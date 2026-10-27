@@ -55,7 +55,8 @@ shows one bar, for the outer loop.
 
 Updates are cheap: when quiet an update only stores the value, and when
 drawing, frames are throttled, so \code{$tick()} can be called on every
-iteration of a loop. Call \code{$done()} through \code{on.exit()} right
+iteration of a loop. Call \code{$done()} through
+\code{on.exit(p$done(), add = TRUE)} right
 after making the bar, so the line is cleared and the bar is released even
 when the work fails or is interrupted:
 \preformatted{

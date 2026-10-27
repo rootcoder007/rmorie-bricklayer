@@ -22,7 +22,8 @@ numeric. Code a categorical confounder as indicator columns first.}
 reproducible.}
 }
 \value{
-A list with \code{ate} (the estimate of \eqn{\theta}: the change
+A list of class \code{c("rmbl_plr", "list")} (its print method shows
+it as a box) with \code{ate} (the estimate of \eqn{\theta}: the change
 in the outcome per unit of the treatment), \code{se} (its sandwich
 standard error), \code{n} (complete rows used), \code{kfol} and
 \code{method} (a string naming the estimator).

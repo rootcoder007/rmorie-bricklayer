@@ -5,16 +5,18 @@ testthat::skip_on_cran()
 
 .cap8 <- function(...) {
   txt <- character()
-  status <- blcli(c(...), out = function(s) txt <<- c(txt, s))
+  status <- blcli(c(...), out = function(s) {
+    assign("txt", c(txt, s), envir = parent.env(environment()))
+  })
   list(status = status, text = paste(txt, collapse = ""))
 }
 
 test_that("help refuses an unknown option like every other verb", {
   r <- .cap8("help", "--nosuch-flag-xyz")
-  expect_equal(r$status, 2L)
+  expect_identical(r$status, 2L)
   expect_match(r$text, "unknown option --nosuch-flag-xyz")
-  expect_equal(.cap8("help")$status, 0L)
-  expect_equal(.cap8("help", "--help")$status, 0L)
+  expect_identical(.cap8("help")$status, 0L)
+  expect_identical(.cap8("help", "--help")$status, 0L)
 })
 
 test_that(
@@ -24,13 +26,13 @@ test_that(
   ),
   {
     r <- .cap8("ask", "")
-    expect_equal(r$status, 2L)
+    expect_identical(r$status, 2L)
     expect_match(r$text, "the prompt is empty")
     expect_false(grepl("`prompt`", r$text, fixed = TRUE))
-    expect_equal(.cap8("ask", "  ")$status, 2L)
-    expect_equal(.cap8("bundle", "")$status, 2L)
+    expect_identical(.cap8("ask", "  ")$status, 2L)
+    expect_identical(.cap8("bundle", "")$status, 2L)
     r <- .cap8("login", "--email", "notanemail")
-    expect_equal(r$status, 2L)
+    expect_identical(r$status, 2L)
     expect_match(r$text, "'notanemail' is not an email address")
   }
 )
@@ -39,7 +41,7 @@ test_that("bundle with no language-model route fails", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(.bl_hosted_base = function(...) NULL)
   r <- .cap8("bundle", "scaffold", "a", "bundle")
-  expect_equal(r$status, 1L)
+  expect_identical(r$status, 1L)
   expect_match(r$text, "No language-model route is set up")
 })
 
@@ -388,11 +390,11 @@ test_that(
       stop("the table was downloaded")
     })
     r <- .cap8("data", "pull", "hib/x", "--out", "/nonexistent-dir-r8/x.csv")
-    expect_equal(r$status, 1L)
+    expect_identical(r$status, 1L)
     expect_match(r$text, "cannot write /nonexistent-dir-r8/x.csv")
-    expect_false(grepl("downloaded", r$text))
+    expect_false(grepl("downloaded", r$text, fixed = TRUE))
     r <- .cap8("data", "pull", "hib/x", "--out", tempdir())
-    expect_equal(r$status, 1L)
+    expect_identical(r$status, 1L)
   }
 )
 
@@ -415,7 +417,7 @@ test_that("a fit reports the parameters its estimate leaves on the box", {
   f <- suppressWarnings(chwkfit(d, 100, "weibull"))
   expect_true(f$converged)
   expect_identical(f$atbound, "alpha")
-  expect_equal(f$kerpar[[1]], 15)
+  expect_identical(f$kerpar[[1]], 15)
   # spread across the day, the same events have an interior maximum
   expect_identical(chwkfit(chwkjit(d), 100, "weibull")$atbound, character(0))
   expect_identical(chwkfit(x, 730)$atbound, character(0))
@@ -451,7 +453,7 @@ test_that("jitter keeps an event dated on the horizon inside the window", {
   j <- chwkjit(d, hor = 100)
   expect_lte(max(j), 100)
   expect_identical(sum(j == 100), 1L)
-  expect_true(is.list(chwkfit(j, 100)))
+  expect_type(chwkfit(j, 100), "list")
   expect_error(chwkfit(chwkjit(d), 100), "hor = ")
   expect_identical(chwkjit(d), chwkjit(d, hor = Inf))
   expect_error(chwkjit(d, hor = 50), "must not exceed")

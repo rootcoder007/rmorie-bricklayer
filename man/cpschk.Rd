@@ -24,7 +24,7 @@ cpschk(
   archive = FALSE
 )
 
-\method{format}{rmbl_cpschk}(x, fmt = c("md", "json"), failon = NULL, ...)
+\method{format}{rmbl_cpschk}(x, fmt = c("md", "json", "text"), failon = NULL, ...)
 
 \method{print}{rmbl_cpschk}(x, ...)
 }
@@ -92,12 +92,13 @@ key: \code{dlogin()} or \env{MORIE_HOSTED_KEY}).}
 
 \item{x}{An \code{rmbl_cpschk} result.}
 
-\item{fmt}{\code{"md"} (the Markdown report) or \code{"json"}.}
+\item{fmt}{\code{"md"} (the Markdown report), \code{"json"} or
+\code{"text"} (the console summary \code{print()} draws as a box).}
 
 \item{failon}{Character scalar or \code{NULL}: the fail-on level, named
 in the report's last line.}
 
-\item{...}{Not used.}
+\item{...}{Further arguments of \code{format()} and \code{print()}, ignored.}
 }
 \value{
 A list of class \code{rmbl_cpschk}: \code{status},
@@ -116,8 +117,9 @@ without its value, or \code{NULL}). The \code{cpsdrft()} result
 of each capsule whose columns were compared, with its provenance and
 manifest diff, is in the attribute \code{drifts} (named by capsule),
 for \code{\link{drfthtml}} and \code{\link{drftapp}}.
-\code{format()} returns one string and \code{print()} writes the
-Markdown report.
+\code{format()} returns one string (\code{"md"}, \code{"json"}) or
+the lines of the console summary (\code{"text"}); \code{print()}
+draws that summary as a box.
 }
 \description{
 Runs the checks of the rmbl GitHub Action on every capsule (a folder

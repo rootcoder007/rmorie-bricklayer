@@ -4,3 +4,5 @@ inst/services/* -text
 *.sig -text
 # Test fixtures whose bytes are pinned by sha256 in a signed bundle
 tests/testthat/fixtures/** -text
+# Test certificates for the x509 examples: exact DER bytes
+inst/extdata/x509/*.der -text

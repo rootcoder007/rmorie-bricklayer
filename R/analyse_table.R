@@ -40,7 +40,9 @@
 #' @param value Name of the column (a string) with the published count (or
 #'   measure).
 #' @param prd Name of the column with the period (fiscal year, quarter,
-#'   ...); numeric periods are used as the time axis of the trend tests.
+#'   ...); numeric periods are used as the time axis of the trend tests. Text
+#'   periods (\code{"2019/20"}, \code{"2021 Q3"}, \code{"Mar 2021"}) are
+#'   ordered as [yoy()] reads them (see its \code{prd}).
 #' @param by Optional character vector of grouping column names
 #'   (institution, region, ...). \code{NULL} (the default) treats the table as
 #'   one series.
@@ -121,7 +123,7 @@
 #'   sure, rates, trend, whether this release differs from the one held before.
 #' @srrstats {EA3.0} One call runs profile, change, Benjamini-Hochberg
 #'   adjustment over the whole scan, publication envelope, trend, rates and
-#'   drift, which otherwise take separate manual steps; test-analyse-table.R.
+#'   drift, which otherwise take separate manual steps; test-analyse_table.R.
 anltab <- function(
   data,
   value,
@@ -139,45 +141,182 @@ anltab <- function(
   alpha = 0.05,
   adjust = "BH"
 ) {
-  if (!is.data.frame(data)) {
-    stop("anltab: `data` must be a data frame", call. = FALSE)
-  }
-  .rmbl_df_names(data)
-  value <- .rmbl_string1(value, "value")
-  prd <- .rmbl_string1(prd, "prd")
-  if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
-    stop(
-      "anltab: `by` must be one or more column names, or NULL",
-      call. = FALSE
-    )
-  }
-  conflvl <- .rmbl_conf_level(conflvl)
-  # each a single value, checked here: the inner calls met them as base R did
-  # ("the condition has length > 1", "invalid format '%g'"; CRAN stress test of
-  # 0.5.14)
-  if (!is.null(pop)) {
-    pop <- .rmbl_string1(pop, "pop")
-  }
-  alpha <- .rmbl_conf_level(alpha, "alpha")
+  a <- .anl_inputs(data, value, prd, by, pop, conflvl, alpha)
   adjust <- .rmbl_arg(adjust, stats::p.adjust.methods)
+  b <- .anl_check_bounds(rnd, suplim)
+  units <- .rmbl_arg(units)
+  dir <- .rmbl_arg(dir)
+  rndkind <- .rmbl_arg(rndkind)
+  .anl_check_cols(data, c(a$value, a$prd, by, a$pop))
+  # the settings, in the order the result's `meta` lists them
+  opts <- list(
+    value = a$value,
+    period = a$prd,
+    by = by,
+    population = a$pop,
+    units = units,
+    rounding = b$rnd,
+    rndkind = rndkind,
+    suppression_limit = b$suplim,
+    direction = dir,
+    per = per,
+    conflvl = a$conflvl,
+    alpha = a$alpha,
+    adjust = adjust
+  )
+  .anl_warn_bounds(opts)
+  .anl_run(data, prior, opts)
+}
+
+#' @export
+format.bricklayer_analysis <- function(x, ...) {
+  m <- x$meta
+  .rmbl_res_block(
+    "Analysis of a published table",
+    facts = c(.anl_fmt_head(x), .anl_fmt_change(x), .anl_fmt_tail(x)),
+    reading = paste(
+      "Changes are between consecutive periods with exact or interval",
+      "tests, adjusted for the number of comparisons; rptanl() writes the",
+      "full tables as a report, and x$change, x$rates and x$trend hold them."
+    ),
+    notes = if (length(m$when)) paste("Run", m$when)
+  )
+}
+
+#' Write an analysis as a Markdown or HTML report
+#'
+#' Renders an [anltab()] result as a report: the
+#' change table with
+#' its intervals and adjusted p-values, the rates, the trends, the drift
+#' screen and the column profile, each with one sentence saying how to read
+#' it. The Markdown is plain enough to paste into a notebook or a pull
+#' request; the HTML is a single self-contained file with no external
+#' resources, suitable for e-mailing to a reviewer.
+#'
+#' @details Sections appear in this order: a header line (value, period, groups,
+#' rows, period range and the time of the analysis), \dQuote{Change between
+#' periods}, \dQuote{Rates per ...} (when there were rates), \dQuote{Trend over
+#' the series}, \dQuote{Drift against the prior capsule} (when a prior was
+#' given) and \dQuote{What is in the table} (with \dQuote{Missing values} when
+#' any are missing). Tables use pipe syntax; numbers are rounded to
+#' \code{digits} decimals, whole numbers of 10,000 and above get thousands
+#' separators, logicals are written yes/no and \code{NA} is blank. When the
+#' values are percentages the change is reported in percentage points. The HTML
+#' is produced by a small built-in converter (headings, paragraphs, tables and
+#' inline code, with the text escaped). The file is written as UTF-8 and
+#' overwritten if it exists.
+#'
+#' Errors: \code{x} not from [anltab()]; an invalid
+#' \code{format}.
+#'
+#' @param x A \code{bricklayer_analysis} from
+#'   [anltab()].
+#' @param path Where to write, a file path. With \code{NULL} (the default)
+#'   the text is returned invisibly and nothing is written.
+#' @param format \code{"markdown"} or \code{"html"}. With \code{NULL} (the
+#'   default), a \code{path} ending in \code{.html} or \code{.htm} gives
+#'   HTML and anything else, or no \code{path}, gives Markdown.
+#' @param title Report title, a string; the top heading and, for HTML, the
+#'   page title.
+#' @param digits Number of decimals for percentages and rates, default 1.
+#' @return The report text (a length-1 character string, Markdown or a full
+#'   HTML document), invisibly.
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' path <- system.file("extdata", "otis_a01_individuals.csv",
+#'                     package = "rmoriebricklayer")
+#' a <- anltab(read.csv(path), value = "individuals",
+#'                    prd = "year", by = c("table", "group"))
+#' md <- rptanl(a)
+#' cat(substr(md, 1, 400))
+#'
+#' # HTML, chosen from the file extension
+#' out <- tempfile(fileext = ".html")
+#' rptanl(a, out, title = "OTIS A01: individuals in custody", digits = 2)
+#' readLines(out, n = 3)
+#'
+#' # only an anltab() result can be reported
+#' try(rptanl(read.csv(path)))
+#' unlink(out)
+#' @export
+rptanl <- function(
+  x,
+  path = NULL,
+  format = NULL,
+  title = "Analysis of a published table",
+  digits = 1L
+) {
+  if (!inherits(x, "bricklayer_analysis")) {
+    stop("`x` must come from anltab()", call. = FALSE)
+  }
+  if (!is.null(path)) {
+    path <- .rmbl_out_file(path, "path")
+  }
+  if (!is.null(path) && is.null(format)) {
+    format <- if (
+      is.character(path) && grepl("\\.html?$", path, ignore.case = TRUE)
+    ) {
+      "html"
+    } else {
+      "markdown"
+    }
+  }
+  format <- .rmbl_arg(format, c("markdown", "html"))
+  title <- .rmbl_text1(title, "title")
+  digits <- .rmbl_scalar(digits, "digits", -1, 15, integer = TRUE)
+  text <- paste(
+    c(
+      .anl_md_intro(x, title),
+      .anl_md_change(x, digits),
+      .anl_md_rates(x, digits),
+      .anl_md_trend(x),
+      .anl_md_drift(x),
+      .anl_md_profile(x)
+    ),
+    collapse = "\n"
+  )
+  if (format == "html") {
+    text <- .md_to_html(text, title)
+  }
+  if (!is.null(path)) {
+    writeLines(enc2utf8(text), path, useBytes = TRUE)
+  }
+  invisible(text)
+}
+
+#' anltab()'s rounding base and suppression limit, checked.
+#' @param rnd,suplim As for anltab().
+#' @return A list: rnd and suplim.
+#' @noRd
+.anl_check_bounds <- function(rnd, suplim) {
   for (nm in c("rnd", "suplim")) {
-    v <- get(nm)
+    v <- if (nm == "rnd") rnd else suplim
     if (is.null(v)) {
       next
     }
     v <- .rmbl_num(v, nm)
-    if (length(v) != 1L || is.na(v) || v < 0) {
+    # a rounding base of 0 or Inf, or an infinite suppression limit, has no
+    # publication envelope: pubbnd() refused rnd = 0 only later, Inf never
+    if (length(v) != 1L || !is.finite(v) || v < 0 || (nm == "rnd" && v == 0)) {
       stop(
-        sprintf("`%s` must be one non-negative number, or NULL", nm),
+        sprintf(
+          "`%s` must be one %s number, finite, or NULL",
+          nm,
+          if (nm == "rnd") "positive" else "non-negative"
+        ),
         call. = FALSE
       )
     }
-    assign(nm, v)
+    if (nm == "rnd") rnd <- v else suplim <- v
   }
-  units <- .rmbl_arg(units)
-  dir <- .rmbl_arg(dir)
-  rndkind <- .rmbl_arg(rndkind)
-  for (col in c(value, prd, by, pop)) {
+  list(rnd = rnd, suplim = suplim)
+}
+
+#' anltab()'s columns, each in the data.
+#' @param data The table given to anltab(), whose names must include `cols`.
+#' @param cols The columns.
+#' @noRd
+.anl_check_cols <- function(data, cols) {
+  for (col in cols) {
     if (!col %in% names(data)) {
       stop(
         sprintf("anltab: column `%s` not found in `data`", col),
@@ -185,42 +324,14 @@ anltab <- function(
       )
     }
   }
-  bounded <- !is.null(rnd) || !is.null(suplim)
-  if (bounded && units != "count") {
-    warning(
-      sprintf(
-        paste0(
-          "`rnd` and `suplim` apply only to counts: they are ignored ",
-          "with units = \"%s\""
-        ),
-        units
-      ),
-      call. = FALSE
-    )
-  }
+  invisible(NULL)
+}
 
-  ## ---- what is in it ----
-  profile <- profcols(data)
-  missing <- misssmry(data)
-
-  ## ---- what changed, and how sure ----
-  change <- yoy(
-    data,
-    value = value,
-    prd = prd,
-    by = by,
-    units = units,
-    conflvl = conflvl,
-    dir = dir
-  )
-  if (units == "count") {
-    change <- scanadj(change, meth = adjust, alpha = alpha)
-    if (bounded) {
-      change <- yoybnd(change, rnd = rnd, rndkind = rndkind, suplim = suplim)
-    }
-  }
-
-  ## ---- rates, if there is an exposure ----
+#' anltab()'s rates and their changes, when there is an exposure.
+#' @param data,value,prd,by,pop,per,conflvl,adjust,alpha As for anltab().
+#' @return A list: rates and rc (NULL without `pop`).
+#' @noRd
+.anl_rates <- function(data, value, prd, by, pop, per, conflvl, adjust, alpha) {
   rates <- NULL
   rc <- NULL
   if (!is.null(pop)) {
@@ -243,55 +354,12 @@ anltab <- function(
     )
     rc <- scanadj(rc, meth = adjust, alpha = alpha)
   }
-
-  ## ---- trend over the periods, per group ----
-  trend <- .analysis_trends(data, value, prd, by, units, conflvl)
-
-  ## ---- drift against the prior capsule ----
-  drift <- NULL
-  if (!is.null(prior)) {
-    if (!is.data.frame(prior)) {
-      stop("`prior` must be a data frame", call. = FALSE)
-    }
-    drift <- cpsdrft(prior, data, alpha = alpha)
-  }
-
-  structure(
-    list(
-      profile = profile,
-      missingness = missing,
-      change = change,
-      rates = rates,
-      ratechg = rc,
-      trend = trend,
-      drift = drift,
-      meta = list(
-        value = value,
-        period = prd,
-        by = by,
-        population = pop,
-        units = units,
-        rounding = rnd,
-        rndkind = rndkind,
-        suppression_limit = suplim,
-        direction = dir,
-        per = per,
-        conflvl = conflvl,
-        alpha = alpha,
-        adjust = adjust,
-        n_rows = nrow(data),
-        periods = sort(unique(data[[prd]])),
-        prior = !is.null(prior),
-        when = format(Sys.time(), "%Y-%m-%d %H:%M")
-      )
-    ),
-    class = "bricklayer_analysis"
-  )
+  list(rates = rates, rc = rc)
 }
 
 #' Tests the trend of each group's per-period totals with trndtst() and, for
 #' counts, cnttrnd().
-#' @param data The table.
+#' @param data The table to test, split by `by` into one series per group.
 #' @param value The name of the value column.
 #' @param period The name of the period column.
 #' @param by The names of the grouping columns, or NULL for one group.
@@ -302,6 +370,9 @@ anltab <- function(
 #' @noRd
 .analysis_trends <- function(data, value, period, by, units, conf_level) {
   conf_level <- .rmbl_conf_level(conf_level)
+  # text periods in the order yoy() reads them ("Mar 2021" after "Feb 2021"),
+  # not alphabetically; yoy() has already warned about any it cannot order
+  data[[period]] <- .yoy_prd_read(data[[period]], quiet = TRUE)$p
   groups <- if (is.null(by)) {
     list(data)
   } else {
@@ -335,26 +406,7 @@ anltab <- function(
     out$rateratiolo <- NA_real_
     out$rateratioup <- NA_real_
     if (length(y) >= 3L && !all(is.na(y))) {
-      tt <- tryCatch(
-        trndtst(y, x = if (is.numeric(x)) x else NULL, conflvl = conf_level),
-        error = function(e) NULL
-      )
-      if (!is.null(tt)) {
-        out$tau <- tt$tau
-        out$trndp <- tt$p_value
-        out$slope <- tt$slope
-      }
-      if (units == "count") {
-        ct <- tryCatch(
-          cnttrnd(y, x = if (is.numeric(x)) x else NULL, conflvl = conf_level),
-          error = function(e) NULL
-        )
-        if (!is.null(ct)) {
-          out$rateratio <- ct$rateratio
-          out$rateratiolo <- ct$lower %||% NA_real_
-          out$rateratioup <- ct$upper %||% NA_real_
-        }
-      }
+      out <- .analysis_trend_tests(out, y, x, units, conf_level)
     }
     out
   })
@@ -363,27 +415,275 @@ anltab <- function(
   out
 }
 
-#' @export
-print.bricklayer_analysis <- function(x, ...) {
-  m <- x$meta
-  cat(sprintf(
-    "Analysis of `%s` by %s over %d period(s) (%s to %s)%s\n",
-    m$value,
-    m$period,
-    length(m$periods),
-    m$periods[1L],
-    m$periods[length(m$periods)],
-    if (length(m$by)) {
-      paste0(", grouped by ", paste(m$by, collapse = " x "))
+#' Minimal Markdown table (pipe syntax) from a data frame; numeric
+#' columns rounded to `digits`, logicals as yes/no, NA as blank.
+#' @param d A data frame.
+#' @param digits The number of decimals for numbers that are not whole.
+#' @param plain The names of columns written without a thousands separator.
+#' @return One string holding the table.
+#' @noRd
+.md_table <- function(d, digits = 1L, plain = character()) {
+  d <- as.data.frame(d, stringsAsFactors = FALSE)
+  if (!nrow(d)) {
+    return("(no rows)")
+  }
+  cells <- lapply(names(d), function(nm) {
+    v <- d[[nm]]
+    if (nm %in% plain) {
+      # a period (2023) is a label, not a quantity: no thousands separator
+      ifelse(is.na(v), "", format(v, trim = TRUE, scientific = FALSE))
+    } else if (is.logical(v)) {
+      yn <- ifelse(v, "yes", "no")
+      ifelse(is.na(v), "", yn)
+    } else if (is.numeric(v)) {
+      whole <- v == round(v) & abs(v) < 1e9
+      # a separator from 10,000 up only: a four-digit whole number (a year in
+      # the profile's min / max) read as "2,023"
+      big <- ifelse(
+        abs(v) >= 1e4,
+        format(v, big.mark = ",", trim = TRUE, scientific = FALSE),
+        format(v, trim = TRUE, scientific = FALSE)
+      )
+      num <- ifelse(whole, big, formatC(v, digits = digits, format = "f"))
+      ifelse(is.na(v), "", num)
     } else {
-      ""
+      ifelse(is.na(v), "", as.character(v))
     }
-  ))
-  cat(sprintf(
-    "  rows %d, columns %d; %s\n",
-    m$n_rows,
-    nrow(x$profile),
-    if (x$missingness[["n_missing"]] > 0) {
+  })
+  rows <- do.call(paste, c(cells, sep = " | "))
+  paste(
+    c(
+      paste("|", paste(names(d), collapse = " | "), "|"),
+      paste("|", paste(rep("---", ncol(d)), collapse = " | "), "|"),
+      paste("|", rows, "|")
+    ),
+    collapse = "\n"
+  )
+}
+
+#' Converts the report Markdown to a self-contained HTML page.
+#'
+#' Enough Markdown for the report: headings, paragraphs, pipe tables,
+#' inline code. No dependency, no external resources.
+#' @param md The Markdown text.
+#' @param title The page title, escaped into the `<title>` element.
+#' @return One string holding the HTML document.
+#' @noRd
+.md_to_html <- function(md, title) {
+  lines <- strsplit(md, "\n", fixed = TRUE)[[1L]]
+  out <- character()
+  i <- 1L
+  while (i <= length(lines)) {
+    l <- lines[i]
+    if (grepl("^#{1,3} ", l)) {
+      lvl <- nchar(sub(" .*$", "", l))
+      out <- c(
+        out,
+        sprintf("<h%d>%s</h%d>", lvl, .md_inline(sub("^#+ ", "", l)), lvl)
+      )
+    } else if (grepl("^\\|", l)) {
+      j <- i
+      while (j <= length(lines) && grepl("^\\|", lines[j])) {
+        j <- j + 1L
+      }
+      out <- c(out, .md_html_table(lines[i:(j - 1L)]))
+      i <- j
+      next
+    } else if (nzchar(trimws(l))) {
+      out <- c(out, paste0("<p>", .md_inline(l), "</p>"))
+    }
+    i <- i + 1L
+  }
+  .md_html_page(out, title)
+}
+
+#' anltab()'s data, column names, confidence level and alpha, checked.
+#' @param data,value,prd,by,pop,conflvl,alpha As for anltab().
+#' @return A list: value, prd, pop, conflvl and alpha.
+#' @noRd
+.anl_inputs <- function(data, value, prd, by, pop, conflvl, alpha) {
+  if (!is.data.frame(data)) {
+    stop("anltab: `data` must be a data frame", call. = FALSE)
+  }
+  .rmbl_df_names(data)
+  value <- .rmbl_string1(value, "value")
+  prd <- .rmbl_string1(prd, "prd")
+  if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
+    stop(
+      "anltab: `by` must be one or more column names, or NULL",
+      call. = FALSE
+    )
+  }
+  conflvl <- .rmbl_conf_level(conflvl)
+  # each a single value, checked here: the inner calls met them as base R did
+  # ("the condition has length > 1", "invalid format '%g'"; CRAN stress test of
+  # 0.5.14)
+  if (!is.null(pop)) {
+    pop <- .rmbl_string1(pop, "pop")
+  }
+  alpha <- .rmbl_conf_level(alpha, "alpha")
+  list(value = value, prd = prd, pop = pop, conflvl = conflvl, alpha = alpha)
+}
+
+#' Warns that rounding and suppression are ignored for a non-count.
+#' @param o anltab()'s settings.
+#' @return NULL, invisibly.
+#' @noRd
+.anl_warn_bounds <- function(o) {
+  bounded <- !is.null(o$rounding) || !is.null(o$suppression_limit)
+  if (bounded && o$units != "count") {
+    warning(
+      sprintf(
+        paste0(
+          "`rnd` and `suplim` apply only to counts: they are ignored ",
+          "with units = \"%s\""
+        ),
+        o$units
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' anltab()'s analysis, once its arguments are checked.
+#' @param data The table analysed: profiled, checked for gaps and change.
+#' @param prior The prior capsule, or NULL.
+#' @param o anltab()'s settings.
+#' @return A bricklayer_analysis.
+#' @noRd
+.anl_run <- function(data, prior, o) {
+  ## ---- what is in it ----
+  profile <- profcols(data)
+  miss <- misssmry(data)
+
+  ## ---- what changed, and how sure ----
+  change <- .anl_change(data, o)
+
+  ## ---- rates, if there is an exposure ----
+  r <- .anl_rates(
+    data,
+    o$value,
+    o$period,
+    o$by,
+    o$population,
+    o$per,
+    o$conflvl,
+    o$adjust,
+    o$alpha
+  )
+
+  ## ---- trend over the periods, per group ----
+  trend <- .analysis_trends(
+    data,
+    o$value,
+    o$period,
+    o$by,
+    o$units,
+    o$conflvl
+  )
+
+  ## ---- drift against the prior capsule ----
+  drift <- .anl_drift(prior, data, o$alpha)
+
+  structure(
+    list(
+      profile = profile,
+      missingness = miss,
+      change = change,
+      rates = r$rates,
+      ratechg = r$rc,
+      trend = trend,
+      drift = drift,
+      meta = .anl_meta(o, data, prior)
+    ),
+    class = "bricklayer_analysis"
+  )
+}
+
+#' anltab()'s year-on-year change, multiplicity-adjusted and bounded for a
+#' count.
+#' @param data The table whose change between periods is measured.
+#' @param o anltab()'s settings.
+#' @return A yoy() result.
+#' @noRd
+.anl_change <- function(data, o) {
+  # bare `value` and `prd`, as anltab() passed them to yoy()
+  value <- o$value
+  prd <- o$period
+  change <- yoy(
+    data,
+    value = value,
+    prd = prd,
+    by = o$by,
+    units = o$units,
+    conflvl = o$conflvl,
+    dir = o$direction
+  )
+  if (o$units == "count") {
+    change <- scanadj(change, meth = o$adjust, alpha = o$alpha)
+    if (!is.null(o$rounding) || !is.null(o$suppression_limit)) {
+      change <- yoybnd(
+        change,
+        rnd = o$rounding,
+        rndkind = o$rndkind,
+        suplim = o$suppression_limit
+      )
+    }
+  }
+  change
+}
+
+#' The Mann-Kendall test and the count trend of one series, for
+#' .analysis_trends().
+#' @param out The series' row, its test columns missing.
+#' @param y The values, at least three.
+#' @param x The periods of `y`, used as the time axis only when numeric.
+#' @param units The value's units; `"count"` also runs the count trend test.
+#' @param conf_level The confidence level of the trend tests' intervals.
+#' @return `out`, the test columns filled where a test ran.
+#' @noRd
+.analysis_trend_tests <- function(out, y, x, units, conf_level) {
+  tt <- tryCatch(
+    trndtst(y, x = if (is.numeric(x)) x else NULL, conflvl = conf_level),
+    error = function(e) NULL
+  )
+  if (!is.null(tt)) {
+    out$tau <- tt$tau
+    out$trndp <- tt$p_value
+    out$slope <- tt$slope
+  }
+  if (units == "count") {
+    ct <- tryCatch(
+      cnttrnd(y, x = if (is.numeric(x)) x else NULL, conflvl = conf_level),
+      error = function(e) NULL
+    )
+    if (!is.null(ct)) {
+      out$rateratio <- ct$rateratio
+      out$rateratiolo <- ct$lower %||% NA_real_
+      out$rateratioup <- ct$upper %||% NA_real_
+    }
+  }
+  out
+}
+
+#' The facts that open a printed analysis: what was analysed, and its size.
+#' @param x A bricklayer_analysis.
+#' @return A named list.
+#' @noRd
+.anl_fmt_head <- function(x) {
+  m <- x$meta
+  np <- length(m$periods)
+  list(
+    Value = paste0("`", m$value, "`"),
+    Period = m$period,
+    Periods = if (np) {
+      sprintf("%d (%s to %s)", np, m$periods[1L], m$periods[np])
+    },
+    `Grouped by` = if (length(m$by)) paste(m$by, collapse = " x "),
+    Rows = m$n_rows,
+    Columns = nrow(x$profile),
+    Missing = if (isTRUE(x$missingness[["n_missing"]] > 0)) {
       sprintf(
         "%d column(s) with missing values",
         x$missingness[["n_cols_any_missing"]]
@@ -391,157 +691,102 @@ print.bricklayer_analysis <- function(x, ...) {
     } else {
       "no missing values"
     }
-  ))
-  ch <- x$change
-  cmp <- ch[!is.na(ch$previous), , drop = FALSE]
-  cat(sprintf("  change: %d comparison(s)", nrow(cmp)))
-  if (!is.null(cmp$significant)) {
-    cat(sprintf(
-      ", %d significant after %s at %g",
-      sum(cmp$significant),
-      m$adjust,
-      m$alpha
-    ))
-  }
-  cat("\n")
-  if (!is.null(cmp$compctlo)) {
-    cat(sprintf(
-      paste0(
-        "  publication bounds: rounding %s (%s)%s; ",
-        "combined intervals reported\n"
-      ),
-      if (is.null(m$rounding)) "none" else format(m$rounding),
-      m$rndkind,
-      if (is.null(m$suppression_limit)) {
-        ""
-      } else {
-        sprintf(", suppression below %g", m$suppression_limit)
-      }
-    ))
-  }
-  if (!is.null(x$ratechg)) {
-    r <- x$ratechg[!is.na(x$ratechg$prerate), , drop = FALSE]
-    cat(sprintf(
-      paste0(
-        "  rates per %s: %d comparison(s), ",
-        "%d significant after adjustment\n"
-      ),
-      format(m$per),
-      nrow(r),
-      sum(r$significant, na.rm = TRUE)
-    ))
-  }
-  tr <- x$trend
-  if (nrow(tr) && any(!is.na(tr$trndp))) {
-    cat(sprintf(
-      "  trend: %d of %d series with Mann-Kendall p < %g\n",
-      sum(tr$trndp < m$alpha, na.rm = TRUE),
-      nrow(tr),
-      m$alpha
-    ))
-  } else {
-    cat("  trend: fewer than three periods, not tested\n")
-  }
-  if (!is.null(x$drift)) {
-    d <- x$drift$columns
-    cat(sprintf(
-      paste0(
-        "  drift vs prior capsule: %d of %d column(s) ",
-        "flagged at alpha %g\n"
-      ),
-      sum(d$drifted, na.rm = TRUE),
-      nrow(d),
-      m$alpha
-    ))
-  }
-  invisible(x)
+  )
 }
 
-#' Write an analysis as a Markdown or HTML report
-#'
-#' Renders an [anltab()] result as a report: the
-#' change table with
-#' its intervals and adjusted p-values, the rates, the trends, the drift
-#' screen and the column profile, each with one sentence saying how to read
-#' it. The Markdown is plain enough to paste into a notebook or a pull
-#' request; the HTML is a single self-contained file with no external
-#' resources, suitable for e-mailing to a reviewer.
-#'
-#' @details Sections appear in this order: a header line (value, period, groups,
-#' rows, period range and the time of the analysis), \dQuote{Change between
-#' periods}, \dQuote{Rates per ...} (when there were rates), \dQuote{Trend over
-#' the series}, \dQuote{Drift against the prior capsule} (when a prior was
-#' given) and \dQuote{What is in the table} (with \dQuote{Missing values} when
-#' any are missing). Tables use pipe syntax; numbers are rounded to
-#' \code{digits} decimals, whole numbers of 10,000 and above get thousands
-#' separators, logicals are written yes/no and \code{NA} is blank. When the
-#' values are percentages the change is reported in percentage points. The HTML
-#' is produced by a small built-in converter (headings, paragraphs, tables and
-#' inline code, with the text escaped). The file is written as UTF-8 and
-#' overwritten if it exists.
-#'
-#' Errors: \code{x} not from [anltab()]; an invalid
-#' \code{format}.
-#'
-#' @param x A \code{bricklayer_analysis} from
-#'   [anltab()].
-#' @param path Where to write, a file path. With \code{NULL} (the default)
-#'   the text is returned invisibly and nothing is written.
-#' @param format \code{"markdown"} (the default) or \code{"html"}. When
-#'   \code{format} is not given and \code{path} ends in \code{.html} or
-#'   \code{.htm}, HTML is written; any other path gives Markdown.
-#' @param title Report title, a string; the top heading and, for HTML, the
-#'   page title.
-#' @param digits Number of decimals for percentages and rates, default 1.
-#' @return The report text (a length-1 character string, Markdown or a full
-#'   HTML document), invisibly.
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' path <- system.file("extdata", "otis_a01_individuals.csv",
-#'                     package = "rmoriebricklayer")
-#' a <- anltab(read.csv(path), value = "individuals",
-#'                    prd = "year", by = c("table", "group"))
-#' md <- rptanl(a)
-#' cat(substr(md, 1, 400))
-#'
-#' # HTML, chosen from the file extension
-#' out <- tempfile(fileext = ".html")
-#' rptanl(a, out, title = "OTIS A01: individuals in custody", digits = 2)
-#' readLines(out, n = 3)
-#'
-#' # only an anltab() result can be reported
-#' try(rptanl(read.csv(path)))
-#' unlink(out)
-#' @export
-rptanl <- function(
-  x,
-  path = NULL,
-  format = c("markdown", "html"),
-  title = "Analysis of a published table",
-  digits = 1L
-) {
-  if (!inherits(x, "bricklayer_analysis")) {
-    stop("`x` must come from anltab()", call. = FALSE)
-  }
-  if (!is.null(path)) {
-    path <- .rmbl_out_file(path, "path")
-  }
-  if (!is.null(path) && missing(format)) {
-    format <- if (
-      is.character(path) && grepl("\\.html?$", path, ignore.case = TRUE)
-    ) {
-      "html"
-    } else {
-      "markdown"
-    }
-  }
-  format <- .rmbl_arg(format)
-  title <- .rmbl_text1(title, "title")
-  digits <- .rmbl_scalar(digits, "digits", -1, 15, integer = TRUE)
+#' The change, bounds and rate facts of a printed analysis.
+#' @param x A bricklayer_analysis.
+#' @return A named list.
+#' @noRd
+.anl_fmt_change <- function(x) {
   m <- x$meta
-  acc <- new.env(parent = emptyenv())
-  acc$lines <- character()
-  add <- function(...) acc$lines <- c(acc$lines, ...)
-  add(
+  ch <- x$change
+  cmp <- ch[!is.na(ch$previous), , drop = FALSE]
+  r <- x$ratechg
+  if (!is.null(r)) {
+    r <- r[!is.na(r$prerate), , drop = FALSE]
+  }
+  list(
+    Changes = paste0(
+      sprintf("%d comparison(s)", nrow(cmp)),
+      if (!is.null(cmp$significant)) {
+        sprintf(
+          ", %d significant after %s at %g",
+          sum(cmp$significant),
+          m$adjust,
+          m$alpha
+        )
+      }
+    ),
+    `Publication bounds` = if (!is.null(cmp$compctlo)) .anl_fmt_bounds(m),
+    Rates = if (!is.null(r)) {
+      sprintf(
+        "per %s: %d comparison(s), %d significant after adjustment",
+        format(m$per),
+        nrow(r),
+        sum(r$significant, na.rm = TRUE)
+      )
+    }
+  )
+}
+
+#' The publication-bounds fact of a printed analysis.
+#' @param m The analysis's `meta`.
+#' @return One string.
+#' @noRd
+.anl_fmt_bounds <- function(m) {
+  sprintf(
+    "rounding %s (%s)%s; combined intervals reported",
+    if (is.null(m$rounding)) "none" else format(m$rounding),
+    m$rndkind,
+    if (is.null(m$suppression_limit)) {
+      ""
+    } else {
+      sprintf(", suppression below %g", m$suppression_limit)
+    }
+  )
+}
+
+#' The trend and drift facts of a printed analysis.
+#' @param x A bricklayer_analysis.
+#' @return A named list.
+#' @noRd
+.anl_fmt_tail <- function(x) {
+  m <- x$meta
+  tr <- x$trend
+  d <- x$drift$columns
+  list(
+    Trend = if (nrow(tr) && !all(is.na(tr$trndp))) {
+      sprintf(
+        "%d of %d series with Mann-Kendall p < %g",
+        sum(tr$trndp < m$alpha, na.rm = TRUE),
+        nrow(tr),
+        m$alpha
+      )
+    } else {
+      "fewer than three periods, not tested"
+    },
+    `Drift vs prior capsule` = if (!is.null(d)) {
+      sprintf(
+        "%d of %d column(s) flagged at alpha %g",
+        sum(d$drifted, na.rm = TRUE),
+        nrow(d),
+        m$alpha
+      )
+    }
+  )
+}
+
+#' The title and the one-line summary of rptanl()'s report.
+#' @param x A bricklayer_analysis.
+#' @param title The checked title, written as the level-one Markdown heading.
+#' @return A character vector of Markdown lines.
+#' @noRd
+.anl_md_intro <- function(x, title) {
+  m <- x$meta
+  out <- character()
+  out <- c(
+    out,
     paste0("# ", title),
     "",
     sprintf(
@@ -567,35 +812,25 @@ rptanl <- function(
     ),
     ""
   )
+  out
+}
 
+#' The change-between-periods section of rptanl()'s report.
+#' @param x A bricklayer_analysis.
+#' @param digits Decimal places, as for rptanl().
+#' @return A character vector of Markdown lines.
+#' @noRd
+.anl_md_change <- function(x, digits) {
+  m <- x$meta
+  out <- character()
   ch <- x$change
   # percent units change in points
   chg <- if ("pctchg" %in% names(ch)) "pctchg" else "ppchg"
-  add(
+  out <- c(
+    out,
     "## Change between periods",
     "",
-    if (identical(chg, "ppchg")) {
-      # the values are percentages: they change in points, and a count interval
-      # does not apply
-      paste(
-        "Change in percentage points between consecutive periods (the",
-        "values are percentages,",
-        "so no count-based interval applies)."
-      )
-    } else {
-      sprintf(
-        paste0(
-          "Percent change with a %g%% exact conditional-binomial ",
-          "interval; p-values are exact and adjusted over the %d ",
-          "comparisons by %s. A row is significant when the ",
-          "adjusted p-value is below %g."
-        ),
-        100 * m$conflvl,
-        sum(!is.na(x$change$previous)),
-        m$adjust,
-        m$alpha
-      )
-    },
+    .anl_md_change_note(x, chg),
     ""
   )
   cols <- c(m$by, m$period, "value", "previous", chg)
@@ -604,7 +839,8 @@ rptanl <- function(
   }
   if (!is.null(ch$compctlo)) {
     cols <- c(cols, "compctlo", "compctup")
-    add(
+    out <- c(
+      out,
       sprintf(
         paste0(
           "`combined_*` widens the sampling interval by the ",
@@ -621,10 +857,21 @@ rptanl <- function(
     cols <- c(cols, "padj", "significant")
   }
   cols <- c(cols, "flag")
-  add(.md_table(ch[cols], digits, plain = m$period), "")
+  out <- c(out, .md_table(ch[cols], digits, plain = m$period), "")
+  out
+}
 
+#' The rates section of rptanl()'s report, empty without an exposure.
+#' @param x A bricklayer_analysis.
+#' @param digits Decimal places, as for rptanl().
+#' @return A character vector of Markdown lines.
+#' @noRd
+.anl_md_rates <- function(x, digits) {
+  m <- x$meta
+  out <- character()
   if (!is.null(x$ratechg)) {
-    add(
+    out <- c(
+      out,
       sprintf("## Rates per %s", format(m$per)),
       "",
       sprintf(
@@ -639,7 +886,8 @@ rptanl <- function(
       ""
     )
     rc <- x$ratechg
-    add(
+    out <- c(
+      out,
       .md_table(
         rc[c(
           m$by,
@@ -661,8 +909,17 @@ rptanl <- function(
       ""
     )
   }
+  out
+}
 
-  add(
+#' The trend section of rptanl()'s report.
+#' @param x A bricklayer_analysis.
+#' @return A character vector of Markdown lines.
+#' @noRd
+.anl_md_trend <- function(x) {
+  out <- character()
+  out <- c(
+    out,
     "## Trend over the series",
     "",
     paste0(
@@ -674,10 +931,20 @@ rptanl <- function(
     ),
     ""
   )
-  add(.md_table(x$trend, 3L), "")
+  out <- c(out, .md_table(x$trend, 3L), "")
+  out
+}
 
+#' The drift section of rptanl()'s report, empty without a prior capsule.
+#' @param x A bricklayer_analysis.
+#' @return A character vector of Markdown lines.
+#' @noRd
+.anl_md_drift <- function(x) {
+  m <- x$meta
+  out <- character()
   if (!is.null(x$drift)) {
-    add(
+    out <- c(
+      out,
       "## Drift against the prior capsule",
       "",
       sprintf(
@@ -692,163 +959,102 @@ rptanl <- function(
       ),
       ""
     )
-    add(.md_table(x$drift$columns, 3L), "")
+    out <- c(out, .md_table(x$drift$columns, 3L), "")
     if (length(x$drift$added)) {
-      add(
-        sprintf("Columns added: %s.", paste(x$drift$added, collapse = ", ")),
-        ""
-      )
+      out <- c(out, sprintf("Columns added: %s.", toString(x$drift$added)), "")
     }
     if (length(x$drift$removed)) {
-      add(
+      out <- c(
+        out,
         sprintf(
           "Columns removed: %s.",
-          paste(x$drift$removed, collapse = ", ")
+          toString(x$drift$removed)
         ),
         ""
       )
     }
   }
+  out
+}
 
-  add("## What is in the table", "", .md_table(x$profile, 2L), "")
+#' The profile and missing-value sections of rptanl()'s report.
+#' @param x A bricklayer_analysis.
+#' @return A character vector of Markdown lines.
+#' @noRd
+.anl_md_profile <- function(x) {
+  out <- character()
+  out <- c(out, "## What is in the table", "", .md_table(x$profile, 2L), "")
   if (x$missingness[["n_missing"]] > 0) {
-    add(
+    out <- c(
+      out,
       "### Missing values",
       "",
       .md_table(as.data.frame(as.list(x$missingness)), 2L),
       ""
     )
   }
-  text <- paste(acc$lines, collapse = "\n")
-  if (format == "html") {
-    text <- .md_to_html(text, title)
-  }
-  if (!is.null(path)) {
-    writeLines(enc2utf8(text), path, useBytes = TRUE)
-  }
-  invisible(text)
+  out
 }
 
-#' Minimal Markdown table (pipe syntax) from a data frame; numeric
-#' columns rounded to `digits`, logicals as yes/no, NA as blank.
-#' @param d A data frame.
-#' @param digits The number of decimals for numbers that are not whole.
-#' @param plain The names of columns written without a thousands separator.
-#' @return One string holding the table.
+#' Escapes &, < and > for HTML.
+#' @param s A character vector.
+#' @return `s`, escaped.
 #' @noRd
-.md_table <- function(d, digits = 1L, plain = character()) {
-  d <- as.data.frame(d, stringsAsFactors = FALSE)
-  if (!nrow(d)) {
-    return("(no rows)")
-  }
-  cells <- lapply(names(d), function(nm) {
-    v <- d[[nm]]
-    if (nm %in% plain) {
-      # a period (2023) is a label, not a quantity: no thousands separator
-      ifelse(is.na(v), "", format(v, trim = TRUE, scientific = FALSE))
-    } else if (is.logical(v)) {
-      ifelse(is.na(v), "", ifelse(v, "yes", "no"))
-    } else if (is.numeric(v)) {
-      whole <- v == round(v) & abs(v) < 1e9
-      # a separator from 10,000 up only: a four-digit whole number (a year in
-      # the profile's min / max) read as "2,023"
-      ifelse(
-        is.na(v),
-        "",
-        ifelse(
-          whole,
-          ifelse(
-            abs(v) >= 1e4,
-            format(v, big.mark = ",", trim = TRUE, scientific = FALSE),
-            format(v, trim = TRUE, scientific = FALSE)
-          ),
-          formatC(v, digits = digits, format = "f")
-        )
-      )
-    } else {
-      ifelse(is.na(v), "", as.character(v))
-    }
+.md_esc <- function(s) {
+  s <- gsub("&", "&amp;", s, fixed = TRUE)
+  s <- gsub("<", "&lt;", s, fixed = TRUE)
+  gsub(">", "&gt;", s, fixed = TRUE)
+}
+
+#' Escapes a line of Markdown for HTML and renders its `code` spans.
+#' @param s A character vector.
+#' @return `s` as HTML.
+#' @noRd
+.md_inline <- function(s) gsub("`([^`]+)`", "<code>\\1</code>", .md_esc(s))
+
+#' Renders a Markdown table (its lines, separator second) as HTML.
+#' @param tbl The table's lines.
+#' @return The HTML lines, `<table>` to `</table>`.
+#' @noRd
+.md_html_table <- function(tbl) {
+  cells <- lapply(tbl[-2L], function(r) {
+    v <- strsplit(
+      sub("\\|\\s*$", "", sub("^\\|\\s*", "", r)),
+      " | ",
+      fixed = TRUE
+    )[[1L]]
+    trimws(v)
   })
-  rows <- do.call(paste, c(cells, sep = " | "))
-  paste(
-    c(
-      paste("|", paste(names(d), collapse = " | "), "|"),
-      paste("|", paste(rep("---", ncol(d)), collapse = " | "), "|"),
-      paste("|", rows, "|")
-    ),
-    collapse = "\n"
+  hdr <- paste0(
+    "<tr>",
+    paste0("<th>", .md_inline(cells[[1L]]), "</th>", collapse = ""),
+    "</tr>"
   )
-}
-
-#' Converts the report Markdown to a self-contained HTML page.
-#'
-#' Enough Markdown for the report: headings, paragraphs, pipe tables,
-#' inline code. No dependency, no external resources.
-#' @param md The Markdown text.
-#' @param title The page title.
-#' @return One string holding the HTML document.
-#' @noRd
-.md_to_html <- function(md, title) {
-  esc <- function(s) {
-    s <- gsub("&", "&amp;", s, fixed = TRUE)
-    s <- gsub("<", "&lt;", s, fixed = TRUE)
-    gsub(">", "&gt;", s, fixed = TRUE)
-  }
-  inline <- function(s) gsub("`([^`]+)`", "<code>\\1</code>", esc(s))
-  lines <- strsplit(md, "\n", fixed = TRUE)[[1L]]
-  out <- character()
-  i <- 1L
-  while (i <= length(lines)) {
-    l <- lines[i]
-    if (grepl("^#{1,3} ", l)) {
-      lvl <- nchar(sub(" .*$", "", l))
-      out <- c(
-        out,
-        sprintf("<h%d>%s</h%d>", lvl, inline(sub("^#+ ", "", l)), lvl)
-      )
-    } else if (grepl("^\\|", l)) {
-      j <- i
-      while (j <= length(lines) && grepl("^\\|", lines[j])) {
-        j <- j + 1L
-      }
-      tbl <- lines[i:(j - 1L)]
-      cells <- lapply(tbl[-2L], function(r) {
-        v <- strsplit(
-          sub("\\|\\s*$", "", sub("^\\|\\s*", "", r)),
-          " | ",
-          fixed = TRUE
-        )[[1L]]
-        trimws(v)
-      })
-      hdr <- paste0(
+  body <- vapply(
+    cells[-1L],
+    function(v) {
+      paste0(
         "<tr>",
-        paste0("<th>", inline(cells[[1L]]), "</th>", collapse = ""),
+        paste0("<td>", .md_inline(v), "</td>", collapse = ""),
         "</tr>"
       )
-      body <- vapply(
-        cells[-1L],
-        function(v) {
-          paste0(
-            "<tr>",
-            paste0("<td>", inline(v), "</td>", collapse = ""),
-            "</tr>"
-          )
-        },
-        ""
-      )
-      out <- c(out, "<table>", hdr, body, "</table>")
-      i <- j
-      next
-    } else if (nzchar(trimws(l))) {
-      out <- c(out, paste0("<p>", inline(l), "</p>"))
-    }
-    i <- i + 1L
-  }
+    },
+    ""
+  )
+  c("<table>", hdr, body, "</table>")
+}
+
+#' Wraps HTML body lines in a standalone page.
+#' @param out The body lines.
+#' @param title The page title, escaped into the `<title>` element.
+#' @return The page, one string.
+#' @noRd
+.md_html_page <- function(out, title) {
   paste(
     c(
       "<!DOCTYPE html>",
       "<html lang=\"en\"><head><meta charset=\"utf-8\">",
-      sprintf("<title>%s</title>", esc(title)),
+      sprintf("<title>%s</title>", .md_esc(title)),
       paste0(
         "<style>body{font:15px/1.5 system-ui,sans-serif;",
         "max-width:60em;margin:2em auto;padding:0 1em;color:#222}"
@@ -865,4 +1071,70 @@ rptanl <- function(
     ),
     collapse = "\n"
   )
+}
+
+#' anltab()'s drift against the prior capsule.
+#' @param prior The prior capsule, or NULL.
+#' @param data The current table, compared with `prior` by cpsdrft().
+#' @param alpha The significance level.
+#' @return A cpsdrft() result, or NULL without a prior capsule.
+#' @noRd
+.anl_drift <- function(prior, data, alpha) {
+  if (is.null(prior)) {
+    return(NULL)
+  }
+  if (!is.data.frame(prior)) {
+    stop("`prior` must be a data frame", call. = FALSE)
+  }
+  cpsdrft(prior, data, alpha = alpha)
+}
+
+#' The `meta` of an anltab() result: its settings, then the data's size,
+#' periods and when it ran.
+#' @param o anltab()'s settings.
+#' @param data The table analysed, giving the row count and the periods.
+#' @param prior The prior capsule, or NULL.
+#' @return A list.
+#' @noRd
+.anl_meta <- function(o, data, prior) {
+  c(
+    o,
+    list(
+      n_rows = nrow(data),
+      periods = .yoy_prd_sort(data[[o$period]]),
+      prior = !is.null(prior),
+      when = format(Sys.time(), "%Y-%m-%d %H:%M")
+    )
+  )
+}
+
+#' The sentence that opens rptanl()'s change section.
+#' @param x A bricklayer_analysis.
+#' @param chg The change column, "pctchg" or "ppchg".
+#' @return One string.
+#' @noRd
+.anl_md_change_note <- function(x, chg) {
+  m <- x$meta
+  if (identical(chg, "ppchg")) {
+    # the values are percentages: they change in points, and a count interval
+    # does not apply
+    paste(
+      "Change in percentage points between consecutive periods (the",
+      "values are percentages,",
+      "so no count-based interval applies)."
+    )
+  } else {
+    sprintf(
+      paste0(
+        "Percent change with a %g%% exact conditional-binomial ",
+        "interval; p-values are exact and adjusted over the %d ",
+        "comparisons by %s. A row is significant when the ",
+        "adjusted p-value is below %g."
+      ),
+      100 * m$conflvl,
+      sum(!is.na(x$change$previous)),
+      m$adjust,
+      m$alpha
+    )
+  }
 }

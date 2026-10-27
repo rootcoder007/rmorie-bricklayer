@@ -7,7 +7,7 @@
 cpsfals(data, stat, trt = NULL, n = 199L, subfrac = 0.8, seed = NULL)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame that the statistic \code{stat} is computed on.}
 
 \item{stat}{A function of one data frame returning
 a single finite number.}

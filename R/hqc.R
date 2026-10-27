@@ -418,7 +418,7 @@ hqcencap <- function(key, m = NULL, salt = NULL) {
 #' try(hqcdecap(key, substring(sent$ciphertext, 1L, 100L)))
 #' @export
 hqcdecap <- function(key, ct) {
-  .rmbl_no_fn(ciphertext = ct)
+  .rmbl_no_fn(ct = ct)
   level <- .rmbl_hqc_key_level(key)
   version <- .rmbl_hqc_key_version(key)
   if (is.null(key[["secret"]])) {
@@ -545,11 +545,58 @@ hqccmpkey <- function(key) {
   key
 }
 
+#' @export
+format.bricklayer_hqc_key <- function(x, ...) {
+  .rmbl_stat_block(
+    "Key encapsulation key (HQC, code-based)",
+    facts = list(
+      Level = .rmbl_hqc_label(x),
+      `Public key` = .rmbl_hex_head(x$public),
+      `Secret key` = "<withheld>"
+    ),
+    reading = paste(
+      "Keep this key private: it opens what others encapsulate to its public",
+      "half (hqcpubkey()) with hqcdecap()."
+    )
+  )
+}
+
+#' @export
+format.bricklayer_hqc_public_key <- function(x, ...) {
+  .rmbl_stat_block(
+    "Public encapsulation key (HQC, code-based)",
+    facts = list(
+      Level = .rmbl_hqc_label(x),
+      `Public key` = .rmbl_hex_head(x$public)
+    ),
+    reading = paste(
+      "Anyone can hold this key: hqcencap() uses it to make a shared secret",
+      "that only the private key's holder can recover."
+    )
+  )
+}
+
+#' @export
+format.bricklayer_hqc_capsule <- function(x, ...) {
+  .rmbl_stat_block(
+    "Encapsulated shared secret (HQC, code-based)",
+    facts = list(
+      Level = .rmbl_hqc_label(x),
+      Ciphertext = .rmbl_hex_head(x$ciphertext),
+      `Shared secret` = "<withheld>"
+    ),
+    reading = paste(
+      "Send the ciphertext; keep the shared secret. The receiver recovers",
+      "the same secret from the ciphertext with hqcdecap()."
+    )
+  )
+}
+
 #' Expands a compressed HQC decapsulation key from its seed.
 #'
 #' A compressed decapsulation key: re-derive the pair from its seed, and
 #' refuse a seed that does not give the key's own public half
-#' @param key The key.
+#' @param key The compressed HQC secret key to expand.
 #' @param seed The seed it was made from.
 #' @param level The parameter set, 1, 3 or 5.
 #' @param version \code{"v5"} or \code{"round4"}.
@@ -568,80 +615,16 @@ hqccmpkey <- function(key) {
   .rmbl_hex_or_null(full$secret)
 }
 
-#' @export
-format.bricklayer_hqc_key <- function(x, ...) {
-  c(
-    .rmbl_rule("Key encapsulation key (HQC, code-based)"),
-    .rmbl_kv(list(
-      level = .rmbl_hqc_label(x),
-      "public key" = sprintf(
-        "%s... (%d bytes)",
-        substring(x$public, 1L, 32L),
-        nchar(x$public) %/% 2L
-      ),
-      secret = "<withheld>"
-    )),
-    .rmbl_rule()
-  )
-}
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_hqc_key
-print.bricklayer_hqc_key <- .rmbl_print_via_format
-
-#' @export
-format.bricklayer_hqc_public_key <- function(x, ...) {
-  c(
-    .rmbl_rule("Public encapsulation key (HQC, code-based)"),
-    .rmbl_kv(list(
-      level = .rmbl_hqc_label(x),
-      "public key" = sprintf(
-        "%s... (%d bytes)",
-        substring(x$public, 1L, 32L),
-        nchar(x$public) %/% 2L
-      )
-    )),
-    .rmbl_rule()
-  )
-}
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_hqc_public_key
-print.bricklayer_hqc_public_key <- .rmbl_print_via_format
-
-#' @export
-format.bricklayer_hqc_capsule <- function(x, ...) {
-  c(
-    .rmbl_rule("Encapsulated shared secret (HQC, code-based)"),
-    .rmbl_kv(list(
-      level = .rmbl_hqc_label(x),
-      ciphertext = sprintf(
-        "%s... (%d bytes)",
-        substring(x$ciphertext, 1L, 32L),
-        nchar(x$ciphertext) %/% 2L
-      ),
-      shared = "<withheld>"
-    )),
-    .rmbl_rule()
-  )
-}
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_hqc_capsule
-print.bricklayer_hqc_capsule <- .rmbl_print_via_format
-
 #' Maps a level to its HQC parameter set.
 #'
 #' The three parameter sets, by NIST category (or its security in bits).
 #' A typo must fail rather than select a default: the level is not recorded
 #' in the ciphertext, so both sides have to agree on it by other means.
 #' @param level 1, 3 or 5, or 128, 192 or 256.
+#' @param arg The user's name for the level argument, for the error.
 #' @return 1, 3 or 5.
 #' @noRd
-.rmbl_hqc_level <- function(level) {
+.rmbl_hqc_level <- function(level, arg = "lvl") {
   # one whole number: as.integer() would read c(1, 3) as 1 and 3.5 as 3
   lv <- if (
     is.numeric(level) &&
@@ -662,7 +645,10 @@ print.bricklayer_hqc_capsule <- .rmbl_print_via_format
   }
   if (length(lv) != 1L || is.na(lv)) {
     stop(
-      "`level` must be one of 1, 3 or 5 (HQC-1, HQC-3, HQC-5)",
+      sprintf(
+        "`%s` must be one of 1, 3 or 5 (HQC-1, HQC-3, HQC-5) or 128, 192, 256",
+        arg
+      ),
       call. = FALSE
     )
   }
@@ -670,7 +656,7 @@ print.bricklayer_hqc_capsule <- .rmbl_print_via_format
 }
 
 #' A key made before the version existed is a v5 key
-#' @param key The key.
+#' @param key The HQC key whose `version` is read.
 #' @return \code{"v5"} or \code{"round4"}.
 #' @noRd
 .rmbl_hqc_key_version <- function(key) {
@@ -685,7 +671,7 @@ print.bricklayer_hqc_capsule <- .rmbl_print_via_format
 }
 
 #' Names a key's parameter set for printing.
-#' @param x The key.
+#' @param x The HQC key or public key.
 #' @return One string.
 #' @noRd
 .rmbl_hqc_label <- function(x) {
@@ -700,12 +686,12 @@ print.bricklayer_hqc_capsule <- .rmbl_print_via_format
 }
 
 #' Returns the parameter set of a key from hqckg() or hqcpubkey().
-#' @param key The key.
+#' @param key The HQC key or public key whose level is read.
 #' @return 1, 3 or 5.
 #' @noRd
 .rmbl_hqc_key_level <- function(key) {
   if (!inherits(key, c("bricklayer_hqc_key", "bricklayer_hqc_public_key"))) {
     stop("`key` must come from hqckg() or hqcpubkey()", call. = FALSE)
   }
-  .rmbl_hqc_level(key$level)
+  .rmbl_hqc_level(key$level, "key$level")
 }

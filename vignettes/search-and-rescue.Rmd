@@ -8,13 +8,22 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 4.2)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.2
+)
 library(rmoriebricklayer)
 ```
 
@@ -234,19 +243,30 @@ method. `srchfig()` lists, for each of the 36 figures, the one line that draws i
 numbers (replace the example inputs; a schematic gives the computation it pictures):
 
 ```{r search-and-rescue-own-recipes}
-# an HTML table with each line in <code>: in a Markdown table a `$` starts a formula and a `|`
-# ends the cell, so both are written as entities
+# an HTML table with each line in <code>: in a Markdown table a `$` starts a
+# formula and a `|` ends the cell, so both are written as entities
 tab <- srchfig()[, c("fig", "caption", "yours")]
 esc <- function(x) {
-  for (r in list(c("&", "&amp;"), c("<", "&lt;"), c(">", "&gt;"), c("$", "&#36;"), c("|", "&#124;"))) {
+  for (r in list(
+    c("&", "&amp;"),
+    c("<", "&lt;"),
+    c(">", "&gt;"),
+    c("$", "&#36;"),
+    c("|", "&#124;")
+  )) {
     x <- gsub(r[1], r[2], x, fixed = TRUE)
   }
   x
 }
 tab$caption <- esc(tab$caption)
 tab$yours <- sprintf("<code>%s</code>", esc(tab$yours))
-knitr::kable(tab, format = "html", escape = FALSE, row.names = FALSE,
-             col.names = c("Figure", "Caption", "From your own numbers"))
+knitr::kable(
+  tab,
+  format = "html",
+  escape = FALSE,
+  row.names = FALSE,
+  col.names = c("Figure", "Caption", "From your own numbers")
+)
 ```
 
 The most used of them, step by step. Say a sensor's sweep width is 0.8 nautical miles and its detection falls off as the
@@ -285,55 +305,99 @@ updated by what each search could have detected:
 srchscs(poc = c(0.5, 0.3, 0.2), pod = c(0.8, 0.5, 0))
 ```
 
-## Planning a search, start to finish
+## Your own search, step by step
 
-The same steps plan a real search. A hiker is overdue; the last known position is 2 km east and
-3 km north of the base, and with the time and terrain since then the position could be off by
-about 1.5 km (one standard deviation). Lay a grid over the area, in kilometres, and put the
-probability of where the hiker may be on it:
+The same functions plan a real search from your own numbers, one call per step. Use one
+distance unit throughout (kilometres here; nautical miles at sea): the grid, the positions, the
+sweep width and the track length are all in it, and areas in its square.
 
-```{r search-and-rescue-plan-map}
+**1. The search area and its grid.** A hiker is overdue; the last known position (LKP) is 2 km
+east and 3 km north of the base. Lay a grid of cells over the area you could search: here 12 km
+by 12 km in half-kilometre cells. `xedg` and `yedg` are the cell edges, west to east and south to
+north; cells need not be equal.
+
+```{r search-and-rescue-plan-grid}
 xe <- seq(-4, 8, by = 0.5)
 ye <- seq(-3, 9, by = 0.5)
+```
+
+**2. The probability map.** `datumpmap()` puts the chance the hiker is in each cell on the grid.
+For a point datum give the LKP as `center` and the position error as `sigma`, one standard
+deviation (about 1.5 km, from the time and terrain since the LKP). A route between two points is
+`datum = "line"` or `"corridor"` with `end`, a region known only by its bounds `datum = "area"`,
+and a map of your own (cell shares from the planners' scenarios, say) is `datum = "general"`
+with `wts`, one row per `y` cell and one column per `x` cell.
+
+```{r search-and-rescue-plan-map}
 m <- datumpmap(xe, ye, center = c(2, 3), sigma = 1.5)
+m
 plot(m)
 ```
 
-The ground teams' sweep width is 0.6 km (from a published table for the terrain and object, or
-from a trial of your own as above), and they can walk 40 km of track today. `opteffort()` spreads
-those 40 km over the cells to make the chance of finding the hiker as large as possible:
+Two scenarios weighted by the planners (70% on the LKP, 30% that the hiker took the trail to
+the north-east) are mixed cell by cell, and the mixture is a general datum (its weights are scaled to sum to 1 over the grid):
 
-```{r search-and-rescue-plan-day1}
-day1 <- opteffort(m, W = 0.6, effort = 40)
-day1$pos
-plot(day1)
+```{r search-and-rescue-plan-scenarios}
+trail <- datumpmap(xe, ye, "corridor", c(2, 3), sigma = 0.5, end = c(2, 8))
+mix <- datumpmap(xe, ye, "general", wts = 0.7 * m$poc + 0.3 * trail$poc)
+plot(mix)
 ```
 
-`day1$effort` is the track length to walk in each cell, and `day1$pod` the chance of detection
-there. If the day ends without a find, each cell's probability is updated by what was searched
-(cells searched hard become less likely, the rest more likely), and the next day is planned on
-the updated map:
+**3. The sweep width and the detection model.** The sweep width `W` comes from a published
+table for the sensor, the object and the conditions, or from a field trial of your own with
+`swpwdth()` (above). The detection model says how detection falls off with distance:
+`"invcube"` for good conditions and evenly spaced tracks, `"random"` for poor conditions or
+uneven tracks (the conservative choice), `"definite"` for a sensor that sees everything within
+`W / 2`. Here the ground teams' sweep width is 0.6 km.
+
+**4. Effort, and the probability of detection.** The effort is the track length walked in each
+cell. Say today's teams walked 2 km of track in each of the four cells round the LKP. `srchpod()` with
+`W`, `effort` and `area` turns that into the coverage and the POD of each cell; `area = m`
+takes the map's cell areas, and `effort` is laid out like the map (one row per `y` cell):
+
+```{r search-and-rescue-plan-pod}
+walked <- matrix(0, nrow(m$poc), ncol(m$poc))
+walked[12:13, 12:13] <- 2
+pd <- srchpod(W = 0.6, effort = walked, area = m, model = "random")
+range(pd)
+```
+
+**5. The probability of success, and the map after a search that found nothing.** `srchscs()`
+takes the map and the PODs: `pos` is the chance today's search found the hiker, and `map` the
+probability map updated by what was searched (cells searched hard become less likely, the rest
+more likely):
+
+```{r search-and-rescue-plan-pos}
+day1 <- srchscs(m, pd)
+day1
+plot(day1$map)
+```
+
+**6. Plan the next search.** `opteffort()` spreads tomorrow's 40 km of track over the updated map
+to make the chance of finding the hiker as large as possible (Stone 1975), under random search
+detection. Its result goes straight back into `srchscs()` for the day after:
 
 ```{r search-and-rescue-plan-day2}
-upd <- srchscs(as.vector(m$poc), as.vector(day1$pod))
-poc2 <- matrix(upd$pocupd, nrow = nrow(m$poc))
-day2 <- opteffort(poc2, area = rep(0.25, length(poc2)), W = 0.6, effort = 40)
-day2$pos
+day2 <- opteffort(day1$map, W = 0.6, effort = 40)
+day2
+day3 <- srchscs(day1$map, day2)
+day3$pos
 ```
 
-## On a grid of your own
+**7. Plot.** Every result has a `plot()` method: the allocation as a map of the effort in each
+cell, the map as an image, a surface or its cells with their percentages.
 
-The same functions take any grid and datum. `opteffort()` spreads a total track length over
-the cells to make the probability of success as large as possible (Stone 1975), and
-`srchscs()` updates the containment after a search that finds nothing.
+```{r search-and-rescue-plan-plot}
+plot(day2)
+plot(day1$map, view = "both")
+```
+
+For a single point datum with no grid, `optcrcsrch()` gives Koopman's optimal circle directly,
+and `optsqr()` the optimal square, search after search:
 
 ```{r search-and-rescue-grid}
-m <- datumpmap(seq(-6, 6, by = 0.5), seq(-6, 6, by = 0.5), sigma = 2)
-a <- opteffort(m, W = 1, effort = 30)
-a$pos
-optcrcsrch(sigma = 2, W = 1, effort = 30)$pos
-plot(a)
-srchscs(c(0.5, 0.3, 0.2), c(0.8, 0.5, 0))
+optcrcsrch(sigma = 1.5, W = 0.6, effort = 40)
+optsqr(c(40, 40) * 0.6, E = 1.1774 * 1.5)
 ```
 
 ## References

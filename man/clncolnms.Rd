@@ -7,7 +7,8 @@
 clncolnms(
   data,
   case = c("snake", "lower_camel", "upper_camel", "screaming_snake", "none"),
-  sep = "_"
+  sep = "_",
+  quiet = FALSE
 )
 }
 \arguments{
@@ -21,6 +22,10 @@ separators only and keep the letters' case.}
 \item{sep}{Separator, a string, used between words for \code{"snake"},
 \code{"screaming_snake"} and \code{"none"}, and before the number that
 disambiguates a duplicate in every case (default \code{"_"}).}
+
+\item{quiet}{Logical: \code{TRUE} skips the boxed list of the names that
+changed, which is otherwise sent through \code{message()} (so
+\code{suppressMessages()} also silences it); default \code{FALSE}.}
 }
 \value{
 For a data frame, the data frame with new names and an

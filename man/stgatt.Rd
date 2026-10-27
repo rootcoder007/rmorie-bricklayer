@@ -43,10 +43,10 @@ clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
 
 \item{seed}{Optional seed for the bootstrap.}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of the intervals reported (default 0.95).}
 
 \item{covs}{Optional column names of covariates for conditional parallel
-trends (\code{method = "csa"} only).}
+trends (\code{meth = "csa"} only).}
 
 \item{estmeth}{With covariates: \code{"dr"} (doubly robust, default),
 \code{"ipw"} or \code{"reg"}.}
@@ -70,7 +70,7 @@ since adoption.
 Let the cohort \eqn{g} be the units first treated in period \eqn{g},
 and \eqn{C} the comparison units: never treated (\code{control = "never"}),
 or not yet treated by period \eqn{\max(t, g - 1)} (\code{"notyet"}, the
-default). For \code{method = "csa"}, \deqn{ATT(g, t) = \big(\bar Y_{g,t} -
+default). For \code{meth = "csa"}, \deqn{ATT(g, t) = \big(\bar Y_{g,t} -
 \bar Y_{g,b}\big) - \big(\bar Y_{C,t} - \bar Y_{C,b}\big),}{ATT(g, t) =
 (Y_g,t - Y_g,b) - (Y_C,t - Y_C,b),} with base period \eqn{b = g - 1} for
 \eqn{t \ge g}, and \eqn{b = t - 1} before (the \code{"varying"} base of the
@@ -94,7 +94,7 @@ when either the propensity or the outcome model is right. Comparison units
 with \eqn{\hat p \ge 0.995} are trimmed, as the \code{DRDID} package does.
 These agree with \code{did::attgt()} to rounding error.
 
-For \code{method = "wooldridge"}, the regression of the outcome on unit and
+For \code{meth = "wooldridge"}, the regression of the outcome on unit and
 period effects and an indicator for every treated cohort-period cell, with
 never-treated (or last-treated) units as the comparison, gives each
 \eqn{ATT(g, t)} as a coefficient; without covariates it equals the imputation
@@ -115,6 +115,23 @@ s <- stgatt(p, "district", "month", "crmrate", "refmonth", reps = 99,
 s$overall
 head(s$dynamic)
 plot(s)
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+# each adoption cohort against the towns not yet treated
+stgatt(own, "town", "year", "rate", "first", reps = 49, seed = 1)$overall
 \dontshow{\}) # examplesIf}
 }
 \references{

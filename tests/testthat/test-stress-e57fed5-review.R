@@ -8,8 +8,7 @@ testthat::skip_on_cran()
 ns <- function(f) get(f, envir = asNamespace("rmoriebricklayer"))
 ext <- function(f) {
   utils::read.csv(
-    system.file("extdata", f, package = "rmoriebricklayer"),
-    stringsAsFactors = FALSE
+    system.file("extdata", f, package = "rmoriebricklayer")
   )
 }
 
@@ -91,7 +90,7 @@ test_that(
     g <- function(x, lim = 2^30) .Call(ns("C_rmbl_gunzip_checked"), x, lim)
     empty <- gzip_bytes(raw(0))
     one <- gzip_bytes(charToRaw("x"))
-    expect_identical(length(g(rep(empty, 5000))), 0L)
+    expect_length(g(rep(empty, 5000)), 0L)
     expect_identical(rawToChar(g(rep(one, 1000))), strrep("x", 1000))
     expect_error(g(rep(empty, 100001)), "more than 100000 gzip members")
     # 64 MiB of zeros in a few kilobytes: refused at a 1 MiB limit at once
@@ -100,7 +99,7 @@ test_that(
     expect_error(g(z, 2^20), "more than the size limit")
     # the limit is the most that is taken: exactly the limit passes, one byte
     # less refuses
-    expect_identical(length(g(z, 2^26)), as.integer(2^26))
+    expect_length(g(z, 2^26), as.integer(2^26))
     expect_error(g(z, 2^26 - 1), "more than the size limit")
   }
 )
@@ -134,9 +133,14 @@ svy_data <- function() {
     id = 1:n,
     y = rnorm(n),
     w = runif(n, 1, 3),
-    g = rep(c("a", "b"), 30)
+    g = rep(c("a", "b"), 30),
+    stringsAsFactors = FALSE
   )
-  reps <- sapply(1:20, function(r) d$w * tabulate(sample(n, replace = TRUE), n))
+  reps <- vapply(
+    1:20,
+    function(r) d$w * tabulate(sample(n, replace = TRUE), n),
+    numeric(n)
+  )
   list(d = d, reps = reps, rdf = data.frame(id = d$id, w = d$w, reps))
 }
 
@@ -164,13 +168,15 @@ test_that(
     # for a bootstrap it is kept, and said when more replicates equal the weight
     # than chance draws (statistics stress test of 5e1dce5)
     expect_warning(
-      des_w <- svydes(d, w = d$w, reps = cbind(w = d$w, s$reps)),
+      {
+        des_w <- svydes(d, w = d$w, reps = cbind(w = d$w, s$reps))
+      },
       "equal the full-sample weight"
     )
     expect_s3_class(des_w, "rmbl_svy_design")
     # no id: the id column is the row number
     expect_error(svydes(d, w = "w", reps = s$rdf[, -2]), "the row number")
-    expect_error(svydes(d, w = "w", reps = c("w")), "not a replicate weight")
+    expect_error(svydes(d, w = "w", reps = "w"), "not a replicate weight")
     expect_error(
       svydes(d, w = "w", reps = data.frame(a = s$reps[, 1], b = letters[1:2])),
       "not numbers"
@@ -210,7 +216,9 @@ test_that(
     # (a column on another scale than the weight is said: statistics stress test
     # of 5e1dce5)
     expect_warning(
-      des_m <- svydes(dd, w = "w", reps = dd[c(paste0("bw", 1:20), "meals")]),
+      {
+        des_m <- svydes(dd, w = "w", reps = dd[c(paste0("bw", 1:20), "meals")])
+      },
       "replicate meals is .* times the full-sample weight on a typical row"
     )
     expect_s3_class(des_m, "rmbl_svy_design")
@@ -255,9 +263,13 @@ test_that(
     # genuine sets with a dominant PSU, a jackknife replicate constant on a
     # subset, rounded in a file
     w3 <- rep(c(900, 50, 50), each = 20)
-    jk <- sapply(1:3, function(k) {
-      w3 * ifelse(rep(1:3, each = 20) == k, 0, 3 / 2)
-    })
+    jk <- vapply(
+      1:3,
+      function(k) {
+        w3 * ifelse(rep(1:3, each = 20) == k, 0, 3 / 2)
+      },
+      numeric(60)
+    )
     expect_s3_class(
       svydes(data.frame(y = d$y, w = w3), w = "w", reps = jk, type = "jk1"),
       "rmbl_svy_design"
@@ -310,7 +322,8 @@ test_that(
     d <- data.frame(
       y = factor(rep(c("b", "a", "b"), c(40, 20, 20))),
       g = rep(c("s1", "s2"), each = 40),
-      w = 1
+      w = 1,
+      stringsAsFactors = FALSE
     )
     e <- as.data.frame(svyest(
       svydes(d, w = "w"),
@@ -581,7 +594,9 @@ test_that("E3: knoxtst drops (0, 0) as crmdens and hotpers do", {
   b2$lon[1:20] <- 0
   b2$lat[1:20] <- 0
   expect_message(
-    k1 <- knoxtst(b2$lon, b2$lat, t, 100, 7, nsim = 99, seed = 1),
+    {
+      k1 <- knoxtst(b2$lon, b2$lat, t, 100, 7, nsim = 99, seed = 1)
+    },
     "20 incidents at \\(0, 0\\)"
   )
   k2 <- knoxtst(
@@ -716,13 +731,13 @@ test_that("E4: polbrdn, by_area and mortdisp keep vrfpol's rate band", {
   expect_error(polbrdn(25, 1, 800, 1e6, "PM2.5"), "per 100,000")
   expect_error(polbrdn(25, 1, 0.008, 1e6, "PM2.5", rare = NA), "TRUE or FALSE")
   common <- polbrdn(25, 1, 0.5, 1e6, "PM2.5", hirate = TRUE)
-  expect_equal(common$basecases, 5e5)
+  expect_identical(common$basecases, 5e5)
   rare <- polbrdn(25, 1, 8e-8, 1e6, "PM2.5", rare = TRUE)
   expect_equal(rare$basecases, 0.08)
   expect_identical(polbrdn(25, 1, 0, 1e6, "PM2.5")$attrcases, 0)
   expect_error(mortdisp(10, 1e6, 0.5, 0.01), "hirate")
   expect_error(mortdisp(10, 1e6, 8e-8, 0.01), "rare")
-  expect_equal(
+  expect_identical(
     mortdisp(10, 1e6, 0.5, 0.01, hirate = TRUE),
     0.5 * 1e6 * (1 - exp(-0.1))
   )
@@ -730,7 +745,8 @@ test_that("E4: polbrdn, by_area and mortdisp keep vrfpol's rate band", {
     fsa = c("A", "B"),
     exposure = c(28, 18),
     population = c(4e4, 6e4),
-    brate = c(0.008, 0.5)
+    brate = c(0.008, 0.5),
+    stringsAsFactors = FALSE
   )
   expect_error(polbrdarea(t), "hirate")
   expect_identical(nrow(polbrdarea(t, hirate = TRUE)), 2L)
@@ -953,7 +969,9 @@ test_that("the status of a key stored for another address says so", {
     .bl_ollama_base = function() NULL
   )
   out <- character()
-  ns(".bl_cli_doctor")(function(x) out <<- c(out, x))
+  ns(".bl_cli_doctor")(function(x) {
+    assign("out", c(out, x), envir = parent.env(environment()))
+  })
   expect_true(any(grepl(
     "data key: issued for https://a.example, so not sent to https://b.example",
     out,
@@ -963,7 +981,9 @@ test_that("the status of a key stored for another address says so", {
     list(state = "ok", key = "k")
   })
   out <- character()
-  ns(".bl_cli_doctor")(function(x) out <<- c(out, x))
+  ns(".bl_cli_doctor")(function(x) {
+    assign("out", c(out, x), envir = parent.env(environment()))
+  })
   expect_true(any(grepl("data key: stored", out, fixed = TRUE)))
 })
 
@@ -990,6 +1010,6 @@ test_that(
     # an object saved before 0.5.12 carries no data check: it is taken as it is
     old <- svydes(s$d, w = "w", reps = s$reps)
     old$check <- NULL
-    expect_equal(svyest(old, s$d, "y")$se, svyest(des, s$d, "y")$se)
+    expect_identical(svyest(old, s$d, "y")$se, svyest(des, s$d, "y")$se)
   }
 )

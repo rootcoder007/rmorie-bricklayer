@@ -7,7 +7,7 @@
 audcats(data, cols = NULL)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame whose categorical columns are audited.}
 
 \item{cols}{Character vector of column names to audit, default
 \code{NULL}: every factor, character or haven-labelled column. Columns of

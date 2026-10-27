@@ -37,6 +37,10 @@ including the origin. \code{topshr()}: a data frame with columns
 \code{fraction} (the requested fraction of units), \code{units} (how
 many of the largest units that fraction is) and \code{share} (the share
 of the total those units hold).
+It has class \code{c("rmbl_gini", "rmbl_measure", "numeric")}, so it
+prints as a box with its inputs (kept in attribute \code{"lakner"});
+arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+numbers.
 }
 \description{
 Measures how unevenly a total is spread across units: whether a few

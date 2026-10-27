@@ -14,19 +14,19 @@
 \alias{rulecolcnt}
 \title{Ready-made validation rules}
 \usage{
-ruleinset(col, set, napass = TRUE, sev = c("warning", "fatal"))
+ruleinset(col = NULL, set, napass = TRUE, sev = c("warning", "fatal"))
 
-rulebtw(col, lo, hi, napass = TRUE, sev = c("warning", "fatal"))
+rulebtw(col = NULL, lo, hi, napass = TRUE, sev = c("warning", "fatal"))
 
-rulenull(col, sev = c("warning", "fatal"))
+rulenull(col = NULL, sev = c("warning", "fatal"))
 
-ruleuniq(col, sev = c("warning", "fatal"))
+ruleuniq(col = NULL, sev = c("warning", "fatal"))
 
-rulerx(col, pat, napass = TRUE, sev = c("warning", "fatal"))
+rulerx(col = NULL, pat, napass = TRUE, sev = c("warning", "fatal"))
 
-ruleincr(col, strict = FALSE, sev = c("warning", "fatal"))
+ruleincr(col = NULL, strict = FALSE, sev = c("warning", "fatal"))
 
-rulemad(col, n = 3, napass = TRUE, sev = c("warning", "fatal"))
+rulemad(col = NULL, n = 3, napass = TRUE, sev = c("warning", "fatal"))
 
 rulecmpl(sev = c("warning", "fatal"))
 
@@ -110,7 +110,7 @@ The column must be numeric when the rule is evaluated. Name
 \item \code{rulecmpl()}: no row has a missing value. Name
 \code{"complete_rows"}.
 \item \code{ruledstn()}: no row repeats an earlier one on
-\code{columns} (columns not in the data are ignored; when none is
+\code{cols} (columns not in the data are ignored; when none is
 present the rule passes). Name \code{"distinct_rows"}.
 \item \code{rulecolcnt()}: the data have exactly \code{n} columns.
 Name \code{"col_count"}.

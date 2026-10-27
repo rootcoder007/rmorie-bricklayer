@@ -34,7 +34,8 @@
 #' the number of distinct periods; a function that does not return one label
 #' per row.
 #'
-#' @param x An \code{rmbl_yoy} object from [yoy()].
+#' @param x An \code{rmbl_yoy} object from [yoy()],
+#'   whose periods are labelled.
 #' @param labels Either a function applied to the period
 #'   column, or a character vector the same length as the number of distinct
 #'   periods, or a named character vector mapping a period (as a string) to
@@ -156,6 +157,30 @@ yoylbl <- function(x, labels) {
 #' @export
 fylbl <- function(endyear, sep = "/", short = TRUE) {
   sep <- .rmbl_text1(sep, "sep")
+  short <- .rmbl_flag1(short, "short")
+  .yoy_check_endyear(endyear)
+  y <- suppressWarnings(as.integer(as.character(endyear)))
+  out <- rep(NA_character_, length(y))
+  ok <- !is.na(y)
+  if (!any(ok)) {
+    return(out)
+  }
+  # a two-digit abbreviation of the end year is only unambiguous inside
+  # a century, which is the span these datasets cover
+  tail <- if (short) {
+    sprintf("%02d", y[ok] %% 100L)
+  } else {
+    as.character(y[ok])
+  }
+  out[ok] <- paste0(y[ok] - 1L, sep, tail)
+  out
+}
+
+#' Refuses end years that are not positive whole years.
+#' @param endyear The end years given to fylbl().
+#' @return NULL, invisibly.
+#' @noRd
+.yoy_check_endyear <- function(endyear) {
   if (!is.null(endyear) && !is.numeric(endyear) && !is.character(endyear)) {
     stop("`endyear` must be numeric or character years", call. = FALSE)
   }
@@ -167,21 +192,7 @@ fylbl <- function(endyear, sep = "/", short = TRUE) {
   if (is.numeric(endyear) && any(endyear != round(endyear), na.rm = TRUE)) {
     stop("`endyear` must be whole years", call. = FALSE)
   }
-  y <- suppressWarnings(as.integer(as.character(endyear)))
-  out <- rep(NA_character_, length(y))
-  ok <- !is.na(y)
-  if (!any(ok)) {
-    return(out)
-  }
-  # a two-digit abbreviation of the end year is only unambiguous inside
-  # a century, which is the span these datasets cover
-  tail <- if (isTRUE(short)) {
-    sprintf("%02d", y[ok] %% 100L)
-  } else {
-    as.character(y[ok])
-  }
-  out[ok] <- paste0(y[ok] - 1L, sep, tail)
-  out
+  invisible(NULL)
 }
 
 #' The column a renderer should print for the period.

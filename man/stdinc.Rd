@@ -45,8 +45,9 @@ here because the counts that matter are small: a normal approximation on an
 observed count of three is not an interval, it is a decoration.
 
 Each area's interval is a separate test; with many areas some will
-exclude one by chance (see \code{\link{scanadj}}). Missing values are
-dropped before the lengths are compared.
+exclude one by chance (see \code{\link{scanadj}}). A row with a missing
+observed or expected count is dropped whole (its area label with it), after
+the lengths are compared.
 
 Errors: negative, infinite or non-numeric counts; an expected count of
 zero or below; lengths that differ (a single \code{expd} is recycled).

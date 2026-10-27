@@ -79,6 +79,66 @@ sprd <- function(
   wtype <- .rmbl_arg(wtype)
   x <- .rmbl_num(x, "x")
   .w <- if (is.null(w)) rep(1, length(x)) else .rmbl_num(w, "w")
+  xw <- .rmbl_spread_clean(x, .w, narm)
+  x <- xw$x
+  .w <- xw$w
+  n <- length(x)
+  .N <- if (is.null(N)) NA_real_ else .rmbl_scalar(N, "N", 1)
+  des <- .rmbl_spread_design(des, n, .N)
+  sw <- sum(.w)
+  m <- sum(.w * x) / sw
+  ss <- sum(.w * (x - m)^2)
+  freq <- is.null(w) || wtype == "frequency"
+  dn <- .rmbl_spread_den(des, freq, is.null(w), .w)
+  v <- if (dn$den > 0) ss / dn$den else NA_real_
+  se <- switch(
+    des,
+    census = 0,
+    sample = if (freq) sqrt(v / sw) else sqrt(sum(.w^2 * (x - m)^2)) / sw,
+    finite = sqrt((1 - n / .N) * v / n)
+  )
+  dtxt <- dn$dtxt
+  reason <- .rmbl_spread_reason(des, n, .N)
+  out <- list(
+    n = n,
+    mean = m,
+    variance = v,
+    sd = sqrt(v),
+    semean = se,
+    design = des,
+    denominator = dtxt,
+    reason = reason
+  )
+  class(out) <- "rmbl_spread"
+  out
+}
+
+#' @export
+format.rmbl_spread <- function(x, digits = 6L, ...) {
+  .rmbl_res_block(
+    "Mean and spread",
+    facts = list(
+      Values = x$n,
+      Mean = .rmbl_fmt_num(x$mean, digits),
+      Variance = .rmbl_fmt_num(x$variance, digits),
+      `Standard deviation` = .rmbl_fmt_num(x$sd, digits),
+      `Standard error of the mean` = .rmbl_fmt_num(x$semean, digits),
+      Design = x$design,
+      Denominator = x$denominator
+    ),
+    reading = paste0("Rule: ", x$reason, "."),
+    digits = digits
+  )
+}
+
+#' The values and weights of sprd(), checked, with missing ones dropped
+#' when asked.
+#' @param x The values; missing ones are dropped only with `narm`.
+#' @param .w The weights, one per value.
+#' @param narm Whether missing values are dropped.
+#' @return list(x, w).
+#' @noRd
+.rmbl_spread_clean <- function(x, .w, narm) {
   if (length(.w) != length(x)) {
     stop("`w` must be one per value", call. = FALSE)
   }
@@ -90,14 +150,22 @@ sprd <- function(
     x <- x[keep]
     .w <- .w[keep]
   }
-  n <- length(x)
-  if (n < 1L) {
+  if (length(x) < 1L) {
     stop("`x` has no values", call. = FALSE)
   }
   if (any(.w < 0) || !any(.w > 0)) {
     stop("`w` must be 0 or more, not all 0", call. = FALSE)
   }
-  .N <- if (is.null(N)) NA_real_ else .rmbl_scalar(N, "N", 1)
+  list(x = x, w = .w)
+}
+
+#' The design sprd() measures under: "auto" resolved from `N`.
+#' @param des The design asked for.
+#' @param n The number of values, compared with the population size `.N`.
+#' @param .N The population size, or NA.
+#' @return One of "sample", "census", "finite".
+#' @noRd
+.rmbl_spread_design <- function(des, n, .N) {
   if (is.finite(.N) && .N < n) {
     stop("`N` is smaller than the number of values", call. = FALSE)
   }
@@ -113,28 +181,39 @@ sprd <- function(
   if (des == "finite" && !is.finite(.N)) {
     stop("the finite-population correction needs `N`", call. = FALSE)
   }
+  des
+}
+
+#' The variance denominator of sprd(), and how it is described.
+#' @param des The design, such as `"census"` or `"finite"`.
+#' @param freq Whether the weights are frequency weights (or absent).
+#' @param noweights Whether no weights were given.
+#' @param .w The weights, summed for the denominator.
+#' @return list(den, dtxt).
+#' @noRd
+.rmbl_spread_den <- function(des, freq, noweights, .w) {
   sw <- sum(.w)
-  m <- sum(.w * x) / sw
-  ss <- sum(.w * (x - m)^2)
-  freq <- is.null(w) || wtype == "frequency"
   if (des == "census") {
     den <- sw
-    dtxt <- if (is.null(w)) "n" else "sum of weights"
+    dtxt <- if (noweights) "n" else "sum of weights"
   } else if (freq) {
     den <- sw - 1
-    dtxt <- if (is.null(w)) "n - 1 (Bessel)" else "sum of weights - 1"
+    dtxt <- if (noweights) "n - 1 (Bessel)" else "sum of weights - 1"
   } else {
     den <- sw - sum(.w^2) / sw
     dtxt <- "sum w - sum w^2 / sum w (reliability weights)"
   }
-  v <- if (den > 0) ss / den else NA_real_
-  se <- switch(
-    des,
-    census = 0,
-    sample = if (freq) sqrt(v / sw) else sqrt(sum(.w^2 * (x - m)^2)) / sw,
-    finite = sqrt((1 - n / .N) * v / n)
-  )
-  reason <- switch(
+  list(den = den, dtxt = dtxt)
+}
+
+#' Why sprd() used its rule, in words.
+#' @param des The design named in the reason.
+#' @param n The number of values, quoted in the reason.
+#' @param .N The population size, or NA.
+#' @return One string.
+#' @noRd
+.rmbl_spread_reason <- function(des, n, .N) {
+  switch(
     des,
     sample = paste(
       "the values are a sample from a larger population, so the spread",
@@ -161,38 +240,4 @@ sprd <- function(
       if (n / .N < 0.05) " (negligible below a 5% sampling fraction)" else ""
     )
   )
-  out <- list(
-    n = n,
-    mean = m,
-    variance = v,
-    sd = sqrt(v),
-    semean = se,
-    design = des,
-    denominator = dtxt,
-    reason = reason
-  )
-  class(out) <- "rmbl_spread"
-  out
-}
-
-#' @export
-print.rmbl_spread <- function(x, ...) {
-  cat(sprintf(
-    paste0(
-      "n %d, mean %.6g, variance %.6g, sd %.6g, standard error of the ",
-      "mean %.6g\n"
-    ),
-    x$n,
-    x$mean,
-    x$variance,
-    x$sd,
-    x$semean
-  ))
-  cat(sprintf(
-    "Rule: %s (denominator %s): %s.\n",
-    x$design,
-    x$denominator,
-    x$reason
-  ))
-  invisible(x)
 }

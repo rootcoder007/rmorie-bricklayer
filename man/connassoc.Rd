@@ -33,7 +33,7 @@ the interval).}
 
 \item{seed}{Seed for the draws (default 1).}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of rho's drawn interval (default 0.95).}
 }
 \value{
 A list of class \code{rmbl_connection}: \code{data} (the places
@@ -104,6 +104,14 @@ ca <- connassoc(
 )
 ca
 plot(ca)
+
+# your own places: made-up shares in six regions, without limits
+own <- data.frame(
+  region = c("North", "South", "East", "West", "Coast", "Interior"),
+  language = c(41, 18, 27, 33, 22, 38),
+  wellbeing = c(68, 55, 60, 66, 57, 63)
+)
+connassoc(own, "region", "language", "wellbeing", reps = 2000)
 \dontshow{\}) # examplesIf}
 }
 \references{

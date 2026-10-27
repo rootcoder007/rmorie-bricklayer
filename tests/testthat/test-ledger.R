@@ -49,8 +49,8 @@ test_that("ldgrchk() gives every row type", {
     "ginicoef(c(5, 5, 5, 5)) = 0",
     fixed = TRUE
   )
-  expect_identical(
-    names(r),
+  expect_named(
+    r,
     c("capsule", "part", "file", "check", "ok", "detail", "severity", "line")
   )
   l <- fromjs(paste(readLines(smp()), collapse = "\n"), simplifyVector = FALSE)
@@ -91,7 +91,7 @@ test_that("ldgrchk() gives every row type", {
   )
   # only the packages asked for
   r <- ldgrchk(write_ledger(l), pkgs = "rmoriebricklayer")
-  expect_false(any(grepl("notapkg123", r$check)))
+  expect_false(any(grepl("notapkg123", r$check, fixed = TRUE)))
   expect_false("check: float-round" %in% r$check)
   expect_error(ldgrchk(1), "ldgrchk: `ledger` must be a ldgrread\\(\\) result")
   expect_error(ldgrchk(smp(), pkgs = NA), "`pkgs` must be package names")
@@ -100,7 +100,7 @@ test_that("ldgrchk() gives every row type", {
 test_that("the sandbox runs only the package's functions and base arithmetic", {
   ev <- asNamespace("rmoriebricklayer")$.bl_ldgr_eval
   expect_identical(ev("ginicoef(c(1, 1, 1))", "rmoriebricklayer"), 0)
-  expect_equal(
+  expect_identical(
     ev("rmoriebricklayer::ginicoef(rep(2, 4))", "rmoriebricklayer"),
     0
   )
@@ -108,13 +108,13 @@ test_that("the sandbox runs only the package's functions and base arithmetic", {
     ev("ginicoef(rep(2, 4)) + 1", "rmoriebricklayer"),
     "must be a call to a function"
   )
-  expect_equal(
+  expect_identical(
     ev("lorenzc(c(1, 2, 3))$value[3]", "rmoriebricklayer"),
     lorenzc(c(1, 2, 3))$value[3]
   )
-  expect_equal(
+  expect_identical(
     ev("ginicoef(seq(1, pi, length.out = 3))", "rmoriebricklayer"),
-    ginicoef(seq(1, pi, length.out = 3))
+    as.numeric(ginicoef(seq(1, pi, length.out = 3)))
   )
   expect_error(
     ev("system('echo hi')", "rmoriebricklayer"),
@@ -174,10 +174,11 @@ test_that(
     expect_true(r$ok[r$check == "data_sha256"])
     k <- cpschk(cap, fp = FALSE)
     expect_true("proved: gini-equal" %in% k$rows$check)
-    buf <- character()
-    blcli(c("verify", cap), out = function(s) buf <<- c(buf, s))
+    rec <- new.env()
+    rec$buf <- character()
+    blcli(c("verify", cap), out = function(s) rec$buf <- c(rec$buf, s))
     expect_match(
-      paste(buf, collapse = ""),
+      paste(rec$buf, collapse = ""),
       "ledger_commit_pinned",
       fixed = TRUE
     )
@@ -203,3 +204,58 @@ test_that(
     )
   }
 )
+
+# Prints `x` on an ASCII console: the lines and what print() returned.
+o1_box <- function(x, ...) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  tmp <- withr::local_tempfile()
+  v <- withr::with_output_sink(tmp, withVisible(print(x, ...)))
+  list(out = readLines(tmp), v = v)
+}
+
+# The box's frame, its title and the facts expected in it.
+o1_expect_box <- function(b, x, title, facts = character()) {
+  expect_false(b$v$visible)
+  expect_identical(b$v$value, x)
+  expect_match(b$out[1L], "^\\+-- ")
+  expect_true(grepl(title, b$out[1L], fixed = TRUE))
+  expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  for (f in facts) {
+    expect_true(any(grepl(f, b$out, fixed = TRUE)), info = f)
+  }
+}
+
+test_that("a ledger and its check print as boxes", {
+  l <- ldgrread(smp())
+  o1_expect_box(o1_box(l), l, "Proof ledger", c("Theorems", "Lean"))
+  r <- ldgrchk(l)
+  expect_s3_class(r, c("rmbl_ledger_check", "data.frame"))
+  b <- o1_box(r)
+  o1_expect_box(b, r, "Proof ledger check", "NOT VERIFIED")
+  expect_true(any(grepl("proved:", b$out, fixed = TRUE)))
+  sub <- r[, c("capsule", "part")]
+  expect_true(any(grepl("capsule", format(sub), fixed = TRUE)))
+  expect_output(print(sub), "part")
+  good <- r[r$ok, ]
+  expect_true(any(grepl("VERIFIED", o1_box(good)$out, fixed = TRUE)))
+})
+
+# ---- restored severity and full check names, result-driven reading -----------
+
+test_that("ldgrchk()'s box keeps whole check names and marks warnings", {
+  f <- system.file("extdata", "ledger_sample.json",
+    package = "rmoriebricklayer")
+  l <- ldgrread(f)
+  r <- ldgrchk(l)
+  txt <- paste(format(r), collapse = "\n")
+  expect_match(txt, "covered: gini-equal rmoriebricklayer::ginicoef",
+    fixed = TRUE)
+  expect_match(txt, "WARN proved: float-round", fixed = TRUE)
+  expect_match(paste(format(l), collapse = " "), "1 of 3 theorems are proved",
+    fixed = TRUE)
+  expect_identical(
+    .bl_ldgr_reading(c("proved", "proved")),
+    "All 2 theorems are proved; ldgrchk() confirms it."
+  )
+  expect_match(.bl_ldgr_reading(c("proved", "sorry")), "1 sorry", fixed = TRUE)
+})

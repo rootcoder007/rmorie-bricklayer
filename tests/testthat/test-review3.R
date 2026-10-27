@@ -79,7 +79,7 @@ test_that(
           sprintf('f <- get("%s", envir = asNamespace("rmoriebricklayer"))', e),
           sprintf(
             "inputs <- list(%s)",
-            paste(sprintf("%s = %s", names(inputs), inputs), collapse = ", ")
+            toString(sprintf("%s = %s", names(inputs), inputs))
           ),
           "for (nm in names(inputs)) {",
           paste0(
@@ -428,32 +428,41 @@ test_that(
   {
     set.seed(1)
     for (n in c(10L, 20L, 30L, 100L)) {
-      a <- data.frame(g = as.character(sample(5, n, TRUE)))
-      b <- data.frame(g = as.character(sample(5, n, TRUE)))
+      a <- data.frame(
+        g = as.character(sample(5, n, TRUE)),
+        stringsAsFactors = FALSE
+      )
+      b <- data.frame(
+        g = as.character(sample(5, n, TRUE)),
+        stringsAsFactors = FALSE
+      )
       cd <- cpsdrft(a, b)$columns
       expect_identical(cd$type, "categorical", info = n)
       expect_false(is.na(cd$drifted), info = n)
       expect_true(is.finite(cd$psi), info = n)
     }
     # more distinct values than idelvls: an identifier at any size
-    ids <- data.frame(id = sprintf("id%04d", 1:500))
-    ids2 <- data.frame(id = sprintf("id%04d", 251:750))
+    ids <- data.frame(id = sprintf("id%04d", 1:500), stringsAsFactors = FALSE)
+    ids2 <- data.frame(
+      id = sprintf("id%04d", 251:750),
+      stringsAsFactors = FALSE
+    )
     cd <- cpsdrft(ids, ids2)$columns
     expect_identical(cd$type, "identifier")
     expect_true(is.na(cd$drifted))
     # the ratio test needs 20 distinct values behind it: 90 values on 240 rows
-    x <- data.frame(g = as.character(rep(1:60, 2)))
-    y <- data.frame(g = as.character(rep(31:90, 2)))
+    x <- data.frame(g = as.character(rep(1:60, 2)), stringsAsFactors = FALSE)
+    y <- data.frame(g = as.character(rep(31:90, 2)), stringsAsFactors = FALSE)
     expect_identical(cpsdrft(x, y)$columns$type, "identifier")
     # ... and an 80-row near-unique id column is one too (0.5.8's hundred-row
     # gate scored it categorical with a PSI of 5, its diff review)
-    a <- data.frame(id = sprintf("id%03d", 1:80))
-    b <- data.frame(id = sprintf("id%03d", 21:100))
+    a <- data.frame(id = sprintf("id%03d", 1:80), stringsAsFactors = FALSE)
+    b <- data.frame(id = sprintf("id%03d", 21:100), stringsAsFactors = FALSE)
     expect_identical(cpsdrft(a, b)$columns$type, "identifier")
     # ... while a 10-level factor on 40 rows is a categorical column with a
     # verdict
-    x <- data.frame(g = as.character(rep(1:10, 2)))
-    y <- data.frame(g = as.character(rep(6:15, 2)))
+    x <- data.frame(g = as.character(rep(1:10, 2)), stringsAsFactors = FALSE)
+    y <- data.frame(g = as.character(rep(6:15, 2)), stringsAsFactors = FALSE)
     cd <- cpsdrft(x, y)$columns
     expect_identical(cd$type, "categorical")
     expect_false(is.na(cd$drifted))
@@ -472,11 +481,15 @@ test_that(
     m <- mahaoutl(X)
     expect_true("logpvalue" %in% names(m))
     ok <- !is.na(m$p_value) & m$p_value > 0
-    expect_equal(m$logpvalue[ok], log(m$p_value[ok]))
+    expect_equal(
+      m$logpvalue[ok],
+      log(m$p_value[ok]),
+      tolerance = testthat::testthat_tolerance()
+    )
     # the planted row: the robust distance keeps its p-value above zero, and
     # the log column is its exact log
     expect_lt(m$p_value[m$row == 1], 1e-30)
-    expect_equal(m$logpvalue[m$row == 1], log(m$p_value[m$row == 1]))
+    expect_identical(m$logpvalue[m$row == 1], log(m$p_value[m$row == 1]))
     expect_true(all(m$outlier[m$row == 1]))
     # eps is a parameter of the statistic, accepted anywhere in (0, 1) and
     # documented as such
@@ -490,7 +503,7 @@ test_that(
     )
     expect_error(drftpsi(x, y, eps = 1), "0 < eps < 1")
     expect_error(drftpsi(x, y, eps = 0), "0 < eps < 1")
-    rd <- tools::Rd_db("rmoriebricklayer")
+    rd <- rmbl_rd_db()
     txt <- function(f) {
       paste(
         utils::capture.output(tools::Rd2txt(
@@ -530,12 +543,12 @@ test_that(
     }
     # 32 kept, the OLDEST eight gone, the newest present (0.5.8 flushed all 32
     # at the 33rd)
-    expect_identical(length(ls(.rmbl_mk_cache)), 32L)
+    expect_length(ls(.rmbl_mk_cache), 32L)
     expect_false("1001" %in% ls(.rmbl_mk_cache))
     expect_true(all(as.character(1009:1040) %in% ls(.rmbl_mk_cache)))
     .rmbl_mk_exact(4L)
     expect_true("4" %in% ls(.rmbl_mk_cache))
-    expect_identical(length(ls(.rmbl_mk_cache)), 32L)
+    expect_length(ls(.rmbl_mk_cache), 32L)
     expect_false("1009" %in% ls(.rmbl_mk_cache))
   }
 )

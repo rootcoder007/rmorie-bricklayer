@@ -14,7 +14,7 @@ tojs(
   complex = c("string", "list"),
   raw = c("base64", "hex", "mongo", "int", "js"),
   null = c("list", "null"),
-  na = c("null", "string"),
+  na = NULL,
   auto_unbox = FALSE,
   digits = 4,
   pretty = FALSE,
@@ -57,8 +57,8 @@ default, \code{{}}; a round trip gives an empty list) or \code{"null"}
 \code{NULL} exactly.}
 
 \item{na}{How missing values are written: \code{"null"} or
-\code{"string"} (\code{"NA"}). When not given, the per-type default of
-jsonlite applies (see Details).}
+\code{"string"} (\code{"NA"}). When \code{NULL} (the default), the
+per-type default of jsonlite applies (see Details).}
 
 \item{auto_unbox}{Logical scalar, default \code{FALSE}: write length-one
 vectors as scalars (\code{1}) rather than arrays (\code{[1]}).}

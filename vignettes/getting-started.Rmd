@@ -8,10 +8,14 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
@@ -140,7 +144,7 @@ lengthened, reads differently from one where both moved together;
 ## Other published tables
 
 The same approach works on any table with an estimate and its interval. The package also bundles
-Statistics Canada estimates of First Nations, Metis and Inuit health and mental health
+Statistics Canada estimates of First Nations, Métis and Inuit health and mental health
 (`?indiex`). `vignette("first-nations-metis-inuit-health")` analyses them: by
 distinction, with suppressed cells never imputed, and with wellness reported beside distress.
 

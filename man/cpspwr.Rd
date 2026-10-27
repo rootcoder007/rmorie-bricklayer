@@ -17,7 +17,7 @@ cpspwr(
 )
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame, passed to \code{stat} and \code{inject}.}
 
 \item{stat}{A function of one data frame returning
 a single finite number (for example a correlation or a difference in

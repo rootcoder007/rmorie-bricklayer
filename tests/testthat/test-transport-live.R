@@ -41,13 +41,19 @@ test_that(
     # bearer header must not travel (libcurl's own rule, kept by the hand-rolled
     # loop)
     msgs <- utils::capture.output(
-      out <- bldl(
-        "https://r-project.org/",
-        dest,
-        headers = c(Authorization = "Bearer not-for-www", Accept = "text/html"),
-        label = "r-project",
-        quiet = FALSE,
-        tty = TRUE
+      assign(
+        "out",
+        bldl(
+          "https://r-project.org/",
+          dest,
+          headers = c(
+            Authorization = "Bearer not-for-www",
+            Accept = "text/html"
+          ),
+          label = "r-project",
+          quiet = FALSE,
+          tty = TRUE
+        )
       ),
       type = "message"
     )

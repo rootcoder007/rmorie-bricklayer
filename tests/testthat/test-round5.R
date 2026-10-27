@@ -3,9 +3,10 @@ testthat::skip_on_cran()
 # Fixes for the round-5 fresh-user findings (2026-10-03): one test per finding.
 
 .cap <- function(...) {
-  txt <- character()
-  status <- blcli(c(...), out = function(s) txt <<- c(txt, s))
-  list(status = status, text = paste(txt, collapse = ""))
+  rec <- new.env()
+  rec$txt <- character()
+  status <- blcli(c(...), out = function(s) rec$txt <- c(rec$txt, s))
+  list(status = status, text = paste(rec$txt, collapse = ""))
 }
 
 test_that("VERB --help prints the verb's usage and never runs it", {
@@ -29,27 +30,27 @@ test_that("VERB --help prints the verb's usage and never runs it", {
     expect_equal(r$status, 0L, info = v)
     expect_match(r$text, paste0("^usage: rmoriebricklayer ", v), info = v)
   }
-  expect_equal(.cap("data", "pull", "--help")$status, 0L)
+  expect_identical(.cap("data", "pull", "--help")$status, 0L)
   expect_match(.cap("--version")$text, "^rmoriebricklayer [0-9]")
 })
 
 test_that("messages name the command the user typed", {
   withr::local_envvar(RMBL_PROG = "rmbl")
   r <- .cap("nosuch")
-  expect_equal(r$status, 2L)
+  expect_identical(r$status, 2L)
   expect_match(r$text, "^rmbl: unknown verb 'nosuch'; try `rmbl help`")
 })
 
 test_that("usage errors exit 2, an unknown function 1", {
-  expect_equal(.cap("bundle")$status, 2L)
-  expect_equal(.cap("ask")$status, 2L)
+  expect_identical(.cap("bundle")$status, 2L)
+  expect_identical(.cap("ask")$status, 2L)
   r <- .cap("describe", "nosuchfn")
-  expect_equal(r$status, 1L)
+  expect_identical(r$status, 1L)
   expect_match(r$text, "no help page for 'nosuchfn'")
-  expect_equal(.cap("examples", "nosuchfn")$status, 1L)
-  expect_equal(.cap("login", "--code", "123456")$status, 2L)
+  expect_identical(.cap("examples", "nosuchfn")$status, 1L)
+  expect_identical(.cap("login", "--code", "123456")$status, 2L)
   testthat::local_mocked_bindings(.bl_readline = function(prompt, ...) "")
-  expect_equal(.cap("login", "--token")$status, 2L)
+  expect_identical(.cap("login", "--token")$status, 2L)
 })
 
 test_that(
@@ -67,7 +68,7 @@ test_that(
       list(status = 401L, body = raw(0))
     })
     r <- .cap("login", "--token", "sk-bad")
-    expect_equal(r$status, 1L)
+    expect_identical(r$status, 1L)
     expect_match(r$text, "did not accept that key")
     expect_null(.bl_hosted_key())
     expect_error(
@@ -124,8 +125,8 @@ test_that("models without jsonlite: the native JSON parser reads the list", {
     list(status = 200L, body = charToRaw('{"data":[{"id":"a"},{"id":"b"}]}'))
   })
   m <- llmmdls()
-  expect_equal(as.character(m), c("a", "b"))
-  expect_equal(attr(m, "default"), "b")
+  expect_identical(as.character(m), c("a", "b"))
+  expect_identical(attr(m, "default"), "b")
 })
 
 test_that(
@@ -134,7 +135,7 @@ test_that(
     "NA"
   ),
   {
-    expect_equal(
+    expect_identical(
       siudate(c(
         "February 30, 2020",
         "February 29, 2020",
@@ -157,7 +158,7 @@ test_that(
       )
     )
     expect_error(siuprs(NA), "not NA")
-    expect_equal(
+    expect_identical(
       trimws(siutxt("<p>&rsquo;x&#x2019; &hellip; &mdash;&#x2014;</p>")),
       "'x' ... ----"
     )
@@ -185,9 +186,11 @@ test_that("blfetch names the cause before downloading anything", {
 test_that("data pull to an unwritable path says so, without an R warning", {
   local_mocked_bindings(dload = function(key) data.frame(a = 1))
   expect_silent(
-    r <- .cap("data", "pull", "hib/x", "--out", "/nonexistent-dir-r5/x.csv")
+    {
+      r <- .cap("data", "pull", "hib/x", "--out", "/nonexistent-dir-r5/x.csv")
+    }
   )
-  expect_equal(r$status, 1L)
+  expect_identical(r$status, 1L)
   expect_match(r$text, "cannot write /nonexistent-dir-r5/x.csv")
 })
 
@@ -202,13 +205,13 @@ test_that(
       value = "n",
       prd = "year"
     )
-    expect_equal(b$previous, c(NA, 100, 120, 90))
+    expect_identical(b$previous, c(NA, 100, 120, 90))
     g <- yoy(
       data.frame(year = c(2020, 2021, 2023), n = c(5, 8, 20)),
       value = "n",
       prd = "year"
     )
-    expect_equal(g$flag[g$year == 2022], "no data")
+    expect_identical(g$flag[g$year == 2022], "no data")
   }
 )
 
@@ -221,7 +224,8 @@ test_that(
     d <- data.frame(
       year = rep(2020:2023, 2),
       grp = rep(c("a", "b"), each = 4),
-      pct = c(10, 12, 15, 11, 30, 28, 25, 27)
+      pct = c(10, 12, 15, 11, 30, 28, 25, 27),
+      stringsAsFactors = FALSE
     )
     a <- anltab(d, value = "pct", prd = "year", by = "grp", units = "percent")
     f <- tempfile(fileext = ".md")
@@ -246,18 +250,21 @@ test_that(
       },
       wbsnpurl = function(url, ts = NULL) NULL
     )
-    msgs <- character()
+    rec <- new.env()
+    rec$msgs <- character()
     keep <- function(m) {
-      msgs <<- c(msgs, conditionMessage(m))
+      rec$msgs <- c(rec$msgs, conditionMessage(m))
       invokeRestart("muffleMessage")
     }
     expect_no_warning(withCallingHandlers(
-      ok <- fdl("https://example.com/x", tempfile()),
+      {
+        ok <- fdl("https://example.com/x", tempfile())
+      },
       message = keep
     ))
     expect_false(ok)
-    expect_true(any(grepl("404 Not Found", msgs)))
-    expect_true(any(grepl("no snapshot of it", msgs)))
+    expect_true(any(grepl("404 Not Found", rec$msgs, fixed = TRUE)))
+    expect_true(any(grepl("no snapshot of it", rec$msgs, fixed = TRUE)))
   }
 )
 
@@ -267,7 +274,7 @@ test_that("an unknown verb with --help is a usage error naming the verb", {
     MORIE_HOSTED_KEY = NA
   )
   r <- .cap("bogus", "--help")
-  expect_equal(r$status, 2L)
+  expect_identical(r$status, 2L)
   expect_match(r$text, "unknown verb 'bogus'", fixed = TRUE)
   expect_null(.bl_verb_usage("bogus", "rmbl"))
 })
@@ -344,18 +351,19 @@ test_that(
         )
       }
     )
-    msgs <- character()
+    rec <- new.env()
+    rec$msgs <- character()
     key <- withCallingHandlers(
       dlogin(openbro = FALSE, pollmaxsec = 600),
       message = function(m) {
-        msgs <<- c(msgs, conditionMessage(m))
+        rec$msgs <- c(rec$msgs, conditionMessage(m))
         invokeRestart("muffleMessage")
       }
     )
-    expect_equal(key, "sk-dev")
+    expect_identical(key, "sk-dev")
     expect_true(any(grepl(
       "still waiting for the sign-in to be approved (30s elapsed",
-      msgs,
+      rec$msgs,
       fixed = TRUE
     )))
   }
@@ -386,7 +394,7 @@ test_that("rptanl renders the rate changes when a population is given", {
 })
 
 test_that("numeric entities outside Unicode, and NUL, are dropped", {
-  expect_equal(trimws(siutxt("<p>a&#0;b&#x110000;c&#x41;</p>")), "abcA")
+  expect_identical(trimws(siutxt("<p>a&#0;b&#x110000;c&#x41;</p>")), "abcA")
 })
 
 test_that(
@@ -410,7 +418,7 @@ test_that(
       },
       .package = "base"
     )
-    expect_equal(.bl_readline("Paste your MORIE key: "), "sk-piped")
+    expect_identical(.bl_readline("Paste your MORIE key: "), "sk-piped")
   }
 )
 
@@ -420,7 +428,7 @@ test_that("login --token with no value prompts in an interactive session", {
     readline = function(prompt = "") " sk-typed ",
     .package = "base"
   )
-  expect_equal(.bl_readline("Paste your MORIE key: "), "sk-typed")
+  expect_identical(.bl_readline("Paste your MORIE key: "), "sk-typed")
 })
 
 test_that(
@@ -435,10 +443,11 @@ test_that(
       XDG_CONFIG_HOME = withr::local_tempdir(),
       MORIE_HOSTED_KEY = NA
     )
-    calls <- character()
+    rec <- new.env()
+    rec$calls <- character()
     testthat::local_mocked_bindings(
       .bl_http_post = function(url, body, content_type, timeout, headers) {
-        calls <<- c(calls, sub(".*(/email/[a-z]+)$", "\\1", url))
+        rec$calls <- c(rec$calls, sub(".*(/email/[a-z]+)$", "\\1", url))
         list(status = 200L, body = charToRaw("{}"))
       },
       .bl_readline = function(prompt, ...) ""
@@ -450,7 +459,7 @@ test_that(
         "--code CODE`"
       )
     )
-    expect_equal(calls, "/email/code")
+    expect_identical(rec$calls, "/email/code")
   }
 )
 
@@ -533,13 +542,14 @@ test_that(
       MORIE_HOSTED_KEY = "sk-ok",
       RMBL_PROG = "rmbl"
     )
-    got <- character()
+    rec <- new.env()
+    rec$got <- character()
     testthat::local_mocked_bindings(
       dmnf = function(refresh = FALSE) {
         list(datasets = list(list(key = "hib/cpads_cpads")))
       },
       .bl_data_get = function(path, dest, timeout = 600, ...) {
-        got <<- c(got, path)
+        rec$got <- c(rec$got, path)
       }
     )
     expect_error(
@@ -550,7 +560,7 @@ test_that(
       ),
       fixed = TRUE
     )
-    expect_length(got, 0L)
+    expect_length(rec$got, 0L)
     expect_error(
       dload("hib/cpads_cpads", refresh = NULL),
       "`refresh` must be TRUE or FALSE",
@@ -571,7 +581,7 @@ test_that(
       value = "n",
       prd = "year"
     )))
-    expect_true(all(!grepl("[^\x01-\x7f]", out, perl = TRUE)))
+    expect_false(any(grepl("[^\x01-\x7f]", out, perl = TRUE)))
     expect_true(any(grepl("note: previous period is zero", out, fixed = TRUE)))
   }
 )
@@ -600,7 +610,7 @@ test_that("an option a verb does not take is refused and nothing runs", {
       info = v
     )
   }
-  expect_equal(.cap("ask", "--model", "m", "--nosuch", "hi")$status, 2L)
+  expect_identical(.cap("ask", "--model", "m", "--nosuch", "hi")$status, 2L)
 })
 
 test_that("French reports give the police service, the dates and the person", {
@@ -620,13 +630,16 @@ test_that("French reports give the police service, the dates and the person", {
     "<p>Date : Le 26 novembre 2024</p></body></html>"
   )
   p <- siuprs(html)
-  expect_equal(p[["_language"]], "fr")
-  expect_equal(p[["police_service"]], "Service de police des parcs du Niagara")
-  expect_equal(p[["date_of_incident_iso"]], "2024-07-28")
-  expect_equal(p[["date_siu_notified_iso"]], "2024-07-29")
-  expect_equal(p[["date_of_director_decision_iso"]], "2024-11-26")
-  expect_equal(p[["age_affected"]], "21")
-  expect_equal(p[["sex_gender_affected"]], "man")
+  expect_identical(p[["_language"]], "fr")
+  expect_identical(
+    p[["police_service"]],
+    "Service de police des parcs du Niagara"
+  )
+  expect_identical(p[["date_of_incident_iso"]], "2024-07-28")
+  expect_identical(p[["date_siu_notified_iso"]], "2024-07-29")
+  expect_identical(p[["date_of_director_decision_iso"]], "2024-11-26")
+  expect_identical(p[["age_affected"]], "21")
+  expect_identical(p[["sex_gender_affected"]], "man")
 })
 
 test_that("bad inputs get a worded error and no coercion warning", {
@@ -671,8 +684,8 @@ test_that("bad inputs get a worded error and no coercion warning", {
     fixed = TRUE
   ))
   # a number given as text still works
-  expect_equal(rndbytes("4") |> length(), 4L)
-  expect_no_warning(capdeps("no.such.package.xyz"))
+  expect_identical(rndbytes("4") |> length(), 4L)
+  expect_warning(capdeps("no.such.package.xyz"), "not installed")
 })
 
 
@@ -694,7 +707,7 @@ test_that("round-7 input guards answer in words", {
     "`man` must be a manifest from mkmnf()"
   )
   expect_error(
-    rmoriebricklayer:::.rmbl_as_bytes(d, "token"),
+    .rmbl_as_bytes(d, "token"),
     "is a directory, not a token file"
   )
 })
@@ -712,7 +725,7 @@ test_that(
       "ont parle a un agent du Service de police de Hamilton.</p></body></html>"
     )
     p <- siuprs(html)
-    expect_equal(p[["_language"]], "fr")
-    expect_equal(p[["police_service"]], "Service de police de Toronto")
+    expect_identical(p[["_language"]], "fr")
+    expect_identical(p[["police_service"]], "Service de police de Toronto")
   }
 )

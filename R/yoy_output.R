@@ -82,6 +82,227 @@
 #' @export
 yoypals <- function() names(.YOY_PALETTES)
 
+#' @param x An \code{rmbl_yoy} object returned by \code{yoy()}.
+#' @param digits Integer, default \code{1}. Decimal places shown in the
+#'   percent (or percentage-point) change column. The interval column is
+#'   always shown to whole percent.
+#' @param palette Character, default \code{"diverging"}. One of
+#'   \code{\link{yoypals}()}; chooses the colours used when
+#'   \code{color = TRUE}. An unknown name is an error.
+#' @param color Logical or \code{NULL} (the default). \code{TRUE} wraps each
+#'   row in 24-bit ANSI colour codes chosen from its verdict; \code{FALSE}
+#'   prints plain text. \code{NULL} means colour only in an interactive
+#'   session with the \code{NO_COLOR} environment variable unset, so output
+#'   that is redirected or captured stays plain text. \code{format()} takes
+#'   \code{TRUE} or \code{FALSE} (default \code{FALSE}).
+#' @param n Integer, default \code{30}. Maximum number of rows printed; the
+#'   number of rows left out is reported on a final line.
+#' @param ... Further arguments from \code{print()}; the table ignores them.
+#' @usage
+#' \method{format}{rmbl_yoy}(x, digits = 1L, palette = "diverging",
+#'   color = FALSE, n = 30, ...)
+#' @rdname yoy
+#' @export
+format.rmbl_yoy <- function(
+  x,
+  digits = 1L,
+  palette = "diverging",
+  color = FALSE,
+  n = 30,
+  ...
+) {
+  m <- .yoy_meta(x)
+  if (!nrow(x)) {
+    return("<rmbl_yoy: no periods>")
+  }
+  # a subset of the columns keeps the class but not the period record (`[` on a
+  # data frame drops attributes): print what is there as a table rather than "no
+  # periods" (1.0.0 examples)
+  if (is.null(m) || !all(c("value", "previous", "change") %in% names(x))) {
+    return(.an_plain(x, ...))
+  }
+  pal <- .yoy_pal(palette)
+  chgcol <- .yoy_change_col(x)
+  pp <- identical(chgcol, "ppchg")
+  d <- as.data.frame(x)
+  shown <- utils::head(d, n)
+  cols <- .yoy_print_cols(shown, m, chgcol, digits, pp)
+  hdr <- names(cols)
+  hdr[hdr == "pct"] <- if (pp) "points" else "change %"
+  hdr[hdr == "period"] <- m$period
+  hdr[hdr == "value"] <- m$value
+  rows <- .yoy_print_rows(shown, cols, hdr, isTRUE(color), pal, palette)
+  c(
+    .rmbl_rule(sprintf("Change in %s by %s", m$value, m$period)),
+    .rmbl_kv(.yoy_facts(d, m, pp)),
+    "",
+    paste0("  ", rows),
+    if (nrow(d) > n) sprintf("  ... %d more rows", nrow(d) - n),
+    "",
+    paste0("  ", .yoy_footer_bits(m)),
+    .rmbl_rule()
+  )
+}
+
+#' @rdname yoy
+#' @export
+print.rmbl_yoy <- function(
+  x,
+  digits = 1L,
+  palette = "diverging",
+  color = NULL,
+  n = 30,
+  ...
+) {
+  if (is.null(color)) {
+    # NO_COLOR is the cross-tool convention for "plain text please", and
+    # a non-interactive session is usually being captured
+    color <- isTRUE(interactive()) && Sys.getenv("NO_COLOR") == ""
+  }
+  .rmbl_cat(
+    format(x, digits = digits, palette = palette, color = color, n = n, ...),
+    x
+  )
+  invisible(x)
+}
+
+#' Summarise a change table
+#'
+#' @description
+#' Collapses a period-over-period change table from \code{\link{yoy}} into
+#' one row per series (or one row per group when \code{yoy()} was called with
+#' \code{by}). Each row gives the first and last observed periods, the total
+#' change between them, the compound annual growth rate, and how many
+#' period-to-period changes went up, went down or stayed flat. Use it to
+#' report the whole span of a series in one line next to the detailed table.
+#'
+#' @details Rows whose \code{value} is missing are dropped before the summary,
+#' and the remaining rows are sorted by period, text periods in the order
+#' \code{yoy()} read them (its \code{prd} and \code{prdord}). Periods with no
+#' order (text \code{yoy()} could not read, an unordered factor) have no first
+#' or last: \code{from}, \code{to}, \code{first}, \code{last}, \code{totalpct}
+#' and \code{cagrpct} are then \code{NA}, with a warning saying why. With
+#' \eqn{v_1} the first and \eqn{v_T} the last observed value, the total
+#' change is \deqn{100 (v_T / v_1 - 1)} and, with
+#' \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
+#' \deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).} Both are \code{NA} when
+#' \eqn{v_1 \le 0}, because a growth rate out of zero does not exist;
+#' \code{cagrpct} is also \code{NA} for a single period. \code{"Annual"} in CAGR
+#' assumes one period is a year; for monthly or quarterly data read it as the
+#' compound rate per \code{lag} periods.
+#'
+#' The \code{up}, \code{down} and \code{flat} counts are taken from the
+#' percent-change column (\code{pctchg}, or \code{ppchg} for
+#' \code{units = "percent"}). A change out of a zero base has no percent
+#' change and is not counted in any of the three. A group with no non-missing
+#' value gives a row of \code{NA} with \code{periods = 0}.
+#'
+#' Anything other than a \code{yoy()} result is refused with the error
+#' \dQuote{\code{object} must be a yoy() result}.
+#'
+#' @param object An \code{rmbl_yoy} object returned by \code{\link{yoy}}.
+#' @param ... Further arguments for methods; not used.
+#' @return A data frame with one row per series or group and columns: the
+#' \code{by} columns (character), when \code{yoy()} had \code{by};
+#' \code{from}, \code{to} (the first and last observed period, same type as
+#' the period column); \code{first}, \code{last} (numeric values at those
+#' periods); \code{totalpct}, \code{cagrpct} (numeric, percent);
+#' \code{periods} (integer, observed periods); \code{up}, \code{down},
+#' \code{flat} (integer counts of period-to-period changes).
+#' @seealso \code{\link{yoy}}, \code{\link{yoypals}}.
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' # one series
+#' d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
+#' yoysmry(yoy(d, value = "n", prd = "year"))
+#'
+#' # one row per group; a zero base gives no percent change
+#' g <- data.frame(year = rep(2019:2022, 2), unit = rep(c("A", "B"), each = 4),
+#'                 n = c(10, 12, 0, 15, 5, 7, 6, 9))
+#' yoysmry(yoy(g, value = "n", prd = "year", by = "unit"))
+#'
+#' # anything that is not a yoy() result is refused
+#' try(yoysmry(d))
+#' @export
+yoysmry <- function(object, ...) UseMethod("yoysmry")
+
+#' @rdname yoysmry
+#' @export
+yoysmry.default <- function(object, ...) {
+  stop(
+    sprintf("`object` must be a yoy() result, not %s", class(object)[1L]),
+    call. = FALSE
+  )
+}
+
+#' @rdname yoysmry
+#' @export
+yoysmry.rmbl_yoy <- function(object, ...) {
+  m <- .yoy_meta(object)
+  d <- as.data.frame(object)
+  chgcol <- .yoy_change_col(object)
+  # the span runs first to last period, so it needs their order: text periods
+  # sorted alphabetically put "Apr 2021" before "Jan 2021" (C18)
+  rk <- .yoy_prd_rank(d[[m$period]], m$prdord)
+  if (is.null(rk)) {
+    warning(
+      "yoysmry: the periods have no order, so `from`, `to`, `first`, ",
+      "`last`, `totalpct` and `cagrpct` are NA; give yoy() their order ",
+      "with `prdord`",
+      call. = FALSE
+    )
+  }
+  d$.yoyrk <- if (is.null(rk)) NA_real_ else rk
+  ord <- !is.null(rk)
+  if (is.null(m$by)) {
+    out <- .yoy_smry1(d, m, chgcol, ord)
+  } else {
+    sp <- split(d, d[m$by], drop = TRUE, sep = "\r")
+    rows <- lapply(names(sp), function(k) {
+      r <- .yoy_smry1(sp[[k]], m, chgcol, ord)
+      lab <- strsplit(k, "\r", fixed = TRUE)[[1L]]
+      for (i in seq_along(m$by)) {
+        r[[m$by[i]]] <- lab[i]
+      }
+      r[, c(m$by, setdiff(names(r), m$by)), drop = FALSE]
+    })
+    out <- do.call(rbind, rows)
+  }
+  rownames(out) <- NULL
+  .rmbl_cls(out, "rmbl_yoy_summary")
+}
+
+#' @export
+format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
+  title <- "Year-over-year summary"
+  need <- c(
+    "from", "to", "first", "last", "totalpct", "cagrpct",
+    "periods", "up", "down", "flat"
+  )
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  d <- .rmbl_plain(x)
+  # a period printed as text, so 2021 never reads 2,021
+  d$from <- as.character(d$from)
+  d$to <- as.character(d$to)
+  .rmbl_res_block(
+    title,
+    facts = list(Series = nrow(d)),
+    tables = list(d),
+    reading = paste(
+      "totalpct is the change from the first period to the last and",
+      "cagrpct the compound rate per step; up, down and flat count the",
+      "changes from one period to the next."
+    ),
+    notes = if (nrow(d) && all(is.na(d$from))) {
+      "The periods have no order, so the span is not given."
+    },
+    digits = digits,
+    maxrows = 40L
+  )
+}
+
 #' Looks up a printing palette by name.
 #' @param palette The palette name, one of yoypals().
 #' @return The palette's named colours.
@@ -126,7 +347,7 @@ yoypals <- function() names(.YOY_PALETTES)
 #' The arrow carries the sign; the colour carries whether the sign is
 #' good news. Keeping them separate means a monochrome or piped-to-file
 #' rendering still says which way the number moved.
-#' @param chg The changes.
+#' @param chg The changes, shown as up, down or flat arrows.
 #' @return A character vector of arrows, a dash for no change and a blank for
 #'   NA.
 #' @noRd
@@ -141,7 +362,7 @@ yoypals <- function() names(.YOY_PALETTES)
 
 #' Formats changes as signed percentages or percentage points.
 #' @param v The changes.
-#' @param digits The number of decimal places.
+#' @param digits The decimal places of the percentage.
 #' @param pp Whether the unit is percentage points.
 #' @return A character vector, a dash for a missing value.
 #' @noRd
@@ -158,7 +379,7 @@ yoypals <- function() names(.YOY_PALETTES)
 
 #' Formats numbers with thousands separators.
 #' @param v The numbers.
-#' @param digits The number of decimal places.
+#' @param digits The decimal places of the number.
 #' @return A character vector, a dash for a missing value.
 #' @noRd
 .yoy_fmt_num <- function(v, digits = 0L) {
@@ -168,53 +389,128 @@ yoypals <- function() names(.YOY_PALETTES)
   out
 }
 
-#' @param x An \code{rmbl_yoy} object returned by \code{yoy()}.
-#' @param digits Integer, default \code{1}. Decimal places shown in the
-#'   percent (or percentage-point) change column. The interval column is
-#'   always shown to whole percent.
-#' @param palette Character, default \code{"diverging"}. One of
-#'   \code{\link{yoypals}()}; chooses the colours used when
-#'   \code{color = TRUE}. An unknown name is an error.
-#' @param color Logical or \code{NULL} (the default). \code{TRUE} wraps each
-#'   row in 24-bit ANSI colour codes chosen from its verdict; \code{FALSE}
-#'   prints plain text. \code{NULL} means colour only in an interactive
-#'   session with the \code{NO_COLOR} environment variable unset, so output
-#'   that is redirected or captured stays plain text.
-#' @param n Integer, default \code{30}. Maximum number of rows printed; the
-#'   number of rows left out is reported on a final line.
-#' @param ... Ignored.
-#' @rdname yoy
-#' @export
-print.rmbl_yoy <- function(
-  x,
-  digits = 1L,
-  palette = "diverging",
-  color = NULL,
-  n = 30,
-  ...
-) {
-  m <- .yoy_meta(x)
-  if (!nrow(x)) {
-    cat("<rmbl_yoy: no periods>\n")
-    return(invisible(x))
+#' 24-bit ANSI, which every terminal that reports colour support handles.
+#' @param hex The colour as \dQuote{#RRGGBB}.
+#' @return The escape sequence that sets that foreground colour.
+#' @noRd
+.yoy_ansi <- function(hex) {
+  r <- strtoi(substr(hex, 2L, 3L), 16L)
+  g <- strtoi(substr(hex, 4L, 5L), 16L)
+  b <- strtoi(substr(hex, 6L, 7L), 16L)
+  sprintf("\033[38;2;%d;%d;%dm", r, g, b)
+}
+
+#' Writes the footer line that states a yoy() table's settings.
+#' @param m The settings of the yoy() result (see `.yoy_meta()`).
+#' @return One string.
+#' @noRd
+.yoy_footer <- function(m) {
+  paste(.yoy_footer_bits(m), collapse = .yg(" \u00b7 "))
+}
+
+#' The settings of a yoy() table, one phrase each: lag, units, interval,
+#' direction.
+#' @param m The settings of the yoy() result (see `.yoy_meta()`).
+#' @return A character vector.
+#' @noRd
+.yoy_footer_bits <- function(m) {
+  bits <- c(
+    sprintf("lag %d period%s", m$lag, if (m$lag == 1L) "" else "s"),
+    sprintf("units: %s", m$units)
+  )
+  if (m$units == "count") {
+    bits <- c(
+      bits,
+      sprintf("%.0f%% exact rate-ratio interval", 100 * m$conflvl)
+    )
+    if (isTRUE(m$minbase > 0)) {
+      bits <- c(bits, sprintf("bases below %g noted", m$minbase))
+    }
   }
-  # a subset of the columns keeps the class but not the period record (`[` on a
-  # data frame drops attributes): print what is there as a table rather than "no
-  # periods" (1.0.0 examples)
-  if (is.null(m) || !all(c("value", "previous", "change") %in% names(x))) {
-    print(as.data.frame(unclass(x), stringsAsFactors = FALSE), ...)
-    return(invisible(x))
+  if (m$units == "percent") {
+    bits <- c(bits, "percentage-point change, not percent of a percent")
   }
-  if (is.null(color)) {
-    # NO_COLOR is the cross-tool convention for "plain text please", and
-    # a non-interactive session is usually being captured
-    color <- isTRUE(interactive()) && Sys.getenv("NO_COLOR") == ""
+  if (!identical(m$direction, "neutral")) {
+    bits <- c(bits, paste(m$direction, "is better"))
   }
-  pal <- .yoy_pal(palette)
-  chgcol <- .yoy_change_col(x)
-  pp <- identical(chgcol, "ppchg")
-  d <- as.data.frame(x)
-  d <- utils::head(d, n)
+  bits
+}
+
+#' A glyph, or its ASCII meaning where the console cannot render UTF-8
+#' (LC_ALL=C, some CI logs)
+#' @param x The glyph.
+#' @return `x`, or its ASCII replacement.
+#' @noRd
+.yg <- function(x) if (.rmbl_unicode_ok()) x else .yoy_ascii(x)
+
+#' Summarises one series of a year-over-year table.
+#' @param g The series' rows.
+#' @param m The table's period record.
+#' @param chgcol The change column: pctchg or ppchg.
+#' @param ord Whether the periods have an order (column `.yoyrk`, the sort
+#'   key); without one the span, its ends and its changes are NA.
+#' @return A one-row data frame.
+#' @noRd
+.yoy_smry1 <- function(g, m, chgcol, ord = TRUE) {
+  g <- g[order(g$.yoyrk), , drop = FALSE]
+  fin <- g[!is.na(g$value), , drop = FALSE]
+  if (!nrow(fin)) {
+    return(data.frame(
+      from = NA,
+      to = NA,
+      first = NA_real_,
+      last = NA_real_,
+      totalpct = NA_real_,
+      cagrpct = NA_real_,
+      periods = 0L,
+      up = 0L,
+      down = 0L,
+      flat = 0L,
+      stringsAsFactors = FALSE
+    ))
+  }
+  first <- fin$value[1L]
+  last <- fin$value[nrow(fin)]
+  # the span is in periods, and CAGR is only defined when the starting
+  # value is positive -- a compound rate out of zero does not exist
+  steps <- (nrow(fin) - 1L) / m$lag
+  total <- if (first > 0) 100 * (last / first - 1) else NA_real_
+  cagr <- if (first > 0 && steps > 0) {
+    100 * ((last / first)^(1 / steps) - 1)
+  } else {
+    NA_real_
+  }
+  ch <- g[[chgcol]]
+  out <- data.frame(
+    from = fin[[m$period]][1L],
+    to = fin[[m$period]][nrow(fin)],
+    first = first,
+    last = last,
+    totalpct = total,
+    cagrpct = cagr,
+    periods = nrow(fin),
+    up = sum(ch > 0, na.rm = TRUE),
+    down = sum(ch < 0, na.rm = TRUE),
+    flat = sum(ch == 0, na.rm = TRUE),
+    stringsAsFactors = FALSE
+  )
+  if (!ord) {
+    out$from <- out$from[NA_integer_]
+    out$to <- out$to[NA_integer_]
+    out[c("first", "last", "totalpct", "cagrpct")] <- NA_real_
+  }
+  out
+}
+
+#' The printed columns of a year-over-year table, as text.
+#' @param d The rows printed.
+#' @param m The table's period record.
+#' @param chgcol The change column: pctchg or ppchg.
+#' @param digits The digits of a percentage.
+#' @param pp Whether the change column is in percentage points.
+#' @return A named list of character vectors, one per column.
+#' @noRd
+.yoy_print_cols <- function(d, m, chgcol, digits, pp) {
   vd <- if (is.null(m$valuedig)) 0L else m$valuedig
   cols <- list(
     period = .yoy_period_text(d, m),
@@ -239,10 +535,19 @@ print.rmbl_yoy <- function(
       cols <- c(stats::setNames(list(as.character(d[[b]])), b), cols)
     }
   }
-  hdr <- names(cols)
-  hdr[hdr == "pct"] <- if (pp) "points" else "change %"
-  hdr[hdr == "period"] <- m$period
-  hdr[hdr == "value"] <- m$value
+  cols
+}
+
+#' The header, the rule and the rows of a year-over-year table, as lines.
+#' @param d The rows printed.
+#' @param cols The columns as text.
+#' @param hdr The column headers, padded to the column widths.
+#' @param color Whether rows are coloured by verdict.
+#' @param pal The verdict colours.
+#' @param palette The palette's name.
+#' @return A character vector of lines.
+#' @noRd
+.yoy_print_rows <- function(d, cols, hdr, color, pal, palette) {
   widths <- vapply(
     seq_along(cols),
     function(i) {
@@ -251,21 +556,15 @@ print.rmbl_yoy <- function(
     0L
   )
   pad <- function(s, w) formatC(s, width = w, flag = "-")
-  cat(
+  out <- c(
     paste(
       vapply(seq_along(cols), function(i) pad(hdr[i], widths[i]), ""),
       collapse = "  "
     ),
-    "\n",
-    sep = ""
-  )
-  cat(
     paste(
       vapply(widths, function(w) strrep(.yg("\u2500"), w), ""),
       collapse = "  "
-    ),
-    "\n",
-    sep = ""
+    )
   )
   for (r in seq_len(nrow(d))) {
     line <- paste(
@@ -279,190 +578,36 @@ print.rmbl_yoy <- function(
         line <- paste0(.yoy_ansi(hex), line, "\033[0m")
       }
     }
-    cat(line, "\n", sep = "")
+    out <- c(out, line)
     if (!is.na(d$flag[r])) {
-      cat(.yg("    \u21b3 note: "), d$flag[r], "\n", sep = "")
+      out <- c(out, paste0(.yg("  \u21b3 note: "), d$flag[r]))
     }
   }
-  if (nrow(as.data.frame(x)) > n) {
-    cat("... ", nrow(as.data.frame(x)) - n, " more rows\n", sep = "")
-  }
-  cat("\n", .yoy_footer(m), "\n", sep = "")
-  invisible(x)
-}
-
-#' 24-bit ANSI, which every terminal that reports colour support handles.
-#' @param hex The colour as \dQuote{#RRGGBB}.
-#' @return The escape sequence that sets that foreground colour.
-#' @noRd
-.yoy_ansi <- function(hex) {
-  r <- strtoi(substr(hex, 2L, 3L), 16L)
-  g <- strtoi(substr(hex, 4L, 5L), 16L)
-  b <- strtoi(substr(hex, 6L, 7L), 16L)
-  sprintf("\033[38;2;%d;%d;%dm", r, g, b)
-}
-
-#' Writes the footer line that states a yoy() table's settings.
-#' @param m The settings of the yoy() result (see `.yoy_meta()`).
-#' @return One string.
-#' @noRd
-.yoy_footer <- function(m) {
-  bits <- c(
-    sprintf("lag %d period%s", m$lag, if (m$lag == 1L) "" else "s"),
-    sprintf("units: %s", m$units)
-  )
-  if (m$units == "count") {
-    bits <- c(
-      bits,
-      sprintf("%.0f%% exact rate-ratio interval", 100 * m$conflvl)
-    )
-    if (isTRUE(m$minbase > 0)) {
-      bits <- c(bits, sprintf("bases below %g noted", m$minbase))
-    }
-  }
-  if (m$units == "percent") {
-    bits <- c(bits, "percentage-point change, not percent of a percent")
-  }
-  if (!identical(m$direction, "neutral")) {
-    bits <- c(bits, paste(m$direction, "is better"))
-  }
-  paste(bits, collapse = .yg(" \u00b7 "))
-}
-
-#' Summarise a change table
-#'
-#' @description
-#' Collapses a period-over-period change table from \code{\link{yoy}} into
-#' one row per series (or one row per group when \code{yoy()} was called with
-#' \code{by}). Each row gives the first and last observed periods, the total
-#' change between them, the compound annual growth rate, and how many
-#' period-to-period changes went up, went down or stayed flat. Use it to
-#' report the whole span of a series in one line next to the detailed table.
-#'
-#' @details Rows whose \code{value} is missing are dropped before the summary,
-#' and the remaining rows are sorted by period. With \eqn{v_1} the first and
-#' \eqn{v_T} the last observed value, the total change is \deqn{100 (v_T / v_1 -
-#' 1)} and, with \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
-#' \deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).} Both are \code{NA} when
-#' \eqn{v_1 \le 0}, because a growth rate out of zero does not exist;
-#' \code{cagrpct} is also \code{NA} for a single period. \code{"Annual"} in CAGR
-#' assumes one period is a year; for monthly or quarterly data read it as the
-#' compound rate per \code{lag} periods.
-#'
-#' The \code{up}, \code{down} and \code{flat} counts are taken from the
-#' percent-change column (\code{pctchg}, or \code{ppchg} for
-#' \code{units = "percent"}). A change out of a zero base has no percent
-#' change and is not counted in any of the three. A group with no non-missing
-#' value gives a row of \code{NA} with \code{periods = 0}.
-#'
-#' Anything other than a \code{yoy()} result is refused with the error
-#' \dQuote{\code{object} must be a yoy() result}.
-#'
-#' @param object An \code{rmbl_yoy} object returned by \code{\link{yoy}}.
-#' @param ... Ignored.
-#' @return A data frame with one row per series or group and columns: the
-#' \code{by} columns (character), when \code{yoy()} had \code{by};
-#' \code{from}, \code{to} (the first and last observed period, same type as
-#' the period column); \code{first}, \code{last} (numeric values at those
-#' periods); \code{totalpct}, \code{cagrpct} (numeric, percent);
-#' \code{periods} (integer, observed periods); \code{up}, \code{down},
-#' \code{flat} (integer counts of period-to-period changes).
-#' @seealso \code{\link{yoy}}, \code{\link{yoypals}}.
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' # one series
-#' d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
-#' yoysmry(yoy(d, value = "n", prd = "year"))
-#'
-#' # one row per group; a zero base gives no percent change
-#' g <- data.frame(year = rep(2019:2022, 2), unit = rep(c("A", "B"), each = 4),
-#'                 n = c(10, 12, 0, 15, 5, 7, 6, 9))
-#' yoysmry(yoy(g, value = "n", prd = "year", by = "unit"))
-#'
-#' # anything that is not a yoy() result is refused
-#' try(yoysmry(d))
-#' @export
-yoysmry <- function(object, ...) UseMethod("yoysmry")
-
-#' @rdname yoysmry
-#' @export
-yoysmry.default <- function(object, ...) {
-  stop(
-    sprintf("`object` must be a yoy() result, not %s", class(object)[1L]),
-    call. = FALSE
-  )
-}
-
-#' @rdname yoysmry
-#' @export
-yoysmry.rmbl_yoy <- function(object, ...) {
-  m <- .yoy_meta(object)
-  d <- as.data.frame(object)
-  chgcol <- .yoy_change_col(object)
-  one <- function(g) {
-    g <- g[order(g[[m$period]]), , drop = FALSE]
-    fin <- g[!is.na(g$value), , drop = FALSE]
-    if (!nrow(fin)) {
-      return(data.frame(
-        from = NA,
-        to = NA,
-        first = NA_real_,
-        last = NA_real_,
-        totalpct = NA_real_,
-        cagrpct = NA_real_,
-        periods = 0L,
-        up = 0L,
-        down = 0L,
-        flat = 0L,
-        stringsAsFactors = FALSE
-      ))
-    }
-    first <- fin$value[1L]
-    last <- fin$value[nrow(fin)]
-    # the span is in periods, and CAGR is only defined when the starting
-    # value is positive -- a compound rate out of zero does not exist
-    steps <- (nrow(fin) - 1L) / m$lag
-    total <- if (first > 0) 100 * (last / first - 1) else NA_real_
-    cagr <- if (first > 0 && steps > 0) {
-      100 * ((last / first)^(1 / steps) - 1)
-    } else {
-      NA_real_
-    }
-    ch <- g[[chgcol]]
-    data.frame(
-      from = fin[[m$period]][1L],
-      to = fin[[m$period]][nrow(fin)],
-      first = first,
-      last = last,
-      totalpct = total,
-      cagrpct = cagr,
-      periods = nrow(fin),
-      up = sum(ch > 0, na.rm = TRUE),
-      down = sum(ch < 0, na.rm = TRUE),
-      flat = sum(ch == 0, na.rm = TRUE),
-      stringsAsFactors = FALSE
-    )
-  }
-  if (is.null(m$by)) {
-    out <- one(d)
-  } else {
-    sp <- split(d, d[m$by], drop = TRUE, sep = "\r")
-    rows <- lapply(names(sp), function(k) {
-      r <- one(sp[[k]])
-      lab <- strsplit(k, "\r", fixed = TRUE)[[1L]]
-      for (i in seq_along(m$by)) {
-        r[[m$by[i]]] <- lab[i]
-      }
-      r[, c(m$by, setdiff(names(r), m$by)), drop = FALSE]
-    })
-    out <- do.call(rbind, rows)
-  }
-  rownames(out) <- NULL
   out
 }
 
-#' A glyph, or its ASCII meaning where the console cannot render UTF-8
-#' (LC_ALL=C, some CI logs)
-#' @param x The glyph.
-#' @return `x`, or its ASCII replacement.
+#' The facts shown above a year-over-year table.
+#' @param d The table, as a data frame.
+#' @param m The table's period record.
+#' @param pp Whether the change column is in percentage points.
+#' @return A named list of strings.
 #' @noRd
-.yg <- function(x) if (.rmbl_unicode_ok()) x else .yoy_ascii(x)
+.yoy_facts <- function(d, m, pp) {
+  out <- list(
+    Rows = format(nrow(d)),
+    Change = if (pp) "in percentage points" else "in percent",
+    Better = if (identical(m$direction, "neutral")) {
+      "not set (direction neutral): the colour shows no verdict"
+    } else {
+      paste(m$direction, "values")
+    }
+  )
+  if (!is.null(m$by)) {
+    out$Groups <- sprintf(
+      "%d (by %s)",
+      nrow(unique(d[m$by])),
+      toString(m$by)
+    )
+  }
+  out
+}

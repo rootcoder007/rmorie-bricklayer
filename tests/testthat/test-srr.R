@@ -32,7 +32,8 @@ test_that("trivial noise does not move the estimates", {
   d <- data.frame(
     s = rep(c("a", "b"), each = 10),
     w = rep(c(2, 3), each = 10),
-    y = (1:20) / 3
+    y = (1:20) / 3,
+    stringsAsFactors = FALSE
   )
   des <- svydes(d, w = "w", strata = "s")
   d2 <- d
@@ -75,7 +76,12 @@ test_that("the main result frames have the documented column classes", {
     )
   )
   r <- rtcalc(
-    data.frame(g = c("a", "b"), k = c(5, 9), pop = c(1000, 2000)),
+    data.frame(
+      g = c("a", "b"),
+      k = c(5, 9),
+      pop = c(1000, 2000),
+      stringsAsFactors = FALSE
+    ),
     "k",
     "pop",
     by = "g"
@@ -188,7 +194,12 @@ test_that("stepchg() gives the means of a huge series in its own units", {
 test_that("chwkfit() warns when the branching ratio sits on its bound", {
   set.seed(1)
   tm <- sort(100 + cumsum(stats::rexp(150, 20)))
-  expect_warning(f <- chwkfit(tm, 1000), "upper bound 0.99")
+  expect_warning(
+    {
+      f <- chwkfit(tm, 1000)
+    },
+    "upper bound 0.99"
+  )
   expect_identical(f$atbound, "eta")
 })
 
@@ -199,7 +210,7 @@ test_that("yoy() compares ordered-factor periods by level order", {
   )
   r <- yoy(d, "n", "q")
   expect_identical(as.character(r$q), paste0("Q", 1:4))
-  expect_true(is.ordered(r$q))
+  expect_s3_class(r$q, "ordered")
   expect_identical(r$previous, c(NA, 10, 12, NA))
   expect_identical(r$flag[3L], "no data")
   r <- yoy(d, "n", "q", complete = FALSE)
@@ -227,7 +238,7 @@ with_pdf <- function(expr) {
 #'   at labelled positions.
 #' @srrstats {TS5.3} The period axis is titled with the unit the period implies.
 test_that("the period axis keeps the period's own scale and names its unit", {
-  pa <- rmoriebricklayer:::.bl_period_axis
+  pa <- .bl_period_axis
   a <- pa(c(2019, 2020, 2022))
   expect_identical(a$at, c(2019, 2020, 2022))
   expect_identical(a$xlab, "Period")
@@ -259,15 +270,15 @@ test_that("the period axis keeps the period's own scale and names its unit", {
   # date series
   with_pdf({
     graphics::plot(c(1, 20), c(0, 1))
-    expect_equal(rmoriebricklayer:::.bl_period_ticks(pa(1:3)), 1:3)
-    expect_length(rmoriebricklayer:::.bl_period_ticks(pa(1:20)), 20L)
+    expect_equal(.bl_period_ticks(pa(1:3)), 1:3, tolerance = 1e-8)
+    expect_length(.bl_period_ticks(pa(1:20)), 20L)
     expect_length(
-      rmoriebricklayer:::.bl_period_ticks(pa(as.character(1:20 + 100))),
+      .bl_period_ticks(pa(as.character(1:20 + 100))),
       20L
     )
     graphics::plot(as.numeric(as.Date("2020-01-01") + c(0, 600)), c(0, 1))
     expect_length(
-      rmoriebricklayer:::.bl_period_ticks(pa(seq(
+      .bl_period_ticks(pa(seq(
         as.Date("2020-01-01"),
         by = "month",
         length.out = 20
@@ -286,24 +297,27 @@ test_that("change plots draw the period across, groups side by side", {
     prd = "year"
   )
   d <- with_pdf(plot(y))
-  expect_equal(d$at, 2019:2023)
-  expect_equal(d$pctchg, y$pctchg)
+  expect_equal(d$at, 2019:2023, tolerance = 1e-8)
+  expect_equal(d$pctchg, y$pctchg, tolerance = 1e-8)
   seg <- data.frame(
     year = rep(2021:2023, 2),
     g = rep(c("a", "b"), each = 3),
-    n = c(500, 600, 700, 900, 800, 1000)
+    n = c(500, 600, 700, 900, 800, 1000),
+    stringsAsFactors = FALSE
   )
   dg <- with_pdf(plot(yoy(seg, value = "n", prd = "year", by = "g")))
   # two groups in one period: a to the left of the period, b to the right
   expect_equal(
     dg$at,
-    c(2021, 2022, 2023, 2021, 2022, 2023) + rep(c(-0.175, 0.175), each = 3)
+    c(2021, 2022, 2023, 2021, 2022, 2023) + rep(c(-0.175, 0.175), each = 3),
+    tolerance = 1e-8
   )
   rt <- data.frame(
     division = rep(c("n", "e", "w"), 2),
     year = rep(2022:2023, each = 3),
     stops = c(120, 90, 60, 150, 85, 70),
-    residents = rep(c(1e4, 8e3, 5e3), 2)
+    residents = rep(c(1e4, 8e3, 5e3), 2),
+    stringsAsFactors = FALSE
   )
   rc <- ratechg(
     rt,
@@ -313,16 +327,17 @@ test_that("change plots draw the period across, groups side by side", {
     by = "division"
   )
   drc <- with_pdf(plot(rc, xlab = "Year"))
-  expect_equal(drc$pctchg, rc$pctchg)
+  expect_equal(drc$pctchg, rc$pctchg, tolerance = 1e-8)
   expect_length(unique(drc$at), nrow(rc))
   rc0 <- ratechg(rt, count = "stops", pop = "residents", prd = "year")
-  expect_equal(with_pdf(plot(rc0))$at, as.numeric(rc0$year))
+  expect_equal(with_pdf(plot(rc0))$at, as.numeric(rc0$year), tolerance = 1e-8)
   # one value everywhere, or none at all, still gives the panel a height
-  ti <- rmoriebricklayer:::.bl_time_interval
-  ax <- rmoriebricklayer:::.bl_period_axis(1:2)
+  ti <- .bl_time_interval
+  ax <- .bl_period_axis(1:2)
   expect_equal(
     with_pdf(ti(ax, c(2, 2), c(2, 2), c(2, 2), "m", "y", "x", "black")),
-    1:2
+    1:2,
+    tolerance = 1e-8
   )
   expect_equal(
     with_pdf(ti(
@@ -336,7 +351,8 @@ test_that("change plots draw the period across, groups side by side", {
       "black",
       note = c("a: b", "")
     )),
-    1:2
+    1:2,
+    tolerance = 1e-8
   )
   # six groups recycle the five symbols
   many <- data.frame(
@@ -346,7 +362,8 @@ test_that("change plots draw the period across, groups side by side", {
   )
   expect_equal(
     nrow(with_pdf(plot(yoy(many, value = "n", prd = "year", by = "g")))),
-    12L
+    12L,
+    tolerance = 1e-8
   )
 })
 
@@ -365,12 +382,20 @@ test_that("xlab is an argument of the plots over time", {
     value = "n",
     prd = "year"
   )
-  expect_equal(with_pdf(plot(y, xlab = "Year"))$at, 2019:2021)
-  expect_equal(with_pdf(plot(y, what = "value", xlab = "Year"))$at, 2019:2021)
+  expect_equal(with_pdf(plot(y, xlab = "Year"))$at, 2019:2021, tolerance = 1e-8)
+  expect_equal(
+    with_pdf(plot(y, what = "value", xlab = "Year"))$at,
+    2019:2021,
+    tolerance = 1e-8
+  )
   fy <- yoylbl(y, fylbl)
-  expect_equal(with_pdf(plot(fy, what = "value"))$at, 2019:2021)
+  expect_equal(
+    with_pdf(plot(fy, what = "value"))$at,
+    2019:2021,
+    tolerance = 1e-8
+  )
   ct <- cnttrnd(c(5, 7, 6, 9, 12, 11), x = 2018:2023)
-  expect_equal(with_pdf(plot(ct, xlab = "Year"))$x, 2018:2023)
+  expect_equal(with_pdf(plot(ct, xlab = "Year"))$x, 2018:2023, tolerance = 1e-8)
   es <- evstudy(
     polex(),
     "district",
@@ -382,7 +407,8 @@ test_that("xlab is an argument of the plots over time", {
   )
   expect_equal(
     with_pdf(plot(es, xlab = "Months since the reform"))$evtm,
-    es$evtm
+    es$evtm,
+    tolerance = 1e-8
   )
   dt <- yoy(
     data.frame(
@@ -393,13 +419,17 @@ test_that("xlab is an argument of the plots over time", {
     prd = "d",
     complete = FALSE
   )
-  expect_equal(with_pdf(plot(dt, what = "value"))$at, as.numeric(dt$d))
+  expect_equal(
+    with_pdf(plot(dt, what = "value"))$at,
+    as.numeric(dt$d),
+    tolerance = 1e-8
+  )
 })
 
 #' @srrstats {TS5.5} gaps = "break" breaks the line at a missing value; "join"
 #'   draws over it.
 test_that("missing values break lines by default and can be joined", {
-  bl <- rmoriebricklayer:::.bl_line
+  bl <- .bl_line
   with_pdf({
     graphics::plot(1:4, c(0, 5, 0, 5))
     br <- bl(1:4, c(1, NA, 3, 4), "black", gaps = "break")
@@ -420,9 +450,13 @@ test_that("missing values break lines by default and can be joined", {
   )
   expect_identical(y$flag[y$year == 2021], "no data")
   v <- with_pdf(plot(y, what = "value"))
-  expect_equal(v$at, 2019:2023)
+  expect_equal(v$at, 2019:2023, tolerance = 1e-8)
   expect_true(is.na(v$value[3L]))
-  expect_equal(with_pdf(plot(y, what = "value", gaps = "join"))$value, v$value)
+  expect_equal(
+    with_pdf(plot(y, what = "value", gaps = "join"))$value,
+    v$value,
+    tolerance = 1e-8
+  )
   expect_error(
     with_pdf(plot(y, what = "value", gaps = "skip")),
     "must be one of"

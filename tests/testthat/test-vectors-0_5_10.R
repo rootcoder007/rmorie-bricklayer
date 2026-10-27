@@ -10,7 +10,7 @@ testthat::skip_on_cran()
 dig <- function(nm, x) {
   paste(
     as.character(.Call(
-      rmoriebricklayer:::C_rmbl_prehash_digest,
+      C_rmbl_prehash_digest,
       nm,
       charToRaw(x)
     )),
@@ -84,7 +84,7 @@ test_that("all twelve FIPS 204/205 pre-hash digests match OpenSSL on \"abc\"", {
   }
   expect_error(dig("md5", "abc"), "must be one of none, sha224")
   expect_error(
-    .Call(rmoriebricklayer:::C_rmbl_prehash_digest, "sha256", "abc"),
+    .Call(C_rmbl_prehash_digest, "sha256", "abc"),
     "raw vector"
   )
 })
@@ -118,19 +118,19 @@ test_that(
   ),
   {
     kp <- .Call(
-      rmoriebricklayer:::C_rmbl_mlkem_keygen,
+      C_rmbl_mlkem_keygen,
       768L,
       as.raw(rep(7L, 64L))
     )
     dk <- kp[[2]]
     ct <- .Call(
-      rmoriebricklayer:::C_rmbl_mlkem_encaps,
+      C_rmbl_mlkem_encaps,
       768L,
       kp[[1]],
       as.raw(rep(9L, 32L))
     )
     expect_identical(
-      .Call(rmoriebricklayer:::C_rmbl_mlkem_decaps, 768L, dk, ct$ciphertext),
+      .Call(C_rmbl_mlkem_decaps, 768L, dk, ct$ciphertext),
       ct$shared
     )
     # flip one byte of the stored H(ek): the key no longer describes its own
@@ -139,7 +139,7 @@ test_that(
     h_at <- length(dk) - 64L + 1L
     bad[h_at] <- xor(bad[h_at], as.raw(1L))
     expect_error(
-      .Call(rmoriebricklayer:::C_rmbl_mlkem_decaps, 768L, bad, ct$ciphertext),
+      .Call(C_rmbl_mlkem_decaps, 768L, bad, ct$ciphertext),
       "FIPS 203 hash check"
     )
     # and through the exported interface
@@ -156,18 +156,18 @@ test_that(
   ),
   {
     set <- "SLH-DSA-SHAKE-128f"
-    kp <- .Call(rmoriebricklayer:::C_rmbl_slhdsa_keypair, set, as.raw(1:48))
+    kp <- .Call(C_rmbl_slhdsa_keypair, set, as.raw(1:48))
     msg <- charToRaw("an internal message")
     opt <- kp[[2]][33:48] # PK.seed: the deterministic variant
     sig <- .Call(
-      rmoriebricklayer:::C_rmbl_slhdsa_sign_internal,
+      C_rmbl_slhdsa_sign_internal,
       set,
       kp[[2]],
       msg,
       opt
     )
     expect_true(.Call(
-      rmoriebricklayer:::C_rmbl_slhdsa_verify_internal,
+      C_rmbl_slhdsa_verify_internal,
       set,
       kp[[1]],
       msg,
@@ -176,7 +176,7 @@ test_that(
     # the public interface signs M' = 0x00 || 0x00 || M, so the two signatures
     # differ
     ext <- .Call(
-      rmoriebricklayer:::C_rmbl_slhdsa_sign,
+      C_rmbl_slhdsa_sign,
       set,
       kp[[2]],
       msg,
@@ -190,7 +190,7 @@ test_that(
     mprime <- c(as.raw(c(0, 0)), msg)
     expect_identical(
       .Call(
-        rmoriebricklayer:::C_rmbl_slhdsa_sign_internal,
+        C_rmbl_slhdsa_sign_internal,
         set,
         kp[[2]],
         mprime,
@@ -199,14 +199,14 @@ test_that(
       ext
     )
     expect_false(.Call(
-      rmoriebricklayer:::C_rmbl_slhdsa_verify_internal,
+      C_rmbl_slhdsa_verify_internal,
       set,
       kp[[1]],
       msg,
       ext
     ))
     expect_false(.Call(
-      rmoriebricklayer:::C_rmbl_slhdsa_verify_internal,
+      C_rmbl_slhdsa_verify_internal,
       set,
       kp[[1]][-1],
       msg,
@@ -214,7 +214,7 @@ test_that(
     ))
     expect_error(
       .Call(
-        rmoriebricklayer:::C_rmbl_slhdsa_sign_internal,
+        C_rmbl_slhdsa_sign_internal,
         set,
         kp[[2]],
         msg,
@@ -224,7 +224,7 @@ test_that(
     )
     expect_error(
       .Call(
-        rmoriebricklayer:::C_rmbl_slhdsa_sign_internal,
+        C_rmbl_slhdsa_sign_internal,
         set,
         kp[[2]][-1],
         msg,
@@ -234,7 +234,7 @@ test_that(
     )
     expect_error(
       .Call(
-        rmoriebricklayer:::C_rmbl_slhdsa_sign_internal,
+        C_rmbl_slhdsa_sign_internal,
         set,
         kp[[2]],
         "x",

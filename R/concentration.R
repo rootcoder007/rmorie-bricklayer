@@ -34,6 +34,10 @@
 #'   \code{fraction} (the requested fraction of units), \code{units} (how
 #'   many of the largest units that fraction is) and \code{share} (the share
 #'   of the total those units hold).
+#'    It has class \code{c("rmbl_gini", "rmbl_measure", "numeric")}, so it
+#'   prints as a box with its inputs (kept in attribute \code{"lakner"});
+#'   arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+#'   numbers.
 #' @details
 #' Gini is the mean absolute difference between pairs of units over twice
 #' the mean, \eqn{G = \sum_i \sum_j |x_i - x_j| / (2 n^2 \bar{x})}, which is
@@ -109,7 +113,40 @@ ginicoef <- function(x, na.rm = TRUE) {
       call. = FALSE
     )
   }
-  .Call(C_rmbl_gini, x)
+  .rmbl_measure(
+    .Call(C_rmbl_gini, x),
+    "gini",
+    list(n = length(x), total = sum(x), top = max(x))
+  )
+}
+
+#' @export
+format.rmbl_gini <- function(x, ...) {
+  if (!.lk_ok(x, c("n", "total", "top")) || length(x) != 1L) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  g <- .rmbl_measure_plain(x)
+  .an_block(
+    "Gini coefficient",
+    facts = list(
+      `Gini coefficient` = .rmbl_fmt_num(g),
+      Units = .rmbl_fmt_num(m$n),
+      Total = .rmbl_fmt_num(m$total),
+      `Largest unit` = sprintf(
+        "%s (%.1f%% of the total)",
+        .rmbl_fmt_num(m$top),
+        100 * m$top / m$total
+      ),
+      `Most for n units` = .rmbl_fmt_num(1 - 1 / m$n)
+    ),
+    reading = .rmbl_gini_reading(g, m$n),
+    notes = c(
+      "0 when every unit holds the same, 1 - 1/n when one unit holds it all;",
+      "doubling every value leaves it unchanged. It says how unequal, not",
+      "which units: topshr() and lorenzc() show where the total sits."
+    )
+  )
 }
 
 #' @rdname concentration
@@ -128,37 +165,12 @@ lorenzc <- function(x, na.rm = TRUE) {
 #' @export
 topshr <- function(x, fracs = c(0.01, 0.05, 0.1, 0.25), na.rm = TRUE) {
   x <- .rmbl_conc_input(x)
-  if (
-    is.factor(fracs) ||
-      is.character(fracs) ||
-      is.logical(fracs) ||
-      !is.numeric(fracs)
-  ) {
-    stop("`fracs` must be numeric shares in [0, 1]", call. = FALSE)
-  }
-  f <- as.numeric(fracs)
-  if (!length(f) || anyNA(f) || any(f < 0 | f > 1)) {
-    stop("`fracs` must be shares in [0, 1]", call. = FALSE)
-  }
+  f <- .rmbl_conc_fracs(fracs)
   r <- .Call(C_rmbl_top_share, x, f)
-  data.frame(fraction = f, units = r$units, share = r$share)
-}
-
-#' Checks the values a concentration measure is computed from.
-#' @param x The values passed by the user.
-#' @return `x` as finite, non-negative doubles.
-#' @noRd
-.rmbl_conc_input <- function(x) {
-  # .rmbl_finite_input() has already refused non-numeric and negative
-  # values: a negative value has no place in a share of a total
-  x <- .rmbl_num(.rmbl_finite_input(x, "x", nonneg = TRUE), "x")
-  if (!any(!is.na(x))) {
-    stop(
-      "`x` has no values: a concentration measure of nothing is undefined",
-      call. = FALSE
-    )
-  }
-  x
+  .rmbl_cls(
+    data.frame(fraction = f, units = r$units, share = r$share),
+    "rmbl_top_share"
+  )
 }
 
 #' Tail index of a heavy-tailed count
@@ -276,159 +288,29 @@ hilltlidx <- function(
   approx = FALSE,
   mintl = 3L
 ) {
-  for (flag in c("discrete", "approx")) {
-    v <- get(flag, inherits = FALSE)
-    if (!is.logical(v) || length(v) != 1L || is.na(v)) {
-      stop(
-        sprintf("hilltlidx: `%s` must be TRUE or FALSE", flag),
-        call. = FALSE
-      )
-    }
-  }
+  .hill_check_flags(discrete, approx)
   mintl <- .rmbl_scalar(mintl, "mintl", 1, integer = TRUE)
-  # a factor's level code is not a threshold (xmin = factor("3") fitted from 1,
-  # review of 52a8883)
-  if (is.logical(xmin) || is.factor(xmin) || is.character(xmin)) {
-    stop("`xmin` must be numeric, not logical, a factor or text", call. = FALSE)
-  }
-  x <- .rmbl_num(x, "x")
-  x <- x[is.finite(x) & x > 0]
-  if (!length(x)) {
-    stop("`x` has no positive finite values to fit a tail to", call. = FALSE)
-  }
-  if (is.null(xmin)) {
-    # enough of a tail to estimate from, or everything if there is not
-    s <- sort(x, decreasing = TRUE)
-    xmin <- if (length(s) >= 50L) {
-      s[50L]
-    } else if (length(s)) {
-      min(s)
-    } else {
-      NA_real_
-    }
-  }
-  xmin <- .rmbl_num(xmin, "xmin")
-  if (length(xmin) != 1L) {
-    stop("`xmin` must be a single threshold", call. = FALSE)
-  }
-  if (is.na(xmin) || xmin <= 0) {
-    stop("`xmin` must be positive", call. = FALSE)
-  }
+  x <- .hill_positive(x, xmin)
+  xmin <- .hill_xmin(x, xmin)
   tail <- x[x >= xmin]
   n <- length(tail)
   mintl <- max(2L, as.integer(mintl)[1L])
   if (n < mintl) {
-    return(list(
-      alpha = NA_real_,
-      se = NA_real_,
-      xmin = xmin,
-      ntl = n,
-      ks = NA_real_,
-      reliable = FALSE,
-      method = "too few tail observations"
-    ))
+    return(.hill_none(xmin, n, "too few tail observations"))
   }
-  logsum <- sum(log(tail)) # finite: the tail is finite and positive
   if (length(unique(tail)) == 1L) {
     # every tail value equal: no slope to fit, and the zeta likelihood just
     # pushes alpha to the optimiser's bound
-    return(list(
-      alpha = NA_real_,
-      se = NA_real_,
-      xmin = xmin,
-      ntl = n,
-      ks = NA_real_,
-      reliable = FALSE,
-      method = "not estimable: every tail value equals xmin"
+    return(.hill_none(
+      xmin,
+      n,
+      "not estimable: every tail value equals xmin"
     ))
   }
   if (isTRUE(discrete) && !isTRUE(approx)) {
-    # The zeta distribution truncated below at xmin:
-    #   p(k) = k^-alpha / zeta(alpha, xmin),  k = xmin, xmin + 1, ...
-    # so the log-likelihood is
-    #   -n log zeta(alpha, xmin) - alpha * sum log k
-    # which has no closed-form maximiser and is concave in alpha, so one
-    # univariate maximisation settles it.
-    nll <- function(a) {
-      z <- .rmbl_hurwitz(a, xmin)
-      if (!is.finite(z) || z <= 0) {
-        return(.Machine$double.xmax)
-      }
-      n * log(z) + a * logsum
-    }
-    bounds <- c(1.0001, 25)
-    opt <- stats::optimize(nll, interval = bounds, tol = 1e-9)
-    alpha <- opt$minimum
-    at_bound <- alpha <= bounds[1L] + 1e-3 || alpha >= bounds[2L] - 1e-3
-    # the observed information, by a central difference on the score:
-    # the second derivative of the log-likelihood has no simple form
-    # because it needs the zeta's derivatives in the exponent
-    h <- 1e-4
-    d2 <- (nll(alpha + h) - 2 * nll(alpha) + nll(alpha - h)) / h^2
-    se <- if (is.finite(d2) && d2 > 0) sqrt(1 / d2) else NA_real_
-    method <- "exact discrete (zeta) maximum likelihood"
-    denom <- xmin
-    # zeta(alpha, q) / zeta(alpha, xmin) is P(X >= q), so the
-    # distribution function at an integer k is 1 - P(X >= k + 1).
-    # Using P(X >= k) instead omits the whole point mass at k, which at
-    # a threshold of one is about three quarters of the distribution --
-    # the fit would be reported as terrible however good it was.
-    denom_z <- .rmbl_hurwitz(alpha, xmin)
-    cdf <- function(q) {
-      1 -
-        vapply(
-          q + 1,
-          function(v) {
-            .rmbl_hurwitz(alpha, v) / denom_z
-          },
-          0
-        )
-    }
-    ks <- .rmbl_ks_discrete(tail, cdf)
-    if (at_bound) {
-      method <- paste0(method, " (alpha at the optimiser bound; not a fit)")
-    }
-    return(list(
-      alpha = alpha,
-      se = se,
-      xmin = xmin,
-      ntl = n,
-      ks = ks,
-      reliable = n >= 50L && !at_bound,
-      method = method
-    ))
+    return(.hill_zeta(tail, xmin))
   }
-  # the continuous Hill estimator, and its continuity-corrected discrete
-  # cousin: closed form, exact for a continuous Pareto tail, and only
-  # asymptotically right in xmin for a discrete one
-  denom <- if (isTRUE(discrete) && xmin > 0.5) xmin - 0.5 else xmin
-  # the tail is finite, positive, at or above xmin and not all equal (caught
-  # above), so the log-ratio sum is finite and positive
-  ssum <- sum(log(tail / denom))
-  alpha <- 1 + n / ssum
-  # the asymptotic standard error of the Hill estimator
-  se <- (alpha - 1) / sqrt(n)
-  # goodness of fit: the fitted tail's own distribution function against
-  # the empirical one. alpha without this is a number fitted to whatever
-  # shape the data had.
-  ks <- .rmbl_ks_discrete(
-    tail,
-    function(q) 1 - (q / denom)^(1 - alpha),
-    continuous = !isTRUE(discrete)
-  )
-  list(
-    alpha = alpha,
-    se = se,
-    xmin = xmin,
-    ntl = n,
-    ks = ks,
-    reliable = n >= 50L,
-    method = if (isTRUE(discrete)) {
-      "continuity-corrected closed form (approximate)"
-    } else {
-      "continuous Hill maximum likelihood"
-    }
-  )
+  .hill_closed(tail, xmin, discrete)
 }
 
 #' Hurwitz zeta function
@@ -496,13 +378,7 @@ hilltlidx <- function(
 #' try(hurwzeta(2, q = c(1, 2)))
 #' @export
 hurwzeta <- function(s, q = 1) {
-  if (is.logical(q) || is.logical(s)) {
-    stop("`s` and `q` must be numeric, not logical", call. = FALSE)
-  }
-  q <- .rmbl_num_input(q, "q", allow_null = FALSE)
-  if (length(q) != 1L || !is.finite(q)) {
-    stop("`q` must be a single finite number", call. = FALSE)
-  }
+  q <- .rmbl_hurwitz_q(s, q)
   s <- .rmbl_num_input(s, "s")
   if (q > 0) {
     return(.rmbl_hurwitz_any(s, q))
@@ -510,28 +386,323 @@ hurwzeta <- function(s, q = 1) {
   if (q == round(q)) {
     return(rep(NA_real_, length(s)))
   } # a pole, like s = 1: no value to return
-  # q = -N + f with 0 < f < 1. The terms (q + n)^-s with q + n < 0 have absolute
-  # values 1 - f, 2 - f, ..., N - f, so for a whole s their sum is (-1)^s
-  # (zeta(s, 1 - f) - zeta(s, N + 1 - f)) and the rest is zeta(s, f): no
-  # billion-term sum, and none of the cancellation that summed the terms one by
-  # one lost every digit (s = 5 at q = -99999.5 came back as 0, review of
-  # 52a8883, A7). For a fractional s a negative base has a complex power.
-  f <- q - floor(q)
-  N <- -floor(q)
-  vapply(
-    s,
-    function(si) {
-      if (!is.finite(si) || si != round(si) || si == 1) {
-        return(NA_real_)
-      }
-      sgn <- if (si %% 2 == 0) 1 else -1
-      # the two terms that cancel (exactly, for an odd s at f = 1/2) are added
-      # first, the small tail last
-      (.rmbl_hurwitz_any(si, f) + sgn * .rmbl_hurwitz_any(si, 1 - f)) -
-        sgn * .rmbl_hurwitz_any(si, N + 1 - f)
-    },
-    numeric(1)
+  .rmbl_hurwitz_negq(s, q)
+}
+
+#' Association in a contingency table
+#'
+#' Cramer's V, with the bias correction of Bergsma (2013) available, and
+#' the small-expected-count condition reported rather than assumed away.
+#' Use it to say how strongly two categorical variables are associated (0 is
+#' none, 1 is complete), for example region by outcome in a cross-tabulation,
+#' on a scale that does not depend on the number of rows and columns.
+#'
+#' @details
+#' With \eqn{\chi^2} the Pearson statistic (no continuity correction),
+#' \eqn{n} the total, \eqn{r} rows and \eqn{k} columns, \eqn{\phi^2 =
+#' \chi^2/n} and the uncorrected \eqn{V = \sqrt{\phi^2 / \min(r-1, k-1)}}.
+#' Bergsma's correction replaces \eqn{\phi^2} with
+#' \eqn{\max(0, \phi^2 - (r-1)(k-1)/(n-1))} and \eqn{r, k} with
+#' \eqn{r - (r-1)^2/(n-1)} and \eqn{k - (k-1)^2/(n-1)}.
+#'
+#' Empty rows and columns (an unused factor level) are dropped first, and
+#' \code{method} says so. When fewer than two rows or columns remain, every
+#' statistic is \code{NA}. When any expected count is below
+#' \code{minexp}, the p-value comes from
+#' \code{stats::chisq.test(simulate.p.value = TRUE, B = 10000)} under
+#' \code{seed}, and the caller's random number stream is restored afterwards.
+#'
+#' Errors: \code{tbl} \code{NULL}, not numeric, or with a negative or
+#' non-finite count; \code{biascor} not \code{TRUE} or \code{FALSE};
+#' \code{minexp} not a single non-negative number.
+#'
+#' @param tbl A table or matrix of non-negative counts, at least 2 by 2
+#' after empty rows and columns are dropped.
+#' @param biascor Logical scalar, default \code{TRUE}: whether to apply
+#' Bergsma's
+#' correction, which removes most of V's upward bias in a sparse table.
+#' Worth having: uncorrected V on a sparse table reports association that
+#' is an artefact of the table's size.
+#' @param minexp Numeric scalar, default \code{5}: the expected count
+#' below which the chi-square approximation is treated as unreliable.
+#' Reported, and it switches the p-value to the Monte Carlo one; it does not
+#' stop the calculation.
+#' @return A list with \code{v} (numeric, Cramer's V), \code{chisq} (the
+#' Pearson statistic), \code{df} (integer), \code{p_value}, \code{n} (the
+#' total count), \code{minexp} (the smallest expected count in the
+#' table), \code{cellsbelow} (integer), the number of
+#' cells whose expected count falls under the threshold. When any does,
+#' `p_value` comes from a Monte Carlo permutation instead of the
+#' chi-square approximation, and `method` says which was used.
+#' @references
+#' Bergsma, W. (2013). A bias-correction for Cramer's V and Tschuprow's T.
+#' *Journal of the Korean Statistical Society* 42(3), 323-328. (Not in
+#' the local corpus; cited from the published paper.)
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' tbl <- rbind(c(120, 80), c(40, 160))
+#' cramerv(tbl)
+#'
+#' # No association gives a V near zero.
+#' cramerv(rbind(c(100, 100), c(100, 100)))$v
+#'
+#' # A sparse table's uncorrected V overstates the association.
+#' sparse <- rbind(c(3, 1), c(1, 3))
+#' c(raw = cramerv(sparse, biascor = FALSE)$v,
+#'   corrected = cramerv(sparse)$v)
+#'
+#' # small expected counts: a Monte Carlo p-value, and the method says so
+#' cramerv(sparse)$method
+#'
+#' # an unused level is dropped
+#' cramerv(rbind(c(30, 10), c(0, 0), c(12, 28)))$method
+#'
+#' # negative counts are refused
+#' try(cramerv(rbind(c(-1, 2), c(1, 2))))
+#' @param seed Integer scalar, default \code{1}: the seed for the Monte Carlo
+#'   branch; the caller's random number stream is restored afterwards.
+#' @export
+cramerv <- function(tbl, biascor = TRUE, minexp = 5, seed = 1L) {
+  .rmbl_no_fn(tbl = tbl)
+  .cramerv_check(tbl, biascor, minexp)
+  m <- as.matrix(tbl)
+  # an unused factor level is an empty row or column: it carries no
+  # information and made every expected count on that margin zero (NaN
+  # statistic, NaN V). drfthomog() already drops them; so does this.
+  dropped <- sum(rowSums(m) == 0) + sum(colSums(m) == 0)
+  m <- m[rowSums(m) > 0, colSums(m) > 0, drop = FALSE]
+  if (any(dim(m) < 2L)) {
+    return(.rmbl_cls(.cramerv_small(m, dropped), "rmbl_cramerv"))
+  }
+  # negative counts were refused above, and a table with an empty margin
+  # has just been dropped, so what is left has a positive total
+  n <- sum(m)
+  ct <- suppressWarnings(stats::chisq.test(m, correct = FALSE))
+  chi <- as.numeric(ct$statistic)
+  r <- nrow(m)
+  k <- ncol(m)
+  below <- sum(ct$expected < minexp)
+  # the chi-square approximation rests on the expected counts; when it
+  # does not hold, permute instead of reporting a p-value the table
+  # cannot support
+  method <- "chi-square approximation"
+  p <- as.numeric(ct$p.value)
+  if (below > 0L) {
+    sim <- .rmbl_with_seed(
+      seed,
+      suppressWarnings(
+        stats::chisq.test(m, simulate.p.value = TRUE, B = 10000L)
+      )
+    )
+    p <- as.numeric(sim$p.value)
+    method <- "Monte Carlo permutation (small expected counts)"
+  }
+  if (dropped) {
+    method <- paste0(method, "; ", dropped, " empty row(s)/column(s) dropped")
+  }
+  v <- .cramerv_v(chi / n, r, k, n, biascor)
+  .rmbl_cls(list(
+    v = v,
+    chisq = chi,
+    df = as.integer(ct$parameter),
+    p_value = p,
+    n = n,
+    minexp = min(ct$expected),
+    cellsbelow = below,
+    method = method
+  ), "rmbl_cramerv")
+}
+
+#' @export
+format.rmbl_top_share <- function(x, digits = 4L, ...) {
+  title <- "Top shares of a total"
+  fb <- .rmbl_df_fallback(x, title, c("fraction", "units", "share"), digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  d <- .rmbl_plain(x)
+  tb <- data.frame(
+    top = paste0(.rmbl_fmt_num(100 * d$fraction, digits), "%"),
+    units = d$units,
+    share = paste0(.rmbl_fmt_num(100 * d$share, digits), "%"),
+    stringsAsFactors = FALSE
   )
+  .rmbl_res_block(
+    title,
+    facts = list(Fractions = nrow(d)),
+    tables = list(tb),
+    reading = if (nrow(d)) {
+      sprintf(
+        paste(
+          "The top %s of units (%s of them) hold %s of the total; with",
+          "equal shares they would hold %s."
+        ),
+        tb$top[1L],
+        .rmbl_fmt_num(d$units[1L]),
+        tb$share[1L],
+        tb$top[1L]
+      )
+    },
+    digits = digits
+  )
+}
+
+#' @export
+format.rmbl_tail_index <- function(x, digits = 4L, ...) {
+  est <- length(x$alpha) && !is.na(x$alpha)
+  .rmbl_stat_block(
+    "Power-law tail index",
+    facts = list(
+      `Tail exponent (alpha)` = if (est) x$alpha else "not estimated",
+      `Standard error` = if (est) x$se,
+      `Threshold (xmin)` = x$xmin,
+      `Tail observations` = x$ntl,
+      `KS distance` = if (est) x$ks,
+      Reliable = if (isTRUE(x$reliable)) "yes" else "no",
+      Method = x$method
+    ),
+    reading = .rmbl_wrap(.hill_reading(x, est)),
+    digits = digits
+  )
+}
+
+#' @export
+format.rmbl_cramerv <- function(x, digits = 4L, ...) {
+  .rmbl_stat_block(
+    "Cramer's V",
+    facts = list(
+      `Cramer's V` = if (is.na(x$v)) "not available" else x$v,
+      `Chi-square` = x$chisq,
+      df = x$df,
+      `p-value` = .rmbl_p_fact(x$p_value),
+      Observations = x$n,
+      `Smallest expected` = x$minexp,
+      `Cells below minimum` = x$cellsbelow,
+      Method = x$method
+    ),
+    reading = .rmbl_wrap(.cramerv_reading(x)),
+    digits = digits
+  )
+}
+
+#' Checks the values a concentration measure is computed from.
+#' @param x The values passed by the user.
+#' @return `x` as finite, non-negative doubles.
+#' @noRd
+.rmbl_conc_input <- function(x) {
+  # .rmbl_finite_input() has already refused non-numeric and negative
+  # values: a negative value has no place in a share of a total
+  x <- .rmbl_num(.rmbl_finite_input(x, "x", nonneg = TRUE), "x")
+  if (all(is.na(x))) {
+    stop(
+      "`x` has no values: a concentration measure of nothing is undefined",
+      call. = FALSE
+    )
+  }
+  x
+}
+
+#' hilltlidx()'s `discrete` and `approx`, checked.
+#' @param discrete,approx As for hilltlidx().
+#' @noRd
+.hill_check_flags <- function(discrete, approx) {
+  for (flag in c("discrete", "approx")) {
+    v <- if (flag == "discrete") discrete else approx
+    if (!is.logical(v) || length(v) != 1L || is.na(v)) {
+      stop(
+        sprintf("hilltlidx: `%s` must be TRUE or FALSE", flag),
+        call. = FALSE
+      )
+    }
+  }
+  invisible(NULL)
+}
+
+#' hilltlidx()'s threshold: the one given, checked, or the 50th largest value
+#' (everything, when there are fewer).
+#' @param x The positive finite values.
+#' @param xmin As for hilltlidx().
+#' @return The threshold.
+#' @noRd
+.hill_xmin <- function(x, xmin) {
+  if (is.null(xmin)) {
+    # enough of a tail to estimate from, or everything if there is not
+    s <- sort(x, decreasing = TRUE)
+    xmin <- if (length(s) >= 50L) s[50L] else min(s)
+  }
+  xmin <- .rmbl_num(xmin, "xmin")
+  if (length(xmin) != 1L) {
+    stop("`xmin` must be a single threshold", call. = FALSE)
+  }
+  if (is.na(xmin) || xmin <= 0) {
+    stop("`xmin` must be positive", call. = FALSE)
+  }
+  xmin
+}
+
+#' hilltlidx()'s result when no tail index can be fitted.
+#' @param xmin The threshold.
+#' @param n The tail's size.
+#' @param method Why.
+#' @return The result list.
+#' @noRd
+.hill_none <- function(xmin, n, method) {
+  .rmbl_cls(list(
+    alpha = NA_real_,
+    se = NA_real_,
+    xmin = xmin,
+    ntl = n,
+    ks = NA_real_,
+    reliable = FALSE,
+    method = method
+  ), "rmbl_tail_index")
+}
+
+#' The exact discrete (zeta) maximum-likelihood tail index.
+#'
+#' The zeta distribution truncated below at xmin:
+#'   p(k) = k^-alpha / zeta(alpha, xmin),  k = xmin, xmin + 1, ...
+#' so the log-likelihood is
+#'   -n log zeta(alpha, xmin) - alpha * sum log k
+#' which has no closed-form maximiser and is concave in alpha, so one
+#' univariate maximisation settles it.
+#' @param tail The values at or above the threshold, not all equal.
+#' @param xmin The threshold.
+#' @return hilltlidx()'s result list.
+#' @noRd
+.hill_zeta <- function(tail, xmin) {
+  n <- length(tail)
+  logsum <- sum(log(tail)) # finite: the tail is finite and positive
+  nll <- function(a) {
+    z <- .rmbl_hurwitz(a, xmin)
+    if (!is.finite(z) || z <= 0) {
+      return(.Machine$double.xmax)
+    }
+    n * log(z) + a * logsum
+  }
+  bounds <- c(1.0001, 25)
+  opt <- stats::optimize(nll, interval = bounds, tol = 1e-9)
+  alpha <- opt$minimum
+  at_bound <- alpha <= bounds[1L] + 1e-3 || alpha >= bounds[2L] - 1e-3
+  # the observed information, by a central difference on the score:
+  # the second derivative of the log-likelihood has no simple form
+  # because it needs the zeta's derivatives in the exponent
+  h <- 1e-4
+  d2 <- (nll(alpha + h) - 2 * nll(alpha) + nll(alpha - h)) / h^2
+  se <- if (is.finite(d2) && d2 > 0) sqrt(1 / d2) else NA_real_
+  method <- "exact discrete (zeta) maximum likelihood"
+  ks <- .hill_zeta_ks(tail, alpha, xmin)
+  if (at_bound) {
+    method <- paste0(method, " (alpha at the optimiser bound; not a fit)")
+  }
+  .rmbl_cls(list(
+    alpha = alpha,
+    se = se,
+    xmin = xmin,
+    ntl = n,
+    ks = ks,
+    reliable = n >= 50L && !at_bound,
+    method = method
+  ), "rmbl_tail_index")
 }
 
 #' Computes the Hurwitz zeta function for any order but the pole.
@@ -571,6 +742,26 @@ hurwzeta <- function(s, q = 1) {
   out
 }
 
+#' zeta(s, q) at a whole s in (-5, 1), by the Bernoulli polynomial.
+#' @param si The whole s.
+#' @param q The shift.
+#' @return The value.
+#' @noRd
+.rmbl_hurwitz_negint <- function(si, q) {
+  # zeta(-n, q) = -B_{n+1}(q) / (n + 1) exactly: a polynomial of degree at
+  # most five, with no cancellation through q + 1 (zeta(-4, 1e-8) = 3.3e-10 is
+  # a small difference of O(1) values)
+  m <- 1 - si
+  bk <- c(1, -1 / 2, 1 / 6, 0, -1 / 30, 0)[seq_len(m + 1)]
+  direct <- -sum(choose(m, 0:m) * bk * q^(m - 0:m)) / m
+  if (is.finite(direct)) {
+    return(direct)
+  }
+  # q^m past the double range while the value itself is not (q = 5e61, s = -4
+  # is -6.25e307): q^m / m factored out in logarithms
+  -exp(m * log(q) - log(m)) * sum(choose(m, 0:m) * bk * q^(-(0:m)))
+}
+
 #' Computes the Hurwitz zeta function for one order below one.
 #' @param si The order, a number below 1.
 #' @param q The shift, a positive number.
@@ -585,40 +776,10 @@ hurwzeta <- function(s, q = 1) {
     return(expm1(si * log(2)) * .rmbl_hurwitz_below_one(si, 1))
   }
   if (q == 1 && si < 0) {
-    # Riemann's zeta by its functional equation, zeta(s) = 2^s pi^(s-1) sin(pi s
-    # / 2) Gamma(1-s) zeta(1-s): sinpi() is exact at the trivial zeros and
-    # accurate beside them, where the general route lost the relative digits of
-    # a value near zero (3.5e-7 at s = -2 + 1e-7; review of e57fed5). zeta(1 -
-    # s) has 1 - s > 1, the C series. sinpi(x) beside x = -1 is sin(pi * x) in
-    # R, which carries the absolute error of pi * x (about 2e-16) into a value
-    # of order the distance from -1: the distance is taken first, exactly (si /
-    # 2 + 1 is exact there, Sterbenz), and sinpi of that is accurate (review of
-    # 46de6a9, F5: sin(pi * x) was off by up to 8.9% at -2 +/- 1e-15, on glibc
-    # as on other libms)
-    sp <- .rmbl_sinpi(si / 2)
-    if (sp == 0) {
-      return(0)
-    }
-    lmag <- si *
-      log(2) +
-      (si - 1) * log(pi) +
-      lgamma(1 - si) +
-      log(abs(.rmbl_hurwitz(1 - si, 1)))
-    return(sign(sp) * exp(lmag + log(abs(sp))))
+    return(.rmbl_zeta_reflect(si))
   }
   if (si == round(si) && si > -5) {
-    # zeta(-n, q) = -B_{n+1}(q) / (n + 1) exactly: a polynomial of degree at
-    # most five, with no cancellation through q + 1 (zeta(-4, 1e-8) = 3.3e-10 is
-    # a small difference of O(1) values)
-    m <- 1 - si
-    bk <- c(1, -1 / 2, 1 / 6, 0, -1 / 30, 0)[seq_len(m + 1)]
-    direct <- -sum(choose(m, 0:m) * bk * q^(m - 0:m)) / m
-    if (is.finite(direct)) {
-      return(direct)
-    }
-    # q^m past the double range while the value itself is not (q = 5e61, s = -4
-    # is -6.25e307): q^m / m factored out in logarithms
-    return(-exp(m * log(q) - log(m)) * sum(choose(m, 0:m) * bk * q^(-(0:m))))
+    return(.rmbl_hurwitz_negint(si, q))
   }
   if (q >= max(40, 2 * abs(si))) {
     return(.rmbl_hurwitz_em(si, q, 0))
@@ -711,7 +872,7 @@ hurwzeta <- function(s, q = 1) {
 #'
 #' sin(pi x) with the reduction done exactly: x - round(x) is exact (Sterbenz)
 #' and the sign alternates with the integer.
-#' @param x A number.
+#' @param x The argument of sin(pi * x), any real number.
 #' @return sin(pi x).
 #' @noRd
 .rmbl_sinpi <- function(x) {
@@ -809,80 +970,10 @@ hurwzeta <- function(s, q = 1) {
   max(d)
 }
 
-#' Association in a contingency table
-#'
-#' Cramer's V, with the bias correction of Bergsma (2013) available, and
-#' the small-expected-count condition reported rather than assumed away.
-#' Use it to say how strongly two categorical variables are associated (0 is
-#' none, 1 is complete), for example region by outcome in a cross-tabulation,
-#' on a scale that does not depend on the number of rows and columns.
-#'
-#' @details
-#' With \eqn{\chi^2} the Pearson statistic (no continuity correction),
-#' \eqn{n} the total, \eqn{r} rows and \eqn{k} columns, \eqn{\phi^2 =
-#' \chi^2/n} and the uncorrected \eqn{V = \sqrt{\phi^2 / \min(r-1, k-1)}}.
-#' Bergsma's correction replaces \eqn{\phi^2} with
-#' \eqn{\max(0, \phi^2 - (r-1)(k-1)/(n-1))} and \eqn{r, k} with
-#' \eqn{r - (r-1)^2/(n-1)} and \eqn{k - (k-1)^2/(n-1)}.
-#'
-#' Empty rows and columns (an unused factor level) are dropped first, and
-#' \code{method} says so. When fewer than two rows or columns remain, every
-#' statistic is \code{NA}. When any expected count is below
-#' \code{minexp}, the p-value comes from
-#' \code{stats::chisq.test(simulate.p.value = TRUE, B = 10000)} under
-#' \code{seed}, and the caller's random number stream is restored afterwards.
-#'
-#' Errors: \code{tbl} \code{NULL}, not numeric, or with a negative or
-#' non-finite count; \code{biascor} not \code{TRUE} or \code{FALSE};
-#' \code{minexp} not a single non-negative number.
-#'
-#' @param tbl A table or matrix of non-negative counts, at least 2 by 2
-#' after empty rows and columns are dropped.
-#' @param biascor Logical scalar, default \code{TRUE}: whether to apply
-#' Bergsma's
-#' correction, which removes most of V's upward bias in a sparse table.
-#' Worth having: uncorrected V on a sparse table reports association that
-#' is an artefact of the table's size.
-#' @param minexp Numeric scalar, default \code{5}: the expected count
-#' below which the chi-square approximation is treated as unreliable.
-#' Reported, and it switches the p-value to the Monte Carlo one; it does not
-#' stop the calculation.
-#' @return A list with \code{v} (numeric, Cramer's V), \code{chisq} (the
-#' Pearson statistic), \code{df} (integer), \code{p_value}, \code{n} (the
-#' total count), \code{minexp} (the smallest expected count in the
-#' table), \code{cellsbelow} (integer), the number of
-#' cells whose expected count falls under the threshold. When any does,
-#' `p_value` comes from a Monte Carlo permutation instead of the
-#' chi-square approximation, and `method` says which was used.
-#' @references
-#' Bergsma, W. (2013). A bias-correction for Cramer's V and Tschuprow's T.
-#' *Journal of the Korean Statistical Society* 42(3), 323-328. (Not in
-#' the local corpus; cited from the published paper.)
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' tbl <- rbind(c(120, 80), c(40, 160))
-#' cramerv(tbl)
-#'
-#' # No association gives a V near zero.
-#' cramerv(rbind(c(100, 100), c(100, 100)))$v
-#'
-#' # A sparse table's uncorrected V overstates the association.
-#' sparse <- rbind(c(3, 1), c(1, 3))
-#' c(raw = cramerv(sparse, biascor = FALSE)$v,
-#'   corrected = cramerv(sparse)$v)
-#'
-#' # small expected counts: a Monte Carlo p-value, and the method says so
-#' cramerv(sparse)$method
-#'
-#' # an unused level is dropped
-#' cramerv(rbind(c(30, 10), c(0, 0), c(12, 28)))$method
-#'
-#' # negative counts are refused
-#' try(cramerv(rbind(c(-1, 2), c(1, 2))))
-#' @param seed Integer scalar, default \code{1}: the seed for the Monte Carlo
-#'   branch; the caller's random number stream is restored afterwards.
-#' @export
-cramerv <- function(tbl, biascor = TRUE, minexp = 5, seed = 1L) {
-  .rmbl_no_fn(tbl = tbl)
+#' cramerv()'s table and options, checked.
+#' @param tbl,biascor,minexp As for cramerv().
+#' @noRd
+.cramerv_check <- function(tbl, biascor, minexp) {
   # "abc" silently meant FALSE, and an NA threshold failed deep inside (review
   # of 52a8883)
   if (!is.logical(biascor) || length(biascor) != 1L || is.na(biascor)) {
@@ -899,7 +990,7 @@ cramerv <- function(tbl, biascor = TRUE, minexp = 5, seed = 1L) {
   if (
     is.null(tbl) ||
       !is.numeric(as.matrix(tbl)) ||
-      any(!is.finite(as.matrix(tbl))) ||
+      !all(is.finite(as.matrix(tbl))) ||
       any(as.matrix(tbl) < 0)
   ) {
     stop(
@@ -907,74 +998,285 @@ cramerv <- function(tbl, biascor = TRUE, minexp = 5, seed = 1L) {
       call. = FALSE
     )
   }
-  m <- as.matrix(tbl)
-  # an unused factor level is an empty row or column: it carries no
-  # information and made every expected count on that margin zero (NaN
-  # statistic, NaN V). drfthomog() already drops them; so does this.
-  dropped <- sum(rowSums(m) == 0) + sum(colSums(m) == 0)
-  m <- m[rowSums(m) > 0, colSums(m) > 0, drop = FALSE]
-  if (any(dim(m) < 2L)) {
-    return(list(
-      v = NA_real_,
-      chisq = NA_real_,
-      df = NA_integer_,
-      p_value = NA_real_,
-      n = sum(m),
-      minexp = NA_real_,
-      cellsbelow = NA_integer_,
-      method = if (dropped) {
-        "table too small after dropping empty rows/columns"
-      } else {
-        "table too small"
+  invisible(NULL)
+}
+
+#' Cramer's V from phi-squared, optionally bias-corrected.
+#' @param phi2 Phi-squared.
+#' @param r,k The table's rows and columns.
+#' @param n Its total.
+#' @param biascor As for cramerv().
+#' @return V.
+#' @noRd
+.cramerv_v <- function(phi2, r, k, n, biascor) {
+  if (!isTRUE(biascor)) {
+    return(sqrt(phi2 / min(r - 1, k - 1)))
+  }
+  # Bergsma (2013): correct phi-squared and the dimensions for the bias
+  # that makes V rise with the table's size rather than its association
+  phi2c <- max(0, phi2 - (r - 1) * (k - 1) / (n - 1))
+  rc <- r - (r - 1)^2 / (n - 1)
+  kc <- k - (k - 1)^2 / (n - 1)
+  den <- min(rc - 1, kc - 1)
+  if (den <= 0) NA_real_ else sqrt(phi2c / den)
+}
+
+#' topshr()'s `fracs`, checked.
+#' @param fracs The value passed.
+#' @return The shares as a double vector.
+#' @noRd
+.rmbl_conc_fracs <- function(fracs) {
+  if (
+    is.factor(fracs) ||
+      is.character(fracs) ||
+      is.logical(fracs) ||
+      !is.numeric(fracs)
+  ) {
+    stop("`fracs` must be numeric shares in [0, 1]", call. = FALSE)
+  }
+  f <- as.numeric(fracs)
+  if (!length(f) || anyNA(f) || any(f < 0 | f > 1)) {
+    stop("`fracs` must be shares in [0, 1]", call. = FALSE)
+  }
+  f
+}
+
+#' hilltlidx()'s `x`, its positive finite values, once `xmin` is known to be
+#' numeric.
+#' @param x,xmin As for hilltlidx().
+#' @return The positive finite values of `x`.
+#' @noRd
+.hill_positive <- function(x, xmin) {
+  # a factor's level code is not a threshold (xmin = factor("3") fitted from 1,
+  # review of 52a8883)
+  if (is.logical(xmin) || is.factor(xmin) || is.character(xmin)) {
+    stop("`xmin` must be numeric, not logical, a factor or text", call. = FALSE)
+  }
+  x <- .rmbl_num(x, "x")
+  x <- x[is.finite(x) & x > 0]
+  if (!length(x)) {
+    stop("`x` has no positive finite values to fit a tail to", call. = FALSE)
+  }
+  x
+}
+
+#' The closed-form tail fit of hilltlidx(): continuous, or
+#' continuity-corrected for a discrete tail.
+#' @param tail The tail values, not all equal.
+#' @param xmin The threshold.
+#' @param discrete As for hilltlidx().
+#' @return hilltlidx()'s result.
+#' @noRd
+.hill_closed <- function(tail, xmin, discrete) {
+  n <- length(tail)
+  # the continuous Hill estimator, and its continuity-corrected discrete
+  # cousin: closed form, exact for a continuous Pareto tail, and only
+  # asymptotically right in xmin for a discrete one
+  denom <- if (isTRUE(discrete) && xmin > 0.5) xmin - 0.5 else xmin
+  # the tail is finite, positive, at or above xmin and not all equal (caught
+  # above), so the log-ratio sum is finite and positive
+  ssum <- sum(log(tail / denom))
+  alpha <- 1 + n / ssum
+  # the asymptotic standard error of the Hill estimator
+  se <- (alpha - 1) / sqrt(n)
+  # goodness of fit: the fitted tail's own distribution function against
+  # the empirical one. alpha without this is a number fitted to whatever
+  # shape the data had.
+  ks <- .rmbl_ks_discrete(
+    tail,
+    function(q) 1 - (q / denom)^(1 - alpha),
+    continuous = !isTRUE(discrete)
+  )
+  .rmbl_cls(list(
+    alpha = alpha,
+    se = se,
+    xmin = xmin,
+    ntl = n,
+    ks = ks,
+    reliable = n >= 50L,
+    method = if (isTRUE(discrete)) {
+      "continuity-corrected closed form (approximate)"
+    } else {
+      "continuous Hill maximum likelihood"
+    }
+  ), "rmbl_tail_index")
+}
+
+#' hurwzeta()'s `q`, checked (and that neither argument is logical).
+#' @param s,q As for hurwzeta().
+#' @return `q` as one finite number.
+#' @noRd
+.rmbl_hurwitz_q <- function(s, q) {
+  if (is.logical(q) || is.logical(s)) {
+    stop("`s` and `q` must be numeric, not logical", call. = FALSE)
+  }
+  q <- .rmbl_num_input(q, "q", allow_null = FALSE)
+  if (length(q) != 1L || !is.finite(q)) {
+    stop("`q` must be a single finite number", call. = FALSE)
+  }
+  q
+}
+
+#' The Hurwitz zeta at a negative, non-integer `q`.
+#' @param s The exponents.
+#' @param q The shift, negative and not a whole number.
+#' @return A numeric vector, NA where `s` is not a whole number other than 1.
+#' @noRd
+.rmbl_hurwitz_negq <- function(s, q) {
+  # q = -N + f with 0 < f < 1. The terms (q + n)^-s with q + n < 0 have absolute
+  # values 1 - f, 2 - f, ..., N - f, so for a whole s their sum is (-1)^s
+  # (zeta(s, 1 - f) - zeta(s, N + 1 - f)) and the rest is zeta(s, f): no
+  # billion-term sum, and none of the cancellation that summed the terms one by
+  # one lost every digit (s = 5 at q = -99999.5 came back as 0, review of
+  # 52a8883, A7). For a fractional s a negative base has a complex power.
+  f <- q - floor(q)
+  N <- -floor(q)
+  vapply(
+    s,
+    function(si) {
+      if (!is.finite(si) || si != round(si) || si == 1) {
+        return(NA_real_)
       }
+      sgn <- if (si %% 2 == 0) 1 else -1
+      # the two terms that cancel (exactly, for an odd s at f = 1/2) are added
+      # first, the small tail last
+      (.rmbl_hurwitz_any(si, f) + sgn * .rmbl_hurwitz_any(si, 1 - f)) -
+        sgn * .rmbl_hurwitz_any(si, N + 1 - f)
+    },
+    numeric(1)
+  )
+}
+
+#' The Kolmogorov-Smirnov fit of a zeta tail, for .hill_zeta().
+#' @param tail The tail values.
+#' @param alpha The fitted exponent.
+#' @param xmin The threshold.
+#' @return As for .rmbl_ks_discrete().
+#' @noRd
+.hill_zeta_ks <- function(tail, alpha, xmin) {
+  # zeta(alpha, q) / zeta(alpha, xmin) is P(X >= q), so the
+  # distribution function at an integer k is 1 - P(X >= k + 1).
+  # Using P(X >= k) instead omits the whole point mass at k, which at
+  # a threshold of one is about three quarters of the distribution --
+  # the fit would be reported as terrible however good it was.
+  denom_z <- .rmbl_hurwitz(alpha, xmin)
+  cdf <- function(q) {
+    1 -
+      vapply(
+        q + 1,
+        function(v) {
+          .rmbl_hurwitz(alpha, v) / denom_z
+        },
+        0
+      )
+  }
+  .rmbl_ks_discrete(tail, cdf)
+}
+
+#' Riemann's zeta at a negative s, by its functional equation.
+#' @param si One exponent, below zero.
+#' @return zeta(si).
+#' @noRd
+.rmbl_zeta_reflect <- function(si) {
+  # Riemann's zeta by its functional equation, zeta(s) = 2^s pi^(s-1) sin(pi s
+  # / 2) Gamma(1-s) zeta(1-s): sinpi() is exact at the trivial zeros and
+  # accurate beside them, where the general route lost the relative digits of
+  # a value near zero (3.5e-7 at s = -2 + 1e-7; review of e57fed5). zeta(1 -
+  # s) has 1 - s > 1, the C series. sinpi(x) beside x = -1 is sin(pi * x) in
+  # R, which carries the absolute error of pi * x (about 2e-16) into a value
+  # of order the distance from -1: the distance is taken first, exactly (si /
+  # 2 + 1 is exact there, Sterbenz), and sinpi of that is accurate (review of
+  # 46de6a9, F5: sin(pi * x) was off by up to 8.9% at -2 +/- 1e-15, on glibc
+  # as on other libms)
+  sp <- .rmbl_sinpi(si / 2)
+  if (sp == 0) {
+    return(0)
+  }
+  lmag <- si *
+    log(2) +
+    (si - 1) * log(pi) +
+    lgamma(1 - si) +
+    log(abs(.rmbl_hurwitz(1 - si, 1)))
+  sign(sp) * exp(lmag + log(abs(sp)))
+}
+
+#' cramerv()'s result for a table with fewer than two rows or columns left.
+#' @param m The table, its empty rows and columns dropped.
+#' @param dropped How many were dropped.
+#' @return cramerv()'s result, every statistic missing.
+#' @noRd
+.cramerv_small <- function(m, dropped) {
+  list(
+    v = NA_real_,
+    chisq = NA_real_,
+    df = NA_integer_,
+    p_value = NA_real_,
+    n = sum(m),
+    minexp = NA_real_,
+    cellsbelow = NA_integer_,
+    method = if (dropped) {
+      "table too small after dropping empty rows/columns"
+    } else {
+      "table too small"
+    }
+  )
+}
+
+#' What a hilltlidx() result says, in words.
+#' @param x A hilltlidx() result.
+#' @param est Whether an exponent was estimated.
+#' @return One string.
+#' @noRd
+.hill_reading <- function(x, est) {
+  if (!est) {
+    return(paste0("No exponent was estimated (", x$method, ")."))
+  }
+  a <- .rmbl_fmt_num(x$alpha)
+  out <- if (x$alpha <= 2) {
+    paste(
+      "An exponent of", a, "(2 or below) means the mean is barely defined:",
+      "the largest values dominate the total, and the observed maximum says",
+      "little about the next one."
+    )
+  } else {
+    paste(
+      "An exponent of", a, "(above 2): a heavy tail, but one with a",
+      "defined mean."
+    )
+  }
+  if (!isTRUE(x$reliable)) {
+    out <- paste(out, "The estimate is flagged as not reliable.")
+  }
+  out
+}
+
+#' What a cramerv() result says, in words, at the 5% level.
+#' @param x A cramerv() result.
+#' @return One string.
+#' @noRd
+.cramerv_reading <- function(x) {
+  if (is.na(x$v)) {
+    return(paste(
+      "There is no association to measure: the table needs two rows and",
+      "two columns with counts."
     ))
   }
-  # negative counts were refused above, and a table with an empty margin
-  # has just been dropped, so what is left has a positive total
-  n <- sum(m)
-  ct <- suppressWarnings(stats::chisq.test(m, correct = FALSE))
-  chi <- as.numeric(ct$statistic)
-  r <- nrow(m)
-  k <- ncol(m)
-  below <- sum(ct$expected < minexp)
-  # the chi-square approximation rests on the expected counts; when it
-  # does not hold, permute instead of reporting a p-value the table
-  # cannot support
-  method <- "chi-square approximation"
-  p <- as.numeric(ct$p.value)
-  if (below > 0L) {
-    sim <- .rmbl_with_seed(
-      seed,
-      suppressWarnings(
-        stats::chisq.test(m, simulate.p.value = TRUE, B = 10000L)
-      )
-    )
-    p <- as.numeric(sim$p.value)
-    method <- "Monte Carlo permutation (small expected counts)"
-  }
-  if (dropped) {
-    method <- paste0(method, "; ", dropped, " empty row(s)/column(s) dropped")
-  }
-  phi2 <- chi / n
-  v <- if (isTRUE(biascor)) {
-    # Bergsma (2013): correct phi-squared and the dimensions for the bias
-    # that makes V rise with the table's size rather than its association
-    phi2c <- max(0, phi2 - (r - 1) * (k - 1) / (n - 1))
-    rc <- r - (r - 1)^2 / (n - 1)
-    kc <- k - (k - 1)^2 / (n - 1)
-    den <- min(rc - 1, kc - 1)
-    if (den <= 0) NA_real_ else sqrt(phi2c / den)
-  } else {
-    sqrt(phi2 / min(r - 1, k - 1))
-  }
-  list(
-    v = v,
-    chisq = chi,
-    df = as.integer(ct$parameter),
-    p_value = p,
-    n = n,
-    minexp = min(ct$expected),
-    cellsbelow = below,
-    method = method
+  lead <- paste(
+    "V =", .rmbl_fmt_num(x$v), "on a scale from 0 (the row says nothing",
+    "about the column) to 1 (the row fixes the column)"
   )
+  if (is.na(x$p_value)) {
+    return(paste0(lead, "."))
+  }
+  if (x$p_value < 0.05) {
+    paste0(
+      lead, "; an association this strong is unlikely to be chance (p ",
+      .rmbl_p_txt(x$p_value), ")."
+    )
+  } else {
+    paste0(
+      lead, "; an association this size could be chance (p ",
+      .rmbl_p_txt(x$p_value), ")."
+    )
+  }
 }

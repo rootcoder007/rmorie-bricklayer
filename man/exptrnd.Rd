@@ -14,7 +14,7 @@ exptrnd(cases, n, dose = seq_along(cases) - 1L, conflvl = 0.95)
 \item{dose}{The exposure levels, in order (default \code{0, 1, 2, ...}); the
 trend test scores them.}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of the odds ratios' intervals (default 0.95).}
 }
 \value{
 A data frame with \code{dose}, \code{cases}, \code{n},

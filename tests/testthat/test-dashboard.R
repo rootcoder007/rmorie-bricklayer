@@ -47,7 +47,8 @@ run_tab <- function(
 ) {
   s <- spec(id)
   src <- if (is.null(source)) unname(s$sources[[1L]]) else source
-  got <- NULL
+  rec <- new.env()
+  rec$got <- NULL
   shiny::testServer(
     ns$.bl_tab_server,
     args = list(
@@ -69,36 +70,36 @@ run_tab <- function(
           paste("output error:", conditionMessage(e))
         })
       }
-      got <<- list(res = r, code = output$code, err = html(output$err))
+      rec$got <- list(res = r, code = output$code, err = html(output$err))
       if (!inherits(r, "bl_app_error")) {
-        got$print <<- output$print
-        got$vbox <<- html(output$vbox)
-        got$method <<- html(output$method)
-        got$table <<- html(output$table)
-        got$diag <<- html(output$diag)
-        got$plot <<- out("plot")
+        rec$got$print <- output$print
+        rec$got$vbox <- html(output$vbox)
+        rec$got$method <- html(output$method)
+        rec$got$table <- html(output$table)
+        rec$got$diag <- html(output$diag)
+        rec$got$plot <- out("plot")
         ch <- ns$.bl_diag_choices(r)
-        got$diags <<- lapply(ch, function(w) {
+        rec$got$diags <- lapply(ch, function(w) {
           session$setInputs(diagwhich = w)
           out("diagplot")
         })
-        got$diagsel <<- html(out("diagsel"))
-        got$dl <<- file.exists(output$dl)
-        got$png <<- file.exists(output$png)
-        got$csv <<- file.exists(output$csv)
+        rec$got$diagsel <- html(out("diagsel"))
+        rec$got$dl <- file.exists(output$dl)
+        rec$got$png <- file.exists(output$png)
+        rec$got$csv <- file.exists(output$csv)
         if (ns$.bl_have_cairo()) {
-          got$svg <<- file.exists(output$svg)
+          rec$got$svg <- file.exists(output$svg)
         }
-        got$hover <<- html(out("hoverinfo"))
+        rec$got$hover <- html(out("hoverinfo"))
       }
       if (is.function(extra)) {
         extra(session, output, input)
       }
       session$setInputs(add = 1)
-      got$rpt <<- rpt()
+      rec$got$rpt <- rpt()
     }
   )
-  got
+  rec$got
 }
 
 expect_ran <- function(g, fn) {
@@ -202,7 +203,12 @@ test_that(
     skip_if_not_installed("shiny")
     f <- tempfile(fileext = ".csv")
     utils::write.csv(
-      data.frame(year = 2020:2022, n = c(5L, 7L, 9L), area = c("a", "b", "c")),
+      data.frame(
+        year = 2020:2022,
+        n = c(5L, 7L, 9L),
+        area = c("a", "b", "c"),
+        stringsAsFactors = FALSE
+      ),
       f,
       row.names = FALSE
     )
@@ -281,7 +287,12 @@ test_that(
     invisible(cpsrfrsh(d))
     local_mocked_bindings(
       dtabs = function(...) {
-        data.frame(key = "db/t", name = "A table", rows = 2L)
+        data.frame(
+          key = "db/t",
+          name = "A table",
+          rows = 2L,
+          stringsAsFactors = FALSE
+        )
       },
       dload = function(key, ...) data.frame(x = 1:2),
       .bl_hosted_key = function() NULL
@@ -666,48 +677,57 @@ test_that(
   {
     skip_if_not_installed("shiny")
     skip_if_not_installed("bslib")
-    seen <- list()
+    rec <- new.env()
+    rec$seen <- list()
     run_tab("describe", "profcols", extra = function(session, output, input) {
       session$setInputs(pickcol = "income")
-      seen$plot <<- output$colplot
-      seen$summ <<- output$colsumm
+      rec$seen$plot <- output$colplot
+      rec$seen$summ <- output$colsumm
       session$setInputs(pickcol = "sex")
-      seen$summ2 <<- output$colsumm
+      rec$seen$summ2 <- output$colsumm
     })
-    expect_type(seen$plot, "list")
-    expect_match(seen$summ, "median", fixed = TRUE)
-    expect_match(seen$summ2, "Female", fixed = TRUE)
+    expect_type(rec$seen$plot, "list")
+    expect_match(rec$seen$summ, "median", fixed = TRUE)
+    expect_match(rec$seen$summ2, "Female", fixed = TRUE)
     run_tab("yoy", "yoy", extra = function(session, output, input) {
-      seen$none <<- html(output$hoverinfo)
+      rec$seen$none <- html(output$hoverinfo)
       session$setInputs(hover = list(x = 2020.2, y = 0))
-      seen$hover <<- html(output$hoverinfo)
+      rec$seen$hover <- html(output$hoverinfo)
     })
-    expect_match(seen$none, "Point at the plot", fixed = TRUE)
-    expect_match(seen$hover, "year 2020", fixed = TRUE)
-    expect_match(seen$hover, "Downtown", fixed = TRUE)
+    expect_match(rec$seen$none, "Point at the plot", fixed = TRUE)
+    expect_match(rec$seen$hover, "year 2020", fixed = TRUE)
+    expect_match(rec$seen$hover, "Downtown", fixed = TRUE)
     # a plot whose x axis counts the periods 1, 2, ...
-    v <- data.frame(period = c("a", "b", "c"), n = 1:3)
+    v <- data.frame(
+      period = c("a", "b", "c"),
+      n = 1:3,
+      stringsAsFactors = FALSE
+    )
     expect_match(
       html(list(html = ns$.bl_hover_ui(v, "period", list(x = 2.2)))),
       "period b",
       fixed = TRUE
     )
     run_tab("drift", "cpsdrft", extra = function(session, output, input) {
-      seen$dcol <<- html(output$dcolui)
+      rec$seen$dcol <- html(output$dcolui)
       session$setInputs(dcol = "income")
-      seen$dens <<- output$dens
-      seen$none2 <<- html(output$dshare)
+      rec$seen$dens <- output$dens
+      rec$seen$none2 <- html(output$dshare)
       session$setInputs(dbrush = list(xmin = 40000, xmax = 60000))
-      seen$share <<- html(output$dshare)
+      rec$seen$share <- html(output$dshare)
     })
-    expect_match(seen$dcol, "income", fixed = TRUE)
-    expect_type(seen$dens, "list")
-    expect_match(seen$none2, "Drag across", fixed = TRUE)
-    expect_match(seen$share, "reference", fixed = TRUE)
+    expect_match(rec$seen$dcol, "income", fixed = TRUE)
+    expect_type(rec$seen$dens, "list")
+    expect_match(rec$seen$none2, "Drag across", fixed = TRUE)
+    expect_match(rec$seen$share, "reference", fixed = TRUE)
     sn <- ns$.bl_snaps(rmbldemo("drift"))
     sh <- ns$.bl_brush_share(sn, "age", -Inf, Inf)
     expect_identical(sh$share, c(100, 100))
-    expect_null(ns$.bl_snaps(data.frame(snapshot = "a", x = 1)))
+    expect_null(ns$.bl_snaps(data.frame(
+      snapshot = "a",
+      x = 1,
+      stringsAsFactors = FALSE
+    )))
     expect_null(ns$.bl_snaps(data.frame(x = 1)))
   }
 )
@@ -766,15 +786,16 @@ test_that(
     # the background run itself: a value, an error, and a process that ended
     # without a result
     wait <- function(p) {
-      out <- NULL
-      promises::then(p, function(v) out <<- list(ok = v), function(e) {
-        out <<- list(err = conditionMessage(e))
+      rec <- new.env()
+      rec$out <- NULL
+      promises::then(p, function(v) rec$out <- list(ok = v), function(e) {
+        rec$out <- list(err = conditionMessage(e))
       })
       for (i in 1:300) {
         later::run_now(0.02)
-        if (!is.null(out)) break
+        if (!is.null(rec$out)) break
       }
-      out
+      rec$out
     }
     expect_identical(wait(ns$.bl_bg(function() 6 * 7, TRUE))$ok, 42)
     expect_match(
@@ -882,8 +903,11 @@ test_that(
       ),
       "&policy-a_leads=2&policy-run=3"
     )
-    rc <- shiny:::RestoreContext$new(q)
-    page <- shiny:::withRestoreContext(rc, as.character(ns$.bl_app_ui()))
+    rc <- asNamespace("shiny")$RestoreContext$new(q)
+    page <- asNamespace("shiny")$withRestoreContext(
+      rc,
+      as.character(ns$.bl_app_ui())
+    )
     expect_match(page, "<option value=\"evstudy\" selected>", fixed = TRUE)
     expect_match(page, "data-value=\"policy\"", fixed = TRUE)
     # the server side: the restored form is rerun on the restored data
@@ -927,7 +951,7 @@ test_that("a tab shows the exact call, the refusal and its explanation", {
     inputs = list(a_by = "area", a_minbase = 20)
   )
   expect_identical(
-    strsplit(g$code, "\n")[[1L]][2L],
+    strsplit(g$code, "\n", fixed = TRUE)[[1L]][2L],
     paste(
       "y <- yoy(data, value = \"n\", prd = \"year\", by = \"area\", lag = 1,",
       "units = \"count\",",
@@ -960,7 +984,7 @@ test_that("a tab shows the exact call, the refusal and its explanation", {
   none <- run_tab("yoy", "yoy", source = "")
   expect_match(none$res$msg, "No data yet")
   expect_true(none$res$nodata)
-  expect_false(grepl("Refused", none$err))
+  expect_false(grepl("Refused", none$err, fixed = TRUE))
   # a source that does not evaluate
   ugly <- run_tab("yoy", "yoy", source = "stop('no such table')")
   expect_match(ugly$res$msg, "no such table")
@@ -1127,13 +1151,15 @@ test_that(
     expect_identical(ns$.bl_cps_demo(), ns$.bl_cps_demo())
     st <- ns$.bl_status_rows(data.frame(
       ok = c(TRUE, FALSE),
-      check = c("a", "b")
+      check = c("a", "b"),
+      stringsAsFactors = FALSE
     ))
     expect_identical(st$status, c("pass", "FAIL"))
     st <- ns$.bl_status_rows(data.frame(
       ok = c(FALSE, FALSE, FALSE),
       severity = c("note", "warn", "error"),
-      check = "a"
+      check = "a",
+      stringsAsFactors = FALSE
     ))
     expect_identical(st$status, c("note", "warn", "FAIL"))
     expect_s3_class(ns$.bl_cps_ui("capsule"), "shiny.tag")
@@ -1178,8 +1204,8 @@ test_that(
     ld <- tempfile("ledgers-")
     dir.create(ld)
     file.copy(smp, file.path(ld, "proofs.json"))
-    expect_identical(
-      names(ns$.bl_ldgr_installed("x", find = function(p) ld)),
+    expect_named(
+      ns$.bl_ldgr_installed("x", find = function(p) ld),
       "x: proofs.json"
     )
     # with no packages named it looks in every installed package (here none
@@ -1324,32 +1350,33 @@ test_that(
   ),
   {
     skip_if_not_installed("shiny")
-    seen <- NULL
+    rec <- new.env()
+    rec$seen <- NULL
     local_mocked_bindings(.bl_app_launch = function(app, port, browser) {
-      seen <<- list(app, port, browser)
+      rec$seen <- list(app, port, browser)
     })
-    buf <- character()
+    rec$buf <- character()
     st <- blcli(c("app", "--port", "8123", "--no-browser"), out = function(s) {
-      buf <<- c(buf, s)
+      rec$buf <- c(rec$buf, s)
     })
     expect_identical(st, 0L)
-    expect_s3_class(seen[[1L]], "shiny.appobj")
-    expect_identical(seen[2:3], list(8123L, FALSE))
-    expect_match(paste(buf, collapse = ""), "on port 8123")
+    expect_s3_class(rec$seen[[1L]], "shiny.appobj")
+    expect_identical(rec$seen[2:3], list(8123L, FALSE))
+    expect_match(paste(rec$buf, collapse = ""), "on port 8123")
     d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
     invisible(cpsrfrsh(d))
     expect_identical(blcli(c("app", d), out = function(s) NULL), 0L)
-    expect_identical(seen[[3L]], TRUE)
+    expect_true(rec$seen[[3L]])
     f <- tempfile(fileext = ".csv")
     utils::write.csv(data.frame(a = 1), f, row.names = FALSE)
     expect_identical(blcli(c("app", f), out = function(s) NULL), 0L)
     expect_identical(blcli(c("app", tempfile()), out = function(s) NULL), 1L)
     expect_identical(blcli(c("app", "--port", "x"), out = function(s) NULL), 2L)
     expect_identical(blcli(c("app", "a", "b"), out = function(s) NULL), 2L)
-    help <- character()
-    blcli("help", out = function(s) help <<- c(help, s))
+    rec$help <- character()
+    blcli("help", out = function(s) rec$help <- c(rec$help, s))
     expect_match(
-      paste(help, collapse = ""),
+      paste(rec$help, collapse = ""),
       "app [PATH] [--port N] [--no-browser]",
       fixed = TRUE
     )

@@ -21,7 +21,8 @@ the manifest against.}
 \value{
 \code{wrrcdmnf()} returns \code{path} invisibly.
 
-\code{vrfrcdmnf()} returns a list with \code{ok}
+\code{vrfrcdmnf()} returns a list of class
+\code{rmbl_recode_manifest_check} (it prints as a box) with \code{ok}
 (logical), \code{reasons} (character; empty, \code{character(0)}, when
 \code{ok}), \code{signature_ok} (logical, \code{NA} when the manifest is
 unsigned) and \code{manifest} (the parsed JSON as a list).

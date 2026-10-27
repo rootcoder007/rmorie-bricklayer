@@ -642,12 +642,12 @@ SEXP C_rmbl_ecdsa_verify_impl(SEXP curve, SEXP qx, SEXP qy, SEXP r, SEXP s,
     Num ax, ay;
     to_affine(&ax, &ay, &p2, &c);
     Point sum;
-    if (is_infinity(&p2)) {
-        sum = p1;
-    } else {
-        add_affine(&sum, &p1, &ax, &ay, &c);
-    }
-    if (is_infinity(&sum)) return Rf_ScalarLogical(FALSE);
+    add_affine(&sum, &p1, &ax, &ay, &c);
+    /* p2 = u2 Q is never the point at infinity: Q is a point of the prime order n, and u2 = r / s
+     * mod n is not 0 for r and s in [1, n - 1], checked above. It was taken as sum = p1, a branch no
+     * input could reach; now it refuses the signature with the sum at infinity (to_affine() gave
+     * the coordinates 0, 0, which the addition reads as a point like any other) */
+    if (is_infinity(&p2) || is_infinity(&sum)) return Rf_ScalarLogical(FALSE);
 
     Num rx, ry, v;
     to_affine(&rx, &ry, &sum, &c);

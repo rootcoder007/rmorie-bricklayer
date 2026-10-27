@@ -4,9 +4,10 @@
 # acvp/<set>/{prompt,expectedResults}.json. Returns list(file = list(pass, fail,
 # na = list(reason = n), failures = character())).
 rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
-  TOTAL <- list()
+  acc <- new.env(parent = emptyenv())
+  acc$total <- list()
   tally <- function(file, status, why = NULL, id = NULL) {
-    r <- TOTAL[[file]] %||%
+    r <- acc$total[[file]] %||%
       list(pass = 0L, fail = 0L, na = list(), failures = character())
     if (status == "pass") {
       r$pass <- r$pass + 1L
@@ -18,7 +19,7 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
     } else {
       r$na[[why]] <- (r$na[[why]] %||% 0L) + 1L
     }
-    TOTAL[[file]] <<- r
+    acc$total[[file]] <- r
   }
   ns <- asNamespace("rmoriebricklayer")
   C <- function(n) get(n, envir = ns)
@@ -56,8 +57,8 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
     tally(file, if (isTRUE(cond)) "pass" else "fail", why, id)
   }
 
-  KEM <- function(ps) as.integer(sub("ML-KEM-", "", ps))
-  DSA <- function(ps) as.integer(sub("ML-DSA-", "", ps))
+  KEM <- function(ps) as.integer(sub("ML-KEM-", "", ps, fixed = TRUE))
+  DSA <- function(ps) as.integer(sub("ML-DSA-", "", ps, fixed = TRUE))
   PH <- c(
     "SHA2-224" = "sha224",
     "SHA2-256" = "sha256",
@@ -545,7 +546,7 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
     })
   }
   for (set in c("SHAKE-128-FIPS202", "SHAKE-256-FIPS202")) {
-    w <- if (grepl("128", set)) 128L else 256L
+    w <- if (grepl("128", set, fixed = TRUE)) 128L else 256L
     run_set(set, function(s, g, t, e) {
       if (as.integer(t$len) %% 8L != 0L || as.integer(t$outLen) %% 8L != 0L) {
         return(tally(s, "na", "bit-length input or output"))
@@ -564,7 +565,7 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
     })
   }
   for (set in c("HMAC-SHA2-256-2.0", "HMAC-SHA2-512-2.0")) {
-    bits <- if (grepl("512", set)) 512L else 256L
+    bits <- if (grepl("512", set, fixed = TRUE)) 512L else 256L
     run_set(set, function(s, g, t, e) {
       mac <- .Call(C("C_rmbl_hmac_shax"), bits, h(t$key), h(t$msg))
       check(s, t$tcId, eqhex(mac[seq_len(as.integer(t$macLen) %/% 8L)], e$mac))
@@ -587,5 +588,5 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
     )
     check(s, t$tcId, eqhex(if (is.raw(dk)) dk else h(dk), e$derivedKey))
   })
-  TOTAL
+  acc$total
 }

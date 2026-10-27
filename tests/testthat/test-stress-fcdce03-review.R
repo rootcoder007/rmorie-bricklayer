@@ -45,12 +45,12 @@ test_that(
     }
     # the file matches: accepted without a refresh
     testthat::local_mocked_bindings(dmnf = man(good, function() stop("down")))
-    expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", dest))
+    expect_true(.bl_data_check_sha("db/t", dest))
     # tampered after the manifest was cached, and the refresh fails (server
     # down): refused, deleted
     writeLines("666,TAMPERED-CACHE", dest)
     expect_error(
-      rmoriebricklayer:::.bl_data_check_sha("db/t", dest),
+      .bl_data_check_sha("db/t", dest),
       "does not match"
     )
     expect_false(file.exists(dest))
@@ -60,7 +60,7 @@ test_that(
       dmnf = man(good, function() list(datasets = list()))
     )
     expect_error(
-      rmoriebricklayer:::.bl_data_check_sha("db/t", dest),
+      .bl_data_check_sha("db/t", dest),
       "does not match"
     )
     expect_false(file.exists(dest))
@@ -69,14 +69,14 @@ test_that(
     writeLines("3,4", dest)
     rebuilt <- tolower(csha256(readBin(dest, "raw", file.size(dest))))
     testthat::local_mocked_bindings(dmnf = man(good, rebuilt))
-    expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", dest))
+    expect_true(.bl_data_check_sha("db/t", dest))
     # a digest that is a list, or not a digest: refused, and the unverified file
     # leaves the cache
     testthat::local_mocked_bindings(dmnf = function(refresh = FALSE) {
       list(datasets = list(list(key = "db/t", sha256 = list(rebuilt, "x"))))
     })
     expect_error(
-      rmoriebricklayer:::.bl_data_check_sha("db/t", dest),
+      .bl_data_check_sha("db/t", dest),
       "not a SHA-256"
     )
     expect_false(file.exists(dest))
@@ -85,7 +85,7 @@ test_that(
       list(datasets = list(list(key = "db/t", sha256 = "sha256:zz")))
     })
     expect_error(
-      rmoriebricklayer:::.bl_data_check_sha("db/t", dest),
+      .bl_data_check_sha("db/t", dest),
       "not a SHA-256"
     )
     expect_false(file.exists(dest))
@@ -106,7 +106,7 @@ test_that(
     )
     withr::local_envvar(MORIE_DATA_URL = "https://elsewhere.example.org")
     expect_error(
-      suppressMessages(rmoriebricklayer:::.bl_data_get(
+      suppressMessages(.bl_data_get(
         "/x.csv.gz",
         tempfile()
       )),
@@ -197,7 +197,7 @@ test_that(
       )
     }
     expect_true(wait_for(outs))
-    rec <- rmoriebricklayer:::.rmbl_xmss_record_read(idx)
+    rec <- .rmbl_xmss_record_read(idx)
     kids <- c(xmss_kid(k1), xmss_kid(k2))
     # neither process wiped the other's line
     expect_true(all(kids %in% names(rec)))
@@ -217,7 +217,7 @@ test_that(
     s1 <- cpssign("first", k)
     kid <- xmss_kid(k)
     expect_identical(
-      rmoriebricklayer:::.rmbl_xmss_record_read(f),
+      .rmbl_xmss_record_read(f),
       stats::setNames(0L, kid)
     )
     bad_records <- list(
@@ -248,7 +248,7 @@ test_that(
       ),
       pqckg(height = 2)
     )
-    rm(list = xmss_kid(elsewhere), envir = rmoriebricklayer:::.rmbl_xmss_used)
+    rm(list = xmss_kid(elsewhere), envir = .rmbl_xmss_used)
     expect_error(cpssign("x", elsewhere), "not in the used-index record")
     expect_identical(xmssregkey(elsewhere), elsewhere)
     expect_identical(as.integer(cpssign("x", elsewhere)$index), 0L)
@@ -275,7 +275,7 @@ test_that(
     for (v in list(TRUE, "0", "FALSE", "yes")) {
       withr::local_options(rmoriebricklayer.xmssidxfile = v)
       expect_error(
-        rmoriebricklayer:::.rmbl_xmss_index_file(),
+        .rmbl_xmss_index_file(),
         "not a file path|must be a file path",
         info = format(v)
       )
@@ -315,7 +315,7 @@ test_that("xmssadv() checks what it is given and consults the record", {
   other <- pqckg(height = 2)
   cpssign("o", other)
   xmssfgt(k)
-  rec <- rmoriebricklayer:::.rmbl_xmss_record_read(f)
+  rec <- .rmbl_xmss_record_read(f)
   expect_identical(rec[[xmss_kid(other)]], 0L)
   expect_identical(rec[[xmss_kid(k)]], -1L)
   expect_identical(as.integer(cpssign("again", k)$index), 0L)
@@ -456,7 +456,7 @@ test_that(
     testthat::local_mocked_bindings(.bl_hosted_base = function(...) {
       "https://llm.example.org"
     })
-    p <- rmoriebricklayer:::.bl_credentials_path()
+    p <- .bl_credentials_path()
     dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
     other <- paste0(
       '"other_pkg": {"f": 3.14159265358979, "big": 12345678901234567890, ',
@@ -465,8 +465,8 @@ test_that(
     )
     orig <- paste0("{\n  ", other, ",\n  \"tail\": 1.0\n}\n")
     write_bytes(p, charToRaw(orig))
-    rmoriebricklayer:::.bl_store_key("sk-new", user = "u@example.org")
-    txt <- rmoriebricklayer:::.bl_read_text(p)
+    .bl_store_key("sk-new", user = "u@example.org")
+    txt <- .bl_read_text(p)
     expect_true(grepl(other, txt, fixed = TRUE))
     expect_true(grepl('"tail": 1.0', txt, fixed = TRUE))
     expect_true(grepl('"hosted_key": "sk-new"', txt, fixed = TRUE))
@@ -476,12 +476,12 @@ test_that(
       fixed = TRUE
     ))
     expect_identical(
-      rmoriebricklayer:::.bl_read_credentials()$hosted_key,
+      .bl_read_credentials()$hosted_key,
       "sk-new"
     )
     # a second login replaces the three members in place
-    rmoriebricklayer:::.bl_store_key("sk-again")
-    txt <- rmoriebricklayer:::.bl_read_text(p)
+    .bl_store_key("sk-again")
+    txt <- .bl_read_text(p)
     expect_identical(
       lengths(regmatches(txt, gregexpr("hosted_key", txt, fixed = TRUE))),
       1L
@@ -489,11 +489,11 @@ test_that(
     expect_true(grepl('"hosted_key": "sk-again"', txt, fixed = TRUE))
     expect_true(grepl(other, txt, fixed = TRUE))
     suppressMessages(dlogout())
-    txt <- rmoriebricklayer:::.bl_read_text(p)
+    txt <- .bl_read_text(p)
     expect_false(grepl("hosted_", txt, fixed = TRUE))
     expect_true(grepl(other, txt, fixed = TRUE))
     expect_true(grepl('"tail": 1.0', txt, fixed = TRUE))
-    expect_true(is.list(rmoriebricklayer:::.bl_credentials_object(p)))
+    expect_type(.bl_credentials_object(p), "list")
     # only this package's members: the file goes away
     write_bytes(
       p,
@@ -508,9 +508,9 @@ test_that(
     expect_false(file.exists(p))
     # a file that is not an object is never written over
     write_bytes(p, charToRaw("[1, 2]"))
-    expect_error(rmoriebricklayer:::.bl_store_key("sk-x"), "not a JSON object")
+    expect_error(.bl_store_key("sk-x"), "not a JSON object")
     expect_error(dlogout(), "not a JSON object")
-    expect_identical(rmoriebricklayer:::.bl_read_text(p), "[1, 2]")
+    expect_identical(.bl_read_text(p), "[1, 2]")
   }
 )
 
@@ -520,13 +520,13 @@ test_that(
     "the shapes other packages write"
   ),
   {
-    mem <- rmoriebricklayer:::.bl_json_top_members(
+    mem <- .bl_json_top_members(
       ' {"a": {"b": [1, {"c": "}"}]}, "": null, "d": "x\\"y", "e": 1e300} '
     )
     expect_identical(vapply(mem, `[[`, "", "key"), c("a", "", "d", "e"))
-    expect_null(rmoriebricklayer:::.bl_json_top_members("[1]"))
-    expect_null(rmoriebricklayer:::.bl_json_top_members('{"a": '))
-    expect_identical(rmoriebricklayer:::.bl_json_top_members("{}"), list())
+    expect_null(.bl_json_top_members("[1]"))
+    expect_null(.bl_json_top_members('{"a": '))
+    expect_identical(.bl_json_top_members("{}"), list())
   }
 )
 
@@ -555,12 +555,13 @@ test_that(
       basrateper = 1
     )
     expect_identical(d$status, "ok")
-    expect_equal(d$inputs$baserateper100k, 1200)
+    expect_identical(d$inputs$baserateper100k, 1200)
     z <- vrfpol("pm25", expomean = 25, expoprev = 1, brate = 0)
     expect_identical(z$status, "ok")
     expect_true(any(grepl(
       "measured zero",
-      vapply(z$assumptions, function(a) a$note, "")
+      vapply(z$assumptions, function(a) a$note, ""),
+      fixed = TRUE
     )))
     bad <- vrfpol("pm25", expomean = 25, expoprev = 1, basrateper = -1)
     expect_identical(bad$status, "error")
@@ -597,18 +598,16 @@ test_that(
       multiple = TRUE
     )
     nm <- paste0("Données", paste(chars, collapse = ""), "Montréal")
-    tab <- rmoriebricklayer:::.bl_data_tables_df("db/t", nm, 3L, "x")
-    txt <- rmoriebricklayer:::.bl_format_data_tables(tab, width = 120)
+    tab <- .bl_data_tables_df("db/t", nm, 3L, "x")
+    txt <- .bl_format_data_tables(tab, width = 120)
     for (ch in chars) {
       expect_false(
         grepl(ch, txt, fixed = TRUE),
         info = sprintf("U+%04X", utf8ToInt(ch))
       )
     }
-    expect_true(
-      grepl("Données", txt, fixed = TRUE) &&
-        grepl("Montréal", txt, fixed = TRUE)
-    )
+    expect_true(grepl("Données", txt, fixed = TRUE))
+    expect_true(grepl("Montréal", txt, fixed = TRUE))
   }
 )
 
@@ -667,7 +666,9 @@ test_that(
     # the run (52a8883)
     writeLines(c("exposure,income", "30,1", "n/a,2", "40,3", ",4"), f)
     expect_message(
-      v <- vrfpol("pm25", expcsv = f),
+      {
+        v <- vrfpol("pm25", expcsv = f)
+      },
       "2 row\\(s\\) have no exposure value"
     )
     expect_identical(v$status, "ok")
@@ -693,7 +694,7 @@ test_that(
     long <- strrep("a very long level name ", 4)
     expect_silent(plot(freqtbl(data.frame(g = c(long, "b", "b")), "g")))
     expect_identical(
-      rmoriebricklayer:::.bl_short_label(c(long, "b", NA)),
+      .bl_short_label(c(long, "b", NA)),
       c(paste0(substr(long, 1, 25), "..."), "b", NA)
     )
   }
@@ -713,7 +714,7 @@ test_that(
       OLLAMA_BASE_URL = "http://10.0.0.5:11434",
       XDG_CONFIG_HOME = withr::local_tempdir()
     ))
-    expect_true(rmoriebricklayer:::.bl_own_configured())
+    expect_true(.bl_own_configured())
     testthat::local_mocked_bindings(.bl_config_value = function(name) {
       if (identical(name, "OLLAMA_HOST")) {
         "http://saved.example.org:11434"
@@ -722,13 +723,13 @@ test_that(
       }
     })
     expect_identical(
-      rmoriebricklayer:::.bl_ollama_base(),
+      .bl_ollama_base(),
       "http://10.0.0.5:11434"
     )
     testthat::local_mocked_bindings(.bl_config_value = function(name) NULL)
     withr::local_envvar(OLLAMA_BASE_URL = NA)
     expect_identical(
-      rmoriebricklayer:::.bl_ollama_base(),
+      .bl_ollama_base(),
       "http://localhost:11434"
     )
   }
@@ -747,11 +748,11 @@ test_that(
     ))
     llmcfg(own.key = "k1", own.url = "http://127.0.0.1:1234/v1")
     expect_identical(
-      rmoriebricklayer:::.bl_config_value("MORIE_LLM_API_KEY"),
+      .bl_config_value("MORIE_LLM_API_KEY"),
       "k1"
     )
     expect_match(
-      rmoriebricklayer:::.bl_config_value("MORIE_LLM_BASE_URL"),
+      .bl_config_value("MORIE_LLM_BASE_URL"),
       "127.0.0.1"
     )
   }
@@ -763,31 +764,32 @@ test_that(
     "and does not break doctor"
   ),
   {
+    got <- new.env()
     withr::local_envvar(c(
       XDG_CONFIG_HOME = withr::local_tempdir(),
       MORIE_LLM_ROUTE = NA
     ))
-    p <- rmoriebricklayer:::.bl_config_path()
+    p <- .bl_config_path()
     dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
     writeLines("[1, 2]", p)
     st <- llmstat()
     expect_identical(st$route, "settings")
     expect_identical(st$status, "unreadable")
     expect_match(st$detail, "config reset")
-    out <- character()
-    s <- blcli("doctor", out = function(x) out <<- c(out, x))
+    got$out <- character()
+    s <- blcli("doctor", out = function(x) got$out <- c(got$out, x))
     expect_identical(s, 0L)
-    expect_true(any(grepl("unreadable", out)))
-    out <- character()
-    s <- blcli(c("config", "reset"), out = function(x) out <<- c(out, x))
+    expect_true(any(grepl("unreadable", got$out, fixed = TRUE)))
+    got$out <- character()
+    s <- blcli(c("config", "reset"), out = function(x) got$out <- c(got$out, x))
     expect_identical(s, 0L)
     expect_false(file.exists(p))
-    expect_true(any(grepl("moved", out)))
+    expect_true(any(grepl("moved", got$out, fixed = TRUE)))
     expect_length(list.files(dirname(p), pattern = "broken-"), 1L)
     expect_identical(llmstat()$route[[1L]], "own endpoint")
-    out <- character()
-    blcli(c("config", "reset"), out = function(x) out <<- c(out, x))
-    expect_true(any(grepl("no settings file", out)))
+    got$out <- character()
+    blcli(c("config", "reset"), out = function(x) got$out <- c(got$out, x))
+    expect_true(any(grepl("no settings file", got$out, fixed = TRUE)))
   }
 )
 
@@ -797,28 +799,32 @@ test_that(
     "Ctrl-C exits 130"
   ),
   {
+    got <- new.env()
     for (v in c("logout", "doctor", "version")) {
-      out <- character()
-      s <- blcli(c(v, "extra"), out = function(x) out <<- c(out, x))
+      got$out <- character()
+      s <- blcli(c(v, "extra"), out = function(x) got$out <- c(got$out, x))
       expect_identical(s, 2L, info = v)
-      expect_true(any(grepl("takes no arguments", out)), info = v)
+      expect_true(
+        any(grepl("takes no arguments", got$out, fixed = TRUE)),
+        info = v
+      )
     }
-    out <- character()
+    got$out <- character()
     expect_identical(
-      blcli(c("models", "extra"), out = function(x) out <<- c(out, x)),
+      blcli(c("models", "extra"), out = function(x) got$out <- c(got$out, x)),
       2L
     )
-    expect_true(any(grepl("usage: .* models \\[--route ROUTE\\]", out)))
+    expect_true(any(grepl("usage: .* models \\[--route ROUTE\\]", got$out)))
     testthat::local_mocked_bindings(dlogout = function() {
       stop(structure(
         class = c("interrupt", "condition"),
         list(message = "", call = NULL)
       ))
     })
-    out <- character()
-    s <- blcli("logout", out = function(x) out <<- c(out, x))
+    got$out <- character()
+    s <- blcli("logout", out = function(x) got$out <- c(got$out, x))
     expect_identical(s, 130L)
-    expect_true(any(grepl("interrupted", out)))
+    expect_true(any(grepl("interrupted", got$out, fixed = TRUE)))
   }
 )
 
@@ -830,8 +836,8 @@ test_that(
   {
     chars <- intToUtf8(c(0x061c, 0x2028, 0x2029), multiple = TRUE)
     nm <- paste0("Données", paste(chars, collapse = ""), "Montréal")
-    tab <- rmoriebricklayer:::.bl_data_tables_df("db/t", nm, 3L, "x")
-    txt <- rmoriebricklayer:::.bl_format_data_tables(tab, width = 120)
+    tab <- .bl_data_tables_df("db/t", nm, 3L, "x")
+    txt <- .bl_format_data_tables(tab, width = 120)
     for (ch in chars) {
       expect_false(
         grepl(ch, txt, fixed = TRUE),
@@ -873,8 +879,8 @@ test_that(
       ]])
     }
     expect_identical(pages_of(NULL), pages_of("one short note"))
-    expect_gte(rmoriebricklayer:::.yoy_note_line(2), 0.1)
-    expect_equal(rmoriebricklayer:::.yoy_note_line(8.5), 0.153)
+    expect_gte(.yoy_note_line(2), 0.1)
+    expect_equal(.yoy_note_line(8.5), 0.153)
   }
 )
 
@@ -889,7 +895,7 @@ test_that("the branch's refusals that codecov found untested are exercised", {
     "maxwork"
   )
   # the member scanner on every malformed shape
-  scan <- rmoriebricklayer:::.bl_json_top_members
+  scan <- .bl_json_top_members
   expect_null(scan('{"a": "unterminated'))
   expect_null(scan('{"a": [1, 2'))
   expect_null(scan('{"a'))
@@ -898,31 +904,31 @@ test_that("the branch's refusals that codecov found untested are exercised", {
   expect_null(scan('{"a": 1'))
   expect_null(scan('{"a": {"b": "x"'))
   expect_error(
-    rmoriebricklayer:::.bl_credentials_text_set("[1]", "k", "v"),
+    .bl_credentials_text_set("[1]", "k", "v"),
     "not a JSON object"
   )
   # the credentials reader with and without a file, and the unsimplified read
   # keeps a null
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
-  expect_identical(rmoriebricklayer:::.bl_read_credentials(), list())
-  cred <- rmoriebricklayer:::.bl_credentials_path()
+  expect_identical(.bl_read_credentials(), list())
+  cred <- .bl_credentials_path()
   dir.create(dirname(cred), recursive = TRUE, showWarnings = FALSE)
   writeLines('{"hosted_key": "sk-1", "n": null}', cred)
-  raw <- rmoriebricklayer:::.bl_credentials_object(cred, simplify = FALSE)
+  raw <- .bl_credentials_object(cred, simplify = FALSE)
   expect_identical(raw$hosted_key, "sk-1")
   expect_true("n" %in% names(raw))
   # the CSV reader's edges
   f <- withr::local_tempfile(fileext = ".csv")
   file.create(f)
-  expect_identical(nrow(rmoriebricklayer:::.pollution_read_csv(f)), 0L)
+  expect_identical(nrow(.pollution_read_csv(f)), 0L)
   writeLines(c("", "   "), f)
-  expect_identical(nrow(rmoriebricklayer:::.pollution_read_csv(f)), 0L)
+  expect_identical(nrow(.pollution_read_csv(f)), 0L)
   con <- file(f, "wb")
   # a UTF-16 BOM with an odd byte count
   writeBin(c(as.raw(c(0xff, 0xfe)), as.raw(c(0x41, 0x00, 0x42))), con)
   close(con)
   expect_error(
-    rmoriebricklayer:::.pollution_read_csv(f),
+    .pollution_read_csv(f),
     "decoded|UTF-16|incomplete"
   )
   # a signature whose height was edited does not advance the key
@@ -938,7 +944,7 @@ test_that("the branch's refusals that codecov found untested are exercised", {
   # highest index
   rec <- withr::local_tempfile(fileext = ".txt")
   writeLines(c("", "  ", ""), rec)
-  expect_identical(rmoriebricklayer:::.rmbl_xmss_record_read(rec), integer(0))
+  expect_identical(.rmbl_xmss_record_read(rec), integer(0))
   kid <- xmss_kid(k)
   writeLines(
     c(
@@ -948,9 +954,9 @@ test_that("the branch's refusals that codecov found untested are exercised", {
     ),
     rec
   )
-  got <- rmoriebricklayer:::.rmbl_xmss_record_read(rec)
+  got <- .rmbl_xmss_record_read(rec)
   expect_identical(unname(got), 3L)
-  expect_identical(names(got), kid)
+  expect_named(got, kid)
 })
 
 test_that(
@@ -964,7 +970,7 @@ test_that(
     rec <- withr::local_tempfile(fileext = ".txt")
     dir.create(file.path(rec, "inside"), recursive = TRUE)
     expect_error(
-      rmoriebricklayer:::.rmbl_xmss_record_write(rec, stats::setNames(1L, "k")),
+      .rmbl_xmss_record_write(rec, stats::setNames(1L, "k")),
       "could not write"
     )
     testthat::local_mocked_bindings(
@@ -973,16 +979,16 @@ test_that(
     )
     cred <- withr::local_tempfile(fileext = ".json")
     expect_error(
-      rmoriebricklayer:::.bl_write_private_text(cred, "{}"),
+      .bl_write_private_text(cred, "{}"),
       "could not write"
     )
     withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
-    p <- rmoriebricklayer:::.bl_config_path()
+    p <- .bl_config_path()
     dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
     writeLines("[1]", p)
-    expect_error(rmoriebricklayer:::.bl_config_reset(), "could not move")
+    expect_error(.bl_config_reset(), "could not move")
     expect_error(
-      rmoriebricklayer:::.bl_config_reset(force = TRUE),
+      .bl_config_reset(force = TRUE),
       "could not move"
     )
   }
@@ -1015,11 +1021,11 @@ test_that(
     skip_if_not(wait_files(ready), "the lock-holding process did not start")
     t0 <- Sys.time()
     expect_error(
-      rmoriebricklayer:::.rmbl_xmss_with_lock(rec, function() TRUE),
+      .rmbl_xmss_with_lock(rec, function() TRUE),
       "could not lock"
     )
     expect_gte(as.numeric(difftime(Sys.time(), t0, units = "secs")), 9)
     expect_true(wait_files(done))
-    expect_true(rmoriebricklayer:::.rmbl_xmss_with_lock(rec, function() TRUE))
+    expect_true(.rmbl_xmss_with_lock(rec, function() TRUE))
   }
 )

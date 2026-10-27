@@ -11,20 +11,20 @@ test_that(
     "country, generic zones to none"
   ),
   {
-    expect_equal(loc_of("Iceland"), "IS")
-    expect_equal(loc_of("Atlantic/Reykjavik"), "IS")
-    expect_equal(loc_of("Atlantic/Jan_Mayen"), "NO")
-    expect_equal(loc_of("America/Coral_Harbour"), "CA")
-    expect_equal(loc_of("Africa/Asmera"), "ER")
-    expect_equal(loc_of("Africa/Timbuktu"), "ML")
-    expect_equal(loc_of("Pacific/Truk"), "FM")
-    expect_equal(loc_of("Pacific/Yap"), "FM")
-    expect_equal(loc_of("Pacific/Ponape"), "FM")
-    expect_equal(loc_of("Asia/Calcutta"), "IN")
-    expect_equal(loc_of("US/Eastern"), "US")
-    expect_equal(loc_of("Canada/Eastern"), "CA")
-    expect_equal(loc_of("Europe/Stockholm"), "SE")
-    tz <- rmoriebricklayer:::.rmbl_tz_table()
+    expect_identical(loc_of("Iceland"), "IS")
+    expect_identical(loc_of("Atlantic/Reykjavik"), "IS")
+    expect_identical(loc_of("Atlantic/Jan_Mayen"), "NO")
+    expect_identical(loc_of("America/Coral_Harbour"), "CA")
+    expect_identical(loc_of("Africa/Asmera"), "ER")
+    expect_identical(loc_of("Africa/Timbuktu"), "ML")
+    expect_identical(loc_of("Pacific/Truk"), "FM")
+    expect_identical(loc_of("Pacific/Yap"), "FM")
+    expect_identical(loc_of("Pacific/Ponape"), "FM")
+    expect_identical(loc_of("Asia/Calcutta"), "IN")
+    expect_identical(loc_of("US/Eastern"), "US")
+    expect_identical(loc_of("Canada/Eastern"), "CA")
+    expect_identical(loc_of("Europe/Stockholm"), "SE")
+    tz <- .rmbl_tz_table()
     expect_false(any(
       c(
         "CET",
@@ -40,7 +40,7 @@ test_that(
         tz$tz
     ))
     for (g in c("CET", "EST", "WET")) {
-      expect_equal(loc_of(g), "WORLD")
+      expect_identical(loc_of(g), "WORLD")
     }
     olson <- OlsonNames()
     geo <- olson[
@@ -63,12 +63,12 @@ test_that(
     c0 <- matrix(0, 11, 11)
     c0[6, 6] <- 1
     expect_error(
-      advdif2d(c0, u = 1e10, v = 0, kx = .1, ky = .1, 1, 1, 1, 2),
+      advdif2d(c0, u = 1e10, v = 0, kx = 0.1, ky = 0.1, 1, 1, 1, 2),
       "sub-steps"
     )
     t0 <- proc.time()[["elapsed"]]
     expect_error(
-      advdif2d(c0, u = .5, v = .4, kx = .1, ky = .1, 1, 1, 1e6, 1),
+      advdif2d(c0, u = 0.5, v = 0.4, kx = 0.1, ky = 0.1, 1, 1, 1e6, 1),
       "sub-steps"
     )
     expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(5))
@@ -84,7 +84,7 @@ test_that(
       1,
       1
     ))
-    expect_equal(r$substeps, 2L)
+    expect_identical(r$substeps, 2L)
     expect_equal(r$mass, 1, tolerance = 1e-12)
   }
 )
@@ -96,16 +96,16 @@ test_that(
   ),
   {
     none <- vrfpol("no2")
-    expect_equal(none$status, "error")
-    expect_equal(attr(none, "exitstat"), 2L)
+    expect_identical(none$status, "error")
+    expect_identical(attr(none, "exitstat"), 2L)
     expect_match(none$error, "no exposure data")
     low <- vrfpol("pm25", expomean = 3, expoprev = 0.5)
-    expect_equal(low$status, "ok")
-    expect_equal(low$pipeline$paf, 0)
-    expect_equal(low$pipeline$burden$attrcases, 0)
+    expect_identical(low$status, "ok")
+    expect_identical(low$pipeline$paf, 0)
+    expect_identical(low$pipeline$burden$attrcases, 0)
     bad <- vrfpol("pm25", expomean = -3, expoprev = 0.5)
-    expect_equal(bad$status, "assumption_failure")
-    expect_equal(attr(bad, "exitstat"), 1L)
+    expect_identical(bad$status, "assumption_failure")
+    expect_identical(attr(bad, "exitstat"), 1L)
     for (args in list(
       list(demo = NA),
       list(demo = "yes"),
@@ -118,7 +118,7 @@ test_that(
     )) {
       r <- do.call(vrfpol, c(list("no2"), args))
       expect_equal(r$status, "error", info = paste(names(args), collapse = ","))
-      expect_equal(attr(r, "exitstat"), 2L)
+      expect_identical(attr(r, "exitstat"), 2L)
     }
     expect_match(
       vrfpol("no2", y = "bogus", expomean = 20, expoprev = 0.5)$error,
@@ -156,14 +156,14 @@ test_that(
       "UES\nAgents impliqués\nLe nom d'un agent impliqué n'est pas divulgué. ",
       "AI no 3 A participé\nAI no 1\nAgents témoins\n"
     )
-    expect_equal(as.numeric(siuso(fr1)$count), 1)
-    expect_equal(as.numeric(siuso(fr2)$count), 3)
+    expect_identical(as.numeric(siuso(fr1)$count), 1)
+    expect_identical(as.numeric(siuso(fr2)$count), 3)
     # the English roster is untouched by the change
     en <- paste0(
       "SIU\nSubject Officials\nSO #1 Interviewed\nSO #2 Declined\nWitness ",
       "Officials\n"
     )
-    expect_equal(as.numeric(siuso(en)$count), 2)
+    expect_identical(as.numeric(siuso(en)$count), 2)
   }
 )
 
@@ -194,7 +194,8 @@ test_that(
       fsa = c("a", "b"),
       exposure = c(10, 20),
       population = factor(c("100", "200")),
-      brate = c(500, 500)
+      brate = c(500, 500),
+      stringsAsFactors = FALSE
     )
     expect_error(polbrdarea(a), "must be numeric")
   }
@@ -219,23 +220,23 @@ test_that(
       .bl_config_value = function(env) NULL,
       .package = "rmoriebricklayer"
     )
-    expect_null(rmoriebricklayer:::.bl_llm_route(NULL))
-    expect_null(rmoriebricklayer:::.bl_llm_route("auto"))
+    expect_null(.bl_llm_route(NULL))
+    expect_null(.bl_llm_route("auto"))
     # insisting on Ollama keeps the prompt local: the empty server is taken, no
     # message
-    expect_silent(rt3 <- rmoriebricklayer:::.bl_llm_route("ollama"))
-    expect_equal(rt3$name, "local Ollama")
+    expect_silent(assign("rt3", .bl_llm_route("ollama")))
+    expect_identical(rt3$name, "local Ollama")
     # an own endpoint half set up is skipped out loud when a later route answers
     withr::local_envvar(MORIE_LLM_MODEL = "m", MISTRAL_API_KEY = "mk")
     expect_message(
-      rt4 <- rmoriebricklayer:::.bl_llm_route(NULL),
+      assign("rt4", .bl_llm_route(NULL)),
       "no address .*; using Mistral"
     )
-    expect_equal(rt4$name, "Mistral")
+    expect_identical(rt4$name, "Mistral")
     withr::local_envvar(MORIE_LLM_MODEL = NA, MISTRAL_API_KEY = NA)
     withr::local_envvar(MORIE_LLM_ROUTE = "ollma")
     expect_error(
-      rmoriebricklayer:::.bl_llm_route(NULL),
+      .bl_llm_route(NULL),
       "must be auto, own, ollama or a provider"
     )
   }
@@ -251,7 +252,7 @@ test_that("L2: a malformed llm.json is an error and never written over", {
   )
   # the review of 0.5.12: an unreadable settings file is an error every time,
   # not a warning once per change that then let the saved route be dropped
-  expect_error(rmoriebricklayer:::.bl_read_config(), "not a JSON object")
+  expect_error(.bl_read_config(), "not a JSON object")
   expect_error(llmcfg(route = "ollama"), "not a JSON object")
   expect_identical(readLines(cfg), '{"route": "ollama",}')
 })
@@ -274,12 +275,12 @@ test_that("L3: a saved key is sent only to the address it was saved with", {
     .bl_config_value = function(env) unname(saved[env]),
     .package = "rmoriebricklayer"
   )
-  kf <- rmoriebricklayer:::.bl_key_for
-  expect_equal(kf("MORIE_LLM_API_KEY", "MORIE_LLM_BASE_URL"), "own-secret")
+  kf <- .bl_key_for
+  expect_identical(kf("MORIE_LLM_API_KEY", "MORIE_LLM_BASE_URL"), "own-secret")
   own <- function() kf("MORIE_LLM_API_KEY", "MORIE_LLM_BASE_URL")
   withr::with_envvar(
     c(MORIE_LLM_BASE_URL = "http://10.0.0.5:1234/v1/"),
-    expect_equal(own(), "own-secret")
+    expect_identical(own(), "own-secret")
   )
   withr::with_envvar(
     c(MORIE_LLM_BASE_URL = "http://10.0.0.9:18002"),
@@ -290,7 +291,7 @@ test_that("L3: a saved key is sent only to the address it was saved with", {
       MORIE_LLM_BASE_URL = "http://10.0.0.9:18002",
       MORIE_LLM_API_KEY = "one-off"
     ),
-    expect_equal(kf("MORIE_LLM_API_KEY", "MORIE_LLM_BASE_URL"), "one-off")
+    expect_identical(kf("MORIE_LLM_API_KEY", "MORIE_LLM_BASE_URL"), "one-off")
   )
   withr::with_envvar(
     c(OLLAMA_HOST = "http://10.0.0.7:11434"),
@@ -298,7 +299,7 @@ test_that("L3: a saved key is sent only to the address it was saved with", {
   )
   withr::with_envvar(
     c(OLLAMA_BASE_URL = "http://10.0.0.6:11434"),
-    expect_equal(kf("OLLAMA_API_KEY", "OLLAMA_HOST"), "ollama-secret")
+    expect_identical(kf("OLLAMA_API_KEY", "OLLAMA_HOST"), "ollama-secret")
   )
 })
 
@@ -339,7 +340,7 @@ test_that(
       class = "rmbl_pollution_report"
     )
     try(plot(broken), silent = TRUE)
-    expect_false(rmoriebricklayer:::.bl_state$active)
+    expect_false(.bl_state$active)
     expect_error(
       plotfnl(c(5, 6, 7), c(5, 5, 5), area = "x"),
       "one label per point"
@@ -380,7 +381,10 @@ test_that(
     expect_equal(hurwzeta(2, q = 1), pi^2 / 6, tolerance = 1e-9)
     expect_error(co2fp(1 + 1, cores = 2.5), "whole number")
     expect_error(mortdisp(10, 1e6, 800, 0.01), "per person-year")
-    expect_equal(mortdisp(10, 1e6, 0.008, 0.01), 0.008 * 1e6 * (1 - exp(-0.1)))
+    expect_identical(
+      mortdisp(10, 1e6, 0.008, 0.01),
+      0.008 * 1e6 * (1 - exp(-0.1))
+    )
   }
 )
 
@@ -396,7 +400,7 @@ test_that(
       rows = c(1, NA),
       stringsAsFactors = FALSE
     )
-    out <- rmoriebricklayer:::.bl_format_data_tables(tab, width = 80)
+    out <- .bl_format_data_tables(tab, width = 80)
     expect_false(grepl("\033", out, fixed = TRUE))
     expect_false(grepl("\r", out, fixed = TRUE))
     expect_match(out, "redname", fixed = TRUE)
@@ -422,30 +426,44 @@ test_that(
     d$y <- factor(sample(c("a", "b"), 40, TRUE))
     expect_error(plrcf(d, "y", "d", "x"), "must be numeric")
     expect_error(
-      lagrprt(50, 0, 0, 1, 0, .1, .1, 1, 5, grid = c(10, -10, -10, 10, 5, 5)),
+      lagrprt(50, 0, 0, 1, 0, 0.1, 0.1, 1, 5, grid = c(10, -10, -10, 10, 5, 5)),
       "xmin < x_max"
     )
     expect_error(
-      lagrprt(50, 0, 0, 1, 0, .1, .1, 1, 5, grid = c(-10, 10, -10, 10, 5.5, 5)),
+      lagrprt(
+        50,
+        0,
+        0,
+        1,
+        0,
+        0.1,
+        0.1,
+        1,
+        5,
+        grid = c(-10, 10, -10, 10, 5.5, 5)
+      ),
       "whole"
     )
     expect_warning(
-      r <- dtctloc(
-        envloc = "Narnia",
-        codloc = "",
-        tz = "Europe/Paris",
-        locale = "C"
+      assign(
+        "r",
+        dtctloc(
+          envloc = "Narnia",
+          codloc = "",
+          tz = "Europe/Paris",
+          locale = "C"
+        )
       ),
       "RMBL_LOCATION='Narnia' is not"
     )
-    expect_equal(r$location, "FR")
+    expect_identical(r$location, "FR")
   }
 )
 
 test_that("P14: one world row, from Ember", {
   ci <- co2inttab()
   expect_false("GLOBAL" %in% ci$location)
-  expect_equal(sum(ci$location == "WORLD"), 1L)
+  expect_identical(sum(ci$location == "WORLD"), 1L)
   expect_true(all(ci$year >= 2009 & ci$year <= 2025))
 })
 
@@ -465,7 +483,10 @@ test_that(
     s2$auth <- character(0)
     expect_false(cpsvrf("m", s2, k))
     s2 <- s
-    s2$root <- paste0(rev(strsplit(s2$root, "")[[1]]), collapse = "")
+    s2$root <- paste(
+      rev(strsplit(s2$root, "", fixed = TRUE)[[1]]),
+      collapse = ""
+    )
     expect_false(cpsvrf("m", s2, k))
     s2 <- s
     s2$height <- s2$height + 1L
@@ -497,13 +518,13 @@ test_that(
     p <- 0.4
     levin <- function(r) p * (r - 1) / (1 + p * (r - 1))
     paf <- attrfrac(1.5, p, rrlo = 1.2, rrup = 1.9)
-    expect_equal(as.numeric(paf), levin(1.5))
-    expect_equal(attr(paf, "ci"), c(lower = levin(1.2), upper = levin(1.9)))
+    expect_identical(as.numeric(paf), levin(1.5))
+    expect_identical(attr(paf, "ci"), c(lower = levin(1.2), upper = levin(1.9)))
     expect_null(attr(attrfrac(1.5, p), "ci"))
     expect_error(attrfrac(1.5, p, rrlo = 1.2), "go together")
     expect_error(attrfrac(1.5, p, rrlo = 1.6, rrup = 1.9), "between")
-    # the PM2.5 all-cause curve carries Chen and Hoek's 1.06 to 1.09 per 10
-    # ug/m3
+    # the PM2.5 all-cause curve carries Chen and Hoek's 1.06
+    # to 1.09 per 10 ug/m3
     crf <- crfpm25(15.8)
     expect_equal(crf$rr, 1.08)
     expect_equal(crf$rrlo, 1.06)
@@ -512,10 +533,15 @@ test_that(
     expect_equal(c(n$rrlo, n$rrup), c(1.01, 1.04))
     expect_true(is.na(crfpm25(20, y = "ihd")$rrlo))
     r <- vrfpol("pm25", expomean = 15.8, expoprev = 0.5)
-    expect_equal(r$pipeline$paf, 0.5 * 0.08 / (1 + 0.5 * 0.08))
+    expect_equal(
+      r$pipeline$paf,
+      0.5 * 0.08 / (1 + 0.5 * 0.08),
+      tolerance = testthat::testthat_tolerance()
+    )
     expect_equal(
       unname(r$pipeline$pafci),
-      c(0.5 * 0.06 / (1 + 0.5 * 0.06), 0.5 * 0.09 / (1 + 0.5 * 0.09))
+      c(0.5 * 0.06 / (1 + 0.5 * 0.06), 0.5 * 0.09 / (1 + 0.5 * 0.09)),
+      tolerance = testthat::testthat_tolerance()
     )
     expect_match(polrpttxt(r), "95% CI", fixed = TRUE)
   }
@@ -527,7 +553,7 @@ test_that(
     "label and the notes"
   ),
   {
-    rows <- rmoriebricklayer:::.yoy_rows_per_page
+    rows <- .yoy_rows_per_page
     for (h in c(5, 8.5, 11, 17, 24)) {
       n <- rows(h, 0L)
       # the rows drawn from 0.88 down by 0.22 inch each end above the page label
@@ -536,9 +562,9 @@ test_that(
       expect_gte(0.88 - 1.1 * 0.22 / h - n * 0.22 / h, 0.06 - 1e-9)
       expect_gt(rows(h, 0L), rows(h, 3L))
     }
-    expect_equal(rows(24, 0L), 88L)
-    expect_equal(rows(8.5, 0L), 30L)
-    expect_equal(rows(1, 0L), 5L)
+    expect_identical(rows(24, 0L), 88L)
+    expect_identical(rows(8.5, 0L), 30L)
+    expect_identical(rows(1, 0L), 5L)
   }
 )
 
@@ -573,23 +599,24 @@ test_that(
   {
     skip_on_os("windows")
     calls <- character()
+    te <- environment()
     testthat::local_mocked_bindings(.bl_interactive = function() TRUE)
     testthat::local_mocked_bindings(
       isatty = function(con) TRUE,
       readline = function(prompt = "") " sk-hidden ",
       system2 = function(command, args = character(), ...) {
-        calls <<- c(calls, paste(command, args))
+        assign("calls", c(calls, paste(command, args)), envir = te)
         invisible(0L)
       },
       .package = "base"
     )
     msg <- utils::capture.output(
-      got <- .bl_readline("key> ", secret = TRUE),
+      assign("got", .bl_readline("key> ", secret = TRUE)),
       type = "message"
     )
-    expect_equal(got, "sk-hidden")
+    expect_identical(got, "sk-hidden")
     if (nzchar(Sys.which("stty"))) {
-      expect_equal(calls, c("stty -echo", "stty echo"))
+      expect_identical(calls, c("stty -echo", "stty echo"))
       expect_true(any(msg == ""))
     }
   }
@@ -607,11 +634,13 @@ test_that(
       RMBL_PROG = "rmbl"
     )
     txt <- character()
+    te <- environment()
+    keep <- function(s) assign("txt", c(txt, s), envir = te)
     st <- blcli(
       c("ask", "--model", "a", "--model", "b", "hi"),
-      out = function(s) txt <<- c(txt, s)
+      out = keep
     )
-    expect_equal(st, 2L)
+    expect_identical(st, 2L)
     expect_match(
       paste(txt, collapse = ""),
       "--model may be given once",
@@ -620,9 +649,9 @@ test_that(
     txt <- character()
     st <- blcli(
       c("ask", "--route", "own", "--route", "hosted", "hi"),
-      out = function(s) txt <<- c(txt, s)
+      out = keep
     )
-    expect_equal(st, 2L)
+    expect_identical(st, 2L)
     expect_match(
       paste(txt, collapse = ""),
       "--route may be given once",
@@ -634,7 +663,7 @@ test_that(
 test_that("vrfpol wants one outcome name, not a vector or a number", {
   for (bad in list(c("a", "b"), 3, NA_character_)) {
     r <- vrfpol("no2", y = bad, expomean = 20, expoprev = 0.5)
-    expect_equal(attr(r, "exitstat"), 2L)
+    expect_identical(attr(r, "exitstat"), 2L)
     expect_match(r$error, "outcome must be a single outcome name", fixed = TRUE)
   }
 })
@@ -645,9 +674,9 @@ test_that(
     "otherwise"
   ),
   {
-    expect_equal(rmoriebricklayer:::.pollution_paf_ci_text(NULL), "")
-    expect_equal(
-      rmoriebricklayer:::.pollution_paf_ci_text(c(lower = 0.1234, upper = 0.2)),
+    expect_identical(.pollution_paf_ci_text(NULL), "")
+    expect_identical(
+      .pollution_paf_ci_text(c(lower = 0.1234, upper = 0.2)),
       "  (95% CI 0.1234 to 0.2000, from the risk's limits)"
     )
   }

@@ -18,9 +18,11 @@ wall_limit <- function(s) {
     return(50 * s)
   }
   load <- tryCatch(
-    as.numeric(strsplit(readLines("/proc/loadavg", n = 1L, warn = FALSE), " ")[[
-      1L
-    ]][[1L]]),
+    as.numeric(strsplit(
+      readLines("/proc/loadavg", n = 1L, warn = FALSE),
+      " ",
+      fixed = TRUE
+    )[[1L]][[1L]]),
     error = function(e) NA_real_,
     warning = function(w) NA_real_
   )

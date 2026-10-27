@@ -88,7 +88,7 @@ rmbldemo <- function(name = NULL) {
   if (!name %in% tab$name) {
     stop(
       "rmbldemo: `name` must be one of ",
-      paste(tab$name, collapse = ", "),
+      toString(tab$name),
       call. = FALSE
     )
   }
@@ -202,20 +202,7 @@ rmbldemo <- function(name = NULL) {
       stats::rnorm(nrow(d), 0, 3),
     1
   )
-  d[, c(
-    "court",
-    "region",
-    "month",
-    "date",
-    "received",
-    "disposed",
-    "pending",
-    "clearance",
-    "caseload",
-    "delay",
-    "reformed",
-    "refmonth"
-  )]
+  .bl_demo_court_cols(d)
 }
 
 #' The monthly offence counts.
@@ -326,22 +313,7 @@ rmbldemo <- function(name = NULL) {
   )
   d$income[sample.int(n, 8L)] <- d$income[sample.int(n, 8L)] * 12
   d$income[sample.int(n, round(0.08 * n))] <- NA
-  for (r in 1:20) {
-    m <- numeric(n)
-    for (h in strata) {
-      p <- unique(d$psu[d$stratum == h])
-      k <- tabulate(
-        match(sample(p, length(p) - 1L, replace = TRUE), p),
-        length(p)
-      )
-      m[d$stratum == h] <- (length(p) / (length(p) - 1L) * k)[match(
-        d$psu[d$stratum == h],
-        p
-      )]
-    }
-    d[[sprintf("rw%02d", r)]] <- round(d$w * m, 2)
-  }
-  d
+  .bl_demo_rw(d, strata)
 }
 
 #' The published table by distinction, with suppression and quality flags.
@@ -401,48 +373,10 @@ rmbldemo <- function(name = NULL) {
 #' @return A data frame.
 #' @noRd
 .bl_demo_otis <- function() {
-  inst <- c(
-    "Algoma Centre",
-    "Brant Jail",
-    "Central East Centre",
-    "Elgin Middlesex Centre",
-    "Hamilton Centre",
-    "Maplehurst Complex",
-    "Monteith Complex",
-    "Niagara Centre",
-    "Ottawa Carleton Centre",
-    "South West Centre",
-    "Thunder Bay Jail",
-    "Toronto South Centre"
-  )
-  cd <- c(
-    "3557",
-    "3529",
-    "3516",
-    "3539",
-    "3525",
-    "3524",
-    "3556",
-    "3526",
-    "3506",
-    "3537",
-    "3558",
-    "3520"
-  )
-  reg <- c(
-    "North",
-    "West",
-    "Central",
-    "West",
-    "Central",
-    "Central",
-    "North",
-    "West",
-    "East",
-    "West",
-    "North",
-    "Toronto"
-  )
+  m <- .bl_demo_otis_meta()
+  inst <- m$inst
+  cd <- m$cd
+  reg <- m$reg
   d <- data.frame(
     inst = rep(inst, each = 12L),
     year = rep(2013:2024, 12L),
@@ -470,20 +404,7 @@ rmbldemo <- function(name = NULL) {
 #' @return A data frame.
 #' @noRd
 .bl_demo_air <- function() {
-  mon <- data.frame(
-    monitor = c(
-      "M1 Harbour",
-      "M2 School",
-      "M3 Market",
-      "M4 Park",
-      "M5 Clinic",
-      "M6 Depot"
-    ),
-    x = c(800, 1500, -600, 2500, 300, -1800),
-    y = c(200, -400, 900, 700, -1200, -300),
-    z = 0,
-    stringsAsFactors = FALSE
-  )
+  mon <- .bl_demo_monitors()
   hours <- 0:335
   wind <- (240 + 50 * sin(2 * pi * hours / 96) + stats::rnorm(336L, 0, 20)) %%
     360
@@ -492,11 +413,8 @@ rmbldemo <- function(name = NULL) {
     1
   )
   hod <- hours %% 24
-  stab <- ifelse(
-    hod >= 10 & hod <= 16,
-    "B",
-    ifelse(hod >= 20 | hod <= 5, "E", "D")
-  )
+  stab <- ifelse(hod >= 20 | hod <= 5, "E", "D")
+  stab[hod >= 10 & hod <= 16] <- "B"
   d <- data.frame(
     monitor = rep(mon$monitor, each = 336L),
     hour = rep(hours, 6L),
@@ -509,23 +427,7 @@ rmbldemo <- function(name = NULL) {
   d$wind_from <- round(wind[d$hour + 1L])
   d$wind_speed <- speed[d$hour + 1L]
   d$stability <- stab[d$hour + 1L]
-  # the wind blows from wind_from: downwind is the opposite bearing
-  th <- (d$wind_from + 180) * pi / 180
-  dw <- d$x * sin(th) + d$y * cos(th)
-  cw <- d$x * cos(th) - d$y * sin(th)
-  plume <- numeric(nrow(d))
-  for (k in unique(d$stability)) {
-    i <- which(d$stability == k & dw > 0)
-    for (j in i) {
-      plume[j] <- gplume(
-        10,
-        d$wind_speed[j],
-        50,
-        cbind(dw[j], cw[j], 0),
-        stab = k
-      )
-    }
-  }
+  plume <- .bl_demo_plume(d)
   bg <- 14 + 6 * cos(2 * pi * (d$hour %% 24 - 8) / 24)
   d$no2 <- round(bg + 1e6 * plume + stats::rnorm(nrow(d), 0, 1.5), 1)
   d
@@ -652,38 +554,7 @@ rmbldemo <- function(name = NULL) {
     replace = TRUE,
     prob = c(0.75, 0.15, 0.1)
   )
-  th <- lapply(seq_len(120L), function(i) {
-    f <- fns[(i - 1L) %% length(fns) + 1L]
-    x <- list(
-      id = sprintf("thm-%03d", i),
-      name = sprintf("Rmorie.%s.lemma_%03d", f, i),
-      statement = sprintf("theorem lemma_%03d : %s_spec %d", i, f, i),
-      file = sprintf("Rmorie/%s.lean", f),
-      line = 10L + 7L * i,
-      status = st[[i]],
-      sorry_count = as.integer(st[[i]] == "sorry"),
-      covers = if (st[[i]] == "axiom") {
-        list()
-      } else {
-        list(list(package = "rmoriebricklayer", `function` = f, language = "R"))
-      }
-    )
-    if (i <= 4L) {
-      x$status <- "proved"
-      x$sorry_count <- 0L
-      x$covers <- list(list(
-        package = "rmoriebricklayer",
-        `function` = "ginicoef",
-        language = "R"
-      ))
-      x$check <- list(
-        expr = sprintf("ginicoef(rep(%d, 5))", i),
-        expect = 0,
-        tol = 1e-12
-      )
-    }
-    x
-  })
+  th <- lapply(seq_len(120L), .bl_demo_thm, fns = fns, st = st)
   led <- list(
     name = "rmoriebricklayer demo ledger",
     toolchain = list(lean = "v4.12.0", mathlib = "v4.12.0", lake = "5.0.0"),
@@ -701,4 +572,183 @@ rmbldemo <- function(name = NULL) {
   f <- tempfile("rmbl-demo-ledger-", fileext = ".json")
   writeLines(tojs(led, auto_unbox = TRUE), f)
   ldgrread(f)
+}
+
+#' The court table's columns, in order.
+#' @param d The court table.
+#' @return `d` with its columns in order.
+#' @noRd
+.bl_demo_court_cols <- function(d) {
+  d[, c(
+    "court",
+    "region",
+    "month",
+    "date",
+    "received",
+    "disposed",
+    "pending",
+    "clearance",
+    "caseload",
+    "delay",
+    "reformed",
+    "refmonth"
+  )]
+}
+
+#' Adds the survey's 20 bootstrap replicate weights, rw01 to rw20.
+#' @param d The survey.
+#' @param strata Its strata.
+#' @return `d` with the replicate weights.
+#' @noRd
+.bl_demo_rw <- function(d, strata) {
+  n <- nrow(d)
+  for (r in 1:20) {
+    m <- numeric(n)
+    for (h in strata) {
+      p <- unique(d$psu[d$stratum == h])
+      k <- tabulate(
+        match(sample(p, length(p) - 1L, replace = TRUE), p),
+        length(p)
+      )
+      m[d$stratum == h] <- (length(p) / (length(p) - 1L) * k)[match(
+        d$psu[d$stratum == h],
+        p
+      )]
+    }
+    d[[sprintf("rw%02d", r)]] <- round(d$w * m, 2)
+  }
+  d
+}
+
+#' The custody table's institutions, their census divisions and regions.
+#' @return A list: inst, cd and reg.
+#' @noRd
+.bl_demo_otis_meta <- function() {
+  inst <- c(
+    "Algoma Centre",
+    "Brant Jail",
+    "Central East Centre",
+    "Elgin Middlesex Centre",
+    "Hamilton Centre",
+    "Maplehurst Complex",
+    "Monteith Complex",
+    "Niagara Centre",
+    "Ottawa Carleton Centre",
+    "South West Centre",
+    "Thunder Bay Jail",
+    "Toronto South Centre"
+  )
+  cd <- c(
+    "3557",
+    "3529",
+    "3516",
+    "3539",
+    "3525",
+    "3524",
+    "3556",
+    "3526",
+    "3506",
+    "3537",
+    "3558",
+    "3520"
+  )
+  reg <- c(
+    "North",
+    "West",
+    "Central",
+    "West",
+    "Central",
+    "Central",
+    "North",
+    "West",
+    "East",
+    "West",
+    "North",
+    "Toronto"
+  )
+  list(inst = inst, cd = cd, reg = reg)
+}
+
+#' The monitors around the stack.
+#' @return A data frame: monitor, x, y and z.
+#' @noRd
+.bl_demo_monitors <- function() {
+  data.frame(
+    monitor = c(
+      "M1 Harbour",
+      "M2 School",
+      "M3 Market",
+      "M4 Park",
+      "M5 Clinic",
+      "M6 Depot"
+    ),
+    x = c(800, 1500, -600, 2500, 300, -1800),
+    y = c(200, -400, 900, 700, -1200, -300),
+    z = 0,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The stack's plume at each monitor and hour.
+#' @param d The monitor series: x, y, wind_from, wind_speed and stability.
+#' @return The concentrations, one per row.
+#' @noRd
+.bl_demo_plume <- function(d) {
+  # the wind blows from wind_from: downwind is the opposite bearing
+  th <- (d$wind_from + 180) * pi / 180
+  dw <- d$x * sin(th) + d$y * cos(th)
+  cw <- d$x * cos(th) - d$y * sin(th)
+  plume <- numeric(nrow(d))
+  for (k in unique(d$stability)) {
+    i <- which(d$stability == k & dw > 0)
+    for (j in i) {
+      plume[j] <- gplume(
+        10,
+        d$wind_speed[j],
+        50,
+        cbind(dw[j], cw[j], 0),
+        stab = k
+      )
+    }
+  }
+  plume
+}
+
+#' One theorem of the demo ledger.
+#' @param i Its number.
+#' @param fns The functions the theorems cover, in turn.
+#' @param st Each theorem's status.
+#' @return A list.
+#' @noRd
+.bl_demo_thm <- function(i, fns, st) {
+  f <- fns[(i - 1L) %% length(fns) + 1L]
+  x <- list(
+    id = sprintf("thm-%03d", i),
+    name = sprintf("Rmorie.%s.lemma_%03d", f, i),
+    statement = sprintf("theorem lemma_%03d : %s_spec %d", i, f, i),
+    file = sprintf("Rmorie/%s.lean", f),
+    line = 10L + 7L * i,
+    status = st[[i]],
+    sorry_count = as.integer(st[[i]] == "sorry"),
+    covers = if (st[[i]] == "axiom") {
+      list()
+    } else {
+      list(list(package = "rmoriebricklayer", `function` = f, language = "R"))
+    }
+  )
+  if (i <= 4L) {
+    x$status <- "proved"
+    x$sorry_count <- 0L
+    x$covers <- list(list(
+      package = "rmoriebricklayer",
+      `function` = "ginicoef",
+      language = "R"
+    ))
+    x$check <- list(
+      expr = sprintf("ginicoef(rep(%d, 5))", i),
+      expect = 0,
+      tol = 1e-12
+    )
+  }
+  x
 }

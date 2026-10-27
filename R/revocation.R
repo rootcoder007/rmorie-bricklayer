@@ -220,7 +220,7 @@ rvkfetch <- function(path, tmout = 10) {
   # only http; a verifier that followed ldap or file URLs from a
   # certificate would be following instructions from the thing it is
   # checking
-  urls[grepl("^https?://", urls)]
+  grep("^https?://", urls, value = TRUE)
 }
 
 #' Collects the IA5String URIs in a parsed DER structure.
@@ -232,14 +232,7 @@ rvkfetch <- function(path, tmout = 10) {
 #' @return A character vector of URIs.
 #' @noRd
 .rmbl_collect_uris <- function(nd, method = NULL) {
-  out <- character(0)
-  if (
-    !is.null(method) &&
-      isTRUE(nd$constructed) &&
-      length(nd$children) >= 2L &&
-      identical(nd$children[[1]]$tag, 6) &&
-      identical(.rmbl_oid_string(nd$children[[1]]$value), method)
-  ) {
+  if (!is.null(method) && .rmbl_is_access_for(nd, method)) {
     tail <- nd$children[[2]]
     if (identical(tail$class, 2L) && identical(tail$tag, 6)) {
       return(.rmbl_raw_text(tail$value))
@@ -253,10 +246,24 @@ rvkfetch <- function(path, tmout = 10) {
   ) {
     return(.rmbl_raw_text(nd$value))
   }
+  out <- character(0)
   for (kid in nd$children) {
     out <- c(out, .rmbl_collect_uris(kid, method))
   }
   out
+}
+
+#' Whether a node is an AccessDescription for the access method `method`: a
+#' SEQUENCE whose first element is that OID.
+#' @param nd The parsed DER node to test for an AccessDescription.
+#' @param method The access method's OID.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_is_access_for <- function(nd, method) {
+  isTRUE(nd$constructed) &&
+    length(nd$children) >= 2L &&
+    identical(nd$children[[1]]$tag, 6) &&
+    identical(.rmbl_oid_string(nd$children[[1]]$value), method)
 }
 
 #' Fetches a URL as raw DER bytes.
@@ -313,7 +320,7 @@ rvkfetch <- function(path, tmout = 10) {
 # The two network calls, each one line, so the protocol logic above and
 # below can be exercised against recorded answers.
 #' Downloads a URL to a file.
-#' @param url The URL.
+#' @param url The CRL or certificate URL to download.
 #' @param fallback A fallback URL, or NA for none.
 #' @param tmp The file to write.
 #' @param timeout The network timeout in seconds.
@@ -330,7 +337,7 @@ rvkfetch <- function(path, tmout = 10) {
 }
 
 #' Posts a body to a URL.
-#' @param url The URL.
+#' @param url The OCSP responder URL the request is posted to.
 #' @param body The raw request body.
 #' @param content_type The request's Content-Type.
 #' @param timeout The network timeout in seconds.
@@ -361,7 +368,7 @@ rvkfetch <- function(path, tmout = 10) {
 # Minimal DER encoding. Only what an OCSP request needs, because a
 # general encoder is a great deal of surface for one message shape.
 #' Encodes one DER tag-length-value.
-#' @param tag The tag byte.
+#' @param tag The DER tag byte of the element encoded.
 #' @param body The raw contents.
 #' @return The encoding as raw bytes.
 #' @noRd
@@ -495,7 +502,7 @@ rvkfetch <- function(path, tmout = 10) {
   }
   if (is.null(body)) {
     b64 <- jsb64enc(req)
-    full <- paste0(sub("/+$", "", url), "/", .rmbl_url_encode(b64))
+    full <- sprintf("%s/%s", sub("/+$", "", url), .rmbl_url_encode(b64))
     body <- .rmbl_http_der(full, timeout)
   }
   if (is.null(body)) {
@@ -546,75 +553,26 @@ rvkfetch <- function(path, tmout = 10) {
   }
   status <- .rmbl_int_of(d$children[[1]]$value)
   if (!identical(status, 0L)) {
-    labels <- c(
-      "malformedRequest",
-      "internalError",
-      "tryLater",
-      "",
-      "sigRequired",
-      "unauthorized"
-    )
-    nm <- if (status >= 1L && status <= 6L) {
-      labels[status]
-    } else {
-      as.character(status)
-    }
     return(list(
       ok = FALSE,
-      detail = sprintf("the responder answered '%s'", nm)
+      detail = sprintf(
+        "the responder answered '%s'",
+        .rmbl_ocsp_status_name(status)
+      )
     ))
   }
-  # responseBytes ::= [0] EXPLICIT SEQUENCE { responseType OID,
-  #                                            response OCTET STRING }
-  # The BasicOCSPResponse is the CONTENTS of that octet string, which
-  # is a DER document of its own -- the outer parse stops at the string,
-  # so it has to be parsed again. Walking the outer tree looking for it
-  # finds nothing, which is exactly what happened the first time.
-  oct <- .rmbl_der_find(d, function(nd) {
-    identical(nd$class, 0L) && identical(nd$tag, 4) && length(nd$value) > 8L
-  })
-  if (is.null(oct)) {
-    return(list(ok = FALSE, detail = "the answer carries no response bytes"))
+  b <- .rmbl_ocsp_basic(d)
+  if (is.character(b)) {
+    return(list(ok = FALSE, detail = b))
   }
-  inner_src <- oct$value
-  basic <- tryCatch(.Call(C_rmbl_der_parse, inner_src), error = function(e) {
-    NULL
-  })
-  if (
-    is.null(basic) ||
-      length(basic$children) < 3L ||
-      !isTRUE(basic$children[[1]]$constructed) ||
-      !identical(basic$children[[3]]$tag, 3)
-  ) {
-    return(list(ok = FALSE, detail = "no BasicOCSPResponse in the answer"))
-  }
-  tbs <- basic$children[[1]]
-  # find the single response's certStatus: [0] good, [1] revoked,
-  # [2] unknown
-  single <- .rmbl_der_find(tbs, function(nd) {
-    isTRUE(nd$constructed) &&
-      identical(nd$tag, 16) &&
-      length(nd$children) >= 2L &&
-      isTRUE(nd$children[[1]]$constructed) &&
-      length(nd$children[[1]]$children) >= 4L &&
-      identical(nd$children[[1]]$children[[1]]$tag, 16)
-  })
-  if (is.null(single)) {
+  state <- .rmbl_ocsp_state(b$basic$children[[1]])
+  if (is.null(state)) {
     return(list(ok = FALSE, detail = "no SingleResponse in the answer"))
   }
-  st <- single$children[[2]]
-  state <- if (identical(st$class, 2L) && identical(st$tag, 0)) {
-    "good"
-  } else if (identical(st$class, 2L) && identical(st$tag, 1)) {
-    "revoked"
-  } else {
-    "unknown"
-  }
-
   # The answer is only worth anything if it is signed by someone the
   # path vouches for. An unverified "good" is worse than no check: it
   # looks like one happened.
-  sig_ok <- .rmbl_ocsp_verify_sig(basic, path, inner_src)
+  sig_ok <- .rmbl_ocsp_verify_sig(b$basic, path, b$src)
   if (!sig_ok$ok) {
     return(list(
       ok = FALSE,
@@ -627,9 +585,85 @@ rvkfetch <- function(path, tmout = 10) {
   list(ok = FALSE, detail = sprintf("the responder says %s, signed", state))
 }
 
+#' The name of an OCSPResponseStatus that is not "successful".
+#' @param status The status number.
+#' @return The name (the number when it is not one RFC 6960 names).
+#' @noRd
+.rmbl_ocsp_status_name <- function(status) {
+  labels <- c(
+    "malformedRequest",
+    "internalError",
+    "tryLater",
+    "",
+    "sigRequired",
+    "unauthorized"
+  )
+  if (status >= 1L && status <= 6L) labels[status] else as.character(status)
+}
+
+#' The BasicOCSPResponse of an OCSP answer.
+#'
+#' responseBytes ::= [0] EXPLICIT SEQUENCE { responseType OID, response OCTET
+#' STRING }. The BasicOCSPResponse is the CONTENTS of that octet string, which
+#' is a DER document of its own -- the outer parse stops at the string, so it
+#' has to be parsed again. Walking the outer tree looking for it finds nothing,
+#' which is exactly what happened the first time.
+#' @param d The parsed answer.
+#' @return A list (basic: the parsed response, src: its bytes), or what is
+#'   wrong.
+#' @noRd
+.rmbl_ocsp_basic <- function(d) {
+  oct <- .rmbl_der_find(d, function(nd) {
+    identical(nd$class, 0L) && identical(nd$tag, 4) && length(nd$value) > 8L
+  })
+  if (is.null(oct)) {
+    return("the answer carries no response bytes")
+  }
+  inner_src <- oct$value
+  basic <- tryCatch(.Call(C_rmbl_der_parse, inner_src), error = function(e) {
+    NULL
+  })
+  if (
+    is.null(basic) ||
+      length(basic$children) < 3L ||
+      !isTRUE(basic$children[[1]]$constructed) ||
+      !identical(basic$children[[3]]$tag, 3)
+  ) {
+    return("no BasicOCSPResponse in the answer")
+  }
+  list(basic = basic, src = inner_src)
+}
+
+#' The single response's certStatus: [0] good, [1] revoked, [2] unknown.
+#' @param tbs The parsed tbsResponseData.
+#' @return "good", "revoked" or "unknown", or NULL when there is no
+#'   SingleResponse.
+#' @noRd
+.rmbl_ocsp_state <- function(tbs) {
+  single <- .rmbl_der_find(tbs, function(nd) {
+    isTRUE(nd$constructed) &&
+      identical(nd$tag, 16) &&
+      length(nd$children) >= 2L &&
+      isTRUE(nd$children[[1]]$constructed) &&
+      length(nd$children[[1]]$children) >= 4L &&
+      identical(nd$children[[1]]$children[[1]]$tag, 16)
+  })
+  if (is.null(single)) {
+    return(NULL)
+  }
+  st <- single$children[[2]]
+  if (identical(st$class, 2L) && identical(st$tag, 0)) {
+    return("good")
+  }
+  if (identical(st$class, 2L) && identical(st$tag, 1)) {
+    return("revoked")
+  }
+  "unknown"
+}
+
 #' Verifies a BasicOCSPResponse's signature under a certificate in the path.
 #' @param basic The parsed BasicOCSPResponse.
-#' @param path The certificate path.
+#' @param path The certificate path whose keys may have signed the answer.
 #' @param src The raw bytes `basic` was parsed from.
 #' @return A list with `ok` and a `detail` sentence.
 #' @noRd
@@ -647,15 +681,7 @@ rvkfetch <- function(path, tmout = 10) {
     NA_character_
   }
   name <- .rmbl_x509_sigalg_name(oid)
-  dalg <- if (grepl("SHA256", name)) {
-    "sha256"
-  } else if (grepl("SHA384", name)) {
-    "sha384"
-  } else if (grepl("SHA512", name)) {
-    "sha512"
-  } else {
-    NA_character_
-  }
+  dalg <- .rmbl_ocsp_digest(name)
   if (is.na(dalg)) {
     return(list(
       ok = FALSE,
@@ -668,66 +694,104 @@ rvkfetch <- function(path, tmout = 10) {
   if (is.null(tbs)) {
     return(list(ok = FALSE, detail = "the signed bytes could not be isolated"))
   }
-  # A responder may sign with a certificate the path issued, carried in
-  # the answer; otherwise it must be one already in the path. The
-  # certificates are the fourth element of BasicOCSPResponse ([0]
-  # EXPLICIT SEQUENCE OF Certificate), read by position: a tree search
-  # for a [0] lands on nextUpdate inside the SingleResponse first.
-  candidates <- path
-  embedded <- if (length(basic$children) >= 4L) basic$children[[4]] else NULL
-  if (
-    !is.null(embedded) &&
-      !(identical(embedded$class, 2L) &&
-        identical(embedded$tag, 0) &&
-        isTRUE(embedded$constructed))
-  ) {
-    embedded <- NULL
-  }
-  if (!is.null(embedded)) {
-    for (c1 in embedded$children) {
-      for (c2 in c1$children) {
-        b <- .rmbl_node_bytes(c2, src)
-        if (is.null(b)) {
-          next
-        }
-        pc <- tryCatch(certprs(b), error = function(e) NULL)
-        if (!is.null(pc)) candidates <- c(list(pc), candidates)
-      }
-    }
-  }
-  for (cand in candidates) {
-    key <- cand$key
-    if (identical(key$type, "RSA")) {
-      em <- tryCatch(
-        .Call(C_rmbl_rsa_recover, sig, key$modulus, key$exponent),
-        error = function(e) NULL
-      )
-      if (!is.null(em) && isTRUE(.rmbl_pkcs1_check(em, dalg, tbs)$ok)) {
-        return(list(ok = TRUE, detail = "signed"))
-      }
-    } else if (identical(key$type, "EC") && !is.null(key$x)) {
-      rs <- .rmbl_ecdsa_rs(sig)
-      if (!is.null(rs)) {
-        v <- tryCatch(
-          .Call(
-            C_rmbl_ecdsa_verify,
-            key$curve,
-            key$x,
-            key$y,
-            rs$r,
-            rs$s,
-            .rmbl_ts_digest(dalg, tbs)
-          ),
-          error = function(e) FALSE
-        )
-        if (isTRUE(v)) return(list(ok = TRUE, detail = "signed"))
-      }
+  for (cand in .rmbl_ocsp_candidates(basic, path, src)) {
+    if (.rmbl_ocsp_key_verifies(cand$key, sig, dalg, tbs)) {
+      return(list(ok = TRUE, detail = "signed"))
     }
   }
   list(
     ok = FALSE,
     detail = "its signature does not verify under any certificate in the path"
   )
+}
+
+#' The digest a signature algorithm's name implies.
+#' @param name The algorithm's name.
+#' @return "sha256", "sha384", "sha512", or NA.
+#' @noRd
+.rmbl_ocsp_digest <- function(name) {
+  if (grepl("SHA256", name, fixed = TRUE)) {
+    return("sha256")
+  }
+  if (grepl("SHA384", name, fixed = TRUE)) {
+    return("sha384")
+  }
+  if (grepl("SHA512", name, fixed = TRUE)) {
+    return("sha512")
+  }
+  NA_character_
+}
+
+#' The certificates that may have signed an OCSP answer.
+#'
+#' A responder may sign with a certificate the path issued, carried in the
+#' answer; otherwise it must be one already in the path. The certificates are
+#' the fourth element of BasicOCSPResponse ([0] EXPLICIT SEQUENCE OF
+#' Certificate), read by position: a tree search for a [0] lands on nextUpdate
+#' inside the SingleResponse first.
+#' @param basic The parsed BasicOCSPResponse.
+#' @param path The certificate path, the first candidates.
+#' @param src The response's bytes.
+#' @return A list of certificates, the embedded ones first.
+#' @noRd
+.rmbl_ocsp_candidates <- function(basic, path, src) {
+  candidates <- path
+  embedded <- if (length(basic$children) >= 4L) basic$children[[4]] else NULL
+  if (
+    is.null(embedded) ||
+      !(identical(embedded$class, 2L) &&
+        identical(embedded$tag, 0) &&
+        isTRUE(embedded$constructed))
+  ) {
+    return(candidates)
+  }
+  for (c1 in embedded$children) {
+    for (c2 in c1$children) {
+      b <- .rmbl_node_bytes(c2, src)
+      if (is.null(b)) {
+        next
+      }
+      pc <- tryCatch(certprs(b), error = function(e) NULL)
+      if (!is.null(pc)) candidates <- c(list(pc), candidates)
+    }
+  }
+  candidates
+}
+
+#' Whether a certificate's key verifies the signature over the signed bytes.
+#' @param key The certificate's public key.
+#' @param sig The OCSP response's signature bytes.
+#' @param dalg The digest.
+#' @param tbs The signed bytes.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_ocsp_key_verifies <- function(key, sig, dalg, tbs) {
+  if (identical(key$type, "RSA")) {
+    em <- tryCatch(
+      .Call(C_rmbl_rsa_recover, sig, key$modulus, key$exponent),
+      error = function(e) NULL
+    )
+    return(!is.null(em) && isTRUE(.rmbl_pkcs1_check(em, dalg, tbs)$ok))
+  }
+  if (!identical(key$type, "EC") || is.null(key$x)) {
+    return(FALSE)
+  }
+  rs <- .rmbl_ecdsa_rs(sig)
+  if (is.null(rs)) {
+    return(FALSE)
+  }
+  isTRUE(tryCatch(
+    .Call(
+      C_rmbl_ecdsa_verify,
+      key$curve,
+      key$x,
+      key$y,
+      rs$r,
+      rs$s,
+      .rmbl_ts_digest(dalg, tbs)
+    ),
+    error = function(e) FALSE
+  ))
 }
 
 #' Slices a parsed node's exact DER out of its source.

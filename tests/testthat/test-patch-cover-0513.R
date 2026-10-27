@@ -115,6 +115,6 @@ test_that("two failed CRL fetches for one certificate keep both notes", {
     .rmbl_http_der = function(url, timeout) NULL
   )
   r <- ns$.rmbl_revocation_fetch(list(list(der = as.raw(1))), 5)
-  expect_identical(names(r$notes), c("crl fetch [1]", "crl fetch [1] #2"))
+  expect_named(r$notes, c("crl fetch [1]", "crl fetch [1] #2"))
   expect_identical(r$ok, c(FALSE, FALSE))
 })

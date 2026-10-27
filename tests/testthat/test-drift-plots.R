@@ -76,35 +76,35 @@ test_that(
     }
     s <- d$summ$size
     expect_equal(sum(s$hist$ref), 1, tolerance = 1e-12)
-    expect_equal(nrow(s$hist), 30L)
-    expect_equal(
+    expect_identical(nrow(s$hist), 30L)
+    expect_identical(
       s$stats$stat,
       c("mean", "sd", "min", "q1", "median", "q3", "max")
     )
     expect_equal(s$stats$ref[1], mean(fx$ref$size), tolerance = 1e-12)
-    expect_equal(sum(s$benford$cur), s$benford$n)
+    expect_identical(sum(s$benford$cur), s$benford$n)
     expect_match(s$bins$bin[1], "^<= ")
     expect_match(s$bins$bin[10], "^> ")
     # a category the reference never had is its own bin, and the ten largest
     # categories are kept
     expect_true("(not in the reference)" %in% d$summ$grade$bins$bin)
-    expect_equal(nrow(d$summ$grade$top), 4L)
+    expect_identical(nrow(d$summ$grade$top), 4L)
     # dates: labels as dates, no Benford; identifiers: sizes only
     expect_match(d$summ$day$bins$bin[2], "^\\(2020-")
-    ds <- rmoriebricklayer:::.bl_drift_show_stats(d$summ$day)
+    ds <- .bl_drift_show_stats(d$summ$day)
     expect_match(ds$ref[ds$stat == "median"], "^2020-[0-9]{2}-[0-9]{2}$")
     expect_match(ds$ref[ds$stat == "sd"], " days$")
-    expect_equal(
+    expect_identical(
       nrow(with_dev(plot(d, what = "columns", cols = "day"))),
       nrow(d$summ$day$bins)
     )
-    expect_equal(
-      rmoriebricklayer:::.bl_drift_show_stats(d$summ$grade),
+    expect_identical(
+      .bl_drift_show_stats(d$summ$grade),
       d$summ$grade$top
     )
     expect_null(d$summ$day$benford)
     expect_null(d$summ$id$bins)
-    expect_equal(d$summ$id$nref, 400L)
+    expect_identical(d$summ$id$nref, 400L)
     # a category set that did not change has no unseen bin
     same <- cpsdrft(fx$ref["grade"], fx$ref["grade"])
     expect_false("(not in the reference)" %in% same$summ$grade$bins$bin)
@@ -133,27 +133,27 @@ test_that("the summaries cover the small and degenerate columns", {
   )
   expect_true(is.na(d$summ$k$stats$cur[2])) # one value: no sd
   # a constant: a unit range
-  expect_equal(diff(range(c(d$summ$k$hist$lo, d$summ$k$hist$hi))), 1)
+  expect_identical(diff(range(c(d$summ$k$hist$lo, d$summ$k$hist$hi))), 1)
   # date-times label as date-times, ISO 8601
   expect_match(d$summ$t$bins$bin[1], "2024-01-01T")
-  expect_equal(d$summ$t$kind, "datetime")
-  st <- rmoriebricklayer:::.bl_drift_show_stats(d$summ$t)
-  expect_equal(st$ref[st$stat == "min"], "2024-01-01T00:00:00Z")
-  expect_equal(st$ref[st$stat == "sd"], "60 s")
-  expect_equal(st$cur[st$stat == "sd"], "")
-  expect_equal(rmoriebricklayer:::.bl_drift_show_stats(d$summ$k)$ref[1], "5")
-  expect_null(rmoriebricklayer:::.bl_drift_show_stats(d$summ$e))
-  expect_equal(
+  expect_identical(d$summ$t$kind, "datetime")
+  st <- .bl_drift_show_stats(d$summ$t)
+  expect_identical(st$ref[st$stat == "min"], "2024-01-01T00:00:00Z")
+  expect_identical(st$ref[st$stat == "sd"], "60 s")
+  expect_identical(st$cur[st$stat == "sd"], "")
+  expect_identical(.bl_drift_show_stats(d$summ$k)$ref[1], "5")
+  expect_null(.bl_drift_show_stats(d$summ$e))
+  expect_identical(
     nrow(with_dev(plot(d, what = "columns", cols = "t"))),
     nrow(d$summ$t$bins)
   )
   expect_null(d$summ$e$bins) # nothing on one side
-  expect_equal(d$summ$e$missref, 1)
+  expect_identical(d$summ$e$missref, 1)
   expect_null(d$summ$z$benford) # zeros carry no first digit
   expect_null(d$summ$s$bins)
-  expect_equal(d$summ$s$misscur, 1)
-  expect_equal(
-    rmoriebricklayer:::.rmbl_drift_summ(
+  expect_identical(d$summ$s$misscur, 1)
+  expect_identical(
+    .rmbl_drift_summ(
       numeric(),
       numeric(),
       "numeric",
@@ -170,41 +170,42 @@ test_that(
   ),
   {
     d <- drift_fixture()$d
-    v <- rmoriebricklayer:::.bl_drift_verdict(d, 0.1, 0.25)
-    expect_equal(v == "fail", d$columns$drifted %in% TRUE)
-    expect_equal(v[d$columns$column == "id"], "untested")
+    v <- .bl_drift_verdict(d, 0.1, 0.25)
+    dr <- d$columns$drifted
+    expect_identical(v == "fail", dr & !is.na(dr))
+    expect_identical(v[d$columns$column == "id"], "untested")
     # a wide fail band and a tiny alpha leave a PSI above the warn band as warn
-    v2 <- rmoriebricklayer:::.bl_drift_verdict(d, 0.1, 100, alpha = 1e-300)
-    expect_equal(v2[d$columns$column == "value"], "warn")
-    expect_equal(v2[d$columns$column == "day"], "ok")
+    v2 <- .bl_drift_verdict(d, 0.1, 100, alpha = 1e-300)
+    expect_identical(v2[d$columns$column == "value"], "warn")
+    expect_identical(v2[d$columns$column == "day"], "ok")
     # an object without summaries (an older one) treats every sample as large
     old <- d
     old$summ <- NULL
-    expect_equal(rmoriebricklayer:::.bl_drift_verdict(old, 0.1, 0.25), v)
-    expect_equal(
-      rmoriebricklayer:::.bl_drift_bands(old),
+    expect_identical(.bl_drift_verdict(old, 0.1, 0.25), v)
+    expect_identical(
+      .bl_drift_bands(old),
       list(warn = 0.1, fail = 0.25)
     )
     expect_error(
-      rmoriebricklayer:::.bl_drift_bands(d, 0.5, 0.2),
+      .bl_drift_bands(d, 0.5, 0.2),
       "`warn` must not be above `fail`"
     )
     expect_error(
       plot(d, warn = -1),
       "plot: `warn` must be one number of at least 0"
     )
-    t <- rmoriebricklayer:::.bl_drift_table(d, 0.1, 0.25)
-    expect_equal(t$verdict[1:3], c("fail", "fail", "fail"))
-    expect_equal(t$test[t$column == "grade"], "chi-square homogeneity")
-    expect_equal(t$missing_change, rep(0, 5))
+    t <- .bl_drift_table(d, 0.1, 0.25)
+    expect_identical(t$verdict[1:3], c("fail", "fail", "fail"))
+    expect_identical(t$test[t$column == "grade"], "chi-square homogeneity")
+    expect_identical(t$missing_change, rep(0, 5))
   }
 )
 
 test_that("each verdict has its sentence", {
   d <- drift_fixture()$d
   b <- list(warn = 0.1, fail = 0.25)
-  t <- rmoriebricklayer:::.bl_drift_table(d, 0.1, 0.25)
-  note <- function(r, ...) rmoriebricklayer:::.bl_drift_note(r, b, 0.01, ...)
+  t <- .bl_drift_table(d, 0.1, 0.25)
+  note <- function(r, ...) .bl_drift_note(r, b, 0.01, ...)
   expect_match(
     note(t[t$column == "size", ]),
     "size moved: the KS test gives p = .*look before pinning it"
@@ -229,9 +230,12 @@ test_that("plot() draws the PSI, the columns and the first digits", {
   d <- drift_fixture()$d
   p <- with_dev(plot(d))
   expect_setequal(p$column, d$columns$column)
-  expect_equal(p$column[1], "size") # worst first
-  expect_equal(p$verdict[1], "fail")
-  expect_equal(p$drifted, d$columns$drifted[match(p$column, d$columns$column)])
+  expect_identical(p$column[1], "size") # worst first
+  expect_identical(p$verdict[1], "fail")
+  expect_identical(
+    p$drifted,
+    d$columns$drifted[match(p$column, d$columns$column)]
+  )
   cl <- with_dev(plot(d, what = "columns"))
   expect_setequal(unique(cl$column), c("size", "grade", "value", "day"))
   expect_equal(
@@ -242,7 +246,7 @@ test_that("plot() draws the PSI, the columns and the first digits", {
   bf <- with_dev(plot(d, what = "benford", cols = "value", main = "digits"))
   # a title too long for any size falls back to the fitted one; whole numbers
   # get one bin per value
-  expect_equal(
+  expect_identical(
     nrow(with_dev(plot(
       d,
       what = "benford",
@@ -258,19 +262,19 @@ test_that("plot() draws the PSI, the columns and the first digits", {
   )
   hw <- w$summ$wait$hist
   expect_true(all(hw$hi - hw$lo == 1))
-  expect_equal(
+  expect_identical(
     hw$lo[1],
     min(w$summ$wait$stats$ref[3], w$summ$wait$stats$cur[3]) - 0.5
   )
-  expect_equal(sum(hw$cur), 1)
-  expect_equal(bf$expected, log10(1 + 1 / (1:9)))
-  expect_equal(sum(bf$cur), 1)
+  expect_identical(sum(hw$cur), 1)
+  expect_identical(bf$expected, log10(1 + 1 / (1:9)))
+  expect_identical(sum(bf$cur), 1)
   # colours, a palette, the bands, the default title's counts
-  expect_equal(
+  expect_identical(
     nrow(with_dev(plot(d, col = "red", warn = 0.05, fail = 0.5))),
     5L
   )
-  expect_equal(
+  expect_identical(
     nrow(with_dev(plot(d, what = "columns", cols = "grade", palette = "grey"))),
     nrow(d$summ$grade$bins)
   )
@@ -280,9 +284,12 @@ test_that("plot() draws the PSI, the columns and the first digits", {
   )
   expect_error(plot(d, what = "pie"), "must be one of")
   # nothing to draw: a categorical-only result has no first digits
-  cat_only <- cpsdrft(data.frame(g = c("a", "b")), data.frame(g = c("a", "a")))
-  expect_equal(nrow(with_dev(plot(cat_only, what = "benford"))), 0L)
-  expect_equal(
+  cat_only <- cpsdrft(
+    data.frame(g = c("a", "b"), stringsAsFactors = FALSE),
+    data.frame(g = c("a", "a"), stringsAsFactors = FALSE)
+  )
+  expect_identical(nrow(with_dev(plot(cat_only, what = "benford"))), 0L)
+  expect_identical(
     nrow(with_dev(plot(
       cpsdrft(data.frame(i = 1:2), data.frame(j = 1:2)),
       what = "columns"
@@ -315,8 +322,8 @@ test_that("drfthtml() writes one self-contained page whose data round-trip", {
     )
   )
   d$manifest <- mnfdiff(
-    data.frame(path = "a.csv", sha256 = "aa"),
-    data.frame(path = "a.csv", sha256 = "bb")
+    data.frame(path = "a.csv", sha256 = "aa", stringsAsFactors = FALSE),
+    data.frame(path = "a.csv", sha256 = "bb", stringsAsFactors = FALSE)
   )
   d$columns$column[1] <- "</script><b>x</b>"
   names(d$summ)[1] <- d$columns$column[1]
@@ -331,7 +338,7 @@ test_that("drfthtml() writes one self-contained page whose data round-trip", {
   ))
   expect_true(grepl("<h1>A &amp; B &lt;report&gt;</h1>", txt, fixed = TRUE))
   expect_false(grepl("<b>x</b>", txt, fixed = TRUE))
-  expect_equal(
+  expect_identical(
     lengths(regmatches(txt, gregexpr("</script>", txt, fixed = TRUE))),
     2L
   )
@@ -393,11 +400,11 @@ test_that("drfthtml() writes one self-contained page whose data round-trip", {
   expect_true(grepl("navigator.clipboard.writeText", txt, fixed = TRUE))
   expect_false(grepl("execCommand", txt, fixed = TRUE))
   p <- page_json(f)
-  expect_equal(p$title, "A & B <report>")
-  expect_equal(p$columns[[1]]$column, "</script><b>x</b>")
-  expect_equal(
+  expect_identical(p$title, "A & B <report>")
+  expect_identical(p$columns[[1]]$column, "</script><b>x</b>")
+  expect_identical(
     vapply(p$columns, function(e) e$verdict, ""),
-    rmoriebricklayer:::.bl_drift_verdict(d, 0.1, 0.25)
+    .bl_drift_verdict(d, 0.1, 0.25)
   )
   sz <- p$columns[[which(d$columns$column == "size")]]
   expect_equal(
@@ -405,25 +412,26 @@ test_that("drfthtml() writes one self-contained page whose data round-trip", {
     d$summ$size$bins$contrib,
     tolerance = 1e-5
   )
-  expect_equal(unlist(sz$stats$stat), d$summ$size$stats$stat)
-  expect_equal(p$columns[[which(d$columns$column == "day")]]$kind, "date")
-  expect_equal(p$provenance$date, "2026-10-01")
-  expect_equal(unlist(p$manifest$change), "changed")
-  expect_equal(p$bands, list(warn = 0.1, fail = 0.25))
+  expect_identical(unlist(sz$stats$stat), d$summ$size$stats$stat)
+  expect_identical(p$columns[[which(d$columns$column == "day")]]$kind, "date")
+  expect_identical(p$provenance$date, "2026-10-01")
+  expect_identical(unlist(p$manifest$change), "changed")
+  expect_identical(p$bands, list(warn = 0.1, fail = 0.25))
   expect_length(unlist(sz$dens$ref), 64L)
   expect_length(unlist(sz$benford$band$upper), 9L)
-  expect_equal(unlist(p$chain$status), c("ok", "warn", "ok", "none"))
+  expect_identical(unlist(p$chain$status), c("ok", "warn", "ok", "none"))
   expect_true(grepl("prefers-reduced-motion", txt, fixed = TRUE))
   expect_lt(file.size(f), 150000) # summaries, not rows
   # the bands the page opens with, and open = TRUE
-  opened <- NULL
+  acc <- new.env(parent = emptyenv())
+  acc$opened <- NULL
   local_mocked_bindings(
-    .bl_open_file = function(f) opened <<- f,
+    .bl_open_file = function(f) acc$opened <- f,
     .package = "rmoriebricklayer"
   )
   drfthtml(fx$d, f, warn = 0.02, fail = 0.05, open = TRUE)
-  expect_equal(opened, f)
-  expect_equal(page_json(f)$bands, list(warn = 0.02, fail = 0.05))
+  expect_identical(acc$opened, f)
+  expect_identical(page_json(f)$bands, list(warn = 0.02, fail = 0.05))
   expect_null(page_json(f)$provenance)
   expect_error(
     drfthtml(list(), f),
@@ -450,17 +458,17 @@ test_that(
   ),
   {
     d <- drift_fixture()$d
-    md <- rmoriebricklayer:::.bl_drift_md(d, list(warn = 0.1, fail = 0.25))
+    md <- .bl_drift_md(d, list(warn = 0.1, fail = 0.25))
     expect_match(md, "## Drift: 3 fail, 0 warn, 1 ok, 1 untested")
     expect_match(md, "| \u2716 fail | size | numeric | KS |", fixed = TRUE)
     b <- d$summ$size$bins
-    w <- rmoriebricklayer:::.bl_psi_without(b, 2L)
+    w <- .bl_psi_without(b, 2L)
     expect_length(w$dropped, 2L)
     expect_lt(w$psi, sum(b$contrib))
-    expect_true(is.na(rmoriebricklayer:::.bl_psi_without(b, nrow(b))$psi))
-    expect_null(rmoriebricklayer:::.bl_drift_prov(NULL))
-    expect_equal(
-      rmoriebricklayer:::.bl_drift_prov(list(
+    expect_true(is.na(.bl_psi_without(b, nrow(b))$psi))
+    expect_null(.bl_drift_prov(NULL))
+    expect_identical(
+      .bl_drift_prov(list(
         name = "n",
         date = "d",
         resource = list(sha256 = NA)
@@ -469,7 +477,7 @@ test_that(
     )
     expect_true(grepl(
       "\\u003c",
-      rmoriebricklayer:::.bl_drift_json(list(a = "<")),
+      .bl_drift_json(list(a = "<")),
       fixed = TRUE
     ))
   }
@@ -480,19 +488,20 @@ test_that("the history reads drift JSON and draws the PSI over runs", {
   dir <- tempfile("hist")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  expect_error(rmoriebricklayer:::.bl_drift_history(dir), "no drift JSON in")
+  expect_error(.bl_drift_history(dir), "no drift JSON in")
   expect_error(
-    rmoriebricklayer:::.bl_drift_history(file.path(dir, "nope")),
+    .bl_drift_history(file.path(dir, "nope")),
     "`hist` is not a directory"
   )
   writeLines(
-    rmoriebricklayer:::.bl_drift_json(rmoriebricklayer:::.bl_drift_payload(d)),
+    .bl_drift_json(.bl_drift_payload(d)),
     file.path(dir, "1.json")
   )
   cols <- data.frame(
     column = c("size", "value"),
     psi = c(0.3, NA),
-    p_value = 0.2
+    p_value = 0.2,
+    stringsAsFactors = FALSE
   )
   writeLines(
     tojs(
@@ -507,11 +516,11 @@ test_that("the history reads drift JSON and draws the PSI over runs", {
     file.path(dir, "2.json")
   )
   writeLines("{not json", file.path(dir, "3.json"))
-  h <- rmoriebricklayer:::.bl_drift_history(dir)
-  expect_equal(unique(h$run), 1:2)
+  h <- .bl_drift_history(dir)
+  expect_identical(unique(h$run), 1:2)
   expect_equal(h$psi[h$run == 2 & h$column == "size"], 0.3)
   expect_identical(
-    with_dev(rmoriebricklayer:::.bl_drift_history_plot(
+    with_dev(.bl_drift_history_plot(
       h,
       list(warn = 0.1, fail = 0.25)
     )),
@@ -546,12 +555,12 @@ test_that("drftapp() refuses without shiny, and builds its UI and server", {
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   writeLines(
-    rmoriebricklayer:::.bl_drift_json(rmoriebricklayer:::.bl_drift_payload(d)),
+    .bl_drift_json(.bl_drift_payload(d)),
     file.path(dir, "1.json")
   )
   d$manifest <- mnfdiff(
-    data.frame(path = "a.csv", sha256 = "aa"),
-    data.frame(path = "a.csv", sha256 = "bb")
+    data.frame(path = "a.csv", sha256 = "aa", stringsAsFactors = FALSE),
+    data.frame(path = "a.csv", sha256 = "bb", stringsAsFactors = FALSE)
   )
   app <- drftapp(d, ref = fx$ref, cur = fx$cur, hist = dir)
   expect_s3_class(app, "shiny.appobj")
@@ -572,9 +581,8 @@ test_that("drftapp() refuses without shiny, and builds its UI and server", {
   )) {
     expect_true(grepl(sprintf("id=\"%s\"", id), ui, fixed = TRUE), label = id)
   }
-  expect_true(
-    grepl("Manifest", ui, fixed = TRUE) && grepl("History", ui, fixed = TRUE)
-  )
+  expect_true(grepl("Manifest", ui, fixed = TRUE))
+  expect_true(grepl("History", ui, fixed = TRUE))
   shiny::testServer(app, {
     session$setInputs(
       warn = 0.1,
@@ -631,7 +639,7 @@ test_that("drftapp() with no result compares two uploaded CSV files", {
     session$setInputs(refcsv = list(datapath = r), curcsv = list(datapath = k))
     session$setInputs(col = "id")
     expect_match(output$tab, "size")
-    expect_equal(output$clear, "")
+    expect_identical(output$clear, "")
     session$setInputs(rerun = 1)
     expect_match(output$tab, "value")
   })
@@ -647,16 +655,21 @@ test_that(
     withr::local_envvar(HOME = home, XDG_CONFIG_HOME = file.path(home, "cfg"))
     root <- file.path(home, "caps")
     run <- function(...) {
-      buf <- character()
-      st <- blcli(c(...), out = function(s) buf <<- c(buf, s))
-      list(status = st, text = paste(buf, collapse = ""))
+      acc <- new.env(parent = emptyenv())
+      acc$buf <- character()
+      st <- blcli(c(...), out = function(s) acc$buf <- c(acc$buf, s))
+      list(status = st, text = paste(acc$buf, collapse = ""))
     }
     mk <- function(name) {
       d <- file.path(root, name)
       dir.create(d, recursive = TRUE)
       src <- file.path(d, "source.csv")
       utils::write.csv(
-        data.frame(id = 1:40, v = rep(c("a", "b"), 20)),
+        data.frame(
+          id = 1:40,
+          v = rep(c("a", "b"), 20),
+          stringsAsFactors = FALSE
+        ),
         src,
         row.names = FALSE
       )
@@ -669,7 +682,7 @@ test_that(
         tojs(prov, auto_unbox = TRUE),
         file.path(d, "data_provenance.json")
       )
-      expect_equal(run("refresh", d)$status, 0L)
+      expect_identical(run("refresh", d)$status, 0L)
       src
     }
     s1 <- mk("one")
@@ -679,42 +692,47 @@ test_that(
     r <- run("drift", root, "--app")
     expect_match(r$text, "no app to open")
     utils::write.csv(
-      data.frame(id = 1:40, v = rep(c("a", "c"), 20)),
+      data.frame(id = 1:40, v = rep(c("a", "c"), 20), stringsAsFactors = FALSE),
       s1,
       row.names = FALSE
     )
     r <- run("drift", root, "--html", h)
-    expect_equal(r$status, 0L)
+    expect_equal(r$status, 0L, tolerance = testthat::testthat_tolerance())
     expect_match(r$text, "HTML report: ", fixed = TRUE)
     p <- page_json(h)
-    expect_equal(p$provenance$name, "one")
-    expect_equal(
+    expect_identical(p$provenance$name, "one")
+    expect_identical(
       unlist(p$chain$link),
       c("provenance", "bytes", "manifest", "attestation")
     )
-    expect_equal(unlist(p$chain$status)[2], "warn")
-    expect_equal(unlist(p$manifest$change), "changed")
+    expect_identical(unlist(p$chain$status)[2], "warn")
+    expect_identical(unlist(p$manifest$change), "changed")
     j <- fromjs(
       run("drift", root, "--json", "--html", h)$text,
       simplifyVector = FALSE
     )
-    expect_equal(j$capsules[[1]]$drift$columns[[2]]$column, "v")
+    expect_identical(j$capsules[[1]]$drift$columns[[2]]$column, "v")
     expect_null(j$capsules[[1]]$drift$object)
     expect_length(attr(cpschk(root, "drift", fp = FALSE), "drifts"), 1L)
-    launched <- NULL
+    acc2 <- new.env(parent = emptyenv())
+    acc2$launched <- NULL
     local_mocked_bindings(
-      .bl_run_app = function(app) launched <<- app,
+      .bl_run_app = function(app) acc2$launched <- app,
       .package = "rmoriebricklayer"
     )
     if (requireNamespace("shiny", quietly = TRUE)) {
       r <- run("drift", root, "--app")
-      expect_equal(r$status, 0L)
-      expect_s3_class(launched, "shiny.appobj")
+      expect_identical(r$status, 0L)
+      expect_s3_class(acc2$launched, "shiny.appobj")
     }
     # two capsules: one page each, named after the capsule
     s2 <- mk("two")
     utils::write.csv(
-      data.frame(id = 41:80, v = rep(c("b", "c"), 20)),
+      data.frame(
+        id = 41:80,
+        v = rep(c("b", "c"), 20),
+        stringsAsFactors = FALSE
+      ),
       s2,
       row.names = FALSE
     )
@@ -732,17 +750,19 @@ test_that(
     "the options"
   ),
   {
-    seen <- NULL
-    withr::local_options(browser = function(url) seen <<- url)
-    expect_null(rmoriebricklayer:::.bl_open_file("x.html"))
-    expect_equal(seen, "x.html")
+    acc <- new.env(parent = emptyenv())
+    acc$seen <- NULL
+    withr::local_options(browser = function(url) acc$seen <- url)
+    expect_null(.bl_open_file("x.html"))
+    expect_identical(acc$seen, "x.html")
     skip_if_not_installed("shiny")
     local_mocked_bindings(runApp = function(app) "ran", .package = "shiny")
-    expect_equal(rmoriebricklayer:::.bl_run_app(NULL), "ran")
-    buf <- character()
-    blcli("help", out = function(s) buf <<- c(buf, s))
+    expect_identical(.bl_run_app(NULL), "ran")
+    acc2 <- new.env(parent = emptyenv())
+    acc2$buf <- character()
+    blcli("help", out = function(s) acc2$buf <- c(acc2$buf, s))
     expect_match(
-      paste(buf, collapse = ""),
+      paste(acc2$buf, collapse = ""),
       "[--html FILE] [--app]",
       fixed = TRUE
     )
@@ -753,27 +773,28 @@ test_that("the curves, the Benford band, the chain and the history heatmap", {
   fx <- drift_fixture()
   d <- fx$d
   v <- d$summ$value
-  expect_equal(nrow(v$dens), 64L)
-  expect_true(all(diff(v$ecdf$ref) >= 0) && all(diff(v$ecdf$cur) >= 0))
-  expect_equal(
+  expect_identical(nrow(v$dens), 64L)
+  expect_true(all(diff(v$ecdf$ref) >= 0))
+  expect_true(all(diff(v$ecdf$cur) >= 0))
+  expect_identical(
     v$qq$ref,
     unname(stats::quantile(fx$ref$value, seq(0.02, 0.98, by = 0.04)))
   )
   expect_gt(v$qq$cur[13], v$qq$ref[13]) # the median moved up by about 0.5
   # one value on each side: the bandwidth is still positive
   one <- cpsdrft(data.frame(v = 3), data.frame(v = 3))
-  expect_equal(nrow(one$summ$v$dens), 64L)
-  bb <- rmoriebricklayer:::.bl_benford_band(100)
-  expect_equal(bb$expected, log10(1 + 1 / (1:9)))
+  expect_identical(nrow(one$summ$v$dens), 64L)
+  bb <- .bl_benford_band(100)
+  expect_identical(bb$expected, log10(1 + 1 / (1:9)))
   expect_true(all(
     bb$lower >= 0 & bb$lower < bb$expected & bb$upper > bb$expected
   ))
-  expect_equal(rmoriebricklayer:::.bl_benford_band(0)$upper[9] <= 1, TRUE)
-  chain <- function(x) rmoriebricklayer:::.bl_drift_chain(x)$status
-  expect_equal(chain(d), rep("none", 4))
+  expect_lte(.bl_benford_band(0)$upper[9], 1)
+  chain <- function(x) .bl_drift_chain(x)$status
+  expect_identical(chain(d), rep("none", 4))
   d$provenance <- list(name = "x")
-  d$manifest <- data.frame(change = "unchanged")
-  expect_equal(chain(d), c("ok", "ok", "ok", "none"))
+  d$manifest <- data.frame(change = "unchanged", stringsAsFactors = FALSE)
+  expect_identical(chain(d), c("ok", "ok", "ok", "none"))
   d$checks <- data.frame(
     part = c("provenance", "data", "data", "spec", "bundle", "data"),
     file = c("p.json", "d.csv", "d.csv", "manifest.json", "b.json", "d.csv"),
@@ -790,13 +811,13 @@ test_that("the curves, the Benford band, the chain and the history heatmap", {
     severity = c("error", "error", "note", "error", "error", "drift"),
     stringsAsFactors = FALSE
   )
-  ch <- rmoriebricklayer:::.bl_drift_chain(d)
-  expect_equal(ch$status, c("ok", "warn", "fail", "ok"))
+  ch <- .bl_drift_chain(d)
+  expect_identical(ch$status, c("ok", "warn", "fail", "ok"))
   expect_match(ch$detail[2], "source_columns: drift")
-  expect_equal(ch$detail[1], "1 check passed")
+  expect_identical(ch$detail[1], "1 check passed")
   d$checks <- d$checks[1, ]
-  expect_equal(
-    rmoriebricklayer:::.bl_drift_chain(d)$status,
+  expect_identical(
+    .bl_drift_chain(d)$status,
     c("ok", "none", "none", "none")
   )
   h <- data.frame(
@@ -805,10 +826,10 @@ test_that("the curves, the Benford band, the chain and the history heatmap", {
     psi = c(0.05, 0.2, 0.3, NA, 0.4, 0.1),
     stringsAsFactors = FALSE
   )
-  hb <- rmoriebricklayer:::.bl_drift_heat(h, list(warn = 0.1, fail = 0.25))
-  expect_equal(hb$band, c("ok", "warn", "fail", "none", "fail", "ok"))
-  expect_equal(
-    with_dev(rmoriebricklayer:::.bl_drift_heat_plot(
+  hb <- .bl_drift_heat(h, list(warn = 0.1, fail = 0.25))
+  expect_identical(hb$band, c("ok", "warn", "fail", "none", "fail", "ok"))
+  expect_identical(
+    with_dev(.bl_drift_heat_plot(
       h,
       list(warn = 0.1, fail = 0.25)
     ))$band,
@@ -823,25 +844,28 @@ test_that("plot() draws the ECDFs, the quantiles and the fingerprint", {
   expect_equal(max(e$ref[e$column == "grade"]), 1, tolerance = 1e-12)
   q <- with_dev(plot(d, what = "quantiles"))
   expect_setequal(unique(q$column), c("size", "value", "day"))
-  expect_equal(q$ref[q$column == "value"], d$summ$value$qq$ref)
+  expect_identical(q$ref[q$column == "value"], d$summ$value$qq$ref)
   f <- with_dev(plot(d, what = "fingerprint", warn = 0.05))
-  expect_equal(nrow(f), 5L)
+  expect_identical(nrow(f), 5L)
   # the largest PSI sits on the outer ring
-  expect_equal(f$radius[f$column == "size"], 1)
-  expect_equal(f$verdict[f$column == "id"], "untested")
+  expect_identical(f$radius[f$column == "size"], 1)
+  expect_identical(f$verdict[f$column == "id"], "untested")
   # one or two columns: no polygon, the points alone
-  expect_equal(
+  expect_identical(
     nrow(with_dev(plot(
       cpsdrft(data.frame(a = 1:50), data.frame(a = 3:52)),
       what = "fingerprint"
     ))),
     1L
   )
-  only_cat <- cpsdrft(data.frame(g = c("a", "b")), data.frame(g = c("a", "a")))
-  expect_equal(nrow(with_dev(plot(only_cat, what = "quantiles"))), 0L)
-  ids <- cpsdrft(
-    data.frame(i = sprintf("x%03d", 1:200)),
-    data.frame(i = sprintf("y%03d", 1:200))
+  only_cat <- cpsdrft(
+    data.frame(g = c("a", "b"), stringsAsFactors = FALSE),
+    data.frame(g = c("a", "a"), stringsAsFactors = FALSE)
   )
-  expect_equal(nrow(with_dev(plot(ids, what = "ecdf"))), 0L)
+  expect_identical(nrow(with_dev(plot(only_cat, what = "quantiles"))), 0L)
+  ids <- cpsdrft(
+    data.frame(i = sprintf("x%03d", 1:200), stringsAsFactors = FALSE),
+    data.frame(i = sprintf("y%03d", 1:200), stringsAsFactors = FALSE)
+  )
+  expect_identical(nrow(with_dev(plot(ids, what = "ecdf"))), 0L)
 })

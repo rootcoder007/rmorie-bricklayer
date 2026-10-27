@@ -66,15 +66,8 @@ usecpstmpl <- function(path, name = basename(path), ex = FALSE) {
   if (dir.exists(path) && length(list.files(path))) {
     stop("`path` exists and is not empty", call. = FALSE)
   }
-  if (
-    !is.character(name) || length(name) != 1L || is.na(name) || !nzchar(name)
-  ) {
-    stop("`name` must be a single non-empty string", call. = FALSE)
-  }
+  .bl_tmpl_name(name)
   dir.create(path, recursive = TRUE, showWarnings = FALSE)
-  # a JSON string literal for x: quotes, backslashes (Windows paths) and control
-  # characters escaped
-  jstr <- function(x) sub("^\\[(.*)\\]$", "\\1", tojs(as.character(x)))
   src <- if (ex) {
     system.file(
       "extdata",
@@ -84,6 +77,34 @@ usecpstmpl <- function(path, name = basename(path), ex = FALSE) {
   } else {
     "TODO: https://example.org/open-data/table.csv"
   }
+  writeLines(.bl_tmpl_prov(name, src), file.path(path, "data_provenance.json"))
+  writeLines(.bl_tmpl_script(), file.path(path, "analysis.R"))
+  writeLines(.bl_tmpl_readme(name), file.path(path, "README.md"))
+  invisible(path)
+}
+
+#' Refuses a capsule name that is not a single non-empty string.
+#' @param name The capsule's name.
+#' @return `name`, invisibly.
+#' @noRd
+.bl_tmpl_name <- function(name) {
+  if (
+    !is.character(name) || length(name) != 1L || is.na(name) || !nzchar(name)
+  ) {
+    stop("`name` must be a single non-empty string", call. = FALSE)
+  }
+  invisible(name)
+}
+
+#' The capsule's data_provenance.json lines.
+#' @param name The capsule's name.
+#' @param src The source URL or path.
+#' @return A character vector of lines.
+#' @noRd
+.bl_tmpl_prov <- function(name, src) {
+  # a JSON string literal for x: quotes, backslashes (Windows paths) and control
+  # characters escaped
+  jstr <- function(x) sub("^\\[(.*)\\]$", "\\1", tojs(as.character(x)))
   # nolint start: indentation_linter, line_length_linter.
   prov <- c(
     "{",
@@ -104,8 +125,14 @@ usecpstmpl <- function(path, name = basename(path), ex = FALSE) {
     "  }",
     "}"
   )
-  writeLines(prov, file.path(path, "data_provenance.json"))
   # nolint end
+  prov
+}
+
+#' The capsule's analysis.R lines (its fetching half, then the rest).
+#' @return A character vector of lines.
+#' @noRd
+.bl_tmpl_script <- function() {
   # nolint start: indentation_linter, line_length_linter.
   script <- c(
     "# Reproducible capsule: fetch, verify, analyse, record.",
@@ -148,7 +175,18 @@ usecpstmpl <- function(path, name = basename(path), ex = FALSE) {
       "  stop(\"the source bytes changed since the capsule was pinned: \", ",
       "digest)"
     ),
-    "}",
+    "}"
+  )
+  # nolint end
+  c(script, .bl_tmpl_script_analyse())
+}
+
+#' The analysing and recording half of the capsule's analysis.R lines.
+#' @return A character vector of lines.
+#' @noRd
+.bl_tmpl_script_analyse <- function() {
+  # nolint start: indentation_linter, line_length_linter.
+  script <- c(
     "data <- read.csv(local, check.names = FALSE)",
     "",
     "# 2. Analyse: change with exact intervals and adjusted p-values, trend,",
@@ -175,8 +213,15 @@ usecpstmpl <- function(path, name = basename(path), ex = FALSE) {
     "rptanl(a, file.path(out, \"report.md\"), title = prov$name)",
     "cat(\"results in\", out, \"\\n\")"
   )
-  writeLines(script, file.path(path, "analysis.R"))
   # nolint end
+  script
+}
+
+#' The capsule's README.md lines.
+#' @param name The capsule's name.
+#' @return A character vector of lines.
+#' @noRd
+.bl_tmpl_readme <- function(name) {
   # nolint start: indentation_linter, line_length_linter.
   readme <- c(
     sprintf("# %s", name),
@@ -196,7 +241,6 @@ usecpstmpl <- function(path, name = basename(path), ex = FALSE) {
     "Anyone with this folder and the package can rerun it and compare",
     "manifests with `mnfrcmp()`."
   )
-  writeLines(readme, file.path(path, "README.md"))
   # nolint end
-  invisible(path)
+  readme
 }

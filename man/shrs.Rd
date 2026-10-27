@@ -8,7 +8,7 @@
 \usage{
 shrs(x, ...)
 
-\method{shrs}{data.frame}(x, count, by = NULL, total = NULL, conflvl = 0.95, ...)
+\method{shrs}{data.frame}(x, count = NULL, by = NULL, total = NULL, conflvl = 0.95, ...)
 
 \method{shrs}{default}(x, total = NULL, conflvl = 0.95, ...)
 }
@@ -17,8 +17,8 @@ shrs(x, ...)
 
 \item{...}{Passed to methods.}
 
-\item{count}{Column of counts, unquoted or as a string: non-negative
-whole numbers.}
+\item{count}{Column of counts (required), unquoted or as a string:
+non-negative whole numbers.}
 
 \item{by}{Character vector of grouping columns. Shares are computed
 over the groups, so they sum to 100 unless \code{total} says otherwise.}

@@ -79,36 +79,7 @@
 #' status # "live" or "wayback"
 #' @export
 blfetch <- function(url, dest, wb = "", tmout = 120L) {
-  if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
-    stop("`url` must be one non-empty URL string", call. = FALSE)
-  }
-  if (
-    !is.character(dest) || length(dest) != 1L || is.na(dest) || !nzchar(dest)
-  ) {
-    stop("`dest` must be one non-empty file path", call. = FALSE)
-  }
-  # what can be told before any download: the URL, the destination, the timeout
-  if (!grepl("^https?://", url, ignore.case = TRUE)) {
-    stop(sprintf("blfetch: '%s' is not an http(s) URL", url), call. = FALSE)
-  }
-  # the same gate every other entry point has (the compiled layer checks
-  # again, resolves, pins and re-checks each redirect)
-  .rmbl_check_public_url(url, "url")
-  d <- dirname(path.expand(dest))
-  if (!dir.exists(d) || file.access(d, 2L) != 0L) {
-    stop(
-      sprintf(
-        "blfetch: cannot write %s (%s)",
-        dest,
-        if (!dir.exists(d)) "its directory does not exist" else "no permission"
-      ),
-      call. = FALSE
-    )
-  }
-  tmout <- suppressWarnings(as.integer(tmout))
-  if (length(tmout) != 1L || is.na(tmout) || tmout < 1L) {
-    stop("`tmout` must be a positive number of seconds", call. = FALSE)
-  }
+  tmout <- .bl_fetch_check(url, dest, tmout)
   code <- .bl_net(
     url,
     .Call(
@@ -126,38 +97,7 @@ blfetch <- function(url, dest, wb = "", tmout = 120L) {
   if (code == 1L) {
     return(invisible("wayback"))
   }
-  # the destination could not be written: a local failure, and no Wayback lookup
-  # was made
-  if (code == -2L) {
-    stop(
-      sprintf(
-        "blfetch: cannot write %s (the download could not be saved there)",
-        dest
-      ),
-      call. = FALSE
-    )
-  }
-  v <- -code
-  live <- v %/% 10L
-  stop(
-    sprintf(
-      "blfetch: %s; %s",
-      if (live == 1L) {
-        sprintf("could not reach %s", url)
-      } else {
-        sprintf("%s answered HTTP %d", url, live)
-      },
-      if (v %% 10L == 1L) {
-        "the Wayback fallback failed too (its copy could not be downloaded)"
-      } else {
-        paste0(
-          "the Wayback fallback failed (the Wayback Machine has no ",
-          "snapshot of it, or did not answer)"
-        )
-      }
-    ),
-    call. = FALSE
-  )
+  .bl_fetch_fail(code, url, dest)
 }
 
 #' Resolve a Wayback Machine snapshot URL (C++/libcurl)
@@ -215,4 +155,98 @@ wbsnpnat <- function(url, tmout = 30L) {
     .Call(C_rmbl_wayback, url, as.integer(tmout), "")
   )
   if (is.character(snap) && nzchar(snap)) snap else NULL
+}
+
+#' blfetch()'s URL: http(s), and public.
+#' @param url As for blfetch().
+#' @noRd
+.bl_fetch_check_url <- function(url) {
+  # what can be told before any download: the URL, the destination, the timeout
+  if (!grepl("^https?://", url, ignore.case = TRUE)) {
+    stop(sprintf("blfetch: '%s' is not an http(s) URL", url), call. = FALSE)
+  }
+  # the same gate every other entry point has (the compiled layer checks
+  # again, resolves, pins and re-checks each redirect)
+  .rmbl_check_public_url(url, "url")
+  invisible(NULL)
+}
+
+#' blfetch()'s destination: in a directory that exists and can be written.
+#' @param dest As for blfetch().
+#' @noRd
+.bl_fetch_check_dest <- function(dest) {
+  d <- dirname(path.expand(dest))
+  if (!dir.exists(d) || file.access(d, 2L) != 0L) {
+    stop(
+      sprintf(
+        "blfetch: cannot write %s (%s)",
+        dest,
+        if (dir.exists(d)) "no permission" else "its directory does not exist"
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' blfetch()'s URL, destination and timeout, checked before any download.
+#' @param url,dest,tmout As for blfetch().
+#' @return The timeout, in whole seconds.
+#' @noRd
+.bl_fetch_check <- function(url, dest, tmout) {
+  if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
+    stop("`url` must be one non-empty URL string", call. = FALSE)
+  }
+  if (
+    !is.character(dest) || length(dest) != 1L || is.na(dest) || !nzchar(dest)
+  ) {
+    stop("`dest` must be one non-empty file path", call. = FALSE)
+  }
+  .bl_fetch_check_url(url)
+  .bl_fetch_check_dest(dest)
+  tmout <- suppressWarnings(as.integer(tmout))
+  if (length(tmout) != 1L || is.na(tmout) || tmout < 1L) {
+    stop("`tmout` must be a positive number of seconds", call. = FALSE)
+  }
+  tmout
+}
+
+#' blfetch()'s error for a failed download: where it failed, and whether the
+#' Wayback fallback was tried.
+#' @param code The compiled layer's code.
+#' @param url,dest As for blfetch().
+#' @noRd
+.bl_fetch_fail <- function(code, url, dest) {
+  # the destination could not be written: a local failure, and no Wayback lookup
+  # was made
+  if (code == -2L) {
+    stop(
+      sprintf(
+        "blfetch: cannot write %s (the download could not be saved there)",
+        dest
+      ),
+      call. = FALSE
+    )
+  }
+  v <- -code
+  live <- v %/% 10L
+  stop(
+    sprintf(
+      "blfetch: %s; %s",
+      if (live == 1L) {
+        sprintf("could not reach %s", url)
+      } else {
+        sprintf("%s answered HTTP %d", url, live)
+      },
+      if (v %% 10L == 1L) {
+        "the Wayback fallback failed too (its copy could not be downloaded)"
+      } else {
+        paste0(
+          "the Wayback fallback failed (the Wayback Machine has no ",
+          "snapshot of it, or did not answer)"
+        )
+      }
+    ),
+    call. = FALSE
+  )
 }

@@ -89,9 +89,12 @@ test_that(
     expect_identical(ns$.bl_console()$out, "stdout")
     # a sink on the stream: neither redrawn nor coloured, and on stderr
     sunk <- NULL
-    invisible(capture.output(sunk <- ns$.bl_console()))
+    invisible(capture.output(assign("sunk", ns$.bl_console())))
     expect_identical(sunk$out, "stderr")
-    invisible(capture.output(type = "message", sunk <- ns$.bl_console()))
+    invisible(capture.output(
+      type = "message",
+      assign("sunk", ns$.bl_console())
+    ))
     expect_false(sunk$dynamic)
     expect_identical(sunk$colors, 1L)
     # the width is R's, which RStudio keeps at the console's; COLUMNS is the
@@ -476,7 +479,7 @@ test_that(
     st <- ns$.bl_progress_state
     old <- st$delay
     st$delay <- 0
-    withr::defer(st$delay <- old)
+    withr::defer(assign("delay", old, envir = st))
     run <- function(fail) {
       p <- blprog("Boom", 10)
       a <- environment(p$update)$a
@@ -606,6 +609,6 @@ test_that(
     expect_error(ns$.bl_busy("boom", stop("failed")), "failed")
     expect_false(ns$.bl_progress_state$busy)
     withr::local_options(morie.quiet = TRUE)
-    expect_identical(ns$.bl_busy("quiet", ns$.bl_progress_state$busy), FALSE)
+    expect_false(ns$.bl_busy("quiet", ns$.bl_progress_state$busy))
   }
 )

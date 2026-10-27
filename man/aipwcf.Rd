@@ -46,7 +46,7 @@ replicate weights or its strata and primary sampling units.}
 
 \item{seed}{Seed for the folds (default 1).}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of the interval (default 0.95).}
 }
 \value{
 A data frame of class \code{rmbl_aipw}: \code{estimand},

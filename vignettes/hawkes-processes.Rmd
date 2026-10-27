@@ -8,13 +8,22 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 3.5)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 3.5
+)
 library(rmoriebricklayer)
 ```
 
@@ -74,9 +83,9 @@ baseline close to 1. Four kernels are available: `exponential` (memoryless decay
 Compare them by information criterion:
 
 ```{r hawkes-processes-kernels}
-sapply(c("exponential", "weibull", "lomax"), function(k) {
+vapply(c("exponential", "weibull", "lomax"), function(k) {
   chwkfit(times, 300, kernel = k)$aic
-})
+}, numeric(1))
 ```
 
 A **sinusoidal baseline** lets the background rate follow a cycle (a weekly or seasonal
@@ -99,7 +108,7 @@ stats::ks.test(U, "punif")$p.value
 ```
 
 ```{r hawkes-processes-qq}
-plot(stats::qunif(stats::ppoints(length(U))), sort(U), pch = 20, cex = .6,
+plot(stats::qunif(stats::ppoints(length(U))), sort(U), pch = 20, cex = 0.6,
      xlab = "uniform quantiles", ylab = "rescaled residuals",
      main = "Time-rescaling check")
 abline(0, 1, col = 2)

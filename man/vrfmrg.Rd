@@ -22,7 +22,8 @@ the \code{permutation} that would explain the counts and the
 report it or pass the permutation to \code{\link{rlblfrns}}.}
 }
 \value{
-A list with elements \code{counts} (named numeric, observed count
+A list of class \code{rmbl_margin_check} (it prints as a box)
+with elements \code{counts} (named numeric, observed count
 per published label), \code{published} (named numeric), \code{ok}
 (logical), \code{permutation} (named character, true label = label it
 would have to be read as, or \code{NULL}) and \code{message}

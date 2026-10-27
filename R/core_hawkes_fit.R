@@ -5,199 +5,6 @@
 # core (morie_core.h: hawkes_nll_grad, hawkes_rescaled, hawkes_intensity,
 # hawkes_em_pass, hawkes_cdf_sum) -- the same code morie's Python arm calls.
 
-.rmbl_hk_kind <- c(exponential = 0L, weibull = 1L, gamma = 2L, lomax = 3L)
-.rmbl_hk_bkind <- c(constant = 0L, sinusoidal = 1L)
-.rmbl_hk_methods <- c("auto", "exact", "soe", "truncate", "em", "inar")
-
-#' Resolves the fitting route for a kernel, turning \code{"auto"} into a
-#' concrete one.
-#' @param method The route asked for: one of \code{"auto"}, \code{"exact"},
-#' \code{"soe"}, \code{"truncate"}, \code{"em"}, \code{"inar"}.
-#' @param kernel The kernel name.
-#' @return The route name.
-#' @noRd
-.rmbl_hk_method <- function(method, kernel) {
-  method <- .rmbl_arg(method, .rmbl_hk_methods)
-  # Weibull's exact window is where the kernel underflows: for shape < 1 the
-  # whole record, so "auto" truncates. Lomax and gamma use the sum of
-  # exponentials ("soe"; a gamma kernel with shape >= 1 is truncated at eps).
-  # The gamma stall on that route (2,000 iterations to a worse optimum on 2,118
-  # tied events) ended when the projected BFGS began restarting its curvature
-  # estimate at the bounds; it now reaches the exact route's maximum in 2.8 s.
-  if (method == "auto") {
-    return(switch(kernel, exponential = "exact", weibull = "truncate", "soe"))
-  }
-  if (method == "soe" && !kernel %in% c("lomax", "gamma")) {
-    stop(
-      "method = \"soe\" applies to completely monotone kernels: \"lomax\", ",
-      "and \"gamma\" with shape < 1 ",
-      "(a gamma kernel with shape >= 1 is truncated at eps); use ",
-      "\"exact\" or \"truncate\"",
-      call. = FALSE
-    )
-  }
-  method
-}
-
-#' Gives the sum-of-exponentials window for a kernel.
-#'
-#' The sum-of-exponentials window: r = (u + c)/R in \[delta, 1\] (Lomax, c <=
-#' 100 in the fit), r = u/R from the smallest gap (gamma)
-#' @param times The sorted event times.
-#' @param horizon The end of the observation window.
-#' @param kernel The kernel name.
-#' @return A length-two vector: the scale and the lower end delta of the window.
-#' @noRd
-.rmbl_hk_soe <- function(times, horizon, kernel) {
-  if (kernel == "lomax") {
-    return(c(horizon + 100, 1e-3 / (horizon + 100)))
-  }
-  g <- diff(times)
-  g <- g[g > 0]
-  c(horizon, max(if (length(g)) min(g) else 1e-9, 1e-12) / horizon)
-}
-
-#' Evaluates the negative log-likelihood (and its gradient) in the shared C++
-#' core.
-#' @param times The sorted event times.
-#' @param horizon The end of the observation window.
-#' @param kernel The kernel name.
-#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
-#' @param theta The parameters: the baseline terms, the branching ratio and the
-#'   kernel parameters.
-#' @param method The route: \code{"exact"}, \code{"soe"} or \code{"truncate"}.
-#' @param eps The tolerance of the \code{"soe"} and \code{"truncate"} routes.
-#' @param gradient Whether the gradient is computed too.
-#' @return The negative log-likelihood, followed by the gradient when asked for.
-#' @noRd
-.rmbl_hk_call <- function(
-  times,
-  horizon,
-  kernel,
-  baseline,
-  theta,
-  method,
-  eps,
-  gradient
-) {
-  nb <- if (baseline == "constant") 1L else 4L
-  soe <- .rmbl_hk_soe(times, horizon, kernel)
-  code <- c(exact = 0L, soe = 1L, truncate = 2L)[[method]]
-  .Call(
-    C_rmbl_hawkes_nll_grad,
-    times,
-    horizon,
-    .rmbl_hk_bkind[[baseline]],
-    theta[seq_len(nb)],
-    theta[[nb + 1L]],
-    .rmbl_hk_kind[[kernel]],
-    theta[-seq_len(nb + 1L)],
-    code,
-    eps,
-    soe[[1]],
-    soe[[2]],
-    gradient
-  )
-}
-
-#' Checks event times and the horizon of a Hawkes fit.
-#' @param times The event times passed by the user.
-#' @param horizon The horizon passed by the user (the `hor` argument).
-#' @param baseline \code{"constant"} or \code{"sinusoidal"}; the sinusoidal one
-#' caps the horizon.
-#' @return A list with the checked `times` and `horizon`.
-#' @noRd
-.rmbl_hk_check_times <- function(times, horizon, baseline = "constant") {
-  times <- .rmbl_num(times, "times")
-  if (anyNA(times)) {
-    stop(.rmbl_fn(), "`times` must not contain NA", call. = FALSE)
-  }
-  if (length(times) > 1L && any(diff(times) < 0)) {
-    stop(
-      .rmbl_fn(),
-      "`times` must be sorted in increasing order",
-      call. = FALSE
-    )
-  }
-  horizon <- .rmbl_num(horizon, "hor")
-  if (length(horizon) != 1L || !is.finite(horizon) || horizon <= 0) {
-    stop(
-      .rmbl_fn(),
-      "`hor` must be a single positive finite number",
-      call. = FALSE
-    )
-  }
-  if (baseline != "constant" && horizon > 4194304) {
-    stop(
-      "a sinusoidal baseline is integrated day by day: `hor` must be at ",
-      "most 4194304 days",
-      call. = FALSE
-    )
-  }
-  if (length(times) > 0L && (min(times) < 0 || max(times) > horizon)) {
-    stop(
-      sprintf(
-        paste0(
-          "`times` must lie within [0, hor] (they span %g to %g)",
-          if (max(times) > horizon) {
-            "; chwkjit(times, hor = ) keeps them inside"
-          } else {
-            ""
-          }
-        ),
-        min(times),
-        max(times)
-      ),
-      call. = FALSE
-    )
-  }
-  list(times = times, horizon = horizon)
-}
-
-#' Gives the starting parameters for the optimiser.
-#' @param kernel The kernel name.
-#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
-#' @param n The number of events.
-#' @param horizon The end of the observation window.
-#' @param mean_dt The mean gap between events.
-#' @return The starting parameter vector.
-#' @noRd
-.rmbl_hk_x0 <- function(kernel, baseline, n, horizon, mean_dt) {
-  rate <- max(n / horizon, 1e-3)
-  a <- if (baseline == "constant") {
-    log(rate * 0.6)
-  } else {
-    c(log(rate * 0.6), 0, 0, 0)
-  }
-  psi <- switch(
-    kernel,
-    exponential = 1 / max(mean_dt, 1e-3),
-    gamma = c(1.5, 1 / max(mean_dt, 1e-3)),
-    weibull = c(1.5, max(mean_dt, 1e-3) * 1.2),
-    lomax = c(2.5, max(mean_dt, 1e-3) * 5)
-  )
-  c(a, 0.4, psi)
-}
-
-#' Gives the parameter box the optimiser stays inside.
-#' @param kernel The kernel name.
-#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
-#' @return A list with the `lower` and `upper` bounds.
-#' @noRd
-.rmbl_hk_bounds <- function(kernel, baseline) {
-  nb <- if (baseline == "constant") 1L else 4L
-  lo <- c(-15, rep(-5, nb - 1L), 1e-3)
-  hi <- c(15, rep(5, nb - 1L), 0.99)
-  k <- switch(
-    kernel,
-    exponential = list(0.1, 25),
-    weibull = list(c(0.1, 1e-3), c(15, 100)),
-    gamma = list(c(0.1, 0.05), c(15, 25)),
-    lomax = list(c(1.05, 1e-3), c(30, 100))
-  )
-  list(lower = c(lo, k[[1]]), upper = c(hi, k[[2]]))
-}
-
 #' Fit a Hawkes process by maximum likelihood (analytic gradient, fast routes)
 #'
 #' Fits a self-exciting (Hawkes) point process to a series of event times,
@@ -405,289 +212,67 @@ chwkfit <- function(
   if (n < 50L) {
     stop(sprintf("too few events (%d) for the fit", n), call. = FALSE)
   }
-  # the baseline is bounded (a0 in [-15, 15], eta <= 0.99), so the event rate it
-  # can reach is [e^-15, 100 e^15] per unit time; outside that the optimiser can
-  # only return its start
-  rate <- n / hor
-  if (!(rate >= exp(-15)) || !(rate <= 100 * exp(15))) {
-    stop(
-      sprintf(
-        paste0(
-          "the event rate n / horizon = %g is outside what the fit can ",
-          "represent ",
-          "(%g to %g per unit time): express the times in another unit"
-        ),
-        rate,
-        exp(-15),
-        100 * exp(15)
-      ),
-      call. = FALSE
-    )
-  }
-  ties <- sum(diff(times) == 0)
-  if (ties) {
-    warning(
-      sprintf(
-        paste0(
-          "%d event(s) share their time with an earlier one: they do ",
-          "not excite each ",
-          "other (the intensity sums over strictly earlier events). ",
-          "Times rounded to a ",
-          "resolution (daily dates) should first be spread across it: chwkjit()"
-        ),
-        ties
-      ),
-      call. = FALSE
-    )
-  }
-  if (
-    !is.numeric(eps) ||
-      length(eps) != 1L ||
-      is.na(eps) ||
-      !(eps > 0) ||
-      eps >= 1
-  ) {
-    stop("`eps` must be a single number in (0, 1)", call. = FALSE)
-  }
+  .chwkfit_check(times, hor, n, eps)
   nb <- if (base == "constant") 1L else 4L
   b <- .rmbl_hk_bounds(kernel, base)
-  x0 <- if (is.null(start)) {
-    .rmbl_hk_x0(kernel, base, n, hor, mean(diff(times)))
-  } else {
-    .rmbl_num(start, "start")
-  }
-  if (length(x0) != length(b$lower)) {
-    stop(sprintf("`start` must have length %d", length(b$lower)), call. = FALSE)
-  }
-  x0 <- pmin(pmax(x0, b$lower), b$upper)
+  x0 <- .chwkfit_x0(start, kernel, base, n, hor, times, b)
   exact_nll <- function(th) {
     .rmbl_hk_call(times, hor, kernel, base, th, "exact", 1e-12, FALSE)[[1]]
   }
-  converged <- TRUE
-  # EM is an R loop: a bar with its iterations; the other routes are long native
-  # calls: a spinner with the stage
-  stage <- function(what, expr) {
-    .bl_busy(
-      sprintf(
-        "Hawkes fit (%s, %s events): %s",
-        kernel,
-        format(n, big.mark = ","),
-        what
-      ),
-      expr
-    )
-  }
-  if (meth == "em") {
-    pg <- blprog(sprintf("Hawkes fit (%s)", kernel), 0)
-    on.exit(pg$done(), add = TRUE)
-    pg$update(info = sprintf("fitting %s events", format(n, big.mark = ",")))
-    em <- .rmbl_hk_em(times, hor, kernel, base, x0, b, pg = pg)
-    # EM converges linearly: its steps shrink long before it reaches the
-    # maximum, so a small step is not a stop (it ended 1.4e-5 short on macOS
-    # x86_64). Finish with the projected BFGS on the exact likelihood from EM's
-    # point; it only moves uphill.
-    pg$update(info = "polishing the EM point")
-    pol <- .rmbl_hk_pbfgs(times, hor, kernel, base, "exact", 1e-12, b, em$theta)
-    theta <- if (pol$value <= exact_nll(em$theta)) pol$par else em$theta
-    converged <- pol$iterations < 2000
-  } else if (meth == "inar") {
-    theta <- stage(
-      "INAR approximation",
-      .rmbl_hk_inar(times, hor, kernel, base, b)
-    )
+  fit <- if (meth == "em") {
+    .chwkfit_em(times, hor, kernel, base, x0, b, exact_nll)
   } else {
-    run <- function(st) {
-      .rmbl_hk_pbfgs(times, hor, kernel, base, meth, eps, b, st)
-    }
-    fit <- stage("first start", run(x0))
-    if (!is.null(start) && fit$value >= 1e11) {
-      # the optimizer cannot move from a point where the likelihood is not
-      # finite (it returned the start itself, reported as converged)
-      stop(
-        "the likelihood is not finite at `start` (no intensity, or an ",
-        "overflowing baseline): ",
-        "give a start inside the model",
-        call. = FALSE
-      )
-    }
-    if (kernel == "exponential" && is.null(start)) {
-      # a second start with little excitation and a slow decay: on weakly
-      # clustered data the likelihood has a second maximum with the decay on its
-      # bound, and the data-driven start can stop there (nll -155.02 against
-      # -156.46 for runif(400) with seed 1)
-      x1 <- .rmbl_hk_x0(kernel, base, n, hor, mean(diff(times)))
-      x1[[1L]] <- log(max(n / hor, 1e-3) * 0.9)
-      x1[[nb + 1L]] <- 0.1
-      x1[[length(x1)]] <- x1[[length(x1)]] / 4
-      fit2 <- stage("second start", run(pmin(pmax(x1, b$lower), b$upper)))
-      if (fit2$value < fit$value) fit <- fit2
-    }
-    if (kernel != "exponential" && is.null(start)) {
-      # a second, deterministic start at the exponential fit (the shape-1 member
-      # of Weibull and gamma), as morie's Python fit: the likelihood is
-      # multimodal
-      fit2 <- stage(
-        "second start, from the exponential fit",
-        run(.rmbl_hk_warm(times, hor, kernel, base, b))
-      )
-      if (fit2$value < fit$value) fit <- fit2
-    }
-    theta <- fit$par
-    converged <- fit$iterations < 2000 && fit$value < 1e11
+    .chwkfit_opt(times, hor, kernel, base, meth, eps, b, x0, start, nb)
   }
+  theta <- fit$theta
+  converged <- fit$converged
   nll <- exact_nll(theta)
-  k <- length(theta)
-  pnames <- c(
-    if (base == "constant") "a0" else paste0("a", 0:3),
-    "eta",
-    switch(
-      kernel,
-      exponential = "beta",
-      weibull = c("alpha", "lambda"),
-      gamma = c("alpha", "beta"),
-      lomax = c("alpha", "c")
-    )
-  )
-  on_box <- abs(theta - b$lower) <= 1e-6 * pmax(1, abs(b$lower)) |
-    abs(theta - b$upper) <= 1e-6 * pmax(1, abs(b$upper))
-  # reported, not warned: a Lomax fitted to exponential-like data reaching its
-  # exponential limit is an ordinary result; a shape at its wall on day-dated
-  # times is the case to look at
-  at_bound <- pnames[on_box]
-  if (abs(theta[[nb + 1L]] - b$upper[[nb + 1L]]) <= 1e-6) {
-    warning(
-      sprintf(
-        paste0(
-          "the branching ratio eta sits on its upper bound %g: the ",
-          "process is near critical ",
-          "and the fit is not an interior maximum (often an unmodelled ",
-          "trend; try ",
-          "base = \"sinusoidal\")"
-        ),
-        b$upper[[nb + 1L]]
-      ),
-      call. = FALSE
-    )
+  .chwkfit_result(theta, converged, nll, times, hor, kernel, base, meth, eps, b)
+}
+
+#' @export
+format.rmbl_hawkes_fit <- function(x, digits = 4L, ...) {
+  th <- x$theta
+  pn <- .chwkfit_pnames(x$kernel, x$baseline)
+  if (length(pn) != length(th)) {
+    pn <- paste0("theta", seq_along(th))
   }
-  U <- chwkres(times, hor, kernel, theta, base = base)
-  # the exact distribution up to n = 10,000, as morie's Python (and scipy's
-  # "auto"); with tied residuals (tied event times) the exact computation is
-  # extremely slow and memory-hungry and its distribution does not hold, so the
-  # asymptotic one
-  ks <- suppressWarnings(stats::ks.test(
-    U,
-    "punif",
-    exact = length(U) <= 10000L && !anyDuplicated(U)
-  ))
-  list(
-    theta = theta,
-    basepar = theta[seq_len(nb)],
-    braratio = theta[[nb + 1L]],
-    kerpar = theta[-seq_len(nb + 1L)],
-    nll = nll,
-    aic = 2 * k + 2 * nll,
-    bic = k * log(n) + 2 * nll,
-    n = n,
-    horizon = hor,
-    kpar = k,
-    ksstat = unname(ks$statistic),
-    kspva = ks$p.value,
-    kernel = kernel,
-    baseline = base,
-    method = meth,
-    eps = if (meth %in% c("soe", "truncate")) eps else NA_real_,
-    converged = converged,
-    atbound = at_bound
+  tb <- data.frame(
+    parameter = pn,
+    estimate = th,
+    bound = ifelse(pn %in% x$atbound, "on the box", ""),
+    stringsAsFactors = FALSE
   )
-}
-
-#' Runs the whole projected BFGS fit in the shared C++ core.
-#'
-#' The whole fit in the shared C++ core (projected BFGS, morie_core.h
-#' hawkes_fit_pbfgs): the routine morie's Python fit calls, so both reach the
-#' same optimum from the same start
-#' @param times The sorted event times.
-#' @param horizon The end of the observation window.
-#' @param kernel The kernel name.
-#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
-#' @param method The route: \code{"exact"}, \code{"soe"} or \code{"truncate"}.
-#' @param eps The tolerance of the \code{"soe"} and \code{"truncate"} routes.
-#' @param b The parameter box, from .rmbl_hk_bounds().
-#' @param start The starting parameters.
-#' @return A list with the parameters `par`, the minimum `value` and the number
-#'   of `iterations`.
-#' @noRd
-.rmbl_hk_pbfgs <- function(
-  times,
-  horizon,
-  kernel,
-  baseline,
-  method,
-  eps,
-  b,
-  start
-) {
-  soe <- .rmbl_hk_soe(times, horizon, kernel)
-  code <- c(exact = 0L, soe = 1L, truncate = 2L)[[method]]
-  r <- .Call(
-    C_rmbl_hawkes_fit_pbfgs,
-    times,
-    horizon,
-    .rmbl_hk_bkind[[baseline]],
-    .rmbl_hk_kind[[kernel]],
-    code,
-    eps,
-    soe[[1]],
-    soe[[2]],
-    b$lower,
-    b$upper,
-    as.numeric(start),
-    2000L,
-    1e-6
+  .rmbl_stat_block(
+    "Hawkes process fit",
+    facts = list(
+      Kernel = x$kernel,
+      Baseline = x$baseline,
+      Method = if (length(x$eps) && !is.na(x$eps)) {
+        sprintf("%s (eps %s)", x$method, format(x$eps))
+      } else {
+        x$method
+      },
+      Events = x$n,
+      Window = paste("0 to", .rmbl_fmt_num(x$horizon)),
+      Parameters = x$kpar,
+      `Branching ratio (eta)` = x$braratio,
+      `Negative log-lik.` = x$nll,
+      AIC = x$aic,
+      BIC = x$bic,
+      `Residual KS test` = sprintf(
+        "D = %s, p %s",
+        .rmbl_fmt_num(x$ksstat),
+        .rmbl_p_txt(x$kspva)
+      ),
+      Converged = if (isTRUE(x$converged)) "yes" else "no",
+      `On the box` = if (length(x$atbound)) toString(x$atbound) else "none"
+    ),
+    table = tb,
+    reading = .rmbl_wrap(.chwkfit_reading(x)),
+    notes = "The baseline terms (a0, ...) are on the log scale.",
+    digits = digits
   )
-  d <- length(start)
-  list(par = r[seq_len(d)], value = r[[d + 1L]], iterations = r[[d + 2L]])
-}
-
-#' Starts a kernel's fit from the fitted exponential model.
-#' @param times The sorted event times.
-#' @param horizon The end of the observation window.
-#' @param kernel The kernel name.
-#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
-#' @param b The parameter box, from .rmbl_hk_bounds().
-#' @return Starting parameters for `kernel`, inside the box.
-#' @noRd
-.rmbl_hk_warm <- function(times, horizon, kernel, baseline, b) {
-  nb <- if (baseline == "constant") 1L else 4L
-  eb <- list(
-    lower = c(b$lower[seq_len(nb + 1L)], 0.1),
-    upper = c(b$upper[seq_len(nb + 1L)], 25)
-  )
-  x0 <- .rmbl_hk_x0(
-    "exponential",
-    baseline,
-    length(times),
-    horizon,
-    mean(diff(times))
-  )
-  f <- .rmbl_hk_pbfgs(
-    times,
-    horizon,
-    "exponential",
-    baseline,
-    "exact",
-    1e-9,
-    eb,
-    x0
-  )$par
-  beta <- f[[length(f)]]
-  psi <- switch(
-    kernel,
-    weibull = c(1, 1 / beta),
-    gamma = c(1, beta),
-    lomax = c(30, 30 / beta)
-  )
-  pmin(pmax(c(f[-length(f)], psi), b$lower), b$upper)
 }
 
 #' Time-rescaling residuals of a Hawkes process
@@ -778,244 +363,6 @@ chwkres <- function(
   )
 }
 
-#' Builds the baseline design matrix at a set of times.
-#' @param x The times.
-#' @param horizon The end of the observation window.
-#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
-#' @return A matrix with one column for the constant baseline, four for the
-#'   sinusoidal one.
-#' @noRd
-.rmbl_hk_feats <- function(x, horizon, baseline) {
-  if (baseline == "constant") {
-    return(matrix(1, length(x), 1L))
-  }
-  cbind(
-    1,
-    x / max(horizon, 1),
-    sin(2 * pi * x / 365.25),
-    cos(2 * pi * x / 365.25)
-  )
-}
-
-#' EM (Veen & Schoenberg 2008), as morie's Python hawkes_em
-#' @param times The sorted event times.
-#' @param horizon The end of the observation window.
-#' @param kernel The kernel name.
-#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
-#' @param x0 The starting parameters.
-#' @param b The parameter box, from .rmbl_hk_bounds().
-#' @param max_iter The largest number of EM iterations.
-#' @param tol The relative change in the negative log-likelihood that ends the
-#'   iterations.
-#' @param pg A progress bar to update, or NULL.
-#' @return A list with the parameters `theta` and whether the iterations
-#'   `converged`.
-#' @noRd
-.rmbl_hk_em <- function(
-  times,
-  horizon,
-  kernel,
-  baseline,
-  x0,
-  b,
-  max_iter = 500L,
-  tol = 1e-9,
-  pg = NULL
-) {
-  kind <- .rmbl_hk_kind[[kernel]]
-  bk <- .rmbl_hk_bkind[[baseline]]
-  nb <- if (baseline == "constant") 1L else 4L
-  theta <- x0
-  Fx <- .rmbl_hk_feats(times, horizon, baseline)
-  # a constant baseline is exact on any grid (a point a time unit was 2^31 of
-  # them for a horizon of 2^31; CRAN stress test of 0.5.14); the sinusoidal one
-  # keeps a point a day
-  m <- if (baseline == "constant") 64L else max(64L, floor(horizon) + 1L)
-  grid <- seq(0, horizon, length.out = m)
-  Fg <- .rmbl_hk_feats(grid, horizon, baseline)
-  wq <- c(0.5, rep(1, m - 2L), 0.5) * horizon / (m - 1L)
-  nll_of <- function(th) {
-    .rmbl_hk_call(times, horizon, kernel, baseline, th, "exact", 1e-12, FALSE)[[
-      1
-    ]]
-  }
-  cur <- nll_of(theta)
-  for (it in seq_len(max_iter)) {
-    if (!is.null(pg)) {
-      pg$update(info = sprintf("EM iteration %d", it))
-    }
-    a <- theta[seq_len(nb)]
-    eta <- theta[[nb + 1L]]
-    psi <- theta[-seq_len(nb + 1L)]
-    lam <- .Call(C_rmbl_hawkes_intensity, times, horizon, bk, a, eta, kind, psi)
-    p0 <- exp(drop(Fx %*% a)) / lam
-    if (baseline == "constant") {
-      a_new <- min(
-        max(log(max(sum(p0), 1e-300) / horizon), b$lower[[1]]),
-        b$upper[[1]]
-      )
-    } else {
-      sp <- colSums(p0 * Fx)
-      fb <- function(av) {
-        v <- exp(drop(Fg %*% av)) * wq
-        -(sum(sp * av) - sum(v))
-      }
-      gb <- function(av) {
-        v <- exp(drop(Fg %*% av)) * wq
-        -(sp - colSums(v * Fg))
-      }
-      a_new <- stats::optim(
-        a,
-        fb,
-        gb,
-        method = "L-BFGS-B",
-        lower = b$lower[seq_len(nb)],
-        upper = b$upper[seq_len(nb)]
-      )$par
-    }
-    kidx <- -seq_len(nb + 1L)
-    fk <- function(ps) {
-      e <- .Call(C_rmbl_hawkes_em_pass, times, lam, eta, kind, psi, ps)
-      s <- .Call(C_rmbl_hawkes_cdf_sum, times, horizon, kind, ps)
-      if (!is.finite(e[[1]]) || s[[1]] <= 0) {
-        return(1e12)
-      }
-      -(e[[1]] - e[[2]] * log(s[[1]]))
-    }
-    gk <- function(ps) {
-      e <- .Call(C_rmbl_hawkes_em_pass, times, lam, eta, kind, psi, ps)
-      s <- .Call(C_rmbl_hawkes_cdf_sum, times, horizon, kind, ps)
-      if (!is.finite(e[[1]]) || s[[1]] <= 0) {
-        return(rep(0, length(ps)))
-      }
-      -(e[-(1:2)] - e[[2]] * s[-1] / s[[1]])
-    }
-    psi_new <- stats::optim(
-      psi,
-      fk,
-      gk,
-      method = "L-BFGS-B",
-      lower = b$lower[kidx],
-      upper = b$upper[kidx]
-    )$par
-    e <- .Call(C_rmbl_hawkes_em_pass, times, lam, eta, kind, psi, psi_new)
-    s <- .Call(C_rmbl_hawkes_cdf_sum, times, horizon, kind, psi_new)
-    # no event can have been triggered when every event sits at the horizon (the
-    # kernel's CDF sums to zero): the branching ratio goes to its lower bound
-    # rather than 0/0
-    eta_new <- if (s[[1]] > 0) e[[2]] / s[[1]] else b$lower[[nb + 1L]]
-    eta_new <- min(max(eta_new, b$lower[[nb + 1L]]), b$upper[[nb + 1L]])
-    theta <- c(a_new, eta_new, psi_new)
-    new <- nll_of(theta)
-    done <- abs(cur - new) <= tol * max(1, abs(cur))
-    cur <- new
-    if (done) break
-  }
-  list(theta = theta, converged = done)
-}
-
-#' Evaluates a kernel's cumulative distribution function.
-#' @param u The lags.
-#' @param kernel The kernel name.
-#' @param psi The kernel parameters.
-#' @return The CDF at `u`.
-#' @noRd
-.rmbl_hk_cdf <- function(u, kernel, psi) {
-  switch(
-    kernel,
-    exponential = stats::pexp(u, psi[[1]]),
-    weibull = stats::pweibull(u, psi[[1]], psi[[2]]),
-    gamma = stats::pgamma(u, psi[[1]], psi[[2]]),
-    lomax = 1 - (psi[[2]] / (u + psi[[2]]))^psi[[1]]
-  )
-}
-
-#' Kirchner's INAR(p) estimator, as morie's Python hawkes_inar
-#' @param times The sorted event times.
-#' @param horizon The end of the observation window.
-#' @param kernel The kernel name.
-#' @param baseline Must be \code{"constant"}.
-#' @param b The parameter box, from .rmbl_hk_bounds().
-#' @return The parameter vector: the log baseline, the branching ratio and the
-#'   kernel parameters.
-#' @noRd
-.rmbl_hk_inar <- function(times, horizon, kernel, baseline, b) {
-  if (baseline != "constant") {
-    stop(
-      "method = \"inar\" assumes a stationary process: use baseline = ",
-      "\"constant\"",
-      call. = FALSE
-    )
-  }
-  n <- length(times)
-  rate <- n / horizon
-  # bins narrow against the clustering (a quarter of the median gap), at most
-  # 20,000, as Python
-  gaps <- sort(diff(times))
-  med <- if (length(gaps)) {
-    gaps[[length(gaps) %/% 2L + 1L]]
-  } else {
-    horizon / max(n, 1L)
-  }
-  delta <- max(horizon / 20000, min(0.25 / rate, med / 4))
-  support <- min(horizon / 10, 200 * delta)
-  p <- max(2L, as.integer(ceiling(support / delta)))
-  B <- as.integer(ceiling(horizon / delta))
-  X <- tabulate(pmin(floor(times / delta), B - 1L) + 1L, nbins = B)
-  xc <- X - mean(X)
-  gam <- vapply(
-    0:p,
-    function(h) sum(xc[(h + 1L):B] * xc[1:(B - h)]) / B,
-    numeric(1)
-  )
-  # Levinson-Durbin on the Yule-Walker system
-  a <- numeric(p)
-  e <- gam[[1]]
-  for (k in seq_len(p)) {
-    acc <- gam[[k + 1L]] - if (k > 1L) sum(a[seq_len(k - 1L)] * gam[k:2]) else 0
-    kap <- acc / e
-    a_new <- a
-    a_new[[k]] <- kap
-    if (k > 1L) {
-      a_new[seq_len(k - 1L)] <- a[seq_len(k - 1L)] - kap * a[(k - 1L):1]
-    }
-    a <- a_new
-    e <- e * (1 - kap^2)
-  }
-  alpha0 <- mean(X) * (1 - sum(a))
-  nu <- max(alpha0 / delta, 1e-12)
-  edges <- delta * (0:p)
-  fk <- function(par) {
-    # Nelder-Mead is unbounded: a point outside the parameter box scores as
-    # invalid before any CDF is evaluated (a negative shape made pweibull /
-    # pgamma warn "NaNs produced"), as Python
-    if (any(par < b$lower[-1] | par > b$upper[-1])) {
-      return(1e12)
-    }
-    cdf <- tryCatch(.rmbl_hk_cdf(edges, kernel, par[-1]), error = function(e) {
-      NULL
-    })
-    if (is.null(cdf) || any(!is.finite(cdf))) {
-      return(1e12)
-    }
-    sum((a - par[[1]] * diff(cdf))^2)
-  }
-  mean_dt <- horizon / n
-  psi0 <- switch(
-    kernel,
-    exponential = 1 / max(mean_dt, 1e-3),
-    gamma = c(1.5, 1 / max(mean_dt, 1e-3)),
-    weibull = c(1.5, max(mean_dt, 1e-3) * 1.2),
-    lomax = c(2.5, max(mean_dt, 1e-3) * 5)
-  )
-  x0 <- pmin(pmax(c(sum(a), psi0), b$lower[-1]), b$upper[-1])
-  par <- stats::optim(x0, fk, method = "Nelder-Mead")$par
-  c(
-    min(max(log(nu), b$lower[[1]]), b$upper[[1]]),
-    pmin(pmax(par, b$lower[-1]), b$upper[-1])
-  )
-}
-
 #' Reproducible uniforms shared with morie's Python arm (splitmix64)
 #'
 #' Returns \code{n} pseudo-random numbers on [0, 1) from a 64-bit seed with
@@ -1060,13 +407,7 @@ chwkres <- function(
 #' try(cunif(2, 2^53))
 #' @export
 cunif <- function(n, seed) {
-  n <- .rmbl_num(n, "n")
-  if (length(n) != 1L || is.na(n) || !is.finite(n) || n < 0 || n != floor(n)) {
-    stop("`n` must be a non-negative whole number", call. = FALSE)
-  }
-  if (n > .Machine$integer.max) {
-    stop("`n` must be at most 2147483647", call. = FALSE)
-  }
+  n <- .rmbl_cunif_n(.rmbl_num(n, "n"))
   seed <- .rmbl_seed(seed)
   .Call(C_rmbl_uniforms, n, seed)
 }
@@ -1131,7 +472,7 @@ cunif <- function(n, seed) {
 #' @export
 chwkjit <- function(times, res = 1, seed = 42, hor = Inf) {
   times <- .rmbl_num(times, "times")
-  if (anyNA(times) || any(!is.finite(times))) {
+  if (anyNA(times) || !all(is.finite(times))) {
     stop("`times` must be finite numbers", call. = FALSE)
   }
   res <- .rmbl_num(res, "res")
@@ -1145,7 +486,934 @@ chwkjit <- function(times, res = 1, seed = 42, hor = Inf) {
   if (any(times > hor)) {
     stop("`times` must not exceed `hor`", call. = FALSE)
   }
-  times <- times[order(times, method = "radix")]
+  times <- sort(times, method = "radix")
   width <- pmin(res, hor - times)
   sort(times + width * cunif(length(times), seed))
+}
+
+.rmbl_hk_kind <- c(exponential = 0L, weibull = 1L, gamma = 2L, lomax = 3L)
+
+.rmbl_hk_bkind <- c(constant = 0L, sinusoidal = 1L)
+
+.rmbl_hk_methods <- c("auto", "exact", "soe", "truncate", "em", "inar")
+
+#' Resolves the fitting route for a kernel, turning \code{"auto"} into a
+#' concrete one.
+#' @param method The route asked for: one of \code{"auto"}, \code{"exact"},
+#' \code{"soe"}, \code{"truncate"}, \code{"em"}, \code{"inar"}.
+#' @param kernel The kernel name.
+#' @return The route name.
+#' @noRd
+.rmbl_hk_method <- function(method, kernel) {
+  method <- .rmbl_arg(method, .rmbl_hk_methods)
+  # Weibull's exact window is where the kernel underflows: for shape < 1 the
+  # whole record, so "auto" truncates. Lomax and gamma use the sum of
+  # exponentials ("soe"; a gamma kernel with shape >= 1 is truncated at eps).
+  # The gamma stall on that route (2,000 iterations to a worse optimum on 2,118
+  # tied events) ended when the projected BFGS began restarting its curvature
+  # estimate at the bounds; it now reaches the exact route's maximum in 2.8 s.
+  if (method == "auto") {
+    return(switch(kernel, exponential = "exact", weibull = "truncate", "soe"))
+  }
+  if (method == "soe" && !kernel %in% c("lomax", "gamma")) {
+    stop(
+      "method = \"soe\" applies to completely monotone kernels: \"lomax\", ",
+      "and \"gamma\" with shape < 1 ",
+      "(a gamma kernel with shape >= 1 is truncated at eps); use ",
+      "\"exact\" or \"truncate\"",
+      call. = FALSE
+    )
+  }
+  method
+}
+
+#' Gives the sum-of-exponentials window for a kernel.
+#'
+#' The sum-of-exponentials window: r = (u + c)/R in \[delta, 1\] (Lomax, c <=
+#' 100 in the fit), r = u/R from the smallest gap (gamma)
+#' @param times The sorted event times; the least positive gap sets the window.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @return A length-two vector: the scale and the lower end delta of the window.
+#' @noRd
+.rmbl_hk_soe <- function(times, horizon, kernel) {
+  if (kernel == "lomax") {
+    return(c(horizon + 100, 1e-3 / (horizon + 100)))
+  }
+  g <- diff(times)
+  g <- g[g > 0]
+  c(horizon, max(if (length(g)) min(g) else 1e-9, 1e-12) / horizon)
+}
+
+#' Evaluates the negative log-likelihood (and its gradient) in the shared C++
+#' core.
+#' @param times The sorted event times the likelihood is evaluated on.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
+#' @param theta The parameters: the baseline terms, the branching ratio and the
+#'   kernel parameters.
+#' @param method The route: \code{"exact"}, \code{"soe"} or \code{"truncate"}.
+#' @param eps The tolerance of the \code{"soe"} and \code{"truncate"} routes.
+#' @param gradient Whether the gradient is computed too.
+#' @return The negative log-likelihood, followed by the gradient when asked for.
+#' @noRd
+.rmbl_hk_call <- function(
+  times,
+  horizon,
+  kernel,
+  baseline,
+  theta,
+  method,
+  eps,
+  gradient
+) {
+  nb <- if (baseline == "constant") 1L else 4L
+  soe <- .rmbl_hk_soe(times, horizon, kernel)
+  code <- c(exact = 0L, soe = 1L, truncate = 2L)[[method]]
+  .Call(
+    C_rmbl_hawkes_nll_grad,
+    times,
+    horizon,
+    .rmbl_hk_bkind[[baseline]],
+    theta[seq_len(nb)],
+    theta[[nb + 1L]],
+    .rmbl_hk_kind[[kernel]],
+    theta[-seq_len(nb + 1L)],
+    code,
+    eps,
+    soe[[1]],
+    soe[[2]],
+    gradient
+  )
+}
+
+#' Checks event times and the horizon of a Hawkes fit.
+#' @param times The event times passed by the user.
+#' @param horizon The horizon passed by the user (the `hor` argument).
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}; the sinusoidal one
+#' caps the horizon.
+#' @return A list with the checked `times` and `horizon`.
+#' @noRd
+.rmbl_hk_check_times <- function(times, horizon, baseline = "constant") {
+  times <- .rmbl_num(times, "times")
+  if (anyNA(times)) {
+    stop(.rmbl_fn(), "`times` must not contain NA", call. = FALSE)
+  }
+  if (length(times) > 1L && any(diff(times) < 0)) {
+    stop(
+      .rmbl_fn(),
+      "`times` must be sorted in increasing order",
+      call. = FALSE
+    )
+  }
+  horizon <- .rmbl_num(horizon, "hor")
+  if (length(horizon) != 1L || !is.finite(horizon) || horizon <= 0) {
+    stop(
+      .rmbl_fn(),
+      "`hor` must be a single positive finite number",
+      call. = FALSE
+    )
+  }
+  if (baseline != "constant" && horizon > 4194304) {
+    stop(
+      "a sinusoidal baseline is integrated day by day: `hor` must be at ",
+      "most 4194304 days",
+      call. = FALSE
+    )
+  }
+  if (length(times) > 0L && (min(times) < 0 || max(times) > horizon)) {
+    stop(
+      sprintf(
+        paste0(
+          "`times` must lie within [0, hor] (they span %g to %g)",
+          if (max(times) > horizon) {
+            "; chwkjit(times, hor = ) keeps them inside"
+          } else {
+            ""
+          }
+        ),
+        min(times),
+        max(times)
+      ),
+      call. = FALSE
+    )
+  }
+  list(times = times, horizon = horizon)
+}
+
+#' Gives the starting parameters for the optimiser.
+#' @param kernel The kernel name.
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
+#' @param n The number of events.
+#' @param horizon The end of the observation window.
+#' @param mean_dt The mean gap between events.
+#' @return The starting parameter vector.
+#' @noRd
+.rmbl_hk_x0 <- function(kernel, baseline, n, horizon, mean_dt) {
+  rate <- max(n / horizon, 1e-3)
+  a <- if (baseline == "constant") {
+    log(rate * 0.6)
+  } else {
+    c(log(rate * 0.6), 0, 0, 0)
+  }
+  psi <- switch(
+    kernel,
+    exponential = 1 / max(mean_dt, 1e-3),
+    gamma = c(1.5, 1 / max(mean_dt, 1e-3)),
+    weibull = c(1.5, max(mean_dt, 1e-3) * 1.2),
+    lomax = c(2.5, max(mean_dt, 1e-3) * 5)
+  )
+  c(a, 0.4, psi)
+}
+
+#' Gives the parameter box the optimiser stays inside.
+#' @param kernel The kernel name.
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
+#' @return A list with the `lower` and `upper` bounds.
+#' @noRd
+.rmbl_hk_bounds <- function(kernel, baseline) {
+  nb <- if (baseline == "constant") 1L else 4L
+  lo <- c(-15, rep(-5, nb - 1L), 1e-3)
+  hi <- c(15, rep(5, nb - 1L), 0.99)
+  k <- switch(
+    kernel,
+    exponential = list(0.1, 25),
+    weibull = list(c(0.1, 1e-3), c(15, 100)),
+    gamma = list(c(0.1, 0.05), c(15, 25)),
+    lomax = list(c(1.05, 1e-3), c(30, 100))
+  )
+  list(lower = c(lo, k[[1]]), upper = c(hi, k[[2]]))
+}
+
+#' chwkfit()'s event rate, ties and tolerance, checked.
+#' @param times The event times in the window.
+#' @param hor The horizon.
+#' @param n The number of events.
+#' @param eps As for chwkfit().
+#' @noRd
+.chwkfit_check <- function(times, hor, n, eps) {
+  # the baseline is bounded (a0 in [-15, 15], eta <= 0.99), so the event rate it
+  # can reach is [e^-15, 100 e^15] per unit time; outside that the optimiser can
+  # only return its start
+  rate <- n / hor
+  if (is.na(rate) || rate < exp(-15) || rate > 100 * exp(15)) {
+    stop(
+      sprintf(
+        paste0(
+          "the event rate n / horizon = %g is outside what the fit can ",
+          "represent ",
+          "(%g to %g per unit time): express the times in another unit"
+        ),
+        rate,
+        exp(-15),
+        100 * exp(15)
+      ),
+      call. = FALSE
+    )
+  }
+  ties <- sum(diff(times) == 0)
+  if (ties) {
+    warning(
+      sprintf(
+        paste0(
+          "%d event(s) share their time with an earlier one: they do ",
+          "not excite each ",
+          "other (the intensity sums over strictly earlier events). ",
+          "Times rounded to a ",
+          "resolution (daily dates) should first be spread across it: chwkjit()"
+        ),
+        ties
+      ),
+      call. = FALSE
+    )
+  }
+  if (
+    !is.numeric(eps) ||
+      length(eps) != 1L ||
+      is.na(eps) ||
+      eps <= 0 ||
+      eps >= 1
+  ) {
+    stop("`eps` must be a single number in (0, 1)", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' chwkfit() by EM, polished by the projected BFGS on the exact likelihood.
+#' @param times,hor,kernel,base As for chwkfit().
+#' @param x0 The start.
+#' @param b The box bounds.
+#' @param exact_nll The exact negative log-likelihood.
+#' @return A list: theta and converged.
+#' @noRd
+.chwkfit_em <- function(times, hor, kernel, base, x0, b, exact_nll) {
+  n <- length(times)
+  pg <- blprog(sprintf("Hawkes fit (%s)", kernel), 0)
+  on.exit(pg$done(), add = TRUE)
+  pg$update(info = sprintf("fitting %s events", format(n, big.mark = ",")))
+  em <- .rmbl_hk_em(times, hor, kernel, base, x0, b, pg = pg)
+  # EM converges linearly: its steps shrink long before it reaches the
+  # maximum, so a small step is not a stop (it ended 1.4e-5 short on macOS
+  # x86_64). Finish with the projected BFGS on the exact likelihood from EM's
+  # point; it only moves uphill.
+  pg$update(info = "polishing the EM point")
+  pol <- .rmbl_hk_pbfgs(times, hor, kernel, base, "exact", 1e-12, b, em$theta)
+  theta <- if (pol$value <= exact_nll(em$theta)) pol$par else em$theta
+  converged <- pol$iterations < 2000
+  list(theta = theta, converged = converged)
+}
+
+#' chwkfit() by the INAR approximation or the projected BFGS (from one start,
+#' or two when none is given).
+#' @param times,hor,kernel,base,meth,eps,start As for chwkfit().
+#' @param b The box bounds.
+#' @param x0 The start.
+#' @param nb The number of baseline parameters.
+#' @return A list: theta and converged.
+#' @noRd
+.chwkfit_opt <- function(
+  times,
+  hor,
+  kernel,
+  base,
+  meth,
+  eps,
+  b,
+  x0,
+  start,
+  nb
+) {
+  n <- length(times)
+  stage <- function(what, expr) .chwkfit_stage(kernel, n, what, expr)
+  if (meth == "inar") {
+    theta <- stage(
+      "INAR approximation",
+      .rmbl_hk_inar(times, hor, kernel, base, b)
+    )
+    return(list(theta = theta, converged = TRUE))
+  }
+  run <- function(st) {
+    .rmbl_hk_pbfgs(times, hor, kernel, base, meth, eps, b, st)
+  }
+  fit <- stage("first start", run(x0))
+  if (!is.null(start) && fit$value >= 1e11) {
+    # the optimizer cannot move from a point where the likelihood is not
+    # finite (it returned the start itself, reported as converged)
+    stop(
+      "the likelihood is not finite at `start` (no intensity, or an ",
+      "overflowing baseline): ",
+      "give a start inside the model",
+      call. = FALSE
+    )
+  }
+  if (is.null(start)) {
+    fit <- .chwkfit_second(fit, times, hor, kernel, base, b, nb, stage, run)
+  }
+  theta <- fit$par
+  converged <- fit$iterations < 2000 && fit$value < 1e11
+  list(theta = theta, converged = converged)
+}
+
+#' Runs one stage of a chwkfit() with the busy indicator.
+#' @param kernel The kernel's name, shown in the busy indicator.
+#' @param n The number of events.
+#' @param what The stage, as shown.
+#' @param expr The stage's work, evaluated inside .bl_busy().
+#' @return The value of `expr`.
+#' @noRd
+.chwkfit_stage <- function(kernel, n, what, expr) {
+  .bl_busy(
+    sprintf(
+      "Hawkes fit (%s, %s events): %s",
+      kernel,
+      format(n, big.mark = ","),
+      what
+    ),
+    expr
+  )
+}
+
+#' The second start of .chwkfit_opt() when none is given: the better fit is
+#' kept.
+#' @param fit The fit from the first start.
+#' @param times,hor,kernel,base As for chwkfit().
+#' @param b The box bounds.
+#' @param nb The number of baseline parameters.
+#' @param stage,run The progress wrapper and the optimiser of .chwkfit_opt().
+#' @return The better fit.
+#' @noRd
+.chwkfit_second <- function(fit, times, hor, kernel, base, b, nb, stage, run) {
+  n <- length(times)
+  if (kernel == "exponential") {
+    # a second start with little excitation and a slow decay: on weakly
+    # clustered data the likelihood has a second maximum with the decay on its
+    # bound, and the data-driven start can stop there (nll -155.02 against
+    # -156.46 for runif(400) with seed 1)
+    x1 <- .rmbl_hk_x0(kernel, base, n, hor, mean(diff(times)))
+    x1[[1L]] <- log(max(n / hor, 1e-3) * 0.9)
+    x1[[nb + 1L]] <- 0.1
+    x1[[length(x1)]] <- x1[[length(x1)]] / 4
+    fit2 <- stage("second start", run(pmin(pmax(x1, b$lower), b$upper)))
+    if (fit2$value < fit$value) fit <- fit2
+  }
+  if (kernel != "exponential") {
+    # a second, deterministic start at the exponential fit (the shape-1 member
+    # of Weibull and gamma), as morie's Python fit: the likelihood is
+    # multimodal
+    fit2 <- stage(
+      "second start, from the exponential fit",
+      run(.rmbl_hk_warm(times, hor, kernel, base, b))
+    )
+    if (fit2$value < fit$value) fit <- fit2
+  }
+  fit
+}
+
+#' chwkfit()'s start: the one given, or a data-driven one, inside the box.
+#' @param start,kernel,base,hor As for chwkfit().
+#' @param n The number of events.
+#' @param times The event times in the window.
+#' @param b The box bounds.
+#' @return The start.
+#' @noRd
+.chwkfit_x0 <- function(start, kernel, base, n, hor, times, b) {
+  x0 <- if (is.null(start)) {
+    .rmbl_hk_x0(kernel, base, n, hor, mean(diff(times)))
+  } else {
+    .rmbl_num(start, "start")
+  }
+  if (length(x0) != length(b$lower)) {
+    stop(sprintf("`start` must have length %d", length(b$lower)), call. = FALSE)
+  }
+  pmin(pmax(x0, b$lower), b$upper)
+}
+
+#' chwkfit()'s result: the estimates, their names and box, and the
+#' goodness-of-fit test.
+#' @param theta The estimate.
+#' @param converged Whether the optimiser converged.
+#' @param nll The exact negative log-likelihood at `theta`.
+#' @param times,hor,kernel,base,meth,eps As for chwkfit().
+#' @param b The box bounds.
+#' @return The list chwkfit() returns.
+#' @noRd
+.chwkfit_result <- function(
+  theta,
+  converged,
+  nll,
+  times,
+  hor,
+  kernel,
+  base,
+  meth,
+  eps,
+  b
+) {
+  n <- length(times)
+  nb <- if (base == "constant") 1L else 4L
+  k <- length(theta)
+  at_bound <- .chwkfit_at_bound(theta, b, nb, kernel, base)
+  U <- chwkres(times, hor, kernel, theta, base = base)
+  # the exact distribution up to n = 10,000, as morie's Python (and scipy's
+  # "auto"); with tied residuals (tied event times) the exact computation is
+  # extremely slow and memory-hungry and its distribution does not hold, so the
+  # asymptotic one
+  ks <- suppressWarnings(stats::ks.test(
+    U,
+    "punif",
+    exact = length(U) <= 10000L && !anyDuplicated(U)
+  ))
+  .rmbl_cls(list(
+    theta = theta,
+    basepar = theta[seq_len(nb)],
+    braratio = theta[[nb + 1L]],
+    kerpar = theta[-seq_len(nb + 1L)],
+    nll = nll,
+    aic = 2 * k + 2 * nll,
+    bic = k * log(n) + 2 * nll,
+    n = n,
+    horizon = hor,
+    kpar = k,
+    ksstat = unname(ks$statistic),
+    kspva = ks$p.value,
+    kernel = kernel,
+    baseline = base,
+    method = meth,
+    eps = if (meth %in% c("soe", "truncate")) eps else NA_real_,
+    converged = converged,
+    atbound = at_bound
+  ), "rmbl_hawkes_fit")
+}
+
+#' The parameters of a chwkfit() estimate that lie on the box, with a warning
+#' when eta sits on its upper bound.
+#' @param theta The estimate.
+#' @param b The box bounds.
+#' @param nb The number of baseline parameters.
+#' @param kernel,base As for chwkfit().
+#' @return The names of the parameters on the box.
+#' @noRd
+.chwkfit_at_bound <- function(theta, b, nb, kernel, base) {
+  pnames <- .chwkfit_pnames(kernel, base)
+  on_box <- abs(theta - b$lower) <= 1e-6 * pmax(1, abs(b$lower)) |
+    abs(theta - b$upper) <= 1e-6 * pmax(1, abs(b$upper))
+  # reported, not warned: a Lomax fitted to exponential-like data reaching its
+  # exponential limit is an ordinary result; a shape at its wall on day-dated
+  # times is the case to look at
+  at_bound <- pnames[on_box]
+  if (abs(theta[[nb + 1L]] - b$upper[[nb + 1L]]) <= 1e-6) {
+    warning(
+      sprintf(
+        paste0(
+          "the branching ratio eta sits on its upper bound %g: the ",
+          "process is near critical ",
+          "and the fit is not an interior maximum (often an unmodelled ",
+          "trend; try ",
+          "base = \"sinusoidal\")"
+        ),
+        b$upper[[nb + 1L]]
+      ),
+      call. = FALSE
+    )
+  }
+  at_bound
+}
+
+#' Runs the whole projected BFGS fit in the shared C++ core.
+#'
+#' The whole fit in the shared C++ core (projected BFGS, morie_core.h
+#' hawkes_fit_pbfgs): the routine morie's Python fit calls, so both reach the
+#' same optimum from the same start
+#' @param times The sorted event times the BFGS fit is run on.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
+#' @param method The route: \code{"exact"}, \code{"soe"} or \code{"truncate"}.
+#' @param eps The tolerance of the \code{"soe"} and \code{"truncate"} routes.
+#' @param b The parameter box, from .rmbl_hk_bounds().
+#' @param start The starting parameters.
+#' @return A list with the parameters `par`, the minimum `value` and the number
+#'   of `iterations`.
+#' @noRd
+.rmbl_hk_pbfgs <- function(
+  times,
+  horizon,
+  kernel,
+  baseline,
+  method,
+  eps,
+  b,
+  start
+) {
+  soe <- .rmbl_hk_soe(times, horizon, kernel)
+  code <- c(exact = 0L, soe = 1L, truncate = 2L)[[method]]
+  r <- .Call(
+    C_rmbl_hawkes_fit_pbfgs,
+    times,
+    horizon,
+    .rmbl_hk_bkind[[baseline]],
+    .rmbl_hk_kind[[kernel]],
+    code,
+    eps,
+    soe[[1]],
+    soe[[2]],
+    b$lower,
+    b$upper,
+    as.numeric(start),
+    2000L,
+    1e-6
+  )
+  d <- length(start)
+  list(par = r[seq_len(d)], value = r[[d + 1L]], iterations = r[[d + 2L]])
+}
+
+#' Starts a kernel's fit from the fitted exponential model.
+#' @param times The sorted event times the exponential warm start is fitted to.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
+#' @param b The parameter box, from .rmbl_hk_bounds().
+#' @return Starting parameters for `kernel`, inside the box.
+#' @noRd
+.rmbl_hk_warm <- function(times, horizon, kernel, baseline, b) {
+  nb <- if (baseline == "constant") 1L else 4L
+  eb <- list(
+    lower = c(b$lower[seq_len(nb + 1L)], 0.1),
+    upper = c(b$upper[seq_len(nb + 1L)], 25)
+  )
+  x0 <- .rmbl_hk_x0(
+    "exponential",
+    baseline,
+    length(times),
+    horizon,
+    mean(diff(times))
+  )
+  f <- .rmbl_hk_pbfgs(
+    times,
+    horizon,
+    "exponential",
+    baseline,
+    "exact",
+    1e-9,
+    eb,
+    x0
+  )$par
+  beta <- f[[length(f)]]
+  psi <- switch(
+    kernel,
+    weibull = c(1, 1 / beta),
+    gamma = c(1, beta),
+    lomax = c(30, 30 / beta)
+  )
+  pmin(pmax(c(f[-length(f)], psi), b$lower), b$upper)
+}
+
+#' Builds the baseline design matrix at a set of times.
+#' @param x The times.
+#' @param horizon The end of the observation window.
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
+#' @return A matrix with one column for the constant baseline, four for the
+#'   sinusoidal one.
+#' @noRd
+.rmbl_hk_feats <- function(x, horizon, baseline) {
+  if (baseline == "constant") {
+    return(matrix(1, length(x), 1L))
+  }
+  cbind(
+    1,
+    x / max(horizon, 1),
+    sin(2 * pi * x / 365.25),
+    cos(2 * pi * x / 365.25)
+  )
+}
+
+#' EM (Veen & Schoenberg 2008), as morie's Python hawkes_em
+#' @param times The sorted event times the EM iterations run on.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
+#' @param x0 The starting parameters.
+#' @param b The parameter box, from .rmbl_hk_bounds().
+#' @param max_iter The largest number of EM iterations (default 500).
+#' @param tol The relative change in the negative log-likelihood that ends the
+#'   iterations.
+#' @param pg A progress bar to update, or NULL.
+#' @return A list with the parameters `theta` and whether the iterations
+#'   `converged`.
+#' @noRd
+.rmbl_hk_em <- function(
+  times,
+  horizon,
+  kernel,
+  baseline,
+  x0,
+  b,
+  max_iter = 500L,
+  tol = 1e-9,
+  pg = NULL
+) {
+  kind <- .rmbl_hk_kind[[kernel]]
+  bk <- .rmbl_hk_bkind[[baseline]]
+  nb <- if (baseline == "constant") 1L else 4L
+  theta <- x0
+  Fx <- .rmbl_hk_feats(times, horizon, baseline)
+  # a constant baseline is exact on any grid (a point a time unit was 2^31 of
+  # them for a horizon of 2^31; CRAN stress test of 0.5.14); the sinusoidal one
+  # keeps a point a day
+  m <- if (baseline == "constant") 64L else max(64L, floor(horizon) + 1L)
+  grid <- seq(0, horizon, length.out = m)
+  Fg <- .rmbl_hk_feats(grid, horizon, baseline)
+  wq <- c(0.5, rep(1, m - 2L), 0.5) * horizon / (m - 1L)
+  nll_of <- function(th) {
+    .rmbl_hk_call(times, horizon, kernel, baseline, th, "exact", 1e-12, FALSE)[[
+      1
+    ]]
+  }
+  cur <- nll_of(theta)
+  for (it in seq_len(max_iter)) {
+    if (!is.null(pg)) {
+      pg$update(info = sprintf("EM iteration %d", it))
+    }
+    a <- theta[seq_len(nb)]
+    eta <- theta[[nb + 1L]]
+    psi <- theta[-seq_len(nb + 1L)]
+    lam <- .Call(C_rmbl_hawkes_intensity, times, horizon, bk, a, eta, kind, psi)
+    p0 <- exp(drop(Fx %*% a)) / lam
+    a_new <- .rmbl_hk_em_base(p0, Fx, Fg, wq, a, b, nb, horizon, baseline)
+    psi_new <- .rmbl_hk_em_kernel(times, horizon, lam, eta, kind, psi, b, nb)
+    e <- .Call(C_rmbl_hawkes_em_pass, times, lam, eta, kind, psi, psi_new)
+    s <- .Call(C_rmbl_hawkes_cdf_sum, times, horizon, kind, psi_new)
+    # no event can have been triggered when every event sits at the horizon (the
+    # kernel's CDF sums to zero): the branching ratio goes to its lower bound
+    # rather than 0/0
+    eta_new <- if (s[[1]] > 0) e[[2]] / s[[1]] else b$lower[[nb + 1L]]
+    eta_new <- min(max(eta_new, b$lower[[nb + 1L]]), b$upper[[nb + 1L]])
+    theta <- c(a_new, eta_new, psi_new)
+    new <- nll_of(theta)
+    done <- abs(cur - new) <= tol * max(1, abs(cur))
+    cur <- new
+    if (done) break
+  }
+  list(theta = theta, converged = done)
+}
+
+#' The M-step of .rmbl_hk_em() for the baseline parameters.
+#' @param p0 Each event's probability of being a background event.
+#' @param Fx,Fg The baseline features at the events and on the grid.
+#' @param wq The trapezoid weights of the grid.
+#' @param a The current baseline parameters.
+#' @param b The parameter box.
+#' @param nb The number of baseline parameters.
+#' @param horizon,baseline As for .rmbl_hk_em().
+#' @return The new baseline parameters.
+#' @noRd
+.rmbl_hk_em_base <- function(p0, Fx, Fg, wq, a, b, nb, horizon, baseline) {
+  if (baseline == "constant") {
+    min(
+      max(log(max(sum(p0), 1e-300) / horizon), b$lower[[1]]),
+      b$upper[[1]]
+    )
+  } else {
+    sp <- colSums(p0 * Fx)
+    fb <- function(av) {
+      v <- exp(drop(Fg %*% av)) * wq
+      -(sum(sp * av) - sum(v))
+    }
+    gb <- function(av) {
+      v <- exp(drop(Fg %*% av)) * wq
+      -(sp - colSums(v * Fg))
+    }
+    stats::optim(
+      a,
+      fb,
+      gb,
+      method = "L-BFGS-B",
+      lower = b$lower[seq_len(nb)],
+      upper = b$upper[seq_len(nb)]
+    )$par
+  }
+}
+
+#' The M-step of .rmbl_hk_em() for the kernel parameters.
+#' @param times,horizon As for .rmbl_hk_em().
+#' @param lam The intensity at each event.
+#' @param eta The branching ratio.
+#' @param kind The kernel's code.
+#' @param psi The current kernel parameters.
+#' @param b The parameter box.
+#' @param nb The number of baseline parameters.
+#' @return The new kernel parameters.
+#' @noRd
+.rmbl_hk_em_kernel <- function(times, horizon, lam, eta, kind, psi, b, nb) {
+  kidx <- -seq_len(nb + 1L)
+  fk <- function(ps) {
+    e <- .Call(C_rmbl_hawkes_em_pass, times, lam, eta, kind, psi, ps)
+    s <- .Call(C_rmbl_hawkes_cdf_sum, times, horizon, kind, ps)
+    if (!is.finite(e[[1]]) || s[[1]] <= 0) {
+      return(1e12)
+    }
+    -(e[[1]] - e[[2]] * log(s[[1]]))
+  }
+  gk <- function(ps) {
+    e <- .Call(C_rmbl_hawkes_em_pass, times, lam, eta, kind, psi, ps)
+    s <- .Call(C_rmbl_hawkes_cdf_sum, times, horizon, kind, ps)
+    if (!is.finite(e[[1]]) || s[[1]] <= 0) {
+      return(rep(0, length(ps)))
+    }
+    -(e[-(1:2)] - e[[2]] * s[-1] / s[[1]])
+  }
+  stats::optim(
+    psi,
+    fk,
+    gk,
+    method = "L-BFGS-B",
+    lower = b$lower[kidx],
+    upper = b$upper[kidx]
+  )$par
+}
+
+#' Evaluates a kernel's cumulative distribution function.
+#' @param u The lags.
+#' @param kernel The kernel name.
+#' @param psi The kernel parameters.
+#' @return The CDF at `u`.
+#' @noRd
+.rmbl_hk_cdf <- function(u, kernel, psi) {
+  switch(
+    kernel,
+    exponential = stats::pexp(u, psi[[1]]),
+    weibull = stats::pweibull(u, psi[[1]], psi[[2]]),
+    gamma = stats::pgamma(u, psi[[1]], psi[[2]]),
+    lomax = 1 - (psi[[2]] / (u + psi[[2]]))^psi[[1]]
+  )
+}
+
+#' Kirchner's INAR(p) estimator, as morie's Python hawkes_inar
+#' @param times The sorted event times, binned for the INAR(p) estimator.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @param baseline Must be \code{"constant"}.
+#' @param b The parameter box, from .rmbl_hk_bounds().
+#' @return The parameter vector: the log baseline, the branching ratio and the
+#'   kernel parameters.
+#' @noRd
+.rmbl_hk_inar <- function(times, horizon, kernel, baseline, b) {
+  if (baseline != "constant") {
+    stop(
+      "method = \"inar\" assumes a stationary process: use baseline = ",
+      "\"constant\"",
+      call. = FALSE
+    )
+  }
+  n <- length(times)
+  rate <- n / horizon
+  # bins narrow against the clustering (a quarter of the median gap), at most
+  # 20,000, as Python
+  gaps <- sort(diff(times))
+  med <- if (length(gaps)) {
+    gaps[[length(gaps) %/% 2L + 1L]]
+  } else {
+    horizon / max(n, 1L)
+  }
+  delta <- max(horizon / 20000, min(0.25 / rate, med / 4))
+  support <- min(horizon / 10, 200 * delta)
+  p <- max(2L, as.integer(ceiling(support / delta)))
+  B <- as.integer(ceiling(horizon / delta))
+  X <- tabulate(pmin(floor(times / delta), B - 1L) + 1L, nbins = B)
+  xc <- X - mean(X)
+  gam <- vapply(
+    0:p,
+    function(h) sum(xc[(h + 1L):B] * xc[1:(B - h)]) / B,
+    numeric(1)
+  )
+  a <- .rmbl_hk_levinson(gam, p)
+  alpha0 <- mean(X) * (1 - sum(a))
+  nu <- max(alpha0 / delta, 1e-12)
+  edges <- delta * (0:p)
+  par <- .rmbl_hk_inar_fit(a, edges, kernel, b, horizon / n)
+  c(
+    min(max(log(nu), b$lower[[1]]), b$upper[[1]]),
+    pmin(pmax(par, b$lower[-1]), b$upper[-1])
+  )
+}
+
+#' Levinson-Durbin on the Yule-Walker system of .rmbl_hk_inar().
+#' @param gam The autocovariances at lags 0 to p.
+#' @param p The order.
+#' @return The p autoregressive coefficients.
+#' @noRd
+.rmbl_hk_levinson <- function(gam, p) {
+  a <- numeric(p)
+  e <- gam[[1]]
+  for (k in seq_len(p)) {
+    acc <- gam[[k + 1L]] - if (k > 1L) sum(a[seq_len(k - 1L)] * gam[k:2]) else 0
+    kap <- acc / e
+    a_new <- a
+    a_new[[k]] <- kap
+    if (k > 1L) {
+      a_new[seq_len(k - 1L)] <- a[seq_len(k - 1L)] - kap * a[(k - 1L):1]
+    }
+    a <- a_new
+    e <- e * (1 - kap^2)
+  }
+  a
+}
+
+#' The branching ratio and kernel parameters of .rmbl_hk_inar(), fitted to
+#' the autoregressive coefficients.
+#' @param a The autoregressive coefficients.
+#' @param edges The bin edges of the kernel's support.
+#' @param kernel The kernel name.
+#' @param b The parameter box.
+#' @param mean_dt The mean gap between events.
+#' @return The branching ratio and the kernel parameters (unclamped).
+#' @noRd
+.rmbl_hk_inar_fit <- function(a, edges, kernel, b, mean_dt) {
+  fk <- function(par) {
+    # Nelder-Mead is unbounded: a point outside the parameter box scores as
+    # invalid before any CDF is evaluated (a negative shape made pweibull /
+    # pgamma warn "NaNs produced"), as Python
+    if (any(par < b$lower[-1] | par > b$upper[-1])) {
+      return(1e12)
+    }
+    cdf <- tryCatch(.rmbl_hk_cdf(edges, kernel, par[-1]), error = function(e) {
+      NULL
+    })
+    if (is.null(cdf) || !all(is.finite(cdf))) {
+      return(1e12)
+    }
+    sum((a - par[[1]] * diff(cdf))^2)
+  }
+  psi0 <- switch(
+    kernel,
+    exponential = 1 / max(mean_dt, 1e-3),
+    gamma = c(1.5, 1 / max(mean_dt, 1e-3)),
+    weibull = c(1.5, max(mean_dt, 1e-3) * 1.2),
+    lomax = c(2.5, max(mean_dt, 1e-3) * 5)
+  )
+  x0 <- pmin(pmax(c(sum(a), psi0), b$lower[-1]), b$upper[-1])
+  stats::optim(x0, fk, method = "Nelder-Mead")$par
+}
+
+#' cunif()'s `n`, checked: one whole number in [0, 2147483647].
+#' @param n The number of uniforms.
+#' @return `n`.
+#' @noRd
+.rmbl_cunif_n <- function(n) {
+  if (length(n) != 1L || is.na(n) || !is.finite(n) || n < 0 || n != floor(n)) {
+    stop("`n` must be a non-negative whole number", call. = FALSE)
+  }
+  if (n > .Machine$integer.max) {
+    stop("`n` must be at most 2147483647", call. = FALSE)
+  }
+  n
+}
+
+#' The names of a chwkfit() estimate's parameters, in the order of theta.
+#' @param kernel The kernel.
+#' @param base The baseline.
+#' @return A character vector.
+#' @noRd
+.chwkfit_pnames <- function(kernel, base) {
+  c(
+    if (identical(base, "constant")) "a0" else paste0("a", 0:3),
+    "eta",
+    switch(
+      kernel,
+      exponential = "beta",
+      weibull = c("alpha", "lambda"),
+      gamma = c("alpha", "beta"),
+      lomax = c("alpha", "c")
+    )
+  )
+}
+
+#' What a chwkfit() result says, in words.
+#' @param x A chwkfit() result.
+#' @return One string.
+#' @noRd
+.chwkfit_reading <- function(x) {
+  eta <- paste(
+    "Each event triggers on average",
+    .rmbl_fmt_num(x$braratio),
+    "further events (eta); the rest of the rate is the baseline."
+  )
+  p <- x$kspva
+  ks <- if (!length(p) || is.na(p)) {
+    "There is no residual check to judge the fit by."
+  } else if (p < 0.05) {
+    paste0(
+      "The time-rescaling residuals depart from uniform (p ",
+      .rmbl_p_txt(p),
+      "), so the model misses some clustering or trend."
+    )
+  } else {
+    paste0(
+      "The time-rescaling residuals look uniform (p ",
+      .rmbl_p_txt(p),
+      "): the check finds no misfit."
+    )
+  }
+  paste(eta, ks)
 }

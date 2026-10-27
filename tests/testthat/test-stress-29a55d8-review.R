@@ -9,9 +9,10 @@ ns <- function(x) get(x, envir = asNamespace("rmoriebricklayer"))
 # again ---
 
 test_that("G1: an interrupted POST is not retried", {
-  calls <- 0L
+  ctr <- new.env()
+  ctr$calls <- 0L
   local_mocked_bindings(.bl_post_json = function(...) {
-    calls <<- calls + 1L
+    ctr$calls <- ctr$calls + 1L
     list(status = -1L, json = NULL, error = "interrupted (Ctrl-C)")
   })
   rt <- list(
@@ -25,11 +26,11 @@ test_that("G1: an interrupted POST is not retried", {
     ns(".bl_llm_chat")(rt, "m", list(list(role = "user", content = "q"))),
     "interrupted"
   )
-  expect_identical(calls, 1L)
+  expect_identical(ctr$calls, 1L)
   # nor is a timed-out or dropped POST: the prompt goes once (review of 46de6a9)
-  calls <- 0L
+  ctr$calls <- 0L
   local_mocked_bindings(.bl_post_json = function(...) {
-    calls <<- calls + 1L
+    ctr$calls <- ctr$calls + 1L
     list(
       status = -1L,
       json = NULL,
@@ -40,7 +41,7 @@ test_that("G1: an interrupted POST is not retried", {
     ns(".bl_llm_chat")(rt, "m", list(list(role = "user", content = "q"))),
     "could not reach"
   )
-  expect_identical(calls, 1L)
+  expect_identical(ctr$calls, 1L)
 })
 
 test_that(
@@ -168,17 +169,18 @@ test_that(
     "address, never MORIE_DATA_URL"
   ),
   {
-    seen <- character()
+    rec <- new.env()
+    rec$seen <- character()
     local_mocked_bindings(.bl_http_get = function(url, timeout, headers) {
-      seen <<- c(seen, url)
+      rec$seen <- c(rec$seen, url)
       list(status = 200L, body = charToRaw("{}"), error = "")
     })
     withr::local_envvar(MORIE_DATA_URL = "https://data2.stub.example")
     expect_true(ns(".bl_check_token")("sk-under-test"))
-    expect_length(seen, 1L)
-    expect_false(grepl("data2.stub.example", seen))
+    expect_length(rec$seen, 1L)
+    expect_false(grepl("data2.stub.example", rec$seen))
     expect_true(startsWith(
-      seen,
+      rec$seen,
       sub("/+$", "", ns(".rmbl_services_data")()$base_url)
     ))
   }
@@ -239,7 +241,7 @@ test_that(
     # held by this process through acquire: the locked call answers `busy` and
     # holds nothing
     fd <- .Call(ns("C_rmbl_flock_acquire"), lock, 0L)
-    expect_true(fd > 2L)
+    expect_gt(fd, 2L)
     expect_identical(
       .Call(ns("C_rmbl_flock_with"), lock, function() "ran", busy),
       busy
@@ -415,12 +417,13 @@ test_that(
         message = list(content = "Use knoxtst().")
       ))
     )
-    n <- 0L
-    sent <- list()
+    ctr <- new.env()
+    ctr$n <- 0L
+    ctr$sent <- list()
     local_mocked_bindings(.bl_post_json = function(url, payload, ...) {
-      n <<- n + 1L
-      sent[[n]] <<- payload
-      list(status = 200L, json = if (n == 1L) flood else done, error = "")
+      ctr$n <- ctr$n + 1L
+      ctr$sent[[ctr$n]] <- payload
+      list(status = 200L, json = if (ctr$n == 1L) flood else done, error = "")
     })
     withr::local_envvar(MORIE_LLM_CONTEXT = "200000")
     expect_match(
@@ -435,27 +438,27 @@ test_that(
     )
     tool_msgs <- Filter(
       function(m) identical(m$role, "tool"),
-      sent[[2L]]$messages
+      ctr$sent[[2L]]$messages
     )
     # the rest are dropped from the turn, and the model told
     expect_length(tool_msgs, 12L)
     asst <- Filter(
       function(m) identical(m$role, "assistant"),
-      sent[[2L]]$messages
+      ctr$sent[[2L]]$messages
     )
     expect_length(asst[[1L]]$tool_calls, 12L)
-    told <- vapply(sent[[2L]]$messages, function(m) m$content %||% "", "")
-    expect_true(any(grepl("Only the first 12 of your 40", told)))
+    told <- vapply(ctr$sent[[2L]]$messages, function(m) m$content %||% "", "")
+    expect_true(any(grepl("Only the first 12 of your 40", told, fixed = TRUE)))
     # with the last tool result, not a user turn after the tool results
-    roles <- vapply(sent[[2L]]$messages, function(m) m$role %||% "", "")
+    roles <- vapply(ctr$sent[[2L]]$messages, function(m) m$role %||% "", "")
     expect_false(any(roles[-1L] == "user" & roles[-length(roles)] == "tool"))
     # an endless tool loop ends in an error, never an empty answer with exit 0
-    n <- 0L
+    ctr$n <- 0L
     local_mocked_bindings(.bl_post_json = function(url, payload, ...) {
-      n <<- n + 1L
+      ctr$n <- ctr$n + 1L
       list(
         status = 200L,
-        json = if (n <= 3L) flood else list(choices = list()),
+        json = if (ctr$n <= 3L) flood else list(choices = list()),
         error = ""
       )
     })
@@ -527,7 +530,7 @@ test_that("L5: a planted llm.json.tmp symlink is not followed", {
   llmcfg(openai.key = "sk-secret")
   expect_identical(readLines(target), "untouched")
   expect_true(file.exists(p))
-  expect_true(any(grepl("sk-secret", readLines(p))))
+  expect_true(any(grepl("sk-secret", readLines(p), fixed = TRUE)))
 })
 
 # ---- the rest of the LOW list ------------------------------------------------
@@ -543,7 +546,9 @@ test_that(
     y <- c(runif(40, 43.6, 43.8), 43.7, 43.7)
     t <- c(1:40, 41, 42)
     expect_message(
-      k <- knoxtst(x, y, t, 500, 3, nsim = 19, seed = 1),
+      {
+        k <- knoxtst(x, y, t, 500, 3, nsim = 19, seed = 1)
+      },
       "2 incidents without a usable location"
     )
     expect_s3_class(k, "rmbl_knox")
@@ -573,25 +578,23 @@ test_that(
     x <- c(1e15, 1e15 + 1, 1e15 + 2) * 3
     cp <- ns(".jx_close_pairs")(x, c(0, 0, 0), 1, 1e6)
     # the three points are three apart: no pair is within 1
-    expect_identical(length(cp$i), 0L)
+    expect_length(cp$i, 0L)
     # at 8e15 / 1 the index is still a whole number; at 1e12 / 1e-6 it is not
     # (review of 46de6a9)
-    expect_identical(
-      length(
-        ns(".jx_close_pairs")(
-          c(8e15, 8e15 + 0.5, 8e15 + 3),
-          c(0, 0, 0),
-          1,
-          1e6
-        )$i
-      ),
+    expect_length(
+      ns(".jx_close_pairs")(
+        c(8e15, 8e15 + 0.5, 8e15 + 3),
+        c(0, 0, 0),
+        1,
+        1e6
+      )$i,
       1L
     )
     # 1e12 + 1e-7 is the double 1e12: one pair at distance 0, found directly (it
     # was refused; the statistics stress test of 5e1dce5 asked for the test to
     # run rather than refuse)
-    expect_identical(
-      length(ns(".jx_close_pairs")(c(1e12, 1e12 + 1e-7), c(0, 0), 1e-6, 1e6)$i),
+    expect_length(
+      ns(".jx_close_pairs")(c(1e12, 1e12 + 1e-7), c(0, 0), 1e-6, 1e6)$i,
       1L
     )
   }
@@ -659,7 +662,7 @@ test_that("svycmp takes a numeric domain label", {
   des <- svydes(d, w = "w")
   a <- svycmp(des, d, "y", by = "yr", ref = 2023)
   b <- svycmp(des, d, "y", by = "yr", ref = "2023")
-  expect_equal(a$difference, b$difference)
+  expect_identical(a$difference, b$difference)
 })
 
 test_that("an assumption with ok = NA is reported as NA, not a raw error", {
@@ -832,7 +835,8 @@ test_that("an estimate without a standard error plots without a warning", {
     g = rep(c("a", "b"), 10),
     w = 1,
     s = 1:20,
-    p = 1:20
+    p = 1:20,
+    stringsAsFactors = FALSE
   )
   des <- svydes(d, w = "w", strata = "s", psu = "p", lonely = "remove")
   e <- svyest(des, d, "y", by = "g")
@@ -953,13 +957,13 @@ test_that("the CSV reader gives read.csv's table, byte for byte of meaning", {
     )))$b,
     "xy"
   )
-  expect_identical(
-    names(ns(".bl_csv_from_bytes")(as.raw(c(
+  expect_named(
+    ns(".bl_csv_from_bytes")(as.raw(c(
       0xEF,
       0xBB,
       0xBF,
       charToRaw("a,b\n1,2\n")
-    )))),
+    ))),
     c("a", "b")
   )
   expect_error(

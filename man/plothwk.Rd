@@ -24,7 +24,7 @@ plothwk(
 
 \item{ngrid}{Whole number, default 600: points of the intensity curve.}
 
-\item{...}{Further arguments to the first \code{plot()} call.}
+\item{...}{Further arguments to the \code{plot()} call that opens the panel.}
 
 \item{main, col, pal}{The title, colours, and a \code{\link[=blpal]{blpal()}} name.}
 }

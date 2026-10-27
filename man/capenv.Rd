@@ -23,6 +23,9 @@ A list of seven elements: \describe{
 (\code{NA} for a package that is not installed). A list, not a vector, so
 the names survive the manifest's JSON: a named vector is written as a bare
 array.} }
+The list has class \code{c("rmbl_capenv", "list")}, which only changes
+how it prints (a box); its elements, and the JSON written from it, are
+those of a plain list.
 }
 \description{
 Records the facts a replicator needs to rebuild the session in which a

@@ -8,10 +8,14 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
@@ -153,8 +157,17 @@ o <- order(back$estimate)
 t1 <- back[o, ]
 yy <- seq_len(nrow(t1))
 op <- par(mar = c(4, 16, 3, 1))
-plot(t1$estimate, yy, xlim = range(t1$lower, t1$upper), yaxt = "n", pch = 19, col = blpal()[1],
-     xlab = "estimate and 95% interval", ylab = "", main = t1$measure[1])
+plot(
+  t1$estimate,
+  yy,
+  xlim = range(t1$lower, t1$upper),
+  yaxt = "n",
+  pch = 19,
+  col = blpal()[1],
+  xlab = "estimate and 95% interval",
+  ylab = "",
+  main = t1$measure[1]
+)
 segments(t1$lower, yy, t1$upper, yy, col = blpal()[1])
 axis(2, yy, t1$group, las = 1, cex.axis = 0.7)
 par(op)

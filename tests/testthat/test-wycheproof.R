@@ -26,7 +26,7 @@ wp_read <- function(name) {
   )
 }
 hex2raw <- function(h) {
-  if (!nzchar(h)) raw(0) else rmoriebricklayer:::.rmbl_hex_to_raw(h)
+  if (nzchar(h)) .rmbl_hex_to_raw(h) else raw(0)
 }
 coord <- function(h, n) {
   r <- hex2raw(h)
@@ -56,14 +56,14 @@ wp_ecdsa <- function(file, curve, alg, n) {
   for (i in seq_len(nrow(v))) {
     qx <- coord(v$qx[i], n)
     qy <- coord(v$qy[i], n)
-    rs <- rmoriebricklayer:::.rmbl_ecdsa_rs(hex2raw(v$sig[i]))
+    rs <- .rmbl_ecdsa_rs(hex2raw(v$sig[i]))
     if (is.null(qx) || is.null(qy) || is.null(rs)) {
       next
     }
-    dig <- rmoriebricklayer:::.rmbl_ts_digest(alg, hex2raw(v$msg[i]))
+    dig <- .rmbl_ts_digest(alg, hex2raw(v$msg[i]))
     verified[i] <- isTRUE(tryCatch(
       .Call(
-        rmoriebricklayer:::C_rmbl_ecdsa_verify,
+        C_rmbl_ecdsa_verify,
         curve,
         qx,
         qy,
@@ -177,7 +177,7 @@ test_that(
       }
       em <- tryCatch(
         .Call(
-          rmoriebricklayer:::C_rmbl_rsa_recover,
+          C_rmbl_rsa_recover,
           hex2raw(v$sig[i]),
           n_raw,
           hex2raw(v$e[i])
@@ -188,7 +188,7 @@ test_that(
         next
       }
       verified[i] <- isTRUE(
-        rmoriebricklayer:::.rmbl_pkcs1_check(em, "sha256", hex2raw(v$msg[i]))$ok
+        .rmbl_pkcs1_check(em, "sha256", hex2raw(v$msg[i]))$ok
       )
     }
     counts <- wp_check(list(v = v, verified = verified))

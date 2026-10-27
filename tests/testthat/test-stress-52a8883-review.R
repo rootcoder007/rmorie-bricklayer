@@ -11,7 +11,7 @@ xmss_tmp_record <- function(env = parent.frame()) {
   f
 }
 fresh_session <- function() {
-  e <- rmoriebricklayer:::.rmbl_xmss_used
+  e <- .rmbl_xmss_used
   rm(list = ls(e, all.names = TRUE), envir = e)
 }
 
@@ -89,14 +89,14 @@ test_that(
   {
     d <- data_cache_with(good, manifest_for(good_sha()), age_days = 3)
     local_mocked_bindings(.bl_data_get = function(...) stop("HTTP 500"))
-    expect_true(rmoriebricklayer:::.bl_data_check_sha(
+    expect_true(.bl_data_check_sha(
       "db/t",
       file.path(d, "db__t.csv.gz")
     ))
     # a manifest that lists the table without a digest: the fresh manifest is
     # authoritative
     d2 <- data_cache_with(good, '{"datasets":[{"key":"db/t"}]}', age_days = 0)
-    expect_true(rmoriebricklayer:::.bl_data_check_sha(
+    expect_true(.bl_data_check_sha(
       "db/t",
       file.path(d2, "db__t.csv.gz")
     ))
@@ -104,14 +104,14 @@ test_that(
     # digest, as the live one does, so the table loads (refusing it deleted
     # genuine tables offline; review of 02a38be, C9)
     d3 <- data_cache_with(good, '{"datasets":[{"key":"db/t"}]}', age_days = 3)
-    expect_true(rmoriebricklayer:::.bl_data_check_sha(
+    expect_true(.bl_data_check_sha(
       "db/t",
       file.path(d3, "db__t.csv.gz")
     ))
     # an unparseable cached manifest is no copy at all
     d4 <- data_cache_with(good, "{not json", age_days = 3)
     expect_error(
-      rmoriebricklayer:::.bl_data_check_sha(
+      .bl_data_check_sha(
         "db/t",
         file.path(d4, "db__t.csv.gz")
       ),
@@ -120,7 +120,7 @@ test_that(
     # a digest field that is not a digest, in the fallback copy too
     d5 <- data_cache_with(good, manifest_for("xyz"), age_days = 3)
     expect_error(
-      rmoriebricklayer:::.bl_data_check_sha(
+      .bl_data_check_sha(
         "db/t",
         file.path(d5, "db__t.csv.gz")
       ),
@@ -129,7 +129,7 @@ test_that(
     expect_false(file.exists(file.path(d5, "db__t.csv.gz")))
     d6 <- data_cache_with(good, manifest_for("xyz"), age_days = 0)
     expect_error(
-      rmoriebricklayer:::.bl_data_check_sha(
+      .bl_data_check_sha(
         "db/t",
         file.path(d6, "db__t.csv.gz")
       ),
@@ -176,16 +176,16 @@ test_that(
     skip_on_cran()
     p <- tempfile("lockrec-")
     lock <- paste0(p, ".flock")
-    fd <- .Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 0L)
-    expect_true(fd >= 0L)
+    fd <- .Call(C_rmbl_flock_acquire, lock, 0L)
+    expect_gte(fd, 0L)
     # a second open file description in this process is refused while the first
     # holds it
     expect_identical(
-      .Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 60L),
+      .Call(C_rmbl_flock_acquire, lock, 60L),
       -1L
     )
-    invisible(.Call(rmoriebricklayer:::C_rmbl_flock_release, fd))
-    expect_null(.Call(rmoriebricklayer:::C_rmbl_flock_release, -1L))
+    invisible(.Call(C_rmbl_flock_release, fd))
+    expect_null(.Call(C_rmbl_flock_release, -1L))
     # another process takes the lock and dies without releasing it (a crashed
     # session): it is free
     rscript_bg(
@@ -198,9 +198,9 @@ test_that(
       ),
       wait = TRUE
     )
-    fd2 <- .Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 2000L)
-    expect_true(fd2 >= 0L)
-    .Call(rmoriebricklayer:::C_rmbl_flock_release, fd2)
+    fd2 <- .Call(C_rmbl_flock_acquire, lock, 2000L)
+    expect_gte(fd2, 0L)
+    .Call(C_rmbl_flock_release, fd2)
     # a live holder: the waiter is told after its timeout, nothing is deleted
     ready <- tempfile()
     done <- tempfile()
@@ -218,7 +218,7 @@ test_that(
     skip_if_not(wait_files(ready), "the lock-holding process did not start")
     t0 <- Sys.time()
     expect_identical(
-      .Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 1000L),
+      .Call(C_rmbl_flock_acquire, lock, 1000L),
       -1L
     )
     waited <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
@@ -295,14 +295,14 @@ test_that(
     )
     expect_error(
       .Call(
-        rmoriebricklayer:::C_rmbl_flock_acquire,
+        C_rmbl_flock_acquire,
         file.path(tempfile(), "x"),
         0L
       ),
       "cannot open the lock file"
     )
     expect_error(
-      .Call(rmoriebricklayer:::C_rmbl_flock_acquire, NA_character_, 0L),
+      .Call(C_rmbl_flock_acquire, NA_character_, 0L),
       "single file path"
     )
     # a read-only directory: said as such, not as "another process holds the
@@ -341,11 +341,11 @@ test_that(
     )
     expect_error(pqckg(height = 2L), "is not a directory")
     expect_identical(
-      .Call(rmoriebricklayer:::C_rmbl_path_kind, "/dev/null"),
+      .Call(C_rmbl_path_kind, "/dev/null"),
       "other"
     )
     expect_identical(
-      .Call(rmoriebricklayer:::C_rmbl_path_kind, tempfile()),
+      .Call(C_rmbl_path_kind, tempfile()),
       "missing"
     )
   }
@@ -359,7 +359,7 @@ test_that(
     "and stops the signature"
   ),
   {
-    w <- rmoriebricklayer:::C_rmbl_write_file_checked
+    w <- C_rmbl_write_file_checked
     target <- tempfile()
     writeLines("k:old", target)
     # the temporary file is created exclusively: an existing path is refused,
@@ -394,9 +394,10 @@ test_that(
     # (an R trace written under the same limit broke covr's merge)
     sh <- Sys.which("sh")
     rscript <- file.path(R.home("bin"), "Rscript")
-    so <- file.path(
-      system.file("libs", package = "rmoriebricklayer"),
-      paste0("rmoriebricklayer", .Platform$dynlib.ext)
+    so <- system.file(
+      "libs",
+      paste0("rmoriebricklayer", .Platform$dynlib.ext),
+      package = "rmoriebricklayer"
     )
     skip_if(!nzchar(sh) || !file.exists(rscript) || !file.exists(so))
     code <- sprintf(
@@ -616,7 +617,10 @@ test_that("A4: gzip, bzip2 and xz exposure CSVs are read as before 0.5.12", {
       )[[1]],
       u
     )
-    expect_message(v <- vrfpol("pm25", expcsv = u), "no byte-order mark")
+    expect_message(
+      assign("v", vrfpol("pm25", expcsv = u)),
+      "no byte-order mark"
+    )
     expect_identical(v$status, "ok")
   }
   nul <- tempfile(fileext = ".csv")
@@ -675,7 +679,7 @@ test_that(
       rare = TRUE
     )
     expect_identical(c$status, "ok")
-    expect_equal(c$pipeline$burden$attrcases, b$pipeline$burden$attrcases)
+    expect_identical(c$pipeline$burden$attrcases, b$pipeline$burden$attrcases)
     expect_identical(
       vrfpol(
         "pm25",
@@ -707,13 +711,16 @@ test_that(
     expect_match(v$error, "3 exposure value\\(s\\) are text")
     writeLines(c("exposure,site", "20,a", ",b", "NA,c", "n/a,d", "40,e"), f)
     expect_message(
-      v <- vrfpol("pm25", expcsv = f),
+      assign("v", vrfpol("pm25", expcsv = f)),
       "3 row\\(s\\) have no exposure value"
     )
     expect_identical(v$inputs$drorows, 3L)
     expect_match(polrpttxt(v), "rows dropped: +3")
     writeLines(c("exposure,income", "20,", "40,"), f)
-    expect_message(v <- vrfpol("pm25", expcsv = f), "income column is empty")
+    expect_message(
+      assign("v", vrfpol("pm25", expcsv = f)),
+      "income column is empty"
+    )
     expect_identical(v$status, "ok")
     p <- vrfpol("pm25", expomean = 25, expoprev = 1, pop = 1e300)
     expect_identical(p$status, "assumption_failure")
@@ -746,7 +753,7 @@ test_that(
     )) {
       writeLines(bad, p)
       expect_error(
-        rmoriebricklayer:::.bl_store_key("sk-NEW"),
+        .bl_store_key("sk-NEW"),
         "not a JSON object",
         info = bad
       )
@@ -754,14 +761,14 @@ test_that(
       expect_error(dlogout(), "not a JSON object", info = bad)
     }
     writeLines('{"big": 12345678901234567890, "hosted_key": "sk-OLD"}', p)
-    rmoriebricklayer:::.bl_store_key("sk-BIG")
+    .bl_store_key("sk-BIG")
     expect_match(
       paste(readLines(p), collapse = ""),
       "12345678901234567890",
       fixed = TRUE
     )
     writeLines('{"other": [1, 2], "hosted_key": "sk-OLD"}', p)
-    rmoriebricklayer:::.bl_store_key("sk-NEW")
+    .bl_store_key("sk-NEW")
     expect_identical(
       fromjs(paste(readLines(p), collapse = "\n"))$hosted_key,
       "sk-NEW"
@@ -790,20 +797,25 @@ test_that(
     asked <- list()
     answers <- c("own", "http://localhost:1234/v1", "m1", "sk-own")
     i <- 0L
+    te <- environment()
     local_mocked_bindings(.bl_readline = function(
       prompt,
       con = NULL,
       secret = FALSE
     ) {
-      i <<- i + 1L
-      asked[[i]] <<- list(prompt = prompt, secret = secret)
+      assign("i", i + 1L, envir = te)
+      assign(
+        "asked",
+        c(asked, list(list(prompt = prompt, secret = secret))),
+        envir = te
+      )
       if (i <= length(answers)) answers[[i]] else ""
     })
     local_mocked_bindings(.bl_cli_doctor = function(out) invisible(NULL))
-    rmoriebricklayer:::.bl_config_setup(function(...) invisible(NULL))
+    .bl_config_setup(function(...) invisible(NULL))
     sec <- vapply(asked, function(a) a$secret, logical(1))
     pr <- vapply(asked, function(a) a$prompt, "")
-    expect_true(sec[grep("API key", pr)])
+    expect_true(sec[grep("API key", pr, fixed = TRUE)])
     expect_false(any(sec[grep("Ollama|server|Model|Which", pr)]))
   }
 )
@@ -815,14 +827,15 @@ test_that(
   ),
   {
     e <- tryCatch(
-      rmoriebricklayer:::.bl_signal_interrupt(),
+      .bl_signal_interrupt(),
       interrupt = function(i) "interrupt"
     )
     expect_identical(e, "interrupt")
     out <- character()
+    te <- environment()
     local_mocked_bindings(dlogin = function(...) invisible(TRUE))
     st <- blcli(c("login", "--token", "sk-ARGV"), out = function(x) {
-      out <<- c(out, x)
+      assign("out", c(out, x), envir = te)
     })
     expect_identical(st, 0L)
     expect_match(paste(out, collapse = ""), "stays in the shell history")
@@ -836,7 +849,8 @@ test_that(
   ),
   {
     out <- character()
-    o <- function(x) out <<- c(out, x)
+    te <- environment()
+    o <- function(x) assign("out", c(out, x), envir = te)
     expect_identical(blcli(c("data", "list", "foo"), out = o), 2L)
     expect_identical(blcli(c("data", "pull", "a/b", "c/d"), out = o), 2L)
     expect_identical(blcli(c("functions", "a", "b"), out = o), 2L)
@@ -845,7 +859,7 @@ test_that(
     expect_identical(blcli(c("config", "reset", "--now"), out = o), 2L)
     home <- withr::local_tempdir()
     withr::local_envvar(XDG_CONFIG_HOME = home)
-    cfg <- rmoriebricklayer:::.bl_config_path()
+    cfg <- .bl_config_path()
     dir.create(dirname(cfg), recursive = TRUE)
     writeLines('{"route": "hosted"}', cfg)
     expect_identical(blcli(c("config", "reset"), out = o), 1L)
@@ -879,7 +893,7 @@ test_that("A7: hurwzeta() at large negative q, below s = 1, and its poles", {
   )
   expect_equal(
     hurwzeta(3, -999999.5),
-    rmoriebricklayer:::.rmbl_hurwitz(3, 1e6 + 0.5),
+    .rmbl_hurwitz(3, 1e6 + 0.5),
     tolerance = 1e-10
   )
   expect_equal(
@@ -932,8 +946,8 @@ test_that("sibling caps: particles x steps and lid images", {
   # formula): no diffusion puts every particle at u dt nsteps = 3; a fixed
   # normal draw of 1 adds sqrt(2 kx dt) per step
   p <- lagrprt(10, 0, 0, 1, 0, 0, 0, 1, nsteps = 3, maxwork = Inf)
-  expect_equal(p$x, rep(3, 10))
-  expect_equal(p$mean_x, 3)
+  expect_identical(p$x, rep(3, 10))
+  expect_identical(p$mean_x, 3)
   p <- lagrprt(
     10,
     0,
@@ -947,7 +961,7 @@ test_that("sibling caps: particles x steps and lid images", {
     maxwork = Inf,
     normals = function(n, seed, stream) rep(1, n)
   )
-  expect_equal(p$mean_x, 3 + 3 * sqrt(2))
+  expect_identical(p$mean_x, 3 + 3 * sqrt(2))
   rec <- matrix(c(100, 0, 1), 1)
   expect_error(gplume(1, 2, 10, rec, nimg = 1e9), "at most 1,000")
   expect_error(gspuff(1, 2, 10, rec, t = 10, nimg = 1001), "at most 1,000")
@@ -963,15 +977,15 @@ test_that(
   ),
   {
     lab <- c(paste0(strrep("x", 30), c("a", "b")), "short", NA)
-    s <- rmoriebricklayer:::.bl_short_label(lab, 25)
+    s <- .bl_short_label(lab, 25)
     expect_false(anyDuplicated(s[!is.na(s)]) > 0)
     expect_true(all(nchar(s[!is.na(s)]) <= 25))
     expect_identical(
-      rmoriebricklayer:::.bl_short_label(
+      .bl_short_label(
         rep("same-long-label-over-the-limit", 2),
         10
       )[1],
-      rmoriebricklayer:::.bl_short_label(
+      .bl_short_label(
         rep("same-long-label-over-the-limit", 2),
         10
       )[2]
@@ -979,16 +993,16 @@ test_that(
     pdf(NULL, width = 2.5, height = 2.5)
     on.exit(grDevices::dev.off(), add = TRUE)
     long <- paste0("level-", strrep("long", 10), 1:4)
-    expect_silent(rmoriebricklayer:::.bl_hbars(
+    expect_silent(.bl_hbars(
       c(4, 3, 2, 1),
       long,
       "n",
       "t",
       rep("grey", 4)
     ))
-    fit <- rmoriebricklayer:::.bl_label_fit(long)
+    fit <- .bl_label_fit(long)
     expect_false(anyDuplicated(fit$labels) > 0)
-    expect_silent(rmoriebricklayer:::.bl_hbars(
+    expect_silent(.bl_hbars(
       c(2, 1, 1),
       c("(missing)", NA, "b"),
       "n",
@@ -1053,7 +1067,7 @@ test_that(
     "as an interrupt"
   ),
   {
-    expect_error(rmoriebricklayer:::.bl_signal_interrupt(), "interrupted")
+    expect_error(.bl_signal_interrupt(), "interrupted")
     skip_on_os("windows")
     skip_if_not(nzchar(Sys.which("sh")))
     local_mocked_bindings(
@@ -1067,7 +1081,7 @@ test_that(
       .package = "base"
     )
     got <- tryCatch(
-      rmoriebricklayer:::.bl_readline("key: ", secret = FALSE),
+      .bl_readline("key: ", secret = FALSE),
       interrupt = function(i) "interrupt"
     )
     expect_identical(got, "interrupt")
@@ -1078,7 +1092,7 @@ test_that(
       .package = "base"
     )
     expect_identical(
-      rmoriebricklayer:::.bl_readline("key: ", secret = FALSE),
+      .bl_readline("key: ", secret = FALSE),
       "typed-line"
     )
     # output without the mark is a read that never finished (a Ctrl-C before the
@@ -1088,7 +1102,7 @@ test_that(
       .package = "base"
     )
     got <- tryCatch(
-      rmoriebricklayer:::.bl_readline("key: ", secret = FALSE),
+      .bl_readline("key: ", secret = FALSE),
       interrupt = function(i) "interrupt"
     )
     expect_identical(got, "interrupt")
@@ -1096,15 +1110,16 @@ test_that(
     # trap restores it)
     skip_if_not(nzchar(Sys.which("stty")))
     seen <- NULL
+    te <- environment()
     local_mocked_bindings(
       system2 = function(command, args, ...) {
-        seen <<- args[[2L]]
+        assign("seen", args[[2L]], envir = te)
         "\002RMBL-LINE\002sk-typed"
       },
       .package = "base"
     )
     expect_identical(
-      rmoriebricklayer:::.bl_readline("key: ", secret = TRUE),
+      .bl_readline("key: ", secret = TRUE),
       "sk-typed"
     )
     expect_match(seen, "stty -echo", fixed = TRUE)
@@ -1145,12 +1160,16 @@ test_that(
   ),
   {
     out <- character()
+    te <- environment()
     expect_identical(
-      blcli(c("config", "reset", "now"), out = function(x) out <<- c(out, x)),
+      blcli(
+        c("config", "reset", "now"),
+        out = function(x) assign("out", c(out, x), envir = te)
+      ),
       2L
     )
     expect_match(paste(out, collapse = ""), "config reset \\[--force\\]")
-    expect_null(rmoriebricklayer:::.bl_json_top_members(
+    expect_null(.bl_json_top_members(
       '{"a": {"b": "unterminated}'
     ))
   }
@@ -1176,7 +1195,7 @@ test_that(
       txt
     })
     expect_error(
-      rmoriebricklayer:::.bl_store_key("sk-NEW"),
+      .bl_store_key("sk-NEW"),
       "without damaging it"
     )
     # an editor whose result is not valid JSON at all is refused the same way
@@ -1184,7 +1203,7 @@ test_that(
       paste0(txt, " junk")
     })
     expect_error(
-      rmoriebricklayer:::.bl_store_key("sk-NEW"),
+      .bl_store_key("sk-NEW"),
       "without damaging it"
     )
     local_mocked_bindings(.bl_credentials_text_set = function(txt, key, value) {
@@ -1215,7 +1234,7 @@ test_that("a lock path that is not a regular file is refused (a FIFO)", {
   system2("mkfifo", f)
   skip_if_not(file.exists(f))
   expect_error(
-    .Call(rmoriebricklayer:::C_rmbl_flock_acquire, f, 0L),
+    .Call(C_rmbl_flock_acquire, f, 0L),
     "not a regular file"
   )
 })

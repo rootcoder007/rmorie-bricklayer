@@ -43,6 +43,10 @@
 #' @return A named length-3 numeric: `statistic` (the KS \eqn{D}) ,
 #' `p_value`, and `neff` (the harmonic-style effective size
 #'   \eqn{n_xn_y/(n_x+n_y)}).
+#'    It has class \code{c("rmbl_drftks", "rmbl_measure", "numeric")}, so it
+#'   prints as a box with its inputs (kept in attribute \code{"lakner"});
+#'   arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+#'   numbers.
 #' @seealso
 #' [drftpsi()],
 #' [drftchisq()],
@@ -77,7 +81,29 @@ drftks <- function(x, y) {
   y <- y[!is.na(y)]
   out <- .Call(C_rmbl_ks, x, y)
   names(out) <- c("statistic", "p_value", "neff")
-  out
+  .rmbl_measure(out, "drftks", list(nx = length(x), ny = length(y)))
+}
+
+#' @export
+format.rmbl_drftks <- function(x, ...) {
+  if (!.lk_ok(x, c("nx", "ny")) || length(x) != 3L) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  .an_block(
+    "Two-sample Kolmogorov-Smirnov test",
+    facts = list(
+      Samples = sprintf("%s and %s values", .rmbl_fmt_num(m$nx),
+        .rmbl_fmt_num(m$ny))
+    ),
+    tables = list(.rmbl_msr_table(x)),
+    reading = .rmbl_ks_reading(x),
+    notes = c(
+      "D is the largest gap between the two empirical distribution",
+      "functions. The p-value is the asymptotic one: rough below a few",
+      "dozen values; stats::ks.test() gives an exact one."
+    )
+  )
 }
 
 #' Population stability index and Jensen-Shannon divergence (C backend)
@@ -137,6 +163,10 @@ drftks <- function(x, y) {
 #' Compare runs only at one `eps`.
 #' @return A named length-2 numeric: `psi` (non-negative, unbounded) and
 #' `jsdiv` (in nats, between 0 and \eqn{\log 2 \approx 0.693}).
+#'    It has class \code{c("rmbl_drftpsi", "rmbl_measure", "numeric")}, so it
+#'   prints as a box with its inputs (kept in attribute \code{"lakner"});
+#'   arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+#'   numbers.
 #' @seealso [drftks()],
 #'   [cpsdrft()].
 #' @references Wu D, Olson DL (2010). Enterprise risk management: coping
@@ -174,64 +204,39 @@ drftpsi <- function(x, y, bins = 10L, eps = 1e-6) {
   y <- .rmbl_finite_input(y, "y", min_n = 1L)
   x <- x[!is.na(x)] # minn = 1L above: at least one value remains in each
   y <- y[!is.na(y)]
-  bins <- .rmbl_num(bins, "bins", integer = TRUE)
-  if (length(bins) != 1L || is.na(bins) || bins < 2L) {
-    stop("`bins` must be one whole number of at least 2", call. = FALSE)
-  }
-  if (bins > 1e6) {
-    stop(
-      "`bins` must be at most 1,000,000 (a bin per value is already the ",
-      "finest it gets)",
-      call. = FALSE
-    )
-  }
-  eps <- .rmbl_num(eps, "eps")
-  if (length(eps) != 1L || is.na(eps) || eps <= 0 || eps >= 1) {
-    stop(
-      "`eps` must be a positive floor below one (0 < eps < 1)",
-      call. = FALSE
-    )
-  }
+  bins <- .rmbl_psi_bins(bins)
+  eps <- .rmbl_psi_eps(eps)
   s <- .rmbl_psi_shares(x, y, bins)
   out <- .Call(C_rmbl_psi, s$px, s$py, as.numeric(eps))
   names(out) <- c("psi", "jsdiv")
-  out
+  .rmbl_measure(
+    out,
+    "drftpsi",
+    list(nx = length(x), ny = length(y), bins = bins)
+  )
 }
 
-#' Bins two samples on the reference's quantiles, as drftpsi() does.
-#'
-#' The bin edges and the two sets of bin shares behind the PSI; cpsdrft() keeps
-#' them so a plot or a report can show where the index comes from.
-#' @param x,y The reference and the new sample, finite and non-empty.
-#' @param bins The number of quantile bins of the reference.
-#' @return A list: `edges` (from -Inf to Inf), `px` and `py` (the shares per
-#'   bin).
-#' @noRd
-.rmbl_psi_shares <- function(x, y, bins) {
-  # Values within a part in 1e12 of each other are the same value: cut()
-  # is right-closed, and a float-formatting difference between two
-  # releases of a file moved whole bins of tied integers across an edge.
-  x <- signif(x, 12)
-  y <- signif(y, 12)
-  # The reference defines the bin edges, so the comparison asks where the
-  # NEW sample sits relative to the pinned one.
-  probs <- seq(0, 1, length.out = bins + 1L)
-  q <- unique(.Call(C_rmbl_quantile, x, probs))
-  # The outer quantiles (the reference's min and max) become open ends so
-  # the new sample's tails land in a bin. When the reference has fewer
-  # than three distinct quantiles -- a constant column, or one that is
-  # mostly a single value with a thin tail -- every distinct value is a
-  # cut point instead: replacing the ends with +-Inf left ONE bin, and a
-  # column rescaled by 1000x reported PSI = 0.
-  edges <- if (length(q) >= 3L) {
-    c(-Inf, q[-c(1L, length(q))], Inf)
-  } else {
-    c(-Inf, q, Inf)
+#' @export
+format.rmbl_drftpsi <- function(x, ...) {
+  if (!.lk_ok(x, c("nx", "ny", "bins")) || length(x) != 2L) {
+    return(.lk_plain(x, ...))
   }
-  list(
-    edges = edges,
-    px = as.numeric(table(cut(x, edges))) / length(x),
-    py = as.numeric(table(cut(y, edges))) / length(y)
+  m <- attr(x, "lakner")
+  .an_block(
+    "Population stability index",
+    facts = list(
+      Samples = sprintf("%s and %s values", .rmbl_fmt_num(m$nx),
+        .rmbl_fmt_num(m$ny)),
+      Bins = sprintf("%d, on the reference's quantiles", as.integer(m$bins))
+    ),
+    tables = list(.rmbl_msr_table(x)),
+    reading = .rmbl_psi_reading(x),
+    notes = c(
+      "PSI below 0.1 is read as stable, 0.1 to 0.25 as worth a look, above",
+      "0.25 as a material shift: heuristic bands with no null distribution,",
+      "which binning noise alone can cross on a few hundred rows. The JS",
+      "divergence is bounded by log 2 (0.693)."
+    )
   )
 }
 
@@ -287,6 +292,10 @@ drftpsi <- function(x, y, bins = 10L, eps = 1e-6) {
 #' @return A named length-4 numeric: `statistic`, `df`,
 #' `p_value` and `logpvalue`, the natural log of the upper tail, which
 #' keeps its information where `p_value` underflows to 0.
+#'    It has class \code{c("rmbl_drftchisq", "rmbl_measure", "numeric")}, so it
+#'   prints as a box with its inputs (kept in attribute \code{"lakner"});
+#'   arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+#'   numbers.
 #' @seealso [drfthomog()],
 #'   [cpsdrft()],
 #' [stats::chisq.test()] for the full test object.
@@ -315,83 +324,38 @@ drftpsi <- function(x, y, bins = 10L, eps = 1e-6) {
 #' drfthomog(c("a", "a", "b", "b"), c("a", "a", "b", "d"))
 #' @export
 drftchisq <- function(obs, expd) {
-  tab <- function(v) {
-    if (is.factor(v) || is.character(v)) {
-      t <- table(v)
-      stats::setNames(as.numeric(t), names(t))
-    } else {
-      nm <- names(v)
-      if (is.null(nm)) {
-        stop("a numeric `obs`/`expd` must be named", call. = FALSE)
-      }
-      stats::setNames(.rmbl_num(v, "observed / expected"), nm)
-    }
-  }
-  o <- .rmbl_check_counts(tab(obs), "obs")
-  e <- .rmbl_check_counts(tab(expd), "expd")
-  lv <- union(names(o), names(e))
-  o <- stats::setNames(ifelse(is.na(o[lv]), 0, o[lv]), lv)
-  e <- stats::setNames(ifelse(is.na(e[lv]), 0, e[lv]), lv)
-  if (sum(o) <= 0) {
-    stop("`obs` has no counts", call. = FALSE)
-  }
-  if (sum(e) <= 0) {
-    stop("`expd` has no counts", call. = FALSE)
-  }
-  # Reference proportions, scaled to the observed total.
-  exp_counts <- sum(o) * e / sum(e)
-  keep <- exp_counts > 0 # non-empty: both totals are positive by now
-  df <- sum(keep) - 1L
-  # A category the reference assigns probability zero, yet which occurs,
-  # contradicts the pinned distribution outright: the chi-square term
-  # for it diverges. Report that rather than dropping the category and
-  # returning a statistic computed as though it had not appeared.
-  if (any(o[!keep] > 0)) {
-    return(c(statistic = Inf, df = max(1L, df), p_value = 0, logpvalue = -Inf))
-  }
-  stat <- sum((o[keep] - exp_counts[keep])^2 / exp_counts[keep])
-  if (df < 1L) {
-    # one category on both sides: nothing to test, and df = 0 is not a
-    # chi-square distribution
-    return(c(
-      statistic = stat,
-      df = 0,
-      p_value = NA_real_,
-      logpvalue = NA_real_
-    ))
-  }
-  c(
-    statistic = stat,
-    df = df,
-    p_value = .rmbl_chisq_p(stat, df),
-    logpvalue = .rmbl_chisq_logp(stat, df)
+  out <- .rmbl_drftchisq(obs, expd)
+  n <- if (is.numeric(obs)) obs else table(as.character(obs))
+  .rmbl_measure(
+    out,
+    "drftchisq",
+    list(n = sum(n), k = length(union(names(n), .rmbl_drft_lv(expd))))
   )
 }
 
-#' Returns the upper tail of a chi-square distribution.
-#'
-#' The upper tail of a chi-square, computed AS the upper tail. The former
-#' 1 - cgamcdf(df / 2, stat / 2) underflowed to exactly 0 once the
-#' lower tail rounded to 1 (stat >= 74.9 at df = 2), and \dQuote{p = 0} is a
-#' number a reader quotes.
-#' @param stat The chi-square statistic.
-#' @param df Its degrees of freedom.
-#' @return The upper-tail probability.
-#' @noRd
-.rmbl_chisq_p <- function(stat, df) {
-  stats::pchisq(stat, df, lower.tail = FALSE)
-}
-
-#' Returns the upper tail of a chi-square distribution on the log scale.
-#'
-#' The same tail on the log scale: a double cannot hold exp(-2536), so
-#' `p_value` is 0 there while `logpvalue` still says how far below.
-#' @param stat The chi-square statistic.
-#' @param df Its degrees of freedom.
-#' @return The log of the upper-tail probability.
-#' @noRd
-.rmbl_chisq_logp <- function(stat, df) {
-  stats::pchisq(stat, df, lower.tail = FALSE, log.p = TRUE)
+#' @export
+format.rmbl_drftchisq <- function(x, ...) {
+  if (!.lk_ok(x, c("n", "k")) || length(x) != 4L) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  .an_block(
+    "Chi-square test against a reference distribution",
+    facts = list(
+      Counts = .rmbl_fmt_num(m$n),
+      Categories = .rmbl_fmt_num(m$k)
+    ),
+    tables = list(.rmbl_msr_table(x)),
+    reading = .rmbl_chisq_reading(
+      x,
+      "The counts depart from the reference distribution",
+      "The counts agree with the reference distribution"
+    ),
+    notes = c(
+      "The reference is taken as known; when it is itself a sample,",
+      "drfthomog() allows for its own sampling error."
+    )
+  )
 }
 
 #' Chi-square test of homogeneity for two categorical samples
@@ -446,6 +410,10 @@ drftchisq <- function(obs, expd) {
 #' `logpvalue` is its log, so it carries no extra range there. The
 #' attribute `method` names the branch, or says why the test was
 #' inapplicable (one category, no counts).
+#'    It has class \code{c("rmbl_drfthomog", "rmbl_measure", "numeric")}, so it
+#'   prints as a box with its inputs (kept in attribute \code{"lakner"});
+#'   arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+#'   numbers.
 #' @seealso
 #' [drftchisq()] for a known reference
 #' distribution, [stats::chisq.test()] for
@@ -482,94 +450,44 @@ drftchisq <- function(obs, expd) {
 #'   downstream moves.
 #' @export
 drfthomog <- function(x, y, seed = 1L) {
-  tab <- function(v) {
-    if (is.factor(v) || is.character(v)) {
-      t <- table(as.character(v))
-      stats::setNames(as.numeric(t), names(t))
-    } else {
-      nm <- names(v)
-      if (is.null(nm)) {
-        stop("a numeric `x`/`y` must be named", call. = FALSE)
-      }
-      stats::setNames(.rmbl_num(v, "x / y"), nm)
-    }
-  }
-  cx <- .rmbl_check_counts(tab(x), "x")
-  cy <- .rmbl_check_counts(tab(y), "y")
-  lv <- union(names(cx), names(cy))
-  cx <- stats::setNames(ifelse(is.na(cx[lv]), 0, cx[lv]), lv)
-  cy <- stats::setNames(ifelse(is.na(cy[lv]), 0, cy[lv]), lv)
-  nx <- sum(cx)
-  ny <- sum(cy)
-  if (nx <= 0 || ny <= 0) {
-    stop("both samples must have at least one observation", call. = FALSE)
-  }
-  # Expected counts under a shared distribution estimated from the
-  # pooled margins -- this is what carries both samples' uncertainty.
-  pooled <- (cx + cy) / (nx + ny)
-  ex <- nx * pooled
-  ey <- ny * pooled
-  keep <- pooled > 0 # nx, ny > 0 above: at least one category is kept
-  stat <- sum((cx[keep] - ex[keep])^2 / ex[keep]) +
-    sum((cy[keep] - ey[keep])^2 / ey[keep])
-  df <- sum(keep) - 1L
-  if (df < 1L) {
-    out <- c(statistic = stat, df = 0, p_value = NA_real_, logpvalue = NA_real_)
-    attr(out, "method") <- "inapplicable: one category"
-    return(out)
-  }
-  # A table whose categories outnumber its observations has one statistic
-  # for every arrangement of its margins (two disjoint sets of 400 dates:
-  # stat = 800, df = 799, and every table with those margins is the same).
-  # No test has power there; the honest answer is "inapplicable", not p = 1.
-  if ((nx + ny) / sum(keep) < 2) {
-    out <- c(
-      statistic = stat,
-      df = df,
-      p_value = NA_real_,
-      logpvalue = NA_real_
+  out <- .rmbl_drfthomog(x, y, seed)
+  cnt <- function(v) if (is.numeric(v)) v else table(as.character(v))
+  .rmbl_measure(
+    out,
+    "drfthomog",
+    list(
+      nx = sum(cnt(x)),
+      ny = sum(cnt(y)),
+      k = length(union(names(cnt(x)), names(cnt(y))))
     )
-    attr(out, "method") <- paste0(
-      "inapplicable: ",
-      sum(keep),
-      " categories for ",
-      nx + ny,
-      " observations (fewer than two per category)"
-    )
-    return(out)
-  }
-  # The chi-square approximation rests on the expected counts. When any
-  # is below 5 the p-value is a Monte Carlo one over tables with the same
-  # margins, under a fixed local seed: the caller's RNG stream is left
-  # exactly as it was.
-  simulated <- min(ex[keep], ey[keep]) < 5
-  p <- if (simulated) {
-    tab <- rbind(cx[keep], cy[keep])
-    .rmbl_with_seed(
-      seed,
-      as.numeric(
-        suppressWarnings(stats::chisq.test(
-          tab,
-          simulate.p.value = TRUE,
-          B = 10000L
-        ))$p.value
-      )
-    )
-  } else {
-    .rmbl_chisq_p(stat, df)
-  }
-  out <- c(
-    statistic = stat,
-    df = df,
-    p_value = p,
-    logpvalue = if (simulated) log(p) else .rmbl_chisq_logp(stat, df)
   )
-  attr(out, "method") <- if (simulated) {
-    "Monte Carlo permutation (small expected counts)"
-  } else {
-    "chi-square approximation"
+}
+
+#' @export
+format.rmbl_drfthomog <- function(x, ...) {
+  if (!.lk_ok(x, c("nx", "ny", "k")) || length(x) != 4L) {
+    return(.lk_plain(x, ...))
   }
-  out
+  m <- attr(x, "lakner")
+  .an_block(
+    "Chi-square test of homogeneity",
+    facts = list(
+      Samples = sprintf("%s and %s values", .rmbl_fmt_num(m$nx),
+        .rmbl_fmt_num(m$ny)),
+      Categories = .rmbl_fmt_num(m$k),
+      Method = attr(x, "method")
+    ),
+    tables = list(.rmbl_msr_table(x)),
+    reading = .rmbl_chisq_reading(
+      x,
+      "The two samples' mixes of categories differ",
+      "The two samples' mixes of categories agree"
+    ),
+    notes = c(
+      "Both samples carry sampling error; with an expected count below 5",
+      "the p-value is a Monte Carlo one under a fixed seed."
+    )
+  )
 }
 
 #' Benford first-digit test
@@ -602,7 +520,7 @@ drfthomog <- function(x, y, seed = 1L) {
 #' (silenced by `options(morie.quiet = TRUE)`). Errors: non-numeric input,
 #' or no finite non-zero value.
 #'
-#' @param x Numeric vector.
+#' @param x Numeric vector; zero and non-finite values are dropped.
 #' @return A list of class `bricklayer_benford` with `counts`
 #' (observed digit frequencies 1--9), `expected`, `proportion`,
 #' `statistic`, `df`, `p_value`, `logpvalue` (the log of the upper
@@ -810,7 +728,7 @@ benfordtst <- function(x) {
 #'   similar no-NA checks in test-areal.R:322 and test-census.R:143.
 #' @srrstats {EA3.1} A fixed battery (KS, chi-square, PSI, Jensen-Shannon)
 #'   compares a fetched frame with the pinned one, column by column, in one
-#'   report; test-print-methods.R.
+#'   report; test-print_methods.R.
 cpsdrft <- function(
   ref,
   cur,
@@ -824,175 +742,20 @@ cpsdrft <- function(
   if (!is.data.frame(ref) || !is.data.frame(cur)) {
     stop("`ref` and `cur` must both be data frames", call. = FALSE)
   }
-  alpha <- .rmbl_num(alpha, "alpha")
-  if (length(alpha) != 1L || is.na(alpha) || alpha <= 0 || alpha >= 1) {
-    stop(
-      "cpsdrft: `alpha` must be a single value strictly inside (0, 1)",
-      call. = FALSE
-    )
-  }
-  psiminn <- .rmbl_num(psiminn, "psiminn", integer = TRUE)
-  if (length(psiminn) != 1L || is.na(psiminn) || psiminn < 0L) {
-    stop("`psiminn` must be a single non-negative integer", call. = FALSE)
-  }
-  idelvls <- .rmbl_num(idelvls, "idelvls", integer = TRUE)
-  if (length(idelvls) != 1L || is.na(idelvls) || idelvls < 2L) {
-    stop("`idelvls` must be a single integer of at least 2", call. = FALSE)
-  }
+  o <- .drift_args(alpha, psiminn, idelvls)
+  o$psithr <- psithr
+  o$bins <- bins
+  o$seed <- seed
   shared <- intersect(names(ref), names(cur))
   added <- setdiff(names(cur), names(ref))
   removed <- setdiff(names(ref), names(cur))
-
-  row <- function(
-    nm,
-    type,
-    statistic = NA_real_,
-    p_value = NA_real_,
-    psi = NA_real_,
-    js = NA_real_,
-    unseen = NA_real_,
-    drifted = NA,
-    note = ""
-  ) {
-    data.frame(
-      column = nm,
-      type = type,
-      statistic = statistic,
-      p_value = p_value,
-      psi = psi,
-      jsdiv = js,
-      unseen_share = unseen,
-      drifted = drifted,
-      note = note,
-      stringsAsFactors = FALSE
-    )
-  }
   pg <- blprog("drift screen", length(shared))
   on.exit(pg$done(), add = TRUE)
   rows <- lapply(shared, function(nm) {
     pg$tick(info = nm)
-    a <- ref[[nm]]
-    b <- cur[[nm]]
-    numeric_col <- is.numeric(a) && is.numeric(b)
-    # a character column of dates is a numeric column in disguise: two
-    # disjoint years of daily dates are a shift, not 730 unrelated labels
-    if (!numeric_col) {
-      da <- .rmbl_as_dates(a)
-      db <- .rmbl_as_dates(b)
-      if (!is.null(da) && !is.null(db)) {
-        a <- da
-        b <- db
-        numeric_col <- TRUE
-      }
-    }
-    type <- if (inherits(a, "Date") || inherits(a, "POSIXct")) {
-      "date"
-    } else if (numeric_col) {
-      "numeric"
-    } else {
-      "categorical"
-    }
-    if (numeric_col) {
-      av <- as.numeric(a[!is.na(a)])
-      bv <- as.numeric(b[!is.na(b)])
-      if (length(av) < 1L || length(bv) < 1L) {
-        return(row(nm, type, note = "no non-missing values on one side"))
-      }
-      k <- drftks(av, bv)
-      p <- drftpsi(av, bv, bins = bins)
-      # The p-value is calibrated; the PSI band is a heuristic that only
-      # means anything once both samples are large.
-      psi_flag <- length(av) >= psiminn &&
-        length(bv) >= psiminn &&
-        p[["psi"]] > psithr
-      return(row(
-        nm,
-        type,
-        statistic = k[["statistic"]],
-        p_value = k[["p_value"]],
-        psi = p[["psi"]],
-        js = p[["jsdiv"]],
-        drifted = k[["p_value"]] < alpha || psi_flag
-      ))
-    }
-    av <- as.character(a)
-    bv <- as.character(b)
-    av <- av[!is.na(av)]
-    bv <- bv[!is.na(bv)]
-    if (length(av) < 1L || length(bv) < 1L) {
-      return(row(nm, "categorical", note = "no non-missing values on one side"))
-    }
-    unseen <- mean(!(bv %in% av))
-    n_lv <- length(unique(c(av, bv)))
-    # An identifier-like column -- a key, a postcode, free text: more
-    # distinct values than `idelvls`, or a value for every
-    # fifth row -- has no distribution to compare. Two independent
-    # samples of the same 5,000 ids share about half their values, so a
-    # divergence over the union of categories read 8.8 and fired on every
-    # such column. The share of current rows the reference never saw is
-    # reported; the verdict is NA, not a guess.
-    # The ratio test needs levels behind it, not rows: on ten rows a
-    # five-level factor has "a value for every fifth row" and 0.5.7 returned
-    # no verdict for an ordinary small column, while 0.5.8's hundred-row gate
-    # scored an 80-row id column as categorical with a PSI of 5 (its diff
-    # review). A column with fewer than 20 distinct values is a factor.
-    if (
-      n_lv > idelvls ||
-        (n_lv >= 20L && n_lv > 0.2 * (length(av) + length(bv)))
-    ) {
-      return(row(
-        nm,
-        "identifier",
-        unseen = unseen,
-        drifted = NA,
-        note = sprintf(
-          "%d distinct values: distribution tests do not apply",
-          n_lv
-        )
-      ))
-    }
-    cs <- drfthomog(av, bv, seed = seed)
-    # PSI over the REFERENCE's categories, with every current value the
-    # reference lacks pooled into one bin: that is the index's definition
-    # (expected bins, actual mass), and it stays near zero when the two
-    # samples share a distribution
-    lv <- unique(av)
-    px <- c(as.numeric(table(factor(av, levels = lv))) / length(av), 0)
-    py <- c(as.numeric(table(factor(bv, levels = lv))) / length(bv), unseen)
-    ps <- .Call(C_rmbl_psi, px, py, 1e-6)
-    psi_flag <- length(av) >= psiminn &&
-      length(bv) >= psiminn &&
-      ps[[1L]] > psithr
-    p_cat <- cs[["p_value"]]
-    row(
-      nm,
-      "categorical",
-      statistic = cs[["statistic"]],
-      p_value = p_cat,
-      psi = ps[[1L]],
-      js = ps[[2L]],
-      unseen = unseen,
-      drifted = if (is.na(p_cat)) psi_flag || NA else p_cat < alpha || psi_flag,
-      note = if (is.na(p_cat)) attr(cs, "method") else ""
-    )
+    .drift_column(nm, ref[[nm]], cur[[nm]], o)
   })
-
-  cols <- if (length(rows)) {
-    do.call(rbind, rows)
-  } else {
-    data.frame(
-      column = character(0),
-      type = character(0),
-      statistic = numeric(0),
-      p_value = numeric(0),
-      psi = numeric(0),
-      jsdiv = numeric(0),
-      unseen_share = numeric(0),
-      drifted = logical(0),
-      note = character(0),
-      stringsAsFactors = FALSE
-    )
-  }
+  cols <- if (length(rows)) do.call(rbind, rows) else .drift_empty()
 
   # the binned summaries a plot or a report draws from (never the rows
   # themselves)
@@ -1008,9 +771,9 @@ cpsdrft <- function(
     removed = removed,
     nref = nrow(ref),
     ncur = nrow(cur),
-    alpha = alpha,
+    alpha = o$alpha,
     psithr = psithr,
-    psiminn = psiminn,
+    psiminn = o$psiminn,
     bands = c(warn = min(0.1, psithr), fail = psithr),
     summ = summ,
     anydrft = any(cols$drifted, na.rm = TRUE) ||
@@ -1021,6 +784,431 @@ cpsdrft <- function(
   out
 }
 
+#' drftpsi()'s number of bins: one whole number from 2 to 1,000,000.
+#' @param bins The value given.
+#' @return The number of bins.
+#' @noRd
+.rmbl_psi_bins <- function(bins) {
+  bins <- .rmbl_num(bins, "bins", integer = TRUE)
+  if (length(bins) != 1L || is.na(bins) || bins < 2L) {
+    stop("`bins` must be one whole number of at least 2", call. = FALSE)
+  }
+  if (bins > 1e6) {
+    stop(
+      "`bins` must be at most 1,000,000 (a bin per value is already the ",
+      "finest it gets)",
+      call. = FALSE
+    )
+  }
+  bins
+}
+
+#' drftpsi()'s floor on the shares: one number strictly between 0 and 1.
+#' @param eps The value given.
+#' @return The floor.
+#' @noRd
+.rmbl_psi_eps <- function(eps) {
+  eps <- .rmbl_num(eps, "eps")
+  if (length(eps) != 1L || is.na(eps) || eps <= 0 || eps >= 1) {
+    stop(
+      "`eps` must be a positive floor below one (0 < eps < 1)",
+      call. = FALSE
+    )
+  }
+  eps
+}
+
+#' Bins two samples on the reference's quantiles, as drftpsi() does.
+#'
+#' The bin edges and the two sets of bin shares behind the PSI; cpsdrft() keeps
+#' them so a plot or a report can show where the index comes from.
+#' @param x,y The reference and the new sample, finite and non-empty.
+#' @param bins The number of quantile bins of the reference.
+#' @return A list: `edges` (from -Inf to Inf), `px` and `py` (the shares per
+#'   bin).
+#' @noRd
+.rmbl_psi_shares <- function(x, y, bins) {
+  # Values within a part in 1e12 of each other are the same value: cut()
+  # is right-closed, and a float-formatting difference between two
+  # releases of a file moved whole bins of tied integers across an edge.
+  x <- signif(x, 12)
+  y <- signif(y, 12)
+  # The reference defines the bin edges, so the comparison asks where the
+  # NEW sample sits relative to the pinned one.
+  probs <- seq(0, 1, length.out = bins + 1L)
+  q <- unique(.Call(C_rmbl_quantile, x, probs))
+  # The outer quantiles (the reference's min and max) become open ends so
+  # the new sample's tails land in a bin. When the reference has fewer
+  # than three distinct quantiles -- a constant column, or one that is
+  # mostly a single value with a thin tail -- every distinct value is a
+  # cut point instead: replacing the ends with +-Inf left ONE bin, and a
+  # column rescaled by 1000x reported PSI = 0.
+  edges <- if (length(q) >= 3L) {
+    c(-Inf, q[-c(1L, length(q))], Inf)
+  } else {
+    c(-Inf, q, Inf)
+  }
+  list(
+    edges = edges,
+    px = as.numeric(table(cut(x, edges))) / length(x),
+    py = as.numeric(table(cut(y, edges))) / length(y)
+  )
+}
+
+#' Returns the upper tail of a chi-square distribution.
+#'
+#' The upper tail of a chi-square, computed AS the upper tail. The former
+#' 1 - cgamcdf(df / 2, stat / 2) underflowed to exactly 0 once the
+#' lower tail rounded to 1 (stat >= 74.9 at df = 2), and \dQuote{p = 0} is a
+#' number a reader quotes.
+#' @param stat The chi-square statistic.
+#' @param df Its degrees of freedom.
+#' @return The upper-tail probability.
+#' @noRd
+.rmbl_chisq_p <- function(stat, df) {
+  stats::pchisq(stat, df, lower.tail = FALSE)
+}
+
+#' Returns the upper tail of a chi-square distribution on the log scale.
+#'
+#' The same tail on the log scale: a double cannot hold exp(-2536), so
+#' `p_value` is 0 there while `logpvalue` still says how far below.
+#' @param stat The chi-square statistic.
+#' @param df Its degrees of freedom.
+#' @return The log of the upper-tail probability.
+#' @noRd
+.rmbl_chisq_logp <- function(stat, df) {
+  stats::pchisq(stat, df, lower.tail = FALSE, log.p = TRUE)
+}
+
+#' Counts by category, from a factor or character vector (its table) or a
+#' named numeric vector.
+#' @param v The values to tabulate: labels, or counts by name.
+#' @param t The table of `v`, used when `v` is a factor or character vector.
+#' @param unnamed The error when `v` is numeric but unnamed.
+#' @param what The name .rmbl_num() gives `v` in its errors.
+#' @return A named numeric vector.
+#' @noRd
+.rmbl_count_tab <- function(v, t, unnamed, what) {
+  if (is.factor(v) || is.character(v)) {
+    stats::setNames(as.numeric(t), names(t))
+  } else {
+    nm <- names(v)
+    if (is.null(nm)) {
+      stop(unnamed, call. = FALSE)
+    }
+    stats::setNames(.rmbl_num(v, what), nm)
+  }
+}
+
+#' Counts on a set of categories, 0 where a category has none.
+#' @param o Named counts.
+#' @param lv The categories.
+#' @return Counts named by `lv`.
+#' @noRd
+.rmbl_count_align <- function(o, lv) {
+  stats::setNames(ifelse(is.na(o[lv]), 0, o[lv]), lv)
+}
+
+#' drfthomog()'s answer when no test applies: one category, or fewer than two
+#' observations per category.
+#' @param stat The test statistic, returned with no p-value.
+#' @param df Its degrees of freedom.
+#' @param k The number of categories kept.
+#' @param n The number of observations.
+#' @return The result with its method, or NULL when a test applies.
+#' @noRd
+.rmbl_homog_inapplicable <- function(stat, df, k, n) {
+  if (df < 1L) {
+    out <- c(statistic = stat, df = 0, p_value = NA_real_, logpvalue = NA_real_)
+    attr(out, "method") <- "inapplicable: one category"
+    return(out)
+  }
+  # A table whose categories outnumber its observations has one statistic
+  # for every arrangement of its margins (two disjoint sets of 400 dates:
+  # stat = 800, df = 799, and every table with those margins is the same).
+  # No test has power there; the honest answer is "inapplicable", not p = 1.
+  if (n / k < 2) {
+    out <- c(
+      statistic = stat,
+      df = df,
+      p_value = NA_real_,
+      logpvalue = NA_real_
+    )
+    attr(out, "method") <- paste0(
+      "inapplicable: ",
+      k,
+      " categories for ",
+      n,
+      " observations (fewer than two per category)"
+    )
+    return(out)
+  }
+  NULL
+}
+
+#' drfthomog()'s test: the chi-square approximation, or a Monte Carlo
+#' p-value when an expected count is below 5.
+#' @param cx,cy The two samples' counts.
+#' @param ex,ey Their expected counts.
+#' @param keep The categories kept.
+#' @param stat,df The statistic and its degrees of freedom.
+#' @param seed The Monte Carlo seed.
+#' @return The result with its method.
+#' @noRd
+.rmbl_homog_result <- function(cx, cy, ex, ey, keep, stat, df, seed) {
+  # The chi-square approximation rests on the expected counts. When any
+  # is below 5 the p-value is a Monte Carlo one over tables with the same
+  # margins, under a fixed local seed: the caller's RNG stream is left
+  # exactly as it was.
+  simulated <- min(ex[keep], ey[keep]) < 5
+  p <- if (simulated) {
+    tab <- rbind(cx[keep], cy[keep])
+    .rmbl_with_seed(
+      seed,
+      as.numeric(
+        suppressWarnings(stats::chisq.test(
+          tab,
+          simulate.p.value = TRUE,
+          B = 10000L
+        ))$p.value
+      )
+    )
+  } else {
+    .rmbl_chisq_p(stat, df)
+  }
+  out <- c(
+    statistic = stat,
+    df = df,
+    p_value = p,
+    logpvalue = if (simulated) log(p) else .rmbl_chisq_logp(stat, df)
+  )
+  attr(out, "method") <- if (simulated) {
+    "Monte Carlo permutation (small expected counts)"
+  } else {
+    "chi-square approximation"
+  }
+  out
+}
+
+#' cpsdrft()'s numeric arguments, checked.
+#' @param alpha,psiminn,idelvls As for cpsdrft().
+#' @return A list of the checked values.
+#' @noRd
+.drift_args <- function(alpha, psiminn, idelvls) {
+  alpha <- .rmbl_num(alpha, "alpha")
+  if (length(alpha) != 1L || is.na(alpha) || alpha <= 0 || alpha >= 1) {
+    stop(
+      "cpsdrft: `alpha` must be a single value strictly inside (0, 1)",
+      call. = FALSE
+    )
+  }
+  psiminn <- .rmbl_num(psiminn, "psiminn", integer = TRUE)
+  if (length(psiminn) != 1L || is.na(psiminn) || psiminn < 0L) {
+    stop("`psiminn` must be a single non-negative integer", call. = FALSE)
+  }
+  idelvls <- .rmbl_num(idelvls, "idelvls", integer = TRUE)
+  if (length(idelvls) != 1L || is.na(idelvls) || idelvls < 2L) {
+    stop("`idelvls` must be a single integer of at least 2", call. = FALSE)
+  }
+  list(alpha = alpha, psiminn = psiminn, idelvls = idelvls)
+}
+
+#' One row of the drift table.
+#' @param nm The column.
+#' @param type Its type.
+#' @param statistic,p_value,psi,js,unseen,drifted,note The results.
+#' @return A one-row data frame.
+#' @noRd
+.drift_row <- function(
+  nm,
+  type,
+  statistic = NA_real_,
+  p_value = NA_real_,
+  psi = NA_real_,
+  js = NA_real_,
+  unseen = NA_real_,
+  drifted = NA,
+  note = ""
+) {
+  data.frame(
+    column = nm,
+    type = type,
+    statistic = statistic,
+    p_value = p_value,
+    psi = psi,
+    jsdiv = js,
+    unseen_share = unseen,
+    drifted = drifted,
+    note = note,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The drift table with no rows.
+#' @return A data frame.
+#' @noRd
+.drift_empty <- function() {
+  data.frame(
+    column = character(0),
+    type = character(0),
+    statistic = numeric(0),
+    p_value = numeric(0),
+    psi = numeric(0),
+    jsdiv = numeric(0),
+    unseen_share = numeric(0),
+    drifted = logical(0),
+    note = character(0),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The drift of one column shared by the two tables.
+#' @param nm The column.
+#' @param a,b Its values in the reference and the current table.
+#' @param o The options (alpha, psithr, psiminn, bins, idelvls, seed).
+#' @return A one-row data frame.
+#' @noRd
+.drift_column <- function(nm, a, b, o) {
+  numeric_col <- is.numeric(a) && is.numeric(b)
+  # a character column of dates is a numeric column in disguise: two
+  # disjoint years of daily dates are a shift, not 730 unrelated labels
+  if (!numeric_col) {
+    da <- .rmbl_as_dates(a)
+    db <- .rmbl_as_dates(b)
+    if (!is.null(da) && !is.null(db)) {
+      a <- da
+      b <- db
+      numeric_col <- TRUE
+    }
+  }
+  if (!numeric_col) {
+    return(.drift_categorical(nm, a, b, o))
+  }
+  type <- if (inherits(a, "Date") || inherits(a, "POSIXct")) {
+    "date"
+  } else {
+    "numeric"
+  }
+  av <- as.numeric(a[!is.na(a)])
+  bv <- as.numeric(b[!is.na(b)])
+  if (length(av) < 1L || length(bv) < 1L) {
+    return(.drift_row(nm, type, note = "no non-missing values on one side"))
+  }
+  k <- drftks(av, bv)
+  p <- drftpsi(av, bv, bins = o$bins)
+  # The p-value is calibrated; the PSI band is a heuristic that only
+  # means anything once both samples are large.
+  psi_flag <- length(av) >= o$psiminn &&
+    length(bv) >= o$psiminn &&
+    p[["psi"]] > o$psithr
+  .drift_row(
+    nm,
+    type,
+    statistic = k[["statistic"]],
+    p_value = k[["p_value"]],
+    psi = p[["psi"]],
+    js = p[["jsdiv"]],
+    drifted = k[["p_value"]] < o$alpha || psi_flag
+  )
+}
+
+#' The drift of a categorical column.
+#'
+#' An identifier-like column -- a key, a postcode, free text: more distinct
+#' values than `idelvls`, or a value for every fifth row -- has no distribution
+#' to compare. Two independent samples of the same 5,000 ids share about half
+#' their values, so a divergence over the union of categories read 8.8 and
+#' fired on every such column. The share of current rows the reference never
+#' saw is reported; the verdict is NA, not a guess. The ratio test needs levels
+#' behind it, not rows: on ten rows a five-level factor has "a value for every
+#' fifth row" and 0.5.7 returned no verdict for an ordinary small column, while
+#' 0.5.8's hundred-row gate scored an 80-row id column as categorical with a PSI
+#' of 5 (its diff review). A column with fewer than 20 distinct values is a
+#' factor.
+#' @param nm The column.
+#' @param a,b Its values in the reference and the current table.
+#' @param o The cpsdrft() options, such as `seed`, `psiminn` and `psithr`.
+#' @return A one-row data frame.
+#' @noRd
+.drift_categorical <- function(nm, a, b, o) {
+  av <- as.character(a)
+  bv <- as.character(b)
+  av <- av[!is.na(av)]
+  bv <- bv[!is.na(bv)]
+  if (length(av) < 1L || length(bv) < 1L) {
+    return(.drift_row(
+      nm,
+      "categorical",
+      note = "no non-missing values on one side"
+    ))
+  }
+  unseen <- mean(!(bv %in% av))
+  id <- .drift_cat_ident(nm, av, bv, unseen, o)
+  if (!is.null(id)) {
+    return(id)
+  }
+  cs <- drfthomog(av, bv, seed = o$seed)
+  ps <- .drift_cat_psi(av, bv, unseen)
+  psi_flag <- length(av) >= o$psiminn &&
+    length(bv) >= o$psiminn &&
+    ps[[1L]] > o$psithr
+  p_cat <- cs[["p_value"]]
+  .drift_row(
+    nm,
+    "categorical",
+    statistic = cs[["statistic"]],
+    p_value = p_cat,
+    psi = ps[[1L]],
+    js = ps[[2L]],
+    unseen = unseen,
+    drifted = if (is.na(p_cat)) psi_flag || NA else p_cat < o$alpha || psi_flag,
+    note = if (is.na(p_cat)) attr(cs, "method") else ""
+  )
+}
+
+#' The row of a categorical column with too many distinct values to test.
+#' @param nm The column.
+#' @param av,bv Its non-missing values in the reference and the current table.
+#' @param unseen The share of current values the reference lacks.
+#' @param o The cpsdrft() options, giving the level limit `idelvls`.
+#' @return A one-row data frame, or NULL when the column is a factor.
+#' @noRd
+.drift_cat_ident <- function(nm, av, bv, unseen, o) {
+  n_lv <- length(unique(c(av, bv)))
+  if (
+    n_lv > o$idelvls ||
+      (n_lv >= 20L && n_lv > 0.2 * (length(av) + length(bv)))
+  ) {
+    return(.drift_row(
+      nm,
+      "identifier",
+      unseen = unseen,
+      drifted = NA,
+      note = sprintf(
+        "%d distinct values: distribution tests do not apply",
+        n_lv
+      )
+    ))
+  }
+  NULL
+}
+
+#' The PSI and Jensen-Shannon divergence of a categorical column.
+#' @param av,bv Its non-missing values in the reference and the current table.
+#' @param unseen The share of current values the reference lacks.
+#' @return What C_rmbl_psi returns.
+#' @noRd
+.drift_cat_psi <- function(av, bv, unseen) {
+  # PSI over the REFERENCE's categories, with every current value the
+  # reference lacks pooled into one bin: that is the index's definition
+  # (expected bins, actual mass), and it stays near zero when the two
+  # samples share a distribution
+  lv <- unique(av)
+  px <- c(as.numeric(table(factor(av, levels = lv))) / length(av), 0)
+  py <- c(as.numeric(table(factor(bv, levels = lv))) / length(bv), unseen)
+  .Call(C_rmbl_psi, px, py, 1e-6)
+}
 
 #' The binned summary of one shared column, for the drift plots and reports.
 #'
@@ -1042,87 +1230,132 @@ cpsdrft <- function(
     misscur = if (length(b)) mean(is.na(b)) else 0
   )
   if (type %in% c("numeric", "date")) {
-    if (type == "date") {
-      a <- .rmbl_as_dates(a)
-      b <- .rmbl_as_dates(b)
-    }
-    out$kind <- if (inherits(a, "Date")) {
-      "date"
-    } else if (inherits(a, "POSIXct")) {
-      "datetime"
-    } else {
-      "number"
-    }
-    fmt <- function(v) .bl_drift_iso(v, out$kind)
-    av <- as.numeric(a[!is.na(a)])
-    bv <- as.numeric(b[!is.na(b)])
-    out$nref <- length(av)
-    out$ncur <- length(bv)
-    if (!length(av) || !length(bv)) {
-      return(out)
-    }
-    q <- function(v) {
-      c(
-        mean(v),
-        if (length(v) > 1L) stats::sd(v) else NA_real_,
-        stats::quantile(v, c(0, 0.25, 0.5, 0.75, 1), names = FALSE)
-      )
-    }
-    out$stats <- data.frame(
+    return(.rmbl_drift_summ_num(out, a, b, type, bins))
+  }
+  .rmbl_drift_summ_cat(out, a, b, type)
+}
+
+#' The binned summary of a numeric or date column (.rmbl_drift_summ()).
+#' @param out The summary so far (the missing shares).
+#' @param a,b The column in the reference and in the current frame.
+#' @param type The column's type, `"numeric"` or `"date"`.
+#' @param bins The number of quantile bins.
+#' @return A list.
+#' @noRd
+.rmbl_drift_summ_num <- function(out, a, b, type, bins) {
+  if (type == "date") {
+    a <- .rmbl_as_dates(a)
+    b <- .rmbl_as_dates(b)
+  }
+  out$kind <- if (inherits(a, "Date")) {
+    "date"
+  } else if (inherits(a, "POSIXct")) {
+    "datetime"
+  } else {
+    "number"
+  }
+  kind <- out$kind
+  fmt <- function(v) .bl_drift_iso(v, kind)
+  av <- as.numeric(a[!is.na(a)])
+  bv <- as.numeric(b[!is.na(b)])
+  out$nref <- length(av)
+  out$ncur <- length(bv)
+  if (!length(av) || !length(bv)) {
+    return(out)
+  }
+  out <- c(out, .rmbl_drift_summ_stats(av, bv, bins, fmt))
+  hs <- .rmbl_drift_hist(av, bv)
+  out$hist <- hs$hist
+  out <- c(out, .rmbl_drift_curves(av, bv, hs$r))
+  if (type == "numeric") {
+    out$benford <- .rmbl_benford_pair(av, bv)
+  }
+  out
+}
+
+#' Summary statistics and PSI bins of a numeric column.
+#' @param av,bv The reference and current values, finite and non-empty.
+#' @param bins The number of quantile bins.
+#' @param fmt The function that formats a bin edge.
+#' @return A list: `stats` and `bins` (data frames).
+#' @noRd
+.rmbl_drift_summ_stats <- function(av, bv, bins, fmt) {
+  q <- function(v) {
+    c(
+      mean(v),
+      if (length(v) > 1L) stats::sd(v) else NA_real_,
+      stats::quantile(v, c(0, 0.25, 0.5, 0.75, 1), names = FALSE)
+    )
+  }
+  s <- .rmbl_psi_shares(av, bv, bins)
+  list(
+    stats = data.frame(
       stat = c("mean", "sd", "min", "q1", "median", "q3", "max"),
       ref = q(av),
       cur = q(bv),
       stringsAsFactors = FALSE
-    )
-    s <- .rmbl_psi_shares(av, bv, bins)
-    out$bins <- data.frame(
+    ),
+    bins = data.frame(
       bin = .rmbl_bin_labels(s$edges, fmt),
       ref = s$px,
       cur = s$py,
       contrib = .rmbl_psi_terms(s$px, s$py),
       stringsAsFactors = FALSE
     )
-    r <- stats::quantile(c(av, bv), c(0.005, 0.995), names = FALSE)
-    whole <- all(c(av, bv) == round(c(av, bv))) && diff(range(c(av, bv))) < 60
-    if (r[2L] <= r[1L]) {
-      r <- r + c(-0.5, 0.5)
-    }
-    # whole numbers over a short range: one bin per value, so no bin falls
-    # between two integers and draws a false gap (a day count over 30 bins
-    # narrower than 1)
-    if (whole) {
-      r <- range(c(av, bv)) + c(-0.5, 0.5)
-    }
-    br <- if (whole) {
-      seq(r[1L], r[2L], by = 1)
-    } else {
-      seq(r[1L], r[2L], length.out = 31L)
-    }
-    nb <- length(br) - 1L
-    h <- function(v) {
-      tabulate(
-        findInterval(
-          pmin(pmax(v, r[1L]), r[2L]),
-          br,
-          rightmost.closed = TRUE,
-          all.inside = TRUE
-        ),
-        nb
-      ) /
-        length(v)
-    }
-    out$hist <- data.frame(
-      lo = br[-length(br)],
-      hi = br[-1L],
-      ref = h(av),
-      cur = h(bv)
-    )
-    out <- c(out, .rmbl_drift_curves(av, bv, r))
-    if (type == "numeric") {
-      out$benford <- .rmbl_benford_pair(av, bv)
-    }
-    return(out)
+  )
+}
+
+#' The histogram of a numeric column: 30 bins on the pooled 0.5-99.5% range,
+#' or one bin per value for whole numbers over a range under 60.
+#' @param av,bv The reference and current values, finite and non-empty.
+#' @return A list: `r` (the range) and `hist` (lo, hi, ref, cur: shares).
+#' @noRd
+.rmbl_drift_hist <- function(av, bv) {
+  r <- stats::quantile(c(av, bv), c(0.005, 0.995), names = FALSE)
+  whole <- all(c(av, bv) == round(c(av, bv))) && diff(range(c(av, bv))) < 60
+  if (r[2L] <= r[1L]) {
+    r <- r + c(-0.5, 0.5)
   }
+  # whole numbers over a short range: one bin per value, so no bin falls
+  # between two integers and draws a false gap (a day count over 30 bins
+  # narrower than 1)
+  if (whole) {
+    r <- range(c(av, bv)) + c(-0.5, 0.5)
+  }
+  br <- if (whole) {
+    seq(r[1L], r[2L], by = 1)
+  } else {
+    seq(r[1L], r[2L], length.out = 31L)
+  }
+  nb <- length(br) - 1L
+  h <- function(v) {
+    tabulate(
+      findInterval(
+        pmin(pmax(v, r[1L]), r[2L]),
+        br,
+        rightmost.closed = TRUE,
+        all.inside = TRUE
+      ),
+      nb
+    ) /
+      length(v)
+  }
+  hist <- data.frame(
+    lo = br[-length(br)],
+    hi = br[-1L],
+    ref = h(av),
+    cur = h(bv)
+  )
+  list(r = r, hist = hist)
+}
+
+#' The binned summary of a categorical column (.rmbl_drift_summ()).
+#' @param out The summary so far (the missing shares).
+#' @param a,b The column in the reference and in the current frame.
+#' @param type The column's type.
+#' @return A list.
+#' @noRd
+.rmbl_drift_summ_cat <- function(out, a, b, type) {
   av <- as.character(a)
   bv <- as.character(b)
   av <- av[!is.na(av)]
@@ -1230,15 +1463,12 @@ cpsdrft <- function(
 .rmbl_bin_labels <- function(edges, fmt) {
   lo <- edges[-length(edges)]
   hi <- edges[-1L]
-  ifelse(
-    is.infinite(lo),
-    paste0("<= ", fmt(hi)),
-    ifelse(
-      is.infinite(hi),
-      paste0("> ", fmt(lo)),
-      paste0("(", fmt(lo), ", ", fmt(hi), "]")
-    )
+  mid <- ifelse(
+    is.infinite(hi),
+    paste0("> ", fmt(lo)),
+    paste0("(", fmt(lo), ", ", fmt(hi), "]")
   )
+  ifelse(is.infinite(lo), paste0("<= ", fmt(hi)), mid)
 }
 
 #' First-digit counts of two samples and the current sample's Benford test.
@@ -1274,7 +1504,7 @@ cpsdrft <- function(
 #' A character vector that is entirely ISO dates or date-times, as Date /
 #' POSIXct; NULL when any value is not (a numeric comparison then makes no
 #' sense). NAs are allowed and kept.
-#' @param v The column.
+#' @param v The column to read as dates; dates pass through.
 #' @return A Date or POSIXct vector, or NULL.
 #' @noRd
 .rmbl_as_dates <- function(v) {
@@ -1313,4 +1543,105 @@ cpsdrft <- function(
     return(if (is.null(d) || anyNA(d[ok])) NULL else d)
   }
   NULL
+}
+
+#' drftchisq()'s test, its number returned plain.
+#' @param obs,expd As for drftchisq().
+#' @return The named statistic, df, p-value and log p-value.
+#' @noRd
+.rmbl_drftchisq <- function(obs, expd) {
+  tab <- function(v) {
+    .rmbl_count_tab(
+      v,
+      table(v),
+      "a numeric `obs`/`expd` must be named",
+      "observed / expected"
+    )
+  }
+  o <- .rmbl_check_counts(tab(obs), "obs")
+  e <- .rmbl_check_counts(tab(expd), "expd")
+  lv <- union(names(o), names(e))
+  o <- .rmbl_count_align(o, lv)
+  e <- .rmbl_count_align(e, lv)
+  if (sum(o) <= 0) {
+    stop("`obs` has no counts", call. = FALSE)
+  }
+  if (sum(e) <= 0) {
+    stop("`expd` has no counts", call. = FALSE)
+  }
+  # Reference proportions, scaled to the observed total.
+  exp_counts <- sum(o) * e / sum(e)
+  keep <- exp_counts > 0 # non-empty: both totals are positive by now
+  df <- sum(keep) - 1L
+  # A category the reference assigns probability zero, yet which occurs,
+  # contradicts the pinned distribution outright: the chi-square term
+  # for it diverges. Report that rather than dropping the category and
+  # returning a statistic computed as though it had not appeared.
+  if (any(o[!keep] > 0)) {
+    return(c(statistic = Inf, df = max(1L, df), p_value = 0, logpvalue = -Inf))
+  }
+  stat <- sum((o[keep] - exp_counts[keep])^2 / exp_counts[keep])
+  if (df < 1L) {
+    # one category on both sides: nothing to test, and df = 0 is not a
+    # chi-square distribution
+    return(c(
+      statistic = stat,
+      df = 0,
+      p_value = NA_real_,
+      logpvalue = NA_real_
+    ))
+  }
+  c(
+    statistic = stat,
+    df = df,
+    p_value = .rmbl_chisq_p(stat, df),
+    logpvalue = .rmbl_chisq_logp(stat, df)
+  )
+}
+
+#' drfthomog()'s test, its number returned plain.
+#' @param x,y,seed As for drfthomog().
+#' @return The named statistic, df, p-value and log p-value, with `method`.
+#' @noRd
+.rmbl_drfthomog <- function(x, y, seed = 1L) {
+  tab <- function(v) {
+    .rmbl_count_tab(
+      v,
+      table(as.character(v)),
+      "a numeric `x`/`y` must be named",
+      "x / y"
+    )
+  }
+  cx <- .rmbl_check_counts(tab(x), "x")
+  cy <- .rmbl_check_counts(tab(y), "y")
+  lv <- union(names(cx), names(cy))
+  cx <- .rmbl_count_align(cx, lv)
+  cy <- .rmbl_count_align(cy, lv)
+  nx <- sum(cx)
+  ny <- sum(cy)
+  if (nx <= 0 || ny <= 0) {
+    stop("both samples must have at least one observation", call. = FALSE)
+  }
+  # Expected counts under a shared distribution estimated from the
+  # pooled margins -- this is what carries both samples' uncertainty.
+  pooled <- (cx + cy) / (nx + ny)
+  ex <- nx * pooled
+  ey <- ny * pooled
+  keep <- pooled > 0 # nx, ny > 0 above: at least one category is kept
+  stat <- sum((cx[keep] - ex[keep])^2 / ex[keep]) +
+    sum((cy[keep] - ey[keep])^2 / ey[keep])
+  df <- sum(keep) - 1L
+  out <- .rmbl_homog_inapplicable(stat, df, sum(keep), nx + ny)
+  if (!is.null(out)) {
+    return(out)
+  }
+  .rmbl_homog_result(cx, cy, ex, ey, keep, stat, df, seed)
+}
+
+#' The category names of a reference given to drftchisq().
+#' @param expd Named counts, or raw values.
+#' @return The names.
+#' @noRd
+.rmbl_drft_lv <- function(expd) {
+  if (is.numeric(expd)) names(expd) else unique(as.character(expd))
 }

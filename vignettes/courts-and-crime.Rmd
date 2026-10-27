@@ -8,15 +8,26 @@ vignette: >
 ---
 
 ```{r courts-and-crime-setup, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 8, fig.height = 4.5)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 4.5
+)
 library(rmoriebricklayer)
-ext <- function(f) read.csv(system.file("extdata", f, package = "rmoriebricklayer"))
+ext <- function(f) {
+  read.csv(system.file("extdata", f, package = "rmoriebricklayer"))
+}
 ```
 
 Court and police statistics are published as counts: cases received and disposed each month,
@@ -42,7 +53,10 @@ would take to clear at the recent pace.
 ```{r courts-and-crime-flow}
 f <- ext("ocj_flow_ontario.csv")
 cf <- caseflow(f$received, f$disposed, pend = f$pending, prd = f$month)
-cf[c(1, 12, 24), c("period", "received", "disposed", "clearance", "rolclr", "pertoclear")]
+cf[
+  c(1, 12, 24),
+  c("period", "received", "disposed", "clearance", "rolclr", "pertoclear")
+]
 plot(cf)
 ```
 
@@ -61,8 +75,15 @@ with a Greenwood interval, and the median.
 d <- ext("ocj_time_to_disposition.csv")
 last <- nrow(d)
 shares <- unlist(d[last, c("under_10", "m10_15", "m15_18", "over_18")])
-lt <- lifetbl(c("Under 10 Months", "Between 10-15 Months", "Between 15-18 Months", "Over 18 Months"),
-                 events = shares * f$disposed[last])
+lt <- lifetbl(
+  c(
+    "Under 10 Months",
+    "Between 10-15 Months",
+    "Between 15-18 Months",
+    "Over 18 Months"
+  ),
+  events = shares * f$disposed[last]
+)
 lt
 plot(lt)
 ```
@@ -104,7 +125,12 @@ cd
 plot(cd)
 # a group's share of the cases received in a year, as a percentage
 caseshare <- function(group, yr) {
-  sprintf("%.0f%%", 100 * sum(g$received[g$offence_group == group & g$year == yr]) / sum(g$received[g$year == yr]))
+  sprintf(
+    "%.0f%%",
+    100 *
+      sum(g$received[g$offence_group == group & g$year == yr]) /
+      sum(g$received[g$year == yr])
+  )
 }
 ```
 

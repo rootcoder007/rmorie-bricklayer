@@ -42,7 +42,7 @@ test_that("the helper itself restores, and is a no-op for NULL", {
   set.seed(5)
   ref <- stats::runif(1)
   f <- function() {
-    rmoriebricklayer:::.rmbl_local_seed(1L)
+    .rmbl_local_seed(1L)
     stats::runif(1)
   }
   set.seed(5)
@@ -50,5 +50,5 @@ test_that("the helper itself restores, and is a no-op for NULL", {
   expect_identical(stats::runif(1), ref)
   set.seed(9)
   expect_identical(f(), x)
-  expect_null(rmoriebricklayer:::.rmbl_local_seed(NULL))
+  expect_null(.rmbl_local_seed(NULL))
 })

@@ -34,7 +34,7 @@ yoypdf(
 )
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}.}
+\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}, written as HTML.}
 
 \item{file}{Output path (a string). \code{yoyhtml()} writes a single
 self-contained HTML file with no external requests; \code{yoypdf()}
@@ -63,7 +63,7 @@ the change, scaled to the largest absolute change in the table
 
 \item{notes}{Optional character vector of footnotes.}
 
-\item{...}{Ignored.}
+\item{...}{Further arguments; the HTML writer does not use them.}
 
 \item{width, height}{PDF page size in inches (default 11 by 8.5,
 landscape US letter).}

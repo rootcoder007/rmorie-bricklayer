@@ -8,10 +8,14 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
@@ -122,10 +126,10 @@ of association an unmeasured confounder would need with both treatment and outco
 explain the result away:
 
 ```{r falsification-and-power-evalue}
-evlrr(2)                       # needs a confounder associated by 3.41 with both
-evlrr(0.5)                     # a protective effect is inverted; same answer
-evlrr(2, lo = 0.9, hi = 4.4)   # an interval that includes the null needs nothing
-evlrr(3, lo = 2.1, hi = 4.3)   # a strong result with a limit well above the null
+evlrr(2) # needs a confounder associated by 3.41 with both
+evlrr(0.5) # a protective effect is inverted; same answer
+evlrr(2, lo = 0.9, hi = 4.4) # an interval that includes the null needs nothing
+evlrr(3, lo = 2.1, hi = 4.3) # a strong result with a limit well above the null
 ```
 
 ## Where this fits in a capsule

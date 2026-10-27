@@ -64,7 +64,7 @@ schemapath <- function(name) {
 #' @param old,new The two manifests, as described above. A list with
 #'   neither \code{resource} nor \code{files} has no resources.
 #' @param x An \code{rmbl_mnfdiff} result.
-#' @param ... Not used.
+#' @param ... Further arguments, ignored when printing the comparison.
 #' @return A data frame of class \code{rmbl_mnfdiff}, one row per resource
 #'   in either manifest, with the columns \code{resource} (the file name),
 #'   \code{change} (\code{"added"}, \code{"removed"}, \code{"changed"} or
@@ -100,7 +100,7 @@ schemapath <- function(name) {
 #' try(mnfdiff(1, b))
 #' @srrstats {G2.1} `old` and `new` are checked for type: a data frame must
 #'   carry path and sha256, and anything but a list, a data frame or a file name
-#'   is refused (test-capsule-cli.R).
+#'   is refused (test-capsule_cli.R).
 #' @export
 mnfdiff <- function(old, new) {
   a <- .bl_mnf_resources(old, "old")
@@ -112,17 +112,12 @@ mnfdiff <- function(old, new) {
   sb <- tolower(b$sha256[ib])
   za <- a$size_bytes[ia]
   zb <- b$size_bytes[ib]
-  same <- (sa == sb) %in% TRUE | (is.na(sa) & is.na(sb))
+  eq <- sa == sb
+  same <- (!is.na(eq) & eq) | (is.na(sa) & is.na(sb))
   same_size <- is.na(za) | is.na(zb) | za == zb
-  change <- ifelse(
-    is.na(ia),
-    "added",
-    ifelse(
-      is.na(ib),
-      "removed",
-      ifelse(same & same_size, "unchanged", "changed")
-    )
-  )
+  change <- ifelse(same & same_size, "unchanged", "changed")
+  change[is.na(ib)] <- "removed"
+  change[is.na(ia)] <- "added"
   out <- data.frame(
     resource = keys,
     change = change,
@@ -136,116 +131,33 @@ mnfdiff <- function(old, new) {
   out
 }
 
-#' The resources of one manifest, as a data frame of resource, sha256 and
-#' size_bytes.
-#' @param x A provenance record, a bundle, a data frame or a JSON file's path.
-#' @param what The argument's name, for the error message.
-#' @return A data frame.
-#' @noRd
-.bl_mnf_resources <- function(x, what) {
-  if (is.character(x)) {
-    x <- .rmbl_read_json(.rmbl_file1(x, what), simplify = FALSE)
-  }
-  if (is.data.frame(x)) {
-    if (!all(c("path", "sha256") %in% names(x))) {
-      stop(
-        .rmbl_fn(),
-        sprintf("`%s`: a data frame needs the columns path and sha256", what),
-        call. = FALSE
-      )
-    }
-    size <- if ("size_bytes" %in% names(x)) {
-      as.numeric(x[["size_bytes"]])
-    } else {
-      rep(NA_real_, nrow(x))
-    }
-    return(data.frame(
-      resource = as.character(x[["path"]]),
-      sha256 = as.character(x[["sha256"]]),
-      size_bytes = size,
-      stringsAsFactors = FALSE
-    ))
-  }
-  if (!is.list(x)) {
-    stop(
-      .rmbl_fn(),
-      sprintf(
-        paste(
-          "`%s` must be a provenance record, a capsule bundle, a data",
-          "frame of path",
-          "and sha256, or the path of a JSON file"
-        ),
-        what
-      ),
-      call. = FALSE
-    )
-  }
-  ents <- if (!is.null(x[["files"]])) {
-    x[["files"]]
-  } else if (is.list(x[["resource"]])) {
-    list(x[["resource"]])
-  }
-  s1 <- function(v) {
-    v <- unlist(v)
-    if (length(v) && !is.na(v[[1L]])) as.character(v[[1L]]) else NA_character_
-  }
-  data.frame(
-    resource = vapply(
-      ents,
-      function(e) {
-        if (is.na(s1(e[["path"]]))) s1(e[["filename"]]) else s1(e[["path"]])
-      },
-      ""
-    ),
-    sha256 = vapply(ents, function(e) s1(e[["sha256"]]), ""),
-    size_bytes = as.numeric(vapply(
-      ents,
-      function(e) s1(e[["size_bytes"]]),
-      ""
-    )),
-    stringsAsFactors = FALSE
-  )
-}
-
 #' @rdname mnfdiff
 #' @export
 format.rmbl_mnfdiff <- function(x, ...) {
-  n <- table(factor(x$change, c("changed", "added", "removed", "unchanged")))
-  ch <- x[x$change != "unchanged", , drop = FALSE]
-  short <- function(s) ifelse(is.na(s), "-", substr(s, 1L, 12L))
-  size <- function(z) {
-    ifelse(
-      is.na(z),
-      "-",
-      format(z, big.mark = ",", scientific = FALSE, trim = TRUE)
-    )
+  if (!all(c("resource", "change") %in% names(x))) {
+    return(utils::capture.output(print(as.data.frame(unclass(x)))))
   }
-  c(
-    sprintf(
-      "Manifest diff: %d changed, %d added, %d removed, %d unchanged",
-      n[["changed"]],
-      n[["added"]],
-      n[["removed"]],
-      n[["unchanged"]]
-    ),
-    if (nrow(ch)) {
-      sprintf(
-        "  %-9s %s  sha256 %s -> %s, %s -> %s bytes",
-        ch$change,
-        ch$resource,
-        short(ch$old_sha256),
-        short(ch$new_sha256),
-        size(ch$old_size),
-        size(ch$new_size)
+  n <- table(factor(x$change, c("changed", "added", "removed", "unchanged")))
+  lines <- .bl_mnfdiff_text(x)[-1L]
+  .rmbl_stat_block(
+    "Manifest diff",
+    facts = list(
+      Resources = sprintf(
+        "%d changed, %d added, %d removed, %d unchanged",
+        n[["changed"]],
+        n[["added"]],
+        n[["removed"]],
+        n[["unchanged"]]
       )
-    }
+    ),
+    reading = if (length(lines)) {
+      "Files below differ between the two manifests (old -> new)."
+    } else {
+      "Both manifests pin the same bytes for every resource."
+    },
+    notes = trimws(lines, "left")
   )
 }
-
-#' @rdname mnfdiff
-#' @export
-#' @method print rmbl_mnfdiff
-print.rmbl_mnfdiff <- .rmbl_print_via_format
 
 #' Fetch a capsule's source again and pin the new bytes
 #'
@@ -300,7 +212,7 @@ print.rmbl_mnfdiff <- .rmbl_print_via_format
 #'
 #' try(cpsrfrsh(tempfile()))
 #' @srrstats {G2.0} `dir` must be one existing directory, and the provenance's
-#'   filename one plain relative path inside it (test-capsule-cli.R).
+#'   filename one plain relative path inside it (test-capsule_cli.R).
 #' @export
 cpsrfrsh <- function(dir, allowfile = FALSE) {
   dir <- .rmbl_string1(dir, "dir")
@@ -318,14 +230,139 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   diff
 }
 
+#' The plain lines of a manifest diff: the counts, then one line per change.
+#' @param x An rmbl_mnfdiff result.
+#' @return Lines.
+#' @noRd
+.bl_mnfdiff_text <- function(x) {
+  n <- table(factor(x$change, c("changed", "added", "removed", "unchanged")))
+  ch <- x[x$change != "unchanged", , drop = FALSE]
+  short <- function(s) ifelse(is.na(s), "-", substr(s, 1L, 12L))
+  size <- function(z) {
+    ifelse(
+      is.na(z),
+      "-",
+      format(z, big.mark = ",", scientific = FALSE, trim = TRUE)
+    )
+  }
+  c(
+    sprintf(
+      "Manifest diff: %d changed, %d added, %d removed, %d unchanged",
+      n[["changed"]],
+      n[["added"]],
+      n[["removed"]],
+      n[["unchanged"]]
+    ),
+    if (nrow(ch)) {
+      sprintf(
+        "  %-9s %s  sha256 %s -> %s, %s -> %s bytes",
+        ch$change,
+        ch$resource,
+        short(ch$old_sha256),
+        short(ch$new_sha256),
+        size(ch$old_size),
+        size(ch$new_size)
+      )
+    }
+  )
+}
+
+#' The resources of one manifest, as a data frame of resource, sha256 and
+#' size_bytes.
+#' @param x A provenance record, a bundle, a data frame or a JSON file's path.
+#' @param what The argument's name, for the error message.
+#' @return A data frame.
+#' @noRd
+.bl_mnf_resources <- function(x, what) {
+  if (is.character(x)) {
+    x <- .rmbl_read_json(.rmbl_file1(x, what), simplify = FALSE)
+  }
+  if (is.data.frame(x)) {
+    return(.bl_mnf_from_frame(x, what))
+  }
+  if (!is.list(x)) {
+    stop(
+      .rmbl_fn(),
+      sprintf(
+        paste(
+          "`%s` must be a provenance record, a capsule bundle, a data",
+          "frame of path",
+          "and sha256, or the path of a JSON file"
+        ),
+        what
+      ),
+      call. = FALSE
+    )
+  }
+  .bl_mnf_from_list(x)
+}
+
+#' A manifest given as a data frame of path, sha256 and size_bytes.
+#' @param x The manifest data frame, with columns `path` and `sha256`.
+#' @param what The manifest's argument name, quoted when a column is missing.
+#' @return A data frame: resource, sha256 and size_bytes.
+#' @noRd
+.bl_mnf_from_frame <- function(x, what) {
+  if (!all(c("path", "sha256") %in% names(x))) {
+    stop(
+      .rmbl_fn(),
+      sprintf("`%s`: a data frame needs the columns path and sha256", what),
+      call. = FALSE
+    )
+  }
+  size <- if ("size_bytes" %in% names(x)) {
+    as.numeric(x[["size_bytes"]])
+  } else {
+    rep(NA_real_, nrow(x))
+  }
+  data.frame(
+    resource = as.character(x[["path"]]),
+    sha256 = as.character(x[["sha256"]]),
+    size_bytes = size,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' A manifest given as a provenance record or a capsule bundle.
+#' @param x The record, as a list.
+#' @return A data frame: resource, sha256 and size_bytes.
+#' @noRd
+.bl_mnf_from_list <- function(x) {
+  ents <- if (!is.null(x[["files"]])) {
+    x[["files"]]
+  } else if (is.list(x[["resource"]])) {
+    list(x[["resource"]])
+  }
+  s1 <- function(v) {
+    v <- unlist(v)
+    if (length(v) && !is.na(v[[1L]])) as.character(v[[1L]]) else NA_character_
+  }
+  data.frame(
+    resource = vapply(
+      ents,
+      function(e) {
+        if (is.na(s1(e[["path"]]))) s1(e[["filename"]]) else s1(e[["path"]])
+      },
+      ""
+    ),
+    sha256 = vapply(ents, function(e) s1(e[["sha256"]]), ""),
+    size_bytes = as.numeric(vapply(
+      ents,
+      function(e) s1(e[["size_bytes"]]),
+      ""
+    )),
+    stringsAsFactors = FALSE
+  )
+}
+
 #' Writes the fetched bytes as the capsule's data file and the provenance that
 #' pins them.
 #'
 #' Refused when the data file is not a plain relative path inside the capsule,
 #' or when the new data (a CSV) fail the schema the old provenance pins
 #' (valsch(), a fatal issue).
-#' @param dir The capsule directory.
-#' @param f From .bl_fetch_pin().
+#' @param dir The capsule directory the data file and provenance are written in.
+#' @param f The fetch result of .bl_fetch_pin(): the bytes and new provenance.
 #' @return The data file's path, invisibly.
 #' @noRd
 .bl_write_pin <- function(dir, f) {
@@ -376,6 +413,96 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   invisible(dest)
 }
 
+#' A capsule's remote source, fetched: live or its pinned Wayback copy, then
+#' the archive's copy of the pinned bytes, then an earlier run's cache.
+#' @param src The https:// source URL to fetch.
+#' @param prov The capsule's provenance, which may pin a Wayback copy.
+#' @param cache,archive As for .bl_fetch_pin().
+#' @return A list: got, cached, archived and tmp.
+#' @noRd
+.bl_fetch_remote <- function(src, prov, cache, archive) {
+  s1 <- .bl_s1
+  archived <- FALSE
+  # a source in a capsule (a pull request's, in the action) is fetched over
+  # https only (audit of 30bed8e, #6)
+  if (!grepl("^https://", src, ignore.case = TRUE)) {
+    stop(
+      .rmbl_fn(),
+      "a source to fetch must be an https:// URL: ",
+      .rmbl_printable(src),
+      call. = FALSE
+    )
+  }
+  got <- tempfile(fileext = paste0(".", tools::file_ext(src)))
+  # the Wayback copy the provenance pins, and no other: an unpinned source
+  # that answered 404 was looked up in the archive without being asked (audit
+  # of 30bed8e, #17)
+  ok <- tryCatch(
+    fdl(src, got, attwb = s1(prov[["wayback"]][["csv_snapshot"]]) %||% ""),
+    error = function(e) e
+  )
+  # then the copy kept on archive.rmorie.com with the pinned bytes, before an
+  # earlier run's cache
+  pin <- s1(prov[["resource"]][["sha256"]]) %||% ""
+  if (!isTRUE(ok) && isTRUE(archive) && nzchar(pin)) {
+    archived <- .bl_fetch_archived(src, got, pin)
+    if (archived) {
+      ok <- TRUE
+    }
+  }
+  keep <- if (!is.null(cache)) {
+    file.path(
+      cache,
+      paste0("source-", substr(csha256(charToRaw(src)), 1L, 16L))
+    )
+  }
+  if (isTRUE(ok) && !is.null(keep)) {
+    file.copy(got, keep, overwrite = TRUE)
+  }
+  if (!isTRUE(ok)) {
+    unlink(got)
+    .bl_fetch_unfetched(ok, keep, src)
+    # an earlier run's copy, kept in the cache: not a temporary file
+    return(list(got = keep, cached = TRUE, archived = archived, tmp = FALSE))
+  }
+  list(got = got, cached = FALSE, archived = archived, tmp = TRUE)
+}
+
+#' Fetches a source's copy kept on archive.rmorie.com with the pinned bytes.
+#' @param src The source URL whose archive.rmorie.com copy is fetched.
+#' @param got The file to write.
+#' @param pin The pinned SHA-256.
+#' @return TRUE when the copy was fetched.
+#' @noRd
+.bl_fetch_archived <- function(src, got, pin) {
+  unlink(got)
+  a <- tryCatch(arcget(src, got, sha256 = pin), error = function(e) {
+    .bl_unless_interrupted(e, NULL)
+  })
+  !is.null(a) && file.exists(got)
+}
+
+#' Stops when a source could not be fetched and no earlier copy is cached.
+#' @param ok The fetch's result: an error, or another value that is not TRUE.
+#' @param keep The cached copy's path, or NULL.
+#' @param src The source URL, shown when it could not be fetched.
+#' @return NULL, invisibly, when the cached copy can stand in.
+#' @noRd
+.bl_fetch_unfetched <- function(ok, keep, src) {
+  if (is.null(keep) || !file.exists(keep)) {
+    if (inherits(ok, "error")) {
+      stop(ok)
+    }
+    stop(
+      .rmbl_fn(),
+      "the source could not be fetched: ",
+      .rmbl_printable(src),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
 #' Fetches a capsule's source and builds the provenance that pins it, without
 #' writing anything.
 #'
@@ -383,7 +510,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' it is, when .bl_local_source() admits it. A failed download falls back on the
 #' provenance's own Wayback snapshot, else on the copy kept in `cache` by an
 #' earlier fetch.
-#' @param dir The capsule directory.
+#' @param dir The capsule directory holding data_provenance.json.
 #' @param allowfile FALSE, TRUE or a folder, from .bl_allowfile_arg().
 #' @param cache The cache folder, or NULL.
 #' @param root The folder `allowfile = TRUE` admits (the folder checked; the
@@ -403,10 +530,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   if (is.null(prov)) {
     stop(.rmbl_fn(), "no data_provenance.json in ", dir, call. = FALSE)
   }
-  s1 <- function(v) {
-    v <- unlist(v)
-    if (length(v) && !is.na(v[[1L]])) as.character(v[[1L]])
-  }
+  s1 <- .bl_s1
   src <- s1(prov[["resource"]][["direct_url"]]) %||%
     s1(prov[["source"]][["url"]]) %||%
     ""
@@ -427,64 +551,11 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   ) {
     got <- .bl_local_source(src, dir, allowfile, root)
   } else {
-    # a source in a capsule (a pull request's, in the action) is fetched over
-    # https only (audit of 30bed8e, #6)
-    if (!grepl("^https://", src, ignore.case = TRUE)) {
-      stop(
-        .rmbl_fn(),
-        "a source to fetch must be an https:// URL: ",
-        .rmbl_printable(src),
-        call. = FALSE
-      )
-    }
-    got <- tempfile(fileext = paste0(".", tools::file_ext(src)))
-    tmp <- TRUE
-    # the Wayback copy the provenance pins, and no other: an unpinned source
-    # that answered 404 was looked up in the archive without being asked (audit
-    # of 30bed8e, #17)
-    ok <- tryCatch(
-      fdl(src, got, attwb = s1(prov[["wayback"]][["csv_snapshot"]]) %||% ""),
-      error = function(e) e
-    )
-    # then the copy kept on archive.rmorie.com with the pinned bytes, before an
-    # earlier run's cache
-    pin <- s1(prov[["resource"]][["sha256"]]) %||% ""
-    if (!isTRUE(ok) && isTRUE(archive) && nzchar(pin)) {
-      unlink(got)
-      a <- tryCatch(arcget(src, got, sha256 = pin), error = function(e) {
-        .bl_unless_interrupted(e, NULL)
-      })
-      if (!is.null(a) && file.exists(got)) {
-        ok <- TRUE
-        archived <- TRUE
-      }
-    }
-    keep <- if (!is.null(cache)) {
-      file.path(
-        cache,
-        paste0("source-", substr(csha256(charToRaw(src)), 1L, 16L))
-      )
-    }
-    if (isTRUE(ok) && !is.null(keep)) {
-      file.copy(got, keep, overwrite = TRUE)
-    }
-    if (!isTRUE(ok)) {
-      unlink(got)
-      if (is.null(keep) || !file.exists(keep)) {
-        if (inherits(ok, "error")) {
-          stop(ok)
-        }
-        stop(
-          .rmbl_fn(),
-          "the source could not be fetched: ",
-          .rmbl_printable(src),
-          call. = FALSE
-        )
-      }
-      got <- keep
-      cached <- TRUE
-      tmp <- FALSE
-    }
+    r <- .bl_fetch_remote(src, prov, cache, archive)
+    got <- r$got
+    cached <- r$cached
+    archived <- r$archived
+    tmp <- r$tmp
   }
   f <- list(
     old = prov,
@@ -505,7 +576,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 }
 
 #' Deletes the download behind a .bl_fetch_pin() result, when it was one.
-#' @param f From .bl_fetch_pin().
+#' @param f A .bl_fetch_pin() result; its `path` is deleted when `tmp`.
 #' @return NULL, invisibly.
 #' @noRd
 .bl_fetch_cleanup <- function(f) {
@@ -557,7 +628,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' under /proc, /sys or /dev. ponytail: resolved once and read after; a link
 #' swapped in between is not looked at again.
 #' @param src The source as the provenance names it.
-#' @param dir The capsule directory.
+#' @param dir The capsule directory, always an allowed folder for the source.
 #' @param allowfile FALSE, TRUE or a folder.
 #' @param root The folder `allowfile = TRUE` admits.
 #' @return The file's real path.
@@ -572,40 +643,14 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       call. = FALSE
     )
   }
-  p <- src
-  if (is_file) {
-    p <- utils::URLdecode(sub(
-      "^file://(localhost)?",
-      "",
-      src,
-      ignore.case = TRUE
-    ))
-    p <- sub("^/([A-Za-z]:)", "\\1", p)
-  }
-  if (!grepl("^([/\\\\]|~|[A-Za-z]:)", p)) {
-    p <- file.path(dir, p)
-  }
-  p <- path.expand(p)
+  p <- .bl_local_path(src, is_file, dir)
   real <- if (file.exists(p) && !dir.exists(p)) {
     tryCatch(
       normalizePath(p, winslash = "/", mustWork = TRUE),
       error = function(e) NULL
     )
   }
-  roots <- c(
-    dir,
-    if (isTRUE(allowfile)) {
-      root
-    } else if (is.character(allowfile)) {
-      allowfile
-    },
-    system.file("extdata", package = "rmoriebricklayer")
-  )
-  roots <- sub(
-    "/+$",
-    "",
-    normalizePath(roots[nzchar(roots)], winslash = "/", mustWork = FALSE)
-  )
+  roots <- .bl_local_roots(dir, allowfile, root)
   if (
     is.null(real) ||
       !any(startsWith(real, paste0(roots, "/"))) ||
@@ -623,13 +668,58 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   real
 }
 
+#' The path a local source names, relative paths taken from the capsule.
+#' @param src The source.
+#' @param is_file Whether it is a file:// URL.
+#' @param dir The capsule directory a relative source path is taken from.
+#' @return The expanded path.
+#' @noRd
+.bl_local_path <- function(src, is_file, dir) {
+  p <- src
+  if (is_file) {
+    p <- utils::URLdecode(sub(
+      "^file://(localhost)?",
+      "",
+      src,
+      ignore.case = TRUE
+    ))
+    p <- sub("^/([A-Za-z]:)", "\\1", p)
+  }
+  if (!grepl("^([/\\\\]|~|[A-Za-z]:)", p)) {
+    p <- file.path(dir, p)
+  }
+  path.expand(p)
+}
+
+#' The folders a local source may lie in.
+#' @param dir The capsule directory, the first allowed folder.
+#' @param allowfile,root As for .bl_local_source().
+#' @return The folders, normalised, without a trailing slash.
+#' @noRd
+.bl_local_roots <- function(dir, allowfile, root) {
+  roots <- c(
+    dir,
+    if (isTRUE(allowfile)) {
+      root
+    } else if (is.character(allowfile)) {
+      allowfile
+    },
+    system.file("extdata", package = "rmoriebricklayer")
+  )
+  sub(
+    "/+$",
+    "",
+    normalizePath(roots[nzchar(roots)], winslash = "/", mustWork = FALSE)
+  )
+}
+
 #' Reads a capsule's CSV, inflating a gzip file no further than the option
 #' rmoriebricklayer.maxcsvbytes.
 #'
 #' read.csv() inflates gzip itself, with no limit: a 388 KB gzip of 400 MB of
 #' zeros ran for more than 400 s at 1.3 GB (audit of 30bed8e, #9). Only reading
 #' errors give NULL; the limit is an error.
-#' @param p The file.
+#' @param p The CSV file to read, plain or gzip-compressed.
 #' @return A data frame, or NULL when the file does not read as a CSV.
 #' @noRd
 .bl_read_csv_capped <- function(p) {
@@ -648,7 +738,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #'
 #' The trailer's ISIZE is checked first (free, but it can lie), then the bytes
 #' are counted as they are inflated, 4 MiB at a time.
-#' @param p The file.
+#' @param p The file to inflate when it starts with the gzip magic bytes.
 #' @return The path of the plain bytes.
 #' @noRd
 .bl_gunzip_capped <- function(p) {
@@ -661,31 +751,51 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     return(p)
   }
   lim <- .rmbl_max_csv_bytes()
-  over <- function() {
-    stop(
-      .rmbl_fn(),
-      sprintf(
-        paste0(
-          "%s inflates to more than %s bytes (option ",
-          "rmoriebricklayer.maxcsvbytes)"
-        ),
-        basename(p),
-        format(lim, big.mark = ",", scientific = FALSE)
-      ),
-      call. = FALSE
-    )
-  }
   n <- file.size(p)
   if (n >= 18) {
     con <- file(p, "rb")
     seek(con, n - 4)
     isize <- sum(as.numeric(as.integer(readBin(con, "raw", 4L))) * 256^(0:3))
     close(con)
-    if (isize > lim) over()
+    if (isize > lim) .bl_gunzip_over(p, lim)
   }
   out <- tempfile(fileext = ".csv")
   ok <- FALSE
   on.exit(if (!ok) unlink(out), add = TRUE)
+  .bl_gunzip_copy(p, out, lim)
+  ok <- TRUE
+  out
+}
+
+#' Stops: a gzip file inflates past the byte cap.
+#' @param p The gzip file, named by its base name in the error.
+#' @param lim The cap.
+#' @return Does not return.
+#' @noRd
+.bl_gunzip_over <- function(p, lim) {
+  stop(
+    .rmbl_fn(),
+    sprintf(
+      paste0(
+        "%s inflates to more than %s bytes (option ",
+        "rmoriebricklayer.maxcsvbytes)"
+      ),
+      basename(p),
+      format(lim, big.mark = ",", scientific = FALSE)
+    ),
+    call. = FALSE
+  )
+}
+
+#' Inflates a gzip file into another, stopping past the byte cap.
+#' @param p The gzip file.
+#' @param out The file to write.
+#' @param lim The cap.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_gunzip_copy <- function(p, out, lim) {
+  # a directory is refused by name: gzfile() on one hung (1.0.3)
+  p <- .rmbl_file1(p, "path")
   inp <- gzfile(p, "rb")
   dst <- file(out, "wb")
   total <- 0
@@ -697,7 +807,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       }
       total <- total + length(b)
       if (total > lim) {
-        over()
+        .bl_gunzip_over(p, lim)
       }
       writeBin(b, dst)
     },
@@ -706,8 +816,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       close(dst)
     }
   )
-  ok <- TRUE
-  out
+  invisible(NULL)
 }
 
 #' A provenance record pinned to a data file's bytes, in the fields
@@ -751,7 +860,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 # ---- the rows of rmbl verify / drift / report --------------------------------
 
 #' The JSON type of a value as fromjs(simplifyVector = FALSE) returns it.
-#' @param x The value.
+#' @param x The parsed JSON value whose type is named.
 #' @return One string: null, empty, object, array, boolean, string, integer,
 #'   number or unknown.
 #' @noRd
@@ -782,18 +891,13 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   "unknown"
 }
 
-#' Validates a parsed JSON value against a schema.
-#'
-#' The JSON Schema 2020-12 subset the shipped schemas use: type, enum, required,
-#' properties, additionalProperties, items, pattern, minLength, minimum (as the
-#' rmbl action's check.R).
-#' @param x The value, from fromjs(simplifyVector = FALSE).
-#' @param s The schema, parsed the same way.
-#' @param at Where `x` sits in the document, for the messages.
-#' @return A character vector of problems, empty when `x` is valid.
+#' A JSON value's type against its schema's `type`.
+#' @param t The value's JSON type.
+#' @param s The schema.
+#' @param at Where the value is.
+#' @return The error, or NULL.
 #' @noRd
-.bl_schema_errors <- function(x, s, at = "$") {
-  t <- .bl_json_type(x)
+.bl_schema_type_error <- function(t, s, at) {
   if (!is.null(s$type)) {
     want <- unlist(s$type)
     if (
@@ -811,6 +915,18 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       ))
     }
   }
+  NULL
+}
+
+#' A JSON scalar's errors against its schema: enum, pattern, minLength and
+#' minimum.
+#' @param x The JSON scalar checked against the schema's constraints.
+#' @param t Its JSON type.
+#' @param s The schema.
+#' @param at Where the value is.
+#' @return The errors.
+#' @noRd
+.bl_schema_scalar_errors <- function(x, t, s, at) {
   err <- character()
   if (!is.null(s$enum) && !(length(x) == 1L && x %in% unlist(s$enum))) {
     err <- c(
@@ -818,7 +934,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       sprintf(
         "%s: must be one of %s",
         at,
-        paste(unlist(s$enum), collapse = ", ")
+        toString(unlist(s$enum))
       )
     )
   }
@@ -833,12 +949,32 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   if (t %in% c("integer", "number") && !is.null(s$minimum) && x < s$minimum) {
     err <- c(err, sprintf("%s: below %s", at, s$minimum))
   }
+  err
+}
+
+#' Validates a parsed JSON value against a schema.
+#'
+#' The JSON Schema 2020-12 subset the shipped schemas use: type, enum, required,
+#' properties, additionalProperties, items, pattern, minLength, minimum (as the
+#' rmbl action's check.R).
+#' @param x The value, from fromjs(simplifyVector = FALSE).
+#' @param s The schema, parsed the same way.
+#' @param at Where `x` sits in the document, for the messages.
+#' @return A character vector of problems, empty when `x` is valid.
+#' @noRd
+.bl_schema_errors <- function(x, s, at = "$") {
+  t <- .bl_json_type(x)
+  bad <- .bl_schema_type_error(t, s, at)
+  if (!is.null(bad)) {
+    return(bad)
+  }
+  err <- .bl_schema_scalar_errors(x, t, s, at)
   if (t %in% c("object", "empty")) {
     miss <- setdiff(unlist(s$required), names(x))
     if (length(miss)) {
       err <- c(
         err,
-        sprintf("%s: missing required %s", at, paste(miss, collapse = ", "))
+        sprintf("%s: missing required %s", at, toString(miss))
       )
     }
   }
@@ -863,7 +999,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 }
 
 #' Reads a JSON file for the schema check, keeping objects and arrays as lists.
-#' @param path The file.
+#' @param path The JSON file to read for the schema check.
 #' @return The parsed value.
 #' @noRd
 .bl_read_json_list <- function(path) .rmbl_read_json(path, simplify = FALSE)
@@ -872,9 +1008,9 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @param capsule The capsule directory.
 #' @param part provenance, bundle, spec or drift.
 #' @param file The file checked.
-#' @param check The check's name.
-#' @param ok Whether it passed.
-#' @param detail What was found.
+#' @param check The check's name, shown in the row's `check` column.
+#' @param ok Whether the check passed, the row's `ok` column.
+#' @param detail What was found, the row's `detail` column.
 #' @param severity What a failure of the row is: error, drift, warn or note (a
 #'   note changes no result).
 #' @param line The line of `file` the row points at, or NA.
@@ -905,7 +1041,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 
 #' The schema row of one capsule file.
 #' @param capsule The capsule directory.
-#' @param path The file.
+#' @param path The capsule JSON file checked against `schema`.
 #' @param schema The schema's name, for schemapath().
 #' @return One check row.
 #' @noRd
@@ -937,13 +1073,13 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' ponytail: the first line with that key, not a JSON-pointer walk; a key
 #' repeated earlier in the file points there. NA when the problem names no key
 #' (a top-level one) or no line holds it.
-#' @param path The file.
+#' @param path The JSON file whose lines are searched for the problem's key.
 #' @param err One problem, such as `$.a.b[2].c: does not match`.
 #' @return An integer.
 #' @noRd
 .bl_json_line <- function(path, err) {
   at <- gsub("\\[[0-9]+\\]", "", sub(":.*$", "", err))
-  if (!grepl("\\.", at)) {
+  if (!grepl(".", at, fixed = TRUE)) {
     return(NA_integer_)
   }
   key <- sub("^.*\\.", "", at)
@@ -1002,7 +1138,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 
 #' The verify rows of one capsule: every file against its schema, vrfcps(),
 #' cpsbndlvrf().
-#' @param d The capsule directory.
+#' @param d The capsule directory whose files are verified.
 #' @param key The shared secret of an HMAC bundle, or \code{""}.
 #' @param pubkey The public key (or HMAC key id) the bundle must be signed with,
 #' or \code{""}.
@@ -1070,12 +1206,12 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 .bl_worst <- function(sev) {
   r <- c("ok", "warn", "drift", "error")
   sev <- sev[sev != "note"]
-  if (!length(sev)) "ok" else r[max(match(sev, r))]
+  if (length(sev)) r[max(match(sev, r))] else "ok"
 }
 
 #' The summary-table cells of one capsule: source host, pinned digest, size,
 #' rows, bounds.
-#' @param d The capsule directory.
+#' @param d The capsule directory whose provenance and data file are read.
 #' @return A list of strings.
 #' @noRd
 .bl_capsule_info <- function(d) {
@@ -1089,13 +1225,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   }
   res <- p[["resource"]]
   src <- s1(res[["direct_url"]]) %||% s1(p[["source"]][["url"]]) %||% ""
-  host <- if (!nzchar(src)) {
-    "-"
-  } else if (startsWith(src, "file://")) {
-    "local file"
-  } else {
-    sub("^[a-z]+://([^/:]+).*$", "\\1", src)
-  }
+  host <- .bl_capsule_host(src)
   f <- .rmbl_safe_rel(s1(res[["filename"]]), d) %||% ""
   b <- if (file.exists(f) && !dir.exists(f)) file.size(f) else NA
   n <- suppressWarnings(as.numeric(s1(res[["row_count_data_rows"]]) %||% NA))
@@ -1109,48 +1239,63 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     } else {
       substr(s1(res[["sha256"]]), 1L, 12L)
     },
-    size = if (is.na(b)) {
-      "-"
-    } else if (b < 1024^2) {
-      sprintf("%.1f KB", b / 1024)
-    } else {
-      sprintf("%.1f MB", b / 1024^2)
-    },
+    size = .bl_capsule_size(b),
     rows = if (is.na(n)) "-" else format(n, big.mark = ","),
-    bounds = if (is.null(rnd) && is.null(sup)) {
-      "-"
-    } else {
-      paste(
-        c(
-          if (!is.null(rnd)) paste("round", rnd),
-          if (!is.null(sup)) paste("supp", sup)
-        ),
-        collapse = " \u00b7 "
-      )
-    }
+    bounds = .bl_capsule_bounds(rnd, sup)
   )
 }
 
-#' Runs the capsule verbs: verify, drift, report and refresh.
-#'
-#' The HMAC secret of a bundle is read from RMBL_KEY and removed from the
-#' environment at once, so no child process inherits it. Exit status: 0, or 1
-#' when the worst failed row is at or above --fail-on (report never fails); a
-#' usage error is raised for blcli() to turn into 2.
-#' @param verb The verb.
-#' @param rest The arguments after the verb.
-#' @param flag A function that returns the value of an option, or NULL.
-#' @param out The function that prints the verb's output.
-#' @param usage_error A function that raises a usage error.
-#' @return The exit status.
+#' The host of a capsule's source, for the summary table.
+#' @param src The source URL, or "".
+#' @return One string.
 #' @noRd
-.bl_cli_capsule <- function(verb, rest, flag, out, usage_error) {
-  # the secret is taken out of the process first, before any usage error can
-  # return with it still set: its bytes are wiped, then the name unset (audit of
-  # 30bed8e, #17)
-  key <- Sys.getenv("RMBL_KEY")
-  .Call(C_rmbl_env_wipe, "RMBL_KEY")
-  Sys.unsetenv("RMBL_KEY")
+.bl_capsule_host <- function(src) {
+  if (!nzchar(src)) {
+    "-"
+  } else if (startsWith(src, "file://")) {
+    "local file"
+  } else {
+    sub("^[a-z]+://([^/:]+).*$", "\\1", src)
+  }
+}
+
+#' A data file's size, for the summary table.
+#' @param b The size in bytes, or NA.
+#' @return One string.
+#' @noRd
+.bl_capsule_size <- function(b) {
+  if (is.na(b)) {
+    "-"
+  } else if (b < 1024^2) {
+    sprintf("%.1f KB", b / 1024)
+  } else {
+    sprintf("%.1f MB", b / 1024^2)
+  }
+}
+
+#' A table's rounding and suppression, for the summary table.
+#' @param rnd,sup The rounding base and suppression limit, or NULL.
+#' @return One string.
+#' @noRd
+.bl_capsule_bounds <- function(rnd, sup) {
+  if (is.null(rnd) && is.null(sup)) {
+    "-"
+  } else {
+    paste(
+      c(
+        if (!is.null(rnd)) paste("round", rnd),
+        if (!is.null(sup)) paste("supp", sup)
+      ),
+      collapse = " \u00b7 "
+    )
+  }
+}
+
+#' A capsule verb's directory, and its options' values, checked.
+#' @param verb,rest,flag,usage_error As for .bl_cli_capsule().
+#' @return The directory.
+#' @noRd
+.bl_capsule_root <- function(verb, rest, flag, usage_error) {
   pos <- rest
   for (f in c(.bl_capsule_valued, "--html")) {
     i <- match(f, pos)
@@ -1182,6 +1327,14 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       usage_error(sprintf("%s was given an empty value", f))
     }
   }
+  root
+}
+
+#' A capsule verb's --fail-on and --format, checked.
+#' @param rest,flag,usage_error As for .bl_cli_capsule().
+#' @return A list: fail_on and fmt.
+#' @noRd
+.bl_capsule_output <- function(rest, flag, usage_error) {
   fail_on <- flag("--fail-on") %||% "error"
   if (!fail_on %in% c("error", "drift", "warn")) {
     usage_error(sprintf(
@@ -1196,19 +1349,70 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       .rmbl_printable(fmt)
     ))
   }
+  list(fail_on = fail_on, fmt = fmt)
+}
+
+#' Runs the capsule verbs: verify, drift, report and refresh.
+#'
+#' The HMAC secret of a bundle is read from RMBL_KEY and removed from the
+#' environment at once, so no child process inherits it. Exit status: 0, or 1
+#' when the worst failed row is at or above --fail-on (report never fails); a
+#' usage error is raised for blcli() to turn into 2.
+#' @param verb The capsule verb: verify, drift, report, refresh or sign.
+#' @param rest The command-line arguments after the verb.
+#' @param flag A function that returns a command-line option's value, or NULL.
+#' @param out The function that prints the capsule verb's output.
+#' @param usage_error A function that raises a usage error for a bad option.
+#' @return The exit status.
+#' @noRd
+.bl_cli_capsule <- function(verb, rest, flag, out, usage_error) {
+  # the secret is taken out of the process first, before any usage error can
+  # return with it still set: its bytes are wiped, then the name unset (audit of
+  # 30bed8e, #17)
+  key <- Sys.getenv("RMBL_KEY")
+  .Call(C_rmbl_env_wipe, "RMBL_KEY")
+  Sys.unsetenv("RMBL_KEY")
+  root <- .bl_capsule_root(verb, rest, flag, usage_error)
+  o <- .bl_capsule_output(rest, flag, usage_error)
+  fail_on <- o$fail_on
+  fmt <- o$fmt
   if (verb == "refresh") {
     return(.bl_cli_refresh(root, out))
   }
   if (verb == "sign") {
     return(.bl_cli_sign(root, key, flag, rest, fmt, fail_on, out, usage_error))
   }
+  res <- .bl_cli_check(root, verb, key, flag, rest, usage_error)
+  out(format(res, fmt = fmt, failon = if (verb != "report") fail_on))
+  html <- flag("--html")
+  drifts <- attr(res, "drifts")
+  if (verb == "drift" && !is.null(html)) {
+    .bl_cli_drift_html(drifts, html, if (fmt == "md") out else function(s) NULL)
+  }
+  if (verb == "drift" && "--app" %in% rest) {
+    .bl_cli_drift_app(drifts, out)
+  }
+  rank <- c(ok = 0L, warn = 1L, drift = 2L, error = 3L)
+  if (verb != "report" && rank[[res$status]] >= rank[[fail_on]]) 1L else 0L
+}
+
+#' Runs the checks behind rmbl verify, drift and report.
+#' @param root The capsule root.
+#' @param verb The check verb passed to cpschk(): verify, drift or report.
+#' @param key The secret key, or "".
+#' @param flag The command line's flag reader.
+#' @param rest The command line's arguments.
+#' @param usage_error The usage-error function.
+#' @return cpschk()'s result.
+#' @noRd
+.bl_cli_check <- function(root, verb, key, flag, rest, usage_error) {
   num <- function(f, default) {
     v <- flag(f)
     if (is.null(v)) default else suppressWarnings(as.numeric(v))
   }
   # a refused argument (a PSI band that is not a number, a --base that does not
   # exist) is a usage error
-  res <- tryCatch(
+  tryCatch(
     cpschk(
       root,
       verb,
@@ -1226,17 +1430,6 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     ),
     error = function(e) usage_error(sub("^cpschk: ", "", conditionMessage(e)))
   )
-  out(format(res, fmt = fmt, failon = if (verb != "report") fail_on))
-  html <- flag("--html")
-  drifts <- attr(res, "drifts")
-  if (verb == "drift" && !is.null(html)) {
-    .bl_cli_drift_html(drifts, html, if (fmt == "md") out else function(s) NULL)
-  }
-  if (verb == "drift" && "--app" %in% rest) {
-    .bl_cli_drift_app(drifts, out)
-  }
-  rank <- c(ok = 0L, warn = 1L, drift = 2L, error = 3L)
-  if (verb != "report" && rank[[res$status]] >= rank[[fail_on]]) 1L else 0L
 }
 
 #' The options of the capsule verbs that take a value.
@@ -1288,7 +1481,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @param root The directory searched.
 #' @param key The value of RMBL_KEY, or \code{""}.
 #' @param flag,usage_error,out As for .bl_cli_capsule().
-#' @param rest The arguments after the verb.
+#' @param rest The arguments after the sign verb, read for `--overwrite`.
 #' @param fmt md or json, for the verify report.
 #' @param fail_on The fail-on level of the verify that follows.
 #' @return The exit status.
@@ -1305,6 +1498,57 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 ) {
   scheme <- flag("--scheme") %||% "hmac"
   kf <- flag("--key-file")
+  key <- .bl_cli_sign_key(key, kf, usage_error)
+  glob <- flag("--manifests") %||% ""
+  overwrite <- "--overwrite" %in% rest
+  pub <- flag("--public-key") %||% ""
+  xs <- NULL
+  if (identical(scheme, "xmss-sha256")) {
+    xs <- .bl_cli_xmss_reserve(
+      root,
+      key,
+      kf,
+      flag,
+      overwrite,
+      glob,
+      usage_error
+    )
+    if (inherits(xs, "error")) {
+      return(.bl_cli_sign_fail(xs, out))
+    }
+    sk <- xs$key
+    sk$next_index <- xs$from
+    pub <- paste0(sk$root, .rmbl_xkey(sk, "pubseed"))
+    # the block is this run's to sign from; the configuration directory is not
+    # used
+    assign(xs$id, c(xs$from, xs$to), envir = .rmbl_xmss_block)
+    on.exit(rm(list = xs$id, envir = .rmbl_xmss_block), add = TRUE)
+  } else {
+    sp <- .bl_cli_sign_plain(scheme, key, pub, rest, usage_error)
+    sk <- sp$sk
+    pub <- sp$pub
+  }
+  res <- tryCatch(
+    cpsseal(root, sk, overwrite = overwrite, glob = glob),
+    error = function(e) e
+  )
+  if (inherits(res, "error")) {
+    return(.bl_cli_sign_fail(res, out))
+  }
+  .bl_cli_sign_said(res, scheme, out)
+  if (!is.null(xs)) {
+    .bl_cli_xmss_report(xs, root, flag("--seen-log"), out)
+  }
+  .bl_cli_sign_check(root, scheme, key, pub, glob, flag, fmt, fail_on, out)
+}
+
+#' rmbl sign's key: from the environment, or from --key-file.
+#' @param key The key from RMBL_KEY, or "".
+#' @param kf The --key-file path, or NULL.
+#' @param usage_error The usage-error function.
+#' @return The key.
+#' @noRd
+.bl_cli_sign_key <- function(key, kf, usage_error) {
   if (!is.null(kf)) {
     if (!file.exists(kf) || dir.exists(kf)) {
       usage_error(sprintf("--key-file: no such file: %s", .rmbl_printable(kf)))
@@ -1320,84 +1564,81 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       "sign needs a key: RMBL_KEY in the environment, or --key-file FILE"
     )
   }
-  glob <- flag("--manifests") %||% ""
-  overwrite <- "--overwrite" %in% rest
-  fail <- function(e) {
-    out(sprintf(
-      "%s: %s\n",
-      .bl_prog(),
-      sub("^(blcli|xmssidxseen): ", "", conditionMessage(e))
-    ))
-    1L
-  }
-  pub <- flag("--public-key") %||% ""
-  xs <- NULL
-  if (identical(scheme, "xmss-sha256")) {
-    xs <- .bl_cli_xmss_reserve(
-      root,
-      key,
-      kf,
-      flag,
-      overwrite,
-      glob,
-      usage_error
-    )
-    if (inherits(xs, "error")) {
-      return(fail(xs))
-    }
-    sk <- xs$key
-    sk$next_index <- xs$from
-    pub <- paste0(sk$root, .rmbl_xkey(sk, "pubseed"))
-    # the block is this run's to sign from; the configuration directory is not
-    # used
-    assign(xs$id, c(xs$from, xs$to), envir = .rmbl_xmss_block)
-    on.exit(rm(list = xs$id, envir = .rmbl_xmss_block), add = TRUE)
-  } else {
-    xo <- intersect(
-      c(
-        "--state-file",
-        "--sectors",
-        "--sector",
-        "--sector-index",
-        "--reserve",
-        "--warn-left"
-      ),
-      rest
-    )
-    if (length(xo)) {
-      usage_error(sprintf("%s is for --scheme xmss-sha256 only", xo[[1L]]))
-    }
-    sk <- if (scheme == "hmac") {
-      key
-    } else {
-      tryCatch(
-        {
-          if (startsWith(trimws(key), "{")) {
-            j <- fromjs(key)
-            fipskey(j$scheme %||% scheme, j$public, j$secret)
-          } else {
-            if (!nzchar(pub)) {
-              usage_error(sprintf(
-                "--scheme %s with a bare secret key needs --public-key HEX",
-                scheme
-              ))
-            }
-            fipskey(scheme, pub, key)
-          }
-        },
-        bl_usage = function(e) stop(e),
-        error = function(e) usage_error(paste("the key:", conditionMessage(e)))
-      )
-    }
-    if (scheme != "hmac" && !nzchar(pub)) pub <- sk$public
-  }
-  res <- tryCatch(
-    cpsseal(root, sk, overwrite = overwrite, glob = glob),
-    error = function(e) e
+  key
+}
+
+#' Writes rmbl sign's error and returns its exit status.
+#' @param e The error rmbl sign raised; its message is printed.
+#' @param out The output function.
+#' @return 1L.
+#' @noRd
+.bl_cli_sign_fail <- function(e, out) {
+  out(sprintf(
+    "%s: %s\n",
+    .bl_prog(),
+    sub("^(blcli|xmssidxseen): ", "", conditionMessage(e))
+  ))
+  1L
+}
+
+#' rmbl sign's key for a scheme other than XMSS.
+#' @param scheme The --scheme.
+#' @param key The HMAC secret or private key for the non-XMSS scheme.
+#' @param pub The --public-key, or "".
+#' @param rest The command line's arguments.
+#' @param usage_error The usage-error function.
+#' @return A list: sk (the signing key) and pub (the public key, or "").
+#' @noRd
+.bl_cli_sign_plain <- function(scheme, key, pub, rest, usage_error) {
+  xo <- intersect(
+    c(
+      "--state-file",
+      "--sectors",
+      "--sector",
+      "--sector-index",
+      "--reserve",
+      "--warn-left"
+    ),
+    rest
   )
-  if (inherits(res, "error")) {
-    return(fail(res))
+  if (length(xo)) {
+    usage_error(sprintf("%s is for --scheme xmss-sha256 only", xo[[1L]]))
   }
+  sk <- if (scheme == "hmac") {
+    key
+  } else {
+    tryCatch(
+      {
+        if (startsWith(trimws(key), "{")) {
+          j <- fromjs(key)
+          fipskey(j$scheme %||% scheme, j$public, j$secret)
+        } else {
+          if (!nzchar(pub)) {
+            usage_error(sprintf(
+              "--scheme %s with a bare secret key needs --public-key HEX",
+              scheme
+            ))
+          }
+          fipskey(scheme, pub, key)
+        }
+      },
+      bl_usage = function(e) stop(e),
+      error = function(e) usage_error(paste("the key:", conditionMessage(e)))
+    )
+  }
+  if (scheme != "hmac" && !nzchar(pub)) {
+    pub <- sk$public
+  }
+  list(sk = sk, pub = pub)
+}
+
+#' Writes the line that says what rmbl sign signed.
+#' @param res cpsseal()'s result.
+#' @param scheme The --scheme.
+#' @param out The output function.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_cli_sign_said <- function(res, scheme, out) {
   out(sprintf(
     "signed %s: %d files, %s %s%s\n",
     res$capsule,
@@ -1410,47 +1651,16 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     substr(res$public, 1L, 16L),
     ifelse(res$pinned, " (provenance pinned)", "")
   ))
-  if (!is.null(xs)) {
-    .bl_cli_xmss_report(xs, root, flag("--seen-log"), out)
-  }
-  x <- cpschk(
-    root,
-    key = if (scheme == "hmac") key else "",
-    pubkey = pub,
-    glob = glob,
-    fp = FALSE,
-    seenlog = flag("--seen-log") %||% ""
-  )
-  out(format(x, fmt = fmt, failon = fail_on))
-  rank <- c(ok = 0L, warn = 1L, drift = 2L, error = 3L)
-  if (rank[[x$status]] >= rank[[fail_on]]) 1L else 0L
+  invisible(NULL)
 }
 
-#' rmbl sign with an XMSS key: check the options, then reserve this run's
-#' indices in the key's state.
-#'
-#' The state is the key file (rewritten atomically, under a lock) or
-#' --state-file; RMBL_XMSS_INDEX_FILE is read and updated only when it is set.
-#' Nothing is signed here: the reservation is durable before the first signature
-#' exists (RFC 10033 section 4), and a refusal leaves the capsules as they were.
-#' @param root The directory searched.
-#' @param key The key's JSON text.
-#' @param kf The key file, or NULL (the key came from RMBL_KEY).
-#' @param flag,usage_error As for .bl_cli_capsule().
-#' @param overwrite,glob As for cpsseal().
-#' @return The reservation (.rmbl_xmss_state_commit() with `id` and `warn`), or
-#'   the error that refused it.
+#' The XMSS state's file, checked: an absolute path to a writable regular
+#' file (or a new one), or a key file that can be rewritten.
+#' @param sf The --state-file, or NULL.
+#' @param kf The --key-file, or NULL.
+#' @param usage_error Raises a usage error.
 #' @noRd
-.bl_cli_xmss_reserve <- function(
-  root,
-  key,
-  kf,
-  flag,
-  overwrite,
-  glob,
-  usage_error
-) {
-  sf <- flag("--state-file")
+.bl_xmss_check_state_file <- function(sf, kf, usage_error) {
   writable <- function(f) {
     (!file.exists(f) || file.access(f, 2L) == 0L) &&
       file.access(dirname(f), 2L) == 0L
@@ -1498,6 +1708,15 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       .rmbl_printable(kf)
     ))
   }
+  invisible(NULL)
+}
+
+#' rmbl sign's sector, reserve and warning arguments for an XMSS key, checked.
+#' @param flag The flag reader.
+#' @param usage_error Raises a usage error.
+#' @return A list: sec, reserve and warn.
+#' @noRd
+.bl_xmss_sector_args <- function(flag, usage_error) {
   int <- function(f, lo) {
     v <- flag(f)
     if (is.null(v)) {
@@ -1532,6 +1751,39 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   }
   reserve <- int("--reserve", 1L) %||% 1L
   warn <- int("--warn-left", 0L)
+  list(sec = sec, reserve = reserve, warn = warn)
+}
+
+#' rmbl sign with an XMSS key: check the options, then reserve this run's
+#' indices in the key's state.
+#'
+#' The state is the key file (rewritten atomically, under a lock) or
+#' --state-file; RMBL_XMSS_INDEX_FILE is read and updated only when it is set.
+#' Nothing is signed here: the reservation is durable before the first signature
+#' exists (RFC 10033 section 4), and a refusal leaves the capsules as they were.
+#' @param root The directory searched.
+#' @param key The key's JSON text.
+#' @param kf The key file, or NULL (the key came from RMBL_KEY).
+#' @param flag,usage_error As for .bl_cli_capsule().
+#' @param overwrite,glob As for cpsseal().
+#' @return The reservation (.rmbl_xmss_state_commit() with `id` and `warn`), or
+#'   the error that refused it.
+#' @noRd
+.bl_cli_xmss_reserve <- function(
+  root,
+  key,
+  kf,
+  flag,
+  overwrite,
+  glob,
+  usage_error
+) {
+  sf <- flag("--state-file")
+  .bl_xmss_check_state_file(sf, kf, usage_error)
+  a <- .bl_xmss_sector_args(flag, usage_error)
+  sec <- a$sec
+  reserve <- a$reserve
+  warn <- a$warn
   seenlog <- flag("--seen-log")
   tryCatch(
     {
@@ -1696,7 +1948,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' The refresh verb: cpsrfrsh() on every capsule under a path that has a
 #' provenance.
 #' @param root The directory searched.
-#' @param out The function that prints the verb's output.
+#' @param out The function that prints each capsule's refresh result.
 #' @return The exit status: 1 when a capsule could not be refreshed.
 #' @noRd
 .bl_cli_refresh <- function(root, out) {
@@ -1713,7 +1965,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       status <- 1L
       next
     }
-    out(sprintf("%s: %s\n", d, paste(format(r), collapse = "\n")))
+    out(sprintf("%s: %s\n", d, paste(.bl_mnfdiff_text(r), collapse = "\n")))
     if (
       any(r$change != "unchanged") &&
         file.exists(file.path(d, "capsule_bundle.json"))
@@ -1735,7 +1987,31 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @return One string.
 #' @noRd
 .bl_check_meaning <- function(check) {
-  m <- c(
+  m <- c(.bl_check_meanings_data(), .bl_check_meanings_signed())
+  if (check %in% names(m)) {
+    return(m[[check]])
+  }
+  if (startsWith(check, "file:")) {
+    return(
+      paste0(
+        "a bundled file is missing or its digest differs: restore it or ",
+        "sign again"
+      )
+    )
+  }
+  if (startsWith(check, "schema: ")) {
+    return(
+      "the file does not follow its JSON Schema (schemapath()): see the detail"
+    )
+  }
+  "a failed check: see the detail"
+}
+
+#' The meanings of the failed checks of a capsule's data and provenance.
+#' @return A named character vector: check name to meaning.
+#' @noRd
+.bl_check_meanings_data <- function() {
+  c(
     provenance_readable = paste0(
       "data_provenance.json is missing, outside the capsule or not valid ",
       "JSON"
@@ -1780,7 +2056,15 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     no_unlisted_files = paste0(
       "the capsule holds files the bundle does not cover: remove them or ",
       "sign again (cpsbndl())"
-    ),
+    )
+  )
+}
+
+#' The meanings of the failed checks of a capsule's signature and source.
+#' @return A named character vector: check name to meaning.
+#' @noRd
+.bl_check_meanings_signed <- function() {
+  c(
     `attestation:signature` = paste(
       "the bundle's signature does not verify: the bundle was altered,",
       "or (hmac)",
@@ -1824,23 +2108,6 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       "outside the capsule)"
     )
   )
-  if (check %in% names(m)) {
-    return(m[[check]])
-  }
-  if (startsWith(check, "file:")) {
-    return(
-      paste0(
-        "a bundled file is missing or its digest differs: restore it or ",
-        "sign again"
-      )
-    )
-  }
-  if (startsWith(check, "schema: ")) {
-    return(
-      "the file does not follow its JSON Schema (schemapath()): see the detail"
-    )
-  }
-  "a failed check: see the detail"
 }
 
 #' explerr() on check rows: each failed row, what it means and where its message
@@ -1859,7 +2126,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       call. = FALSE
     )
   }
-  bad <- rows[!(as.logical(rows$ok) %in% TRUE), , drop = FALSE]
+  ok <- as.logical(rows$ok)
+  bad <- rows[is.na(ok) | !ok, , drop = FALSE]
   detail <- as.character(bad$detail)
   raised <- vapply(
     detail,
@@ -1882,4 +2150,38 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     raised_by = raised,
     stringsAsFactors = FALSE
   )
+}
+
+#' Checks the capsule rmbl sign just signed, and returns the exit status.
+#' @param root The capsule root.
+#' @param scheme The --scheme.
+#' @param key,pub The secret and the public key.
+#' @param glob The --manifests glob.
+#' @param flag The command line's flag reader.
+#' @param fmt,fail_on The output format and the failing severity.
+#' @param out The output function.
+#' @return 1L when the check fails at `fail_on` or worse, else 0L.
+#' @noRd
+.bl_cli_sign_check <- function(
+  root,
+  scheme,
+  key,
+  pub,
+  glob,
+  flag,
+  fmt,
+  fail_on,
+  out
+) {
+  x <- cpschk(
+    root,
+    key = if (scheme == "hmac") key else "",
+    pubkey = pub,
+    glob = glob,
+    fp = FALSE,
+    seenlog = flag("--seen-log") %||% ""
+  )
+  out(format(x, fmt = fmt, failon = fail_on))
+  rank <- c(ok = 0L, warn = 1L, drift = 2L, error = 3L)
+  if (rank[[x$status]] >= rank[[fail_on]]) 1L else 0L
 }

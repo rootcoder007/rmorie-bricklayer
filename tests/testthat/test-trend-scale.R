@@ -27,8 +27,8 @@ test_that("the Sen interval in C matches the former R loop exactly", {
   set.seed(8)
   x <- c(1:25, 25, 26:40) # one repeated x: that pair contributes no slope
   y <- 0.3 * x + rnorm(length(x))
-  mk <- .Call(rmoriebricklayer:::C_rmbl_mann_kendall, y[order(x)])
-  new <- rmoriebricklayer:::.rmbl_sen_ci(sort(x), y[order(x)], mk$var, 0.95)
+  mk <- .Call(C_rmbl_mann_kendall, y[order(x)])
+  new <- .rmbl_sen_ci(sort(x), y[order(x)], mk$var, 0.95)
   old <- old_sen_ci(sort(x), y[order(x)], mk$var, 0.95)
   # the C version also says whether a rank was clamped; the values match
   expect_identical(as.numeric(new), old)
@@ -41,7 +41,8 @@ test_that("trndtst scales to thousands of periods, refuses absurd sizes", {
   t0 <- proc.time()[["elapsed"]]
   r <- trndtst(y)
   expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(30))
-  expect_true(is.finite(r$slopelo) && is.finite(r$slopeup))
+  expect_true(is.finite(r$slopelo))
+  expect_true(is.finite(r$slopeup))
   expect_error(trndtst(seq_len(20001)), "20001")
 })
 

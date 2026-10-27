@@ -10,7 +10,11 @@ jk1_subset <- function(m = 6L, keep = 1:3, per = 5L) {
   set.seed(11)
   psu <- rep(seq_len(m), each = per)
   w <- rep(runif(m, 20, 40), each = per)
-  reps <- sapply(seq_len(m), function(j) w * ifelse(psu == j, 0, m / (m - 1)))
+  reps <- vapply(
+    seq_len(m),
+    function(j) w * ifelse(psu == j, 0, m / (m - 1)),
+    numeric(length(w))
+  )
   rows <- psu %in% keep
   list(
     d = data.frame(y = rnorm(sum(rows)), w = w[rows], psu = psu[rows]),
@@ -27,7 +31,7 @@ test_that(
     s <- jk1_subset()
     B <- s$reps
     colnames(B) <- paste0("rw", seq_len(ncol(B)))
-    expect_true(any(duplicated(t(B))))
+    expect_gt(anyDuplicated(t(B)), 0L)
     d <- cbind(s$d, as.data.frame(B))
     by_name <- svydes(d, w = "w", reps = colnames(B), type = "jk1")
     by_matrix <- svydes(s$d, w = "w", reps = unname(B), type = "jk1")
@@ -104,7 +108,8 @@ test_that(
       y = rnorm(60),
       a = rnorm(60),
       b = runif(60),
-      meals = sample(0:100, 60, TRUE)
+      meals = sample(0:100, 60, TRUE),
+      stringsAsFactors = FALSE
     )
     w <- rep(c(10, 20, 30), each = 20)
     des <- svydes(st, w = w, strata = "stype")
@@ -129,7 +134,7 @@ test_that(
     ds <- svydes(sub, w = "b", strata = "stype")
     s2 <- sub
     rownames(s2) <- NULL
-    expect_equal(svyest(ds, s2, "y")$se, svyest(ds, sub, "y")$se)
+    expect_identical(svyest(ds, s2, "y")$se, svyest(ds, sub, "y")$se)
   }
 )
 
@@ -144,11 +149,17 @@ test_that(
     p <- rep(1:12, each = 2)
     w <- runif(24, 5, 9)
     nh <- 4
-    reps <- sapply(1:12, function(j) {
-      h <- s[p == j][[1L]]
-      f <- ifelse(s == h, ifelse(p == j, 0, nh / (nh - 1)), 1)
-      w * f
-    })
+    reps <- vapply(
+      1:12,
+      function(j) {
+        h <- s[p == j][[1L]]
+        f <- rep(1, length(s))
+        f[s == h] <- nh / (nh - 1)
+        f[s == h & p == j] <- 0
+        w * f
+      },
+      numeric(length(w))
+    )
     rs <- rep((nh - 1) / nh, 12)
     keep <- s == 1
     d <- data.frame(y = rnorm(24), w = w)[keep, ]
@@ -186,10 +197,16 @@ test_that(
     # Rao-Wu with n_h - 1 = 1 draw of 2 PSUs a stratum: multipliers 0 or 2, each
     # replicate the weight with chance 1/16 here (counts, not rescaled: 2 draws
     # of 2 PSUs, k in 0..2)
-    reps <- sapply(1:200, function(b) {
-      k <- unlist(lapply(1:4, function(h) stats::rmultinom(1, 2, c(1, 1))[, 1]))
-      w * k[p]
-    })
+    reps <- vapply(
+      1:200,
+      function(b) {
+        k <- unlist(lapply(1:4, function(h) {
+          stats::rmultinom(1, 2, c(1, 1))[, 1]
+        }))
+        w * k[p]
+      },
+      numeric(length(w))
+    )
     eq <- sum(apply(reps, 2, function(r) all(r == w)))
     expect_gt(eq, 3)
     expect_silent(svydes(
@@ -675,7 +692,7 @@ test_that(
     # the live GET hangs: stopped there, the lookups never start
     stopped(.Call(
       ns_$C_rmbl_fetch_fallback,
-      paste0(silent, "/x"),
+      file.path(silent, "x"),
       "",
       tempfile(),
       20L,
@@ -695,7 +712,7 @@ test_that(
     stopped(.Call(
       ns_$C_rmbl_fetch_fallback,
       closed,
-      paste0(silent, "/snap"),
+      file.path(silent, "snap"),
       tempfile(),
       20L,
       silent
@@ -719,7 +736,7 @@ test_that(
     des <- svydes(d, w = rep(2, 20))
     d2 <- d
     d2$b <- NULL
-    expect_equal(svyest(des, d2, "y")$se, svyest(des, d, "y")$se)
+    expect_identical(svyest(des, d2, "y")$se, svyest(des, d, "y")$se)
     # the native uniforms' own checks, said as before
     expect_error(
       .Call(asNamespace("rmoriebricklayer")$C_rmbl_uniforms, -1, 1),

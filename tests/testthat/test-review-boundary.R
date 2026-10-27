@@ -6,7 +6,11 @@ make_capsule <- function() {
   dir.create(d, recursive = TRUE, showWarnings = FALSE)
   f <- file.path(d, "data.csv")
   write.csv(
-    data.frame(region = c("A", "B"), count = c(10, 20)),
+    data.frame(
+      region = c("A", "B"),
+      count = c(10, 20),
+      stringsAsFactors = FALSE
+    ),
     f,
     row.names = FALSE
   )
@@ -29,7 +33,11 @@ test_that("vrfcps fails when it cannot check, not only when a check fails", {
 
   # alter the data, then delete one field at a time: every one must FAIL
   write.csv(
-    data.frame(region = c("A", "B"), count = c(10, 999)),
+    data.frame(
+      region = c("A", "B"),
+      count = c(10, 999),
+      stringsAsFactors = FALSE
+    ),
     cp$file,
     row.names = FALSE
   )
@@ -70,12 +78,12 @@ test_that("vrfcps refuses a path that escapes the capsule", {
   r <- vrfcps(cp$dir)
   expect_false(r$ok)
   expect_false(r$checks$ok[r$checks$check == "data_present"])
-  expect_null(rmoriebricklayer:::.rmbl_safe_rel("../x", cp$dir))
-  expect_null(rmoriebricklayer:::.rmbl_safe_rel("/etc/passwd", cp$dir))
-  expect_null(rmoriebricklayer:::.rmbl_safe_rel("C:/x", cp$dir))
-  expect_null(rmoriebricklayer:::.rmbl_safe_rel("~/x", cp$dir))
+  expect_null(.rmbl_safe_rel("../x", cp$dir))
+  expect_null(.rmbl_safe_rel("/etc/passwd", cp$dir))
+  expect_null(.rmbl_safe_rel("C:/x", cp$dir))
+  expect_null(.rmbl_safe_rel("~/x", cp$dir))
   expect_type(
-    rmoriebricklayer:::.rmbl_safe_rel("sub/data.csv", cp$dir),
+    .rmbl_safe_rel("sub/data.csv", cp$dir),
     "character"
   )
 })
@@ -132,7 +140,10 @@ test_that(
     expect_error(fromjs(deep), "nesting deeper than 100")
     expect_error(fromjs('{"k":"\\ud800"}'), "lone surrogate")
     expect_identical(fromjs('{"k":"\\ud83d\\ude00"}')$k, "\U0001F600")
-    expect_warning(v <- fromjs("[12345678901234567890]"), "exceeds 2\\^53")
+    expect_warning(
+      assign("v", fromjs("[12345678901234567890]")),
+      "exceeds 2\\^53"
+    )
     expect_identical(
       fromjs("[12345678901234567890]", bigint_as_char = TRUE),
       "12345678901234567890"
@@ -165,7 +176,7 @@ test_that("canonicalisation sorts a level with an empty-string key", {
 })
 
 test_that("public URLs are https, public and never file://", {
-  chk <- rmoriebricklayer:::.rmbl_check_public_url
+  chk <- .rmbl_check_public_url
   expect_identical(
     chk("https://data.ontario.ca/x.csv"),
     "https://data.ontario.ca/x.csv"
@@ -255,7 +266,7 @@ test_that("hostile DER is an error, not an abort", {
     16L
   ))
   expect_error(
-    .Call(rmoriebricklayer:::C_rmbl_der_parse, b),
+    .Call(C_rmbl_der_parse, b),
     "not well-formed DER"
   )
   h2 <- "300c0488ffffffffffffffff0100"
@@ -264,7 +275,7 @@ test_that("hostile DER is an error, not an abort", {
     16L
   ))
   expect_error(
-    .Call(rmoriebricklayer:::C_rmbl_der_parse, b2),
+    .Call(C_rmbl_der_parse, b2),
     "not well-formed DER"
   )
 })

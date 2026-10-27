@@ -13,6 +13,9 @@ loadprov(path)
 The parsed provenance as a nested named list (JSON objects become
 named lists, arrays become unnamed lists, strings, numbers and booleans
 become length-1 vectors), or \code{NULL} if the file does not exist.
+The list has class \code{c("rmbl_provenance", "list")}, which only
+changes how it prints (a box); its elements, and the JSON written from it,
+are those of a plain list.
 }
 \description{
 Reads a \code{data_provenance.json} file, the record that pins where a

@@ -1,7 +1,56 @@
 # rmoriebricklayer 1.0.3
 
+## Printed results
+
+* Every result prints as one box: a title, the facts a reader needs to judge it (method, number of observations, groups, periods, confidence level, data source and edition), an estimate table with aligned columns, intervals as [lower, upper] and p-values as 0.017 or < 0.001, a plain-language reading, and the cautions the result records. The box fits the console's width, uses colour and Unicode only where the console takes them (ASCII `+--` boxes otherwise), and a verification (attestation, certificate chain, bundle, capsule, ledger, identity card) opens with VERIFIED or NOT VERIFIED and how many of its checks passed. `format()` still returns the plain lines.
+* This covers the statistical results (difference in differences, event studies, staggered and switching designs, Bacon decomposition, synthetic control, DML, matching, wild bootstrap, permutation inference, fixed-effects Poisson, balance, power, survey estimates, rates, drift, Benford), the Lakner custody measures (`stkflow()`, `staysmry()`, with Lakner's steady-state caution), the justice, Indigenous, Truth and Reconciliation, census, search, pollution and air-dispersion results, and the signing, provenance and archive objects. 49 classes that printed as a raw list now have a method; a signing key prints its scheme, fingerprint and public key, never its secret.
+* `ldgrchk()`, `vrfmrg()`, `orchk()`, `vrfrcdmnf()`, `xfrvrf()`, `fetchvrf()`, `staysmry()`, `plrcf()`, `exprspplr()`, `piperate()`, `cmlrisk()`, `bufasgn()`, `trndtst()` and `stepchg()` return their result with a class put in front of its existing ones, so it prints as a box; no element or value changed, and a data frame stays a data frame.
+* The Lakner single measures `adp()`, `alos()`, `admits()`, `adpcnts()` and `perdays()` print as a box too: the number, the inputs it came from, the formula (`adp = days / t`, `alos = days / n`, `admits = adp x t / alos`), a plain reading and Lakner's caveats (steady state; a short period biases the average stay downward). The value is unchanged, with class `rmbl_<name>` and `rmbl_measure` put in front; arithmetic, `round()`, `sum()`, `mean()`, `[`, `c()` and `as.numeric()` give a plain number, and the measures still feed each other (`adp(days, t = perdays(...))`).
+* A box shows everything the plain printout showed before it. Restored: the residence, gender, age, DGUID, geographic level, hierarchy (`level`, `parid`, `rootid`), sample and non-response columns of `cnsprof()` and the gender, age, DGUID and quality columns of `profshr()`; every row of `cnscwb()` (up to 100 rows for the census tables, where 8 or 16 were shown); the pooled row's mark in `indgap()` and `ordcmp()`; which proxies are shared in `mhcont()`; a domain in `welprof()`; `logpvalue` in `mahaoutl()`; the trend statistics of `dispmix()` to two decimals; the key usage of `certprs()`; the whole check names of `ldgrchk()` and a WARN mark for a check that only warns; and, in `cpschk()`, each capsule's source, pinned SHA-256, size, rows and bounds, every check row with its detail, whole digests, the footprint line and the package and R versions.
+* Every box's reading now comes from the result itself: which group is highest and lowest and whether their intervals overlap, which rows lie above, below or across the value of no difference, whether a test rejects at the result's level, how many changes rose or fell by more than chance, whether a certificate is in force, how many theorems are proved, whether a Benford screen departs and where. The definitions the readings used to repeat are kept in the notes.
+* `ginicoef()`, `attrfrac()`, `drftks()`, `drftpsi()`, `drftchisq()` and `drfthomog()` print as a box like the Lakner measures: the number (or a small table of the named statistics), the inputs it came from, what the scale means, a reading and the caveats. The values are unchanged, with class `rmbl_<name>` and `rmbl_measure` put in front; arithmetic, `[`, `c()` and `as.numeric()` give plain numbers. Code that compares one of these results with `identical()` against a bare number now needs `as.numeric()` first (`identical(as.numeric(ginicoef(x)), g)`), because the class is kept on the value. The arithmetic primitives (`cmn()`, `csdev()` and the rest) stay plain numbers.
+* `mkmnf()`, `capenv()`, `loadprov()` and `citecps()` return their list with a class put in front (`rmbl_manifest`, `rmbl_capenv`, `rmbl_provenance`, `rmbl_citation`), so they print as a box; every element is unchanged. `dgstobj()` of these objects differs from 1.0.2 because they now carry a class; signatures (`mnfdgst()`, `mnfcanon()`) and the JSON written to disk (`tojs()`, `wrmnfjs()`) are byte for byte unchanged.
+* `drpconst()`, `drpempty()`, `duprows()` and `clncolnms()` gain `quiet = FALSE`: unless quiet, they show one boxed summary of what they did (rows and columns before and after, the columns dropped or renamed, how many rows are duplicates) through `message()`, so `suppressMessages()` silences it too. What they return is unchanged.
+
+## Your own data
+
+* Search and rescue: `srchpod()` takes the sweep width, track length and area (`W`, `effort`, `area`) in place of `coverage`, one area or one per cell, with `area` also a probability map from `datumpmap()` whose cell areas it uses. `srchscs()` takes a map and an `opteffort()` allocation (or PODs laid out like the map) and returns the map after a search that found nothing as `map`, ready for the next `opteffort()` and `plot()`. The help page and `vignette("search-and-rescue")` ("Your own search, step by step") walk a search from the last known position to the next day's plan, one call a step. Defaults are unchanged.
+* Policy evaluation: `evstudy()` takes weights (`w`), `loounit()` passes weights to each fit (`w`), `mtchdid()` clusters its standard errors (`cl`), and `tse()` takes the confidence level of its robust interval (`conflvl`; it was fixed at 95%). Every estimator's help page and `vignette("policy-evaluation")` ("Your own panel, step by step") show a panel typed in the example: unit, time, outcome, treatment, covariates, clusters and weights.
+* `trchlthgap()` takes the label of the all-ages row (`agetot`) and uses a table of your own without an `age` column whole; its help page named two of `indiex()`'s tables wrongly. The Indigenous estimators' help pages show a table of your own, and `vignette("first-nations-metis-inuit-health")` ("Your own data, step by step") goes from a published table, from microdata through `svydes()` and `svyest()`, and from plain numbers to the estimators.
+* Errors from the search, Indigenous and policy functions start with the function's name (`tse: x must come from evstudy()`).
+
+## Periods
+
+* `yoy()` reads text periods in time order whatever the years: fiscal years (`"2019/20"`, `"2019-2020"`, `"FY 2019-20"`; `"2020/21"` no longer comes before `"2019/20"`), one-year fiscal labels (`"FY2020"`), quarters (`"2021 Q3"`, `"Q3 2021"`), months (`"2021-03"`, `"Mar 2021"`) and dates. A period missing from the data is a gap. The new argument `prdord` gives the order of any other labels; labels whose order cannot be read keep the old behaviour, with one warning that names them. `yoysmry()` and `anltab()` follow the same order, and `ratechg()` orders text periods the same way.
+
+## Fixes
+
+* A gzipped table too large to decompress in memory was read a piece at a time without checking the gzip stream, so a truncated file came back as a shorter table with no error. The stream is now checked whole first (trailer, CRC and size), and a truncated or damaged file is refused, as smaller files already were.
+* The C function `rmbl_wayback_snapshot()`, which other packages call through `LinkingTo`, answers 0 for a NULL address or buffer, or a buffer of no size, where it crashed the calling session, and for an address that is not http(s) without asking archive.org.
+* The file readers refuse a directory by name ("`path` is a directory, not a file") instead of opening it.
+* `wcb()` refuses a covariate the fixed effects absorb (one that does not vary within units), naming it, instead of failing in `solve()` with "system is computationally singular".
+* Plots restore every graphics setting they change, colours included, and panel layouts restore their margins and text size; a test runs every plot example and checks the device is left as it was.
+* Errors name the argument as you typed it (for example `diam`, `cl`, `lvl`, `msg`), and the arguments that take one TRUE or FALSE, one number or one name refuse anything else instead of using its first element or ignoring it. `expconcidx()` refuses an income with a single value, where it returned an index of 0. `capdeps()` warns about a package that is not installed. `envdiff()` reports any other field that differs (`fields`). `jsb64dec()` refuses `=` padding before the end.
+
+* `idcrd()`, `idcrdrd()` and `idcrdvrf()` make, read and verify an identity card for a signing key: your public key (ML-DSA, SLH-DSA or XMSS) with your name and, if you give them, your ORCID iD, e-mail address, web page and affiliation, signed with the key itself under its own context. Publish the card and give its fingerprint where people know you; `idcrdvrf()` checks the card is intact and in date, that its fingerprint is the one you gave, and that an attestation or a bundle was signed by its key. No authority and no network are involved.
+* The examples of `certprs()` and `certchnvrf()` read a test chain shipped as files (`inst/extdata/x509/`) rather than certificates pasted as hexadecimal.
 * `dload()` reads a table of any size when its SHA-256 matches the manifest: it is then the file data.rmorie.com holds, so the 1 GiB limit on what an untrusted CSV may decompress to (option `rmoriebricklayer.maxcsvbytes`) no longer applies. Tables of about 95 MB of gzip and more decompress past 1 GiB and were refused. A table the manifest lists without a digest keeps the limit, and a gzip file over 2 GB is read a piece at a time.
 * The reference index lists the categorical-integrity functions once (the section appeared twice).
+* Vignettes, the README and the reference index spell Métis with its accent in their text and headings (the plots already did).
+* `plotopt()` refuses a `grid`, `cex`, `las`, `bg` or `panel` value the plots cannot use (for example `grid = "x"`); it used to store it, and every later plot of the session then failed.
+* The rule constructors (`rulenull()`, `ruleuniq()`, `ruleincr()`, `rulemad()`, `rulebtw()`, `ruleinset()`, `rulerx()`) give one message whether `col` is left out or `NULL`: "`col` must name a column: a single non-empty string".
+
+## Code health
+
+* goodpractice passes every one of its checks. Every exported function's cyclomatic complexity is at most 15 and every function is at most 50 lines: long functions are split into named helpers, with no change in what they return or the errors they give (every exported function was run on the old and the new code with the same inputs and compared). In each file the exported functions come first; arguments that were tested with `missing()` default to `NULL`; each R file has a test file of the same name.
+* `explerr()` lists the exported functions an error is reached from through any helpers a function is split into, as well as up to four calls of shared code. Every line of R, of the tests and of the vignettes' code is at most 80 characters, and `lintr::lint_package()` reports nothing. The source is formatted with air (`air.toml`).
+* A function defined twice, the second copy silently replacing the first, is defined once: `plot.rmbl_prevalence()` (its help page showed it twice), `.bl_interactive()`, `.bl_stdin_tty()` and `.rmbl_permutations()`.
+* Continuous integration runs goodpractice with every check, and fails on any that fails.
+
+## Docker image and Homebrew
+
+* The Docker image installs every system and R package at its latest version, then removes the compilers and header packages it needed only to build; it is rebuilt every week from the latest release, and Trivy refuses an image with a fixable high or critical vulnerability. Known vulnerabilities went from 3,089 to 65, none of them high or critical.
+* A release updates the rmoriebricklayer formula in the homebrew-morie tap and checks that it installs and passes its test on macOS.
 
 # rmoriebricklayer 1.0.2
 
@@ -56,7 +105,7 @@
   [--port N] [--no-browser]` from a terminal; it needs shiny, which is suggested, not imported).
   Load a CSV file, a capsule's pinned data or a data.rmorie.com table, then describe, compare
   years, compute rates, test trends, estimate from a survey, fit distributions, check a capsule,
-  evaluate a policy on a panel, read the First Nations, Metis and Inuit tables, work through
+  evaluate a policy on a panel, read the First Nations, Métis and Inuit tables, work through
   courts and corrections counts, model a plume and its burden, fit a Hawkes process, or check a
   proof ledger. Each analysis shows the R call it ran and runs exactly that call; a refusal is
   shown in the package's words with `explerr()`'s note. The Report tab gathers results into one
@@ -267,12 +316,12 @@ names (`pctchg` for `pct_change`); `?rmbl-aliases` lists every renamed column an
 tools list the new names. Wire formats (capsule, manifest and service JSON fields, CSV columns from
 published tables) keep their names, so files written by earlier versions still read.
 
-## First Nations, Metis and Inuit health, mental health and wellness
+## First Nations, Métis and Inuit health, mental health and wellness
 
-Methods for the published tables, distinctions-based (First Nations, Metis and Inuit are each
+Methods for the published tables, distinctions-based (First Nations, Métis and Inuit are each
 reported on their own), with suppressed cells never imputed. Data governance follows OCAP® and the
 CARE Principles: only openly licensed aggregate tables are used, and First Nations-held survey data
-are not mirrored. A new vignette, "First Nations, Metis and Inuit health: published tables,
+are not mirrored. A new vignette, "First Nations, Métis and Inuit health: published tables,
 distinctions and governance", covers them all.
 
 **Reading the tables**

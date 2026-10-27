@@ -189,7 +189,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 
 #' Reads a CSV file with the package's reader (the columns read.csv() gives,
 #' typed the same way).
-#' @param path The file.
+#' @param path The path of the CSV file, gzipped or plain, to read.
 #' @param name The name to show and to write in the R call.
 #' @return A list: data, code, label, capsule.
 #' @noRd
@@ -220,7 +220,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 }
 
 #' Loads the pinned data of a capsule.
-#' @param dir The capsule directory.
+#' @param dir The capsule directory whose data file is loaded.
 #' @return A list: data, code, label, capsule.
 #' @noRd
 .bl_app_capsule <- function(dir) {
@@ -270,7 +270,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 
 #' Where an error comes from, in explerr()'s words, or \code{""} when it is not
 #' one of the package's.
-#' @param e The condition.
+#' @param e The condition whose message explerr() explains.
 #' @return One string.
 #' @noRd
 .bl_app_why <- function(e) {
@@ -456,13 +456,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
     fillable = FALSE,
     window_title = "rmoriebricklayer dashboard",
     selected = "describe",
-    header = shiny::tagList(
-      shiny::tags$head(
-        shiny::tags$style(shiny::HTML(.bl_app_css())),
-        shiny::tags$script(shiny::HTML(.bl_app_js()))
-      ),
-      shiny::useBusyIndicators()
-    ),
+    header = .bl_app_header(),
     sidebar = bslib::sidebar(
       id = "datasidebar",
       title = "Data",
@@ -494,11 +488,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
     bslib::nav_panel("Report", value = "report", .bl_rpt_ui("report")),
     bslib::nav_panel("Settings", value = "settings", .bl_set_ui("settings")),
     bslib::nav_spacer(),
-    bslib::nav_item(shiny::bookmarkButton(
-      label = "Share this view",
-      class = "btn-sm btn-outline-secondary",
-      title = "A link that reopens this tab with the same data and form"
-    )),
+    .bl_app_share(),
     bslib::nav_item(bslib::input_dark_mode(id = "mode"))
   )
 }
@@ -528,7 +518,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 # ---- data source -------------------------------------------------------------
 
 #' The data source panel of the sidebar.
-#' @param id The module id.
+#' @param id The data module's id, for its input namespace.
 #' @return A tag list.
 #' @noRd
 .bl_data_ui <- function(id) {
@@ -546,64 +536,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
       id = ns("acc"),
       open = "Source",
       multiple = TRUE,
-      bslib::accordion_panel(
-        "Source",
-        shiny::radioButtons(
-          ns("src"),
-          NULL,
-          c(
-            "Demo dataset" = "demo",
-            "CSV file" = "csv",
-            "Capsule directory" = "capsule",
-            "data.rmorie.com table" = "hub"
-          )
-        ),
-        shiny::conditionalPanel(
-          "input.src == 'demo'",
-          ns = ns,
-          shiny::selectInput(
-            ns("demo"),
-            "Demo dataset",
-            stats::setNames(dm$name, paste0(dm$name, ": ", dm$description))
-          ),
-          shiny::actionButton(
-            ns("demoload"),
-            "Use this dataset",
-            class = "btn-sm btn-primary"
-          )
-        ),
-        shiny::conditionalPanel(
-          "input.src == 'csv'",
-          ns = ns,
-          shiny::fileInput(
-            ns("csv"),
-            "CSV file (plain or gzip)",
-            accept = c(".csv", ".gz")
-          )
-        ),
-        shiny::conditionalPanel(
-          "input.src == 'capsule'",
-          ns = ns,
-          shiny::textInput(ns("cpsdir"), "Capsule directory"),
-          shiny::actionButton(
-            ns("cpsload"),
-            "Load the pinned data",
-            class = "btn-sm"
-          )
-        ),
-        shiny::conditionalPanel(
-          "input.src == 'hub'",
-          ns = ns,
-          shiny::uiOutput(ns("signin")),
-          shiny::actionButton(
-            ns("hublist"),
-            "List the tables",
-            class = "btn-sm"
-          ),
-          shiny::selectInput(ns("hubkey"), "Table", NULL),
-          shiny::actionButton(ns("hubload"), "Load the table", class = "btn-sm")
-        )
-      ),
+      .bl_data_source(ns, dm),
       bslib::accordion_panel(
         "Loaded datasets",
         shiny::actionButton(
@@ -620,7 +553,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 }
 
 #' The data source server.
-#' @param id The module id.
+#' @param id The data module's id, as given to .bl_data_ui().
 #' @param init The data to start with.
 #' @return A reactive value holding list(data, code, label, capsule).
 #' @noRd
@@ -644,127 +577,10 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
         list()
       }
     )
-    keep <- function(rs) {
-      l <- loaded()
-      for (r in rs) {
-        l[[r$label]] <- r
-      }
-      loaded(l)
-      shiny::updateSelectInput(
-        session,
-        "pick",
-        choices = names(l),
-        selected = rs[[length(rs)]]$label
-      )
-    }
-    take <- function(r) {
-      if (inherits(r, "bl_app_error")) {
-        msg(r)
-        .bl_app_toast(r)
-      } else {
-        cur(r)
-        msg(NULL)
-        keep(list(r))
-      }
-    }
-    shiny::observeEvent(
-      input$demoload,
-      take(.bl_app_try(.bl_app_demo(input$demo)))
-    )
-    shiny::observeEvent(input$alldemos, {
-      rs <- lapply(rmbldemo()$name, .bl_app_demo)
-      keep(rs)
-      cur(rs[[length(rs)]])
-      shiny::showNotification(
-        sprintf(
-          "%d demo datasets loaded: pick one under Active dataset.",
-          length(rs)
-        ),
-        type = "message"
-      )
-    })
-    shiny::observeEvent(
-      input$pick,
-      {
-        r <- loaded()[[input$pick]]
-        if (!is.null(r) && !identical(r$label, cur()$label)) cur(r)
-      },
-      ignoreInit = TRUE
-    )
-    shiny::observeEvent(
-      input$csv,
-      take(.bl_app_try(.bl_app_read(input$csv$datapath, input$csv$name)))
-    )
-    shiny::observeEvent(
-      input$cpsload,
-      take(.bl_app_try(.bl_app_capsule(input$cpsdir)))
-    )
-    shiny::observeEvent(input$hublist, {
-      r <- .bl_app_try(dtabs())
-      if (inherits(r, "bl_app_error")) {
-        msg(r)
-      } else {
-        shiny::updateSelectInput(
-          session,
-          "hubkey",
-          choices = stats::setNames(r$key, paste(r$key, "-", r$name))
-        )
-      }
-    })
-    shiny::observeEvent(
-      input$hubload,
-      take(.bl_app_try({
-        key <- input$hubkey
-        list(
-          data = dload(key),
-          code = sprintf("data <- dload(%s)", deparse(key)),
-          label = key,
-          capsule = NULL
-        )
-      }))
-    )
-    output$signin <- shiny::renderUI({
-      # whether a key is stored, never the key
-      shiny::tags$p(
-        class = "bl-about",
-        if (is.null(.bl_hosted_key())) {
-          "Not signed in: run `rmbl login` in a terminal, then list the tables."
-        } else {
-          "Signed in: the data key stays where `rmbl login` stored it."
-        }
-      )
-    })
-    output$status <- shiny::renderUI({
-      m <- msg()
-      if (!is.null(m)) {
-        return(.bl_app_err_ui(m))
-      }
-      d <- cur()
-      if (!is.data.frame(d$data)) {
-        return(shiny::tags$p(class = "bl-about", "No dataset chosen here yet."))
-      }
-      shiny::tags$p(
-        shiny::tags$strong(d$label),
-        sprintf(
-          ": %s rows, %d columns",
-          format(nrow(d$data), big.mark = ","),
-          ncol(d$data)
-        )
-      )
-    })
-    output$cols <- shiny::renderTable(.bl_app_types(cur()$data))
-    output$colsui <- shiny::renderUI({
-      if (!is.data.frame(cur()$data)) {
-        return(shiny::tags$p(
-          class = "bl-about",
-          "Choose a dataset to see its columns."
-        ))
-      }
-      shiny::tags$div(
-        class = "bl-scroll",
-        shiny::tableOutput(session$ns("cols"))
-      )
-    })
+    st <- list(cur = cur, msg = msg, loaded = loaded)
+    .bl_data_events(input, session, st)
+    .bl_data_hub_events(input, session, st)
+    .bl_data_outputs(output, session, st)
     cur
   })
 }
@@ -772,7 +588,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 # ---- one analysis tab --------------------------------------------------------
 
 #' The download menu of a plot card: PNG, SVG, the table as CSV and the result.
-#' @param ns The namespace function.
+#' @param ns The namespace function for the download links' ids.
 #' @return A tag.
 #' @noRd
 .bl_dl_menu <- function(ns) {
@@ -799,20 +615,12 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 }
 
 #' The form, value boxes and cards of one tab.
-#' @param id The module id.
+#' @param id The analysis tab's module id, for its input namespace.
 #' @param s The tab's spec.
 #' @return A tag.
 #' @noRd
 .bl_tab_ui <- function(id, s) {
   ns <- shiny::NS(id)
-  fns <- vapply(s$fns, `[[`, "", "label")
-  card <- function(title, ..., tools = NULL, full = TRUE) {
-    bslib::card(
-      full_screen = full,
-      bslib::card_header(title, tools),
-      bslib::card_body(...)
-    )
-  }
   plot_args <- list(
     ns("plot"),
     height = "420px",
@@ -820,57 +628,29 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   )
   bslib::layout_sidebar(
     fillable = FALSE,
-    sidebar = bslib::sidebar(
-      id = ns("side"),
-      title = "Analysis",
-      width = 300,
-      open = list(desktop = "open", mobile = "always-above"),
-      shiny::selectInput(
-        ns("source"),
-        "Data",
-        c(s$sources, "The dataset chosen at the left" = ""),
-        selected = unname(s$sources[[1L]])
-      ),
-      shiny::selectInput(
-        ns("fn"),
-        "Analysis",
-        stats::setNames(names(s$fns), fns)
-      ),
-      shiny::uiOutput(ns("form")),
-      bslib::input_task_button(
-        ns("run"),
-        "Run",
-        label_busy = "Running...",
-        class = "btn-primary"
-      ),
-      shiny::actionButton(
-        ns("add"),
-        "Add to report",
-        class = "btn-outline-secondary"
-      )
-    ),
+    sidebar = .bl_tab_sidebar(ns, s),
     shiny::tags$div(class = "bl-lead", s$about),
     shiny::tags$div(`aria-live` = "polite", shiny::uiOutput(ns("err"))),
     shiny::uiOutput(ns("vbox")),
     bslib::layout_columns(
       col_widths = bslib::breakpoints(sm = 12, xl = c(8, 4)),
-      card(
+      .bl_tab_card(
         "Plot",
         do.call(shiny::plotOutput, plot_args),
         shiny::uiOutput(ns("hoverinfo")),
         tools = .bl_dl_menu(ns)
       ),
-      card("Method", shiny::uiOutput(ns("method")), full = FALSE)
+      .bl_tab_card("Method", shiny::uiOutput(ns("method")), full = FALSE)
     ),
     if (identical(s$linked, "density")) .bl_drift_brush_ui(ns),
     bslib::layout_columns(
       col_widths = bslib::breakpoints(sm = 12, xl = c(6, 6)),
-      card(
+      .bl_tab_card(
         "Diagnostics",
         shiny::uiOutput(ns("diagsel")),
         shiny::uiOutput(ns("diag"))
       ),
-      card(
+      .bl_tab_card(
         "Table",
         shiny::uiOutput(ns("table")),
         bslib::accordion(
@@ -882,20 +662,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
         )
       )
     ),
-    card(
-      "Reproducible R call",
-      shiny::verbatimTextOutput(ns("code")),
-      full = FALSE,
-      tools = shiny::tags$div(
-        class = "bl-tools",
-        shiny::tags$button(
-          type = "button",
-          class = "btn btn-sm btn-outline-secondary bl-copy",
-          `data-target` = ns("code"),
-          "Copy"
-        )
-      )
-    ),
+    .bl_tab_code_card(ns),
     if (is.function(s$extra)) s$extra()
   )
 }
@@ -903,7 +670,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 #' The values the form of an analysis starts with, by input name, as the page's
 #' controls hold them: a column argument takes the first of its defaults the
 #' data has.
-#' @param f The analysis spec.
+#' @param f The analysis spec, whose steps, plot and diagnostics give arguments.
 #' @param cols The column names of the data, or NULL to take the first default.
 #' @return A named list.
 #' @noRd
@@ -934,7 +701,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
         text = ,
         nums = ,
         texts = ,
-        seq = paste(a$default %||% "", collapse = ", "),
+        seq = toString(a$default %||% ""),
         choice = a$default %||% a$choices[[1L]],
         flag = isTRUE(a$default),
         NULL
@@ -965,7 +732,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 }
 
 #' One form control.
-#' @param ns The namespace function.
+#' @param ns The namespace function for the argument input's id.
 #' @param nm The argument's input name.
 #' @param a The argument's spec.
 #' @param cols The column names of the data.
@@ -996,7 +763,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
     text = ,
     nums = ,
     texts = ,
-    seq = shiny::textInput(id, lab, paste(a$default %||% "", collapse = ", ")),
+    seq = shiny::textInput(id, lab, toString(a$default %||% "")),
     area = shiny::textAreaInput(id, lab, a$default %||% "", rows = 8),
     choice = shiny::selectInput(id, lab, a$choices, selected = a$default),
     choices = shiny::selectInput(
@@ -1077,7 +844,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 
 #' Builds the call of one step from the form.
 #' @param st The step: fn and args.
-#' @param input The inputs.
+#' @param input The tab's inputs, holding each argument's `a_` value.
 #' @param set The settings.
 #' @return A call.
 #' @noRd
@@ -1102,7 +869,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 
 #' The row filter of a tab, as a call, or NULL when no value is chosen.
 #' @param filters The filterable columns.
-#' @param input The inputs.
+#' @param input The tab's inputs, holding each filter's `f_` value.
 #' @param d The data.
 #' @return A call or NULL.
 #' @noRd
@@ -1140,27 +907,16 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 
 #' Runs one analysis: the filter, each step, then the plot (to a null device)
 #' and the diagnostic plots' calls.
-#' @param f The analysis spec.
-#' @param s The tab spec.
+#' @param f The analysis spec: its steps, plot, diagnostics and hover.
+#' @param s The tab spec, giving the filters.
 #' @param d The tab's data, from .bl_tab_data().
-#' @param input The inputs.
+#' @param input The tab's inputs, read for the filters and step arguments.
 #' @param set The settings.
 #' @return A list: value, code, env, plot (a call or NULL), diag (named calls),
 #'   title and hover (the period column, or NULL).
 #' @noRd
 .bl_tab_run <- function(f, s, d, input, set) {
-  if (isTRUE(f$needs_data %||% TRUE) && !is.data.frame(d$data)) {
-    stop(structure(
-      class = c("bl_nodata", "error", "condition"),
-      list(
-        message = paste0(
-          "No data yet: choose an example in Data, or a dataset at the ",
-          "left."
-        ),
-        call = NULL
-      )
-    ))
-  }
+  .bl_tab_need_data(f, d)
   env <- new.env(parent = asNamespace("rmoriebricklayer"))
   env$data <- d$data
   code <- d$code
@@ -1242,11 +998,74 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   })
 }
 
+#' A dashboard tab's result outputs: code, errors, headline, method, plots,
+#' diagnostics, tables and downloads.
+#' @param input,output,session The module's.
+#' @param s The tab's spec.
+#' @param id The tab.
+#' @param res The result, a reactive value.
+#' @param tabdata The tab's data, a reactive.
+#' @param set The settings, a reactive.
+#' @param mode The colour mode, a reactive.
+#' @noRd
+.bl_tab_result_outputs <- function(
+  input,
+  output,
+  session,
+  s,
+  id,
+  res,
+  tabdata,
+  set,
+  mode
+) {
+  .bl_tab_main_outputs(input, output, s, res, tabdata, mode)
+  .bl_tab_diag_outputs(input, output, session, s, res, tabdata, set, mode)
+  .bl_tab_dl_outputs(output, id, res)
+  invisible(NULL)
+}
+
+#' A dashboard tab's column dialog: a profile column picked opens its
+#' distribution and summary.
+#' @param input,output,session The module's.
+#' @param tabdata The tab's data, a reactive.
+#' @param mode The colour mode, a reactive.
+#' @noRd
+.bl_tab_column_outputs <- function(input, output, session, tabdata, mode) {
+  # a column of the profile opens its distribution
+  shiny::observeEvent(input$pickcol, {
+    d <- tabdata()
+    shiny::req(!inherits(d, "bl_app_error"), input$pickcol %in% names(d$data))
+    shiny::showModal(shiny::modalDialog(
+      title = sprintf("The distribution of %s", input$pickcol),
+      size = "l",
+      easyClose = TRUE,
+      shiny::plotOutput(session$ns("colplot"), height = "360px"),
+      shiny::tableOutput(session$ns("colsumm"))
+    ))
+  })
+  output$colplot <- shiny::renderPlot(
+    {
+      d <- tabdata()
+      shiny::req(input$pickcol %in% names(d$data))
+      .bl_col_plot(d$data[[input$pickcol]], input$pickcol, mode())
+    },
+    res = 96,
+    bg = "transparent"
+  )
+  output$colsumm <- shiny::renderTable({
+    d <- tabdata()
+    shiny::req(input$pickcol %in% names(d$data))
+    .bl_col_summary(d$data[[input$pickcol]])
+  })
+  invisible(NULL)
+}
+
 #' The form and outputs of one tab.
-#' @param id The module id.
-#' @param s The tab spec.
+#' @param id The analysis tab's module id, as given to .bl_tab_ui().
+#' @param s The tab spec: its sources, filters and analyses.
 #' @param dat The data loaded at the left.
-#' @param rpt The report's entries.
+#' @param rpt The reactive report entries, passed to the tab's events.
 #' @param set The settings.
 #' @param active The id of the tab on the page; the tab runs its first analysis
 #'   when it is first shown.
@@ -1267,14 +1086,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   # analysis)
   force(s)
   shiny::moduleServer(id, function(input, output, session) {
-    shiny::setBookmarkExclude(c(
-      "run",
-      "add",
-      "pickcol",
-      "hover",
-      "dbrush",
-      "side"
-    ))
+    shiny::setBookmarkExclude(.bl_tab_unbookmarked())
     res <- shiny::reactiveVal(NULL)
     restored <- shiny::reactiveVal(list())
     shiny::onRestore(function(state) restored(state$input))
@@ -1287,221 +1099,20 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
       .bl_bg(function() .bl_app_try(.bl_tab_run(f, s, d, inp, st)), f$long)
     })
     bslib::bind_task_button(task, "run")
-    go <- function(inp) {
-      d <- tabdata()
-      if (inherits(d, "bl_app_error")) {
-        return(res(d))
-      }
-      inp <- utils::modifyList(restored(), inp)
-      f <- s$fns[[inp$fn %||% names(s$fns)[1L]]]
-      cols <- if (is.data.frame(d$data)) names(d$data)
-      task$invoke(
-        f,
-        d,
-        utils::modifyList(.bl_form_defaults(f, cols), inp),
-        set()
-      )
-    }
-    shiny::observeEvent(input$run, go(shiny::reactiveValuesToList(input)))
-    # the tab runs its first analysis (or the restored one) on its example data
-    # when first shown
-    shiny::observeEvent(active(), {
-      if (identical(active(), id) && task$status() == "initial") {
-        go(shiny::reactiveValuesToList(input))
-      }
-    })
-    # a dataset chosen at the left becomes the tab's data, and runs
-    shiny::observeEvent(
-      dat(),
-      {
-        shiny::updateSelectInput(session, "source", selected = "")
-        restored(list())
-      },
-      ignoreInit = TRUE
+    ev <- list(
+      res = res,
+      restored = restored,
+      task = task,
+      tabdata = tabdata
     )
-    shiny::observe({
-      st <- task$status()
-      if (st %in% c("success", "error")) {
-        r <- .bl_app_try(task$result())
-        res(r)
-        .bl_app_toast(r)
-      }
-    })
-    output$form <- shiny::renderUI({
-      f <- s$fns[[input$fn %||% names(s$fns)[1L]]]
-      d <- tabdata()
-      cols <- if (is.data.frame(d$data)) names(d$data) else character()
-      args <- list()
-      for (st in c(
-        f$steps,
-        if (!is.null(f$plot)) list(f$plot),
-        lapply(f$diag, `[[`, "step")
-      )) {
-        for (nm in names(st$args)) {
-          args[[.bl_arg_id(nm, st$args[[nm]])]] <- st$args[[nm]]
-        }
-      }
-      flt <- lapply(intersect(s$filters, cols), function(fc) {
-        shiny::selectInput(
-          session$ns(paste0("f_", make.names(fc))),
-          sprintf("Rows where %s is", fc),
-          sort(unique(as.character(d$data[[fc]]))),
-          multiple = TRUE
-        )
-      })
-      shiny::tagList(
-        if (!is.null(f$about)) shiny::tags$p(class = "bl-about", f$about),
-        flt,
-        lapply(names(args), function(nm) {
-          .bl_arg_ui(session$ns, nm, args[[nm]], cols)
-        })
-      )
-    })
-    ok <- function() {
-      r <- res()
-      !is.null(r) && !inherits(r, "bl_app_error")
-    }
-    data_n <- function() {
-      d <- tabdata()
-      if (!inherits(d, "bl_app_error") && is.data.frame(d$data)) nrow(d$data)
-    }
-    output$code <- shiny::renderText(
-      if (ok()) paste(res()$code, collapse = "\n") else ""
-    )
-    output$err <- shiny::renderUI(
-      if (inherits(res(), "bl_app_error")) .bl_app_err_ui(res())
-    )
-    output$vbox <- shiny::renderUI(
-      if (ok()) .bl_vbox_ui(.bl_headline(res()$value, data_n()))
-    )
-    output$method <- shiny::renderUI({
-      f <- s$fns[[input$fn %||% names(s$fns)[1L]]]
-      .bl_method_ui(
-        f,
-        s,
-        if (ok()) .bl_headline(res()$value, data_n()),
-        if (ok()) res()$value
-      )
-    })
-    output$plot <- shiny::renderPlot(
-      {
-        shiny::req(ok())
-        .bl_plot_run(res()$plot, res(), mode())
-      },
-      res = 96,
-      bg = "transparent"
-    )
-    output$hoverinfo <- shiny::renderUI({
-      shiny::req(ok(), res()$hover)
-      .bl_hover_ui(res()$value, res()$hover, input$hover)
-    })
-    output$diagsel <- shiny::renderUI({
-      shiny::req(ok())
-      ch <- .bl_diag_choices(res())
-      if (length(ch)) {
-        shiny::tagList(
-          shiny::selectInput(session$ns("diagwhich"), "Diagnostic plot", ch),
-          shiny::plotOutput(session$ns("diagplot"), height = "320px")
-        )
-      }
-    })
-    output$diagplot <- shiny::renderPlot(
-      {
-        shiny::req(ok())
-        ch <- .bl_diag_choices(res())
-        shiny::req(length(ch) > 0L)
-        w <- input$diagwhich %||% ch[[1L]]
-        .bl_draw_diag(res(), if (w %in% ch) w else ch[[1L]], mode())
-      },
-      res = 96,
-      bg = "transparent"
-    )
-    output$diag <- shiny::renderUI(if (ok()) .bl_diag_ui(res()$value))
-    output$table <- shiny::renderUI({
-      shiny::req(ok())
-      d <- tabdata()
-      .bl_table_ui(
-        res()$value,
-        set()$digits,
-        if (identical(s$linked, "columns") && is.data.frame(d$data)) {
-          list(ns = session$ns, cols = names(d$data))
-        }
-      )
-    })
-    output$print <- shiny::renderPrint({
-      shiny::req(ok())
-      op <- options(digits = set()$digits)
-      on.exit(options(op), add = TRUE)
-      print(res()$value)
-    })
-    output$dl <- shiny::downloadHandler(
-      filename = function() .bl_dl_name(res()$value, id),
-      content = function(file) .bl_dl_write(res()$value, file)
-    )
-    output$png <- shiny::downloadHandler(
-      paste0("rmbl-", id, ".png"),
-      function(file) {
-        .bl_save_plot(res(), file, "png")
-      }
-    )
-    output$svg <- shiny::downloadHandler(
-      paste0("rmbl-", id, ".svg"),
-      function(file) {
-        .bl_save_plot(res(), file, "svg")
-      }
-    )
-    output$csv <- shiny::downloadHandler(
-      paste0("rmbl-", id, ".csv"),
-      function(file) {
-        utils::write.csv(.bl_main_table(res()$value), file, row.names = FALSE)
-      }
-    )
-    # a column of the profile opens its distribution
-    shiny::observeEvent(input$pickcol, {
-      d <- tabdata()
-      shiny::req(!inherits(d, "bl_app_error"), input$pickcol %in% names(d$data))
-      shiny::showModal(shiny::modalDialog(
-        title = sprintf("The distribution of %s", input$pickcol),
-        size = "l",
-        easyClose = TRUE,
-        shiny::plotOutput(session$ns("colplot"), height = "360px"),
-        shiny::tableOutput(session$ns("colsumm"))
-      ))
-    })
-    output$colplot <- shiny::renderPlot(
-      {
-        d <- tabdata()
-        shiny::req(input$pickcol %in% names(d$data))
-        .bl_col_plot(d$data[[input$pickcol]], input$pickcol, mode())
-      },
-      res = 96,
-      bg = "transparent"
-    )
-    output$colsumm <- shiny::renderTable({
-      d <- tabdata()
-      shiny::req(input$pickcol %in% names(d$data))
-      .bl_col_summary(d$data[[input$pickcol]])
-    })
-    if (identical(s$linked, "density")) {
-      .bl_drift_brush_server(input, output, session, tabdata, mode)
-    }
-    shiny::observeEvent(
-      input$add,
-      if (ok()) {
-        rpt(c(rpt(), list(.bl_rpt_entry(res()))))
-        shiny::showNotification(
-          sprintf("Added \"%s\" to the report.", res()$title),
-          type = "message",
-          duration = 3
-        )
-      }
-    )
+    .bl_tab_events(input, session, s, id, dat, ev, set, active, rpt)
+    .bl_tab_outputs(input, output, session, s, id, ev, set, mode)
     invisible(NULL)
   })
 }
 
 #' The file name of a downloaded result.
-#' @param x The result.
+#' @param x The result to download, whose kind names the file.
 #' @param id The tab.
 #' @return One string.
 #' @noRd
@@ -1520,7 +1131,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 }
 
 #' A result as a table for download, or whether there is one.
-#' @param x The result.
+#' @param x The result, turned into a table when it is one or holds one.
 #' @param test Whether only to say if there is one.
 #' @return A data frame (or NULL), or TRUE/FALSE.
 #' @noRd
@@ -1537,8 +1148,8 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 
 #' Writes a downloaded result: a yoy() table as yoyhtml() draws it, a table as
 #' CSV, else the print.
-#' @param x The result.
-#' @param file The file.
+#' @param x The result to write: as HTML, as CSV or as printed text.
+#' @param file The path the download is written to.
 #' @return The file, invisibly.
 #' @noRd
 .bl_dl_write <- function(x, file) {
@@ -1553,11 +1164,11 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 }
 
 #' Runs the app verb: `rmbl app [PATH] [--port N] [--no-browser]`.
-#' @param rest The arguments after the verb.
-#' @param flag A function that returns the value of an option, or NULL.
+#' @param rest The arguments after `app`: a path, `--port N` and `--no-browser`.
+#' @param flag Looks up the value of `--port`, or gives NULL.
 #' @param has A function that tells whether an option was given.
-#' @param out The function that prints the verb's output.
-#' @param usage_error A function that raises a usage error.
+#' @param out The function that prints the app's messages.
+#' @param usage_error Raises the app verb's usage error with the message given.
 #' @return The exit status.
 #' @noRd
 .bl_cli_app <- function(rest, flag, has, out, usage_error) {
@@ -1605,4 +1216,674 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
     launch.browser = browser
   )
   invisible(NULL)
+}
+
+#' The inputs of an analysis tab that a bookmark leaves out.
+#' @return A character vector of input ids.
+#' @noRd
+.bl_tab_unbookmarked <- function() {
+  c("run", "add", "pickcol", "hover", "dbrush", "side")
+}
+
+#' Whether an analysis tab holds a result that is not an error.
+#' @param res The tab's result (a reactive value).
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_res_ok <- function(res) {
+  r <- res()
+  !is.null(r) && !inherits(r, "bl_app_error")
+}
+
+#' Starts an analysis tab's run on its data with the given inputs (the
+#' restored ones under them).
+#' @param inp The inputs.
+#' @param s The tab's spec.
+#' @param ev The tab's state: `res`, `restored`, `task` and `tabdata`.
+#' @param set The settings.
+#' @return The task invoked, or the data error set as the result.
+#' @noRd
+.bl_tab_go <- function(inp, s, ev, set) {
+  d <- ev$tabdata()
+  if (inherits(d, "bl_app_error")) {
+    return(ev$res(d))
+  }
+  inp <- utils::modifyList(ev$restored(), inp)
+  f <- s$fns[[inp$fn %||% names(s$fns)[1L]]]
+  cols <- if (is.data.frame(d$data)) names(d$data)
+  ev$task$invoke(
+    f,
+    d,
+    utils::modifyList(.bl_form_defaults(f, cols), inp),
+    set()
+  )
+}
+
+#' An analysis tab's observers: run, first show, new data, the task's end
+#' and the report button.
+#' @param input,session The analysis tab's input and session.
+#' @param s,id,dat,set,active,rpt As for `.bl_tab_server()`.
+#' @param ev The tab's state: `res`, `restored`, `task` and `tabdata`.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_tab_events <- function(input, session, s, id, dat, ev, set, active, rpt) {
+  go <- function() .bl_tab_go(shiny::reactiveValuesToList(input), s, ev, set)
+  shiny::observeEvent(input$run, go())
+  # the tab runs its first analysis (or the restored one) on its example data
+  # when first shown
+  shiny::observeEvent(active(), {
+    if (identical(active(), id) && ev$task$status() == "initial") {
+      go()
+    }
+  })
+  # a dataset chosen at the left becomes the tab's data, and runs
+  shiny::observeEvent(
+    dat(),
+    {
+      shiny::updateSelectInput(session, "source", selected = "")
+      ev$restored(list())
+    },
+    ignoreInit = TRUE
+  )
+  shiny::observe({
+    st <- ev$task$status()
+    if (st %in% c("success", "error")) {
+      r <- .bl_app_try(ev$task$result())
+      ev$res(r)
+      .bl_app_toast(r)
+    }
+  })
+  shiny::observeEvent(
+    input$add,
+    if (.bl_res_ok(ev$res)) {
+      rpt(c(rpt(), list(.bl_rpt_entry(ev$res()))))
+      shiny::showNotification(
+        sprintf("Added \"%s\" to the report.", ev$res()$title),
+        type = "message",
+        duration = 3
+      )
+    }
+  )
+  invisible(NULL)
+}
+
+#' An analysis tab's outputs: its form, its result, its column views and,
+#' for a density tab, its brush.
+#' @param input,output,session The module's input, output and session.
+#' @param s,id,set,mode As for `.bl_tab_server()`.
+#' @param ev The tab's state: `res`, `restored`, `task` and `tabdata`.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_tab_outputs <- function(input, output, session, s, id, ev, set, mode) {
+  output$form <- shiny::renderUI(.bl_tab_form(input, session, s, ev$tabdata()))
+  .bl_tab_result_outputs(
+    input,
+    output,
+    session,
+    s,
+    id,
+    ev$res,
+    ev$tabdata,
+    set,
+    mode
+  )
+  .bl_tab_column_outputs(input, output, session, ev$tabdata, mode)
+  if (identical(s$linked, "density")) {
+    .bl_drift_brush_server(input, output, session, ev$tabdata, mode)
+  }
+  invisible(NULL)
+}
+
+#' An analysis tab's form: the row filters and the arguments of the chosen
+#' analysis.
+#' @param input,session The analysis tab's input and session, for its form.
+#' @param s The tab's spec.
+#' @param d The tab's data.
+#' @return A tag list.
+#' @noRd
+.bl_tab_form <- function(input, session, s, d) {
+  f <- s$fns[[input$fn %||% names(s$fns)[1L]]]
+  cols <- if (is.data.frame(d$data)) names(d$data) else character()
+  args <- list()
+  for (st in c(
+    f$steps,
+    if (!is.null(f$plot)) list(f$plot),
+    lapply(f$diag, `[[`, "step")
+  )) {
+    for (nm in names(st$args)) {
+      args[[.bl_arg_id(nm, st$args[[nm]])]] <- st$args[[nm]]
+    }
+  }
+  flt <- lapply(intersect(s$filters, cols), function(fc) {
+    shiny::selectInput(
+      session$ns(paste0("f_", make.names(fc))),
+      sprintf("Rows where %s is", fc),
+      sort(unique(as.character(d$data[[fc]]))),
+      multiple = TRUE
+    )
+  })
+  shiny::tagList(
+    if (!is.null(f$about)) shiny::tags$p(class = "bl-about", f$about),
+    flt,
+    lapply(names(args), function(nm) {
+      .bl_arg_ui(session$ns, nm, args[[nm]], cols)
+    })
+  )
+}
+
+#' The number of rows of an analysis tab's data, or `NULL`.
+#' @param tabdata The tab's data (a reactive).
+#' @return A count, or `NULL` when there is no data frame.
+#' @noRd
+.bl_data_n <- function(tabdata) {
+  d <- tabdata()
+  if (!inherits(d, "bl_app_error") && is.data.frame(d$data)) nrow(d$data)
+}
+
+#' An analysis tab's call, error, value boxes, method, plot and hover.
+#' @param input,output The module's input and output.
+#' @param s The tab's spec.
+#' @param res,tabdata,mode The tab's result, data and colour mode.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_tab_main_outputs <- function(input, output, s, res, tabdata, mode) {
+  ok <- function() .bl_res_ok(res)
+  output$code <- shiny::renderText(
+    if (ok()) paste(res()$code, collapse = "\n") else ""
+  )
+  output$err <- shiny::renderUI(
+    if (inherits(res(), "bl_app_error")) .bl_app_err_ui(res())
+  )
+  output$vbox <- shiny::renderUI(
+    if (ok()) .bl_vbox_ui(.bl_headline(res()$value, .bl_data_n(tabdata)))
+  )
+  output$method <- shiny::renderUI({
+    f <- s$fns[[input$fn %||% names(s$fns)[1L]]]
+    .bl_method_ui(
+      f,
+      s,
+      if (ok()) .bl_headline(res()$value, .bl_data_n(tabdata)),
+      if (ok()) res()$value
+    )
+  })
+  output$plot <- shiny::renderPlot(
+    {
+      shiny::req(ok())
+      .bl_plot_run(res()$plot, res(), mode())
+    },
+    res = 96,
+    bg = "transparent"
+  )
+  output$hoverinfo <- shiny::renderUI({
+    shiny::req(ok(), res()$hover)
+    .bl_hover_ui(res()$value, res()$hover, input$hover)
+  })
+  invisible(NULL)
+}
+
+#' An analysis tab's diagnostics, table and printed result.
+#' @param input,output,session The module's input, output and session.
+#' @param s The tab's spec.
+#' @param res,tabdata,set,mode The tab's result, data, settings and colour
+#'   mode.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_tab_diag_outputs <- function(
+  input,
+  output,
+  session,
+  s,
+  res,
+  tabdata,
+  set,
+  mode
+) {
+  ok <- function() .bl_res_ok(res)
+  output$diagsel <- shiny::renderUI({
+    shiny::req(ok())
+    ch <- .bl_diag_choices(res())
+    if (length(ch)) {
+      shiny::tagList(
+        shiny::selectInput(session$ns("diagwhich"), "Diagnostic plot", ch),
+        shiny::plotOutput(session$ns("diagplot"), height = "320px")
+      )
+    }
+  })
+  output$diagplot <- shiny::renderPlot(
+    {
+      shiny::req(ok())
+      ch <- .bl_diag_choices(res())
+      shiny::req(length(ch) > 0L)
+      w <- input$diagwhich %||% ch[[1L]]
+      .bl_draw_diag(res(), if (w %in% ch) w else ch[[1L]], mode())
+    },
+    res = 96,
+    bg = "transparent"
+  )
+  output$diag <- shiny::renderUI(if (ok()) .bl_diag_ui(res()$value))
+  output$table <- shiny::renderUI({
+    shiny::req(ok())
+    d <- tabdata()
+    .bl_table_ui(
+      res()$value,
+      set()$digits,
+      if (identical(s$linked, "columns") && is.data.frame(d$data)) {
+        list(ns = session$ns, cols = names(d$data))
+      }
+    )
+  })
+  output$print <- shiny::renderPrint({
+    shiny::req(ok())
+    op <- options(digits = set()$digits)
+    on.exit(options(op), add = TRUE)
+    print(res()$value)
+  })
+  invisible(NULL)
+}
+
+#' An analysis tab's downloads: the result, the plot as PNG and SVG, and
+#' the main table as CSV.
+#' @param output The analysis tab's output, given its download handlers.
+#' @param id The tab's id.
+#' @param res The tab's result.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_tab_dl_outputs <- function(output, id, res) {
+  output$dl <- shiny::downloadHandler(
+    filename = function() .bl_dl_name(res()$value, id),
+    content = function(file) .bl_dl_write(res()$value, file)
+  )
+  output$png <- shiny::downloadHandler(
+    paste0("rmbl-", id, ".png"),
+    function(file) {
+      .bl_save_plot(res(), file, "png")
+    }
+  )
+  output$svg <- shiny::downloadHandler(
+    paste0("rmbl-", id, ".svg"),
+    function(file) {
+      .bl_save_plot(res(), file, "svg")
+    }
+  )
+  output$csv <- shiny::downloadHandler(
+    paste0("rmbl-", id, ".csv"),
+    function(file) {
+      utils::write.csv(.bl_main_table(res()$value), file, row.names = FALSE)
+    }
+  )
+  invisible(NULL)
+}
+
+#' A card of an analysis tab.
+#' @param title The card's header text, beside its tools.
+#' @param ... The card's body.
+#' @param tools Tags for the header's right, or `NULL`.
+#' @param full Whether the card can go full screen.
+#' @return A card.
+#' @noRd
+.bl_tab_card <- function(title, ..., tools = NULL, full = TRUE) {
+  bslib::card(
+    full_screen = full,
+    bslib::card_header(title, tools),
+    bslib::card_body(...)
+  )
+}
+
+#' An analysis tab's sidebar: the data, the analysis, its form and the
+#' buttons.
+#' @param ns The analysis tab's namespace function, for the sidebar inputs.
+#' @param s The tab's spec.
+#' @return A sidebar.
+#' @noRd
+.bl_tab_sidebar <- function(ns, s) {
+  fns <- vapply(s$fns, `[[`, "", "label")
+  bslib::sidebar(
+    id = ns("side"),
+    title = "Analysis",
+    width = 300,
+    open = list(desktop = "open", mobile = "always-above"),
+    shiny::selectInput(
+      ns("source"),
+      "Data",
+      c(s$sources, "The dataset chosen at the left" = ""),
+      selected = unname(s$sources[[1L]])
+    ),
+    shiny::selectInput(
+      ns("fn"),
+      "Analysis",
+      stats::setNames(names(s$fns), fns)
+    ),
+    shiny::uiOutput(ns("form")),
+    bslib::input_task_button(
+      ns("run"),
+      "Run",
+      label_busy = "Running...",
+      class = "btn-primary"
+    ),
+    shiny::actionButton(
+      ns("add"),
+      "Add to report",
+      class = "btn-outline-secondary"
+    )
+  )
+}
+
+#' An analysis tab's card with the reproducible R call and its copy button.
+#' @param ns The analysis tab's namespace function, for the code output.
+#' @return A card.
+#' @noRd
+.bl_tab_code_card <- function(ns) {
+  .bl_tab_card(
+    "Reproducible R call",
+    shiny::verbatimTextOutput(ns("code")),
+    full = FALSE,
+    tools = shiny::tags$div(
+      class = "bl-tools",
+      shiny::tags$button(
+        type = "button",
+        class = "btn btn-sm btn-outline-secondary bl-copy",
+        `data-target` = ns("code"),
+        "Copy"
+      )
+    )
+  )
+}
+
+#' Stops with the no-data condition when an analysis needs data and has
+#' none.
+#' @param f The analysis.
+#' @param d The tab's data.
+#' @return `NULL`, invisibly; signals a `bl_nodata` error otherwise.
+#' @noRd
+.bl_tab_need_data <- function(f, d) {
+  if (isTRUE(f$needs_data %||% TRUE) && !is.data.frame(d$data)) {
+    stop(structure(
+      class = c("bl_nodata", "error", "condition"),
+      list(
+        message = paste0(
+          "No data yet: choose an example in Data, or a dataset at the ",
+          "left."
+        ),
+        call = NULL
+      )
+    ))
+  }
+  invisible(NULL)
+}
+
+#' The dashboard page's header: its style, its script and the busy
+#' indicators.
+#' @return A tag list.
+#' @noRd
+.bl_app_header <- function() {
+  shiny::tagList(
+    shiny::tags$head(
+      shiny::tags$style(shiny::HTML(.bl_app_css())),
+      shiny::tags$script(shiny::HTML(.bl_app_js()))
+    ),
+    shiny::useBusyIndicators()
+  )
+}
+
+#' The dashboard's share button: a bookmark of the current view.
+#' @return A nav item.
+#' @noRd
+.bl_app_share <- function() {
+  bslib::nav_item(shiny::bookmarkButton(
+    label = "Share this view",
+    class = "btn-sm btn-outline-secondary",
+    title = "A link that reopens this tab with the same data and form"
+  ))
+}
+
+#' The data sidebar's source panel: a demo, a CSV file, a capsule or a
+#' data.rmorie.com table.
+#' @param ns The data module's namespace function, for the source inputs.
+#' @param dm The demo datasets, from rmbldemo().
+#' @return An accordion panel.
+#' @noRd
+.bl_data_source <- function(ns, dm) {
+  bslib::accordion_panel(
+    "Source",
+    shiny::radioButtons(
+      ns("src"),
+      NULL,
+      c(
+        "Demo dataset" = "demo",
+        "CSV file" = "csv",
+        "Capsule directory" = "capsule",
+        "data.rmorie.com table" = "hub"
+      )
+    ),
+    shiny::conditionalPanel(
+      "input.src == 'demo'",
+      ns = ns,
+      shiny::selectInput(
+        ns("demo"),
+        "Demo dataset",
+        stats::setNames(dm$name, paste0(dm$name, ": ", dm$description))
+      ),
+      shiny::actionButton(
+        ns("demoload"),
+        "Use this dataset",
+        class = "btn-sm btn-primary"
+      )
+    ),
+    shiny::conditionalPanel(
+      "input.src == 'csv'",
+      ns = ns,
+      shiny::fileInput(
+        ns("csv"),
+        "CSV file (plain or gzip)",
+        accept = c(".csv", ".gz")
+      )
+    ),
+    shiny::conditionalPanel(
+      "input.src == 'capsule'",
+      ns = ns,
+      shiny::textInput(ns("cpsdir"), "Capsule directory"),
+      shiny::actionButton(
+        ns("cpsload"),
+        "Load the pinned data",
+        class = "btn-sm"
+      )
+    ),
+    .bl_data_hub_panel(ns)
+  )
+}
+
+#' Adds datasets to the data sidebar's list, choosing the last one.
+#' @param session The data module's session, passed to the input updates.
+#' @param st The sidebar's state: `cur`, `msg` and `loaded`.
+#' @param rs The datasets.
+#' @return As `shiny::updateSelectInput()`.
+#' @noRd
+.bl_data_keep <- function(session, st, rs) {
+  l <- st$loaded()
+  for (r in rs) {
+    l[[r$label]] <- r
+  }
+  st$loaded(l)
+  shiny::updateSelectInput(
+    session,
+    "pick",
+    choices = names(l),
+    selected = rs[[length(rs)]]$label
+  )
+}
+
+#' Makes a loaded dataset the current one, or shows its error.
+#' @param session The data module's session, passed on to .bl_data_keep().
+#' @param st The sidebar's state.
+#' @param r The loaded data from `.bl_app_try()`, or a `bl_app_error`.
+#' @return As `.bl_data_keep()`, or the error shown.
+#' @noRd
+.bl_data_take <- function(session, st, r) {
+  if (inherits(r, "bl_app_error")) {
+    st$msg(r)
+    .bl_app_toast(r)
+  } else {
+    st$cur(r)
+    st$msg(NULL)
+    .bl_data_keep(session, st, list(r))
+  }
+}
+
+#' The data sidebar's loading buttons: a demo, all demos, the active pick, a
+#' CSV file and a capsule.
+#' @param input,session The data module's input and session.
+#' @param st The sidebar's state.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_data_events <- function(input, session, st) {
+  shiny::observeEvent(
+    input$demoload,
+    .bl_data_take(session, st, .bl_app_try(.bl_app_demo(input$demo)))
+  )
+  shiny::observeEvent(input$alldemos, {
+    rs <- lapply(rmbldemo()$name, .bl_app_demo)
+    .bl_data_keep(session, st, rs)
+    st$cur(rs[[length(rs)]])
+    shiny::showNotification(
+      sprintf(
+        "%d demo datasets loaded: pick one under Active dataset.",
+        length(rs)
+      ),
+      type = "message"
+    )
+  })
+  shiny::observeEvent(
+    input$pick,
+    {
+      r <- st$loaded()[[input$pick]]
+      if (!is.null(r) && !identical(r$label, st$cur()$label)) st$cur(r)
+    },
+    ignoreInit = TRUE
+  )
+  shiny::observeEvent(
+    input$csv,
+    .bl_data_take(
+      session,
+      st,
+      .bl_app_try(.bl_app_read(input$csv$datapath, input$csv$name))
+    )
+  )
+  shiny::observeEvent(
+    input$cpsload,
+    .bl_data_take(session, st, .bl_app_try(.bl_app_capsule(input$cpsdir)))
+  )
+  invisible(NULL)
+}
+
+#' The data sidebar's data.rmorie.com buttons: list the tables, load one.
+#' @param input,session The data module's input and session, for the hub panel.
+#' @param st The sidebar's state.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_data_hub_events <- function(input, session, st) {
+  shiny::observeEvent(input$hublist, {
+    r <- .bl_app_try(dtabs())
+    if (inherits(r, "bl_app_error")) {
+      st$msg(r)
+    } else {
+      shiny::updateSelectInput(
+        session,
+        "hubkey",
+        choices = stats::setNames(r$key, paste(r$key, "-", r$name))
+      )
+    }
+  })
+  shiny::observeEvent(
+    input$hubload,
+    .bl_data_take(
+      session,
+      st,
+      .bl_app_try({
+        key <- input$hubkey
+        list(
+          data = dload(key),
+          code = sprintf("data <- dload(%s)", deparse(key)),
+          label = key,
+          capsule = NULL
+        )
+      })
+    )
+  )
+  invisible(NULL)
+}
+
+#' The data sidebar's outputs: the sign-in line, the status and the
+#' columns.
+#' @param output,session The module's output and session.
+#' @param st The sidebar's state.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_data_outputs <- function(output, session, st) {
+  output$signin <- shiny::renderUI({
+    # whether a key is stored, never the key
+    shiny::tags$p(
+      class = "bl-about",
+      if (is.null(.bl_hosted_key())) {
+        "Not signed in: run `rmbl login` in a terminal, then list the tables."
+      } else {
+        "Signed in: the data key stays where `rmbl login` stored it."
+      }
+    )
+  })
+  output$status <- shiny::renderUI(.bl_data_status(st$msg(), st$cur()))
+  output$cols <- shiny::renderTable(.bl_app_types(st$cur()$data))
+  output$colsui <- shiny::renderUI({
+    if (!is.data.frame(st$cur()$data)) {
+      return(shiny::tags$p(
+        class = "bl-about",
+        "Choose a dataset to see its columns."
+      ))
+    }
+    shiny::tags$div(
+      class = "bl-scroll",
+      shiny::tableOutput(session$ns("cols"))
+    )
+  })
+  invisible(NULL)
+}
+
+#' The data sidebar's status line: the error, or the current dataset's size.
+#' @param m The error, or `NULL`.
+#' @param d The current dataset.
+#' @return A tag.
+#' @noRd
+.bl_data_status <- function(m, d) {
+  if (!is.null(m)) {
+    return(.bl_app_err_ui(m))
+  }
+  if (!is.data.frame(d$data)) {
+    return(shiny::tags$p(class = "bl-about", "No dataset chosen here yet."))
+  }
+  shiny::tags$p(
+    shiny::tags$strong(d$label),
+    sprintf(
+      ": %s rows, %d columns",
+      format(nrow(d$data), big.mark = ","),
+      ncol(d$data)
+    )
+  )
+}
+
+#' The data sidebar's data.rmorie.com panel: sign-in state, table list and
+#' load button.
+#' @param ns The data module's namespace function, for the hub inputs.
+#' @return A conditional panel.
+#' @noRd
+.bl_data_hub_panel <- function(ns) {
+  shiny::conditionalPanel(
+    "input.src == 'hub'",
+    ns = ns,
+    shiny::uiOutput(ns("signin")),
+    shiny::actionButton(
+      ns("hublist"),
+      "List the tables",
+      class = "btn-sm"
+    ),
+    shiny::selectInput(ns("hubkey"), "Table", NULL),
+    shiny::actionButton(ns("hubload"), "Load the table", class = "btn-sm")
+  )
 }

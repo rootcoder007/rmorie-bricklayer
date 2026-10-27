@@ -24,7 +24,8 @@ test_that("rvkfetch returns no URLs, not a crash, for DER with no children", {
 test_that("cnormpdf refuses a non-positive sd and vector mean or sd", {
   expect_equal(
     cnormpdf(c(-1, 0, 2), mean = 0.5, sd = 2),
-    stats::dnorm(c(-1, 0, 2), 0.5, 2)
+    stats::dnorm(c(-1, 0, 2), 0.5, 2),
+    tolerance = 1e-8
   )
   expect_error(cnormpdf(0, sd = 0), "`sd` must be a single positive number")
   expect_error(cnormpdf(0, sd = -1), "`sd` must be a single positive number")
@@ -69,7 +70,11 @@ test_that(
 test_that("sir refuses a confidence level outside (0, 1)", {
   expect_error(stdinc(3, 5, conflvl = 2), "strictly between 0 and 1")
   expect_error(stdinc(3, 5, conflvl = c(0.9, 0.95)), "strictly between 0 and 1")
-  expect_equal(stdinc(3, 5)$lower, stats::qgamma(0.025, 3) / 5)
+  expect_equal(
+    stdinc(3, 5)$lower,
+    stats::qgamma(0.025, 3) / 5,
+    tolerance = 1e-8
+  )
 })
 
 test_that(
@@ -80,7 +85,7 @@ test_that(
   {
     s <- shrs(c(a = 3, b = 7))
     expect_identical(s$label, c("a", "b"))
-    expect_equal(s$share, c(30, 70))
+    expect_equal(s$share, c(30, 70), tolerance = 1e-8)
     r <- rtcalc(c(a = 3, b = 7), c(100, 200))
     expect_identical(r$label, c("a", "b"))
     # unnamed input: no label column
@@ -188,7 +193,12 @@ test_that(
       mrkprf(ch, 3, scheme = 1)[c("sibling", "side")],
       old_proof3
     )
-    expect_warning(ok <- mrkvrf("c", old_proof3, old_root), "weaker scheme 1")
+    expect_warning(
+      {
+        ok <- mrkvrf("c", old_proof3, old_root)
+      },
+      "weaker scheme 1"
+    )
     expect_true(ok)
     expect_false(suppressWarnings(mrkvrf("x", old_proof3, old_root)))
     expect_false(mrkvrf("c", old_proof3, old_root, scheme = 2))
@@ -235,7 +245,9 @@ test_that(
   ),
   {
     expect_warning(
-      chk <- chnvrf(old_chain),
+      {
+        chk <- chnvrf(old_chain)
+      },
       "sealed by rmoriebricklayer 0.5.12 or earlier"
     )
     expect_true(chk$valid)
@@ -316,7 +328,8 @@ test_that("every confidence level outside (0, 1) is refused with one message", {
     p = rep(1:4, each = 3),
     y = c(3, 5, 4, 6, 8, 7, 2, 1, 3, 9, 8, 10),
     g = rep(c("x", "y", "z"), 4),
-    w = c(10, 12, 9, 11, 10, 8, 20, 18, 22, 19, 21, 20)
+    w = c(10, 12, 9, 11, 10, 8, 20, 18, 22, 19, 21, 20),
+    stringsAsFactors = FALSE
   )
   des <- svydes(toy, w = "w", strata = "s", psu = "p")
   expect_error(svyest(des, toy, "y", conflvl = 2), msg, fixed = TRUE)
@@ -410,7 +423,8 @@ test_that(
     )
     expect_equal(
       stkflow(days = c(10, 20), people = c(1, 2), t = c(5, 10))$adp,
-      c(2, 2)
+      c(2, 2),
+      tolerance = 1e-8
     )
     expect_error(
       adp(c(10, 20), t = c(1, 2)),
@@ -424,7 +438,7 @@ test_that(
     expect_error(admits(10, c(5, 6)), "`alos` must be a single number")
     expect_error(admits(10, 5, t = c(1, 2)), "`t` must be a single number")
     expect_error(adpcnts(1:3, t = c(1, 2)), "`t` must be a single number")
-    expect_equal(adp(c(10, 20), t = 30), 1)
+    expect_equal(as.numeric(adp(c(10, 20), t = 30)), 1, tolerance = 1e-8)
   }
 )
 
@@ -434,7 +448,9 @@ test_that("profcols() leaves non-finite values out of the numeric statistics", {
   expect_equal(c(p$mean, p$min, p$max, p$median), c(1.5, 1, 2, 1.5))
   expect_true(is.finite(p$q50))
   all_inf <- profcols(data.frame(x = c(Inf, -Inf)))
-  expect_true(is.na(all_inf$mean) && is.na(all_inf$max) && is.na(all_inf$q50))
+  expect_true(is.na(all_inf$mean))
+  expect_true(is.na(all_inf$max))
+  expect_true(is.na(all_inf$q50))
   expect_identical(all_inf$ninf, 2L)
 })
 
@@ -538,10 +554,15 @@ test_that("cnormlpdf, cgamcdf and ctrmmean refuse or answer the edge cases", {
   expect_error(cnormlpdf(0, sd = 0), "`sd` must be a single positive number")
   expect_equal(
     cnormlpdf(c(-1, 2), 0.3, 1.7),
-    stats::dnorm(c(-1, 2), 0.3, 1.7, log = TRUE)
+    stats::dnorm(c(-1, 2), 0.3, 1.7, log = TRUE),
+    tolerance = 1e-8
   )
   expect_identical(cgamcdf(2, c(0, Inf)), c(0, 1))
-  expect_equal(cgamcdf(2, c(-1, 3, Inf)), stats::pgamma(c(-1, 3, Inf), 2))
+  expect_equal(
+    cgamcdf(2, c(-1, 3, Inf)),
+    stats::pgamma(c(-1, 3, Inf), 2),
+    tolerance = 1e-8
+  )
   expect_error(
     ctrmmean(1:10, trim = 0.7),
     "`trim` must be a single number in \\[0, 0.5\\]"
@@ -551,7 +572,11 @@ test_that("cnormlpdf, cgamcdf and ctrmmean refuse or answer the edge cases", {
     ctrmmean(1:10, trim = c(0.1, 0.2)),
     "`trim` must be a single number"
   )
-  expect_equal(ctrmmean(c(1:9, 100), 0.1), mean(c(1:9, 100), trim = 0.1))
+  expect_equal(
+    ctrmmean(c(1:9, 100), 0.1),
+    mean(c(1:9, 100), trim = 0.1),
+    tolerance = 1e-8
+  )
 })
 
 test_that("anltab() warns that rounding and suppression apply only to counts", {
@@ -581,7 +606,7 @@ test_that(
     "installed"
   ),
   {
-    d <- capdeps(c("stats", "notapkgxyz123"))
+    d <- suppressWarnings(capdeps(c("stats", "notapkgxyz123")))
     expect_true(is.na(d$library[d$package == "notapkgxyz123"]))
     # the library is the directory the package is in, not its parent
     expect_identical(
@@ -724,12 +749,11 @@ test_that(
       model = "m",
       local = TRUE
     )
-    err <- capture.output(
-      type = "message",
-      out <- capture.output(
+    err <- capture.output(type = "message", {
+      out <- capture.output({
         res <- .bl_llm_chat(rt, "m", list(list(role = "user", content = "hi")))
-      )
-    )
+      })
+    })
     expect_identical(res$text, "fine")
     expect_match(paste(out, collapse = ""), "m is thinking", fixed = TRUE)
     expect_false(any(grepl("m is thinking", err, fixed = TRUE)))

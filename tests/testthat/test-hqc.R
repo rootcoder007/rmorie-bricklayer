@@ -63,8 +63,8 @@ test_that("the byte lengths are the ones the specification fixes", {
   for (lv in names(HQC_SIZES)) {
     sz <- hqcsz(as.integer(lv))
     expect_identical(unname(sz), HQC_SIZES[[lv]])
-    expect_identical(
-      names(sz),
+    expect_named(
+      sz,
       c("public", "secret", "ciphertext", "seed", "message", "salt", "shared")
     )
   }
@@ -231,8 +231,8 @@ test_that("malformed keys, sizes and levels are refused with a reason", {
 test_that("keys and capsules print without revealing the secret", {
   key <- hqckg(5L, seed = as.raw(32:1))
   out <- format(key)
-  expect_true(any(grepl("HQC-5", out)))
-  expect_true(any(grepl("<withheld>", out)))
+  expect_true(any(grepl("HQC-5", out, fixed = TRUE)))
+  expect_true(any(grepl("<withheld>", out, fixed = TRUE)))
   expect_false(any(grepl(
     substring(key$secret, 4500L, 4540L),
     out,
@@ -243,4 +243,40 @@ test_that("keys and capsules print without revealing the secret", {
   cap <- hqcencap(key)
   expect_output(print(cap), "Encapsulated shared secret")
   expect_false(any(grepl(cap$shared, format(cap), fixed = TRUE)))
+})
+
+test_that("HQC errors name ct and lvl, and list every accepted level", {
+  expect_error(hqcdecap(hqckg(), function() 1), "hqcdecap: `ct` must be data")
+  expect_error(hqckg(7), "`lvl` must be one of 1, 3 or 5")
+  expect_error(hqcsz(7), "128, 192, 256", fixed = TRUE)
+  expect_identical(hqcsz(128), hqcsz(1))
+})
+
+# Prints `x` on an ASCII console: the lines and what print() returned.
+o1_box <- function(x, ...) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  tmp <- withr::local_tempfile()
+  v <- withr::with_output_sink(tmp, withVisible(print(x, ...)))
+  list(out = readLines(tmp), v = v)
+}
+
+# The box's frame, its title and the facts expected in it.
+o1_expect_box <- function(b, x, title, facts = character()) {
+  expect_false(b$v$visible)
+  expect_identical(b$v$value, x)
+  expect_match(b$out[1L], "^\\+-- ")
+  expect_true(grepl(title, b$out[1L], fixed = TRUE))
+  expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  for (f in facts) {
+    expect_true(any(grepl(f, b$out, fixed = TRUE)), info = f)
+  }
+}
+
+test_that("HQC keys and capsules print as boxes", {
+  key <- hqckg(1L, seed = as.raw(1:32))
+  o1_expect_box(o1_box(key), key, "Key encapsulation key (HQC", "HQC-1")
+  pub <- hqcpubkey(key)
+  o1_expect_box(o1_box(pub), pub, "Public encapsulation key (HQC", "HQC-1")
+  cap <- hqcencap(pub)
+  o1_expect_box(o1_box(cap), cap, "Encapsulated shared secret", "Ciphertext")
 })

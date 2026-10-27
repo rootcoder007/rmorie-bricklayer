@@ -8,7 +8,7 @@ margin of error}
 limfrom(est, se = NULL, cv = NULL, moe = NULL, moelev = 0.9, conflvl = 0.95)
 }
 \arguments{
-\item{est}{The estimates.}
+\item{est}{The estimates the limits are centred on.}
 
 \item{se, cv, moe}{Give one: standard errors, coefficients of variation
 (relative standard errors, in percent), or margins of error.}

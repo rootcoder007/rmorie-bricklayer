@@ -8,10 +8,14 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
@@ -32,7 +36,8 @@ and by group. A realistic shape:
 seg <- data.frame(
   EndFiscalYear = rep(2019:2023, each = 2),
   Gender = rep(c("Female", "Male"), 5),
-  NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
+  NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331),
+  stringsAsFactors = FALSE
 )
 ```
 
@@ -135,7 +140,8 @@ is a rate -- but a rate is not made trustworthy by being a rate.
 stops <- data.frame(
   division = c("North", "South", "East"),
   stops = c(412, 77, 3),
-  residents = c(120000, 41000, 9500))
+  residents = c(120000, 41000, 9500),
+  stringsAsFactors = FALSE)
 
 rtcalc(stops, stops, residents, by = "division", per = "100k")
 ```
@@ -165,7 +171,8 @@ d <- data.frame(
   year = rep(2021:2023, each = 2),
   division = rep(c("North", "South"), 3),
   stops = c(400, 70, 430, 66, 455, 61),
-  residents = c(120000, 41000, 122000, 41500, 125000, 42000))
+  residents = c(120000, 41000, 122000, 41500, 125000, 42000),
+  stringsAsFactors = FALSE)
 
 ratechg(d, stops, residents, year, by = "division", per = "100k")
 ```

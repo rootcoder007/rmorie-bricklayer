@@ -114,6 +114,9 @@ cp "${BRICKLAYER_ROOT}/R/lib_manifest.R"    "${STAGE}/"
 # print_methods.R carries the frame every table printer draws with, so
 # it goes first: rate.R, custody.R and region_map.R print through it
 cp "${BRICKLAYER_ROOT}/R/print_methods.R"  "${STAGE}/"
+# print_boxes.R carries the print() methods of the rate, stock and flow
+# and stay results, which draw the box format() builds
+cp "${BRICKLAYER_ROOT}/R/print_boxes.R"    "${STAGE}/"
 # yoy.R carries .yoy_col, which rate.R uses, so the two travel together
 cp "${BRICKLAYER_ROOT}/R/yoy.R"            "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/rate.R"           "${STAGE}/"

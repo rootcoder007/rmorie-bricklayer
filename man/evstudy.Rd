@@ -16,7 +16,8 @@ evstudy(
   bin = TRUE,
   covs = NULL,
   cl = NULL,
-  conflvl = 0.95
+  conflvl = 0.95,
+  w = NULL
 )
 }
 \arguments{
@@ -44,7 +45,10 @@ V_{ab}}, each term with the small-sample factor of the dimension with fewer
 clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
 (district by month, say) is one column made with \code{interaction()}.}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of the intervals reported (default 0.95).}
+
+\item{w}{Optional column name of non-negative weights, such as population or
+matching weights, for weighted least squares with weighted within-means.}
 }
 \value{
 A data frame of class \code{rmbl_event_study}: \code{evtm},
@@ -84,6 +88,24 @@ es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 3,
 es
 attr(es, "pretrend")$p_value
 plot(es)
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+# three years either side of adoption, weighted by population
+evstudy(own, "town", "year", "rate", "first", leads = 3, lags = 3,
+        w = "pop")
 \dontshow{\}) # examplesIf}
 }
 \references{

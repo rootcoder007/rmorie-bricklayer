@@ -71,7 +71,8 @@ test_that("every published kernel compiles and resolves from a consumer", {
       "import(rmoriebricklayer)",
       "export(consume_series)",
       "export(consume_mk)",
-      "export(consume_theil)"
+      "export(consume_theil)",
+      "export(consume_gini)"
     ),
     file.path(dir, "NAMESPACE")
   )
@@ -79,7 +80,8 @@ test_that("every published kernel compiles and resolves from a consumer", {
     c(
       "consume_series <- function() .Call(C_consume_series)",
       "consume_mk <- function(y) .Call(C_consume_mk, as.double(y))",
-      "consume_theil <- function(n) .Call(C_consume_theil, as.integer(n))"
+      "consume_theil <- function(n) .Call(C_consume_theil, as.integer(n))",
+      "consume_gini <- function(n) .Call(C_consume_gini, as.integer(n))"
     ),
     file.path(dir, "R", "consume.R")
   )
@@ -217,9 +219,17 @@ test_that("every published kernel compiles and resolves from a consumer", {
       "        int sn = (live && live[0] == '1' && !live[1]) ?",
       paste0(
         "            rmbl_wayback_snapshot(\"https://invalid.invalid/x\", ",
-        "snap, (int) sizeof snap, 2) : 0;"
+        "snap, (int) sizeof snap, 2) :"
       ),
-      "        out[k++] = (code < 0) + (sn == 0);",
+      paste0(
+        "            rmbl_wayback_snapshot(\"ftp://example.org/x\", ",
+        "snap, (int) sizeof snap, 2);"
+      ),
+      paste0(
+        "        int nul = rmbl_wayback_snapshot(NULL, snap, ",
+        "(int) sizeof snap, 2);"
+      ),
+      "        out[k++] = (code < 0) + (sn == 0) + (nul == 0);",
       "    }",
       "    {",
       paste0(
@@ -306,6 +316,19 @@ test_that("every published kernel compiles and resolves from a consumer", {
         " * and a Ctrl-C in the pair loop is raised once the kernel's ",
         "vectors are gone */"
       ),
+      paste0(
+        "/* the Gini kernel over the first n of three values; n = -1 asks ",
+        "its vector for SIZE_MAX"
+      ),
+      paste0(
+        " * elements, a C++ exception the kernel raises as an R error ",
+        "once its try block has closed */"
+      ),
+      "SEXP C_consume_gini(SEXP n) {",
+      "    const double x[3] = {1.0, 2.0, 3.0};",
+      "    return Rf_ScalarReal(rmbl_gini(x, (R_xlen_t) INTEGER(n)[0]));",
+      "}",
+      "",
       "SEXP C_consume_theil(SEXP n) {",
       "    const R_xlen_t m = (R_xlen_t) INTEGER(n)[0];",
       "    double *x = (double *) R_alloc((size_t) m, sizeof(double));",
@@ -330,6 +353,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
       "    {\"C_consume_series\", (DL_FUNC) &C_consume_series, 0},",
       "    {\"C_consume_mk\", (DL_FUNC) &C_consume_mk, 1},",
       "    {\"C_consume_theil\", (DL_FUNC) &C_consume_theil, 1},",
+      "    {\"C_consume_gini\", (DL_FUNC) &C_consume_gini, 1},",
       "    {NULL, NULL, 0}",
       "};",
       "",
@@ -408,7 +432,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
   # %.17g round-trips a binary64 exactly, so the comparisons below can
   # be identities rather than tolerances
   nums <- suppressWarnings(
-    as.numeric(strsplit(trimws(res[length(res) - 1L]), ",")[[1L]])
+    as.numeric(strsplit(trimws(res[length(res) - 1L]), ",", fixed = TRUE)[[1L]])
   )
   sha <- trimws(res[length(res)])
   if (length(nums) != 55L) {
@@ -424,31 +448,40 @@ test_that("every published kernel compiles and resolves from a consumer", {
   # because they are supposed to be the same code
   x <- c(1, 2, 3, 4, 5, 9)
   y <- c(2, 1, 4, 3, 6, 5)
-  expect_equal(nums[1L], mean(x))
-  expect_equal(nums[2L], mean(x))
-  expect_equal(nums[3L], stats::var(x))
-  expect_equal(nums[4L], stats::cor(x, y))
-  expect_equal(nums[5L], stats::dnorm(0.5))
-  expect_equal(nums[6L], 64)
-  expect_equal(nums[7L], stats::sd(x))
-  expect_equal(nums[8L], sqrt(sum((x - y)^2)))
-  expect_equal(nums[9L], stats::dnorm(0.5, log = TRUE))
-  expect_equal(nums[12L], stats::pgamma(1.5, 2))
-  expect_equal(nums[14L], mean(x))
-  expect_equal(nums[16L], stats::median(x))
-  expect_equal(nums[17L], ginicoef(x))
+  expect_identical(nums[1L], mean(x))
+  expect_identical(nums[2L], mean(x))
+  expect_identical(nums[3L], stats::var(x))
+  expect_identical(nums[4L], stats::cor(x, y))
+  expect_identical(nums[5L], stats::dnorm(0.5))
+  expect_identical(nums[6L], 64)
+  expect_identical(nums[7L], stats::sd(x))
+  expect_identical(nums[8L], sqrt(sum((x - y)^2)))
+  expect_identical(nums[9L], stats::dnorm(0.5, log = TRUE))
+  expect_equal(
+    nums[12L],
+    stats::pgamma(1.5, 2),
+    tolerance = testthat::testthat_tolerance()
+  )
+  expect_identical(nums[14L], mean(x))
+  expect_identical(nums[16L], stats::median(x))
+  expect_identical(nums[17L], as.numeric(ginicoef(x)))
   expect_equal(nums[22L], pi^2 / 6, tolerance = 1e-13)
-  expect_equal(nums[23L], stats::mad(x))
-  expect_equal(nums[24L], mean(x, trim = 0.2))
-  expect_equal(nums[26L], stats::weighted.mean(x, c(1, 1, 2, 2, 1, 1)))
-  expect_equal(nums[28L], stats::cor(x, y, method = "spearman"))
-  expect_equal(nums[35L], 0xba)
-  expect_equal(nums[36L], 128)
-  expect_equal(nums[37L], 64)
-  expect_equal(nums[38L], 1)
-  expect_equal(nums[39L], 6)
-  expect_equal(nums[42L], 0) # rmbl_os_random succeeded
-  expect_equal(nums[43L], 2) # both libcurl shims resolved
+  expect_identical(nums[23L], stats::mad(x))
+  expect_identical(nums[24L], mean(x, trim = 0.2))
+  expect_identical(nums[26L], stats::weighted.mean(x, c(1, 1, 2, 2, 1, 1)))
+  expect_equal(
+    nums[28L],
+    stats::cor(x, y, method = "spearman"),
+    tolerance = testthat::testthat_tolerance()
+  )
+  expect_identical(nums[35L], 0xba)
+  expect_identical(nums[36L], 128)
+  expect_identical(nums[37L], 64)
+  expect_identical(nums[38L], 1)
+  expect_identical(nums[39L], 6)
+  expect_identical(nums[42L], 0) # rmbl_os_random succeeded
+  # both libcurl shims resolved; the snapshot lookup answers 0 offline
+  expect_identical(nums[43L], 3)
   # the Hawkes likelihood takes the kernel's own parameter layout; only
   # that it answered is asserted here, the value is pinned elsewhere
   expect_true(all(is.finite(nums[-c(13L, 48L)])))
@@ -477,7 +510,8 @@ test_that("every published kernel compiles and resolves from a consumer", {
       },
       function(u) 1 - exp(-(u / wb[4])^wb[3]),
       wb
-    )
+    ),
+    tolerance = testthat::testthat_tolerance()
   )
   lx <- c(0.5, 0.3, 2.5, 1.0)
   expect_equal(
@@ -486,7 +520,8 @@ test_that("every published kernel compiles and resolves from a consumer", {
       function(u) (lx[3] - 1) * lx[4]^(lx[3] - 1) / (u + lx[4])^lx[3],
       function(u) 1 - (lx[4] / (u + lx[4]))^(lx[3] - 1),
       lx
-    )
+    ),
+    tolerance = testthat::testthat_tolerance()
   )
   # the C API's Lomax shape is the fitter's plus one, and its kernel codes
   # differ: the same likelihood either way (review of 1.0.0)
@@ -507,7 +542,8 @@ test_that("every published kernel compiles and resolves from a consumer", {
       function(u) stats::dgamma(u, shape = gm[3], rate = gm[4]),
       function(u) stats::pgamma(u, shape = gm[3], rate = gm[4]),
       gm
-    )
+    ),
+    tolerance = testthat::testthat_tolerance()
   )
   expect_identical(nums[47L], 2e12) # eta = 5 is infeasible for both kernels
   expect_true(is.nan(nums[48L])) # three parameters where four are needed
@@ -538,7 +574,9 @@ test_that(
     )
     # rmbl_theil_sen()'s refusal past kMaxPairwiseN is rmbl_arg_error() with no
     # barrier active, an R error raised at once (src/rmbl_series.cpp,
-    # src/rmbl_entry.h)
+    # src/rmbl_entry.h); a C++ exception in a kernel (the Gini kernel's vector
+    # sized SIZE_MAX) is caught by kernel_call() and raised by kernel_raise()
+    # as an R error, the session alive after it
     f <- tempfile(fileext = ".R")
     writeLines(
       c(
@@ -548,7 +586,12 @@ test_that(
           "cat(tryCatch(consume_theil(20001L), error = function(e) ",
           "conditionMessage(e)), '\\n')"
         ),
-        "cat('SLOPE', consume_theil(5L), '\\n')"
+        "cat('SLOPE', consume_theil(5L), '\\n')",
+        paste0(
+          "cat(tryCatch(consume_gini(-1L), error = function(e) ",
+          "paste('GINIERR', conditionMessage(e))), '\\n')"
+        ),
+        "cat('GINI', consume_gini(3L), '\\n')"
       ),
       f
     )
@@ -559,16 +602,25 @@ test_that(
       stderr = TRUE
     ))
     expect_true(
-      any(grepl("n = 20001 exceeds the 20000-point limit", res)),
+      any(grepl("n = 20001 exceeds the 20000-point limit", res, fixed = TRUE)),
       info = paste(res, collapse = " | ")
     )
     expect_true(
       "SLOPE 2.5" %in% trimws(res),
       info = paste(res, collapse = " | ")
     )
+    expect_true(
+      any(startsWith(trimws(res), "GINIERR ")),
+      info = paste(res, collapse = " | ")
+    )
+    expect_true(
+      sprintf("GINI %s", format(as.numeric(ginicoef(c(1, 2, 3))))) %in%
+        trimws(res),
+      info = paste(res, collapse = " | ")
+    )
     # a Ctrl-C in the pair loop: kernel_call() catches check_interrupt()'s
-    # throw, and kernel_raise() raises R's interrupt with no barrier to do it
-    # (src/rmbl_entry.h)
+    # throw, and kernel_raise() raises R's interrupt with no
+    # barrier to do it (src/rmbl_entry.h)
     skip_if(
       !nzchar(Sys.which("python3")) || !nzchar(Sys.which("timeout")),
       "no python3/timeout"

@@ -7,8 +7,21 @@ test_that(
     "addresses"
   ),
   {
-    why <- asNamespace("rmoriebricklayer")$.rmbl_url_why
-    environment(why) <- new.env(parent = baseenv())
+    ns <- asNamespace("rmoriebricklayer")
+    env <- new.env(parent = baseenv())
+    # the base-R validator and its host check live beside it in lib_helpers.R
+    need <- ".rmbl_url_why"
+    while (length(need)) {
+      nm <- need[[1L]]
+      need <- need[-1L]
+      f <- get(nm, ns)
+      environment(f) <- env
+      assign(nm, f, envir = env)
+      calls <- intersect(all.names(body(f)), ls(ns, all.names = TRUE))
+      calls <- calls[startsWith(calls, ".rmbl_")]
+      need <- union(need, setdiff(calls, ls(env, all.names = TRUE)))
+    }
+    why <- env$.rmbl_url_why
     ok <- c(
       "https://data.ontario.ca/api/3/action/package_show?id=x",
       "https://www12.statcan.gc.ca/x"

@@ -61,7 +61,14 @@ test_that("dldata and fdl work over file:// without network", {
   bad <- paste0("file://", tempfile(fileext = ".missing"))
   res <- NULL
   capture.output(
-    res <- suppressWarnings(fdl(bad, tempfile(), attwb = "", allowfile = TRUE))
+    {
+      res <- suppressWarnings(fdl(
+        bad,
+        tempfile(),
+        attwb = "",
+        allowfile = TRUE
+      ))
+    }
   )
   expect_false(res)
 })
@@ -72,7 +79,7 @@ test_that("sha256file matches digest and vrfsha256 classifies match/mismatch", {
   h <- sha256file(f)
   expect_identical(h, digest::digest(file = f, algo = "sha256"))
   expect_true(vrfsha256(f, h)$match)
-  bad <- vrfsha256(f, paste(rep("0", 64), collapse = ""))
+  bad <- vrfsha256(f, strrep("0", 64))
   expect_false(bad$match)
   expect_identical(bad$actual, h)
 })
@@ -98,7 +105,7 @@ test_that("valsch flags missing columns as fatal and short rows as warning", {
 test_that("schval stops on fatal, warns on warning, TRUE when clean", {
   prov <- list(
     schema = list(
-      expected_columns = c("id"),
+      expected_columns = "id",
       structural_invariants = list(min_data_rows = 3)
     )
   )
@@ -145,10 +152,11 @@ test_that("rslvckan returns the first name-matched resource URL", {
 
 test_that("rslvckns matches resources and derives the query", {
   skip_if_cannot_mock()
-  seen_url <- NULL
+  st <- new.env(parent = emptyenv())
+  st$seen_url <- NULL
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(url, ...) {
-      seen_url <<- url
+      st$seen_url <- url
       list(
         result = list(
           results = list(list(
@@ -183,12 +191,12 @@ test_that("rslvckns matches resources and derives the query", {
     )
   )
   expect_identical(rslvckns(prov), "https://example.org/s.csv")
-  expect_match(seen_url, "package_search\\?q=library%20stats")
+  expect_match(st$seen_url, "package_search\\?q=library%20stats")
 
   # query derived from the name pattern when search_query is absent
   prov$resource$search_query <- NULL
   expect_identical(rslvckns(prov), "https://example.org/s.csv")
-  expect_match(seen_url, "q=2014")
+  expect_match(st$seen_url, "q=2014")
 
   # no portal base URL derivable -> NULL
   expect_null(rslvckns(list(resource = list(name_match_pattern = "x"))))
@@ -196,10 +204,11 @@ test_that("rslvckns matches resources and derives the query", {
 
 test_that("wbsnpurl honours an explicit timestamp", {
   skip_if_cannot_mock()
-  seen <- NULL
+  st <- new.env(parent = emptyenv())
+  st$seen <- NULL
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(url, ...) {
-      seen <<- url
+      st$seen <- url
       list(
         archived_snapshots = list(
           closest = list(
@@ -211,7 +220,7 @@ test_that("wbsnpurl honours an explicit timestamp", {
     }
   )
   out <- wbsnpurl("https://example.org/x.csv", ts = "20240101000000")
-  expect_match(seen, "&timestamp=20240101000000", fixed = TRUE)
+  expect_match(st$seen, "&timestamp=20240101000000", fixed = TRUE)
   expect_match(out, "^https://")
 })
 
@@ -219,11 +228,12 @@ test_that("fdl prints diagnostics and retries from a wayback snapshot", {
   skip_if_cannot_mock()
   snap <- tempfile(fileext = ".csv")
   writeLines("a,b\n1,2", snap)
-  calls <- 0L
+  st <- new.env(parent = emptyenv())
+  st$calls <- 0L
   testthat::local_mocked_bindings(
     .bl_fetch_file = function(url, dest, ...) {
-      calls <<- calls + 1L
-      if (calls == 1L) {
+      st$calls <- st$calls + 1L
+      if (st$calls == 1L) {
         stop("HTTP error 429: too many requests")
       }
       file.copy(sub("^file://", "", url), dest, overwrite = TRUE)
@@ -231,42 +241,40 @@ test_that("fdl prints diagnostics and retries from a wayback snapshot", {
     }
   )
   dst <- tempfile(fileext = ".csv")
-  out <- capture.output(
-    type = "message",
+  out <- capture.output(type = "message", {
     ok <- fdl(
       "https://example.org/x.csv",
       dst,
       attwb = paste0("file://", snap),
       allowfile = TRUE
     )
-  )
+  })
   expect_true(ok)
   expect_true(file.exists(dst))
-  expect_true(any(grepl("Rate-limited", out)))
-  expect_true(any(grepl("Wayback", out)))
+  expect_true(any(grepl("Rate-limited", out, fixed = TRUE)))
+  expect_true(any(grepl("Wayback", out, fixed = TRUE)))
 })
 
 test_that("fdl covers the failure diagnostics and total failure", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
     .bl_fetch_file = function(...) {
-      stop(paste(
-        "SSL certificate handshake failed; connection timed out;",
+      stop(
+        "SSL certificate handshake failed; connection timed out; ",
         "could not resolve host; HTTP 403 forbidden"
-      ))
+      )
     }
   )
   # auto-resolution consults wbsnpurl; make it find nothing
   testthat::local_mocked_bindings(wbsnpurl = function(...) NULL)
-  out <- capture.output(
-    type = "message",
+  out <- capture.output(type = "message", {
     ok <- fdl("https://example.org/x.csv", tempfile())
-  )
+  })
   expect_false(ok)
-  expect_true(any(grepl("SSL/TLS", out)))
-  expect_true(any(grepl("DNS", out)))
-  expect_true(any(grepl("timed out", out)))
-  expect_true(any(grepl("403", out)))
+  expect_true(any(grepl("SSL/TLS", out, fixed = TRUE)))
+  expect_true(any(grepl("DNS", out, fixed = TRUE)))
+  expect_true(any(grepl("timed out", out, fixed = TRUE)))
+  expect_true(any(grepl("403", out, fixed = TRUE)))
 })
 
 test_that("fdl reports a failed wayback retry", {
@@ -274,17 +282,16 @@ test_that("fdl reports a failed wayback retry", {
   testthat::local_mocked_bindings(
     .bl_fetch_file = function(...) stop("could not resolve host")
   )
-  out <- capture.output(
-    type = "message",
+  out <- capture.output(type = "message", {
     ok <- fdl(
       "https://example.org/x.csv",
       tempfile(),
       attwb = "file:///nonexistent/nope.csv",
       allowfile = TRUE
     )
-  )
+  })
   expect_false(ok)
-  expect_true(any(grepl("also failed", out)))
+  expect_true(any(grepl("also failed", out, fixed = TRUE)))
 })
 
 test_that("rslvsoc returns the canonical CSV export URL", {
@@ -410,7 +417,7 @@ test_that("a snapshot lookup that returns nothing usable is no snapshot", {
   testthat::local_mocked_bindings(.rmbl_read_json = function(api, ...) {
     answer("http://web.archive.org/x")
   })
-  expect_equal(
+  expect_identical(
     wbsnpurl("https://example.invalid/x.csv"),
     "https://web.archive.org/x"
   )
@@ -427,17 +434,16 @@ test_that("fdl names a refused connection as one, not as a DNS failure", {
       )
     }
   )
-  out <- capture.output(
-    type = "message",
+  out <- capture.output(type = "message", {
     ok <- suppressWarnings(fdl(
       "https://www.r-project.org/",
       tempfile(),
       attwb = ""
     ))
-  )
+  })
   expect_false(ok)
-  expect_true(any(grepl("Could not connect to the server", out)))
-  expect_false(any(grepl("DNS lookup failed", out)))
+  expect_true(any(grepl("Could not connect to the server", out, fixed = TRUE)))
+  expect_false(any(grepl("DNS lookup failed", out, fixed = TRUE)))
 })
 
 test_that("fdl with the Wayback fallback off says so, and claims no lookup", {
@@ -447,20 +453,18 @@ test_that("fdl with the Wayback fallback off says so, and claims no lookup", {
     wbsnpurl = function(...) stop("must not be called")
   )
   for (off in list(FALSE, "")) {
-    out <- capture.output(
-      type = "message",
+    out <- capture.output(type = "message", {
       ok <- fdl("https://example.org/x.csv", tempfile(), attwb = off)
-    )
+    })
     expect_false(ok)
-    expect_true(any(grepl("switched off", out)))
-    expect_false(any(grepl("no snapshot", out)))
+    expect_true(any(grepl("switched off", out, fixed = TRUE)))
+    expect_false(any(grepl("no snapshot", out, fixed = TRUE)))
   }
   # the default looks one up, and says when there is none
   testthat::local_mocked_bindings(wbsnpurl = function(...) NULL)
-  out <- capture.output(
-    type = "message",
+  out <- capture.output(type = "message", {
     ok <- fdl("https://example.org/x.csv", tempfile())
-  )
+  })
   expect_false(ok)
-  expect_true(any(grepl("no snapshot", out)))
+  expect_true(any(grepl("no snapshot", out, fixed = TRUE)))
 })

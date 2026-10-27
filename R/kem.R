@@ -348,7 +348,7 @@ kemdecap <- function(
   ct,
   masked = getOption("rmoriebricklayer.masked", TRUE)
 ) {
-  .rmbl_no_fn(ciphertext = ct)
+  .rmbl_no_fn(ct = ct)
   masked <- .rmbl_masked_flag(masked)
   level <- .rmbl_kem_key_level(key)
   if (is.null(key[["secret"]])) {
@@ -384,68 +384,50 @@ kemdecap <- function(
 
 #' @export
 format.bricklayer_kem_key <- function(x, ...) {
-  c(
-    .rmbl_rule("Key encapsulation key (ML-KEM, FIPS 203)"),
-    .rmbl_kv(list(
-      level = sprintf("ML-KEM-%d", x$level),
-      "public key" = sprintf(
-        "%s... (%d bytes)",
-        substring(x$public, 1L, 32L),
-        nchar(x$public) %/% 2L
-      ),
-      secret = "<withheld>"
-    )),
-    .rmbl_rule()
+  .rmbl_stat_block(
+    "Key encapsulation key (ML-KEM, FIPS 203)",
+    facts = list(
+      Level = sprintf("ML-KEM-%d", x$level),
+      `Public key` = .rmbl_hex_head(x$public),
+      `Secret key` = "<withheld>"
+    ),
+    reading = paste(
+      "Keep this key private: it opens what others encapsulate to its public",
+      "half (kempubkey()) with kemdecap()."
+    )
   )
 }
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_kem_key
-print.bricklayer_kem_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_kem_public_key <- function(x, ...) {
-  c(
-    .rmbl_rule("Public encapsulation key (ML-KEM, FIPS 203)"),
-    .rmbl_kv(list(
-      level = sprintf("ML-KEM-%d", x$level),
-      "public key" = sprintf(
-        "%s... (%d bytes)",
-        substring(x$public, 1L, 32L),
-        nchar(x$public) %/% 2L
-      )
-    )),
-    .rmbl_rule()
+  .rmbl_stat_block(
+    "Public encapsulation key (ML-KEM, FIPS 203)",
+    facts = list(
+      Level = sprintf("ML-KEM-%d", x$level),
+      `Public key` = .rmbl_hex_head(x$public)
+    ),
+    reading = paste(
+      "Anyone can hold this key: kemencap() uses it to make a shared secret",
+      "that only the private key's holder can recover."
+    )
   )
 }
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_kem_public_key
-print.bricklayer_kem_public_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_kem_capsule <- function(x, ...) {
-  c(
-    .rmbl_rule("Encapsulated shared secret (ML-KEM, FIPS 203)"),
-    .rmbl_kv(list(
-      level = sprintf("ML-KEM-%d", x$level),
-      ciphertext = sprintf(
-        "%s... (%d bytes)",
-        substring(x$ciphertext, 1L, 32L),
-        nchar(x$ciphertext) %/% 2L
-      ),
-      shared = "<withheld>"
-    )),
-    .rmbl_rule()
+  .rmbl_stat_block(
+    "Encapsulated shared secret (ML-KEM, FIPS 203)",
+    facts = list(
+      Level = sprintf("ML-KEM-%d", x$level),
+      Ciphertext = .rmbl_hex_head(x$ciphertext),
+      `Shared secret` = "<withheld>"
+    ),
+    reading = paste(
+      "Send the ciphertext; keep the shared secret. The receiver recovers",
+      "the same secret from the ciphertext with kemdecap()."
+    )
   )
 }
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_kem_capsule
-print.bricklayer_kem_capsule <- .rmbl_print_via_format
 
 #' Checks an ML-KEM security level.
 #'
@@ -453,9 +435,10 @@ print.bricklayer_kem_capsule <- .rmbl_print_via_format
 #' rather than select a default: the level is not recorded in the
 #' ciphertext, so the two sides have to agree by other means.
 #' @param level The level passed by the user.
+#' @param arg The user's name for it, for the error.
 #' @return The level as an integer.
 #' @noRd
-.rmbl_kem_level <- function(level) {
+.rmbl_kem_level <- function(level, arg = "lvl") {
   # one whole number: as.integer() read c(512, 768) as 512 and 512.5 as 512
   ok <- is.numeric(level) &&
     length(level) == 1L &&
@@ -463,7 +446,10 @@ print.bricklayer_kem_capsule <- .rmbl_print_via_format
     level == round(level) &&
     level %in% c(512, 768, 1024)
   if (!ok) {
-    stop("`level` must be one of 512, 768 or 1024", call. = FALSE)
+    stop(
+      sprintf("`%s` must be one of 512, 768 or 1024", arg),
+      call. = FALSE
+    )
   }
   as.integer(level)
 }
@@ -476,5 +462,5 @@ print.bricklayer_kem_capsule <- .rmbl_print_via_format
   if (!inherits(key, c("bricklayer_kem_key", "bricklayer_kem_public_key"))) {
     stop("`key` must come from kemkg() or kempubkey()", call. = FALSE)
   }
-  .rmbl_kem_level(key$level)
+  .rmbl_kem_level(key$level, "key$level")
 }

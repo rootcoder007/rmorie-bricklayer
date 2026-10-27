@@ -27,6 +27,9 @@ static char rmbl_pending_error[512] = "";
  * tryCatch(interrupt = ) handler sees it) and unwind to top level, as
  * R's own handler does. The pending flag was consumed by the test above,
  * so R_CheckUserInterrupt() would not fire again. */
+static const char rmbl_interrupt_r[] =
+    "{ signalCondition(structure(list(message = \"interrupt\", call = NULL), "
+    "    class = c(\"interrupt\", \"condition\"))); invokeRestart(\"abort\") }";
 static void rmbl_raise_interrupt(void) {
     if (rmbl_pending_error[0]) {
         char m[sizeof rmbl_pending_error];
@@ -34,11 +37,9 @@ static void rmbl_raise_interrupt(void) {
         rmbl_pending_error[0] = 0;
         Rf_errorcall(R_NilValue, "%s", m);
     }
-    R_ParseEvalString(
-        "{ signalCondition(structure(list(message = \"interrupt\", call = NULL), "
-        "    class = c(\"interrupt\", \"condition\"))); invokeRestart(\"abort\") }",
-        R_BaseEnv);
-}
+    /* the brace shares the line: invokeRestart() does not return, so on a line of its own the
+     * brace was the one line no run reaches */
+    R_ParseEvalString(rmbl_interrupt_r, R_BaseEnv); }
 
 /* How many barriers are active on the C stack: 0 means a LinkingTo kernel
  * was called by another package's .Call, with no barrier of ours to raise

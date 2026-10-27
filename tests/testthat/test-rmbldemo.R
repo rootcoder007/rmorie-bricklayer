@@ -61,7 +61,7 @@ cols <- list(
 
 test_that("rmbldemo() lists its datasets with a one-line description each", {
   tab <- rmbldemo()
-  expect_identical(names(tab), c("name", "rows", "description"))
+  expect_named(tab, c("name", "rows", "description"))
   expect_setequal(tab$name, c(names(cols), "ledger"))
   expect_true(all(nzchar(tab$description) & nchar(tab$description) < 90L))
 })
@@ -79,7 +79,7 @@ test_that(
     for (nm in names(cols)) {
       d <- rmbldemo(nm)
       expect_s3_class(d, "data.frame")
-      expect_identical(names(d), cols[[nm]], info = nm)
+      expect_named(d, cols[[nm]], info = nm)
       expect_gte(nrow(d), 100L)
       expect_lte(nrow(d), 5000L)
       r <- tab$rows[tab$name == nm]
@@ -111,7 +111,7 @@ test_that("the demo data carry what their tabs need", {
   post <- mean(of$n[of$date >= as.Date("2020-04-01")])
   expect_lt(post / pre, 0.85)
   sv <- rmbldemo("survey")
-  expect_identical(length(unique(sv$psu)), 40L)
+  expect_length(unique(sv$psu), 40L)
   expect_true(anyNA(sv$income))
   fn <- rmbldemo("fnmi")
   expect_true(any(fn$quality == "F"))
@@ -123,7 +123,8 @@ test_that("the demo data carry what their tabs need", {
   air <- rmbldemo("air")
   expect_gt(max(air$no2), 3 * stats::median(air$no2))
   hk <- rmbldemo("hawkes")
-  expect_true(all(diff(hk$t) > 0) && max(hk$t) <= 365)
+  expect_true(all(diff(hk$t) > 0))
+  expect_lte(max(hk$t), 365)
   dr <- rmbldemo("drift")
   expect_identical(
     as.vector(table(dr$snapshot)[c("reference", "current")]),

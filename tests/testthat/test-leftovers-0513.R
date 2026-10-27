@@ -164,10 +164,20 @@ test_that("sha256file() shows a byte bar for a file larger than one chunk", {
   st <- lo_ns(".bl_progress_state")
   old <- st$delay
   st$delay <- 0
-  on.exit(st$delay <- old, add = TRUE)
+  on.exit(
+    {
+      st$delay <- old
+    },
+    add = TRUE
+  )
   local_mocked_bindings(.bl_stderr_tty = function() FALSE)
   f2 <- function() stream(f, chunk = 1000L)
-  msg <- capture.output(h <- f2(), type = "message")
+  msg <- capture.output(
+    {
+      h <- f2()
+    },
+    type = "message"
+  )
   expect_identical(h, csha256(readBin(f, "raw", 4000L)))
   expect_true(any(grepl(
     "sha256 big.bin: 4000 of 4000 (100%)",

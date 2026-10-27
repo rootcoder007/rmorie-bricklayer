@@ -24,8 +24,16 @@ struct Field {
 // "subject official" (after it) and "SO" for either: one quantity, so ONE column,
 // `number_of_subject_officials` (the current legal term, as `number_of_witness_officials`);
 // officers/officials/officils variants normalise to it.
-inline const std::vector<Field>& schema() {
-    static const std::vector<Field> kFields = {
+struct FieldText {
+    const char *name;
+    bool is_count;
+    const char *desc;
+};
+
+// The columns as constant text; schema() builds its vector from them in one call, so the
+// static's initialisation is one line (the first line of a braced list of strings was the
+// line of its unwinding, which no run reaches).
+inline constexpr FieldText kFieldText[] = {
         {"police_service", false,
          "the police service(s) whose officials the SIU investigated"},
         {"date_of_incident_iso", false,
@@ -58,7 +66,16 @@ inline const std::vector<Field>& schema() {
          "the specific injuries the affected person sustained"},
         {"relevant_legislation", false,
          "the legislation/Criminal Code sections the Director analysed"},
-    };
+};
+
+inline std::vector<Field> schema_fields() {
+    std::vector<Field> v;
+    for (const FieldText &f : kFieldText) v.push_back({f.name, f.is_count, f.desc});
+    return v;
+}
+
+inline const std::vector<Field>& schema() {
+    static const std::vector<Field> kFields = schema_fields();
     return kFields;
 }
 

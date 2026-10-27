@@ -28,7 +28,8 @@
 #' before they are read as numbers. A missing value (\code{NA}) that is not a
 #' suppression mark gets status \code{"missing"} and \code{NA} bounds.
 #'
-#' Errors: \code{rnd} not a positive number; an unknown
+#' Errors: \code{rnd} not one positive finite number; a negative or
+#' infinite count in \code{x}; an unknown
 #' \code{rndkind}; a text cell that is neither a number nor a
 #' suppression mark (the message lists the cells); a suppressed cell with no
 #' limit (neither \code{"<k"} nor \code{suplim}).
@@ -84,68 +85,33 @@ pubbnd <- function(
   supmar = c("x", "X", "s", "..", "F", "suppressed", "n/a")
 ) {
   rndkind <- .rmbl_arg(rndkind)
-  if (!is.null(suplim)) {
-    suplim <- .rmbl_scalar(suplim, "suplim", 0)
-  }
-  if (!is.character(supmar) || anyNA(supmar)) {
-    stop(
-      "`supmar` must be the text markers of a suppressed cell",
-      call. = FALSE
-    )
-  }
-  if (!is.null(rnd)) {
-    rnd <- .rmbl_num(rnd, "rnd")[1L]
-    if (is.na(rnd) || rnd <= 0) {
-      stop("`rnd` must be a positive number", call. = FALSE)
-    }
-  }
+  ck <- .pb_check_args(rnd, suplim, supmar)
+  rnd <- ck$rnd
+  suplim <- ck$suplim
   n <- length(x)
-  value <- rep(NA_real_, n)
-  status <- rep("exact", n)
-  limit <- rep(NA_real_, n)
   if (is.character(x) || is.factor(x)) {
-    s <- trimws(as.character(x))
-    lt <- grepl("^<\\s*[0-9]+$", s)
-    limit[lt] <- as.numeric(sub("^<\\s*", "", s[lt]))
-    marked <- s %in% supmar
-    status[lt | marked] <- "suppressed"
-    num <- !(lt | marked) & !is.na(s)
-    value[num] <- suppressWarnings(as.numeric(gsub(",", "", s[num])))
-    bad <- num & is.na(value)
-    if (any(bad)) {
-      stop(
-        sprintf(
-          paste0(
-            "cannot read these cells as numbers or ",
-            "suppression marks: %s"
-          ),
-          paste(unique(s[bad]), collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    }
+    rd <- .pb_read_text(x, supmar)
+    value <- rd$value
+    status <- rd$status
+    limit <- rd$limit
   } else {
     value <- .rmbl_num(x, "x")
+    status <- rep("exact", n)
+    limit <- rep(NA_real_, n)
   }
+  .pb_check_counts(value)
   status[is.na(value) & status != "suppressed"] <- "missing"
-  lower <- value
-  upper <- value
-  if (!is.null(rnd)) {
-    half <- if (rndkind == "nearest") rnd / 2 else rnd - 1
-    r <- status == "exact" & !is.na(value)
-    lower[r] <- pmax(0, value[r] - half)
-    upper[r] <- value[r] + half
-    status[r] <- "rounded"
-  }
+  rb <- .pb_round(value, status, rnd, rndkind)
+  lower <- rb$lower
+  upper <- rb$upper
+  status <- rb$status
   sup <- status == "suppressed"
   if (any(sup)) {
     lim <- ifelse(is.na(limit[sup]), suplim %||% NA_real_, limit[sup])
     if (anyNA(lim)) {
       stop(
-        paste0(
-          "a suppressed cell has no limit: give `suplim` ",
-          "or write the cell as \"<k\""
-        ),
+        "a suppressed cell has no limit: give `suplim` ",
+        "or write the cell as \"<k\"",
         call. = FALSE
       )
     }
@@ -163,6 +129,43 @@ pubbnd <- function(
     ),
     class = c("rmbl_bounds", "data.frame"),
     bounds = list(rounding = rnd, rndkind = rndkind, suppression_limit = suplim)
+  )
+}
+
+#' @export
+format.rmbl_bounds <- function(x, ...) {
+  if (!all(c("value", "lower", "upper", "status") %in% names(x))) {
+    return(utils::capture.output(print(as.data.frame(unclass(x)))))
+  }
+  b <- attr(x, "bounds")
+  st <- table(factor(
+    x$status,
+    levels = c("exact", "rounded", "suppressed", "missing")
+  ))
+  d <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
+  attr(d, "bounds") <- NULL
+  .rmbl_stat_block(
+    "Publication bounds",
+    facts = list(
+      Cells = sprintf(
+        "%d: %d exact, %d rounded, %d suppressed, %d missing",
+        nrow(x),
+        st[["exact"]],
+        st[["rounded"]],
+        st[["suppressed"]],
+        st[["missing"]]
+      ),
+      Rounding = if (length(b$rounding)) {
+        sprintf("to %s (%s)", toString(b$rounding), toString(b$rndkind))
+      },
+      `Suppression limit` = b$suppression_limit
+    ),
+    table = utils::head(d, 20L),
+    reading = paste(
+      "Each published number stands for the range of true counts that",
+      "could have produced it; a later comparison has to hold across it."
+    ),
+    notes = if (nrow(x) > 20L) sprintf("... and %d more cells", nrow(x) - 20L)
   )
 }
 
@@ -226,18 +229,8 @@ pubbnd <- function(
 #' try(chgenv(now, prev[1, ]))
 #' @export
 chgenv <- function(now, prev, pop = NULL, prepop = NULL, per = 1000) {
-  for (nm in c("now", "prev")) {
-    v <- get(nm)
-    if (!is.data.frame(v) || !all(c("lower", "upper") %in% names(v))) {
-      stop(
-        sprintf(
-          "`%s` must be a data frame from pubbnd() (columns lower and upper)",
-          nm
-        ),
-        call. = FALSE
-      )
-    }
-  }
+  .pb_check_bounds(now, "now")
+  .pb_check_bounds(prev, "prev")
   if (nrow(now) != nrow(prev)) {
     stop("`now` and `prev` must have the same number of rows", call. = FALSE)
   }
@@ -251,20 +244,8 @@ chgenv <- function(now, prev, pop = NULL, prepop = NULL, per = 1000) {
   out$pctlo <- pl
   out$pctup <- pu
   per <- .rmbl_num(per, "per")
-  for (nm in c("pop", "prepop")) {
-    v <- get(nm)
-    if (is.null(v)) {
-      next
-    }
-    v <- .rmbl_num(v, nm)
-    if (!(length(v) %in% c(1L, nrow(now)))) {
-      stop(
-        sprintf("`%s` must be one number or one per row (%d)", nm, nrow(now)),
-        call. = FALSE
-      )
-    }
-    assign(nm, v)
-  }
+  pop <- .pb_exposure(pop, "pop", nrow(now))
+  prepop <- .pb_exposure(prepop, "prepop", nrow(now))
   if (!is.null(pop)) {
     out$ratelo <- per * now$lower / pop
     out$rateup <- per * now$upper / pop
@@ -273,7 +254,43 @@ chgenv <- function(now, prev, pop = NULL, prepop = NULL, per = 1000) {
       out$prerateup <- per * prev$upper / prepop
     }
   }
-  out
+  .rmbl_cls(out, "rmbl_change_bounds")
+}
+
+#' @export
+format.rmbl_change_bounds <- function(x, digits = 4L, ...) {
+  title <- "Change between published values"
+  need <- c("chglo", "chgup", "pctlo", "pctup")
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  d <- .rmbl_plain(x)
+  tb <- data.frame(cell = seq_len(nrow(d)))
+  tb$change <- .rmbl_fmt_ci(d$chglo, d$chgup, digits)
+  tb$`change %` <- .rmbl_fmt_ci(d$pctlo, d$pctup, digits)
+  if (all(c("ratelo", "rateup") %in% names(d))) {
+    tb$rate <- .rmbl_fmt_ci(d$ratelo, d$rateup, digits)
+  }
+  if (all(c("preratelo", "prerateup") %in% names(d))) {
+    tb$`previous rate` <- .rmbl_fmt_ci(d$preratelo, d$prerateup, digits)
+  }
+  .rmbl_res_block(
+    title,
+    facts = list(
+      Cells = nrow(d),
+      `Certain rises` = sum(d$chglo > 0, na.rm = TRUE),
+      `Certain falls` = sum(d$chgup < 0, na.rm = TRUE)
+    ),
+    tables = list(tb),
+    reading = paste(
+      "Each interval holds every change consistent with the two published",
+      "(rounded or suppressed) values. An interval that spans 0 cannot tell",
+      "a rise from a fall."
+    ),
+    digits = digits,
+    maxrows = 40L
+  )
 }
 
 #' Add publication bounds to a year-over-year table
@@ -352,4 +369,134 @@ yoybnd <- function(
   m$bounds <- attr(now, "bounds")
   attr(y, "yoy") <- m
   y
+}
+
+#' pubbnd()'s rounding base, suppression limit and markers, checked.
+#' @param rnd,suplim,supmar As for pubbnd().
+#' @return A list: rnd and suplim.
+#' @noRd
+.pb_check_args <- function(rnd, suplim, supmar) {
+  if (!is.null(suplim)) {
+    suplim <- .rmbl_scalar(suplim, "suplim", 0)
+  }
+  if (!is.character(supmar) || anyNA(supmar)) {
+    stop(
+      "`supmar` must be the text markers of a suppressed cell",
+      call. = FALSE
+    )
+  }
+  if (!is.null(rnd)) {
+    rnd <- .rmbl_num(rnd, "rnd")
+    # one finite base: Inf gave infinite bounds, c(5, 10) was cut to 5
+    if (length(rnd) != 1L || !is.finite(rnd) || rnd <= 0) {
+      stop("`rnd` must be a positive number, one and finite", call. = FALSE)
+    }
+  }
+  list(rnd = rnd, suplim = suplim)
+}
+
+#' pubbnd()'s published values must be counts.
+#'
+#' -10 gave the interval \[0, -7.5\], Inf an infinite one.
+#' @param value The values read from `x`; NA is a missing cell.
+#' @return NULL, invisibly.
+#' @noRd
+.pb_check_counts <- function(value) {
+  if (any(!is.na(value) & (value < 0 | !is.finite(value)))) {
+    stop("`x` must hold counts, finite and not negative", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' pubbnd()'s text cells read as numbers, suppression marks and limits.
+#' @param x,supmar As for pubbnd(), `x` a character vector or factor.
+#' @return A list: value, status and limit, one element per cell.
+#' @noRd
+.pb_read_text <- function(x, supmar) {
+  n <- length(x)
+  value <- rep(NA_real_, n)
+  status <- rep("exact", n)
+  limit <- rep(NA_real_, n)
+  s <- trimws(as.character(x))
+  lt <- grepl("^<\\s*[0-9]+$", s)
+  limit[lt] <- as.numeric(sub("^<\\s*", "", s[lt]))
+  marked <- s %in% supmar
+  status[lt | marked] <- "suppressed"
+  num <- !(lt | marked) & !is.na(s)
+  value[num] <- suppressWarnings(as.numeric(gsub(
+    ",",
+    "",
+    s[num],
+    fixed = TRUE
+  )))
+  bad <- num & is.na(value)
+  if (any(bad)) {
+    stop(
+      sprintf(
+        paste0(
+          "cannot read these cells as numbers or ",
+          "suppression marks: %s"
+        ),
+        toString(unique(s[bad]))
+      ),
+      call. = FALSE
+    )
+  }
+  list(value = value, status = status, limit = limit)
+}
+
+#' chgenv()'s current or previous bounds, checked.
+#' @param v The bounds.
+#' @param nm Their argument's name.
+#' @return NULL, invisibly.
+#' @noRd
+.pb_check_bounds <- function(v, nm) {
+  if (!is.data.frame(v) || !all(c("lower", "upper") %in% names(v))) {
+    stop(
+      sprintf(
+        "`%s` must be a data frame from pubbnd() (columns lower and upper)",
+        nm
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' chgenv()'s exposure for a rate, checked: one number or one per row.
+#' @param v The exposure, or NULL.
+#' @param nm Its argument's name.
+#' @param nr The number of rows.
+#' @return The exposure as numbers, or NULL.
+#' @noRd
+.pb_exposure <- function(v, nm, nr) {
+  if (is.null(v)) {
+    return(NULL)
+  }
+  v <- .rmbl_num(v, nm)
+  if (!(length(v) %in% c(1L, nr))) {
+    stop(
+      sprintf("`%s` must be one number or one per row (%d)", nm, nr),
+      call. = FALSE
+    )
+  }
+  v
+}
+
+#' pubbnd()'s bounds of the cells published as rounded numbers.
+#' @param value,status The cells' values and status.
+#' @param rnd,rndkind As for pubbnd(), checked.
+#' @return A list: lower, upper and status.
+#' @noRd
+.pb_round <- function(value, status, rnd, rndkind) {
+  lower <- value
+  upper <- value
+  if (!is.null(rnd)) {
+    half <- if (rndkind == "nearest") rnd / 2 else rnd - 1
+    r <- status == "exact" & !is.na(value)
+    lower[r] <- pmax(0, value[r] - half)
+    upper[r] <- value[r] + half
+    status[r] <- "rounded"
+  }
+  list(lower = lower, upper = upper, status = status)
 }

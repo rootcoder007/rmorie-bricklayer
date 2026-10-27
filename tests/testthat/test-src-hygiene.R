@@ -12,8 +12,11 @@ testthat::skip_on_cran()
 src_dir <- function() {
   # under R CMD check the tests run from a copy with no src/, so look for
   # the installed package's own sources first and skip when absent
+  # a directory only counts when it is this package's src/ (init.c and
+  # Makevars.in present), so a stray src/ above the test directory is skipped
   for (p in c("../../src", "../../../src", "src")) {
-    if (dir.exists(p)) return(normalizePath(p))
+    ok <- file.exists(file.path(p, c("init.c", "Makevars.in")))
+    if (all(ok)) return(normalizePath(p))
   }
   NA_character_
 }
@@ -76,7 +79,7 @@ test_that("no R header precedes a header that pulls in libc++ locale", {
   }
   # Put the standard headers first in the offending file. That ordering
   # is always safe and costs nothing.
-  expect_equal(offenders, character(0))
+  expect_identical(offenders, character(0))
 })
 
 test_that("no source file carries a non-ASCII byte", {
@@ -148,7 +151,7 @@ test_that("no Rd line exceeds 90 characters", {
       )
     }
   }
-  expect_equal(long, character(0))
+  expect_identical(long, character(0))
 })
 
 test_that("every C entry point is registered and every registration resolves", {
@@ -160,7 +163,7 @@ test_that("every C entry point is registered and every registration resolves", {
 
   # the names the .Call table offers
   reg <- regmatches(ini, regexpr("\"C_rmbl_[A-Za-z0-9_]+\"", ini))
-  reg <- gsub("\"", "", reg[nzchar(reg)])
+  reg <- gsub("\"", "", reg[nzchar(reg)], fixed = TRUE)
   reg <- unique(reg)
   expect_gt(length(reg), 30L)
 
@@ -189,8 +192,8 @@ test_that("every C entry point is registered and every registration resolves", {
   # definition nobody registers is dead weight that R_useDynamicSymbols
   # FALSE makes unreachable from R. Neither is caught by a passing test
   # suite, because a test only exercises what it happens to call.
-  expect_equal(sort(setdiff(reg, defined)), character(0))
-  expect_equal(sort(setdiff(defined, reg)), character(0))
+  expect_identical(sort(setdiff(reg, defined)), character(0))
+  expect_identical(sort(setdiff(defined, reg)), character(0))
 
   # and each registration's declared arity matches its definition
   for (nm in reg) {
@@ -255,10 +258,10 @@ test_that("no S3 method for one class is defined in two files", {
     }
   }
   twice <- seen[vapply(seen, length, integer(1)) > 1L]
-  expect_identical(
-    names(twice),
+  expect_named(
+    twice,
     character(0),
-    info = paste(names(twice), collapse = ", ")
+    info = toString(names(twice))
   )
   # every method is also registered exactly once
   ns <- readLines(test_path("..", "..", "NAMESPACE"), warn = FALSE)
@@ -480,7 +483,7 @@ test_that(
     ))
     for (mv in c("Makevars.in", "Makevars.win")) {
       x <- paste(readLines(file.path(d, mv), warn = FALSE), collapse = "\n")
-      x <- gsub("\\\\\n", " ", x)
+      x <- gsub("\\\n", " ", x, fixed = TRUE)
       o <- regmatches(x, regexpr("(?m)^OBJECTS = [^\n]*", x, perl = TRUE))
       expect_identical(
         sort(strsplit(trimws(sub("^OBJECTS = ", "", o)), "[[:space:]]+")[[1]]),

@@ -17,8 +17,8 @@ A data frame with one row per package and character columns
 version, platform and time of the build). Unavailable fields are \code{NA}
 rather than omitted, so a reader can see that the information was absent
 rather than forgotten; for a package that is not installed, every field
-except \code{package} is \code{NA}. An empty \code{packages} gives a data
-frame with no rows and the same columns.
+except \code{package} is \code{NA}, and a warning names it. An empty
+\code{pkgs} gives a data frame with no rows and the same columns.
 }
 \description{
 Records, for every package named, its version and enough about its

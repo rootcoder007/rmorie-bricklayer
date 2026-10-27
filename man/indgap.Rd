@@ -35,7 +35,9 @@ ones returned (default 0.95).}
 
 \item{pooled}{Optional labels of the rows that pool other groups (for example
 \code{"Aboriginal and Torres Strait Islander"} beside its parts, or a
-\dQuote{Total Indigenous} row); by default the labels described in Details.}
+\dQuote{Total Indigenous} row); by default the labels described in Details.
+Each label must be a group of \code{data}: one that matches no row (a
+typo) is refused rather than ignored.}
 }
 \value{
 A data frame of class \code{rmbl_indigenous_gap}, one row per group

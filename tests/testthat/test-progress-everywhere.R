@@ -2,7 +2,7 @@
 testthat::skip_on_cran()
 # blprog() and the long-running functions wired to it. stderr is not a terminal
 # under testthat, so a forced-on bar writes its milestone lines; the in-place
-# frames are tested through the internal tty switch, as in test-progress-anim.R.
+# frames are tested through the internal tty switch, as in test-progress_anim.R.
 
 ns <- asNamespace("rmoriebricklayer")
 msgs <- function(expr) {
@@ -18,7 +18,12 @@ progress_on <- function(env = parent.frame()) {
   st <- ns$.bl_progress_state
   old <- st$delay
   st$delay <- 0
-  withr::defer(st$delay <- old, envir = env)
+  withr::defer(
+    {
+      st$delay <- old
+    },
+    envir = env
+  )
 }
 
 test_that(
@@ -441,37 +446,38 @@ wired("exact p-values", yoypv(yoy(c(10, 20, 15, 30, 25, 40))), "exact p-values")
 # ---- the long native calls: a spinner with the stage, through .bl_busy() -----
 
 test_that("the native routes name their stage for the spinner", {
-  labels <- character()
+  rec <- new.env()
+  rec$labels <- character()
   local_mocked_bindings(.bl_busy = function(label, expr) {
-    labels <<- c(labels, label)
+    rec$labels <- c(rec$labels, label)
     expr
   })
   set.seed(3)
   invisible(chwkfit(sort(runif(100, 0, 50)), 50, "weibull"))
   expect_true(any(grepl(
     "Hawkes fit (weibull, 100 events): first start",
-    labels,
+    rec$labels,
     fixed = TRUE
   )))
   expect_true(any(grepl(
     "second start, from the exponential fit",
-    labels,
+    rec$labels,
     fixed = TRUE
   )))
   invisible(pqckg(2))
   expect_true(any(grepl(
     "XMSS key: building the tree of 4 one-time keys",
-    labels,
+    rec$labels,
     fixed = TRUE
   )))
   invisible(drvkey("pw", as.raw(1:16), iter = 10L))
   expect_true(any(grepl(
     "deriving a key (10 PBKDF2 iterations)",
-    labels,
+    rec$labels,
     fixed = TRUE
   )))
   invisible(ns$.bl_net("https://user@data.example.org:8443/x?y=1", 1))
-  expect_true(any(labels == "waiting for data.example.org:8443"))
+  expect_true(any(rec$labels == "waiting for data.example.org:8443"))
 })
 
 test_that(
@@ -487,7 +493,9 @@ test_that(
       ns$.bl_busy("work", {
         seen$on <- ns$.bl_progress_state$busy
         # an inner one keeps the outer label
-        ns$.bl_busy("inner", seen$inner <- ns$.bl_progress_state$busy)
+        ns$.bl_busy("inner", {
+          seen$inner <- ns$.bl_progress_state$busy
+        })
         seen$after_inner <- ns$.bl_progress_state$busy
         2
       }),

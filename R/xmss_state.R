@@ -4,6 +4,76 @@
 # session's record (R_user_dir) is not used here: the command line writes only
 # the files it is pointed at.
 
+#' Find XMSS signature indices used twice
+#'
+#' Lists every XMSS signature in the capsule bundles under a directory, and in
+#' seen-logs, and marks an index that one key signed with two different
+#' signatures. An XMSS index must sign once: two signatures at one index let
+#' anyone forge a third message, so a reused index means the key's state was
+#' copied or rolled back (RFC 10033, section 4: a verifier that sees all of a
+#' signer's signatures can detect reuse, since each carries its index).
+#'
+#' A seen-log is the text file `rmbl sign --seen-log FILE` appends to: one line
+#' per signature it made, with the key fingerprint, the index, a digest of the
+#' signature and the bundle it went into, tab-separated; lines starting with `#`
+#' are comments. The same signature found twice (one bundle copied to two
+#' places, or a bundle and its log line) is not a reuse.
+#'
+#' @param path A directory (every `capsule_bundle.json` under it) or one bundle
+#'   file.
+#' @param seenlog Seen-log files to read as well, or NULL. A file that does not
+#'   exist yet is an empty log; a directory, or a log with a malformed line, is
+#'   refused.
+#' @return A data frame, one row per signature seen: `key` (the key
+#'   fingerprint, the first 16 hex characters of SHA-256 over the public
+#'   key), `index`, `sig` (a digest of the signature), `where` (the file)
+#'   and `reused` (`TRUE` when this key signed this index with another
+#'   signature too).
+#' @seealso [cpsbndlvrf()] (its `seen` argument),
+#'   [blcli()] (`rmbl sign --seen-log`),
+#'   [pqckg()].
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+#' # one-time index record out of your configuration directory
+#' root <- tempfile("capsules-")
+#' d <- file.path(root, "one")
+#' dir.create(d, recursive = TRUE)
+#' writeLines("x\n1", file.path(d, "data.csv"))
+#' key <- pqckg(height = 2)
+#' b <- cpsbndl(d, mkmnf(list(), env = FALSE), key)
+#' xmssidxseen(root)
+#'
+#' # the same index signed again from a stale copy of the key: reused
+#' e <- file.path(root, "two")
+#' dir.create(e)
+#' writeLines("x\n2", file.path(e, "data.csv"))
+#' # forget the record, as a copy on another machine would
+#' invisible(xmssfgt(key))
+#' b2 <- cpsbndl(e, mkmnf(list(), env = FALSE), key)
+#' xmssidxseen(root)[, c("index", "reused")]
+#'
+#' try(xmssidxseen(tempfile()))
+#' options(op)
+#' @export
+xmssidxseen <- function(path = ".", seenlog = NULL) {
+  path <- .rmbl_string1(path, "path")
+  if (!file.exists(path)) {
+    stop(
+      .rmbl_fn(),
+      "`path` is not an existing directory or bundle file: ",
+      .rmbl_printable(path),
+      call. = FALSE
+    )
+  }
+  if (!is.null(seenlog) && (!is.character(seenlog) || anyNA(seenlog))) {
+    stop(.rmbl_fn(), "`seenlog` must be file paths, or NULL", call. = FALSE)
+  }
+  rows <- lapply(.rmbl_xmss_bundle_files(path), .rmbl_xmss_bundle_row)
+  rows <- c(rows, lapply(seenlog, .rmbl_xmss_seen_read))
+  .rmbl_xmss_seen_df(rows)
+}
+
 # the reserved block of indices of each key while `rmbl sign` signs from it, by
 # record id
 .rmbl_xmss_block <- new.env(parent = emptyenv())
@@ -50,7 +120,7 @@
 
 #' Reads an XMSS key from the JSON pqckg() keys are saved as (with the state in
 #' `used`, if any).
-#' @param txt The JSON text.
+#' @param txt The JSON text of a saved pqckg() XMSS key.
 #' @param what What to call it in a refusal.
 #' @return A list: `key` (a bricklayer_signing_key) and `used` (the state it
 #'   carries, or NULL).
@@ -72,6 +142,30 @@
       call. = FALSE
     )
   }
+  .rmbl_xmss_key_range(j, what)
+  key <- j[setdiff(names(j), "used")]
+  key$height <- as.integer(j$height)
+  key$next_index <- as.integer(j$next_index)
+  key$capacity <- bitwShiftL(1L, key$height)
+  class(key) <- c("bricklayer_signing_key", "list")
+  tryCatch(
+    {
+      .rmbl_xmss_ids(key)
+      .rmbl_check_seed(.rmbl_xkey(key, "skprf"), "skprf")
+    },
+    error = function(e) {
+      stop(sprintf("%s: %s", what, conditionMessage(e)), call. = FALSE)
+    }
+  )
+  list(key = key, used = j$used)
+}
+
+#' Refuses a key whose height or next index is not a whole number in range.
+#' @param j The key, as read from JSON.
+#' @param what What to call it in a refusal.
+#' @return `j`, invisibly.
+#' @noRd
+.rmbl_xmss_key_range <- function(j, what) {
   whole <- function(v, lo, hi) {
     is.numeric(v) &&
       length(v) == 1L &&
@@ -93,21 +187,7 @@
       call. = FALSE
     )
   }
-  key <- j[setdiff(names(j), "used")]
-  key$height <- as.integer(j$height)
-  key$next_index <- as.integer(j$next_index)
-  key$capacity <- bitwShiftL(1L, key$height)
-  class(key) <- c("bricklayer_signing_key", "list")
-  tryCatch(
-    {
-      .rmbl_xmss_ids(key)
-      .rmbl_check_seed(.rmbl_xkey(key, "skprf"), "skprf")
-    },
-    error = function(e) {
-      stop(sprintf("%s: %s", what, conditionMessage(e)), call. = FALSE)
-    }
-  )
-  list(key = key, used = j$used)
+  invisible(j)
 }
 
 #' Checks a key's XMSS state and gives it back with whole numbers as integers.
@@ -117,27 +197,7 @@
 #' @return The state.
 #' @noRd
 .rmbl_xmss_state_check <- function(st, fpr, what) {
-  w <- function(v, lo = -1) {
-    is.numeric(v) &&
-      length(v) == 1L &&
-      !is.na(v) &&
-      v == floor(v) &&
-      v >= lo &&
-      v < 2^31
-  }
-  sc <- if (is.list(st)) st$sectors
-  ok <- is.list(st) &&
-    identical(st$format, "rmbl-xmss-state/1") &&
-    identical(st$key, fpr) &&
-    w(st$highest) &&
-    w(st$generation, 0) &&
-    (is.null(sc) ||
-      (is.list(sc) &&
-        w(sc$count, 2) &&
-        w(sc$base) &&
-        is.list(sc$highest) &&
-        all(vapply(sc$highest, w, NA))))
-  if (!ok) {
+  if (!.rmbl_xmss_state_ok(st, fpr)) {
     stop(
       sprintf(
         paste(
@@ -151,6 +211,7 @@
       call. = FALSE
     )
   }
+  sc <- st$sectors
   st$highest <- as.integer(st$highest)
   st$generation <- as.integer(st$generation)
   if (!is.null(sc)) {
@@ -164,6 +225,41 @@
     )
   }
   st
+}
+
+#' One whole number from `lo` up, below 2^31.
+#' @param v The value to test for one whole number in [`lo`, 2^31).
+#' @param lo The least allowed.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_xmss_whole <- function(v, lo = -1) {
+  is.numeric(v) &&
+    length(v) == 1L &&
+    !is.na(v) &&
+    v == floor(v) &&
+    v >= lo &&
+    v < 2^31
+}
+
+#' Whether a parsed XMSS state is one of this key, in the state format.
+#' @param st The parsed state.
+#' @param fpr The key's fingerprint.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_xmss_state_ok <- function(st, fpr) {
+  w <- .rmbl_xmss_whole
+  sc <- if (is.list(st)) st$sectors
+  is.list(st) &&
+    identical(st$format, "rmbl-xmss-state/1") &&
+    identical(st$key, fpr) &&
+    w(st$highest) &&
+    w(st$generation, 0) &&
+    (is.null(sc) ||
+      (is.list(sc) &&
+        w(sc$count, 2) &&
+        w(sc$base) &&
+        is.list(sc$highest) &&
+        all(vapply(sc$highest, w, NA))))
 }
 
 #' Writes a file atomically: a temporary file in the same directory, flushed to
@@ -224,210 +320,35 @@
   .rmbl_xmss_with_lock(
     where,
     function() {
-      txt <- if (is.null(kf)) {
-        keytxt
-      } else {
-        paste(readLines(kf, warn = FALSE), collapse = "\n")
-      }
-      kj <- .rmbl_xmss_key_json(txt, "the key")
-      key <- kj$key
-      fpr <- .rmbl_xmss_fpr(paste0(key$root, .rmbl_xkey(key, "pubseed")))
-      fresh <- list(
-        format = "rmbl-xmss-state/1",
-        key = fpr,
-        highest = -1L,
-        generation = 0L
-      )
-      st <- if (!is.null(sf) && file.exists(sf) && file.size(sf) > 0) {
-        tryCatch(
-          .rmbl_json_text(readLines(sf, warn = FALSE), simplifyVector = FALSE),
-          error = function(e) NULL
-        )
-      } else {
-        kj$used %||% fresh
-      }
-      st <- .rmbl_xmss_state_check(st, fpr, where)
-      cap <- key$capacity
+      ks <- .rmbl_xmss_read_state(kf, sf, keytxt, where)
+      key <- ks$key
+      fpr <- ks$fpr
+      st <- ks$st
       # what the key file's next_index and the used-index record say was used:
       # never go back from it
       outside <- max(key$next_index - 1L, rec_hi)
-      k <- sec$count
-      if (!is.null(k) && (bitwAnd(k, k - 1L) != 0L || k > cap %/% 2L)) {
-        stop(
-          sprintf(
-            paste0(
-              "--sectors must be a power of two from 2 to %d (half the %d ",
-              "indices of this key), not %d"
-            ),
-            cap %/% 2L,
-            cap,
-            k
-          ),
-          call. = FALSE
-        )
-      }
-      if (is.null(st$sectors) && !is.null(k)) {
-        # every index up to the highest used so far counts as used in every
-        # sector
-        st$sectors <- list(
-          count = k,
-          base = max(st$highest, outside),
-          highest = stats::setNames(list(), character())
-        )
-      }
+      st <- .rmbl_xmss_sectors(st, sec, key, outside)
       kk <- st$sectors$count %||% 1L
+      i <- .rmbl_xmss_sector_index(sec, fpr, kk)
+      r <- .rmbl_xmss_range(st, i, kk, key$capacity, outside, seen, fpr, n)
+      st$highest <- max(st$highest, outside, r$to)
       if (kk > 1L) {
-        if (key$next_index - 1L > st$highest) {
-          stop(
-            sprintf(
-              paste(
-                "the key's next_index (%d) is past the highest index",
-                "its sector state records (%d): it",
-                "signed outside rmbl sign after its state was split",
-                "into sectors, so which indices",
-                "are used is not known. Generate a new key"
-              ),
-              key$next_index,
-              st$highest
-            ),
-            call. = FALSE
-          )
-        }
-        if (!is.null(k) && k != kk) {
-          stop(
-            sprintf(
-              paste0(
-                "this key's state is split into %d sectors, not %d: give ",
-                "--sectors %d"
-              ),
-              kk,
-              k,
-              kk
-            ),
-            call. = FALSE
-          )
-        }
-        if (is.null(sec$index) && is.null(sec$name)) {
-          stop(
-            sprintf(
-              paste0(
-                "this key's state is split into %d sectors: give --sector ",
-                "NAME or --sector-index I"
-              ),
-              kk
-            ),
-            call. = FALSE
-          )
-        }
-      } else if (!is.null(sec$index) || !is.null(sec$name)) {
-        stop(
-          "--sector and --sector-index need --sectors K: this key's ",
-          "state is not split into sectors",
-          call. = FALSE
-        )
-      }
-      i <- if (kk == 1L) {
-        0L
-      } else {
-        sec$index %||%
-          (strtoi(
-            substr(tolower(csha256(charToRaw(paste0(sec$name, fpr)))), 1L, 7L),
-            16L
-          ) %%
-            kk)
-      }
-      if (i >= kk) {
-        stop(
-          sprintf("--sector-index must be below the %d sectors, not %d", kk, i),
-          call. = FALSE
-        )
-      }
-      size <- cap %/% kk
-      lo <- i * size
-      end <- lo + size - 1L
-      cur <- if (kk == 1L) {
-        max(st$highest, outside)
-      } else {
-        max(
-          min(max(st$sectors$base, lo - 1L), end),
-          st$sectors$highest[[as.character(i)]] %||% -1L
-        )
-      }
-      kn <- seen$index[seen$key == fpr & seen$index >= lo & seen$index <= end]
-      if (length(kn) && max(kn) > cur) {
-        stop(
-          sprintf(
-            paste(
-              "stale copy of the key: index %d of it was already signed",
-              "(seen in %s), but this state",
-              "says the highest used in its range is %d. Signing would",
-              "reuse an index: use the copy that",
-              "made that signature, or generate a new key"
-            ),
-            max(kn),
-            seen$where[seen$key == fpr & seen$index == max(kn)][[1L]],
-            cur
-          ),
-          call. = FALSE
-        )
-      }
-      from <- cur + 1L
-      to <- from + as.integer(n) - 1L
-      if (to > end) {
-        stop(
-          sprintf(
-            paste(
-              "the key is exhausted in sector %d of %d (indices %d to",
-              "%d): %d left, and this run needs %d.",
-              "Generate a new key"
-            ),
-            i,
-            kk,
-            lo,
-            end,
-            end - cur,
-            n
-          ),
-          call. = FALSE
-        )
-      }
-      st$highest <- max(st$highest, outside, to)
-      if (kk > 1L) {
-        st$sectors$highest[[as.character(i)]] <- to
+        st$sectors$highest[[as.character(i)]] <- r$to
       }
       prev <- st$writer %||% ""
       st$generation <- st$generation + 1L
       st$writer <- .rmbl_xmss_writer()
-      st$reserved <- list(sector = i, from = from, to = to)
-      if (is.null(sf)) {
-        key$next_index <- st$highest + 1L
-        .rmbl_xmss_put(
-          kf,
-          paste0(
-            tojs(
-              c(unclass(key), list(used = st)),
-              auto_unbox = TRUE,
-              pretty = TRUE,
-              digits = NA
-            ),
-            "\n"
-          )
-        )
-      } else {
-        .rmbl_xmss_put(
-          sf,
-          paste0(tojs(st, auto_unbox = TRUE, pretty = TRUE, digits = NA), "\n")
-        )
-      }
+      st$reserved <- list(sector = i, from = r$from, to = r$to)
+      key <- .rmbl_xmss_state_write(st, key, kf, sf)
       list(
         key = key,
         fpr = fpr,
-        from = from,
-        to = to,
+        from = r$from,
+        to = r$to,
         sector = i,
         count = kk,
-        size = size,
-        left = end - to,
+        size = r$size,
+        left = r$end - r$to,
         generation = st$generation,
         prev = prev,
         writer = st$writer,
@@ -436,6 +357,286 @@
     },
     what = "the XMSS state"
   )
+}
+
+#' Reads an XMSS key and its state, checked, inside the state's lock.
+#' @param kf,sf The key file and the state file, or NULL.
+#' @param keytxt The key's JSON when there is no key file.
+#' @param where The file the state is kept in, for refusals.
+#' @return A list: `key`, `fpr` (its fingerprint) and `st` (the state).
+#' @noRd
+.rmbl_xmss_read_state <- function(kf, sf, keytxt, where) {
+  txt <- if (is.null(kf)) {
+    keytxt
+  } else {
+    paste(readLines(kf, warn = FALSE), collapse = "\n")
+  }
+  kj <- .rmbl_xmss_key_json(txt, "the key")
+  key <- kj$key
+  fpr <- .rmbl_xmss_fpr(paste0(key$root, .rmbl_xkey(key, "pubseed")))
+  fresh <- list(
+    format = "rmbl-xmss-state/1",
+    key = fpr,
+    highest = -1L,
+    generation = 0L
+  )
+  st <- if (!is.null(sf) && file.exists(sf) && file.size(sf) > 0) {
+    tryCatch(
+      .rmbl_json_text(readLines(sf, warn = FALSE), simplifyVector = FALSE),
+      error = function(e) NULL
+    )
+  } else {
+    kj$used %||% fresh
+  }
+  st <- .rmbl_xmss_state_check(st, fpr, where)
+  list(key = key, fpr = fpr, st = st)
+}
+
+#' An XMSS state's sectors: split on the first `--sectors K`, and the
+#' sector arguments checked against the split.
+#' @param st The state.
+#' @param sec The sector arguments (count, index, name).
+#' @param key The XMSS key, whose capacity bounds the sector count.
+#' @param outside The highest index used outside the state.
+#' @return The state.
+#' @noRd
+.rmbl_xmss_sectors <- function(st, sec, key, outside) {
+  cap <- key$capacity
+  k <- sec$count
+  .rmbl_xmss_sector_count(k, cap)
+  if (is.null(st$sectors) && !is.null(k)) {
+    # every index up to the highest used so far counts as used in every
+    # sector
+    st$sectors <- list(
+      count = k,
+      base = max(st$highest, outside),
+      highest = stats::setNames(list(), character())
+    )
+  }
+  kk <- st$sectors$count %||% 1L
+  if (kk == 1L) {
+    if (!is.null(sec$index) || !is.null(sec$name)) {
+      stop(
+        "--sector and --sector-index need --sectors K: this key's ",
+        "state is not split into sectors",
+        call. = FALSE
+      )
+    }
+    return(st)
+  }
+  .rmbl_xmss_sector_checks(st, sec, key, k, kk)
+  st
+}
+
+#' Refuses a sector count that is not a power of two up to half the key.
+#' @param k The sector count asked for, or NULL.
+#' @param cap The key's number of indices.
+#' @return `k`, invisibly.
+#' @noRd
+.rmbl_xmss_sector_count <- function(k, cap) {
+  if (!is.null(k) && (bitwAnd(k, k - 1L) != 0L || k > cap %/% 2L)) {
+    stop(
+      sprintf(
+        paste0(
+          "--sectors must be a power of two from 2 to %d (half the %d ",
+          "indices of this key), not %d"
+        ),
+        cap %/% 2L,
+        cap,
+        k
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(k)
+}
+
+#' Refuses a sectored state the run cannot sign from: a key that signed past
+#' it, another sector count, or no sector named.
+#' @param st The state.
+#' @param sec The sector options.
+#' @param key The XMSS key, whose next index must not pass the state.
+#' @param k The sector count asked for, or NULL.
+#' @param kk The state's sector count.
+#' @return `st`, invisibly.
+#' @noRd
+.rmbl_xmss_sector_checks <- function(st, sec, key, k, kk) {
+  if (key$next_index - 1L > st$highest) {
+    stop(
+      sprintf(
+        paste(
+          "the key's next_index (%d) is past the highest index",
+          "its sector state records (%d): it",
+          "signed outside rmbl sign after its state was split",
+          "into sectors, so which indices",
+          "are used is not known. Generate a new key"
+        ),
+        key$next_index,
+        st$highest
+      ),
+      call. = FALSE
+    )
+  }
+  if (!is.null(k) && k != kk) {
+    stop(
+      sprintf(
+        paste0(
+          "this key's state is split into %d sectors, not %d: give ",
+          "--sectors %d"
+        ),
+        kk,
+        k,
+        kk
+      ),
+      call. = FALSE
+    )
+  }
+  if (is.null(sec$index) && is.null(sec$name)) {
+    stop(
+      sprintf(
+        paste0(
+          "this key's state is split into %d sectors: give --sector ",
+          "NAME or --sector-index I"
+        ),
+        kk
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(st)
+}
+
+#' The sector a signing run uses: the one given, or the one its name hashes to.
+#' @param sec The sector arguments.
+#' @param fpr The key's fingerprint.
+#' @param kk The number of sectors.
+#' @return The sector, from 0.
+#' @noRd
+.rmbl_xmss_sector_index <- function(sec, fpr, kk) {
+  if (kk == 1L) {
+    return(0L)
+  }
+  i <- sec$index %||%
+    (strtoi(
+      substr(tolower(csha256(charToRaw(paste0(sec$name, fpr)))), 1L, 7L),
+      16L
+    ) %%
+      kk)
+  if (i >= kk) {
+    stop(
+      sprintf("--sector-index must be below the %d sectors, not %d", kk, i),
+      call. = FALSE
+    )
+  }
+  i
+}
+
+#' The indices a signing run reserves in its sector: past every index used,
+#' by the state or by a signature seen, and inside the sector.
+#' @param st The state.
+#' @param i The sector.
+#' @param kk The number of sectors.
+#' @param cap The key's capacity.
+#' @param outside The highest index used outside the state.
+#' @param seen The signatures seen (key, index, where).
+#' @param fpr The key's fingerprint.
+#' @param n The signatures to make.
+#' @return A list: from, to, end and size.
+#' @noRd
+.rmbl_xmss_range <- function(st, i, kk, cap, outside, seen, fpr, n) {
+  size <- cap %/% kk
+  lo <- i * size
+  end <- lo + size - 1L
+  cur <- if (kk == 1L) {
+    max(st$highest, outside)
+  } else {
+    max(
+      min(max(st$sectors$base, lo - 1L), end),
+      st$sectors$highest[[as.character(i)]] %||% -1L
+    )
+  }
+  .rmbl_xmss_stale(seen, fpr, lo, end, cur)
+  from <- cur + 1L
+  to <- from + as.integer(n) - 1L
+  if (to > end) {
+    stop(
+      sprintf(
+        paste(
+          "the key is exhausted in sector %d of %d (indices %d to",
+          "%d): %d left, and this run needs %d.",
+          "Generate a new key"
+        ),
+        i,
+        kk,
+        lo,
+        end,
+        end - cur,
+        n
+      ),
+      call. = FALSE
+    )
+  }
+  list(from = from, to = to, end = end, size = size)
+}
+
+#' Refuses a stale copy of a key: one whose state is behind a signature seen.
+#' @param seen The signatures seen (xmssidxseen()), checked for later indices.
+#' @param fpr The key's fingerprint.
+#' @param lo,end The sector's first and last index.
+#' @param cur The highest index the state says is used.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_xmss_stale <- function(seen, fpr, lo, end, cur) {
+  kn <- seen$index[seen$key == fpr & seen$index >= lo & seen$index <= end]
+  if (length(kn) && max(kn) > cur) {
+    stop(
+      sprintf(
+        paste(
+          "stale copy of the key: index %d of it was already signed",
+          "(seen in %s), but this state",
+          "says the highest used in its range is %d. Signing would",
+          "reuse an index: use the copy that",
+          "made that signature, or generate a new key"
+        ),
+        max(kn),
+        seen$where[seen$key == fpr & seen$index == max(kn)][[1L]],
+        cur
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' An XMSS state, written: into the key file when it has no state file of its
+#' own, else into the state file.
+#' @param st The state.
+#' @param key The XMSS key, written with its state when there is no state file.
+#' @param kf,sf The key and state files.
+#' @return The key, with next_index advanced when it holds the state.
+#' @noRd
+.rmbl_xmss_state_write <- function(st, key, kf, sf) {
+  if (is.null(sf)) {
+    key$next_index <- st$highest + 1L
+    .rmbl_xmss_put(
+      kf,
+      paste0(
+        tojs(
+          c(unclass(key), list(used = st)),
+          auto_unbox = TRUE,
+          pretty = TRUE,
+          digits = NA
+        ),
+        "\n"
+      )
+    )
+  } else {
+    .rmbl_xmss_put(
+      sf,
+      paste0(tojs(st, auto_unbox = TRUE, pretty = TRUE, digits = NA), "\n")
+    )
+  }
+  key
 }
 
 #' Reads an XMSS seen-log: one line per signature, key fingerprint, index,
@@ -526,72 +727,12 @@
   invisible(f)
 }
 
-#' Find XMSS signature indices used twice
-#'
-#' Lists every XMSS signature in the capsule bundles under a directory, and in
-#' seen-logs, and marks an index that one key signed with two different
-#' signatures. An XMSS index must sign once: two signatures at one index let
-#' anyone forge a third message, so a reused index means the key's state was
-#' copied or rolled back (RFC 10033, section 4: a verifier that sees all of a
-#' signer's signatures can detect reuse, since each carries its index).
-#'
-#' A seen-log is the text file `rmbl sign --seen-log FILE` appends to: one line
-#' per signature it made, with the key fingerprint, the index, a digest of the
-#' signature and the bundle it went into, tab-separated; lines starting with `#`
-#' are comments. The same signature found twice (one bundle copied to two
-#' places, or a bundle and its log line) is not a reuse.
-#'
-#' @param path A directory (every `capsule_bundle.json` under it) or one bundle
-#'   file.
-#' @param seenlog Seen-log files to read as well, or NULL. A file that does not
-#'   exist yet is an empty log; a directory, or a log with a malformed line, is
-#'   refused.
-#' @return A data frame, one row per signature seen: `key` (the key
-#'   fingerprint, the first 16 hex characters of SHA-256 over the public
-#'   key), `index`, `sig` (a digest of the signature), `where` (the file)
-#'   and `reused` (`TRUE` when this key signed this index with another
-#'   signature too).
-#' @seealso [cpsbndlvrf()] (its `seen` argument),
-#'   [blcli()] (`rmbl sign --seen-log`),
-#'   [pqckg()].
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' # keep this example's
-#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())
-#' # one-time index record out of your configuration directory
-#' root <- tempfile("capsules-")
-#' d <- file.path(root, "one")
-#' dir.create(d, recursive = TRUE)
-#' writeLines("x\n1", file.path(d, "data.csv"))
-#' key <- pqckg(height = 2)
-#' b <- cpsbndl(d, mkmnf(list(), env = FALSE), key)
-#' xmssidxseen(root)
-#'
-#' # the same index signed again from a stale copy of the key: reused
-#' e <- file.path(root, "two")
-#' dir.create(e)
-#' writeLines("x\n2", file.path(e, "data.csv"))
-#' # forget the record, as a copy on another machine would
-#' invisible(xmssfgt(key))
-#' b2 <- cpsbndl(e, mkmnf(list(), env = FALSE), key)
-#' xmssidxseen(root)[, c("index", "reused")]
-#'
-#' try(xmssidxseen(tempfile()))
-#' options(op)
-#' @export
-xmssidxseen <- function(path = ".", seenlog = NULL) {
-  path <- .rmbl_string1(path, "path")
-  if (!file.exists(path)) {
-    stop(
-      .rmbl_fn(),
-      "`path` is not an existing directory or bundle file: ",
-      .rmbl_printable(path),
-      call. = FALSE
-    )
-  }
-  if (!is.null(seenlog) && (!is.character(seenlog) || anyNA(seenlog))) {
-    stop(.rmbl_fn(), "`seenlog` must be file paths, or NULL", call. = FALSE)
-  }
-  files <- if (dir.exists(path)) {
+#' The capsule bundles under a path: the path itself when it is a file.
+#' @param path A directory or a bundle file.
+#' @return The bundle files' paths.
+#' @noRd
+.rmbl_xmss_bundle_files <- function(path) {
+  if (dir.exists(path)) {
     f <- list.files(
       path,
       pattern = "^capsule_bundle[.]json$",
@@ -603,31 +744,42 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
   } else {
     path
   }
-  rows <- lapply(files, function(f) {
-    b <- tryCatch(
-      .rmbl_json_text(readLines(f, warn = FALSE), simplifyVector = FALSE),
-      error = function(e) NULL
-    )
-    a <- if (is.list(b) && is.list(b$attestation)) b$attestation
-    s <- if (is.list(a)) a$signature
-    if (
-      !is.list(s) ||
-        !identical(a$scheme, "xmss-sha256") ||
-        !is.character(a$public) ||
-        !is.numeric(s$index) ||
-        !is.character(s$wire)
-    ) {
-      return(NULL)
-    }
-    data.frame(
-      key = .rmbl_xmss_fpr(a$public),
-      index = as.integer(s$index),
-      sig = .rmbl_xmss_sigd(s$wire),
-      where = f,
-      stringsAsFactors = FALSE
-    )
-  })
-  rows <- c(rows, lapply(seenlog, .rmbl_xmss_seen_read))
+}
+
+#' The XMSS signature of one capsule bundle, as a row of xmssidxseen().
+#' @param f The bundle file.
+#' @return A one-row data frame, or NULL when it holds no XMSS signature.
+#' @noRd
+.rmbl_xmss_bundle_row <- function(f) {
+  b <- tryCatch(
+    .rmbl_json_text(readLines(f, warn = FALSE), simplifyVector = FALSE),
+    error = function(e) NULL
+  )
+  a <- if (is.list(b) && is.list(b$attestation)) b$attestation
+  s <- if (is.list(a)) a$signature
+  if (
+    !is.list(s) ||
+      !identical(a$scheme, "xmss-sha256") ||
+      !is.character(a$public) ||
+      !is.numeric(s$index) ||
+      !is.character(s$wire)
+  ) {
+    return(NULL)
+  }
+  data.frame(
+    key = .rmbl_xmss_fpr(a$public),
+    index = as.integer(s$index),
+    sig = .rmbl_xmss_sigd(s$wire),
+    where = f,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The signatures seen, bound, with whether each index was reused.
+#' @param rows The rows, one data frame per signature or log.
+#' @return As for xmssidxseen().
+#' @noRd
+.rmbl_xmss_seen_df <- function(rows) {
   df <- do.call(
     rbind,
     c(

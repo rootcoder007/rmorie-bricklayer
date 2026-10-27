@@ -21,7 +21,7 @@ test_that(
     )
     writeLines(c("a,b", "1,2", "3,4"), f)
     r <- .bl_read_csv_streamed(f)
-    expect_identical(names(r), c("a", "b"))
+    expect_named(r, c("a", "b"))
     expect_identical(nrow(r), 2L)
     # a quoted comma is one field; a gzip file reads the same way
     writeLines(c("a,b", "1,\"x,y\"", "3,4"), f)
@@ -141,7 +141,9 @@ test_that(
     # B > n: the n x n product (a B x B one asked for gigabytes at B = 1e5)
     B <- 500L
     R <- matrix(w, n, B) * matrix(stats::rpois(n * B, 1), n, B)
-    t <- system.time(des <- svydes(d, "w", reps = R, type = "bootstrap"))[[
+    t <- system.time(
+      assign("des", svydes(d, "w", reps = R, type = "bootstrap"))
+    )[[
       "elapsed"
     ]]
     expect_lte(des$degf, n - 1L)
@@ -372,7 +374,7 @@ test_that(
       ", 9007199254740993]"
     )
     t <- system.time(expect_warning(
-      r <- fromjs(big),
+      assign("r", fromjs(big)),
       "integer 9007199254740993 exceeds 2\\^53"
     ))[["elapsed"]]
     expect_lt(t, wall_limit(3))
@@ -406,7 +408,7 @@ test_that(
     )
     expect_identical(
       unlist(fromjs('{"a": 1, "a": 2}', duplicate_keys = "keep")),
-      c(a = 1L, a = 2L)
+      stats::setNames(c(1L, 2L), c("a", "a"))
     )
     dup <- paste0(
       "{",
@@ -711,7 +713,8 @@ test_that("#3: the row-key digests read a column as a set without sorting it", {
   d <- data.frame(
     y = c(1, 2, 3, 4),
     w = c(1, 1, 2, 2),
-    g = c("a", "b", "a", "b")
+    g = c("a", "b", "a", "b"),
+    stringsAsFactors = FALSE
   )
   k1 <- .svy_rowkey_digests(d)
   k2 <- .svy_rowkey_digests(d[4:1, ])
@@ -743,15 +746,15 @@ test_that(
     expect_false(x$isid)
     expect_false(x$isrow)
     expect_identical(x$hk, 1:4)
-    expect_equal(x$fullfac, 1)
+    expect_identical(x$fullfac, 1)
     # a jackknife replicate: one row out, the others scaled by 4/3
     r <- c(0, w[-1] * 4 / 3)
     x <- s(r, w)
     expect_false(x$same)
     expect_true(x$anyzero)
     expect_identical(x$hk, 2:4)
-    expect_equal(x$fullfac, 4 / 3)
-    expect_equal(x$maxrel, 1)
+    expect_identical(x$fullfac, 4 / 3)
+    expect_identical(x$maxrel, 1)
     # the row numbers, the row names and the id's values are recognised
     expect_true(s(1:4, w)$isrow)
     expect_true(s(c(10, 20, 30, 40), w, rn = c(10, 20, 30, 40))$isrow)
@@ -774,7 +777,7 @@ test_that(
     n <- 10000
     x <- s(rep(2, n), rep(1, n))
     expect_identical(x$hk, 1:4096)
-    expect_equal(x$fullfac, 2)
+    expect_identical(x$fullfac, 2)
     expect_identical(s(numeric(), numeric())$maxrel, 0)
     expect_error(s(1:3, 1:2), "one length")
     expect_error(.Call(C_rmbl_svy_colsumm, 1L, 1, NULL, NULL), "double vectors")
@@ -876,7 +879,11 @@ test_that(
 )
 
 test_that("battery: shrs() refuses a total that is not one number", {
-  stops <- data.frame(division = c("N", "S"), stops = c(4, 6))
+  stops <- data.frame(
+    division = c("N", "S"),
+    stops = c(4, 6),
+    stringsAsFactors = FALSE
+  )
   expect_error(
     shrs(1e308, stops, by = "division"),
     "`total` must be NULL, one finite non-negative number"
@@ -893,6 +900,9 @@ test_that("battery: shrs() refuses a total that is not one number", {
     "`total` must be NULL"
   )
   expect_error(shrs(c(5, 2), total = NaN), "`total` must be NULL")
-  expect_equal(shrs(stops, stops, by = "division", total = 20)$share, c(20, 30))
-  expect_equal(shrs(c(5, 2), total = 10L)$share, c(50, 20))
+  expect_identical(
+    shrs(stops, stops, by = "division", total = 20)$share,
+    c(20, 30)
+  )
+  expect_identical(shrs(c(5, 2), total = 10L)$share, c(50, 20))
 })

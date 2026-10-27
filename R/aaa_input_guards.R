@@ -58,8 +58,8 @@
 
 #' Checks that an argument is numeric (or logical) and returns it as a double
 #' vector.
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param x The argument's value, numeric or logical, or NULL.
+#' @param what The argument's name, quoted when the value is not numeric.
 #' @param allow_null Whether NULL is accepted (it becomes `numeric(0)`).
 #' @return A double vector.
 #' @noRd
@@ -92,8 +92,8 @@
 
 #' Checks that an argument is numeric with no infinite value and returns its
 #' non-missing values.
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param x The argument's value; NA values are dropped before the checks.
+#' @param what The argument's name, quoted in the finite and count errors.
 #' @param nonneg Whether negative values are refused.
 #' @param min_n The least number of non-missing values accepted.
 #' @return A double vector with the missing values dropped.
@@ -101,7 +101,7 @@
 .rmbl_finite_input <- function(x, what, nonneg = FALSE, min_n = 0L) {
   x <- .rmbl_num_input(x, what)
   x <- x[!is.na(x)]
-  if (any(!is.finite(x))) {
+  if (!all(is.finite(x))) {
     stop(
       .rmbl_fn(),
       sprintf("`%s` must be finite (no Inf)", what),
@@ -129,8 +129,8 @@
 
 #' Checks that an argument is character (or raw, when allowed) and returns it
 #' unchanged.
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param x The argument's value: character, raw, or an all-NA logical.
+#' @param what The argument's name, quoted when the value is not character.
 #' @param allow_raw Whether a raw vector is accepted.
 #' @return `x`.
 #' @noRd
@@ -163,7 +163,7 @@
 #' more), none missing or empty. NULL or character(0) went on to data\[, cols\]
 #' and failed there as \code{"get1index"} (statistics stress test of 5e1dce5).
 #' @param x The column name or names passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param what The argument's name, quoted when it does not name a column.
 #' @param several Whether more than one column may be named.
 #' @return `x`.
 #' @noRd
@@ -212,8 +212,8 @@
 
 #' Checks that an argument is a single non-empty string and returns it marked
 #' UTF-8.
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param x The argument's value, which must be one non-blank string.
+#' @param what The argument's name, quoted when it is not one non-empty string.
 #' @return `x`, through `.rmbl_utf8()`.
 #' @noRd
 .rmbl_string1 <- function(x, what) {
@@ -235,14 +235,16 @@
 #' argument's default in the calling function, as .rmbl_arg() finds them.
 #' @param arg The value passed by the user; NULL or the full default vector
 #'   picks the first choice.
-#' @param choices The accepted values.
+#' @param choices The accepted values; NULL (the default) reads them from the
+#'   calling function's default.
 #' @param several Whether more than one choice may be given.
 #' @return The matched choice or choices.
 #' @noRd
-.rmbl_arg <- function(arg, choices, several = FALSE) {
+.rmbl_arg <- function(arg, choices = NULL, several = FALSE) {
   what <- paste(deparse(substitute(arg)), collapse = "")
-  if (missing(choices)) {
-    fn <- sys.function(sysp <- sys.parent())
+  if (is.null(choices)) {
+    sysp <- sys.parent()
+    fn <- sys.function(sysp)
     choices <- eval(formals(fn)[[what]], envir = sys.frame(sysp))
   }
   if (is.null(arg)) {
@@ -251,7 +253,7 @@
   if (!several && identical(arg, choices)) {
     return(choices[[1L]])
   }
-  shown <- paste(dQuote(choices, FALSE), collapse = ", ")
+  shown <- toString(dQuote(choices, FALSE))
   given <- .rmbl_printable(paste(utils::head(deparse(arg), 1L), collapse = ""))
   if (
     !is.character(arg) ||
@@ -293,8 +295,8 @@
 #' A data frame's columns must be named, every name non-empty and no name twice:
 #' a frame built by hand with NULL or \code{""} names is refused in words, not
 #' with a subscript error later (review of 29a55d8, hostile battery).
-#' @param data The data frame passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param data The data frame whose column names are checked.
+#' @param what The data frame's argument name (default `data`), for errors.
 #' @return `TRUE`, invisibly.
 #' @noRd
 .rmbl_df_names <- function(data, what = "data") {
@@ -310,7 +312,7 @@
     )
   }
   nm <- names(data)
-  if (length(data) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
+  if (length(data) && (is.null(nm) || anyNA(nm) || !all(nzchar(nm)))) {
     stop(
       .rmbl_fn(),
       sprintf(
@@ -340,8 +342,8 @@
 #' A seed for a native generator: one whole number in [0, 2^53). The core casts
 #' it to an unsigned 64-bit integer, and a NA, negative or fractional double
 #' cast that way is undefined behaviour.
-#' @param seed The value passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param seed The seed to check: a whole number in [0, 2^53).
+#' @param what The argument's name, quoted when the seed is out of range.
 #' @return The seed as a double.
 #' @noRd
 .rmbl_seed <- function(seed, what = "seed") {
@@ -364,8 +366,8 @@
 
 #' A confidence level: one number strictly inside (0, 1); outside it the
 #' interval quantiles are NaN
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param x The confidence level to check, strictly between 0 and 1.
+#' @param what The argument's name (default `conflvl`), quoted in the error.
 #' @return The level as a double.
 #' @noRd
 .rmbl_conf_level <- function(x, what = "conflvl") {
@@ -380,20 +382,11 @@
   x
 }
 
-#' Checks that an argument is a number (a whole one with `integer`) and converts
-#' it.
-#'
-#' A numeric argument: text that is not a number is refused in words
-#' (as.numeric() turned it into NA with \dQuote{NAs introduced by coercion} and
-#' the function failed further on); every other type converts exactly as
-#' as.numeric() / as.integer() always did.
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
-#' @param integer Whether the value must be a whole number, returned as an
-#'   integer.
-#' @return A double vector, or an integer vector with `integer = TRUE`.
+#' .rmbl_num()'s refusals before any conversion: a value that is no number,
+#' and a date where a count is wanted.
+#' @param x,what,integer As for .rmbl_num().
 #' @noRd
-.rmbl_num <- function(x, what, integer = FALSE) {
+.rmbl_num_kind <- function(x, what, integer) {
   # a list, a data frame, a factor, a complex number or a function is no number:
   # as.numeric() refused them in its own words ("'list' object cannot be coerced
   # to type 'double'") or read a factor's codes (re-test of the b617a3f CRAN
@@ -430,39 +423,16 @@
       call. = FALSE
     )
   }
-  if (is.character(x)) {
-    v <- suppressWarnings(as.numeric(x))
-    bad <- !is.na(x) & is.na(v) & nzchar(trimws(x)) & x != "NA"
-    if (any(bad)) {
-      stop(
-        .rmbl_fn(),
-        sprintf(
-          "`%s` must be numeric, not text such as \"%s\"",
-          what,
-          x[bad][1L]
-        ),
-        call. = FALSE
-      )
-    }
-    x <- v
-  }
-  # a number, not a flag: as.numeric(TRUE) is 1 (maxprs = TRUE was read as one
-  # pair)
-  if (is.logical(x) && any(!is.na(x))) {
-    stop(
-      .rmbl_fn(),
-      sprintf(
-        "`%s` must be a%s number, not %s",
-        what,
-        if (integer) " whole" else "",
-        format(x[!is.na(x)][1L])
-      ),
-      call. = FALSE
-    )
-  }
-  if (!integer) {
-    return(as.numeric(x))
-  }
+  invisible(NULL)
+}
+
+#' A number as a whole number: no fraction, no infinity, within the integer
+#' range.
+#' @param x The number.
+#' @param what Its argument's name.
+#' @return The integer.
+#' @noRd
+.rmbl_num_whole <- function(x, what) {
   # a whole number: as.integer() would read 2.5 as 2 and pick another setting
   # silently, and turn Inf or 1e10 into NA with a coercion warning
   x <- as.numeric(x)
@@ -489,13 +459,64 @@
   as.integer(x)
 }
 
+#' Checks that an argument is a number (a whole one with `integer`) and converts
+#' it.
+#'
+#' A numeric argument: text that is not a number is refused in words
+#' (as.numeric() turned it into NA with \dQuote{NAs introduced by coercion} and
+#' the function failed further on); every other type converts exactly as
+#' as.numeric() / as.integer() always did.
+#' @param x The value to convert: numeric, logical NA, or numeric text.
+#' @param what The argument's name, quoted when the value is not a number.
+#' @param integer Whether the value must be a whole number, returned as an
+#'   integer.
+#' @return A double vector, or an integer vector with `integer = TRUE`.
+#' @noRd
+.rmbl_num <- function(x, what, integer = FALSE) {
+  .rmbl_num_kind(x, what, integer)
+  if (is.character(x)) {
+    v <- suppressWarnings(as.numeric(x))
+    bad <- !is.na(x) & is.na(v) & nzchar(trimws(x)) & x != "NA"
+    if (any(bad)) {
+      stop(
+        .rmbl_fn(),
+        sprintf(
+          "`%s` must be numeric, not text such as \"%s\"",
+          what,
+          x[bad][1L]
+        ),
+        call. = FALSE
+      )
+    }
+    x <- v
+  }
+  # a number, not a flag: as.numeric(TRUE) is 1 (maxprs = TRUE was read as one
+  # pair)
+  if (is.logical(x) && !all(is.na(x))) {
+    stop(
+      .rmbl_fn(),
+      sprintf(
+        "`%s` must be a%s number, not %s",
+        what,
+        if (integer) " whole" else "",
+        format(x[!is.na(x)][1L])
+      ),
+      call. = FALSE
+    )
+  }
+  if (!integer) {
+    return(as.numeric(x))
+  }
+  .rmbl_num_whole(x, what)
+}
+
 #' Checks where a function writes its output.
 #'
 #' Where a function writes: a connection, or one non-empty path (a number or NA
 #' reached file() and writeLines() and failed in their words: \dQuote{'con' is
 #' not a connection}, \dQuote{invalid 'description' argument})
 #' @param file The connection or path passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param what The argument's name (default `file`), quoted in the path error.
 #' @param connection Whether a connection or NULL is accepted.
 #' @return `file`.
 #' @noRd
@@ -509,8 +530,8 @@
 
 #' TRUE or FALSE, said in words when it is neither (`if (quiet)` failed on NA, a
 #' vector or a frame)
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param x The flag to check: one TRUE or FALSE.
+#' @param what The argument's name, quoted when the flag is NA or not logical.
 #' @return `x`.
 #' @noRd
 .rmbl_flag1 <- function(x, what) {
@@ -521,8 +542,8 @@
 }
 
 #' One string, empty allowed (a title, an NA marker)
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param x The string to check; an empty string is accepted.
+#' @param what The argument's name, quoted when it is not a single string.
 #' @return `x`.
 #' @noRd
 .rmbl_text1 <- function(x, what) {
@@ -543,9 +564,9 @@
 #' number, NA, a vector are each refused here, not by the base R call they
 #' reached (`if (n < mintl)`: \dQuote{missing value where TRUE/FALSE needed};
 #' CRAN stress test of 0.5.14)
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
-#' @param min The smallest value accepted.
+#' @param x The scalar to check against `min` and `max`.
+#' @param what The argument's name, quoted with the accepted range.
+#' @param min The smallest value accepted (default `-Inf`, no lower bound).
 #' @param max The largest value accepted.
 #' @param integer Whether the value must be a whole number.
 #' @return The value as a double, or an integer with `integer = TRUE`.
@@ -637,7 +658,7 @@
 #' A file the function reads: one path that exists and is a file (not a
 #' directory)
 #' @param path The path passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param what The argument's name (`path`), quoted if the file is missing.
 #' @return The path.
 #' @noRd
 .rmbl_file1 <- function(path, what = "path") {
@@ -664,8 +685,8 @@
 #'
 #' Evaluate `expr` under a fixed RNG seed and hand the caller's stream back
 #' untouched: a drift report must not move the user's downstream draws.
-#' @param seed The seed, or NULL for the session's stream.
-#' @param expr The expression to evaluate.
+#' @param seed The seed set before `expr` is forced; NULL keeps the stream.
+#' @param expr The expression forced under the seed; the old state is restored.
 #' @return The value of `expr`.
 #' @noRd
 .rmbl_with_seed <- function(seed, expr) {
@@ -678,29 +699,25 @@
   seed <- .rmbl_r_seed(seed) # before the promise `expr` is forced
   had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
   old <- if (had) get(".Random.seed", envir = globalenv(), inherits = FALSE)
-  on.exit(
-    {
-      if (had) {
-        assign(".Random.seed", old, envir = globalenv())
-      } else if (
-        exists(".Random.seed", envir = globalenv(), inherits = FALSE)
-      ) {
-        rm(".Random.seed", envir = globalenv())
-      }
-    },
-    add = TRUE
-  )
+  restore <- function() {
+    if (had) {
+      assign(".Random.seed", old, envir = globalenv())
+    } else if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+      rm(".Random.seed", envir = globalenv())
+    }
+  }
+  on.exit(restore(), add = TRUE)
   .rmbl_set_seed(seed)
   expr
 }
 
 #' Finite, non-negative counts, or an error that names the argument.
 #' @param v The counts to check.
-#' @param what The argument's name, used in the error message.
+#' @param what The argument's name, quoted if a count is negative or infinite.
 #' @return `v`, invisibly.
 #' @noRd
 .rmbl_check_counts <- function(v, what) {
-  if (any(!is.finite(v)) || any(v < 0)) {
+  if (!all(is.finite(v)) || any(v < 0)) {
     stop(
       .rmbl_fn(),
       sprintf("`%s` must be finite, non-negative counts", what),
@@ -807,6 +824,25 @@
   if (is.null(v)) default else v
 }
 
+# .rmbl_getopt(), with the value checked: an option set by hand to something the
+# package cannot use is refused where it is read, by name, instead of failing
+# later with an error about something else.
+.rmbl_getopt_ok <- function(name, default, ok, want) {
+  v <- .rmbl_getopt(name, default)
+  if (!is.null(v) && !isTRUE(ok(v))) {
+    stop("option rmoriebricklayer.", name, " must be ", want, call. = FALSE)
+  }
+  v
+}
+
+.rmbl_is_num1 <- function(v, min = 0) {
+  is.numeric(v) && length(v) == 1L && !is.na(v) && v >= min
+}
+
+.rmbl_is_str1 <- function(v) {
+  is.character(v) && length(v) == 1L && !is.na(v) && nzchar(v)
+}
+
 # ---- 0.5.x result names ------------------------------------------------------
 # Results keep their 1.0.0 names when a 1.0.0 function is called. Called through
 # a 0.5.x alias (or yoy() with its 0.5.x argument names), the result comes back
@@ -864,53 +900,25 @@
   r[!duplicated(names(r))]
 }
 
-#' Renames, through a result, every name found in `map` (from -> to): names,
-#' column names, dimnames and attribute names, in nested lists and attributes
-#' too.
-#' @param x Any object.
-#' @param map A named character vector, from -> to.
-#' @param used An environment collecting the names renamed (`used$from`), or
-#'   NULL.
-#' @return `x` renamed.
+#' Which of some names the map renames, recorded in `used`.
+#' @param v The names.
+#' @param map,used As for .rmbl_names_swap().
+#' @return A logical vector.
 #' @noRd
-.rmbl_names_swap <- function(x, map, used = NULL) {
-  if (!length(map) || is.function(x) || is.environment(x)) {
-    return(x)
+.rmbl_names_hit <- function(v, map, used) {
+  k <- v %in% names(map)
+  if (!is.null(used) && any(k)) {
+    used$from <- union(used$from, v[k])
   }
-  hit <- function(v) {
-    k <- v %in% names(map)
-    if (!is.null(used) && any(k)) {
-      used$from <- union(used$from, v[k])
-    }
-    k
-  }
-  # a list is renamed bare, so a data frame's compact row names stay as they are
-  cl <- if (is.list(x)) oldClass(x)
-  if (is.list(x)) {
-    x <- unclass(x)
-  }
-  n <- names(x)
-  if (!is.null(n) && any(k <- hit(n))) {
-    names(x)[k] <- unname(map[n[k]])
-  }
-  dn <- if (is.null(dim(x))) NULL else dimnames(x)
-  if (is.list(dn)) {
-    dimnames(x) <- lapply(dn, function(v) {
-      if (!is.null(v) && any(k <- hit(v))) {
-        v[k] <- unname(map[v[k]])
-      }
-      v
-    })
-  }
-  if (is.list(x)) {
-    for (i in seq_along(x)) {
-      if (
-        !is.null(x[[i]]) && (is.list(x[[i]]) || !is.null(attributes(x[[i]])))
-      ) {
-        x[[i]] <- .rmbl_names_swap(x[[i]], map, used)
-      }
-    }
-  }
+  k
+}
+
+#' An object's own attributes renamed, and their values swapped through.
+#' @param x The object whose attributes (not names or class) are renamed.
+#' @param map,used As for .rmbl_names_swap().
+#' @return The object.
+#' @noRd
+.rmbl_names_swap_attrs <- function(x, map, used) {
   a <- attributes(x)
   for (nm in setdiff(
     names(a),
@@ -928,10 +936,67 @@
     )
   )) {
     v <- .rmbl_names_swap(a[[nm]], map, used)
-    to <- if (hit(nm)) map[[nm]] else nm
+    to <- if (.rmbl_names_hit(nm, map, used)) map[[nm]] else nm
     attr(x, nm) <- NULL
     attr(x, to) <- v
   }
+  x
+}
+
+#' An array's dimnames renamed through the map.
+#' @param x The object whose dimnames, if it has any, are renamed.
+#' @param map,used As for .rmbl_names_swap().
+#' @return The object.
+#' @noRd
+.rmbl_names_swap_dimnames <- function(x, map, used) {
+  dn <- if (is.null(dim(x))) NULL else dimnames(x)
+  if (is.list(dn)) {
+    dimnames(x) <- lapply(dn, function(v) {
+      k <- if (!is.null(v)) .rmbl_names_hit(v, map, used)
+      if (!is.null(v) && any(k)) {
+        v[k] <- unname(map[v[k]])
+      }
+      v
+    })
+  }
+  x
+}
+
+#' Renames, through a result, every name found in `map` (from -> to): names,
+#' column names, dimnames and attribute names, in nested lists and attributes
+#' too.
+#' @param x Any object.
+#' @param map A named character vector, from -> to.
+#' @param used An environment collecting the names renamed (`used$from`), or
+#'   NULL.
+#' @return `x` renamed.
+#' @noRd
+.rmbl_names_swap <- function(x, map, used = NULL) {
+  if (!length(map) || is.function(x) || is.environment(x)) {
+    return(x)
+  }
+  hit <- function(v) .rmbl_names_hit(v, map, used)
+  # a list is renamed bare, so a data frame's compact row names stay as they are
+  cl <- if (is.list(x)) oldClass(x)
+  if (is.list(x)) {
+    x <- unclass(x)
+  }
+  n <- names(x)
+  k <- if (!is.null(n)) hit(n)
+  if (!is.null(n) && any(k)) {
+    names(x)[k] <- unname(map[n[k]])
+  }
+  x <- .rmbl_names_swap_dimnames(x, map, used)
+  if (is.list(x)) {
+    for (i in seq_along(x)) {
+      if (
+        !is.null(x[[i]]) && (is.list(x[[i]]) || !is.null(attributes(x[[i]])))
+      ) {
+        x[[i]] <- .rmbl_names_swap(x[[i]], map, used)
+      }
+    }
+  }
+  x <- .rmbl_names_swap_attrs(x, map, used)
   if (!is.null(cl)) {
     oldClass(x) <- cl
   }
@@ -972,20 +1037,6 @@
   class(x) <- setdiff(oldClass(x), "rmbl_old")
   attr(x, "rmbl_names") <- NULL
   .rmbl_names_swap(x, stats::setNames(names(done), unname(done)))
-}
-
-#' Prints an object by its format() method.
-#'
-#' The print method of every class whose printed form is its format() lines: one
-#' function, assigned to each print.<class> (in this file, which loads first, so
-#' that the assignments find it).
-#' @param x The object.
-#' @param ... Passed to format().
-#' @return x, invisibly.
-#' @noRd
-.rmbl_print_via_format <- function(x, ...) {
-  cat(format(x, ...), sep = "\n")
-  invisible(x)
 }
 
 # `%||%` (the right side when the left is NULL) is in base R from 4.4.0. It is

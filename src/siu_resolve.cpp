@@ -236,14 +236,16 @@ static SoResolution resolve_fr(const std::string& text) {
         mo = std::max(mo, k);
         one = one || k == 1;
     }
-    static const std::unordered_map<std::string, int> kFrNum = {
+    /* a constant table, no static constructor: the first line of a constructed map was the line
+     * of its unwinding, which no run reaches */
+    static constexpr struct { const char *word; int n; } kFrNum[] = {
         {"un", 1}, {"une", 1}, {"deux", 2}, {"trois", 3}, {"quatre", 4}, {"cinq", 5},
         {"six", 6}, {"sept", 7}, {"huit", 8}, {"neuf", 9}, {"dix", 10}};
     auto num = [&](std::string tok) {
         std::transform(tok.begin(), tok.end(), tok.begin(),
                    [](unsigned char c) { return static_cast<char>(rmbl_ascii_lower(c)); });
-        const auto w = kFrNum.find(tok);
-        return w != kFrNum.end() ? w->second : small_int(tok);
+        for (const auto &w : kFrNum) if (tok == w.word) return w.n;
+        return small_int(tok);
     };
     std::smatch m;
     if (mo > 0 && one) {

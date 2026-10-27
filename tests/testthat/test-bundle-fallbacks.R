@@ -10,13 +10,13 @@ test_that(".rmbl_column_stats base-R branch matches the compiled kernels", {
   for (nm in c("mean", "sd", "skewness", "median", "mad", "lower", "upper")) {
     expect_equal(b[[nm]], a[[nm]], tolerance = 1e-10, label = nm)
   }
-  expect_true(is.character(a$hist))
+  expect_type(a$hist, "character")
   expect_identical(b$hist, NA_character_)
   # degenerate: one value has no sd or skewness
   one <- .rmbl_column_stats(3, native = FALSE)
   expect_true(is.nan(one$sd))
   expect_true(is.nan(one$skewness))
-  expect_equal(one$median, 3)
+  expect_equal(one$median, 3, tolerance = 1e-8)
 })
 
 test_that(".rmbl_sha256_bytes pure-R branch matches csha256", {

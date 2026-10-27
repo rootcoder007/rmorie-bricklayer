@@ -5,29 +5,6 @@
 # randomization-inference distributions, leave-one-out estimates, and raw
 # outcome trends by adoption cohort.
 
-#' Returns the corner of the plot with the fewest points, for a legend.
-#'
-#' The corner of the plotting region with the fewest of the plotted points, for
-#' a legend that hides nothing
-#' @param x The points' x coordinates.
-#' @param y Their y coordinates.
-#' @return \code{"topleft"}, \code{"topright"}, \code{"bottomleft"} or
-#'   \code{"bottomright"}.
-#' @noRd
-.bl_free_corner <- function(x, y) {
-  u <- graphics::par("usr")
-  mx <- (u[1L] + u[2L]) / 2
-  my <- (u[3L] + u[4L]) / 2
-  ok <- is.finite(x) & is.finite(y)
-  n <- c(
-    topleft = sum(x[ok] < mx & y[ok] > my),
-    topright = sum(x[ok] >= mx & y[ok] > my),
-    bottomleft = sum(x[ok] < mx & y[ok] <= my),
-    bottomright = sum(x[ok] >= mx & y[ok] <= my)
-  )
-  names(n)[which.min(n)]
-}
-
 #' Event studies for several outcomes in one grid
 #'
 #' Draws a list of \code{\link{evstudy}} (or \code{\link{stgatt}}) results in a
@@ -51,24 +28,30 @@
 #'   "Arrest rate" = evstudy(p, "district", "month", "arrrate", "refmonth",
 #'                               leads = 3, lags = 4))
 #' plotevgrid(es, style = "stata")
+#'
+#' # your own panel: eight towns over ten years, four adopting a by-law (two
+#' # in 2019, two in 2021), with each town's population, county and income
+#' own <- data.frame(
+#'   town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+#'   year = rep(2015:2024, times = 8)
+#' )
+#' i <- match(own$town, unique(own$town))
+#' own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+#' own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+#' own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+#' own$county <- rep(c("North", "South"), 4)[i]
+#' own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+#' own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+#'   0.2 * own$income + sin(seq_len(80))
+#' plotevgrid(list(
+#'   "Rate" = evstudy(own, "town", "year", "rate", "first", leads = 3,
+#'                    lags = 3),
+#'   "Income" = evstudy(own, "town", "year", "income", "first", leads = 3,
+#'                      lags = 3)
+#' ))
 #' @export
 plotevgrid <- function(x, ncol = NULL, main = NULL, ...) {
-  if (
-    !is.list(x) ||
-      !length(x) ||
-      is.null(names(x)) ||
-      any(!nzchar(names(x))) ||
-      !all(vapply(
-        x,
-        function(e) inherits(e, c("rmbl_event_study", "rmbl_staggered_att")),
-        NA
-      ))
-  ) {
-    stop(
-      "`x` must be a named list of evstudy() or stgatt() results",
-      call. = FALSE
-    )
-  }
+  .bl_evgrid_check(x)
   n <- length(x)
   if (is.null(ncol)) {
     ncol <- min(3L, n)
@@ -78,7 +61,7 @@ plotevgrid <- function(x, ncol = NULL, main = NULL, ...) {
     main <- .rmbl_text1(main, "main")
   }
   nrow <- ceiling(n / ncol)
-  op <- graphics::par(
+  op <- .bl_par_set(
     mfrow = c(nrow, ncol),
     oma = c(0, 0, if (is.null(main)) 0 else 2, 0),
     mar = c(4, 4, 2.5, 1)
@@ -156,7 +139,7 @@ plot.rmbl_permutation <- function(
   null <- attr(x, "null")
   d <- as.data.frame(x)
   n <- nrow(d)
-  op <- graphics::par(
+  op <- .bl_par_set(
     mfrow = c(ceiling(n / min(3L, n)), min(3L, n)),
     mar = c(4, 4, 3, 1)
   )
@@ -214,6 +197,23 @@ plot.rmbl_permutation <- function(
 #' l <- loounit(p, "district", "month", "crmrate", "reformed")
 #' range(l$estimate)
 #' plot(l)
+#'
+#' # your own panel: eight towns over ten years, four adopting a by-law (two
+#' # in 2019, two in 2021), with each town's population, county and income
+#' own <- data.frame(
+#'   town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+#'   year = rep(2015:2024, times = 8)
+#' )
+#' i <- match(own$town, unique(own$town))
+#' own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+#' own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+#' own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+#' own$county <- rep(c("North", "South"), 4)[i]
+#' own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+#' own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+#'   0.2 * own$income + sin(seq_len(80))
+#' # each adopting town left out in turn, weighted by population
+#' loounit(own, "town", "year", "rate", "bylaw", w = "pop")
 #' @export
 loounit <- function(
   data,
@@ -223,19 +223,20 @@ loounit <- function(
   trtd,
   covs = NULL,
   cl = NULL,
-  units = NULL
+  units = NULL,
+  w = NULL
 ) {
-  full <- plndid(data, unit, time, y, trtd, covs = covs, cl = cl)
+  full <- plndid(data, unit, time, y, trtd, covs = covs, cl = cl, w = w)
   ever <- tapply(data[[trtd]], data[[unit]], max) > 0
   if (is.null(units)) {
     units <- names(ever)[ever]
   }
   if (!is.atomic(units)) {
-    stop("`units` must be unit labels of `data`", call. = FALSE)
+    stop(.rmbl_fn(), "`units` must be unit labels of `data`", call. = FALSE)
   }
   units <- as.character(units)
   if (!length(units) || !all(units %in% as.character(data[[unit]]))) {
-    stop("`units` must be units of `data`", call. = FALSE)
+    stop(.rmbl_fn(), "`units` must be units of `data`", call. = FALSE)
   }
   rows <- lapply(units, function(u) {
     r <- tryCatch(
@@ -246,7 +247,8 @@ loounit <- function(
         y,
         trtd,
         covs = covs,
-        cl = cl
+        cl = cl,
+        w = w
       ),
       error = function(e) NULL
     )
@@ -263,6 +265,40 @@ loounit <- function(
   out
 }
 
+#' @export
+format.rmbl_loo <- function(x, digits = 4L, ...) {
+  title <- "Leave one unit out"
+  fb <- .rmbl_df_fallback(x, title, c("dropped", "estimate", "se"), digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  full <- attr(x, "full")
+  d <- .rmbl_plain(x, c("dropped", "estimate", "se"))
+  if (length(full)) {
+    d$change <- d$estimate - full
+  }
+  ok <- is.finite(x$estimate)
+  .rmbl_res_block(
+    title,
+    facts = list(
+      `Full-sample estimate` = full,
+      `Units dropped in turn` = nrow(x),
+      `Range of estimates` = if (any(ok)) {
+        .rmbl_fmt_ci(min(x$estimate[ok]), max(x$estimate[ok]))
+      },
+      `Not estimable` = if (!all(ok)) sum(!ok)
+    ),
+    tables = d,
+    reading = paste(
+      "Each row re-estimates the difference in differences without one",
+      "treated unit; a unit whose removal moves the estimate a lot is",
+      "driving the result."
+    ),
+    digits = digits,
+    maxrows = 30L
+  )
+}
+
 #' @rdname plot-methods
 #' @export
 plot.rmbl_loo <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
@@ -277,13 +313,7 @@ plot.rmbl_loo <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   )
   # col = fills the bars (it was accepted and ignored; final audit of 1.0.0,
   # #11)
-  fill <- if (!is.null(col)) {
-    .bl_cols(1L, col)
-  } else if (!is.null(palette)) {
-    blpal(palette, 1L)
-  } else {
-    "#D5D5D5"
-  }
+  fill <- .bl_loo_fill(col, palette)
   graphics::plot(
     h,
     xlim = range(c(e, f)),
@@ -338,6 +368,22 @@ plot.rmbl_loo <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' ct <- cohtrnd(p, "district", "month", "crmrate", "refmonth",
 #'                     win = c(-10, 10))
 #' plot(ct)
+#'
+#' # your own panel: eight towns over ten years, four adopting a by-law (two
+#' # in 2019, two in 2021), with each town's population, county and income
+#' own <- data.frame(
+#'   town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+#'   year = rep(2015:2024, times = 8)
+#' )
+#' i <- match(own$town, unique(own$town))
+#' own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+#' own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+#' own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+#' own$county <- rep(c("North", "South"), 4)[i]
+#' own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+#' own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+#'   0.2 * own$income + sin(seq_len(80))
+#' cohtrnd(own, "town", "year", "rate", "first", win = c(-3, 3), ma = 1)
 #' @export
 cohtrnd <- function(
   data,
@@ -354,41 +400,62 @@ cohtrnd <- function(
   win <- .rmbl_num(win, "win")
   if (length(win) != 2L || win[1L] >= -1 || win[2L] < 0) {
     stop(
+      .rmbl_fn(),
       "`win` must be two numbers, the first below -1 and the second 0 or more",
       call. = FALSE
     )
   }
   ma <- .rmbl_scalar(ma, "ma", 1, 100, integer = TRUE)
+  norm <- .rmbl_flag1(norm, "norm")
   cohorts <- sort(unique(g[is.finite(g)]))
   if (!length(cohorts)) {
     stop("cohtrnd: no unit is ever treated", call. = FALSE)
   }
-  rows <- lapply(cohorts, function(cg) {
-    k <- g == cg
-    m <- tapply(p$y[k], p$t[k], mean)
-    tt <- as.numeric(names(m))
-    v <- as.vector(m)
-    if (ma > 1L) {
-      v <- as.vector(stats::filter(v, rep(1 / ma, ma), sides = 1))
-    }
-    e <- tt - cg
-    keep <- e >= win[1L] & e <= win[2L]
-    out <- data.frame(cohort = cg, evtm = e[keep], value = v[keep])
-    if (isTRUE(norm)) {
-      b <- out$value[out$evtm == -1]
-      out$value <- if (length(b) && is.finite(b) && b != 0) {
-        out$value / b
-      } else {
-        NA_real_
-      }
-    }
-    out
-  })
+  rows <- lapply(
+    cohorts,
+    .bl_coh_row,
+    g = g,
+    p = p,
+    ma = ma,
+    win = win,
+    norm = norm
+  )
   out <- do.call(rbind, rows)
   attr(out, "normalised") <- isTRUE(norm)
   attr(out, "ma") <- ma
   class(out) <- c("rmbl_cohort_trends", "data.frame")
   out
+}
+
+#' @export
+format.rmbl_cohort_trends <- function(x, digits = 4L, ...) {
+  title <- "Outcome trends by adoption cohort"
+  fb <- .rmbl_df_fallback(x, title, c("cohort", "evtm", "value"), digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  nrm <- isTRUE(attr(x, "normalised"))
+  .rmbl_res_block(
+    title,
+    facts = list(
+      Cohorts = length(unique(x$cohort)),
+      `Periods since adoption` = if (nrow(x)) {
+        sprintf("%s to %s", min(x$evtm), max(x$evtm))
+      },
+      `Moving average` = if (length(attr(x, "ma"))) {
+        paste(attr(x, "ma"), "period(s)")
+      },
+      Scale = if (nrm) "relative to period -1 (= 1)" else "outcome units"
+    ),
+    tables = .rmbl_coh_wide(x),
+    reading = paste(
+      "Each column is one cohort's average outcome around its own adoption",
+      "date (evtm 0); cohorts that move together before 0 support a common",
+      "trend."
+    ),
+    digits = digits,
+    maxrows = 40L
+  )
 }
 
 #' @rdname plot-methods
@@ -441,4 +508,112 @@ plot.rmbl_cohort_trends <- function(
     bg = "white"
   )
   invisible(d)
+}
+
+#' Returns the corner of the plot with the fewest points, for a legend.
+#'
+#' The corner of the plotting region with the fewest of the plotted points, for
+#' a legend that hides nothing
+#' @param x The points' x coordinates.
+#' @param y Their y coordinates.
+#' @return \code{"topleft"}, \code{"topright"}, \code{"bottomleft"} or
+#'   \code{"bottomright"}.
+#' @noRd
+.bl_free_corner <- function(x, y) {
+  u <- graphics::par("usr")
+  mx <- (u[1L] + u[2L]) / 2
+  my <- (u[3L] + u[4L]) / 2
+  ok <- is.finite(x) & is.finite(y)
+  n <- c(
+    topleft = sum(x[ok] < mx & y[ok] > my),
+    topright = sum(x[ok] >= mx & y[ok] > my),
+    bottomleft = sum(x[ok] < mx & y[ok] <= my),
+    bottomright = sum(x[ok] >= mx & y[ok] <= my)
+  )
+  names(n)[which.min(n)]
+}
+
+#' Refuses what plotevgrid() cannot draw: anything but a named list of
+#' evstudy() or stgatt() results.
+#' @param x As for plotevgrid().
+#' @return `x`, invisibly.
+#' @noRd
+.bl_evgrid_check <- function(x) {
+  if (
+    !is.list(x) ||
+      !length(x) ||
+      is.null(names(x)) ||
+      !all(nzchar(names(x))) ||
+      !all(vapply(
+        x,
+        function(e) inherits(e, c("rmbl_event_study", "rmbl_staggered_att")),
+        NA
+      ))
+  ) {
+    stop(
+      .rmbl_fn(),
+      "`x` must be a named list of evstudy() or stgatt() results",
+      call. = FALSE
+    )
+  }
+  invisible(x)
+}
+
+#' The fill of the leave-one-out histogram's bars.
+#' @param col,palette As for plot().
+#' @return One colour.
+#' @noRd
+.bl_loo_fill <- function(col, palette) {
+  if (!is.null(col)) {
+    .bl_cols(1L, col)
+  } else if (!is.null(palette)) {
+    blpal(palette, 1L)
+  } else {
+    "#D5D5D5"
+  }
+}
+
+#' One adoption cohort's mean outcome by time since adoption (cohtrnd()).
+#' @param cg The cohort's first treated period.
+#' @param g Each unit-period's first treated period.
+#' @param p The panel, with outcome `y` and period `t` per row.
+#' @param ma,win,norm As for cohtrnd().
+#' @return A data frame: cohort, evtm and value.
+#' @noRd
+.bl_coh_row <- function(cg, g, p, ma, win, norm) {
+  k <- g == cg
+  m <- tapply(p$y[k], p$t[k], mean)
+  tt <- as.numeric(names(m))
+  v <- as.vector(m)
+  if (ma > 1L) {
+    v <- as.vector(stats::filter(v, rep(1 / ma, ma), sides = 1))
+  }
+  e <- tt - cg
+  keep <- e >= win[1L] & e <= win[2L]
+  out <- data.frame(cohort = cg, evtm = e[keep], value = v[keep])
+  if (isTRUE(norm)) {
+    b <- out$value[out$evtm == -1]
+    out$value <- if (length(b) && is.finite(b) && b != 0) {
+      out$value / b
+    } else {
+      NA_real_
+    }
+  }
+  out
+}
+
+#' cohtrnd()'s rows as a table with one row per period since adoption and one
+#' column per cohort.
+#' @param x A cohtrnd() result.
+#' @return A data frame.
+#' @noRd
+.rmbl_coh_wide <- function(x) {
+  ev <- sort(unique(x$evtm))
+  co <- sort(unique(x$cohort))
+  out <- data.frame(evtm = ev)
+  for (g in co) {
+    i <- x$cohort == g
+    out[[paste("cohort", g)]] <- x$value[i][match(ev, x$evtm[i])]
+  }
+  out
 }

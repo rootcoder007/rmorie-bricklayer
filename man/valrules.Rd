@@ -7,7 +7,7 @@
 valrules(data, rules)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame the rules are applied to.}
 
 \item{rules}{A list of \code{\link[=rul]{rul()}} objects, or a single rule.}
 }

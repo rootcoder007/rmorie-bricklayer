@@ -56,7 +56,8 @@ test_that(
       MORIE_LLM_API_KEY = "sk-own",
       MORIE_LLM_MODEL = "my-model"
     ))
-    seen <- NULL
+    rec <- new.env()
+    rec$seen <- NULL
     testthat::local_mocked_bindings(
       .bl_http_post = function(...) {
         stop("a LAN endpoint must take the local seam")
@@ -68,14 +69,14 @@ test_that(
         timeout,
         headers
       ) {
-        seen <<- list(url = url, headers = headers)
+        rec$seen <- list(url = url, headers = headers)
         rt_reply("lan says hi")
       },
       .package = "rmoriebricklayer"
     )
     expect_identical(llmask("hi"), "lan says hi")
-    expect_identical(seen$url, "http://10.0.0.5:8000/v1/chat/completions")
-    expect_identical(seen$headers, "Authorization: Bearer sk-own")
+    expect_identical(rec$seen$url, "http://10.0.0.5:8000/v1/chat/completions")
+    expect_identical(rec$seen$headers, "Authorization: Bearer sk-own")
     for (base in c(
       "http://169.254.169.254/",
       "http://100.64.0.1:8000",
@@ -100,12 +101,13 @@ test_that(
       MORIE_LLM_API_KEY = "sk-own",
       MORIE_LLM_MODEL = "my-model"
     ))
-    seen <- NULL
+    rec <- new.env()
+    rec$seen <- NULL
     # a REMOTE endpoint of your own goes through the ordinary POST seam: no
     # loopback relaxation
     testthat::local_mocked_bindings(
       .bl_http_post = function(url, body, content_type, timeout, headers) {
-        seen <<- list(
+        rec$seen <- list(
           url = url,
           headers = headers,
           body = rawToChar(body),
@@ -124,10 +126,13 @@ test_that(
       .package = "rmoriebricklayer"
     )
     expect_identical(llmask("hi"), "own says hi")
-    expect_identical(seen$url, "https://api.example.org/v1/chat/completions")
-    expect_identical(seen$headers, "Authorization: Bearer sk-own")
-    expect_match(seen$body, "\"model\":\"my-model\"", fixed = TRUE)
-    expect_identical(seen$seam, "public")
+    expect_identical(
+      rec$seen$url,
+      "https://api.example.org/v1/chat/completions"
+    )
+    expect_identical(rec$seen$headers, "Authorization: Bearer sk-own")
+    expect_match(rec$seen$body, "\"model\":\"my-model\"", fixed = TRUE)
+    expect_identical(rec$seen$seam, "public")
     withr::local_envvar(c(MORIE_LLM_BASE_URL = "https://api.example.org/v1/"))
     st <- llmstat()
     expect_identical(
@@ -143,7 +148,7 @@ test_that(
     # no key configured: no Authorization header at all
     withr::local_envvar(c(MORIE_LLM_API_KEY = NA))
     llmask("hi")
-    expect_null(seen$headers)
+    expect_null(rec$seen$headers)
     # no model: said plainly
     withr::local_envvar(c(MORIE_LLM_MODEL = NA))
     expect_error(llmask("hi"), "own endpoint has no model to use")
@@ -164,7 +169,8 @@ test_that(
     rt_env()
     # the form Ollama itself uses
     withr::local_envvar(c(OLLAMA_HOST = "127.0.0.1:11434"))
-    calls <- list()
+    rec <- new.env()
+    rec$calls <- list()
     testthat::local_mocked_bindings(
       .bl_http_post = function(...) {
         stop("a loopback server takes the local seam")
@@ -176,7 +182,7 @@ test_that(
         timeout,
         headers
       ) {
-        calls$post <<- list(
+        rec$calls$post <- list(
           url = url,
           headers = headers,
           body = rawToChar(body)
@@ -184,25 +190,29 @@ test_that(
         rt_reply("llama says hi")
       },
       .bl_http_get_local = function(url, timeout, headers) {
-        calls$get <<- list(url = url, headers = headers)
+        rec$calls$get <- list(url = url, headers = headers)
         rt_tags("llama3.2:latest", "qwen3:8b")
       },
       .package = "rmoriebricklayer"
     )
     expect_identical(llmask("hi"), "llama says hi")
-    expect_identical(calls$get$url, "http://127.0.0.1:11434/api/tags")
-    expect_null(calls$get$headers)
+    expect_identical(rec$calls$get$url, "http://127.0.0.1:11434/api/tags")
+    expect_null(rec$calls$get$headers)
     expect_identical(
-      calls$post$url,
+      rec$calls$post$url,
       "http://127.0.0.1:11434/v1/chat/completions"
     )
-    expect_null(calls$post$headers)
-    expect_match(calls$post$body, "\"model\":\"llama3.2:latest\"", fixed = TRUE)
+    expect_null(rec$calls$post$headers)
+    expect_match(
+      rec$calls$post$body,
+      "\"model\":\"llama3.2:latest\"",
+      fixed = TRUE
+    )
     withr::local_envvar(c(OLLAMA_MODEL = "qwen3:8b", OLLAMA_API_KEY = "ok-1"))
     llmask("hi")
-    expect_match(calls$post$body, "\"model\":\"qwen3:8b\"", fixed = TRUE)
-    expect_identical(calls$post$headers, "Authorization: Bearer ok-1")
-    expect_identical(calls$get$headers, "Authorization: Bearer ok-1")
+    expect_match(rec$calls$post$body, "\"model\":\"qwen3:8b\"", fixed = TRUE)
+    expect_identical(rec$calls$post$headers, "Authorization: Bearer ok-1")
+    expect_identical(rec$calls$get$headers, "Authorization: Bearer ok-1")
     st <- llmstat()
     expect_identical(st$status[3], "available")
     expect_match(
@@ -217,7 +227,7 @@ test_that(
     ))
     llmask("hi")
     expect_identical(
-      calls$post$url,
+      rec$calls$post$url,
       "http://localhost:11434/v1/chat/completions"
     )
     # a server with no models pulled yet
@@ -334,24 +344,28 @@ test_that(
   ),
   {
     rt_env()
-    buf <- character()
-    st <- blcli("doctor", out = function(s) buf <<- c(buf, s))
-    expect_equal(st, 0L)
-    expect_match(buf[1], "^  own endpoint +not set")
+    rec <- new.env()
+    rec$buf <- character()
+    st <- blcli("doctor", out = function(s) rec$buf <- c(rec$buf, s))
+    expect_identical(st, 0L)
+    expect_match(rec$buf[1], "^  own endpoint +not set")
     expect_match(
-      buf[2],
+      rec$buf[2],
       "^  other providers +no key +openai \\(OPENAI_API_KEY\\)"
     )
-    expect_match(buf[3], "^  local Ollama +disabled +OLLAMA_HOST=off")
-    buf <- character()
-    expect_equal(
-      blcli(c("bundle", "x"), out = function(s) buf <<- c(buf, s)),
+    expect_match(rec$buf[3], "^  local Ollama +disabled +OLLAMA_HOST=off")
+    rec$buf <- character()
+    expect_identical(
+      blcli(c("bundle", "x"), out = function(s) rec$buf <- c(rec$buf, s)),
       1L
     )
-    expect_match(paste(buf, collapse = ""), "No language-model route")
-    buf <- character()
-    blcli("models", out = function(s) buf <<- c(buf, s))
-    expect_match(buf[1], "^No language-model route is set up on this machine:")
+    expect_match(paste(rec$buf, collapse = ""), "No language-model route")
+    rec$buf <- character()
+    blcli("models", out = function(s) rec$buf <- c(rec$buf, s))
+    expect_match(
+      rec$buf[1],
+      "^No language-model route is set up on this machine:"
+    )
   }
 )
 
@@ -479,7 +493,7 @@ test_that(
     for (i in 1:40) {
       up <- isTRUE(
         rt_ns(".bl_http_get_local")(
-          paste0(base, "/api/tags"),
+          file.path(base, "api", "tags"),
           2,
           NULL
         )$status ==
@@ -494,7 +508,7 @@ test_that(
     # without the option the C transport refuses before connecting
     r <- .Call(
       rt_ns("C_rmbl_http_get"),
-      paste0(base, "/api/tags"),
+      file.path(base, "api", "tags"),
       5L,
       NULL,
       FALSE
@@ -511,7 +525,7 @@ test_that(
     # a POST reaches the server too (http.server answers 501 to POST: the
     # connection was made)
     res <- rt_ns(".bl_post_json")(
-      paste0(base, "/v1/chat/completions"),
+      file.path(base, "v1", "chat", "completions"),
       list(a = 1),
       timeout = 5,
       local = TRUE

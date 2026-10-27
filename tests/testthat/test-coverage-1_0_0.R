@@ -36,7 +36,14 @@ test_that(
       ordcmp(1, "g", "r", "e", "lo", "hi", lvls = "a", ref = "A"),
       "must be a data frame"
     )
-    d <- data.frame(g = "A", r = "x", e = 1, lo = 0, hi = 2)
+    d <- data.frame(
+      g = "A",
+      r = "x",
+      e = 1,
+      lo = 0,
+      hi = 2,
+      stringsAsFactors = FALSE
+    )
     expect_error(
       ordcmp(d, "g", "r", "e", "lo", "nope", lvls = "x", ref = "A"),
       "column `nope` not found"
@@ -65,13 +72,16 @@ test_that(
       stringsAsFactors = FALSE
     )
     expect_warning(
-      oc <- ordcmp(d, "g", "r", "e", "lo", "hi", lvls = lv, ref = "R"),
+      {
+        oc <- ordcmp(d, "g", "r", "e", "lo", "hi", lvls = lv, ref = "R")
+      },
       "does not contain its estimate"
     )
     expect_true(is.na(oc$probbet[oc$group == "A"]))
     b <- oc[oc$group == "B", ]
     expect_false(is.na(b$probbet))
-    expect_true(is.na(b$lower) && is.na(b$upper))
+    expect_true(is.na(b$lower))
+    expect_true(is.na(b$upper))
   }
 )
 
@@ -143,7 +153,7 @@ test_that(
       "must name indicators"
     )
     expect_error(
-      rmoriebricklayer:::.rmbl_col(d, "zz", "grp"),
+      .rmbl_col(d, "zz", "grp"),
       "column `zz` not found"
     )
   }
@@ -240,7 +250,7 @@ test_that("a wide table without symbol columns tidies with an empty STATUS", {
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
-  t <- rmoriebricklayer:::.rmbl_statcan_long(w)
+  t <- .rmbl_statcan_long(w)
   expect_identical(unique(t$STATUS), "")
   expect_identical(nrow(t), 4L)
 })
@@ -256,28 +266,30 @@ test_that(
       DGUID = "2021A000011124",
       Group = "A",
       COORDINATE = "1.1",
-      VALUE = 1
+      VALUE = 1,
+      stringsAsFactors = FALSE
     )
-    expect_identical(rmoriebricklayer:::.rmbl_statcan_members(one), one)
+    expect_identical(.rmbl_statcan_members(one), one)
     two <- data.frame(
       GEO = "Canada",
       DGUID = "x",
       Group = c("A", "A"),
       Age = c("0-4", "5-9"),
       COORDINATE = c("1.1", "1"),
-      VALUE = 1:2
+      VALUE = 1:2,
+      stringsAsFactors = FALSE
     )
-    expect_identical(rmoriebricklayer:::.rmbl_statcan_members(two), two)
+    expect_identical(.rmbl_statcan_members(two), two)
   }
 )
 
 test_that("pooled rows must be named as text", {
   expect_error(
-    rmoriebricklayer:::.rmbl_pan_indigenous("Total", pooled_groups = 1),
+    .rmbl_pan_indigenous("Total", pooled_groups = 1),
     "labels of the rows"
   )
   expect_error(
-    rmoriebricklayer:::.rmbl_pan_indigenous(
+    .rmbl_pan_indigenous(
       "Total",
       pooled_groups = NA_character_
     ),
@@ -360,7 +372,9 @@ test_that(
       }
     )
     expect_warning(
-      r <- arccap("https://s.org/a.zip", dir),
+      {
+        r <- arccap("https://s.org/a.zip", dir)
+      },
       "did not answer \\(HTTP 503\\)"
     )
     expect_null(attr(r, "timestamp"))

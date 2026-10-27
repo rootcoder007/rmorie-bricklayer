@@ -249,6 +249,7 @@ extern SEXP C_rmbl_env_wipe(SEXP);
 extern SEXP C_rmbl_path_kind(SEXP);
 extern SEXP C_rmbl_write_file_checked(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_gunzip_checked(SEXP, SEXP);   /* rmbl_gunzip.c */
+extern SEXP C_rmbl_gunzip_count(SEXP, SEXP);     /* rmbl_gunzip.c */
 extern SEXP C_rmbl_csv_split(SEXP, SEXP);   /* rmbl_csv.c */
 /* rmbl_progress.c: .bl_readline's check that raises a pending Ctrl-C before the terminal read
  * starts, and the progress bar and spinner */
@@ -269,6 +270,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_path_kind",      (DL_FUNC) &C_rmbl_path_kind,      1},
     {"C_rmbl_write_file_checked", (DL_FUNC) &C_rmbl_write_file_checked, 3},
     {"C_rmbl_gunzip_checked",     (DL_FUNC) &C_rmbl_gunzip_checked,     2},
+    {"C_rmbl_gunzip_count",       (DL_FUNC) &C_rmbl_gunzip_count,       2},
     {"C_rmbl_json_fast",          (DL_FUNC) &C_rmbl_json_fast,          3},
     {"C_rmbl_svy_dblcode",        (DL_FUNC) &C_rmbl_svy_dblcode,        1},
     {"C_rmbl_sha256_real",        (DL_FUNC) &C_rmbl_sha256_real,        1},

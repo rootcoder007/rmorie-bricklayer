@@ -5,18 +5,18 @@ testthat::skip_on_cran()
 
 test_that("chi-square p-values are the upper tail, never a hard zero", {
   r <- drftchisq(c(a = 40, b = 60, c = 100), c(a = 50, b = 30, c = 20))
-  expect_equal(r[["statistic"]], 126)
-  expect_equal(r[["p_value"]], stats::pchisq(126, 2, lower.tail = FALSE))
+  expect_identical(r[["statistic"]], 126)
+  expect_identical(r[["p_value"]], stats::pchisq(126, 2, lower.tail = FALSE))
   expect_gt(r[["p_value"]], 0)
   r2 <- drfthomog(c(x = 500, y = 500), c(x = 200, y = 800))
-  expect_equal(
+  expect_identical(
     r2[["p_value"]],
     stats::pchisq(r2[["statistic"]], 1, lower.tail = FALSE)
   )
   expect_gt(r2[["p_value"]], 0)
   # a one-category table has no test: df 0 and NA, not df 1 and p 1
   one <- drftchisq(c(a = 10), c(a = 7))
-  expect_equal(one[["df"]], 0)
+  expect_identical(one[["df"]], 0)
   expect_true(is.na(one[["p_value"]]))
 })
 
@@ -68,8 +68,14 @@ test_that(
     "not apply"
   ),
   {
-    ref <- data.frame(d = as.character(as.Date("2020-01-01") + 1:400))
-    cur <- data.frame(d = as.character(as.Date("2024-06-01") + 1:400))
+    ref <- data.frame(
+      d = as.character(as.Date("2020-01-01") + 1:400),
+      stringsAsFactors = FALSE
+    )
+    cur <- data.frame(
+      d = as.character(as.Date("2024-06-01") + 1:400),
+      stringsAsFactors = FALSE
+    )
     cd <- cpsdrft(ref, cur)$columns
     # dates written as text are compared as dates
     expect_identical(cd$type[1], "date")
@@ -100,7 +106,7 @@ test_that("morani honours the magnitudes of a weight matrix", {
   x <- c(1, 2, 10, 11, 3, 4)
   z <- x - mean(x)
   m <- morani(x, W, style = "B", nperm = 99L)
-  expect_equal(m$W, sum(W))
+  expect_identical(m$W, sum(W))
   expect_equal(
     m$I,
     (n / sum(W)) * sum(outer(z, z) * W) / sum(z^2),
@@ -108,7 +114,7 @@ test_that("morani honours the magnitudes of a weight matrix", {
   )
   # row-standardised: each row's weights sum to one
   mw <- morani(x, W, style = "W", nperm = 99L)
-  expect_equal(mw$W, n)
+  expect_identical(mw$W, n)
   Ws <- W / rowSums(W)
   expect_equal(
     mw$I,
@@ -122,7 +128,7 @@ test_that("morani honours the magnitudes of a weight matrix", {
   a <- morani(x, nb, nperm = 99L)$I
   set.seed(1)
   b <- morani(x, B, nperm = 99L)$I
-  expect_equal(a, b)
+  expect_identical(a, b)
 })
 
 test_that("the exact Mann-Kendall p-value keeps ties", {
@@ -174,8 +180,8 @@ test_that(
       "50+",
       "<5"
     ))
-    expect_equal(b$lower, c(1000, 18, 18, 2, -10, 50, NA))
-    expect_equal(b$upper, c(2499, 24, 24, 5, -5, NA, 4))
+    expect_identical(b$lower, c(1000, 18, 18, 2, -10, 50, NA))
+    expect_identical(b$upper, c(2499, 24, 24, 5, -5, NA, 4))
     bad <- prsbands(c("-5", "24 to 18", "100-200-300", "15 to 19 and over"))
     expect_true(all(is.na(bad$lower)))
     expect_true(all(is.na(bad$upper)))
@@ -192,12 +198,14 @@ test_that("expbands never drops units in silence", {
     "99 unit\\(s\\) in 1 band\\(s\\).*'unknown'"
   )
   expect_warning(
-    e <- expbands(
-      c("1", "2 to 5", "unknown", "Greater than 5"),
-      cnts = c(10, 4, 99, 2),
-      openupcap = 12,
-      drpunp = TRUE
-    ),
+    {
+      e <- expbands(
+        c("1", "2 to 5", "unknown", "Greater than 5"),
+        cnts = c(10, 4, 99, 2),
+        openupcap = 12,
+        drpunp = TRUE
+      )
+    },
     "could not be placed"
   )
   expect_length(e, 16L)

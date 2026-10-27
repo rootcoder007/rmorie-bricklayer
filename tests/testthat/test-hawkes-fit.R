@@ -34,7 +34,7 @@ hk_nll <- function(t, horizon, kernel, baseline, th, method = 0L, eps = 1e-12) {
     c(horizon, max(min(diff(t)[diff(t) > 0]), 1e-12) / horizon)
   }
   .Call(
-    rmoriebricklayer:::C_rmbl_hawkes_nll_grad,
+    C_rmbl_hawkes_nll_grad,
     t,
     horizon,
     if (baseline == "constant") 0L else 1L,
@@ -134,11 +134,13 @@ test_that(
       )
     )
     for (key in names(ref)) {
-      kb <- strsplit(key, "/")[[1]]
+      kb <- strsplit(key, "/", fixed = TRUE)[[1]]
       f <- chwkfit(e$t, e$T, kb[[1]], kb[[2]])
       expect_equal(f$nll, ref[[key]][[1]], tolerance = 1e-10)
       expect_lt(max(abs(f$theta - ref[[key]][[2]])), 1e-6)
-      expect_true(f$kspva >= 0 && f$kspva <= 1 && isTRUE(f$converged))
+      expect_gte(f$kspva, 0)
+      expect_lte(f$kspva, 1)
+      expect_true(isTRUE(f$converged))
     }
   }
 )
@@ -350,7 +352,9 @@ test_that("INAR fits every kernel without straying outside the parameter box", {
   # any CDF is evaluated, so no "NaNs produced" warning reaches the caller
   e <- hk_events(300L)
   for (k in c("weibull", "gamma", "lomax")) {
-    expect_no_warning(i <- chwkfit(e$t, e$T, k, meth = "inar"))
+    expect_no_warning({
+      i <- chwkfit(e$t, e$T, k, meth = "inar")
+    })
     expect_identical(i$method, "inar")
     expect_true(is.finite(i$nll))
     expect_lt(abs(i$braratio - chwkfit(e$t, e$T, k)$braratio), 0.25)
@@ -464,7 +468,9 @@ test_that(
     # 100 events at one instant: no self-excitation to reward, so no steep
     # kernel and no likelihood above the Poisson one
     expect_warning(
-      f <- chwkfit(rep(5, 100), 200),
+      {
+        f <- chwkfit(rep(5, 100), 200)
+      },
       "99 event\\(s\\) share their time"
     )
     expect_equal(

@@ -66,7 +66,7 @@ test_that("capenv records the running session", {
   expect_identical(env$r_version, as.character(getRversion()))
   expect_true(nzchar(env$platform))
   expect_match(env$captured_utc, "^\\d{4}-\\d{2}-\\d{2}T")
-  expect_identical(names(env$packages), c("stats", "testthat"))
+  expect_named(env$packages, c("stats", "testthat"))
   expect_identical(
     env$packages[["testthat"]],
     as.character(utils::packageVersion("testthat"))
@@ -142,7 +142,7 @@ test_that("rslvarc guards missing fields and builds the query URL", {
   )
   expect_identical(
     rslvarc(list(dataset = list(arcgis_layer_url = paste0(layer, "/")))),
-    paste0(layer, "/query?where=1%3D1&outFields=*&f=geojson")
+    file.path(layer, "query?where=1%3D1&outFields=*&f=geojson")
   )
 
   testthat::local_mocked_bindings(

@@ -14,7 +14,7 @@ svc_doc <- function(
   version = 1L,
   data_base = "https://tables.example.org"
 ) {
-  auth <- if (nzchar(base)) paste0(base, "/auth") else ""
+  auth <- if (nzchar(base)) file.path(base, "auth") else ""
   sprintf(
     paste0(
       '{"version":%d,"issued":"%s","notice":"test notice",',

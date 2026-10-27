@@ -7,7 +7,8 @@
 yoylbl(x, labels)
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}.}
+\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}},
+whose periods are labelled.}
 
 \item{labels}{Either a function applied to the period
 column, or a character vector the same length as the number of distinct

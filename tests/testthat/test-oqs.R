@@ -162,7 +162,7 @@ test_that("the standardised keys print without exposing the secret", {
     fixed = TRUE
   ))
   # nor is the whole public key dumped
-  expect_true(nchar(txt) < 1000L)
+  expect_lt(nchar(txt), 1000L)
   expect_output(print(key), "Signing key")
 
   ptxt <- paste(format(fipspubkey(key)), collapse = "\n")
@@ -179,7 +179,7 @@ test_that("the standardised keys print without exposing the secret", {
   stxt <- paste(format(s), collapse = "\n")
   expect_match(stxt, "3309 bytes")
   expect_match(stxt, "stateless")
-  expect_true(nchar(stxt) < 500L)
+  expect_lt(nchar(stxt), 500L)
   expect_output(print(s), "Capsule signature")
 })
 

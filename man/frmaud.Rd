@@ -7,7 +7,7 @@
 frmaud(x)
 }
 \arguments{
-\item{x}{A \code{\link{welprof}}.}
+\item{x}{A \code{\link{welprof}} result, whose rows are counted by side.}
 }
 \value{
 A list of class \code{rmbl_framing}: \code{bygrp} (a data frame of
@@ -47,6 +47,19 @@ w <- welprof(
   )
 )
 frmaud(w)
+
+# your own table: made-up percentages for two communities, with limits
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 4),
+  item = rep(c("Hopeful", "Satisfied", "Rarely hopeful", "Low satisfaction"),
+             2),
+  pct = c(64, 71, 12, 18, 58, 66, 16, 22),
+  lo = c(59, 66, 9, 14, 52, 60, 12, 17),
+  hi = c(69, 76, 15, 22, 64, 72, 20, 27)
+)
+frmaud(welprof(own, "community", "item", "pct", "lo", "hi",
+               well = c("Hopeful", "Satisfied"),
+               distress = c("Rarely hopeful", "Low satisfaction")))
 \dontshow{\}) # examplesIf}
 }
 \references{

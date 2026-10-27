@@ -4,7 +4,17 @@
 \alias{commidx}
 \title{A community-weighted index of protective and risk factors}
 \usage{
-commidx(data, grp, ind, est, lower, upper, w, qual = NULL, conflvl = 0.95)
+commidx(
+  data,
+  grp,
+  ind,
+  est,
+  lower,
+  upper,
+  w = NULL,
+  qual = NULL,
+  conflvl = 0.95
+)
 }
 \arguments{
 \item{data}{A data frame, one row per group (or place) and indicator.}
@@ -16,9 +26,11 @@ weights meaningless).}
 \item{w}{Named weights, one per indicator used: positive for a protective
 factor, negative for a risk factor.}
 
-\item{qual}{Optional column of quality flags.}
+\item{qual}{Optional column of quality flags: \code{"E"} rows are marked use
+with caution, and suppressed ones (\code{"F"}, \code{"x"}, \code{".."})
+get no estimate.}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of each group's index limits (default 0.95).}
 }
 \value{
 A data frame of class \code{rmbl_community_index}: \code{group},
@@ -82,6 +94,18 @@ commidx(
   w = w2
 )$index
 plot(ci)
+
+# your own table and the weights a community chose: made-up percentages
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 3),
+  item = rep(c("Speaks the language", "Has a doctor", "Food insecure"), 2),
+  pct = c(38, 72, 21, 25, 64, 30),
+  lo = c(33, 67, 17, 20, 58, 25),
+  hi = c(43, 77, 25, 30, 70, 35)
+)
+commidx(own, "community", "item", "pct", "lo", "hi",
+        w = c("Speaks the language" = 2, "Has a doctor" = 1,
+              "Food insecure" = -1))
 \dontshow{\}) # examplesIf}
 }
 \references{

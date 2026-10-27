@@ -8,10 +8,14 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
@@ -173,8 +177,16 @@ sz <- rbind(
   "HQC-5" = hqcsz(5L)[c("public", "ciphertext")]
 )
 op <- par(mar = c(7, 5, 3, 1))
-barplot(t(sz), beside = TRUE, col = blpal()[1:2], ylab = "bytes", las = 2, cex.names = 0.8,
-        legend.text = c("public key", "ciphertext"), args.legend = list(x = "topleft", bty = "n"),
-        main = "Key and ciphertext sizes")
+barplot(
+  t(sz),
+  beside = TRUE,
+  col = blpal()[1:2],
+  ylab = "bytes",
+  las = 2,
+  cex.names = 0.8,
+  legend.text = c("public key", "ciphertext"),
+  args.legend = list(x = "topleft", bty = "n"),
+  main = "Key and ciphertext sizes"
+)
 par(op)
 ```

@@ -147,7 +147,7 @@ test_that(
     x <- drbggen(a, 20)
     expect_identical(drbggen(b, 20), x)
     expect_false(identical(drbggen(a, 20), x))
-    expect_identical(length(drbggen(a, 65536)), 65536L)
+    expect_length(drbggen(a, 65536), 65536L)
     c1 <- drbgnew(as.raw(0:47))
     expect_false(identical(drbggen(c1, 20, addl = "00"), x))
     expect_false(identical(drbggen(drbgnew(), 32), drbggen(drbgnew(), 32)))
@@ -194,6 +194,36 @@ test_that("a generator prints without its state", {
   drbggen(d, 4)
   out <- capture.output(print(d))
   expect_true(any(grepl("CTR_DRBG, AES-256", out, fixed = TRUE)))
-  expect_true(any(grepl("requests since seeding +1$", out)))
+  expect_true(any(grepl("Requests since seeding +1 ", out)))
   expect_false(any(grepl(drbg_str(d$key), out, fixed = TRUE)))
+})
+
+# Prints `x` on an ASCII console: the lines and what print() returned.
+o1_box <- function(x, ...) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  tmp <- withr::local_tempfile()
+  v <- withr::with_output_sink(tmp, withVisible(print(x, ...)))
+  list(out = readLines(tmp), v = v)
+}
+
+# The box's frame, its title and the facts expected in it.
+o1_expect_box <- function(b, x, title, facts = character()) {
+  expect_false(b$v$visible)
+  expect_identical(b$v$value, x)
+  expect_match(b$out[1L], "^\\+-- ")
+  expect_true(grepl(title, b$out[1L], fixed = TRUE))
+  expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  for (f in facts) {
+    expect_true(any(grepl(f, b$out, fixed = TRUE)), info = f)
+  }
+}
+
+test_that("a generator prints as a box", {
+  d <- drbgnew(as.raw(0:47))
+  o1_expect_box(
+    o1_box(d),
+    d,
+    "Deterministic random bit generator",
+    c("CTR_DRBG", "<withheld>", "drbgrsd()")
+  )
 })

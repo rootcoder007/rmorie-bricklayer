@@ -73,21 +73,7 @@
 #' try(sha256file(tempdir()))
 #' @export
 sha256file <- function(path) {
-  if (
-    !is.character(path) ||
-      length(path) != 1L ||
-      is.na(path) ||
-      !file.exists(path) ||
-      dir.exists(path)
-  ) {
-    stop(
-      sprintf(
-        "sha256file: %s is not a file",
-        if (is.character(path) && length(path) == 1L) path else "`path`"
-      ),
-      call. = FALSE
-    )
-  }
+  .rmbl_sha256_path(path)
   # inside the package: the compiled SHA-256 core over the file read in chunks
   # (identical output to digest::digest(file = path, algo = "sha256")); sourced
   # standalone in a capsule bundle: the pure-R FIPS 180-4 implementation from
@@ -97,52 +83,6 @@ sha256file <- function(path) {
   }
   .rmbl_sha256_hex(readBin(path, "raw", n = file.info(path)$size))
 }
-
-#' Hashes a file with SHA-256 one chunk at a time.
-#'
-#' The digest of a file read `chunk` bytes at a time (8 MB), so memory stays at
-#' one chunk whatever the file's size; a file larger than one chunk gets a
-#' byte-progress bar (drawn only after the usual lazy start, so a quick hash
-#' shows nothing).
-#' @param path The file.
-#' @param chunk The number of bytes read at a time.
-#' @return The digest as lower-case hex.
-#' @noRd
-.rmbl_sha256_stream <- function(path, chunk = 8388608L) {
-  size <- file.info(path)$size
-  con <- file(path, open = "rb")
-  on.exit(close(con), add = TRUE)
-  pg <- if (is.finite(size) && size > chunk) {
-    blprog(sprintf("sha256 %s", .rmbl_printable(basename(path))), size)
-  }
-  if (!is.null(pg)) {
-    on.exit(pg$done(), add = TRUE)
-  }
-  state <- NULL
-  done <- 0
-  repeat {
-    b <- readBin(con, "raw", n = chunk)
-    if (!length(b)) {
-      break
-    }
-    state <- .Call(C_rmbl_sha256_chunk, state, b, FALSE)
-    done <- done + length(b)
-    if (!is.null(pg)) {
-      pg$update(
-        done,
-        info = sprintf("%s of %s", .bl_fmt_bytes(done), .bl_fmt_bytes(size))
-      )
-    }
-  }
-  .Call(C_rmbl_sha256_chunk, state, NULL, TRUE)
-}
-
-## ----------------- Unicode-safe text with ASCII fallback -----------------
-
-#' Tells whether stringi is installed.
-#' @return TRUE or FALSE.
-#' @noRd
-.rmbl_has_stringi <- function() requireNamespace("stringi", quietly = TRUE)
 
 #' Transliterate Text to Plain ASCII
 #'
@@ -223,70 +163,6 @@ toascii <- function(x) {
   out[is.na(out)] <- ""
   # Guarantee pure 7-bit ASCII regardless of path.
   gsub("[^ -~]", "", out)
-}
-
-#' Transliterates text to ASCII without stringi.
-#'
-#' Deterministic no-stringi fallback. iconv(\code{"ASCII//TRANSLIT"}) is
-#' locale-dependent: under a C locale (glibc) accented characters come back as
-#' \dQuote{?} -- ASCII, so the final strip keeps them. Transliterate the common
-#' Latin accents by table first, then let iconv DROP (not \dQuote{?}) the rest.
-#' @param x A character vector.
-#' @return A character vector.
-#' @noRd
-.to_ascii_fallback <- function(x) {
-  # Under a C locale UTF-8 bytes arrive unmarked and chartr() errors on
-  # them; declare valid UTF-8 so translation is locale-independent.
-  valid <- !is.na(x) & validUTF8(x)
-  Encoding(x[valid]) <- "UTF-8"
-  from <- paste0(
-    "\u00c0\u00c1\u00c2\u00c3\u00c4\u00c5\u00c7",
-    "\u00c8\u00c9\u00ca\u00cb\u00cc\u00cd\u00ce\u00cf",
-    "\u00d0\u00d1\u00d2\u00d3\u00d4\u00d5\u00d6\u00d8",
-    "\u00d9\u00da\u00db\u00dc\u00dd",
-    "\u00e0\u00e1\u00e2\u00e3\u00e4\u00e5\u00e7",
-    "\u00e8\u00e9\u00ea\u00eb\u00ec\u00ed\u00ee\u00ef",
-    "\u00f0\u00f1\u00f2\u00f3\u00f4\u00f5\u00f6\u00f8",
-    "\u00f9\u00fa\u00fb\u00fc\u00fd\u00ff",
-    "\u0100\u0101\u0104\u0105\u0106\u0107\u010c\u010d",
-    "\u010e\u010f\u0110\u0111\u0112\u0113\u0118\u0119",
-    "\u011a\u011b\u011e\u011f\u0130\u0131\u0141\u0142",
-    "\u0143\u0144\u0147\u0148\u014c\u014d\u0150\u0151",
-    "\u0158\u0159\u015a\u015b\u015e\u015f\u0160\u0161",
-    "\u0164\u0165\u016a\u016b\u016e\u016f\u0170\u0171",
-    "\u0179\u017a\u017b\u017c\u017d\u017e"
-  )
-  to <- paste0(
-    "AAAAAAC",
-    "EEEEIIII",
-    "DNOOOOOO",
-    "UUUUY",
-    "aaaaaac",
-    "eeeeiiii",
-    "dnoooooo",
-    "uuuuyy",
-    "AaAaCcCc",
-    "DdDdEeEe",
-    "EeGgIiLl",
-    "NnNnOoOo",
-    "RrSsSsSs",
-    "TtUuUuUu",
-    "ZzZzZz"
-  )
-  x <- chartr(from, to, x)
-  multi <- list(
-    c("\u00df", "ss"),
-    c("\u00c6", "AE"),
-    c("\u00e6", "ae"),
-    c("\u0152", "OE"),
-    c("\u0153", "oe"),
-    c("\u00de", "Th"),
-    c("\u00fe", "th")
-  )
-  for (pair in multi) {
-    x <- gsub(pair[[1L]], pair[[2L]], x, fixed = TRUE)
-  }
-  iconv(x, to = "ASCII", sub = "")
 }
 
 #' Use Text As-Is, Falling Back to ASCII When It Cannot Be Represented
@@ -426,6 +302,156 @@ wrtxtfb <- function(text, path) {
   invisible(path)
 }
 
+# In-process synthetic state: mksyncsv() sets it, so a manifest
+# built in the same session says synthetic whether or not the environment
+# variable was set.
+#' @noRd
+.rmbl_synth_state <- new.env(parent = emptyenv())
+
+#' Refuses a path that is not one existing file.
+#' @param path The path given to sha256file().
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_sha256_path <- function(path) {
+  if (
+    !is.character(path) ||
+      length(path) != 1L ||
+      is.na(path) ||
+      !file.exists(path) ||
+      dir.exists(path)
+  ) {
+    stop(
+      sprintf(
+        "sha256file: %s is not a file",
+        if (is.character(path) && length(path) == 1L) path else "`path`"
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' Hashes a file with SHA-256 one chunk at a time.
+#'
+#' The digest of a file read `chunk` bytes at a time (8 MB), so memory stays at
+#' one chunk whatever the file's size; a file larger than one chunk gets a
+#' byte-progress bar (drawn only after the usual lazy start, so a quick hash
+#' shows nothing).
+#' @param path The file to hash, read in chunks with progress when large.
+#' @param chunk The number of bytes read at a time.
+#' @return The digest as lower-case hex.
+#' @noRd
+.rmbl_sha256_stream <- function(path, chunk = 8388608L) {
+  # a directory is refused by name: gzfile() on one hung (1.0.3)
+  path <- .rmbl_file1(path, "path")
+  size <- file.info(path)$size
+  con <- file(path, open = "rb")
+  on.exit(close(con), add = TRUE)
+  pg <- if (is.finite(size) && size > chunk) {
+    blprog(sprintf("sha256 %s", .rmbl_printable(basename(path))), size)
+  }
+  if (!is.null(pg)) {
+    on.exit(pg$done(), add = TRUE)
+  }
+  state <- NULL
+  done <- 0
+  repeat {
+    b <- readBin(con, "raw", n = chunk)
+    if (!length(b)) {
+      break
+    }
+    state <- .Call(C_rmbl_sha256_chunk, state, b, FALSE)
+    done <- done + length(b)
+    if (!is.null(pg)) {
+      pg$update(
+        done,
+        info = sprintf("%s of %s", .bl_fmt_bytes(done), .bl_fmt_bytes(size))
+      )
+    }
+  }
+  .Call(C_rmbl_sha256_chunk, state, NULL, TRUE)
+}
+
+## ----------------- Unicode-safe text with ASCII fallback -----------------
+
+#' Tells whether stringi is installed.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_has_stringi <- function() requireNamespace("stringi", quietly = TRUE)
+
+#' Transliterates text to ASCII without stringi.
+#'
+#' Deterministic no-stringi fallback. iconv(\code{"ASCII//TRANSLIT"}) is
+#' locale-dependent: under a C locale (glibc) accented characters come back as
+#' \dQuote{?} -- ASCII, so the final strip keeps them. Transliterate the common
+#' Latin accents by table first, then let iconv DROP (not \dQuote{?}) the rest.
+#' @param x A character vector to transliterate to ASCII.
+#' @return A character vector.
+#' @noRd
+.to_ascii_fallback <- function(x) {
+  # Under a C locale UTF-8 bytes arrive unmarked and chartr() errors on
+  # them; declare valid UTF-8 so translation is locale-independent.
+  valid <- !is.na(x) & validUTF8(x)
+  Encoding(x[valid]) <- "UTF-8"
+  tab <- .to_ascii_table()
+  x <- chartr(tab$from, tab$to, x)
+  multi <- list(
+    c("\u00df", "ss"),
+    c("\u00c6", "AE"),
+    c("\u00e6", "ae"),
+    c("\u0152", "OE"),
+    c("\u0153", "oe"),
+    c("\u00de", "Th"),
+    c("\u00fe", "th")
+  )
+  for (pair in multi) {
+    x <- gsub(pair[[1L]], pair[[2L]], x, fixed = TRUE)
+  }
+  iconv(x, to = "ASCII", sub = "")
+}
+
+#' The Latin accents .to_ascii_fallback() transliterates one for one.
+#' @return A list: \code{from}, the accented letters, and \code{to}, their
+#'   ASCII letters, as chartr() takes them.
+#' @noRd
+.to_ascii_table <- function() {
+  from <- paste0(
+    "\u00c0\u00c1\u00c2\u00c3\u00c4\u00c5\u00c7",
+    "\u00c8\u00c9\u00ca\u00cb\u00cc\u00cd\u00ce\u00cf",
+    "\u00d0\u00d1\u00d2\u00d3\u00d4\u00d5\u00d6\u00d8",
+    "\u00d9\u00da\u00db\u00dc\u00dd",
+    "\u00e0\u00e1\u00e2\u00e3\u00e4\u00e5\u00e7",
+    "\u00e8\u00e9\u00ea\u00eb\u00ec\u00ed\u00ee\u00ef",
+    "\u00f0\u00f1\u00f2\u00f3\u00f4\u00f5\u00f6\u00f8",
+    "\u00f9\u00fa\u00fb\u00fc\u00fd\u00ff",
+    "\u0100\u0101\u0104\u0105\u0106\u0107\u010c\u010d",
+    "\u010e\u010f\u0110\u0111\u0112\u0113\u0118\u0119",
+    "\u011a\u011b\u011e\u011f\u0130\u0131\u0141\u0142",
+    "\u0143\u0144\u0147\u0148\u014c\u014d\u0150\u0151",
+    "\u0158\u0159\u015a\u015b\u015e\u015f\u0160\u0161",
+    "\u0164\u0165\u016a\u016b\u016e\u016f\u0170\u0171",
+    "\u0179\u017a\u017b\u017c\u017d\u017e"
+  )
+  to <- paste0(
+    "AAAAAAC",
+    "EEEEIIII",
+    "DNOOOOOO",
+    "UUUUY",
+    "aaaaaac",
+    "eeeeiiii",
+    "dnoooooo",
+    "uuuuyy",
+    "AaAaCcCc",
+    "DdDdEeEe",
+    "EeGgIiLl",
+    "NnNnOoOo",
+    "RrSsSsSs",
+    "TtUuUuUu",
+    "ZzZzZz"
+  )
+  list(from = from, to = to)
+}
+
 #' Reads JSON from a local path, a URL or text.
 #'
 #' Read JSON from a local path or an http(s) URL with the native codec.
@@ -473,7 +499,7 @@ wrtxtfb <- function(text, path) {
 #'
 #' The compiled fetcher inside the package; plain download.file when this
 #' file is sourced standalone in a capsule bundle.
-#' @param url The URL.
+#' @param url The source file's URL, fetched to `dest`.
 #' @param dest The destination file.
 #' @param native Whether the compiled fetcher is there to use.
 #' @return `dest`, invisibly.
@@ -489,7 +515,6 @@ wrtxtfb <- function(text, path) {
   utils::download.file(url, dest, mode = "wb", quiet = TRUE)
   invisible(dest)
 }
-
 
 #' Joins a manifest's relative file name under a directory, or refuses it.
 #'
@@ -510,7 +535,7 @@ wrtxtfb <- function(text, path) {
   if (grepl("^([/\\\\]|~|[A-Za-z]:)", rel)) {
     return(NULL)
   }
-  parts <- strsplit(gsub("\\\\", "/", rel), "/", fixed = TRUE)[[1L]]
+  parts <- strsplit(gsub("\\", "/", rel, fixed = TRUE), "/", fixed = TRUE)[[1L]]
   if (any(parts %in% c("", ".", ".."))) {
     return(NULL)
   }
@@ -528,7 +553,7 @@ wrtxtfb <- function(text, path) {
 #' normalizePath() only resolves paths that exist, so a missing leaf under a
 #' symlinked tempdir (macOS /var -> /private/var) would never match its resolved
 #' parent. Resolve the deepest existing ancestor and re-append the rest.
-#' @param p The path.
+#' @param p The path to resolve, which may not exist yet.
 #' @return The resolved path.
 #' @noRd
 .rmbl_realpath <- function(p) {
@@ -548,8 +573,8 @@ wrtxtfb <- function(text, path) {
 #' before any transport sees it: https only (plain http needs the explicit
 #' option), never file://, and never a loopback, link-local, private or
 #' metadata address -- the SSRF targets.
-#' @param url The URL.
-#' @param what The argument's name, used in the error message.
+#' @param url The URL to check; only its first element is used.
+#' @param what The URL argument's name (default `url`), quoted in errors.
 #' @param allow_file Whether a file:// URL is accepted.
 #' @param allow_http Whether plain http is accepted.
 #' @param resolve Whether the host's addresses are resolved and checked too.
@@ -587,6 +612,16 @@ wrtxtfb <- function(text, path) {
   if (!nzchar(why)) {
     return(url)
   }
+  .rmbl_url_refuse(url, what, why)
+}
+
+#' Raises the error for a refused URL, in the words of its reason.
+#' @param url The refused URL, shown in the error.
+#' @param what The URL argument's name, at the start of the error.
+#' @param why The reason from .rmbl_url_why().
+#' @return Does not return.
+#' @noRd
+.rmbl_url_refuse <- function(url, what, why) {
   scheme <- tolower(sub(
     "^([a-z][a-z0-9+.-]*)://.*$",
     "\\1",
@@ -629,7 +664,7 @@ wrtxtfb <- function(text, path) {
 #' bundle has no compiled code, so a base-R check stands in: https only, and no
 #' loopback, private, link-local, metadata, numeric or single-label host (it
 #' does not resolve names; the package's fetch layer does).
-#' @param url The URL.
+#' @param url The URL to check, natively when the C checker is there.
 #' @param allow_http Whether plain http is accepted.
 #' @param resolve Whether the host's addresses are resolved and checked too.
 #' @param allow_loopback Whether plain http on the loopback host is accepted.
@@ -650,6 +685,20 @@ wrtxtfb <- function(text, path) {
       isTRUE(allow_loopback)
     ))
   }
+  .rmbl_url_why_base(url, allow_http, allow_loopback)
+}
+
+#' Gives the reason a URL is refused, in base R.
+#'
+#' The stand-in for the C validator in a capsule bundle: https only, and no
+#' loopback, private, link-local, metadata, numeric or single-label host.
+#' @param url The URL to check in base R, without the compiled code.
+#' @param allow_http Whether plain http is accepted.
+#' @param allow_loopback Whether plain http on the loopback host is accepted.
+#' @return The reason, or \code{""} when the URL is accepted.
+#' @noRd
+.rmbl_url_why_base <- function(url, allow_http, allow_loopback) {
+  # self-contained: a staged bundle runs this without the rest of the package
   scheme <- tolower(sub(
     "^([a-z][a-z0-9+.-]*)://.*$",
     "\\1",
@@ -676,40 +725,77 @@ wrtxtfb <- function(text, path) {
   if (loop && isTRUE(allow_loopback)) {
     return("")
   }
-  v4 <- suppressWarnings(as.integer(strsplit(host, ".", fixed = TRUE)[[1L]]))
+  .rmbl_host_why(host, loop)
+}
+
+#' Gives the reason a host is refused, in base R.
+#' @param host The lower-case host, without port or user.
+#' @param loop Whether it is the loopback host.
+#' @return The reason, or \code{""} when the host is accepted.
+#' @noRd
+.rmbl_host_why <- function(host, loop) {
   is_v4 <- grepl("^[0-9]+(\\.[0-9]+){3}$", host)
-  private4 <- is_v4 &&
-    (v4[1L] %in%
-      c(0L, 10L, 127L) ||
-      (v4[1L] == 169L && v4[2L] == 254L) ||
-      (v4[1L] == 172L && v4[2L] >= 16L && v4[2L] <= 31L) ||
-      (v4[1L] == 192L && v4[2L] == 168L) ||
-      (v4[1L] == 100L && v4[2L] >= 64L && v4[2L] <= 127L))
-  odd <- grepl("^(0x[0-9a-f]+|[0-9]+)$", host) ||
-    (grepl("^[0-9.x]+$", host) && !is_v4)
+  private4 <- is_v4 & .rmbl_private_v4(host)
+  odd <- grepl("^(0x[0-9a-f]+|[0-9]+)$", host) |
+    (grepl("^[0-9.x]+$", host) & !is_v4)
   v6 <- startsWith(host, "[")
-  private6 <- v6 &&
+  private6 <- v6 &
     grepl(
       "^\\[(::1?|::ffff:.*|f[cd][0-9a-f]*:.*|fe[89ab][0-9a-f]*:.*)\\]$",
       host
     )
-  if (!nzchar(host) || private4 || odd || private6 || loop) {
-    return("a local or private address")
-  }
-  if (!v6 && !is_v4 && !grepl(".", host, fixed = TRUE)) {
-    return("a single-label host")
-  }
-  if (grepl("\\.(local|localhost|internal|lan|home|corp|intranet)$", host)) {
-    return("a local name")
-  }
-  ""
+  why <- c(
+    "a local or private address" = isTRUE(
+      !nzchar(host) | private4 | odd | private6 | loop
+    ),
+    "a single-label host" = !v6 & !is_v4 & !grepl(".", host, fixed = TRUE),
+    "a local name" = grepl(
+      "\\.(local|localhost|internal|lan|home|corp|intranet)$",
+      host
+    )
+  )
+  if (any(why)) names(why)[which(why)[1L]] else ""
 }
 
-# In-process synthetic state: mksyncsv() sets it, so a manifest
-# built in the same session says synthetic whether or not the environment
-# variable was set.
+#' Tells whether a dotted IPv4 host falls in a private range.
+#' @param host The host, four dotted numbers.
+#' @return TRUE or FALSE.
 #' @noRd
-.rmbl_synth_state <- new.env(parent = emptyenv())
+.rmbl_private_v4 <- function(host) {
+  v4 <- suppressWarnings(as.integer(strsplit(host, ".", fixed = TRUE)[[1L]]))
+  # the private, loopback, link-local and shared (CGNAT) IPv4 ranges: the first
+  # octet, then the range of the second
+  ranges <- matrix(
+    c(
+      0,
+      0,
+      255,
+      10,
+      0,
+      255,
+      127,
+      0,
+      255,
+      169,
+      254,
+      254,
+      172,
+      16,
+      31,
+      192,
+      168,
+      168,
+      100,
+      64,
+      127
+    ),
+    ncol = 3L,
+    byrow = TRUE
+  )
+  any(
+    v4[1L] == ranges[, 1L] & v4[2L] >= ranges[, 2L] & v4[2L] <= ranges[, 3L]
+  )
+}
 
 #' Tells whether the session's data are synthetic, by the environment or by
 #' `mksyncsv()`.
@@ -730,7 +816,6 @@ wrtxtfb <- function(text, path) {
   v <- trimws(Sys.getenv("BRICKLAYER_SYNTHETIC", unset = ""))
   nzchar(v) && !tolower(v) %in% c("0", "false", "no", "off")
 }
-
 
 #' Parses JSON text and nothing else.
 #'
@@ -791,7 +876,7 @@ wrtxtfb <- function(text, path) {
 #' and tabs (a model's answer, which is text to read, not a cell of a table):
 #' the screen-clearing, title-setting and clipboard-writing escapes still go,
 #' with every other control character (review of 29a55d8, L1).
-#' @param x A character vector.
+#' @param x A character vector of fetched or file text to make printable.
 #' @param lines Whether newlines and tabs are kept.
 #' @return A character vector.
 #' @noRd

@@ -7,7 +7,7 @@
 rptanl(
   x,
   path = NULL,
-  format = c("markdown", "html"),
+  format = NULL,
   title = "Analysis of a published table",
   digits = 1L
 )
@@ -19,9 +19,9 @@ rptanl(
 \item{path}{Where to write, a file path. With \code{NULL} (the default)
 the text is returned invisibly and nothing is written.}
 
-\item{format}{\code{"markdown"} (the default) or \code{"html"}. When
-\code{format} is not given and \code{path} ends in \code{.html} or
-\code{.htm}, HTML is written; any other path gives Markdown.}
+\item{format}{\code{"markdown"} or \code{"html"}. With \code{NULL} (the
+default), a \code{path} ending in \code{.html} or \code{.htm} gives
+HTML and anything else, or no \code{path}, gives Markdown.}
 
 \item{title}{Report title, a string; the top heading and, for HTML, the
 page title.}

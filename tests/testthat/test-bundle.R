@@ -89,3 +89,36 @@ test_that(
     expect_true(oks[rows == "attestation:key_as_expected"])
   }
 )
+
+# Prints `x` on an ASCII console: the lines and what print() returned.
+o1_box <- function(x, ...) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  tmp <- withr::local_tempfile()
+  v <- withr::with_output_sink(tmp, withVisible(print(x, ...)))
+  list(out = readLines(tmp), v = v)
+}
+
+# The box's frame, its title and the facts expected in it.
+o1_expect_box <- function(b, x, title, facts = character()) {
+  expect_false(b$v$visible)
+  expect_identical(b$v$value, x)
+  expect_match(b$out[1L], "^\\+-- ")
+  expect_true(grepl(title, b$out[1L], fixed = TRUE))
+  expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  for (f in facts) {
+    expect_true(any(grepl(f, b$out, fixed = TRUE)), info = f)
+  }
+}
+
+test_that("bundles and bundle checks print as boxes", {
+  d <- tempfile("bnd-")
+  dir.create(d)
+  writeLines("a,b", file.path(d, "data.csv"))
+  m <- mkmnf(list(project = "demo"), env = FALSE)
+  key <- fipskg("ML-DSA-44")
+  p <- file.path(d, "capsule_bundle.json")
+  bnd <- cpsbndl(d, m, key, path = p)
+  o1_expect_box(o1_box(bnd), bnd, "Capsule bundle", c("Files", "ML-DSA-44"))
+  ck <- cpsbndlvrf(bnd, d)
+  o1_expect_box(o1_box(ck), ck, "Bundle check: OK", "VERIFIED")
+})

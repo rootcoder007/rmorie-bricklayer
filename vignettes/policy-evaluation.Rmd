@@ -8,13 +8,23 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4, dpi = 72)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4,
+  dpi = 72
+)
 library(rmoriebricklayer)
 ```
 
@@ -59,7 +69,15 @@ plot(cohtrnd(p, "district", "month", "crmrate", "refmonth", win = c(-10, 10)))
 adoption) should be near zero; the joint test of that is printed below the table:
 
 ```{r policy-evaluation-event, fig.height = 3.5}
-es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 4, lags = 6)
+es <- evstudy(
+  p,
+  "district",
+  "month",
+  "crmrate",
+  "refmonth",
+  leads = 4,
+  lags = 6
+)
 es
 plot(es)
 ```
@@ -115,10 +133,21 @@ plot(loounit(p, "district", "month", "crmrate", "reformed"))
 Several outcomes at once, in the style of a Stata event-study figure:
 
 ```{r policy-evaluation-grid, fig.height = 3.5}
-plotevgrid(list(
-  "Crime rate" = es,
-  "Arrest rate" = evstudy(p, "district", "month", "arrrate", "refmonth", leads = 4,
-                              lags = 6)), style = "stata")
+plotevgrid(
+  list(
+    "Crime rate" = es,
+    "Arrest rate" = evstudy(
+      p,
+      "district",
+      "month",
+      "arrrate",
+      "refmonth",
+      leads = 4,
+      lags = 6
+    )
+  ),
+  style = "stata"
+)
 ```
 
 ## Counts
@@ -156,11 +185,23 @@ For place-based designs, `bufasgn()` marks places near a site as treated, places
 comparison point and far from every site as the comparison, and excludes the rest.
 
 ```{r policy-evaluation-measures}
-d <- data.frame(city = rep(c("A", "B"), each = 3), year = 2024,
-                offence = rep(c("homicide", "robbery", "burglary"), 2),
-                n = c(5, 120, 300, 2, 90, 410), pop = rep(c(250000, 180000), each = 3))
-sevidx(d, "city", "year", "offence", "n",
-               w = c(homicide = 25, robbery = 8, burglary = 4), pop = "pop")
+d <- data.frame(
+  city = rep(c("A", "B"), each = 3),
+  year = 2024,
+  offence = rep(c("homicide", "robbery", "burglary"), 2),
+  n = c(5, 120, 300, 2, 90, 410),
+  pop = rep(c(250000, 180000), each = 3),
+  stringsAsFactors = FALSE
+)
+sevidx(
+  d,
+  "city",
+  "year",
+  "offence",
+  "n",
+  w = c(homicide = 25, robbery = 8, burglary = 4),
+  pop = "pop"
+)
 cmlrisk(16:20, c(900, 1400, 1700, 1600, 1400), rep(1e5, 5))
 ```
 
@@ -183,7 +224,7 @@ parallel trends, relative to the largest seen before adoption, would make the ef
 tse(es, seed = 1)
 ```
 
-**Covariates that differ between groups.** `stgatt()` with `covariates` is doubly robust
+**Covariates that differ between groups.** `stgatt()` with `covs` is doubly robust
 (use covariates fixed before treatment: one the reform moves, such as arrests, is a bad
 control). `plndml()` lets a machine learner fit the confounding with fixed effects, and
 `mtchdid()` matches units on their pre-reform paths before differencing:
@@ -201,7 +242,15 @@ m$estimate
 pre-periods:
 
 ```{r policy-evaluation-sdid, fig.height = 3.5}
-sd <- syndid(p13, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
+sd <- syndid(
+  p13,
+  "district",
+  "month",
+  "crmrate",
+  "refmonth",
+  reps = 50,
+  seed = 1
+)
 sd
 plot(sd)
 ```
@@ -214,6 +263,80 @@ pw <- plnpwr(p[p$month <= 12, ], "district", "month", "crmrate", ntrt = 10,
                   adopt = 7:10, eff = c(0, 0.5, 1, 1.5), reps = 40, seed = 1)
 pw
 plot(pw)
+```
+
+## Your own panel, step by step
+
+Every estimator takes a data frame with one row per unit and period and the names of its
+columns, so your own data need only that layout. Here eight towns over ten years, four of them
+adopting a by-law (two in 2019, two in 2021), typed in:
+
+```{r policy-evaluation-own-data}
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8),
+  stringsAsFactors = FALSE
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+head(own)
+```
+
+The arguments name the columns:
+
+- `unit` and `time`: the unit (`"town"`) and the period, a number (`"year"`; a month index or a
+  date turned into a number works the same);
+- `y`: the outcome (`"rate"`);
+- the treatment, in one of two forms: `trtd`, a 0/1 column that is 1 in the periods a unit is
+  treated (`"bylaw"`, for `plndid()`, `wcb()`, `bacondcmp()`, `swtdid()`, `loounit()`), or
+  `ftreat`, the period a unit is first treated, `NA` for a unit never treated (`"first"`, for
+  `evstudy()`, `stgatt()`, `perminf()`, `mtchdid()`, `syndid()`, `cohtrnd()`);
+- `covs`: covariate columns (`"income"`);
+- `cl`: the cluster column for the standard errors (default the unit; `"county"` if the by-law
+  was assigned by county);
+- `w`: a weight column (`"pop"`), and `conflvl` the confidence level.
+
+**1. Look first.** Each cohort's outcome around its adoption:
+
+```{r policy-evaluation-own-trends, fig.height = 3.5}
+plot(cohtrnd(own, "town", "year", "rate", "first", win = c(-3, 3), ma = 1))
+```
+
+**2. The effect.** The two-way fixed-effects estimate, with income as a control, weighted by
+population, at a 90% level:
+
+```{r policy-evaluation-own-did}
+plndid(own, "town", "year", "rate", "bylaw", covs = "income", w = "pop",
+       conflvl = 0.9)
+```
+
+**3. Period by period.** The event study, and its sensitivity to parallel trends:
+
+```{r policy-evaluation-own-event, fig.height = 3.5}
+es <- evstudy(own, "town", "year", "rate", "first", leads = 3, lags = 3,
+              covs = "income", w = "pop")
+plot(es)
+tse(es, seed = 1)
+```
+
+**4. Staggered adoption.** Each cohort against the towns not yet treated:
+
+```{r policy-evaluation-own-staggered}
+stgatt(own, "town", "year", "rate", "first", reps = 49, seed = 1)$overall
+```
+
+**5. Honest inference with few clusters.** With eight towns, the wild cluster bootstrap and the
+permutation test:
+
+```{r policy-evaluation-own-inference}
+wcb(own, "town", "year", "rate", "bylaw", covs = "income")
+perminf(own, "town", "year", "rate", "first", reps = 99, seed = 1)
 ```
 
 ## Indigenous examples

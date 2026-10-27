@@ -21,14 +21,16 @@ plothex(x, y, bins = 30L, ..., main = NULL, col = NULL, pal = NULL)
 plotgain(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
 }
 \arguments{
-\item{x}{Numeric vector.}
+\item{x}{Numeric vector to plot, one value per observation.}
 
 \item{grp}{Optional vector of groups, one per value of \code{x}.}
 
-\item{bw}{Bandwidth passed to \code{\link[stats:density]{stats::density()}},
-default \code{"nrd0"}.}
+\item{bw}{Bandwidth passed to
+\code{\link[stats:density]{stats::density()}}: one positive number or
+the name of a rule (\code{"nrd0"}, the default, \code{"nrd"}, \code{"ucv"}, \code{"bcv"},
+\code{"sj"}, \code{"sj-ste"}, \code{"sj-dpi"}).}
 
-\item{...}{Further arguments to the first \code{plot()} call.}
+\item{...}{Further arguments to the \code{plot()} call that opens each frame.}
 
 \item{main, col, pal}{The title, colours overriding the palette, and a
 \code{\link[=blpal]{blpal()}} name.}

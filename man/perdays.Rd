@@ -16,7 +16,12 @@ before \code{from}.}
 }
 \value{
 A numeric scalar: the number of days in the period,
-\code{to - from + 1}, for use as \code{t}.
+\code{to - from + 1}, for use as \code{t}. It has class
+\code{c("rmbl_perdays", "rmbl_measure", "numeric")} and an attribute
+\code{"lakner"} (\code{from} and \code{to} as dates), so it prints as a
+box; arithmetic, \code{round()}, \code{sum()}, \code{mean()},
+\code{[}, \code{c()} and \code{as.numeric()} give a plain number, and
+every \code{t} argument takes it as it is.
 }
 \description{
 Counts the days from one date to another, both ends included, so the

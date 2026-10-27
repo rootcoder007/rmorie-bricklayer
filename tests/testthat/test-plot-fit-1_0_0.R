@@ -3,7 +3,7 @@
 # text were numbered.
 
 test_that("labels cut to the same text keep the part that tells them apart", {
-  f <- rmoriebricklayer:::.bl_short_label
+  f <- .bl_short_label
   x <- c(
     "Life satisfaction rating of 8, 9 or 10",
     "Life satisfaction rating between 0 and 5"
@@ -19,10 +19,10 @@ test_that("labels cut to the same text keep the part that tells them apart", {
   expect_true(all(grepl("\\.\\.\\.#[12]$", z)))
   expect_false(anyDuplicated(z) > 0)
   expect_identical(
-    rmoriebricklayer:::.bl_common_start(c("ab cd ef", "ab cd gh")),
+    .bl_common_start(c("ab cd ef", "ab cd gh")),
     6L
   )
-  expect_identical(rmoriebricklayer:::.bl_common_start(c("abc", "xyz")), 0L)
+  expect_identical(.bl_common_start(c("abc", "xyz")), 0L)
 })
 
 test_that(
@@ -34,11 +34,11 @@ test_that(
     grDevices::pdf(NULL, width = 6.5, height = 4.6)
     on.exit(grDevices::dev.off(), add = TRUE)
     graphics::plot(1, 1, type = "n", ylim = c(0.5, 44.5), yaxt = "n")
-    cex <- rmoriebricklayer:::.bl_row_labels(1:44, sprintf("row %d", 1:44))
+    cex <- .bl_row_labels(1:44, sprintf("row %d", 1:44))
     expect_lt(cex, 0.85)
     expect_gte(cex, 0.6)
     graphics::plot(1, 1, type = "n", ylim = c(0.5, 4.5), yaxt = "n")
-    expect_identical(rmoriebricklayer:::.bl_row_labels(1:4, letters[1:4]), 0.85)
+    expect_identical(.bl_row_labels(1:4, letters[1:4]), 0.85)
   }
 )
 
@@ -55,10 +55,11 @@ test_that(
     "straight now fit it to the panel"
   ),
   {
-    seen <- character()
+    rec <- new.env()
+    rec$seen <- character()
     local_mocked_bindings(
       .bl_title = function(title) {
-        seen <<- c(seen, as.character(title))
+        rec$seen <- c(rec$seen, as.character(title))
         invisible(title)
       },
       .package = "rmoriebricklayer"
@@ -66,12 +67,12 @@ test_that(
     grDevices::pdf(NULL, width = 3, height = 3)
     on.exit(grDevices::dev.off(), add = TRUE)
     plot(cnscwb(cnsprof(indiex("censuspop")), cnsprof(indiex("censushh"))))
-    expect_true("Community Well-Being, by place and group" %in% seen)
+    expect_true("Community Well-Being, by place and group" %in% rec$seen)
     plot(
       cnscwb(cnsprof(indiex("censuspop")), cnsprof(indiex("censushh"))),
       main = "My title"
     )
-    expect_true("My title" %in% seen)
+    expect_true("My title" %in% rec$seen)
   }
 )
 
@@ -87,8 +88,8 @@ test_that(
       prd = "year"
     )
     out <- capture.output(print(y[1:3, c("year", "pctchg")]))
-    expect_false(any(grepl("no periods", out)))
-    expect_true(any(grepl("pctchg", out)))
+    expect_false(any(grepl("no periods", out, fixed = TRUE)))
+    expect_true(any(grepl("pctchg", out, fixed = TRUE)))
     expect_identical(capture.output(print(y[0, ])), "<rmbl_yoy: no periods>")
   }
 )

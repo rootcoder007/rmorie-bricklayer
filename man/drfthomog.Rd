@@ -23,6 +23,10 @@ Carlo branch (sparse tables) \code{p_value} is floored at 1/(B+1) and
 \code{logpvalue} is its log, so it carries no extra range there. The
 attribute \code{method} names the branch, or says why the test was
 inapplicable (one category, no counts).
+It has class \code{c("rmbl_drfthomog", "rmbl_measure", "numeric")}, so it
+prints as a box with its inputs (kept in attribute \code{"lakner"});
+arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+numbers.
 }
 \description{
 Tests whether two samples of a categorical variable (for example race,

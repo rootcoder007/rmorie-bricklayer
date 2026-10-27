@@ -62,107 +62,148 @@ kAnyPolicy <- "2.5.29.32.0"
   n <- length(certs)
   # the anchor's own policies do not constrain; processing starts with
   # the any-policy at the top
-  valid <- kAnyPolicy
-  mappings_seen <- list()
-  explicit_after <- NA_integer_ # require_explicit_policy
-  inhibit_map_after <- NA_integer_
-  inhibit_any_after <- NA_integer_
-  explicit_required <- FALSE
-  any_inhibited <- FALSE
-  mapping_inhibited <- FALSE
-  notes <- character(0)
+  st <- .rmbl_pt_start()
 
   for (i in seq_len(n)) {
     cert <- certs[[i]]
-    is_last <- (i == n)
-
-    # the counters come into force when they reach zero
-    if (!is.na(explicit_after)) {
-      if (explicit_after <= 0L) {
-        explicit_required <- TRUE
-      }
-      explicit_after <- explicit_after - 1L
-    }
-    if (!is.na(inhibit_map_after)) {
-      if (inhibit_map_after <= 0L) {
-        mapping_inhibited <- TRUE
-      }
-      inhibit_map_after <- inhibit_map_after - 1L
-    }
-    if (!is.na(inhibit_any_after)) {
-      if (inhibit_any_after <= 0L) {
-        any_inhibited <- TRUE
-      }
-      inhibit_any_after <- inhibit_any_after - 1L
-    }
-
+    st <- .rmbl_pt_counters(st)
     if (i > 1L) {
-      # intersect the certificate's policies with what is still valid
-      have <- .rmbl_chr0(cert$policies)
-      if (!length(have)) {
-        # A certificate with no policies extension prunes the tree
-        # entirely. That is only fatal where an explicit policy is
-        # required, which is the distinction the counters exist for.
-        valid <- character(0)
-        notes <- c(notes, sprintf("[%d] states no certificate policies", i))
-      } else if (kAnyPolicy %in% have && !any_inhibited) {
-        # anyPolicy asserts everything still valid
-        notes <- c(notes, sprintf("[%d] asserts anyPolicy", i))
-      } else {
-        have <- setdiff(have, kAnyPolicy)
-        if (identical(valid, kAnyPolicy)) {
-          valid <- have
-        } else {
-          valid <- intersect(valid, have)
-        }
-      }
+      st <- .rmbl_pt_policies(st, cert, i)
     }
-
     # policy mapping, unless inhibited: a mapped policy continues under
     # its new name
-    if (
-      !is_last && !is.null(cert$policy_mappings) && length(cert$policy_mappings)
-    ) {
-      if (mapping_inhibited) {
-        notes <- c(
-          notes,
-          sprintf("[%d] asserts policy mappings while mapping is inhibited", i)
-        )
-        valid <- character(0)
-      } else {
-        for (m in cert$policy_mappings) {
-          if (
-            identical(m$issuer, kAnyPolicy) ||
-              identical(m$subject, kAnyPolicy)
-          ) {
-            # mapping to or from anyPolicy is forbidden
-            notes <- c(notes, sprintf("[%d] maps to or from anyPolicy", i))
-            valid <- character(0)
-            next
-          }
-          mappings_seen[[length(mappings_seen) + 1L]] <- m
-          if (m$issuer %in% valid) {
-            valid <- unique(c(setdiff(valid, m$issuer), m$subject))
-          }
-        }
-      }
+    if (i != n && length(cert$policy_mappings)) {
+      st <- .rmbl_pt_mappings(st, cert, i)
     }
-
-    # the constraints this certificate imposes on the rest of the path
-    rep_v <- .rmbl_na_int(cert$require_explicit_policy)
-    map_v <- .rmbl_na_int(cert$inhibit_policy_mapping)
-    any_v <- .rmbl_na_int(cert$inhibit_any_policy)
-    if (!is.na(rep_v)) {
-      explicit_after <- min(c(explicit_after, rep_v), na.rm = TRUE)
-    }
-    if (!is.na(map_v)) {
-      inhibit_map_after <- min(c(inhibit_map_after, map_v), na.rm = TRUE)
-    }
-    if (!is.na(any_v)) {
-      inhibit_any_after <- min(c(inhibit_any_after, any_v), na.rm = TRUE)
-    }
+    st <- .rmbl_pt_constraints(st, cert)
   }
 
+  .rmbl_pt_result(st, initial)
+}
+
+#' The policy tree's counters, one certificate on: each comes into force
+#' when it reaches zero.
+#' @param st The tree's state.
+#' @return The state.
+#' @noRd
+.rmbl_pt_counters <- function(st) {
+  flags <- c(
+    explicit_after = "explicit_required",
+    inhibit_map_after = "mapping_inhibited",
+    inhibit_any_after = "any_inhibited"
+  )
+  for (k in names(flags)) {
+    if (!is.na(st[[k]])) {
+      if (st[[k]] <= 0L) {
+        st[[flags[[k]]]] <- TRUE
+      }
+      st[[k]] <- st[[k]] - 1L
+    }
+  }
+  st
+}
+
+#' The policies still valid, intersected with a certificate's.
+#' @param st The tree's state.
+#' @param cert The certificate.
+#' @param i Its place in the path, anchor first.
+#' @return The state.
+#' @noRd
+.rmbl_pt_policies <- function(st, cert, i) {
+  have <- .rmbl_chr0(cert$policies)
+  if (!length(have)) {
+    # A certificate with no policies extension prunes the tree
+    # entirely. That is only fatal where an explicit policy is
+    # required, which is the distinction the counters exist for.
+    st$valid <- character(0)
+    st$notes <- c(st$notes, sprintf("[%d] states no certificate policies", i))
+  } else if (kAnyPolicy %in% have && !st$any_inhibited) {
+    # anyPolicy asserts everything still valid
+    st$notes <- c(st$notes, sprintf("[%d] asserts anyPolicy", i))
+  } else {
+    have <- setdiff(have, kAnyPolicy)
+    st$valid <- if (identical(st$valid, kAnyPolicy)) {
+      have
+    } else {
+      intersect(st$valid, have)
+    }
+  }
+  st
+}
+
+#' A certificate's policy mappings, applied to the policies still valid.
+#' @param st The tree's state.
+#' @param cert The certificate, with mappings.
+#' @param i Its place in the path, anchor first.
+#' @return The state.
+#' @noRd
+.rmbl_pt_mappings <- function(st, cert, i) {
+  if (st$mapping_inhibited) {
+    st$notes <- c(
+      st$notes,
+      sprintf("[%d] asserts policy mappings while mapping is inhibited", i)
+    )
+    st$valid <- character(0)
+    return(st)
+  }
+  for (m in cert$policy_mappings) {
+    if (identical(m$issuer, kAnyPolicy) || identical(m$subject, kAnyPolicy)) {
+      # mapping to or from anyPolicy is forbidden
+      st$notes <- c(st$notes, sprintf("[%d] maps to or from anyPolicy", i))
+      st$valid <- character(0)
+      next
+    }
+    st$mappings_seen[[length(st$mappings_seen) + 1L]] <- m
+    if (m$issuer %in% st$valid) {
+      st$valid <- unique(c(setdiff(st$valid, m$issuer), m$subject))
+    }
+  }
+  st
+}
+
+#' The constraints a certificate imposes on the rest of the path.
+#' @param st The tree's state.
+#' @param cert The certificate.
+#' @return The state.
+#' @noRd
+.rmbl_pt_constraints <- function(st, cert) {
+  v <- c(
+    explicit_after = .rmbl_na_int(cert$require_explicit_policy),
+    inhibit_map_after = .rmbl_na_int(cert$inhibit_policy_mapping),
+    inhibit_any_after = .rmbl_na_int(cert$inhibit_any_policy)
+  )
+  for (k in names(v)) {
+    if (!is.na(v[[k]])) {
+      st[[k]] <- min(c(st[[k]], v[[k]]), na.rm = TRUE)
+    }
+  }
+  st
+}
+
+#' The policy tree's state before the first certificate.
+#' @return The state: the any-policy valid, no counter set, nothing seen.
+#' @noRd
+.rmbl_pt_start <- function() {
+  list(
+    valid = kAnyPolicy,
+    mappings_seen = list(),
+    explicit_after = NA_integer_, # require_explicit_policy
+    inhibit_map_after = NA_integer_,
+    inhibit_any_after = NA_integer_,
+    explicit_required = FALSE,
+    any_inhibited = FALSE,
+    mapping_inhibited = FALSE,
+    notes = character(0)
+  )
+}
+
+#' The result of .rmbl_policy_tree() from the state after the path.
+#' @param st The tree's state after the last certificate.
+#' @param initial The initial policy set the caller accepts.
+#' @return As for .rmbl_policy_tree().
+#' @noRd
+.rmbl_pt_result <- function(st, initial) {
+  valid <- st$valid
   initial <- as.character(initial)
   wanted <- if (!length(initial) || kAnyPolicy %in% initial) {
     valid
@@ -175,14 +216,14 @@ kAnyPolicy <- "2.5.29.32.0"
   list(
     valid = valid,
     authorities_constrained_to = wanted,
-    explicit_required = explicit_required,
-    anyinh = any_inhibited,
-    mapinh = mapping_inhibited,
-    mappings = mappings_seen,
-    notes = notes,
+    explicit_required = st$explicit_required,
+    anyinh = st$any_inhibited,
+    mapinh = st$mapping_inhibited,
+    mappings = st$mappings_seen,
+    notes = st$notes,
     # A path satisfies the policy requirement when either nothing was
     # required of it, or something acceptable survived.
-    ok = (!explicit_required &&
+    ok = (!st$explicit_required &&
       (!length(initial) ||
         kAnyPolicy %in% initial)) ||
       length(wanted) > 0L

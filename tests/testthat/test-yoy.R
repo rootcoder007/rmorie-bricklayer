@@ -12,19 +12,23 @@ test_that("the percent change is the arithmetic, not the row order", {
   y <- yoy(d, value = "n", prd = "year")
   got <- as.data.frame(y)
   expect_s3_class(y, "rmbl_yoy")
-  expect_equal(got$year, 2019:2023)
-  expect_equal(got$previous, c(NA, 402, 377, 190, 268))
-  expect_equal(got$change, c(NA, -25, -187, 78, 63))
+  expect_identical(got$year, 2019:2023)
+  expect_identical(got$previous, c(NA, 402, 377, 190, 268))
+  expect_identical(got$change, c(NA, -25, -187, 78, 63))
   expect_equal(
     got$pctchg,
-    100 * (c(NA, 377, 190, 268, 331) / c(NA, 402, 377, 190, 268) - 1)
+    100 * (c(NA, 377, 190, 268, 331) / c(NA, 402, 377, 190, 268) - 1),
+    tolerance = testthat::testthat_tolerance()
   )
   # the first period has nothing to compare with, and says so rather
   # than reporting a change of zero
   expect_true(is.na(got$pctchg[1L]))
   expect_identical(got$flag[1L], "no comparison period")
   # a bare column name works as well as a string
-  expect_equal(as.data.frame(yoy(d, value = n, prd = year))$change, got$change)
+  expect_identical(
+    as.data.frame(yoy(d, value = n, prd = year))$change,
+    got$change
+  )
   expect_error(yoy(d, value = "nope", prd = "year"), "not found")
   expect_error(yoy(d, value = "n", prd = "nope"), "not found")
   expect_error(yoy(d, value = "n", prd = "year", lag = 0), "positive")
@@ -40,19 +44,19 @@ test_that("a missing period is a gap, not a shifted comparison", {
   # confident number for a three-year change labelled as one year.
   d <- data.frame(year = c(2019, 2020, 2022, 2023), n = c(100, 120, 140, 150))
   got <- as.data.frame(yoy(d, value = "n", prd = "year"))
-  expect_equal(got$year, 2019:2023)
+  expect_equal(got$year, 2019:2023, tolerance = testthat::testthat_tolerance())
   # 2021 is present as a row with no value
   expect_true(is.na(got$value[got$year == 2021]))
   # 2022 has no previous period, because 2021 is missing
   expect_true(is.na(got$previous[got$year == 2022]))
   expect_identical(got$flag[got$year == 2022], "no comparison period")
   # and 2023 compares with 2022, which is present
-  expect_equal(got$previous[got$year == 2023], 140)
-  expect_equal(got$change[got$year == 2023], 10)
+  expect_identical(got$previous[got$year == 2023], 140)
+  expect_identical(got$change[got$year == 2023], 10)
   # turning completion off leaves the observed rows alone, and the
   # comparison is STILL matched on the period rather than the row
   raw <- as.data.frame(yoy(d, value = "n", prd = "year", complete = FALSE))
-  expect_equal(nrow(raw), 4L)
+  expect_identical(nrow(raw), 4L)
   expect_true(is.na(raw$previous[raw$year == 2022]))
 })
 
@@ -93,7 +97,8 @@ test_that("the count interval is exactly poisson.test's", {
   )
   # a count of zero in both periods has no ratio at all
   z <- .yoy_ratio_ci(0, 0, 0.95)
-  expect_true(is.na(z$lower) && is.na(z$upper))
+  expect_true(is.na(z$lower))
+  expect_true(is.na(z$upper))
   # the interval brackets the point estimate it belongs to
   d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
   got <- as.data.frame(yoy(d, value = "n", prd = "year"))
@@ -107,17 +112,17 @@ test_that("a percent off a small base is computed, with its exact interval", {
   # carries how little a base of two supports, so nothing is withheld
   d <- data.frame(year = 2019:2021, n = c(2, 20, 25))
   got <- as.data.frame(yoy(d, value = "n", prd = "year"))
-  expect_equal(got$pctchg[got$year == 2020], 900)
+  expect_identical(got$pctchg[got$year == 2020], 900)
   expect_true(is.na(got$flag[got$year == 2020]))
   # the interval is the exact one: conditional on 22 events, 20 fall in the
   # later period
   ci <- stats::binom.test(20, 22)$conf.int
-  expect_equal(got$pctlo[got$year == 2020], 100 * (ci[1] / (1 - ci[1]) - 1))
-  expect_equal(got$pctup[got$year == 2020], 100 * (ci[2] / (1 - ci[2]) - 1))
+  expect_identical(got$pctlo[got$year == 2020], 100 * (ci[1] / (1 - ci[1]) - 1))
+  expect_identical(got$pctup[got$year == 2020], 100 * (ci[2] / (1 - ci[2]) - 1))
   # wide, as a base of two must be, and it contains the estimate
   expect_lt(got$pctlo[got$year == 2020], 900)
   expect_gt(got$pctup[got$year == 2020], 900)
-  expect_equal(got$change[got$year == 2020], 18)
+  expect_identical(got$change[got$year == 2020], 18)
   expect_identical(got$verdict[got$year == 2020], "up")
   # a minute change off a small base is reported too
   m <- as.data.frame(yoy(
@@ -125,10 +130,10 @@ test_that("a percent off a small base is computed, with its exact interval", {
     value = "n",
     prd = "y"
   ))
-  expect_equal(m$pctchg[2L], -100 / 15)
+  expect_identical(m$pctchg[2L], -100 / 15)
   # a note appears only when asked for, and still nothing is withheld
   noted <- as.data.frame(yoy(d, value = "n", prd = "year", minbase = 20))
-  expect_equal(noted$pctchg[noted$year == 2020], 900)
+  expect_identical(noted$pctchg[noted$year == 2020], 900)
   expect_identical(noted$flag[noted$year == 2020], "small base (below 20)")
   expect_true(is.na(noted$flag[noted$year == 2021]))
   # a previous period of zero has no percent change to report, whatever
@@ -175,10 +180,18 @@ test_that("count units refuse a measured quantity", {
   )
   # and continuous units accept it, without claiming an interval
   got <- as.data.frame(yoy(d, value = "x", prd = "year", units = "continuous"))
-  expect_equal(got$pctchg, c(NA, 100 * (2.5 / 1.5 - 1), 100 * (3.5 / 2.5 - 1)))
+  expect_equal(
+    got$pctchg,
+    c(NA, 100 * (2.5 / 1.5 - 1), 100 * (3.5 / 2.5 - 1)),
+    tolerance = testthat::testthat_tolerance()
+  )
   expect_false("pctlo" %in% names(got))
   expect_error(
-    yoy(data.frame(y = 1:2, s = c("a", "b")), value = "s", prd = "y"),
+    yoy(
+      data.frame(y = 1:2, s = c("a", "b"), stringsAsFactors = FALSE),
+      value = "s",
+      prd = "y"
+    ),
     "must be numeric"
   )
 })
@@ -187,7 +200,8 @@ test_that("groups are compared within themselves", {
   seg <- data.frame(
     year = rep(2019:2021, each = 2),
     gender = rep(c("Female", "Male"), 3),
-    n = c(31, 402, 28, 377, 12, 190)
+    n = c(31, 402, 28, 377, 12, 190),
+    stringsAsFactors = FALSE
   )
   got <- as.data.frame(yoy(
     seg,
@@ -199,9 +213,9 @@ test_that("groups are compared within themselves", {
   f <- got[got$gender == "Female", ]
   m <- got[got$gender == "Male", ]
   # Female 2020 compares with Female 2019, not with Male 2019
-  expect_equal(f$previous, c(NA, 31, 28))
-  expect_equal(m$previous, c(NA, 402, 377))
-  expect_equal(f$change, c(NA, -3, -16))
+  expect_identical(f$previous, c(NA, 31, 28))
+  expect_identical(m$previous, c(NA, 402, 377))
+  expect_identical(f$change, c(NA, -3, -16))
   expect_error(
     yoy(seg, value = "n", prd = "year", by = "nope"),
     "`by` column not found"
@@ -216,7 +230,7 @@ test_that("groups are compared within themselves", {
     minbase = 0
   ))
   expect_true(all(c("gender", "region") %in% names(two)))
-  expect_equal(nrow(two), 6L)
+  expect_identical(nrow(two), 6L)
 })
 
 test_that("repeated rows inside a period are aggregated first", {
@@ -227,8 +241,8 @@ test_that("repeated rows inside a period are aggregated first", {
     n = c(10, 20, 30, 25, 35)
   )
   got <- as.data.frame(yoy(d, value = "n", prd = "year"))
-  expect_equal(got$value, c(60, 60))
-  expect_equal(got$change, c(NA, 0))
+  expect_identical(got$value, c(60, 60))
+  expect_identical(got$change, c(NA, 0))
   # another aggregation is available where a total is the wrong summary
   avg <- as.data.frame(yoy(
     d,
@@ -237,8 +251,8 @@ test_that("repeated rows inside a period are aggregated first", {
     fun = mean,
     units = "continuous"
   ))
-  expect_equal(avg$value, c(20, 30))
-  expect_equal(avg$pctchg, c(NA, 50))
+  expect_identical(avg$value, c(20, 30))
+  expect_identical(avg$pctchg, c(NA, 50))
   # the period column keeps its own type through the aggregation
   dd <- data.frame(
     when = as.Date(c("2019-01-01", "2019-01-01", "2020-01-01")),
@@ -246,7 +260,7 @@ test_that("repeated rows inside a period are aggregated first", {
   )
   a <- as.data.frame(yoy(dd, value = "n", prd = "when", minbase = 0))
   expect_s3_class(a$when, "Date")
-  expect_equal(a$value, c(3, 6))
+  expect_identical(a$value, c(3, 6))
 })
 
 test_that("a seasonal series compares with the same season", {
@@ -254,34 +268,37 @@ test_that("a seasonal series compares with the same season", {
   # previous OBSERVATION would put January against December
   x <- stats::ts(c(10:21, 20:31), start = c(2021, 1), frequency = 12)
   got <- as.data.frame(yoy(x, minbase = 0))
-  expect_equal(nrow(got), 24L)
+  expect_identical(nrow(got), 24L)
   # the first twelve have no counterpart a year earlier
   expect_true(all(is.na(got$previous[1:12])))
   # and the thirteenth compares with the first, which is the same month
-  expect_equal(got$previous[13L], 10)
-  expect_equal(got$value[13L], 20)
-  expect_equal(got$change[13L], 10)
+  expect_identical(got$previous[13L], 10)
+  expect_identical(got$value[13L], 20)
+  expect_identical(got$change[13L], 10)
   # a quarterly series takes four
   q <- stats::ts(c(1:4, 5:8), start = c(2021, 1), frequency = 4)
   gq <- as.data.frame(yoy(q, minbase = 0))
   expect_true(all(is.na(gq$previous[1:4])))
-  expect_equal(gq$previous[5L], 1)
+  expect_identical(gq$previous[5L], 1)
   # an explicit lag overrides the frequency
   g1 <- as.data.frame(yoy(q, lag = 1L, minbase = 0))
-  expect_equal(g1$previous[2L], 1)
+  expect_identical(g1$previous[2L], 1)
   # a plain vector indexes by position when no periods are given
   v <- as.data.frame(yoy(c(100, 110, 121), minbase = 0))
-  expect_equal(v$pctchg, c(NA, 10, 10))
+  expect_identical(v$pctchg, c(NA, 10, 10))
   # and an integer vector goes the same way
-  expect_equal(as.data.frame(yoy(c(100L, 150L), minbase = 0))$change, c(NA, 50))
+  expect_identical(
+    as.data.frame(yoy(c(100L, 150L), minbase = 0))$change,
+    c(NA, 50)
+  )
 })
 
 test_that("a longer lag compares with a longer-ago period", {
   d <- data.frame(year = 2015:2023, n = seq(100, 180, by = 10))
   l3 <- as.data.frame(yoy(d, value = "n", prd = "year", lag = 3L))
   expect_true(all(is.na(l3$previous[1:3])))
-  expect_equal(l3$previous[4L], 100)
-  expect_equal(l3$change[4L], 30)
+  expect_identical(l3$previous[4L], 100)
+  expect_identical(l3$change[4L], 30)
   # and the footer says which lag produced the column
   out <- utils::capture.output(print(
     yoy(d, value = "n", prd = "year", lag = 3L),
@@ -299,7 +316,7 @@ test_that("direction decides what counts as an improvement", {
   worse <- as.data.frame(yoy(d, value = "n", prd = "year", dir = "lower"))
   expect_identical(worse$verdict[2L], "worse")
   # the arithmetic is untouched by the choice
-  expect_equal(up$pctchg, worse$pctchg)
+  expect_identical(up$pctchg, worse$pctchg)
   # and an unchanged period is unchanged under every direction
   flat <- data.frame(year = 2019:2020, n = c(100, 100))
   for (dir in c("neutral", "higher", "lower")) {
@@ -311,17 +328,17 @@ test_that("direction decides what counts as an improvement", {
 test_that("the span summary is the compound rate", {
   d <- data.frame(year = 2019:2023, n = c(100, 110, 120, 130, 160))
   s <- yoysmry(yoy(d, value = "n", prd = "year"))
-  expect_equal(s$first, 100)
-  expect_equal(s$last, 160)
-  expect_equal(s$totalpct, 60)
+  expect_identical(s$first, 100)
+  expect_identical(s$last, 160)
+  expect_equal(s$totalpct, 60, tolerance = testthat::testthat_tolerance())
   # four steps from 100 to 160, so the compound rate per period is the
   # fourth root of the total growth
-  expect_equal(s$cagrpct, 100 * ((160 / 100)^(1 / 4) - 1))
+  expect_identical(s$cagrpct, 100 * ((160 / 100)^(1 / 4) - 1))
   # and compounding it back over the span returns the total
-  expect_equal(100 * ((1 + s$cagrpct / 100)^4 - 1), s$totalpct)
-  expect_equal(s$periods, 5L)
-  expect_equal(s$up, 4L)
-  expect_equal(s$down, 0L)
+  expect_identical(100 * ((1 + s$cagrpct / 100)^4 - 1), s$totalpct)
+  expect_identical(s$periods, 5L)
+  expect_identical(s$up, 4L)
+  expect_identical(s$down, 0L)
   # a compound rate out of zero does not exist
   z <- yoysmry(yoy(
     data.frame(y = 1:3, n = c(0, 5, 10)),
@@ -335,13 +352,18 @@ test_that("the span summary is the compound rate", {
   seg <- data.frame(
     year = rep(2019:2021, each = 2),
     g = rep(c("a", "b"), 3),
-    n = c(10, 100, 20, 90, 30, 80)
+    n = c(10, 100, 20, 90, 30, 80),
+    stringsAsFactors = FALSE
   )
   sg <- yoysmry(yoy(seg, value = "n", prd = "year", by = "g", minbase = 0))
-  expect_equal(nrow(sg), 2L)
+  expect_identical(nrow(sg), 2L)
   expect_true("g" %in% names(sg))
-  expect_equal(sg$totalpct[sg$g == "a"], 200)
-  expect_equal(sg$totalpct[sg$g == "b"], -20)
+  expect_identical(sg$totalpct[sg$g == "a"], 200)
+  expect_equal(
+    sg$totalpct[sg$g == "b"],
+    -20,
+    tolerance = testthat::testthat_tolerance()
+  )
 })
 
 test_that("printing says what the percentages mean", {
@@ -403,8 +425,12 @@ test_that("the delimited writers round-trip through base R's readers", {
   on.exit(unlink(f), add = TRUE)
   yoycsv(y, f)
   back <- utils::read.csv(f, comment.char = "#")
-  expect_equal(as.numeric(back$value), ref$value)
-  expect_equal(back$pctchg, ref$pctchg)
+  expect_identical(as.numeric(back$value), ref$value)
+  expect_equal(
+    back$pctchg,
+    ref$pctchg,
+    tolerance = testthat::testthat_tolerance()
+  )
   # the flag travels with the numbers: a CSV that dropped it would hand
   # on the one figure the table declined to stand behind
   expect_identical(back$flag[1L], "no comparison period")
@@ -418,13 +444,13 @@ test_that("the delimited writers round-trip through base R's readers", {
   on.exit(unlink(g), add = TRUE)
   yoytsv(y, g)
   bt <- utils::read.delim(g, comment.char = "#")
-  expect_equal(as.numeric(bt$value), ref$value)
+  expect_identical(as.numeric(bt$value), ref$value)
   # no metadata when it is not wanted
   yoycsv(y, f, meta = FALSE)
   expect_false(startsWith(readLines(f, n = 1L), "#"))
   # rounding is available for a figure meant to be read
   yoycsv(y, f, digits = 1L, meta = FALSE)
-  expect_equal(utils::read.csv(f)$pctchg, round(ref$pctchg, 1L))
+  expect_identical(utils::read.csv(f)$pctchg, round(ref$pctchg, 1L))
   # NA spelling is settable
   yoycsv(y, f, na = "NA", meta = FALSE)
   expect_true(any(grepl(",NA,", readLines(f), fixed = TRUE)))
@@ -439,7 +465,8 @@ test_that("a separator inside a field cannot break the columns", {
   d <- data.frame(
     year = rep(2019:2020, each = 2),
     region = rep(c("North, Central", "Say \"hi\""), 2),
-    n = c(100, 200, 120, 180)
+    n = c(100, 200, 120, 180),
+    stringsAsFactors = FALSE
   )
   y <- yoy(d, value = "n", prd = "year", by = "region")
   f <- tempfile(fileext = ".csv")
@@ -447,7 +474,7 @@ test_that("a separator inside a field cannot break the columns", {
   yoycsv(y, f)
   back <- utils::read.csv(f, comment.char = "#")
   # the row count and the labels survive the comma and the quotes
-  expect_equal(nrow(back), 4L)
+  expect_identical(nrow(back), 4L)
   expect_true("North, Central" %in% back$region)
   expect_true("Say \"hi\"" %in% back$region)
 
@@ -456,13 +483,14 @@ test_that("a separator inside a field cannot break the columns", {
   d2 <- data.frame(
     year = rep(2019:2020, each = 1),
     region = c("A\tB", "A\tB"),
-    n = c(100, 120)
+    n = c(100, 120),
+    stringsAsFactors = FALSE
   )
   g <- tempfile(fileext = ".tsv")
   on.exit(unlink(g), add = TRUE)
   yoytsv(yoy(d2, value = "n", prd = "year", by = "region"), g)
   bt <- utils::read.delim(g, comment.char = "#")
-  expect_equal(nrow(bt), 2L)
+  expect_identical(nrow(bt), 2L)
   expect_identical(bt$region[1L], "A B")
 })
 
@@ -475,18 +503,23 @@ test_that("the JSON keeps the settings as fields", {
   expect_identical(obj$settings$value, "n")
   expect_identical(obj$settings$units, "count")
   expect_identical(obj$settings$direction, "lower")
-  expect_equal(obj$settings$lag, 1L)
+  expect_identical(obj$settings$lag, 1L)
   # an absent grouping is an absent key, not an empty object
   expect_null(obj$settings$by)
   expect_length(obj$rows, 3L)
-  expect_equal(obj$rows[[2L]]$change, 20)
+  expect_equal(
+    obj$rows[[2L]]$change,
+    20,
+    tolerance = testthat::testthat_tolerance()
+  )
   expect_length(obj$summary, 1L)
   # a grouped table names its grouping
   g <- yoy(
     data.frame(
       year = rep(2019:2020, each = 2),
       k = rep(c("a", "b"), 2),
-      n = c(1, 2, 3, 4)
+      n = c(1, 2, 3, 4),
+      stringsAsFactors = FALSE
     ),
     value = "n",
     prd = "year",
@@ -501,7 +534,8 @@ test_that("the JSON keeps the settings as fields", {
   yoyjs(y, f)
   expect_equal(
     fromjs(paste(readLines(f), collapse = "\n"))$rows$change,
-    c(NA, 20, 20)
+    c(NA, 20, 20),
+    tolerance = testthat::testthat_tolerance()
   )
 })
 
@@ -520,10 +554,10 @@ test_that("the Markdown table lines up and escapes its cells", {
     },
     0L
   )
-  expect_equal(length(unique(counts)), 1L)
+  expect_length(unique(counts), 1L)
   # the rule is exactly as wide as its header, so the source reads as a
   # table before it is rendered
-  expect_equal(nchar(tbl[1L]), nchar(tbl[2L]))
+  expect_identical(nchar(tbl[1L]), nchar(tbl[2L]))
   # right-aligned numeric columns are marked as such
   expect_match(tbl[2L], "-:")
   # a pipe inside a label is escaped instead of ending the cell
@@ -532,7 +566,8 @@ test_that("the Markdown table lines up and escapes its cells", {
       data.frame(
         year = rep(2019:2020, each = 1),
         k = c("a|b", "a|b"),
-        n = c(10, 20)
+        n = c(10, 20),
+        stringsAsFactors = FALSE
       ),
       value = "n",
       prd = "year",
@@ -551,7 +586,8 @@ test_that("the HTML is self-contained and escapes its content", {
   d <- data.frame(
     year = rep(2019:2020, each = 1),
     region = c("<script>alert(1)</script>", "x"),
-    n = c(100, 120)
+    n = c(100, 120),
+    stringsAsFactors = FALSE
   )
   y <- yoy(d, value = "n", prd = "year", by = "region", minbase = 0)
   f <- tempfile(fileext = ".html")
@@ -665,10 +701,10 @@ test_that("degenerate input degrades rather than erroring", {
     value = "n",
     prd = "y"
   ))
-  expect_equal(nrow(one), 1L)
+  expect_identical(nrow(one), 1L)
   expect_true(is.na(one$previous))
   expect_identical(one$flag, "no comparison period")
-  expect_equal(
+  expect_identical(
     nrow(yoysmry(yoy(data.frame(y = 2019, n = 100), value = "n", prd = "y"))),
     1L
   )
@@ -678,10 +714,10 @@ test_that("degenerate input degrades rather than erroring", {
     value = "n",
     prd = "y"
   )
-  expect_equal(nrow(as.data.frame(na)), 3L)
+  expect_identical(nrow(as.data.frame(na)), 3L)
   expect_true(all(is.na(as.data.frame(na)$pctchg)))
   s <- yoysmry(na)
-  expect_equal(s$periods, 0L)
+  expect_identical(s$periods, 0L)
   expect_true(is.na(s$cagrpct))
   # an empty table prints without erroring
   empty <- yoy(
@@ -689,13 +725,13 @@ test_that("degenerate input degrades rather than erroring", {
     value = "n",
     prd = "y"
   )
-  expect_equal(nrow(as.data.frame(empty)), 0L)
+  expect_identical(nrow(as.data.frame(empty)), 0L)
   expect_output(print(empty), "no periods")
   # and writes an empty file with only its header
   f <- tempfile(fileext = ".csv")
   on.exit(unlink(f), add = TRUE)
   yoycsv(empty, f, meta = FALSE)
-  expect_equal(length(readLines(f)), 1L)
+  expect_length(readLines(f), 1L)
   # an irregular period column has no grid, so nothing is compared and
   # nothing is invented
   irr <- as.data.frame(yoy(
@@ -712,21 +748,21 @@ test_that("a label changes the printing and nothing else", {
   y <- yoy(seg, value = n, prd = EndFiscalYear)
   # 2023 keys the fiscal year 2022/23, so printing it as "2023" names a
   # calendar year the row is not about
-  expect_equal(
+  expect_identical(
     fylbl(2019:2023),
     c("2018/19", "2019/20", "2020/21", "2021/22", "2022/23")
   )
-  expect_equal(fylbl(2023, short = FALSE), "2022/2023")
-  expect_equal(fylbl(2023, sep = "-"), "2022-23")
+  expect_identical(fylbl(2023, short = FALSE), "2022/2023")
+  expect_identical(fylbl(2023, sep = "-"), "2022-23")
   expect_true(is.na(fylbl("not a year")))
-  expect_equal(fylbl(2000), "1999/00")
+  expect_identical(fylbl(2000), "1999/00")
 
   lab <- yoylbl(y, fylbl)
   # the arithmetic already ran on the period's value, so a label cannot
   # move a number
-  expect_equal(as.data.frame(lab)$pctchg, as.data.frame(y)$pctchg)
-  expect_equal(as.data.frame(lab)$previous, as.data.frame(y)$previous)
-  expect_equal(as.data.frame(lab)$EndFiscalYear, 2019:2023)
+  expect_identical(as.data.frame(lab)$pctchg, as.data.frame(y)$pctchg)
+  expect_identical(as.data.frame(lab)$previous, as.data.frame(y)$previous)
+  expect_identical(as.data.frame(lab)$EndFiscalYear, 2019:2023)
 
   # and it reaches every renderer, not just the one it was tested on
   out <- paste(
@@ -756,7 +792,7 @@ test_that("a label changes the printing and nothing else", {
   expect_identical(n$perlbl[n$EndFiscalYear == 2020], "2019/20 (COVID)")
   expect_identical(n$perlbl[n$EndFiscalYear == 2021], "2021")
   # an unnamed vector must cover every period
-  expect_equal(
+  expect_identical(
     as.data.frame(
       yoylbl(y, c("a", "b", "c", "d", "e"))
     )$perlbl,
@@ -769,14 +805,15 @@ test_that("a label changes the printing and nothing else", {
     data.frame(
       y = rep(2019:2020, each = 2),
       k = rep(c("a", "b"), 2),
-      n = c(100, 200, 120, 180)
+      n = c(100, 200, 120, 180),
+      stringsAsFactors = FALSE
     ),
     value = "n",
     prd = "y",
     by = "k"
   )
   gl <- as.data.frame(yoylbl(g, fylbl))
-  expect_equal(gl$perlbl, fylbl(gl$y))
+  expect_identical(gl$perlbl, fylbl(gl$y))
 })
 
 test_that(
@@ -812,10 +849,10 @@ test_that(
       share = c(53, 57.9, 60, 62)
     )
     p <- yoy(d, value = "share", prd = "year", units = "percent")
-    expect_equal(p$value[p$year == 2019], mean(c(53, 57.9)))
+    expect_identical(p$value[p$year == 2019], mean(c(53, 57.9)))
     n <- data.frame(year = c(2019, 2019, 2020, 2020), cases = c(53, 58, 60, 62))
     k <- yoy(n, value = "cases", prd = "year", units = "count")
-    expect_equal(k$value[k$year == 2019], 53 + 58)
+    expect_identical(k$value[k$year == 2019], 53 + 58)
     m <- yoy(d, value = "share", prd = "year", units = "percent", fun = max)
     expect_equal(m$value[m$year == 2019], 57.9)
   }
@@ -846,13 +883,159 @@ test_that("a grouped table prints its group columns first", {
   d <- data.frame(
     year = rep(2020:2022, 2),
     g = rep(c("a", "b"), each = 3),
-    n = c(10, 12, 15, 30, 28, 33)
+    n = c(10, 12, 15, 30, 28, 33),
+    stringsAsFactors = FALSE
   )
   out <- utils::capture.output(print(
     yoy(d, value = "n", prd = "year", by = "g"),
     color = FALSE
   ))
-  hdr <- out[grepl("year", out)][1]
-  expect_lt(regexpr("\\bg\\b", hdr), regexpr("year", hdr))
-  expect_true(any(grepl("^\\s*b\\s", out)))
+  # the header row of the table, inside the box
+  hdr <- grep("change %", out, fixed = TRUE, value = TRUE)[1]
+  expect_gt(regexpr("\\bg\\b", hdr), 0L)
+  expect_lt(regexpr("\\bg\\b", hdr), regexpr("year", hdr, fixed = TRUE))
+  expect_true(any(grepl("^\\S?\\s*b\\s", out)))
+})
+
+test_that("text periods of every form are read in calendar order (C18)", {
+  rd <- function(p, ...) {
+    d <- data.frame(p = p, n = seq_along(p) * 10, stringsAsFactors = FALSE)
+    as.data.frame(yoy(d, "n", "p", ...))
+  }
+  # each form: two consecutive periods and one after a gap
+  forms <- list(
+    year = c("1987", "1988", "1990"),
+    fy2 = c("2019/20", "2020/21", "2022/23"),
+    fy4 = c("2019-2020", "2020-2021", "2022-2023"),
+    fyd = c("2019-20", "2020-21", "2022-23"),
+    fyp = c("FY 2019-20", "FY 2020-21", "FY 2022-23"),
+    fy1 = c("FY2020", "FY2021", "FY2023"),
+    qa = c("2021 Q3", "2021 Q4", "2022 Q2"),
+    qb = c("2021Q3", "2021Q4", "2022Q2"),
+    qc = c("2021-Q3", "2021-Q4", "2022-Q2"),
+    qd = c("Q3 2021", "Q4 2021", "Q2 2022"),
+    ma = c("2021-11", "2021-12", "2022-02"),
+    mb = c("2021/11", "2021/12", "2022/02"),
+    mc = c("Nov 2021", "December 2021", "Feb 2022"),
+    md = c("2021 Nov", "2021 Dec", "2022 Feb"),
+    dt = c("2021-03-01", "2021-04-01", "2021-06-01")
+  )
+  for (nm in names(forms)) {
+    p <- forms[[nm]]
+    # given out of order: the reader sorts them, not the alphabet
+    y <- expect_silent(rd(rev(p)))
+    got <- y[!is.na(y$value), ]
+    expect_identical(got$p, p, info = nm)
+    expect_identical(got$previous, c(NA, 30, NA), info = nm)
+    # the gap is a row of its own, spelled like the others
+    expect_identical(nrow(y), 4L, info = nm)
+    expect_identical(y$flag[3L], "no data", info = nm)
+  }
+  expect_identical(rd(forms$fy2)$p[3L], "2021/22")
+  expect_identical(rd(forms$qd)$p[3L], "Q1 2022")
+  expect_identical(rd(forms$mc)$p[3L], "Jan 2022")
+  expect_identical(rd(forms$fyp)$p[3L], "FY 2021-22")
+  # complete = FALSE: no row for the gap, and still no comparison across it
+  nc <- rd(forms$qa, complete = FALSE)
+  expect_identical(nc$previous, c(NA, 10, NA))
+  # years before 1900 and after 2030 alike
+  expect_identical(rd(c("1899", "2031", "2030"))$previous[132:133], c(NA, 30))
+})
+
+test_that("labels yoy() cannot order warn once and name them (C18)", {
+  d <- data.frame(
+    p = c("Q1", "Q2", "Q3"),
+    n = 1:3 * 10,
+    stringsAsFactors = FALSE
+  )
+  expect_warning(
+    yoy(d, "n", "p"),
+    "\"Q1\", \"Q2\", \"Q3\" are of no form yoy\\(\\) reads.*`prdord`"
+  )
+  y <- suppressWarnings(yoy(d, "n", "p"))
+  expect_identical(y$flag, rep("no comparison period", 3L))
+  mixed <- data.frame(
+    p = c("2020", "2021", "2022 Q1"),
+    n = 1:3,
+    stringsAsFactors = FALSE
+  )
+  w <- testthat::capture_warnings(yoy(mixed, "n", "p"))
+  expect_length(w, 1L)
+  expect_match(w, "\"2022 Q1\" are not years like the others")
+  # "2010-11" is a fiscal year and November 2010 alike
+  amb <- data.frame(
+    p = c("2010-11", "2011-12"),
+    n = 1:2,
+    stringsAsFactors = FALSE
+  )
+  expect_warning(yoy(amb, "n", "p"), "fiscal years or as months alike")
+  # a second year that does not follow the first is no fiscal year
+  expect_warning(
+    yoy(
+      data.frame(
+        p = c("2019/21", "2020/22"),
+        n = 1:2,
+        stringsAsFactors = FALSE
+      ),
+      "n",
+      "p"
+    ),
+    "no form"
+  )
+})
+
+test_that("prdord orders labels the reader does not know (C18)", {
+  d <- data.frame(
+    s = c("fall", "spring", "summer"),
+    n = c(30, 10, 20),
+    stringsAsFactors = FALSE
+  )
+  ord <- c("spring", "summer", "fall", "winter")
+  y <- as.data.frame(yoy(d, "n", "s", prdord = ord))
+  expect_identical(y$s, c("spring", "summer", "fall"))
+  expect_identical(y$previous, c(NA, 10, 20))
+  # a label prdord lists that the data lacks is a gap
+  g <- as.data.frame(yoy(d[-3, ], "n", "s", prdord = ord))
+  expect_identical(g$flag[2L], "no data")
+  expect_true(is.na(g$previous[3L]))
+  # numeric method and the 0.5.x argument names pass it through
+  v <- yoy(c(5, 6), prd = c("b", "a"), prdord = c("a", "b"))
+  expect_identical(v$previous, c(NA, 6))
+  o <- yoy(d, "n", period = "s", prdord = ord)
+  expect_true(any(vapply(o, identical, NA, c(NA, 10, 20))))
+  # a factor too
+  f <- yoy(transform(d, s = factor(s)), "n", "s", prdord = ord)
+  expect_identical(f$previous, c(NA, 10, 20))
+  expect_error(
+    yoy(d, "n", "s", prdord = c("spring", "summer")),
+    "yoy: `prdord` must list every period label; it lacks \"fall\""
+  )
+  expect_error(
+    yoy(d, "n", "s", prdord = c("spring", "spring")),
+    "`prdord` must be the period labels in order"
+  )
+  expect_error(
+    yoy(data.frame(y = 1:2, n = 1:2), "n", "y", prdord = c("1", "2")),
+    "`prdord` orders text periods, but the `prd` column is integer"
+  )
+})
+
+test_that("an ordered factor stays ordered when its rows are combined", {
+  d <- data.frame(
+    p = factor(c("lo", "lo", "hi"), levels = c("lo", "hi"), ordered = TRUE),
+    n = c(1, 2, 6)
+  )
+  y <- yoy(d, "n", "p")
+  expect_s3_class(y$p, "ordered")
+  expect_identical(y$previous, c(NA, 3))
+})
+
+test_that("the period readers handle numbers, factors and month labels", {
+  expect_identical(.yoy_prd_read(1:3), list(p = 1:3))
+  na <- c(NA_character_, NA_character_)
+  expect_identical(.yoy_prd_read(na), list(p = na))
+  expect_null(.yoy_prd_rank(factor(c("b", "a"))))
+  expect_identical(.yoy_prd_sort(c("b", NA, "a", "b")), c("a", "b"))
+  expect_identical(.yoy_prd_sort(c(3, 1, 2)), c(1, 2, 3))
+  expect_identical(.yoy_lab_month("JAN 2020", 12 * 2021 + 1), "FEB 2021")
 })

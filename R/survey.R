@@ -210,43 +210,10 @@ svydes <- function(
   rscales = NULL,
   degf = NULL
 ) {
-  if (!is.data.frame(data)) {
-    stop("svydes: `data` must be a data frame", call. = FALSE)
-  }
-  # only the columns the design names must be unique: a duplicated column it
-  # does not use is no reason to refuse the data (statistics stress test of
-  # 5e1dce5)
-  used <- unlist(Filter(
-    function(v) is.character(v),
-    list(w, strata, psu, fpc, id, reps)
-  ))
-  twice <- used[used %in% names(data)[duplicated(names(data))]]
-  if (length(twice)) {
-    stop(
-      sprintf("`data` has two columns named %s: rename one", twice[[1L]]),
-      call. = FALSE
-    )
-  }
-  n <- nrow(data)
-  if (n < 2L) {
-    stop("`data` must have at least two rows", call. = FALSE)
-  }
+  n <- .svy_des_data(data, list(w, strata, psu, fpc, id, reps))
   type <- .rmbl_arg(type)
   lonely <- .rmbl_arg(lonely)
-  if (!is.logical(mse) || length(mse) != 1L || is.na(mse)) {
-    stop("`mse` must be TRUE or FALSE", call. = FALSE)
-  }
-  .w <- .svy_des_col(data, n, w, "weights")
-  if (!is.numeric(.w) || anyNA(.w) || any(!is.finite(.w)) || any(.w < 0)) {
-    stop("`w` must be finite, non-negative and not missing", call. = FALSE)
-  }
-  .w <- as.numeric(.w)
-  if (
-    !is.null(degf) &&
-      (!is.numeric(degf) || length(degf) != 1L || is.na(degf) || degf < 1)
-  ) {
-    stop("`degf` must be a number of at least 1", call. = FALSE)
-  }
+  .w <- .svy_des_weights(data, n, w, mse, degf)
   des <- list(
     n = n,
     weights = .w,
@@ -269,54 +236,603 @@ svydes <- function(
         call. = FALSE
       )
     }
-    rp <- .svy_des_reps(data, n, w, .w, reps, id)
-    .reps <- .svy_reps_numeric(rp$reps)
-    .svy_replicate_check(
-      .reps,
-      .w,
-      type,
+    des <- .svy_des_replicates(
+      des,
       data,
-      rp$id_values,
-      attr(data, "row.names"),
-      rp$named,
-      rscales
-    )
-    if (!is.matrix(.reps)) {
-      .reps <- unname(.reps)
-    }
-    B <- if (is.matrix(.reps)) ncol(.reps) else length(.reps)
-    .svy_reps_params(type, B, rscales, msize, rho)
-    des$scale <- switch(
+      n,
+      w,
+      .w,
+      reps,
+      id,
       type,
-      bootstrap = 1 / B,
-      meanboot = msize / B,
-      jk1 = (B - 1) / B,
-      jkn = 1,
-      brr = 1 / B,
-      fay = 1 / (B * (1 - rho)^2)
+      rscales,
+      msize,
+      rho
     )
-    des$type <- type
-    des$reps <- .reps
-    des$mean_size <- if (type == "meanboot") msize
-    des$rho <- if (type == "fay") rho
-    des$rscales <- if (!is.null(rscales)) as.numeric(rscales)
-    if (is.null(des$degf)) des$degf <- .svy_reps_degf(.reps, B, n)
   } else {
-    lin <- .svy_des_linearization(data, n, strata, psu, fpc)
-    des$type <- "linearization"
-    des$strata <- lin$strata
-    des$psu <- lin$psu
-    des$fpc <- lin$fpc
-    if (is.null(des$degf)) {
-      des$degf <- length(unique(lin$psu)) - length(unique(lin$strata))
-    }
+    des <- .svy_des_linear(des, data, n, strata, psu, fpc)
   }
   structure(des, class = "rmbl_svy_design")
 }
 
+#' @export
+format.rmbl_svy_design <- function(x, ...) {
+  lin <- identical(x$type, "linearization")
+  .rmbl_res_block(
+    "Survey design",
+    facts = c(
+      list(
+        Respondents = x$n,
+        `Sum of weights` = round(sum(x$weights)),
+        Variance = .svy_var_label(x)
+      ),
+      if (lin) .svy_lin_facts(x) else .svy_rep_facts(x),
+      list(
+        `Lonely PSUs` = x$lonely,
+        `Degrees of freedom` = x$degf
+      )
+    ),
+    reading = paste(
+      "svyest() and svycmp() use this design for every estimate: the",
+      "weights for the point estimate, the",
+      if (lin) "strata and PSUs" else "replicate weights",
+      "for its standard error."
+    )
+  )
+}
+
+#' Estimate a mean, total, proportion or ratio from a survey
+#' design
+#'
+#' Design-based point estimates with standard errors, confidence
+#' intervals and coefficients of variation, for the whole
+#' population or for each domain of `by`. A respondent outside a
+#' domain, or missing the analysis variable, counts zero in that
+#' domain and stays in the design, so the variance of a subgroup
+#' estimate reflects the whole sample design. Use it for the figures a
+#' survey report publishes (the prevalence of a behaviour by region, the mean
+#' number of drinks, a population total) with the standard errors the survey's
+#' design implies rather than those of a simple random sample.
+#'
+#' @details
+#' The estimates are ratios of weighted totals: a mean is
+#' \eqn{\sum w_i y_i / \sum w_i} over the domain, a total
+#' \eqn{\sum w_i y_i}, a proportion the mean of the 0/1 indicator of each
+#' category, and a ratio \eqn{\sum w_i y_i / \sum w_i x_i} with \eqn{x} the
+#' \code{den}. Their variances come from the design: the replicate
+#' formula, or Taylor linearization of the ratio (see
+#' [svydes()]).
+#'
+#' Proportions are reported for every category of `y` (or those
+#' in `lvls`), each with its own interval. The default
+#' interval for a proportion is Wilson's score interval at the
+#' modified effective sample size of SAS PROC SURVEYFREQ, the
+#' software behind Health Canada's published Canadian Substance
+#' Use Survey intervals: \eqn{n / \mathrm{Deff}}, with the
+#' design effect taken against the simple-random-sampling
+#' variance \eqn{p(1 - p)/(n - 1)}, scaled by \eqn{(t_{n-1} /
+#' t_{df})^2} for the design's degrees of freedom (Korn and
+#' Graubard 1998; \eqn{t_{df}} is the normal quantile when the design's
+#' degrees of freedom are infinite) and capped at the \eqn{n} respondents
+#' behind the estimate. `ci = "logit"` builds the interval on the logit
+#' scale and `"wald"` symmetrically. Means, totals and ratios
+#' get the symmetric normal interval.
+#'
+#' A domain with fewer than `minn` respondents is flagged, not
+#' withheld: Health Canada suppresses such CSUS estimates in its
+#' data tool (denominator under 30), and the flag lets the
+#' reader do the same. Other flags say why a standard error is missing (no
+#' stratum with two PSUs, a replicate that left the domain empty, weights all
+#' zero) or that a domain has no respondents.
+#'
+#' Errors: \code{des} not from [svydes()];
+#' \code{data} not the rows
+#' the design was built on, in the same order; \code{y}, \code{by} or
+#' \code{den} naming a column \code{data} does not have; a ratio
+#' without \code{den}; \code{conflvl} outside (0, 1); \code{df}
+#' not positive, \code{Inf} or \code{"design"}, or a design with no degrees
+#' of freedom under \code{df = "design"}; a single-PSU stratum under
+#' \code{lonely = "fail"}.
+#'
+#' @param des A [svydes()] built on `data`.
+#' @param data The data frame the design was built on.
+#' @param y Character scalar, the analysis column: numeric for a mean, total
+#'   or ratio; any type for a proportion (each distinct value is a category).
+#' @param by Optional character vector of domain columns; \code{NULL} (the
+#'   default) estimates for the whole population.
+#' @param stat `"mean"`, `"total"`, `"proportion"` or `"ratio"`
+#'   (of `y` to `den`).
+#' @param den For a ratio, the denominator column.
+#' @param lvls For a proportion, the categories to report
+#'   (default all observed).
+#' @param conflvl Numeric scalar in (0, 1), the confidence level; default
+#'   \code{0.95}.
+#' @param ci Interval method: \code{"auto"} (the default; Wilson for
+#'   proportions, Wald otherwise), \code{"wilson"}, \code{"logit"} or
+#'   \code{"wald"}. Wilson and logit apply to proportions only.
+#' @param minn Numeric scalar, default \code{30}: domains with fewer
+#'   respondents are flagged.
+#' @param df Degrees of freedom for the interval: `Inf` (the
+#'   default) for the normal quantile, a number for Student's t,
+#'   or `"design"` for the design's own (PSUs less strata under
+#'   linearization, replicates less one otherwise).
+#' @return A data frame of class \code{c("rmbl_svy_estimate", "data.frame")},
+#'   one row per domain (and category, for a proportion): the domain columns
+#'   (and \code{level}), then numeric \code{estimate}, \code{se},
+#'   \code{lower}, \code{upper}, \code{cv} (coefficient of variation,
+#'   percent), integer \code{n} (respondents counted) and character
+#'   \code{flag} (\code{NA} when there is nothing to say). Attributes:
+#'   \code{vcov} (the covariance matrix of the estimates, used by
+#'   [svycmp()]), \code{stat}, \code{y}, \code{by},
+#'   \code{ci},
+#'   \code{conflvl}, \code{df}, \code{method} (the variance method) and
+#'   \code{denominator}.
+#' @seealso [svydes()],
+#'   [svycmp()]
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' set.seed(1)
+#' d <- data.frame(region = rep(c("north", "south"), each = 50),
+#'                 smoker = rbinom(100, 1, rep(c(0.2, 0.35), each = 50)),
+#'                 drinks = rpois(100, 3), w = runif(100, 50, 150))
+#' des <- svydes(d, w = "w", strata = "region")
+#' svyest(des, d, "smoker", by = "region", stat = "proportion", lvls = "1")
+#' svyest(des, d, "drinks", stat = "mean")
+#' svyest(des, d, "drinks", by = "region", stat = "total")
+#'
+#' # a ratio of two totals, with Student's t on the design's degrees of freedom
+#' d$visits <- rpois(100, 6)
+#' svyest(des, d, "drinks", stat = "ratio", den = "visits", df = "design")
+#'
+#' # a logit interval at 90 percent
+#' svyest(des, d, "smoker", stat = "proportion", lvls = "1", ci = "logit",
+#'                 conflvl = 0.90)
+#'
+#' # the design remembers its rows: a subset is refused
+#' try(svyest(des, d[-1, ], "drinks"))
+#' @export
+#' @srrstats {G2.0a} @param docs state lengths explicitly ("y Character scalar",
+#'   "conflvl Numeric scalar in (0, 1)", "by Optional character vector").
+#' @srrstats {G2.3} Univariate character options are handled by .rmbl_arg
+#'   (G2.3a); case handling is covered under G2.3b.
+#' @srrstats {G2.3a} stat and ci are checked by .rmbl_arg() (match.arg
+#'   equivalent, pmatch, names the value given); there are 106 .rmbl_arg calls
+#'   package-wide.
+#' @srrstats {G2.13} A missing y counts zero in its domain but stays in the
+#'   design; test-survey.R checks estimate and n = 11 with `y[1] = NA`.
+#' @srrstats {G5.0} Tested on the survey package's standard api datasets
+#'   (apistrat, apiclus1) in test-survey.R.
+#' @srrstats {G5.4b} test-survey.R matches
+#'   survey::svymean/svytotal/svyratio/svyby/svyciprop and JK1 replicates to the
+#'   estimate and SE.
+svyest <- function(
+  des,
+  data,
+  y,
+  by = NULL,
+  stat = c("mean", "total", "proportion", "ratio"),
+  den = NULL,
+  lvls = NULL,
+  conflvl = 0.95,
+  ci = c("auto", "wilson", "logit", "wald"),
+  minn = 30,
+  df = Inf
+) {
+  .rmbl_no_fn(lvls = lvls)
+  stat <- .rmbl_arg(stat)
+  ci <- .rmbl_arg(ci)
+  by <- .svy_est_inputs(des, data, by)
+  conflvl <- .rmbl_conf_level(conflvl)
+  minn <- .rmbl_scalar(minn, "minn", 0)
+  if (stat == "ratio" && is.null(den)) {
+    stop("a ratio needs a `den` column", call. = FALSE)
+  }
+  if (ci == "auto") {
+    ci <- if (stat == "proportion") "wilson" else "wald"
+  }
+  df <- .svy_est_df(df, des)
+  cols <- .svy_columns(data, des, y, by, stat, if (stat == "ratio") den, lvls)
+  core <- .svy_core(des, cols$num, cols$den)
+  se <- sqrt(pmax(diag(core$V), 0))
+  int <- .svy_ci(core$est, se, cols$n, stat, ci, conflvl, df, .svy_df(des))
+  flag <- .svy_est_flags(se, cols$n, minn, des, core)
+  out <- cbind(
+    cols$labels,
+    data.frame(
+      estimate = core$est,
+      se = se,
+      lower = int$lower,
+      upper = int$upper,
+      cv = 100 * se / abs(core$est),
+      n = cols$n,
+      flag = flag,
+      stringsAsFactors = FALSE
+    )
+  )
+  rownames(out) <- NULL
+  structure(
+    out,
+    class = c("rmbl_svy_estimate", "data.frame"),
+    vcov = core$V,
+    stat = stat,
+    y = y,
+    by = by,
+    ci = ci,
+    conflvl = conflvl,
+    df = df,
+    method = des$type,
+    denominator = den
+  )
+}
+
+#' Compare survey estimates between domains
+#'
+#' Each domain's estimate against a reference domain: the
+#' difference, its standard error from the design (the
+#' covariance between the two estimates included, which is what
+#' a pair of separate intervals leaves out), a confidence
+#' interval and a two-sided p-value from the normal
+#' approximation. Use it to test whether two regions or groups differ, rather
+#' than checking whether their separate intervals overlap: overlapping
+#' intervals do not mean no difference, and domains of one survey are not
+#' independent.
+#'
+#' @details
+#' The estimates come from [svyest()] with Wald
+#' intervals. For domain
+#' \eqn{i} and reference \eqn{0} the difference is \eqn{d = \hat\theta_i -
+#' \hat\theta_0} with \eqn{SE(d) = \sqrt{V_{ii} + V_{00} - 2V_{i0}}} from the
+#' design covariance; the interval is \eqn{d \pm z\,SE(d)} and the p-value
+#' \eqn{2\Phi(-|d|/SE(d))}, both on the normal distribution (there is no
+#' \code{df} argument). For a proportion every category is compared
+#' separately. No adjustment for multiple comparisons is made.
+#'
+#' Errors: \code{by} missing or empty; fewer than two domains; a \code{ref}
+#' that is not a single domain label present in the data; and every error of
+#' [svyest()].
+#'
+#' @inheritParams svyest
+#' @param by The domain columns to compare across.
+#' @param ref The reference domain, as its label (for several
+#'   \code{by} columns, the labels joined with \code{" / "}); a number is
+#'   matched as the label it prints as. Default \code{NULL}: the first domain.
+#' @return A data frame of class \code{c("rmbl_svy_compare", "data.frame")},
+#'   one row per non-reference domain (and category): \code{domain},
+#'   \code{level} (for a proportion only), numeric \code{estimate} (the
+#'   domain's), \code{reference} (the reference domain's), \code{difference},
+#'   \code{se}, \code{lower}, \code{upper} and \code{p_value}. Attributes
+#'   \code{ref}, \code{stat}, \code{y} and \code{conflvl}.
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' set.seed(1)
+#' d <- data.frame(region = rep(c("north", "south", "east"), length.out = 150),
+#'                 smoker = rbinom(150, 1, 0.3), w = runif(150, 50, 150))
+#' des <- svydes(d, w = "w")
+#' svycmp(des, d, "smoker", by = "region", stat = "proportion",
+#'                lvls = "1", ref = "north")
+#'
+#' # means, against the default (first) domain, at 90 percent
+#' d$drinks <- rpois(150, 3)
+#' svycmp(des, d, "drinks", by = "region", conflvl = 0.90)
+#'
+#' # the reference must be one of the domains
+#' try(svycmp(des, d, "drinks", by = "region", ref = "west"))
+#' @export
+svycmp <- function(
+  des,
+  data,
+  y,
+  by = NULL,
+  stat = c("mean", "total", "proportion", "ratio"),
+  den = NULL,
+  lvls = NULL,
+  ref = NULL,
+  conflvl = 0.95
+) {
+  .rmbl_no_fn(lvls = lvls)
+  stat <- .rmbl_arg(stat)
+  conflvl <- .rmbl_conf_level(conflvl)
+  if (!length(by)) {
+    stop("`by` must name the domains to compare", call. = FALSE)
+  }
+  e <- svyest(
+    des,
+    data,
+    y,
+    by = by,
+    stat = stat,
+    den = den,
+    lvls = lvls,
+    conflvl = conflvl,
+    ci = "wald"
+  )
+  V <- attr(e, "vcov")
+  dom <- do.call(paste, c(as.list(as.data.frame(e)[by]), sep = " / "))
+  lev <- if (stat == "proportion") e$level else rep(NA_character_, nrow(e))
+  doms <- unique(dom)
+  if (length(doms) < 2L) {
+    stop("comparisons need at least two domains", call. = FALSE)
+  }
+  ref <- .svy_cmp_ref(ref, doms)
+  out <- .svy_cmp_rows(e, V, dom, lev, ref, conflvl)
+  if (stat != "proportion") {
+    out$level <- NULL
+  }
+  rownames(out) <- NULL
+  structure(
+    out,
+    class = c("rmbl_svy_compare", "data.frame"),
+    ref = ref,
+    stat = stat,
+    y = y,
+    conflvl = conflvl
+  )
+}
+
+#' @export
+format.rmbl_svy_estimate <- function(x, digits = 4L, ...) {
+  title <- "Survey estimate"
+  need <- c("estimate", "se", "lower", "upper")
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  m <- attributes(x)
+  fc <- .rmbl_flag_codes(.rmbl_ci_cols(.rmbl_plain(x), m$conflvl))
+  .rmbl_res_block(
+    .svy_est_title(m),
+    facts = list(
+      Variable = m$y,
+      Denominator = m$denominator,
+      Domains = if (length(m$by)) toString(m$by),
+      Variance = m$method,
+      Interval = if (length(m$conflvl)) {
+        paste(.rmbl_lvl(m$conflvl), m$ci)
+      },
+      `Degrees of freedom` = if (isTRUE(is.finite(m$df))) m$df
+    ),
+    tables = fc$df,
+    reading = .svy_est_reading(x, m),
+    notes = c(
+      fc$notes,
+      paste(
+        "cv is the coefficient of variation (the standard error as a",
+        "percentage of the estimate); from 16.6 to 33.3 use the estimate",
+        "with caution, above 33.3 it is too unstable to publish, by",
+        "Statistics Canada's usual bands."
+      )
+    ),
+    digits = digits,
+    maxrows = 40L
+  )
+}
+
+#' @export
+print.rmbl_svy_estimate <- function(x, digits = 4, ...) {
+  .rmbl_cat(format(x, digits = digits, ...), x)
+  invisible(x)
+}
+
+#' @export
+format.rmbl_svy_compare <- function(x, digits = 4L, ...) {
+  title <- "Survey comparison"
+  need <- c("domain", "estimate", "difference", "lower", "upper")
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  lvl <- attr(x, "conflvl")
+  .rmbl_res_block(
+    paste(
+      "Survey",
+      attr(x, "stat") %||% "estimate",
+      "of",
+      toString(attr(x, "y")),
+      "against",
+      toString(attr(x, "ref"))
+    ),
+    facts = list(
+      Variable = attr(x, "y"),
+      `Reference domain` = attr(x, "ref"),
+      Confidence = .rmbl_lvl(lvl)
+    ),
+    tables = .rmbl_ci_cols(.rmbl_plain(x), lvl),
+    reading = .rd_null(
+      .svy_cmp_labels(x),
+      x$lower,
+      x$upper,
+      0,
+      sprintf("Above %s", toString(attr(x, "ref"))),
+      sprintf("Below %s", toString(attr(x, "ref")))
+    ),
+    notes = paste(
+      "Each difference is a domain's estimate minus the reference domain's,",
+      "with the design's covariance between the two taken into account."
+    ),
+    digits = digits,
+    maxrows = 40L
+  )
+}
+
+#' @export
+print.rmbl_svy_compare <- function(x, digits = 4, ...) {
+  .rmbl_cat(format(x, digits = digits, ...), x)
+  invisible(x)
+}
+
+#' @noRd
+#' @export
+format.rmbl_svy_colspec <- function(x, ...) {
+  .rmbl_res_block(
+    "Survey column specification",
+    facts = list(
+      Statistic = x$stat,
+      Columns = x$k,
+      Domains = length(x$rows),
+      Respondents = sum(lengths(x$rows))
+    ),
+    reading = paste(
+      "An internal description of the estimate's columns, built one at a",
+      "time from the design rather than held as a matrix."
+    )
+  )
+}
+
+#' @rdname plot-methods
+#' @export
+plot.rmbl_svy_estimate <- function(
+  x,
+  ...,
+  main = NULL,
+  col = NULL,
+  palette = NULL
+) {
+  .rmbl_plot_check(x, "rmbl_svy_estimate")
+  m <- attributes(x)
+  d <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
+  pct <- identical(m$stat, "proportion")
+  k <- if (pct) 100 else 1
+  lab <- .svy_plot_labels(d, m, pct)
+  pal <- .bl_cols(3, col, palette)
+  cols <- if (!is.null(col)) {
+    rep_len(col, nrow(d))
+  } else {
+    ifelse(is.na(d$flag), pal[1L], pal[2L])
+  }
+  note <- ifelse(is.na(d$flag), NA_character_, d$flag)
+  .bl_dot_interval(
+    lab,
+    k * d$estimate,
+    k * d$lower,
+    k * d$upper,
+    .bl_main(main, sprintf("%s of %s", tools::toTitleCase(m$stat), m$y)),
+    sprintf(
+      "%s%s, with %g%% interval (orange: flagged)",
+      if (pct) {
+        "Percent"
+      } else {
+        tools::toTitleCase(m$stat)
+      },
+      if (pct) "" else "",
+      100 * m$conflvl
+    ),
+    cols,
+    note = note,
+    ...
+  )
+  invisible(data.frame(
+    label = lab,
+    estimate = k * d$estimate,
+    lower = k * d$lower,
+    upper = k * d$upper,
+    stringsAsFactors = FALSE
+  ))
+}
+
+#' @rdname plot-methods
+#' @export
+plot.rmbl_svy_compare <- function(
+  x,
+  ...,
+  main = NULL,
+  col = NULL,
+  palette = NULL
+) {
+  .rmbl_plot_check(x, "rmbl_svy_compare")
+  d <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
+  pct <- identical(attr(x, "stat"), "proportion")
+  k <- if (pct) 100 else 1
+  lab <- if (!is.null(d$level) && length(unique(d$level)) > 1L) {
+    paste(d$domain, d$level, sep = ": ")
+  } else {
+    d$domain
+  }
+  pal <- .bl_cols(
+    3,
+    col,
+    if (is.null(palette) && is.null(col)) "diverging" else palette
+  )
+  sig <- d$p_value < 1 - attr(x, "conflvl")
+  cols <- if (!is.null(col)) {
+    rep_len(col, nrow(d))
+  } else {
+    .svy_cmp_cols(sig, d$difference, pal)
+  }
+  .bl_dot_interval(
+    lab,
+    k * d$difference,
+    k * d$lower,
+    k * d$upper,
+    .bl_main(main, sprintf("Difference from %s", attr(x, "ref"))),
+    sprintf(
+      "Difference%s, with interval (grey: not significant)",
+      if (pct) " in percentage points" else ""
+    ),
+    cols,
+    ref = 0,
+    ...
+  )
+  invisible(data.frame(
+    label = lab,
+    difference = k * d$difference,
+    lower = k * d$lower,
+    upper = k * d$upper,
+    stringsAsFactors = FALSE
+  ))
+}
+
+#' svydes()'s data, checked: a data frame of two rows or more whose design
+#' columns are named once.
+#'
+#' Only the columns the design names must be unique: a duplicated column it
+#' does not use is no reason to refuse the data (statistics stress test of
+#' 5e1dce5).
+#' @param data As for svydes().
+#' @param named The design arguments (w, strata, psu, fpc, id, reps).
+#' @return The number of rows.
+#' @noRd
+.svy_des_data <- function(data, named) {
+  if (!is.data.frame(data)) {
+    stop("svydes: `data` must be a data frame", call. = FALSE)
+  }
+  used <- unlist(Filter(function(v) is.character(v), named))
+  twice <- used[used %in% names(data)[duplicated(names(data))]]
+  if (length(twice)) {
+    stop(
+      sprintf("`data` has two columns named %s: rename one", twice[[1L]]),
+      call. = FALSE
+    )
+  }
+  n <- nrow(data)
+  if (n < 2L) {
+    stop("`data` must have at least two rows", call. = FALSE)
+  }
+  n
+}
+
+#' svydes()'s `mse`, weights and `degf`, checked.
+#' @param data,w,mse,degf As for svydes().
+#' @param n The number of rows of `data`, which the weights must match.
+#' @return The weights, as doubles.
+#' @noRd
+.svy_des_weights <- function(data, n, w, mse, degf) {
+  if (!is.logical(mse) || length(mse) != 1L || is.na(mse)) {
+    stop("`mse` must be TRUE or FALSE", call. = FALSE)
+  }
+  .w <- .svy_des_col(data, n, w, "w")
+  if (!is.numeric(.w) || anyNA(.w) || !all(is.finite(.w)) || any(.w < 0)) {
+    stop("`w` must be finite, non-negative and not missing", call. = FALSE)
+  }
+  if (
+    !is.null(degf) &&
+      (!is.numeric(degf) || length(degf) != 1L || is.na(degf) || degf < 1)
+  ) {
+    stop("`degf` must be a number of at least 1", call. = FALSE)
+  }
+  as.numeric(.w)
+}
+
 #' A design variable of svydes(): a column of `data` named by a string, or the
 #' values themselves, one per row.
-#' @param data The data frame.
+#' @param data The survey data frame whose column `x` may name.
 #' @param n Its number of rows.
 #' @param x The column name or the values; NULL for none.
 #' @param what The argument's name, for the error.
@@ -394,32 +910,7 @@ svydes <- function(
 #' @noRd
 .svy_des_reps <- function(data, n, w, .w, reps, id) {
   if (is.character(reps)) {
-    miss <- setdiff(reps, names(data))
-    if (length(miss)) {
-      stop(
-        sprintf(
-          "replicate columns not in `data`: %s",
-          paste(utils::head(miss, 5), collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    }
-    own <- intersect(reps, c(if (is.character(w) && length(w) == 1L) w, id))
-    if (length(own)) {
-      stop(
-        sprintf(
-          paste0(
-            "`reps` names %s, which is not a replicate weight (the full ",
-            "weight or the id)"
-          ),
-          paste(own, collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    }
-    .reps <- unname(as.list(data[reps]))
-    names(.reps) <- reps
-    return(list(reps = .reps, id_values = NULL, named = TRUE))
+    return(.svy_des_reps_named(data, w, reps, id))
   }
   # a matrix with an extra class (a "repweights" object) was dispatched to
   # another as.data.frame method and read wrongly whether the columns came
@@ -507,7 +998,7 @@ svydes <- function(
   # (762.9 MB at 5e6 x 20)
   for (j in seq_len(ncol(reps))) {
     r <- reps[, j]
-    if (anyNA(r) || any(!is.finite(r)) || any(r < 0)) {
+    if (anyNA(r) || !all(is.finite(r)) || any(r < 0)) {
       stop(
         "svydes: replicate weights must be finite, non-negative ",
         "and not missing",
@@ -552,7 +1043,7 @@ svydes <- function(
     reps <- reps[, names(reps) != w, drop = FALSE]
   }
   .reps <- as.list(reps)
-  if (is.null(names(.reps)) || any(!nzchar(names(.reps)))) {
+  if (is.null(names(.reps)) || !all(nzchar(names(.reps)))) {
     names(.reps) <- sprintf("V%d", seq_along(.reps))
   }
   list(reps = .reps, id_values = id_values)
@@ -634,7 +1125,7 @@ svydes <- function(
     )
   }
   lapply(.reps, function(r) {
-    if (anyNA(r) || any(!is.finite(r)) || any(r < 0)) {
+    if (anyNA(r) || !all(is.finite(r)) || any(r < 0)) {
       stop(
         "svydes: replicate weights must be finite, non-negative and ",
         "not missing",
@@ -647,7 +1138,7 @@ svydes <- function(
 
 #' Checks the replicate type's own arguments against the number of replicates.
 #' @param type,rscales,msize,rho As for svydes().
-#' @param B The number of replicates.
+#' @param B The number of replicate columns; `rscales` needs one value each.
 #' @noRd
 .svy_reps_params <- function(type, B, rscales, msize, rho) {
   if (B < 2L) {
@@ -665,7 +1156,7 @@ svydes <- function(
       (!is.numeric(rscales) ||
         length(rscales) != B ||
         anyNA(rscales) ||
-        any(!is.finite(rscales)) ||
+        !all(is.finite(rscales)) ||
         any(rscales < 0))
   ) {
     stop(
@@ -681,7 +1172,7 @@ svydes <- function(
 
 #' Checks meanboot's `msize`, Fay's `rho` and the number of BRR replicates.
 #' @param type,msize,rho As for svydes().
-#' @param B The number of replicates.
+#' @param B The number of replicates, checked for a BRR Hadamard order.
 #' @noRd
 .svy_reps_type_args <- function(type, B, msize, rho) {
   if (
@@ -704,6 +1195,14 @@ svydes <- function(
       stop("`rho` must be a number in [0, 1) for Fay's BRR", call. = FALSE)
     }
   }
+  .svy_reps_hadamard(type, B)
+}
+
+#' BRR and Fay replicates come in a Hadamard order: 2, or a multiple of 4.
+#' @param type The replicate type.
+#' @param B The number of replicates: 2 or a multiple of 4 for BRR and Fay.
+#' @noRd
+.svy_reps_hadamard <- function(type, B) {
   if (type %in% c("brr", "fay") && B > 2L && B %% 4L != 0L) {
     stop(
       sprintf(
@@ -728,7 +1227,7 @@ svydes <- function(
 #' 16 s for CSUS's 36,180 x 1,000.
 #' @param .reps The replicates, a double matrix or a list of columns.
 #' @param B Their number.
-#' @param n The number of rows.
+#' @param n The number of rows; the smaller of `n` and `B` sizes the Gram.
 #' @return An integer.
 #' @noRd
 .svy_reps_degf <- function(.reps, B, n) {
@@ -873,57 +1372,10 @@ svydes <- function(
     },
     logical(1)
   ))
-  # whether the rows are in the order the design was built on, read from the
-  # rows themselves; NA when they cannot tell, and then the row names decide
-  in_order <- NA
-  rk <- ck$rowkeys
-  if (same_cols && !is.null(rk)) {
-    present <- intersect(rk$cols, names(data))
-    if (length(present) && length(present) == length(rk$cols)) {
-      now <- .svy_rowkey_digests(data[rk$cols])
-      # the same rows in another order: a reorder, whatever the row names say. A
-      # column changed since (a permuted y for a permutation test, a recode)
-      # changes the rows themselves and passes; it was refused as a reorder when
-      # each column was compared on its own (statistics stress test of 5e1dce5)
-      if (identical(now$sorted, rk$sorted)) {
-        in_order <- identical(now$ordered, rk$ordered)
-      } else if (!is.null(rk$keys) && length(rk$keys) == length(now$keys)) {
-        # cells edited since: each row's key is looked for among the built keys.
-        # A row whose key is at its own position is in place; one whose key is
-        # at another position has moved; one found nowhere was edited. Rows that
-        # moved beside fewer edited ones are a reorder, whatever the columns the
-        # reorder left unchanged say (a swap of two rows and one edited cell was
-        # read as in order because the columns equal on the two rows counted as
-        # "not moved": SE 9.60 for 9.92 silently; final audit of 1.0.0, #3). A
-        # permuted or recoded column changes rows and moves none, and passes as
-        # before
-        inplace <- now$keys == rk$keys
-        found <- now$keys %in% rk$keys
-        moved <- sum(found & !inplace)
-        edited <- sum(!found)
-        in_order <- !(moved >= 2L && moved > edited)
-      }
-    }
-    if (is.na(in_order) && length(present) && !is.null(rk$colsor)) {
-      # a column dropped or one cell edited since: the rows as a whole differ,
-      # so each column that still holds the same values is read on its own. One
-      # of them in another order is a permuted column; two or more are the rows
-      # reordered (reorder then drop or edit a column gave a wrong SE silently;
-      # CRAN stress test of b617a3f, #3)
-      now <- .svy_rowkey_digests(data[present])
-      cs <- intersect(present, intersect(now$cols, names(rk$colsor)))
-      cs <- cs[rk$colinf[cs] & now$colsor[cs] == rk$colsor[cs]]
-      moved <- sum(now$colord[cs] != rk$colord[cs])
-      # a reorder moves every column that still holds its values; two permuted
-      # outcomes beside columns still in place are columns changed since, not a
-      # reorder (they were refused as one; re-test of the b617a3f CRAN stress
-      # fixes)
-      if (moved >= 2L && moved == length(cs)) {
-        in_order <- FALSE
-      } else if (length(cs) > moved) {
-        in_order <- TRUE
-      }
-    }
+  in_order <- if (same_cols && !is.null(ck$rowkeys)) {
+    .svy_rows_in_order(ck$rowkeys, data)
+  } else {
+    NA
   }
   # a row-name reset (rownames(d) <- NULL) on rows still in order is the same
   # data (refused as a reorder; CRAN stress test of b617a3f)
@@ -934,12 +1386,10 @@ svydes <- function(
   }
   if (!same_rows || !same_cols) {
     stop(
-      paste(
-        "`data` is not the data frame the design was built on (its rows",
-        "are in another order, or",
-        "its weight, strata or PSU columns differ): build the design on",
-        "this data"
-      ),
+      "`data` is not the data frame the design was built on (its rows ",
+      "are in another order, or ",
+      "its weight, strata or PSU columns differ): build the design on ",
+      "this data",
       call. = FALSE
     )
   }
@@ -947,6 +1397,86 @@ svydes <- function(
     cache$last <- data
   }
   invisible()
+}
+
+#' Whether the rows are in the order the design was built on, read from the
+#' rows themselves; NA when they cannot tell, and then the row names decide.
+#' @param rk The row keys the design recorded.
+#' @param data The data frame the design is now applied to.
+#' @return TRUE, FALSE or NA.
+#' @noRd
+.svy_rows_in_order <- function(rk, data) {
+  present <- intersect(rk$cols, names(data))
+  in_order <- NA
+  if (length(present) && length(present) == length(rk$cols)) {
+    in_order <- .svy_order_by_rows(rk, data)
+  }
+  if (is.na(in_order) && length(present) && !is.null(rk$colsor)) {
+    in_order <- .svy_order_by_cols(rk, data, present)
+  }
+  in_order
+}
+
+#' The rows' order read from whole rows.
+#'
+#' The same rows in another order: a reorder, whatever the row names say. A
+#' column changed since (a permuted y for a permutation test, a recode) changes
+#' the rows themselves and passes; it was refused as a reorder when each column
+#' was compared on its own (statistics stress test of 5e1dce5). Cells edited
+#' since: each row's key is looked for among the built keys. A row whose key is
+#' at its own position is in place; one whose key is at another position has
+#' moved; one found nowhere was edited. Rows that moved beside fewer edited ones
+#' are a reorder, whatever the columns the reorder left unchanged say (a swap of
+#' two rows and one edited cell was read as in order because the columns equal
+#' on the two rows counted as "not moved": SE 9.60 for 9.92 silently; final
+#' audit of 1.0.0, #3). A permuted or recoded column changes rows and moves
+#' none, and passes as before
+#' @param rk The row keys the design recorded.
+#' @param data The data frame whose rows are digested in the recorded columns.
+#' @return TRUE, FALSE or NA.
+#' @noRd
+.svy_order_by_rows <- function(rk, data) {
+  now <- .svy_rowkey_digests(data[rk$cols])
+  if (identical(now$sorted, rk$sorted)) {
+    return(identical(now$ordered, rk$ordered))
+  }
+  if (is.null(rk$keys) || length(rk$keys) != length(now$keys)) {
+    return(NA)
+  }
+  inplace <- now$keys == rk$keys
+  found <- now$keys %in% rk$keys
+  moved <- sum(found & !inplace)
+  edited <- sum(!found)
+  moved < 2L || moved <= edited
+}
+
+#' The rows' order read column by column.
+#'
+#' A column dropped or one cell edited since: the rows as a whole differ, so
+#' each column that still holds the same values is read on its own. One of them
+#' in another order is a permuted column; two or more are the rows reordered
+#' (reorder then drop or edit a column gave a wrong SE silently; CRAN stress
+#' test of b617a3f, #3). A reorder moves every column that still holds its
+#' values; two permuted outcomes beside columns still in place are columns
+#' changed since, not a reorder (they were refused as one; re-test of the
+#' b617a3f CRAN stress fixes).
+#' @param rk The row keys the design recorded.
+#' @param data The data frame whose `present` columns are digested one by one.
+#' @param present The recorded columns the data still has.
+#' @return TRUE, FALSE or NA.
+#' @noRd
+.svy_order_by_cols <- function(rk, data, present) {
+  now <- .svy_rowkey_digests(data[present])
+  cs <- intersect(present, intersect(now$cols, names(rk$colsor)))
+  cs <- cs[rk$colinf[cs] & now$colsor[cs] == rk$colsor[cs]]
+  moved <- sum(now$colord[cs] != rk$colord[cs])
+  if (moved >= 2L && moved == length(cs)) {
+    return(FALSE)
+  }
+  if (length(cs) > moved) {
+    return(TRUE)
+  }
+  NA
 }
 
 #' Digests the rows of a data frame in an order-free and an ordered form.
@@ -958,7 +1488,7 @@ svydes <- function(
 #' same sorted digest and a different ordered one. A million rows of ten columns
 #' take about a second; the per-column text digests this replaces took 88 s per
 #' estimate (statistics stress test of 5e1dce5).
-#' @param data The data frame.
+#' @param data The data frame whose atomic, uniquely named columns are digested.
 #' @return A list with the columns used, the ordered and sorted digests, each
 #'   row's key and per-column digests.
 #' @noRd
@@ -981,23 +1511,7 @@ svydes <- function(
   for (i in which(keep)) {
     # a one-dimensional array (apiclus2 has one) is its values
     v <- as.vector(data[[i]])
-    code <- if (is.double(v)) {
-      # the bits of the number: the same value gives the same code wherever its
-      # row is, with no sort or match (in C: the R arithmetic's own result,
-      # without its column-long copies)
-      .Call(C_rmbl_svy_dblcode, v)
-    } else if (is.integer(v) || is.logical(v)) {
-      # the same codes as a double column's: an edit that turned an integer
-      # column into a double one (x$meals[5] <- x$meals[5] + 1) changed every
-      # row's code with it, and the rows as a whole read as all changed rather
-      # than two moved and one edited (final audit of 1.0.0, #3)
-      .Call(C_rmbl_svy_dblcode, as.numeric(v))
-    } else {
-      if (is.complex(v)) {
-        v <- paste(Re(v), Im(v))
-      }
-      match(v, sort(unique(v), method = "radix", na.last = TRUE))
-    }
+    code <- .svy_col_code(v)
     k <- fold(k * 1000003 + code)
     code <- as.numeric(code)
     co[[nm[[i]]]] <- .Call(C_rmbl_sha256_real, code)
@@ -1064,11 +1578,7 @@ svydes <- function(
   # one pass (the earlier five passes over 20 columns of 5e6 rows were 4 GB of
   # transient copies and 17 s; final audit of 1.0.0)
   B <- if (is.matrix(reps)) ncol(reps) else length(reps)
-  rnm <- if (is.matrix(reps)) colnames(reps) else names(reps)
-  if (is.null(rnm)) {
-    rnm <- sprintf("V%d", seq_len(B))
-  }
-  rnm[!nzchar(rnm)] <- sprintf("V%d", seq_len(B))[!nzchar(rnm)]
+  rnm <- .svy_rc_names(reps, B)
   rn <- if (is.numeric(row_names)) as.numeric(row_names) else NULL
   idv <- if (is.numeric(id_values)) as.numeric(id_values) else NULL
   numcols <- Filter(is.numeric, as.list(data))
@@ -1080,53 +1590,24 @@ svydes <- function(
   # leaves the other strata at 1. From 101 PSUs on that is within 1% of the
   # weight, and on a domain without the deleted PSU's rows it was refused as a
   # copy (stratum of 150 PSUs; pre-CRAN audit of 30bed8e)
-  rsc <- if (
-    identical(type, "jkn") &&
-      is.numeric(rscales) &&
-      length(rscales) == B &&
-      all(is.finite(rscales))
-  ) {
-    rscales
-  }
-  ctx <- list(
-    reps = reps,
-    summ = summ,
-    type = type,
-    B = B,
-    rnm = rnm,
-    rsc = rsc,
-    adjusted = adjusted,
-    wvaries = n > 0L && max(w) != min(w),
-    named = named,
-    numcols = numcols,
-    keys = lapply(numcols, function(v) .svy_rc_key(as.numeric(v), n)),
-    # the factor each unadjusted jackknife replicate applies to the rows it
-    # keeps, and how many carry it (see .svy_rc_stray())
-    fac_of = if (!adjusted && type %in% c("jk1", "jkn")) {
-      .svy_rc_get(summ, "fac")
-    } else {
-      rep(NA_real_, B)
-    }
+  rsc <- .svy_rc_rscales(type, rscales, B)
+  ctx <- .svy_rc_context(
+    reps,
+    summ,
+    type,
+    B,
+    rnm,
+    rsc,
+    adjusted,
+    w,
+    named,
+    numcols
   )
-  warned <- character()
-  equal <- integer()
-  for (b in seq_len(B)) {
-    res <- .svy_rc_one(b, ctx)
-    warned <- c(warned, res$warn)
-    if (res$equal) equal <- c(equal, b)
-  }
-  if (identical(type, "jkn") && length(equal) == B) {
-    stop(
-      "every replicate is the full-sample weight: give the replicate weights",
-      call. = FALSE
-    )
-  }
-  # one JKn replicate equal to the weight: a stratum left out of a subset leaves
-  # all its (two or more) replicates at the weight, so a single one is the
-  # weight passed beside them (accepted; re-test of the b617a3f CRAN stress
-  # fixes)
-  if (identical(type, "jkn") && !adjusted && length(equal) == 1L) {
-    .svy_rc_refuse(rnm, equal[[1L]], "the full-sample weight")
+  rr <- .svy_rc_run(ctx, B)
+  warned <- rr$warned
+  equal <- rr$equal
+  if (identical(type, "jkn")) {
+    .svy_rc_jkn_equal(equal, B, adjusted, rnm)
   }
   # two or more JKn replicates equal to the weight are kept: a stratum left out
   # of a subset leaves all of its replicates at the weight, and two copies of it
@@ -1136,6 +1617,61 @@ svydes <- function(
   }
   .svy_rc_warn(warned, mean(.svy_rc_get(summ, "total")) / sum(w))
   invisible(TRUE)
+}
+
+#' The replicates' names: their own, or V1, V2, ... for those without one.
+#' @param reps The replicates.
+#' @param B Their number.
+#' @return The names.
+#' @noRd
+.svy_rc_names <- function(reps, B) {
+  rnm <- if (is.matrix(reps)) colnames(reps) else names(reps)
+  if (is.null(rnm)) {
+    rnm <- sprintf("V%d", seq_len(B))
+  }
+  rnm[!nzchar(rnm)] <- sprintf("V%d", seq_len(B))[!nzchar(rnm)]
+  rnm
+}
+
+#' JKn's rscales when they are usable: one finite number per replicate.
+#' @param type The replicate type.
+#' @param rscales The rscales given.
+#' @param B The number of replicates; usable `rscales` have exactly `B` values.
+#' @return The rscales, or NULL.
+#' @noRd
+.svy_rc_rscales <- function(type, rscales, B) {
+  if (
+    identical(type, "jkn") &&
+      is.numeric(rscales) &&
+      length(rscales) == B &&
+      all(is.finite(rscales))
+  ) {
+    rscales
+  }
+}
+
+#' JKn replicates equal to the full weight: all of them is no replicate set,
+#' and one alone is the weight passed beside them.
+#'
+#' A stratum left out of a subset leaves all its (two or more) replicates at
+#' the weight, so a single one is the weight passed beside them (accepted;
+#' re-test of the b617a3f CRAN stress fixes).
+#' @param equal The replicates equal to the full weight.
+#' @param B The number of replicates; all `B` equal to the weight is an error.
+#' @param adjusted Whether the set is adjusted.
+#' @param rnm The replicates' names.
+#' @noRd
+.svy_rc_jkn_equal <- function(equal, B, adjusted, rnm) {
+  if (length(equal) == B) {
+    stop(
+      "every replicate is the full-sample weight: give the replicate weights",
+      call. = FALSE
+    )
+  }
+  if (!adjusted && length(equal) == 1L) {
+    .svy_rc_refuse(rnm, equal[[1L]], "the full-sample weight")
+  }
+  invisible(NULL)
 }
 
 #' One replicate column, read in place.
@@ -1173,7 +1709,7 @@ svydes <- function(
 
 #' One field of every replicate's summary, as a vector.
 #' @param summ The summaries (.svy_rc_summaries()).
-#' @param what The field.
+#' @param what The summary field to extract, such as `"same"` or `"maxrel"`.
 #' @return A logical vector for the flags, numbers otherwise.
 #' @noRd
 .svy_rc_get <- function(summ, what) {
@@ -1199,7 +1735,7 @@ svydes <- function(
 #' @param reps The replicates.
 #' @param w The full-sample weights.
 #' @param idv,rn The numeric id values and row names, or NULL.
-#' @param B The number of replicates.
+#' @param B The number of replicate columns summarised, shown in the progress.
 #' @return A list of B summaries.
 #' @noRd
 .svy_rc_summaries <- function(reps, w, idv, rn, B) {
@@ -1250,7 +1786,7 @@ svydes <- function(
 #' adjustment's (three post-strata give few factors, but not these); a
 #' bootstrap's counts are many, so there it is their number.
 #' @param x One replicate's summary.
-#' @param B The number of replicates.
+#' @param B The number of replicates, the largest k a lattice factor may have.
 #' @return TRUE or FALSE.
 #' @noRd
 .svy_rc_off_lattice <- function(x, B) {
@@ -1284,7 +1820,7 @@ svydes <- function(
 #' 0.5.14, #5)
 #' @param summ The summaries.
 #' @param inf_idx The replicates that differ from the weight.
-#' @param B The number of replicates.
+#' @param B The number of replicates; over half must share the JK1 factor.
 #' @return TRUE or FALSE.
 #' @noRd
 .svy_rc_jk1_unadjusted <- function(summ, inf_idx, B) {
@@ -1312,7 +1848,7 @@ svydes <- function(
 #' by majority among the replicates that differ from the weight.
 #' @param summ The summaries.
 #' @param type The replicate type.
-#' @param B The number of replicates.
+#' @param B The number of replicates, passed to the lattice and JK1 checks.
 #' @param inf_idx The replicates that differ from the weight.
 #' @return TRUE or FALSE.
 #' @noRd
@@ -1322,7 +1858,7 @@ svydes <- function(
       # whole-number factors are a bootstrap's counts (a bootstrap set called a
       # jackknife), never an adjustment's
       !.svy_rc_jk1_unadjusted(summ, inf_idx, B) &&
-        !(sum(.svy_rc_get(summ, "counts")[inf_idx]) > length(inf_idx) / 2)
+        sum(.svy_rc_get(summ, "counts")[inf_idx]) <= length(inf_idx) / 2
     } else if (type %in% c("jkn", "brr")) {
       sum(vapply(summ[inf_idx], .svy_rc_off_lattice, NA, B = B)) >
         length(inf_idx) / 2
@@ -1338,7 +1874,7 @@ svydes <- function(
 #' the weight, and it was refused as a copy on 15 JK1 domain subsets (re-test of
 #' the b617a3f CRAN stress fixes).
 #' @param x One replicate's summary.
-#' @param B The number of replicates.
+#' @param B The number of replicates, the largest k a full-row scale may have.
 #' @return TRUE or FALSE.
 #' @noRd
 .svy_rc_jk_scale <- function(x, B) {
@@ -1542,31 +2078,7 @@ svydes <- function(
     ))
   }
   if (!adjusted && type %in% c("jk1", "jkn") && !x$anyzero) {
-    # a jackknife replicate deletes a PSU: on rows that keep every PSU it is
-    # one factor k / (k - 1) (and 1 on other strata under JKn), as documented,
-    # and that is genuine only on a subset whose deleted PSU lies outside it
-    # (the full data plus w * 15/14 passed silently; final audit of 1.0.0,
-    # #9); anything else that leaves no row out is said (the warning the Rd
-    # promises was not given; re-test of the b617a3f CRAN stress fixes)
-    if (.svy_rc_jk_scale(x, ctx$B)) {
-      if (.svy_rc_stray(x, ctx$fac_of)) {
-        return(.svy_rc_stray_msg(
-          nm,
-          .svy_rc_fac_cnt(ctx$fac_of, ctx$fac_of[[b]])
-        ))
-      }
-    } else if (!.svy_rc_jkn_known(x, ctx$rsc, b)) {
-      # JKn's factor 1 / rscale on its stratum and 1 elsewhere is a rescaled
-      # weight
-      return(sprintf(
-        paste0(
-          "replicate %s leaves no row out and is no rescaled weight, ",
-          "as a %s replicate is"
-        ),
-        nm,
-        toupper(type)
-      ))
-    }
+    return(.svy_rc_shape_jk(b, x, nm, ctx))
   }
   character()
 }
@@ -1590,9 +2102,7 @@ svydes <- function(
     # deleted PSU lies outside it; carried by more or fewer replicates than
     # its k it is a rescaled copy (w * 1.005 under JKn and w * 15/14 under
     # JK1 passed silently; final audit of 1.0.0, #9): said
-    if (
-      !adjusted && !x$anyzero && !jkn_known && .svy_rc_stray(x, ctx$fac_of)
-    ) {
+    if (!adjusted && !x$anyzero && !jkn_known && .svy_rc_stray(x, ctx$fac_of)) {
       return(.svy_rc_stray_msg(
         nm,
         .svy_rc_fac_cnt(ctx$fac_of, ctx$fac_of[[b]])
@@ -1677,7 +2187,7 @@ svydes <- function(
       "bootstrap of %d PSUs draws"
     ),
     length(equal),
-    paste(utils::head(rnm[equal], 3L), collapse = ", "),
+    toString(utils::head(rnm[equal], 3L)),
     m
   )
 }
@@ -1710,58 +2220,17 @@ svydes <- function(
   }
   if (length(warned)) {
     warning(
-      paste0(
-        paste(utils::head(warned, 5L), collapse = "; "),
-        if (length(warned) > 5L) {
-          sprintf("; and %d more", length(warned) - 5L)
-        } else {
-          ""
-        },
-        ". Kept as given: give only the replicate weights if these are not"
-      ),
+      paste(utils::head(warned, 5L), collapse = "; "),
+      if (length(warned) > 5L) {
+        sprintf("; and %d more", length(warned) - 5L)
+      } else {
+        ""
+      },
+      ". Kept as given: give only the replicate weights if these are not",
       call. = FALSE
     )
   }
   invisible(NULL)
-}
-
-#' @export
-print.rmbl_svy_design <- function(x, ...) {
-  cat(sprintf(
-    "Survey design: %s respondents, weights summing to %s\n",
-    format(x$n, big.mark = ","),
-    format(round(sum(x$weights)), big.mark = ",")
-  ))
-  if (identical(x$type, "linearization")) {
-    cat(sprintf(
-      "Variance: Taylor linearization, %d strata, %d PSUs%s\n",
-      length(unique(x$strata)),
-      length(unique(x$psu)),
-      if (!is.null(x$fpc)) ", finite population correction" else ""
-    ))
-  } else {
-    lab <- switch(
-      x$type,
-      bootstrap = "bootstrap",
-      meanboot = sprintf("mean bootstrap (each the mean of %g)", x$mean_size),
-      jk1 = "jackknife (JK1)",
-      jkn = "stratified jackknife (JKn)",
-      brr = "balanced repeated replication",
-      fay = sprintf("Fay's BRR (rho = %g)", x$rho)
-    )
-    cat(sprintf(
-      "Variance: %d replicate weights, %s; scale %.6g, %s\n",
-      .svy_nrep(x),
-      lab,
-      x$scale,
-      if (x$mse) {
-        "centred on the full-sample estimate"
-      } else {
-        "centred on the replicate mean"
-      }
-    ))
-  }
-  invisible(x)
 }
 
 #' Computes the design-based estimates and their covariance matrix.
@@ -1798,70 +2267,11 @@ print.rmbl_svy_design <- function(x, ...) {
   if (!is.null(des$reps)) {
     return(.svy_core_rep(des, column, k, has_den))
   }
-  # Linearization. The PSU totals of the linearized values are n_psu x k; with
-  # one row per PSU and fifty domains at a million rows that alone is 400 MB, so
-  # the columns go in blocks: each block's linearized PSU totals are centred
-  # within strata and scaled by the stratum's factor, and the covariance is the
-  # cross-product of those blocks, two at a time.
-  psu <- des$psu
-  # the stratum of each PSU, in the order rowsum() returns them (sorted);
-  # tapply() over a million one-row PSUs built a list of a million elements
-  # (final audit of 1.0.0)
-  upsu <- sort(unique(psu))
-  ps <- as.integer(des$strata[match(upsu, psu)])
-  npsu <- length(ps)
-  A <- numeric(k)
-  D <- if (has_den) numeric(k) else NULL
-  for (j in seq_len(k)) {
-    cj <- column(j)
-    wj <- w[cj$idx]
-    A[j] <- sum(wj * cj$num)
-    if (has_den) D[j] <- sum(wj * cj$den)
-  }
-  est <- if (has_den) A / D else A
-  st <- .svy_core_strata(des, ps, npsu)
-  lin <- list(
-    column = column,
-    w = w,
-    n = n,
-    has_den = has_den,
-    est = est,
-    D = D,
-    psu = psu,
-    ps = ps,
-    npsu = npsu,
-    st = st,
-    # each PSU one row (no PSU given): the PSU totals are the rows themselves,
-    # and rowsum() over a million groups (a sort and a million row names a
-    # call, 300 calls) is skipped
-    one_row = npsu == n && identical(as.integer(psu), seq_len(n))
-  )
-  V <- matrix(0, k, k)
-  bk <- max(1L, as.integer(floor(2^24 / max(n, 1L))))
-  starts <- seq(1L, k, by = bk)
-  for (a in starts) {
-    ca <- a:min(k, a + bk - 1L)
-    za <- .svy_core_block(ca, lin)
-    V[ca, ca] <- crossprod(za)
-    for (b in starts[starts > a]) {
-      cb <- b:min(k, b + bk - 1L)
-      zb <- .svy_core_block(cb, lin)
-      V[ca, cb] <- crossprod(za, zb)
-      V[cb, ca] <- t(V[ca, cb])
-    }
-  }
-  # no stratum with two PSUs (one PSU in all, or every lonely PSU removed): a
-  # standard error of zero would read as an exact estimate, so the variance is
-  # not computable
-  census <- !is.null(des$fpc) && all(des$fpc >= 1 - 1e-12)
-  if (st$informative == 0L && !census) {
-    V[] <- NA_real_
-  }
-  list(est = unname(est), V = unname(V), A = A, D = D)
+  .svy_core_lin(des, column, k, has_den)
 }
 
 #' The estimates and their covariance under a replicate design.
-#' @param des The design.
+#' @param des The replicate design: weights, replicate matrix and `mse` flag.
 #' @param column A function of a column index giving its rows (idx), numerator
 #'   and denominator there.
 #' @param k The number of columns.
@@ -1914,7 +2324,7 @@ print.rmbl_svy_design <- function(x, ...) {
 
 #' The strata that carry variance information, and each one's centring and
 #' factor, under linearization.
-#' @param des The design.
+#' @param des The linearization design: its `fpc` and `lonely` setting.
 #' @param ps The stratum of each PSU, PSUs sorted.
 #' @param npsu The number of PSUs.
 #' @return A list: use (PSUs that enter the cross-product), fac (sqrt of the
@@ -2034,7 +2444,7 @@ print.rmbl_svy_design <- function(x, ...) {
 
 #' The analysis columns for one variable over the domains: numerators,
 #' denominators and labels.
-#' @param data The data frame.
+#' @param data The survey data frame holding `y`, `by` and `denominator`.
 #' @param des A design from `svydes()`.
 #' @param y The analysis variable's column name.
 #' @param by The domain columns, or NULL.
@@ -2052,76 +2462,16 @@ print.rmbl_svy_design <- function(x, ...) {
   }
   v <- data[[y]]
   ok <- !is.na(v)
+  x <- NULL
   if (!is.null(denominator)) {
-    if (
-      !is.character(denominator) ||
-        length(denominator) != 1L ||
-        !denominator %in% names(data)
-    ) {
-      stop("`denominator` must name a column of `data`", call. = FALSE)
-    }
-    x <- data[[denominator]]
-    if (!is.numeric(x)) {
-      stop("`denominator` must be numeric", call. = FALSE)
-    }
+    x <- .svy_denominator(data, denominator)
     ok <- ok & !is.na(x)
   }
-  if (is.null(by)) {
-    dom <- factor(rep("all", n))
-    dlab <- data.frame(row.names = 1L)
-  } else {
-    miss <- setdiff(by, names(data))
-    if (length(miss)) {
-      stop(
-        sprintf(
-          "`by` names columns `data` does not have: %s",
-          paste(miss, collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    }
-    key <- interaction(data[by], drop = TRUE, sep = "\r", lex.order = TRUE)
-    dom <- key
-    parts <- do.call(rbind, strsplit(levels(key), "\r", fixed = TRUE))
-    dlab <- as.data.frame(
-      matrix(parts, ncol = length(by)),
-      stringsAsFactors = FALSE
-    )
-    names(dlab) <- by
-  }
+  d <- .svy_domains(data, by, n)
+  dom <- d$dom
+  dlab <- d$dlab
   ok <- ok & !is.na(dom)
-  if (stat == "proportion") {
-    lv <- if (is.factor(v)) {
-      levels(droplevels(v[ok]))
-    } else {
-      sort(unique(as.character(v[ok])))
-    }
-    if (!is.null(levels)) {
-      bad <- setdiff(as.character(levels), lv)
-      if (length(bad)) {
-        stop(
-          sprintf(
-            "levels not observed in `%s`: %s",
-            y,
-            paste(bad, collapse = ", ")
-          ),
-          call. = FALSE
-        )
-      }
-      lv <- as.character(levels)
-    }
-    if (!length(lv)) {
-      stop(sprintf("`%s` has no non-missing values", y), call. = FALSE)
-    }
-  } else {
-    if (!is.numeric(v) && !is.logical(v)) {
-      stop(sprintf("`%s` must be numeric for a %s", y, stat), call. = FALSE)
-    }
-    if (any(!is.finite(v[ok]))) {
-      stop(sprintf("`%s` has infinite values", y), call. = FALSE)
-    }
-    lv <- NA_character_
-  }
+  lv <- .svy_levels(v, ok, y, stat, levels)
   nd <- nlevels(dom)
   k <- nd * length(lv)
   domi <- as.integer(dom)
@@ -2132,15 +2482,7 @@ print.rmbl_svy_design <- function(x, ...) {
   # copy per column)
   rows <- split(which(okd), factor(domi[okd], levels = seq_len(nd)))
   cnt <- lengths(rows)[di]
-  lab <- if (ncol(dlab)) {
-    dlab[di, , drop = FALSE]
-  } else {
-    data.frame(row.names = seq_len(k))
-  }
-  if (stat == "proportion") {
-    lab$level <- li
-  }
-  rownames(lab) <- NULL
+  lab <- .svy_col_labels(dlab, di, k, stat, li)
   # the columns are made one at a time by .svy_colpair(): see .svy_core()
   spec <- structure(
     list(
@@ -2158,14 +2500,108 @@ print.rmbl_svy_design <- function(x, ...) {
   list(num = spec, den = NULL, n = cnt, labels = lab)
 }
 
+#' The denominator column of a ratio, checked.
+#' @param data The survey data frame `denominator` must name a column of.
+#' @param denominator Its name.
+#' @return The column.
+#' @noRd
+.svy_denominator <- function(data, denominator) {
+  if (
+    !is.character(denominator) ||
+      length(denominator) != 1L ||
+      !denominator %in% names(data)
+  ) {
+    stop("`denominator` must name a column of `data`", call. = FALSE)
+  }
+  x <- data[[denominator]]
+  if (!is.numeric(x)) {
+    stop("`denominator` must be numeric", call. = FALSE)
+  }
+  x
+}
+
+#' The domains: every row in one, or the combinations of the `by` columns.
+#' @param data The survey data frame holding the `by` columns.
+#' @param by The domain columns, or NULL.
+#' @param n The number of rows, the single domain's length when `by` is NULL.
+#' @return A list: dom (a factor) and dlab (each domain's labels).
+#' @noRd
+.svy_domains <- function(data, by, n) {
+  if (is.null(by)) {
+    return(list(dom = factor(rep("all", n)), dlab = data.frame(row.names = 1L)))
+  }
+  miss <- setdiff(by, names(data))
+  if (length(miss)) {
+    stop(
+      sprintf(
+        "`by` names columns `data` does not have: %s",
+        toString(miss)
+      ),
+      call. = FALSE
+    )
+  }
+  key <- interaction(data[by], drop = TRUE, sep = "\r", lex.order = TRUE)
+  parts <- do.call(rbind, strsplit(levels(key), "\r", fixed = TRUE))
+  dlab <- as.data.frame(
+    matrix(parts, ncol = length(by)),
+    stringsAsFactors = FALSE
+  )
+  names(dlab) <- by
+  list(dom = key, dlab = dlab)
+}
+
+#' The levels of a proportion's variable, or NA for a mean, total or ratio
+#' (whose variable must be numbers).
+#' @param v The variable.
+#' @param ok The rows used.
+#' @param y Its name.
+#' @param stat The statistic; a non-proportion's variable must be numeric.
+#' @param levels The levels asked for, or NULL.
+#' @return The levels.
+#' @noRd
+.svy_levels <- function(v, ok, y, stat, levels) {
+  if (stat != "proportion") {
+    if (!is.numeric(v) && !is.logical(v)) {
+      stop(sprintf("`%s` must be numeric for a %s", y, stat), call. = FALSE)
+    }
+    if (!all(is.finite(v[ok]))) {
+      stop(sprintf("`%s` has infinite values", y), call. = FALSE)
+    }
+    return(NA_character_)
+  }
+  lv <- if (is.factor(v)) {
+    levels(droplevels(v[ok]))
+  } else {
+    sort(unique(as.character(v[ok])))
+  }
+  if (!is.null(levels)) {
+    bad <- setdiff(as.character(levels), lv)
+    if (length(bad)) {
+      stop(
+        sprintf(
+          "levels not observed in `%s`: %s",
+          y,
+          toString(bad)
+        ),
+        call. = FALSE
+      )
+    }
+    lv <- as.character(levels)
+  }
+  if (!length(lv)) {
+    stop(sprintf("`%s` has no non-missing values", y), call. = FALSE)
+  }
+  lv
+}
+
 #' Computes confidence limits for survey estimates.
-#' @param est The estimates.
+#' @param est The point estimates the intervals are centred on.
 #' @param se Their standard errors.
 #' @param n_used The number of respondents behind each estimate.
 #' @param stat The statistic; proportions get bounded intervals.
 #' @param ci The interval for proportions: \code{"wald"}, \code{"wilson"} or
 #'   \code{"logit"}.
-#' @param conf_level The confidence level.
+#' @param conf_level The confidence level, strictly between 0 and 1.
 #' @param df The degrees of freedom for the quantile; Inf uses the normal.
 #' @param design_df The design's degrees of freedom, for the effective sample
 #'   size of the Wilson interval.
@@ -2196,20 +2632,9 @@ print.rmbl_svy_design <- function(x, ...) {
     # 0 had collapsed to [1, 1] for 40 of 40.
     edge <- !is.na(est) & (est <= 0 | est >= 1) & n_used > 0
     if (any(edge)) {
-      zz <- stats::qnorm(1 - (1 - conf_level) / 2)
-      tt <- if (is.finite(design_df)) {
-        stats::qt(1 - (1 - conf_level) / 2, design_df)
-      } else {
-        zz
-      }
-      tn <- stats::qt(1 - (1 - conf_level) / 2, pmax(n_used[edge] - 1, 1))
-      ne <- pmin(n_used[edge] * (tn / tt)^2, n_used[edge])
-      p <- pmin(pmax(est[edge], 0), 1)
-      mid <- (p + zz^2 / (2 * ne)) / (1 + zz^2 / ne)
-      half <- zz / (1 + zz^2 / ne) * sqrt(p * (1 - p) / ne + zz^2 / (4 * ne^2))
-      # the bound at the observed end is that end, exactly
-      lower[edge] <- ifelse(p <= 0, 0, mid - half)
-      upper[edge] <- ifelse(p >= 1, 1, mid + half)
+      eb <- .svy_ci_edge(est[edge], n_used[edge], conf_level, design_df)
+      lower[edge] <- eb$lower
+      upper[edge] <- eb$upper
     }
     if (ci == "logit") {
       l <- stats::qlogis(est[inside]) -
@@ -2225,22 +2650,15 @@ print.rmbl_svy_design <- function(x, ...) {
       # t_df)^2 for the design's degrees of freedom (Korn and Graubard 1998; SAS
       # documents the n - 1 quantile, where z stood before 0.5.12), and never
       # more than the n respondents behind the estimate
-      p <- est[inside]
-      n <- n_used[inside]
-      zz <- stats::qnorm(1 - (1 - conf_level) / 2)
-      tt <- if (is.finite(design_df)) {
-        stats::qt(1 - (1 - conf_level) / 2, design_df)
-      } else {
-        zz
-      }
-      tn <- stats::qt(1 - (1 - conf_level) / 2, pmax(n - 1, 1))
-      deff <- se[inside]^2 / (p * (1 - p) / (n - 1))
-      ne <- pmin(n / deff * (tn / tt)^2, n)
-      z <- zz
-      mid <- (p + z^2 / (2 * ne)) / (1 + z^2 / ne)
-      half <- z / (1 + z^2 / ne) * sqrt(p * (1 - p) / ne + z^2 / (4 * ne^2))
-      lower[inside] <- mid - half
-      upper[inside] <- mid + half
+      wi <- .svy_ci_wilson(
+        est[inside],
+        n_used[inside],
+        se[inside],
+        conf_level,
+        design_df
+      )
+      lower[inside] <- wi$lower
+      upper[inside] <- wi$upper
     }
     lower <- pmax(lower, 0)
     upper <- pmin(upper, 1)
@@ -2248,145 +2666,86 @@ print.rmbl_svy_design <- function(x, ...) {
   list(lower = lower, upper = upper)
 }
 
-#' Estimate a mean, total, proportion or ratio from a survey
-#' design
-#'
-#' Design-based point estimates with standard errors, confidence
-#' intervals and coefficients of variation, for the whole
-#' population or for each domain of `by`. A respondent outside a
-#' domain, or missing the analysis variable, counts zero in that
-#' domain and stays in the design, so the variance of a subgroup
-#' estimate reflects the whole sample design. Use it for the figures a
-#' survey report publishes (the prevalence of a behaviour by region, the mean
-#' number of drinks, a population total) with the standard errors the survey's
-#' design implies rather than those of a simple random sample.
-#'
-#' @details
-#' The estimates are ratios of weighted totals: a mean is
-#' \eqn{\sum w_i y_i / \sum w_i} over the domain, a total
-#' \eqn{\sum w_i y_i}, a proportion the mean of the 0/1 indicator of each
-#' category, and a ratio \eqn{\sum w_i y_i / \sum w_i x_i} with \eqn{x} the
-#' \code{den}. Their variances come from the design: the replicate
-#' formula, or Taylor linearization of the ratio (see
-#' [svydes()]).
-#'
-#' Proportions are reported for every category of `y` (or those
-#' in `lvls`), each with its own interval. The default
-#' interval for a proportion is Wilson's score interval at the
-#' modified effective sample size of SAS PROC SURVEYFREQ, the
-#' software behind Health Canada's published Canadian Substance
-#' Use Survey intervals: \eqn{n / \mathrm{Deff}}, with the
-#' design effect taken against the simple-random-sampling
-#' variance \eqn{p(1 - p)/(n - 1)}, scaled by \eqn{(t_{n-1} /
-#' t_{df})^2} for the design's degrees of freedom (Korn and
-#' Graubard 1998; \eqn{t_{df}} is the normal quantile when the design's
-#' degrees of freedom are infinite) and capped at the \eqn{n} respondents
-#' behind the estimate. `ci = "logit"` builds the interval on the logit
-#' scale and `"wald"` symmetrically. Means, totals and ratios
-#' get the symmetric normal interval.
-#'
-#' A domain with fewer than `minn` respondents is flagged, not
-#' withheld: Health Canada suppresses such CSUS estimates in its
-#' data tool (denominator under 30), and the flag lets the
-#' reader do the same. Other flags say why a standard error is missing (no
-#' stratum with two PSUs, a replicate that left the domain empty, weights all
-#' zero) or that a domain has no respondents.
-#'
-#' Errors: \code{des} not from [svydes()];
-#' \code{data} not the rows
-#' the design was built on, in the same order; \code{y}, \code{by} or
-#' \code{den} naming a column \code{data} does not have; a ratio
-#' without \code{den}; \code{conflvl} outside (0, 1); \code{df}
-#' not positive, \code{Inf} or \code{"design"}, or a design with no degrees
-#' of freedom under \code{df = "design"}; a single-PSU stratum under
-#' \code{lonely = "fail"}.
-#'
-#' @param des A [svydes()] built on `data`.
-#' @param data The data frame the design was built on.
-#' @param y Character scalar, the analysis column: numeric for a mean, total
-#'   or ratio; any type for a proportion (each distinct value is a category).
-#' @param by Optional character vector of domain columns; \code{NULL} (the
-#'   default) estimates for the whole population.
-#' @param stat `"mean"`, `"total"`, `"proportion"` or `"ratio"`
-#'   (of `y` to `den`).
-#' @param den For a ratio, the denominator column.
-#' @param lvls For a proportion, the categories to report
-#'   (default all observed).
-#' @param conflvl Numeric scalar in (0, 1), the confidence level; default
-#'   \code{0.95}.
-#' @param ci Interval method: \code{"auto"} (the default; Wilson for
-#'   proportions, Wald otherwise), \code{"wilson"}, \code{"logit"} or
-#'   \code{"wald"}. Wilson and logit apply to proportions only.
-#' @param minn Numeric scalar, default \code{30}: domains with fewer
-#'   respondents are flagged.
-#' @param df Degrees of freedom for the interval: `Inf` (the
-#'   default) for the normal quantile, a number for Student's t,
-#'   or `"design"` for the design's own (PSUs less strata under
-#'   linearization, replicates less one otherwise).
-#' @return A data frame of class \code{c("rmbl_svy_estimate", "data.frame")},
-#'   one row per domain (and category, for a proportion): the domain columns
-#'   (and \code{level}), then numeric \code{estimate}, \code{se},
-#'   \code{lower}, \code{upper}, \code{cv} (coefficient of variation,
-#'   percent), integer \code{n} (respondents counted) and character
-#'   \code{flag} (\code{NA} when there is nothing to say). Attributes:
-#'   \code{vcov} (the covariance matrix of the estimates, used by
-#'   [svycmp()]), \code{stat}, \code{y}, \code{by},
-#'   \code{ci},
-#'   \code{conflvl}, \code{df}, \code{method} (the variance method) and
-#'   \code{denominator}.
-#' @seealso [svydes()],
-#'   [svycmp()]
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' set.seed(1)
-#' d <- data.frame(region = rep(c("north", "south"), each = 50),
-#'                 smoker = rbinom(100, 1, rep(c(0.2, 0.35), each = 50)),
-#'                 drinks = rpois(100, 3), w = runif(100, 50, 150))
-#' des <- svydes(d, w = "w", strata = "region")
-#' svyest(des, d, "smoker", by = "region", stat = "proportion", lvls = "1")
-#' svyest(des, d, "drinks", stat = "mean")
-#' svyest(des, d, "drinks", by = "region", stat = "total")
-#'
-#' # a ratio of two totals, with Student's t on the design's degrees of freedom
-#' d$visits <- rpois(100, 6)
-#' svyest(des, d, "drinks", stat = "ratio", den = "visits", df = "design")
-#'
-#' # a logit interval at 90 percent
-#' svyest(des, d, "smoker", stat = "proportion", lvls = "1", ci = "logit",
-#'                 conflvl = 0.90)
-#'
-#' # the design remembers its rows: a subset is refused
-#' try(svyest(des, d[-1, ], "drinks"))
-#' @export
-#' @srrstats {G2.0a} @param docs state lengths explicitly ("y Character scalar",
-#'   "conflvl Numeric scalar in (0, 1)", "by Optional character vector").
-#' @srrstats {G2.3} Univariate character options are handled by .rmbl_arg
-#'   (G2.3a); case handling is covered under G2.3b.
-#' @srrstats {G2.3a} stat and ci are checked by .rmbl_arg() (match.arg
-#'   equivalent, pmatch, names the value given); there are 106 .rmbl_arg calls
-#'   package-wide.
-#' @srrstats {G2.13} A missing y counts zero in its domain but stays in the
-#'   design; test-survey.R checks estimate and n = 11 with `y[1] = NA`.
-#' @srrstats {G5.0} Tested on the survey package's standard api datasets
-#'   (apistrat, apiclus1) in test-survey.R.
-#' @srrstats {G5.4b} test-survey.R matches
-#'   survey::svymean/svytotal/svyratio/svyby/svyciprop and JK1 replicates to the
-#'   estimate and SE.
-svyest <- function(
+#' svydes()'s replicate-weight design.
+#' @param des The design so far.
+#' @param data,w,reps,id,type,rscales,msize,rho As for svydes(), checked.
+#' @param n The number of respondents.
+#' @param .w The full-sample weights.
+#' @return The design, with its replicates, type and scale.
+#' @noRd
+.svy_des_replicates <- function(
   des,
   data,
-  y,
-  by = NULL,
-  stat = c("mean", "total", "proportion", "ratio"),
-  den = NULL,
-  lvls = NULL,
-  conflvl = 0.95,
-  ci = c("auto", "wilson", "logit", "wald"),
-  minn = 30,
-  df = Inf
+  n,
+  w,
+  .w,
+  reps,
+  id,
+  type,
+  rscales,
+  msize,
+  rho
 ) {
-  .rmbl_no_fn(levels = lvls)
-  stat <- .rmbl_arg(stat)
-  ci <- .rmbl_arg(ci)
+  rp <- .svy_des_reps(data, n, w, .w, reps, id)
+  .reps <- .svy_reps_numeric(rp$reps)
+  .svy_replicate_check(
+    .reps,
+    .w,
+    type,
+    data,
+    rp$id_values,
+    attr(data, "row.names"),
+    rp$named,
+    rscales
+  )
+  if (!is.matrix(.reps)) {
+    .reps <- unname(.reps)
+  }
+  B <- if (is.matrix(.reps)) ncol(.reps) else length(.reps)
+  .svy_reps_params(type, B, rscales, msize, rho)
+  des$scale <- switch(
+    type,
+    bootstrap = 1 / B,
+    meanboot = msize / B,
+    jk1 = (B - 1) / B,
+    jkn = 1,
+    brr = 1 / B,
+    fay = 1 / (B * (1 - rho)^2)
+  )
+  des$type <- type
+  des$reps <- .reps
+  des$mean_size <- if (type == "meanboot") msize
+  des$rho <- if (type == "fay") rho
+  des$rscales <- if (!is.null(rscales)) as.numeric(rscales)
+  if (is.null(des$degf)) {
+    des$degf <- .svy_reps_degf(.reps, B, n)
+  }
+  des
+}
+
+#' svydes()'s Taylor-linearization design.
+#' @param des The design so far.
+#' @param data,strata,psu,fpc As for svydes().
+#' @param n The number of respondents.
+#' @return The design, with its strata, PSUs and population corrections.
+#' @noRd
+.svy_des_linear <- function(des, data, n, strata, psu, fpc) {
+  lin <- .svy_des_linearization(data, n, strata, psu, fpc)
+  des$type <- "linearization"
+  des$strata <- lin$strata
+  des$psu <- lin$psu
+  des$fpc <- lin$fpc
+  if (is.null(des$degf)) {
+    des$degf <- length(unique(lin$psu)) - length(unique(lin$strata))
+  }
+  des
+}
+
+#' svyest()'s design, data and domains, checked.
+#' @param des,data,by As for svyest().
+#' @return `by`, or NULL for no domains.
+#' @noRd
+.svy_est_inputs <- function(des, data, by) {
   if (!inherits(des, "rmbl_svy_design")) {
     stop("svyest: `des` must come from svydes()", call. = FALSE)
   }
@@ -2397,14 +2756,15 @@ svyest <- function(
   if (!is.character(by) && !is.null(by)) {
     stop("`by` must name columns of `data`", call. = FALSE)
   }
-  conflvl <- .rmbl_conf_level(conflvl)
-  minn <- .rmbl_scalar(minn, "minn", 0)
-  if (stat == "ratio" && is.null(den)) {
-    stop("a ratio needs a `den` column", call. = FALSE)
-  }
-  if (ci == "auto") {
-    ci <- if (stat == "proportion") "wilson" else "wald"
-  }
+  by
+}
+
+#' svyest()'s degrees of freedom for the intervals, checked.
+#' @param df As for svyest().
+#' @param des The design whose degrees of freedom `df = "design"` reads.
+#' @return The degrees of freedom.
+#' @noRd
+.svy_est_df <- function(df, des) {
   if (identical(df, "design")) {
     df <- .svy_df(des)
     # replicates that are all multiples of one weight vector have rank 1: no
@@ -2425,12 +2785,20 @@ svyest <- function(
   if (!is.numeric(df) || length(df) != 1L || is.na(df) || df <= 0) {
     stop("`df` must be a positive number, Inf or \"design\"", call. = FALSE)
   }
-  cols <- .svy_columns(data, des, y, by, stat, if (stat == "ratio") den, lvls)
-  core <- .svy_core(des, cols$num, cols$den)
-  se <- sqrt(pmax(diag(core$V), 0))
-  int <- .svy_ci(core$est, se, cols$n, stat, ci, conflvl, df, .svy_df(des))
+  df
+}
+
+#' svyest()'s flags: why an estimate is unreliable or has no variance.
+#' @param se The standard errors.
+#' @param n The respondents behind each estimate.
+#' @param minn As for svyest(), checked.
+#' @param des The design; replicates or not changes the missing-variance flag.
+#' @param core The estimates and their variance (.svy_core()).
+#' @return One flag per estimate, NA when there is nothing to say.
+#' @noRd
+.svy_est_flags <- function(se, n, minn, des, core) {
   flag <- rep(NA_character_, length(se))
-  flag[cols$n < minn] <- sprintf("fewer than %g respondents", minn)
+  flag[n < minn] <- sprintf("fewer than %g respondents", minn)
   # the reason a variance is missing, said as it is
   flag[is.na(se)] <- if (is.null(des$reps)) {
     "variance not computable (no stratum has two PSUs)"
@@ -2440,123 +2808,16 @@ svyest <- function(
   flag[
     is.na(se) & !is.null(core$D) & is.finite(core$D) & core$D == 0
   ] <- "the domain's weights are all zero"
-  flag[cols$n == 0L] <- "no respondents"
-  out <- cbind(
-    cols$labels,
-    data.frame(
-      estimate = core$est,
-      se = se,
-      lower = int$lower,
-      upper = int$upper,
-      cv = 100 * se / abs(core$est),
-      n = cols$n,
-      flag = flag,
-      stringsAsFactors = FALSE
-    )
-  )
-  rownames(out) <- NULL
-  structure(
-    out,
-    class = c("rmbl_svy_estimate", "data.frame"),
-    vcov = core$V,
-    stat = stat,
-    y = y,
-    by = by,
-    ci = ci,
-    conflvl = conflvl,
-    df = df,
-    method = des$type,
-    denominator = den
-  )
+  flag[n == 0L] <- "no respondents"
+  flag
 }
 
-#' Compare survey estimates between domains
-#'
-#' Each domain's estimate against a reference domain: the
-#' difference, its standard error from the design (the
-#' covariance between the two estimates included, which is what
-#' a pair of separate intervals leaves out), a confidence
-#' interval and a two-sided p-value from the normal
-#' approximation. Use it to test whether two regions or groups differ, rather
-#' than checking whether their separate intervals overlap: overlapping
-#' intervals do not mean no difference, and domains of one survey are not
-#' independent.
-#'
-#' @details
-#' The estimates come from [svyest()] with Wald
-#' intervals. For domain
-#' \eqn{i} and reference \eqn{0} the difference is \eqn{d = \hat\theta_i -
-#' \hat\theta_0} with \eqn{SE(d) = \sqrt{V_{ii} + V_{00} - 2V_{i0}}} from the
-#' design covariance; the interval is \eqn{d \pm z\,SE(d)} and the p-value
-#' \eqn{2\Phi(-|d|/SE(d))}, both on the normal distribution (there is no
-#' \code{df} argument). For a proportion every category is compared
-#' separately. No adjustment for multiple comparisons is made.
-#'
-#' Errors: \code{by} missing or empty; fewer than two domains; a \code{ref}
-#' that is not a single domain label present in the data; and every error of
-#' [svyest()].
-#'
-#' @inheritParams svyest
-#' @param by The domain columns to compare across.
-#' @param ref The reference domain, as its label (for several
-#'   \code{by} columns, the labels joined with \code{" / "}); a number is
-#'   matched as the label it prints as. Default \code{NULL}: the first domain.
-#' @return A data frame of class \code{c("rmbl_svy_compare", "data.frame")},
-#'   one row per non-reference domain (and category): \code{domain},
-#'   \code{level} (for a proportion only), numeric \code{estimate} (the
-#'   domain's), \code{reference} (the reference domain's), \code{difference},
-#'   \code{se}, \code{lower}, \code{upper} and \code{p_value}. Attributes
-#'   \code{ref}, \code{stat}, \code{y} and \code{conflvl}.
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' set.seed(1)
-#' d <- data.frame(region = rep(c("north", "south", "east"), length.out = 150),
-#'                 smoker = rbinom(150, 1, 0.3), w = runif(150, 50, 150))
-#' des <- svydes(d, w = "w")
-#' svycmp(des, d, "smoker", by = "region", stat = "proportion",
-#'                lvls = "1", ref = "north")
-#'
-#' # means, against the default (first) domain, at 90 percent
-#' d$drinks <- rpois(150, 3)
-#' svycmp(des, d, "drinks", by = "region", conflvl = 0.90)
-#'
-#' # the reference must be one of the domains
-#' try(svycmp(des, d, "drinks", by = "region", ref = "west"))
-#' @export
-svycmp <- function(
-  des,
-  data,
-  y,
-  by,
-  stat = c("mean", "total", "proportion", "ratio"),
-  den = NULL,
-  lvls = NULL,
-  ref = NULL,
-  conflvl = 0.95
-) {
-  .rmbl_no_fn(levels = lvls)
-  stat <- .rmbl_arg(stat)
-  conflvl <- .rmbl_conf_level(conflvl)
-  if (missing(by) || !length(by)) {
-    stop("`by` must name the domains to compare", call. = FALSE)
-  }
-  e <- svyest(
-    des,
-    data,
-    y,
-    by = by,
-    stat = stat,
-    den = den,
-    lvls = lvls,
-    conflvl = conflvl,
-    ci = "wald"
-  )
-  V <- attr(e, "vcov")
-  dom <- do.call(paste, c(as.list(as.data.frame(e)[by]), sep = " / "))
-  lev <- if (stat == "proportion") e$level else rep(NA_character_, nrow(e))
-  doms <- unique(dom)
-  if (length(doms) < 2L) {
-    stop("comparisons need at least two domains", call. = FALSE)
-  }
+#' svycmp()'s reference domain, checked.
+#' @param ref As for svycmp().
+#' @param doms The domains' labels.
+#' @return The reference domain's label.
+#' @noRd
+.svy_cmp_ref <- function(ref, doms) {
   if (is.null(ref)) {
     ref <- doms[1L]
   }
@@ -2572,11 +2833,23 @@ svycmp <- function(
     stop(
       sprintf(
         "`ref` is not one of the domains: %s",
-        paste(doms, collapse = ", ")
+        toString(doms)
       ),
       call. = FALSE
     )
   }
+  ref
+}
+
+#' svycmp()'s rows: each domain against the reference, level by level.
+#' @param e The estimates (svyest()).
+#' @param V Their covariance.
+#' @param dom,lev Each estimate's domain and level.
+#' @param ref The reference domain.
+#' @param conflvl As for svycmp(), checked.
+#' @return A data frame, one row per domain and level compared.
+#' @noRd
+.svy_cmp_rows <- function(e, V, dom, lev, ref, conflvl) {
   z <- stats::qnorm(1 - (1 - conflvl) / 2)
   rows <- list()
   for (l in unique(lev)) {
@@ -2598,72 +2871,16 @@ svycmp <- function(
       )
     }
   }
-  out <- do.call(rbind, rows)
-  if (stat != "proportion") {
-    out$level <- NULL
-  }
-  rownames(out) <- NULL
-  structure(
-    out,
-    class = c("rmbl_svy_compare", "data.frame"),
-    ref = ref,
-    stat = stat,
-    y = y,
-    conflvl = conflvl
-  )
+  do.call(rbind, rows)
 }
 
-#' @export
-print.rmbl_svy_estimate <- function(x, digits = 4, ...) {
-  m <- attributes(x)
-  cat(sprintf(
-    "Survey %s of %s%s (%s variance, %g%% %s interval)\n",
-    m$stat,
-    m$y,
-    if (length(m$by)) paste(" by", paste(m$by, collapse = ", ")) else "",
-    m$method,
-    100 * m$conflvl,
-    m$ci
-  ))
-  d <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
-  attr(d, "vcov") <- NULL
-  print(format(d, digits = digits), row.names = FALSE)
-  invisible(x)
-}
-
-#' @export
-print.rmbl_svy_compare <- function(x, digits = 4, ...) {
-  cat(sprintf(
-    "Survey %s of %s against %s (%g%% interval)\n",
-    attr(x, "stat"),
-    attr(x, "y"),
-    attr(x, "ref"),
-    100 * attr(x, "conflvl")
-  ))
-  print(
-    format(
-      as.data.frame(unclass(x), stringsAsFactors = FALSE),
-      digits = digits
-    ),
-    row.names = FALSE
-  )
-  invisible(x)
-}
-
-#' @rdname plot-methods
-#' @export
-plot.rmbl_svy_estimate <- function(
-  x,
-  ...,
-  main = NULL,
-  col = NULL,
-  palette = NULL
-) {
-  .rmbl_plot_check(x, "rmbl_svy_estimate")
-  m <- attributes(x)
-  d <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
-  pct <- identical(m$stat, "proportion")
-  k <- if (pct) 100 else 1
+#' plot.rmbl_svy_estimate()'s row labels: the domains, and the levels.
+#' @param d The estimates, as a data frame.
+#' @param m Their attributes.
+#' @param pct Whether the estimates are proportions.
+#' @return One label per row.
+#' @noRd
+.svy_plot_labels <- function(d, m, pct) {
   lab <- if (length(m$by)) {
     do.call(paste, c(d[m$by], sep = " / "))
   } else {
@@ -2675,90 +2892,405 @@ plot.rmbl_svy_estimate <- function(
   if (all(lab == "all")) {
     lab <- if (pct) d$level else m$y
   }
-  pal <- .bl_cols(3, col, palette)
-  cols <- if (!is.null(col)) {
-    rep_len(col, nrow(d))
-  } else {
-    ifelse(is.na(d$flag), pal[1L], pal[2L])
-  }
-  note <- ifelse(is.na(d$flag), NA_character_, d$flag)
-  .bl_dot_interval(
-    lab,
-    k * d$estimate,
-    k * d$lower,
-    k * d$upper,
-    .bl_main(main, sprintf("%s of %s", tools::toTitleCase(m$stat), m$y)),
-    sprintf(
-      "%s%s, with %g%% interval (orange: flagged)",
-      if (pct) {
-        "Percent"
-      } else {
-        tools::toTitleCase(m$stat)
-      },
-      if (pct) "" else "",
-      100 * m$conflvl
-    ),
-    cols,
-    note = note,
-    ...
-  )
-  invisible(data.frame(
-    label = lab,
-    estimate = k * d$estimate,
-    lower = k * d$lower,
-    upper = k * d$upper,
-    stringsAsFactors = FALSE
-  ))
+  lab
 }
 
-#' @rdname plot-methods
-#' @export
-plot.rmbl_svy_compare <- function(
-  x,
-  ...,
-  main = NULL,
-  col = NULL,
-  palette = NULL
+#' svydes()'s replicate weights named as columns of `data`.
+#' @param data,w,reps,id As for svydes().
+#' @return A list: reps (the columns), id_values (NULL) and named (TRUE).
+#' @noRd
+.svy_des_reps_named <- function(data, w, reps, id) {
+  miss <- setdiff(reps, names(data))
+  if (length(miss)) {
+    stop(
+      sprintf(
+        "replicate columns not in `data`: %s",
+        toString(utils::head(miss, 5))
+      ),
+      call. = FALSE
+    )
+  }
+  own <- intersect(reps, c(if (is.character(w) && length(w) == 1L) w, id))
+  if (length(own)) {
+    stop(
+      sprintf(
+        paste0(
+          "`reps` names %s, which is not a replicate weight (the full ",
+          "weight or the id)"
+        ),
+        toString(own)
+      ),
+      call. = FALSE
+    )
+  }
+  .reps <- unname(as.list(data[reps]))
+  names(.reps) <- reps
+  list(reps = .reps, id_values = NULL, named = TRUE)
+}
+
+#' A column's values as numbers that are the same wherever a value's row is.
+#' @param v The column to code: double, integer, logical, complex or text.
+#' @return A numeric or integer vector.
+#' @noRd
+.svy_col_code <- function(v) {
+  if (is.double(v)) {
+    # the bits of the number: the same value gives the same code wherever its
+    # row is, with no sort or match (in C: the R arithmetic's own result,
+    # without its column-long copies)
+    .Call(C_rmbl_svy_dblcode, v)
+  } else if (is.integer(v) || is.logical(v)) {
+    # the same codes as a double column's: an edit that turned an integer
+    # column into a double one (x$meals[5] <- x$meals[5] + 1) changed every
+    # row's code with it, and the rows as a whole read as all changed rather
+    # than two moved and one edited (final audit of 1.0.0, #3)
+    .Call(C_rmbl_svy_dblcode, as.numeric(v))
+  } else {
+    if (is.complex(v)) {
+      v <- paste(Re(v), Im(v))
+    }
+    match(v, sort(unique(v), method = "radix", na.last = TRUE))
+  }
+}
+
+#' What .svy_rc_one() reads for each replicate.
+#' @param reps,type,named As for .svy_replicate_check().
+#' @param summ The replicates' summaries.
+#' @param B The number of replicates, stored in the context for each check.
+#' @param rnm The replicates' names.
+#' @param rsc The replicates' rscales.
+#' @param adjusted Whether the replicates are adjusted.
+#' @param w The full-sample weights.
+#' @param numcols The numeric columns of the data.
+#' @return A list.
+#' @noRd
+.svy_rc_context <- function(
+  reps,
+  summ,
+  type,
+  B,
+  rnm,
+  rsc,
+  adjusted,
+  w,
+  named,
+  numcols
 ) {
-  .rmbl_plot_check(x, "rmbl_svy_compare")
-  d <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
-  pct <- identical(attr(x, "stat"), "proportion")
-  k <- if (pct) 100 else 1
-  lab <- if (!is.null(d$level) && length(unique(d$level)) > 1L) {
-    paste(d$domain, d$level, sep = ": ")
-  } else {
-    d$domain
-  }
-  pal <- .bl_cols(
-    3,
-    col,
-    if (is.null(palette) && is.null(col)) "diverging" else palette
+  n <- length(w)
+  list(
+    reps = reps,
+    summ = summ,
+    type = type,
+    B = B,
+    rnm = rnm,
+    rsc = rsc,
+    adjusted = adjusted,
+    wvaries = n > 0L && max(w) != min(w),
+    named = named,
+    numcols = numcols,
+    keys = lapply(numcols, function(v) .svy_rc_key(as.numeric(v), n)),
+    # the factor each unadjusted jackknife replicate applies to the rows it
+    # keeps, and how many carry it (see .svy_rc_stray())
+    fac_of = if (!adjusted && type %in% c("jk1", "jkn")) {
+      .svy_rc_get(summ, "fac")
+    } else {
+      rep(NA_real_, B)
+    }
   )
-  sig <- d$p_value < 1 - attr(x, "conflvl")
-  cols <- if (!is.null(col)) {
-    rep_len(col, nrow(d))
-  } else {
-    ifelse(!sig, pal[2L], ifelse(d$difference > 0, pal[3L], pal[1L]))
+}
+
+#' .svy_rc_shape() for an unadjusted jackknife replicate that leaves no row
+#' out.
+#' @param b,x,nm,ctx As for .svy_rc_shape().
+#' @return The warning, or character() when the replicate is genuine.
+#' @noRd
+.svy_rc_shape_jk <- function(b, x, nm, ctx) {
+  type <- ctx$type
+  # a jackknife replicate deletes a PSU: on rows that keep every PSU it is
+  # one factor k / (k - 1) (and 1 on other strata under JKn), as documented,
+  # and that is genuine only on a subset whose deleted PSU lies outside it
+  # (the full data plus w * 15/14 passed silently; final audit of 1.0.0,
+  # #9); anything else that leaves no row out is said (the warning the Rd
+  # promises was not given; re-test of the b617a3f CRAN stress fixes)
+  if (.svy_rc_jk_scale(x, ctx$B)) {
+    if (.svy_rc_stray(x, ctx$fac_of)) {
+      return(.svy_rc_stray_msg(
+        nm,
+        .svy_rc_fac_cnt(ctx$fac_of, ctx$fac_of[[b]])
+      ))
+    }
+  } else if (!.svy_rc_jkn_known(x, ctx$rsc, b)) {
+    # JKn's factor 1 / rscale on its stratum and 1 elsewhere is a rescaled
+    # weight
+    return(sprintf(
+      paste0(
+        "replicate %s leaves no row out and is no rescaled weight, ",
+        "as a %s replicate is"
+      ),
+      nm,
+      toupper(type)
+    ))
   }
-  .bl_dot_interval(
-    lab,
-    k * d$difference,
-    k * d$lower,
-    k * d$upper,
-    .bl_main(main, sprintf("Difference from %s", attr(x, "ref"))),
-    sprintf(
-      "Difference%s, with interval (grey: not significant)",
-      if (pct) " in percentage points" else ""
+  character()
+}
+
+#' The weighted totals of each column's numerator and denominator.
+#' @param column The column reader of .svy_core().
+#' @param w The full-sample weights the totals are summed with.
+#' @param k The number of columns.
+#' @param has_den Whether there is a denominator.
+#' @return A list: A and D (NULL without a denominator).
+#' @noRd
+.svy_core_totals <- function(column, w, k, has_den) {
+  A <- numeric(k)
+  D <- if (has_den) numeric(k) else NULL
+  for (j in seq_len(k)) {
+    cj <- column(j)
+    wj <- w[cj$idx]
+    A[j] <- sum(wj * cj$num)
+    if (has_den) D[j] <- sum(wj * cj$den)
+  }
+  list(A = A, D = D)
+}
+
+#' The linearized covariance, built in blocks of columns.
+#' @param k The number of columns.
+#' @param n The number of rows, which sets how many columns fit in a block.
+#' @param lin What .svy_core_block() reads.
+#' @return The k x k covariance.
+#' @noRd
+.svy_core_vcov <- function(k, n, lin) {
+  V <- matrix(0, k, k)
+  bk <- max(1L, as.integer(floor(2^24 / max(n, 1L))))
+  starts <- seq(1L, k, by = bk)
+  for (a in starts) {
+    ca <- a:min(k, a + bk - 1L)
+    za <- .svy_core_block(ca, lin)
+    V[ca, ca] <- crossprod(za)
+    for (b in starts[starts > a]) {
+      cb <- b:min(k, b + bk - 1L)
+      zb <- .svy_core_block(cb, lin)
+      V[ca, cb] <- crossprod(za, zb)
+      V[cb, ca] <- t(V[ca, cb])
+    }
+  }
+  V
+}
+
+#' .svy_columns()'s labels: the domain columns, and the level.
+#' @param dlab The domains' labels.
+#' @param di,li Each column's domain and level.
+#' @param k The number of columns.
+#' @param stat The statistic; a proportion adds a `level` column to the labels.
+#' @return A data frame, one row per column.
+#' @noRd
+.svy_col_labels <- function(dlab, di, k, stat, li) {
+  lab <- if (ncol(dlab)) {
+    dlab[di, , drop = FALSE]
+  } else {
+    data.frame(row.names = seq_len(k))
+  }
+  if (stat == "proportion") {
+    lab$level <- li
+  }
+  rownames(lab) <- NULL
+  lab
+}
+
+#' Wilson's interval at an estimate of 0 or 1, at the plain n.
+#' @param est The estimates at an edge.
+#' @param n_used Their respondents.
+#' @param conf_level,design_df As for .svy_ci().
+#' @return A list: lower and upper.
+#' @noRd
+.svy_ci_edge <- function(est, n_used, conf_level, design_df) {
+  zz <- stats::qnorm(1 - (1 - conf_level) / 2)
+  tt <- if (is.finite(design_df)) {
+    stats::qt(1 - (1 - conf_level) / 2, design_df)
+  } else {
+    zz
+  }
+  tn <- stats::qt(1 - (1 - conf_level) / 2, pmax(n_used - 1, 1))
+  ne <- pmin(n_used * (tn / tt)^2, n_used)
+  p <- pmin(pmax(est, 0), 1)
+  mid <- (p + zz^2 / (2 * ne)) / (1 + zz^2 / ne)
+  half <- zz / (1 + zz^2 / ne) * sqrt(p * (1 - p) / ne + zz^2 / (4 * ne^2))
+  # the bound at the observed end is that end, exactly
+  list(
+    lower = ifelse(p <= 0, 0, mid - half),
+    upper = ifelse(p >= 1, 1, mid + half)
+  )
+}
+
+#' Wilson's score interval at the modified effective sample size.
+#' @param p The proportion estimates, strictly between 0 and 1.
+#' @param n Their respondents.
+#' @param se Their standard errors.
+#' @param conf_level,design_df As for .svy_ci().
+#' @return A list: lower and upper.
+#' @noRd
+.svy_ci_wilson <- function(p, n, se, conf_level, design_df) {
+  zz <- stats::qnorm(1 - (1 - conf_level) / 2)
+  tt <- if (is.finite(design_df)) {
+    stats::qt(1 - (1 - conf_level) / 2, design_df)
+  } else {
+    zz
+  }
+  tn <- stats::qt(1 - (1 - conf_level) / 2, pmax(n - 1, 1))
+  deff <- se^2 / (p * (1 - p) / (n - 1))
+  ne <- pmin(n / deff * (tn / tt)^2, n)
+  z <- zz
+  mid <- (p + z^2 / (2 * ne)) / (1 + z^2 / ne)
+  half <- z / (1 + z^2 / ne) * sqrt(p * (1 - p) / ne + z^2 / (4 * ne^2))
+  list(lower = mid - half, upper = mid + half)
+}
+
+#' plot.rmbl_svy_compare()'s colours: grey where the difference is not
+#' significant, else by its sign.
+#' @param sig Whether each difference is significant.
+#' @param difference The differences.
+#' @param pal The three colours: below, not significant, above.
+#' @return One colour per difference.
+#' @noRd
+.svy_cmp_cols <- function(sig, difference, pal) {
+  cl <- ifelse(difference > 0, pal[3L], pal[1L])
+  cl[!is.na(sig) & !sig] <- pal[2L]
+  cl[is.na(sig)] <- NA
+  cl
+}
+
+#' Checks each replicate in turn (.svy_rc_one()).
+#' @param ctx What .svy_rc_one() reads.
+#' @param B The number of replicates, checked from 1 to `B`.
+#' @return A list: warned (the warnings) and equal (the replicates equal to the
+#'   weight).
+#' @noRd
+.svy_rc_run <- function(ctx, B) {
+  warned <- character()
+  equal <- integer()
+  for (b in seq_len(B)) {
+    res <- .svy_rc_one(b, ctx)
+    warned <- c(warned, res$warn)
+    if (res$equal) equal <- c(equal, b)
+  }
+  list(warned = warned, equal = equal)
+}
+
+#' .svy_core() for a linearization design.
+#' @param des The linearization design: weights, PSUs, strata and `fpc`.
+#' @param column The column reader of .svy_core().
+#' @param k The number of columns.
+#' @param has_den Whether there is a denominator.
+#' @return A list: est, V, A and D.
+#' @noRd
+.svy_core_lin <- function(des, column, k, has_den) {
+  w <- des$weights
+  n <- length(w)
+  # Linearization. The PSU totals of the linearized values are n_psu x k; with
+  # one row per PSU and fifty domains at a million rows that alone is 400 MB, so
+  # the columns go in blocks: each block's linearized PSU totals are centred
+  # within strata and scaled by the stratum's factor, and the covariance is the
+  # cross-product of those blocks, two at a time.
+  psu <- des$psu
+  # the stratum of each PSU, in the order rowsum() returns them (sorted);
+  # tapply() over a million one-row PSUs built a list of a million elements
+  # (final audit of 1.0.0)
+  upsu <- sort(unique(psu))
+  ps <- as.integer(des$strata[match(upsu, psu)])
+  npsu <- length(ps)
+  ad <- .svy_core_totals(column, w, k, has_den)
+  A <- ad$A
+  D <- ad$D
+  est <- if (has_den) A / D else A
+  st <- .svy_core_strata(des, ps, npsu)
+  lin <- list(
+    column = column,
+    w = w,
+    n = n,
+    has_den = has_den,
+    est = est,
+    D = D,
+    psu = psu,
+    ps = ps,
+    npsu = npsu,
+    st = st,
+    # each PSU one row (no PSU given): the PSU totals are the rows themselves,
+    # and rowsum() over a million groups (a sort and a million row names a
+    # call, 300 calls) is skipped
+    one_row = npsu == n && identical(as.integer(psu), seq_len(n))
+  )
+  V <- .svy_core_vcov(k, n, lin)
+  # no stratum with two PSUs (one PSU in all, or every lonely PSU removed): a
+  # standard error of zero would read as an exact estimate, so the variance is
+  # not computable
+  census <- !is.null(des$fpc) && all(des$fpc >= 1 - 1e-12)
+  if (st$informative == 0L && !census) {
+    V[] <- NA_real_
+  }
+  list(est = unname(est), V = unname(V), A = A, D = D)
+}
+
+# ---- printed reports ---------------------------------------------------------
+
+#' The variance method of a survey design, as text.
+#' @param x An svydes() result.
+#' @return One string.
+#' @noRd
+.svy_var_label <- function(x) {
+  if (identical(x$type, "linearization")) {
+    return("Taylor linearization")
+  }
+  switch(
+    x$type %||% "",
+    bootstrap = "bootstrap replicate weights",
+    meanboot = sprintf(
+      "mean bootstrap (each the mean of %g)",
+      x$mean_size %||% NA_real_
     ),
-    cols,
-    ref = 0,
-    ...
+    jk1 = "jackknife (JK1)",
+    jkn = "stratified jackknife (JKn)",
+    brr = "balanced repeated replication",
+    fay = sprintf("Fay's BRR (rho = %g)", x$rho %||% NA_real_),
+    as.character(x$type %||% "unknown")
   )
-  invisible(data.frame(
-    label = lab,
-    difference = k * d$difference,
-    lower = k * d$lower,
-    upper = k * d$upper,
-    stringsAsFactors = FALSE
-  ))
+}
+
+#' The facts of a linearized survey design.
+#' @param x An svydes() result.
+#' @return A named list.
+#' @noRd
+.svy_lin_facts <- function(x) {
+  list(
+    Strata = length(unique(x$strata)),
+    PSUs = length(unique(x$psu)),
+    `Finite population` = if (!is.null(x$fpc)) "corrected"
+  )
+}
+
+#' The facts of a replicate-weight survey design.
+#' @param x An svydes() result.
+#' @return A named list.
+#' @noRd
+.svy_rep_facts <- function(x) {
+  list(
+    Replicates = .svy_nrep(x),
+    Scale = x$scale,
+    Centring = if (isTRUE(x$mse)) {
+      "on the full-sample estimate"
+    } else {
+      "on the replicate mean"
+    }
+  )
+}
+
+#' The title of a printed survey estimate: "Survey mean of y by g".
+#' @param m The estimate's attributes.
+#' @return One string.
+#' @noRd
+.svy_est_title <- function(m) {
+  paste0(
+    "Survey ",
+    m$stat %||% "estimate",
+    if (length(m$y)) paste(" of", toString(m$y)),
+    if (length(m$by)) paste(" by", toString(m$by))
+  )
 }

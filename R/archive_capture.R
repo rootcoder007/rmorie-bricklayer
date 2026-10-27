@@ -6,143 +6,6 @@
 # timestamp, and, with archive.org keys, an archive.org item that holds them all
 # publicly. fetchvrf() then serves the same bytes from that item.
 
-# The transport seams, one place for tests to stand in a server.
-#' Posts a timestamp query to a time-stamping authority.
-#' @param url The authority's URL.
-#' @param body The query, as raw DER.
-#' @param timeout Seconds before the request gives up.
-#' @return The reply from the native transport.
-#' @noRd
-.bl_tsa_post <- function(url, body, timeout) {
-  .bl_net(
-    url,
-    .Call(
-      C_rmbl_http_post,
-      url,
-      body,
-      "application/timestamp-query",
-      as.integer(timeout),
-      character(),
-      .bl_loopback_url(url)
-    )
-  )
-}
-#' Uploads a file to the Internet Archive with a PUT request.
-#' @param url The item's URL.
-#' @param path The file to upload.
-#' @param content_type The file's media type.
-#' @param headers Further request headers.
-#' @param timeout Seconds before the request gives up.
-#' @return The reply from the native transport.
-#' @noRd
-.bl_ia_put <- function(url, path, content_type, headers, timeout) {
-  .bl_net(
-    url,
-    .Call(
-      C_rmbl_http_put,
-      url,
-      path,
-      content_type,
-      as.integer(timeout),
-      headers,
-      .bl_loopback_url(url)
-    )
-  )
-}
-#' Returns the Internet Archive's S3 endpoint.
-#' @return One URL.
-#' @noRd
-.bl_ia_s3 <- function() "https://s3.us.archive.org"
-
-#' Encodes one DER element.
-#'
-#' DER: a tag, its length, its content
-#' @param tag The tag byte.
-#' @param content The content, as raw.
-#' @return A raw vector.
-#' @noRd
-.bl_der <- function(tag, content) {
-  n <- length(content)
-  len <- if (n < 128L) {
-    as.raw(n)
-  } else if (n < 256L) {
-    as.raw(c(0x81, n))
-  } else {
-    as.raw(c(0x82, n %/% 256L, n %% 256L))
-  }
-  c(as.raw(tag), len, content)
-}
-
-#' An RFC 3161 TimeStampReq for a SHA-256 digest (raw, 32 bytes), with a nonce
-#' and certReq TRUE
-#' @param digest The SHA-256 digest, 32 raw bytes.
-#' @param nonce The nonce, as raw.
-#' @return The request, as raw DER.
-#' @noRd
-.bl_tsq <- function(digest, nonce) {
-  sha256_oid <- as.raw(c(
-    0x06,
-    0x09,
-    0x60,
-    0x86,
-    0x48,
-    0x01,
-    0x65,
-    0x03,
-    0x04,
-    0x02,
-    0x01
-  ))
-  alg <- .bl_der(0x30, c(sha256_oid, as.raw(c(0x05, 0x00))))
-  imprint <- .bl_der(0x30, c(alg, .bl_der(0x04, digest)))
-  .bl_der(
-    0x30,
-    c(
-      .bl_der(0x02, as.raw(1L)),
-      imprint,
-      .bl_der(0x02, nonce),
-      as.raw(c(0x01, 0x01, 0xff))
-    )
-  )
-}
-
-#' Turns hex text into raw bytes.
-#' @param h One string of hex digits.
-#' @return A raw vector.
-#' @noRd
-.bl_hex_raw <- function(h) {
-  as.raw(strtoi(
-    substring(h, seq(1L, nchar(h), 2L), seq(2L, nchar(h), 2L)),
-    16L
-  ))
-}
-
-#' Makes a file name from a URL.
-#'
-#' A file name from a URL: its last path segment (or \code{"index"}), safe
-#' characters only, and the start of the URL's own digest when the URL has a
-#' query (tv.action?pid=... pages share one name otherwise)
-#' @param u The URL.
-#' @return One string.
-#' @noRd
-.bl_capture_name <- function(u) {
-  path <- sub("[?#].*$", "", sub("^https?://[^/]+", "", u))
-  base <- utils::tail(strsplit(path, "/", fixed = TRUE)[[1L]], 1L)
-  if (!length(base) || !nzchar(base)) {
-    base <- "index"
-  }
-  base <- gsub("[^A-Za-z0-9._-]", "_", base)
-  if (grepl("?", u, fixed = TRUE)) {
-    h <- substr(csha256(charToRaw(u)), 1L, 10L)
-    base <- if (grepl("\\.", base)) {
-      sub("(\\.[^.]*)$", paste0("_", h, "\\1"), base)
-    } else {
-      paste0(base, "_", h)
-    }
-  }
-  base
-}
-
 #' Capture files the Internet Archive cannot reach, and publish them as an
 #' archive.org item
 #'
@@ -272,16 +135,11 @@ arccap <- function(
   up <- .bl_cap_upload_arg(upload, reason)
   upload <- up$upload
   reason <- up$reason
-  if (!is.logical(warc) || length(warc) != 1L || is.na(warc)) {
-    stop("`warc` must be TRUE or FALSE", call. = FALSE)
-  }
-  urls <- .bl_cap_urls(urls)
-  dir <- .rmbl_string1(dir, "dir")
-  .bl_cap_item_meta(item, meta)
-  if (!is.null(tsa)) {
-    tsa <- .rmbl_string1(tsa, "tsa")
-  }
-  tmout <- .rmbl_scalar(tmout, "tmout", 1, 86400, integer = TRUE)
+  a <- .bl_cap_args(warc, urls, dir, item, meta, tsa, tmout)
+  urls <- a$urls
+  dir <- a$dir
+  tsa <- a$tsa
+  tmout <- a$tmout
   keys <- .bl_cap_ia_keys(item, ak, sk)
   if (!dir.exists(dir) && !dir.create(dir, recursive = TRUE)) {
     stop(sprintf("cannot create %s", dir), call. = FALSE)
@@ -291,36 +149,239 @@ arccap <- function(
   if (!any(ok)) {
     stop("no URL could be fetched from here", call. = FALSE)
   }
-  man <- list(
-    created_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
-    item = item %||% NA_character_,
-    files = lapply(which(ok), function(i) {
-      as.list(out[i, c("url", "file", "sha256", "bytes", "fetched_utc")])
-    })
-  )
-  mpath <- file.path(dir, "manifest.json")
-  writeLines(tojs(man), mpath)
+  mpath <- .bl_cap_manifest(out, ok, item, dir)
   ts <- if (!is.null(tsa)) .bl_cap_timestamp(tsa, mpath, dir)
   if (!is.null(item)) {
     out <- .bl_cap_ia_upload(out, ok, item, meta, dir, keys, tmout)
   }
   ok <- out$status %in% c("captured", "uploaded")
-  # WARC/1.1 files and a CDXJ index: a pywb collection, and fetchvrf()'s last
-  # fallback
-  if (isTRUE(warc) && any(ok)) {
-    out <- .bl_cap_warc(out, ok, dir, reason)
-  }
-  if ("rmorie" %in% upload && any(ok)) {
-    out <- .bl_cap_rmorie(out, ok, dir, reason, visibility, tmout)
-  }
-  if ("wayback" %in% upload && any(ok)) {
-    out <- .bl_cap_wayback(out, ok, ak, sk)
+  if (any(ok)) {
+    out <- .bl_cap_publish(
+      out,
+      ok,
+      dir,
+      warc,
+      upload,
+      reason,
+      visibility,
+      tmout
+    )
+    if ("wayback" %in% upload) {
+      out <- .bl_cap_wayback(out, ok, ak, sk)
+    }
   }
   attr(out, "manifest") <- mpath
   attr(out, "timestamp") <- ts
   attr(out, "item") <- item
   class(out) <- c("rmbl_archive_capture", "data.frame")
   out
+}
+
+#' @export
+format.rmbl_archive_capture <- function(x, ...) {
+  d <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
+  if (!"status" %in% names(d)) {
+    return(utils::capture.output(print(d)))
+  }
+  st <- sub(":.*$", "", d$status)
+  item <- attr(x, "item")
+  .rmbl_stat_block(
+    "Archive capture",
+    facts = list(
+      Captured = sprintf(
+        "%d of %d URLs",
+        sum(d$status %in% c("captured", "uploaded", "archived")),
+        nrow(d)
+      ),
+      `archive.org item` = if (!is.null(item)) {
+        sprintf("%s: %d uploaded", item, sum(d$status == "uploaded"))
+      },
+      `archive.rmorie.com` = if (!all(is.na(d$archive))) {
+        sprintf("%d saved", sum(!is.na(d$archive)))
+      },
+      Manifest = attr(x, "manifest"),
+      `Manifest timestamp` = .bl_cap_ts_text(attr(x, "timestamp"))
+    ),
+    table = utils::head(
+      d[intersect(c("file", "bytes", "status"), names(d))],
+      10L
+    ),
+    reading = paste(
+      "Each file is kept with its SHA-256, so a later copy can be checked",
+      "against what was fetched here."
+    ),
+    notes = c(
+      if (nrow(d) > 10L) sprintf("... and %d more", nrow(d) - 10L),
+      if (any(st == "failed")) {
+        sprintf("%d failed: see the status column", sum(st == "failed"))
+      }
+    )
+  )
+}
+
+#' The manifest timestamp of a capture, in words.
+#' @param ts A tsvrf() result, or NULL.
+#' @return One string, or NULL.
+#' @noRd
+.bl_cap_ts_text <- function(ts) {
+  if (is.null(ts)) {
+    return(NULL)
+  }
+  ck <- ts$checks
+  core <- all(ck$ok[ck$check %in% c("message_imprint", "signature")])
+  sprintf(
+    "%s (%s)",
+    format(ts$time, tz = "UTC"),
+    if (isTRUE(ts$ok)) {
+      "verified, with the authority's chain"
+    } else if (core) {
+      paste0(
+        "imprint and signature verified; give tsvrf() a trust anchor to ",
+        "check the chain"
+      )
+    } else {
+      "NOT verified"
+    }
+  )
+}
+
+# The transport seams, one place for tests to stand in a server.
+#' Posts a timestamp query to a time-stamping authority.
+#' @param url The authority's URL.
+#' @param body The query, as raw DER.
+#' @param timeout Seconds before the request gives up.
+#' @return The reply from the native transport.
+#' @noRd
+.bl_tsa_post <- function(url, body, timeout) {
+  .bl_net(
+    url,
+    .Call(
+      C_rmbl_http_post,
+      url,
+      body,
+      "application/timestamp-query",
+      as.integer(timeout),
+      character(),
+      .bl_loopback_url(url)
+    )
+  )
+}
+
+#' Uploads a file to the Internet Archive with a PUT request.
+#' @param url The item's URL.
+#' @param path The file to upload.
+#' @param content_type The file's media type.
+#' @param headers Further request headers.
+#' @param timeout Seconds before the request gives up.
+#' @return The reply from the native transport.
+#' @noRd
+.bl_ia_put <- function(url, path, content_type, headers, timeout) {
+  .bl_net(
+    url,
+    .Call(
+      C_rmbl_http_put,
+      url,
+      path,
+      content_type,
+      as.integer(timeout),
+      headers,
+      .bl_loopback_url(url)
+    )
+  )
+}
+
+#' Returns the Internet Archive's S3 endpoint.
+#' @return One URL.
+#' @noRd
+.bl_ia_s3 <- function() "https://s3.us.archive.org"
+
+#' Encodes one DER element.
+#'
+#' DER: a tag, its length, its content
+#' @param tag The DER tag byte, such as 0x30 for a SEQUENCE.
+#' @param content The content, as raw.
+#' @return A raw vector.
+#' @noRd
+.bl_der <- function(tag, content) {
+  n <- length(content)
+  len <- if (n < 128L) {
+    as.raw(n)
+  } else if (n < 256L) {
+    as.raw(c(0x81, n))
+  } else {
+    as.raw(c(0x82, n %/% 256L, n %% 256L))
+  }
+  c(as.raw(tag), len, content)
+}
+
+#' An RFC 3161 TimeStampReq for a SHA-256 digest (raw, 32 bytes), with a nonce
+#' and certReq TRUE
+#' @param digest The SHA-256 digest, 32 raw bytes.
+#' @param nonce The nonce, as raw.
+#' @return The request, as raw DER.
+#' @noRd
+.bl_tsq <- function(digest, nonce) {
+  sha256_oid <- as.raw(c(
+    0x06,
+    0x09,
+    0x60,
+    0x86,
+    0x48,
+    0x01,
+    0x65,
+    0x03,
+    0x04,
+    0x02,
+    0x01
+  ))
+  alg <- .bl_der(0x30, c(sha256_oid, as.raw(c(0x05, 0x00))))
+  imprint <- .bl_der(0x30, c(alg, .bl_der(0x04, digest)))
+  .bl_der(
+    0x30,
+    c(
+      .bl_der(0x02, as.raw(1L)),
+      imprint,
+      .bl_der(0x02, nonce),
+      as.raw(c(0x01, 0x01, 0xff))
+    )
+  )
+}
+
+#' Turns hex text into raw bytes.
+#' @param h One string of hex digits.
+#' @return A raw vector.
+#' @noRd
+.bl_hex_raw <- function(h) {
+  as.raw(strtoi(
+    substring(h, seq(1L, nchar(h), 2L), seq(2L, nchar(h), 2L)),
+    16L
+  ))
+}
+
+#' Makes a file name from a URL.
+#'
+#' A file name from a URL: its last path segment (or \code{"index"}), safe
+#' characters only, and the start of the URL's own digest when the URL has a
+#' query (tv.action?pid=... pages share one name otherwise)
+#' @param u The URL whose last path part becomes the file name.
+#' @return One string.
+#' @noRd
+.bl_capture_name <- function(u) {
+  path <- sub("[?#].*$", "", sub("^https?://[^/]+", "", u))
+  base <- utils::tail(strsplit(path, "/", fixed = TRUE)[[1L]], 1L)
+  if (!length(base) || !nzchar(base)) {
+    base <- "index"
+  }
+  base <- gsub("[^A-Za-z0-9._-]", "_", base)
+  if (grepl("?", u, fixed = TRUE)) {
+    h <- substr(csha256(charToRaw(u)), 1L, 10L)
+    base <- if (grepl(".", base, fixed = TRUE)) {
+      sub("(\\.[^.]*)$", paste0("_", h, "\\1"), base)
+    } else {
+      paste0(base, "_", h)
+    }
+  }
+  base
 }
 
 #' arccap()'s `item` and `meta`, checked.
@@ -403,9 +464,7 @@ arccap <- function(
   }
   .ak <- if (is.null(ak)) .bl_ia_key("IA_S3_ACCESS_KEY") else ak
   .sk <- if (is.null(sk)) .bl_ia_key("IA_S3_SECRET_KEY") else sk
-  if (
-    !nzchar(.ak) || !nzchar(.sk) || grepl("[^A-Za-z0-9]", paste0(.ak, .sk))
-  ) {
+  if (!nzchar(.ak) || !nzchar(.sk) || grepl("[^A-Za-z0-9]", paste0(.ak, .sk))) {
     stop(
       "archive.org keys are needed to upload: set IA_S3_ACCESS_KEY ",
       "and IA_S3_SECRET_KEY",
@@ -416,7 +475,7 @@ arccap <- function(
 }
 
 #' Fetches every URL into `dir`.
-#' @param urls The URLs.
+#' @param urls The URLs to capture, one row of the result each.
 #' @param dir The folder.
 #' @param tmout Seconds per download.
 #' @return The capture table, one row per URL.
@@ -496,7 +555,7 @@ arccap <- function(
 #' @param out The capture table.
 #' @param ok The rows captured.
 #' @param item,meta,dir,tmout As for arccap().
-#' @param keys The archive.org keys.
+#' @param keys The archive.org S3 keys (`ak`, `sk`) for the upload.
 #' @return The capture table.
 #' @noRd
 .bl_cap_ia_upload <- function(out, ok, item, meta, dir, keys, tmout) {
@@ -512,49 +571,8 @@ arccap <- function(
     out$file[ok]
   )
   for (k in seq_along(files)) {
-    h <- c(
-      sprintf("authorization: LOW %s:%s", keys$ak, keys$sk),
-      "x-archive-queue-derive:0",
-      if (k == 1L) c("x-amz-auto-make-bucket:1", meta_h)
-    )
-    ctype <- if (grepl("\\.json$", files[k])) {
-      "application/json"
-    } else {
-      "application/octet-stream"
-    }
-    res <- .bl_ia_put(
-      sprintf("%s/%s/%s", .bl_ia_s3(), item, files[k]),
-      file.path(dir, files[k]),
-      ctype,
-      h,
-      tmout
-    )
-    good <- isTRUE(res$status >= 200L && res$status < 300L)
-    j <- match(files[k], out$file)
-    if (!is.na(j)) {
-      out$status[j] <- if (good) {
-        "uploaded"
-      } else {
-        paste("failed: upload answered", res$status, res$error)
-      }
-      if (good) {
-        out$mirror[j] <- sprintf(
-          "https://archive.org/download/%s/%s",
-          item,
-          files[k]
-        )
-      }
-    } else if (!good) {
-      stop(
-        sprintf(
-          "archive.org refused %s (HTTP %s %s): nothing more was sent",
-          files[k],
-          res$status,
-          res$error
-        ),
-        call. = FALSE
-      )
-    }
+    res <- .bl_cap_ia_put1(files[k], k == 1L, item, dir, keys, meta_h, tmout)
+    out <- .bl_cap_ia_mark(out, files[k], res, item)
   }
   out
 }
@@ -628,29 +646,7 @@ arccap <- function(
     )
   }
   for (i in which(ok)) {
-    r <- tryCatch(
-      .bl_arc_upload(
-        file.path(dir, out$file[i]),
-        out$url[i],
-        as.POSIXct(
-          out$fetched_utc[i],
-          format = "%Y-%m-%dT%H:%M:%SZ",
-          tz = "UTC"
-        ),
-        reason,
-        visibility,
-        .bl_arc_mime(out$file[i]),
-        base,
-        key,
-        tmout
-      ),
-      error = function(e) {
-        .bl_unless_interrupted(
-          e,
-          structure(conditionMessage(e), class = "rmbl_fail")
-        )
-      }
-    )
+    r <- .bl_cap_rmorie1(out, i, dir, reason, visibility, base, key, tmout)
     if (inherits(r, "rmbl_fail")) {
       out$status[i] <- paste("failed:", r, "(the file is kept locally)")
     } else {
@@ -684,64 +680,183 @@ arccap <- function(
   }
   wd <- as.data.frame(unclass(w))
   j <- match(out$url[ok], wd$url)
-  out$wayback[ok] <- ifelse(
-    is.na(j),
-    NA_character_,
-    ifelse(
-      is.na(wd$timestamp[j]),
-      wd$status[j],
-      paste(wd$status[j], wd$timestamp[j])
-    )
+  said <- ifelse(
+    is.na(wd$timestamp[j]),
+    wd$status[j],
+    paste(wd$status[j], wd$timestamp[j])
   )
+  said[is.na(j)] <- NA_character_
+  out$wayback[ok] <- said
   out
 }
 
-#' @export
-print.rmbl_archive_capture <- function(x, ...) {
-  d <- as.data.frame(x)
-  n <- table(sub(":.*$", "", d$status))
-  cat(sprintf(
-    "Captured %d of %d URLs%s\n",
-    sum(d$status %in% c("captured", "uploaded", "archived")),
-    nrow(d),
-    if (!is.null(attr(x, "item"))) {
-      sprintf(
-        " (archive.org item %s: %d uploaded)",
-        attr(x, "item"),
-        sum(d$status == "uploaded")
-      )
-    } else {
-      ""
-    }
-  ))
-  ts <- attr(x, "timestamp")
-  if (!is.null(ts)) {
-    ck <- ts$checks
-    core <- all(ck$ok[ck$check %in% c("message_imprint", "signature")])
-    cat(sprintf(
-      "Manifest timestamp: %s (%s)\n",
-      format(ts$time, tz = "UTC"),
-      if (isTRUE(ts$ok)) {
-        "verified, with the authority's chain"
-      } else if (core) {
-        paste0(
-          "imprint and signature verified; give tsvrf() a trust anchor to ",
-          "check the chain"
-        )
-      } else {
-        "NOT verified"
-      }
-    ))
+#' arccap()'s WARC flag, URLs, folder, item, timestamp authority and
+#' timeout, checked.
+#' @param warc,urls,dir,item,meta,tsa,tmout As for arccap().
+#' @return A list with the checked `urls`, `dir`, `tsa` and `tmout`.
+#' @noRd
+.bl_cap_args <- function(warc, urls, dir, item, meta, tsa, tmout) {
+  if (!is.logical(warc) || length(warc) != 1L || is.na(warc)) {
+    stop("`warc` must be TRUE or FALSE", call. = FALSE)
   }
-  if (any(!is.na(d$archive))) {
-    cat(sprintf("archive.rmorie.com: %d saved\n", sum(!is.na(d$archive))))
+  urls <- .bl_cap_urls(urls)
+  dir <- .rmbl_string1(dir, "dir")
+  .bl_cap_item_meta(item, meta)
+  if (!is.null(tsa)) {
+    tsa <- .rmbl_string1(tsa, "tsa")
   }
-  print(
-    utils::head(d[intersect(c("file", "bytes", "status"), names(d))], 10L),
-    row.names = FALSE
+  tmout <- .rmbl_scalar(tmout, "tmout", 1, 86400, integer = TRUE)
+  list(urls = urls, dir = dir, tsa = tsa, tmout = tmout)
+}
+
+#' Writes arccap()'s manifest of the captured files.
+#' @param out The capture table.
+#' @param ok Which rows were captured.
+#' @param item The Internet Archive item, or `NULL`.
+#' @param dir The capture folder manifest.json is written to.
+#' @return The manifest's path.
+#' @noRd
+.bl_cap_manifest <- function(out, ok, item, dir) {
+  man <- list(
+    created_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    item = item %||% NA_character_,
+    files = lapply(which(ok), function(i) {
+      as.list(out[i, c("url", "file", "sha256", "bytes", "fetched_utc")])
+    })
   )
-  if (any(names(n) == "failed")) {
-    cat(sprintf("%d failed: see the status column\n", n[["failed"]]))
+  mpath <- file.path(dir, "manifest.json")
+  writeLines(tojs(man), mpath)
+  mpath
+}
+
+#' arccap()'s WARC files and archive.rmorie.com upload, as asked for.
+#'
+#' WARC/1.1 files and a CDXJ index make a pywb collection, and fetchvrf()'s
+#' last fallback.
+#' @param out The capture table.
+#' @param ok Which rows were captured or uploaded.
+#' @param dir The capture folder holding the files to publish.
+#' @param warc,upload,reason,visibility,tmout As for arccap() (checked).
+#' @return `out`, with the WARC and archive columns filled in.
+#' @noRd
+.bl_cap_publish <- function(
+  out,
+  ok,
+  dir,
+  warc,
+  upload,
+  reason,
+  visibility,
+  tmout
+) {
+  if (isTRUE(warc)) {
+    out <- .bl_cap_warc(out, ok, dir, reason)
   }
-  invisible(x)
+  if ("rmorie" %in% upload) {
+    out <- .bl_cap_rmorie(out, ok, dir, reason, visibility, tmout)
+  }
+  out
+}
+
+#' Sends one file of an arccap() capture to its Internet Archive item.
+#' @param file The file name, relative to `dir`.
+#' @param first Whether this is the first file, which makes the item.
+#' @param item The item.
+#' @param dir The capture folder `file` is read from.
+#' @param keys The S3 keys (`ak`, `sk`).
+#' @param meta_h The item metadata headers.
+#' @param tmout Seconds the upload of this one file may take.
+#' @return The reply of `.bl_ia_put()`.
+#' @noRd
+.bl_cap_ia_put1 <- function(file, first, item, dir, keys, meta_h, tmout) {
+  h <- c(
+    sprintf("authorization: LOW %s:%s", keys$ak, keys$sk),
+    "x-archive-queue-derive:0",
+    if (first) c("x-amz-auto-make-bucket:1", meta_h)
+  )
+  ctype <- if (grepl("\\.json$", file)) {
+    "application/json"
+  } else {
+    "application/octet-stream"
+  }
+  .bl_ia_put(
+    sprintf("%s/%s/%s", .bl_ia_s3(), item, file),
+    file.path(dir, file),
+    ctype,
+    h,
+    tmout
+  )
+}
+
+#' Records one Internet Archive upload in the capture table; a refused
+#' manifest stops the upload.
+#' @param out The capture table.
+#' @param file The file name.
+#' @param res The reply of `.bl_ia_put()`.
+#' @param item The item.
+#' @return `out`, with the file's status and mirror filled in.
+#' @noRd
+.bl_cap_ia_mark <- function(out, file, res, item) {
+  good <- isTRUE(res$status >= 200L && res$status < 300L)
+  j <- match(file, out$file)
+  if (!is.na(j)) {
+    out$status[j] <- if (good) {
+      "uploaded"
+    } else {
+      paste("failed: upload answered", res$status, res$error)
+    }
+    if (good) {
+      out$mirror[j] <- sprintf(
+        "https://archive.org/download/%s/%s",
+        item,
+        file
+      )
+    }
+  } else if (!good) {
+    stop(
+      sprintf(
+        "archive.org refused %s (HTTP %s %s): nothing more was sent",
+        file,
+        res$status,
+        res$error
+      ),
+      call. = FALSE
+    )
+  }
+  out
+}
+
+#' Uploads one captured file to archive.rmorie.com.
+#' @param out The capture table.
+#' @param i The row of the capture table whose file is uploaded.
+#' @param dir The capture folder the row's file is read from.
+#' @param reason,visibility As for arccap().
+#' @param base,key The archive's base URL and key.
+#' @param tmout Seconds the upload to archive.rmorie.com may take.
+#' @return The archive's reply, or an `rmbl_fail` string with the error.
+#' @noRd
+.bl_cap_rmorie1 <- function(out, i, dir, reason, visibility, base, key, tmout) {
+  tryCatch(
+    .bl_arc_upload(
+      file.path(dir, out$file[i]),
+      out$url[i],
+      as.POSIXct(
+        out$fetched_utc[i],
+        format = "%Y-%m-%dT%H:%M:%SZ",
+        tz = "UTC"
+      ),
+      reason,
+      visibility,
+      .bl_arc_mime(out$file[i]),
+      base,
+      key,
+      tmout
+    ),
+    error = function(e) {
+      .bl_unless_interrupted(
+        e,
+        structure(conditionMessage(e), class = "rmbl_fail")
+      )
+    }
+  )
 }

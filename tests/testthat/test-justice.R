@@ -22,7 +22,7 @@ test_that(
     d <- c(110, 101, 128, 92, 4)
     cf <- caseflow(r, d, win = 2)
     expect_s3_class(cf, "rmbl_case_flow")
-    expect_equal(cf$clearance[1:4], d[1:4] / r[1:4])
+    expect_equal(cf$clearance[1:4], d[1:4] / r[1:4], tolerance = 1e-8)
     expect_true(is.na(cf$clearance[5]))
     for (i in 1:4) {
       ci <- stats::binom.test(d[i], d[i] + r[i])$conf.int
@@ -34,10 +34,14 @@ test_that(
     }
     # disposed but nothing received: the ratio is unbounded above
     expect_identical(cf$upper[5], Inf)
-    expect_equal(cf$net, r - d)
-    expect_equal(cf$cumnet, cumsum(r - d))
+    expect_equal(cf$net, r - d, tolerance = 1e-8)
+    expect_equal(cf$cumnet, cumsum(r - d), tolerance = 1e-8)
     expect_true(is.na(cf$rolclr[1]))
-    expect_equal(cf$rolclr[2:5], (d[1:4] + d[2:5]) / (r[1:4] + r[2:5]))
+    expect_equal(
+      cf$rolclr[2:5],
+      (d[1:4] + d[2:5]) / (r[1:4] + r[2:5]),
+      tolerance = 1e-8
+    )
     ci <- stats::binom.test(
       d[3] + d[4],
       d[3] + d[4] + r[3] + r[4],
@@ -51,8 +55,10 @@ test_that(
     )
     # nothing received and nothing disposed: no ratio and no interval
     z <- caseflow(c(0, 5), c(0, 5), win = 1)
-    expect_true(is.na(z$clearance[1]) && is.na(z$lower[1]) && is.na(z$upper[1]))
-    expect_equal(z$rolclr, c(NA, 1))
+    expect_true(is.na(z$clearance[1]))
+    expect_true(is.na(z$lower[1]))
+    expect_true(is.na(z$upper[1]))
+    expect_equal(z$rolclr, c(NA, 1), tolerance = 1e-8)
   }
 )
 
@@ -65,15 +71,16 @@ test_that(
     f <- ext("ocj_flow_ontario.csv")
     cf <- caseflow(f$received, f$disposed, pend = f$pending, prd = f$month)
     expect_identical(nrow(cf), 24L)
-    expect_equal(cf$penchg, c(NA, diff(f$pending)))
+    expect_equal(cf$penchg, c(NA, diff(f$pending)), tolerance = 1e-8)
     pace <- vapply(1:24, function(i) mean(f$disposed[max(1, i - 11):i]), 0)
-    expect_equal(cf$pertoclear, f$pending / pace)
+    expect_equal(cf$pertoclear, f$pending / pace, tolerance = 1e-8)
     # the published series (2026 edition, April 2024 to March 2026): 497,393
     # received and 489,448 disposed over the 24 months
-    expect_equal(sum(cf$received), 497393)
-    expect_equal(sum(cf$disposed), 489448)
+    expect_equal(sum(cf$received), 497393, tolerance = 1e-8)
+    expect_equal(sum(cf$disposed), 489448, tolerance = 1e-8)
     expect_null(cf$cumnet)
-    out <- capture.output(print(cf))
+    expect_output(print(cf), "Case flow")
+    out <- format(cf)
     expect_true(any(grepl(
       sprintf("clearance %.3f", 489448 / 497393),
       out,
@@ -83,7 +90,7 @@ test_that(
     pdf(NULL)
     on.exit(grDevices::dev.off(), add = TRUE)
     drawn <- plot(cf)
-    expect_equal(drawn$clearance, cf$clearance)
+    expect_equal(drawn$clearance, cf$clearance, tolerance = 1e-8)
     expect_silent(plot(cf, what = "clearance", main = "Ontario"))
     expect_silent(plot(cf, what = "flow"))
     expect_silent(plot(cf, main = "Ontario Court of Justice, criminal cases"))
@@ -185,20 +192,28 @@ test_that(
       if (q < 1) {
         gw <- gw + q / (np * (1 - q))
       }
-      expect_equal(lt$entering[j], nj)
-      expect_equal(lt$atrisk[j], np)
-      expect_equal(lt$q[j], q)
-      expect_equal(lt$survival[j], surv)
+      expect_equal(lt$entering[j], nj, tolerance = 1e-8)
+      expect_equal(lt$atrisk[j], np, tolerance = 1e-8)
+      expect_equal(lt$q[j], q, tolerance = 1e-8)
+      expect_equal(lt$survival[j], surv, tolerance = 1e-8)
       if (j < 4) {
-        expect_equal(lt$se[j], surv * sqrt(gw))
-        expect_equal(lt$hazard[j], d[j] / (1 * (np - d[j] / 2)))
+        expect_equal(lt$se[j], surv * sqrt(gw), tolerance = 1e-8)
+        expect_equal(
+          lt$hazard[j],
+          d[j] / (1 * (np - d[j] / 2)),
+          tolerance = 1e-8
+        )
         z <- stats::qnorm(0.975)
-        expect_equal(lt$conflo[j], max(surv - z * surv * sqrt(gw), 0))
+        expect_equal(
+          lt$conflo[j],
+          max(surv - z * surv * sqrt(gw), 0),
+          tolerance = 1e-8
+        )
       }
     }
     # an open band has no hazard
     expect_true(is.na(lt$hazard[4]))
-    expect_equal(lifetbl(br, d, cens = 0)$censored, rep(0, 4))
+    expect_equal(lifetbl(br, d, cens = 0)$censored, rep(0, 4), tolerance = 1e-8)
   }
 )
 
@@ -211,7 +226,11 @@ test_that(
     lt <- lifetbl(c(0, 10, 20), c(30, 70))
     # survival 1 -> 0.7 -> 0: crosses 0.5 in the second band, 10 + 10 * (0.7 -
     # 0.5) / 0.7
-    expect_equal(as.numeric(attr(lt, "median")), 10 + 10 * 0.2 / 0.7)
+    expect_equal(
+      as.numeric(attr(lt, "median")),
+      10 + 10 * 0.2 / 0.7,
+      tolerance = 1e-8
+    )
     expect_true(any(grepl(
       "Median time: 12.9",
       capture.output(print(lt)),
@@ -220,14 +239,15 @@ test_that(
     lt2 <- lifetbl(c(0, 10, Inf), c(30, 70))
     expect_identical(as.numeric(attr(lt2, "median")), Inf)
     expect_match(attr(attr(lt2, "median"), "note"), "open band")
-    expect_true(any(grepl("open band", capture.output(print(lt2)))))
+    expect_true(any(grepl("open band", format(lt2), fixed = TRUE)))
+    expect_output(print(lt2), "Life table")
     lt3 <- lifetbl(c(0, 10, 20), c(10, 20), cens = c(0, 70))
     expect_match(attr(attr(lt3, "median"), "note"), "never falls")
     pdf(NULL)
     on.exit(grDevices::dev.off(), add = TRUE)
     for (x in list(lt, lt2, lt3)) {
       drawn <- plot(x)
-      expect_equal(drawn$survival, c(1, x$survival))
+      expect_equal(drawn$survival, c(1, x$survival), tolerance = 1e-8)
     }
     expect_silent(plot(lifetbl(c(0, Inf), 5)))
   }
@@ -248,7 +268,7 @@ test_that("lifetbl(): published band labels give the same table as the edges", {
     ),
     ev
   )
-  expect_equal(as.data.frame(a), as.data.frame(b))
+  expect_equal(as.data.frame(a), as.data.frame(b), tolerance = 1e-8)
   # the published shares are rounded and need not add to one; the table takes
   # them as counts, so the share still open after 10 months is one less the
   # first share over their sum
@@ -297,9 +317,13 @@ test_that(
     }
     # the shares of each period add to one and use the published totals
     tot <- tapply(m$shares$share, m$shares$period, sum)
-    expect_equal(as.vector(tot), rep(1, 12))
+    expect_equal(as.vector(tot), rep(1, 12), tolerance = 1e-8)
     # the 2022 provincial total of cases disposed
-    expect_equal(m$shares$total[m$shares$period == 2022][1], 209961)
+    expect_equal(
+      m$shares$total[m$shares$period == 2022][1],
+      209961,
+      tolerance = 1e-8
+    )
   }
 )
 
@@ -313,11 +337,16 @@ test_that(
     cnt <- as.matrix(x[, -(1:2)])
     m <- dispmix(x[, -(1:2)], prd = x$year)
     ct <- suppressWarnings(stats::chisq.test(cnt, correct = FALSE))
-    expect_equal(m$homogeneity$statistic, unname(ct$statistic))
-    expect_equal(m$homogeneity$df, 66)
+    expect_equal(
+      m$homogeneity$statistic,
+      unname(ct$statistic),
+      tolerance = 1e-8
+    )
+    expect_equal(m$homogeneity$df, 66, tolerance = 1e-8)
     expect_equal(
       m$homogeneity$cramerv,
-      sqrt(unname(ct$statistic) / (sum(cnt) * 6))
+      sqrt(unname(ct$statistic) / (sum(cnt) * 6)),
+      tolerance = 1e-8
     )
     tot <- rowSums(cnt)
     sc <- 1:12
@@ -333,16 +362,22 @@ test_that(
         info = colnames(cnt)[j]
       )
     }
-    expect_equal(m$trend$pholm, stats::p.adjust(m$trend$p_value, "holm"))
+    expect_equal(
+      m$trend$pholm,
+      stats::p.adjust(m$trend$p_value, "holm"),
+      tolerance = 1e-8
+    )
     expect_equal(
       m$trend$change[1],
-      unname(cnt[12, 1] / tot[12] - cnt[1, 1] / tot[1])
+      unname(cnt[12, 1] / tot[12] - cnt[1, 1] / tot[1]),
+      tolerance = 1e-8
     )
     # years as scores: 2020 and 2023 are missing from the series, and the scores
     # say so
     m2 <- dispmix(x[, -(1:2)], prd = x$year, scores = x$year)
     expect_false(isTRUE(all.equal(m$trend$statistic, m2$trend$statistic)))
-    out <- capture.output(print(m))
+    expect_output(print(m), "Outcome shares")
+    out <- format(m)
     expect_true(any(grepl(
       sprintf("chi-square %.1f on 66 df", m$homogeneity$statistic),
       out,
@@ -352,7 +387,7 @@ test_that(
     pdf(NULL)
     on.exit(grDevices::dev.off(), add = TRUE)
     drawn <- plot(m)
-    expect_equal(drawn$share, m$shares$share)
+    expect_equal(drawn$share, m$shares$share, tolerance = 1e-8)
   }
 )
 
@@ -367,7 +402,7 @@ test_that("dispmix(): one or two periods, empty outcomes, and bad input", {
   expect_identical(two$outcome, c("outcome_1", "outcome_2"))
   # an outcome that never happens is left out of the chi-square and has no trend
   three <- dispmix(cbind(a = c(5, 6, 7), b = c(5, 4, 3), c = 0))
-  expect_equal(three$homogeneity$df, 2)
+  expect_equal(three$homogeneity$df, 2, tolerance = 1e-8)
   expect_true(is.na(three$trend$statistic[3]))
   pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
@@ -378,7 +413,10 @@ test_that("dispmix(): one or two periods, empty outcomes, and bad input", {
   )))
   expect_silent(plot(two))
   expect_output(print(one), "Outcome shares")
-  expect_error(dispmix(data.frame(a = 1:2, b = c("x", "y"))), "not numeric")
+  expect_error(
+    dispmix(data.frame(a = 1:2, b = c("x", "y"), stringsAsFactors = FALSE)),
+    "not numeric"
+  )
   expect_error(dispmix(list(1, 2)), "numeric matrix")
   expect_error(dispmix(matrix(1:3, 3)), "two outcomes")
   expect_error(dispmix(rbind(c(1, 2), c(0, 0))), "has no cases")
@@ -413,7 +451,7 @@ test_that(
       n = 300,
       lims = c(range(kd$x), range(kd$y))
     )
-    expect_equal(kd$x, ref$x)
+    expect_equal(kd$x, ref$x, tolerance = 1e-8)
     expect_equal(
       max(abs(kd$field - 230 * ref$z)) / max(kd$field),
       0,
@@ -421,7 +459,7 @@ test_that(
     )
     cell <- diff(kd$x[1:2]) * diff(kd$y[1:2])
     expect_equal(sum(kd$field) * cell, 230, tolerance = 1e-3)
-    expect_true(kd$regions$areakm2[1] < kd$regions$areakm2[2])
+    expect_lt(kd$regions$areakm2[1], kd$regions$areakm2[2])
     expect_equal(kd$regions$coverage, c(0.5, 0.9))
     # weights scale the surface
     kd2 <- crmdens(
@@ -432,10 +470,14 @@ test_that(
       ngrid = 300,
       xy = "planar"
     )
-    expect_equal(kd2$field, 2 * kd$field)
+    expect_equal(kd2$field, 2 * kd$field, tolerance = 1e-8)
     # the default bandwidth is Scott's rule, sd * n^(-1/6) in each direction
     kd3 <- crmdens(x, y, ngrid = 60, xy = "planar")
-    expect_equal(kd3$bandwidth, c(stats::sd(px), stats::sd(py)) * 230^(-1 / 6))
+    expect_equal(
+      kd3$bandwidth,
+      c(stats::sd(px), stats::sd(py)) * 230^(-1 / 6),
+      tolerance = 1e-8
+    )
   }
 )
 
@@ -450,23 +492,31 @@ test_that(
     # 515 of the file before 0.5.12 was a subsetting artefact; review of
     # e57fed5, E5); an unlocated one is dropped and said
     expect_message(
-      kd <- crmdens(c(b$lon, NA), c(b$lat, NA), ngrid = 80),
+      {
+        kd <- crmdens(c(b$lon, NA), c(b$lat, NA), ngrid = 80)
+      },
       "1 incident without a usable location"
     )
     expect_identical(kd$n, 508L)
     expect_identical(kd$dropped, 1L)
-    expect_identical(length(kd$lon), 80L)
+    expect_length(kd$lon, 80L)
     # one kilometre north is 1/6371.0088 radians of latitude
-    expect_equal(diff(kd$lat[1:2]) / diff(kd$y[1:2]), 180 / pi / 6371.0088)
+    expect_equal(
+      diff(kd$lat[1:2]) / diff(kd$y[1:2]),
+      180 / pi / 6371.0088,
+      tolerance = 1e-8
+    )
     expect_equal(
       diff(kd$lon[1:2]) / diff(kd$x[1:2]),
-      180 / pi / 6371.0088 / cos(kd$centre[["lat"]] * pi / 180)
+      180 / pi / 6371.0088 / cos(kd$centre[["lat"]] * pi / 180),
+      tolerance = 1e-8
     )
     expect_message(
       crmdens(c(b$lon[1:20], 0), c(b$lat[1:20], 0), ngrid = 40),
       "1 incident"
     )
-    out <- capture.output(print(kd))
+    expect_output(print(kd), "Kernel density")
+    out <- format(kd)
     expect_true(any(grepl(
       "508 incidents (1 without a location dropped)",
       out,
@@ -475,7 +525,7 @@ test_that(
     pdf(NULL)
     on.exit(grDevices::dev.off(), add = TRUE)
     drawn <- plot(kd)
-    expect_equal(drawn$density, as.vector(kd$field))
+    expect_equal(drawn$density, as.vector(kd$field), tolerance = 1e-8)
     expect_silent(plot(kd, points = FALSE, palette = "sequential"))
     expect_silent(plot(crmdens(
       b$lon[2:60],
@@ -560,11 +610,15 @@ test_that(
     tb <- c(3, 10, 30)
     kn <- knoxtst(x, y, t, sb, tb, nsim = 99, seed = 3, xy = "planar")
     br <- knox_brute(x, y, t, sb, tb)
-    expect_equal(kn$table$observed, as.vector(br$o))
-    expect_equal(kn$table$expected, as.vector(br$e))
-    expect_equal(kn$table$ratio, as.vector(br$o / br$e))
+    expect_equal(kn$table$observed, as.vector(br$o), tolerance = 1e-8)
+    expect_equal(kn$table$expected, as.vector(br$e), tolerance = 1e-8)
+    expect_equal(kn$table$ratio, as.vector(br$o / br$e), tolerance = 1e-8)
     expect_true(all(kn$table$p_value > 0 & kn$table$p_value <= 1))
-    expect_equal(kn$table$p_value * 100, round(kn$table$p_value * 100))
+    expect_equal(
+      kn$table$p_value * 100,
+      round(kn$table$p_value * 100),
+      tolerance = 1e-8
+    )
   }
 )
 
@@ -587,7 +641,7 @@ test_that(
     for (k in seq_len(nrow(perms))) {
       tot <- tot + knox_brute(x, y, t[perms[k, ]], sb, tb)$o
     }
-    expect_equal(kn$table$expected, as.vector(tot / 120))
+    expect_equal(kn$table$expected, as.vector(tot / 120), tolerance = 1e-8)
   }
 )
 
@@ -621,18 +675,19 @@ test_that(
       nsim = 99,
       seed = 5
     )
-    expect_equal(k1$table, k2$table)
+    expect_equal(k1$table, k2$table, tolerance = 1e-8)
     # break-ins within 100 m and a week of each other: the published near-repeat
     # pattern
     expect_gt(k1$table$ratio[1], 1.5)
     expect_lt(k1$table$p_value[1], 0.05)
-    out <- capture.output(print(k1))
+    expect_output(print(k1), "Knox")
+    out <- format(k1)
     expect_true(any(grepl("0-100 m", out, fixed = TRUE)))
     expect_true(any(grepl("not adjusted", out, fixed = TRUE)))
     pdf(NULL)
     on.exit(grDevices::dev.off(), add = TRUE)
     drawn <- plot(k1)
-    expect_equal(drawn$ratio, k1$table$ratio)
+    expect_equal(drawn$ratio, k1$table$ratio, tolerance = 1e-8)
     # a cell with nothing expected is drawn and printed as a dash
     k3 <- knoxtst(
       c(0, 10, 5000),
@@ -803,11 +858,11 @@ test_that(
     a <- g[g$year == 2014, ]
     b <- g[g$year == 2022, ]
     b <- b[match(a$offence_group, b$offence_group), ]
-    expect_equal(o$ratea, sum(a$disposed) / sum(a$received))
-    expect_equal(o$rateb, sum(b$disposed) / sum(b$received))
+    expect_equal(o$ratea, sum(a$disposed) / sum(a$received), tolerance = 1e-8)
+    expect_equal(o$rateb, sum(b$disposed) / sum(b$received), tolerance = 1e-8)
     expect_equal(o$rateeff + o$mixeff, o$change, tolerance = 1e-10)
-    expect_equal(sum(cd$groups$rateeff), o$rateeff)
-    expect_equal(sum(cd$groups$mixeff), o$mixeff)
+    expect_equal(sum(cd$groups$rateeff), o$rateeff, tolerance = 1e-8)
+    expect_equal(sum(cd$groups$mixeff), o$mixeff, tolerance = 1e-8)
     # independently: the rate effect is the rate change at the average mix, and
     # the standardised rates apply the 2022 rates to the 2014 and to the average
     # mix
@@ -815,9 +870,13 @@ test_that(
     wb <- b$received / sum(b$received)
     ra <- a$disposed / a$received
     rb <- b$disposed / b$received
-    expect_equal(o$rateeff, sum((wa + wb) / 2 * rb) - sum((wa + wb) / 2 * ra))
-    expect_equal(o$staonbase, sum(wa * rb))
-    expect_equal(o$staonave, sum((wa + wb) / 2 * rb))
+    expect_equal(
+      o$rateeff,
+      sum((wa + wb) / 2 * rb) - sum((wa + wb) / 2 * ra),
+      tolerance = 1e-8
+    )
+    expect_equal(o$staonbase, sum(wa * rb), tolerance = 1e-8)
+    expect_equal(o$staonave, sum((wa + wb) / 2 * rb), tolerance = 1e-8)
     # the published 2014 and 2022 totals: the aggregate fell while the rates at
     # a fixed mix rose
     expect_identical(cd$simpson$type, "mix")
@@ -882,19 +941,21 @@ test_that(
     "and its Greenland-Robins variance"
   ),
   {
-    # one part: the MH ratio is the crude ratio and the variance of its log is
-    # 1/a + 1/b
+    # one part: the MH ratio is the crude ratio and the variance of its
+    # log is 1/a + 1/b
     one <- clrdcmp(c(40, 90), c(100, 150), c("g", "g"), c(1, 2))
     mh <- one$rateratio[2, ]
-    expect_equal(mh$ratio, (90 / 150) / (40 / 100))
+    expect_equal(mh$ratio, (90 / 150) / (40 / 100), tolerance = 1e-8)
     z <- stats::qnorm(0.975)
     expect_equal(
       c(mh$lower, mh$upper),
-      mh$ratio * exp(c(-1, 1) * z * sqrt(1 / 40 + 1 / 90))
+      mh$ratio * exp(c(-1, 1) * z * sqrt(1 / 40 + 1 / 90)),
+      tolerance = 1e-8
     )
     expect_equal(
       mh$p_value,
-      2 * stats::pnorm(-abs(log(mh$ratio)) / sqrt(1 / 40 + 1 / 90))
+      2 * stats::pnorm(-abs(log(mh$ratio)) / sqrt(1 / 40 + 1 / 90)),
+      tolerance = 1e-8
     )
     # many parts with a common ratio: the MH estimate agrees with the Poisson
     # regression with a term per part, the maximum-likelihood estimate of the
@@ -983,8 +1044,10 @@ test_that(
     expect_lt(full$overall$change, 0)
     expect_true(any(grepl(
       "every part moved the other way",
-      capture.output(print(full))
+      format(full),
+      fixed = TRUE
     )))
+    expect_output(print(full), "Clearance rate")
     none <- clrdcmp(
       c(50, 60, 55, 70),
       c(100, 100, 100, 100),
@@ -992,7 +1055,8 @@ test_that(
       c(1, 1, 2, 2)
     )
     expect_identical(none$simpson$type, "none")
-    expect_true(any(grepl("No reversal", capture.output(print(none)))))
+    expect_true(any(grepl("No reversal", format(none), fixed = TRUE)))
+    expect_output(print(none), "Kitagawa")
     flip <- clrdcmp(
       c(50, 60, 55, 70),
       c(100, 100, 100, 100),
@@ -1001,7 +1065,7 @@ test_that(
       base = 2
     )
     expect_identical(flip$compare, c(2, 1))
-    expect_equal(flip$overall$change, -none$overall$change)
+    expect_equal(flip$overall$change, -none$overall$change, tolerance = 1e-8)
     # a part that does not change has no arrow; an unchanged aggregate is not a
     # reversal
     same <- clrdcmp(
@@ -1027,7 +1091,8 @@ test_that(
     g <- ext("ocj_offence_groups.csv")
     g <- g[g$year %in% c(2014, 2022), ]
     cd <- clrdcmp(g$disposed, g$received, g$offence_group, g$year)
-    out <- capture.output(print(cd))
+    expect_output(print(cd), "Clearance rate")
+    out <- format(cd)
     expect_true(any(grepl(
       "Simpson's paradox through the mix",
       out,
@@ -1036,12 +1101,15 @@ test_that(
     expect_true(any(grepl("Mantel-Haenszel", out, fixed = TRUE)))
     for (sz in list(c(3.5, 3), c(5, 4), c(9, 5))) {
       grDevices::pdf(NULL, width = sz[1], height = sz[2])
-      expect_no_warning(drawn <- plot(cd))
+      expect_no_warning({
+        drawn <- plot(cd)
+      })
       # drawn in order of rate (lowest at the bottom); the same parts, the same
       # values
       expect_equal(
         drawn$rateb[match(cd$groups$group, drawn$group)],
-        cd$groups$rateb
+        cd$groups$rateb,
+        tolerance = 1e-8
       )
       expect_identical(
         drawn$group,
@@ -1154,8 +1222,8 @@ test_that(
     # the summed row's rate comes from the summed counts, not an average of
     # rates
     rest <- cc$groups[!cc$groups$group %in% drawn$group, ]
-    expect_equal(other$ratea, sum(rest$numa) / sum(rest$dena))
-    expect_equal(other$rateeff, sum(rest$rateeff))
+    expect_equal(other$ratea, sum(rest$numa) / sum(rest$dena), tolerance = 1e-8)
+    expect_equal(other$rateeff, sum(rest$rateeff), tolerance = 1e-8)
     # the shown parts are the ones with the largest contributions
     kept <- setdiff(drawn$group, other$group)
     big <- cc$groups$group[order(
@@ -1179,7 +1247,7 @@ test_that(
   {
     grDevices::pdf(NULL, width = 3.5, height = 3)
     on.exit(grDevices::dev.off(), add = TRUE)
-    f <- rmoriebricklayer:::.jx_row_labels(
+    f <- .jx_row_labels(
       c("Crimes Against the Person", "Federal Statute"),
       30
     )
@@ -1188,7 +1256,7 @@ test_that(
       c("Crimes Against the Person", "Federal Statute")
     )
     expect_lt(f$cex, 1)
-    g <- rmoriebricklayer:::.jx_row_labels(
+    g <- .jx_row_labels(
       c(strrep("verylongword", 8), "b"),
       30
     )
@@ -1208,14 +1276,19 @@ test_that("a period-over-period plot says why a row has no percentage", {
   on.exit(grDevices::dev.off(), add = TRUE)
   drawn <- plot(y)
   expect_identical(is.finite(drawn$pctchg), c(FALSE, TRUE, TRUE, TRUE, FALSE))
-  calls <- character()
+  rec <- new.env()
+  rec$calls <- character()
   local_mocked_bindings(
-    text = function(x, y, labels, ...) calls <<- c(calls, labels),
+    text = function(x, y, labels, ...) rec$calls <- c(rec$calls, labels),
     .package = "graphics"
   )
   plot(y)
-  expect_true(any(grepl("first period", calls)))
-  expect_true(any(grepl("no percentage: previous period is zero", calls)))
+  expect_true(any(grepl("first period", rec$calls, fixed = TRUE)))
+  expect_true(any(grepl(
+    "no percentage: previous period is zero",
+    rec$calls,
+    fixed = TRUE
+  )))
 })
 
 test_that(
@@ -1231,17 +1304,153 @@ test_that(
     )
     grDevices::pdf(NULL, width = 4, height = 1.6)
     on.exit(grDevices::dev.off(), add = TRUE)
-    calls <- character()
+    rec <- new.env()
+    rec$calls <- character()
     local_mocked_bindings(
-      text = function(x, y, labels, ...) calls <<- c(calls, labels),
+      text = function(x, y, labels, ...) rec$calls <- c(rec$calls, labels),
       .package = "graphics"
     )
     plot(y)
-    expect_true(any(calls == "first period"))
-    expect_true(any(calls == "no percentage"))
+    expect_true(any(rec$calls == "first period"))
+    expect_true(any(rec$calls == "no percentage"))
     expect_false(any(grepl(
       "nothing to compare with|previous period is zero",
-      calls
+      rec$calls
     )))
   }
 )
+
+test_that("lifetbl() names `cens` when it is a function", {
+  expect_error(lifetbl(c(0, 2, 4), c(3, 2), cens = mean), "`cens` must be data")
+})
+
+test_that("the decomposition panels leave par(col), fg and mar as they were", {
+  mix <- dispmix(
+    ext("ocj_dispositions.csv")[, -(1:2)],
+    prd = ext(
+      "ocj_dispositions.csv"
+    )$year
+  )
+  g <- ext("ocj_offence_groups.csv")
+  g <- g[g$year %in% c(2014, 2022), ]
+  cd <- clrdcmp(g$disposed, g$received, g$offence_group, g$year)
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  before <- graphics::par(c("col", "fg", "mar"))
+  plot(mix)
+  expect_identical(graphics::par(c("col", "fg", "mar")), before)
+  plot(cd)
+  expect_identical(graphics::par(c("col", "fg", "mar")), before)
+  expect_identical(graphics::par("col"), "black")
+})
+
+# ---- printed boxes -----------------------------------------------------------
+
+# format() gives the plain lines of one titled block; print() draws them as a
+# box that fits an 80-column console, ASCII where the console takes no Unicode,
+# and returns the object invisibly.
+expect_box <- function(x, title, has = character()) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  withr::local_options(rmoriebricklayer.width = 80, rmoriebricklayer.numcol = 1)
+  txt <- format(x)
+  expect_type(txt, "character")
+  expect_true(grepl(title, txt[1L], fixed = TRUE), info = txt[1L])
+  flat <- paste(txt, collapse = "\n")
+  for (h in has) {
+    expect_true(grepl(h, flat, fixed = TRUE), info = h)
+  }
+  out <- utils::capture.output(print(x))
+  expect_output(expect_invisible(print(x)), "+-- ", fixed = TRUE)
+  expect_identical(withr::with_output_sink(nullfile(), print(x)), x)
+  expect_match(out[1L], "^\\+-- ")
+  expect_match(out[length(out)], "^\\+-+\\+$")
+  expect_true(all(nchar(out) == nchar(out[1L])))
+  expect_true(all(nchar(out) <= 79L))
+  invisible(out)
+}
+
+test_that("the justice results print as boxes with their facts", {
+  cf <- caseflow(c(10, 12, 9), c(9, 13, 9), win = 2)
+  expect_box(
+    cf,
+    "Case flow",
+    c("Periods", "1 to 3 (3)", "95% exact", "2 periods", "Over all 3")
+  )
+  lt <- lifetbl(c(0, 10, 20, Inf), c(30, 40, 20), cens = c(5, 5, 0))
+  out <- expect_box(lt, "Life table (actuarial)", c("Censored", "Greenwood"))
+  # an open last band has no interval: blank, not "[, ]"
+  expect_false(any(grepl("[, ]", out, fixed = TRUE)))
+  m <- dispmix(
+    rbind(c(5, 5), c(8, 2), c(6, 4)),
+    prd = c("2024-01", "2024-02", "2024-03")
+  )
+  expect_box(
+    m,
+    "Outcome shares by period",
+    c("Same mix in every period", "Cochran-Armitage", "rose most")
+  )
+  one <- dispmix(matrix(c(5, 3, 2), 1, dimnames = list(NULL, c("a", "b", "c"))))
+  expect_box(one, "Outcome shares by period", c("One period", "three periods"))
+  set.seed(5)
+  kd <- crmdens(
+    stats::rnorm(60),
+    stats::rnorm(60),
+    ngrid = 40,
+    xy = "planar"
+  )
+  expect_box(kd, "Kernel density", c("planar", "40 x 40 cells", "50%"))
+  k3 <- knoxtst(
+    c(0, 10, 5000),
+    c(0, 0, 0),
+    c(0, 100, 200),
+    c(20, 40),
+    c(1, 2),
+    nsim = 19,
+    xy = "planar"
+  )
+  expect_box(k3, "Knox test", c("Permutations  19", "not adjusted"))
+  none <- clrdcmp(
+    c(50, 60, 55, 70),
+    c(100, 100, 100, 100),
+    c("x", "y", "x", "y"),
+    c(1, 1, 2, 2)
+  )
+  expect_box(
+    none,
+    "Clearance rate, 2 against 1",
+    c("Rate 1", "Rate 2", "mix effect", "No reversal", "Mantel-Haenszel")
+  )
+})
+
+# ---- result-driven readings and restored digits ------------------------------
+
+ls_flat <- function(x) gsub("\\s+", " ", paste(format(x), collapse = " "))
+
+test_that("caseflow()'s reading follows whether the caseload grew or shrank", {
+  grew <- ls_flat(caseflow(c(100, 120, 110), c(80, 90, 85)))
+  expect_match(grew, "Clearance is below 1 over the whole run", fixed = TRUE)
+  expect_match(grew, "caseload grew", fixed = TRUE)
+  expect_match(grew, "Period by period: 1 below 1, 0 above 1, 2", fixed = TRUE)
+  shrank <- ls_flat(caseflow(c(80, 90, 85), c(100, 120, 110)))
+  expect_match(shrank, "caseload shrank", fixed = TRUE)
+  even <- ls_flat(caseflow(c(100, 100, 100), c(101, 99, 100)))
+  expect_match(even, "interval includes 1", fixed = TRUE)
+})
+
+test_that("dispmix()'s trend table keeps two decimals and counts trends", {
+  d <- read.csv(system.file("extdata", "ocj_dispositions.csv",
+    package = "rmoriebricklayer"))
+  mix <- dispmix(d[, -(1:2)], prd = d$year)
+  txt <- ls_flat(mix)
+  expect_match(txt, "20.29", fixed = TRUE)
+  expect_match(txt, "29,543.56", fixed = TRUE)
+  expect_match(txt, "7 of 7 shares trend at the Holm-adjusted 0.05 level",
+    fixed = TRUE)
+  x <- list(
+    trend = data.frame(outcome = c("a", "b"), pholm = c(0.5, 0.01),
+      change = c(0.1, -0.2), stringsAsFactors = FALSE),
+    conflvl = 0.95
+  )
+  expect_match(.jx_dm_trends(x), "1 of 2 shares trend", fixed = TRUE)
+  expect_match(.jx_dm_trends(x), "0 up (none), 1 down (b)", fixed = TRUE)
+})

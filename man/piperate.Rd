@@ -18,7 +18,8 @@ piperate(num, den, win = 12L, lag = 0L, grp = NULL)
 counts in period order within it.}
 }
 \value{
-A data frame: \code{group}, \code{index} (the period's position
+A data frame of class \code{rmbl_pipeline_rate}: \code{group},
+\code{index} (the period's position
 within its group), \code{numerator}, \code{denominator} (the window sums),
 \code{rate}.
 }

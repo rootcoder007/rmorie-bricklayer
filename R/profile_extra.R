@@ -30,7 +30,7 @@
 #' Errors: \code{data} not a data frame, without columns, or with missing or
 #' duplicated names; \code{maxpat} not one positive whole number.
 #'
-#' @param data A data frame.
+#' @param data A data frame whose missingness patterns are counted.
 #' @param maxpat Maximum patterns to return, most
 #'   frequent first, one positive whole number (default 20).
 #' @return A data frame of class \code{bricklayer_missingness}, one row per
@@ -80,9 +80,8 @@ misspat <- function(data, maxpat = 20L) {
   if (length(maxpat) != 1L || is.na(maxpat) || maxpat < 1L) {
     stop("`maxpat` must be a single positive integer", call. = FALSE)
   }
-  n <- nrow(data)
-  if (n == 0L) {
-    out <- data.frame(
+  out <- if (nrow(data) == 0L) {
+    data.frame(
       pattern = character(0),
       n_rows = integer(0),
       pctrows = numeric(0),
@@ -90,38 +89,9 @@ misspat <- function(data, maxpat = 20L) {
       columns = character(0),
       stringsAsFactors = FALSE
     )
-    attr(out, "columns") <- names(data)
-    class(out) <- c("bricklayer_missingness", "data.frame")
-    return(out)
+  } else {
+    .bl_miss_rows(data, maxpat)
   }
-
-  m <- vapply(data, is.na, logical(n))
-  if (is.null(dim(m))) {
-    m <- matrix(m, nrow = n)
-  }
-  codes <- apply(m, 1L, function(r) {
-    paste0(ifelse(r, "X", "."), collapse = "")
-  })
-  tab <- sort(table(codes), decreasing = TRUE)
-  keep <- utils::head(names(tab), maxpat)
-
-  rows <- lapply(keep, function(code) {
-    flags <- strsplit(code, "", fixed = TRUE)[[1L]] == "X"
-    data.frame(
-      pattern = code,
-      n_rows = as.integer(tab[[code]]),
-      pctrows = 100 * as.integer(tab[[code]]) / n,
-      n_missing = sum(flags),
-      columns = if (any(flags)) {
-        paste(names(data)[flags], collapse = ", ")
-      } else {
-        ""
-      },
-      stringsAsFactors = FALSE
-    )
-  })
-  out <- do.call(rbind, rows)
-  rownames(out) <- NULL
   attr(out, "columns") <- names(data)
   class(out) <- c("bricklayer_missingness", "data.frame")
   out
@@ -143,20 +113,31 @@ print.bricklayer_missingness <- function(x, ...) {
   ) {
     return(invisible(x))
   }
-  cat(.rmbl_rule("Missingness patterns"), "\n")
-  cols <- attr(x, "columns")
-  cat(
-    "  columns, in pattern order: ",
-    paste(cols, collapse = ", "),
-    "\n\n",
-    sep = ""
-  )
+  .rmbl_cat(format(x, ...), x)
+  invisible(x)
+}
+
+#' @export
+format.bricklayer_missingness <- function(x, ...) {
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(df, "columns") <- NULL
+  if (!all(c("pattern", "n_rows", "pctrows") %in% names(df))) {
+    return(utils::capture.output(print(df)))
+  }
   df$pctrows <- formatC(df$pctrows, format = "f", digits = 1)
-  print(df, row.names = FALSE)
-  cat(.rmbl_rule(), "\n")
-  invisible(x)
+  .rmbl_stat_block(
+    "Missingness patterns",
+    facts = list(
+      Columns = paste0("in pattern order: ", toString(attr(x, "columns"))),
+      Patterns = nrow(df),
+      Rows = sum(df$n_rows)
+    ),
+    table = df,
+    reading = paste(
+      "Each pattern marks the columns missing together; a few large",
+      "patterns point to a cause worth naming before rows are dropped."
+    )
+  )
 }
 
 #' Strongest pairwise correlations in a data frame
@@ -187,7 +168,7 @@ print.bricklayer_missingness <- function(x, ...) {
 #' \code{n} not one positive whole number; \code{minabs} not one number in
 #' \eqn{[0, 1]}; an invalid \code{meth}.
 #'
-#' @param data A data frame; non-numeric columns are ignored.
+#' @param data A data frame; its numeric pairs are ranked by correlation.
 #' @param n Number of pairs to return, one positive whole number (default
 #'   10).
 #' @param meth \code{"spearman"} (default) or \code{"pearson"}.
@@ -253,33 +234,10 @@ topcors <- function(
   if (length(n) != 1L || is.na(n) || n < 1L) {
     stop("`n` must be a single positive integer", call. = FALSE)
   }
-  minabs <- .rmbl_num(minabs, "minabs")
-  if (length(minabs) != 1L || is.na(minabs) || minabs < 0 || minabs > 1) {
-    stop("`minabs` must be a single value in [0, 1]", call. = FALSE)
-  }
+  minabs <- .bl_minabs(minabs)
 
   pairs <- utils::combn(num, 2L)
-  pg <- blprog("correlations", ncol(pairs))
-  on.exit(pg$done(), add = TRUE)
-  vals <- vapply(
-    seq_len(ncol(pairs)),
-    function(j) {
-      pg$update(j - 1L, sprintf("pair %d/%d", j, ncol(pairs)))
-      a <- data[[pairs[1L, j]]]
-      b <- data[[pairs[2L, j]]]
-      ok <- !is.na(a) & !is.na(b)
-      if (sum(ok) < 3L) {
-        return(NA_real_)
-      }
-      if (identical(meth, "spearman")) {
-        cspr(a[ok], b[ok])
-      } else {
-        ccorr(a[ok], b[ok])
-      }
-    },
-    0
-  )
-
+  vals <- .bl_pair_cors(data, pairs, meth)
   out <- data.frame(
     x = pairs[1L, ],
     y = pairs[2L, ],
@@ -301,33 +259,31 @@ print.bricklayer_correlations <- function(x, ...) {
   if (.rmbl_needs_cols(x, c("x", "y", "correlation", "abscor"))) {
     return(invisible(x))
   }
-  cat(.rmbl_rule(paste0("Top correlations (", attr(x, "method"), ")")), "\n")
+  .rmbl_cat(format(x, ...), x)
+  invisible(x)
+}
+
+#' @export
+format.bricklayer_correlations <- function(x, ...) {
+  title <- paste0("Top correlations (", attr(x, "method"), ")")
   if (nrow(x) == 0L) {
-    cat("  (none above the threshold)\n")
-    cat(.rmbl_rule(), "\n")
-    return(invisible(x))
+    return(.rmbl_stat_block(title, notes = "(none above the threshold)"))
   }
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(df, "method") <- NULL
   # a signed bar makes the direction and strength readable at a glance
-  df$plot <- vapply(
-    x$correlation,
-    function(r) {
-      k <- as.integer(round(abs(r) * 10))
-      bar <- strrep("#", k)
-      if (r < 0) {
-        paste0(formatC(bar, width = 10), "|", strrep(" ", 10))
-      } else {
-        paste0(strrep(" ", 10), "|", formatC(bar, width = -10))
-      }
-    },
-    character(1)
-  )
+  df$plot <- vapply(x$correlation, .bl_cor_bar, character(1))
   df$correlation <- formatC(df$correlation, format = "f", digits = 3)
   df$abscor <- NULL
-  print(df, row.names = FALSE)
-  cat(.rmbl_rule(), "\n")
-  invisible(x)
+  .rmbl_stat_block(
+    title,
+    facts = list(Method = attr(x, "method"), Pairs = nrow(df)),
+    table = df,
+    reading = paste(
+      "The pairs most strongly associated, strongest first; a correlation",
+      "near 1 or -1 often means one column is derived from the other."
+    )
+  )
 }
 
 #' Compare two captured environments
@@ -347,8 +303,9 @@ print.bricklayer_correlations <- function(x, ...) {
 #' in \code{a} (or recorded with an \code{NA} version in \code{a}) is
 #' \code{"added"}; the reverse is \code{"removed"}. The operating-system
 #' string, the capture time and the random number generator settings are
-#' not compared. Rows follow the order of \code{a}'s packages, then
-#' \code{b}'s new ones.
+#' not compared. Any other field present in only one record, or different
+#' in the two, is named in \code{fields} and makes them differ. Rows follow
+#' the order of \code{a}'s packages, then \code{b}'s new ones.
 #'
 #' Error: \code{a} or \code{b} that is not a list.
 #'
@@ -362,7 +319,9 @@ print.bricklayer_correlations <- function(x, ...) {
 #'   \code{platform} (likewise), and \code{packages} (a data frame with
 #'   character columns \code{package}, \code{a}, \code{b} and \code{change},
 #'   where \code{change} is \code{"added"}, \code{"removed"} or
-#'   \code{"changed"}; no rows when nothing differs).
+#'   \code{"changed"}; no rows when nothing differs), and \code{fields}
+#'   (the names of any other fields that differ, \code{character(0)} when
+#'   none).
 #' @seealso
 #' [capenv()],
 #' [mkmnf()]
@@ -390,34 +349,246 @@ print.bricklayer_correlations <- function(x, ...) {
 #' try(envdiff("4.5.1", a))
 #' @export
 envdiff <- function(a, b) {
-  pull <- function(x, what) {
-    if (is.list(x) && !is.null(x$environment)) {
-      x <- x$environment
-    }
-    if (!is.list(x) || is.data.frame(x) || is.null(names(x))) {
-      stop(
-        "`a` and `b` must be environment records or manifests",
-        call. = FALSE
+  ra <- as.character(.bl_env_pull(a, "r_version"))
+  rb <- as.character(.bl_env_pull(b, "r_version"))
+  pa <- as.character(.bl_env_pull(a, "platform"))
+  pb <- as.character(.bl_env_pull(b, "platform"))
+  ka <- .bl_env_pkgs(a)
+  kb <- .bl_env_pkgs(b)
+
+  pkg_df <- .bl_env_pkg_diff(ka, kb)
+
+  r_diff <- if (identical(ra, rb)) NULL else c(a = ra, b = rb)
+  p_diff <- if (identical(pa, pb)) NULL else c(a = pa, b = pb)
+  # a field in only one record was ignored and the two called identical
+  fld <- .bl_env_fields(a, b)
+
+  out <- list(
+    identical = is.null(r_diff) &&
+      is.null(p_diff) &&
+      nrow(pkg_df) == 0L &&
+      !length(fld),
+    r_version = r_diff,
+    platform = p_diff,
+    packages = pkg_df,
+    fields = fld
+  )
+  class(out) <- c("bricklayer_env_diff", "list")
+  out
+}
+
+#' @export
+format.bricklayer_env_diff <- function(x, ...) {
+  g <- .rmbl_glyphs()
+  pk <- x$packages
+  .rmbl_stat_block(
+    "Environment diff",
+    facts = .bl_env_diff_facts(x, g),
+    table = if (nrow(pk)) {
+      data.frame(
+        package = pk$package,
+        a = ifelse(is.na(pk$a), g$dash, pk$a),
+        b = ifelse(is.na(pk$b), g$dash, pk$b),
+        change = pk$change,
+        stringsAsFactors = FALSE
       )
+    },
+    reading = if (isTRUE(x$identical)) {
+      "The two records describe the same R, platform and package versions."
+    } else {
+      "The records differ: a result may not reproduce until these agree."
+    },
+    notes = if (nrow(pk)) {
+      sprintf("%d package difference(s)", nrow(pk))
+    } else {
+      "no package differences"
     }
-    x[[what]]
-  }
-  pkgs <- function(x) {
-    p <- pull(x, "packages")
-    if (is.null(p)) {
-      return(character(0))
-    }
-    v <- vapply(p, function(z) as.character(z)[1L], character(1))
-    stats::setNames(v, names(p))
-  }
+  )
+}
 
-  ra <- as.character(pull(a, "r_version"))
-  rb <- as.character(pull(b, "r_version"))
-  pa <- as.character(pull(a, "platform"))
-  pb <- as.character(pull(b, "platform"))
-  ka <- pkgs(a)
-  kb <- pkgs(b)
+#' Counts the rows of each missingness pattern, the commonest first.
+#' @param data A data frame with at least one row.
+#' @param maxpat The most patterns kept.
+#' @return A data frame, one row per pattern.
+#' @noRd
+.bl_miss_rows <- function(data, maxpat) {
+  n <- nrow(data)
+  m <- vapply(data, is.na, logical(n))
+  if (is.null(dim(m))) {
+    m <- matrix(m, nrow = n)
+  }
+  codes <- apply(m, 1L, function(r) {
+    paste(ifelse(r, "X", "."), collapse = "")
+  })
+  tab <- sort(table(codes), decreasing = TRUE)
+  keep <- utils::head(names(tab), maxpat)
 
+  rows <- lapply(keep, function(code) {
+    flags <- strsplit(code, "", fixed = TRUE)[[1L]] == "X"
+    data.frame(
+      pattern = code,
+      n_rows = as.integer(tab[[code]]),
+      pctrows = 100 * as.integer(tab[[code]]) / n,
+      n_missing = sum(flags),
+      columns = if (any(flags)) {
+        toString(names(data)[flags])
+      } else {
+        ""
+      },
+      stringsAsFactors = FALSE
+    )
+  })
+  out <- do.call(rbind, rows)
+  rownames(out) <- NULL
+  out
+}
+
+#' Checks the smallest absolute correlation topcors() keeps.
+#' @param minabs The value given.
+#' @return It, as a number.
+#' @noRd
+.bl_minabs <- function(minabs) {
+  minabs <- .rmbl_num(minabs, "minabs")
+  if (length(minabs) != 1L || is.na(minabs) || minabs < 0 || minabs > 1) {
+    stop("`minabs` must be a single value in [0, 1]", call. = FALSE)
+  }
+  minabs
+}
+
+#' Correlates each pair of columns on their complete rows, for topcors().
+#' @param data The data frame holding the columns in `pairs`.
+#' @param pairs The pairs, one per column of a two-row matrix.
+#' @param meth "spearman" or "pearson".
+#' @return One correlation per pair, NA for fewer than three complete rows.
+#' @noRd
+.bl_pair_cors <- function(data, pairs, meth) {
+  pg <- blprog("correlations", ncol(pairs))
+  on.exit(pg$done(), add = TRUE)
+  vals <- vapply(
+    seq_len(ncol(pairs)),
+    function(j) {
+      pg$update(j - 1L, sprintf("pair %d/%d", j, ncol(pairs)))
+      a <- data[[pairs[1L, j]]]
+      b <- data[[pairs[2L, j]]]
+      ok <- !is.na(a) & !is.na(b)
+      if (sum(ok) < 3L) {
+        return(NA_real_)
+      }
+      if (identical(meth, "spearman")) {
+        cspr(a[ok], b[ok])
+      } else {
+        ccorr(a[ok], b[ok])
+      }
+    },
+    0
+  )
+  vals
+}
+
+#' The facts of an environment diff: the verdict, then the R version, the
+#' platform and the other fields when they differ.
+#' @param x An environment diff from envdiff().
+#' @param g The glyphs from .rmbl_glyphs().
+#' @return A named list.
+#' @noRd
+.bl_env_diff_facts <- function(x, g) {
+  arrow <- function(v) {
+    if (!is.null(v)) sprintf("%s -> %s", v[["a"]], v[["b"]])
+  }
+  list(
+    Status = if (isTRUE(x$identical)) {
+      paste0(g$ok, " environments match")
+    } else {
+      paste0(g$bad, " environments differ")
+    },
+    `R version` = arrow(x$r_version),
+    Platform = arrow(x$platform),
+    `other fields` = if (length(x$fields)) toString(x$fields)
+  )
+}
+
+#' A signed text bar for one correlation: left of the bar for negative,
+#' right for positive, one mark per 0.1.
+#' @param r The correlation.
+#' @return One string of 21 characters.
+#' @noRd
+.bl_cor_bar <- function(r) {
+  k <- as.integer(round(abs(r) * 10))
+  bar <- strrep("#", k)
+  if (r < 0) {
+    paste0(formatC(bar, width = 10), "|", strrep(" ", 10))
+  } else {
+    paste0(strrep(" ", 10), "|", formatC(bar, width = -10))
+  }
+}
+
+#' Reads one field of an environment record or a manifest's.
+#' @param x An environment record, or a manifest carrying one.
+#' @param what The field to take from `x`.
+#' @return The field's value.
+#' @noRd
+.bl_env_pull <- function(x, what) {
+  .bl_env_rec(x)[[what]]
+}
+
+#' The environment record itself: `x`, or a manifest's environment element.
+#' @param x An environment record, or a manifest carrying one.
+#' @return The record, a named list.
+#' @noRd
+.bl_env_rec <- function(x) {
+  if (is.list(x) && !is.null(x$environment)) {
+    x <- x$environment
+  }
+  if (!is.list(x) || is.data.frame(x) || is.null(names(x))) {
+    stop(
+      "`a` and `b` must be environment records or manifests",
+      call. = FALSE
+    )
+  }
+  x
+}
+
+#' The fields other than R version, platform and packages that differ.
+#'
+#' The operating system, capture time and RNG settings are left out, as
+#' documented; any other field in only one record, or different, is named.
+#' @param a,b Environment records, or manifests carrying one.
+#' @return A character vector of field names.
+#' @noRd
+.bl_env_fields <- function(a, b) {
+  skip <- c(
+    "r_version",
+    "platform",
+    "packages",
+    "os",
+    "captured_utc",
+    "rng_kind",
+    "rng_seeded"
+  )
+  ra <- .bl_env_rec(a)
+  rb <- .bl_env_rec(b)
+  nm <- setdiff(union(names(ra), names(rb)), skip)
+  nm[!vapply(nm, function(n) identical(ra[[n]], rb[[n]]), NA)]
+}
+
+#' The package versions of an environment record, named by package.
+#' @param x An environment record, or a manifest carrying one.
+#' @return A named character vector.
+#' @noRd
+.bl_env_pkgs <- function(x) {
+  p <- .bl_env_pull(x, "packages")
+  if (is.null(p)) {
+    return(character(0))
+  }
+  v <- vapply(p, function(z) as.character(z)[1L], character(1))
+  stats::setNames(v, names(p))
+}
+
+#' The packages added, removed or changed between two environments.
+#' @param ka,kb The package versions of each, named by package.
+#' @return A data frame: package, a, b and change.
+#' @noRd
+.bl_env_pkg_diff <- function(ka, kb) {
   all_names <- union(names(ka), names(kb))
   rows <- lapply(all_names, function(nm) {
     va <- if (nm %in% names(ka)) ka[[nm]] else NA_character_
@@ -453,81 +624,5 @@ envdiff <- function(a, b) {
     )
   }
   rownames(pkg_df) <- NULL
-
-  r_diff <- if (!identical(ra, rb)) c(a = ra, b = rb) else NULL
-  p_diff <- if (!identical(pa, pb)) c(a = pa, b = pb) else NULL
-
-  out <- list(
-    identical = is.null(r_diff) && is.null(p_diff) && nrow(pkg_df) == 0L,
-    r_version = r_diff,
-    platform = p_diff,
-    packages = pkg_df
-  )
-  class(out) <- c("bricklayer_env_diff", "list")
-  out
+  pkg_df
 }
-
-#' @export
-format.bricklayer_env_diff <- function(x, ...) {
-  g <- .rmbl_glyphs()
-  lines <- c(
-    .rmbl_rule("Environment diff"),
-    paste0(
-      "  ",
-      if (isTRUE(x$identical)) {
-        paste0(g$ok, " environments match")
-      } else {
-        paste0(g$bad, " environments differ")
-      }
-    ),
-    ""
-  )
-  if (!is.null(x$r_version)) {
-    lines <- c(
-      lines,
-      .rmbl_kv(list(
-        "R version" = sprintf(
-          "%s -> %s",
-          x$r_version[["a"]],
-          x$r_version[["b"]]
-        )
-      ))
-    )
-  }
-  if (!is.null(x$platform)) {
-    lines <- c(
-      lines,
-      .rmbl_kv(list(
-        platform = sprintf(
-          "%s -> %s",
-          x$platform[["a"]],
-          x$platform[["b"]]
-        )
-      ))
-    )
-  }
-  if (nrow(x$packages) == 0L) {
-    return(c(lines, "  no package differences", .rmbl_rule()))
-  }
-  lines <- c(
-    lines,
-    sprintf(
-      "  %d package difference(s):",
-      nrow(x$packages)
-    ),
-    ""
-  )
-  rows <- sprintf(
-    "  %-24s %-12s %-12s %s",
-    x$packages$package,
-    ifelse(is.na(x$packages$a), g$dash, x$packages$a),
-    ifelse(is.na(x$packages$b), g$dash, x$packages$b),
-    x$packages$change
-  )
-  c(lines, rows, .rmbl_rule())
-}
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_env_diff
-print.bricklayer_env_diff <- .rmbl_print_via_format

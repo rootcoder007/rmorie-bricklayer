@@ -143,14 +143,7 @@ tsvrf <- function(
   data <- .rmbl_as_bytes(data, "data")
   acc <- new.env(parent = emptyenv())
   acc$checks <- list()
-  note_row <- function(check, ok, detail = "") {
-    acc$checks[[length(acc$checks) + 1L]] <- data.frame(
-      check = check,
-      ok = isTRUE(ok),
-      detail = as.character(detail),
-      stringsAsFactors = FALSE
-    )
-  }
+  note_row <- .rmbl_ts_recorder(acc)
   der <- tryCatch(.Call(C_rmbl_der_parse, token), error = function(e) e)
   if (inherits(der, "error")) {
     note_row("token_parses", FALSE, conditionMessage(der))
@@ -169,6 +162,109 @@ tsvrf <- function(
     sprintf("TSTInfo of %d bytes", length(info$tst_der))
   )
 
+  .rmbl_ts_imprint_row(info, data, note_row)
+  # 2. the signature over the signed attributes, under a key we are given
+  .cert <- if (is.null(cert)) info$cert_der else .rmbl_as_bytes(cert, "cert")
+  if (is.null(.cert)) {
+    note_row(
+      "signature",
+      FALSE,
+      "no certificate supplied and none embedded in the token"
+    )
+  } else {
+    note_row(
+      "certificate_source",
+      TRUE,
+      if (is.null(cert)) {
+        "the token's embedded certificate"
+      } else {
+        "the certificate supplied by the caller"
+      }
+    )
+    .rmbl_ts_sig_rows(info, .cert, note_row)
+    .rmbl_ts_trust_rows(info, .cert, trust, attm, crls, note_row)
+  }
+  .rmbl_ts_result(acc$checks, info)
+}
+
+#' @rdname tsvrf
+#' @export
+tsinfo <- function(token) {
+  token <- .rmbl_as_bytes(token, "token")
+  der <- .Call(C_rmbl_der_parse, token)
+  info <- .rmbl_ts_extract(der, token)
+  out <- list(
+    time = info$time,
+    serial = info$serial,
+    policy = info$policy,
+    hash_algorithm = .rmbl_ts_digest_name(info$imprint_oid),
+    imprint = .rmbl_hexlify(info$imprint),
+    signature_algorithm = info$sig_oid,
+    has_certificate = !is.null(info$cert_der)
+  )
+  out
+}
+
+#' @export
+format.bricklayer_timestamp <- function(x, ...) {
+  .rmbl_stat_block(
+    sprintf(
+      "Timestamp token: %s",
+      if (isTRUE(x$ok)) "verified" else "NOT verified"
+    ),
+    facts = list(
+      Time = if (inherits(x$time, "POSIXct")) {
+        format(x$time, "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
+      } else {
+        "<unknown>"
+      },
+      Serial = x$serial,
+      Policy = x$policy,
+      Imprint = x$hash_algorithm,
+      Signature = x$signature_algorithm
+    ),
+    reading = .rmbl_check_reading(
+      x$ok,
+      "the authority vouches that the data existed at this time",
+      "the token does not prove when the data existed"
+    ),
+    notes = c(
+      .rmbl_check_lines(x$checks),
+      # Only say this when it is true. Trust IS checked when an anchor
+      # was given, and a line claiming otherwise under a verified chain
+      # would be the most misleading thing on the screen.
+      if (
+        any(x$checks$check == "certificate_trust" & !x$checks$ok) &&
+          !any(startsWith(x$checks$check, "chain:"))
+      ) {
+        c("", "no anchor was given: nothing vouches for the certificate")
+      }
+    )
+  )
+}
+
+#' A function that records one check of tsvrf() as a row in `acc$checks`.
+#' @param acc The environment the rows are kept in.
+#' @return The function (check, ok, detail).
+#' @noRd
+.rmbl_ts_recorder <- function(acc) {
+  function(check, ok, detail = "") {
+    acc$checks[[length(acc$checks) + 1L]] <- data.frame(
+      check = check,
+      ok = isTRUE(ok),
+      detail = as.character(detail),
+      stringsAsFactors = FALSE
+    )
+  }
+}
+
+#' tsvrf()'s row on whether the token's imprint is a digest of the data.
+#' @param info The token's contents (.rmbl_ts_extract()).
+#' @param data The data's bytes.
+#' @param note_row The function that records the imprint check.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_ts_imprint_row <- function(info, data, note_row) {
   # 1. is the token about these bytes
   alg <- .rmbl_ts_digest_name(info$imprint_oid)
   if (is.na(alg)) {
@@ -195,109 +291,97 @@ tsvrf <- function(
       }
     )
   }
-
-  # 2. the signature over the signed attributes, under a key we are given
-  .cert <- if (!is.null(cert)) {
-    .rmbl_as_bytes(cert, "cert")
-  } else if (!is.null(info$cert_der)) {
-    info$cert_der
-  } else {
-    NULL
-  }
-  if (is.null(.cert)) {
-    note_row(
-      "signature",
-      FALSE,
-      "no certificate supplied and none embedded in the token"
-    )
-  } else {
-    note_row(
-      "certificate_source",
-      TRUE,
-      if (is.null(cert)) {
-        "the token's embedded certificate"
-      } else {
-        "the certificate supplied by the caller"
-      }
-    )
-    v <- tryCatch(.rmbl_ts_verify_sig(info, .cert), error = function(e) e)
-    if (inherits(v, "error")) {
-      note_row("signature", FALSE, conditionMessage(v))
-    } else {
-      note_row("signature", v$ok, v$detail)
-      # the signed attributes must themselves commit to the TSTInfo
-      note_row("attribute_digest", v$content_ok, v$content_detail)
-    }
-    # Trust. Without an anchor the check above says only that the key in
-    # the certificate signed the token; with one it says a key you chose
-    # to believe vouches for that certificate.
-    if (is.null(trust)) {
-      note_row(
-        "certificate_trust",
-        FALSE,
-        paste(
-          "no trust anchor given: the key in the certificate",
-          "signed the token, but nothing vouches for the",
-          "certificate itself"
-        )
-      )
-    } else {
-      # Validity windows are checked at the time the TOKEN asserts, not
-      # now. A token signed in 2020 under a certificate that expired in
-      # 2021 was validly signed, and judging it by today's date would
-      # reject it for a reason unconnected to its validity.
-      when <- if (is.null(attm)) info$time else attm
-      ch <- tryCatch(
-        certchnvrf(
-          .cert,
-          trust = trust,
-          attm = when,
-          purp = "timeStamping",
-          crls = crls
-        ),
-        error = function(e) e
-      )
-      if (inherits(ch, "error")) {
-        note_row("certificate_trust", FALSE, conditionMessage(ch))
-      } else {
-        note_row(
-          "certificate_trust",
-          ch$ok,
-          sprintf(
-            "%d certificate(s), checked at %s",
-            length(ch$path),
-            format(when, "%Y-%m-%d", tz = "UTC")
-          )
-        )
-        for (i in seq_len(nrow(ch$checks))) {
-          note_row(
-            paste0("chain:", ch$checks$check[i]),
-            ch$checks$ok[i],
-            ch$checks$detail[i]
-          )
-        }
-      }
-    }
-  }
-  .rmbl_ts_result(acc$checks, info)
+  invisible(NULL)
 }
 
-#' @rdname tsvrf
-#' @export
-tsinfo <- function(token) {
-  token <- .rmbl_as_bytes(token, "token")
-  der <- .Call(C_rmbl_der_parse, token)
-  info <- .rmbl_ts_extract(der, token)
-  out <- list(
-    time = info$time,
-    serial = info$serial,
-    policy = info$policy,
-    hash_algorithm = .rmbl_ts_digest_name(info$imprint_oid),
-    imprint = .rmbl_hexlify(info$imprint),
-    signature_algorithm = info$sig_oid,
-    has_certificate = !is.null(info$cert_der)
-  )
-  out
+#' tsvrf()'s rows on the signature over the signed attributes.
+#' @param info The token's contents.
+#' @param .cert The certificate's DER bytes.
+#' @param note_row The function that records the signature checks.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_ts_sig_rows <- function(info, .cert, note_row) {
+  v <- tryCatch(.rmbl_ts_verify_sig(info, .cert), error = function(e) e)
+  if (inherits(v, "error")) {
+    note_row("signature", FALSE, conditionMessage(v))
+  } else {
+    note_row("signature", v$ok, v$detail)
+    # the signed attributes must themselves commit to the TSTInfo
+    note_row("attribute_digest", v$content_ok, v$content_detail)
+  }
+  invisible(NULL)
+}
+
+#' tsvrf()'s rows on whether a trust anchor vouches for the certificate.
+#' @param info The token's contents.
+#' @param .cert The certificate's DER bytes.
+#' @param trust,attm,crls As for tsvrf().
+#' @param note_row The function that records the trust checks.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_ts_trust_rows <- function(info, .cert, trust, attm, crls, note_row) {
+  # Trust. Without an anchor the check above says only that the key in
+  # the certificate signed the token; with one it says a key you chose
+  # to believe vouches for that certificate.
+  if (is.null(trust)) {
+    note_row(
+      "certificate_trust",
+      FALSE,
+      paste(
+        "no trust anchor given: the key in the certificate",
+        "signed the token, but nothing vouches for the",
+        "certificate itself"
+      )
+    )
+  } else {
+    # Validity windows are checked at the time the TOKEN asserts, not
+    # now. A token signed in 2020 under a certificate that expired in
+    # 2021 was validly signed, and judging it by today's date would
+    # reject it for a reason unconnected to its validity.
+    when <- if (is.null(attm)) info$time else attm
+    ch <- tryCatch(
+      certchnvrf(
+        .cert,
+        trust = trust,
+        attm = when,
+        purp = "timeStamping",
+        crls = crls
+      ),
+      error = function(e) e
+    )
+    .rmbl_ts_chain_rows(ch, when, note_row)
+  }
+  invisible(NULL)
+}
+
+#' tsvrf()'s rows from the certificate chain's check.
+#' @param ch What certchnvrf() returned, or the error it gave.
+#' @param when The time the chain was checked at.
+#' @param note_row The function that records the certificate chain's check.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_ts_chain_rows <- function(ch, when, note_row) {
+  if (inherits(ch, "error")) {
+    note_row("certificate_trust", FALSE, conditionMessage(ch))
+  } else {
+    note_row(
+      "certificate_trust",
+      ch$ok,
+      sprintf(
+        "%d certificate(s), checked at %s",
+        length(ch$path),
+        format(when, "%Y-%m-%d", tz = "UTC")
+      )
+    )
+    for (i in seq_len(nrow(ch$checks))) {
+      note_row(
+        paste0("chain:", ch$checks$check[i]),
+        ch$checks$ok[i],
+        ch$checks$detail[i]
+      )
+    }
+  }
+  invisible(NULL)
 }
 
 #' Assembles the result of a timestamp verification.
@@ -330,51 +414,6 @@ tsinfo <- function(token) {
   out
 }
 
-#' @export
-format.bricklayer_timestamp <- function(x, ...) {
-  c(
-    .rmbl_rule(sprintf(
-      "Timestamp token: %s",
-      if (x$ok) "verified" else "NOT verified"
-    )),
-    .rmbl_kv(list(
-      time = if (inherits(x$time, "POSIXct")) {
-        format(x$time, "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
-      } else {
-        "<unknown>"
-      },
-      serial = x$serial,
-      policy = x$policy,
-      imprint = x$hash_algorithm,
-      signature = x$signature_algorithm
-    )),
-    .rmbl_rule(),
-    sprintf(
-      "  %-20s %-5s %s",
-      x$checks$check,
-      ifelse(x$checks$ok, "ok", "FAIL"),
-      substring(x$checks$detail, 1L, 42L)
-    ),
-    # Only say this when it is true. Trust IS checked when an anchor
-    # was given, and a line claiming otherwise under a verified chain
-    # would be the most misleading thing on the screen.
-    if (
-      any(x$checks$check == "certificate_trust" & !x$checks$ok) &&
-        !any(startsWith(x$checks$check, "chain:"))
-    ) {
-      "  no anchor was given: nothing vouches for the certificate"
-    } else {
-      NULL
-    },
-    .rmbl_rule()
-  )
-}
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_timestamp
-print.bricklayer_timestamp <- .rmbl_print_via_format
-
 # ---------------------------------------------------------------- #
 # DER navigation. Everything below walks the structures RFC 3161,
 # RFC 5652 (CMS) and RFC 5280 (X.509) define, by tag and by OID.
@@ -383,7 +422,7 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
 #' Reads a token or certificate as DER bytes, from a raw vector or a DER or PEM
 #' file.
 #' @param x A raw vector or the path to a file.
-#' @param what The argument's name, used in the error message.
+#' @param what The argument's name, quoted when the token cannot be read.
 #' @return A raw vector.
 #' @noRd
 .rmbl_as_bytes <- function(x, what) {
@@ -490,7 +529,7 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
 
 #' Computes a digest of bytes with a named algorithm.
 #' @param alg \code{"sha256"}, \code{"sha384"} or \code{"sha512"}.
-#' @param bytes A raw vector.
+#' @param bytes A raw vector to digest.
 #' @return The digest as a raw vector.
 #' @noRd
 .rmbl_ts_digest <- function(alg, bytes) {
@@ -503,6 +542,59 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
   )
 }
 
+#' Whether a DER node is a SEQUENCE of at least `n` elements whose first is the
+#' OID `oid`.
+#' @param nd The parsed DER node to test for a SEQUENCE led by the OID.
+#' @param n The least number of elements.
+#' @param oid The OID, dotted.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_ts_seq_with_oid <- function(nd, n, oid) {
+  if (!isTRUE(nd$constructed) || !identical(nd$tag, 16)) {
+    return(FALSE)
+  }
+  k <- nd$children
+  length(k) >= n && .rmbl_der_oid_eq(k[[1]], oid)
+}
+
+#' Whether a DER node is a SignerInfos SET holding one SignerInfo.
+#' @param nd The parsed DER node to test for a SignerInfos SET.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_ts_is_signer_infos <- function(nd) {
+  isTRUE(nd$constructed) &&
+    identical(nd$tag, 17) &&
+    length(nd$children) == 1L &&
+    isTRUE(nd$children[[1]]$constructed) &&
+    length(nd$children[[1]]$children) >= 5L &&
+    identical(nd$children[[1]]$children[[1]]$tag, 2)
+}
+
+#' The first certificate that travelled with a SignedData, as DER, or NULL.
+#' @param sd The SignedData.
+#' @param token The token's bytes.
+#' @return The certificate's bytes, or NULL.
+#' @noRd
+.rmbl_ts_cert_der <- function(sd, token) {
+  certs <- Filter(
+    function(nd) {
+      identical(nd$class, 2L) &&
+        identical(nd$tag, 0) &&
+        isTRUE(nd$constructed)
+    },
+    sd$children
+  )
+  if (!length(certs)) {
+    return(NULL)
+  }
+  c1 <- certs[[1]]$children
+  if (!length(c1)) {
+    return(NULL)
+  }
+  st <- c1[[1]]$start
+  token[(st + 1L):(c1[[1]]$offset + c1[[1]]$length)]
+}
+
 #' Pull out the pieces of a TimeStampResp or bare TimeStampToken.
 #' @param der The parsed DER of the response or token.
 #' @param token The token's bytes.
@@ -512,11 +604,7 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
 .rmbl_ts_extract <- function(der, token) {
   # The token is a CMS ContentInfo whose contentType is id-signedData.
   ci <- .rmbl_der_find(der, function(nd) {
-    if (!isTRUE(nd$constructed) || !identical(nd$tag, 16)) {
-      return(FALSE)
-    }
-    k <- nd$children
-    length(k) >= 2L && .rmbl_der_oid_eq(k[[1]], "1.2.840.113549.1.7.2")
+    .rmbl_ts_seq_with_oid(nd, 2L, "1.2.840.113549.1.7.2")
   })
   if (is.null(ci)) {
     stop("no CMS SignedData in the token", call. = FALSE)
@@ -524,11 +612,7 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
   sd <- ci$children[[2]]$children[[1]] # [0] EXPLICIT SignedData
   # encapContentInfo: eContentType id-ct-TSTInfo, eContent [0] OCTET STRING
   eci <- .rmbl_der_find(sd, function(nd) {
-    if (!isTRUE(nd$constructed) || !identical(nd$tag, 16)) {
-      return(FALSE)
-    }
-    k <- nd$children
-    length(k) >= 1L && .rmbl_der_oid_eq(k[[1]], "1.2.840.113549.1.9.16.1.4")
+    .rmbl_ts_seq_with_oid(nd, 1L, "1.2.840.113549.1.9.16.1.4")
   })
   if (is.null(eci)) {
     stop("no TSTInfo content in the token", call. = FALSE)
@@ -542,56 +626,45 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
   tst_der <- oct$value
   tst <- .Call(C_rmbl_der_parse, tst_der)
 
-  # TSTInfo: version, policy, messageImprint, serialNumber, genTime, ...
-  k <- tst$children
-  policy <- .rmbl_oid_string(k[[2]]$value)
-  imprint_seq <- k[[3]]
-  imprint_oid <- .rmbl_oid_string(imprint_seq$children[[1]]$children[[1]]$value)
-  imprint <- imprint_seq$children[[2]]$value
-  serial <- .rmbl_hexlify(k[[4]]$value)
-  gen <- rawToChar(k[[5]]$value)
-  time <- .rmbl_ts_gentime(gen)
+  ti <- .rmbl_ts_tstinfo(tst)
 
   # the signer's information, and the certificate if one travelled
-  si <- .rmbl_der_find(sd, function(nd) {
-    isTRUE(nd$constructed) &&
-      identical(nd$tag, 17) &&
-      length(nd$children) == 1L &&
-      isTRUE(nd$children[[1]]$constructed) &&
-      length(nd$children[[1]]$children) >= 5L &&
-      identical(nd$children[[1]]$children[[1]]$tag, 2)
-  })
+  si <- .rmbl_der_find(sd, .rmbl_ts_is_signer_infos)
   if (is.null(si)) {
     stop("no SignerInfo in the token", call. = FALSE)
   }
   signer <- si$children[[1]]
-  cert_der <- NULL
-  certs <- Filter(
-    function(nd) {
-      identical(nd$class, 2L) &&
-        identical(nd$tag, 0) &&
-        isTRUE(nd$constructed)
-    },
-    sd$children
-  )
-  if (length(certs)) {
-    c1 <- certs[[1]]$children
-    if (length(c1)) {
-      st <- c1[[1]]$start
-      cert_der <- token[(st + 1L):(c1[[1]]$offset + c1[[1]]$length)]
-    }
-  }
+  cert_der <- .rmbl_ts_cert_der(sd, token)
   list(
     tst_der = tst_der,
-    policy = policy,
-    imprint_oid = imprint_oid,
-    imprint = imprint,
-    serial = serial,
-    time = time,
+    policy = ti$policy,
+    imprint_oid = ti$imprint_oid,
+    imprint = ti$imprint,
+    serial = ti$serial,
+    time = ti$time,
     signer = signer,
     cert_der = cert_der,
     sig_oid = .rmbl_ts_signer_sig_oid(signer),
     token = token
+  )
+}
+
+#' The fields of a TSTInfo that tsvrf() reports.
+#' @param tst The parsed TSTInfo.
+#' @return A list: policy, imprint_oid, imprint, serial and time.
+#' @noRd
+.rmbl_ts_tstinfo <- function(tst) {
+  # TSTInfo: version, policy, messageImprint, serialNumber, genTime, ...
+  k <- tst$children
+  imprint_seq <- k[[3]]
+  list(
+    policy = .rmbl_oid_string(k[[2]]$value),
+    imprint_oid = .rmbl_oid_string(
+      imprint_seq$children[[1]]$children[[1]]$value
+    ),
+    imprint = imprint_seq$children[[2]]$value,
+    serial = .rmbl_hexlify(k[[4]]$value),
+    time = .rmbl_ts_gentime(rawToChar(k[[5]]$value))
   )
 }
 
@@ -602,7 +675,7 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
 .rmbl_ts_gentime <- function(s) {
   s <- sub("Z$", "", s)
   frac <- 0
-  if (grepl("[.]", s)) {
+  if (grepl(".", s, fixed = TRUE)) {
     frac <- as.numeric(paste0("0.", sub(".*[.]", "", s)))
     s <- sub("[.].*", "", s)
   }
@@ -641,6 +714,42 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
 #' @noRd
 .rmbl_ts_verify_sig <- function(info, cert) {
   signer <- info$signer
+  sb <- .rmbl_ts_signed_attrs(info)
+  ct <- .rmbl_ts_content(sb$sa, signer, info)
+  sig <- .rmbl_ts_signature(signer)
+  parsed <- tryCatch(certprs(cert), error = function(e) NULL)
+  if (is.null(parsed)) {
+    stop("the certificate could not be parsed", call. = FALSE)
+  }
+  key <- parsed$key
+  r <- if (identical(key$type, "RSA")) {
+    .rmbl_ts_rsa_verify(key, sig, ct$dalg, sb$signed_bytes)
+  } else if (identical(key$type, "EC") && !is.null(key$x)) {
+    .rmbl_ts_ec_verify(key, sig, ct$dalg, sb$signed_bytes)
+  } else {
+    stop(
+      "the certificate carries a ",
+      key$type,
+      " key; RSA and ECDSA over ",
+      "the NIST prime curves are verified here, and anything else is ",
+      "reported as unverifiable rather than accepted",
+      call. = FALSE
+    )
+  }
+  list(
+    ok = r$ok,
+    detail = r$detail,
+    content_ok = ct$ok,
+    content_detail = ct$detail
+  )
+}
+
+#' A SignerInfo's signed attributes, and the bytes its signature is over.
+#' @param info The token's pieces from `.rmbl_ts_extract()`.
+#' @return A list: `sa` (the attributes' node) and `signed_bytes`.
+#' @noRd
+.rmbl_ts_signed_attrs <- function(info) {
+  signer <- info$signer
   # signedAttrs is [0] IMPLICIT; the bytes that are SIGNED are the same
   # contents re-tagged as a SET, which is the one step in CMS that a
   # verifier gets wrong and then reports a valid signature as invalid.
@@ -662,7 +771,16 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
   sa <- sa[[1]]
   body <- info$token[(sa$offset + 1L):(sa$offset + sa$length)]
   signed_bytes <- c(as.raw(0x31), .rmbl_der_length(length(body)), body)
+  list(sa = sa, signed_bytes = signed_bytes)
+}
 
+#' Whether a token's messageDigest attribute is the digest of its TSTInfo.
+#' @param sa The signed attributes' node.
+#' @param signer The SignerInfo node.
+#' @param info The token's pieces from `.rmbl_ts_extract()`.
+#' @return A list: `ok`, `detail` and `dalg` (the signer's digest algorithm).
+#' @noRd
+.rmbl_ts_content <- function(sa, signer, info) {
   # messageDigest attribute: must equal the digest of the TSTInfo
   md_attr <- .rmbl_der_find(sa, function(nd) {
     isTRUE(nd$constructed) &&
@@ -687,73 +805,67 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
       )
     }
   }
+  list(ok = content_ok, detail = content_detail, dalg = dalg)
+}
 
-  sig <- .rmbl_ts_signature(signer)
-  parsed <- tryCatch(certprs(cert), error = function(e) NULL)
-  if (is.null(parsed)) {
-    stop("the certificate could not be parsed", call. = FALSE)
-  }
-  key <- parsed$key
-  if (identical(key$type, "RSA")) {
-    # a signature of the wrong length (or otherwise not one) is not
-    # verified, as for ECDSA below, rather than an error
-    em <- tryCatch(
-      .Call(C_rmbl_rsa_recover, sig, key$modulus, key$exponent),
-      error = function(e) e
-    )
-    if (inherits(em, "error")) {
-      return(list(
-        ok = FALSE,
-        detail = conditionMessage(em),
-        content_ok = content_ok,
-        content_detail = content_detail
-      ))
-    }
-    ok <- .rmbl_pkcs1_check(em, dalg, signed_bytes)
+#' Verifies an RSA (PKCS #1 v1.5) signature over the signed attributes.
+#' @param key The certificate's key.
+#' @param sig The signature's bytes.
+#' @param dalg The digest algorithm the PKCS #1 v1.5 encoding must name.
+#' @param signed_bytes The bytes signed.
+#' @return A list: `ok` and `detail`.
+#' @noRd
+.rmbl_ts_rsa_verify <- function(key, sig, dalg, signed_bytes) {
+  # a signature of the wrong length (or otherwise not one) is not
+  # verified, as for ECDSA below, rather than an error
+  em <- tryCatch(
+    .Call(C_rmbl_rsa_recover, sig, key$modulus, key$exponent),
+    error = function(e) e
+  )
+  if (inherits(em, "error")) {
     return(list(
-      ok = ok$ok,
-      detail = ok$detail,
-      content_ok = content_ok,
-      content_detail = content_detail
+      ok = FALSE,
+      detail = conditionMessage(em)
     ))
   }
-  if (identical(key$type, "EC") && !is.null(key$x)) {
-    rs <- .rmbl_ecdsa_rs(sig)
-    if (is.null(rs)) {
-      return(list(
-        ok = FALSE,
-        detail = "the ECDSA signature is malformed",
-        content_ok = content_ok,
-        content_detail = content_detail
-      ))
-    }
-    dig <- .rmbl_ts_digest(dalg, signed_bytes)
-    v <- tryCatch(
-      .Call(
-        C_rmbl_ecdsa_verify,
-        key$curve,
-        key$x,
-        key$y,
-        rs$r,
-        rs$s,
-        dig
-      ),
-      error = function(e) FALSE
-    )
+  ok <- .rmbl_pkcs1_check(em, dalg, signed_bytes)
+  list(
+    ok = ok$ok,
+    detail = ok$detail
+  )
+}
+
+#' Verifies an ECDSA signature over the signed attributes.
+#' @param key The certificate's key.
+#' @param sig The signature's bytes.
+#' @param dalg The digest algorithm applied to the signed bytes for ECDSA.
+#' @param signed_bytes The bytes signed.
+#' @return A list: `ok` and `detail`.
+#' @noRd
+.rmbl_ts_ec_verify <- function(key, sig, dalg, signed_bytes) {
+  rs <- .rmbl_ecdsa_rs(sig)
+  if (is.null(rs)) {
     return(list(
-      ok = isTRUE(v),
-      detail = sprintf("ECDSA over %s on %s", dalg, key$curve),
-      content_ok = content_ok,
-      content_detail = content_detail
+      ok = FALSE,
+      detail = "the ECDSA signature is malformed"
     ))
   }
-  stop(
-    "the certificate carries a ",
-    key$type,
-    " key; RSA and ECDSA over ",
-    "the NIST prime curves are verified here, and anything else is ",
-    "reported as unverifiable rather than accepted",
-    call. = FALSE
+  dig <- .rmbl_ts_digest(dalg, signed_bytes)
+  v <- tryCatch(
+    .Call(
+      C_rmbl_ecdsa_verify,
+      key$curve,
+      key$x,
+      key$y,
+      rs$r,
+      rs$s,
+      dig
+    ),
+    error = function(e) FALSE
+  )
+  list(
+    ok = isTRUE(v),
+    detail = sprintf("ECDSA over %s on %s", dalg, key$curve)
   )
 }
 

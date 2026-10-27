@@ -8,13 +8,18 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
-# the one-time index record of this vignette stays out of the reader's configuration directory
+# the one-time index record of this vignette stays out of the reader's
+# configuration directory
 options(rmoriebricklayer.xmssidxfile = tempfile())
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
@@ -46,12 +51,19 @@ a Black group with a real disparity, and a very small unknown group), the
 reference group, and the odds ratios a report states.
 
 ```{r}
-tab <- matrix(c(9000, 120, 2000, 220, 1500, 60, 4000, 1), ncol = 2, byrow = TRUE,
-              dimnames = list(c("White", "Black", "Other", "Unknown"), c("no", "yes")))
+tab <- matrix(
+  c(9000, 120, 2000, 220, 1500, 60, 4000, 1),
+  ncol = 2,
+  byrow = TRUE,
+  dimnames = list(c("White", "Black", "Other", "Unknown"), c("no", "yes"))
+)
 tab
 ref <- 120 / 9000
-orchk(tab, "White", c(Black = 220 / 2000 / ref, Other = 60 / 1500 / ref,
-                                 Unknown = 1 / 4000 / ref))$verdict
+orchk(
+  tab,
+  "White",
+  c(Black = 220 / 2000 / ref, Other = 60 / 1500 / ref, Unknown = 1 / 4000 / ref)
+)$verdict
 ```
 
 Now rotate the labels one place, as happened in the transfer, and read
@@ -188,7 +200,11 @@ labels, in the order R sorts them, assigned to the codes by position.
 ```{r}
 f <- factor(c(1, 2, 3, 4, 1))
 levels(f) <- sort(unname(code_book))
-data.frame(code = c(1, 2, 3, 4, 1), became = as.character(f))
+data.frame(
+  code = c(1, 2, 3, 4, 1),
+  became = as.character(f),
+  stringsAsFactors = FALSE
+)
 ```
 
 Code 1 (White) became "Black", 2 (Black) became "Other", 3 (Other) became
@@ -214,7 +230,12 @@ which deterministic step, applied to the code book, yields exactly the
 permutation observed. `rlblfrns()` tries the known ones.
 
 ```{r}
-observed <- c(White = "Black", Black = "Other", Other = "Unknown", Unknown = "White")
+observed <- c(
+  White = "Black",
+  Black = "Other",
+  Other = "Unknown",
+  Unknown = "White"
+)
 rlblfrns(code_book, observed)
 ```
 
@@ -234,10 +255,19 @@ published ratios match. A rotation of four codes is enough to turn ratios near 1
 the hundreds.
 
 ```{r categorical-integrity-rotation-plot, fig.width = 7, fig.height = 4.5}
-odds_vs_white <- function(t) (t[, "yes"] / t[, "no"]) / (t["White", "yes"] / t["White", "no"])
+odds_vs_white <- function(t) {
+  (t[, "yes"] / t[, "no"]) / (t["White", "yes"] / t["White", "no"])
+}
 r <- rbind(correct = odds_vs_white(tab), rotated = odds_vs_white(rotated))[, -1]
-barplot(r, beside = TRUE, log = "y", col = blpal()[c(2, 1)], ylab = "odds ratio vs White (log scale)",
-        legend.text = c("correct labels", "labels rotated one place"),
-        args.legend = list(x = "topleft", bty = "n"), main = "Same counts, rotated labels")
+barplot(
+  r,
+  beside = TRUE,
+  log = "y",
+  col = blpal()[c(2, 1)],
+  ylab = "odds ratio vs White (log scale)",
+  legend.text = c("correct labels", "labels rotated one place"),
+  args.legend = list(x = "topleft", bty = "n"),
+  main = "Same counts, rotated labels"
+)
 abline(h = 1, lty = 2)
 ```

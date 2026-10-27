@@ -40,6 +40,123 @@
 # and knitr set for their output -- do not apply; NO_COLOR, R_CLI_NUM_COLORS and
 # this package's options do); `tty = FALSE` says it is not.
 
+#' Live progress for long-running work
+#'
+#' Makes a progress bar for a loop or a long computation: the animated bar of
+#' \code{\link{bldl}()}, redrawn in place at no more than 12
+#' frames a second, when the console can redraw a line -- a terminal, or the
+#' RStudio, Positron, R.app or RKWard console (never a knitr or Jupyter
+#' notebook; the options \code{rmoriebricklayer.dynamic} or
+#' \code{cli.dynamic}, or the environment variable \code{R_CLI_DYNAMIC},
+#' override the choice). In the RStudio or Positron console the bar is drawn
+#' on stdout, elsewhere on stderr. Otherwise a milestone line goes to stderr
+#' at each tenth, and nothing is shown when quiet. With \code{total = 0} the
+#' work has no count, and the bar is a spinner with the time so far and the
+#' current stage (the \code{info} text), with a line at each new stage when
+#' the console cannot redraw.
+#'
+#' Progress is shown when a person is watching: an interactive session, or a
+#' command line that sets \code{options(morie.progress = TRUE)}.
+#' \code{options(morie.quiet = TRUE)} or \code{quiet = TRUE} silences it.
+#'
+#' Nothing is drawn until the work has run for \code{delay} seconds, so a
+#' fast call never flashes a bar. A bar made inside a function while a bar
+#' made by a calling function is still running stays silent, so nested work
+#' shows one bar, for the outer loop.
+#'
+#' Updates are cheap: when quiet an update only stores the value, and when
+#' drawing, frames are throttled, so \code{$tick()} can be called on every
+#' iteration of a loop. Call \code{$done()} through
+#' \code{on.exit(p$done(), add = TRUE)} right
+#' after making the bar, so the line is cleared and the bar is released even
+#' when the work fails or is interrupted:
+#' \preformatted{
+#' p <- blprog("bootstrap", B)
+#' on.exit(p$done(), add = TRUE)
+#' for (b in seq_len(B)) {
+#'   ...
+#'   p$tick(info = sprintf("resample %d/%d", b, B))
+#' }
+#' }
+#' \code{$done()} may be called more than once; only the first call acts.
+#'
+#' @param label A short name for the work, shown before the bar.
+#' @param total The number of steps, or 0 when the work has no count.
+#' @param quiet \code{TRUE}, \code{FALSE}, or \code{NULL} to follow the
+#'   session (see above).
+#' @param color The bar's colour: \code{"blue"}, \code{"green"},
+#'   \code{"red"}, \code{"violet"} or \code{"amber"}.
+#' @param delay Seconds of work before anything is drawn; \code{NULL} takes the
+#'   package's 0.75.
+#' @return An object of class \code{rmbl_progress}, a list of functions:
+#'   \code{update(done, info = NULL)} sets the steps done (and the text after
+#'   the bar), \code{tick(by = 1, info = NULL)} adds \code{by} steps,
+#'   \code{wait(seconds)} sleeps while keeping the animation moving, and
+#'   \code{done(summary = NULL)} ends the bar, clears the line and, when the
+#'   bar was shown, writes \code{summary} on its own line. Each returns the
+#'   object invisibly.
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' p <- blprog("squares", 50, delay = 0)
+#' for (i in 1:50) {
+#'   x <- sum(seq_len(i)^2)
+#'   p$tick(info = sprintf("step %d/50", i))
+#' }
+#' p$done("squares: 50 steps")
+#'
+#' # work with no count: a spinner and the stage
+#' f <- function() {
+#'   p <- blprog("model", 0, delay = 0)
+#'   on.exit(p$done(), add = TRUE)
+#'   p$update(info = "fitting")
+#'   p$wait(0.2)
+#'   p$update(info = "writing")
+#'   invisible(TRUE)
+#' }
+#' f()
+#' @export
+blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
+  .rmbl_no_fn(label = label)
+  label <- as.character(label)
+  delay <- .bl_prog_args(label, total, quiet, color, delay)
+  creator <- parent.frame()
+  live <- .bl_prog_live()
+  nested <- length(live) > 0L
+  a <- .bl_anim_new(
+    label,
+    total,
+    color = color,
+    quiet = if (nested) TRUE else quiet
+  )
+  a$indeterminate <- total <= 0
+  a$stage <- NULL
+  a$said <- -Inf
+  # drawn yet, closed, and whether the creator failed
+  st <- new.env(parent = emptyenv())
+  st$started <- delay <= 0
+  st$closed <- FALSE
+  st$failed <- FALSE
+  # only a bar that draws holds back the bars inside it; the console's own frame
+  # is not on the call stack, so a bar made at top level never counts
+  if (!a$quiet && !identical(creator, globalenv())) {
+    .bl_progress_state$active <- c(live, creator)
+    .bl_prog_watch(creator, st)
+  }
+  .bl_prog_object(a, st, creator, delay)
+}
+
+#' @export
+print.rmbl_progress <- function(x, ...) {
+  a <- environment(x$update)$a
+  cat(sprintf(
+    "<progress \"%s\": %s of %s%s>\n",
+    a$label,
+    format(a$done),
+    if (a$total > 0) format(a$total) else "?",
+    if (a$quiet) ", quiet" else ""
+  ))
+  invisible(x)
+}
+
 #' A logical override from options, then an environment variable; NULL when none
 #' is set
 #' @param opts The option names, tried in order.
@@ -51,7 +168,8 @@
     v <- getOption(o)
     if (!is.null(v)) return(isTRUE(as.logical(v)[1L]))
   }
-  if (!is.null(env) && nzchar(e <- Sys.getenv(env))) {
+  e <- if (is.null(env)) "" else Sys.getenv(env)
+  if (nzchar(e)) {
     return(isTRUE(as.logical(e)))
   }
   NULL
@@ -64,6 +182,7 @@
 #' @return `.Platform$GUI`.
 #' @noRd
 .bl_gui <- function() .Platform$GUI
+
 #' Says whether stdin is a terminal.
 #' @return TRUE or FALSE.
 #' @noRd
@@ -100,6 +219,25 @@
 #' @noRd
 .bl_interactive <- function() interactive()
 
+#' Whether a console redraws a line in place: a terminal, or an IDE console
+#' that does (RStudio, Positron, R.app, RKWard) when the output is not sunk.
+#' @param con The output connection, tested for a terminal.
+#' @param free Whether the output is free (not sunk).
+#' @param rs The RStudio session kind, or "".
+#' @param positron Whether in Positron.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_console_live <- function(con, free, rs, positron) {
+  isatty(con) ||
+    (free &&
+      (rs %in%
+        c("console", "build", "render") ||
+        (.bl_interactive() &&
+          (positron ||
+            nzchar(Sys.getenv("R_GUI_APP_VERSION")) ||
+            "rkward" %in% .packages()))))
+}
+
 #' Describes what the console can show: whether it redraws, its colours,
 #' characters, stream and width.
 #' @param tty TRUE to treat the console as a terminal, FALSE to treat it as not
@@ -131,14 +269,7 @@
   } else if (notebook) {
     FALSE
   } else {
-    isatty(con) ||
-      (free &&
-        (rs %in%
-          c("console", "build", "render") ||
-          (.bl_interactive() &&
-            (positron ||
-              nzchar(Sys.getenv("R_GUI_APP_VERSION")) ||
-              "rkward" %in% .packages()))))
+    .bl_console_live(con, free, rs, positron)
   }
   ov <- .bl_opt_flag(c(
     "rmoriebricklayer.unicode",
@@ -166,35 +297,73 @@
 #' @return An integer.
 #' @noRd
 .bl_num_colors <- function(con, rs, positron, knit, free, tty) {
-  n <- function(x) {
-    x <- suppressWarnings(as.integer(x)[1L])
-    if (length(x) != 1L || is.na(x) || x < 1L) 1L else x
-  }
+  .bl_num_colors_set(tty) %||%
+    .bl_num_colors_env(rs, knit, free, tty) %||%
+    .bl_num_colors_term(con, positron, tty)
+}
+
+#' A colour count read as cli reads one: a whole number of at least 1.
+#' @param x The colour count to read, such as an option's value.
+#' @return An integer.
+#' @noRd
+.bl_num_colors_n <- function(x) {
+  x <- suppressWarnings(as.integer(x)[1L])
+  if (length(x) != 1L || is.na(x) || x < 1L) 1L else x
+}
+
+#' The colour count an option or R_CLI_NUM_COLORS sets.
+#' @param tty Whether the output is a terminal.
+#' @return An integer, or NULL.
+#' @noRd
+.bl_num_colors_set <- function(tty) {
   for (o in c(
     "rmoriebricklayer.numcol",
     "rmoriebricklayer.num_colors",
     if (!tty) "cli.num_colors"
   )) {
-    if (!is.null(v <- getOption(o))) return(n(v))
+    v <- getOption(o)
+    if (!is.null(v)) return(.bl_num_colors_n(v))
   }
-  if (nzchar(e <- Sys.getenv("R_CLI_NUM_COLORS"))) {
-    return(n(e))
+  e <- Sys.getenv("R_CLI_NUM_COLORS")
+  if (nzchar(e)) {
+    return(.bl_num_colors_n(e))
   }
+  NULL
+}
+
+#' The colour count the environment decides: colour switched off, a knit, a
+#' GUI console or RStudio's.
+#' @param rs The RStudio session kind, or "".
+#' @param knit,free,tty Whether knitting, whether the output is free to colour,
+#'   and whether it is a terminal.
+#' @return An integer, or NULL.
+#' @noRd
+.bl_num_colors_env <- function(rs, knit, free, tty) {
   if (!tty && identical(getOption("crayon.enabled"), FALSE)) {
     return(1L)
   }
   if (nzchar(Sys.getenv("NO_COLOR")) || knit || !free) {
     return(1L)
   }
-  if (!tty && !is.null(v <- getOption("cli.default_num_colors"))) {
-    return(n(v))
+  v <- if (tty) NULL else getOption("cli.default_num_colors")
+  if (!is.null(v)) {
+    return(.bl_num_colors_n(v))
   }
   if (.bl_gui() %in% c("AQUA", "Rgui") && rs == "") {
     return(1L)
   }
   if (rs %in% c("console", "build", "job")) {
-    return(n(Sys.getenv("RSTUDIO_CONSOLE_COLOR")))
+    return(.bl_num_colors_n(Sys.getenv("RSTUDIO_CONSOLE_COLOR")))
   }
+  NULL
+}
+
+#' The colour count of a Positron console or a terminal.
+#' @param con The output connection, tested for a terminal.
+#' @param positron,tty Whether in Positron, and whether a terminal.
+#' @return An integer.
+#' @noRd
+.bl_num_colors_term <- function(con, positron, tty) {
   # ponytail: a Positron console without ark's cli.default_num_colors is taken
   # as 256 colours (cli's is_ansi_tty() says its console is ANSI); not checked
   # in a live Positron session
@@ -290,7 +459,7 @@
 }
 
 #' Wraps text in a colour escape and a reset.
-#' @param x The text.
+#' @param x The text to colour; empty text is returned as it is.
 #' @param code The escape, or \code{""} for none.
 #' @return The painted text.
 #' @noRd
@@ -299,13 +468,13 @@
 }
 
 #' Returns the width of text in console cells.
-#' @param x The text.
+#' @param x The text whose width in console cells is counted.
 #' @return An integer vector.
 #' @noRd
 .bl_w <- function(x) nchar(x, type = "width")
 
 #' `x` cut to `n` cells, the cut marked with an ellipsis
-#' @param x The text.
+#' @param x The text to cut to `n` console cells.
 #' @param n The number of cells.
 #' @param unicode Whether the ellipsis may be the Unicode one.
 #' @return The text, cut when longer than `n`.
@@ -329,7 +498,7 @@
 # ---- formats -----------------------------------------------------------------
 
 #' Formats a time taken: 4.2s, 2m05s.
-#' @param s Seconds.
+#' @param s The time taken, in seconds.
 #' @return One string.
 #' @noRd
 .bl_fmt_elapsed <- function(s) {
@@ -368,7 +537,7 @@
     return(NULL)
   }
   if (bytes) {
-    return(paste0(.bl_fmt_bytes(x), "/s"))
+    return(sprintf("%s/s", .bl_fmt_bytes(x)))
   }
   if (x >= 1e6) {
     sprintf("%.1fM/s", x / 1e6)
@@ -481,9 +650,9 @@
   rate <- .bl_rate_now(a, now)
   if (a$total > 0) {
     cnt <- if (bytes) {
-      paste0(.bl_fmt_bytes(a$done), "/", .bl_fmt_bytes(a$total))
+      sprintf("%s/%s", .bl_fmt_bytes(a$done), .bl_fmt_bytes(a$total))
     } else {
-      paste0(.bl_n(a$done), "/", .bl_n(a$total))
+      sprintf("%s/%s", .bl_n(a$done), .bl_n(a$total))
     }
     frac <- a$done / a$total
     eta <- if (
@@ -518,21 +687,7 @@
   cols <- .bl_console_width(a$rs) - 1L
   sep <- if (a$unicode) " \u00b7 " else ", "
   if (a$total <= 0) {
-    # no count to fill a bar with: the spinner, the label, the time so far and
-    # the stage
-    spin <- .bl_paint(
-      .Call(C_rmbl_progress_spinner, now, a$unicode),
-      a$sty$accent
-    )
-    st <- .bl_anim_stats(a, now)
-    el <- st[["elapsed"]]
-    extra <- st[intersect(c("count", "rate"), names(st))]
-    if (length(extra)) {
-      el <- paste(paste(extra, collapse = sep), el, sep = sep)
-    }
-    lab <- .bl_trunc(a$label, max(8L, cols - 3L - .bl_w(el)), a$unicode)
-    info <- .bl_trunc(a$info, cols - 5L - .bl_w(lab) - .bl_w(el), a$unicode)
-    return(sprintf("%s %s %s  %s", spin, lab, el, info))
+    return(.bl_anim_line_spin(a, now, cols, sep))
   }
   target <- min(1, a$done / a$total)
   # ease toward the target, a third of the way per frame, so a jump reads as a
@@ -543,76 +698,11 @@
   }
   active <- target < 1
   stats <- .bl_anim_stats(a, now)
-  lab <- a$label
-  info <- a$info
-  frame_w <- if (a$unicode) 0L else 2L
-  need <- function(bw) {
-    2L +
-      .bl_w(lab) +
-      1L +
-      bw +
-      frame_w +
-      5L +
-      (if (length(stats)) .bl_w(paste(stats, collapse = sep)) + 1L else 0L) +
-      (if (nzchar(info)) 2L + .bl_w(info) else 0L)
-  }
-  # the bar's width leaves room for the widest the numbers after it get (the
-  # stage takes what is left), so it does not jump when the rate or the time
-  # left appears
-  bytes <- identical(a$unit, "B")
-  widest <- c(
-    if (bytes) {
-      paste0(.bl_fmt_bytes(a$total), "/", .bl_fmt_bytes(a$total))
-    } else {
-      paste0(.bl_n(a$total), "/", .bl_n(a$total))
-    },
-    if (bytes) "000.0 MB/s" else "0000/s",
-    "0m00s",
-    "ETA 0m00s"
-  )
-  bw <- max(
-    10L,
-    min(
-      40L,
-      cols -
-        (2L +
-          .bl_w(lab) +
-          1L +
-          frame_w +
-          5L +
-          .bl_w(paste(widest, collapse = sep)) +
-          1L)
-    )
-  )
-  # narrow consoles: the bar is at 10 cells, then the stage is cut and dropped,
-  # then the count, the rate and the time so far go, then the label is cut, then
-  # the bar shrinks to 4
-  if (need(bw) > cols && nzchar(info)) {
-    room <- cols - need(bw) + .bl_w(info)
-    info <- if (room >= 8L) .bl_trunc(info, room, a$unicode) else ""
-  }
-  for (k in c("count", "rate", "elapsed")) {
-    if (need(bw) > cols) stats <- stats[names(stats) != k]
-  }
-  if (need(bw) > cols) {
-    lab <- .bl_trunc(lab, max(6L, cols - need(bw) + .bl_w(lab)), a$unicode)
-  }
-  if (need(bw) > cols) {
-    bw <- max(4L, cols - need(0L))
-  }
-  bar <- .Call(
-    C_rmbl_progress_frame,
-    a$shown,
-    now,
-    as.numeric(bw),
-    if (a$color) as.integer(a$ncolors) else FALSE,
-    a$unicode,
-    active,
-    a$rgb
-  )
-  if (!a$unicode) {
-    bar <- paste0("[", bar, "]")
-  }
+  ft <- .bl_anim_fit(a, a$label, a$info, stats, sep, cols)
+  lab <- ft$lab
+  info <- ft$info
+  stats <- ft$stats
+  bar <- .bl_anim_bar(a, now, ft$bw, active)
   spin <- if (active) {
     .bl_paint(.Call(C_rmbl_progress_spinner, now, a$unicode), a$sty$accent)
   } else {
@@ -656,28 +746,7 @@
   if (!is.null(summary)) {
     text <- summary
   } else {
-    # the count reached (of the total when short of it), then the last stage
-    res <- if (a$total > 0) {
-      if (bytes) {
-        paste0(
-          .bl_fmt_bytes(a$done),
-          if (a$done < a$total) paste0(" of ", .bl_fmt_bytes(a$total))
-        )
-      } else {
-        paste0(
-          .bl_n(a$done),
-          if (a$done != a$total) paste0("/", .bl_n(a$total))
-        )
-      }
-    } else {
-      ""
-    }
-    if (!ok) {
-      res <- paste0("stopped", if (nzchar(res)) paste0(" at ", res))
-    }
-    if (nzchar(a$info)) {
-      res <- if (nzchar(res)) paste0(res, "  ", a$info) else a$info
-    }
+    res <- .bl_anim_result(a, bytes, ok)
     text <- if (nzchar(res)) paste0(a$label, "  ", res) else a$label
     tail <- if (a$unicode) {
       paste0("\u00b7 ", .bl_fmt_elapsed(now))
@@ -837,10 +906,13 @@
 # bar whose done() was never called cannot silence the bars after it. `delay` is
 # the lazy start of every bar (seconds), adjustable for the tests.
 .bl_progress_state <- new.env(parent = emptyenv())
+
 .bl_progress_state$active <- list()
+
 .bl_progress_state$delay <- 0.75
-# what returnValue() gives in an on.exit() when the frame is leaving by an error
-# or an interrupt
+
+# what returnValue() gives in an exit handler when the frame is leaving by an
+# error or an interrupt
 .bl_progress_state$unwound <- new.env(parent = emptyenv())
 
 #' Returns the frames of the bars still running whose frame is still on the call
@@ -855,82 +927,11 @@
   )
 }
 
-#' Live progress for long-running work
-#'
-#' Makes a progress bar for a loop or a long computation: the animated bar of
-#' \code{\link{bldl}()}, redrawn in place at no more than 12
-#' frames a second, when the console can redraw a line -- a terminal, or the
-#' RStudio, Positron, R.app or RKWard console (never a knitr or Jupyter
-#' notebook; the options \code{rmoriebricklayer.dynamic} or
-#' \code{cli.dynamic}, or the environment variable \code{R_CLI_DYNAMIC},
-#' override the choice). In the RStudio or Positron console the bar is drawn
-#' on stdout, elsewhere on stderr. Otherwise a milestone line goes to stderr
-#' at each tenth, and nothing is shown when quiet. With \code{total = 0} the
-#' work has no count, and the bar is a spinner with the time so far and the
-#' current stage (the \code{info} text), with a line at each new stage when
-#' the console cannot redraw.
-#'
-#' Progress is shown when a person is watching: an interactive session, or a
-#' command line that sets \code{options(morie.progress = TRUE)}.
-#' \code{options(morie.quiet = TRUE)} or \code{quiet = TRUE} silences it.
-#'
-#' Nothing is drawn until the work has run for \code{delay} seconds, so a
-#' fast call never flashes a bar. A bar made inside a function while a bar
-#' made by a calling function is still running stays silent, so nested work
-#' shows one bar, for the outer loop.
-#'
-#' Updates are cheap: when quiet an update only stores the value, and when
-#' drawing, frames are throttled, so \code{$tick()} can be called on every
-#' iteration of a loop. Call \code{$done()} through \code{on.exit()} right
-#' after making the bar, so the line is cleared and the bar is released even
-#' when the work fails or is interrupted:
-#' \preformatted{
-#' p <- blprog("bootstrap", B)
-#' on.exit(p$done(), add = TRUE)
-#' for (b in seq_len(B)) {
-#'   ...
-#'   p$tick(info = sprintf("resample %d/%d", b, B))
-#' }
-#' }
-#' \code{$done()} may be called more than once; only the first call acts.
-#'
-#' @param label A short name for the work, shown before the bar.
-#' @param total The number of steps, or 0 when the work has no count.
-#' @param quiet \code{TRUE}, \code{FALSE}, or \code{NULL} to follow the
-#'   session (see above).
-#' @param color The bar's colour: \code{"blue"}, \code{"green"},
-#'   \code{"red"}, \code{"violet"} or \code{"amber"}.
-#' @param delay Seconds of work before anything is drawn; \code{NULL} takes the
-#'   package's 0.75.
-#' @return An object of class \code{rmbl_progress}, a list of functions:
-#'   \code{update(done, info = NULL)} sets the steps done (and the text after
-#'   the bar), \code{tick(by = 1, info = NULL)} adds \code{by} steps,
-#'   \code{wait(seconds)} sleeps while keeping the animation moving, and
-#'   \code{done(summary = NULL)} ends the bar, clears the line and, when the
-#'   bar was shown, writes \code{summary} on its own line. Each returns the
-#'   object invisibly.
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' p <- blprog("squares", 50, delay = 0)
-#' for (i in 1:50) {
-#'   x <- sum(seq_len(i)^2)
-#'   p$tick(info = sprintf("step %d/50", i))
-#' }
-#' p$done("squares: 50 steps")
-#'
-#' # work with no count: a spinner and the stage
-#' f <- function() {
-#'   p <- blprog("model", 0, delay = 0)
-#'   on.exit(p$done(), add = TRUE)
-#'   p$update(info = "fitting")
-#'   p$wait(0.2)
-#'   p$update(info = "writing")
-#'   invisible(TRUE)
-#' }
-#' f()
-#' @export
-blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
-  .rmbl_no_fn(label = label)
-  label <- as.character(label)
+#' blprog()'s arguments, checked.
+#' @param label,total,quiet,color,delay As for blprog().
+#' @return The delay in seconds.
+#' @noRd
+.bl_prog_args <- function(label, total, quiet, color, delay) {
   if (length(label) != 1L || is.na(label)) {
     stop("`label` must be a single string", call. = FALSE)
   }
@@ -955,11 +956,19 @@ blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
     stop(
       sprintf(
         "`color` must be one of %s",
-        paste(names(.bl_anim_colors), collapse = ", ")
+        toString(names(.bl_anim_colors))
       ),
       call. = FALSE
     )
   }
+  .bl_prog_delay(quiet, delay)
+}
+
+#' blprog()'s `quiet` and `delay`, checked.
+#' @param quiet,delay As for blprog().
+#' @return The delay in seconds.
+#' @noRd
+.bl_prog_delay <- function(quiet, delay) {
   if (
     !is.null(quiet) &&
       !(is.logical(quiet) && length(quiet) == 1L && !is.na(quiet))
@@ -973,43 +982,39 @@ blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
       call. = FALSE
     )
   }
-  creator <- parent.frame()
-  live <- .bl_prog_live()
-  nested <- length(live) > 0L
-  a <- .bl_anim_new(
-    label,
-    total,
-    color = color,
-    quiet = if (nested) TRUE else quiet
+  delay
+}
+
+#' How the creating function ends: an exit handler of its own, added now so it
+#' runs before the caller's exit handler p$done(), notes an error or an
+#' interrupt (returnValue() gives its default then), and done() ends the bar
+#' with a cross instead of a check.
+#' @param creator The frame of the function that made the bar.
+#' @param st The bar's state.
+#' @noRd
+.bl_prog_watch <- function(creator, st) {
+  unwound <- .bl_progress_state$unwound
+  note <- function(value) if (identical(value, unwound)) st$failed <- TRUE
+  do.call(
+    on.exit,
+    list(
+      as.call(list(note, as.call(list(quote(base::returnValue), unwound)))),
+      add = TRUE
+    ),
+    envir = creator
   )
-  a$indeterminate <- total <= 0
-  a$stage <- NULL
-  a$said <- -Inf
-  # drawn yet, closed, and whether the creator failed
-  st <- new.env(parent = emptyenv())
-  st$started <- delay <= 0
-  st$closed <- FALSE
-  st$failed <- FALSE
-  # only a bar that draws holds back the bars inside it; the console's own frame
-  # is not on the call stack, so a bar made at top level never counts
-  if (!a$quiet && !identical(creator, globalenv())) {
-    .bl_progress_state$active <- c(live, creator)
-    # how the creating function ends: an on.exit() of its own, added now so it
-    # runs before the caller's on.exit(p$done()), notes an error or an interrupt
-    # (returnValue() gives its default then), and done() ends the bar with a
-    # cross instead of a check
-    unwound <- .bl_progress_state$unwound
-    note <- function(value) if (identical(value, unwound)) st$failed <- TRUE
-    do.call(
-      on.exit,
-      list(
-        as.call(list(note, as.call(list(quote(base::returnValue), unwound)))),
-        add = TRUE
-      ),
-      envir = creator
-    )
-  }
+}
+
+#' The progress bar object: update(), tick(), wait() and done().
+#' @param a The animation.
+#' @param st The bar's state.
+#' @param creator The frame of the function that made the bar.
+#' @param delay Seconds before the bar is first drawn.
+#' @return The object.
+#' @noRd
+.bl_prog_object <- function(a, st, creator, delay) {
   self <- NULL
+  h <- environment()
   draw <- function(force = FALSE) {
     if (!st$started) {
       if (proc.time()[["elapsed"]] - a$t0 < delay) {
@@ -1021,75 +1026,26 @@ blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
     .bl_anim_update(a, force = force)
     invisible(self)
   }
+  advance <- function(done, info) {
+    a$done <- done
+    if (!is.null(info)) {
+      a$info <- as.character(info)[1L]
+    }
+    if (a$quiet || st$closed) {
+      return(invisible(self))
+    }
+    draw()
+  }
   self <- structure(
     list(
-      update = function(done = a$done, info = NULL) {
-        a$done <- done
-        if (!is.null(info)) {
-          a$info <- as.character(info)[1L]
-        }
-        if (a$quiet || st$closed) {
-          return(invisible(self))
-        }
-        draw()
-      },
-      tick = function(by = 1, info = NULL) {
-        a$done <- a$done + by
-        if (!is.null(info)) {
-          a$info <- as.character(info)[1L]
-        }
-        if (a$quiet || st$closed) {
-          return(invisible(self))
-        }
-        draw()
-      },
-      wait = function(seconds) {
-        if (a$quiet || st$closed) {
-          Sys.sleep(seconds)
-          return(invisible(self))
-        }
-        end <- proc.time()[["elapsed"]] + seconds
-        repeat {
-          left <- end - proc.time()[["elapsed"]]
-          if (left <= 0) {
-            break
-          }
-          Sys.sleep(min(left, 1 / 12))
-          draw()
-        }
-        invisible(self)
-      },
-      done = function(summary = NULL) {
-        if (st$closed) {
-          return(invisible(self))
-        }
-        st$closed <- TRUE
-        .bl_progress_state$active <- Filter(
-          function(e) !identical(e, creator),
-          .bl_progress_state$active
-        )
-        if (!a$quiet && st$started) {
-          .bl_anim_done(a, summary, ok = !st$failed)
-        }
-        invisible(self)
-      }
+      update = function(done = a$done, info = NULL) advance(done, info),
+      tick = function(by = 1, info = NULL) advance(a$done + by, info),
+      wait = .bl_prog_wait_fn(a, st, draw, h),
+      done = .bl_prog_done_fn(a, st, creator, h)
     ),
     class = "rmbl_progress"
   )
   self
-}
-
-#' @export
-print.rmbl_progress <- function(x, ...) {
-  a <- environment(x$update)$a
-  cat(sprintf(
-    "<progress \"%s\": %s of %s%s>\n",
-    a$label,
-    format(a$done),
-    if (a$total > 0) format(a$total) else "?",
-    if (a$quiet) ", quiet" else ""
-  ))
-  invisible(x)
 }
 
 #' Turns a count the caller passed into a bar's total.
@@ -1144,6 +1100,7 @@ print.rmbl_progress <- function(x, ...) {
       as.numeric(mode)
     )
     on.exit(
+      add = TRUE,
       {
         ok <- !identical(
           returnValue(.bl_progress_state$unwound),
@@ -1151,8 +1108,7 @@ print.rmbl_progress <- function(x, ...) {
         )
         .Call(C_rmbl_wait_label, "", con$unicode, as.numeric(c(mode, ok)))
         .bl_progress_state$busy <- FALSE
-      },
-      add = TRUE
+      }
     )
   }
   expr
@@ -1173,7 +1129,222 @@ print.rmbl_progress <- function(x, ...) {
 }
 
 #' A count for a bar's text: 1,000,000, never 1e+06
-#' @param x A number.
+#' @param x A count to format with thousands separators.
 #' @return One string.
 #' @noRd
 .bl_n <- function(x) format(x, big.mark = ",", scientific = FALSE, trim = TRUE)
+
+#' The frame of a bar with no count: the spinner, the label, the time so far
+#' and the stage.
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param now Seconds since the start.
+#' @param cols The console's width.
+#' @param sep The separator of the numbers.
+#' @return One string.
+#' @noRd
+.bl_anim_line_spin <- function(a, now, cols, sep) {
+  # no count to fill a bar with: the spinner, the label, the time so far and
+  # the stage
+  spin <- .bl_paint(
+    .Call(C_rmbl_progress_spinner, now, a$unicode),
+    a$sty$accent
+  )
+  st <- .bl_anim_stats(a, now)
+  el <- st[["elapsed"]]
+  extra <- st[intersect(c("count", "rate"), names(st))]
+  if (length(extra)) {
+    el <- paste(paste(extra, collapse = sep), el, sep = sep)
+  }
+  lab <- .bl_trunc(a$label, max(8L, cols - 3L - .bl_w(el)), a$unicode)
+  info <- .bl_trunc(a$info, cols - 5L - .bl_w(lab) - .bl_w(el), a$unicode)
+  sprintf("%s %s %s  %s", spin, lab, el, info)
+}
+
+#' Fits a bar's frame to the console: the bar's width, and the stage, the
+#' numbers and the label cut or dropped as the console narrows.
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param lab,info The label and the stage.
+#' @param stats The numbers after the bar.
+#' @param sep The separator of the numbers.
+#' @param cols The console's width.
+#' @return A list: `lab`, `info`, `stats` and `bw` (the bar's width).
+#' @noRd
+.bl_anim_fit <- function(a, lab, info, stats, sep, cols) {
+  frame_w <- if (a$unicode) 0L else 2L
+  need <- function(bw) {
+    2L +
+      .bl_w(lab) +
+      1L +
+      bw +
+      frame_w +
+      5L +
+      (if (length(stats)) .bl_w(paste(stats, collapse = sep)) + 1L else 0L) +
+      (if (nzchar(info)) 2L + .bl_w(info) else 0L)
+  }
+  bw <- .bl_anim_bar_width(a, lab, sep, cols, frame_w)
+  # narrow consoles: the bar is at 10 cells, then the stage is cut and dropped,
+  # then the count, the rate and the time so far go, then the label is cut, then
+  # the bar shrinks to 4
+  if (need(bw) > cols && nzchar(info)) {
+    room <- cols - need(bw) + .bl_w(info)
+    info <- if (room >= 8L) .bl_trunc(info, room, a$unicode) else ""
+  }
+  for (k in c("count", "rate", "elapsed")) {
+    if (need(bw) > cols) stats <- stats[names(stats) != k]
+  }
+  if (need(bw) > cols) {
+    lab <- .bl_trunc(lab, max(6L, cols - need(bw) + .bl_w(lab)), a$unicode)
+  }
+  if (need(bw) > cols) {
+    bw <- max(4L, cols - need(0L))
+  }
+  list(lab = lab, info = info, stats = stats, bw = bw)
+}
+
+#' The bar itself, `bw` cells wide.
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param now Seconds since the start.
+#' @param bw The bar's width.
+#' @param active Whether the work goes on.
+#' @return One string.
+#' @noRd
+.bl_anim_bar <- function(a, now, bw, active) {
+  bar <- .Call(
+    C_rmbl_progress_frame,
+    a$shown,
+    now,
+    as.numeric(bw),
+    if (a$color) as.integer(a$ncolors) else FALSE,
+    a$unicode,
+    active,
+    a$rgb
+  )
+  if (!a$unicode) {
+    bar <- paste0("[", bar, "]")
+  }
+  bar
+}
+
+#' The result the final line of a bar shows after its label: the count
+#' reached (of the total when short of it), then the last stage.
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param bytes Whether the count is in bytes.
+#' @param ok Whether the work ended well.
+#' @return One string, maybe empty.
+#' @noRd
+.bl_anim_result <- function(a, bytes, ok) {
+  # the count reached (of the total when short of it), then the last stage
+  res <- if (a$total > 0) {
+    if (bytes) {
+      paste0(
+        .bl_fmt_bytes(a$done),
+        if (a$done < a$total) paste0(" of ", .bl_fmt_bytes(a$total))
+      )
+    } else {
+      paste0(
+        .bl_n(a$done),
+        if (a$done != a$total) paste0("/", .bl_n(a$total))
+      )
+    }
+  } else {
+    ""
+  }
+  if (!ok) {
+    res <- paste0("stopped", if (nzchar(res)) paste0(" at ", res))
+  }
+  if (nzchar(a$info)) {
+    res <- if (nzchar(res)) paste0(res, "  ", a$info) else a$info
+  }
+  res
+}
+
+#' The wait() method of a progress bar: sleeps, drawing the bar meanwhile.
+#' @param a The animation.
+#' @param st The bar's state.
+#' @param draw The bar's draw function.
+#' @param h The frame that holds the bar object (`self`).
+#' @return The method.
+#' @noRd
+.bl_prog_wait_fn <- function(a, st, draw, h) {
+  function(seconds) {
+    if (a$quiet || st$closed) {
+      Sys.sleep(seconds)
+      return(invisible(h$self))
+    }
+    end <- proc.time()[["elapsed"]] + seconds
+    repeat {
+      left <- end - proc.time()[["elapsed"]]
+      if (left <= 0) {
+        break
+      }
+      Sys.sleep(min(left, 1 / 12))
+      draw()
+    }
+    invisible(h$self)
+  }
+}
+
+#' The done() method of a progress bar: ends it once and releases it.
+#' @param a The animation.
+#' @param st The bar's state.
+#' @param creator The frame of the function that made the bar.
+#' @param h The frame that holds the bar object (`self`).
+#' @return The method.
+#' @noRd
+.bl_prog_done_fn <- function(a, st, creator, h) {
+  function(summary = NULL) {
+    if (st$closed) {
+      return(invisible(h$self))
+    }
+    st$closed <- TRUE
+    .bl_progress_state$active <- Filter(
+      function(e) !identical(e, creator),
+      .bl_progress_state$active
+    )
+    if (!a$quiet && st$started) {
+      .bl_anim_done(a, summary, ok = !st$failed)
+    }
+    invisible(h$self)
+  }
+}
+
+#' The widest a bar is drawn: room is left for the widest the numbers after
+#' it get (the stage takes what is left), so it does not jump when the rate or
+#' the time left appears.
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param lab The label.
+#' @param sep The separator of the numbers.
+#' @param cols The console's width.
+#' @param frame_w The width of the bar's frame.
+#' @return The bar's width, 10 to 40 cells.
+#' @noRd
+.bl_anim_bar_width <- function(a, lab, sep, cols, frame_w) {
+  # the bar's width leaves room for the widest the numbers after it get (the
+  # stage takes what is left), so it does not jump when the rate or the time
+  # left appears
+  bytes <- identical(a$unit, "B")
+  widest <- c(
+    if (bytes) {
+      sprintf("%s/%s", .bl_fmt_bytes(a$total), .bl_fmt_bytes(a$total))
+    } else {
+      sprintf("%s/%s", .bl_n(a$total), .bl_n(a$total))
+    },
+    if (bytes) "000.0 MB/s" else "0000/s",
+    "0m00s",
+    "ETA 0m00s"
+  )
+  max(
+    10L,
+    min(
+      40L,
+      cols -
+        (2L +
+          .bl_w(lab) +
+          1L +
+          frame_w +
+          5L +
+          .bl_w(paste(widest, collapse = sep)) +
+          1L)
+    )
+  )
+}

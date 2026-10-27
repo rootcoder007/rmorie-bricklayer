@@ -3,7 +3,7 @@
 # (NOT_CRAN), on r-universe (MY_UNIVERSE) and on the package website
 # (IN_PKGDOWN), but not in CRAN's check, which runs them within a ten-minute
 # limit. An option the user has set is left as it is.
-.onLoad <- function(libname, pkgname) {
+.rmbl_examples_default <- function(libname, pkgname) {
   if (is.null(getOption("rmbl.examples"))) {
     options(
       rmbl.examples = interactive() ||
@@ -11,3 +11,5 @@
     )
   }
 }
+
+.onLoad <- .rmbl_examples_default

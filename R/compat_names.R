@@ -1,5 +1,5 @@
-# The text of this page is written by hand; its two tables come from
-# dev/gen_aliases.R.
+# The text of this page is written by hand; its
+# two tables come from dev/gen_aliases.R.
 
 #' The 0.5.x names
 #'

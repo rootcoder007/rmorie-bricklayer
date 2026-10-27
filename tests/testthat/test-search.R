@@ -178,7 +178,7 @@ test_that("closed forms and hand-checked values", {
   # Bayes on three areas
   s <- srchscs(c(0.5, 0.3, 0.2), c(0.8, 0.5, 0))
   expect_equal(s$pos, 0.55)
-  expect_equal(s$pocupd, c(0.1, 0.15, 0.2) / 0.45)
+  expect_equal(s$pocupd, c(0.1, 0.15, 0.2) / 0.45, tolerance = 1e-8)
   s2 <- srchscs(c(0.5, 0.5), rbind(c(0.5, 0), c(0.5, 0)))
   expect_equal(s2$cumpod, c(0.75, 0))
   expect_equal(s2$pocupd, c(0.2, 0.8))
@@ -188,8 +188,12 @@ test_that("closed forms and hand-checked values", {
   m <- datumpmap(c(-1, 0, 1), c(-1, 0, 1))
   expect_equal(round(c(m$poc[1, 1], m$outside), 6), c(0.116516, 0.533935))
   ma <- datumpmap(0:4, 0:2, "area", c(1, 0.5), end = c(3, 1.5))
-  expect_equal(sum(ma$poc), 1)
-  expect_equal(ma$poc, rbind(c(0, 0.25, 0.25, 0), c(0, 0.25, 0.25, 0)))
+  expect_equal(sum(ma$poc), 1, tolerance = 1e-8)
+  expect_equal(
+    ma$poc,
+    rbind(c(0, 0.25, 0.25, 0), c(0, 0.25, 0.25, 0)),
+    tolerance = 1e-8
+  )
   # the segment's probability is that of its midpoint for a tiny line
   ml <- datumpmap(-3:3, -3:3, "line", c(0, 0), end = c(1e-9, 0))
   expect_equal(ml$poc, datumpmap(-3:3, -3:3)$poc, tolerance = 1e-8)
@@ -215,7 +219,7 @@ test_that("closed forms and hand-checked values", {
   # an effort beyond rmorie's bisection floor is still spent in full
   big <- opteffort(c(0.6, 0.4), c(1, 1), 1, 500)
   expect_equal(sum(big$effort), 500, tolerance = 1e-8)
-  expect_equal(opteffort(c(0.6, 0.4), c(1, 1), 1, 0)$pos, 0)
+  expect_equal(opteffort(c(0.6, 0.4), c(1, 1), 1, 0)$pos, 0, tolerance = 1e-8)
 })
 
 test_that("bad inputs are refused with the function named", {
@@ -257,7 +261,12 @@ test_that("bad inputs are refused with the function named", {
     srchscs(c(0.5, 0.5), c(0.5, -0.1)),
     "`pod` must be between 0 and 1"
   )
-  expect_warning(s <- srchscs(1, 1), "POS = 1")
+  expect_warning(
+    {
+      s <- srchscs(1, 1)
+    },
+    "POS = 1"
+  )
   expect_true(is.na(s$pocupd))
   expect_error(datumpmap(1, 1:2), "datumpmap: `xedg` must hold at least two")
   expect_error(datumpmap(1:2, 1:2, center = 1), "`center` must be two numbers")
@@ -303,8 +312,12 @@ test_that("results print and plot", {
   expect_s3_class(p, "rmbl_ltrlrng")
   expect_type(p, "double")
   out <- capture.output(print(p))
-  expect_true(any(grepl("inverse cube model, sweep width W = 2", out)))
-  expect_true(any(grepl("and 41 more", out)))
+  expect_true(any(grepl(
+    "inverse cube model, sweep width W = 2",
+    out,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("and 41 more", out, fixed = TRUE)))
   expect_output(print(ltrlrng(1, 1, "mbeta", m = 0.5)), "m = 0.5")
   expect_output(print(srchpod(seq(0, 3, by = 0.1))), "and 11 more")
   expect_output(print(srchpod(1)), "random search model")
@@ -341,7 +354,7 @@ test_that("results print and plot", {
   expect_identical(unique(d$model), c("invcube", "random", "definite"))
   d <- plot(m)
   expect_named(d, c("x", "y", "poc"))
-  expect_equal(sum(d$poc), sum(m$poc))
+  expect_equal(sum(d$poc), sum(m$poc), tolerance = 1e-8)
   expect_silent(plot(datumpmap(0:4, 0:3, "line", c(0.5, 0.5), end = c(3, 2))))
   expect_silent(plot(datumpmap(0:4, 0:3, "area", c(0.5, 0.5), end = c(3, 2))))
   d <- plot(a)
@@ -354,4 +367,133 @@ test_that("results print and plot", {
     effort = 2
   ))
   expect_identical(d$cell, c("a", "b", "c"))
+})
+
+test_that("plot() of ltrlrng() checks `equiv` and leaves par() (B1)", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  p <- ltrlrng(seq(-2, 2, by = 0.5), 2)
+  expect_error(plot(p, equiv = "yes"), "`equiv` must be TRUE or FALSE")
+  p0 <- graphics::par(c("col", "fg", "mar", "cex"))
+  plot(p, equiv = TRUE)
+  expect_identical(graphics::par(c("col", "fg", "mar", "cex")), p0)
+})
+
+# ---- printed boxes -----------------------------------------------------------
+
+# format() gives the plain lines of one titled block; print() draws them as a
+# box that fits an 80-column console, ASCII where the console takes no Unicode,
+# and returns the object invisibly.
+expect_box <- function(x, title, has = character()) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  withr::local_options(rmoriebricklayer.width = 80, rmoriebricklayer.numcol = 1)
+  txt <- format(x)
+  expect_type(txt, "character")
+  expect_true(grepl(title, txt[1L], fixed = TRUE), info = txt[1L])
+  flat <- paste(txt, collapse = "\n")
+  for (h in has) {
+    expect_true(grepl(h, flat, fixed = TRUE), info = h)
+  }
+  out <- utils::capture.output(print(x))
+  expect_output(expect_invisible(print(x)), "+-- ", fixed = TRUE)
+  expect_identical(withr::with_output_sink(nullfile(), print(x)), x)
+  expect_match(out[1L], "^\\+-- ")
+  expect_match(out[length(out)], "^\\+-+\\+$")
+  expect_true(all(nchar(out) == nchar(out[1L])))
+  expect_true(all(nchar(out) <= 79L))
+  invisible(out)
+}
+
+test_that("the search results print as boxes", {
+  expect_box(
+    ltrlrng(seq(-30, 30), 2),
+    "Lateral range curve",
+    c("inverse cube", "Sweep width W", "and 41 more", "area under")
+  )
+  expect_box(
+    ltrlrng(1, 1, "mbeta", m = 0.5, navsd = 0.5),
+    "Lateral range curve",
+    c("m = 0.5", "navigation error sd 0.5")
+  )
+  expect_box(
+    srchpod(1, "mbeta", m = 0.5),
+    "Probability of detection",
+    c("M-Beta", "M = 0.5")
+  )
+  expect_box(
+    srchscs(c(0.5, 0.3), c(0.8, 0.5)),
+    "Probability of success",
+    c("Overall POS", "POS 0.55 after 1 search")
+  )
+  m <- datumpmap(seq(-5, 5), seq(-5, 5), sigma = 2)
+  expect_box(m, "Datum probability map", c("10 x 10 cells", "likely cells"))
+  expect_box(
+    optcrcsrch(2, 1, 30),
+    "Optimal search of a circular normal datum",
+    c("radius", "chance")
+  )
+  expect_box(
+    opteffort(m, W = 1, effort = 30),
+    "Optimal allocation of effort",
+    c("Cells searched", "more cells")
+  )
+})
+
+test_that("srchpod() takes sweep width, effort and area for the coverage", {
+  expect_equal(
+    as.vector(srchpod(W = 0.6, effort = 12, area = 4, model = "invcube")),
+    as.vector(srchpod(0.6 * 12 / 4, "invcube")),
+    tolerance = 1e-12
+  )
+  expect_identical(
+    attr(srchpod(W = 2, effort = c(1, 2), area = 4), "coverage"),
+    c(0.5, 1)
+  )
+  m <- datumpmap(0:3, 0:2, center = c(1, 1))
+  eff <- matrix(1:6, 2)
+  pd <- srchpod(W = 0.5, effort = eff, area = m)
+  expect_equal(attr(pd, "coverage"), 0.5 * as.vector(eff),
+               tolerance = 1e-12)
+  expect_error(srchpod(1, W = 0.6), "srchpod: give either `coverage`")
+  expect_error(srchpod(W = 0.6, effort = 1), "srchpod: give `coverage`")
+  expect_error(srchpod(), "srchpod: give `coverage`")
+  expect_error(
+    srchpod(W = 1, effort = 1:2, area = 1:3),
+    "srchpod: `effort` and `area` must have the same length"
+  )
+  expect_error(srchpod(W = 1, effort = -1, area = 1), "srchpod: `effort`")
+})
+
+test_that("srchscs() takes a map and an allocation and returns the map", {
+  m <- datumpmap(seq(-3, 3), seq(-3, 3), sigma = 1.5)
+  a <- opteffort(m, W = 1, effort = 10)
+  s <- srchscs(m, a)
+  plain <- srchscs(as.vector(m$poc), as.vector(a$pod))
+  expect_equal(s$pos, plain$pos, tolerance = 1e-12)
+  expect_equal(as.vector(s$map$poc), plain$pocupd, tolerance = 1e-12)
+  expect_s3_class(s$map, "rmbl_datummap")
+  expect_equal(sum(s$map$poc) + s$map$outside, 1, tolerance = 1e-12)
+  expect_null(plain$map)
+  # a POD matrix laid out like the map is one search
+  expect_equal(srchscs(m, a$pod)$pos, s$pos, tolerance = 1e-12)
+  # the updated map plans the next search
+  b <- opteffort(s$map, W = 1, effort = 10)
+  expect_s3_class(b, "rmbl_opteffort")
+  out <- format(s)
+  expect_true(any(grepl("updated in $map", out, fixed = TRUE)))
+  expect_true(any(grepl("The 20 most likely of 36 cells", out, fixed = TRUE)))
+  expect_error(srchscs(m, c(0.5, 0.5)), "srchscs: `pod` must have one value")
+})
+
+test_that("the help page's own search runs step by step", {
+  own <- datumpmap(seq(-3, 7), seq(-2, 8), center = c(2, 3), sigma = 1.5)
+  walked <- matrix(0, nrow(own$poc), ncol(own$poc))
+  walked[5:6, 5:6] <- 12
+  pd <- srchpod(W = 0.6, effort = walked, area = own, model = "invcube")
+  expect_equal(sum(pd > 0), 4L, tolerance = 1e-12)
+  day1 <- srchscs(own, pd)
+  expect_equal(day1$pos, sum(own$poc * as.vector(pd)), tolerance = 1e-12)
+  expect_lt(sum(day1$map$poc[5:6, 5:6]), sum(own$poc[5:6, 5:6]))
+  day2 <- opteffort(day1$map, W = 0.6, effort = 40)
+  expect_equal(sum(day2$effort), 40, tolerance = 1e-8)
 })

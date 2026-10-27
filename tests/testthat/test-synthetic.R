@@ -64,7 +64,7 @@ test_that("mksyncsv is deterministic and restores the caller RNG state", {
   expect_identical(info$seed, 42L)
 
   df <- utils::read.csv(f1, stringsAsFactors = FALSE)
-  expect_identical(names(df), c("fy", "id", "alert"))
+  expect_named(df, c("fy", "id", "alert"))
   expect_true(all(df$alert %in% c("Yes", "No")))
 })
 

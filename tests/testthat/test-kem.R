@@ -221,3 +221,40 @@ test_that(
     }
   }
 )
+
+test_that("ML-KEM errors name ct and lvl", {
+  expect_error(kemdecap(kemkg(), function() 1), "kemdecap: `ct` must be data")
+  expect_error(kemkg(7), "`lvl` must be one of 512, 768 or 1024")
+  expect_error(kemsz(7), "`lvl` must be one of")
+})
+
+# Prints `x` on an ASCII console: the lines and what print() returned.
+o1_box <- function(x, ...) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  tmp <- withr::local_tempfile()
+  v <- withr::with_output_sink(tmp, withVisible(print(x, ...)))
+  list(out = readLines(tmp), v = v)
+}
+
+# The box's frame, its title and the facts expected in it.
+o1_expect_box <- function(b, x, title, facts = character()) {
+  expect_false(b$v$visible)
+  expect_identical(b$v$value, x)
+  expect_match(b$out[1L], "^\\+-- ")
+  expect_true(grepl(title, b$out[1L], fixed = TRUE))
+  expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  for (f in facts) {
+    expect_true(any(grepl(f, b$out, fixed = TRUE)), info = f)
+  }
+}
+
+test_that("ML-KEM keys and capsules print as boxes", {
+  key <- kemkg(512)
+  o1_expect_box(o1_box(key), key, "Key encapsulation key", "ML-KEM-512")
+  pub <- kempubkey(key)
+  o1_expect_box(o1_box(pub), pub, "Public encapsulation key", "Level")
+  cap <- kemencap(pub)
+  b <- o1_box(cap)
+  o1_expect_box(b, cap, "Encapsulated shared secret", "<withheld>")
+  expect_false(any(grepl(cap$shared, b$out, fixed = TRUE)))
+})

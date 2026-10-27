@@ -28,7 +28,8 @@ When \code{FALSE} the result comes back with \code{ok = FALSE},
 \code{\link{rlblfrns}}.}
 }
 \value{
-A list with \code{ok} (logical), \code{decoded} (a factor; in code
+A list of class \code{rmbl_transfer_check} (it prints as a box)
+with \code{ok} (logical), \code{decoded} (a factor; in code
 order when decoded from codes), \code{marginals} (the
 \code{\link{vrfmrg}} result), \code{code_book_ok} (logical, or
 \code{NA} when there was nothing to compare) and \code{reasons}

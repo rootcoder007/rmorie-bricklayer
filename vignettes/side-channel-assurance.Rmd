@@ -8,10 +8,14 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
@@ -25,7 +29,10 @@ exactly what remains outside the verification. The harnesses live under `inst/` 
 installed package and run in continuous integration on every change.
 
 ```{r side-channel-assurance-harnesses}
-list.files(system.file(package = "rmoriebricklayer"), pattern = "^(ctcheck|dudect|tvla|fuzz)$")
+list.files(
+  system.file(package = "rmoriebricklayer"),
+  pattern = "^(ctcheck|dudect|tvla|fuzz)$"
+)
 ```
 
 ## 1. Timing
@@ -145,7 +152,10 @@ unmasked control leaks (|t| 87 to 163). CI fails on a masked leak under either m
 full table is in `inst/tvla/README.md`.
 
 ```{r side-channel-assurance-tvla-readme}
-readLines(system.file("tvla", "README.md", package = "rmoriebricklayer"), n = 12)
+readLines(
+  system.file("tvla", "README.md", package = "rmoriebricklayer"),
+  n = 12
+)
 ```
 
 ## 3. What is outside these checks
@@ -205,10 +215,13 @@ indistinguishable.
 
 ```{r side-channel-assurance-decap-timing-plot, fig.width = 7, fig.height = 4.5}
 bad <- sent$ciphertext
-substr(bad, 1, 1) <- if (substr(bad, 1, 1) == "0") "1" else "0"  # one hex digit changed
+# one hex digit changed
+substr(bad, 1, 1) <- if (substr(bad, 1, 1) == "0") "1" else "0"
 tm <- function(ct) {
   s <- proc.time()[["elapsed"]]
-  for (i in 1:200) kemdecap(key, ct)
+  for (i in 1:200) {
+    kemdecap(key, ct)
+  }
   (proc.time()[["elapsed"]] - s) / 200 * 1e6
 }
 honest <- tampered <- numeric(60)
@@ -216,6 +229,9 @@ for (k in 1:60) {
   honest[k] <- tm(sent$ciphertext)
   tampered[k] <- tm(bad)
 }
-plotecdf(c(honest, tampered), rep(c("honest ciphertext", "one digit changed"), each = 60),
-         main = "ML-KEM-512 decapsulation time (microseconds)")
+plotecdf(
+  c(honest, tampered),
+  rep(c("honest ciphertext", "one digit changed"), each = 60),
+  main = "ML-KEM-512 decapsulation time (microseconds)"
+)
 ```

@@ -8,13 +8,22 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 3.8)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 3.8
+)
 library(rmoriebricklayer)
 ```
 
@@ -33,7 +42,8 @@ d <- data.frame(
   region = rep(c("North", "South", "East"), each = 2),
   age = rep(c("18 to 24", "25 to 49"), 3),
   n = c(30, 45, 12, 60, 8, 20),
-  pop = c(1000, 6000, 900, 9000, 400, 3500)
+  pop = c(1000, 6000, 900, 9000, 400, 3500),
+  stringsAsFactors = FALSE
 )
 expcnts(d$n, d$pop, d$region)
 ```
@@ -50,16 +60,18 @@ expcnts(d$n, d$pop, d$region, strata = d$age)
 
 Indirect standardisation asks what each unit would expect at the overall rates. Direct
 standardisation asks what rate each population would have with one standard age structure. It
-is the comparison to use when the populations' ages differ a great deal. First Nations, Metis and
+is the comparison to use when the populations' ages differ a great deal. First Nations, Métis and
 Inuit populations, for example, are younger than the non-Indigenous population.
 `agestd()` gives the rates with the Fay-Feuer gamma interval, which holds for small
 counts. `rategap()` compares two of them. The counts below are made up, to show the computation:
 
 ```{r small-area-rates-direct}
-r <- agestd(events = c(4, 9, 11, 6, 3, 40, 70, 90, 80, 60),
-                     pop = c(9000, 8000, 6000, 4000, 2000, 300000, 320000, 350000, 340000, 300000),
-                     std = c(30, 25, 20, 15, 10),
-                     grp = rep(c("Inuit", "Non-Indigenous"), each = 5))
+r <- agestd(
+  events = c(4, 9, 11, 6, 3, 40, 70, 90, 80, 60),
+  pop = c(9000, 8000, 6000, 4000, 2000, 300000, 320000, 350000, 340000, 300000),
+  std = c(30, 25, 20, 15, 10),
+  grp = rep(c("Inuit", "Non-Indigenous"), each = 5)
+)
 r
 rategap(r, "Inuit", "Non-Indigenous")
 ```
@@ -131,13 +143,14 @@ values cluster in space, against a permutation null; `neighbours` is a list givi
 area's adjacent areas:
 
 ```{r small-area-rates-moran}
-nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)   # six areas in a line
+# six areas in a line
+nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)
 
 set.seed(1)
-morani(c(1, 2, 3, 4, 5, 6), nb, nperm = 999L)[c("I", "p_value")]   # a gradient
+morani(c(1, 2, 3, 4, 5, 6), nb, nperm = 999L)[c("I", "p_value")] # a gradient
 
 set.seed(1)
-morani(c(1, 6, 1, 6, 1, 6), nb, nperm = 999L)[c("I", "p_value")]   # alternating
+morani(c(1, 6, 1, 6, 1, 6), nb, nperm = 999L)[c("I", "p_value")] # alternating
 ```
 
 The null expectation of *I* is not zero but $-1/(n-1)$:

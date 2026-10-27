@@ -7,52 +7,6 @@
 # mirror rmorie's envhealth module (and morie's Python envhealth) formula for
 # formula; see exprspplr() for the one seam that differs.
 
-#' Builds an `rmbl_crf` object from a concentration-response curve evaluated at
-#' the exposures.
-#' @param rr The relative risk at each exposure.
-#' @param log_rr Its logarithm.
-#' @param z The exposures.
-#' @param scalar Whether one exposure was given (the object then holds its
-#'   values, not means).
-#' @param reference_conc The counterfactual concentration.
-#' @param pollutant The pollutant's name.
-#' @param citation The source of the curve.
-#' @param extra Further fields kept in the object's `extra` list.
-#' @param rr_lower The lower 95 percent limit of the relative risk, or NA.
-#' @param rr_upper The upper 95 percent limit, or NA.
-#' @return An object of class `rmbl_crf`.
-#' @noRd
-.crf_object <- function(
-  rr,
-  log_rr,
-  z,
-  scalar,
-  reference_conc,
-  pollutant,
-  citation,
-  extra,
-  rr_lower = NA_real_,
-  rr_upper = NA_real_
-) {
-  structure(
-    list(
-      rr = if (scalar) rr[[1L]] else mean(rr),
-      logrr = if (scalar) log_rr[[1L]] else mean(log_rr),
-      # the published 95 percent limits of the relative risk, carried through
-      # the same curve (NA for the IER forms, whose papers give no interval on
-      # the pooled parameters)
-      rrlo = if (scalar) rr_lower[[1L]] else mean(rr_lower),
-      rrup = if (scalar) rr_upper[[1L]] else mean(rr_upper),
-      refconc = reference_conc,
-      expconc = if (scalar) z[[1L]] else mean(z),
-      pollutant = pollutant,
-      citation = citation,
-      extra = c(extra, list(rrperunit = if (scalar) NULL else rr))
-    ),
-    class = "rmbl_crf"
-  )
-}
-
 #' Concentration-response functions for PM2.5 and NO2
 #'
 #' A concentration-response function (CRF) turns an air-pollution
@@ -159,28 +113,14 @@
 #' try(crfpm25(12, y = "asthma"))
 #' @export
 crfpm25 <- function(expo, y = "allcause", refconc = 5.8) {
-  .rmbl_no_fn(outcome = y)
+  .rmbl_no_fn(y = y)
   # all-cause: RR 1.08 (95% CI 1.06-1.09) per 10 ug/m3, Chen and Hoek (2020),
   # the WHO 2021 review
   loglinear <- c(allcause = log(1.08))
-  loglinear_ci <- list(allcause = log(c(1.06, 1.09)))
   # GBD 2013 cause-specific IER triples (alpha, gamma, delta), Burnett et al.
   # (2014)
   ier <- list(ihd = c(1.91, 0.14, 0.49), stroke = c(1.46, 0.13, 0.61))
-  if (
-    !is.character(y) ||
-      length(y) != 1L ||
-      !y %in% c(names(loglinear), names(ier))
-  ) {
-    stop(
-      sprintf(
-        "Unknown outcome '%s'. Available: %s",
-        paste(y, collapse = ","),
-        paste(c(names(loglinear), names(ier)), collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  }
+  .crf_check_outcome(y, c(names(loglinear), names(ier)))
   # one reference for every exposure: a vector would recycle against z, an NA
   # would give NA risks
   refconc <- .pollution_scalar(refconc, "refconc")
@@ -188,29 +128,7 @@ crfpm25 <- function(expo, y = "allcause", refconc = 5.8) {
   scalar <- length(z) == 1L
   excess <- pmax(z - refconc, 0)
   if (y %in% names(loglinear)) {
-    beta <- loglinear[[y]]
-    log_rr <- beta * excess / 10
-    ci <- loglinear_ci[[y]]
-    return(.crf_object(
-      exp(log_rr),
-      log_rr,
-      z,
-      scalar,
-      refconc,
-      "PM2.5",
-      paste0(
-        "Chen & Hoek (2020) Environ Int 143:105974; WHO (2021) Global AQ ",
-        "Guidelines"
-      ),
-      list(
-        betaper10 = beta,
-        betaper10ci = ci,
-        form = "log-linear",
-        outcome = y
-      ),
-      rr_lower = exp(ci[[1L]] * excess / 10),
-      rr_upper = exp(ci[[2L]] * excess / 10)
-    ))
+    return(.crf_pm25_loglinear(loglinear[[y]], y, excess, z, scalar, refconc))
   }
   p <- ier[[y]]
   rr <- 1 + p[1L] * (1 - exp(-p[2L] * excess^p[3L]))
@@ -229,39 +147,14 @@ crfpm25 <- function(expo, y = "allcause", refconc = 5.8) {
 #' @rdname crfpm25
 #' @export
 crfno2 <- function(expo, y = "allcause", refconc = 10, betaper10 = NULL) {
-  .rmbl_no_fn(outcome = y)
+  .rmbl_no_fn(y = y)
   # all-cause RR 1.02 (95% CI 1.01-1.04) and respiratory RR 1.03 (1.00-1.05) per
   # 10 ug/m3, Huangfu and Atkinson (2020), the WHO 2021 review; childhood asthma
   # incidence OR 1.05 (1.02-1.07) per 4 ug/m3, Khreis et al. (2017), scaled to
   # per 10 ug/m3
-  betas <- c(
-    allcause = log(1.02),
-    respiratory = log(1.03),
-    chiast = log(1.05) * 10 / 4
-  )
-  betas_ci <- list(
-    allcause = log(c(1.01, 1.04)),
-    respiratory = log(c(1.00, 1.05)),
-    chiast = log(c(1.02, 1.07)) * 10 / 4
-  )
-  ci <- c(NA_real_, NA_real_)
-  if (is.null(betaper10)) {
-    if (!is.character(y) || length(y) != 1L || !y %in% names(betas)) {
-      stop(
-        sprintf(
-          "Unknown outcome '%s'. Available: %s or pass betaper10 explicitly.",
-          paste(y, collapse = ","),
-          paste(names(betas), collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    }
-    beta <- betas[[y]]
-    ci <- betas_ci[[y]]
-  } else {
-    # the same guard as every other scalar: TRUE is not a log relative risk of 1
-    beta <- .pollution_scalar(betaper10, "betaper10", nonneg = FALSE)
-  }
+  bc <- .crf_no2_beta(y, betaper10)
+  beta <- bc$beta
+  ci <- bc$ci
   refconc <- .pollution_scalar(refconc, "refconc")
   z <- .pollution_exposure(expo)
   scalar <- length(z) == 1L
@@ -286,194 +179,6 @@ crfno2 <- function(expo, y = "allcause", refconc = 10, betaper10 = NULL) {
     rr_lower = exp(ci[[1L]] * pmax(z - refconc, 0) / 10),
     rr_upper = exp(ci[[2L]] * pmax(z - refconc, 0) / 10)
   )
-}
-
-#' Checks the exposure concentrations: finite, non-negative, none missing.
-#' @param exposure The concentrations passed by the user.
-#' @return A double vector.
-#' @noRd
-.pollution_exposure <- function(exposure) {
-  if (is.logical(exposure)) {
-    stop("`exposure` must be numeric, not logical", call. = FALSE)
-  }
-  z <- .rmbl_num_input(exposure, "exposure", allow_null = FALSE)
-  if (!length(z) || anyNA(z) || any(!is.finite(z))) {
-    stop(
-      "`exposure` must be one or more finite concentrations, with no ",
-      "missing values",
-      call. = FALSE
-    )
-  }
-  if (any(z < 0)) {
-    stop("`exposure` must be non-negative", call. = FALSE)
-  }
-  z
-}
-
-#' Says that a baseline rate above 1 looks like a rate per 100,000.
-#' @param rate The rate passed.
-#' @return One string.
-#' @noRd
-.pollution_rate_msg <- function(rate) {
-  sprintf(
-    paste(
-      "`brate` is a rate per person-year, between 0 and 1 (0.008 is 800",
-      "per 100,000);",
-      "%s looks like a rate per 100,000, which only vrfpol() takes"
-    ),
-    format(rate)
-  )
-}
-
-#' Checks a baseline rate per person-year.
-#'
-#' A baseline rate per person-year, checked as vrfpol() checks its rate per
-#' 100,000 (the same band, the same switches; review of e57fed5, E4: 0.5 and
-#' 8e-8 were taken as they came). The band is 1 to 10,000 per 100,000 a year
-#' (1e-5 to 0.1 per person-year): below it, the number is also what a rate per
-#' 100,000 passed here looks like (rare = TRUE when the outcome really is that
-#' rare, never below 1e-6 per 100,000); above it, no population's all-cause
-#' mortality comes close (hirate = TRUE for an outcome that common, never above
-#' 1); zero is a measured zero.
-#' @param rate The rate.
-#' @param rare_outcome Whether a rate below one per 100,000 a year is taken.
-#' @param high_rate Whether a rate above 0.1 per person-year is taken.
-#' @return `rate`.
-#' @noRd
-.pollution_rate_pp <- function(rate, rare_outcome = FALSE, high_rate = FALSE) {
-  for (a in list(
-    list("rare_outcome", rare_outcome),
-    list("high_rate", high_rate)
-  )) {
-    if (!is.logical(a[[2L]]) || length(a[[2L]]) != 1L || is.na(a[[2L]])) {
-      stop(
-        .rmbl_fn(),
-        sprintf("`%s` must be TRUE or FALSE", a[[1L]]),
-        call. = FALSE
-      )
-    }
-  }
-  if (rate > 1) {
-    stop(.pollution_rate_msg(rate), call. = FALSE)
-  }
-  if (rate == 0) {
-    return(rate)
-  }
-  if (rate < 1e-11) {
-    stop(
-      sprintf(
-        paste(
-          "`brate` %s per person-year is below one case per 100 billion",
-          "person-years:",
-          "not a usable rate"
-        ),
-        format(rate)
-      ),
-      call. = FALSE
-    )
-  }
-  if (rate < 1e-5 && !rare_outcome) {
-    stop(
-      sprintf(
-        paste(
-          "`brate` %s per person-year is below one case per 100,000 a",
-          "year. A rate per",
-          "100,000 divided by 100,000 is the rate here (800 per 100,000",
-          "is 0.008); if the outcome",
-          "really is this rare, say so with rare = TRUE"
-        ),
-        format(rate)
-      ),
-      call. = FALSE
-    )
-  }
-  if (rate > 0.1 && !high_rate) {
-    stop(
-      sprintf(
-        paste(
-          "`brate` %s per person-year is %s per 100,000 a year, above a",
-          "whole population's",
-          "all-cause death rate (an age-specific rate for the oldest",
-          "ages can be this high). If it",
-          "is a rate per 100,000, divide it by 100,000; if the outcome",
-          "really is this common, say",
-          "so with hirate = TRUE"
-        ),
-        format(rate),
-        format(rate * 1e5, big.mark = ",", scientific = FALSE)
-      ),
-      call. = FALSE
-    )
-  }
-  rate
-}
-
-#' One finite number, optionally non-negative: the scalar inputs of the burden
-#' functions.
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
-#' @param nonneg Whether a negative value is refused.
-#' @param positive Whether zero is refused too.
-#' @return The number.
-#' @noRd
-.pollution_scalar <- function(x, what, nonneg = TRUE, positive = FALSE) {
-  # a flag is not a number: as.numeric(TRUE) is 1, and a relative risk of TRUE
-  # is a typo
-  if (is.logical(x) && !all(is.na(x))) {
-    stop(
-      .rmbl_fn(),
-      sprintf("`%s` must be numeric, not logical", what),
-      call. = FALSE
-    )
-  }
-  if (is.factor(x)) {
-    stop(
-      sprintf(
-        "`%s` must be numeric, not a factor (its level codes are not values)",
-        what
-      ),
-      call. = FALSE
-    )
-  }
-  v <- .rmbl_num_input(x, what, allow_null = FALSE)
-  if (length(v) != 1L || is.na(v) || !is.finite(v)) {
-    stop(sprintf("`%s` must be a single finite number", what), call. = FALSE)
-  }
-  if (positive && v <= 0) {
-    stop(.rmbl_fn(), sprintf("`%s` must be positive", what), call. = FALSE)
-  }
-  if (nonneg && v < 0) {
-    stop(.rmbl_fn(), sprintf("`%s` must be non-negative", what), call. = FALSE)
-  }
-  v
-}
-
-#' \code{"PM2.5"}, \code{"PM25"}, \code{"pm2.5"}, \code{"pm25"} ->
-#' \code{"PM2.5"}; \code{"NO2"}, \code{"no2"} -> \code{"NO2"}; anything else NA.
-#' @param pollutant The pollutant's name as given.
-#' @return \code{"PM2.5"}, \code{"NO2"} or NA.
-#' @noRd
-.pollution_pollutant <- function(pollutant) {
-  if (!is.character(pollutant) || length(pollutant) != 1L || is.na(pollutant)) {
-    return(NA_character_)
-  }
-  key <- gsub("[^a-z0-9]", "", tolower(pollutant))
-  if (key %in% c("pm25", "pm2.5")) {
-    return("PM2.5")
-  }
-  if (identical(key, "no2")) {
-    return("NO2")
-  }
-  NA_character_
-}
-
-#' The unit of an outcome's attributable count: the mortality outcomes are
-#' deaths, the childhood-asthma CRF is an incidence relative risk.
-#' @param outcome The outcome's code.
-#' @return One string.
-#' @noRd
-.pollution_outcome_unit <- function(outcome) {
-  if (identical(outcome, "chiast")) "incident cases" else "deaths"
 }
 
 #' Population attributable fraction
@@ -514,6 +219,10 @@ crfno2 <- function(expo, y = "allcause", refconc = 10, betaper10 = NULL) {
 #'   \code{rr >= 1}, negative for a protective exposure. When the limits
 #'   were given it carries an attribute \code{ci}, a named numeric vector
 #'   (\code{lower}, \code{upper}).
+#'    It has class \code{c("rmbl_attrfrac", "rmbl_measure", "numeric")}, so it
+#'   prints as a box with its inputs (kept in attribute \code{"lakner"});
+#'   arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+#'   numbers.
 #' @seealso \code{\link{crfpm25}} for a relative risk from a
 #'   concentration, \code{\link{polbrdn}} for the attributable
 #'   cases.
@@ -554,7 +263,39 @@ attrfrac <- function(rr, expoprev, rrlo = NULL, rrup = NULL) {
     }
     attr(paf, "ci") <- c(lower = levin(lo), upper = levin(hi))
   }
-  paf
+  .rmbl_measure(
+    paf,
+    "attrfrac",
+    list(rr = rr, expoprev = p, rrlo = rrlo, rrup = rrup)
+  )
+}
+
+#' @export
+format.rmbl_attrfrac <- function(x, ...) {
+  if (!.lk_ok(x, c("rr", "expoprev")) || length(x) != 1L) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  ci <- attr(x, "ci")
+  pct <- function(v) sprintf("%.2f%%", 100 * v)
+  .an_block(
+    "Population attributable fraction",
+    facts = list(
+      `Attributable fraction` = pct(.rmbl_measure_plain(x)),
+      Interval = if (length(ci) == 2L) {
+        sprintf("[%s, %s]", pct(ci[["lower"]]), pct(ci[["upper"]]))
+      },
+      `Relative risk` = .rd_num_ci(m$rr, m$rrlo, m$rrup),
+      Exposed = pct(m$expoprev),
+      Formula = "Levin: p (RR - 1) / (1 + p (RR - 1))"
+    ),
+    reading = .rmbl_paf_reading(.rmbl_measure_plain(x), ci),
+    notes = c(
+      "It holds only if the relative risk is causal and unconfounded, and",
+      "only for a population exposed as this one is (Rothman et al. 2008,",
+      "chapter 5)."
+    )
+  )
 }
 
 #' Deaths avoided under a counterfactual exposure reduction
@@ -626,7 +367,7 @@ mortdisp <- function(
   hirate = FALSE
 ) {
   expdel <- .pollution_scalar(expdel, "expdel", nonneg = FALSE)
-  pop <- .pollution_scalar(pop, "population")
+  pop <- .pollution_scalar(pop, "pop")
   brate <- .pollution_rate_pp(.pollution_scalar(brate, "brate"), rare, hirate)
   betaperunit <- .pollution_scalar(betaperunit, "betaperunit", nonneg = FALSE)
   brate * pop * (1 - exp(-betaperunit * expdel))
@@ -715,7 +456,7 @@ polbrdn <- function(
   rare = FALSE,
   hirate = FALSE
 ) {
-  .rmbl_no_fn(pollutant = poll)
+  .rmbl_no_fn(poll = poll)
   pol <- .pollution_pollutant(poll)
   if (is.na(pol)) {
     stop(
@@ -731,7 +472,7 @@ polbrdn <- function(
   # the same check mortdisp() makes: 800 is a rate per 100,000, and taken per
   # person-year it gave 110 million attributable deaths from a million people
   brate <- .pollution_rate_pp(.pollution_scalar(brate, "brate"), rare, hirate)
-  pop <- .pollution_scalar(pop, "population")
+  pop <- .pollution_scalar(pop, "pop")
   if (!is.null(refconc)) {
     refconc <- .pollution_scalar(refconc, "refconc")
   }
@@ -740,7 +481,7 @@ polbrdn <- function(
   } else {
     crfno2(expomean, y = y, refconc = if (is.null(refconc)) 10 else refconc)
   }
-  paf <- attrfrac(crf$rr, expoprev)
+  paf <- .rmbl_measure_plain(attrfrac(crf$rr, expoprev))
   baseline_cases <- brate * pop
   structure(
     list(
@@ -818,7 +559,8 @@ polbrdn <- function(
 #'   2 (default 5).
 #' @param seed Seed of the fold assignment (default 1), so the estimate is
 #'   reproducible.
-#' @return A list with \code{ate} (the estimate of \eqn{\theta}: the change
+#' @return A list of class \code{c("rmbl_plr", "list")} (its print method shows
+#'   it as a box) with \code{ate} (the estimate of \eqn{\theta}: the change
 #'   in the outcome per unit of the treatment), \code{se} (its sandwich
 #'   standard error), \code{n} (complete rows used), \code{kfol} and
 #'   \code{method} (a string naming the estimator).
@@ -849,65 +591,17 @@ plrcf <- function(data, y, trt, covs, kfol = 5L, seed = 1L) {
   .rmbl_colnames(y, "y")
   .rmbl_colnames(trt, "trt")
   .rmbl_colnames(covs, "covs", several = TRUE)
-  cols <- c(y, trt, covs)
-  missing <- setdiff(cols, names(data))
-  if (length(missing)) {
-    stop(
-      sprintf(
-        "plrcf: data is missing columns: %s",
-        paste(missing, collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  }
-  df <- data[
-    stats::complete.cases(data[, cols, drop = FALSE]),
-    cols,
-    drop = FALSE
-  ]
+  dd <- .plrcf_data(data, y, trt, covs, kfol)
+  df <- dd$df
+  kfol <- dd$kfol
   n <- nrow(df)
-  kfol <- as.integer(.rmbl_num(kfol, "kfol", integer = TRUE))
-  if (length(kfol) != 1L || is.na(kfol) || kfol < 2L) {
-    stop("`kfol` must be at least 2", call. = FALSE)
-  }
-  for (cl in cols) {
-    if (!is.numeric(df[[cl]])) {
-      stop(
-        sprintf(
-          paste0(
-            "column `%s` must be numeric (a factor or character column is ",
-            "not a code)"
-          ),
-          cl
-        ),
-        call. = FALSE
-      )
-    }
-  }
-  if (n < 2L * kfol) {
-    stop(
-      sprintf(
-        "need at least %d complete rows for %d folds; have %d",
-        2L * kfol,
-        kfol,
-        n
-      ),
-      call. = FALSE
-    )
-  }
   folds <- .rmbl_with_seed(seed, sample(rep_len(seq_len(kfol), n)))
   .y <- as.numeric(df[[y]])
   d <- as.numeric(df[[trt]])
   X <- cbind(1, as.matrix(df[, covs, drop = FALSE]))
   storage.mode(X) <- "double"
   YD <- cbind(.y, d)
-  # the covariates centred and scaled by their full-sample moments: the same
-  # column space (the intercept is in it), so the same fitted values, with a
-  # cross-product that is well conditioned whatever the covariates' units
-  ctr <- colMeans(X[, -1L, drop = FALSE])
-  scl <- sqrt(colSums(sweep(X[, -1L, drop = FALSE], 2L, ctr)^2) / n)
-  scl[!is.finite(scl) | scl <= 0] <- 1
-  Z <- cbind(1, sweep(sweep(X[, -1L, drop = FALSE], 2L, ctr), 2L, scl, "/"))
+  Z <- .plrcf_scaled(X, n)
   U <- numeric(n)
   V <- numeric(n)
   pg <- blprog("cross-fitting", kfol)
@@ -931,53 +625,15 @@ plrcf <- function(data, y, trt, covs, kfol = 5L, seed = 1L) {
   }
   theta <- sum(V * U) / denom
   se <- sqrt(sum(V * V * (U - theta * V)^2)) / denom
-  list(
+  out <- list(
     ate = theta,
     se = se,
     n = n,
     kfol = kfol,
     method = "partially linear regression, DML2 cross-fitting, OLS nuisances"
   )
-}
-
-#' Fits one fold's two nuisance regressions and predicts them on the test rows.
-#'
-#' One fold's two nuisance fits (outcome and treatment on the covariates, least
-#' squares on the training rows) predicted on the test rows. The least-squares
-#' solution comes from the normal equations of the standardized design Z, solved
-#' by Cholesky: two cross-products and a p x p solve. That is the same
-#' projection lm.fit() computes by its LINPACK QR, and it is used only when the
-#' cross-product is well conditioned (reciprocal condition number at least 1e-5,
-#' so the rounding difference from the QR is far below 1e-10); a near-singular
-#' fold (collinear covariates, a constant column) takes lm.fit() on the raw
-#' design as before, with its pivoting and its NA coefficients set to 0.
-#' lm.fit()'s QR is a long chain of level-1 BLAS calls, which a threaded BLAS on
-#' a busy machine runs a hundred times slower than this (an n = 20000 fit took
-#' 1.5 s); the cross-products are level-3 calls.
-#' @param X The raw design matrix.
-#' @param Z The standardized design matrix.
-#' @param YD The outcome and treatment, as a two-column matrix.
-#' @param train The training rows.
-#' @param test The test rows.
-#' @return A matrix of predictions, one column for each of `YD`.
-#' @noRd
-.plr_fold_fit <- function(X, Z, YD, train, test) {
-  Zt <- Z[train, , drop = FALSE]
-  A <- crossprod(Zt)
-  if (all(is.finite(A)) && rcond(A) >= 1e-5) {
-    R <- chol(A)
-    b <- backsolve(
-      R,
-      backsolve(R, crossprod(Zt, YD[train, , drop = FALSE]), transpose = TRUE)
-    )
-    return(Z[test, , drop = FALSE] %*% b)
-  }
-  g <- stats::lm.fit(
-    X[train, , drop = FALSE],
-    YD[train, , drop = FALSE]
-  )$coefficients
-  g[is.na(g)] <- 0
-  X[test, , drop = FALSE] %*% g
+  class(out) <- c("rmbl_plr", class(out))
+  out
 }
 
 #' Exposure-response estimate with a bootstrap sensitivity interval
@@ -1017,7 +673,8 @@ plrcf <- function(data, y, trt, covs, kfol = 5L, seed = 1L) {
 #'   returning a list with \code{ate} and \code{se}. The default is
 #'   \code{\link{plrcf}}; rmorie's \code{morie_estimate_double_ml()}
 #'   has the same interface.
-#' @return A list with \code{ate} (the full-sample estimate),
+#' @return A list of class \code{c("rmbl_plr_boot", "list")} (its print
+#'   method shows it as a box) with \code{ate} (the full-sample estimate),
 #'   \code{seana} (the estimator's standard error),
 #'   \code{seboot} (the standard deviation of the replicates),
 #'   \code{cilobs} and \code{ciupbs} (the 95% percentile
@@ -1081,48 +738,11 @@ exprspplr <- function(
   pg$update(0, "fitting the full sample")
   # the full sample: an estimator that cannot take (data, outcome, exposure,
   # confounders) is said so
-  base <- tryCatch(estr(data, y, expo, confs), error = function(e) {
-    stop(
-      .rmbl_fn(),
-      sprintf(
-        paste(
-          "`estr` failed on the full sample, called as",
-          "estr(data, y, expo, confs): %s"
-        ),
-        conditionMessage(e)
-      ),
-      call. = FALSE
-    )
-  })
+  base <- .exprsp_full(estr, data, y, expo, confs)
   ate <- as.numeric(base$ate)
   se_analytic <- as.numeric(base$se)
-  n <- nrow(data)
-  boot <- .rmbl_with_seed(rstate, {
-    out <- numeric(0)
-    for (b in seq_len(nboot)) {
-      pg$update(b, sprintf("bootstrap %d/%d", b, nboot))
-      idx <- sample.int(n, n, replace = TRUE)
-      r <- tryCatch(
-        estr(data[idx, , drop = FALSE], y, expo, confs),
-        error = .rmbl_or(NULL)
-      )
-      if (!is.null(r)) out <- c(out, as.numeric(r$ate))
-    }
-    out
-  })
-  if (length(boot) < 10L) {
-    stop(
-      sprintf(
-        paste0(
-          "Only %d successful bootstrap fits; need >=10. Inspect the ",
-          "model's convergence on your resamples."
-        ),
-        length(boot)
-      ),
-      call. = FALSE
-    )
-  }
-  list(
+  boot <- .exprsp_boot(estr, data, y, expo, confs, nboot, rstate, pg)
+  out <- list(
     ate = ate,
     seana = se_analytic,
     seboot = stats::sd(boot),
@@ -1134,6 +754,8 @@ exprspplr <- function(
       " + percentile bootstrap"
     )
   )
+  class(out) <- c("rmbl_plr_boot", class(out))
+  out
 }
 
 #' Concentration index of exposure by income
@@ -1158,8 +780,10 @@ exprspplr <- function(
 #' calls an index below -0.01 a burden on the poor, above 0.01 a burden on
 #' the rich, and anything between an even distribution. Refusals: column
 #' names that are not single strings or not in \code{data}; fewer than 2
-#' complete rows; a non-numeric or infinite value; a negative exposure; and
-#' a mean exposure of zero (the index divides by it). Income only needs an
+#' complete rows; a non-numeric or infinite value; a negative exposure; an
+#' income that takes one value only (no income gradient, so the index is
+#' undefined); and a mean exposure of zero (the index divides by it). Income
+#' only needs an
 #' order: an amount, a quintile number or a rank all give the same index.
 #'
 #' @param data A data frame with one row per person or area.
@@ -1193,36 +817,11 @@ exprspplr <- function(
 expconcidx <- function(data, expo, income) {
   .rmbl_colnames(expo, "expo")
   .rmbl_colnames(income, "income")
-  missing <- setdiff(c(expo, income), names(data))
-  if (length(missing)) {
-    stop(
-      sprintf(
-        "expconcidx: data is missing columns: %s",
-        paste(missing, collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  }
-  df <- data[, c(expo, income), drop = FALSE]
-  df <- df[stats::complete.cases(df), , drop = FALSE]
+  df <- .expconc_rows(data, expo, income)
   n <- nrow(df)
-  if (n < 2L) {
-    stop("Need at least 2 rows to compute concentration index.", call. = FALSE)
-  }
   h <- .rmbl_num_input(df[[expo]], expo, allow_null = FALSE)
   inc <- .rmbl_num_input(df[[income]], income, allow_null = FALSE)
-  if (any(!is.finite(h)) || any(!is.finite(inc))) {
-    stop(sprintf("`%s` and `%s` must be finite", expo, income), call. = FALSE)
-  }
-  if (any(h < 0)) {
-    stop(
-      sprintf(
-        "`%s` must be non-negative: an exposure is a concentration",
-        expo
-      ),
-      call. = FALSE
-    )
-  }
+  .expconc_check(h, inc, expo, income)
   mu <- mean(h)
   if (mu <= 0) {
     stop("Mean exposure is zero; concentration index undefined.", call. = FALSE)
@@ -1241,28 +840,7 @@ expconcidx <- function(data, expo, income) {
     population = seq_len(n) / n,
     exposure = cumsum(h[ord]) / sum(h)
   )
-  interp <- if (ci < -0.01) {
-    sprintf(
-      paste0(
-        "CI = %.4f. Pro-poor exposure burden: lower-income individuals ",
-        "bear disproportionately higher pollution."
-      ),
-      ci
-    )
-  } else if (ci > 0.01) {
-    sprintf(
-      paste0(
-        "CI = %.4f. Pro-rich exposure burden: higher-income individuals ",
-        "bear disproportionately higher pollution."
-      ),
-      ci
-    )
-  } else {
-    sprintf(
-      "CI = %.4f. Exposure distributed approximately evenly across income.",
-      ci
-    )
-  }
+  interp <- .expconc_interp(ci)
   structure(
     list(
       concidx = ci,
@@ -1347,7 +925,7 @@ polbrdarea <- function(
   missing <- setdiff(required, names(areatab))
   if (length(missing)) {
     stop(
-      sprintf("areatab missing columns: %s", paste(missing, collapse = ", ")),
+      sprintf("areatab missing columns: %s", toString(missing)),
       call. = FALSE
     )
   }
@@ -1369,261 +947,55 @@ polbrdarea <- function(
     }
   }
   rows <- lapply(seq_len(nrow(areatab)), function(i) {
-    r <- polbrdn(
-      expomean = as.numeric(areatab[[expcol]][i]),
-      expoprev = 1,
-      brate = as.numeric(areatab[[basratecol]][i]),
-      pop = as.numeric(areatab[[popcol]][i]),
-      poll = poll,
-      y = y,
-      rare = rare,
-      hirate = hirate
+    .polbrd_row(
+      areatab,
+      i,
+      areacol,
+      expcol,
+      popcol,
+      basratecol,
+      poll,
+      y,
+      rare,
+      hirate
     )
-    out <- data.frame(a = areatab[[areacol]][i], stringsAsFactors = FALSE)
-    names(out) <- areacol
-    out[[expcol]] <- as.numeric(areatab[[expcol]][i])
-    out[[popcol]] <- as.numeric(areatab[[popcol]][i])
-    out[[basratecol]] <- as.numeric(areatab[[basratecol]][i])
-    out$rr <- r$extra$rr
-    out$paf <- r$paf
-    out$attrcases <- r$attrcases
-    out$basecases <- r$basecases
-    out
   })
   res <- do.call(rbind, rows)
   res <- res[order(-res$attrcases), , drop = FALSE]
   rownames(res) <- NULL
-  res
+  .rmbl_cls(res, "rmbl_burden_area")
 }
 
-# ---- vrfpol -------------------------------------------------------
-
-#' Makes synthetic exposure and income data for the examples.
-#'
-#' Synthetic exposure and income with the orders of magnitude of Toronto
-#' forward-sortation-area NO2 and CIHI asthma rates. R's own RNG, seeded
-#' locally.
-#' @param pollutant \code{"no2"}, \code{"pm25"} or another name.
-#' @return A data frame with `exposure` and `income`.
-#' @noRd
-.pollution_demo_data <- function(pollutant) {
-  .rmbl_with_seed(20260417L, {
-    n <- 1000L
-    meanlog <- switch(pollutant, no2 = log(22), pm25 = log(9), log(15))
-    sdlog <- if (pollutant == "pm25") 0.30 else 0.35
-    exposure <- stats::rlnorm(n, meanlog, sdlog)
-    income <- sample(
-      1:5,
-      n,
-      replace = TRUE,
-      prob = c(0.18, 0.22, 0.22, 0.20, 0.18)
-    )
-    mult <- c(1.25, 1.12, 1.00, 0.93, 0.85)[income]
-    data.frame(exposure = exposure * mult, income = income)
-  })
-}
-
-#' Lists the assumptions of a burden calculation, each checked against the
-#' inputs.
-#' @param pollutant The pollutant.
-#' @param exposure_mean The mean exposure.
-#' @param exposure_prevalence The share of the population exposed.
-#' @param baseline_rate The baseline rate.
-#' @param population The population size.
-#' @param reference The counterfactual concentration.
-#' @param rare_outcome Whether a rare outcome was declared.
-#' @param high_rate Whether a high rate was declared.
-#' @return A list of rows, each with `assumption`, `ok` and `note`.
-#' @noRd
-.pollution_assumptions <- function(
-  pollutant,
-  exposure_mean,
-  exposure_prevalence,
-  baseline_rate,
-  population,
-  reference,
-  rare_outcome = FALSE,
-  high_rate = FALSE
-) {
-  row <- .pollution_row
-  fin <- .pollution_fin
-  list(
-    row(
-      "exposure finite and non-negative",
-      fin(exposure_mean) && exposure_mean >= 0,
-      .pollution_exposure_note(exposure_mean, reference)
-    ),
-    row(
-      "exposure within the concentration-response range (at most 10,000 ug/m3)",
-      fin(exposure_mean) && exposure_mean <= 1e4,
-      sprintf("exposure_mean=%s", format(exposure_mean))
-    ),
-    row(
-      "prevalence in [0,1]",
-      fin(exposure_prevalence) &&
-        exposure_prevalence >= 0 &&
-        exposure_prevalence <= 1,
-      sprintf("exposure_prevalence=%s", format(exposure_prevalence))
-    ),
-    .pollution_rate_row(baseline_rate, rare_outcome, high_rate),
-    row(
-      "population finite, positive and at most 10 billion",
-      fin(population) && population > 0 && population <= 1e10,
-      if (fin(population) && population > 1e10) {
-        sprintf(
-          "population=%s is more people than live on Earth",
-          format(population, big.mark = ",", scientific = FALSE)
-        )
-      } else {
-        sprintf(
-          "population=%s",
-          format(population, big.mark = ",", scientific = FALSE)
-        )
+#' @export
+format.rmbl_burden_area <- function(x, digits = 4L, ...) {
+  title <- "Pollution burden by area"
+  need <- c("rr", "paf", "attrcases", "basecases")
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  d <- .rmbl_plain(x)
+  att <- sum(d$attrcases, na.rm = TRUE)
+  base <- sum(d$basecases, na.rm = TRUE)
+  .rmbl_res_block(
+    title,
+    facts = list(
+      Areas = nrow(d),
+      `Attributable cases` = att,
+      `Baseline cases` = base,
+      `Share attributable` = if (base > 0) {
+        paste0(.rmbl_fmt_num(100 * att / base, 3L), "%")
       }
     ),
-    row(
-      "reference finite and non-negative",
-      fin(reference) && reference >= 0,
-      sprintf("reference=%s", format(reference))
+    tables = list(d),
+    reading = paste(
+      "The areas are sorted by the cases attributable to the exposure,",
+      "largest first: rr is the relative risk at the area's exposure and",
+      "paf the share of its cases the exposure accounts for."
     ),
-    row(
-      "pollutant supported by the CRFs",
-      !is.na(.pollution_pollutant(pollutant)),
-      paste(
-        "Current CRFs: NO2 (log-linear), PM2.5 (log-linear all-cause;",
-        "Burnett IER for IHD and stroke).",
-        "Other pollutants reject."
-      )
-    )
+    digits = digits,
+    maxrows = 40L
   )
-}
-
-#' One row of the assumption log.
-#' @param name The assumption.
-#' @param ok Whether it holds.
-#' @param note What was found.
-#' @return A list.
-#' @noRd
-.pollution_row <- function(name, ok, note) {
-  list(assumption = name, ok = isTRUE(ok), note = note)
-}
-
-#' One finite number.
-#' @param x A value.
-#' @return TRUE or FALSE.
-#' @noRd
-.pollution_fin <- function(x) length(x) == 1L && is.finite(x)
-
-#' The note on the mean exposure.
-#' @param exposure_mean The mean exposure.
-#' @param reference The counterfactual floor.
-#' @return The text.
-#' @noRd
-.pollution_exposure_note <- function(exposure_mean, reference) {
-  if (!.pollution_fin(exposure_mean) || exposure_mean < 0) {
-    sprintf(
-      "expomean=%s is not a finite non-negative concentration",
-      format(exposure_mean)
-    )
-  } else if (isTRUE(exposure_mean <= reference)) {
-    sprintf(
-      paste0(
-        "mean %s is at or below the counterfactual floor %s: no ",
-        "excess risk, PAF and cases are 0."
-      ),
-      format(exposure_mean, digits = 10),
-      format(reference)
-    )
-  } else {
-    sprintf(
-      "mean %s vs ref %s",
-      format(exposure_mean, digits = 10),
-      format(reference)
-    )
-  }
-}
-
-#' The baseline rate's row of the assumption log.
-#'
-#' A rate below one per 100,000 (the rate as converted, whatever unit it came
-#' in) is real for a rare outcome, and is also what a rate per person-year
-#' passed as per 100k looks like. The caller says which with rare = TRUE: giving
-#' the unit is not enough, since a wrapper or do.call() passes it routinely
-#' (review of 52a8883, A6; of 02a38be, C4). Below 1e-6 per 100k (fewer than one
-#' case in the world's population over a lifetime) no rate is plausible. the
-#' top of the band is 10,000 per 100k (no population's all-cause death rate
-#' comes close); hirate = TRUE admits a more common outcome, up to every person
-#' every year
-#' @param baseline_rate The rate per 100,000.
-#' @param rare_outcome,high_rate As for vrfpol()'s rare and hirate.
-#' @return The row.
-#' @noRd
-.pollution_rate_row <- function(baseline_rate, rare_outcome, high_rate) {
-  top <- if (isTRUE(high_rate)) 1e5 else 1e4
-  fin <- .pollution_fin(baseline_rate)
-  .pollution_row(
-    sprintf(
-      "brate finite: zero, or between %s and %s per 100k%s",
-      if (isTRUE(rare_outcome)) "1e-6" else "1",
-      format(top, big.mark = ",", scientific = FALSE),
-      if (isTRUE(rare_outcome)) " (a rare outcome)" else ""
-    ),
-    fin &&
-      baseline_rate >= 0 &&
-      baseline_rate <= top &&
-      (baseline_rate == 0 ||
-        baseline_rate >= 1 ||
-        (isTRUE(rare_outcome) && baseline_rate >= 1e-6)),
-    .pollution_rate_note(baseline_rate, fin, rare_outcome, top)
-  )
-}
-
-#' The note on the baseline rate.
-#' @param baseline_rate The rate per 100,000.
-#' @param fin Whether it is one finite number.
-#' @param rare_outcome Whether the outcome is said to be rare.
-#' @param top The top of the band.
-#' @return The text.
-#' @noRd
-.pollution_rate_note <- function(baseline_rate, fin, rare_outcome, top) {
-  if (fin && baseline_rate < 1e-6 && baseline_rate > 0) {
-    sprintf(
-      paste(
-        "brate=%s per 100k is below one case per 100 billion",
-        "person-years: not a",
-        "usable rate (check basrateper)"
-      ),
-      format(baseline_rate)
-    )
-  } else if (
-    fin && baseline_rate < 1 && baseline_rate > 0 && !isTRUE(rare_outcome)
-  ) {
-    sprintf(
-      paste(
-        "brate=%s per 100k is below one case per 100,000. If it is",
-        "a rate per person-year",
-        "(0.012 is 1,200 per 100k), pass basrateper = 1; if the",
-        "outcome really is this",
-        "rare, say so with rare = TRUE"
-      ),
-      format(baseline_rate)
-    )
-  } else if (fin && baseline_rate > top && baseline_rate <= 1e5) {
-    sprintf(
-      paste(
-        "brate=%s per 100k a year is above a whole population's",
-        "all-cause death rate",
-        "(an age-specific rate for the oldest ages can be this",
-        "high): if the outcome really is",
-        "this common, say so with hirate = TRUE"
-      ),
-      format(baseline_rate, big.mark = ",", scientific = FALSE)
-    )
-  } else if (fin && baseline_rate == 0) {
-    "brate=0: a measured zero rate, so no cases"
-  } else {
-    sprintf("brate=%s per 100k per year", format(baseline_rate))
-  }
 }
 
 #' Run the pollution-to-health pipeline and report it
@@ -1779,145 +1151,746 @@ vrfpol <- function(
   rare = FALSE,
   hirate = FALSE
 ) {
-  if (!is.character(poll) || length(poll) != 1L || is.na(poll)) {
-    stop(
-      "`poll` must be one pollutant name (\"PM2.5\" or \"NO2\")",
-      call. = FALSE
-    )
-  }
-  pol <- .pollution_pollutant(poll)
-  poll <- if (is.na(pol)) {
-    tolower(as.character(poll))
-  } else if (pol == "NO2") {
-    "no2"
-  } else {
-    "pm25"
-  }
-  equity_df <- NULL
+  poll <- .pollution_poll_key(poll)
   # the input contract is part of the report: an argument the pipeline cannot
   # use is an "error" report with exit status 2, never a raw stop() or a
   # silently truncated vector
   if (!is.logical(demo) || length(demo) != 1L || is.na(demo)) {
     return(.pollution_fail("demo must be TRUE or FALSE"))
   }
-  if (is.null(ref)) {
-    ref <- if (identical(poll, "no2")) 10 else 5.8
-  }
-  # the scalar inputs go together: a mean without a prevalence (or the reverse)
-  # is not a run with the other at zero, it is half of the data
-  no_scalar_data <- is.null(expomean) && is.null(expoprev)
-  why <- .pollution_check_inputs(
+  inp <- .pollution_inputs(
     demo,
     expcsv,
-    list(
-      expomean = expomean,
-      expoprev = expoprev,
-      brate = brate,
-      basrateper = basrateper,
-      pop = pop,
-      ref = ref
-    ),
+    poll,
+    ref,
+    expomean,
+    expoprev,
+    list(brate = brate, basrateper = basrateper, pop = pop),
     rare,
     hirate,
     y
   )
-  if (!is.null(why)) {
-    return(.pollution_fail(why))
-  }
-  ref <- suppressWarnings(as.numeric(ref))
-  dropped_rows <- 0L
-  if (isTRUE(demo)) {
-    df <- .pollution_demo_data(poll)
-    es <- .pollution_exposed_summary(df$exposure, ref)
-    expomean <- es$mean
-    expoprev <- es$prevalence
-    equity_df <- df
-    data_source <- "demo (synthetic)"
-  } else if (!is.null(expcsv)) {
-    rd <- .pollution_read_exposure(expcsv, poll)
-    if (is.character(rd)) {
-      return(.pollution_fail(rd))
-    }
-    dropped_rows <- rd$dropped
-    es <- .pollution_exposed_summary(rd$df$exposure, ref)
-    expomean <- es$mean
-    expoprev <- es$prevalence
-    equity_df <- rd$equity_df
-    data_source <- expcsv
-  } else {
-    expomean <- as.numeric(expomean)
-    expoprev <- as.numeric(expoprev)
-    data_source <- "scalar arguments"
-    # neither given is no data at all: a call with nothing to verify, not a
-    # clean run with zero deaths; a missing or negative value is a failed
-    # assumption, logged below
-    if (no_scalar_data) {
-      return(.pollution_fail(paste(
-        "no exposure data: pass expcsv, or expomean and expoprev,",
-        "or demo = TRUE"
-      )))
-    }
+  if (is.character(inp)) {
+    return(.pollution_fail(inp))
   }
   brate <- as.numeric(brate) * 1e5 / basrateper # per 100,000 from here on
-  pop <- as.numeric(pop)
-  assumptions <- .pollution_assumptions(
+  .pollution_run(
     poll,
-    expomean,
-    expoprev,
+    y,
+    reg,
+    years,
+    inp$ex,
     brate,
-    pop,
-    ref,
+    as.numeric(pop),
+    inp$ref,
     rare,
     hirate
   )
-  report <- list(
-    command = "verify-pollution",
-    pollutant = poll,
-    outcome = y,
-    region = reg,
-    years = years,
-    dsou = data_source,
-    inputs = list(
-      expomean = expomean,
-      expoprev = expoprev,
-      baserateper100k = brate,
-      population = pop,
-      refconc = ref,
-      drorows = dropped_rows
-    ),
-    assumptions = assumptions
-  )
-  if (!all(vapply(assumptions, function(a) isTRUE(a$ok), logical(1)))) {
-    report$status <- "assumption_failure"
-    report$pipeline <- list(skipped = TRUE, reason = "assumptions")
-    return(structure(
-      report,
-      exitstat = 1L,
-      class = c("rmbl_pollution_report", "list")
+}
+
+#' @rdname vrfpol
+#' @export
+polrpttxt <- function(report) {
+  if (
+    !inherits(report, "rmbl_pollution_report") &&
+      !(is.list(report) && is.character(report$status))
+  ) {
+    stop("`report` must be a report from vrfpol()", call. = FALSE)
+  }
+  if (identical(report$status, "error")) {
+    return(paste0("ERROR: ", report$error, "\n"))
+  }
+  .polrpt_parts(report)
+  lines <- c(.polrpt_head(report), .polrpt_assumptions(report$assumptions))
+  if (identical(report$status, "assumption_failure")) {
+    return(paste0(
+      paste(lines, collapse = "\n"),
+      "\n\nSTATUS: assumption_failure (pipeline skipped)\n"
     ))
   }
-  pipe <- .pollution_pipeline(
-    poll,
-    y,
-    expomean,
-    expoprev,
-    brate,
-    pop,
-    ref,
-    rare,
-    hirate,
-    equity_df
-  )
-  if (is.character(pipe)) {
-    return(.pollution_fail(pipe))
+  lines <- c(lines, .polrpt_pipeline(report$pipeline))
+  paste0(paste(lines, collapse = "\n"), "\n\nSTATUS: ok\n")
+}
+
+#' @export
+format.rmbl_crf <- function(x, ...) {
+  ex <- x$extra
+  ci <- if (is.finite(x$rrlo) && is.finite(x$rrup)) {
+    paste("95%", .an_ci(x$rrlo, x$rrup))
   }
-  report$status <- "ok"
-  report$pipeline <- pipe
-  structure(report, exitstat = 0L, class = c("rmbl_pollution_report", "list"))
+  .an_block(
+    sprintf("Concentration-response: %s", x$pollutant),
+    facts = list(
+      Outcome = ex$outcome,
+      Form = ex$form,
+      Exposure = sprintf("%s ug/m3", .rmbl_fmt_num(x$expconc)),
+      Reference = sprintf(
+        "%s ug/m3 (no excess risk below it)",
+        .rmbl_fmt_num(x$refconc)
+      ),
+      `Relative risk` = trimws(paste(.rmbl_fmt_num(x$rr), ci %||% "")),
+      `Log RR per 10 ug/m3` = if (!is.null(ex$betaper10)) {
+        trimws(paste(
+          .rmbl_fmt_num(ex$betaper10),
+          if (length(ex$betaper10ci) == 2L) {
+            paste("95%", .an_ci(ex$betaper10ci[1L], ex$betaper10ci[2L]))
+          } else {
+            ""
+          }
+        ))
+      },
+      Source = x$citation
+    ),
+    reading = .pol_rr_reading(x$rr, x$expconc, x$refconc),
+    notes = if (length(ex$rrperunit) > 1L) {
+      "Several exposures were given: the risk shown is their mean."
+    }
+  )
+}
+
+#' @export
+format.rmbl_burden <- function(x, ...) {
+  ex <- x$extra
+  unit <- ex$unit %||% "cases"
+  .an_block(
+    sprintf("Burden of %s: %s", x$pollutant, ex$outcome %||% "outcome"),
+    facts = list(
+      Population = x$population,
+      `Baseline rate` = sprintf("%s per person-year", .rmbl_fmt_num(x$brate)),
+      `Baseline cases` = sprintf(
+        "%s %s a year",
+        .rmbl_fmt_num(x$basecases),
+        unit
+      ),
+      Exposure = sprintf("%s ug/m3 (mean)", .rmbl_fmt_num(x$expomean)),
+      Reference = sprintf("%s ug/m3", .rmbl_fmt_num(x$refconc)),
+      `Relative risk` = ex$rr,
+      `Attributable fraction` = sprintf("%.2f%%", 100 * x$paf),
+      Attributable = sprintf("%s %s a year", .rmbl_fmt_num(x$attrcases), unit),
+      Source = x$citation
+    ),
+    reading = sprintf(
+      "About %s of the %s %s a year are attributable to %s above %s ug/m3.",
+      .rmbl_fmt_num(x$attrcases, 3L),
+      .rmbl_fmt_num(x$basecases, 3L),
+      unit,
+      x$pollutant,
+      .rmbl_fmt_num(x$refconc)
+    ),
+    notes = c(
+      "Attributable, not observed: the share of cases the exposure above",
+      "the reference accounts for under the curve, if the curve is causal."
+    )
+  )
+}
+
+#' @export
+format.rmbl_equity <- function(x, ...) {
+  ex <- x$extra
+  .an_block(
+    "Concentration index of exposure by income",
+    facts = list(
+      `Concentration index` = sprintf("%.4f (from -1 to 1)", x$concidx),
+      `Rows used` = ex$n,
+      `Mean exposure` = x$expomean,
+      Source = x$citation
+    ),
+    reading = strwrap(x$interpretation, width = 70L),
+    notes = c(
+      "Below 0: the exposure is concentrated among the poorer; above 0,",
+      "among the richer. Income only needs an order: ranks give the same."
+    )
+  )
+}
+
+#' @export
+format.rmbl_pollution_report <- function(x, ...) {
+  if (identical(x$status, "error")) {
+    return(.an_block(
+      "Pollution report: error",
+      facts = list(Status = "error (exit status 2)"),
+      reading = strwrap(x$error, width = 70L)
+    ))
+  }
+  inp <- x$inputs
+  .an_block(
+    sprintf("Pollution report: %s, %s", toupper(x$pollutant), x$outcome),
+    facts = list(
+      Status = x$status,
+      Region = x$region,
+      Years = x$years,
+      Data = x$dsou,
+      `Exposure mean` = inp$expomean,
+      `Exposure prevalence` = inp$expoprev,
+      `Baseline rate /100k` = inp$baserateper100k,
+      Population = inp$population,
+      `Reference conc` = inp$refconc,
+      `Rows dropped` = if (isTRUE(inp$drorows > 0)) inp$drorows
+    ),
+    reading = .pol_pipeline_lines(x),
+    notes = c("Assumption log", .pol_assumption_lines(x$assumptions))
+  )
+}
+
+#' @export
+format.rmbl_plr <- function(x, ...) {
+  z <- stats::qnorm(0.975)
+  .an_block(
+    "Partially linear exposure effect (cross-fitted)",
+    facts = list(
+      Method = x$method,
+      Observations = x$n,
+      Folds = x$kfol
+    ),
+    tables = list(data.frame(
+      term = "exposure",
+      estimate = x$ate,
+      se = x$se,
+      `95% CI` = .an_ci(x$ate - z * x$se, x$ate + z * x$se),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )),
+    reading = c(
+      "The change in the outcome per unit of the exposure, the confounders",
+      "partialled out of both by cross-fitting (Chernozhukov et al. 2018)."
+    ),
+    notes = "Normal interval from the sandwich standard error."
+  )
+}
+
+#' @export
+format.rmbl_plr_boot <- function(x, ...) {
+  .an_block(
+    "Exposure effect with a percentile bootstrap",
+    facts = list(
+      Method = x$method,
+      Resamples = x$nboot
+    ),
+    tables = list(data.frame(
+      term = "exposure",
+      estimate = x$ate,
+      se = x$seana,
+      `bootstrap sd` = x$seboot,
+      `95% CI` = .an_ci(x$cilobs, x$ciupbs),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )),
+    reading = c(
+      "The interval is the 2.5th to 97.5th percentile of the estimates",
+      "over the resamples."
+    ),
+    notes = "se is the estimator's own; bootstrap sd is the replicates' spread."
+  )
+}
+
+#' Builds an `rmbl_crf` object from a concentration-response curve evaluated at
+#' the exposures.
+#' @param rr The relative risk at each exposure.
+#' @param log_rr Its logarithm.
+#' @param z The exposures.
+#' @param scalar Whether one exposure was given (the object then holds its
+#'   values, not means).
+#' @param reference_conc The counterfactual concentration.
+#' @param pollutant The pollutant's name.
+#' @param citation The source of the curve.
+#' @param extra Further fields kept in the object's `extra` list.
+#' @param rr_lower The lower 95 percent limit of the relative risk, or NA.
+#' @param rr_upper The upper 95 percent limit, or NA.
+#' @return An object of class `rmbl_crf`.
+#' @noRd
+.crf_object <- function(
+  rr,
+  log_rr,
+  z,
+  scalar,
+  reference_conc,
+  pollutant,
+  citation,
+  extra,
+  rr_lower = NA_real_,
+  rr_upper = NA_real_
+) {
+  structure(
+    list(
+      rr = if (scalar) rr[[1L]] else mean(rr),
+      logrr = if (scalar) log_rr[[1L]] else mean(log_rr),
+      # the published 95 percent limits of the relative risk, carried through
+      # the same curve (NA for the IER forms, whose papers give no interval on
+      # the pooled parameters)
+      rrlo = if (scalar) rr_lower[[1L]] else mean(rr_lower),
+      rrup = if (scalar) rr_upper[[1L]] else mean(rr_upper),
+      refconc = reference_conc,
+      expconc = if (scalar) z[[1L]] else mean(z),
+      pollutant = pollutant,
+      citation = citation,
+      extra = c(extra, list(rrperunit = if (scalar) NULL else rr))
+    ),
+    class = "rmbl_crf"
+  )
+}
+
+#' Checks the exposure concentrations: finite, non-negative, none missing.
+#' @param exposure The concentrations passed by the user.
+#' @return A double vector.
+#' @noRd
+.pollution_exposure <- function(exposure) {
+  if (is.logical(exposure)) {
+    stop("`exposure` must be numeric, not logical", call. = FALSE)
+  }
+  z <- .rmbl_num_input(exposure, "exposure", allow_null = FALSE)
+  if (!length(z) || anyNA(z) || !all(is.finite(z))) {
+    stop(
+      "`exposure` must be one or more finite concentrations, with no ",
+      "missing values",
+      call. = FALSE
+    )
+  }
+  if (any(z < 0)) {
+    stop("`exposure` must be non-negative", call. = FALSE)
+  }
+  z
+}
+
+#' Says that a baseline rate above 1 looks like a rate per 100,000.
+#' @param rate The rate passed.
+#' @return One string.
+#' @noRd
+.pollution_rate_msg <- function(rate) {
+  sprintf(
+    paste(
+      "`brate` is a rate per person-year, between 0 and 1 (0.008 is 800",
+      "per 100,000);",
+      "%s looks like a rate per 100,000, which only vrfpol() takes"
+    ),
+    format(rate)
+  )
+}
+
+#' Checks a baseline rate per person-year.
+#'
+#' A baseline rate per person-year, checked as vrfpol() checks its rate per
+#' 100,000 (the same band, the same switches; review of e57fed5, E4: 0.5 and
+#' 8e-8 were taken as they came). The band is 1 to 10,000 per 100,000 a year
+#' (1e-5 to 0.1 per person-year): below it, the number is also what a rate per
+#' 100,000 passed here looks like (rare = TRUE when the outcome really is that
+#' rare, never below 1e-6 per 100,000); above it, no population's all-cause
+#' mortality comes close (hirate = TRUE for an outcome that common, never above
+#' 1); zero is a measured zero.
+#' @param rate The rate.
+#' @param rare_outcome Whether a rate below one per 100,000 a year is taken.
+#' @param high_rate Whether a rate above 0.1 per person-year is taken.
+#' @return `rate`.
+#' @noRd
+.pollution_rate_pp <- function(rate, rare_outcome = FALSE, high_rate = FALSE) {
+  .pollution_rate_flags(rare_outcome, high_rate)
+  if (rate > 1) {
+    stop(.pollution_rate_msg(rate), call. = FALSE)
+  }
+  if (rate == 0) {
+    return(rate)
+  }
+  if (rate < 1e-11) {
+    stop(
+      sprintf(
+        paste(
+          "`brate` %s per person-year is below one case per 100 billion",
+          "person-years:",
+          "not a usable rate"
+        ),
+        format(rate)
+      ),
+      call. = FALSE
+    )
+  }
+  .pollution_rate_band(rate, rare_outcome, high_rate)
+  rate
+}
+
+#' One finite number, optionally non-negative: the scalar inputs of the burden
+#' functions.
+#' @param x The pollution argument's value, checked to be numeric.
+#' @param what The argument's name, quoted in each pollution error message.
+#' @param nonneg Whether a negative value is refused.
+#' @param positive Whether zero is refused too.
+#' @return The number.
+#' @noRd
+.pollution_scalar <- function(x, what, nonneg = TRUE, positive = FALSE) {
+  # a flag is not a number: as.numeric(TRUE) is 1, and a relative risk of TRUE
+  # is a typo
+  if (is.logical(x) && !all(is.na(x))) {
+    stop(
+      .rmbl_fn(),
+      sprintf("`%s` must be numeric, not logical", what),
+      call. = FALSE
+    )
+  }
+  if (is.factor(x)) {
+    stop(
+      sprintf(
+        "`%s` must be numeric, not a factor (its level codes are not values)",
+        what
+      ),
+      call. = FALSE
+    )
+  }
+  v <- .rmbl_num_input(x, what, allow_null = FALSE)
+  if (length(v) != 1L || is.na(v) || !is.finite(v)) {
+    stop(sprintf("`%s` must be a single finite number", what), call. = FALSE)
+  }
+  if (positive && v <= 0) {
+    stop(.rmbl_fn(), sprintf("`%s` must be positive", what), call. = FALSE)
+  }
+  if (nonneg && v < 0) {
+    stop(.rmbl_fn(), sprintf("`%s` must be non-negative", what), call. = FALSE)
+  }
+  v
+}
+
+#' \code{"PM2.5"}, \code{"PM25"}, \code{"pm2.5"}, \code{"pm25"} ->
+#' \code{"PM2.5"}; \code{"NO2"}, \code{"no2"} -> \code{"NO2"}; anything else NA.
+#' @param pollutant The pollutant's name as given.
+#' @return \code{"PM2.5"}, \code{"NO2"} or NA.
+#' @noRd
+.pollution_pollutant <- function(pollutant) {
+  if (!is.character(pollutant) || length(pollutant) != 1L || is.na(pollutant)) {
+    return(NA_character_)
+  }
+  key <- gsub("[^a-z0-9]", "", tolower(pollutant))
+  if (key %in% c("pm25", "pm2.5")) {
+    return("PM2.5")
+  }
+  if (identical(key, "no2")) {
+    return("NO2")
+  }
+  NA_character_
+}
+
+#' The unit of an outcome's attributable count: the mortality outcomes are
+#' deaths, the childhood-asthma CRF is an incidence relative risk.
+#' @param outcome The outcome's code.
+#' @return One string.
+#' @noRd
+.pollution_outcome_unit <- function(outcome) {
+  if (identical(outcome, "chiast")) "incident cases" else "deaths"
+}
+
+#' Fits one fold's two nuisance regressions and predicts them on the test rows.
+#'
+#' One fold's two nuisance fits (outcome and treatment on the covariates, least
+#' squares on the training rows) predicted on the test rows. The least-squares
+#' solution comes from the normal equations of the standardized design Z, solved
+#' by Cholesky: two cross-products and a p x p solve. That is the same
+#' projection lm.fit() computes by its LINPACK QR, and it is used only when the
+#' cross-product is well conditioned (reciprocal condition number at least 1e-5,
+#' so the rounding difference from the QR is far below 1e-10); a near-singular
+#' fold (collinear covariates, a constant column) takes lm.fit() on the raw
+#' design as before, with its pivoting and its NA coefficients set to 0.
+#' lm.fit()'s QR is a long chain of level-1 BLAS calls, which a threaded BLAS on
+#' a busy machine runs a hundred times slower than this (an n = 20000 fit took
+#' 1.5 s); the cross-products are level-3 calls.
+#' @param X The raw design matrix.
+#' @param Z The standardized design matrix.
+#' @param YD The outcome and treatment, as a two-column matrix.
+#' @param train The training rows.
+#' @param test The test rows.
+#' @return A matrix of predictions, one column for each of `YD`.
+#' @noRd
+.plr_fold_fit <- function(X, Z, YD, train, test) {
+  Zt <- Z[train, , drop = FALSE]
+  A <- crossprod(Zt)
+  if (all(is.finite(A)) && rcond(A) >= 1e-5) {
+    R <- chol(A)
+    b <- backsolve(
+      R,
+      backsolve(R, crossprod(Zt, YD[train, , drop = FALSE]), transpose = TRUE)
+    )
+    return(Z[test, , drop = FALSE] %*% b)
+  }
+  g <- stats::lm.fit(
+    X[train, , drop = FALSE],
+    YD[train, , drop = FALSE]
+  )$coefficients
+  g[is.na(g)] <- 0
+  X[test, , drop = FALSE] %*% g
+}
+
+# ---- vrfpol -------------------------------------------------------
+
+#' Makes synthetic exposure and income data for the examples.
+#'
+#' Synthetic exposure and income with the orders of magnitude of Toronto
+#' forward-sortation-area NO2 and CIHI asthma rates. R's own RNG, seeded
+#' locally.
+#' @param pollutant \code{"no2"}, \code{"pm25"} or another name.
+#' @return A data frame with `exposure` and `income`.
+#' @noRd
+.pollution_demo_data <- function(pollutant) {
+  .rmbl_with_seed(20260417L, {
+    n <- 1000L
+    meanlog <- switch(pollutant, no2 = log(22), pm25 = log(9), log(15))
+    sdlog <- if (pollutant == "pm25") 0.30 else 0.35
+    exposure <- stats::rlnorm(n, meanlog, sdlog)
+    income <- sample(
+      1:5,
+      n,
+      replace = TRUE,
+      prob = c(0.18, 0.22, 0.22, 0.20, 0.18)
+    )
+    mult <- c(1.25, 1.12, 1.00, 0.93, 0.85)[income]
+    data.frame(exposure = exposure * mult, income = income)
+  })
+}
+
+#' Lists the assumptions of a burden calculation, each checked against the
+#' inputs.
+#' @param pollutant The pollutant.
+#' @param exposure_mean The mean exposure.
+#' @param exposure_prevalence The share of the population exposed.
+#' @param baseline_rate The baseline rate.
+#' @param population The population size.
+#' @param reference The counterfactual concentration.
+#' @param rare_outcome Whether a rare outcome was declared.
+#' @param high_rate Whether a high rate was declared.
+#' @return A list of rows, each with `assumption`, `ok` and `note`.
+#' @noRd
+.pollution_assumptions <- function(
+  pollutant,
+  exposure_mean,
+  exposure_prevalence,
+  baseline_rate,
+  population,
+  reference,
+  rare_outcome = FALSE,
+  high_rate = FALSE
+) {
+  row <- .pollution_row
+  fin <- .pollution_fin
+  list(
+    row(
+      "exposure finite and non-negative",
+      fin(exposure_mean) && exposure_mean >= 0,
+      .pollution_exposure_note(exposure_mean, reference)
+    ),
+    row(
+      "exposure within the concentration-response range (at most 10,000 ug/m3)",
+      fin(exposure_mean) && exposure_mean <= 1e4,
+      sprintf("exposure_mean=%s", format(exposure_mean))
+    ),
+    row(
+      "prevalence in [0,1]",
+      fin(exposure_prevalence) &&
+        exposure_prevalence >= 0 &&
+        exposure_prevalence <= 1,
+      sprintf("exposure_prevalence=%s", format(exposure_prevalence))
+    ),
+    .pollution_rate_row(baseline_rate, rare_outcome, high_rate),
+    .pollution_pop_row(population),
+    row(
+      "reference finite and non-negative",
+      fin(reference) && reference >= 0,
+      sprintf("reference=%s", format(reference))
+    ),
+    row(
+      "pollutant supported by the CRFs",
+      !is.na(.pollution_pollutant(pollutant)),
+      paste(
+        "Current CRFs: NO2 (log-linear), PM2.5 (log-linear all-cause;",
+        "Burnett IER for IHD and stroke).",
+        "Other pollutants reject."
+      )
+    )
+  )
+}
+
+#' One row of the assumption log.
+#' @param name The assumption.
+#' @param ok Whether it holds.
+#' @param note What was found.
+#' @return A list.
+#' @noRd
+.pollution_row <- function(name, ok, note) {
+  list(assumption = name, ok = isTRUE(ok), note = note)
+}
+
+#' One finite number.
+#' @param x A value tested to be one finite number.
+#' @return TRUE or FALSE.
+#' @noRd
+.pollution_fin <- function(x) length(x) == 1L && is.finite(x)
+
+#' The note on the mean exposure.
+#' @param exposure_mean The mean exposure.
+#' @param reference The counterfactual floor.
+#' @return The text.
+#' @noRd
+.pollution_exposure_note <- function(exposure_mean, reference) {
+  if (!.pollution_fin(exposure_mean) || exposure_mean < 0) {
+    sprintf(
+      "expomean=%s is not a finite non-negative concentration",
+      format(exposure_mean)
+    )
+  } else if (isTRUE(exposure_mean <= reference)) {
+    sprintf(
+      paste0(
+        "mean %s is at or below the counterfactual floor %s: no ",
+        "excess risk, PAF and cases are 0."
+      ),
+      format(exposure_mean, digits = 10),
+      format(reference)
+    )
+  } else {
+    sprintf(
+      "mean %s vs ref %s",
+      format(exposure_mean, digits = 10),
+      format(reference)
+    )
+  }
+}
+
+#' The baseline rate's row of the assumption log.
+#'
+#' A rate below one per 100,000 (the rate as converted, whatever unit it came
+#' in) is real for a rare outcome, and is also what a rate per person-year
+#' passed as per 100k looks like. The caller says which with rare = TRUE: giving
+#' the unit is not enough, since a wrapper or do.call() passes it routinely
+#' (review of 52a8883, A6; of 02a38be, C4). Below 1e-6 per 100k (fewer than one
+#' case in the world's population over a lifetime) no rate is plausible. the
+#' top of the band is 10,000 per 100k (no population's all-cause death rate
+#' comes close); hirate = TRUE admits a more common outcome, up to every person
+#' every year
+#' @param baseline_rate The rate per 100,000.
+#' @param rare_outcome,high_rate As for vrfpol()'s rare and hirate.
+#' @return The row.
+#' @noRd
+.pollution_rate_row <- function(baseline_rate, rare_outcome, high_rate) {
+  top <- if (isTRUE(high_rate)) 1e5 else 1e4
+  fin <- .pollution_fin(baseline_rate)
+  .pollution_row(
+    sprintf(
+      "brate finite: zero, or between %s and %s per 100k%s",
+      if (isTRUE(rare_outcome)) "1e-6" else "1",
+      format(top, big.mark = ",", scientific = FALSE),
+      if (isTRUE(rare_outcome)) " (a rare outcome)" else ""
+    ),
+    fin &&
+      baseline_rate >= 0 &&
+      baseline_rate <= top &&
+      (baseline_rate == 0 ||
+        baseline_rate >= 1 ||
+        (isTRUE(rare_outcome) && baseline_rate >= 1e-6)),
+    .pollution_rate_note(baseline_rate, fin, rare_outcome, top)
+  )
+}
+
+#' The note on the baseline rate.
+#' @param baseline_rate The rate per 100,000.
+#' @param fin Whether it is one finite number.
+#' @param rare_outcome Whether the outcome is said to be rare.
+#' @param top The top of the band.
+#' @return The text.
+#' @noRd
+.pollution_rate_note <- function(baseline_rate, fin, rare_outcome, top) {
+  if (fin && baseline_rate < 1e-6 && baseline_rate > 0) {
+    sprintf(
+      paste(
+        "brate=%s per 100k is below one case per 100 billion",
+        "person-years: not a",
+        "usable rate (check basrateper)"
+      ),
+      format(baseline_rate)
+    )
+  } else if (
+    fin && baseline_rate < 1 && baseline_rate > 0 && !isTRUE(rare_outcome)
+  ) {
+    sprintf(
+      paste(
+        "brate=%s per 100k is below one case per 100,000. If it is",
+        "a rate per person-year",
+        "(0.012 is 1,200 per 100k), pass basrateper = 1; if the",
+        "outcome really is this",
+        "rare, say so with rare = TRUE"
+      ),
+      format(baseline_rate)
+    )
+  } else if (fin && baseline_rate > top && baseline_rate <= 1e5) {
+    sprintf(
+      paste(
+        "brate=%s per 100k a year is above a whole population's",
+        "all-cause death rate",
+        "(an age-specific rate for the oldest ages can be this",
+        "high): if the outcome really is",
+        "this common, say so with hirate = TRUE"
+      ),
+      format(baseline_rate, big.mark = ",", scientific = FALSE)
+    )
+  } else if (fin && baseline_rate == 0) {
+    "brate=0: a measured zero rate, so no cases"
+  } else {
+    sprintf("brate=%s per 100k per year", format(baseline_rate))
+  }
+}
+
+#' The exposure vrfpol() works from: the demo, a CSV, or the scalars given.
+#' @param demo,expcsv,poll,expomean,expoprev As for vrfpol().
+#' @param ref The reference concentration.
+#' @param no_scalar_data Whether neither scalar was given.
+#' @return What is wrong, or a list: expomean, expoprev, equity_df,
+#'   data_source and dropped.
+#' @noRd
+.pollution_exposure_source <- function(
+  demo,
+  expcsv,
+  poll,
+  ref,
+  expomean,
+  expoprev,
+  no_scalar_data
+) {
+  if (isTRUE(demo)) {
+    df <- .pollution_demo_data(poll)
+    es <- .pollution_exposed_summary(df$exposure, ref)
+    return(list(
+      expomean = es$mean,
+      expoprev = es$prevalence,
+      equity_df = df,
+      data_source = "demo (synthetic)",
+      dropped = 0L
+    ))
+  }
+  if (!is.null(expcsv)) {
+    rd <- .pollution_read_exposure(expcsv, poll)
+    if (is.character(rd)) {
+      return(rd)
+    }
+    es <- .pollution_exposed_summary(rd$df$exposure, ref)
+    return(list(
+      expomean = es$mean,
+      expoprev = es$prevalence,
+      equity_df = rd$equity_df,
+      data_source = expcsv,
+      dropped = rd$dropped
+    ))
+  }
+  # neither given is no data at all: a call with nothing to verify, not a
+  # clean run with zero deaths; a missing or negative value is a failed
+  # assumption, logged below
+  if (no_scalar_data) {
+    return(paste(
+      "no exposure data: pass expcsv, or expomean and expoprev,",
+      "or demo = TRUE"
+    ))
+  }
+  list(
+    expomean = as.numeric(expomean),
+    expoprev = as.numeric(expoprev),
+    equity_df = NULL,
+    data_source = "scalar arguments",
+    dropped = 0L
+  )
 }
 
 #' The "error" report of vrfpol(), exit status 2.
-#' @param msg What is wrong.
+#' @param msg What is wrong, kept as the result's `error`.
 #' @return The report.
 #' @noRd
 .pollution_fail <- function(msg) {
@@ -2018,6 +1991,15 @@ vrfpol <- function(
       "(100000 for a rate per 100,000, 1 per person-year)"
     ))
   }
+  .pollution_check_lengths(sc, y)
+}
+
+#' The scalars' lengths and the outcome.
+#' @param sc The scalar inputs, by name.
+#' @param y As for vrfpol().
+#' @return NULL, or what is wrong.
+#' @noRd
+.pollution_check_lengths <- function(sc, y) {
   for (nm in c("ref", "expomean", "expoprev", "brate", "pop")) {
     v <- sc[[nm]]
     # a flag, text, a date, a factor, a list or a complex was refused by type
@@ -2066,31 +2048,9 @@ vrfpol <- function(
 #'   column, or NULL).
 #' @noRd
 .pollution_read_exposure <- function(expcsv, poll) {
-  if (!is.character(expcsv) || length(expcsv) != 1L || is.na(expcsv)) {
-    return("expcsv must be a single file path")
-  }
-  if (!file.exists(expcsv)) {
-    return(sprintf("exposure CSV not found: %s", expcsv))
-  }
-  if (dir.exists(expcsv)) {
-    return(sprintf("exposure CSV is a directory, not a file: %s", expcsv))
-  }
-  empty <- sprintf(
-    paste0(
-      "%s is empty (expected a column exposure in ug/m3, or a NAPS ",
-      "pull's value + unit)"
-    ),
-    expcsv
-  )
-  if (isTRUE(file.size(expcsv) == 0)) {
-    return(empty)
-  }
-  df <- tryCatch(.pollution_read_csv(expcsv), error = function(e) e)
-  if (inherits(df, "error")) {
-    return(sprintf("%s: %s", expcsv, conditionMessage(df)))
-  }
-  if (!nrow(df)) {
-    return(empty)
+  df <- .pollution_load_csv(expcsv)
+  if (is.character(df)) {
+    return(df)
   }
   raw_exposure <- NULL
   naps <- FALSE
@@ -2120,35 +2080,42 @@ vrfpol <- function(
   if (!is.null(why)) {
     return(why)
   }
-  dropped <- sum(is.na(df$exposure))
-  if (dropped > 0L) {
-    message(sprintf(
-      "note: %d row(s) have no exposure value and were dropped",
-      dropped
-    ))
+  .pollution_exposure_rows(df)
+}
+
+#' The exposure CSV, read: what is wrong when it is no file, empty or
+#' unreadable.
+#' @param expcsv The file.
+#' @return The rows, or what is wrong.
+#' @noRd
+.pollution_load_csv <- function(expcsv) {
+  if (!is.character(expcsv) || length(expcsv) != 1L || is.na(expcsv)) {
+    return("expcsv must be a single file path")
   }
-  if (any(df$exposure < 0, na.rm = TRUE)) {
-    n_neg <- sum(df$exposure < 0, na.rm = TRUE)
-    return(sprintf(
-      "%d exposure value(s) are negative: a concentration cannot be",
-      n_neg
-    ))
+  if (!file.exists(expcsv)) {
+    return(sprintf("exposure CSV not found: %s", expcsv))
   }
-  equity_df <- NULL
-  if ("income" %in% names(df) && all(is.na(df$income))) {
-    message("note: the income column is empty: no equity analysis")
-    df$income <- NULL
+  if (dir.exists(expcsv)) {
+    return(sprintf("exposure CSV is a directory, not a file: %s", expcsv))
   }
-  if ("income" %in% names(df)) {
-    if (!is.numeric(df$income)) {
-      return(paste0(
-        "the income column must be numeric (a quintile or an amount); ",
-        "text cannot be ranked"
-      ))
-    }
-    equity_df <- df
+  empty <- sprintf(
+    paste0(
+      "%s is empty (expected a column exposure in ug/m3, or a NAPS ",
+      "pull's value + unit)"
+    ),
+    expcsv
+  )
+  if (isTRUE(file.size(expcsv) == 0)) {
+    return(empty)
   }
-  list(df = df, dropped = dropped, equity_df = equity_df)
+  df <- tryCatch(.pollution_read_csv(expcsv), error = function(e) e)
+  if (inherits(df, "error")) {
+    return(sprintf("%s: %s", expcsv, conditionMessage(df)))
+  }
+  if (!nrow(df)) {
+    return(empty)
+  }
+  df
 }
 
 #' A NAPS pull: hourly `value` in `unit`, converted row by row; NO2 is reported
@@ -2172,13 +2139,13 @@ vrfpol <- function(
   raw <- if (is.character(df$value)) trimws(df$value)
   vals <- suppressWarnings(as.numeric(df$value))
   unit <- tolower(trimws(as.character(df$unit)))
-  ugm3 <- c("ug/m3", "µg/m3", "µg/m³", "ug/m³")
+  ugm3 <- c("ug/m3", "\u00b5g/m3", "\u00b5g/m\u00b3", "ug/m\u00b3")
   is_ppb <- unit %in% c("ppb", "ppbv")
   bad <- !is.na(vals) & !(unit %in% ugm3) & !(is_ppb & poll == "no2")
   if (any(bad)) {
     return(sprintf(
       "exposure unit %s is not ug/m3 for %s",
-      paste(sort(unique(unit[bad])), collapse = ", "),
+      toString(sort(unique(unit[bad]))),
       poll
     ))
   }
@@ -2223,7 +2190,7 @@ vrfpol <- function(
       "those rows"
     ),
     sum(text_rows),
-    paste(sprintf("\"%s\"", ex), collapse = ", ")
+    toString(sprintf("\"%s\"", ex))
   )
 }
 
@@ -2254,63 +2221,26 @@ vrfpol <- function(
   hirate,
   equity_df
 ) {
-  crf <- tryCatch(
-    if (poll == "no2") {
-      crfno2(expomean, y = y, refconc = ref)
-    } else {
-      crfpm25(expomean, y = y, refconc = ref)
-    },
-    error = function(e) e
-  )
-  if (inherits(crf, "error")) {
-    return(conditionMessage(crf))
+  cp <- .pollution_crf_paf(poll, y, expomean, expoprev, ref)
+  if (is.character(cp)) {
+    return(cp)
   }
-  paf <- tryCatch(
-    attrfrac(
-      crf$rr,
-      expoprev,
-      rrlo = if (is.finite(crf$rrlo)) crf$rrlo,
-      rrup = if (is.finite(crf$rrup)) crf$rrup
-    ),
-    error = function(e) e
-  )
-  if (inherits(paf, "error")) {
-    return(conditionMessage(paf))
-  }
+  crf <- cp$crf
+  paf <- cp$paf
   baseline_per_person <- brate / 1e5
   exposure_delta <- max(0, expomean - ref)
   beta_per_unit <- log(crf$rr) / max(exposure_delta, 1e-9)
-  staged <- tryCatch(
-    {
-      # the rate's band was checked above, with the caller's switches: they go
-      # to the stages too, or a rate the caller vouched for (hirate, rare) was
-      # refused again by the stage
-      displaced <- mortdisp(
-        exposure_delta,
-        pop * expoprev,
-        baseline_per_person,
-        beta_per_unit,
-        rare = rare,
-        hirate = hirate
-      )
-      burden <- polbrdn(
-        expomean,
-        expoprev,
-        baseline_per_person,
-        pop,
-        poll = if (poll == "pm25") "PM2.5" else "NO2",
-        y = y,
-        refconc = ref,
-        rare = rare,
-        hirate = hirate
-      )
-      list(
-        displaced = displaced,
-        burden = burden,
-        equity = .pollution_equity(equity_df)
-      )
-    },
-    error = function(e) e
+  staged <- .pollution_stages(
+    poll,
+    y,
+    expomean,
+    expoprev,
+    pop,
+    ref,
+    c(exposure_delta, baseline_per_person, beta_per_unit),
+    rare,
+    hirate,
+    equity_df
   )
   if (inherits(staged, "error")) {
     return(conditionMessage(staged))
@@ -2364,138 +2294,6 @@ vrfpol <- function(
   )
 }
 
-#' @rdname vrfpol
-#' @export
-polrpttxt <- function(report) {
-  if (
-    !inherits(report, "rmbl_pollution_report") &&
-      !(is.list(report) && is.character(report$status))
-  ) {
-    stop("`report` must be a report from vrfpol()", call. = FALSE)
-  }
-  bar <- strrep("=", 66)
-  if (identical(report$status, "error")) {
-    return(paste0("ERROR: ", report$error, "\n"))
-  }
-  # a list that only looks like a report (status "ok" and no inputs) is refused
-  # in words, not with "$ operator is invalid for atomic vectors"
-  parts_ok <- is.list(report$inputs) &&
-    is.list(report$assumptions) &&
-    all(vapply(
-      report$assumptions,
-      function(a) is.list(a) && is.logical(a$ok),
-      logical(1)
-    )) &&
-    (!identical(report$status, "ok") || is.list(report$pipeline))
-  if (!parts_ok) {
-    stop(
-      "`report` is not a complete vrfpol() report (its inputs, ",
-      "assumptions or pipeline are missing)",
-      call. = FALSE
-    )
-  }
-  lines <- c(
-    bar,
-    sprintf(
-      "  %s -- %s -> %s",
-      report$command,
-      toupper(report$pollutant),
-      report$outcome
-    )
-  )
-  if (!is.null(report$region)) {
-    lines <- c(lines, sprintf("  region: %s", report$region))
-  }
-  if (!is.null(report$years)) {
-    lines <- c(lines, sprintf("  years:  %s", report$years))
-  }
-  inp <- report$inputs
-  lines <- c(
-    lines,
-    sprintf("  data:   %s", report$dsou),
-    bar,
-    "",
-    "Inputs",
-    sprintf("  exposure mean:      %.3f", inp$expomean),
-    sprintf("  exposure prevalence:%.3f", inp$expoprev),
-    sprintf("  baseline rate/100k: %.2f", inp$baserateper100k),
-    sprintf(
-      "  population:         %s",
-      format(inp$population, big.mark = ",", scientific = FALSE)
-    ),
-    sprintf("  reference conc:     %s", format(inp$refconc)),
-    if (isTRUE(inp$drorows > 0)) {
-      sprintf("  rows dropped:       %d (no exposure value)", inp$drorows)
-    },
-    "",
-    "Assumption log"
-  )
-  for (a in report$assumptions) {
-    lines <- c(
-      lines,
-      sprintf(
-        "  [%s] %s -- %s",
-        if (isTRUE(a$ok)) {
-          "PASS"
-        } else if (isFALSE(a$ok)) {
-          "FAIL"
-        } else {
-          "NA"
-        },
-        a$assumption,
-        a$note
-      )
-    )
-  }
-  if (identical(report$status, "assumption_failure")) {
-    return(paste0(
-      paste(lines, collapse = "\n"),
-      "\n\nSTATUS: assumption_failure (pipeline skipped)\n"
-    ))
-  }
-  p <- report$pipeline
-  lines <- c(
-    lines,
-    "",
-    "Concentration-response",
-    sprintf("  RR:       %.4f", p$crf$rr),
-    sprintf("  source:   %s", p$crf$citation),
-    "",
-    sprintf(
-      "Attributable fraction (PAF): %.4f%s",
-      p$paf,
-      .pollution_paf_ci_text(p$pafci)
-    ),
-    "",
-    if (identical(p$displaced$unit, "deaths")) {
-      "Mortality displaced"
-    } else {
-      "Cases displaced"
-    },
-    sprintf(
-      "  expected avoided %s: %.1f",
-      p$displaced$unit %||% "deaths",
-      p$displaced$deadisp
-    ),
-    "",
-    "Burden of pollution",
-    sprintf(
-      "  attributable %s:   %.1f",
-      p$burden$extra$unit %||% "deaths",
-      p$burden$attrcases
-    )
-  )
-  if (!is.null(p$equity)) {
-    lines <- c(
-      lines,
-      "",
-      "Equity analysis",
-      sprintf("  concentration index: %.4f", p$equity$concidx)
-    )
-  }
-  paste0(paste(lines, collapse = "\n"), "\n\nSTATUS: ok\n")
-}
-
 #' Reads the exposure CSV whole.
 #'
 #' The exposure CSV, read whole: a gzip, bzip2 or xz file is decompressed (as
@@ -2505,89 +2303,21 @@ polrpttxt <- function(report) {
 #' Latin-1 (and said), other NUL bytes are refused. A parse that reports a
 #' problem (an unbalanced quote that swallowed the rest of the file, A5) stops
 #' with the parser's own message instead of returning the rows before it.
-#' @param path The file.
+#' @param path The pollution CSV file to read.
 #' @return A data frame.
 #' @noRd
 .pollution_read_csv <- function(path) {
-  head <- readBin(path, "raw", 6L)
-  compressed <- length(head) >= 2L &&
-    (identical(head[1:2], as.raw(c(0x1f, 0x8b))) ||
-      (length(head) >= 3L && identical(head[1:3], charToRaw("BZh"))) ||
-      (length(head) >= 6L &&
-        identical(head[1:6], as.raw(c(0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00)))))
-  if (compressed) {
-    raw <- .rmbl_decompress_checked(path, head)
-  } else {
-    raw <- readBin(path, "raw", file.size(path))
-  }
+  rd <- .pollution_csv_bytes(path)
+  raw <- rd$raw
   if (!length(raw)) {
     return(data.frame())
   }
-  note <- NULL
-  utf16 <- NULL
-  # UTF-32 first: its little-endian mark starts with the UTF-16 one (FF FE 00
-  # 00), and decoded as UTF-16 it put a kilobyte of the file into the "embedded
-  # nul" message (review of 02a38be)
-  if (length(raw) >= 4L && identical(raw[1:4], as.raw(c(0xff, 0xfe, 0, 0)))) {
-    utf16 <- "UTF-32LE"
-    raw <- raw[-(1:4)]
-  } else if (
-    length(raw) >= 4L && identical(raw[1:4], as.raw(c(0, 0, 0xfe, 0xff)))
-  ) {
-    utf16 <- "UTF-32BE"
-    raw <- raw[-(1:4)]
-  } else if (length(raw) >= 2L && identical(raw[1:2], as.raw(c(0xff, 0xfe)))) {
-    utf16 <- "UTF-16LE"
-    raw <- raw[-(1:2)]
-  } else if (length(raw) >= 2L && identical(raw[1:2], as.raw(c(0xfe, 0xff)))) {
-    utf16 <- "UTF-16BE"
-    raw <- raw[-(1:2)]
-  } else if (length(grepRaw(as.raw(0L), raw, fixed = TRUE))) {
-    # UTF-16 without a byte-order mark: ASCII text puts a NUL in every other
-    # byte
-    probe <- raw[seq_len(min(length(raw), 2000L))]
-    odd <- probe[seq(1L, length(probe), by = 2L)]
-    even <- probe[seq(2L, length(probe), by = 2L)]
-    if (mean(even == as.raw(0L)) > 0.9 && mean(odd == as.raw(0L)) < 0.1) {
-      utf16 <- "UTF-16LE"
-    } else if (
-      mean(odd == as.raw(0L)) > 0.9 && mean(even == as.raw(0L)) < 0.1
-    ) {
-      utf16 <- "UTF-16BE"
-    } else {
-      stop(
-        "contains NUL bytes and is not UTF-16 text: not a text CSV",
-        call. = FALSE
-      )
-    }
-    note <- sprintf(
-      "note: %s has no byte-order mark; read as %s",
-      basename(path),
-      utf16
-    )
-  }
-  transformed <- compressed || !is.null(utf16)
-  if (!is.null(utf16)) {
-    txt <- iconv(list(raw), from = utf16, to = "UTF-8")[[1L]]
-    if (is.null(txt) || is.na(txt)) {
-      stop(sprintf("cannot be decoded as %s", utf16), call. = FALSE)
-    }
-  } else {
-    if (length(raw) >= 3L && identical(raw[1:3], as.raw(c(0xef, 0xbb, 0xbf)))) {
-      raw <- raw[-(1:3)]
-      transformed <- TRUE
-    }
-    txt <- rawToChar(raw)
-    if (!validUTF8(txt)) {
-      txt <- iconv(txt, from = "latin1", to = "UTF-8")
-      note <- sprintf(
-        "note: %s is not UTF-8; read as Latin-1 (ISO-8859-1)",
-        basename(path)
-      )
-      transformed <- TRUE
-    }
-  }
-  rm(raw)
+  enc <- .pollution_csv_encoding(raw, path)
+  dec <- .pollution_csv_decode(enc$raw, enc$utf16, path)
+  txt <- dec$txt
+  note <- dec$note %||% enc$note
+  transformed <- rd$compressed || !is.null(enc$utf16) || dec$transformed
+  rm(raw, enc, dec)
   if (!is.null(note)) {
     message(note)
   }
@@ -2607,9 +2337,126 @@ polrpttxt <- function(report) {
     writeLines(txt, src, useBytes = TRUE)
   }
   rm(txt)
-  # every row has the header's number of fields: read.csv wrapped a row with too
-  # many into an extra row, and a header with a name twice read only the first
-  # of the two columns (review of 02a38be)
+  .pollution_csv_shape(src)
+  .pollution_csv_parse(src)
+}
+
+#' The file's bytes, decompressed when it is gzip, bzip2 or xz.
+#' @param path The CSV file whose bytes are read, decompressed if needed.
+#' @return A list: raw and compressed.
+#' @noRd
+.pollution_csv_bytes <- function(path) {
+  # a directory is refused by name: gzfile() on one hung (1.0.3)
+  path <- .rmbl_file1(path, "path")
+  head <- readBin(path, "raw", 6L)
+  compressed <- length(head) >= 2L &&
+    (identical(head[1:2], as.raw(c(0x1f, 0x8b))) ||
+      (length(head) >= 3L && identical(head[1:3], charToRaw("BZh"))) ||
+      (length(head) >= 6L &&
+        identical(head[1:6], as.raw(c(0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00)))))
+  raw <- if (compressed) {
+    .rmbl_decompress_checked(path, head)
+  } else {
+    readBin(path, "raw", file.size(path))
+  }
+  list(raw = raw, compressed = compressed)
+}
+
+#' The text's UTF-16 or UTF-32 encoding, from its byte-order mark or (UTF-16
+#' without one) its NUL bytes.
+#'
+#' UTF-32 first: its little-endian mark starts with the UTF-16 one (FF FE 00
+#' 00), and decoded as UTF-16 it put a kilobyte of the file into the "embedded
+#' nul" message (review of 02a38be).
+#' @param raw The bytes.
+#' @param path The file, for the note.
+#' @return A list: utf16 (the encoding, or NULL), raw (without the mark) and
+#'   note.
+#' @noRd
+.pollution_csv_encoding <- function(raw, path) {
+  boms <- list(
+    "UTF-32LE" = as.raw(c(0xff, 0xfe, 0, 0)),
+    "UTF-32BE" = as.raw(c(0, 0, 0xfe, 0xff)),
+    "UTF-16LE" = as.raw(c(0xff, 0xfe)),
+    "UTF-16BE" = as.raw(c(0xfe, 0xff))
+  )
+  for (enc in names(boms)) {
+    b <- boms[[enc]]
+    if (length(raw) >= length(b) && identical(raw[seq_along(b)], b)) {
+      return(list(utf16 = enc, raw = raw[-seq_along(b)], note = NULL))
+    }
+  }
+  if (!length(grepRaw(as.raw(0L), raw, fixed = TRUE))) {
+    return(list(utf16 = NULL, raw = raw, note = NULL))
+  }
+  # UTF-16 without a byte-order mark: ASCII text puts a NUL in every other
+  # byte
+  probe <- raw[seq_len(min(length(raw), 2000L))]
+  odd <- probe[seq(1L, length(probe), by = 2L)]
+  even <- probe[seq(2L, length(probe), by = 2L)]
+  utf16 <- if (
+    mean(even == as.raw(0L)) > 0.9 && mean(odd == as.raw(0L)) < 0.1
+  ) {
+    "UTF-16LE"
+  } else if (mean(odd == as.raw(0L)) > 0.9 && mean(even == as.raw(0L)) < 0.1) {
+    "UTF-16BE"
+  } else {
+    stop(
+      "contains NUL bytes and is not UTF-16 text: not a text CSV",
+      call. = FALSE
+    )
+  }
+  list(
+    utf16 = utf16,
+    raw = raw,
+    note = sprintf(
+      "note: %s has no byte-order mark; read as %s",
+      basename(path),
+      utf16
+    )
+  )
+}
+
+#' The bytes as UTF-8 text: decoded from UTF-16/32, or with a UTF-8 mark
+#' removed, or read as Latin-1 when they are not UTF-8.
+#' @param raw The bytes.
+#' @param utf16 Their UTF-16 or UTF-32 encoding, or NULL.
+#' @param path The file, for the note.
+#' @return A list: txt, note (or NULL) and transformed.
+#' @noRd
+.pollution_csv_decode <- function(raw, utf16, path) {
+  if (!is.null(utf16)) {
+    txt <- iconv(list(raw), from = utf16, to = "UTF-8")[[1L]]
+    if (is.null(txt) || is.na(txt)) {
+      stop(sprintf("cannot be decoded as %s", utf16), call. = FALSE)
+    }
+    return(list(txt = txt, note = NULL, transformed = FALSE))
+  }
+  transformed <- FALSE
+  if (length(raw) >= 3L && identical(raw[1:3], as.raw(c(0xef, 0xbb, 0xbf)))) {
+    raw <- raw[-(1:3)]
+    transformed <- TRUE
+  }
+  txt <- rawToChar(raw)
+  if (validUTF8(txt)) {
+    return(list(txt = txt, note = NULL, transformed = transformed))
+  }
+  list(
+    txt = iconv(txt, from = "latin1", to = "UTF-8"),
+    note = sprintf(
+      "note: %s is not UTF-8; read as Latin-1 (ISO-8859-1)",
+      basename(path)
+    ),
+    transformed = TRUE
+  )
+}
+
+#' Every row has the header's number of fields: read.csv wrapped a row with too
+#' many into an extra row, and a header with a name twice read only the first
+#' of the two columns (review of 02a38be).
+#' @param src The CSV file.
+#' @noRd
+.pollution_csv_shape <- function(src) {
   hdr <- names(utils::read.csv(
     src,
     nrows = 1L,
@@ -2621,7 +2468,7 @@ polrpttxt <- function(report) {
     stop(
       sprintf(
         "has the column name %s more than once: say which column is meant",
-        paste(sprintf("'%s'", dup), collapse = ", ")
+        toString(sprintf("'%s'", dup))
       ),
       call. = FALSE
     )
@@ -2648,6 +2495,14 @@ polrpttxt <- function(report) {
       call. = FALSE
     )
   }
+  invisible(NULL)
+}
+
+#' The CSV read, refused when the parser stopped part-way through.
+#' @param src The CSV file.
+#' @return A data frame.
+#' @noRd
+.pollution_csv_parse <- function(src) {
   acc <- new.env(parent = emptyenv())
   acc$problems <- character()
   df <- withCallingHandlers(
@@ -2686,7 +2541,7 @@ polrpttxt <- function(report) {
 #' capped while it is read (option rmoriebricklayer.maxcsvbytes, 1 GiB by
 #' default): a few megabytes of gzip no longer expand to gigabytes before
 #' anything is refused.
-#' @param path The file.
+#' @param path The compressed file to decompress and check.
 #' @param head The file's first bytes.
 #' @return A raw vector.
 #' @noRd
@@ -2761,7 +2616,7 @@ polrpttxt <- function(report) {
 #' A bzip2 stream ends with the 48-bit end-of-stream magic 0x177245385090, a
 #' 32-bit CRC and zero padding to the next byte; none of it is byte-aligned. A
 #' file cut anywhere before its end lacks it in its last 11 bytes.
-#' @param path The file.
+#' @param path The bzip2 file whose end-of-stream mark is checked.
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_bzip2_complete <- function(path) {
@@ -2789,4 +2644,965 @@ polrpttxt <- function(report) {
     }
   }
   FALSE
+}
+
+#' Stops unless `y` is one of the outcomes a concentration-response function
+#' knows.
+#' @param y The outcome.
+#' @param avail The outcomes known.
+#' @return Nothing useful.
+#' @noRd
+.crf_check_outcome <- function(y, avail) {
+  if (!is.character(y) || length(y) != 1L || !y %in% avail) {
+    stop(
+      sprintf(
+        "Unknown outcome '%s'. Available: %s",
+        paste(y, collapse = ","),
+        toString(avail)
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' crfpm25()'s log-linear (all-cause) function.
+#' @param beta The log relative risk per 10 ug/m3.
+#' @param y The outcome.
+#' @param excess The exposure above the reference.
+#' @param z,scalar,refconc As in crfpm25().
+#' @return A concentration-response object.
+#' @noRd
+.crf_pm25_loglinear <- function(beta, y, excess, z, scalar, refconc) {
+  log_rr <- beta * excess / 10
+  # 95% CI 1.06-1.09, Chen and Hoek (2020)
+  ci <- list(allcause = log(c(1.06, 1.09)))[[y]]
+  .crf_object(
+    exp(log_rr),
+    log_rr,
+    z,
+    scalar,
+    refconc,
+    "PM2.5",
+    paste0(
+      "Chen & Hoek (2020) Environ Int 143:105974; WHO (2021) Global AQ ",
+      "Guidelines"
+    ),
+    list(
+      betaper10 = beta,
+      betaper10ci = ci,
+      form = "log-linear",
+      outcome = y
+    ),
+    rr_lower = exp(ci[[1L]] * excess / 10),
+    rr_upper = exp(ci[[2L]] * excess / 10)
+  )
+}
+
+#' crfno2()'s log relative risk per 10 ug/m3 and its interval: the review's
+#' for the outcome, or the one given.
+#' @param y,betaper10 As for crfno2().
+#' @return A list: `beta` and `ci` (NA when given).
+#' @noRd
+.crf_no2_beta <- function(y, betaper10) {
+  betas <- c(
+    allcause = log(1.02),
+    respiratory = log(1.03),
+    chiast = log(1.05) * 10 / 4
+  )
+  betas_ci <- list(
+    allcause = log(c(1.01, 1.04)),
+    respiratory = log(c(1.00, 1.05)),
+    chiast = log(c(1.02, 1.07)) * 10 / 4
+  )
+  ci <- c(NA_real_, NA_real_)
+  if (is.null(betaper10)) {
+    if (!is.character(y) || length(y) != 1L || !y %in% names(betas)) {
+      stop(
+        sprintf(
+          "Unknown outcome '%s'. Available: %s or pass betaper10 explicitly.",
+          paste(y, collapse = ","),
+          toString(names(betas))
+        ),
+        call. = FALSE
+      )
+    }
+    beta <- betas[[y]]
+    ci <- betas_ci[[y]]
+  } else {
+    # the same guard as every other scalar: TRUE is not a log relative risk of 1
+    beta <- .pollution_scalar(betaper10, "betaper10", nonneg = FALSE)
+  }
+  list(beta = beta, ci = ci)
+}
+
+#' Stops unless `rare_outcome` and `high_rate` are TRUE or FALSE; the message
+#' names the callers' own arguments, `rare` and `hirate`.
+#' @param rare_outcome,high_rate As for .pollution_rate_pp().
+#' @return Nothing useful.
+#' @noRd
+.pollution_rate_flags <- function(rare_outcome, high_rate) {
+  for (a in list(
+    list("rare", rare_outcome),
+    list("hirate", high_rate)
+  )) {
+    if (!is.logical(a[[2L]]) || length(a[[2L]]) != 1L || is.na(a[[2L]])) {
+      stop(
+        .rmbl_fn(),
+        sprintf("`%s` must be TRUE or FALSE", a[[1L]]),
+        call. = FALSE
+      )
+    }
+  }
+  invisible(NULL)
+}
+
+#' Stops when a rate per person-year looks like a rate per 100,000 (too low)
+#' or above any population's death rate (too high), unless the caller says so.
+#' @param rate The rate.
+#' @param rare_outcome,high_rate As for .pollution_rate_pp().
+#' @return Nothing useful.
+#' @noRd
+.pollution_rate_band <- function(rate, rare_outcome, high_rate) {
+  if (rate < 1e-5 && !rare_outcome) {
+    stop(
+      sprintf(
+        paste(
+          "`brate` %s per person-year is below one case per 100,000 a",
+          "year. A rate per",
+          "100,000 divided by 100,000 is the rate here (800 per 100,000",
+          "is 0.008); if the outcome",
+          "really is this rare, say so with rare = TRUE"
+        ),
+        format(rate)
+      ),
+      call. = FALSE
+    )
+  }
+  if (rate > 0.1 && !high_rate) {
+    stop(
+      sprintf(
+        paste(
+          "`brate` %s per person-year is %s per 100,000 a year, above a",
+          "whole population's",
+          "all-cause death rate (an age-specific rate for the oldest",
+          "ages can be this high). If it",
+          "is a rate per 100,000, divide it by 100,000; if the outcome",
+          "really is this common, say",
+          "so with hirate = TRUE"
+        ),
+        format(rate),
+        format(rate * 1e5, big.mark = ",", scientific = FALSE)
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' plrcf()'s complete rows, checked: every column present and numeric, and
+#' enough rows for the folds.
+#' @param data,y,trt,covs,kfol As for plrcf().
+#' @return A list: `df` (the complete rows of the columns used) and `kfol`.
+#' @noRd
+.plrcf_data <- function(data, y, trt, covs, kfol) {
+  cols <- c(y, trt, covs)
+  missing <- setdiff(cols, names(data))
+  if (length(missing)) {
+    stop(
+      sprintf(
+        "plrcf: data is missing columns: %s",
+        toString(missing)
+      ),
+      call. = FALSE
+    )
+  }
+  df <- data[
+    stats::complete.cases(data[, cols, drop = FALSE]),
+    cols,
+    drop = FALSE
+  ]
+  n <- nrow(df)
+  kfol <- as.integer(.rmbl_num(kfol, "kfol", integer = TRUE))
+  if (length(kfol) != 1L || is.na(kfol) || kfol < 2L) {
+    stop("`kfol` must be at least 2", call. = FALSE)
+  }
+  for (cl in cols) {
+    if (!is.numeric(df[[cl]])) {
+      stop(
+        sprintf(
+          paste0(
+            "column `%s` must be numeric (a factor or character column is ",
+            "not a code)"
+          ),
+          cl
+        ),
+        call. = FALSE
+      )
+    }
+  }
+  if (n < 2L * kfol) {
+    stop(
+      sprintf(
+        "need at least %d complete rows for %d folds; have %d",
+        2L * kfol,
+        kfol,
+        n
+      ),
+      call. = FALSE
+    )
+  }
+  list(df = df, kfol = kfol)
+}
+
+#' The design of plrcf() with its covariates centred and scaled.
+#' @param X The design (an intercept column, then the covariates).
+#' @param n The number of rows of `X`, dividing the sums of squares.
+#' @return The scaled design.
+#' @noRd
+.plrcf_scaled <- function(X, n) {
+  # the covariates centred and scaled by their full-sample moments: the same
+  # column space (the intercept is in it), so the same fitted values, with a
+  # cross-product that is well conditioned whatever the covariates' units
+  ctr <- colMeans(X[, -1L, drop = FALSE])
+  scl <- sqrt(colSums(sweep(X[, -1L, drop = FALSE], 2L, ctr)^2) / n)
+  scl[!is.finite(scl) | scl <= 0] <- 1
+  cbind(1, sweep(sweep(X[, -1L, drop = FALSE], 2L, ctr), 2L, scl, "/"))
+}
+
+#' exprspplr()'s full-sample fit; an estimator that cannot take (data,
+#' outcome, exposure, confounders) is said so.
+#' @param estr,data,y,expo,confs As for exprspplr().
+#' @return The estimator's result.
+#' @noRd
+.exprsp_full <- function(estr, data, y, expo, confs) {
+  tryCatch(estr(data, y, expo, confs), error = function(e) {
+    stop(
+      .rmbl_fn(),
+      sprintf(
+        paste(
+          "`estr` failed on the full sample, called as",
+          "estr(data, y, expo, confs): %s"
+        ),
+        conditionMessage(e)
+      ),
+      call. = FALSE
+    )
+  })
+}
+
+#' exprspplr()'s bootstrap estimates; at least ten fits must succeed.
+#' @param estr,data,y,expo,confs,nboot,rstate As for exprspplr().
+#' @param pg The progress bar, updated after each bootstrap draw.
+#' @return The estimates of the fits that succeeded.
+#' @noRd
+.exprsp_boot <- function(estr, data, y, expo, confs, nboot, rstate, pg) {
+  n <- nrow(data)
+  boot <- .rmbl_with_seed(rstate, {
+    out <- numeric(0)
+    for (b in seq_len(nboot)) {
+      pg$update(b, sprintf("bootstrap %d/%d", b, nboot))
+      idx <- sample.int(n, n, replace = TRUE)
+      r <- tryCatch(
+        estr(data[idx, , drop = FALSE], y, expo, confs),
+        error = .rmbl_or(NULL)
+      )
+      if (!is.null(r)) out <- c(out, as.numeric(r$ate))
+    }
+    out
+  })
+  if (length(boot) < 10L) {
+    stop(
+      sprintf(
+        paste0(
+          "Only %d successful bootstrap fits; need >=10. Inspect the ",
+          "model's convergence on your resamples."
+        ),
+        length(boot)
+      ),
+      call. = FALSE
+    )
+  }
+  boot
+}
+
+#' expconcidx()'s complete rows of the two columns, checked.
+#' @param data,expo,income As for expconcidx().
+#' @return A data frame.
+#' @noRd
+.expconc_rows <- function(data, expo, income) {
+  missing <- setdiff(c(expo, income), names(data))
+  if (length(missing)) {
+    stop(
+      sprintf(
+        "expconcidx: data is missing columns: %s",
+        toString(missing)
+      ),
+      call. = FALSE
+    )
+  }
+  df <- data[, c(expo, income), drop = FALSE]
+  df <- df[stats::complete.cases(df), , drop = FALSE]
+  if (nrow(df) < 2L) {
+    stop("Need at least 2 rows to compute concentration index.", call. = FALSE)
+  }
+  df
+}
+
+#' Stops unless exposures and incomes are finite and exposures non-negative.
+#' @param h The exposures.
+#' @param inc The incomes.
+#' @param expo,income The columns' names.
+#' @return Nothing useful.
+#' @noRd
+.expconc_check <- function(h, inc, expo, income) {
+  if (!all(is.finite(h)) || !all(is.finite(inc))) {
+    stop(sprintf("`%s` and `%s` must be finite", expo, income), call. = FALSE)
+  }
+  if (any(h < 0)) {
+    stop(
+      sprintf(
+        "`%s` must be non-negative: an exposure is a concentration",
+        expo
+      ),
+      call. = FALSE
+    )
+  }
+  if (length(unique(inc)) < 2L) {
+    stop(
+      .rmbl_fn(),
+      sprintf(
+        paste0(
+          "`%s` must take at least two values: with one income level ",
+          "there is no income gradient and the index is undefined"
+        ),
+        income
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' The reading of a concentration index.
+#' @param ci The index.
+#' @return One string.
+#' @noRd
+.expconc_interp <- function(ci) {
+  if (ci < -0.01) {
+    sprintf(
+      paste0(
+        "CI = %.4f. Pro-poor exposure burden: lower-income individuals ",
+        "bear disproportionately higher pollution."
+      ),
+      ci
+    )
+  } else if (ci > 0.01) {
+    sprintf(
+      paste0(
+        "CI = %.4f. Pro-rich exposure burden: higher-income individuals ",
+        "bear disproportionately higher pollution."
+      ),
+      ci
+    )
+  } else {
+    sprintf(
+      "CI = %.4f. Exposure distributed approximately evenly across income.",
+      ci
+    )
+  }
+}
+
+#' One area's burden, for polbrdarea().
+#' @param areatab,areacol,expcol,popcol,basratecol,poll,y,rare,hirate As for
+#'   polbrdarea().
+#' @param i The area table's row index.
+#' @return A one-row data frame.
+#' @noRd
+.polbrd_row <- function(
+  areatab,
+  i,
+  areacol,
+  expcol,
+  popcol,
+  basratecol,
+  poll,
+  y,
+  rare,
+  hirate
+) {
+  r <- tryCatch(
+    polbrdn(
+      expomean = as.numeric(areatab[[expcol]][i]),
+      expoprev = 1,
+      brate = as.numeric(areatab[[basratecol]][i]),
+      pop = as.numeric(areatab[[popcol]][i]),
+      poll = poll,
+      y = y,
+      rare = rare,
+      hirate = hirate
+    ),
+    error = function(e) {
+      stop(.rmbl_fn(), .polbrd_msg(conditionMessage(e)), call. = FALSE)
+    }
+  )
+  out <- data.frame(a = areatab[[areacol]][i], stringsAsFactors = FALSE)
+  names(out) <- areacol
+  out[[expcol]] <- as.numeric(areatab[[expcol]][i])
+  out[[popcol]] <- as.numeric(areatab[[popcol]][i])
+  out[[basratecol]] <- as.numeric(areatab[[basratecol]][i])
+  out$rr <- r$extra$rr
+  out$paf <- r$paf
+  out$attrcases <- r$attrcases
+  out$basecases <- r$basecases
+  out
+}
+
+#' polbrdn()'s refusal, said in polbrdarea()'s words: its own function name
+#' dropped and each per-row argument named by the column argument it came from.
+#' @param m polbrdn()'s error message.
+#' @return The message without a function prefix.
+#' @noRd
+.polbrd_msg <- function(m) {
+  m <- sub("^(polbrdn|crfpm25|crfno2): ", "", m)
+  map <- c(expomean = "expcol", pop = "popcol", brate = "basratecol")
+  for (k in names(map)) {
+    m <- gsub(sprintf("`%s`", k), sprintf("`%s`", map[[k]]), m, fixed = TRUE)
+  }
+  m
+}
+
+#' A population row of the pollution assumptions.
+#' @param population The population.
+#' @return One assumption row.
+#' @noRd
+.pollution_pop_row <- function(population) {
+  fin <- .pollution_fin
+  .pollution_row(
+    "population finite, positive and at most 10 billion",
+    fin(population) && population > 0 && population <= 1e10,
+    if (fin(population) && population > 1e10) {
+      sprintf(
+        "population=%s is more people than live on Earth",
+        format(population, big.mark = ",", scientific = FALSE)
+      )
+    } else {
+      sprintf(
+        "population=%s",
+        format(population, big.mark = ",", scientific = FALSE)
+      )
+    }
+  )
+}
+
+#' vrfpol()'s pollutant, as its key ("no2", "pm25", or the name lower-cased
+#' when it is neither).
+#' @param poll As for vrfpol().
+#' @return One string.
+#' @noRd
+.pollution_poll_key <- function(poll) {
+  if (!is.character(poll) || length(poll) != 1L || is.na(poll)) {
+    stop(
+      "`poll` must be one pollutant name (\"PM2.5\" or \"NO2\")",
+      call. = FALSE
+    )
+  }
+  pol <- .pollution_pollutant(poll)
+  if (is.na(pol)) {
+    tolower(as.character(poll))
+  } else if (pol == "NO2") {
+    "no2"
+  } else {
+    "pm25"
+  }
+}
+
+#' vrfpol() once its inputs are read: the assumptions, then the pipeline.
+#' @param poll,y,reg,years,ref,rare,hirate As for vrfpol(), checked.
+#' @param ex The exposure, from .pollution_exposure_source().
+#' @param brate The baseline rate per 100,000.
+#' @param pop The population.
+#' @return The report.
+#' @noRd
+.pollution_run <- function(
+  poll,
+  y,
+  reg,
+  years,
+  ex,
+  brate,
+  pop,
+  ref,
+  rare,
+  hirate
+) {
+  expomean <- ex$expomean
+  expoprev <- ex$expoprev
+  equity_df <- ex$equity_df
+  assumptions <- .pollution_assumptions(
+    poll,
+    expomean,
+    expoprev,
+    brate,
+    pop,
+    ref,
+    rare,
+    hirate
+  )
+  report <- .pollution_report(poll, y, reg, years, ex, brate, pop, ref)
+  report$assumptions <- assumptions
+  if (!all(vapply(assumptions, function(a) isTRUE(a$ok), logical(1)))) {
+    report$status <- "assumption_failure"
+    report$pipeline <- list(skipped = TRUE, reason = "assumptions")
+    return(structure(
+      report,
+      exitstat = 1L,
+      class = c("rmbl_pollution_report", "list")
+    ))
+  }
+  pipe <- .pollution_pipeline(
+    poll,
+    y,
+    expomean,
+    expoprev,
+    brate,
+    pop,
+    ref,
+    rare,
+    hirate,
+    equity_df
+  )
+  if (is.character(pipe)) {
+    return(.pollution_fail(pipe))
+  }
+  report$status <- "ok"
+  report$pipeline <- pipe
+  structure(report, exitstat = 0L, class = c("rmbl_pollution_report", "list"))
+}
+
+#' The head of a vrfpol() report: the command, the inputs and their source.
+#' @param poll,y,reg,years,ref As for vrfpol(), checked.
+#' @param ex The exposure, from .pollution_exposure_source().
+#' @param brate The baseline rate per 100,000.
+#' @param pop The population.
+#' @return A list.
+#' @noRd
+.pollution_report <- function(poll, y, reg, years, ex, brate, pop, ref) {
+  list(
+    command = "verify-pollution",
+    pollutant = poll,
+    outcome = y,
+    region = reg,
+    years = years,
+    dsou = ex$data_source,
+    inputs = list(
+      expomean = ex$expomean,
+      expoprev = ex$expoprev,
+      baserateper100k = brate,
+      population = pop,
+      refconc = ref,
+      drorows = ex$dropped
+    )
+  )
+}
+
+#' vrfpol()'s inputs, checked, and its exposure, read.
+#' @param demo,expcsv,poll,ref,expomean,expoprev,rare,hirate,y As for
+#'   vrfpol() (`poll` as its key).
+#' @param rates A list: `brate`, `basrateper` and `pop`, as given.
+#' @return The reason a run cannot go on (one string), or a list: `ex` (from
+#'   .pollution_exposure_source()) and `ref`.
+#' @noRd
+.pollution_inputs <- function(
+  demo,
+  expcsv,
+  poll,
+  ref,
+  expomean,
+  expoprev,
+  rates,
+  rare,
+  hirate,
+  y
+) {
+  if (is.null(ref)) {
+    ref <- if (identical(poll, "no2")) 10 else 5.8
+  }
+  # the scalar inputs go together: a mean without a prevalence (or the reverse)
+  # is not a run with the other at zero, it is half of the data
+  no_scalar_data <- is.null(expomean) && is.null(expoprev)
+  why <- .pollution_check_inputs(
+    demo,
+    expcsv,
+    list(
+      expomean = expomean,
+      expoprev = expoprev,
+      brate = rates$brate,
+      basrateper = rates$basrateper,
+      pop = rates$pop,
+      ref = ref
+    ),
+    rare,
+    hirate,
+    y
+  )
+  if (!is.null(why)) {
+    return(why)
+  }
+  ref <- suppressWarnings(as.numeric(ref))
+  ex <- .pollution_exposure_source(
+    demo,
+    expcsv,
+    poll,
+    ref,
+    expomean,
+    expoprev,
+    no_scalar_data
+  )
+  if (is.character(ex)) {
+    return(ex)
+  }
+  list(ex = ex, ref = ref)
+}
+
+#' The rows of an exposure file once its values are numbers: the empty ones
+#' dropped (with a note), negative values and a text income refused.
+#' @param df The file's rows.
+#' @return The reason it cannot be used (one string), or a list: `df`,
+#'   `dropped` and `equity_df`.
+#' @noRd
+.pollution_exposure_rows <- function(df) {
+  dropped <- sum(is.na(df$exposure))
+  if (dropped > 0L) {
+    message(sprintf(
+      "note: %d row(s) have no exposure value and were dropped",
+      dropped
+    ))
+  }
+  if (any(df$exposure < 0, na.rm = TRUE)) {
+    n_neg <- sum(df$exposure < 0, na.rm = TRUE)
+    return(sprintf(
+      "%d exposure value(s) are negative: a concentration cannot be",
+      n_neg
+    ))
+  }
+  if ("income" %in% names(df) && all(is.na(df$income))) {
+    message("note: the income column is empty: no equity analysis")
+    df$income <- NULL
+  }
+  if ("income" %in% names(df) && !is.numeric(df$income)) {
+    return(paste0(
+      "the income column must be numeric (a quintile or an amount); ",
+      "text cannot be ranked"
+    ))
+  }
+  list(
+    df = df,
+    dropped = dropped,
+    equity_df = if ("income" %in% names(df)) df
+  )
+}
+
+#' The concentration-response function and the attributable fraction of a
+#' pollution run.
+#' @param poll,y,expomean,expoprev,ref As for .pollution_pipeline().
+#' @return The error message of a stage that failed, or a list: `crf`, `paf`.
+#' @noRd
+.pollution_crf_paf <- function(poll, y, expomean, expoprev, ref) {
+  crf <- tryCatch(
+    if (poll == "no2") {
+      crfno2(expomean, y = y, refconc = ref)
+    } else {
+      crfpm25(expomean, y = y, refconc = ref)
+    },
+    error = function(e) e
+  )
+  if (inherits(crf, "error")) {
+    return(conditionMessage(crf))
+  }
+  paf <- tryCatch(
+    attrfrac(
+      crf$rr,
+      expoprev,
+      rrlo = if (is.finite(crf$rrlo)) crf$rrlo,
+      rrup = if (is.finite(crf$rrup)) crf$rrup
+    ),
+    error = function(e) e
+  )
+  if (inherits(paf, "error")) {
+    return(conditionMessage(paf))
+  }
+  list(crf = crf, paf = paf)
+}
+
+#' The displaced deaths, the burden and the equity analysis of a pollution
+#' run.
+#' @param poll,y,expomean,expoprev,pop,ref,rare,hirate,equity_df As for
+#'   .pollution_pipeline().
+#' @param k The exposure above the reference, the baseline rate per person
+#'   and the log relative risk per unit.
+#' @return A list (`displaced`, `burden`, `equity`), or the error.
+#' @noRd
+.pollution_stages <- function(
+  poll,
+  y,
+  expomean,
+  expoprev,
+  pop,
+  ref,
+  k,
+  rare,
+  hirate,
+  equity_df
+) {
+  exposure_delta <- k[[1L]]
+  baseline_per_person <- k[[2L]]
+  beta_per_unit <- k[[3L]]
+  tryCatch(
+    {
+      # the rate's band was checked above, with the caller's switches: they go
+      # to the stages too, or a rate the caller vouched for (hirate, rare) was
+      # refused again by the stage
+      displaced <- mortdisp(
+        exposure_delta,
+        pop * expoprev,
+        baseline_per_person,
+        beta_per_unit,
+        rare = rare,
+        hirate = hirate
+      )
+      burden <- polbrdn(
+        expomean,
+        expoprev,
+        baseline_per_person,
+        pop,
+        poll = if (poll == "pm25") "PM2.5" else "NO2",
+        y = y,
+        refconc = ref,
+        rare = rare,
+        hirate = hirate
+      )
+      list(
+        displaced = displaced,
+        burden = burden,
+        equity = .pollution_equity(equity_df)
+      )
+    },
+    error = function(e) e
+  )
+}
+
+#' Stops unless a report has its inputs, assumptions and (when it ran) its
+#' pipeline.
+#' @param report As for polrpttxt().
+#' @return Nothing useful.
+#' @noRd
+.polrpt_parts <- function(report) {
+  # a list that only looks like a report (status "ok" and no inputs) is refused
+  # in words, not with "$ operator is invalid for atomic vectors"
+  parts_ok <- is.list(report$inputs) &&
+    is.list(report$assumptions) &&
+    all(vapply(
+      report$assumptions,
+      function(a) is.list(a) && is.logical(a$ok),
+      logical(1)
+    )) &&
+    (!identical(report$status, "ok") || is.list(report$pipeline))
+  if (!parts_ok) {
+    stop(
+      "`report` is not a complete vrfpol() report (its inputs, ",
+      "assumptions or pipeline are missing)",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' The heading and inputs of a pollution report's text.
+#' @param report As for polrpttxt().
+#' @return A character vector of lines.
+#' @noRd
+.polrpt_head <- function(report) {
+  bar <- strrep("=", 66)
+  lines <- c(
+    bar,
+    sprintf(
+      "  %s -- %s -> %s",
+      report$command,
+      toupper(report$pollutant),
+      report$outcome
+    )
+  )
+  if (!is.null(report$region)) {
+    lines <- c(lines, sprintf("  region: %s", report$region))
+  }
+  if (!is.null(report$years)) {
+    lines <- c(lines, sprintf("  years:  %s", report$years))
+  }
+  inp <- report$inputs
+  lines <- c(
+    lines,
+    sprintf("  data:   %s", report$dsou),
+    bar,
+    "",
+    "Inputs",
+    sprintf("  exposure mean:      %.3f", inp$expomean),
+    sprintf("  exposure prevalence:%.3f", inp$expoprev),
+    sprintf("  baseline rate/100k: %.2f", inp$baserateper100k),
+    sprintf(
+      "  population:         %s",
+      format(inp$population, big.mark = ",", scientific = FALSE)
+    ),
+    sprintf("  reference conc:     %s", format(inp$refconc)),
+    if (isTRUE(inp$drorows > 0)) {
+      sprintf("  rows dropped:       %d (no exposure value)", inp$drorows)
+    },
+    "",
+    "Assumption log"
+  )
+  lines
+}
+
+#' The assumption log of a pollution report's text.
+#' @param assumptions The report's assumptions.
+#' @return A character vector of lines.
+#' @noRd
+.polrpt_assumptions <- function(assumptions) {
+  lines <- character()
+  for (a in assumptions) {
+    lines <- c(
+      lines,
+      sprintf(
+        "  [%s] %s -- %s",
+        if (isTRUE(a$ok)) {
+          "PASS"
+        } else if (isFALSE(a$ok)) {
+          "FAIL"
+        } else {
+          "NA"
+        },
+        a$assumption,
+        a$note
+      )
+    )
+  }
+  lines
+}
+
+#' The results of a pollution report's text.
+#' @param p The report's pipeline.
+#' @return A character vector of lines.
+#' @noRd
+.polrpt_pipeline <- function(p) {
+  lines <- c(
+    "",
+    "Concentration-response",
+    sprintf("  RR:       %.4f", p$crf$rr),
+    sprintf("  source:   %s", p$crf$citation),
+    "",
+    sprintf(
+      "Attributable fraction (PAF): %.4f%s",
+      p$paf,
+      .pollution_paf_ci_text(p$pafci)
+    ),
+    "",
+    if (identical(p$displaced$unit, "deaths")) {
+      "Mortality displaced"
+    } else {
+      "Cases displaced"
+    },
+    sprintf(
+      "  expected avoided %s: %.1f",
+      p$displaced$unit %||% "deaths",
+      p$displaced$deadisp
+    ),
+    "",
+    "Burden of pollution",
+    sprintf(
+      "  attributable %s:   %.1f",
+      p$burden$extra$unit %||% "deaths",
+      p$burden$attrcases
+    )
+  )
+  if (!is.null(p$equity)) {
+    lines <- c(
+      lines,
+      "",
+      "Equity analysis",
+      sprintf("  concentration index: %.4f", p$equity$concidx)
+    )
+  }
+  lines
+}
+
+#' The reading of a relative risk at an exposure.
+#' @param rr The relative risk.
+#' @param expo,ref The exposure and the reference concentration.
+#' @return One or two sentences.
+#' @noRd
+.pol_rr_reading <- function(rr, expo, ref) {
+  if (!is.finite(rr)) {
+    return("The relative risk is not defined at this exposure.")
+  }
+  c(
+    sprintf(
+      "At %s ug/m3 the risk is %.1f%% %s than at the reference %s ug/m3",
+      .rmbl_fmt_num(expo),
+      abs(100 * (rr - 1)),
+      if (rr >= 1) "higher" else "lower",
+      .rmbl_fmt_num(ref)
+    ),
+    "(the curve's estimate for a population, not for one person)."
+  )
+}
+
+#' The assumption log of a pollution report, one line per assumption, PASS or
+#' FAIL first so the box marks it.
+#' @param assumptions The report's assumptions.
+#' @return A character vector.
+#' @noRd
+.pol_assumption_lines <- function(assumptions) {
+  vapply(
+    assumptions,
+    function(a) {
+      mark <- if (isTRUE(a$ok)) {
+        "PASS"
+      } else if (isFALSE(a$ok)) {
+        "FAIL"
+      } else {
+        "n/a"
+      }
+      sprintf("%-4s %s -- %s", mark, a$assumption, a$note)
+    },
+    ""
+  )
+}
+
+#' The results of a pollution report's pipeline, or why it was skipped.
+#' @param x The pollution report.
+#' @return A character vector.
+#' @noRd
+.pol_pipeline_lines <- function(x) {
+  p <- x$pipeline
+  if (!identical(x$status, "ok") || isTRUE(p$skipped)) {
+    return("Pipeline skipped: an assumption failed (exit status 1).")
+  }
+  unit <- p$burden$extra$unit %||% "deaths"
+  c(
+    sprintf("Relative risk %.4f: %s", p$crf$rr, p$crf$citation),
+    trimws(sprintf(
+      "Attributable fraction %.4f %s",
+      p$paf,
+      trimws(.pollution_paf_ci_text(p$pafci))
+    )),
+    sprintf(
+      "Expected avoided %s a year: %.1f",
+      p$displaced$unit %||% "deaths",
+      p$displaced$deadisp
+    ),
+    sprintf("Attributable %s a year: %.1f", unit, p$burden$attrcases),
+    if (!is.null(p$equity)) {
+      sprintf("Concentration index of exposure: %.4f", p$equity$concidx)
+    }
+  )
 }

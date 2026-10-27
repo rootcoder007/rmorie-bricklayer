@@ -7,7 +7,7 @@
 cnormpdf(x, mean = 0, sd = 1)
 }
 \arguments{
-\item{x}{Numeric vector of quantiles.}
+\item{x}{Numeric vector of quantiles at which the density is evaluated.}
 
 \item{mean}{Number, default \code{0}: the mean \eqn{\mu}.}
 

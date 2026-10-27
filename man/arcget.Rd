@@ -11,7 +11,7 @@ arcget(x, dest, sha256 = NULL, at = NULL, tmout = 600L)
 \code{\link{arcfind}} or a capture page) or a web address; for an address,
 the capture closest to \code{at} (default: the latest) is taken.}
 
-\item{dest}{The file to write.}
+\item{dest}{The file the fetched bytes are written to.}
 
 \item{sha256}{Optional SHA-256 the bytes must have.}
 

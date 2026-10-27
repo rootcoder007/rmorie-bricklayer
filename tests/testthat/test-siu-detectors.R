@@ -33,7 +33,7 @@ test_that("the police service falls back to the force abbreviations", {
       pair[1],
       " attended the scene."
     )
-    expect_equal(unname(parse_text(body)["police_service"]), pair[2])
+    expect_identical(unname(parse_text(body)["police_service"]), pair[2])
   }
   # a spelled-out service beats the abbreviation, because the
   # most-frequent full name wins before the table is consulted
@@ -43,7 +43,7 @@ test_that("the police service falls back to the force abbreviations", {
     "Lakeshore Police Service later notified the SIU. ",
     "An OPP unit assisted."
   )
-  expect_equal(
+  expect_identical(
     unname(parse_text(named)["police_service"]),
     "Lakeshore Police Service"
   )
@@ -54,7 +54,7 @@ test_that("the police service falls back to the force abbreviations", {
     "Riverton Police Service secured the scene. ",
     "Hillcrest Police Service was not involved."
   )
-  expect_equal(
+  expect_identical(
     unname(parse_text(two)["police_service"]),
     "Riverton Police Service"
   )
@@ -68,7 +68,7 @@ test_that("the police service falls back to the force abbreviations", {
   expect_match(unname(parse_text(lead)["police_service"]), "Northvale")
   # nothing identifiable leaves the field empty rather than guessing
   none <- "The Investigation\nSubject Officers\nNo force is named here."
-  expect_equal(unname(parse_text(none)["police_service"]), "")
+  expect_identical(unname(parse_text(none)["police_service"]), "")
 })
 
 test_that("the location detector handles every municipal form", {
@@ -79,7 +79,7 @@ test_that("the location detector handles every municipal form", {
       kind,
       " of Elmwood, shortly after midnight."
     )
-    expect_equal(
+    expect_identical(
       unname(parse_text(body)["location_of_call"]),
       paste0(kind, " of Elmwood")
     )
@@ -92,7 +92,7 @@ test_that("the location detector handles every municipal form", {
     "The incident occurred in the City of\nElmwood on a",
     " Tuesday."
   )
-  expect_equal(
+  expect_identical(
     unname(parse_text(wrapped)["location_of_call"]),
     "City of Elmwood"
   )
@@ -109,7 +109,7 @@ test_that("the location detector handles every municipal form", {
       "It happened in the Town of Fairhaven",
       tail
     )
-    expect_equal(
+    expect_identical(
       unname(parse_text(body)["location_of_call"]),
       "Town of Fairhaven"
     )
@@ -119,12 +119,12 @@ test_that("the location detector handles every municipal form", {
     "The Investigation\nSubject Officers\n",
     "in the City of Stoney-Brook, at dusk."
   )
-  expect_equal(
+  expect_identical(
     unname(parse_text(hyph)["location_of_call"]),
     "City of Stoney-Brook"
   )
   # no location phrase leaves it empty
-  expect_equal(
+  expect_identical(
     unname(parse_text(
       "The Investigation\nSubject Officers\nNo place is given."
     )["location_of_call"]),
@@ -153,26 +153,26 @@ test_that("age and sex are read from the descriptive phrase", {
       "."
     )
     f <- parse_text(body)
-    expect_equal(unname(f["age_affected"]), "34")
-    expect_equal(unname(f["sex_gender_affected"]), noun)
+    expect_identical(unname(f["age_affected"]), "34")
+    expect_identical(unname(f["sex_gender_affected"]), noun)
   }
   # spaces instead of hyphens, and mixed case
   spaced <- parse_text(paste0(
     "The Investigation\nSubject Officers\n",
     "a 7 year old Child was present."
   ))
-  expect_equal(unname(spaced["age_affected"]), "7")
-  expect_equal(unname(spaced["sex_gender_affected"]), "child")
+  expect_identical(unname(spaced["age_affected"]), "7")
+  expect_identical(unname(spaced["sex_gender_affected"]), "child")
   # a three-digit age is still read
   old <- parse_text(paste0(
     "The Investigation\nSubject Officers\n",
     "a 101-year-old woman"
   ))
-  expect_equal(unname(old["age_affected"]), "101")
+  expect_identical(unname(old["age_affected"]), "101")
   # no such phrase leaves both empty
   none <- parse_text("The Investigation\nSubject Officers\nNo age given.")
-  expect_equal(unname(none["age_affected"]), "")
-  expect_equal(unname(none["sex_gender_affected"]), "")
+  expect_identical(unname(none["age_affected"]), "")
+  expect_identical(unname(none["sex_gender_affected"]), "")
 })
 
 test_that("specific injuries are matched by verb and body part", {
@@ -219,7 +219,7 @@ test_that("specific injuries are matched by verb and body part", {
   )
   # an injury with no recognised body part is not reported, rather than
   # a partial phrase being invented
-  expect_equal(
+  expect_identical(
     unname(parse_text(paste0(
       "The Investigation\nSubject Officers\n",
       "The Complainant was bruised."
@@ -242,10 +242,10 @@ test_that("multiple statutes are collected and de-duplicated", {
   # each distinct act appears once, joined by a semicolon
   expect_match(got, "Criminal Code")
   expect_match(got, "Highway Traffic Act")
-  expect_equal(length(gregexpr("Criminal Code", got)[[1]]), 1L)
+  expect_length(gregexpr("Criminal Code", got, fixed = TRUE)[[1]], 1L)
   expect_match(got, ";")
   # no legislation section leaves the field empty
-  expect_equal(
+  expect_identical(
     unname(parse_text(
       "The Investigation\nSubject Officers\nNothing here."
     )[
@@ -273,7 +273,7 @@ test_that("the charge outcome reads both decisions", {
       phrase,
       "."
     )
-    expect_equal(unname(parse_text(body)["charges_recommended"]), "FALSE")
+    expect_identical(unname(parse_text(body)["charges_recommended"]), "FALSE")
   }
   # and the charge phrasings to TRUE
   for (phrase in c(
@@ -282,7 +282,7 @@ test_that("the charge outcome reads both decisions", {
     "charges have been laid against the official"
   )) {
     body <- paste0(header, "Analysis and Director's Decision\n", phrase, ".")
-    expect_equal(unname(parse_text(body)["charges_recommended"]), "TRUE")
+    expect_identical(unname(parse_text(body)["charges_recommended"]), "TRUE")
   }
   # a no-charge phrase takes precedence, since it is checked first and a
   # report that says both is a report declining to charge
@@ -291,9 +291,9 @@ test_that("the charge outcome reads both decisions", {
     "Analysis and Director's Decision\n",
     "No charges shall issue; no one was charged with anything."
   )
-  expect_equal(unname(parse_text(both)["charges_recommended"]), "FALSE")
+  expect_identical(unname(parse_text(both)["charges_recommended"]), "FALSE")
   # a decision section with neither phrasing is left empty
-  expect_equal(
+  expect_identical(
     unname(parse_text(paste0(
       header,
       "Analysis and Director's Decision\n",
@@ -307,7 +307,7 @@ test_that("the charge outcome reads both decisions", {
     "Analysis and Director’s Decision\n",
     "No charges shall issue."
   )
-  expect_equal(unname(parse_text(curly)["charges_recommended"]), "FALSE")
+  expect_identical(unname(parse_text(curly)["charges_recommended"]), "FALSE")
 })
 
 test_that("the director's name is read from either signature form", {
@@ -318,22 +318,22 @@ test_that("the director's name is read from either signature form", {
     "Dated at Toronto.\n\nAlex Morrow\nDirector\n",
     "Special Investigations Unit"
   )
-  expect_equal(unname(parse_text(block)["directors_name"]), "Alex Morrow")
+  expect_identical(unname(parse_text(block)["directors_name"]), "Alex Morrow")
   # the inline form
   inline <- paste0(header, "Signed by Jordan Vale, Director")
-  expect_equal(unname(parse_text(inline)["directors_name"]), "Jordan Vale")
+  expect_identical(unname(parse_text(inline)["directors_name"]), "Jordan Vale")
   # a three-part name
   three <- paste0(header, "Mary Anne Fielding\nDirector")
-  expect_equal(
+  expect_identical(
     unname(parse_text(three)["directors_name"]),
     "Mary Anne Fielding"
   )
   # a name containing "the" is rejected as boilerplate rather than
   # reported as a person
   boiler <- paste0(header, "Report of the Director")
-  expect_equal(unname(parse_text(boiler)["directors_name"]), "")
+  expect_identical(unname(parse_text(boiler)["directors_name"]), "")
   # no signature leaves it empty
-  expect_equal(
+  expect_identical(
     unname(parse_text(paste0(header, "No signature."))[
       "directors_name"
     ]),
@@ -347,18 +347,18 @@ test_that("the language detector needs two markers to commit", {
     "The Investigation\nSubject Officers\n",
     "Civilian Witnesses\nWitness Officers\n"
   )
-  expect_equal(unname(parse_text(en)["_language"]), "en")
+  expect_identical(unname(parse_text(en)["_language"]), "en")
   # two or more French markers
   fr <- paste0(
     "L'enquête\nTémoins civils\n",
     "Agents impliqués\nExercice du mandat\n"
   )
-  expect_equal(unname(parse_text(fr)["_language"]), "fr")
+  expect_identical(unname(parse_text(fr)["_language"]), "fr")
   # a single marker is not enough to commit either way
   one <- "The Investigation\nnothing else recognisable"
-  expect_equal(unname(parse_text(one)["_language"]), "unknown")
+  expect_identical(unname(parse_text(one)["_language"]), "unknown")
   # no markers at all
-  expect_equal(
+  expect_identical(
     unname(parse_text("Plain prose with no headings.")[
       "_language"
     ]),
@@ -369,15 +369,15 @@ test_that("the language detector needs two markers to commit", {
     "The Investigation\nWitness Officers\n",
     "L'enquête\nTémoins civils\n"
   )
-  expect_equal(unname(parse_text(tie)["_language"]), "unknown")
+  expect_identical(unname(parse_text(tie)["_language"]), "unknown")
 })
 
 test_that("the date parser handles its edges", {
   # the human form
-  expect_equal(siudate("January 5, 2023"), "2023-01-05")
-  expect_equal(siudate("December 31, 1999"), "1999-12-31")
+  expect_identical(siudate("January 5, 2023"), "2023-01-05")
+  expect_identical(siudate("December 31, 1999"), "1999-12-31")
   # without the comma
-  expect_equal(siudate("March 7 2021"), "2021-03-07")
+  expect_identical(siudate("March 7 2021"), "2021-03-07")
   # every month name
   months <- c(
     "January",
@@ -394,19 +394,19 @@ test_that("the date parser handles its edges", {
     "December"
   )
   for (i in seq_along(months)) {
-    expect_equal(
+    expect_identical(
       siudate(paste(months[i], "1, 2020")),
       sprintf("2020-%02d-01", i)
     )
   }
   # already-ISO input passes through unchanged
-  expect_equal(siudate("2023-04-28"), "2023-04-28")
+  expect_identical(siudate("2023-04-28"), "2023-04-28")
   # anything unparseable is empty rather than a guess
-  expect_equal(siudate("sometime last spring"), "")
-  expect_equal(siudate(""), "")
-  expect_equal(siudate("2023/04/28"), "")
+  expect_identical(siudate("sometime last spring"), "")
+  expect_identical(siudate(""), "")
+  expect_identical(siudate("2023/04/28"), "")
   # a date embedded in a sentence is still found
-  expect_equal(siudate("dated at Toronto on May 9, 2022"), "2022-05-09")
+  expect_identical(siudate("dated at Toronto on May 9, 2022"), "2022-05-09")
 })
 
 test_that("html_to_text strips markup and decodes entities", {
@@ -443,9 +443,9 @@ test_that("the officer and witness counts read their own labels", {
     "Civilian Witnesses\nCW #1 Interviewed\n"
   )
   f <- parse_text(body)
-  expect_equal(unname(f["number_of_subject_officials"]), "2")
-  expect_equal(unname(f["number_of_witness_officials"]), "3")
-  expect_equal(unname(f["number_of_civilian_witnesses"]), "1")
+  expect_identical(unname(f["number_of_subject_officials"]), "2")
+  expect_identical(unname(f["number_of_witness_officials"]), "3")
+  expect_identical(unname(f["number_of_civilian_witnesses"]), "1")
 
   # ZERO is a real answer, not a missing one: a witness-officer-only case
   # genuinely has no subject official, and the schema flags these fields
@@ -457,7 +457,7 @@ test_that("the officer and witness counts read their own labels", {
   )
   sch <- siusch()
   expect_true(sch$count[sch$name == "number_of_subject_officials"])
-  expect_equal(unname(parse_text(none)["number_of_witness_officials"]), "1")
+  expect_identical(unname(parse_text(none)["number_of_witness_officials"]), "1")
 })
 
 test_that("SO, subject officer and subject official count the same people", {

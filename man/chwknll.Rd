@@ -8,7 +8,7 @@ chwknll(
   times,
   hor,
   kernel = c("exponential", "weibull", "lomax", "gamma"),
-  par
+  par = NULL
 )
 }
 \arguments{
@@ -23,7 +23,7 @@ number in the same unit; the window starts at 0.}
 default), \code{"weibull"}, \code{"lomax"} and \code{"gamma"}. Partial names are
 matched.}
 
-\item{par}{Numeric parameter vector, as described above: length 3
+\item{par}{Numeric parameter vector (required), as described above: length 3
 (\code{a0}, \code{eta}, \code{beta}) for \code{"exponential"}, length 4 (\code{a0},
 \code{eta} and
 the kernel's two parameters) for the others. Rates are per unit of

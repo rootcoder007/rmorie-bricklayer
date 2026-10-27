@@ -150,21 +150,9 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
       call. = FALSE
     )
   }
-  n <- .rmbl_num(n, "n", integer = TRUE)
-  if (length(n) != 1L || is.na(n) || n < 0L) {
-    stop(
-      "mksyncol: `n` must be a single non-negative whole number",
-      call. = FALSE
-    )
-  }
+  n <- .syn_check_col(spec, n, type, basep)
   if (!is.null(basep)) {
     basep <- .rmbl_num(basep, "basep")
-    if (anyNA(basep) || any(basep < 0 | basep > 1)) {
-      stop("`basep` must be probabilities between 0 and 1", call. = FALSE)
-    }
-  }
-  if (identical(type, "sample") && !length(unlist(spec$values))) {
-    stop("a \"sample\" column spec needs `values` to draw from", call. = FALSE)
   }
   switch(
     type,
@@ -173,76 +161,15 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
       w <- if (!is.null(spec$weights)) unlist(spec$weights) else NULL
       sample(vals, n, replace = TRUE, prob = w)
     },
-    bernoulli = {
-      p_base <- spec$p %||% 0.1
-      p_extra <- spec$p_with_baserate %||% 0
-      p_per_row <- if (!is.null(basep)) p_base + p_extra * basep else p_base
-      # unlist: schemas parsed from provenance JSON deliver list("Yes","No")
-      labels <- unlist(spec$labels %||% c("Yes", "No"))
-      ifelse(stats::runif(n) < p_per_row, labels[1], labels[2])
-    },
+    bernoulli = .syn_bernoulli(spec, n, basep),
     poisson = {
       lambda <- spec$lambda %||% 1
       out <- stats::rpois(n, lambda = lambda)
       mn <- spec$min %||% 0
       pmax(out, mn)
     },
-    id_pattern = {
-      pattern <- spec$pattern %||% "id-{seq:05d}"
-      year_col <- spec$year_col %||% NULL
-      if (!is.null(year_col) && year_col %in% names(ctx)) {
-        years <- ctx[[year_col]]
-        if (length(years) != n) {
-          stop(
-            sprintf(
-              "`ctx$%s` has %d values but n = %d",
-              year_col,
-              length(years),
-              n
-            ),
-            call. = FALSE
-          )
-        }
-        seq_per_yr <- stats::ave(seq_along(years), years, FUN = seq_along)
-        ids <- mapply(
-          function(y, s) {
-            out <- gsub("\\{year\\}", as.character(y), pattern)
-            gsub("\\{seq:05d\\}", sprintf("%05d", s), out)
-          },
-          years,
-          seq_per_yr,
-          USE.NAMES = FALSE
-        )
-        return(ids)
-      }
-      # vapply: gsub vectorises over x, not replacement -- a bare gsub here
-      # returned a single id regardless of n.
-      vapply(
-        seq_len(n),
-        function(s) {
-          gsub("\\{seq:05d\\}", sprintf("%05d", s), pattern)
-        },
-        character(1)
-      )
-    },
-    fitted = {
-      fit <- spec$fit
-      if (!inherits(fit, "rmbl_dstfit") || !length(fit$fits)) {
-        stop(
-          "mksyncol: a \"fitted\" column spec needs `fit`, a dstfit() ",
-          "result with a converged fit",
-          call. = FALSE
-        )
-      }
-      fam <- spec$family %||% names(fit$fits)[[1L]]
-      if (!fam %in% names(fit$fits)) {
-        stop(
-          sprintf("mksyncol: the fit has no converged %s family", fam),
-          call. = FALSE
-        )
-      }
-      .dst_fams()[[fam]]$r(n, fit$fits[[fam]])
-    },
+    id_pattern = .syn_id_pattern(spec, n, ctx),
+    fitted = .syn_fitted(spec, n),
     sequence = {
       from <- spec$from %||% 1L
       seq.int(from, length.out = n)
@@ -250,10 +177,6 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
     stop("Unknown synthetic column type: ", type)
   )
 }
-
-## ----- Main generator -----
-## `schema` is the synthetic_recipe sub-block of provenance.
-## `outpath` is where to write the CSV.
 
 #' Generate a Synthetic CSV From a Schema Recipe
 #'
@@ -344,12 +267,167 @@ mksyncsv <- function(schema, outpath, nrows = NULL, seed = NULL) {
   if (!is.list(schema)) {
     stop("`schema` must be a schema list (columns = ..., ...)", call. = FALSE)
   }
-  if (is.null(seed)) {
-    seed <- schema$seed %||% 91735246L
+  seed <- seed %||% schema$seed %||% 91735246L
+  nrows <- nrows %||% schema$n_rows %||% 50000L
+  .syn_check_nrows(nrows)
+  # CRAN policy: restore the caller's RNG state on exit.
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    old_seed <- get(".Random.seed", envir = globalenv())
+    on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
   }
-  if (is.null(nrows)) {
-    nrows <- schema$n_rows %||% 50000L
+  .rmbl_local_seed(seed)
+
+  # base R only when sourced standalone in a bundle: the bar only when the
+  # package is there
+  pg <- if (exists("blprog", mode = "function")) {
+    blprog("synthetic data", length(schema$columns) + 1L)
   }
+  if (!is.null(pg)) {
+    on.exit(pg$done(), add = TRUE)
+  }
+  out_df <- .syn_draw(schema, nrows, pg)
+  utils::write.csv(out_df, outpath, row.names = FALSE)
+  # The CSV stays a plain CSV so every reader opens it; the sidecar beside
+  # it is what says the rows were generated (seed, recipe digest), and
+  # vrfcps() refuses a capsule whose data file has one. Read back
+  # with read.csv() alone the file was indistinguishable from real data.
+  recipe_sha256 <- .syn_recipe_sha(schema)
+  .rmbl_synth_state$made <- TRUE
+  sidecar <- .syn_sidecar(outpath, nrow(out_df), seed, recipe_sha256)
+  invisible(structure(
+    list(
+      path = outpath,
+      sidecar = sidecar,
+      rows = nrow(out_df),
+      seed = seed,
+      recipe_sha256 = recipe_sha256
+    ),
+    class = c("bricklayer_synthetic", "list")
+  ))
+}
+
+#' @export
+format.bricklayer_synthetic <- function(x, ...) {
+  title <- "SYNTHETIC data (generated from a recipe, not fetched)"
+  # sourced on its own in a capsule bundle the package's block is absent
+  if (!exists(".rmbl_res_block", mode = "function")) {
+    return(c(
+      title,
+      sprintf("  file    %s", x$path),
+      sprintf("  sidecar %s", x$sidecar),
+      sprintf(
+        "  rows %d, seed %s, recipe sha256 %s",
+        x$rows,
+        format(x$seed),
+        substr(x$recipe_sha256, 1L, 16L)
+      )
+    ))
+  }
+  .rmbl_res_block(
+    title,
+    facts = list(
+      File = x$path,
+      Sidecar = x$sidecar,
+      Rows = x$rows,
+      Seed = format(x$seed),
+      `Recipe sha256` = substr(x$recipe_sha256, 1L, 16L)
+    ),
+    reading = paste(
+      "These rows were drawn from a recipe, not fetched from a source. The",
+      "sidecar beside the file says so, and vrfcps() refuses a capsule",
+      "built on them as real data."
+    )
+  )
+}
+
+#' @export
+#' @method print bricklayer_synthetic
+print.bricklayer_synthetic <- function(x, ...) {
+  if (exists(".rmbl_cat", mode = "function")) {
+    .rmbl_cat(format(x, ...), x)
+  } else {
+    cat(format(x, ...), sep = "\n")
+  }
+  invisible(x)
+}
+
+#' mksyncol()'s row count, base propensities and sample values, checked.
+#' @param spec,n,basep As for mksyncol().
+#' @param type The column type.
+#' @return The row count, a whole number.
+#' @noRd
+.syn_check_col <- function(spec, n, type, basep) {
+  n <- .rmbl_num(n, "n", integer = TRUE)
+  if (length(n) != 1L || is.na(n) || n < 0L) {
+    stop(
+      "mksyncol: `n` must be a single non-negative whole number",
+      call. = FALSE
+    )
+  }
+  if (!is.null(basep)) {
+    basep <- .rmbl_num(basep, "basep")
+    if (anyNA(basep) || any(basep < 0 | basep > 1)) {
+      stop("`basep` must be probabilities between 0 and 1", call. = FALSE)
+    }
+  }
+  if (identical(type, "sample") && !length(unlist(spec$values))) {
+    stop("a \"sample\" column spec needs `values` to draw from", call. = FALSE)
+  }
+  n
+}
+
+#' An id_pattern column: `{seq:05d}` numbered, within each year when the
+#' spec names a year column of `ctx`.
+#' @param spec,n,ctx As for mksyncol().
+#' @return The ids.
+#' @noRd
+.syn_id_pattern <- function(spec, n, ctx) {
+  pattern <- spec$pattern %||% "id-{seq:05d}"
+  year_col <- spec$year_col %||% NULL
+  if (!is.null(year_col) && year_col %in% names(ctx)) {
+    years <- ctx[[year_col]]
+    if (length(years) != n) {
+      stop(
+        sprintf(
+          "`ctx$%s` has %d values but n = %d",
+          year_col,
+          length(years),
+          n
+        ),
+        call. = FALSE
+      )
+    }
+    seq_per_yr <- stats::ave(seq_along(years), years, FUN = seq_along)
+    ids <- mapply(
+      function(y, s) {
+        out <- gsub("{year}", as.character(y), pattern, fixed = TRUE)
+        gsub("{seq:05d}", sprintf("%05d", s), out, fixed = TRUE)
+      },
+      years,
+      seq_per_yr,
+      USE.NAMES = FALSE
+    )
+    return(ids)
+  }
+  # vapply: gsub vectorises over x, not replacement -- a bare gsub here
+  # returned a single id regardless of n.
+  vapply(
+    seq_len(n),
+    function(s) {
+      gsub("{seq:05d}", sprintf("%05d", s), pattern, fixed = TRUE)
+    },
+    character(1)
+  )
+}
+
+## ----- Main generator -----
+## `schema` is the synthetic_recipe sub-block of provenance.
+## `outpath` is where to write the CSV.
+
+#' mksyncsv()'s row count, checked: whole, at least one, at most 100 million.
+#' @param nrows As for mksyncsv().
+#' @noRd
+.syn_check_nrows <- function(nrows) {
   # built in memory: a count of rows, and one a machine can hold (2^31 was a
   # process killed for memory; CRAN stress test of 0.5.14). Base R only: a
   # staged bundle sources this file on its own.
@@ -370,52 +448,48 @@ mksyncsv <- function(schema, outpath, nrows = NULL, seed = NULL) {
       call. = FALSE
     )
   }
-  # CRAN policy: restore the caller's RNG state on exit.
-  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
-    old_seed <- get(".Random.seed", envir = globalenv())
-    on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
-  }
-  .rmbl_local_seed(seed)
+  invisible(NULL)
+}
 
+#' Rows per person: a draw of the schema's replication values, and the
+#' function that repeats a person's values over their rows.
+#' @param reps_spec The schema's row_replication, or NULL.
+#' @param nrows The persons.
+#' @return A list: expand and n_total.
+#' @noRd
+.syn_replication <- function(reps_spec, nrows) {
   ## Optional: replicate rows per "person" if a multiplier is specified
-  reps_spec <- schema$row_replication
-  if (!is.null(reps_spec)) {
-    n_persons <- nrows
-    # index-sample the values: sample(x) with a scalar integer x would
-    # expand to 1:x (base R gotcha) and break single-value replication.
-    rep_vals <- unlist(reps_spec$values)
-    rows_per <- rep_vals[sample.int(
-      length(rep_vals),
-      n_persons,
-      replace = TRUE,
-      prob = unlist(reps_spec$weights)
-    )]
-    expand <- function(x) rep(x, rows_per)
-    n_total <- sum(rows_per)
-  } else {
-    expand <- identity
-    n_total <- nrows
+  if (is.null(reps_spec)) {
+    return(list(expand = identity, n_total = nrows))
   }
+  n_persons <- nrows
+  # index-sample the values: sample(x) with a scalar integer x would
+  # expand to 1:x (base R gotcha) and break single-value replication.
+  rep_vals <- unlist(reps_spec$values)
+  rows_per <- rep_vals[sample.int(
+    length(rep_vals),
+    n_persons,
+    replace = TRUE,
+    prob = unlist(reps_spec$weights)
+  )]
+  expand <- function(x) rep(x, rows_per)
+  n_total <- sum(rows_per)
+  list(expand = expand, n_total = n_total)
+}
 
-  ## Latent per-person "baseline propensity" -- shared across bernoulli
-  ## cols; expanded to one entry per row so replicated rows of a person
-  ## share the propensity but draw their own outcome (a person's alert
-  ## status can change between placements, which is what the treatment
-  ## definition in the analyses rests on).
-  base_p <- expand(stats::runif(nrows, 0, 1))
-
-  ## Generate columns in declaration order; later columns can see ctx
+#' mksyncsv()'s columns, in declaration order: person-level ones drawn once
+#' per person and repeated, bernoulli ones drawn per row.
+#' @param schema,nrows As for mksyncsv().
+#' @param n_total The rows.
+#' @param expand Repeats a person's values over their rows.
+#' @param base_p The per-row baseline propensity.
+#' @param pg The progress bar, or NULL.
+#' @return The columns, a named list.
+#' @noRd
+.syn_columns <- function(schema, nrows, n_total, expand, base_p, pg) {
   out <- list()
   ctx <- list() # one entry per row
   ctx_person <- list() # one entry per person, before replication
-  # base R only when sourced standalone in a bundle: the bar only when the
-  # package is there
-  pg <- if (exists("blprog", mode = "function")) {
-    blprog("synthetic data", length(schema$columns) + 1L)
-  }
-  if (!is.null(pg)) {
-    on.exit(pg$done(), add = TRUE)
-  }
   for (col_name in names(schema$columns)) {
     if (!is.null(pg)) {
       pg$tick(0, sprintf("column %s", col_name))
@@ -436,31 +510,27 @@ mksyncsv <- function(schema, outpath, nrows = NULL, seed = NULL) {
     out[[col_name]] <- vals
     if (!is.null(pg)) pg$tick()
   }
-  if (!is.null(pg)) {
-    pg$tick(0, sprintf("writing %s rows", format(n_total, big.mark = ",")))
-  }
-  out_df <- as.data.frame(out, stringsAsFactors = FALSE)
-  utils::write.csv(out_df, outpath, row.names = FALSE)
-  # The CSV stays a plain CSV so every reader opens it; the sidecar beside
-  # it is what says the rows were generated (seed, recipe digest), and
-  # vrfcps() refuses a capsule whose data file has one. Read back
-  # with read.csv() alone the file was indistinguishable from real data.
-  # This file is also sourced standalone inside a staged bundle, where only
-  # lib_*.R exist: base R only here (the bundle's lib_manifest.R supplies the
-  # digest when it is present; the sidecar is written either way).
-  recipe_sha256 <- if (exists("mnfdgst", mode = "function")) {
-    tryCatch(mnfdgst(schema), error = function(e) NA_character_)
-  } else {
-    NA_character_
-  }
-  .rmbl_synth_state$made <- TRUE
+  out
+}
+
+#' The `.synthetic` sidecar beside a synthetic CSV: rows, seed, recipe digest
+#' and time.
+#' @param outpath The CSV.
+#' @param rows Its rows.
+#' @param seed The seed recorded in the sidecar file.
+#' @param recipe_sha256 The schema's digest, or NA.
+#' @return The sidecar's path.
+#' @noRd
+.syn_sidecar <- function(outpath, rows, seed, recipe_sha256) {
   sidecar <- paste0(outpath, ".synthetic")
-  jstr <- function(x) paste0("\"", gsub("\"", "\\\\\"", as.character(x)), "\"")
+  jstr <- function(x) {
+    paste0("\"", gsub("\"", "\\\"", as.character(x), fixed = TRUE), "\"")
+  }
   writeLines(
     c(
       "{",
       "  \"synthetic\": true,",
-      sprintf("  \"rows\": %d,", nrow(out_df)),
+      sprintf("  \"rows\": %d,", rows),
       sprintf("  \"seed\": %s,", format(seed)),
       sprintf(
         "  \"recipe_sha256\": %s,",
@@ -474,32 +544,87 @@ mksyncsv <- function(schema, outpath, nrows = NULL, seed = NULL) {
     ),
     sidecar
   )
-  res <- list(
-    path = outpath,
-    sidecar = sidecar,
-    rows = nrow(out_df),
-    seed = seed,
-    recipe_sha256 = recipe_sha256
-  )
-  class(res) <- c("bricklayer_synthetic", "list")
-  invisible(res)
+  sidecar
 }
 
-#' @export
-format.bricklayer_synthetic <- function(x, ...) {
-  c(
-    "SYNTHETIC data (generated from a recipe, not fetched)",
-    sprintf("  file    %s", x$path),
-    sprintf("  sidecar %s", x$sidecar),
-    sprintf(
-      "  rows %d, seed %s, recipe sha256 %s",
-      x$rows,
-      format(x$seed),
-      substr(x$recipe_sha256, 1L, 16L)
+#' A "bernoulli" column of mksyncol(): two labels, the first with
+#' probability `p` plus `p_with_baserate` times the row's propensity.
+#' @param spec The column spec.
+#' @param n The number of synthetic rows to draw.
+#' @param basep The per-row propensity, or NULL.
+#' @return A vector of `n` labels.
+#' @noRd
+.syn_bernoulli <- function(spec, n, basep) {
+  p_base <- spec$p %||% 0.1
+  p_extra <- spec$p_with_baserate %||% 0
+  p_per_row <- if (!is.null(basep)) p_base + p_extra * basep else p_base
+  # unlist: schemas parsed from provenance JSON deliver list("Yes","No")
+  labels <- unlist(spec$labels %||% c("Yes", "No"))
+  ifelse(stats::runif(n) < p_per_row, labels[1], labels[2])
+}
+
+#' A "fitted" column of mksyncol(): draws from a dstfit() family.
+#' @param spec The column spec.
+#' @param n The number of rows drawn from the fitted family.
+#' @return A numeric vector of `n` draws.
+#' @noRd
+.syn_fitted <- function(spec, n) {
+  fit <- spec$fit
+  if (!inherits(fit, "rmbl_dstfit") || !length(fit$fits)) {
+    stop(
+      "mksyncol: a \"fitted\" column spec needs `fit`, a dstfit() ",
+      "result with a converged fit",
+      call. = FALSE
     )
-  )
+  }
+  fam <- spec$family %||% names(fit$fits)[[1L]]
+  if (!fam %in% names(fit$fits)) {
+    stop(
+      sprintf("mksyncol: the fit has no converged %s family", fam),
+      call. = FALSE
+    )
+  }
+  .dst_fams()[[fam]]$r(n, fit$fits[[fam]])
 }
 
-#' @export
-#' @method print bricklayer_synthetic
-print.bricklayer_synthetic <- .rmbl_print_via_format
+#' The digest of a synthetic recipe, when mnfdgst() is there to make it.
+#' @param schema The recipe.
+#' @return A SHA-256 hex string, or NA.
+#' @noRd
+.syn_recipe_sha <- function(schema) {
+  # This file is also sourced standalone inside a staged bundle, where only
+  # lib_*.R exist: base R only here (the bundle's lib_manifest.R supplies the
+  # digest when it is present; the sidecar is written either way).
+  if (exists("mnfdgst", mode = "function")) {
+    tryCatch(mnfdgst(schema), error = function(e) NA_character_)
+  } else {
+    NA_character_
+  }
+}
+
+#' Draws mksyncsv()'s rows, under the seed already set.
+#' @param schema The recipe.
+#' @param nrows The number of persons.
+#' @param pg The progress bar, or NULL.
+#' @return A data frame.
+#' @noRd
+.syn_draw <- function(schema, nrows, pg) {
+  rp <- .syn_replication(schema$row_replication, nrows)
+  expand <- rp$expand
+  n_total <- rp$n_total
+
+  ## Latent per-person "baseline propensity" -- shared across bernoulli
+  ## cols; expanded to one entry per row so replicated rows of a person
+  ## share the propensity but draw their own outcome (a person's alert
+  ## status can change between placements, which is what the treatment
+  ## definition in the analyses rests on).
+  base_p <- expand(stats::runif(nrows, 0, 1))
+
+  ## Generate columns in declaration order; later columns can see ctx
+  out <- .syn_columns(schema, nrows, n_total, expand, base_p, pg)
+  if (!is.null(pg)) {
+    pg$tick(0, sprintf("writing %s rows", format(n_total, big.mark = ",")))
+  }
+  out_df <- as.data.frame(out, stringsAsFactors = FALSE)
+  out_df
+}

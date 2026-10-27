@@ -21,15 +21,15 @@ test_that("a clean capsule reports nothing and says so carefully", {
   cur$score <- stats::runif(200, 0, 10)
   r <- cpsrpt(cur, ref = ref, schema = infsch(ref))
   expect_s3_class(r, "bricklayer_report")
-  expect_equal(r$verdict, "clean")
-  expect_equal(nrow(r$findings), 0L)
-  expect_equal(r$n_rows, 200L)
-  expect_equal(r$n_cols, 3L)
+  expect_identical(r$verdict, "clean")
+  expect_identical(nrow(r$findings), 0L)
+  expect_identical(r$n_rows, 200L)
+  expect_identical(r$n_cols, 3L)
   # the digest is of the data, and stable
-  expect_equal(r$digest$data_digest, dgstobj(cur))
+  expect_identical(r$digest$data_digest, dgstobj(cur))
   # the profile and missingness are carried for the reader
   expect_s3_class(r$profile, "bricklayer_profile")
-  expect_equal(r$missingness[["n_missing"]], 0)
+  expect_identical(r$missingness[["n_missing"]], 0)
   expect_s3_class(r$drift, "bricklayer_drift")
 
   # the rendering does NOT claim the data is correct
@@ -38,7 +38,7 @@ test_that("a clean capsule reports nothing and says so carefully", {
   expect_match(txt, "proof of correctness")
   expect_match(txt, "blind spot")
   expect_output(print(r), "Capsule report")
-  expect_equal(unname(summary(r)["verdict"]), "clean")
+  expect_identical(unname(summary(r)["verdict"]), "clean")
 })
 
 test_that("findings are ordered worst first and counted by severity", {
@@ -50,7 +50,7 @@ test_that("findings are ordered worst first and counted by severity", {
   bad$flat <- 7 # constant
   r <- cpsrpt(bad, ref = ref, schema = infsch(ref))
 
-  expect_equal(r$verdict, "warn")
+  expect_identical(r$verdict, "warn")
   expect_gt(nrow(r$findings), 3L)
   # fatal before warn before note, always
   rank <- c(fatal = 1L, warn = 2L, note = 3L)
@@ -64,19 +64,19 @@ test_that("findings are ordered worst first and counted by severity", {
   expect_true("schema" %in% r$findings$check)
   expect_true(any(
     r$findings$check == "missing" &
-      grepl("dead", r$findings$subject)
+      grepl("dead", r$findings$subject, fixed = TRUE)
   ))
   # the summary counts agree with the table
   s <- summary(r)
-  expect_equal(
+  expect_identical(
     as.integer(s[["warn"]]),
     sum(r$findings$severity == "warn")
   )
-  expect_equal(
+  expect_identical(
     as.integer(s[["note"]]),
     sum(r$findings$severity == "note")
   )
-  expect_equal(as.integer(s[["fatal"]]), 0L)
+  expect_identical(as.integer(s[["fatal"]]), 0L)
   # every finding names a subject and a detail
   expect_true(all(nzchar(r$findings$subject)))
   expect_true(all(nzchar(r$findings$detail)))
@@ -86,17 +86,17 @@ test_that("a missing required column is fatal", {
   ref <- ref_frame()
   gone <- ref[, c("id", "score")]
   r <- cpsrpt(gone, ref = ref, schema = infsch(ref))
-  expect_equal(r$verdict, "fatal")
+  expect_identical(r$verdict, "fatal")
   expect_gt(sum(r$findings$severity == "fatal"), 0L)
   # both the schema and the drift comparison notice it
   fatal <- r$findings[r$findings$severity == "fatal", ]
   expect_true(any(
-    grepl("grade", fatal$subject) |
-      grepl("grade", fatal$detail)
+    grepl("grade", fatal$subject, fixed = TRUE) |
+      grepl("grade", fatal$detail, fixed = TRUE)
   ))
   expect_match(paste(format(r), collapse = "\n"), "FATAL")
   # and fatal outranks everything else in the ordering
-  expect_equal(r$findings$severity[1], "fatal")
+  expect_identical(r$findings$severity[1], "fatal")
 })
 
 test_that("one problem is reported once, not three times", {
@@ -107,16 +107,16 @@ test_that("one problem is reported once, not three times", {
   d <- ref
   d$dead <- NA_real_
   r <- cpsrpt(d, ref = ref)
-  dead_rows <- r$findings[grepl("dead", r$findings$subject), ]
+  dead_rows <- r$findings[grepl("dead", r$findings$subject, fixed = TRUE), ]
   # it is named as missing, and not also as constant
   expect_true(any(dead_rows$check == "missing"))
   expect_false(any(
     dead_rows$check == "shape" &
-      grepl("constant", dead_rows$detail)
+      grepl("constant", dead_rows$detail, fixed = TRUE)
   ))
   # nor does it produce an outlier-scan complaint, which would be this
   # check declining to run rather than a fact about the data
-  expect_false(any(grepl("complete rows", r$findings$detail)))
+  expect_false(any(grepl("complete rows", r$findings$detail, fixed = TRUE)))
 
   # a constant column is likewise not also reported as collinear
   c2 <- ref
@@ -124,18 +124,18 @@ test_that("one problem is reported once, not three times", {
   rc <- cpsrpt(c2, ref = ref)
   expect_true(any(
     rc$findings$check == "shape" &
-      grepl("constant", rc$findings$detail)
+      grepl("constant", rc$findings$detail, fixed = TRUE)
   ))
-  expect_false(any(grepl("collinear", rc$findings$detail)))
+  expect_false(any(grepl("collinear", rc$findings$detail, fixed = TRUE)))
 
   # but a GENUINELY duplicated column is reported as collinear, which
   # is the case that tells the reader something new
   dup <- ref
   dup$score2 <- dup$score
   rd <- cpsrpt(dup, ref = ref)
-  expect_true(any(grepl("collinear", rd$findings$detail)))
+  expect_true(any(grepl("collinear", rd$findings$detail, fixed = TRUE)))
   expect_match(
-    rd$findings$detail[grepl("collinear", rd$findings$detail)],
+    grep("collinear", rd$findings$detail, fixed = TRUE, value = TRUE),
     "duplicated or derived"
   )
 })
@@ -153,7 +153,7 @@ test_that("the optional inputs each switch on their own check", {
   rl <- list(rulebtw("score", 0, 1))
   withr <- cpsrpt(ref, rules = rl)
   expect_true(any(withr$findings$check == "rule"))
-  expect_equal(withr$verdict, "warn")
+  expect_identical(withr$verdict, "warn")
   # a satisfied rule adds nothing
   ok <- cpsrpt(ref, rules = list(rulebtw("score", -1, 100)))
   expect_false(any(ok$findings$check == "rule"))
@@ -161,9 +161,9 @@ test_that("the optional inputs each switch on their own check", {
   # chunks add the Merkle root
   ch <- c("a", "b", "c")
   withch <- cpsrpt(ref, chunks = ch)
-  expect_equal(withch$digest$merkle_root, mrkroot(ch))
-  expect_equal(withch$digest$n_chunks, 3L)
-  expect_match(paste(format(withch), collapse = "\n"), "merkle root")
+  expect_identical(withch$digest$merkle_root, mrkroot(ch))
+  expect_identical(withch$digest$n_chunks, 3L)
+  expect_match(paste(format(withch), collapse = "\n"), "Merkle root")
 
   # a valid signature over the data's digest verifies
   key <- pqckg(height = 2)
@@ -179,7 +179,7 @@ test_that("the optional inputs each switch on their own check", {
   bad <- cpsrpt(ref, sig = wrong, key = signpubkey(key))
   expect_false(bad$digest$signature_valid)
   expect_true(any(bad$findings$check == "signature"))
-  expect_equal(bad$verdict, "warn")
+  expect_identical(bad$verdict, "warn")
   # a signature with no key to check it against is itself a warning
   nokey <- cpsrpt(ref, sig = sig)
   expect_true(any(nokey$findings$check == "signature"))
@@ -196,15 +196,15 @@ test_that("a contiguous gap is distinguished from scattered failures", {
   outage <- data.frame(v = c(rep(NA_real_, 40), stats::rnorm(160)))
   scattered <- data.frame(v = stats::rnorm(n))
   scattered$v[sample(n, 40)] <- NA
-  expect_equal(sum(is.na(outage$v)), sum(is.na(scattered$v)))
+  expect_identical(sum(is.na(outage$v)), sum(is.na(scattered$v)))
 
   ro <- cpsrpt(outage)
   rs <- cpsrpt(scattered)
   # the block is reported as an outage; the scattered gaps are not
-  expect_true(any(grepl("contiguous run", ro$findings$detail)))
-  expect_false(any(grepl("contiguous run", rs$findings$detail)))
+  expect_true(any(grepl("contiguous run", ro$findings$detail, fixed = TRUE)))
+  expect_false(any(grepl("contiguous run", rs$findings$detail, fixed = TRUE)))
   expect_match(
-    ro$findings$detail[grepl("contiguous", ro$findings$detail)],
+    grep("contiguous", ro$findings$detail, fixed = TRUE, value = TRUE),
     "one outage rather than scattered"
   )
 })
@@ -238,7 +238,7 @@ test_that("the Markdown rendering carries the findings and the caveat", {
   on.exit(unlink(p), add = TRUE)
   invisible(rptmd(r, p))
   expect_true(file.exists(p))
-  expect_equal(paste(readLines(p, warn = FALSE), collapse = "\n"), txt)
+  expect_identical(paste(readLines(p, warn = FALSE), collapse = "\n"), txt)
 
   # a clean report has no findings table but keeps the caveat
   clean <- cpsrpt(ref, schema = infsch(ref))
@@ -260,7 +260,7 @@ test_that("cpsrpt refuses input it cannot assess", {
   expect_false(any(one$findings$check == "outliers"))
   # a zero-row frame does not divide by zero
   z <- cpsrpt(data.frame(v = numeric(0)))
-  expect_equal(z$n_rows, 0L)
+  expect_identical(z$n_rows, 0L)
   expect_s3_class(z, "bricklayer_report")
   # the outlier scan is skipped above its row cap rather than run
   big <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100))
@@ -278,9 +278,9 @@ test_that("the report notices heavy missingness and a Benford departure", {
   r <- cpsrpt(d)
   expect_true(any(
     r$findings$check == "missing" &
-      grepl("over half", r$findings$detail)
+      grepl("over half", r$findings$detail, fixed = TRUE)
   ))
-  expect_equal(r$verdict, "warn")
+  expect_identical(r$verdict, "warn")
 
   # a numeric column spanning orders of magnitude whose leading digits
   # are uniform: the Benford screen fires, as a NOTE, and says so
@@ -295,9 +295,9 @@ test_that("the report notices heavy missingness and a Benford departure", {
   expect_gt(max(b$fabricated) / min(b$fabricated), 1000)
   rb <- cpsrpt(b)
   ben <- rb$findings[rb$findings$check == "benford", ]
-  expect_equal(nrow(ben), 1L)
-  expect_equal(ben$subject, "fabricated")
-  expect_equal(ben$severity, "note")
+  expect_identical(nrow(ben), 1L)
+  expect_identical(ben$subject, "fabricated")
+  expect_identical(ben$severity, "note")
   expect_match(ben$detail, "screen, not a verdict")
   # the honestly-scaled column is not flagged
   expect_false("normal_scale" %in% ben$subject)
@@ -313,8 +313,8 @@ test_that("a note-only report renders as such", {
   dup <- ref
   dup$score2 <- dup$score # collinear: a note, nothing worse
   r <- cpsrpt(dup, ref = ref)
-  expect_equal(r$verdict, "note")
-  expect_equal(sum(r$findings$severity %in% c("fatal", "warn")), 0L)
+  expect_identical(r$verdict, "note")
+  expect_identical(sum(r$findings$severity %in% c("fatal", "warn")), 0L)
   txt <- paste(
     format(r),
     collapse = "
@@ -342,10 +342,10 @@ test_that("a column that cannot be compared is reported as untestable", {
   cur <- ref
   cur$score <- NA_real_
   r <- cpsrpt(cur, ref = ref)
-  untest <- r$findings[grepl("not testable", r$findings$detail), ]
+  untest <- r$findings[grepl("not testable", r$findings$detail, fixed = TRUE), ]
   expect_gte(nrow(untest), 1L)
-  expect_equal(untest$check[1], "drift")
-  expect_equal(untest$severity[1], "note")
+  expect_identical(untest$check[1], "drift")
+  expect_identical(untest$severity[1], "note")
   # and it is NOT reported as having drifted, which would be a claim the
   # data does not support
   drifted <- r$findings[
@@ -364,9 +364,47 @@ test_that("outliers are reported with the worst row named", {
   d[7, ] <- list(a = -3, b = 12)
   r <- cpsrpt(d)
   out <- r$findings[r$findings$check == "outliers", ]
-  expect_equal(nrow(out), 1L)
-  expect_equal(out$severity, "note")
+  expect_identical(nrow(out), 1L)
+  expect_identical(out$severity, "note")
   expect_match(out$detail, "jointly improbable")
   expect_match(out$detail, "row 7")
   expect_match(out$subject, "row")
+})
+
+# Prints `x` on an ASCII console: the lines and what print() returned.
+o1_box <- function(x, ...) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  tmp <- withr::local_tempfile()
+  v <- withr::with_output_sink(tmp, withVisible(print(x, ...)))
+  list(out = readLines(tmp), v = v)
+}
+
+# The box's frame, its title and the facts expected in it.
+o1_expect_box <- function(b, x, title, facts = character()) {
+  expect_false(b$v$visible)
+  expect_identical(b$v$value, x)
+  expect_match(b$out[1L], "^\\+-- ")
+  expect_true(grepl(title, b$out[1L], fixed = TRUE))
+  expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  for (f in facts) {
+    expect_true(any(grepl(f, b$out, fixed = TRUE)), info = f)
+  }
+}
+
+test_that("a capsule report prints as a box", {
+  set.seed(1)
+  df <- data.frame(
+    v = stats::rnorm(50),
+    g = rep("x", 50),
+    stringsAsFactors = FALSE
+  )
+  r <- cpsrpt(df)
+  o1_expect_box(
+    o1_box(r),
+    r,
+    "Capsule report",
+    c("Rows", "Verdict", "blind spot")
+  )
+  expect_null(.rpt_sig_text(NULL, .rmbl_glyphs()))
+  expect_match(.rpt_sig_text(FALSE, .rmbl_glyphs()), "NOT verified")
 })

@@ -2,65 +2,6 @@
 # its conditional intensity, its time-rescaling check, the most likely branching
 # structure of the events, and new event times simulated from it.
 
-#' Checks a chwkfit() result.
-#' @param fit The value passed.
-#' @return `fit`, invisibly.
-#' @noRd
-.hk_fit_check <- function(fit) {
-  if (
-    !is.list(fit) ||
-      !all(
-        c(
-          "kernel",
-          "baseline",
-          "basepar",
-          "braratio",
-          "kerpar",
-          "horizon",
-          "theta"
-        ) %in%
-          names(fit)
-      )
-  ) {
-    stop(.rmbl_fn(), "`fit` must be a chwkfit() result", call. = FALSE)
-  }
-  invisible(fit)
-}
-
-#' The baseline intensity of a fit at times t.
-#' @param fit A chwkfit() result.
-#' @param t The times.
-#' @return The baseline at `t`.
-#' @noRd
-.hk_nu <- function(fit, t) {
-  a <- fit$basepar
-  if (fit$baseline == "constant") {
-    return(rep(exp(a[[1L]]), length(t)))
-  }
-  exp(
-    a[[1L]] +
-      a[[2L]] * t / fit$horizon +
-      a[[3L]] * sin(2 * pi * t / 365.25) +
-      a[[4L]] * cos(2 * pi * t / 365.25)
-  )
-}
-
-#' The normalised kernel density of a fit at lags u.
-#' @param fit A chwkfit() result.
-#' @param u The lags (positive).
-#' @return The density at `u`.
-#' @noRd
-.hk_g <- function(fit, u) {
-  k <- unname(fit$kerpar)
-  switch(
-    fit$kernel,
-    exponential = stats::dexp(u, k[[1L]]),
-    weibull = stats::dweibull(u, k[[1L]], k[[2L]]),
-    gamma = stats::dgamma(u, k[[1L]], k[[2L]]),
-    lomax = k[[1L]] / k[[2L]] * (1 + u / k[[2L]])^(-k[[1L]] - 1)
-  )
-}
-
 #' Simulate event times from a fitted Hawkes process
 #'
 #' Draws a new event history from a [chwkfit()] result by its cluster
@@ -140,7 +81,7 @@ chwksim <- function(fit, hor = NULL, seed = 1L) {
 #' @param times The event times the fit was made on.
 #' @param what One of `"intensity"`, `"qq"` or `"tree"`.
 #' @param ngrid Whole number, default 600: points of the intensity curve.
-#' @param ... Further arguments to the first `plot()` call.
+#' @param ... Further arguments to the `plot()` call that opens the panel.
 #' @param main,col,pal The title, colours, and a [blpal()] name.
 #' @return The data drawn, invisibly: `t` and `lambda` (intensity),
 #'   `uniform` and `residual` (a Q-Q plot), or `t`, `parent` (the
@@ -176,94 +117,206 @@ plothwk <- function(
   }
   times <- sort(times)
   cols <- .bl_cols(3L, col, pal)
-  hor <- fit$horizon
   op <- .bl_par(NULL)
   on.exit(graphics::par(op), add = TRUE)
   if (what == "qq") {
-    u <- sort(chwkres(times, hor, fit$kernel, fit$theta, base = fit$baseline))
-    q <- stats::qunif(stats::ppoints(length(u)))
-    graphics::plot(
-      c(0, 1),
-      c(0, 1),
-      type = "n",
-      xlab = "",
-      ylab = "",
-      main = "",
-      ...
-    )
-    .bl_grid(NULL)
-    graphics::abline(0, 1, col = "#8C8C8C", lty = 2)
-    graphics::points(q, u, pch = 21, bg = cols[1L], col = "white", cex = 0.8)
-    .bl_xlab("Uniform quantile")
-    .bl_ylab("Rescaled residual")
-    .bl_title(.bl_main(
-      main,
-      sprintf("Time-rescaling check (KS p = %.3g)", fit$kspva)
-    ))
-    return(invisible(data.frame(uniform = q, residual = u)))
+    return(.hk_plot_qq(fit, times, cols, main, ...))
   }
   if (what == "tree") {
-    n <- length(times)
-    if (n > 5000L) {
-      stop("plothwk: the tree view takes at most 5,000 events", call. = FALSE)
-    }
-    par0 <- integer(n)
-    prob <- numeric(n)
-    gen <- integer(n)
-    for (i in seq_len(n)) {
-      j <- which(times < times[i])
-      w <- c(
-        .hk_nu(fit, times[i]),
-        fit$braratio * .hk_g(fit, times[i] - times[j])
-      )
-      k <- which.max(w)
-      par0[i] <- if (k == 1L) 0L else j[k - 1L]
-      prob[i] <- w[k] / sum(w)
-      gen[i] <- if (par0[i] == 0L) 0L else gen[par0[i]] + 1L
-    }
-    graphics::plot(
-      c(0, hor),
-      c(-0.3, max(gen) + 0.3),
-      type = "n",
-      xlab = "",
-      ylab = "",
-      main = "",
-      ...
-    )
-    .bl_grid(NULL)
-    kid <- par0 > 0L
-    graphics::segments(
-      times[par0[kid]],
-      gen[par0[kid]],
-      times[kid],
-      gen[kid],
-      col = grDevices::adjustcolor(cols[2L], 0.6)
-    )
-    graphics::points(
-      times,
-      gen,
-      pch = 21,
-      bg = ifelse(gen == 0L, cols[1L], cols[2L]),
-      col = "white",
-      cex = 0.6 + prob
-    )
-    .bl_xlab("Time")
-    .bl_ylab("Generation")
-    .bl_title(.bl_main(
-      main,
-      sprintf(
-        "Most probable branching: %d immigrants, %d triggered",
-        sum(!kid),
-        sum(kid)
-      )
-    ))
-    return(invisible(data.frame(
-      t = times,
-      parent = par0,
-      prob = prob,
-      generation = gen
-    )))
+    return(.hk_plot_tree(fit, times, cols, main, ...))
   }
+  .hk_plot_intensity(fit, times, ngrid, cols, main, ...)
+}
+
+#' Checks a chwkfit() result.
+#' @param fit The value passed.
+#' @return `fit`, invisibly.
+#' @noRd
+.hk_fit_check <- function(fit) {
+  if (
+    !is.list(fit) ||
+      !all(
+        c(
+          "kernel",
+          "baseline",
+          "basepar",
+          "braratio",
+          "kerpar",
+          "horizon",
+          "theta"
+        ) %in%
+          names(fit)
+      )
+  ) {
+    stop(.rmbl_fn(), "`fit` must be a chwkfit() result", call. = FALSE)
+  }
+  invisible(fit)
+}
+
+#' The baseline intensity of a fit at times t.
+#' @param fit A chwkfit() result.
+#' @param t The times.
+#' @return The baseline at `t`.
+#' @noRd
+.hk_nu <- function(fit, t) {
+  a <- fit$basepar
+  if (fit$baseline == "constant") {
+    return(rep(exp(a[[1L]]), length(t)))
+  }
+  exp(
+    a[[1L]] +
+      a[[2L]] * t / fit$horizon +
+      a[[3L]] * sin(2 * pi * t / 365.25) +
+      a[[4L]] * cos(2 * pi * t / 365.25)
+  )
+}
+
+#' The normalised kernel density of a fit at lags u.
+#' @param fit A chwkfit() result.
+#' @param u The lags (positive).
+#' @return The density at `u`.
+#' @noRd
+.hk_g <- function(fit, u) {
+  k <- unname(fit$kerpar)
+  switch(
+    fit$kernel,
+    exponential = stats::dexp(u, k[[1L]]),
+    weibull = stats::dweibull(u, k[[1L]], k[[2L]]),
+    gamma = stats::dgamma(u, k[[1L]], k[[2L]]),
+    lomax = k[[1L]] / k[[2L]] * (1 + u / k[[2L]])^(-k[[1L]] - 1)
+  )
+}
+
+#' Draws the time-rescaling Q-Q view of plothwk().
+#' @param fit A chwkfit() result.
+#' @param times The sorted event times, turned into residuals.
+#' @param cols The colours; the first fills the points.
+#' @param main The title, or NULL for the Q-Q plot's default.
+#' @param ... Further arguments to the first plot() call.
+#' @return The data drawn, invisibly.
+#' @noRd
+.hk_plot_qq <- function(fit, times, cols, main, ...) {
+  hor <- fit$horizon
+  u <- sort(chwkres(times, hor, fit$kernel, fit$theta, base = fit$baseline))
+  q <- stats::qunif(stats::ppoints(length(u)))
+  graphics::plot(
+    c(0, 1),
+    c(0, 1),
+    type = "n",
+    xlab = "",
+    ylab = "",
+    main = "",
+    ...
+  )
+  .bl_grid(NULL)
+  graphics::abline(0, 1, col = "#8C8C8C", lty = 2)
+  graphics::points(q, u, pch = 21, bg = cols[1L], col = "white", cex = 0.8)
+  .bl_xlab("Uniform quantile")
+  .bl_ylab("Rescaled residual")
+  .bl_title(.bl_main(
+    main,
+    sprintf("Time-rescaling check (KS p = %.3g)", fit$kspva)
+  ))
+  invisible(data.frame(uniform = q, residual = u))
+}
+
+#' The most probable parent of each event, for plothwk()'s tree view (at
+#' most 5,000 events).
+#' @param fit A chwkfit() result.
+#' @param times The sorted event times, each linked to an earlier one.
+#' @return A list of `parent` (0 for the baseline), `prob` and `generation`.
+#' @noRd
+.hk_tree_links <- function(fit, times) {
+  n <- length(times)
+  if (n > 5000L) {
+    stop("plothwk: the tree view takes at most 5,000 events", call. = FALSE)
+  }
+  par0 <- integer(n)
+  prob <- numeric(n)
+  gen <- integer(n)
+  for (i in seq_len(n)) {
+    j <- which(times < times[i])
+    w <- c(
+      .hk_nu(fit, times[i]),
+      fit$braratio * .hk_g(fit, times[i] - times[j])
+    )
+    k <- which.max(w)
+    par0[i] <- if (k == 1L) 0L else j[k - 1L]
+    prob[i] <- w[k] / sum(w)
+    gen[i] <- if (par0[i] == 0L) 0L else gen[par0[i]] + 1L
+  }
+  list(parent = par0, prob = prob, generation = gen)
+}
+
+#' Draws the branching-tree view of plothwk().
+#' @param fit A chwkfit() result.
+#' @param times The sorted event times, drawn by generation.
+#' @param cols The colours of baseline events and of their offspring.
+#' @param main The title, or NULL for the tree's default.
+#' @param ... Further arguments to the first plot() call.
+#' @return The data drawn, invisibly.
+#' @noRd
+.hk_plot_tree <- function(fit, times, cols, main, ...) {
+  hor <- fit$horizon
+  ln <- .hk_tree_links(fit, times)
+  par0 <- ln$parent
+  prob <- ln$prob
+  gen <- ln$generation
+  graphics::plot(
+    c(0, hor),
+    c(-0.3, max(gen) + 0.3),
+    type = "n",
+    xlab = "",
+    ylab = "",
+    main = "",
+    ...
+  )
+  .bl_grid(NULL)
+  kid <- par0 > 0L
+  graphics::segments(
+    times[par0[kid]],
+    gen[par0[kid]],
+    times[kid],
+    gen[kid],
+    col = grDevices::adjustcolor(cols[2L], 0.6)
+  )
+  graphics::points(
+    times,
+    gen,
+    pch = 21,
+    bg = ifelse(gen == 0L, cols[1L], cols[2L]),
+    col = "white",
+    cex = 0.6 + prob
+  )
+  .bl_xlab("Time")
+  .bl_ylab("Generation")
+  .bl_title(.bl_main(
+    main,
+    sprintf(
+      "Most probable branching: %d immigrants, %d triggered",
+      sum(!kid),
+      sum(kid)
+    )
+  ))
+  invisible(data.frame(
+    t = times,
+    parent = par0,
+    prob = prob,
+    generation = gen
+  ))
+}
+
+#' Draws the conditional-intensity view of plothwk().
+#' @param fit A chwkfit() result.
+#' @param times The sorted event times, marked as a rug.
+#' @param ngrid Points of the intensity curve, as passed.
+#' @param cols The colours of the intensity, the rug and the baseline.
+#' @param main The title, or NULL for the intensity plot's default.
+#' @param ... Further arguments to the first plot() call.
+#' @return The data drawn, invisibly.
+#' @noRd
+.hk_plot_intensity <- function(fit, times, ngrid, cols, main, ...) {
+  hor <- fit$horizon
   ngrid <- .rmbl_scalar(ngrid, "ngrid", 10, 1e5, integer = TRUE)
   tg <- seq(0, hor, length.out = ngrid)
   lam <- .hk_nu(fit, tg) +

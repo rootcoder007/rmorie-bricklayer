@@ -184,44 +184,7 @@ cpsbndl <- function(
     )
   }
   path <- path %||% file.path(dir, "capsule_bundle.json")
-  if (is.null(files)) {
-    # dotfiles too: a .Rprofile dropped into a capsule directory runs when
-    # a session starts there, and a bundle that claims "every regular file"
-    # must have hashed it
-    all_files <- list.files(
-      dir,
-      recursive = TRUE,
-      all.files = TRUE,
-      full.names = FALSE,
-      no.. = TRUE
-    )
-    keep <- vapply(
-      all_files,
-      function(f) {
-        p <- file.path(dir, f)
-        !dir.exists(p) &&
-          !identical(
-            normalizePath(p, mustWork = FALSE),
-            normalizePath(path, mustWork = FALSE)
-          )
-      },
-      logical(1)
-    )
-    files <- sort(all_files[keep])
-  } else {
-    files <- sort(as.character(files))
-  }
-  if (!length(files)) {
-    stop("no files to bundle", call. = FALSE)
-  }
-  missing <- files[!file.exists(file.path(dir, files))]
-  if (length(missing)) {
-    stop(
-      "these files are not in `dir`: ",
-      paste(utils::head(missing, 5L), collapse = ", "),
-      call. = FALSE
-    )
-  }
+  files <- .bl_bnd_select(dir, files, path)
   pg <- blprog("bundling", length(files))
   on.exit(pg$done(), add = TRUE)
   entries <- lapply(seq_along(files), function(i) {
@@ -243,18 +206,7 @@ cpsbndl <- function(
   att <- cpsatst(inner, key, ctx = ctx, prehash = prehash, note = note)
   bundle <- c(payload, list(attestation = att))
   class(bundle) <- c("bricklayer_bundle", "list")
-  writeLines(
-    tojs(
-      unclass(bundle),
-      auto_unbox = TRUE,
-      pretty = TRUE,
-      na = "null",
-      null = "null",
-      digits = I(17)
-    ),
-    path,
-    useBytes = TRUE
-  )
+  .bl_bnd_write(bundle, path)
   attr(bundle, "path") <- path
   invisible(bundle)
 }
@@ -311,33 +263,238 @@ cpsbndlvrf <- function(
   pg <- blprog("verifying bundle", length(bundle$files))
   on.exit(pg$done(), add = TRUE)
   for (e in bundle$files) {
-    f <- as.character(e$path)[1L]
-    pg$tick(1, sprintf("hashing %s", basename(f)))
-    p <- .rmbl_safe_rel(f, dir)
-    if (is.null(p)) {
-      note_row(
-        paste0("file:", f),
-        FALSE,
-        "not a plain relative path inside the directory"
-      )
-      next
-    }
-    if (!file.exists(p)) {
-      note_row(paste0("file:", f), FALSE, "missing from the directory")
-      next
-    }
-    got <- sha256file(p)
-    ok <- identical(got, as.character(e$sha256)[1L])
+    pg$tick(1, sprintf("hashing %s", basename(as.character(e$path)[1L])))
+    .bl_bnd_file_row(e, dir, note_row)
+  }
+  .bl_bnd_extra_row(bundle, dir, note_row)
+  .bl_bnd_att_rows(bundle, keyexp, key, note_row)
+  if (!is.null(seen)) {
+    .bl_bnd_xmss_row(bundle, seen, note_row)
+  }
+  if (!is.null(man)) {
+    .bl_bnd_man_row(bundle, man, note_row)
+  }
+  df <- do.call(rbind, acc$checks)
+  rownames(df) <- NULL
+  out <- list(ok = all(df$ok), checks = df)
+  class(out) <- c("bricklayer_bundle_check", "list")
+  out
+}
+
+#' @export
+format.bricklayer_bundle <- function(x, ...) {
+  .rmbl_stat_block(
+    "Capsule bundle",
+    facts = list(
+      Files = length(x$files),
+      `Manifest digest` = as.character(x$manifest_digest)[1L],
+      Bundled = as.character(x$bundled_utc)[1L],
+      Scheme = x$attestation$scheme,
+      Note = if (nzchar(x$attestation$note %||% "")) x$attestation$note,
+      Path = attr(x, "path")
+    ),
+    reading = paste(
+      "A signed list of the capsule's files and their digests; check the",
+      "files against it with cpsbndlvrf()."
+    )
+  )
+}
+
+#' @rdname printmeth
+#' @export
+print.bricklayer_bundle <- function(x, ...) {
+  if (
+    is.list(x$attestation) &&
+      is.list(x$attestation$signature) &&
+      !is.null(x$attestation$signature$key_state)
+  ) {
+    warning(.rmbl_key_state_warning(), call. = FALSE)
+  }
+  .rmbl_cat(format(x, ...), x)
+  invisible(x)
+}
+
+#' @export
+format.bricklayer_bundle_check <- function(x, ...) {
+  .rmbl_stat_block(
+    sprintf("Bundle check: %s", if (isTRUE(x$ok)) "OK" else "FAILED"),
+    facts = list(Checks = nrow(x$checks)),
+    reading = .rmbl_check_reading(
+      x$ok,
+      "every file is the one that was signed and the signature holds",
+      "the files are not the ones that were signed, or the signature fails"
+    ),
+    notes = .rmbl_check_lines(x$checks)
+  )
+}
+
+#' The files a bundle covers: those named, or every regular file in `dir`
+#' but the bundle itself; each must exist.
+#' @param dir The directory whose regular files, dotfiles too, are bundled.
+#' @param files The file names given, or NULL.
+#' @param path Where the bundle is written.
+#' @return The sorted file names.
+#' @noRd
+.bl_bnd_select <- function(dir, files, path) {
+  if (is.null(files)) {
+    # dotfiles too: a .Rprofile dropped into a capsule directory runs when
+    # a session starts there, and a bundle that claims "every regular file"
+    # must have hashed it
+    all_files <- list.files(
+      dir,
+      recursive = TRUE,
+      all.files = TRUE,
+      full.names = FALSE,
+      no.. = TRUE
+    )
+    keep <- vapply(
+      all_files,
+      function(f) {
+        p <- file.path(dir, f)
+        !dir.exists(p) &&
+          !identical(
+            normalizePath(p, mustWork = FALSE),
+            normalizePath(path, mustWork = FALSE)
+          )
+      },
+      logical(1)
+    )
+    files <- sort(all_files[keep])
+  } else {
+    files <- sort(as.character(files))
+  }
+  if (!length(files)) {
+    stop("no files to bundle", call. = FALSE)
+  }
+  missing <- files[!file.exists(file.path(dir, files))]
+  if (length(missing)) {
+    stop(
+      "these files are not in `dir`: ",
+      toString(utils::head(missing, 5L)),
+      call. = FALSE
+    )
+  }
+  files
+}
+
+#' Writes a bundle as JSON.
+#' @param bundle The bundle.
+#' @param path Where to write it.
+#' @return `path`, invisibly.
+#' @noRd
+.bl_bnd_write <- function(bundle, path) {
+  writeLines(
+    tojs(
+      unclass(bundle),
+      auto_unbox = TRUE,
+      pretty = TRUE,
+      na = "null",
+      null = "null",
+      digits = I(17)
+    ),
+    path,
+    useBytes = TRUE
+  )
+  invisible(path)
+}
+
+#' One bundled file, checked: inside the directory, present, and with its
+#' listed SHA-256.
+#' @param e The bundle's entry.
+#' @param dir The bundled directory the entry's path must be inside.
+#' @param note_row The function that records the file's check.
+#' @noRd
+.bl_bnd_file_row <- function(e, dir, note_row) {
+  f <- as.character(e$path)[1L]
+  p <- .rmbl_safe_rel(f, dir)
+  if (is.null(p)) {
     note_row(
       paste0("file:", f),
-      ok,
-      if (ok) {
-        got
+      FALSE,
+      "not a plain relative path inside the directory"
+    )
+    return(invisible(NULL))
+  }
+  if (!file.exists(p)) {
+    note_row(paste0("file:", f), FALSE, "missing from the directory")
+    return(invisible(NULL))
+  }
+  got <- sha256file(p)
+  ok <- identical(got, as.character(e$sha256)[1L])
+  note_row(
+    paste0("file:", f),
+    ok,
+    if (ok) {
+      got
+    } else {
+      sprintf("expected %s, got %s", as.character(e$sha256)[1L], got)
+    }
+  )
+  invisible(NULL)
+}
+
+#' A bundle's XMSS index against the signatures seen: an index that made
+#' another signature is reused.
+#' @param bundle The bundle.
+#' @param seen The XMSS signatures seen, as xmssidxseen() returns them.
+#' @param note_row The function that records the XMSS index check.
+#' @noRd
+.bl_bnd_xmss_row <- function(bundle, seen, note_row) {
+  if (
+    !is.data.frame(seen) ||
+      !all(c("key", "index", "sig", "where") %in% names(seen))
+  ) {
+    stop(
+      .rmbl_fn(),
+      "`seen` must be what xmssidxseen() returns, or NULL",
+      call. = FALSE
+    )
+  }
+  a <- bundle$attestation
+  s <- a$signature
+  if (
+    identical(a$scheme, "xmss-sha256") &&
+      is.character(a$public) &&
+      is.numeric(s$index) &&
+      is.character(s$wire)
+  ) {
+    k <- .rmbl_xmss_fpr(a$public)
+    i <- as.integer(s$index)
+    o <- seen$where[
+      seen$key == k & seen$index == i & seen$sig != .rmbl_xmss_sigd(s$wire)
+    ]
+    note_row(
+      "xmss_index",
+      !length(o),
+      if (length(o)) {
+        sprintf(
+          paste0(
+            "xmss index reused: index %d of key %s also made another ",
+            "signature (%s)"
+          ),
+          i,
+          k,
+          toString(utils::head(unique(o), 3L))
+        )
       } else {
-        sprintf("expected %s, got %s", as.character(e$sha256)[1L], got)
+        sprintf(
+          "index %d of key %s made one signature in what was seen",
+          i,
+          k
+        )
       }
     )
   }
+  invisible(NULL)
+}
+
+#' The row for files on disk that a bundle does not list.
+#' @param bundle The bundle.
+#' @param dir The bundled directory searched for files the bundle omits.
+#' @param note_row The function that records the extra-files check.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_bnd_extra_row <- function(bundle, dir, note_row) {
   # Files present on disk that the bundle does not mention are reported:
   # a signed list of what SHOULD be there says nothing about what else
   # has been added beside it.
@@ -370,13 +527,22 @@ cpsbndlvrf <- function(
     if (length(extra)) {
       paste(
         "not covered by the bundle:",
-        paste(utils::head(extra, 5L), collapse = ", ")
+        toString(utils::head(extra, 5L))
       )
     } else {
       ""
     }
   )
+  invisible(NULL)
+}
 
+#' The rows of a bundle's attestation check.
+#' @param bundle The bundle.
+#' @param keyexp,key As for cpsbndlvrf().
+#' @param note_row The function that records each attestation check.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_bnd_att_rows <- function(bundle, keyexp, key, note_row) {
   inner <- list(
     meta = list(
       files = bundle$files,
@@ -393,119 +559,29 @@ cpsbndlvrf <- function(
       res$checks$detail[i]
     )
   }
-  if (!is.null(seen)) {
-    if (
-      !is.data.frame(seen) ||
-        !all(c("key", "index", "sig", "where") %in% names(seen))
-    ) {
-      stop(
-        .rmbl_fn(),
-        "`seen` must be what xmssidxseen() returns, or NULL",
-        call. = FALSE
-      )
-    }
-    a <- bundle$attestation
-    s <- a$signature
-    if (
-      identical(a$scheme, "xmss-sha256") &&
-        is.character(a$public) &&
-        is.numeric(s$index) &&
-        is.character(s$wire)
-    ) {
-      k <- .rmbl_xmss_fpr(a$public)
-      i <- as.integer(s$index)
-      o <- seen$where[
-        seen$key == k & seen$index == i & seen$sig != .rmbl_xmss_sigd(s$wire)
-      ]
-      note_row(
-        "xmss_index",
-        !length(o),
-        if (length(o)) {
-          sprintf(
-            paste0(
-              "xmss index reused: index %d of key %s also made another ",
-              "signature (%s)"
-            ),
-            i,
-            k,
-            paste(utils::head(unique(o), 3L), collapse = ", ")
-          )
-        } else {
-          sprintf(
-            "index %d of key %s made one signature in what was seen",
-            i,
-            k
-          )
-        }
-      )
-    }
-  }
-  if (!is.null(man)) {
-    got <- mnfdgst(man)
-    note_row(
-      "manifest_digest",
-      identical(got, as.character(bundle$manifest_digest)[1L]),
-      if (identical(got, as.character(bundle$manifest_digest)[1L])) {
+  invisible(NULL)
+}
+
+#' The row that checks a bundle's manifest digest against a manifest.
+#' @param bundle The bundle.
+#' @param man The manifest whose digest the bundle must record.
+#' @param note_row The function that records the manifest digest check.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_bnd_man_row <- function(bundle, man, note_row) {
+  got <- mnfdgst(man)
+  note_row(
+    "manifest_digest",
+    identical(got, as.character(bundle$manifest_digest)[1L]),
+    if (identical(got, as.character(bundle$manifest_digest)[1L])) {
+      got
+    } else {
+      sprintf(
+        "bundle says %s, manifest is %s",
+        as.character(bundle$manifest_digest)[1L],
         got
-      } else {
-        sprintf(
-          "bundle says %s, manifest is %s",
-          as.character(bundle$manifest_digest)[1L],
-          got
-        )
-      }
-    )
-  }
-  df <- do.call(rbind, acc$checks)
-  rownames(df) <- NULL
-  out <- list(ok = all(df$ok), checks = df)
-  class(out) <- c("bricklayer_bundle_check", "list")
-  out
-}
-
-#' @export
-format.bricklayer_bundle <- function(x, ...) {
-  c(
-    .rmbl_rule("Capsule bundle"),
-    .rmbl_kv(list(
-      files = length(x$files),
-      "manifest digest" = as.character(x$manifest_digest)[1L],
-      bundled = as.character(x$bundled_utc)[1L],
-      scheme = x$attestation$scheme
-    )),
-    .rmbl_rule()
+      )
+    }
   )
+  invisible(NULL)
 }
-
-#' @rdname printmeth
-#' @export
-print.bricklayer_bundle <- function(x, ...) {
-  if (
-    is.list(x$attestation) &&
-      is.list(x$attestation$signature) &&
-      !is.null(x$attestation$signature$key_state)
-  ) {
-    warning(.rmbl_key_state_warning(), call. = FALSE)
-  }
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
-
-#' @export
-format.bricklayer_bundle_check <- function(x, ...) {
-  c(
-    .rmbl_rule(sprintf("Bundle check: %s", if (x$ok) "OK" else "FAILED")),
-    sprintf(
-      "  %-30s %-5s %s",
-      substring(x$checks$check, 1L, 30L),
-      ifelse(x$checks$ok, "ok", "FAIL"),
-      substring(x$checks$detail, 1L, 36L)
-    ),
-    .rmbl_rule()
-  )
-}
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_bundle_check
-print.bricklayer_bundle_check <- .rmbl_print_via_format

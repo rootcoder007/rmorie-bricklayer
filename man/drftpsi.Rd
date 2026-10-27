@@ -23,6 +23,10 @@ Compare runs only at one \code{eps}.}
 \value{
 A named length-2 numeric: \code{psi} (non-negative, unbounded) and
 \code{jsdiv} (in nats, between 0 and \eqn{\log 2 \approx 0.693}).
+It has class \code{c("rmbl_drftpsi", "rmbl_measure", "numeric")}, so it
+prints as a box with its inputs (kept in attribute \code{"lakner"});
+arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+numbers.
 }
 \description{
 Two effect-size summaries of how far the distribution of a numeric

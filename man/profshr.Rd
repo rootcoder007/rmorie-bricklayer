@@ -28,7 +28,7 @@ characteristics use 1 whatever is given.}
 
 \item{deff}{Design effect (default 1).}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of the share's limits (default 0.95).}
 
 \item{roubase}{The base of the random rounding (default 5, Statistics
 Canada's); 1 for counts that are not rounded.}

@@ -7,7 +7,7 @@
 missgrid(data, height = 20L, width = 12L)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame whose missing cells are drawn as a grid.}
 
 \item{height}{Whole number, default 20: the maximum number of lines
 (row blocks) in the map.}

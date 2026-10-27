@@ -100,7 +100,7 @@ test_that("the answer and message caches create their folder, owner-only", {
   withr::local_options(rmoriebricklayer.llmcachedir = d2)
   rm(list = ls(ns(".bl_ee_memo")), envir = ns(".bl_ee_memo"))
   invisible(suppressMessages(explerr("could not find function")))
-  expect_true(length(list.files(d2, pattern = "^messages-.*[.]rds$")) == 1L)
+  expect_length(list.files(d2, pattern = "^messages-.*[.]rds$"), 1L)
 })
 
 test_that(
@@ -112,9 +112,13 @@ test_that(
     set.seed(5)
     n <- 40
     d <- data.frame(y = rnorm(n), w = runif(n, 1, 2))
-    reps <- sapply(1:6, function(b) {
-      d$w * stats::rmultinom(1, n, rep(1, n))[, 1] * n / (n - 1)
-    })
+    reps <- vapply(
+      1:6,
+      function(b) {
+        d$w * stats::rmultinom(1, n, rep(1, n))[, 1] * n / (n - 1)
+      },
+      numeric(n)
+    )
     des <- svydes(d, w = d$w, reps = reps, type = "bootstrap")
     d2 <- d[c(2:n, 1L), ]
     rownames(d2) <- NULL
@@ -180,11 +184,19 @@ test_that(
     # choices), not the package
     arc <- c(
       "arccap",
+      ".bl_cap_upload_arg",
       "fetchvrf",
+      ".fv_check",
+      ".fv_try_archive",
       "wbsave",
       ".bl_cli_archive",
+      ".bl_cli_archive_save",
       ".bl_wb_fallback",
-      ".bl_refresh_capsule"
+      ".bl_refresh_capsule",
+      # pieces of arccap(), .bl_refresh_capsule() and wbsave()
+      ".bl_cap_publish",
+      ".bl_refresh_wayback",
+      ".bl_wb_result"
     )
     src <- unlist(lapply(
       setdiff(ls(asNamespace("rmoriebricklayer"), all.names = TRUE), arc),
@@ -222,7 +234,7 @@ test_that(
     dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
     raw <- paste0(
       '{"note": 0.13436424411240122, "list": ["x"], "": "empty", "big": ',
-      '9007199254740993,',
+      "9007199254740993,",
       ' "ollama.model": "old"}'
     )
     writeLines(raw, p, sep = "")
@@ -364,15 +376,23 @@ test_that(
     psu <- rep(seq_len(m), each = 4)
     w <- rep(exp(rnorm(m)), each = 4) * 25
     d <- data.frame(y = rnorm(n), w = w, pid = seq_len(n))
-    boot <- sapply(1:40, function(b) {
-      k <- stats::rmultinom(1, m, rep(1, m))[, 1]
-      w * k[psu]
-    })
-    jk <- sapply(seq_len(m), function(j) {
-      f <- rep(m / (m - 1), m)
-      f[j] <- 0
-      w * f[psu]
-    })
+    boot <- vapply(
+      1:40,
+      function(b) {
+        k <- stats::rmultinom(1, m, rep(1, m))[, 1]
+        w * k[psu]
+      },
+      numeric(n)
+    )
+    jk <- vapply(
+      seq_len(m),
+      function(j) {
+        f <- rep(m / (m - 1), m)
+        f[j] <- 0
+        w * f[psu]
+      },
+      numeric(n)
+    )
     expect_silent(svydes(d, w = "w", reps = boot, type = "bootstrap"))
     expect_silent(svydes(d, w = "w", reps = jk, type = "jk1"))
     # the weight itself beside bootstrap replicates of 30 PSUs: more equal
@@ -418,7 +438,8 @@ test_that(
       "multipliers"
     )
     # a second column named like the id, holding other values: refused
-    r2 <- data.frame(pid = d$pid, boot, pid = rev(d$pid), check.names = FALSE)
+    r2 <- data.frame(pid = d$pid, boot, pid2 = rev(d$pid), check.names = FALSE)
+    names(r2)[ncol(r2)] <- "pid"
     expect_error(
       svydes(d, w = "w", id = "pid", reps = r2, type = "bootstrap"),
       "has the id's name but not its values"
@@ -426,8 +447,10 @@ test_that(
     # the weight beside the replicates under its own name, 1e-13 off: the
     # weight, set aside
     r3 <- data.frame(w = w * (1 + 1e-13), jk)
-    expect_silent(des <- svydes(d, w = "w", reps = r3, type = "jk1"))
-    expect_equal(length(des$reps), m)
+    expect_silent({
+      des <- svydes(d, w = "w", reps = r3, type = "jk1")
+    })
+    expect_length(des$reps, m)
   }
 )
 
@@ -596,26 +619,29 @@ test_that(
   {
     d <- data.frame(
       a = c(1, NA, 1),
-      a = c(2, 2, 2),
+      a2 = c(2, 2, 2),
       b = c(1, 2, 1),
       check.names = FALSE
     )
+    names(d)[2L] <- "a"
     ms <- misssmry(d)
     expect_identical(unname(ms[["n_missing"]]), 1)
     expect_identical(unname(ms[["n_cols"]]), 3)
     dr <- duprows(rbind(d, d[1, ]))
-    expect_true(nrow(dr) >= 2L)
+    expect_gte(nrow(dr), 2L)
     expect_error(duprows(d, "a"), "two columns named a")
     expect_identical(nrow(duprows(d, "b")), 2L)
     sd <- data.frame(
       y = rnorm(6),
       w = 1:6,
       junk = 1,
-      junk = 2,
+      junk2 = 2,
       check.names = FALSE
     )
+    names(sd)[4L] <- "junk"
     expect_s3_class(svydes(sd, w = "w"), "rmbl_svy_design")
-    sd2 <- data.frame(y = rnorm(6), w = 1:6, w = 6:1, check.names = FALSE)
+    sd2 <- data.frame(y = rnorm(6), w = 1:6, w2 = 6:1, check.names = FALSE)
+    names(sd2)[3L] <- "w"
     expect_error(svydes(sd2, w = "w"), "two columns named w")
   }
 )

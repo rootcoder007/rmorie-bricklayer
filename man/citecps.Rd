@@ -15,6 +15,9 @@ or \code{NULL}.}
 A list with \code{text} and \code{bibtex}, each a length-1
 character string (the BibTeX entry has embedded newlines), or \code{NULL}
 if \code{provenance} is \code{NULL}.
+The list has class \code{c("rmbl_citation", "list")}, which only changes
+how it prints (a box); its elements, and the JSON written from it, are
+those of a plain list.
 }
 \description{
 Builds a ready-to-paste data citation, as plain text and as a BibTeX

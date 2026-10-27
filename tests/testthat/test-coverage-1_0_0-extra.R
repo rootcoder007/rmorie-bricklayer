@@ -3,20 +3,20 @@
 # all.
 
 test_that(".rmbl_utf8() leaves what is not text alone", {
-  expect_identical(rmoriebricklayer:::.rmbl_utf8(1:3), 1:3)
-  expect_identical(rmoriebricklayer:::.rmbl_utf8(NULL), NULL)
+  expect_identical(.rmbl_utf8(1:3), 1:3)
+  expect_null(.rmbl_utf8(NULL))
 })
 
 test_that(".bl_check_email() names what is not an address", {
   expect_error(
-    rmoriebricklayer:::.bl_check_email("not an address"),
+    .bl_check_email("not an address"),
     "'not an address' is not an email address"
   )
   expect_error(
-    rmoriebricklayer:::.bl_check_email(""),
+    .bl_check_email(""),
     "an email address is required"
   )
-  expect_identical(rmoriebricklayer:::.bl_check_email("  A@b.ca "), "a@b.ca")
+  expect_identical(.bl_check_email("  A@b.ca "), "a@b.ca")
 })
 
 test_that(
@@ -88,7 +88,7 @@ test_that("bldl() takes the size the server announces for its progress line", {
     type = "message"
   )
   expect_gt(file.size(dest), 1000)
-  expect_true(any(grepl("downloading", msgs)))
+  expect_true(any(grepl("downloading", msgs, fixed = TRUE)))
 })
 
 test_that(
@@ -98,15 +98,15 @@ test_that(
   ),
   {
     a <- list(done = 50, rd = 0, rt = 0, rn = 0L, rate = NA_real_)
-    b <- rmoriebricklayer:::.bl_rate_sample(a, 2)
-    expect_equal(b$rate, 25)
+    b <- .bl_rate_sample(a, 2)
+    expect_identical(b$rate, 25)
     expect_identical(b$rn, 1L)
     expect_identical(c(b$rt, b$rd), c(2, 50))
     # too soon: nothing changes
-    expect_identical(rmoriebricklayer:::.bl_rate_sample(b, 2.1), b)
+    expect_identical(.bl_rate_sample(b, 2.1), b)
     b$done <- 150
-    d <- rmoriebricklayer:::.bl_rate_sample(b, 3)
-    expect_equal(d$rate, 25 + 0.3 * (100 - 25))
+    d <- .bl_rate_sample(b, 3)
+    expect_identical(d$rate, 25 + 0.3 * (100 - 25))
   }
 )
 
@@ -121,11 +121,11 @@ test_that(
       .package = "rmoriebricklayer"
     )
     expect_error(
-      rmoriebricklayer:::.bl_login_email("nope"),
+      .bl_login_email("nope"),
       "'nope' is not an email address"
     )
     expect_error(
-      rmoriebricklayer:::.bl_login_email(" "),
+      .bl_login_email(" "),
       "an email address is required"
     )
   }

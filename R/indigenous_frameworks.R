@@ -8,48 +8,6 @@
 # and an audit of how deficit-framed a set of results is. Each says what it
 # computes and what it cannot.
 
-#' Checks that `data` is a data frame and that each column argument names one of
-#' its columns.
-#' @param data The data frame passed by the user.
-#' @param ... The column arguments, each named; the optional ones may be NULL.
-#' @return `TRUE`, invisibly.
-#' @noRd
-.rmbl_ind_cols <- function(data, ...) {
-  if (!is.data.frame(data)) {
-    stop(.rmbl_fn(), "`data` must be a data frame", call. = FALSE)
-  }
-  a <- list(...)
-  # the limit and quality columns are optional; every other NULL reached
-  # data[[NULL]] and failed in R's words ("attempt to select less than one
-  # element"; final audit of 1.0.0)
-  optional <- c("quality", "x_lower", "x_upper", "y_lower", "y_upper")
-  for (nm in names(a)) {
-    if (is.null(a[[nm]])) {
-      if (!nm %in% optional) {
-        stop(sprintf("`%s` must name a column of `data`", nm), call. = FALSE)
-      }
-      next
-    }
-    .rmbl_col(data, a[[nm]], nm)
-  }
-  invisible(TRUE)
-}
-
-#' Reads the quality flags of the rows, \code{"ok"} for every row when there is
-#' no quality column.
-#' @param data The data frame.
-#' @param quality The name of the quality column, or NULL.
-#' @return A character vector of flags, one per row.
-#' @noRd
-.rmbl_quality <- function(data, quality) {
-  q <- if (is.null(quality)) {
-    rep("ok", nrow(data))
-  } else {
-    as.character(data[[quality]])
-  }
-  .rmbl_qflags(q)
-}
-
 #' The four directions of the First Nations Mental Wellness Continuum, from
 #' published indicators
 #'
@@ -88,7 +46,9 @@
 #'   the estimate (percent) and its published limits.
 #' @param hope,belong,meaning,purp The indicators taken as proxies for each
 #'   direction, or \code{NULL} where the tables have none.
-#' @param qual Optional column of quality flags.
+#' @param qual Optional column of quality flags: \code{"E"} rows are marked use
+#'   with caution, and suppressed ones (\code{"F"}, \code{"x"}, \code{".."})
+#'   get no estimate.
 #' @param conflvl Confidence level of the published intervals (default 0.95).
 #' @return A data frame with the classes \code{rmbl_wellness_continuum} and
 #'   \code{rmbl_wellness_profile}. Its columns are \code{group},
@@ -118,6 +78,18 @@
 #' )
 #' mw
 #' plot(mw)
+#'
+#' # your own table: made-up percentages for two communities, with limits;
+#' # one item stands for both meaning and purpose, and none for belonging
+#' own <- data.frame(
+#'   community = rep(c("Lakeside", "Riverbend"), each = 2),
+#'   item = rep(c("Hopeful", "Life has meaning"), 2),
+#'   pct = c(64, 70, 58, 75),
+#'   lo = c(59, 65, 52, 70),
+#'   hi = c(69, 75, 64, 80)
+#' )
+#' mhcont(own, "community", "item", "pct", "lo", "hi", hope = "Hopeful",
+#'        meaning = "Life has meaning", purp = "Life has meaning")
 #' @export
 mhcont <- function(
   data,
@@ -135,12 +107,12 @@ mhcont <- function(
 ) {
   .rmbl_ind_cols(
     data,
-    group = grp,
-    indicator = ind,
-    estimate = est,
+    grp = grp,
+    ind = ind,
+    est = est,
     lower = lower,
     upper = upper,
-    quality = qual
+    qual = qual
   )
   conflvl <- .rmbl_conf_level(conflvl)
   z <- stats::qnorm(1 - (1 - conflvl) / 2)
@@ -152,33 +124,11 @@ mhcont <- function(
   )
   .rmbl_no_fn(
     hope = hope,
-    belonging = belong,
+    belong = belong,
     meaning = meaning,
-    purpose = purp
+    purp = purp
   )
-  for (nm in names(dirs)) {
-    v <- dirs[[nm]]
-    if (!is.null(v) && (!is.character(v) || !length(v) || anyNA(v))) {
-      stop(
-        sprintf("`%s` must name indicators of `data`, or be NULL", nm),
-        call. = FALSE
-      )
-    }
-  }
-  if (all(vapply(dirs, is.null, NA))) {
-    stop("name a proxy for one direction at least", call. = FALSE)
-  }
-  .ind <- .rmbl_utf8(trimws(as.character(data[[ind]])))
-  miss <- setdiff(trimws(unlist(dirs)), .ind)
-  if (length(miss)) {
-    stop(
-      sprintf(
-        "mhcont: not an indicator of `data`: %s",
-        paste(miss, collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  }
+  .ind <- .rmbl_mh_check(dirs, data, ind)
   g <- .rmbl_utf8(trimws(as.character(data[[grp]])))
   .est <- .rmbl_num(data[[est]], "est")
   lo <- .rmbl_num(data[[lower]], "lower")
@@ -194,47 +144,8 @@ mhcont <- function(
   q <- .rmbl_quality(data, qual)
   .est[q %in% c("F", "x", "..", "...")] <- NA_real_
   used <- table(unlist(lapply(dirs, unique)))
-  rows <- list()
-  for (gi in unique(g)) {
-    for (nm in names(dirs)) {
-      p <- trimws(dirs[[nm]])
-      if (is.null(dirs[[nm]])) {
-        rows[[length(rows) + 1L]] <- data.frame(
-          group = gi,
-          indicator = nm,
-          domain = "no published proxy",
-          estimate = NA_real_,
-          lower = NA_real_,
-          upper = NA_real_,
-          usewithcau = FALSE,
-          shared = FALSE
-        )
-        next
-      }
-      i <- which(g == gi & .ind %in% p)
-      ok <- length(i) == length(p) && !anyNA(.est[i])
-      m <- if (ok) mean(.est[i]) else NA_real_
-      s <- if (ok) sqrt(sum(se[i]^2)) / length(i) else NA_real_
-      rows[[length(rows) + 1L]] <- data.frame(
-        group = gi,
-        indicator = nm,
-        domain = paste(p, collapse = "; "),
-        estimate = m,
-        lower = m - z * s,
-        upper = m + z * s,
-        usewithcau = any(q[i] == "E"),
-        shared = any(used[p] > 1)
-      )
-    }
-  }
-  out <- do.call(rbind, rows)
-  out <- data.frame(
-    out[c("group", "indicator")],
-    side = "wellness",
-    out[c("domain", "estimate", "lower", "upper", "usewithcau", "shared")],
-    proxy = TRUE,
-    stringsAsFactors = FALSE
-  )
+  cells <- list(g = g, ind = .ind, est = .est, se = se, q = q)
+  out <- .rmbl_mh_rows(dirs, cells, used, z)
   attr(out, "conflvl") <- conflvl
   class(out) <- c(
     "rmbl_wellness_continuum",
@@ -324,31 +235,9 @@ cwbscr <- function(
     employment = empl
   )
   a <- Map(.rmbl_num, a, names(a))
-  n <- max(lengths(a))
-  if (!n || any(lengths(a) != n & lengths(a) != 1L)) {
-    stop(
-      "every argument must have one value per community (or one value for all)",
-      call. = FALSE
-    )
-  }
-  pct <- a[-1L]
-  for (nm in names(pct)) {
-    if (any(pct[[nm]] < 0 | pct[[nm]] > 100, na.rm = TRUE)) {
-      stop(sprintf("`%s` must be percentages from 0 to 100", nm), call. = FALSE)
-    }
-  }
-  if (any(a$incpercap <= 0, na.rm = TRUE)) {
-    stop("`incpercap` must be positive", call. = FALSE)
-  }
+  n <- .rmbl_cwb_check(a)
   bounds <- .rmbl_num(bounds, "bounds")
-  if (
-    length(bounds) != 2L ||
-      anyNA(bounds) ||
-      bounds[1L] <= 0 ||
-      bounds[2L] <= bounds[1L]
-  ) {
-    stop("`bounds` must be two increasing positive incomes", call. = FALSE)
-  }
+  .rmbl_cwb_bounds(bounds)
   inc <- 100 *
     (log(a$incpercap) - log(bounds[1L])) /
     (log(bounds[2L]) - log(bounds[1L]))
@@ -363,7 +252,34 @@ cwbscr <- function(
     labour = rep_len(lab, n)
   )
   out$cwb <- rowMeans(out)
-  out
+  .rmbl_cls(out, "rmbl_cwb_scores")
+}
+
+#' @export
+format.rmbl_cwb_scores <- function(x, digits = 4L, ...) {
+  title <- "Community Well-Being scores"
+  need <- c("income", "education", "housing", "labour", "cwb")
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  d <- .rmbl_plain(x)
+  ok <- !is.na(d$cwb)
+  .rmbl_res_block(
+    title,
+    facts = list(
+      Communities = nrow(d),
+      `Mean CWB` = if (any(ok)) mean(d$cwb[ok]),
+      `CWB range` = if (any(ok)) .rmbl_fmt_ci(min(d$cwb[ok]), max(d$cwb[ok]))
+    ),
+    tables = list(cbind(community = seq_len(nrow(d)), d)),
+    reading = paste(
+      "Each component runs from 0 to 100, and the CWB score is their mean:",
+      "income, education, housing and labour force activity."
+    ),
+    digits = digits,
+    maxrows = 40L
+  )
 }
 
 #' Connection across places: does one indicator rise where another does?
@@ -406,7 +322,7 @@ cwbscr <- function(
 #' @param reps Draws for the interval and, past 8 places, for the p-value
 #'   (default 10,000).
 #' @param seed Seed for the draws (default 1).
-#' @param conflvl Confidence level (default 0.95).
+#' @param conflvl Confidence level of rho's drawn interval (default 0.95).
 #' @return A list of class \code{rmbl_connection}: \code{data} (the places
 #'   used), \code{rho}, \code{p_value}, \code{exact}, \code{rholo},
 #'   \code{rhoup}, \code{n}.
@@ -446,6 +362,14 @@ cwbscr <- function(
 #' )
 #' ca
 #' plot(ca)
+#'
+#' # your own places: made-up shares in six regions, without limits
+#' own <- data.frame(
+#'   region = c("North", "South", "East", "West", "Coast", "Interior"),
+#'   language = c(41, 18, 27, 33, 22, 38),
+#'   wellbeing = c(68, 55, 60, 66, 57, 63)
+#' )
+#' connassoc(own, "region", "language", "wellbeing", reps = 2000)
 #' @export
 connassoc <- function(
   data,
@@ -465,59 +389,34 @@ connassoc <- function(
     place = place,
     x = x,
     y = y,
-    x_lower = xlo,
-    x_upper = xup,
-    y_lower = ylo,
-    y_upper = yup
+    xlo = xlo,
+    xup = xup,
+    ylo = ylo,
+    yup = yup
   )
   if (sum(vapply(list(xlo, xup, ylo, yup), is.null, NA)) %% 4L) {
-    stop("give all four limit columns, or none", call. = FALSE)
+    stop(.rmbl_fn(), "give all four limit columns, or none", call. = FALSE)
   }
   reps <- .rmbl_scalar(reps, "reps", 100, 1e6, integer = TRUE)
   conflvl <- .rmbl_conf_level(conflvl)
   z <- stats::qnorm(1 - (1 - conflvl) / 2)
-  xv <- .rmbl_num(data[[x]], "x")
-  yv <- .rmbl_num(data[[y]], "y")
-  ok <- is.finite(xv) & is.finite(yv)
-  if (sum(ok) < 3L) {
-    stop(
-      "the association needs three places at least with both indicators",
-      call. = FALSE
-    )
-  }
-  d <- data.frame(place = as.character(data[[place]]), x = xv, y = yv)
-  if (!is.null(xlo)) {
-    d$xse <- (.rmbl_num(data[[xup]], "xup") - .rmbl_num(data[[xlo]], "xlo")) /
-      (2 * z)
-    d$yse <- (.rmbl_num(data[[yup]], "yup") - .rmbl_num(data[[ylo]], "ylo")) /
-      (2 * z)
-    ok <- ok & is.finite(d$xse) & is.finite(d$yse)
-  }
-  d <- d[ok, , drop = FALSE]
+  d <- .rmbl_conn_frame(
+    data,
+    c(place = place, x = x, y = y),
+    list(xlo = xlo, xup = xup, ylo = ylo, yup = yup),
+    z
+  )
   n <- nrow(d)
-  rho <- function(a, b) stats::cor(rank(a), rank(b))
-  r0 <- rho(d$x, d$y)
+  r0 <- .rmbl_spearman(d$x, d$y)
   .rmbl_local_seed(seed)
-  ry <- rank(d$y)
-  rx <- rank(d$x)
-  exact <- n <= 8L
-  perm <- if (exact) {
-    ps <- .rmbl_permutations(n)
-    apply(ps, 1L, function(p) stats::cor(rx, ry[p]))
-  } else {
-    replicate(reps, stats::cor(rx, sample(ry)))
-  }
-  hits <- sum(abs(perm) >= abs(r0) - 1e-12)
-  p <- if (exact) hits / length(perm) else (hits + 1) / (reps + 1)
+  pm <- .rmbl_conn_perm(d, reps)
+  p <- pm$p
+  exact <- pm$exact
   lo <- hi <- NA_real_
   if (!is.null(xlo)) {
-    draws <- replicate(
-      reps,
-      rho(stats::rnorm(n, d$x, d$xse), stats::rnorm(n, d$y, d$yse))
-    )
-    a <- (1 - conflvl) / 2
-    lo <- unname(stats::quantile(draws, a, na.rm = TRUE))
-    hi <- unname(stats::quantile(draws, 1 - a, na.rm = TRUE))
+    ci <- .rmbl_conn_interval(d, reps, conflvl)
+    lo <- ci[[1L]]
+    hi <- ci[[2L]]
   }
   out <- list(
     data = d,
@@ -534,47 +433,43 @@ connassoc <- function(
   out
 }
 
-#' Every ordering of 1..n, one per row (n <= 8: 40,320 rows at most)
-#' @param n The number of items, a whole number from 1 to 8.
-#' @return An integer matrix with one permutation per row.
-#' @noRd
-.rmbl_permutations <- function(n) {
-  if (n == 1L) {
-    return(matrix(1L, 1L, 1L))
-  }
-  sub <- .rmbl_permutations(n - 1L)
-  do.call(
-    rbind,
-    lapply(seq_len(n), function(i) {
-      cbind(i, matrix(setdiff(seq_len(n), i)[sub], nrow(sub)))
-    })
-  )
-}
-
 #' @export
-print.rmbl_connection <- function(x, ...) {
-  cat(sprintf(
-    "Rank correlation across %d places: rho = %.2f, %s p = %s",
-    x$n,
-    x$rho,
-    if (x$exact) "exact" else "permutation",
-    format.pval(x$p_value, digits = 3)
-  ))
-  if (is.finite(x$rholo)) {
-    cat(sprintf(
-      "; with the published sampling error, %.0f%% interval %.2f to %.2f",
-      100 * x$conflvl,
-      x$rholo,
-      x$rhoup
-    ))
-  }
-  cat(
-    paste0(
-      "\nAn association across places: it does not show that one causes ",
-      "the other for any person.\n"
+format.rmbl_connection <- function(x, ...) {
+  lab <- x$labels %||% c(x = "x", y = "y")
+  .an_block(
+    "Connection across places",
+    facts = list(
+      Places = x$n,
+      Indicators = sprintf("%s and %s", lab[[1L]], lab[[2L]]),
+      `Rank correlation` = sprintf("rho = %.2f", x$rho),
+      `p-value` = sprintf(
+        "%s (%s)",
+        .rmbl_fmt_p(x$p_value),
+        if (x$exact) "exact, every permutation" else "permutation"
+      ),
+      Interval = if (is.finite(x$rholo)) {
+        sprintf(
+          "%s %s, with the published sampling error",
+          .an_lvl(x$conflvl),
+          .an_ci(x$rholo, x$rhoup, 2L)
+        )
+      }
+    ),
+    reading = c(
+      sprintf(
+        "Rank correlation across %d places: rho = %.2f, %s p = %s",
+        x$n,
+        x$rho,
+        if (x$exact) "exact" else "permutation",
+        format.pval(x$p_value, digits = 3)
+      ),
+      .an_conn_reading(x$rho)
+    ),
+    notes = c(
+      "An association across places only:",
+      "it does not show that one causes the other for any person."
     )
   )
-  invisible(x)
 }
 
 #' Healing as a process: change in published indicators between two periods
@@ -599,8 +494,8 @@ print.rmbl_connection <- function(x, ...) {
 #' @param well,distress Optional indicators of wellness (listed first) and of
 #'   distress; with \code{distress} given, any other indicator is marked
 #'   \code{"other"}.
-#' @param qual Optional column of quality flags.
-#' @param conflvl Confidence level (default 0.95).
+#' @inheritParams mhcont
+#' @param conflvl Confidence level of each change's interval (default 0.95).
 #' @return A data frame of class \code{rmbl_healing_change}: \code{group},
 #'   \code{indicator}, \code{side}, \code{from}, \code{to}, \code{change},
 #'   \code{lower}, \code{upper}, \code{usewithcau}.
@@ -644,6 +539,19 @@ print.rmbl_connection <- function(x, ...) {
 #' )
 #' hc
 #' plot(hc)
+#'
+#' # your own table: made-up percentages for one community in two surveys
+#' own <- data.frame(
+#'   community = "Lakeside",
+#'   item = rep(c("Good mental health", "Anxiety"), 2),
+#'   survey = rep(c("2018", "2023"), each = 2),
+#'   pct = c(55, 14, 61, 11),
+#'   lo = c(50, 11, 56, 8),
+#'   hi = c(60, 17, 66, 14)
+#' )
+#' healchg(own, "community", "item", "survey", "pct", "lo", "hi",
+#'         from = "2018", to = "2023", well = "Good mental health",
+#'         distress = "Anxiety")
 #' @export
 healchg <- function(
   data,
@@ -662,25 +570,21 @@ healchg <- function(
 ) {
   .rmbl_ind_cols(
     data,
-    group = grp,
-    indicator = ind,
-    period = prd,
-    estimate = est,
+    grp = grp,
+    ind = ind,
+    prd = prd,
+    est = est,
     lower = lower,
     upper = upper,
-    quality = qual
+    qual = qual
   )
   from <- .rmbl_string1(from, "from")
   to <- .rmbl_string1(to, "to")
-  .rmbl_no_fn(wellness = well, distress = distress)
+  .rmbl_no_fn(well = well, distress = distress)
   conflvl <- .rmbl_conf_level(conflvl)
   z <- stats::qnorm(1 - (1 - conflvl) / 2)
   pr <- as.character(data[[prd]])
-  for (v in c(from, to)) {
-    if (!v %in% pr) {
-      stop(sprintf("\"%s\" is not a period of `data`", v), call. = FALSE)
-    }
-  }
+  .rmbl_heal_periods(pr, from, to)
   g <- .rmbl_utf8(trimws(as.character(data[[grp]])))
   .ind <- .rmbl_utf8(trimws(as.character(data[[ind]])))
   .est <- .rmbl_num(data[[est]], "est")
@@ -690,37 +594,12 @@ healchg <- function(
   se <- (hi - lo) / (2 * z)
   q <- .rmbl_quality(data, qual)
   .est[q %in% c("F", "x", "..", "...")] <- NA_real_
-  key <- paste(g, .ind, sep = "\r")
-  k1 <- which(pr == from)
-  k2 <- which(pr == to)
-  if (anyDuplicated(key[k1]) || anyDuplicated(key[k2])) {
-    stop(
-      "a group and indicator appear twice in one period: filter `data` ",
-      "to one age group, sex and place",
-      call. = FALSE
-    )
-  }
-  both <- intersect(key[k1], key[k2])
-  if (!length(both)) {
-    stop("no group and indicator is in both periods", call. = FALSE)
-  }
-  i1 <- k1[match(both, key[k1])]
-  i2 <- k2[match(both, key[k2])]
+  ii <- .rmbl_heal_pairs(paste(g, .ind, sep = "\r"), pr, from, to)
+  i1 <- ii$i1
+  i2 <- ii$i2
   ch <- .est[i2] - .est[i1]
   s <- sqrt(se[i1]^2 + se[i2]^2)
-  side <- if (is.null(well) && is.null(distress)) {
-    rep(NA_character_, length(both))
-  } else {
-    ifelse(
-      .ind[i1] %in% trimws(well),
-      "wellness",
-      if (is.null(distress)) {
-        "distress"
-      } else {
-        ifelse(.ind[i1] %in% trimws(distress), "distress", "other")
-      }
-    )
-  }
+  side <- .rmbl_heal_side(.ind[i1], well, distress)
   out <- data.frame(
     group = g[i1],
     indicator = .ind[i1],
@@ -733,12 +612,7 @@ healchg <- function(
     usewithcau = q[i1] == "E" | q[i2] == "E",
     stringsAsFactors = FALSE
   )
-  o <- order(
-    !(out$side %in% "wellness"),
-    match(out$indicator, unique(out$indicator))
-  )
-  out <- out[o, , drop = FALSE]
-  rownames(out) <- NULL
+  out <- .rmbl_heal_order(out)
   attr(out, "periods") <- c(from = from, to = to)
   class(out) <- c("rmbl_healing_change", "data.frame")
   out
@@ -769,8 +643,8 @@ healchg <- function(
 #'   weights meaningless).
 #' @param w Named weights, one per indicator used: positive for a protective
 #'   factor, negative for a risk factor.
-#' @param qual Optional column of quality flags.
-#' @param conflvl Confidence level (default 0.95).
+#' @inheritParams mhcont
+#' @param conflvl Confidence level of each group's index limits (default 0.95).
 #' @return A data frame of class \code{rmbl_community_index}: \code{group},
 #'   \code{index}, \code{lower}, \code{upper}, \code{usewithcau}; attributes
 #'   \code{weights} and \code{conflvl}. \code{plot()} draws it.
@@ -815,6 +689,18 @@ healchg <- function(
 #'   w = w2
 #' )$index
 #' plot(ci)
+#'
+#' # your own table and the weights a community chose: made-up percentages
+#' own <- data.frame(
+#'   community = rep(c("Lakeside", "Riverbend"), each = 3),
+#'   item = rep(c("Speaks the language", "Has a doctor", "Food insecure"), 2),
+#'   pct = c(38, 72, 21, 25, 64, 30),
+#'   lo = c(33, 67, 17, 20, 58, 25),
+#'   hi = c(43, 77, 25, 30, 70, 35)
+#' )
+#' commidx(own, "community", "item", "pct", "lo", "hi",
+#'         w = c("Speaks the language" = 2, "Has a doctor" = 1,
+#'               "Food insecure" = -1))
 #' @export
 commidx <- function(
   data,
@@ -823,50 +709,25 @@ commidx <- function(
   est,
   lower,
   upper,
-  w,
+  w = NULL,
   qual = NULL,
   conflvl = 0.95
 ) {
   .rmbl_ind_cols(
     data,
-    group = grp,
-    indicator = ind,
-    estimate = est,
+    grp = grp,
+    ind = ind,
+    est = est,
     lower = lower,
     upper = upper,
-    quality = qual
+    qual = qual
   )
-  if (missing(w)) {
-    w <- NULL
-  }
-  .rmbl_no_fn(weights = w)
-  if (
-    !is.numeric(w) ||
-      is.null(names(w)) ||
-      anyNA(w) ||
-      all(w == 0) ||
-      anyDuplicated(names(w))
-  ) {
-    stop(
-      "`w` must be numbers named by indicator (positive protective, ",
-      "negative risk), set by the ",
-      "community: the function does not choose them",
-      call. = FALSE
-    )
-  }
+  .rmbl_no_fn(w = w)
+  .rmbl_ci_weights(w)
   conflvl <- .rmbl_conf_level(conflvl)
   z <- stats::qnorm(1 - (1 - conflvl) / 2)
   .ind <- .rmbl_utf8(trimws(as.character(data[[ind]])))
-  miss <- setdiff(names(w), .ind)
-  if (length(miss)) {
-    stop(
-      sprintf(
-        "commidx: not an indicator of `data`: %s",
-        paste(miss, collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  }
+  .rmbl_ci_present(w, .ind)
   g <- .rmbl_utf8(trimws(as.character(data[[grp]])))
   .est <- .rmbl_num(data[[est]], "est")
   lo <- .rmbl_num(data[[lower]], "lower")
@@ -883,28 +744,12 @@ commidx <- function(
   .est[q %in% c("F", "x", "..", "...")] <- NA_real_
   tot <- sum(abs(w))
   rows <- lapply(unique(g), function(gi) {
-    i <- which(g == gi & .ind %in% names(w))
-    if (anyDuplicated(.ind[i])) {
-      stop(sprintf("group \"%s\" has an indicator twice", gi), call. = FALSE)
-    }
-    i <- i[match(names(w), .ind[i])]
-    if (anyNA(i) || anyNA(.est[i])) {
-      return(data.frame(
-        group = gi,
-        index = NA_real_,
-        lower = NA_real_,
-        upper = NA_real_,
-        usewithcau = FALSE
-      ))
-    }
-    v <- sum(w * .est[i]) / tot
-    s <- sqrt(sum(w^2 * se[i]^2)) / tot
-    data.frame(
-      group = gi,
-      index = v,
-      lower = v - z * s,
-      upper = v + z * s,
-      usewithcau = any(q[i] == "E")
+    .rmbl_ci_row(
+      gi,
+      w,
+      list(g = g, ind = .ind, est = .est, se = se, q = q),
+      tot,
+      z
     )
   })
   out <- do.call(rbind, rows)
@@ -928,7 +773,7 @@ commidx <- function(
 #' group, so a report can be balanced before it is published. Pair each gap with
 #' a strength-framed level (\code{\link{welprof}}, \code{\link{dualcont}}).
 #'
-#' @param x A \code{\link{welprof}}.
+#' @param x A \code{\link{welprof}} result, whose rows are counted by side.
 #' @return A list of class \code{rmbl_framing}: \code{bygrp} (a data frame of
 #'   \code{group}, \code{wellness}, \code{distress}, \code{shrdef}),
 #'   \code{shrdef} overall and \code{defonly} (the groups with no wellness
@@ -957,10 +802,30 @@ commidx <- function(
 #'   )
 #' )
 #' frmaud(w)
+#'
+#' # your own table: made-up percentages for two communities, with limits
+#' own <- data.frame(
+#'   community = rep(c("Lakeside", "Riverbend"), each = 4),
+#'   item = rep(c("Hopeful", "Satisfied", "Rarely hopeful", "Low satisfaction"),
+#'              2),
+#'   pct = c(64, 71, 12, 18, 58, 66, 16, 22),
+#'   lo = c(59, 66, 9, 14, 52, 60, 12, 17),
+#'   hi = c(69, 76, 15, 22, 64, 72, 20, 27)
+#' )
+#' frmaud(welprof(own, "community", "item", "pct", "lo", "hi",
+#'                well = c("Hopeful", "Satisfied"),
+#'                distress = c("Rarely hopeful", "Low satisfaction")))
 #' @export
 frmaud <- function(x) {
   if (!inherits(x, "rmbl_wellness_profile")) {
     stop("frmaud: `x` must come from welprof()", call. = FALSE)
+  }
+  if (!any(x$side %in% c("wellness", "distress"))) {
+    stop(
+      "frmaud: `x` has no wellness or distress indicator: there is no ",
+      "framing to count",
+      call. = FALSE
+    )
   }
   groups <- unique(x$group)
   bg <- data.frame(
@@ -977,7 +842,8 @@ frmaud <- function(x) {
     ),
     stringsAsFactors = FALSE
   )
-  bg$shrdef <- bg$distress / (bg$wellness + bg$distress)
+  tot <- bg$wellness + bg$distress
+  bg$shrdef <- ifelse(tot > 0, bg$distress / pmax(tot, 1), NA_real_)
   rownames(bg) <- NULL
   out <- list(
     bygrp = bg,
@@ -989,23 +855,165 @@ frmaud <- function(x) {
 }
 
 #' @export
-print.rmbl_framing <- function(x, ...) {
-  cat(sprintf(
-    "%.0f%% of the indicators reported are deficit-framed.\n",
-    100 * x$shrdef
-  ))
-  if (length(x$defonly)) {
-    cat("Reported on deficits alone:", paste(x$defonly, collapse = "; "), "\n")
-  }
-  if (x$shrdef > 0.5) {
-    cat(
-      paste0(
-        "Most of this report measures disparity or deficit; pair each ",
-        "with a strength-framed level.\n"
-      )
+format.rmbl_framing <- function(x, ...) {
+  bg <- x$bygrp
+  .an_block(
+    "Framing audit",
+    facts = list(
+      Groups = nrow(bg),
+      `Wellness indicators` = sum(bg$wellness),
+      `Distress indicators` = sum(bg$distress),
+      `Deficit-framed` = sprintf("%.0f%%", 100 * x$shrdef)
+    ),
+    tables = list(`By group (shrdef: the deficit-framed share)` = bg),
+    reading = c(
+      sprintf(
+        "%.0f%% of the indicators reported are deficit-framed.",
+        100 * x$shrdef
+      ),
+      if (length(x$defonly)) {
+        paste("Reported on deficits alone:", paste(x$defonly, collapse = "; "))
+      },
+      if (x$shrdef > 0.5) {
+        c(
+          "Most of this report measures disparity or deficit;",
+          "pair each with a strength-framed level."
+        )
+      }
+    ),
+    notes = c(
+      "Walter (2016): statistics about Indigenous peoples cluster around",
+      "disparity, deprivation, disadvantage, dysfunction and difference.",
+      "This audits the report, not the people it describes."
     )
+  )
+}
+
+#' @export
+format.rmbl_wellness_continuum <- function(x, ...) {
+  need <- c("group", "indicator", "domain", "estimate", "lower", "upper")
+  if (!all(need %in% names(x)) || !nrow(x)) {
+    return(.an_plain(x, ...))
   }
-  invisible(x)
+  d <- as.data.frame(x)
+  ci <- .an_ci_name(attr(x, "conflvl"))
+  tabs <- .an_by(d, "group", function(g) {
+    out <- data.frame(
+      direction = .an_star(g$indicator, g$usewithcau),
+      estimate = g$estimate,
+      stringsAsFactors = FALSE
+    )
+    out[[ci]] <- ifelse(is.na(g$estimate), "", .an_ci(g$lower, g$upper))
+    proxy <- ifelse(.an_true(g$shared), "yes (shared)", "yes")
+    proxy[is.na(g$estimate)] <- "none published"
+    out$proxy <- proxy
+    out
+  })
+  .an_block(
+    "First Nations Mental Wellness Continuum: the four directions",
+    facts = list(
+      Groups = paste(unique(d$group), collapse = "; "),
+      Directions = "hope, belonging, meaning, purpose",
+      Estimates = "percent, from the published tables"
+    ),
+    tables = tabs,
+    reading = c(.an_wc_reading(d), .an_wc_levels(d)),
+    notes = c(
+      .an_wc_proxies(d),
+      "Every level is a proxy: no survey table measures the directions as",
+      "the Framework defines them (Health Canada and AFN 2015).",
+      if (any(.an_true(d$shared))) {
+        paste(
+          "yes (shared): one indicator serves two directions, counted for",
+          "each."
+        )
+      },
+      .an_caution(d$usewithcau)
+    )
+  )
+}
+
+#' @export
+format.rmbl_healing_change <- function(x, ...) {
+  need <- c("group", "indicator", "side", "from", "to", "change", "lower")
+  if (!all(need %in% names(x)) || !nrow(x)) {
+    return(.an_plain(x, ...))
+  }
+  d <- as.data.frame(x)
+  pr <- attr(x, "periods")
+  tabs <- .an_by(d, "indicator", function(g) {
+    out <- data.frame(
+      group = .an_star(g$group, g$usewithcau),
+      from = g$from,
+      to = g$to,
+      change = g$change,
+      stringsAsFactors = FALSE
+    )
+    out$interval <- .an_ci(g$lower, g$upper)
+    out
+  })
+  names(tabs) <- .an_side_caption(names(tabs), d)
+  clear <- sum(d$lower > 0 | d$upper < 0, na.rm = TRUE)
+  .an_block(
+    "Healing as change between two periods",
+    facts = list(
+      Periods = if (!is.null(pr)) sprintf("%s to %s", pr[["from"]], pr[["to"]]),
+      Groups = paste(unique(d$group), collapse = "; "),
+      Indicators = length(unique(d$indicator)),
+      Units = "the estimate's own (percentage points for percentages)"
+    ),
+    tables = tabs,
+    reading = c(
+      sprintf(
+        "%d of %d changes have an interval clear of zero.",
+        clear,
+        sum(!is.na(d$change))
+      ),
+      .an_hc_sides(d)
+    ),
+    notes = c(
+      "Wellness indicators come first: a change is read as part of healing.",
+      "A change is only as comparable as the two periods' questions and",
+      "designs: across a break in the series it is not a change in people.",
+      .an_caution(d$usewithcau)
+    )
+  )
+}
+
+#' @export
+format.rmbl_community_index <- function(x, ...) {
+  if (!all(c("group", "index", "lower", "upper") %in% names(x)) || !nrow(x)) {
+    return(.an_plain(x, ...))
+  }
+  d <- as.data.frame(x)
+  w <- attr(x, "weights")
+  show <- data.frame(
+    group = .an_star(d$group, d$usewithcau),
+    index = d$index,
+    stringsAsFactors = FALSE
+  )
+  show[[.an_ci_name(attr(x, "conflvl"))]] <- .an_ci(d$lower, d$upper)
+  .an_block(
+    "Community-weighted index of protective and risk factors",
+    facts = list(
+      Groups = nrow(d),
+      Indicators = length(w),
+      Index = "sum of w x estimate over sum of |w|, on the indicators' scale"
+    ),
+    tables = list(show),
+    reading = .rd_groups(show$group, d$index, d$lower, d$upper, "index"),
+    notes = c(
+      "A higher index: more of the protective factors, less of the risks,",
+      "under the weights given.",
+      if (length(w)) "Weights (positive protective, negative risk):",
+      if (length(w)) sprintf("%+g  %s", unname(w), names(w)),
+      "The weights are a judgement for the people the index describes;",
+      "with other weights it ranks places otherwise. It is never a ranking",
+      "of Nations or communities on their culture.",
+      "Risk and protective factors: Inuit Tapiriit Kanatami (2016).",
+      .an_caution(d$usewithcau)
+    )
+  )
 }
 
 #' @rdname plot-methods
@@ -1026,19 +1034,12 @@ plot.rmbl_connection <- function(
   d <- x$data
   cols <- .bl_cols(1L, col, palette)
   o <- .bl_plot_opts()
-  op <- graphics::par(
-    las = 1,
-    cex = o$cex,
-    bg = o$bg,
-    bty = "n",
-    tcl = -0.2,
-    mgp = c(3, 0.55, 0),
-    col.axis = "#3D4350",
-    fg = "#8A909A",
-    col = "#1F2430",
-    mar = .bl_safe_mar(c(4.2, 4.5, 3, 1))
-  )
+  pp <- .rmbl_conn_par(o)
+  # every value saved before any is set: setting fg sets col too, so col read
+  # after fg was already the frame's grey
+  op <- graphics::par(names(pp))
   on.exit(graphics::par(op), add = TRUE)
+  graphics::par(pp)
   z <- stats::qnorm(1 - (1 - x$conflvl) / 2)
   has <- !is.null(d$xse)
   xr <- range(d$x, if (has) d$x + c(-1, 1) * z * rep(d$xse, each = 2))
@@ -1061,35 +1062,10 @@ plot.rmbl_connection <- function(
   .bl_ylab(if (is.null(ylab)) x$labels[["y"]] else .rmbl_string1(ylab, "ylab"))
   .bl_grid(NULL, side = "y")
   if (has) {
-    graphics::segments(
-      d$x - z * d$xse,
-      d$y,
-      d$x + z * d$xse,
-      d$y,
-      col = grDevices::adjustcolor(cols, 0.5)
-    )
-    graphics::segments(
-      d$x,
-      d$y - z * d$yse,
-      d$x,
-      d$y + z * d$yse,
-      col = grDevices::adjustcolor(cols, 0.5)
-    )
+    .rmbl_conn_bars(d, z, cols)
   }
   graphics::points(d$x, d$y, pch = 21, bg = cols, col = "white", cex = 1.6)
-  # neighbouring places labelled on alternating sides, so close points do not
-  # print over each other
-  side <- c(3L, 1L, 4L, 2L)[(rank(d$x, ties.method = "first") - 1L) %% 4L + 1L]
-  graphics::text(
-    d$x,
-    d$y,
-    d$place,
-    pos = side,
-    offset = 0.6,
-    cex = 0.65,
-    col = "#3D4350",
-    xpd = NA
-  )
+  .rmbl_conn_labels(d)
   invisible(d)
 }
 
@@ -1111,7 +1087,8 @@ plot.rmbl_healing_change <- function(
     d$group,
     ifelse(d$usewithcau, " (E)", "")
   )
-  side <- ifelse(is.na(d$side), 1L, ifelse(d$side == "wellness", 2L, 3L))
+  named_side <- ifelse(d$side == "wellness", 2L, 3L)
+  side <- ifelse(is.na(d$side), 1L, named_side)
   cols <- .bl_cols(3L, col, palette)[side]
   .bl_dot_interval(
     lab,
@@ -1159,4 +1136,568 @@ plot.rmbl_community_index <- function(
     ...
   )
   invisible(d[c("group", "index", "lower", "upper")])
+}
+
+#' Checks that `data` is a data frame and that each column argument names one of
+#' its columns.
+#' @param data The data frame whose columns the named arguments must name.
+#' @param ... The column arguments, each named; the optional ones may be NULL.
+#' @return `TRUE`, invisibly.
+#' @noRd
+.rmbl_ind_cols <- function(data, ...) {
+  if (!is.data.frame(data)) {
+    stop(.rmbl_fn(), "`data` must be a data frame", call. = FALSE)
+  }
+  a <- list(...)
+  # the limit and quality columns are optional; every other NULL reached
+  # data[[NULL]] and failed in R's words ("attempt to select less than one
+  # element"; final audit of 1.0.0)
+  optional <- c("qual", "xlo", "xup", "ylo", "yup")
+  for (nm in names(a)) {
+    if (is.null(a[[nm]])) {
+      if (!nm %in% optional) {
+        stop(
+          .rmbl_fn(),
+          sprintf("`%s` must name a column of `data`", nm),
+          call. = FALSE
+        )
+      }
+      next
+    }
+    .rmbl_col(data, a[[nm]], nm)
+  }
+  invisible(TRUE)
+}
+
+#' Reads the quality flags of the rows, \code{"ok"} for every row when there is
+#' no quality column.
+#' @param data The data frame; its row count sets the length of the flags.
+#' @param quality The name of the quality column, or NULL.
+#' @return A character vector of flags, one per row.
+#' @noRd
+.rmbl_quality <- function(data, quality) {
+  q <- if (is.null(quality)) {
+    rep("ok", nrow(data))
+  } else {
+    as.character(data[[quality]])
+  }
+  .rmbl_qflags(q)
+}
+
+#' Checks mhcont()'s directions: character proxies, one at least, each an
+#' indicator of the data.
+#' @param dirs The directions' proxies, named, NULL where none.
+#' @param data The table whose indicator column the proxies must appear in.
+#' @param ind The indicator column.
+#' @return The indicators of `data`, trimmed.
+#' @noRd
+.rmbl_mh_check <- function(dirs, data, ind) {
+  # the directions' names are mhcont()'s output; the arguments are shorter
+  arg <- c(hope = "hope", belonging = "belong", meaning = "meaning")
+  arg <- c(arg, purpose = "purp")
+  for (nm in names(dirs)) {
+    v <- dirs[[nm]]
+    if (!is.null(v) && (!is.character(v) || !length(v) || anyNA(v))) {
+      stop(
+        .rmbl_fn(),
+        sprintf("`%s` must name indicators of `data`, or be NULL", arg[[nm]]),
+        call. = FALSE
+      )
+    }
+  }
+  if (all(vapply(dirs, is.null, NA))) {
+    stop(.rmbl_fn(), "name a proxy for one direction at least", call. = FALSE)
+  }
+  .ind <- .rmbl_utf8(trimws(as.character(data[[ind]])))
+  miss <- setdiff(trimws(unlist(dirs)), .ind)
+  if (length(miss)) {
+    stop(
+      sprintf(
+        "mhcont: not an indicator of `data`: %s",
+        toString(miss)
+      ),
+      call. = FALSE
+    )
+  }
+  .ind
+}
+
+#' One group's score in one direction of the continuum.
+#' @param gi The group whose direction score is computed.
+#' @param nm The direction.
+#' @param dir Its proxies, or NULL.
+#' @param cells The table's columns: g, ind, est, se, q.
+#' @param used How many directions each proxy stands for.
+#' @param z The normal quantile of the confidence level, for the score's limits.
+#' @return A one-row data frame.
+#' @noRd
+.rmbl_mh_row <- function(gi, nm, dir, cells, used, z) {
+  p <- trimws(dir)
+  if (is.null(dir)) {
+    return(data.frame(
+      group = gi,
+      indicator = nm,
+      domain = "no published proxy",
+      estimate = NA_real_,
+      lower = NA_real_,
+      upper = NA_real_,
+      usewithcau = FALSE,
+      shared = FALSE,
+      stringsAsFactors = FALSE
+    ))
+  }
+  i <- which(cells$g == gi & cells$ind %in% p)
+  ok <- length(i) == length(p) && !anyNA(cells$est[i])
+  m <- if (ok) mean(cells$est[i]) else NA_real_
+  s <- if (ok) sqrt(sum(cells$se[i]^2)) / length(i) else NA_real_
+  data.frame(
+    group = gi,
+    indicator = nm,
+    domain = paste(p, collapse = "; "),
+    estimate = m,
+    lower = m - z * s,
+    upper = m + z * s,
+    usewithcau = any(cells$q[i] == "E"),
+    shared = any(used[p] > 1),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' Every group's score in every direction of the continuum.
+#' @param dirs The directions' proxies, named, NULL where none.
+#' @param cells The table's columns: g, ind, est, se, q.
+#' @param used How many directions each proxy stands for.
+#' @param z The normal quantile of the confidence level, passed to each row.
+#' @return A data frame, one row per group and direction.
+#' @noRd
+.rmbl_mh_rows <- function(dirs, cells, used, z) {
+  rows <- list()
+  for (gi in unique(cells$g)) {
+    for (nm in names(dirs)) {
+      rows[[length(rows) + 1L]] <- .rmbl_mh_row(
+        gi,
+        nm,
+        dirs[[nm]],
+        cells,
+        used,
+        z
+      )
+    }
+  }
+  out <- do.call(rbind, rows)
+  data.frame(
+    out[c("group", "indicator")],
+    side = "wellness",
+    out[c("domain", "estimate", "lower", "upper", "usewithcau", "shared")],
+    proxy = TRUE,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' Checks cwbscr()'s components: one value per community (or one for all),
+#' percentages from 0 to 100, a positive income.
+#' @param a The components, named.
+#' @return The number of communities.
+#' @noRd
+.rmbl_cwb_check <- function(a) {
+  n <- max(lengths(a))
+  if (!n || any(lengths(a) != n & lengths(a) != 1L)) {
+    stop(
+      .rmbl_fn(),
+      "every argument must have one value per community (or one value for all)",
+      call. = FALSE
+    )
+  }
+  pct <- a[-1L]
+  for (nm in names(pct)) {
+    if (any(pct[[nm]] < 0 | pct[[nm]] > 100, na.rm = TRUE)) {
+      stop(
+        .rmbl_fn(),
+        sprintf("`%s` must be percentages from 0 to 100", nm),
+        call. = FALSE
+      )
+    }
+  }
+  if (any(a$incpercap <= 0, na.rm = TRUE)) {
+    stop(.rmbl_fn(), "`incpercap` must be positive", call. = FALSE)
+  }
+  n
+}
+
+#' Checks cwbscr()'s income bounds.
+#' @param bounds The bounds.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_cwb_bounds <- function(bounds) {
+  if (
+    length(bounds) != 2L ||
+      anyNA(bounds) ||
+      bounds[1L] <= 0 ||
+      bounds[2L] <= bounds[1L]
+  ) {
+    stop(
+      .rmbl_fn(),
+      "`bounds` must be two increasing positive incomes",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' The places connassoc() compares: both indicators finite, and their standard
+#' errors when limits are given.
+#' @param data The table of places with the x, y and limit columns.
+#' @param cols The place, x and y columns.
+#' @param lims The limit columns (xlo, xup, ylo, yup), NULL when not given.
+#' @param z The normal quantile that turns published limits into SEs.
+#' @return A data frame of place, x, y (and xse, yse).
+#' @noRd
+.rmbl_conn_frame <- function(data, cols, lims, z) {
+  xv <- .rmbl_num(data[[cols[["x"]]]], "x")
+  yv <- .rmbl_num(data[[cols[["y"]]]], "y")
+  ok <- is.finite(xv) & is.finite(yv)
+  if (sum(ok) < 3L) {
+    stop(
+      .rmbl_fn(),
+      "the association needs three places at least with both indicators",
+      call. = FALSE
+    )
+  }
+  d <- data.frame(
+    place = as.character(data[[cols[["place"]]]]),
+    x = xv,
+    y = yv,
+    stringsAsFactors = FALSE
+  )
+  if (!is.null(lims$xlo)) {
+    xw <- .rmbl_num(data[[lims$xup]], "xup") -
+      .rmbl_num(data[[lims$xlo]], "xlo")
+    yw <- .rmbl_num(data[[lims$yup]], "yup") -
+      .rmbl_num(data[[lims$ylo]], "ylo")
+    d$xse <- xw / (2 * z)
+    d$yse <- yw / (2 * z)
+    ok <- ok & is.finite(d$xse) & is.finite(d$yse)
+  }
+  d <- d[ok, , drop = FALSE]
+  d
+}
+
+#' Spearman's rank correlation.
+#' @param a,b The two variables.
+#' @return One number.
+#' @noRd
+.rmbl_spearman <- function(a, b) stats::cor(rank(a), rank(b))
+
+#' The permutation p-value of connassoc(): exact for eight places or fewer.
+#' @param d The places compared.
+#' @param reps The permutations drawn when not exact.
+#' @return list(p, exact).
+#' @noRd
+.rmbl_conn_perm <- function(d, reps) {
+  n <- nrow(d)
+  r0 <- .rmbl_spearman(d$x, d$y)
+  ry <- rank(d$y)
+  rx <- rank(d$x)
+  exact <- n <= 8L
+  perm <- if (exact) {
+    ps <- .rmbl_permutations(n)
+    apply(ps, 1L, function(p) stats::cor(rx, ry[p]))
+  } else {
+    replicate(reps, stats::cor(rx, sample(ry)))
+  }
+  hits <- sum(abs(perm) >= abs(r0) - 1e-12)
+  p <- if (exact) hits / length(perm) else (hits + 1) / (reps + 1)
+  list(p = p, exact = exact)
+}
+
+#' The interval of connassoc()'s rho from the published limits, by drawing.
+#' @param d The places compared, with xse and yse.
+#' @param reps The number of normal draws of both indicators.
+#' @param conflvl The confidence level; its tails set the draws' quantiles.
+#' @return c(lower, upper).
+#' @noRd
+.rmbl_conn_interval <- function(d, reps, conflvl) {
+  n <- nrow(d)
+  draws <- replicate(
+    reps,
+    .rmbl_spearman(stats::rnorm(n, d$x, d$xse), stats::rnorm(n, d$y, d$yse))
+  )
+  a <- (1 - conflvl) / 2
+  lo <- unname(stats::quantile(draws, a, na.rm = TRUE))
+  hi <- unname(stats::quantile(draws, 1 - a, na.rm = TRUE))
+  c(lo, hi)
+}
+
+#' Refuses a period healchg() is asked for that the data do not have.
+#' @param pr The periods of the data.
+#' @param from,to The two periods compared.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_heal_periods <- function(pr, from, to) {
+  for (v in c(from, to)) {
+    if (!v %in% pr) {
+      stop(
+        .rmbl_fn(),
+        sprintf("\"%s\" is not a period of `data`", v),
+        call. = FALSE
+      )
+    }
+  }
+  invisible(NULL)
+}
+
+#' The rows of each group and indicator in the two periods compared.
+#' @param key Group and indicator, one per row.
+#' @param pr The periods of the data.
+#' @param from,to The two periods compared.
+#' @return list(i1, i2): the rows in `from` and in `to`, matched.
+#' @noRd
+.rmbl_heal_pairs <- function(key, pr, from, to) {
+  k1 <- which(pr == from)
+  k2 <- which(pr == to)
+  if (anyDuplicated(key[k1]) || anyDuplicated(key[k2])) {
+    stop(
+      .rmbl_fn(),
+      "a group and indicator appear twice in one period: filter `data` ",
+      "to one age group, sex and place",
+      call. = FALSE
+    )
+  }
+  both <- intersect(key[k1], key[k2])
+  if (!length(both)) {
+    stop(.rmbl_fn(), "no group and indicator is in both periods", call. = FALSE)
+  }
+  list(
+    i1 = k1[match(both, key[k1])],
+    i2 = k2[match(both, key[k2])]
+  )
+}
+
+#' The side of each indicator: wellness, distress or other.
+#' @param ind The indicators.
+#' @param well,distress The indicators named as wellness and as distress.
+#' @return A character vector, NA when neither is named.
+#' @noRd
+.rmbl_heal_side <- function(ind, well, distress) {
+  if (is.null(well) && is.null(distress)) {
+    rep(NA_character_, length(ind))
+  } else {
+    ifelse(
+      ind %in% trimws(well),
+      "wellness",
+      if (is.null(distress)) {
+        "distress"
+      } else {
+        ifelse(ind %in% trimws(distress), "distress", "other")
+      }
+    )
+  }
+}
+
+#' healchg()'s rows in order: wellness first, then by indicator.
+#' @param out The rows.
+#' @return The rows, reordered.
+#' @noRd
+.rmbl_heal_order <- function(out) {
+  o <- order(
+    is.na(out$side) | out$side != "wellness",
+    match(out$indicator, unique(out$indicator))
+  )
+  out <- out[o, , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
+#' Checks commidx()'s weights: numbers named by indicator, set by the
+#' community.
+#' @param w The community's weights, numbers named by indicator, not all zero.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_ci_weights <- function(w) {
+  if (
+    !is.numeric(w) ||
+      is.null(names(w)) ||
+      anyNA(w) ||
+      all(w == 0) ||
+      anyDuplicated(names(w))
+  ) {
+    stop(
+      .rmbl_fn(),
+      "`w` must be numbers named by indicator (positive protective, ",
+      "negative risk), set by the ",
+      "community: the function does not choose them",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' One group's community index, with its interval.
+#' @param gi The group whose weighted index is computed.
+#' @param w The weights, named by indicator.
+#' @param cells The table's columns: g, ind, est, se, q.
+#' @param tot The sum of the weights' absolute values.
+#' @param z The normal quantile of the confidence level, for the index's limits.
+#' @return A one-row data frame.
+#' @noRd
+.rmbl_ci_row <- function(gi, w, cells, tot, z) {
+  i <- which(cells$g == gi & cells$ind %in% names(w))
+  if (anyDuplicated(cells$ind[i])) {
+    stop(
+      .rmbl_fn(),
+      sprintf("group \"%s\" has an indicator twice", gi),
+      call. = FALSE
+    )
+  }
+  i <- i[match(names(w), cells$ind[i])]
+  if (anyNA(i) || anyNA(cells$est[i])) {
+    return(data.frame(
+      group = gi,
+      index = NA_real_,
+      lower = NA_real_,
+      upper = NA_real_,
+      usewithcau = FALSE
+    ))
+  }
+  v <- sum(w * cells$est[i]) / tot
+  s <- sqrt(sum(w^2 * cells$se[i]^2)) / tot
+  data.frame(
+    group = gi,
+    index = v,
+    lower = v - z * s,
+    upper = v + z * s,
+    usewithcau = any(cells$q[i] == "E")
+  )
+}
+
+#' Refuses a weight for an indicator the data do not have.
+#' @param w The weights, named by indicator.
+#' @param .ind The indicators of the data.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_ci_present <- function(w, .ind) {
+  miss <- setdiff(names(w), .ind)
+  if (length(miss)) {
+    stop(
+      sprintf(
+        "commidx: not an indicator of `data`: %s",
+        toString(miss)
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' The graphics parameters of plot.rmbl_connection().
+#' @param o The plot options (.bl_plot_opts()), read for `cex` and `bg`.
+#' @return A list for graphics::par().
+#' @noRd
+.rmbl_conn_par <- function(o) {
+  list(
+    las = 1,
+    cex = o$cex,
+    bg = o$bg,
+    bty = "n",
+    tcl = -0.2,
+    mgp = c(3, 0.55, 0),
+    col.axis = "#3D4350",
+    fg = "#8A909A",
+    col = "#1F2430",
+    mar = .bl_safe_mar(c(4.2, 4.5, 3, 1))
+  )
+}
+
+#' Draws each place's published intervals as crossing bars.
+#' @param d The places, with xse and yse.
+#' @param z The normal quantile that scales each standard error into a bar.
+#' @param cols The colour.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_conn_bars <- function(d, z, cols) {
+  graphics::segments(
+    d$x - z * d$xse,
+    d$y,
+    d$x + z * d$xse,
+    d$y,
+    col = grDevices::adjustcolor(cols, 0.5)
+  )
+  graphics::segments(
+    d$x,
+    d$y - z * d$yse,
+    d$x,
+    d$y + z * d$yse,
+    col = grDevices::adjustcolor(cols, 0.5)
+  )
+  invisible(NULL)
+}
+
+#' Labels each place beside its point.
+#' @param d The places.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_conn_labels <- function(d) {
+  # neighbouring places labelled on alternating sides, so close points do not
+  # print over each other
+  side <- c(3L, 1L, 4L, 2L)[(rank(d$x, ties.method = "first") - 1L) %% 4L + 1L]
+  graphics::text(
+    d$x,
+    d$y,
+    d$place,
+    pos = side,
+    offset = 0.6,
+    cex = 0.65,
+    col = "#3D4350",
+    xpd = NA
+  )
+  invisible(NULL)
+}
+
+#' A plain reading of a rank correlation's size and sign.
+#' @param rho The rank correlation.
+#' @return One sentence.
+#' @noRd
+.an_conn_reading <- function(rho) {
+  if (!is.finite(rho)) {
+    return("The rank correlation is undefined (an indicator does not vary).")
+  }
+  size <- if (abs(rho) >= 0.7) {
+    "strongly"
+  } else if (abs(rho) >= 0.4) {
+    "moderately"
+  } else {
+    "weakly"
+  }
+  sprintf(
+    "Across these places the two rank %s %s.",
+    size,
+    if (rho >= 0) "together" else "in opposite orders"
+  )
+}
+
+#' The directions of a wellness continuum that have no published proxy.
+#' @param d The continuum, as a data frame.
+#' @return One sentence.
+#' @noRd
+.an_wc_reading <- function(d) {
+  miss <- unique(d$indicator[is.na(d$estimate)])
+  if (!length(miss)) {
+    return("Every direction has a published proxy for every group.")
+  }
+  c(
+    paste("No published proxy:", toString(miss)),
+    "-- reported as missing, never filled from another direction."
+  )
+}
+
+#' The proxy each direction of a wellness continuum was measured by.
+#' @param d The continuum, as a data frame.
+#' @return One line per direction with a proxy.
+#' @noRd
+.an_wc_proxies <- function(d) {
+  ok <- !is.na(d$estimate) & !duplicated(d$indicator)
+  if (!any(ok)) {
+    return(NULL)
+  }
+  paste0("Proxy for ", d$indicator[ok], ": ", d$domain[ok])
 }

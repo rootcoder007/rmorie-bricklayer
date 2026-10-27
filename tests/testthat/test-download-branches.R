@@ -103,16 +103,21 @@ test_that(".bl_data_get passes the manifest's compressed size for a table", {
   withr::local_envvar(XDG_CONFIG_HOME = cfg, MORIE_HOSTED_KEY = "sk-test")
   withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
   seen <- NULL
+  te <- environment()
   testthat::local_mocked_bindings(
     dmnf = function(...) {
       list(datasets = list(list(key = "db/tbl", bytes_gz = 4321)))
     },
     bldl = function(url, dest, headers = NULL, label = NULL, size = NULL, ...) {
-      seen <<- list(
-        url = url,
-        label = label,
-        size = size,
-        auth = headers[["Authorization"]]
+      assign(
+        "seen",
+        list(
+          url = url,
+          label = label,
+          size = size,
+          auth = headers[["Authorization"]]
+        ),
+        envir = te
       )
       writeLines("x", dest)
       invisible(dest)
@@ -126,13 +131,14 @@ test_that(".bl_data_get passes the manifest's compressed size for a table", {
 
 test_that("a staged bundle without bldl falls back to base R", {
   called <- NULL
+  te <- environment()
   testthat::local_mocked_bindings(
     exists = function(x, ...) FALSE,
     .package = "base"
   )
   testthat::local_mocked_bindings(
     download.file = function(url, destfile, ...) {
-      called <<- url
+      assign("called", url, envir = te)
       writeLines("ok", destfile)
       0L
     },
@@ -146,9 +152,11 @@ test_that("a staged bundle without bldl falls back to base R", {
 
 test_that("the CLI strips R 4.6's --args and serves the data verbs", {
   out <- character()
-  st <- blcli(c("--args", "version"), out = function(s) out <<- c(out, s))
+  te <- environment()
+  keep <- function(s) assign("out", c(out, s), envir = te)
+  st <- blcli(c("--args", "version"), out = keep)
   expect_identical(st, 0L)
-  expect_true(any(grepl("rmoriebricklayer", out)))
+  expect_true(any(grepl("rmoriebricklayer", out, fixed = TRUE)))
   testthat::local_mocked_bindings(
     dtabs = function(...) {
       data.frame(
@@ -159,26 +167,26 @@ test_that("the CLI strips R 4.6's --args and serves the data verbs", {
         stringsAsFactors = FALSE
       )
     },
-    dload = function(key, ...) data.frame(x = 1:3, y = c("a", "b", "c"))
+    dload = function(key, ...) {
+      data.frame(x = 1:3, y = c("a", "b", "c"), stringsAsFactors = FALSE)
+    }
   )
   out <- character()
   expect_identical(
-    blcli(c("data", "list"), out = function(s) out <<- c(out, s)),
+    blcli(c("data", "list"), out = keep),
     0L
   )
   expect_true(any(grepl("db/a", out, fixed = TRUE)))
   dest <- withr::local_tempfile(fileext = ".csv")
   out <- character()
   expect_identical(
-    blcli(c("data", "pull", "db/a", "--out", dest), out = function(s) {
-      out <<- c(out, s)
-    }),
+    blcli(c("data", "pull", "db/a", "--out", dest), out = keep),
     0L
   )
   expect_identical(nrow(utils::read.csv(dest)), 3L)
   out <- character()
   expect_identical(
-    blcli(c("data", "nonsense"), out = function(s) out <<- c(out, s)),
+    blcli(c("data", "nonsense"), out = keep),
     2L
   )
 })

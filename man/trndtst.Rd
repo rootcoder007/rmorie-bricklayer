@@ -38,7 +38,8 @@ or \code{"decreasing"}.}
 the slope interval.}
 }
 \value{
-A list with \code{S}, \code{tau}, \code{p_value}, \code{slope}
+A list of class \code{rmbl_trend_test} with \code{S},
+\code{tau}, \code{p_value}, \code{slope}
 (Theil-Sen, in units of \code{y} per unit of \code{x}),
 \code{intercept}, \code{slopelo} and \code{slopeup} (the
 distribution-free interval), \code{slopecicla} (\code{TRUE} when

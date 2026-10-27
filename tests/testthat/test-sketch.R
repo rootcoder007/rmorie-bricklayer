@@ -17,17 +17,29 @@ test_that("block accumulation is exact, not approximate", {
   }
   s <- smrystat(acc)
   expect_named(s, c("n", "mean", "variance", "sd", "skewness", "kurtosis"))
-  expect_equal(s[["n"]], 1000)
+  expect_identical(s[["n"]], 1000)
   # exact agreement with base R, block by block
-  expect_equal(s[["mean"]], mean(x))
-  expect_equal(s[["variance"]], stats::var(x))
-  expect_equal(s[["sd"]], stats::sd(x))
+  expect_equal(s[["mean"]], mean(x), tolerance = testthat::testthat_tolerance())
+  expect_identical(s[["variance"]], stats::var(x))
+  expect_identical(s[["sd"]], stats::sd(x))
   # and with the batch kernel, on all four moments
   m <- cmom(x)
-  expect_equal(s[["mean"]], m[["mean"]])
-  expect_equal(s[["variance"]], m[["variance"]])
-  expect_equal(s[["skewness"]], m[["skewness"]])
-  expect_equal(s[["kurtosis"]], m[["kurtosis"]])
+  expect_equal(
+    s[["mean"]],
+    m[["mean"]],
+    tolerance = testthat::testthat_tolerance()
+  )
+  expect_identical(s[["variance"]], m[["variance"]])
+  expect_equal(
+    s[["skewness"]],
+    m[["skewness"]],
+    tolerance = testthat::testthat_tolerance()
+  )
+  expect_equal(
+    s[["kurtosis"]],
+    m[["kurtosis"]],
+    tolerance = testthat::testthat_tolerance()
+  )
 
   # the block size cannot change the answer
   for (bs in c(1L, 7L, 333L, 1000L)) {
@@ -35,12 +47,24 @@ test_that("block accumulation is exact, not approximate", {
     for (i in seq(1, 1000, by = bs)) {
       a2 <- smryupd(a2, x[i:min(1000, i + bs - 1L)])
     }
-    expect_equal(smrystat(a2)[["variance"]], stats::var(x))
-    expect_equal(smrystat(a2)[["skewness"]], m[["skewness"]])
+    expect_equal(
+      smrystat(a2)[["variance"]],
+      stats::var(x),
+      tolerance = testthat::testthat_tolerance()
+    )
+    expect_equal(
+      smrystat(a2)[["skewness"]],
+      m[["skewness"]],
+      tolerance = testthat::testthat_tolerance()
+    )
   }
 
   # a single-shot constructor is the same as one update
-  expect_equal(smrystat(onlsmry(x)), s)
+  expect_equal(
+    smrystat(onlsmry(x)),
+    s,
+    tolerance = testthat::testthat_tolerance()
+  )
 })
 
 test_that("accumulators merge in any order and handle empty blocks", {
@@ -51,37 +75,42 @@ test_that("accumulators merge in any order and handle empty blocks", {
   ab <- smrymrg(a, b)
   ba <- smrymrg(b, a)
 
-  expect_equal(smrystat(ab)[["mean"]], mean(x))
-  expect_equal(smrystat(ab)[["variance"]], stats::var(x))
+  expect_identical(smrystat(ab)[["mean"]], mean(x))
+  expect_equal(
+    smrystat(ab)[["variance"]],
+    stats::var(x),
+    tolerance = testthat::testthat_tolerance()
+  )
   # merging is symmetric in its arguments
-  expect_equal(smrystat(ba)[["variance"]], smrystat(ab)[["variance"]])
-  expect_equal(smrystat(ba)[["mean"]], smrystat(ab)[["mean"]])
+  expect_identical(smrystat(ba)[["variance"]], smrystat(ab)[["variance"]])
+  expect_identical(smrystat(ba)[["mean"]], smrystat(ab)[["mean"]])
   # and associative across three parts
   p1 <- onlsmry(x[1:200])
   p2 <- onlsmry(x[201:400])
   p3 <- onlsmry(x[401:600])
   expect_equal(
     smrystat(smrymrg(smrymrg(p1, p2), p3)),
-    smrystat(smrymrg(p1, smrymrg(p2, p3)))
+    smrystat(smrymrg(p1, smrymrg(p2, p3))),
+    tolerance = testthat::testthat_tolerance()
   )
 
   # an empty accumulator is the identity for the merge
   e <- onlsmry()
-  expect_equal(smrystat(smrymrg(a, e)), smrystat(a))
-  expect_equal(smrystat(smrymrg(e, a)), smrystat(a))
+  expect_identical(smrystat(smrymrg(a, e)), smrystat(a))
+  expect_identical(smrystat(smrymrg(e, a)), smrystat(a))
   # and reports nothing rather than zero
   es <- smrystat(e)
-  expect_equal(es[["n"]], 0)
+  expect_identical(es[["n"]], 0)
   expect_true(is.nan(es[["mean"]]))
   expect_true(is.nan(es[["variance"]]))
   # an empty or all-NA block leaves the accumulator untouched
-  expect_equal(smrystat(smryupd(a, numeric(0))), smrystat(a))
-  expect_equal(smrystat(smryupd(a, c(NA, NA))), smrystat(a))
+  expect_identical(smrystat(smryupd(a, numeric(0))), smrystat(a))
+  expect_identical(smrystat(smryupd(a, c(NA, NA))), smrystat(a))
   # NA inside a block is dropped, not propagated
-  expect_equal(smrystat(onlsmry(c(x[1:10], NA)))[["mean"]], mean(x[1:10]))
+  expect_identical(smrystat(onlsmry(c(x[1:10], NA)))[["mean"]], mean(x[1:10]))
   # too few observations for a moment gives NaN, not a fabricated number
   expect_true(is.nan(smrystat(onlsmry(c(1, 2)))[["skewness"]]))
-  expect_equal(smrystat(onlsmry(5))[["n"]], 1)
+  expect_identical(smrystat(onlsmry(5))[["n"]], 1)
   expect_output(print(a), "Accumulated summary")
 
   expect_error(smryupd(list(), 1), "onlsmry")
@@ -93,9 +122,9 @@ test_that("the reservoir samples uniformly and reproducibly", {
   idx <- rsvidx(1000, 5, seed = 1)
   expect_length(idx, 5L)
   expect_true(all(idx >= 1 & idx <= 1000))
-  expect_equal(length(unique(idx)), 5L)
+  expect_length(unique(idx), 5L)
   # sorted, so it can drive a single forward pass over a file
-  expect_equal(idx, sort(idx))
+  expect_identical(idx, sort(idx))
   # reproducible, and dependent on the seed
   expect_identical(rsvidx(1000, 5, seed = 1), idx)
   expect_false(identical(rsvidx(1000, 5, seed = 2), idx))
@@ -104,11 +133,11 @@ test_that("the reservoir samples uniformly and reproducibly", {
   before <- stats::runif(1)
   set.seed(5)
   invisible(rsvidx(100, 10, seed = 9))
-  expect_equal(stats::runif(1), before)
+  expect_identical(stats::runif(1), before)
 
   # k at or above the stream length returns the whole stream
-  expect_equal(rsvidx(3, 3), c(1, 2, 3))
-  expect_equal(rsvidx(3, 10), c(1, 2, 3))
+  expect_identical(rsvidx(3, 3), c(1, 2, 3))
+  expect_identical(rsvidx(3, 10), c(1, 2, 3))
   expect_length(rsvidx(0, 5), 0L)
   expect_length(rsvidx(10, 0), 0L)
 
@@ -122,7 +151,7 @@ test_that("the reservoir samples uniformly and reproducibly", {
     hit <- rsvidx(n, k, seed = s)
     counts[hit] <- counts[hit] + 1L
   }
-  expect_equal(sum(counts), 2000L * k)
+  expect_identical(sum(counts), 2000L * k)
   expected <- 2000L * k / n
   # a chi-square goodness-of-fit against the uniform inclusion rate
   chi <- sum((counts - expected)^2 / expected)
@@ -131,7 +160,10 @@ test_that("the reservoir samples uniformly and reproducibly", {
   expect_true(all(abs(counts - expected) / expected < 0.25))
 
   # sampling a vector returns its elements
-  expect_equal(rsvsmp(letters, 4, seed = 2), letters[rsvidx(26, 4, seed = 2)])
+  expect_identical(
+    rsvsmp(letters, 4, seed = 2),
+    letters[rsvidx(26, 4, seed = 2)]
+  )
   expect_length(rsvsmp(1:100, 7, seed = 3), 7L)
   expect_true(all(rsvsmp(1:100, 7, seed = 3) %in% 1:100))
 
@@ -164,7 +196,7 @@ test_that("HyperLogLog estimates cardinality within its error bound", {
     tolerance = 0.01
   )
   expect_equal(dstncnt(dstnskch(as.character(1:50))), 50, tolerance = 0.02)
-  expect_equal(dstncnt(dstnskch(character(0))), 0)
+  expect_identical(dstncnt(dstnskch(character(0))), 0)
   expect_equal(dstncnt(dstnskch("only")), 1, tolerance = 0.01)
   # NA carries no value to count
   expect_equal(dstncnt(dstnskch(c("a", NA, "b"))), 2, tolerance = 0.01)
@@ -189,7 +221,7 @@ test_that("HyperLogLog estimates cardinality within its error bound", {
     dstnskch(x[25001:50000], p = 12L)
   )
   expect_identical(merged, one)
-  expect_equal(dstncnt(merged), dstncnt(one))
+  expect_identical(dstncnt(merged), dstncnt(one))
   # merging is the element-wise maximum, so it is idempotent
   expect_identical(skchmrg(one, one), one)
 
@@ -197,4 +229,34 @@ test_that("HyperLogLog estimates cardinality within its error bound", {
   expect_error(dstnskch(x, p = 21L), "between 4 and 20")
   expect_error(dstnskch(x, p = 10L, regstr = 1:5), "2\\^p entries")
   expect_error(skchmrg(1:4, 1:8), "same number of registers")
+})
+
+test_that("onlsmry names itself when x is not numeric", {
+  expect_error(onlsmry("a"), "onlsmry: `x` must be numeric")
+  expect_s3_class(onlsmry(1:3), "bricklayer_online")
+})
+
+# Prints `x` on an ASCII console: the lines and what print() returned.
+o1_box <- function(x, ...) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  tmp <- withr::local_tempfile()
+  v <- withr::with_output_sink(tmp, withVisible(print(x, ...)))
+  list(out = readLines(tmp), v = v)
+}
+
+# The box's frame, its title and the facts expected in it.
+o1_expect_box <- function(b, x, title, facts = character()) {
+  expect_false(b$v$visible)
+  expect_identical(b$v$value, x)
+  expect_match(b$out[1L], "^\\+-- ")
+  expect_true(grepl(title, b$out[1L], fixed = TRUE))
+  expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  for (f in facts) {
+    expect_true(any(grepl(f, b$out, fixed = TRUE)), info = f)
+  }
+}
+
+test_that("an accumulated summary prints as a box", {
+  a <- onlsmry(c(1, 2, 3, 4))
+  o1_expect_box(o1_box(a), a, "Accumulated summary", c("Mean", "2.5"))
 })

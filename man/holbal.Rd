@@ -31,14 +31,14 @@ multiply proportions by 100) and its published limits.}
 \item{w}{Optional named weights, one per domain (they are rescaled to sum to
 one).}
 
-\item{qual}{Optional column of quality flags.}
+\item{qual}{Optional column of quality flags for the estimates.}
 
 \item{reps}{Monte Carlo draws for the intervals (default 10,000).}
 
 \item{seed}{Seed for the draws, so the intervals are reproducible (default
 1).}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of the balance intervals (default 0.95).}
 }
 \value{
 A data frame of class \code{rmbl_holistic_balance}: \code{group},
@@ -145,6 +145,17 @@ holbal(
   qual = "quality",
   w = c(physical = 1, mental = 1, emotional = 1, community = 2)
 )
+
+# your own table: made-up percentages of wellness in four domains a Nation
+# set for itself, for two communities
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 4),
+  domain = rep(c("body", "mind", "spirit", "family"), 2),
+  pct = c(62, 58, 70, 75, 55, 61, 66, 80),
+  lo = c(57, 53, 65, 70, 49, 55, 60, 75),
+  hi = c(67, 63, 75, 80, 61, 67, 72, 85)
+)
+holbal(own, "community", "domain", "pct", "lo", "hi", reps = 2000)
 \dontshow{\}) # examplesIf}
 }
 \references{

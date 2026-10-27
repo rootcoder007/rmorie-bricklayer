@@ -64,10 +64,11 @@ gap_reply <- function(
 
 # the LD_PRELOAD library, built once per session
 gap_shim <- local({
-  so <- NULL
+  rec <- new.env()
+  rec$so <- NULL
   function() {
-    if (!is.null(so)) {
-      return(so)
+    if (!is.null(rec$so)) {
+      return(rec$so)
     }
     testthat::skip_on_os(c("windows", "mac"))
     cc <- tryCatch(
@@ -166,8 +167,8 @@ gap_shim <- local({
       !file.exists(out),
       paste("the shim did not build:", paste(res, collapse = " "))
     )
-    so <<- out
-    so
+    rec$so <- out
+    rec$so
   }
 })
 
@@ -430,7 +431,7 @@ test_that(
       gap_child("no_inet6", sprintf(probe, "2001:4860:4860::8888")),
       NA
     )
-    expect_identical(gap_child("no_inet6", sprintf(probe, "8.8.8.8")), TRUE)
+    expect_true(gap_child("no_inet6", sprintf(probe, "8.8.8.8")))
   }
 )
 
@@ -440,8 +441,8 @@ test_that(
     "or libcurl gives no handle"
   ),
   {
-    # reaches http_put_file()'s two early returns after the file is open
-    # (src/rmbl_fetch.cpp)
+    # reaches http_put_file()'s two early returns after
+    # the file is open (src/rmbl_fetch.cpp)
     f <- tempfile()
     writeLines("x", f)
     call <- sprintf(
@@ -527,8 +528,8 @@ test_that(
       "no python3/timeout"
     )
     # reaches rmbl_bootstrap_mean()'s stop (src/rmbl_core.cpp: the replicates
-    # not drawn are NaN) and the permutation loop's stop in C_rmbl_morans_i_impl
-    # (src/rmbl_series.cpp)
+    # not drawn are NaN) and the permutation
+    # loop's stop in C_rmbl_morans_i_impl (src/rmbl_series.cpp)
     got <- interrupt_probe(
       paste0(
         ".Call(rmoriebricklayer:::C_rmbl_bootstrap_mean, ",

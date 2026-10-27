@@ -23,6 +23,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <cstddef>
+#include <cstdio>
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,12 +67,15 @@ static inline size_t rmbl_str0_len(SEXP x, const char *name) {
     return (size_t)LENGTH(STRING_ELT(x, 0));
 }
 
+/* every caller coerces to a character vector and stays in its range first, so `bad` is never set
+ * there: it is refused with the missing string, by the check the tests reach, and named as what
+ * it is (STRING_ELT() is not read when `bad`) */
 static inline const char *rmbl_str_at(SEXP x, R_xlen_t i, const char *name) {
-    if (TYPEOF(x) != STRSXP || i < 0 || i >= XLENGTH(x)) {
-        RMBL_ARG_ERROR("`%s` must be a character vector", name);
-    }
-    if (STRING_ELT(x, i) == NA_STRING) {
-        RMBL_ARG_ERROR("`%s` contains a missing string (element %d)", name, (int)(i + 1));
+    const int bad = TYPEOF(x) != STRSXP || i < 0 || i >= XLENGTH(x);
+    if (bad || STRING_ELT(x, i) == NA_STRING) {
+        char what[64];
+        snprintf(what, sizeof what, "contains a missing string (element %d)", (int)(i + 1));
+        RMBL_ARG_ERROR("`%s` %s", name, bad ? "must be a character vector" : what);
     }
     return CHAR(STRING_ELT(x, i));
 }

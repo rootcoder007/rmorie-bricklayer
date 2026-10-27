@@ -168,7 +168,7 @@ test_that("the environment record carries the generator", {
   # a seed means nothing without the kind it was fed to.
   expect_true("rng_kind" %in% names(env))
   expect_match(env$rng_kind, "Mersenne-Twister|Wichmann|Marsaglia|Knuth")
-  expect_true(is.logical(env$rng_seeded))
+  expect_type(env$rng_seeded, "logical")
   expect_true(all(
     c(
       "r_version",
@@ -333,12 +333,10 @@ test_that("a skipped control is reported as skipped", {
   r <- cpsfals(d, function(z) mean(z$y), n = 49L, seed = 1L)
   sk <- r$controls[r$controls$control %in% c("permutation", "placebo"), ]
   expect_true(all(is.na(sk$passed)))
-  expect_true(all(grepl("skipped", sk$detail)))
+  expect_true(all(grepl("skipped", sk$detail, fixed = TRUE)))
   # the controls that do not need a treatment still ran
-  expect_true(all(
-    !is.na(
-      r$controls$passed[r$controls$control == "subset_stability"]
-    )
+  expect_false(anyNA(
+    r$controls$passed[r$controls$control == "subset_stability"]
   ))
   expect_null(r$treatment)
   # the RNG state is recorded, so the run can be repeated
@@ -401,7 +399,7 @@ test_that("the bundle's reader fallback works, since a bundle runs it", {
   # real behavioural divergence between the path the package takes and
   # the path a bundle takes.
   expect_warning(
-    fallback_na <- .rmbl_strtod("not a number"),
+    assign("fallback_na", .rmbl_strtod("not a number")),
     "NAs introduced by coercion"
   )
   expect_true(is.na(fallback_na))
@@ -411,7 +409,7 @@ test_that("the bundle's reader fallback works, since a bundle runs it", {
   cache$strtod <- TRUE
   expect_identical(.rmbl_strtod("0.1"), 0.1)
   expect_identical(.rmbl_strtod("1e23"), 1e23)
-  expect_silent(native_na <- .rmbl_strtod("not a number"))
+  expect_silent(assign("native_na", .rmbl_strtod("not a number")))
   expect_true(is.na(native_na))
 })
 
@@ -464,8 +462,8 @@ test_that(
     att <- cpsatst(m, "rmbl-test-secret-hmac", note = "shared")
     # morie's field order and convention: public = HMAC-SHA-256(key, "public"),
     # no context, no pre-hash
-    expect_identical(
-      names(att),
+    expect_named(
+      att,
       c(
         "digest",
         "scheme",
@@ -540,3 +538,92 @@ test_that(
     expect_error(cpschkatst(att, m, key = function() 1), "not a function")
   }
 )
+
+test_that("attestation errors name ctx and keyexp", {
+  f <- function() 1
+  expect_error(cpsatst(list(), NULL, ctx = f), "cpsatst: `ctx` must be data")
+  expect_error(
+    cpschkatst(list(), list(), keyexp = f),
+    "cpschkatst: `keyexp` must be data"
+  )
+})
+
+# Prints `x` on an ASCII console: the lines and what print() returned.
+o1_box <- function(x, ...) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  tmp <- withr::local_tempfile()
+  v <- withr::with_output_sink(tmp, withVisible(print(x, ...)))
+  list(out = readLines(tmp), v = v)
+}
+
+# The box's frame, its title and the facts expected in it.
+o1_expect_box <- function(b, x, title, facts = character()) {
+  expect_false(b$v$visible)
+  expect_identical(b$v$value, x)
+  expect_match(b$out[1L], "^\\+-- ")
+  expect_true(grepl(title, b$out[1L], fixed = TRUE))
+  expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  for (f in facts) {
+    expect_true(any(grepl(f, b$out, fixed = TRUE)), info = f)
+  }
+}
+
+test_that("attestations and their checks print as boxes", {
+  key <- fipskg("ML-DSA-44")
+  m <- mkmnf(list(project = "demo"), env = FALSE)
+  a <- cpsatst(m, key, note = "release")
+  o1_expect_box(
+    o1_box(a),
+    a,
+    "Capsule attestation",
+    c("Scheme", "ML-DSA-44", "release", "cpschkatst()")
+  )
+  ck <- cpschkatst(a, m)
+  b <- o1_box(ck)
+  o1_expect_box(b, ck, "Attestation check: OK", c("VERIFIED", "signature"))
+  txt <- format(ck)
+  expect_true(any(grepl("^  ok +signature", txt)))
+  bad <- cpschkatst(a, mkmnf(list(project = "other"), env = FALSE))
+  b2 <- o1_box(bad)
+  o1_expect_box(b2, bad, "Attestation check: FAILED", "NOT VERIFIED")
+  expect_true(any(grepl("X +manifest_digest", b2$out)))
+})
+
+test_that("the check-row helpers lay out a verdict", {
+  ck <- data.frame(
+    check = c("a", "longer"),
+    ok = c(TRUE, NA),
+    detail = c("fine", NA),
+    stringsAsFactors = FALSE
+  )
+  expect_identical(.rmbl_check_lines(ck), c("ok   a       fine", "FAIL longer"))
+  expect_identical(.rmbl_check_lines(ck[0, ]), character())
+  long <- data.frame(
+    check = "d",
+    ok = TRUE,
+    detail = strrep("ab", 32),
+    stringsAsFactors = FALSE
+  )
+  expect_identical(
+    .rmbl_check_lines(long),
+    paste0("ok   d  ", strrep("ab", 32))
+  )
+  expect_match(.rmbl_check_reading(TRUE, "good", "bad"), "^Every check")
+  expect_match(.rmbl_check_reading(FALSE, "good", "bad"), "bad\\.$")
+  expect_identical(.rmbl_hex_head(""), "<none>")
+  expect_identical(.rmbl_hex_head("abcd", 2L), "ab... (2 bytes)")
+})
+
+test_that("check lines keep long names whole and mark soft failures", {
+  ck <- data.frame(
+    check = c(strrep("n", 40), "short"),
+    ok = c(TRUE, FALSE),
+    severity = c("error", "warn"),
+    detail = c("long detail", "d"),
+    stringsAsFactors = FALSE
+  )
+  out <- .rmbl_check_lines(ck)
+  expect_identical(out[1L], paste("ok  ", strrep("n", 40)))
+  expect_identical(out[2L], "       long detail")
+  expect_identical(out[3L], "WARN short  d")
+})

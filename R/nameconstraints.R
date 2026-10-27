@@ -302,35 +302,7 @@
       }
     }
   }
-  if (length(nc$permitted)) {
-    types <- unique(vapply(nc$permitted, `[[`, character(1), "type"))
-    for (ty in types) {
-      mine <- Filter(function(n) identical(n$type, ty), names_to_check)
-      if (!length(mine)) {
-        next
-      }
-      bases <- Filter(function(b) identical(b$type, ty), nc$permitted)
-      for (nm in mine) {
-        if (
-          !any(vapply(
-            bases,
-            function(b) isTRUE(.rmbl_nc_match(nm, b)),
-            logical(1)
-          ))
-        ) {
-          problems <- c(
-            problems,
-            sprintf(
-              "%s '%s' is outside every permitted subtree",
-              ty,
-              .rmbl_nc_show(nm)
-            )
-          )
-        }
-      }
-    }
-  }
-  problems
+  c(problems, .rmbl_nc_outside(names_to_check, nc$permitted))
 }
 
 #' Formats a name for a message.
@@ -348,10 +320,47 @@
         character(1)
       )
     }))
-    return(paste(parts, collapse = ", "))
+    return(toString(parts))
   }
   if (identical(nm$type, "ip")) {
     return(paste(as.integer(nm$value), collapse = "."))
   }
   as.character(nm$value)
+}
+
+#' The names a certificate carries outside every permitted subtree of
+#' their type.
+#' @param names_to_check The certificate's names.
+#' @param permitted The permitted subtrees.
+#' @return A character vector of problems, empty when none.
+#' @noRd
+.rmbl_nc_outside <- function(names_to_check, permitted) {
+  problems <- character(0)
+  types <- unique(vapply(permitted, `[[`, character(1), "type"))
+  for (ty in types) {
+    mine <- Filter(function(n) identical(n$type, ty), names_to_check)
+    if (!length(mine)) {
+      next
+    }
+    bases <- Filter(function(b) identical(b$type, ty), permitted)
+    for (nm in mine) {
+      if (
+        !any(vapply(
+          bases,
+          function(b) isTRUE(.rmbl_nc_match(nm, b)),
+          logical(1)
+        ))
+      ) {
+        problems <- c(
+          problems,
+          sprintf(
+            "%s '%s' is outside every permitted subtree",
+            ty,
+            .rmbl_nc_show(nm)
+          )
+        )
+      }
+    }
+  }
+  problems
 }

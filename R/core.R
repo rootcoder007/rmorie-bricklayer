@@ -103,7 +103,7 @@ ccorr <- function(x, y) {
 #' \code{x} gives \code{NA}; \code{x = Inf} gives 0. Character, factor or list
 #' input for \code{x} is an error.
 #'
-#' @param x Numeric vector of quantiles.
+#' @param x Numeric vector of quantiles at which the density is evaluated.
 #' @param mean Number, default \code{0}: the mean \eqn{\mu}.
 #' @param sd Number, default \code{1}: the standard deviation \eqn{\sigma};
 #'   must be positive for a finite result.

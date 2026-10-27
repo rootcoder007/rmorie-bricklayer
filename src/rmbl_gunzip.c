@@ -135,3 +135,27 @@ SEXP C_rmbl_gunzip_checked(SEXP in, SEXP max_out) {
     UNPROTECT(1);
     return res;
 }
+
+/* The checks of C_rmbl_gunzip_checked without the output: one counting pass, holding the scratch
+ * buffer only. A table too large to inflate in memory is read by read.csv(gzfile()), which takes
+ * a truncated stream as a short one; this pass refuses it first (coverage round of 1.0.3: half a
+ * 5000-row .csv.gz past the in-memory size read as 2240 rows, silently). Returns the output size. */
+SEXP C_rmbl_gunzip_count(SEXP in, SEXP max_out) {
+    if (TYPEOF(in) != RAWSXP) error("the compressed data must be a raw vector");
+    const double lim = asReal(max_out);
+    if (ISNAN(lim) || lim < 0) error("the output limit must be a non-negative number");
+    const unsigned char *src = RAW(in);
+    const size_t n = (size_t) XLENGTH(in);
+    if (n > 0x7fffffffu) error("is larger than 2 GB compressed, which this reader does not take");
+    if (n < 2 || src[0] != 0x1f || src[1] != 0x8b) error("is not gzip data (no gzip magic number)");
+    unsigned char *scratch = (unsigned char *) R_alloc(RMBL_GUNZIP_SCRATCH, 1);
+    z_stream zs;
+    memset(&zs, 0, sizeof zs);
+    if (inflateInit2(&zs, 16 + MAX_WBITS) != Z_OK) error("could not start the gzip decoder");
+    size_t total = 0;
+    const char *why = rmbl_gunzip_pass(&zs, src, n, lim, scratch, NULL, 0, &total);
+    inflateEnd(&zs);
+    if (why == rmbl_gunzip_interrupted) rmbl_interrupt_raise_unbarriered();
+    if (why != NULL) error("%s", why);
+    return ScalarReal((double) total);
+}

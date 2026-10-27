@@ -12,7 +12,7 @@ options(
 
 # the id a key has in the used-index record: a fingerprint of its secret seed
 # (review of 52a8883)
-xmss_kid <- function(k) rmoriebricklayer:::.rmbl_xmss_ids(k)$id
+xmss_kid <- function(k) .rmbl_xmss_ids(k)$id
 
 # R code in a separate Rscript process, not a fork: a forked child of a
 # covr-instrumented session that is killed leaves a partial coverage trace

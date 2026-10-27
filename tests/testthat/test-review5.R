@@ -105,7 +105,7 @@ test_that(
     )
     w <- NULL
     f <- withCallingHandlers(siuprs(s), warning = function(c) {
-      w <<- conditionMessage(c)
+      assign("w", conditionMessage(c), envir = parent.env(environment()))
       invokeRestart("muffleWarning")
     })
     expect_match(w, "1 line longer than 2000 characters was split")
@@ -187,12 +187,16 @@ test_that(
     withCallingHandlers(
       siuprs(strrep("1234567890", 500)),
       warning = function(c) {
-        w <<- c(w, conditionMessage(c))
+        assign(
+          "w",
+          c(w, conditionMessage(c)),
+          envir = parent.env(environment())
+        )
         invokeRestart("muffleWarning")
       }
     )
-    expect_true(all(grepl("longer than 2000", w)))
-    expect_false(any(grepl("expanded path", w)))
+    expect_true(all(grepl("longer than 2000", w, fixed = TRUE)))
+    expect_false(any(grepl("expanded path", w, fixed = TRUE)))
   }
 )
 
@@ -237,7 +241,7 @@ test_that(
       fixed = TRUE
     )))
     bar <- readLines(file.path(d, "rmbl_barrier.cpp"), warn = FALSE)
-    i <- grep("rmbl_interrupt_pending", bar)[1]
+    i <- grep("rmbl_interrupt_pending", bar, fixed = TRUE)[1]
     expect_false(any(grepl(
       "if (rmbl_barrier_depth == 0) rmbl_raise_interrupt();",
       bar[i:(i + 12)],
@@ -274,7 +278,7 @@ test_that(
       r5(".rmbl_services_sig_url")("https://mirror.example.org/services"),
       "https://mirror.example.org/services.sig"
     )
-    rd <- tools::Rd_db("rmoriebricklayer")
+    rd <- rmbl_rd_db()
     rdtxt <- function(nm) {
       paste(
         utils::capture.output(tools::Rd2txt(

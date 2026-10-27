@@ -196,11 +196,9 @@ SEXP C_rmbl_svy_reptotals(SEXP y, SEXP reps, SEXP idx) {
     double *o = REAL(out);
     const double *yy = REAL(y);
     for (R_xlen_t r = 0; r < nr; r++) {
-        if (rmbl_interrupt_pending()) {
-            UNPROTECT(1);
-            rmbl_interrupt_raise_unbarriered();
-            Rf_error("interrupted");   /* not reached when R raises the interrupt */
-        }
+        /* registered directly, so no barrier of ours is on the stack and the raise does not return;
+         * the error is for a call from R code a barrier runs (as rmbl_csv_poll() has it) */
+        if (rmbl_interrupt_pending()) { UNPROTECT(1); rmbl_interrupt_raise_unbarriered(); Rf_error("interrupted"); }
         const double *w = as_matrix ? REAL(reps) + r * nrep_rows : REAL(VECTOR_ELT(reps, r));
         for (int j = 0; j < k; j++) {
             const double *col = yy + (R_xlen_t) j * n;

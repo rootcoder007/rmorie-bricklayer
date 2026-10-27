@@ -42,13 +42,16 @@ to it, before or after.
 
 \code{NULL} is returned when the API has no snapshot, when the request
 fails (offline, an HTTP error, invalid JSON) or when the answer has no
-usable URL. Error: \code{url} that is not a single non-empty string.
+usable URL. Errors: \code{url} that is not a single non-empty string or
+is not a public web address; \code{ts} that is not \code{NULL},
+\code{""} or a string of 1 to 14 digits.
 Nothing is written.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # argument errors come before any request
 try(wbsnpurl(NA))
+try(wbsnpurl("https://www.r-project.org/", ts = "2020&x=1"))
 try(wbsnpurl(c("https://a.org", "https://b.org")))
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

@@ -31,7 +31,7 @@ plotbump(y, prd, grp, desc = TRUE, ..., main = NULL, col = NULL, pal = NULL)
 
 \item{y}{Numeric vector of values.}
 
-\item{...}{Further arguments to the first \code{plot()} call.}
+\item{...}{Further arguments to the \code{plot()} call that opens the frame.}
 
 \item{main, col, pal}{The title, colours overriding the palette, and a
 \code{\link[=blpal]{blpal()}} name.}

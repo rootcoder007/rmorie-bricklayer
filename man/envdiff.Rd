@@ -19,7 +19,9 @@ vector \code{c(a = , b = )} when they differ, else \code{NULL}),
 \code{platform} (likewise), and \code{packages} (a data frame with
 character columns \code{package}, \code{a}, \code{b} and \code{change},
 where \code{change} is \code{"added"}, \code{"removed"} or
-\code{"changed"}; no rows when nothing differs).
+\code{"changed"}; no rows when nothing differs), and \code{fields}
+(the names of any other fields that differ, \code{character(0)} when
+none).
 }
 \description{
 Reports what changed between the environment captured by one run and
@@ -37,8 +39,9 @@ Versions are compared as strings. A package recorded in \code{b} but not
 in \code{a} (or recorded with an \code{NA} version in \code{a}) is
 \code{"added"}; the reverse is \code{"removed"}. The operating-system
 string, the capture time and the random number generator settings are
-not compared. Rows follow the order of \code{a}'s packages, then
-\code{b}'s new ones.
+not compared. Any other field present in only one record, or different
+in the two, is named in \code{fields} and makes them differ. Rows follow
+the order of \code{a}'s packages, then \code{b}'s new ones.
 
 Error: \code{a} or \code{b} that is not a list.
 }

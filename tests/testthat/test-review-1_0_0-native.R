@@ -407,14 +407,14 @@ test_that("M2: a destination under ~ is expanded as R expands it", {
   on.exit(unlink(full), add = TRUE)
   # "could not reach ...; the Wayback fallback failed" before the fix
   expect_identical(
-    .Call(C_rmbl_fetch_fallback, paste0(base, "/x"), "", dest, 10L, base),
+    .Call(C_rmbl_fetch_fallback, file.path(base, "x"), "", dest, 10L, base),
     0L
   )
   expect_identical(readLines(full, warn = FALSE), "hello")
   unlink(full)
   r <- .Call(
     C_rmbl_http_download,
-    paste0(base, "/y"),
+    file.path(base, "y"),
     dest,
     10L,
     NULL,
@@ -469,8 +469,11 @@ test_that(
       serve_bg(port, "200 OK", strrep("x", 5000), times = 1L),
       "no local server"
     )
-    seen <- list()
-    cb <- function(now, total) seen[[length(seen) + 1L]] <<- c(now, total)
+    rec <- new.env()
+    rec$seen <- list()
+    cb <- function(now, total) {
+      rec$seen[[length(rec$seen) + 1L]] <- c(now, total)
+    }
     # a collection every fifth allocation: gctorture(TRUE) collects on every
     # one, which made the transfer take 29 s on a plain build and time out under
     # the sanitizers; five still puts a collection between the two arguments
@@ -481,9 +484,9 @@ test_that(
     r <- .Call(C_rmbl_http_download, url, tempfile(), 60L, NULL, cb, NULL, TRUE)
     gctorture2(0L)
     expect_identical(r$status, 200L)
-    expect_gt(length(seen), 0L)
+    expect_gt(length(rec$seen), 0L)
     ok <- vapply(
-      seen,
+      rec$seen,
       function(v) is.double(v) && length(v) == 2L && all(v >= 0),
       logical(1)
     )
@@ -593,7 +596,11 @@ test_that("M7: output names and messages use the short names", {
   )
   expect_true("count" %in% names(siusch()))
   expect_true("rnd" %in% names(fipssz("ML-DSA-44")))
-  expect_equal(nchar(kemkg(512)$public) / 2, kemsz(512)[["public"]])
+  expect_equal(
+    nchar(kemkg(512)$public) / 2,
+    kemsz(512)[["public"]],
+    tolerance = testthat::testthat_tolerance()
+  )
   expect_error(
     chwkfit(c(1, 5, 20), 10),
     "within \\[0, hor\\].*chwkjit\\(times, hor = \\)"
@@ -699,7 +706,12 @@ test_that("LOW: the Wayback snapshot URL is read whole and unescaped", {
   skip_on_os("windows")
   port <- free_port()
   long <- paste0("https://example.org/", strrep("a", 3000))
-  esc <- gsub("/", "\\\\/", paste0("http://web.archive.org/web/2024/", long))
+  esc <- gsub(
+    "/",
+    "\\/",
+    paste0("http://web.archive.org/web/2024/", long),
+    fixed = TRUE
+  )
   body <- paste0(
     '{"archived_snapshots":{"closest":{"available": true,"url":"',
     esc,

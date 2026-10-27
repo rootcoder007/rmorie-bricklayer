@@ -28,7 +28,7 @@ order of \code{std} (sort by an age order, not alphabetically).}
 \item{qual}{Optional quality flags, one per row (a vector; see
 \code{\link{qltyrcd}}).}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of the prevalence intervals (default 0.95).}
 
 \item{scale}{The upper bound of the scale: 100 for percentages (the default),
 1 for proportions, \code{Inf} for rates.}
@@ -93,6 +93,16 @@ sp <- stdprev(
 )
 sp
 plot(sp)
+
+# your own numbers: made-up percentages in three age groups for two groups,
+# standardised to a population of 500, 300 and 200 in those age groups
+stdprev(
+  est = c(12, 9, 6, 8, 6, 4),
+  lower = c(9, 6, 3, 7, 5, 3),
+  upper = c(15, 12, 9, 9, 7, 5),
+  std = c(500, 300, 200),
+  grp = rep(c("Nation A", "Everyone else"), each = 3)
+)
 \dontshow{\}) # examplesIf}
 }
 \references{

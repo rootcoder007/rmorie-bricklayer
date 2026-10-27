@@ -15,7 +15,7 @@ test_that("the running-mean fallback matches mean() and cannot overflow", {
   r <- .core_mean_running
   expect_identical(r(rep(1e308, 3)), 1e308)
   expect_equal(r(c(1e308, 1e308, -1e308)), 1e308 / 3, tolerance = 1e-15)
-  expect_equal(r(c(-1e308, 1e308, 1e308, -1e308)), 0)
+  expect_identical(r(c(-1e308, 1e308, 1e308, -1e308)), 0)
   expect_true(is.na(r(numeric(0))))
   expect_true(is.na(r(c(1, NA))))
   set.seed(4)
@@ -31,27 +31,43 @@ test_that("cmom survives the extremes and keeps its definitions", {
   x <- c(1e150, 2e150, 4e150, 8e150)
   m <- cmom(x)
   cm <- function(k) mean(((x - mean(x)) / 1e150)^k)
-  expect_equal(m[["mean"]], mean(x))
+  expect_identical(m[["mean"]], mean(x))
   expect_equal(
     m[["variance"]],
     stats::var(x / 1e150) * 1e300,
     tolerance = 1e-12
   )
-  expect_equal(m[["skewness"]], cm(3) / cm(2)^1.5)
-  expect_equal(m[["kurtosis"]], cm(4) / cm(2)^2 - 3)
+  expect_equal(
+    m[["skewness"]],
+    cm(3) / cm(2)^1.5,
+    tolerance = testthat::testthat_tolerance()
+  )
+  expect_equal(
+    m[["kurtosis"]],
+    cm(4) / cm(2)^2 - 3,
+    tolerance = testthat::testthat_tolerance()
+  )
   set.seed(6)
   y <- stats::rnorm(300, 5, 2)
   m <- cmom(y)
   cy <- function(k) mean((y - mean(y))^k)
-  expect_equal(m[["mean"]], mean(y))
-  expect_equal(m[["variance"]], stats::var(y))
-  expect_equal(m[["skewness"]], cy(3) / cy(2)^1.5)
-  expect_equal(m[["kurtosis"]], cy(4) / cy(2)^2 - 3)
+  expect_identical(m[["mean"]], mean(y))
+  expect_identical(m[["variance"]], stats::var(y))
+  expect_equal(
+    m[["skewness"]],
+    cy(3) / cy(2)^1.5,
+    tolerance = testthat::testthat_tolerance()
+  )
+  expect_equal(
+    m[["kurtosis"]],
+    cy(4) / cy(2)^2 - 3,
+    tolerance = testthat::testthat_tolerance()
+  )
   # the streaming accumulator no longer squares its first value
   st <- smrystat(onlsmry(rep(1e308, 3)))
   expect_identical(unname(st[c("mean", "variance")]), c(1e308, 0))
   st <- smrystat(smryupd(onlsmry(c(1e300, 3e300)), 5e300))
-  expect_equal(st[["mean"]], 3e300)
+  expect_identical(st[["mean"]], 3e300)
   expect_equal(
     st[["variance"]],
     stats::var(c(1, 3, 5)) * 1e600,
@@ -65,7 +81,11 @@ test_that("jsgzdec refuses input that is not a gzip member", {
   expect_error(jsgzdec(charToRaw("abc")), "gzip member|base64")
   expect_error(jsgzdec(-1), "gzip member|base64")
   enc <- jsgzenc(list(a = 1, b = "x"))
-  expect_equal(jsgzdec(enc), list(a = 1, b = "x"))
+  expect_equal(
+    jsgzdec(enc),
+    list(a = 1, b = "x"),
+    tolerance = testthat::testthat_tolerance()
+  )
 })
 
 test_that("ccorr is exact at tiny spread, stays in [-1, 1] (round 3)", {

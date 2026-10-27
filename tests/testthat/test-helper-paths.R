@@ -17,22 +17,22 @@ test_that("the pure-R SHA-256 agrees with the compiled core", {
     "",
     "abc",
     "the quick brown fox",
-    paste(rep("x", 1000), collapse = ""),
+    strrep("x", 1000),
     "café 中文"
   )) {
     bytes <- charToRaw(s)
-    expect_equal(rmoriebricklayer:::.rmbl_sha256_hex(bytes), csha256(bytes))
+    expect_identical(.rmbl_sha256_hex(bytes), csha256(bytes))
   }
   # the published NIST vector, through the pure-R path
-  expect_equal(
-    rmoriebricklayer:::.rmbl_sha256_hex(charToRaw("abc")),
+  expect_identical(
+    .rmbl_sha256_hex(charToRaw("abc")),
     "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
   )
   # and over a multi-block input, which exercises the padding
-  long <- charToRaw(paste(rep("abcdefghij", 30), collapse = ""))
-  expect_equal(rmoriebricklayer:::.rmbl_sha256_hex(long), csha256(long))
+  long <- charToRaw(strrep("abcdefghij", 30))
+  expect_identical(.rmbl_sha256_hex(long), csha256(long))
   expect_match(
-    rmoriebricklayer:::.rmbl_sha256_hex(charToRaw("x")),
+    .rmbl_sha256_hex(charToRaw("x")),
     "^[0-9a-f]{64}$"
   )
 
@@ -40,10 +40,10 @@ test_that("the pure-R SHA-256 agrees with the compiled core", {
   p <- tempfile()
   on.exit(unlink(p), add = TRUE)
   writeBin(charToRaw("capsule payload"), p)
-  expect_equal(sha256file(p), csha256(charToRaw("capsule payload")))
-  expect_equal(
+  expect_identical(sha256file(p), csha256(charToRaw("capsule payload")))
+  expect_identical(
     sha256file(p),
-    rmoriebricklayer:::.rmbl_sha256_hex(
+    .rmbl_sha256_hex(
       charToRaw("capsule payload")
     )
   )
@@ -52,8 +52,8 @@ test_that("the pure-R SHA-256 agrees with the compiled core", {
 test_that("the ASCII transliteration works without stringi", {
   # toascii() prefers stringi and falls back to this when it is absent.
   # Both must return pure 7-bit ASCII.
-  fb <- rmoriebricklayer:::.to_ascii_fallback
-  expect_equal(fb("plain"), "plain")
+  fb <- .to_ascii_fallback
+  expect_identical(fb("plain"), "plain")
   # Latin accents fold to their base letters
   out <- fb(c("café", "naïve", "Angèla"))
   expect_false(any(grepl("[^ -~]", out)))
@@ -65,13 +65,13 @@ test_that("the ASCII transliteration works without stringi", {
   for (s in c("plain", "café", "中文", "Анг")) {
     expect_false(grepl("[^ -~]", toascii(s)))
   }
-  expect_equal(toascii("plain name"), "plain name")
+  expect_identical(toascii("plain name"), "plain name")
   # NA becomes empty rather than the string "NA"
-  expect_equal(toascii(NA), "")
+  expect_identical(toascii(NA), "")
 
   # asciifb() leaves valid text alone and transliterates the rest
-  expect_equal(asciifb("plain name"), "plain name")
-  expect_equal(asciifb(c("café", "resume"), force = TRUE)[2], "resume")
+  expect_identical(asciifb("plain name"), "plain name")
+  expect_identical(asciifb(c("café", "resume"), force = TRUE)[2], "resume")
   expect_false(grepl("[^ -~]", asciifb("café", force = TRUE)))
 
   # INVALID UTF-8: a byte sequence that is not valid text at all. This is
@@ -82,22 +82,26 @@ test_that("the ASCII transliteration works without stringi", {
   expect_false(grepl("[^ -~]", fixed))
   # valid elements beside a broken one are untouched
   mixed <- asciifb(c("keep me", broken))
-  expect_equal(mixed[1], "keep me")
+  expect_identical(mixed[1], "keep me")
   expect_false(grepl("[^ -~]", mixed[2]))
 })
 
 test_that("the JSON reader accepts a path, a string and a URL", {
   # a literal JSON string
-  expect_equal(rmoriebricklayer:::.rmbl_read_json('{"a":1}')$a, 1)
+  expect_equal(
+    .rmbl_read_json('{"a":1}')$a,
+    1,
+    tolerance = testthat::testthat_tolerance()
+  )
   # a local file
   p <- tempfile(fileext = ".json")
   on.exit(unlink(p), add = TRUE)
   writeLines('{"name":"Layer0","n":3}', p)
-  got <- rmoriebricklayer:::.rmbl_read_json(p)
-  expect_equal(got$name, "Layer0")
-  expect_equal(got$n, 3)
+  got <- .rmbl_read_json(p)
+  expect_identical(got$name, "Layer0")
+  expect_equal(got$n, 3, tolerance = testthat::testthat_tolerance())
   # simplify = FALSE gives plain nested lists
-  raw <- rmoriebricklayer:::.rmbl_read_json('{"a":[1,2]}', simplify = FALSE)
+  raw <- .rmbl_read_json('{"a":[1,2]}', simplify = FALSE)
   expect_type(raw$a, "list")
 
   # a URL goes through the fetch core. Mocked, so the test needs no
@@ -106,20 +110,20 @@ test_that("the JSON reader accepts a path, a string and a URL", {
   seen <- NULL
   testthat::local_mocked_bindings(
     blfetch = function(url, dest, ...) {
-      seen <<- url
+      assign("seen", url, envir = parent.env(environment()))
       writeLines('{"from":"url"}', dest)
       invisible(dest)
     }
   )
-  u <- rmoriebricklayer:::.rmbl_read_json("https://example.org/x.json")
-  expect_equal(u$from, "url")
-  expect_equal(seen, "https://example.org/x.json")
+  u <- .rmbl_read_json("https://example.org/x.json")
+  expect_identical(u$from, "url")
+  expect_identical(seen, "https://example.org/x.json")
   # plain http only with the explicit option (the URL gate refuses it otherwise)
   old <- options(rmoriebricklayer.allowhttp = TRUE)
   on.exit(options(old), add = TRUE)
-  v <- rmoriebricklayer:::.rmbl_read_json("http://example.org/y.json")
-  expect_equal(v$from, "url")
-  expect_equal(seen, "http://example.org/y.json")
+  v <- .rmbl_read_json("http://example.org/y.json")
+  expect_identical(v$from, "url")
+  expect_identical(seen, "http://example.org/y.json")
 })
 
 test_that("the run summary includes the package versions when recorded", {
@@ -139,7 +143,7 @@ test_that("the run summary includes the package versions when recorded", {
   # without the version block
   bare <- summary_text(list(project = "demo"))
   expect_match(bare, "PASS")
-  expect_false(grepl("R PACKAGE VERSIONS", bare))
+  expect_false(grepl("R PACKAGE VERSIONS", bare, fixed = TRUE))
 
   # WITH it: a version drift explains most numerical differences between
   # runs, so the summary names the versions it ran on
@@ -157,6 +161,7 @@ test_that("the run summary includes the package versions when recorded", {
   # an empty version list adds no block
   expect_false(grepl(
     "R PACKAGE VERSIONS",
-    summary_text(list(project = "d", r_package_versions = list()))
+    summary_text(list(project = "d", r_package_versions = list())),
+    fixed = TRUE
   ))
 })

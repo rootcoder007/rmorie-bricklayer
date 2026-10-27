@@ -5,39 +5,6 @@
 # the long-form sample and random rounding, an Indigenous standard population
 # for age standardisation, and a Community Well-Being score from public figures.
 
-# identity columns of the profile, as the files name them, and the labels used
-# here. The names are set as a character vector: a non-ASCII name inside c()
-# becomes a symbol, which a package installed in a C locale stores as
-# "M<U+00C9>TIS", so the column never matched there (C-locale check of 1.0.0)
-.rmbl_ipp_groups <- c(
-  "Total",
-  "Indigenous identity",
-  "Single Indigenous responses",
-  "First Nations",
-  "M\u00e9tis",
-  "Inuit",
-  "Multiple Indigenous responses",
-  "Indigenous responses not included elsewhere",
-  "Non-Indigenous",
-  "Total households",
-  "Indigenous households",
-  "Non-Indigenous households"
-)
-names(.rmbl_ipp_groups) <- c(
-  "TOTAL_IND_IDENT",
-  "IND_IDENT",
-  "SINGLE_IND_RESP",
-  "FIRST_NATIONS",
-  "M\u00c9TIS",
-  "INUK",
-  "MULTI_IND_RESP",
-  "IND_RESP_NIE",
-  "NON_IND",
-  "TOTAL_IND_HHLD",
-  "IND_HHLD",
-  "NON_IND_HHLD"
-)
-
 #' Read the 2021 Census Indigenous Population Profile
 #'
 #' Reads a table of the Indigenous Population Profile, 2021 Census of Population
@@ -101,104 +68,10 @@ cnsprof <- function(x) {
       call. = FALSE
     )
   }
-  nm <- names(x)
-  sym <- grep("^SYMBOL_", nm, value = TRUE)
-  base <- sub("^SYMBOL_", "", sym)
-  vcol <- vapply(
-    base,
-    function(b) {
-      hit <- nm[sub("\\s*\\([0-9]+\\)$", "", nm) == b & !grepl("^SYMBOL_", nm)]
-      if (length(hit)) hit[[1L]] else NA_character_
-    },
-    ""
-  )
-  keep <- !is.na(vcol)
-  if (!any(keep)) {
-    stop("`x` has no group columns with their SYMBOL_ columns", call. = FALSE)
-  }
-  sym <- sym[keep]
-  base <- base[keep]
-  vcol <- vcol[keep]
-  # read in a C locale the bytes of "M\u00c9TIS" are unmarked and matched none
-  # of the keys
-  base <- .rmbl_utf8(base)
-  lab <- ifelse(base %in% names(.rmbl_ipp_groups), .rmbl_ipp_groups[base], base)
-  # the hierarchy, from the indentation of each characteristic's name (two
-  # spaces a level)
+  gc <- .rmbl_ipp_cols(names(x))
   cid <- as.integer(x$CHARACTERISTIC_ID)
-  raw <- as.character(x$CHARACTERISTIC_NAME)
-  u <- !duplicated(cid)
-  ch <- data.frame(id = cid[u], name = raw[u])
-  ch <- ch[order(ch$id), ]
-  ch$level <- (nchar(ch$name) - nchar(sub("^\\s+", "", ch$name))) %/% 2L
-  ch$name <- trimws(gsub("\u00a0", " ", ch$name))
-  ch$parent <- NA_integer_
-  ch$root <- NA_integer_
-  stack <- integer()
-  last_total <- NA_integer_
-  for (i in seq_len(nrow(ch))) {
-    lv <- ch$level[i]
-    stack <- stack[seq_len(min(length(stack), lv))]
-    ch$parent[i] <- if (lv > 0L && length(stack) >= lv) {
-      stack[lv]
-    } else {
-      NA_integer_
-    }
-    ch$root[i] <- if (lv > 0L && length(stack)) stack[1L] else ch$id[i]
-    # a top-level line that is not a "Total - " ("Participation rate", "In low
-    # income ...") belongs to the topic above it: its sample is that topic's
-    if (lv == 0L && grepl("^Total", ch$name[i])) {
-      last_total <- ch$id[i]
-    }
-    if (lv == 0L && !grepl("^Total", ch$name[i]) && !is.na(last_total)) {
-      ch$root[i] <- last_total
-    }
-    stack[lv + 1L] <- ch$id[i]
-  }
-  root_name <- ch$name[match(ch$root, ch$id)]
-  ch$sample <- ifelse(
-    grepl("25% sample", root_name, fixed = TRUE),
-    "25%",
-    "100%"
-  )
-  m <- match(cid, ch$id)
-  col_or <- function(n, default = NA) {
-    if (n %in% nm) x[[n]] else rep(default, nrow(x))
-  }
-  n <- nrow(x)
-  k <- length(vcol)
-  rep_k <- function(v) rep(v, times = k)
-  st <- unlist(lapply(sym, function(s) as.character(x[[s]])), use.names = FALSE)
-  st[is.na(st)] <- ""
-  st <- .rmbl_utf8(trimws(st))
-  q <- ifelse(st == "", "ok", st)
-  q[q == "rE"] <- "E"
-  q[!q %in% c("ok", "E", "F", "x", "..", "...")] <- "ok"
-  val <- suppressWarnings(as.numeric(unlist(
-    lapply(vcol, function(v) as.character(x[[v]])),
-    use.names = FALSE
-  )))
-  val[q %in% c("F", "x", "..", "...")] <- NA_real_
-  out <- data.frame(
-    geo = rep_k(as.character(x$GEO_NAME)),
-    dguid = rep_k(as.character(col_or("DGUID"))),
-    geolvl = rep_k(as.character(col_or("GEO_LEVEL"))),
-    residence = rep_k(as.character(col_or("RESIDENCE", "Total"))),
-    gender = rep_k(as.character(col_or("GENDER", "Total"))),
-    age = rep_k(as.character(col_or("AGE_GROUP", "Total"))),
-    chaid = rep_k(cid),
-    characteristic = rep_k(ch$name[m]),
-    level = rep_k(ch$level[m]),
-    parid = rep_k(ch$parent[m]),
-    rootid = rep_k(ch$root[m]),
-    sample = rep_k(ch$sample[m]),
-    group = rep(unname(lab), each = n),
-    value = val,
-    quality = factor(q, levels = c("ok", "E", "F", "x", "..", "...")),
-    tnrsf = rep_k(suppressWarnings(as.numeric(col_or("TNR_SF")))),
-    tnrlf = rep_k(suppressWarnings(as.numeric(col_or("TNR_LF")))),
-    stringsAsFactors = FALSE
-  )
+  ch <- .rmbl_ipp_tree(cid, as.character(x$CHARACTERISTIC_NAME))
+  out <- .rmbl_ipp_long(x, ch, cid, gc)
   class(out) <- c("rmbl_census_profile", "data.frame")
   out
 }
@@ -246,7 +119,7 @@ cnsprof <- function(x) {
 #' @param deff Design effect (default 1).
 #' @param roubase The base of the random rounding (default 5, Statistics
 #'   Canada's); 1 for counts that are not rounded.
-#' @param conflvl Confidence level (default 0.95).
+#' @param conflvl Confidence level of the share's limits (default 0.95).
 #' @return A data frame of class \code{rmbl_profile_share} with \code{geo},
 #'   \code{dguid}, \code{residence}, \code{gender}, \code{age}, \code{group},
 #'   \code{numerator}, \code{denominator}, \code{estimate} (percent),
@@ -289,80 +162,19 @@ profshr <- function(
   deff <- .rmbl_scalar(deff, "deff", 0.1, 100)
   roubase <- .rmbl_scalar(roubase, "roubase", 1, 1000, integer = TRUE)
   conflvl <- .rmbl_conf_level(conflvl)
-  pick <- function(v, what) {
-    if (!(is.numeric(v) || is.character(v)) || length(v) != 1L || is.na(v)) {
-      stop(
-        sprintf("`%s` must be one characteristic id or name", what),
-        call. = FALSE
-      )
-    }
-    id <- if (is.numeric(v)) {
-      as.integer(v)
-    } else {
-      unique(x$chaid[x$characteristic == v])
-    }
-    if (length(id) != 1L || !id %in% x$chaid) {
-      stop(
-        sprintf(
-          "`%s` (%s) names %s characteristic of `x`",
-          what,
-          v,
-          if (length(id) > 1L) "more than one" else "no"
-        ),
-        call. = FALSE
-      )
-    }
-    id
-  }
-  nid <- pick(num, "numerator")
+  nid <- .rmbl_profshr_pick(x, num, "num")
   did <- if (is.null(den)) {
     unique(x$parid[x$chaid == nid])
   } else {
-    pick(den, "denominator")
+    .rmbl_profshr_pick(x, den, "den")
   }
   if (length(did) != 1L || is.na(did)) {
     stop("the numerator has no parent: give `den`", call. = FALSE)
   }
-  key <- function(d) {
-    paste(d$dguid, d$geo, d$residence, d$gender, d$age, d$group, sep = "\r")
-  }
   a <- x[x$chaid == nid, ]
   b <- x[x$chaid == did, ]
-  m <- match(key(a), key(b))
-  .num <- a$value
-  .den <- b$value[m]
-  ok <- is.finite(.num) & is.finite(.den) & .den > 0 & .num >= 0 & .num <= .den
-  p <- ifelse(ok, .num / .den, NA_real_)
-  # on reserves the long form was a full canvass
-  f <- ifelse(a$sample == "25%" & !a$residence %in% "On reserve", smpfrac, 1)
-  cr <- (roubase^2 - 1) / 6
-  v <- ifelse(
-    ok,
-    deff * (1 - f) * p * (1 - p) / (f * .den) + cr * (1 + p^2) / .den^2,
-    NA_real_
-  )
-  z <- stats::qnorm(1 - (1 - conflvl) / 2)
-  ne <- ifelse(ok & v > 0, pmax(p * (1 - p), 1 / .den) / v, NA_real_)
-  centre <- (p + z^2 / (2 * ne)) / (1 + z^2 / ne)
-  half <- z / (1 + z^2 / ne) * sqrt(p * (1 - p) / ne + z^2 / (4 * ne^2))
-  qa <- as.character(a$quality)
-  qb <- as.character(b$quality)[m]
-  qual <- ifelse(qa == "ok" & qb %in% "ok", "ok", ifelse(qa == "ok", qb, qa))
-  out <- data.frame(
-    geo = a$geo,
-    dguid = a$dguid,
-    residence = a$residence,
-    gender = a$gender,
-    age = a$age,
-    group = a$group,
-    numerator = .num,
-    denominator = .den,
-    estimate = 100 * p,
-    lower = 100 * pmax(0, centre - half),
-    upper = 100 * pmin(1, centre + half),
-    quality = qual,
-    stringsAsFactors = FALSE
-  )
+  m <- match(.rmbl_profshr_key(a), .rmbl_profshr_key(b))
+  out <- .rmbl_profshr_est(a, b, m, smpfrac, deff, roubase, conflvl)
   rownames(out) <- NULL
   attr(out, "characteristics") <- c(
     numerator = unique(a$characteristic),
@@ -435,38 +247,12 @@ cnsstd <- function(
   if (!is.character(ages) || !length(ages) || anyNA(ages)) {
     stop("`ages` must name age groups", call. = FALSE)
   }
-  first <- min(x$chaid)
   resid <- .rmbl_string1(resid, "resid")
-  d <- x[
-    x$chaid == first &
-      x$group == grp &
-      (x$geo == geo | x$dguid == geo) &
-      x$gender %in% c("Total - Gender", "Total") &
-      x$residence %in% c(resid, "Total"),
-  ]
-  if (!nrow(d)) {
-    stop(
-      sprintf("no population for group \"%s\" in \"%s\"", grp, geo),
-      call. = FALSE
-    )
-  }
-  if (length(unique(d$dguid)) > 1L) {
-    stop(
-      sprintf(
-        "\"%s\" names %d places: give its DGUID as `geo`",
-        geo,
-        length(unique(d$dguid))
-      ),
-      call. = FALSE
-    )
-  }
+  d <- .rmbl_cnsstd_rows(x, grp, geo, resid)
   pop <- d$value[match(ages, d$age)]
   if (anyNA(pop)) {
     stop(
-      sprintf(
-        "no population for: %s",
-        paste(ages[is.na(pop)], collapse = ", ")
-      ),
+      sprintf("no population for: %s", toString(ages[is.na(pop)])),
       call. = FALSE
     )
   }
@@ -552,143 +338,18 @@ cnscwb <- function(
     stop("`dwell` must come from cnsprof()", call. = FALSE)
   }
   .rmbl_no_fn(groups = groups)
-  if (
-    !is.character(groups) ||
-      !length(groups) ||
-      anyNA(groups) ||
-      !all(nzchar(groups))
-  ) {
-    stop("`groups` must name one group or more", call. = FALSE)
-  }
+  .rmbl_cwb_groups(groups)
   resid <- .rmbl_string1(resid, "resid")
   minpop <- .rmbl_scalar(minpop, "minpop", 0)
   tot_g <- x$gender %in%
     c("Total - Gender", "Total") &
     x$residence %in% c(resid, "Total")
-  val <- function(name, age, root = NULL) {
-    d <- x[tot_g & x$characteristic == name & x$age == age, ]
-    if (!is.null(root)) {
-      d <- d[d$rootid == root, ]
-    }
-    d
-  }
-  look <- function(d, geo, group) {
-    v <- d$value[d$dguid == geo & d$group == group]
-    if (length(v)) v[[1L]] else NA_real_
-  }
-  pop_id <- min(x$chaid)
-  pop <- x[tot_g & x$chaid == pop_id & x$age == "Total - Age groups", ]
-  rec <- val(
-    paste0(
-      "Number of total income recipients aged 15 years and over in ",
-      "private households in 2020 - 25% sample data"
-    ),
-    "Total - Age groups"
-  )
-  avg <- val(
-    "Average total income in 2020 among recipients ($)",
-    "Total - Age groups"
-  )
-  edu_tot <- x[
-    tot_g &
-      x$age == "25 years and over" &
-      grepl("^Total - Highest certificate", x$characteristic),
-  ]
-  # "High (secondary) school diploma" is high school only in the 2021 profile:
-  # at least high school is everyone but those with no certificate
-  none <- val(
-    "No certificate, diploma or degree",
-    "25 years and over",
-    unique(edu_tot$chaid)
-  )
-  ba <- val(
-    "Bachelor's degree or higher",
-    "25 years and over",
-    unique(edu_tot$chaid)
-  )
-  part <- val("Participation rate", "25 to 64 years")
-  unemp <- val("Unemployment rate", "25 to 64 years")
-  geos <- unique(x$dguid)
-  rows <- list()
-  for (g in geos) {
-    for (gr in groups) {
-      inc <- look(rec, g, gr) * look(avg, g, gr) / look(pop, g, gr)
-      e_t <- look(edu_tot, g, gr)
-      rows[[length(rows) + 1L]] <- data.frame(
-        geo = x$geo[match(g, x$dguid)],
-        dguid = g,
-        group = gr,
-        incpercap = inc,
-        highsch25p = 100 * (1 - look(none, g, gr) / e_t),
-        uni25p = 100 * look(ba, g, gr) / e_t,
-        population = look(pop, g, gr),
-        participation = look(part, g, gr),
-        employment = 100 - look(unemp, g, gr),
-        stringsAsFactors = FALSE
-      )
-    }
-  }
-  d <- do.call(rbind, rows)
+  d <- .rmbl_cwb_rows(x, .rmbl_cwb_tables(x, tot_g), groups)
   d$notcro <- d$nomajrep <- NA_real_
   if (!is.null(dwell)) {
-    hh <- function(name) dwell[dwell$characteristic == name, ]
-    crowd_t <- hh(
-      paste0(
-        "Total - Private households by number of persons per room - 25% ",
-        "sample data"
-      )
-    )
-    crowd_ok <- hh("One person or fewer per room")
-    rep_t <- hh(
-      paste0(
-        "Total - Occupied private dwellings by dwelling condition - 25% ",
-        "sample data"
-      )
-    )
-    rep_maj <- hh("Major repairs needed")
-    hgroup <- ifelse(
-      d$group == "Non-Indigenous",
-      "Non-Indigenous households",
-      "Indigenous households"
-    )
-    for (i in seq_len(nrow(d))) {
-      d$notcro[i] <- 100 *
-        look(crowd_ok, d$dguid[i], hgroup[i]) /
-        look(crowd_t, d$dguid[i], hgroup[i])
-      d$nomajrep[i] <- 100 *
-        (1 -
-          look(rep_maj, d$dguid[i], hgroup[i]) /
-            look(rep_t, d$dguid[i], hgroup[i]))
-    }
+    d <- .rmbl_cwb_housing(d, dwell)
   }
-  ok <- is.finite(d$incpercap) &
-    d$incpercap > 0 &
-    is.finite(d$population) &
-    d$population >= minpop
-  sc <- data.frame(
-    income = NA_real_,
-    education = NA_real_,
-    housing = NA_real_,
-    labour = NA_real_,
-    cwb = NA_real_
-  )
-  sc <- sc[rep(1L, nrow(d)), ]
-  if (any(ok)) {
-    s <- cwbscr(
-      d$incpercap[ok],
-      pmin(100, d$highsch25p[ok]),
-      pmin(100, d$uni25p[ok]),
-      ifelse(is.na(d$notcro[ok]), 50, d$notcro[ok]),
-      ifelse(is.na(d$nomajrep[ok]), 50, d$nomajrep[ok]),
-      d$participation[ok],
-      d$employment[ok],
-      bounds = bounds
-    )
-    s$housing[is.na(d$notcro[ok]) | is.na(d$nomajrep[ok])] <- NA_real_
-    s$cwb <- rowMeans(s[c("income", "education", "housing", "labour")])
-    sc[ok, ] <- s
-  }
-  rownames(sc) <- NULL
+  sc <- .rmbl_cwb_score(d, bounds, minpop)
   out <- cbind(
     d[c("geo", "dguid", "group")],
     sc,
@@ -721,13 +382,7 @@ plot.rmbl_census_cwb <- function(
   geos <- unique(d$geo)
   grp <- unique(d$group)
   cl <- .bl_cols(length(grp), col, palette)
-  m <- tapply(
-    d[[component]],
-    list(factor(d$geo, levels = geos), factor(d$group, levels = grp)),
-    mean
-  )
-  o <- order(apply(m, 1, max, na.rm = TRUE))
-  m <- m[o, , drop = FALSE]
+  m <- .rmbl_cwb_matrix(d, component, geos, grp)
   op <- graphics::par(
     mar = c(4.5, max(4, min(14, max(nchar(rownames(m))) * 0.55)), 3, 1)
   )
@@ -797,4 +452,619 @@ plot.rmbl_profile_share <- function(
     ...
   )
   invisible(d[c("geo", "group", "estimate", "lower", "upper")])
+}
+
+# identity columns of the profile, as the files name them, and the labels used
+# here. The names are set as a character vector: a non-ASCII name inside c()
+# becomes a symbol, which a package installed in a C locale stores as
+# "M<U+00C9>TIS", so the column never matched there (C-locale check of 1.0.0)
+.rmbl_ipp_groups <- c(
+  "Total",
+  "Indigenous identity",
+  "Single Indigenous responses",
+  "First Nations",
+  "M\u00e9tis",
+  "Inuit",
+  "Multiple Indigenous responses",
+  "Indigenous responses not included elsewhere",
+  "Non-Indigenous",
+  "Total households",
+  "Indigenous households",
+  "Non-Indigenous households"
+)
+
+names(.rmbl_ipp_groups) <- c(
+  "TOTAL_IND_IDENT",
+  "IND_IDENT",
+  "SINGLE_IND_RESP",
+  "FIRST_NATIONS",
+  "M\u00c9TIS",
+  "INUK",
+  "MULTI_IND_RESP",
+  "IND_RESP_NIE",
+  "NON_IND",
+  "TOTAL_IND_HHLD",
+  "IND_HHLD",
+  "NON_IND_HHLD"
+)
+
+#' @export
+format.rmbl_census_profile <- function(x, ...) {
+  need <- c("geo", "dguid", "group", "chaid", "characteristic", "value")
+  if (!all(need %in% names(x)) || !nrow(x)) {
+    return(.an_plain(x, ...))
+  }
+  d <- as.data.frame(x)
+  h <- .an_head(d, 100L)
+  show <- .an_cp_table(h$df)
+  .an_block(
+    "Indigenous Population Profile, tidied",
+    facts = list(
+      Edition = .an_census_year(d$dguid),
+      Rows = nrow(d),
+      Geographies = .an_values(d$geo),
+      Groups = .an_values(d$group),
+      Characteristics = length(unique(d$chaid)),
+      Samples = .an_values(d$sample),
+      Quality = .an_counts(d$quality),
+      `Non-response` = .an_nonresp(d)
+    ),
+    tables = list(show),
+    reading = .an_cp_reading(d),
+    notes = c(
+      h$more,
+      "One row per geography, group and characteristic: the value with its",
+      "level and parent in the profile's hierarchy, ready for profshr().",
+      "Counts are randomly rounded to multiples of 5 (10 below 10).",
+      "Statistics Canada suppresses an area whose long-form non-response",
+      "is 50% or more; a high rate means a larger error than the sample."
+    )
+  )
+}
+
+#' @export
+format.rmbl_profile_share <- function(x, ...) {
+  need <- c("geo", "group", "numerator", "denominator", "estimate", "lower")
+  if (!all(need %in% names(x)) || !nrow(x)) {
+    return(.an_plain(x, ...))
+  }
+  d <- as.data.frame(x)
+  ch <- attr(x, "characteristics")
+  h <- .an_head(d, 100L)
+  keep <- c("geo", "dguid", "residence", "gender", "age", "group")
+  show <- h$df[intersect(keep, names(d))]
+  show$numerator <- h$df$numerator
+  show$denominator <- h$df$denominator
+  show$estimate <- h$df$estimate
+  show[[.an_ci_name(attr(x, "conflvl"))]] <- .an_ci(
+    h$df$lower,
+    h$df$upper
+  )
+  show$quality <- h$df$quality
+  .an_block(
+    "Share of a population with a characteristic",
+    facts = list(
+      Edition = .an_census_year(d$dguid),
+      Numerator = if (!is.null(ch)) ch[["numerator"]],
+      Denominator = if (!is.null(ch)) ch[["denominator"]],
+      Rows = nrow(d),
+      Geographies = .an_values(d$geo),
+      Ages = .an_values(d$age),
+      Estimate = "percent"
+    ),
+    tables = list(show),
+    reading = .rd_groups(
+      .an_ps_labels(d),
+      d$estimate,
+      d$lower,
+      d$upper,
+      "share"
+    ),
+    notes = c(
+      h$more,
+      "The interval carries the long-form sample and the random rounding,",
+      "not non-response: read it as a lower bound on the uncertainty."
+    )
+  )
+}
+
+#' @export
+format.rmbl_census_cwb <- function(x, ...) {
+  need <- c("geo", "group", "income", "education", "housing", "labour", "cwb")
+  if (!all(need %in% names(x)) || !nrow(x)) {
+    return(.an_plain(x, ...))
+  }
+  d <- as.data.frame(x)
+  h <- .an_head(d[need], 100L)
+  .an_block(
+    "Community Well-Being index, from the census",
+    facts = list(
+      Edition = .an_census_year(d$dguid),
+      Rows = nrow(d),
+      Geographies = .an_values(d$geo),
+      Groups = .an_values(d$group),
+      `Not scored` = if (anyNA(d$cwb)) sum(is.na(d$cwb)),
+      Scale = "0 to 100 for each component and the score"
+    ),
+    tables = list(h$df),
+    reading = .an_cwb_reading(d),
+    notes = c(
+      h$more,
+      "cwb is the mean of income, education, housing and labour force",
+      "activity (Indigenous Services Canada's Community Well-Being index).",
+      "CWB-style, close to but not the Department's index: the public",
+      "profile's inputs differ (ages 25 and over; housing from households,",
+      "pooled for First Nations, M\u00e9tis and Inuit people).",
+      "Never a measure of wellness as First Nations, M\u00e9tis or Inuit",
+      "people define it. A group below minpop people gets no score.",
+      if (anyNA(d$housing)) "Housing needs the household table (dwell)."
+    )
+  )
+}
+
+#' The group columns of a profile table, with their SYMBOL_ columns.
+#' @param nm The table's column names.
+#' @return A list: `sym` (the SYMBOL_ columns), `vcol` (the value columns) and
+#'   `lab` (the group labels).
+#' @noRd
+.rmbl_ipp_cols <- function(nm) {
+  sym <- grep("^SYMBOL_", nm, value = TRUE)
+  base <- sub("^SYMBOL_", "", sym)
+  vcol <- vapply(
+    base,
+    function(b) {
+      hit <- nm[sub("\\s*\\([0-9]+\\)$", "", nm) == b & !grepl("^SYMBOL_", nm)]
+      if (length(hit)) hit[[1L]] else NA_character_
+    },
+    ""
+  )
+  keep <- !is.na(vcol)
+  if (!any(keep)) {
+    stop("`x` has no group columns with their SYMBOL_ columns", call. = FALSE)
+  }
+  sym <- sym[keep]
+  base <- base[keep]
+  vcol <- vcol[keep]
+  # read in a C locale the bytes of "M\u00c9TIS" are unmarked and matched none
+  # of the keys
+  base <- .rmbl_utf8(base)
+  lab <- ifelse(base %in% names(.rmbl_ipp_groups), .rmbl_ipp_groups[base], base)
+  list(sym = sym, vcol = vcol, lab = lab)
+}
+
+#' The hierarchy of a profile's characteristics, from the indentation of each
+#' characteristic's name (two spaces a level).
+#' @param cid The characteristic ids, one per row of the table.
+#' @param raw The characteristic names as published, one per row.
+#' @return A data frame, one row per characteristic: `id`, `name`, `level`,
+#'   `parent`, `root`, `sample`.
+#' @noRd
+.rmbl_ipp_tree <- function(cid, raw) {
+  u <- !duplicated(cid)
+  ch <- data.frame(id = cid[u], name = raw[u])
+  ch <- ch[order(ch$id), ]
+  ch$level <- (nchar(ch$name) - nchar(sub("^\\s+", "", ch$name))) %/% 2L
+  ch$name <- trimws(gsub("\u00a0", " ", ch$name, fixed = TRUE))
+  ch$parent <- NA_integer_
+  ch$root <- NA_integer_
+  stack <- integer()
+  last_total <- NA_integer_
+  for (i in seq_len(nrow(ch))) {
+    lv <- ch$level[i]
+    stack <- stack[seq_len(min(length(stack), lv))]
+    ch$parent[i] <- if (lv > 0L && length(stack) >= lv) {
+      stack[lv]
+    } else {
+      NA_integer_
+    }
+    ch$root[i] <- if (lv > 0L && length(stack)) stack[1L] else ch$id[i]
+    # a top-level line that is not a "Total - " ("Participation rate", "In low
+    # income ...") belongs to the topic above it: its sample is that topic's
+    if (lv == 0L && grepl("^Total", ch$name[i])) {
+      last_total <- ch$id[i]
+    }
+    if (lv == 0L && !grepl("^Total", ch$name[i]) && !is.na(last_total)) {
+      ch$root[i] <- last_total
+    }
+    stack[lv + 1L] <- ch$id[i]
+  }
+  root_name <- ch$name[match(ch$root, ch$id)]
+  ch$sample <- ifelse(
+    grepl("25% sample", root_name, fixed = TRUE),
+    "25%",
+    "100%"
+  )
+  ch
+}
+
+#' A profile table in long form: one row per table row and group.
+#' @param x The profile table.
+#' @param ch Its hierarchy, from `.rmbl_ipp_tree()`.
+#' @param cid The characteristic ids, one per row of `x`.
+#' @param gc The group columns, from `.rmbl_ipp_cols()`.
+#' @return A data frame (the columns of a `cnsprof()`).
+#' @noRd
+.rmbl_ipp_long <- function(x, ch, cid, gc) {
+  nm <- names(x)
+  m <- match(cid, ch$id)
+  col_or <- function(n, default = NA) {
+    if (n %in% nm) x[[n]] else rep(default, nrow(x))
+  }
+  n <- nrow(x)
+  k <- length(gc$vcol)
+  rep_k <- function(v) rep(v, times = k)
+  st <- unlist(
+    lapply(gc$sym, function(s) as.character(x[[s]])),
+    use.names = FALSE
+  )
+  st[is.na(st)] <- ""
+  st <- .rmbl_utf8(trimws(st))
+  q <- ifelse(st == "", "ok", st)
+  q[q == "rE"] <- "E"
+  q[!q %in% c("ok", "E", "F", "x", "..", "...")] <- "ok"
+  val <- suppressWarnings(as.numeric(unlist(
+    lapply(gc$vcol, function(v) as.character(x[[v]])),
+    use.names = FALSE
+  )))
+  val[q %in% c("F", "x", "..", "...")] <- NA_real_
+  data.frame(
+    geo = rep_k(as.character(x$GEO_NAME)),
+    dguid = rep_k(as.character(col_or("DGUID"))),
+    geolvl = rep_k(as.character(col_or("GEO_LEVEL"))),
+    residence = rep_k(as.character(col_or("RESIDENCE", "Total"))),
+    gender = rep_k(as.character(col_or("GENDER", "Total"))),
+    age = rep_k(as.character(col_or("AGE_GROUP", "Total"))),
+    chaid = rep_k(cid),
+    characteristic = rep_k(ch$name[m]),
+    level = rep_k(ch$level[m]),
+    parid = rep_k(ch$parent[m]),
+    rootid = rep_k(ch$root[m]),
+    sample = rep_k(ch$sample[m]),
+    group = rep(unname(gc$lab), each = n),
+    value = val,
+    quality = factor(q, levels = c("ok", "E", "F", "x", "..", "...")),
+    tnrsf = rep_k(suppressWarnings(as.numeric(col_or("TNR_SF")))),
+    tnrlf = rep_k(suppressWarnings(as.numeric(col_or("TNR_LF")))),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' One characteristic of a profile, by id or exact name.
+#' @param x A `cnsprof()`.
+#' @param v The characteristic: its id or its name.
+#' @param what Its role in the message ("numerator", "denominator").
+#' @return The characteristic id.
+#' @noRd
+.rmbl_profshr_pick <- function(x, v, what) {
+  if (!(is.numeric(v) || is.character(v)) || length(v) != 1L || is.na(v)) {
+    stop(
+      sprintf("`%s` must be one characteristic id or name", what),
+      call. = FALSE
+    )
+  }
+  id <- if (is.numeric(v)) {
+    as.integer(v)
+  } else {
+    unique(x$chaid[x$characteristic == v])
+  }
+  if (length(id) != 1L || !id %in% x$chaid) {
+    stop(
+      sprintf(
+        "`%s` (%s) names %s characteristic of `x`",
+        what,
+        v,
+        if (length(id) > 1L) "more than one" else "no"
+      ),
+      call. = FALSE
+    )
+  }
+  id
+}
+
+#' The key that matches a numerator's rows to the denominator's.
+#' @param d Rows of a `cnsprof()`.
+#' @return A character vector.
+#' @noRd
+.rmbl_profshr_key <- function(d) {
+  paste(d$dguid, d$geo, d$residence, d$gender, d$age, d$group, sep = "\r")
+}
+
+#' The shares and their intervals, for `profshr()`.
+#' @param a The numerator's rows.
+#' @param b The denominator's rows.
+#' @param m The denominator row of each numerator row.
+#' @param smpfrac,deff,roubase,conflvl As for `profshr()`, checked.
+#' @return A data frame (the columns of a `profshr()`).
+#' @noRd
+.rmbl_profshr_est <- function(a, b, m, smpfrac, deff, roubase, conflvl) {
+  .num <- a$value
+  .den <- b$value[m]
+  ok <- is.finite(.num) & is.finite(.den) & .den > 0 & .num >= 0 & .num <= .den
+  p <- ifelse(ok, .num / .den, NA_real_)
+  # on reserves the long form was a full canvass
+  off <- is.na(a$residence) | a$residence != "On reserve"
+  f <- ifelse(a$sample == "25%" & off, smpfrac, 1)
+  cr <- (roubase^2 - 1) / 6
+  v <- ifelse(
+    ok,
+    deff * (1 - f) * p * (1 - p) / (f * .den) + cr * (1 + p^2) / .den^2,
+    NA_real_
+  )
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
+  ne <- ifelse(ok & v > 0, pmax(p * (1 - p), 1 / .den) / v, NA_real_)
+  centre <- (p + z^2 / (2 * ne)) / (1 + z^2 / ne)
+  half <- z / (1 + z^2 / ne) * sqrt(p * (1 - p) / ne + z^2 / (4 * ne^2))
+  qa <- as.character(a$quality)
+  qb <- as.character(b$quality)[m]
+  # an "ok" numerator takes the denominator's quality (which is "ok" or a
+  # flag, or NA when unmatched); a flagged one keeps its own
+  qual <- ifelse(qa == "ok", qb, qa)
+  data.frame(
+    geo = a$geo,
+    dguid = a$dguid,
+    residence = a$residence,
+    gender = a$gender,
+    age = a$age,
+    group = a$group,
+    numerator = .num,
+    denominator = .den,
+    estimate = 100 * p,
+    lower = 100 * pmax(0, centre - half),
+    upper = 100 * pmin(1, centre + half),
+    quality = qual,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The population rows of one group and place, for `cnsstd()`.
+#' @param x A `cnsprof()`.
+#' @param grp,geo,resid As for `cnsstd()`, checked.
+#' @return The rows of `x` (the profile's first characteristic).
+#' @noRd
+.rmbl_cnsstd_rows <- function(x, grp, geo, resid) {
+  first <- min(x$chaid)
+  d <- x[
+    x$chaid == first &
+      x$group == grp &
+      (x$geo == geo | x$dguid == geo) &
+      x$gender %in% c("Total - Gender", "Total") &
+      x$residence %in% c(resid, "Total"),
+  ]
+  if (!nrow(d)) {
+    stop(
+      sprintf("no population for group \"%s\" in \"%s\"", grp, geo),
+      call. = FALSE
+    )
+  }
+  if (length(unique(d$dguid)) > 1L) {
+    stop(
+      sprintf(
+        "\"%s\" names %d places: give its DGUID as `geo`",
+        geo,
+        length(unique(d$dguid))
+      ),
+      call. = FALSE
+    )
+  }
+  d
+}
+
+#' The rows of one characteristic and age group of a profile.
+#' @param x A `cnsprof()`.
+#' @param tot_g The rows for all genders and the residence chosen.
+#' @param name The characteristic's name.
+#' @param age The age group.
+#' @param root The topic's id, or NULL for any.
+#' @return Rows of `x`.
+#' @noRd
+.rmbl_cwb_val <- function(x, tot_g, name, age, root = NULL) {
+  d <- x[tot_g & x$characteristic == name & x$age == age, ]
+  if (!is.null(root)) {
+    d <- d[d$rootid == root, ]
+  }
+  d
+}
+
+#' The value of one place and group in rows of a profile.
+#' @param d Rows of a `cnsprof()`.
+#' @param geo The DGUID.
+#' @param group The group.
+#' @return One number, NA when absent.
+#' @noRd
+.rmbl_cwb_look <- function(d, geo, group) {
+  v <- d$value[d$dguid == geo & d$group == group]
+  if (length(v)) v[[1L]] else NA_real_
+}
+
+#' The profile rows the CWB inputs are taken from.
+#' @param x A `cnsprof()` of a population table.
+#' @param tot_g The rows for all genders and the residence chosen.
+#' @return A named list of row sets: `pop`, `rec`, `avg`, `edu_tot`, `none`,
+#'   `ba`, `part`, `unemp`.
+#' @noRd
+.rmbl_cwb_tables <- function(x, tot_g) {
+  pop_id <- min(x$chaid)
+  edu_tot <- x[
+    tot_g &
+      x$age == "25 years and over" &
+      grepl("^Total - Highest certificate", x$characteristic),
+  ]
+  list(
+    pop = x[tot_g & x$chaid == pop_id & x$age == "Total - Age groups", ],
+    rec = .rmbl_cwb_val(
+      x,
+      tot_g,
+      paste0(
+        "Number of total income recipients aged 15 years and over in ",
+        "private households in 2020 - 25% sample data"
+      ),
+      "Total - Age groups"
+    ),
+    avg = .rmbl_cwb_val(
+      x,
+      tot_g,
+      "Average total income in 2020 among recipients ($)",
+      "Total - Age groups"
+    ),
+    edu_tot = edu_tot,
+    # "High (secondary) school diploma" is high school only in the 2021
+    # profile: at least high school is everyone but those with no certificate
+    none = .rmbl_cwb_val(
+      x,
+      tot_g,
+      "No certificate, diploma or degree",
+      "25 years and over",
+      unique(edu_tot$chaid)
+    ),
+    ba = .rmbl_cwb_val(
+      x,
+      tot_g,
+      "Bachelor's degree or higher",
+      "25 years and over",
+      unique(edu_tot$chaid)
+    ),
+    part = .rmbl_cwb_val(x, tot_g, "Participation rate", "25 to 64 years"),
+    unemp = .rmbl_cwb_val(x, tot_g, "Unemployment rate", "25 to 64 years")
+  )
+}
+
+#' The CWB inputs of each place and group.
+#' @param x A `cnsprof()` of a population table.
+#' @param tb Its row sets, from `.rmbl_cwb_tables()`.
+#' @param groups The groups to score.
+#' @return A data frame, one row per place and group.
+#' @noRd
+.rmbl_cwb_rows <- function(x, tb, groups) {
+  look <- .rmbl_cwb_look
+  geos <- unique(x$dguid)
+  rows <- list()
+  for (g in geos) {
+    for (gr in groups) {
+      inc <- look(tb$rec, g, gr) * look(tb$avg, g, gr) / look(tb$pop, g, gr)
+      e_t <- look(tb$edu_tot, g, gr)
+      rows[[length(rows) + 1L]] <- data.frame(
+        geo = x$geo[match(g, x$dguid)],
+        dguid = g,
+        group = gr,
+        incpercap = inc,
+        highsch25p = 100 * (1 - look(tb$none, g, gr) / e_t),
+        uni25p = 100 * look(tb$ba, g, gr) / e_t,
+        population = look(tb$pop, g, gr),
+        participation = look(tb$part, g, gr),
+        employment = 100 - look(tb$unemp, g, gr),
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+  do.call(rbind, rows)
+}
+
+#' The housing inputs of each place and group, from the household profile.
+#' @param d The inputs, from `.rmbl_cwb_rows()`.
+#' @param dwell A `cnsprof()` of the matching household table.
+#' @return `d` with `notcro` and `nomajrep` filled in.
+#' @noRd
+.rmbl_cwb_housing <- function(d, dwell) {
+  look <- .rmbl_cwb_look
+  hh <- function(name) dwell[dwell$characteristic == name, ]
+  crowd_t <- hh(
+    paste0(
+      "Total - Private households by number of persons per room - 25% ",
+      "sample data"
+    )
+  )
+  crowd_ok <- hh("One person or fewer per room")
+  rep_t <- hh(
+    paste0(
+      "Total - Occupied private dwellings by dwelling condition - 25% ",
+      "sample data"
+    )
+  )
+  rep_maj <- hh("Major repairs needed")
+  hgroup <- ifelse(
+    d$group == "Non-Indigenous",
+    "Non-Indigenous households",
+    "Indigenous households"
+  )
+  for (i in seq_len(nrow(d))) {
+    d$notcro[i] <- 100 *
+      look(crowd_ok, d$dguid[i], hgroup[i]) /
+      look(crowd_t, d$dguid[i], hgroup[i])
+    d$nomajrep[i] <- 100 *
+      (1 -
+        look(rep_maj, d$dguid[i], hgroup[i]) /
+          look(rep_t, d$dguid[i], hgroup[i]))
+  }
+  d
+}
+
+#' The CWB components and score of each place and group scored.
+#' @param d The inputs, from `.rmbl_cwb_rows()`.
+#' @param bounds Income bounds of `cwbscr()`.
+#' @param minpop The smallest population scored.
+#' @return A data frame: `income`, `education`, `housing`, `labour`, `cwb`.
+#' @noRd
+.rmbl_cwb_score <- function(d, bounds, minpop) {
+  ok <- is.finite(d$incpercap) &
+    d$incpercap > 0 &
+    is.finite(d$population) &
+    d$population >= minpop
+  sc <- data.frame(
+    income = NA_real_,
+    education = NA_real_,
+    housing = NA_real_,
+    labour = NA_real_,
+    cwb = NA_real_
+  )
+  sc <- sc[rep(1L, nrow(d)), ]
+  if (any(ok)) {
+    s <- cwbscr(
+      d$incpercap[ok],
+      pmin(100, d$highsch25p[ok]),
+      pmin(100, d$uni25p[ok]),
+      ifelse(is.na(d$notcro[ok]), 50, d$notcro[ok]),
+      ifelse(is.na(d$nomajrep[ok]), 50, d$nomajrep[ok]),
+      d$participation[ok],
+      d$employment[ok],
+      bounds = bounds
+    )
+    s$housing[is.na(d$notcro[ok]) | is.na(d$nomajrep[ok])] <- NA_real_
+    s$cwb <- rowMeans(s[c("income", "education", "housing", "labour")])
+    sc[ok, ] <- s
+  }
+  rownames(sc) <- NULL
+  sc
+}
+
+#' The places-by-groups matrix a CWB plot draws, places in order of their
+#' highest value.
+#' @param d The rows with a value.
+#' @param component The column drawn.
+#' @param geos,grp The places and the groups, in order.
+#' @return A matrix.
+#' @noRd
+.rmbl_cwb_matrix <- function(d, component, geos, grp) {
+  m <- tapply(
+    d[[component]],
+    list(factor(d$geo, levels = geos), factor(d$group, levels = grp)),
+    mean
+  )
+  o <- order(apply(m, 1, max, na.rm = TRUE))
+  m[o, , drop = FALSE]
+}
+
+#' Stops unless `groups` names one group or more.
+#' @param groups As for cnscwb().
+#' @return Nothing useful.
+#' @noRd
+.rmbl_cwb_groups <- function(groups) {
+  if (
+    !is.character(groups) ||
+      !length(groups) ||
+      anyNA(groups) ||
+      !all(nzchar(groups))
+  ) {
+    stop("`groups` must name one group or more", call. = FALSE)
+  }
+  invisible(NULL)
 }

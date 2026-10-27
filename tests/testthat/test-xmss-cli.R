@@ -69,7 +69,7 @@ xidx <- function(root) sort(xmssidxseen(root)$index)
 
 xfpr <- function(kf) {
   k <- xread(kf)
-  rmoriebricklayer:::.rmbl_xmss_fpr(paste0(k$root, k$pubseed))
+  .rmbl_xmss_fpr(paste0(k$root, k$pubseed))
 }
 
 test_that(
@@ -91,13 +91,13 @@ test_that(
       )
     )
     k <- xread(kf)
-    expect_equal(k$next_index, 1L)
+    expect_identical(k$next_index, 1L)
     expect_identical(k$used$format, "rmbl-xmss-state/1")
     expect_identical(k$used$key, xfpr(kf))
-    expect_equal(k$used$highest, 0L)
-    expect_equal(k$used$generation, 1L)
+    expect_identical(k$used$highest, 0L)
+    expect_identical(k$used$generation, 1L)
     expect_match(k$used$writer, "^[0-9a-f]{16}$")
-    expect_equal(k$used$reserved$to, 0L)
+    expect_identical(k$used$reserved$to, 0L)
     if (.Platform$OS.type == "unix") {
       expect_identical(as.character(file.mode(kf)), "600")
     }
@@ -109,8 +109,8 @@ test_that(
     j <- fromjs(sub("^[^{]*", "", r$out))
     expect_identical(j$status, "ok")
     expect_true("xmss_index" %in% j$checks$check)
-    expect_equal(xread(kf)$next_index, 2L)
-    expect_equal(xread(kf)$used$generation, 2L)
+    expect_identical(xread(kf)$next_index, 2L)
+    expect_identical(xread(kf)$used$generation, 2L)
     expect_identical(xidx(root), 1L)
   }
 )
@@ -124,7 +124,7 @@ test_that(
     x_no_stdin()
     # a write that cannot even start stops the signature
     expect_error(
-      rmoriebricklayer:::.rmbl_xmss_put(file.path(tempfile(), "x.json"), "{}"),
+      .rmbl_xmss_put(file.path(tempfile(), "x.json"), "{}"),
       "could not write the XMSS state",
       fixed = TRUE
     )
@@ -167,7 +167,7 @@ test_that(
     )
     r <- xsign(root, kf, "--reserve", "5")
     expect_identical(r$status, 1L)
-    expect_equal(got$highest, 4L)
+    expect_identical(got$highest, 4L)
     expect_identical(got$index, 0L)
   }
 )
@@ -184,8 +184,8 @@ test_that(
     r <- xsign(root, kf, "--reserve", "5")
     expect_identical(r$status, 0L)
     expect_identical(xidx(root), c(0L, 1L))
-    expect_equal(xread(kf)$used$highest, 4L)
-    expect_equal(xread(kf)$next_index, 5L)
+    expect_identical(xread(kf)$used$highest, 4L)
+    expect_identical(xread(kf)$next_index, 5L)
     # a reservation smaller than the run is taken as one index per capsule
     r <- xsign(root, kf, "--reserve", "1")
     expect_identical(r$status, 0L)
@@ -197,13 +197,13 @@ test_that(
       fixed = TRUE
     )
     # an index outside the block is not signed
-    k <- rmoriebricklayer:::.rmbl_xmss_key_json(
+    k <- .rmbl_xmss_key_json(
       paste(readLines(kf), collapse = "\n"),
       "k"
     )$key
-    id <- rmoriebricklayer:::.rmbl_xmss_ids(k)$id
-    assign(id, c(20L, 20L), envir = rmoriebricklayer:::.rmbl_xmss_block)
-    withr::defer(rm(list = id, envir = rmoriebricklayer:::.rmbl_xmss_block))
+    id <- .rmbl_xmss_ids(k)$id
+    assign(id, c(20L, 20L), envir = .rmbl_xmss_block)
+    withr::defer(rm(list = id, envir = .rmbl_xmss_block))
     k$next_index <- 10L
     expect_error(
       cpssign("m", k),
@@ -244,12 +244,12 @@ test_that(
     expect_identical(r$status, 0L)
     expect_identical(readLines(kf), before)
     s <- xread(sf)
-    expect_equal(s$highest, 0L)
+    expect_identical(s$highest, 0L)
     expect_identical(s$key, xfpr(kf))
     r <- xsign(root, kf, "--state-file", sf)
     expect_identical(r$status, 0L)
     expect_identical(xidx(root), 1L)
-    expect_equal(xread(sf)$generation, 2L)
+    expect_identical(xread(sf)$generation, 2L)
   }
 )
 
@@ -306,7 +306,7 @@ test_that(
       sf
     ))
     expect_identical(r$status, 0L)
-    expect_equal(xread(sf)$highest, 0L)
+    expect_identical(xread(sf)$highest, 0L)
     # the state of another key, or a damaged state, is not used
     k2 <- xkeyfile(3L)
     r <- xsign(root, k2, "--state-file", sf)
@@ -379,7 +379,7 @@ test_that(
     expect_identical(r$status, 1L)
     expect_match(r$out, "capsule_bundle.json already exists", fixed = TRUE)
     expect_false(grepl("blcli: ", r$out, fixed = TRUE))
-    expect_equal(xread(kx)$used$highest, 0L)
+    expect_identical(xread(kx)$used$highest, 0L)
   }
 )
 
@@ -408,10 +408,10 @@ test_that(
       fixed = TRUE
     )
     s <- xread(kf)$used$sectors
-    expect_equal(s$count, 4L)
-    expect_equal(s$highest[["1"]], 5L)
-    expect_equal(s$highest[["2"]], 8L)
-    expect_equal(xread(kf)$next_index, 9L)
+    expect_identical(s$count, 4L)
+    expect_identical(s$highest[["1"]], 5L)
+    expect_identical(s$highest[["2"]], 8L)
+    expect_identical(xread(kf)$next_index, 9L)
     expect_identical(
       suppressMessages(xsign(
         root,
@@ -445,7 +445,7 @@ test_that(
       expect_identical(r$status, 1L)
     } else {
       expect_identical(r$status, 0L)
-      expect_true(xidx(root) %/% 4L == want)
+      expect_identical(xidx(root) %/% 4L, want)
     }
     # refusals
     expect_match(
@@ -614,7 +614,7 @@ test_that(
     b1 <- cpsseal(root, key, glob = "*one*")
     expect_identical(nrow(b1), 1L)
     s <- xmssidxseen(root)
-    expect_identical(s$reused, FALSE)
+    expect_false(s$reused)
     # a stale copy signs index 0 again (its record forgotten, as on another
     # machine)
     xmssfgt(key)
@@ -720,7 +720,7 @@ test_that(
     root <- xcaps(1L)
     kf <- xkeyfile(3L)
     expect_message(
-      r <- xsign(root, kf, "--warn-left", "7"),
+      assign("r", xsign(root, kf, "--warn-left", "7")),
       "signatures nearing exhaustion: 7 left in sector 0 of 1"
     )
     expect_match(r$out, "warning: signatures nearing exhaustion", fixed = TRUE)
@@ -733,10 +733,10 @@ test_that(
     r <- xsign(root, k4, "--reserve", "14")
     expect_false(grepl("nearing exhaustion", r$out, fixed = TRUE))
     expect_message(
-      r <- xsign(root, k4),
+      assign("r", xsign(root, k4)),
       "1 left in sector 0 of 1 \\(--warn-left 1\\)"
     )
-    expect_message(r <- xsign(root, k4), "0 left in sector 0 of 1")
+    expect_message(assign("r", xsign(root, k4)), "0 left in sector 0 of 1")
     expect_identical(r$status, 0L)
     r <- xsign(root, k4)
     expect_identical(r$status, 1L)
@@ -763,18 +763,18 @@ test_that(
     rec <- file.path(withr::local_tempdir(), "used.txt")
     withr::local_envvar(RMBL_XMSS_INDEX_FILE = rec)
     expect_identical(xsign(root, kf)$status, 0L)
-    k <- rmoriebricklayer:::.rmbl_xmss_key_json(
+    k <- .rmbl_xmss_key_json(
       paste(readLines(kf), collapse = "\n"),
       "k"
     )$key
-    id <- rmoriebricklayer:::.rmbl_xmss_ids(k)$id
+    id <- .rmbl_xmss_ids(k)$id
     expect_identical(readLines(rec), paste0(id, "\t0"))
     writeLines(paste0(id, "\t5"), rec)
     expect_identical(xsign(root, kf)$status, 0L)
     expect_identical(xidx(root), 6L)
     expect_identical(readLines(rec), paste0(id, "\t6"))
     withr::local_envvar(RMBL_XMSS_INDEX_FILE = NA)
-    expect_null(rmoriebricklayer:::.rmbl_xmss_index_file(cli = TRUE))
+    expect_null(.rmbl_xmss_index_file(cli = TRUE))
   }
 )
 
@@ -789,9 +789,9 @@ test_that(
     s <- cpsseal(root, key)
     expect_identical(nrow(s), 3L)
     expect_identical(xidx(root), 0:2)
-    expect_true(
-      cpschk(root, pubkey = paste0(key$root, key$pubseed), fp = FALSE)$status ==
-        "ok"
+    expect_identical(
+      cpschk(root, pubkey = paste0(key$root, key$pubseed), fp = FALSE)$status,
+      "ok"
     )
   }
 )

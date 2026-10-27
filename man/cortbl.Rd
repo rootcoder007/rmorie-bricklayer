@@ -7,7 +7,7 @@
 cortbl(data, meth = c("spearman", "pearson"), minprs = 3L)
 }
 \arguments{
-\item{data}{A data frame; non-numeric columns are ignored.}
+\item{data}{A data frame; its numeric columns are correlated in pairs.}
 
 \item{meth}{\code{"spearman"} (default) or \code{"pearson"}. See
 \code{\link[=topcors]{topcors()}} for why the rank correlation is

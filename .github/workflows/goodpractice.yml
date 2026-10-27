@@ -1,0 +1,59 @@
+# goodpractice, every check: the package's own R CMD check, coverage, lintr
+# (80 columns), cyclomatic complexity (15 at most per function), function
+# length (50 lines) and the rest.
+# rOpenSci's editors read this report, so no check is skipped and any failed
+# check fails the job.
+name: goodpractice
+
+on:
+  push:
+    branches: [main, ropensci]
+    paths-ignore: ['docs/**', 'dist/**', 'examples/**', 'dev/**']
+  pull_request:
+    branches: [main]
+    paths-ignore: ['docs/**', 'dist/**', 'examples/**', 'dev/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: goodpractice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  goodpractice:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: true
+      PKG_USE_BIOCONDUCTOR: "false"
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install libcurl (C++ SystemRequirement)
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::goodpractice, any::rcmdcheck, any::covr, any::srr
+          needs: check
+
+      - name: goodpractice (all checks)
+        shell: Rscript {0}
+        run: |
+          # the srr roclet (DESCRIPTION) defines the @srrstats tags roxygen reads
+          loadNamespace("srr")
+          g <- goodpractice::gp(".", checks = goodpractice::all_checks())
+          print(g)
+          failed <- goodpractice::failed_checks(g)
+          if (length(failed)) {
+            cat("failed checks:", paste(failed, collapse = ", "), "\n")
+            quit(status = 1L)
+          }

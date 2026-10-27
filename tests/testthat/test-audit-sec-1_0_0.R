@@ -5,9 +5,10 @@
 # reads standard input.
 
 sec_cli <- function(args) {
-  txt <- character()
-  st <- blcli(args, out = function(s) txt <<- c(txt, s))
-  list(status = st, out = paste(txt, collapse = ""))
+  rec <- new.env()
+  rec$txt <- character()
+  st <- blcli(args, out = function(s) rec$txt <- c(rec$txt, s))
+  list(status = st, out = paste(rec$txt, collapse = ""))
 }
 
 # a capsule under a root of its own, whose provenance names `src`; data.csv is
@@ -17,7 +18,11 @@ sec_capsule <- function(src, filename = "data.csv", env = parent.frame()) {
   d <- file.path(root, "cap")
   dir.create(d)
   utils::write.csv(
-    data.frame(id = 1:30, v = rep(c("a", "b", "c"), 10)),
+    data.frame(
+      id = 1:30,
+      v = rep(c("a", "b", "c"), 10),
+      stringsAsFactors = FALSE
+    ),
     file.path(d, "data.csv"),
     row.names = FALSE
   )
@@ -229,8 +234,8 @@ test_that("#9: a gzip source inflates no further than maxcsvbytes", {
   withr::local_options(rmoriebricklayer.maxcsvbytes = 1e5)
   gz <- function(path, n) {
     con <- gzfile(path, "wb")
+    on.exit(close(con), add = TRUE)
     writeLines(c("id,v", rep("1,a", n)), con)
-    close(con)
   }
   # the bomb, its ISIZE honest: refused before inflating
   cp <- sec_capsule("source.csv.gz")
@@ -363,16 +368,20 @@ test_that(
     }
     serve(charToRaw('{"id": 123456789012345678901, "choices": []}'))
     expect_no_warning(
-      r <- ns$.bl_post_json("https://api.example.org/v1", list(a = 1))
+      {
+        r <- ns$.bl_post_json("https://api.example.org/v1", list(a = 1))
+      }
     )
-    expect_equal(r$json$id, 123456789012345678901)
+    expect_equal(r$json$id, 123456789012345678901, tolerance = 1e-8)
     serve(c(
       charToRaw('{"choices":[{"message":{"content":"caf'),
       as.raw(0xe9),
       charToRaw('"}}]}')
     ))
     expect_no_warning(
-      r <- ns$.bl_post_json("https://api.example.org/v1", list(a = 1))
+      {
+        r <- ns$.bl_post_json("https://api.example.org/v1", list(a = 1))
+      }
     )
     expect_identical(r$json$error$message, "the reply is not UTF-8 text")
     expect_error(
@@ -470,7 +479,7 @@ test_that("#17: sparse records simplify as before, with a column at a time", {
     r
   })
   df <- fromjs(tojs(recs, auto_unbox = TRUE))
-  expect_identical(names(df), c("id", "a", "b", "c", "d"))
+  expect_named(df, c("id", "a", "b", "c", "d"))
   expect_identical(df$id, 1:60)
   expect_identical(df$a, ifelse(1:60 %% 3 == 0, "x", NA))
   expect_identical(df$b, ifelse(1:60 %% 5 == 0, 1:60 * 1.5, NA))
@@ -489,7 +498,7 @@ test_that("#17: sparse records simplify as before, with a column at a time", {
   expect_identical(nrow(fromjs('[{"x": null}, {"x": null}]')), 2L)
   skip_if_not_installed("jsonlite")
   js <- tojs(recs, auto_unbox = TRUE)
-  expect_equal(fromjs(js), jsonlite::fromJSON(js))
+  expect_equal(fromjs(js), jsonlite::fromJSON(js), tolerance = 1e-8)
 })
 
 test_that("#17: a symlink loop under the path lists each capsule once", {
@@ -557,7 +566,11 @@ test_that(
       allowfile = FALSE
     ) {
       seen$tpath <- tpath
-      utils::write.csv(data.frame(id = 1:30, v = "z"), tpath, row.names = FALSE)
+      utils::write.csv(
+        data.frame(id = 1:30, v = "z", stringsAsFactors = FALSE),
+        tpath,
+        row.names = FALSE
+      )
       TRUE
     })
     x <- cpschk(cp$root, "drift", fp = FALSE)

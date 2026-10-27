@@ -105,14 +105,6 @@
   )
   m <- .bl_old_map()
   edits <- list()
-  add <- function(row, new) {
-    edits[[length(edits) + 1L]] <<- list(
-      l = pd$line1[row],
-      c1 = pd$col1[row],
-      c2 = pd$col2[row],
-      new = new
-    )
-  }
   hits <- which(pd$token == "SYMBOL_FUNCTION_CALL" & pd$text %in% m$old)
   for (h in hits) {
     # a call of another package's function of the same name is not ours
@@ -122,51 +114,13 @@
       next
     }
     r <- .bl_old_row(pd$text[h])
-    add(h, r$new)
-    call <- pd$parent[pd$id == fe]
-    kids <- which(pd$parent == call)
-    kids <- kids[order(pd$line1[kids], pd$col1[kids])]
-    for (k in seq_along(kids)) {
-      j <- kids[k]
-      if (pd$token[j] != "SYMBOL_SUB") {
-        next
-      }
-      a <- pd$text[j]
-      to <- if (a %in% names(r$args)) {
-        r$args[[a]]
-      } else if (a %in% names(r$dots)) {
-        r$dots[[a]]
-      } else {
-        a
-      }
-      if (!identical(to, a)) {
-        add(j, to)
-      }
-      vm <- r$values[[a]]
-      if (is.null(vm) || k + 2L > length(kids)) {
-        next
-      }
-      v <- kids[k + 2L] # SYMBOL_SUB, EQ_SUB, then the value
-      s <- which(pd$parent == pd$id[v] & pd$token == "STR_CONST")
-      if (length(s) != 1L) {
-        next
-      }
-      q <- substr(pd$text[s], 1L, 1L)
-      val <- substr(pd$text[s], 2L, nchar(pd$text[s]) - 1L)
-      if (val %in% names(vm)) add(s, paste0(q, vm[[val]], q))
-    }
-  }
-  # right to left, so the columns of the edits still to make stay put
-  ord <- order(-vapply(edits, `[[`, 1, "l"), -vapply(edits, `[[`, 1, "c1"))
-  for (e in edits[ord]) {
-    x <- lines[e$l]
-    lines[e$l] <- paste0(
-      substr(x, 1L, e$c1 - 1L),
-      e$new,
-      substr(x, e$c2 + 1L, nchar(x))
+    edits <- c(
+      edits,
+      list(.bl_migrate_edit(pd, h, r$new)),
+      .bl_migrate_args(pd, fe, r)
     )
   }
-  list(lines = lines, n = length(edits))
+  list(lines = .bl_migrate_apply(lines, edits), n = length(edits))
 }
 
 #' The migrate verb: rewrites 0.5.x scripts to the 1.0.0 names.
@@ -251,7 +205,125 @@
       prog
     ))
   }
-  words <- rest[-1L]
+  args <- .bl_run_args(rest[-1L], r)
+  if (!is.null(r)) {
+    out(sprintf("(%s() is now %s())\n", name, fn))
+  }
+  v <- withVisible(do.call(getExportedValue(ns, fn), args))
+  if (v$visible) {
+    out(paste0(
+      paste(utils::capture.output(print(v$value)), collapse = "\n"),
+      "\n"
+    ))
+  }
+  0L
+}
+
+#' One edit for .bl_migrate_text(): a parsed token and its replacement.
+#' @param pd The parse data.
+#' @param row The token's row in `pd`.
+#' @param new The replacement text.
+#' @return list(l, c1, c2, new).
+#' @noRd
+.bl_migrate_edit <- function(pd, row, new) {
+  list(
+    l = pd$line1[row],
+    c1 = pd$col1[row],
+    c2 = pd$col2[row],
+    new = new
+  )
+}
+
+#' The new name of an argument of a renamed function.
+#' @param r A row from .bl_old_row().
+#' @param a The argument's name as written.
+#' @return Its 1.0.0 name (`a` when it was not renamed).
+#' @noRd
+.bl_old_arg_name <- function(r, a) {
+  if (a %in% names(r$args)) {
+    r$args[[a]]
+  } else if (a %in% names(r$dots)) {
+    r$dots[[a]]
+  } else {
+    a
+  }
+}
+
+#' The edits to the named arguments of one renamed call.
+#' @param pd The parse data.
+#' @param fe The parse id of the call's function expression.
+#' @param r The function's row from .bl_old_row().
+#' @return A list of edits (.bl_migrate_edit()).
+#' @noRd
+.bl_migrate_args <- function(pd, fe, r) {
+  call <- pd$parent[pd$id == fe]
+  kids <- which(pd$parent == call)
+  kids <- kids[order(pd$line1[kids], pd$col1[kids])]
+  edits <- list()
+  for (k in seq_along(kids)) {
+    j <- kids[k]
+    if (pd$token[j] != "SYMBOL_SUB") {
+      next
+    }
+    a <- pd$text[j]
+    to <- .bl_old_arg_name(r, a)
+    if (!identical(to, a)) {
+      edits <- c(edits, list(.bl_migrate_edit(pd, j, to)))
+    }
+    edits <- c(edits, .bl_migrate_value(pd, kids, k, r$values[[a]]))
+  }
+  edits
+}
+
+#' The edit to a renamed allowed value passed to a named argument.
+#' @param pd The parse data.
+#' @param kids The rows of the call's children, in source order.
+#' @param k The position in `kids` of the argument's name.
+#' @param vm The argument's renamed values (old -> new), or NULL.
+#' @return A list of at most one edit.
+#' @noRd
+.bl_migrate_value <- function(pd, kids, k, vm) {
+  if (is.null(vm) || k + 2L > length(kids)) {
+    return(list())
+  }
+  v <- kids[k + 2L] # SYMBOL_SUB, EQ_SUB, then the value
+  s <- which(pd$parent == pd$id[v] & pd$token == "STR_CONST")
+  if (length(s) != 1L) {
+    return(list())
+  }
+  q <- substr(pd$text[s], 1L, 1L)
+  val <- substr(pd$text[s], 2L, nchar(pd$text[s]) - 1L)
+  if (val %in% names(vm)) {
+    return(list(.bl_migrate_edit(pd, s, paste0(q, vm[[val]], q))))
+  }
+  list()
+}
+
+#' Applies the edits of .bl_migrate_text() to the source.
+#' @param lines The source, a character vector of lines.
+#' @param edits A list of edits (.bl_migrate_edit()).
+#' @return The rewritten lines.
+#' @noRd
+.bl_migrate_apply <- function(lines, edits) {
+  # right to left, so the columns of the edits still to make stay put
+  ord <- order(-vapply(edits, `[[`, 1, "l"), -vapply(edits, `[[`, 1, "c1"))
+  for (e in edits[ord]) {
+    x <- lines[e$l]
+    lines[e$l] <- paste0(
+      substr(x, 1L, e$c1 - 1L),
+      e$new,
+      substr(x, e$c2 + 1L, nchar(x))
+    )
+  }
+  lines
+}
+
+#' The arguments of the run verb, from the words after the function's name.
+#' @param words The command-line words.
+#' @param r The function's row from .bl_old_row(), or NULL for a 1.0.0 name.
+#' @return A list of arguments for do.call().
+#' @noRd
+.bl_run_args <- function(words, r) {
   args <- list()
   i <- 1L
   while (i <= length(words)) {
@@ -265,13 +337,7 @@
         if (is.character(v) && !is.null(vm)) {
           v <- unname(ifelse(v %in% names(vm), vm[v], v))
         }
-        a <- if (a %in% names(r$args)) {
-          r$args[[a]]
-        } else if (a %in% names(r$dots)) {
-          r$dots[[a]]
-        } else {
-          a
-        }
+        a <- .bl_old_arg_name(r, a)
       }
       args[a] <- list(v)
       i <- i + if (flagonly) 1L else 2L
@@ -280,15 +346,5 @@
       i <- i + 1L
     }
   }
-  if (!is.null(r)) {
-    out(sprintf("(%s() is now %s())\n", name, fn))
-  }
-  v <- withVisible(do.call(getExportedValue(ns, fn), args))
-  if (v$visible) {
-    out(paste0(
-      paste(utils::capture.output(print(v$value)), collapse = "\n"),
-      "\n"
-    ))
-  }
-  0L
+  args
 }

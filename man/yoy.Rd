@@ -7,6 +7,7 @@
 \alias{yoy.numeric}
 \alias{yoy.integer}
 \alias{yoy.ts}
+\alias{format.rmbl_yoy}
 \alias{print.rmbl_yoy}
 \title{Year-over-year (and period-over-period) change}
 \usage{
@@ -26,6 +27,7 @@ yoy(x, ...)
   conflvl = 0.95,
   dir = c("neutral", "higher", "lower"),
   complete = TRUE,
+  prdord = NULL,
   ...
 )
 
@@ -35,21 +37,46 @@ yoy(x, ...)
 
 \method{yoy}{ts}(x, lag = NULL, ...)
 
+\method{format}{rmbl_yoy}(x, digits = 1L, palette = "diverging",
+  color = FALSE, n = 30, ...)
+
 \method{print}{rmbl_yoy}(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 }
 \arguments{
 \item{x}{An \code{rmbl_yoy} object returned by \code{yoy()}.}
 
-\item{...}{Ignored.}
+\item{...}{Further arguments from \code{print()}; the table ignores them.}
 
 \item{value}{For a data frame, the column holding the
 measure, as a string or a bare name.}
 
 \item{prd}{For a data frame, the column holding the period (a year, a \code{Date},
-a fiscal-year integer, an ordered factor). An ordered factor is compared by
-level order, one level being one period; an unordered factor or a character
-column has no order, so every row is flagged \dQuote{no comparison period}.
-For a numeric vector, the periods themselves.}
+a fiscal-year integer, an ordered factor, or text). An ordered factor is
+compared by level order, one level being one period; an unordered factor has
+no order, so every row is flagged \dQuote{no comparison period}. For a
+numeric vector, the periods themselves.
+
+Text periods are read when every label has the same one of these forms
+(one step is the period itself, so a missing period is a gap):
+\itemize{
+\item a year: \code{"1987"}, \code{"2031"};
+\item a fiscal year by the two years it spans, ordered by the first:
+\code{"2019/20"}, \code{"2019/2020"}, \code{"2019-20"},
+\code{"2019-2020"}, \code{"FY 2019-20"},
+\code{"FY2019/20"}; or by one year: \code{"FY2020"}, \code{"FY 2020"} (the two kinds do
+not mix);
+\item a quarter: \code{"2021 Q3"}, \code{"2021Q3"}, \code{"2021-Q3"}, \code{"Q3 2021"};
+\item a month: \code{"2021-03"}, \code{"2021/03"}, \code{"2021-3"}, or an English month
+name or its three-letter abbreviation: \code{"Mar 2021"}, \code{"March 2021"},
+\code{"2021 Mar"};
+\item a date: \code{"2021-03-15"}, \code{"2021/03/15"}, compared as a \code{Date}.
+}
+The result keeps the labels as text, with any period the grid inserts
+spelled like the first one. Labels of mixed forms, or of a form not listed
+(\code{"Q3"}, \code{"FY19/20"}), or that read as two forms alike (\code{"2010-11"},
+\code{"2011-12"}: fiscal years or months), have no order: yoy() warns once,
+naming them, and no row has a comparison period. Give their order with
+\code{prdord}.}
 
 \item{by}{Optional grouping columns, as a character vector.
 The change is computed within each group.}
@@ -90,6 +117,11 @@ and the \code{verdict} column only, never the arithmetic.}
 in the observed range so that a gap is visible as a gap instead of closing
 up.}
 
+\item{prdord}{Optional character vector: the period labels in order, one
+label being one step, for text (or factor) periods the reader above does not
+know. Every label in the data must be in it; one it lists that the data lacks
+is a gap. \code{NULL} (the default) reads the labels as above.}
+
 \item{digits}{Integer, default \code{1}. Decimal places shown in the
 percent (or percentage-point) change column. The interval column is
 always shown to whole percent.}
@@ -102,7 +134,8 @@ always shown to whole percent.}
 row in 24-bit ANSI colour codes chosen from its verdict; \code{FALSE}
 prints plain text. \code{NULL} means colour only in an interactive
 session with the \code{NO_COLOR} environment variable unset, so output
-that is redirected or captured stays plain text.}
+that is redirected or captured stays plain text. \code{format()} takes
+\code{TRUE} or \code{FALSE} (default \code{FALSE}).}
 
 \item{n}{Integer, default \code{30}. Maximum number of rows printed; the
 number of rows left out is reported on a final line.}
@@ -136,9 +169,10 @@ off a small count comes with an interval as wide as the count is small.
 \details{
 Rows are first combined to one per period (and group) with \code{fun}. With
 \code{complete = TRUE} the periods missing from a regular grid (numbers, \code{Date}
-or \code{POSIXct} with a common step) are inserted with \code{NA} values and flagged
-\dQuote{no data}. Each period is then compared with the period \code{lag} steps
-earlier in that grid: \code{change} is the difference, \code{pctchg}
+or \code{POSIXct} with a common step, the levels of an ordered factor, text
+periods read as described under \code{prd}) are inserted with \code{NA} values and
+flagged \dQuote{no data}. Each period is then compared with the period
+\code{lag} steps earlier in that grid: \code{change} is the difference, \code{pctchg}
 \eqn{100 (v_t / v_{t-lag} - 1)} (\code{NA} off a zero base), and for percentages
 \code{ppchg} is the difference in percentage points.
 
@@ -160,7 +194,8 @@ Errors: \code{x} neither a data frame, a numeric vector nor a \code{ts}; \code{v
 \code{period} or \code{by} naming a column that does not exist; a non-numeric or
 infinite \code{value}; for \code{units = "count"}, negative or fractional values;
 \code{lag} not a positive whole number; \code{conflvl} outside (0, 1); an unknown
-\code{units} or \code{direction}.
+\code{units} or \code{direction}; a \code{prdord} that is not distinct labels, lacks a
+label of the data, or is given for periods that are not text.
 }
 \section{0.5.x argument names}{
 
@@ -208,6 +243,16 @@ yoy(
 # earlier
 q <- ts(c(5, 6, 7, 8, 6, 7, 9, 9), frequency = 4, start = c(2020, 1))
 as.data.frame(yoy(q))[5:8, c("period", "value", "previous", "pctchg")]
+
+# text periods are read: fiscal years, quarters, months
+fy <- data.frame(fy = c("2019/20", "2020/21", "2022/23"), n = c(5, 7, 9))
+as.data.frame(yoy(fy, "n", "fy"))[, c("fy", "previous", "flag")]
+qt <- data.frame(q = c("2021 Q4", "2022 Q1", "2022 Q2"), n = c(3, 4, 6))
+as.data.frame(yoy(qt, "n", "q"))[, c("q", "previous", "pctchg")]
+
+# labels the reader does not know take their order from `prdord`
+ws <- data.frame(s = c("spring", "summer", "fall"), n = c(4, 6, 5))
+yoy(ws, "n", "s", prdord = c("spring", "summer", "fall", "winter"))
 
 # counts must be whole numbers
 try(yoy(data.frame(year = 1:3, n = c(1.5, 2, 3)), "n", "year"))

@@ -19,6 +19,11 @@ positive. Default \code{365}.}
 \value{
 A numeric scalar: the implied number of admissions over the
 period, \eqn{\mathrm{adp} \times t / \mathrm{alos}}. It is not rounded.
+It has class \code{c("rmbl_admits", "rmbl_measure", "numeric")} and an
+attribute \code{"lakner"} (\code{adp}, \code{alos} and \code{t}), so it
+prints as a box with its inputs, formula and caveats; arithmetic,
+\code{round()}, \code{sum()}, \code{mean()}, \code{[}, \code{c()} and
+\code{as.numeric()} give a plain number.
 }
 \description{
 Works out how many admissions a given average daily population and

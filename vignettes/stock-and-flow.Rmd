@@ -8,10 +8,14 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
@@ -116,11 +120,23 @@ The census excerpt bundled with the package counts foster children, a stock on c
 
 ```{r stock-and-flow-indigenous-stock}
 cp <- indiex("censuspop")
-fc <- cp[cp$GEO_NAME == "Canada" & cp$AGE_GROUP == "0 to 14 years" &
-           cp$RESIDENCE == "Total - Residence on or off reserve", ]
-kids <- fc[grepl("Total - Children in census families", fc$CHARACTERISTIC_NAME),
-           c("FIRST_NATIONS", "NON_IND")]
-fost <- fc[grepl("Foster children", fc$CHARACTERISTIC_NAME), c("FIRST_NATIONS", "NON_IND")]
+fc <- cp[
+  cp$GEO_NAME == "Canada" &
+    cp$AGE_GROUP == "0 to 14 years" &
+    cp$RESIDENCE == "Total - Residence on or off reserve",
+]
+kids <- fc[
+  grepl(
+    "Total - Children in census families",
+    fc$CHARACTERISTIC_NAME,
+    fixed = TRUE
+  ),
+  c("FIRST_NATIONS", "NON_IND")
+]
+fost <- fc[
+  grepl("Foster children", fc$CHARACTERISTIC_NAME, fixed = TRUE),
+  c("FIRST_NATIONS", "NON_IND")
+]
 round(100 * unlist(fost) / unlist(kids), 2)
 ```
 
@@ -137,9 +153,20 @@ median differ.
 ```{r stock-and-flow-stock-flow-plots, fig.width = 8, fig.height = 4}
 op <- par(mfrow = c(1, 2))
 per1000 <- unlist(fost) / unlist(kids) * 1000
-barplot(per1000, names.arg = c("First Nations", "non-Indigenous"), col = blpal()[1:2],
-        ylab = "per 1,000 children", main = "Children in foster care")
-hist(stays, breaks = 30, col = blpal()[2], xlab = "length of stay", main = "Lengths of stay")
+barplot(
+  per1000,
+  names.arg = c("First Nations", "non-Indigenous"),
+  col = blpal()[1:2],
+  ylab = "per 1,000 children",
+  main = "Children in foster care"
+)
+hist(
+  stays,
+  breaks = 30,
+  col = blpal()[2],
+  xlab = "length of stay",
+  main = "Lengths of stay"
+)
 par(op)
 ```
 

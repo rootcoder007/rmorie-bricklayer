@@ -4,7 +4,7 @@
 \alias{orchk}
 \title{Check reported odds ratios against a labelled table, under every relabelling}
 \usage{
-orchk(cnts, ref, rptd, tol = 0.05)
+orchk(cnts, ref = NULL, rptd, tol = 0.05)
 }
 \arguments{
 \item{cnts}{Numeric matrix, data frame or table of counts with row names
@@ -20,7 +20,8 @@ one per non-reference group, named by group. Extra names are ignored.}
 match (5 percent), to allow for rounding in the report.}
 }
 \value{
-A list with elements \code{computed} (named numeric odds ratios
+A list of class \code{rmbl_or_check} (it prints as a box)
+with elements \code{computed} (named numeric odds ratios
 from the table as labelled), \code{reported} (the reported values, in
 the same order), \code{consistent} (logical), \code{matches} (a data frame
 with character \code{relabelling}, for example \code{"B -> C, C -> B"},

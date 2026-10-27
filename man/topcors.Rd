@@ -7,7 +7,7 @@
 topcors(data, n = 10L, meth = c("spearman", "pearson"), minabs = 0)
 }
 \arguments{
-\item{data}{A data frame; non-numeric columns are ignored.}
+\item{data}{A data frame; its numeric pairs are ranked by correlation.}
 
 \item{n}{Number of pairs to return, one positive whole number (default
 10).}

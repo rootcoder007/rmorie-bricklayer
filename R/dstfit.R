@@ -3,339 +3,6 @@
 # goodness-of-fit statistics, bootstrap intervals and a Hill tail-index
 # estimate.
 
-#' The candidate families: their checks, maximum likelihood fits and d/p/q/r
-#' functions.
-#'
-#' Each entry has `disc` (a count family), `need` (what the data must be, in
-#' words), `ok` (whether the data are), `fit` (the estimates, named), `d`
-#' (the log density or mass), `p`, `q` and `r`. The families without a
-#' closed-form estimate are fitted by optim() on an unbounded scale.
-#' @return A named list of families.
-#' @noRd
-.dst_fams <- function() {
-  pos <- function(x) all(x > 0)
-  cnt <- function(x) all(x >= 0 & x == round(x))
-  ml <- function(nll, start, back) {
-    o <- stats::optim(
-      start,
-      nll,
-      method = "Nelder-Mead",
-      control = list(maxit = 4000L, reltol = 1e-12)
-    )
-    o <- stats::optim(
-      o$par,
-      nll,
-      method = "BFGS",
-      control = list(maxit = 500L, reltol = 1e-14)
-    )
-    back(o$par)
-  }
-  lg <- function(p) log(p / (1 - p))
-  il <- function(z) 1 / (1 + exp(-z))
-  dzip <- function(x, p) {
-    ifelse(
-      x == 0,
-      log(p[[1L]] + (1 - p[[1L]]) * stats::dpois(0, p[[2L]])),
-      log(1 - p[[1L]]) + stats::dpois(x, p[[2L]], log = TRUE)
-    )
-  }
-  dzinb <- function(x, p) {
-    ifelse(
-      x == 0,
-      log(
-        p[[1L]] +
-          (1 - p[[1L]]) * stats::dnbinom(0, size = p[[2L]], mu = p[[3L]])
-      ),
-      log(1 - p[[1L]]) +
-        stats::dnbinom(x, size = p[[2L]], mu = p[[3L]], log = TRUE)
-    )
-  }
-  p0 <- function(x) min(max(mean(x == 0) - stats::dpois(0, mean(x)), 0.05), 0.9)
-  list(
-    normal = list(
-      disc = FALSE,
-      need = "numbers",
-      ok = function(x) TRUE,
-      fit = function(x) c(mean = mean(x), sd = sqrt(mean((x - mean(x))^2))),
-      d = function(x, p) stats::dnorm(x, p[[1L]], p[[2L]], log = TRUE),
-      p = function(q, p) stats::pnorm(q, p[[1L]], p[[2L]]),
-      q = function(u, p) stats::qnorm(u, p[[1L]], p[[2L]]),
-      r = function(n, p) stats::rnorm(n, p[[1L]], p[[2L]])
-    ),
-    lognormal = list(
-      disc = FALSE,
-      need = "every value above 0",
-      ok = pos,
-      fit = function(x) {
-        c(meanlog = mean(log(x)), sdlog = sqrt(mean((log(x) - mean(log(x)))^2)))
-      },
-      d = function(x, p) stats::dlnorm(x, p[[1L]], p[[2L]], log = TRUE),
-      p = function(q, p) stats::plnorm(q, p[[1L]], p[[2L]]),
-      q = function(u, p) stats::qlnorm(u, p[[1L]], p[[2L]]),
-      r = function(n, p) stats::rlnorm(n, p[[1L]], p[[2L]])
-    ),
-    exponential = list(
-      disc = FALSE,
-      need = "no value below 0",
-      ok = function(x) all(x >= 0),
-      fit = function(x) c(rate = 1 / mean(x)),
-      d = function(x, p) stats::dexp(x, p[[1L]], log = TRUE),
-      p = function(q, p) stats::pexp(q, p[[1L]]),
-      q = function(u, p) stats::qexp(u, p[[1L]]),
-      r = function(n, p) stats::rexp(n, p[[1L]])
-    ),
-    gamma = list(
-      disc = FALSE,
-      need = "every value above 0",
-      ok = pos,
-      fit = function(x) {
-        m <- mean(x)
-        v <- mean((x - m)^2)
-        ml(
-          function(z) {
-            -sum(stats::dgamma(x, exp(z[[1L]]), exp(z[[2L]]), log = TRUE))
-          },
-          log(c(m^2 / v, m / v)),
-          function(z) c(shape = exp(z[[1L]]), rate = exp(z[[2L]]))
-        )
-      },
-      d = function(x, p) stats::dgamma(x, p[[1L]], p[[2L]], log = TRUE),
-      p = function(q, p) stats::pgamma(q, p[[1L]], p[[2L]]),
-      q = function(u, p) stats::qgamma(u, p[[1L]], p[[2L]]),
-      r = function(n, p) stats::rgamma(n, p[[1L]], p[[2L]])
-    ),
-    weibull = list(
-      disc = FALSE,
-      need = "every value above 0",
-      ok = pos,
-      fit = function(x) {
-        ml(
-          function(z) {
-            -sum(stats::dweibull(x, exp(z[[1L]]), exp(z[[2L]]), log = TRUE))
-          },
-          c(log(1.2), log(mean(x))),
-          function(z) c(shape = exp(z[[1L]]), scale = exp(z[[2L]]))
-        )
-      },
-      d = function(x, p) stats::dweibull(x, p[[1L]], p[[2L]], log = TRUE),
-      p = function(q, p) stats::pweibull(q, p[[1L]], p[[2L]]),
-      q = function(u, p) stats::qweibull(u, p[[1L]], p[[2L]]),
-      r = function(n, p) stats::rweibull(n, p[[1L]], p[[2L]])
-    ),
-    t = list(
-      disc = FALSE,
-      need = "numbers",
-      ok = function(x) TRUE,
-      fit = function(x) {
-        s0 <- max(stats::mad(x), stats::sd(x) / 10)
-        ml(
-          function(z) {
-            -sum(
-              stats::dt(
-                (x - z[[1L]]) / exp(z[[2L]]),
-                exp(z[[3L]]),
-                log = TRUE
-              ) -
-                z[[2L]]
-            )
-          },
-          c(stats::median(x), log(s0), log(5)),
-          function(z) {
-            c(location = z[[1L]], scale = exp(z[[2L]]), df = exp(z[[3L]]))
-          }
-        )
-      },
-      d = function(x, p) {
-        stats::dt((x - p[[1L]]) / p[[2L]], p[[3L]], log = TRUE) - log(p[[2L]])
-      },
-      p = function(q, p) stats::pt((q - p[[1L]]) / p[[2L]], p[[3L]]),
-      q = function(u, p) p[[1L]] + p[[2L]] * stats::qt(u, p[[3L]]),
-      r = function(n, p) p[[1L]] + p[[2L]] * stats::rt(n, p[[3L]])
-    ),
-    pareto = list(
-      disc = FALSE,
-      need = "every value above 0",
-      ok = pos,
-      fit = function(x) {
-        c(xmin = min(x), alpha = length(x) / sum(log(x / min(x))))
-      },
-      d = function(x, p) {
-        ifelse(
-          x >= p[[1L]],
-          log(p[[2L]]) + p[[2L]] * log(p[[1L]]) - (p[[2L]] + 1) * log(x),
-          -Inf
-        )
-      },
-      p = function(q, p) ifelse(q < p[[1L]], 0, 1 - (p[[1L]] / q)^p[[2L]]),
-      q = function(u, p) p[[1L]] * (1 - u)^(-1 / p[[2L]]),
-      r = function(n, p) p[[1L]] * stats::runif(n)^(-1 / p[[2L]])
-    ),
-    beta = list(
-      disc = FALSE,
-      need = "every value between 0 and 1, exclusive",
-      ok = function(x) all(x > 0 & x < 1),
-      fit = function(x) {
-        m <- mean(x)
-        v <- mean((x - m)^2)
-        k <- max(m * (1 - m) / v - 1, 0.1)
-        ml(
-          function(z) {
-            -sum(stats::dbeta(x, exp(z[[1L]]), exp(z[[2L]]), log = TRUE))
-          },
-          log(c(m * k, (1 - m) * k)),
-          function(z) c(shape1 = exp(z[[1L]]), shape2 = exp(z[[2L]]))
-        )
-      },
-      d = function(x, p) stats::dbeta(x, p[[1L]], p[[2L]], log = TRUE),
-      p = function(q, p) stats::pbeta(q, p[[1L]], p[[2L]]),
-      q = function(u, p) stats::qbeta(u, p[[1L]], p[[2L]]),
-      r = function(n, p) stats::rbeta(n, p[[1L]], p[[2L]])
-    ),
-    poisson = list(
-      disc = TRUE,
-      need = "counts (whole numbers, 0 or more)",
-      ok = cnt,
-      fit = function(x) c(lambda = mean(x)),
-      d = function(x, p) stats::dpois(x, p[[1L]], log = TRUE),
-      p = function(q, p) stats::ppois(q, p[[1L]]),
-      q = function(u, p) stats::qpois(u, p[[1L]]),
-      r = function(n, p) stats::rpois(n, p[[1L]])
-    ),
-    negbin = list(
-      disc = TRUE,
-      need = "counts (whole numbers, 0 or more)",
-      ok = cnt,
-      fit = function(x) {
-        # the estimate of mu is the mean whatever the size, so the size is a
-        # one-dimensional search
-        m <- mean(x)
-        o <- stats::optimize(
-          function(z) {
-            -sum(stats::dnbinom(x, size = exp(z), mu = m, log = TRUE))
-          },
-          c(-10, 15)
-        )
-        c(size = exp(o$minimum), mu = m)
-      },
-      d = function(x, p) {
-        stats::dnbinom(x, size = p[[1L]], mu = p[[2L]], log = TRUE)
-      },
-      p = function(q, p) stats::pnbinom(q, size = p[[1L]], mu = p[[2L]]),
-      q = function(u, p) stats::qnbinom(u, size = p[[1L]], mu = p[[2L]]),
-      r = function(n, p) stats::rnbinom(n, size = p[[1L]], mu = p[[2L]])
-    ),
-    zip = list(
-      disc = TRUE,
-      need = "counts with at least one zero",
-      ok = function(x) cnt(x) && any(x == 0),
-      fit = function(x) {
-        ml(
-          function(z) -sum(dzip(x, c(il(z[[1L]]), exp(z[[2L]])))),
-          c(lg(p0(x)), log(max(mean(x[x > 0]), 0.1))),
-          function(z) c(pi = il(z[[1L]]), lambda = exp(z[[2L]]))
-        )
-      },
-      d = dzip,
-      p = function(q, p) {
-        ifelse(q < 0, 0, p[[1L]] + (1 - p[[1L]]) * stats::ppois(q, p[[2L]]))
-      },
-      q = function(u, p) {
-        ifelse(
-          u <= p[[1L]],
-          0,
-          stats::qpois(pmax(0, (u - p[[1L]]) / (1 - p[[1L]])), p[[2L]])
-        )
-      },
-      r = function(n, p) {
-        ifelse(stats::runif(n) < p[[1L]], 0, stats::rpois(n, p[[2L]]))
-      }
-    ),
-    zinb = list(
-      disc = TRUE,
-      need = "counts with at least one zero",
-      ok = function(x) cnt(x) && any(x == 0),
-      fit = function(x) {
-        ml(
-          function(z) {
-            -sum(dzinb(x, c(il(z[[1L]]), exp(z[[2L]]), exp(z[[3L]]))))
-          },
-          c(lg(p0(x)), 0, log(max(mean(x[x > 0]), 0.1))),
-          function(z) {
-            c(pi = il(z[[1L]]), size = exp(z[[2L]]), mu = exp(z[[3L]]))
-          }
-        )
-      },
-      d = dzinb,
-      p = function(q, p) {
-        ifelse(
-          q < 0,
-          0,
-          p[[1L]] +
-            (1 - p[[1L]]) * stats::pnbinom(q, size = p[[2L]], mu = p[[3L]])
-        )
-      },
-      q = function(u, p) {
-        ifelse(
-          u <= p[[1L]],
-          0,
-          stats::qnbinom(
-            pmax(0, (u - p[[1L]]) / (1 - p[[1L]])),
-            size = p[[2L]],
-            mu = p[[3L]]
-          )
-        )
-      },
-      r = function(n, p) {
-        ifelse(
-          stats::runif(n) < p[[1L]],
-          0,
-          stats::rnbinom(n, size = p[[2L]], mu = p[[3L]])
-        )
-      }
-    )
-  )
-}
-
-#' The goodness-of-fit statistics of one fitted family.
-#'
-#' Kolmogorov-Smirnov: for a continuous family the largest gap between the
-#' empirical and fitted distribution functions on either side of each value; for
-#' a count family the largest gap over the support 0 to max(x).
-#' Anderson-Darling: continuous families only (NA for counts).
-#' @param x The data, sorted.
-#' @param f The family.
-#' @param p The estimates.
-#' @return A named numeric vector: ks and ad.
-#' @noRd
-.dst_gof <- function(x, f, p) {
-  n <- length(x)
-  if (f$disc) {
-    k <- 0:max(x)
-    return(c(ks = max(abs(stats::ecdf(x)(k) - f$p(k, p))), ad = NA_real_))
-  }
-  u <- pmin(pmax(f$p(x, p), 1e-300), 1 - 1e-16)
-  i <- seq_len(n)
-  c(
-    ks = max(i / n - u, u - (i - 1) / n),
-    ad = -n - mean((2 * i - 1) * (log(u) + log(1 - rev(u))))
-  )
-}
-
-#' Fits one family, NULL when the optimiser fails or the likelihood is not
-#' finite.
-#' @param f The family.
-#' @param x The data.
-#' @return The estimates, or NULL.
-#' @noRd
-.dst_fit1 <- function(f, x) {
-  p <- tryCatch(suppressWarnings(f$fit(x)), error = function(e) NULL)
-  if (is.null(p) || !all(is.finite(p)) || !is.finite(sum(f$d(x, p)))) {
-    NULL
-  } else {
-    p
-  }
-}
-
 #' Fit and rank candidate distributions
 #'
 #' Fits candidate distributions to one numeric variable by maximum likelihood,
@@ -444,26 +111,9 @@ dstfit <- function(
   seed = 1L,
   k = NULL
 ) {
-  if (!is.numeric(x) || is.object(x)) {
-    stop("dstfit: `x` must be a numeric vector", call. = FALSE)
-  }
-  if (any(is.infinite(x))) {
-    stop("dstfit: `x` has an infinite value", call. = FALSE)
-  }
-  nmiss <- sum(is.na(x))
-  x <- sort(as.numeric(x[!is.na(x)]))
-  if (length(x) < 5L) {
-    stop(
-      "dstfit: `x` needs at least five values that are not missing",
-      call. = FALSE
-    )
-  }
-  if (length(unique(x)) < 2L) {
-    stop(
-      "dstfit: every value of `x` is the same; there is no distribution to fit",
-      call. = FALSE
-    )
-  }
+  cl <- .dst_clean(x)
+  x <- cl$x
+  nmiss <- cl$nmiss
   nboot <- .rmbl_scalar(nboot, "nboot", 0, 1e5, integer = TRUE)
   conflvl <- .rmbl_conf_level(conflvl)
   all <- .dst_fams()
@@ -482,51 +132,9 @@ dstfit <- function(
       stop(sprintf("dstfit: `%s` needs %s", nm, all[[nm]]$need), call. = FALSE)
     }
   }
-  n <- length(x)
-  fits <- list()
-  rows <- list()
-  for (nm in fams) {
-    f <- all[[nm]]
-    p <- .dst_fit1(f, x)
-    if (is.null(p)) {
-      rows[[nm]] <- data.frame(
-        family = nm,
-        npar = NA_integer_,
-        loglik = NA_real_,
-        aic = NA_real_,
-        bic = NA_real_,
-        ks = NA_real_,
-        ad = NA_real_,
-        converged = FALSE,
-        params = "",
-        stringsAsFactors = FALSE
-      )
-      next
-    }
-    fits[[nm]] <- p
-    ll <- sum(f$d(x, p))
-    g <- .dst_gof(x, f, p)
-    rows[[nm]] <- data.frame(
-      family = nm,
-      npar = length(p),
-      loglik = ll,
-      aic = 2 * length(p) - 2 * ll,
-      bic = log(n) * length(p) - 2 * ll,
-      ks = g[["ks"]],
-      ad = g[["ad"]],
-      converged = TRUE,
-      params = paste(
-        sprintf("%s = %s", names(p), format(signif(p, 4))),
-        collapse = ", "
-      ),
-      stringsAsFactors = FALSE
-    )
-  }
-  tab <- do.call(rbind, rows)
-  tab <- tab[order(tab$aic, na.last = TRUE), , drop = FALSE]
-  tab <- cbind(rank = seq_len(nrow(tab)), tab)
-  rownames(tab) <- NULL
-  fits <- fits[intersect(tab$family, names(fits))]
+  ft <- .dst_table(x, all, fams)
+  fits <- ft$fits
+  tab <- ft$table
   boot <- .dst_boot(x, all, fits, nboot, conflvl, seed)
   structure(
     list(
@@ -543,121 +151,48 @@ dstfit <- function(
   )
 }
 
-#' Percentile bootstrap intervals of the fitted parameters.
-#' @param x The data.
-#' @param all The families.
-#' @param fits The estimates of the converged fits.
-#' @param nboot The number of resamples.
-#' @param conflvl The level.
-#' @param seed The seed.
-#' @return A data frame: family, param, estimate, lower, upper.
-#' @noRd
-.dst_boot <- function(x, all, fits, nboot, conflvl, seed) {
-  if (nboot > 0L) {
-    .rmbl_local_seed(seed)
-  }
-  a <- (1 - conflvl) / 2
-  do.call(
-    rbind,
-    c(
-      list(data.frame(
-        family = character(),
-        param = character(),
-        estimate = numeric(),
-        lower = numeric(),
-        upper = numeric(),
-        stringsAsFactors = FALSE
-      )),
-      lapply(names(fits), function(nm) {
-        p <- fits[[nm]]
-        b <- if (nboot > 0L) {
-          vapply(
-            seq_len(nboot),
-            function(i) {
-              q <- .dst_fit1(all[[nm]], sample(x, replace = TRUE))
-              if (is.null(q)) rep(NA_real_, length(p)) else q
-            },
-            p
-          )
-        }
-        lim <- if (is.null(b)) {
-          matrix(NA_real_, 2L, length(p))
-        } else {
-          apply(
-            matrix(b, nrow = length(p)),
-            1L,
-            stats::quantile,
-            c(a, 1 - a),
-            na.rm = TRUE,
-            names = FALSE
-          )
-        }
-        data.frame(
-          family = nm,
-          param = names(p),
-          estimate = unname(p),
-          lower = lim[1L, ],
-          upper = lim[2L, ],
-          stringsAsFactors = FALSE
-        )
-      })
-    )
-  )
-}
-
-#' The Hill estimate of the tail index, NULL for data that are not all positive
-#' or under ten values.
-#' @param x The data, sorted.
-#' @param k The number of upper order statistics, or NULL.
-#' @param conflvl The level.
-#' @return A list, or NULL.
-#' @noRd
-.dst_hill <- function(x, k, conflvl) {
-  n <- length(x)
-  if (n < 10L || any(x <= 0)) {
-    return(NULL)
-  }
-  k <- if (is.null(k)) {
-    floor(sqrt(n))
-  } else {
-    .rmbl_scalar(k, "k", 2, n - 1, integer = TRUE)
-  }
-  top <- rev(x)[seq_len(k)]
-  alpha <- k / sum(log(top / rev(x)[k + 1L]))
-  z <- stats::qnorm(1 - (1 - conflvl) / 2)
-  list(
-    k = as.integer(k),
-    alpha = alpha,
-    lower = alpha * (1 - z / sqrt(k)),
-    upper = alpha * (1 + z / sqrt(k))
-  )
-}
-
+#' @param digits Significant digits of the fit table's numbers.
 #' @rdname dstfit
 #' @export
-print.rmbl_dstfit <- function(x, ...) {
+format.rmbl_dstfit <- function(x, digits = 4L, ...) {
   t <- x$table
-  cat(sprintf(
-    "Distributions fitted to %d values%s, ranked by AIC\n\n",
-    length(x$x),
-    if (x$nmiss) sprintf(" (%d missing dropped)", x$nmiss) else ""
-  ))
-  show <- t[, c("rank", "family", "npar", "loglik", "aic", "bic", "ks", "ad")]
-  print(format(show, digits = 4), row.names = FALSE)
-  cat("\n")
-  for (i in which(t$converged)) {
-    cat(sprintf("  %-12s %s\n", t$family[i], t$params[i]))
-  }
-  if (!is.null(x$hill)) {
-    cat(sprintf(
-      "\nHill tail index %.3g (%.3g to %.3g), from the %d largest values\n",
-      x$hill$alpha,
-      x$hill$lower,
-      x$hill$upper,
-      x$hill$k
-    ))
-  }
-  invisible(x)
+  cols <- c("rank", "family", "npar", "loglik", "aic", "bic", "ks", "ad")
+  ok <- !is.na(t$converged) & t$converged
+  h <- x$hill
+  .rmbl_res_block(
+    "Distribution fit",
+    facts = list(
+      Values = length(x$x),
+      Missing = if (isTRUE(x$nmiss > 0)) sprintf("%d missing dropped", x$nmiss),
+      Data = if (isTRUE(x$discrete)) "whole numbers (counts)" else "continuous",
+      `Families tried` = nrow(t),
+      `Best by AIC` = if (any(ok)) t$family[ok][1L],
+      Confidence = .rmbl_lvl(x$conflvl),
+      `Hill tail index` = if (!is.null(h)) {
+        sprintf(
+          "%s %s, from the %d largest values",
+          .rmbl_fmt_num(h$alpha, 3L),
+          .rmbl_fmt_ci(h$lower, h$upper, 3L),
+          as.integer(h$k)
+        )
+      }
+    ),
+    tables = list(
+      `Families ranked by AIC` = .rmbl_plain(t, cols),
+      Parameters = .rmbl_plain(t[ok, , drop = FALSE], c("family", "params"))
+    ),
+    reading = .rmbl_dstfit_reading(t[ok, , drop = FALSE]),
+    notes = c(
+      if (!all(ok)) paste("Did not converge:", toString(t$family[!ok])),
+      paste(
+        "The lower the AIC, the better the family fits for its number of",
+        "parameters; ks and ad are the Kolmogorov-Smirnov and",
+        "Anderson-Darling distances, smaller is closer. A best fit is only",
+        "the best of those tried."
+      )
+    ),
+    digits = digits
+  )
 }
 
 #' Plot fitted distributions
@@ -667,7 +202,7 @@ print.rmbl_dstfit <- function(x, ...) {
 #' and a PP plot per family; and the empirical survival function on log-log axes
 #' with each fitted survival curve, where a power law is a straight line.
 #' @param x A [dstfit()] result.
-#' @param ... Further arguments to the first `plot()` call.
+#' @param ... Further graphical arguments to the first panel's `plot()` call.
 #' @param which One of `"density"`, `"qq"`, `"pp"` or
 #'   `"tail"`.
 #' @param fams Families to draw; default the three best by AIC.
@@ -702,124 +237,23 @@ plot.rmbl_dstfit <- function(
   bad <- setdiff(fams, names(x$fits))
   if (length(bad)) {
     stop(
-      sprintf("plot: no converged fit for %s", paste(bad, collapse = ", ")),
+      sprintf("plot: no converged fit for %s", toString(bad)),
       call. = FALSE
     )
   }
   all <- .dst_fams()
-  y <- x$x
   cols <- .bl_cols(length(fams) + 1L, col, palette)
   if (which %in% c("qq", "pp")) {
     return(.dst_panels(x, fams, which, main, cols, ...))
   }
   op <- .bl_par(NULL)
   on.exit(graphics::par(op), add = TRUE)
-  if (which == "tail") {
-    s <- y[y > 0]
-    if (length(s) < 2L) {
-      stop(
-        "plot: the tail plot needs at least two values above 0",
-        call. = FALSE
-      )
-    }
-    u <- sort(unique(s))
-    emp <- 1 - stats::ecdf(s)(u) + 1 / length(s)
-    graphics::plot(
-      u,
-      emp,
-      log = "xy",
-      type = "n",
-      xlab = "",
-      ylab = "",
-      main = "",
-      ...
-    )
-    .bl_grid(NULL)
-    graphics::points(u, emp, pch = 21, bg = cols[1L], col = "white")
-    out <- data.frame(family = "data", x = u, y = emp, stringsAsFactors = FALSE)
-    for (i in seq_along(fams)) {
-      sf <- pmax(1 - all[[fams[i]]]$p(u, x$fits[[fams[i]]]), 1e-300)
-      graphics::lines(u, sf, col = cols[i + 1L], lwd = 2)
-      out <- rbind(
-        out,
-        data.frame(family = fams[i], x = u, y = sf, stringsAsFactors = FALSE)
-      )
-    }
-    .bl_ylab("Share at or above (log)")
-    .bl_xlab("Value (log)")
-    .bl_title(.bl_main(main, "Tail: survival on log-log axes"))
+  out <- if (which == "tail") {
+    .dst_plot_tail(x, fams, all, cols, main, ...)
   } else if (x$discrete) {
-    k <- 0:max(y)
-    obs <- as.numeric(table(factor(y, levels = k))) / length(y)
-    mids <- .bl_barplot(
-      obs,
-      names.arg = k,
-      col = grDevices::adjustcolor(cols[1L], 0.6),
-      labels = FALSE,
-      ...
-    )
-    out <- data.frame(family = "data", x = k, y = obs, stringsAsFactors = FALSE)
-    for (i in seq_along(fams)) {
-      pm <- exp(all[[fams[i]]]$d(k, x$fits[[fams[i]]]))
-      graphics::lines(
-        mids,
-        pm,
-        col = cols[i + 1L],
-        lwd = 2,
-        type = "o",
-        pch = 19,
-        cex = 0.7
-      )
-      out <- rbind(
-        out,
-        data.frame(family = fams[i], x = k, y = pm, stringsAsFactors = FALSE)
-      )
-    }
-    .bl_ylab("Proportion")
-    .bl_title(.bl_main(main, "Observed counts and fitted mass"))
+    .dst_plot_mass(x, fams, all, cols, main, ...)
   } else {
-    h <- graphics::hist(y, breaks = "FD", plot = FALSE)
-    g <- seq(min(y), max(y), length.out = 200L)
-    dens <- lapply(fams, function(f) exp(all[[f]]$d(g, x$fits[[f]])))
-    top <- max(h$density, unlist(dens)[is.finite(unlist(dens))])
-    graphics::plot(
-      range(h$breaks),
-      c(0, top),
-      type = "n",
-      xlab = "",
-      ylab = "",
-      main = "",
-      ...
-    )
-    .bl_grid(NULL)
-    graphics::rect(
-      utils::head(h$breaks, -1L),
-      0,
-      h$breaks[-1L],
-      h$density,
-      col = grDevices::adjustcolor(cols[1L], 0.35),
-      border = "white"
-    )
-    out <- data.frame(
-      family = "data",
-      x = h$mids,
-      y = h$density,
-      stringsAsFactors = FALSE
-    )
-    for (i in seq_along(fams)) {
-      graphics::lines(g, dens[[i]], col = cols[i + 1L], lwd = 2.2)
-      out <- rbind(
-        out,
-        data.frame(
-          family = fams[i],
-          x = g,
-          y = dens[[i]],
-          stringsAsFactors = FALSE
-        )
-      )
-    }
-    .bl_ylab("Density")
-    .bl_title(.bl_main(main, "Histogram and fitted densities"))
+    .dst_plot_density(x, fams, all, cols, main, ...)
   }
   graphics::legend(
     "topright",
@@ -833,13 +267,258 @@ plot.rmbl_dstfit <- function(
   invisible(out)
 }
 
+#' Checks the data given to dstfit() and drops its missing values.
+#' @param x The data given to dstfit(), checked numeric and finite.
+#' @return A list: \code{x}, the values that are not missing, sorted, and
+#'   \code{nmiss}, the number dropped.
+#' @noRd
+.dst_clean <- function(x) {
+  if (!is.numeric(x) || is.object(x)) {
+    stop("dstfit: `x` must be a numeric vector", call. = FALSE)
+  }
+  if (any(is.infinite(x))) {
+    stop("dstfit: `x` has an infinite value", call. = FALSE)
+  }
+  nmiss <- sum(is.na(x))
+  x <- sort(as.numeric(x[!is.na(x)]))
+  if (length(x) < 5L) {
+    stop(
+      "dstfit: `x` needs at least five values that are not missing",
+      call. = FALSE
+    )
+  }
+  if (length(unique(x)) < 2L) {
+    stop(
+      "dstfit: every value of `x` is the same; there is no distribution to fit",
+      call. = FALSE
+    )
+  }
+  list(x = x, nmiss = nmiss)
+}
+
+#' The candidate families: their checks, maximum likelihood fits and d/p/q/r
+#' functions.
+#'
+#' Each entry has `disc` (a count family), `need` (what the data must be, in
+#' words), `ok` (whether the data are), `fit` (the estimates, named), `d`
+#' (the log density or mass), `p`, `q` and `r`. The families without a
+#' closed-form estimate are fitted by optim() on an unbounded scale.
+#' @return A named list of families.
+#' @noRd
+.dst_fams <- function() {
+  c(
+    .dst_fams_basic(),
+    .dst_fams_shape(),
+    .dst_fams_t(),
+    .dst_fams_bounded(),
+    .dst_fams_count(),
+    .dst_fams_zip(),
+    .dst_fams_zinb()
+  )
+}
+
+#' The goodness-of-fit statistics of one fitted family.
+#'
+#' Kolmogorov-Smirnov: for a continuous family the largest gap between the
+#' empirical and fitted distribution functions on either side of each value; for
+#' a count family the largest gap over the support 0 to max(x).
+#' Anderson-Darling: continuous families only (NA for counts).
+#' @param x The data, sorted.
+#' @param f The family.
+#' @param p The family's fitted parameters.
+#' @return A named numeric vector: ks and ad.
+#' @noRd
+.dst_gof <- function(x, f, p) {
+  n <- length(x)
+  if (f$disc) {
+    k <- 0:max(x)
+    return(c(ks = max(abs(stats::ecdf(x)(k) - f$p(k, p))), ad = NA_real_))
+  }
+  u <- pmin(pmax(f$p(x, p), 1e-300), 1 - 1e-16)
+  i <- seq_len(n)
+  c(
+    ks = max(i / n - u, u - (i - 1) / n),
+    ad = -n - mean((2 * i - 1) * (log(u) + log(1 - rev(u))))
+  )
+}
+
+#' Fits one family, NULL when the optimiser fails or the likelihood is not
+#' finite.
+#' @param f The family.
+#' @param x The values the family is fitted to.
+#' @return The estimates, or NULL.
+#' @noRd
+.dst_fit1 <- function(f, x) {
+  p <- tryCatch(suppressWarnings(f$fit(x)), error = function(e) NULL)
+  if (is.null(p) || !all(is.finite(p)) || !is.finite(sum(f$d(x, p)))) {
+    NULL
+  } else {
+    p
+  }
+}
+
+#' Fits each family and ranks them by AIC.
+#' @param x The data, sorted.
+#' @param all The families from .dst_fams().
+#' @param fams The names of the families to fit.
+#' @return A list: \code{table}, the ranked table, and \code{fits}, the
+#'   estimates of the families that converged, in rank order.
+#' @noRd
+.dst_table <- function(x, all, fams) {
+  n <- length(x)
+  fits <- list()
+  rows <- list()
+  for (nm in fams) {
+    f <- all[[nm]]
+    p <- .dst_fit1(f, x)
+    if (is.null(p)) {
+      rows[[nm]] <- data.frame(
+        family = nm,
+        npar = NA_integer_,
+        loglik = NA_real_,
+        aic = NA_real_,
+        bic = NA_real_,
+        ks = NA_real_,
+        ad = NA_real_,
+        converged = FALSE,
+        params = "",
+        stringsAsFactors = FALSE
+      )
+      next
+    }
+    fits[[nm]] <- p
+    ll <- sum(f$d(x, p))
+    g <- .dst_gof(x, f, p)
+    rows[[nm]] <- data.frame(
+      family = nm,
+      npar = length(p),
+      loglik = ll,
+      aic = 2 * length(p) - 2 * ll,
+      bic = log(n) * length(p) - 2 * ll,
+      ks = g[["ks"]],
+      ad = g[["ad"]],
+      converged = TRUE,
+      params = toString(sprintf("%s = %s", names(p), format(signif(p, 4)))),
+      stringsAsFactors = FALSE
+    )
+  }
+  tab <- do.call(rbind, rows)
+  tab <- tab[order(tab$aic, na.last = TRUE), , drop = FALSE]
+  tab <- cbind(rank = seq_len(nrow(tab)), tab)
+  rownames(tab) <- NULL
+  fits <- fits[intersect(tab$family, names(fits))]
+  list(table = tab, fits = fits)
+}
+
+#' Percentile bootstrap intervals of the fitted parameters.
+#' @param x The values resampled for the bootstrap.
+#' @param all The families.
+#' @param fits The estimates of the converged fits.
+#' @param nboot The number of resamples.
+#' @param conflvl The level.
+#' @param seed The bootstrap seed, set locally.
+#' @return A data frame: family, param, estimate, lower, upper.
+#' @noRd
+.dst_boot <- function(x, all, fits, nboot, conflvl, seed) {
+  if (nboot > 0L) {
+    .rmbl_local_seed(seed)
+  }
+  a <- (1 - conflvl) / 2
+  do.call(
+    rbind,
+    c(
+      list(data.frame(
+        family = character(),
+        param = character(),
+        estimate = numeric(),
+        lower = numeric(),
+        upper = numeric(),
+        stringsAsFactors = FALSE
+      )),
+      lapply(names(fits), function(nm) {
+        .dst_boot1(x, all[[nm]], nm, fits[[nm]], nboot, a)
+      })
+    )
+  )
+}
+
+#' Bootstraps the estimates of one fitted family.
+#' @param x The values resampled with replacement.
+#' @param f The family.
+#' @param nm The family's name.
+#' @param p Its estimates.
+#' @param nboot The number of resamples; 0 gives NA limits.
+#' @param a The tail probability on each side.
+#' @return A data frame, one row per parameter.
+#' @noRd
+.dst_boot1 <- function(x, f, nm, p, nboot, a) {
+  b <- if (nboot > 0L) {
+    vapply(
+      seq_len(nboot),
+      function(i) {
+        q <- .dst_fit1(f, sample(x, replace = TRUE))
+        if (is.null(q)) rep(NA_real_, length(p)) else q
+      },
+      p
+    )
+  }
+  lim <- if (is.null(b)) {
+    matrix(NA_real_, 2L, length(p))
+  } else {
+    apply(
+      matrix(b, nrow = length(p)),
+      1L,
+      stats::quantile,
+      c(a, 1 - a),
+      na.rm = TRUE,
+      names = FALSE
+    )
+  }
+  data.frame(
+    family = nm,
+    param = names(p),
+    estimate = unname(p),
+    lower = lim[1L, ],
+    upper = lim[2L, ],
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The Hill estimate of the tail index, NULL for data that are not all positive
+#' or under ten values.
+#' @param x The data, sorted.
+#' @param k The number of upper order statistics, or NULL.
+#' @param conflvl The level.
+#' @return A list, or NULL.
+#' @noRd
+.dst_hill <- function(x, k, conflvl) {
+  n <- length(x)
+  if (n < 10L || any(x <= 0)) {
+    return(NULL)
+  }
+  k <- if (is.null(k)) {
+    floor(sqrt(n))
+  } else {
+    .rmbl_scalar(k, "k", 2, n - 1, integer = TRUE)
+  }
+  top <- rev(x)[seq_len(k)]
+  alpha <- k / sum(log(top / rev(x)[k + 1L]))
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
+  list(
+    k = as.integer(k),
+    alpha = alpha,
+    lower = alpha * (1 - z / sqrt(k)),
+    upper = alpha * (1 + z / sqrt(k))
+  )
+}
+
 #' The QQ or PP panels of a dstfit() plot, one per family.
 #' @param x The fit.
 #' @param fams The families.
 #' @param which \code{"qq"} or \code{"pp"}.
-#' @param main The title, or NULL.
-#' @param cols The colours.
-#' @param ... Further arguments to plot().
+#' @param main The title, or NULL for the plot type and family.
+#' @param cols The colours; family `i` is drawn in `cols[i + 1]`.
+#' @param ... Further arguments to each panel's plot().
 #' @return The data drawn, invisibly.
 #' @noRd
 .dst_panels <- function(x, fams, which, main, cols, ...) {
@@ -885,4 +564,533 @@ plot.rmbl_dstfit <- function(
   }
   attr(out, "plnkey") <- .bl_panels_end()
   invisible(out)
+}
+
+#' The normal, lognormal, exponential families of dstfit().
+#' @return A named list of families, as in .dst_fams().
+#' @noRd
+.dst_fams_basic <- function() {
+  list(
+    normal = list(
+      disc = FALSE,
+      need = "numbers",
+      ok = function(x) TRUE,
+      fit = function(x) c(mean = mean(x), sd = sqrt(mean((x - mean(x))^2))),
+      d = function(x, p) stats::dnorm(x, p[[1L]], p[[2L]], log = TRUE),
+      p = function(q, p) stats::pnorm(q, p[[1L]], p[[2L]]),
+      q = function(u, p) stats::qnorm(u, p[[1L]], p[[2L]]),
+      r = function(n, p) stats::rnorm(n, p[[1L]], p[[2L]])
+    ),
+    lognormal = list(
+      disc = FALSE,
+      need = "every value above 0",
+      ok = .dst_pos,
+      fit = function(x) {
+        c(meanlog = mean(log(x)), sdlog = sqrt(mean((log(x) - mean(log(x)))^2)))
+      },
+      d = function(x, p) stats::dlnorm(x, p[[1L]], p[[2L]], log = TRUE),
+      p = function(q, p) stats::plnorm(q, p[[1L]], p[[2L]]),
+      q = function(u, p) stats::qlnorm(u, p[[1L]], p[[2L]]),
+      r = function(n, p) stats::rlnorm(n, p[[1L]], p[[2L]])
+    ),
+    exponential = list(
+      disc = FALSE,
+      need = "no value below 0",
+      ok = function(x) all(x >= 0),
+      fit = function(x) c(rate = 1 / mean(x)),
+      d = function(x, p) stats::dexp(x, p[[1L]], log = TRUE),
+      p = function(q, p) stats::pexp(q, p[[1L]]),
+      q = function(u, p) stats::qexp(u, p[[1L]]),
+      r = function(n, p) stats::rexp(n, p[[1L]])
+    )
+  )
+}
+
+#' The gamma, weibull families of dstfit().
+#' @return A named list of families, as in .dst_fams().
+#' @noRd
+.dst_fams_shape <- function() {
+  list(
+    gamma = list(
+      disc = FALSE,
+      need = "every value above 0",
+      ok = .dst_pos,
+      fit = function(x) {
+        m <- mean(x)
+        v <- mean((x - m)^2)
+        .dst_ml(
+          function(z) {
+            -sum(stats::dgamma(x, exp(z[[1L]]), exp(z[[2L]]), log = TRUE))
+          },
+          log(c(m^2 / v, m / v)),
+          function(z) exp(c(shape = z[[1L]], rate = z[[2L]]))
+        )
+      },
+      d = function(x, p) stats::dgamma(x, p[[1L]], p[[2L]], log = TRUE),
+      p = function(q, p) stats::pgamma(q, p[[1L]], p[[2L]]),
+      q = function(u, p) stats::qgamma(u, p[[1L]], p[[2L]]),
+      r = function(n, p) stats::rgamma(n, p[[1L]], p[[2L]])
+    ),
+    weibull = list(
+      disc = FALSE,
+      need = "every value above 0",
+      ok = .dst_pos,
+      fit = function(x) {
+        .dst_ml(
+          function(z) {
+            -sum(stats::dweibull(x, exp(z[[1L]]), exp(z[[2L]]), log = TRUE))
+          },
+          log(c(1.2, mean(x))),
+          function(z) exp(c(shape = z[[1L]], scale = z[[2L]]))
+        )
+      },
+      d = function(x, p) stats::dweibull(x, p[[1L]], p[[2L]], log = TRUE),
+      p = function(q, p) stats::pweibull(q, p[[1L]], p[[2L]]),
+      q = function(u, p) stats::qweibull(u, p[[1L]], p[[2L]]),
+      r = function(n, p) stats::rweibull(n, p[[1L]], p[[2L]])
+    )
+  )
+}
+
+#' The t family of dstfit().
+#' @return A named list of families, as in .dst_fams().
+#' @noRd
+.dst_fams_t <- function() {
+  list(
+    t = list(
+      disc = FALSE,
+      need = "numbers",
+      ok = function(x) TRUE,
+      fit = function(x) {
+        s0 <- max(stats::mad(x), stats::sd(x) / 10)
+        .dst_ml(
+          function(z) {
+            -sum(
+              stats::dt(
+                (x - z[[1L]]) / exp(z[[2L]]),
+                exp(z[[3L]]),
+                log = TRUE
+              ) -
+                z[[2L]]
+            )
+          },
+          c(stats::median(x), log(s0), log(5)),
+          function(z) {
+            c(location = z[[1L]], scale = exp(z[[2L]]), df = exp(z[[3L]]))
+          }
+        )
+      },
+      d = function(x, p) {
+        stats::dt((x - p[[1L]]) / p[[2L]], p[[3L]], log = TRUE) - log(p[[2L]])
+      },
+      p = function(q, p) stats::pt((q - p[[1L]]) / p[[2L]], p[[3L]]),
+      q = function(u, p) p[[1L]] + p[[2L]] * stats::qt(u, p[[3L]]),
+      r = function(n, p) p[[1L]] + p[[2L]] * stats::rt(n, p[[3L]])
+    )
+  )
+}
+
+#' The pareto, beta families of dstfit().
+#' @return A named list of families, as in .dst_fams().
+#' @noRd
+.dst_fams_bounded <- function() {
+  list(
+    pareto = list(
+      disc = FALSE,
+      need = "every value above 0",
+      ok = .dst_pos,
+      fit = function(x) {
+        c(xmin = min(x), alpha = length(x) / sum(log(x / min(x))))
+      },
+      d = function(x, p) {
+        ifelse(
+          x >= p[[1L]],
+          log(p[[2L]]) + p[[2L]] * log(p[[1L]]) - (p[[2L]] + 1) * log(x),
+          -Inf
+        )
+      },
+      p = function(q, p) ifelse(q < p[[1L]], 0, 1 - (p[[1L]] / q)^p[[2L]]),
+      q = function(u, p) p[[1L]] * (1 - u)^(-1 / p[[2L]]),
+      r = function(n, p) p[[1L]] * stats::runif(n)^(-1 / p[[2L]])
+    ),
+    beta = list(
+      disc = FALSE,
+      need = "every value between 0 and 1, exclusive",
+      ok = function(x) all(x > 0 & x < 1),
+      fit = function(x) {
+        m <- mean(x)
+        v <- mean((x - m)^2)
+        k <- max(m * (1 - m) / v - 1, 0.1)
+        .dst_ml(
+          function(z) {
+            -sum(stats::dbeta(x, exp(z[[1L]]), exp(z[[2L]]), log = TRUE))
+          },
+          log(c(m * k, (1 - m) * k)),
+          function(z) exp(c(shape1 = z[[1L]], shape2 = z[[2L]]))
+        )
+      },
+      d = function(x, p) stats::dbeta(x, p[[1L]], p[[2L]], log = TRUE),
+      p = function(q, p) stats::pbeta(q, p[[1L]], p[[2L]]),
+      q = function(u, p) stats::qbeta(u, p[[1L]], p[[2L]]),
+      r = function(n, p) stats::rbeta(n, p[[1L]], p[[2L]])
+    )
+  )
+}
+
+#' The poisson, negbin families of dstfit().
+#' @return A named list of families, as in .dst_fams().
+#' @noRd
+.dst_fams_count <- function() {
+  list(
+    poisson = list(
+      disc = TRUE,
+      need = "counts (whole numbers, 0 or more)",
+      ok = .dst_cnt,
+      fit = function(x) c(lambda = mean(x)),
+      d = function(x, p) stats::dpois(x, p[[1L]], log = TRUE),
+      p = function(q, p) stats::ppois(q, p[[1L]]),
+      q = function(u, p) stats::qpois(u, p[[1L]]),
+      r = function(n, p) stats::rpois(n, p[[1L]])
+    ),
+    negbin = list(
+      disc = TRUE,
+      need = "counts (whole numbers, 0 or more)",
+      ok = .dst_cnt,
+      fit = function(x) {
+        # the estimate of mu is the mean whatever the size, so the size is a
+        # one-dimensional search
+        m <- mean(x)
+        o <- stats::optimize(
+          function(z) {
+            -sum(stats::dnbinom(x, size = exp(z), mu = m, log = TRUE))
+          },
+          c(-10, 15)
+        )
+        c(size = exp(o$minimum), mu = m)
+      },
+      d = function(x, p) {
+        stats::dnbinom(x, size = p[[1L]], mu = p[[2L]], log = TRUE)
+      },
+      p = function(q, p) stats::pnbinom(q, size = p[[1L]], mu = p[[2L]]),
+      q = function(u, p) stats::qnbinom(u, size = p[[1L]], mu = p[[2L]]),
+      r = function(n, p) stats::rnbinom(n, size = p[[1L]], mu = p[[2L]])
+    )
+  )
+}
+
+#' The zip family of dstfit().
+#' @return A named list of families, as in .dst_fams().
+#' @noRd
+.dst_fams_zip <- function() {
+  list(
+    zip = list(
+      disc = TRUE,
+      need = "counts with at least one zero",
+      ok = function(x) .dst_cnt(x) && any(x == 0),
+      fit = function(x) {
+        .dst_ml(
+          function(z) -sum(.dst_dzip(x, c(.dst_il(z[[1L]]), exp(z[[2L]])))),
+          c(.dst_lg(.dst_p0(x)), log(max(mean(x[x > 0]), 0.1))),
+          function(z) c(pi = .dst_il(z[[1L]]), lambda = exp(z[[2L]]))
+        )
+      },
+      d = .dst_dzip,
+      p = function(q, p) {
+        ifelse(q < 0, 0, p[[1L]] + (1 - p[[1L]]) * stats::ppois(q, p[[2L]]))
+      },
+      q = function(u, p) {
+        ifelse(
+          u <= p[[1L]],
+          0,
+          stats::qpois(pmax(0, (u - p[[1L]]) / (1 - p[[1L]])), p[[2L]])
+        )
+      },
+      r = function(n, p) {
+        ifelse(stats::runif(n) < p[[1L]], 0, stats::rpois(n, p[[2L]]))
+      }
+    )
+  )
+}
+
+#' The zinb family of dstfit().
+#' @return A named list of families, as in .dst_fams().
+#' @noRd
+.dst_fams_zinb <- function() {
+  list(
+    zinb = list(
+      disc = TRUE,
+      need = "counts with at least one zero",
+      ok = function(x) .dst_cnt(x) && any(x == 0),
+      fit = function(x) {
+        .dst_ml(
+          function(z) {
+            -sum(.dst_dzinb(x, c(.dst_il(z[[1L]]), exp(z[[2L]]), exp(z[[3L]]))))
+          },
+          c(.dst_lg(.dst_p0(x)), 0, log(max(mean(x[x > 0]), 0.1))),
+          function(z) {
+            c(pi = .dst_il(z[[1L]]), size = exp(z[[2L]]), mu = exp(z[[3L]]))
+          }
+        )
+      },
+      d = .dst_dzinb,
+      p = function(q, p) {
+        ifelse(
+          q < 0,
+          0,
+          p[[1L]] +
+            (1 - p[[1L]]) * stats::pnbinom(q, size = p[[2L]], mu = p[[3L]])
+        )
+      },
+      q = function(u, p) {
+        ifelse(
+          u <= p[[1L]],
+          0,
+          stats::qnbinom(
+            pmax(0, (u - p[[1L]]) / (1 - p[[1L]])),
+            size = p[[2L]],
+            mu = p[[3L]]
+          )
+        )
+      },
+      r = function(n, p) {
+        ifelse(
+          stats::runif(n) < p[[1L]],
+          0,
+          stats::rnbinom(n, size = p[[2L]], mu = p[[3L]])
+        )
+      }
+    )
+  )
+}
+
+#' Whether every value is above 0.
+#' @param x The data, checked to be all positive.
+#' @return TRUE or FALSE.
+#' @noRd
+.dst_pos <- function(x) all(x > 0)
+
+#' Whether every value is a count: a whole number, 0 or more.
+#' @param x The data, checked to be non-negative whole counts.
+#' @return TRUE or FALSE.
+#' @noRd
+.dst_cnt <- function(x) all(x >= 0 & x == round(x))
+
+#' Minimises a negative log-likelihood on an unbounded scale.
+#'
+#' Nelder-Mead first, then BFGS from where it stopped.
+#' @param nll The negative log-likelihood of the unbounded parameters.
+#' @param start The starting values.
+#' @param back Maps the unbounded estimates back to the named parameters.
+#' @return The named estimates.
+#' @noRd
+.dst_ml <- function(nll, start, back) {
+  o <- stats::optim(
+    start,
+    nll,
+    method = "Nelder-Mead",
+    control = list(maxit = 4000L, reltol = 1e-12)
+  )
+  o <- stats::optim(
+    o$par,
+    nll,
+    method = "BFGS",
+    control = list(maxit = 500L, reltol = 1e-14)
+  )
+  back(o$par)
+}
+
+#' The logit.
+#' @param p A probability.
+#' @return Its log odds.
+#' @noRd
+.dst_lg <- function(p) log(p / (1 - p))
+
+#' The inverse logit.
+#' @param z Log odds.
+#' @return The probability.
+#' @noRd
+.dst_il <- function(z) 1 / (1 + exp(-z))
+
+#' The log mass of the zero-inflated Poisson.
+#' @param x The counts.
+#' @param p The zero probability and the Poisson mean.
+#' @return The log mass at each count.
+#' @noRd
+.dst_dzip <- function(x, p) {
+  ifelse(
+    x == 0,
+    log(p[[1L]] + (1 - p[[1L]]) * stats::dpois(0, p[[2L]])),
+    log(1 - p[[1L]]) + stats::dpois(x, p[[2L]], log = TRUE)
+  )
+}
+
+#' The log mass of the zero-inflated negative binomial.
+#' @param x The counts.
+#' @param p The zero probability, the size and the mean.
+#' @return The log mass at each count.
+#' @noRd
+.dst_dzinb <- function(x, p) {
+  ifelse(
+    x == 0,
+    log(
+      p[[1L]] +
+        (1 - p[[1L]]) * stats::dnbinom(0, size = p[[2L]], mu = p[[3L]])
+    ),
+    log(1 - p[[1L]]) +
+      stats::dnbinom(x, size = p[[2L]], mu = p[[3L]], log = TRUE)
+  )
+}
+
+#' The starting zero probability of a zero-inflated fit: the excess of zeros
+#' over a Poisson with the same mean, kept within 0.05 to 0.9.
+#' @param x The counts.
+#' @return A probability.
+#' @noRd
+.dst_p0 <- function(x) {
+  min(max(mean(x == 0) - stats::dpois(0, mean(x)), 0.05), 0.9)
+}
+
+#' Draws the tail panel of plot.rmbl_dstfit(): survival on log-log axes.
+#' @param x An `rmbl_dstfit` object.
+#' @param fams The families to draw.
+#' @param all The families from .dst_fams().
+#' @param cols The colours: the data's first, then one per family.
+#' @param main The title, or NULL for the tail plot's default.
+#' @param ... Passed to the plotting call.
+#' @return The drawn values: a data frame of family, x and y.
+#' @noRd
+.dst_plot_tail <- function(x, fams, all, cols, main, ...) {
+  y <- x$x
+  s <- y[y > 0]
+  if (length(s) < 2L) {
+    stop(
+      "plot: the tail plot needs at least two values above 0",
+      call. = FALSE
+    )
+  }
+  u <- sort(unique(s))
+  emp <- 1 - stats::ecdf(s)(u) + 1 / length(s)
+  graphics::plot(
+    u,
+    emp,
+    log = "xy",
+    type = "n",
+    xlab = "",
+    ylab = "",
+    main = "",
+    ...
+  )
+  .bl_grid(NULL)
+  graphics::points(u, emp, pch = 21, bg = cols[1L], col = "white")
+  out <- data.frame(family = "data", x = u, y = emp, stringsAsFactors = FALSE)
+  for (i in seq_along(fams)) {
+    sf <- pmax(1 - all[[fams[i]]]$p(u, x$fits[[fams[i]]]), 1e-300)
+    graphics::lines(u, sf, col = cols[i + 1L], lwd = 2)
+    out <- rbind(
+      out,
+      data.frame(family = fams[i], x = u, y = sf, stringsAsFactors = FALSE)
+    )
+  }
+  .bl_ylab("Share at or above (log)")
+  .bl_xlab("Value (log)")
+  .bl_title(.bl_main(main, "Tail: survival on log-log axes"))
+  out
+}
+
+#' Draws the count panel of plot.rmbl_dstfit(): observed and fitted mass.
+#' @param x An `rmbl_dstfit` object.
+#' @param fams The families to draw.
+#' @param all The families from .dst_fams().
+#' @param cols The colours: the data's first, then one per family.
+#' @param main The title, or NULL for the mass plot's default.
+#' @param ... Passed to the plotting call.
+#' @return The drawn values: a data frame of family, x and y.
+#' @noRd
+.dst_plot_mass <- function(x, fams, all, cols, main, ...) {
+  y <- x$x
+  k <- 0:max(y)
+  obs <- as.numeric(table(factor(y, levels = k))) / length(y)
+  mids <- .bl_barplot(
+    obs,
+    names.arg = k,
+    col = grDevices::adjustcolor(cols[1L], 0.6),
+    labels = FALSE,
+    ...
+  )
+  out <- data.frame(family = "data", x = k, y = obs, stringsAsFactors = FALSE)
+  for (i in seq_along(fams)) {
+    pm <- exp(all[[fams[i]]]$d(k, x$fits[[fams[i]]]))
+    graphics::lines(
+      mids,
+      pm,
+      col = cols[i + 1L],
+      lwd = 2,
+      type = "o",
+      pch = 19,
+      cex = 0.7
+    )
+    out <- rbind(
+      out,
+      data.frame(family = fams[i], x = k, y = pm, stringsAsFactors = FALSE)
+    )
+  }
+  .bl_ylab("Proportion")
+  .bl_title(.bl_main(main, "Observed counts and fitted mass"))
+  out
+}
+
+#' Draws the density panel of plot.rmbl_dstfit(): histogram and densities.
+#' @param x An `rmbl_dstfit` object.
+#' @param fams The families to draw.
+#' @param all The families from .dst_fams().
+#' @param cols The colours: the data's first, then one per family.
+#' @param main The title, or NULL for the density plot's default.
+#' @param ... Passed to the plotting call.
+#' @return The drawn values: a data frame of family, x and y.
+#' @noRd
+.dst_plot_density <- function(x, fams, all, cols, main, ...) {
+  y <- x$x
+  h <- graphics::hist(y, breaks = "FD", plot = FALSE)
+  g <- seq(min(y), max(y), length.out = 200L)
+  dens <- lapply(fams, function(f) exp(all[[f]]$d(g, x$fits[[f]])))
+  top <- max(h$density, unlist(dens)[is.finite(unlist(dens))])
+  graphics::plot(
+    range(h$breaks),
+    c(0, top),
+    type = "n",
+    xlab = "",
+    ylab = "",
+    main = "",
+    ...
+  )
+  .bl_grid(NULL)
+  graphics::rect(
+    utils::head(h$breaks, -1L),
+    0,
+    h$breaks[-1L],
+    h$density,
+    col = grDevices::adjustcolor(cols[1L], 0.35),
+    border = "white"
+  )
+  out <- data.frame(
+    family = "data",
+    x = h$mids,
+    y = h$density,
+    stringsAsFactors = FALSE
+  )
+  for (i in seq_along(fams)) {
+    graphics::lines(g, dens[[i]], col = cols[i + 1L], lwd = 2.2)
+    out <- rbind(
+      out,
+      data.frame(
+        family = fams[i],
+        x = g,
+        y = dens[[i]],
+        stringsAsFactors = FALSE
+      )
+    )
+  }
+  .bl_ylab("Density")
+  .bl_title(.bl_main(main, "Histogram and fitted densities"))
+  out
 }

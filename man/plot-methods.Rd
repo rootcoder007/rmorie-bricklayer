@@ -11,8 +11,8 @@
 \alias{plot.rmbl_healing_change}
 \alias{plot.rmbl_community_index}
 \alias{plot.rmbl_indigenous_gap}
-\alias{plot.rmbl_prevalence}
 \alias{plot.rmbl_dsr}
+\alias{plot.rmbl_prevalence}
 \alias{plot.rmbl_exposure_trend}
 \alias{plot.rmbl_trc_progress}
 \alias{plot.rmbl_ordinal_compare}
@@ -101,8 +101,6 @@
   col = NULL,
   palette = NULL
 )
-
-\method{plot}{rmbl_prevalence}(x, ..., main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_dsr}(x, ..., main = NULL, col = NULL, palette = NULL)
 
@@ -310,7 +308,7 @@
 \method{plot}{rmbl_trc_gaps}(x, ..., main = NULL, col = NULL, palette = NULL)
 }
 \arguments{
-\item{x}{The result.}
+\item{x}{An \code{rmbl_stock_flow} result.}
 
 \item{...}{Passed to the base-graphics call (\code{plot}, \code{barplot}
 or \code{image}). They are passed on to each panel's method for a

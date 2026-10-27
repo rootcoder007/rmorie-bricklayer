@@ -9,7 +9,8 @@ tse(
   mbar = c(0, 0.5, 1, 1.5, 2),
   target = "average",
   draws = 5000L,
-  seed = NULL
+  seed = NULL,
+  conflvl = 0.95
 )
 }
 \arguments{
@@ -22,7 +23,11 @@ or an event time.}
 
 \item{draws}{Normal draws for the interval (default 5000).}
 
-\item{seed}{Optional seed.}
+\item{seed}{Optional seed for the bootstrap draws.}
+
+\item{conflvl}{Confidence level of the robust interval, a number strictly
+between 0 and 1 (default 0.95: the 2.5\\% and 97.5\\% quantiles of the
+drawn bounds).}
 }
 \value{
 A data frame of class \code{rmbl_sensitivity}: \code{mbar},
@@ -62,6 +67,24 @@ p <- polex()
 es <- evstudy(p, "district", "month", "crmrate", "refmonth",
                   leads = 3, lags = 4)
 tse(es, seed = 1)
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+es <- evstudy(own, "town", "year", "rate", "first", leads = 3, lags = 3)
+# a 90 percent robust interval
+tse(es, seed = 1, conflvl = 0.9)
 \dontshow{\}) # examplesIf}
 }
 \references{

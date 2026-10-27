@@ -1,24 +1,34 @@
 ---
-title: "First Nations, Metis and Inuit health: published tables, distinctions and governance"
+title: "First Nations, Métis and Inuit health: published tables, distinctions and governance"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{First Nations, Metis and Inuit health: published tables, distinctions and governance}
+  %\VignetteIndexEntry{First Nations, Métis and Inuit health: published tables, distinctions and governance}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4, dpi = 72)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4,
+  dpi = 72
+)
 library(rmoriebricklayer)
 ```
 
-This vignette covers the tools for First Nations, Metis and Inuit health, mental health and
+This vignette covers the tools for First Nations, Métis and Inuit health, mental health and
 wellness data, as Statistics Canada publishes them. It also covers the rules those tools follow,
 because with these data, how you work matters as much as what you compute.
 
@@ -64,7 +74,7 @@ The package follows these principles in six ways.
 - **Only open aggregate data.** The data service mirrors only aggregate tables published under the
   Statistics Canada Open Licence. It never holds First Nations-held survey data, such as the First
   Nations Regional Health Survey. Those are reached through the FNIGC, on its terms.
-- **Distinctions-based.** First Nations, Metis and Inuit are reported separately. A pooled
+- **Distinctions-based.** First Nations, Métis and Inuit are reported separately. A pooled
   "Indigenous" total is marked wherever it appears. `dstntst()` shows when pooling would
   hide a difference.
 - **Off-reserve coverage.** The First Nations figures in these surveys are for people living off
@@ -89,13 +99,25 @@ puts them side by side. It reads every layout the Indigenous tables use:
 - tables with no limits at all.
 
 ```{r first-nations-metis-inuit-health-estimates}
-d <- data.frame(REF_DATE = "2022", GEO = "Canada",
-                `Indigenous identity` = rep(c("First Nations", "Metis"), each = 4),
-                Statistics = rep(c("Number of persons", "Percent", "Low 95% confidence interval",
-                                   "High 95% confidence interval"), 2),
-                UOM = rep(c("Persons", "Percent", "Percent", "Percent"), 2),
-                VALUE = c(415000, 47.1, 45.2, 49.0, 320000, 50.3, 48.1, 52.5),
-                STATUS = "", check.names = FALSE)
+d <- data.frame(
+  REF_DATE = "2022",
+  GEO = "Canada",
+  `Indigenous identity` = rep(c("First Nations", "M\u00e9tis"), each = 4),
+  Statistics = rep(
+    c(
+      "Number of persons",
+      "Percent",
+      "Low 95% confidence interval",
+      "High 95% confidence interval"
+    ),
+    2
+  ),
+  UOM = rep(c("Persons", "Percent", "Percent", "Percent"), 2),
+  VALUE = c(415000, 47.1, 45.2, 49.0, 320000, 50.3, 48.1, 52.5),
+  STATUS = "",
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+)
 scests(d)
 ```
 
@@ -123,7 +145,13 @@ plot(g)
 Before pooling the three groups into one "Indigenous" figure, test whether they differ:
 
 ```{r first-nations-metis-inuit-health-distinctions}
-dt <- dstntst(mh[mh$group != "Non-Indigenous", ], "group", "estimate", "lower", "upper")
+dt <- dstntst(
+  mh[mh$group != "Non-Indigenous", ],
+  "group",
+  "estimate",
+  "lower",
+  "upper"
+)
 dt
 plot(dt)
 ```
@@ -139,16 +167,24 @@ from the 2022 Indigenous Peoples Survey, table 41-10-0067-01:
 ```{r first-nations-metis-inuit-health-ordinal}
 r <- indiex("mentalhealth")
 r <- r[r$region == "Canada", ]
-oc <- ordcmp(r, "group", "rating", "estimate", "lower", "upper",
-                      lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
-                      ref = "M\u00e9tis", qual = "quality")
+oc <- ordcmp(
+  r,
+  "group",
+  "rating",
+  "estimate",
+  "lower",
+  "upper",
+  lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
+  ref = "M\u00e9tis",
+  qual = "quality"
+)
 oc
 plot(oc)
 ```
 
 ## Age standardisation
 
-First Nations, Metis and Inuit populations are younger than the non-Indigenous population, and many
+First Nations, Métis and Inuit populations are younger than the non-Indigenous population, and many
 outcomes vary steeply with age. `stdprev()` standardises survey percentages to one
 age structure. Here it is applied to serious thoughts of suicide in the past year, from the 2017
 Aboriginal Peoples Survey (table 41-10-0021-01):
@@ -182,13 +218,24 @@ cannot show.
 
 ```{r first-nations-metis-inuit-health-wellness}
 wb <- indiex("wellbeing")
-w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
-                      well = c("Life satisfaction rating of 8, 9 or 10",
-                                   "Sense of meaning and purpose rating of 8, 9 or 10",
-                                   "Always or often has a hopeful outlook"),
-                      distress = c("Life satisfaction rating between 0 and 5",
-                                   "Rarely or never has a hopeful outlook"),
-                      qual = "quality")
+w <- welprof(
+  wb,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  well = c(
+    "Life satisfaction rating of 8, 9 or 10",
+    "Sense of meaning and purpose rating of 8, 9 or 10",
+    "Always or often has a hopeful outlook"
+  ),
+  distress = c(
+    "Life satisfaction rating between 0 and 5",
+    "Rarely or never has a hopeful outlook"
+  ),
+  qual = "quality"
+)
 plot(w)
 frmaud(w)
 ```
@@ -197,7 +244,11 @@ frmaud(w)
 distinct (Keyes 2002, 2005):
 
 ```{r first-nations-metis-inuit-health-dual}
-dc <- dualcont(w, "Always or often has a hopeful outlook", "Life satisfaction rating between 0 and 5")
+dc <- dualcont(
+  w,
+  "Always or often has a hopeful outlook",
+  "Life satisfaction rating between 0 and 5"
+)
 dc
 plot(dc)
 ```
@@ -214,13 +265,31 @@ Which indicator stands for each domain is a choice for the people whose data the
 choice below is one reading of it:
 
 ```{r first-nations-metis-inuit-health-balance}
-dom <- c("Perceived health, very good or excellent" = "physical",
-         "Perceived mental health, very good or excellent" = "mental",
-         "Life satisfaction, satisfied or very satisfied" = "emotional",
-         "Sense of belonging to local community, somewhat strong or very strong" = "community")
-d <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" & h$indicator %in% names(dom), ]
+dom <- c(
+  "Perceived health, very good or excellent" = "physical",
+  "Perceived mental health, very good or excellent" = "mental",
+  "Life satisfaction, satisfied or very satisfied" = "emotional",
+  "community"
+)
+names(dom)[4] <- paste(
+  "Sense of belonging to local community,",
+  "somewhat strong or very strong"
+)
+d <- h[
+  h$period == "2019/2022" &
+    h$age == "Total, 18 years and over" &
+    h$indicator %in% names(dom),
+]
 d$domain <- dom[d$indicator]
-hb <- holbal(d, "group", "domain", "estimate", "lower", "upper", qual = "quality")
+hb <- holbal(
+  d,
+  "group",
+  "domain",
+  "estimate",
+  "lower",
+  "upper",
+  qual = "quality"
+)
 hb
 plot(hb)
 ```
@@ -236,10 +305,18 @@ The First Nations Mental Wellness Continuum Framework (Health Canada and Assembl
 directions the tables do not measure, and does not fill them in:
 
 ```{r first-nations-metis-inuit-health-continuum}
-mw <- mhcont(wb, "group", "indicator", "estimate", "lower", "upper",
-        hope = "Always or often has a hopeful outlook",
-        meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
-        purp = "Sense of meaning and purpose rating of 8, 9 or 10", qual = "quality")
+mw <- mhcont(
+  wb,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  hope = "Always or often has a hopeful outlook",
+  meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
+  purp = "Sense of meaning and purpose rating of 8, 9 or 10",
+  qual = "quality"
+)
 mw[, c("group", "indicator", "domain", "estimate", "shared")]
 plot(mw)
 ```
@@ -250,19 +327,36 @@ A process shows in change. `healchg()` gives the change between survey periods, 
 first. It uses the two periods of table 13-10-0924-01:
 
 ```{r first-nations-metis-inuit-health-healing}
-hc <- healchg(h[h$age == "Total, 18 years and over", ], "group", "indicator", "period",
-                     "estimate", "lower", "upper", from = "2015/2018", to = "2019/2022",
-                     qual = "quality",
-                     well = c("Perceived mental health, very good or excellent",
-                                  "Sense of belonging to local community, somewhat strong or very strong"))
-hc <- hc[hc$indicator %in% c("Perceived mental health, very good or excellent",
-                             "Sense of belonging to local community, somewhat strong or very strong",
-                             "Mood disorder", "Anxiety disorder"), ]
+hc <- healchg(
+  h[h$age == "Total, 18 years and over", ],
+  "group",
+  "indicator",
+  "period",
+  "estimate",
+  "lower",
+  "upper",
+  from = "2015/2018",
+  to = "2019/2022",
+  qual = "quality",
+  well = c(
+    "Perceived mental health, very good or excellent",
+    "Sense of belonging to local community, somewhat strong or very strong"
+  )
+)
+hc <- hc[
+  hc$indicator %in%
+    c(
+      "Perceived mental health, very good or excellent",
+      "Sense of belonging to local community, somewhat strong or very strong",
+      "Mood disorder",
+      "Anxiety disorder"
+    ),
+]
 plot(hc)
 ```
 
 Between the two periods, which span the COVID-19 pandemic, the share rating their mental health
-very good or excellent fell for First Nations, Metis and non-Indigenous adults. The Inuit interval
+very good or excellent fell for First Nations, Métis and non-Indigenous adults. The Inuit interval
 includes no change. Because the reference group fell too, a group's change is read against the
 reference group's change, not on its own.
 
@@ -275,19 +369,34 @@ rise together where people live?
 
 `connassoc()` measures this with Spearman's rho. Its p-value is exact for up to eight
 places, and a Monte Carlo estimate beyond. Its band is a sensitivity band, not a confidence
-interval: it shows how far the published sampling error alone moves rho for these places. Here, by region, it asks whether First Nations and Metis
+interval: it shows how far the published sampling error alone moves rho for these places. Here, by region, it asks whether First Nations and Métis
 people's mental health rise together, using table 41-10-0067-01:
 
 ```{r first-nations-metis-inuit-health-connection}
 r <- indiex("mentalhealth")
 r <- r[r$rating == "Excellent or very good" & r$region != "Canada", ]
-pair <- merge(r[r$group == "First Nations", ], r[r$group == "M\u00e9tis", ], by = "region",
-              suffixes = c("fn", "me"))
-ca <- connassoc(pair, "region", "estimatefn", "estimateme", "lowerfn", "upperfn",
-                             "lowerme", "upperme")
+pair <- merge(
+  r[r$group == "First Nations", ],
+  r[r$group == "M\u00e9tis", ],
+  by = "region",
+  suffixes = c("fn", "me")
+)
+ca <- connassoc(
+  pair,
+  "region",
+  "estimatefn",
+  "estimateme",
+  "lowerfn",
+  "upperfn",
+  "lowerme",
+  "upperme"
+)
 ca
-plot(ca, xlab = "First Nations: excellent or very good (%)",
-     ylab = "M\u00e9tis: excellent or very good (%)")
+plot(
+  ca,
+  xlab = "First Nations: excellent or very good (%)",
+  ylab = "M\u00e9tis: excellent or very good (%)"
+)
 ```
 
 This is an association across places. It cannot say that one thing makes a person well.
@@ -301,11 +410,21 @@ not filled in.
 
 ```{r first-nations-metis-inuit-health-community}
 h2 <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over", ]
-ci <- commidx(h2, "group", "indicator", "estimate", "lower", "upper", qual = "quality",
-        w = c("Sense of belonging to local community, somewhat strong or very strong" = 2,
-                    "Has a regular healthcare provider" = 1,
-                    "Perceived life stress, most days quite a bit or extremely stressful" = -2,
-                    "Heavy drinking" = -1))
+ci <- commidx(
+  h2,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  qual = "quality",
+  w = c(
+    "Sense of belonging to local community, somewhat strong or very strong" = 2,
+    "Has a regular healthcare provider" = 1,
+    "Perceived life stress, most days quite a bit or extremely stressful" = -2,
+    "Heavy drinking" = -1
+  )
+)
 plot(ci)
 ```
 
@@ -316,7 +435,7 @@ conditions only. It is not a measure of wellness as First Nations and Inuit defi
 ## The 2021 Census
 
 The Indigenous Population Profile of the 2021 Census gives counts for every geography, by gender, age
-group and about two thousand characteristics, with First Nations, Metis, Inuit and non-Indigenous
+group and about two thousand characteristics, with First Nations, Métis, Inuit and non-Indigenous
 people in their own columns. In the provincial table, residence on and off reserve is split out too.
 `cnsprof()` reads it with the hierarchy of the characteristics. `profshr()` takes a
 share with an interval for the 25% long-form sample and the random rounding of the counts.
@@ -326,26 +445,45 @@ Foster children among children under 15, Canada, 2021:
 ```{r first-nations-metis-inuit-health-census-foster}
 p <- cnsprof(indiex("censuspop"))
 fc <- profshr(p, "Foster children", "Total - Children in census families")
-fc <- fc[fc$geo == "Canada" & fc$age == "0 to 14 years" &
-           fc$group %in% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"), ]
-fc[, c("residence", "group", "numerator", "denominator", "estimate", "lower", "upper")]
+fc <- fc[
+  fc$geo == "Canada" &
+    fc$age == "0 to 14 years" &
+    fc$group %in% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"),
+]
+fc[, c(
+  "residence",
+  "group",
+  "numerator",
+  "denominator",
+  "estimate",
+  "lower",
+  "upper"
+)]
 plot(fc[fc$residence == "Total - Residence on or off reserve", ])
 ```
 
-The overrepresentation of First Nations, Metis and Inuit children in care is the subject of the
+The overrepresentation of First Nations, Métis and Inuit children in care is the subject of the
 first five Calls to Action of the Truth and Reconciliation Commission.
 
 Knowledge of an Indigenous language (all ages):
 
 ```{r first-nations-metis-inuit-health-census-language}
-know <- "Total - Knowledge of Indigenous languages for the population in private households - 25% sample data"
+know <- paste(
+  "Total - Knowledge of Indigenous languages for the population in private",
+  "households - 25% sample data"
+)
 la <- profshr(p, "Indigenous languages", know)
-la[la$geo == "Canada" & la$age == "Total - Age groups" & la$residence == "Total - Residence on or off reserve" &
-     la$group %in% c("First Nations", "M\u00e9tis", "Inuit"), c("group", "estimate", "lower", "upper")]
+la[
+  la$geo == "Canada" &
+    la$age == "Total - Age groups" &
+    la$residence == "Total - Residence on or off reserve" &
+    la$group %in% c("First Nations", "M\u00e9tis", "Inuit"),
+  c("group", "estimate", "lower", "upper")
+]
 ```
 
 The census age structure of the Indigenous population is the standard to use when age-standardising
-First Nations, Metis and Inuit rates (Kumar and Tjepkema 2019):
+First Nations, Métis and Inuit rates (Kumar and Tjepkema 2019):
 
 ```{r first-nations-metis-inuit-health-census-standard}
 cnsstd(p)
@@ -353,12 +491,15 @@ cnsstd(p)
 
 A Community Well-Being score from the public profile (income, education, housing, labour force), by
 distinction. The household table splits Indigenous from non-Indigenous households only, so First
-Nations, Metis and Inuit people share the Indigenous households' housing component. `?cnscwb` explains where it departs from the Department's own index:
+Nations, Métis and Inuit people share the Indigenous households' housing component. `?cnscwb` explains where it departs from the Department's own index:
 
 ```{r first-nations-metis-inuit-health-census-cwb}
 h <- cnsprof(indiex("censushh"))
 cw <- cnscwb(p, h)
-cw[cw$geo %in% c("Canada", "Nunavut"), c("geo", "group", "income", "education", "housing", "labour", "cwb")]
+cw[
+  cw$geo %in% c("Canada", "Nunavut"),
+  c("geo", "group", "income", "education", "housing", "labour", "cwb")
+]
 plot(cw)
 ```
 
@@ -375,7 +516,10 @@ Matheson and Anisman (2014), Kaspar (2014), Hackett, Feeny and Tompa (2016), and
 The counts below are made up, to show the computation:
 
 ```{r first-nations-metis-inuit-health-generations}
-genexpo(parent = c(TRUE, FALSE, TRUE, NA), gparent = c(TRUE, FALSE, FALSE, TRUE))
+genexpo(
+  parent = c(TRUE, FALSE, TRUE, NA),
+  gparent = c(TRUE, FALSE, FALSE, TRUE)
+)
 et <- exptrnd(cases = c(60, 95, 70), n = c(500, 520, 300))
 plot(et)
 ```
@@ -395,8 +539,19 @@ estimates, not a relative risk.
 
 ```{r first-nations-metis-inuit-health-trc-gaps, fig.height = 9}
 g <- trchlthgap()
-g[g$measure %in% c("Life expectancy at birth", "Infant mortality rate"),
-  c("measure", "period", "group", "estimate", "refest", "disratio", "lower", "upper")]
+g[
+  g$measure %in% c("Life expectancy at birth", "Infant mortality rate"),
+  c(
+    "measure",
+    "period",
+    "group",
+    "estimate",
+    "refest",
+    "disratio",
+    "lower",
+    "upper"
+  )
+]
 plot(g)
 ```
 
@@ -429,17 +584,39 @@ Indigenous language, do more rate their mental health highly?
 ```{r first-nations-metis-inuit-health-continuity}
 prof <- cnsprof(indiex("censuspop"))
 la <- profshr(prof, "Indigenous languages", know)
-la <- la[la$age == "Total - Age groups" & la$group == "First Nations" & la$geo != "Canada" &
-           la$residence == "Total - Residence on or off reserve", ]
+la <- la[
+  la$age == "Total - Age groups" &
+    la$group == "First Nations" &
+    la$geo != "Canada" &
+    la$residence == "Total - Residence on or off reserve",
+]
 mh2 <- indiex("mentalhealth")
-mh2 <- mh2[mh2$rating == "Excellent or very good" & mh2$group == "First Nations", ]
-both <- merge(la[c("geo", "estimate", "lower", "upper")], mh2[c("region", "estimate", "lower", "upper")],
-              by.x = "geo", by.y = "region", suffixes = c("lang", "mh"))
-cc <- connassoc(both, "geo", "estimatelang", "estimatemh", "lowerlang", "upperlang",
-                             "lowermh", "uppermh")
+mh2 <- mh2[
+  mh2$rating == "Excellent or very good" & mh2$group == "First Nations",
+]
+both <- merge(
+  la[c("geo", "estimate", "lower", "upper")],
+  mh2[c("region", "estimate", "lower", "upper")],
+  by.x = "geo",
+  by.y = "region",
+  suffixes = c("lang", "mh")
+)
+cc <- connassoc(
+  both,
+  "geo",
+  "estimatelang",
+  "estimatemh",
+  "lowerlang",
+  "upperlang",
+  "lowermh",
+  "uppermh"
+)
 cc
-plot(cc, xlab = "First Nations who know an Indigenous language (%)",
-     ylab = "First Nations: mental health excellent or very good (%)")
+plot(
+  cc,
+  xlab = "First Nations who know an Indigenous language (%)",
+  ylab = "First Nations: mental health excellent or very good (%)"
+)
 ```
 
 Across these eight provinces and territories, the rank correlation is positive but far from
@@ -450,26 +627,90 @@ different surveys and years. The community-level design needs the census profile
 Nations community (98-510-X2021002 at the data service), and outcomes measured for the same
 communities.
 
-## Your own data
+## Your own data, step by step
 
 Nothing here is tied to Canada or to these tables. Each estimator takes a data frame with a group
-column, an estimate and its limits. A table from another agency needs two steps first: limits from
+column, an estimate and its limits, and the arguments name those columns: `grp`, `est`,
+`lower`, `upper`, with `ind` (or `cat`, `domain`) for the indicator and `qual` for quality flags.
+
+**1. A published table.** A table from another agency needs two steps first: limits from
 whatever it publishes in their place (`limfrom()` takes a standard error, a coefficient of
 variation or a margin of error), and its quality flags mapped onto suppressed and use-with-caution
 (`qltyrcd()`). Here, made-up numbers in an Australian layout, with relative standard errors
 and that agency's flags:
 
 ```{r first-nations-metis-inuit-health-own-data}
-own <- data.frame(group = c("Aboriginal", "Torres Strait Islander", "Non-Indigenous Australians"),
-                  pct = c(31.2, 27.5, 18.9), rse = c(4.1, 22.0, 1.2), flag = c("", "*", ""))
+own <- data.frame(
+  group = c(
+    "Aboriginal",
+    "Torres Strait Islander",
+    "Non-Indigenous Australians"
+  ),
+  pct = c(31.2, 27.5, 18.9),
+  rse = c(4.1, 22.0, 1.2),
+  flag = c("", "*", ""),
+  stringsAsFactors = FALSE
+)
 own <- cbind(own, limfrom(own$pct, cv = own$rse)[c("lower", "upper")])
 own$quality <- qltyrcd(own$flag, suppr = "**", caution = "*")
-indgap(own, "group", "pct", "lower", "upper", ref = "Non-Indigenous Australians",
-               qual = "quality")
+indgap(
+  own,
+  "group",
+  "pct",
+  "lower",
+  "upper",
+  ref = "Non-Indigenous Australians",
+  qual = "quality"
+)
 ```
 
 Name the groups as the peoples concerned name themselves, and give `pooled` any row that
 pools several of them, so it is never set beside its own parts.
+
+**2. Microdata.** With one row per respondent, estimate first, then compare. `svydes()` describes
+the design (here only a weight; strata, clusters and replicate weights are its other arguments),
+and `svyest()` gives each group's estimate with its limits in the columns the estimators take.
+Made-up responses:
+
+```{r first-nations-metis-inuit-health-own-micro}
+set.seed(7)
+n <- 600
+resp <- data.frame(
+  group = sample(c("First Nations", "Inuit", "Non-Indigenous"), n, TRUE),
+  wt = runif(n, 50, 150)
+)
+resp$goodmh <- rbinom(n, 1, ifelse(resp$group == "Non-Indigenous", 0.6, 0.5))
+des <- svydes(resp, w = "wt")
+tab <- as.data.frame(
+  svyest(des, resp, "goodmh", by = "group", stat = "proportion", lvls = "1")
+)
+indgap(tab, "group", "estimate", "lower", "upper")
+```
+
+**3. The other estimators, same layout.** A table with an indicator column goes to `welprof()`,
+`mhcont()`, `healchg()` (add a period column), `holbal()` (a domain column) or `commidx()` (with
+the community's own weights), named the same way:
+
+```{r first-nations-metis-inuit-health-own-profile}
+prof <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 3),
+  item = rep(c("Hopeful", "Satisfied", "Rarely hopeful"), 2),
+  pct = c(64, 71, 12, 58, 66, 16),
+  lo = c(59, 66, 9, 52, 60, 12),
+  hi = c(69, 76, 15, 64, 72, 20),
+  stringsAsFactors = FALSE
+)
+welprof(prof, "community", "item", "pct", "lo", "hi",
+        well = c("Hopeful", "Satisfied"), distress = "Rarely hopeful")
+```
+
+**4. Plain numbers.** Counts by age group go to `agestd()` and age-specific percentages to
+`stdprev()`, as vectors, with your own standard population:
+
+```{r first-nations-metis-inuit-health-own-vectors}
+agestd(events = c(4, 9, 11, 6, 3), pop = c(9000, 8000, 6000, 4000, 2000),
+       std = c(30000, 25000, 20000, 15000, 10000))
+```
 
 ## What the package does not compute
 

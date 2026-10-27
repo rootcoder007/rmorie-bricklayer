@@ -32,9 +32,11 @@ estimate's own units (percentage points for percentages).}
 distress; with \code{distress} given, any other indicator is marked
 \code{"other"}.}
 
-\item{qual}{Optional column of quality flags.}
+\item{qual}{Optional column of quality flags: \code{"E"} rows are marked use
+with caution, and suppressed ones (\code{"F"}, \code{"x"}, \code{".."})
+get no estimate.}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of each change's interval (default 0.95).}
 }
 \value{
 A data frame of class \code{rmbl_healing_change}: \code{group},
@@ -98,6 +100,19 @@ hc <- healchg(
 )
 hc
 plot(hc)
+
+# your own table: made-up percentages for one community in two surveys
+own <- data.frame(
+  community = "Lakeside",
+  item = rep(c("Good mental health", "Anxiety"), 2),
+  survey = rep(c("2018", "2023"), each = 2),
+  pct = c(55, 14, 61, 11),
+  lo = c(50, 11, 56, 8),
+  hi = c(60, 17, 66, 14)
+)
+healchg(own, "community", "item", "survey", "pct", "lo", "hi",
+        from = "2018", to = "2023", well = "Good mental health",
+        distress = "Anxiety")
 \dontshow{\}) # examplesIf}
 }
 \references{

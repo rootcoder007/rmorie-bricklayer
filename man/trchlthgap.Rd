@@ -9,7 +9,8 @@ trchlthgap(
   lifeexp = indiex("lifeexp"),
   infmort = indiex("infantmort"),
   suiide = indiex("suicide"),
-  ref = "Non-Indigenous"
+  ref = "Non-Indigenous",
+  agetot = NULL
 )
 }
 \arguments{
@@ -20,12 +21,19 @@ trchlthgap(
 \code{indiex("lifeexp")}, table 17-10-0160), or \code{NULL}.}
 
 \item{infmort}{Infant mortality (default
-\code{indiex("infmort")}, table 17-10-0161), or \code{NULL}.}
+\code{indiex("infantmort")}, table 17-10-0161), or \code{NULL}.}
 
-\item{suiide}{Suicidal thoughts (default
-\code{indiex("suiide")}, table 41-10-0021), or \code{NULL}.}
+\item{suiide}{Suicidal thoughts (default \code{indiex("suicide")}, table
+41-10-0021), or \code{NULL}. The name is kept as it was first published;
+it is the suicidal-ideation table.}
 
 \item{ref}{The reference group's label (default \code{"Non-Indigenous"}).}
+
+\item{agetot}{The label of the all-ages row in the \code{age} column, one
+string for both tables or two (\code{health}, then \code{suiide}).
+Default \code{NULL}: Statistics Canada's \code{"Total, 18 years and
+over"} and \code{"Total, 15 years and over"}. A table of your own with no
+\code{age} column is used whole.}
 }
 \value{
 A data frame of class \code{rmbl_trc_gaps}: \code{indicator},
@@ -80,6 +88,18 @@ g[g$group == "Inuit", c("indicator", "measure", "period", "disratio",
                         "lower",
                         "upper")]
 plot(g)
+
+# your own table: made-up life expectancies with their limits, in the
+# layout of indiex("lifeexp"); the tables you do not have are NULL
+le <- data.frame(
+  period = "2017/2019",
+  group = c("First Nations", "Inuit", "Non-Indigenous"),
+  estimate = c(74.2, 70.9, 81.8),
+  lower = c(73.6, 69.1, 81.6),
+  upper = c(74.8, 72.7, 82.0),
+  quality = "ok"
+)
+trchlthgap(health = NULL, lifeexp = le, infmort = NULL, suiide = NULL)
 \dontshow{\}) # examplesIf}
 }
 \references{

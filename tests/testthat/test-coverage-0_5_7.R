@@ -237,28 +237,29 @@ test_that(
     ca <- certprs(f$ocsp_ca)
     path <- list(leaf, ca)
     url <- "http://ocsp.example.org/"
-    posted <- NULL
+    rec <- new.env()
+    rec$posted <- NULL
     testthat::local_mocked_bindings(.rmbl_net_post = function(
       url,
       body,
       content_type,
       timeout
     ) {
-      posted <<- list(url = url, body = body, ct = content_type)
+      rec$posted <- list(url = url, body = body, ct = content_type)
       list(status = 200L, body = f$ocsp_resp_good, error = "")
     })
     q <- .rmbl_ocsp_query(leaf, ca, url, path)
     expect_true(q$ok)
-    expect_identical(posted$body, f$ocsp_req_good)
-    expect_identical(posted$ct, "application/ocsp-request")
+    expect_identical(rec$posted$body, f$ocsp_req_good)
+    expect_identical(rec$posted$ct, "application/ocsp-request")
     # a responder that refuses POST is asked by GET, request base64 in the path
-    seen <- NULL
+    rec$seen <- NULL
     testthat::local_mocked_bindings(
       .rmbl_net_post = function(url, body, content_type, timeout) {
         list(status = 500L, body = raw(0), error = "")
       },
       .rmbl_net_get_file = function(url, fallback, tmp, timeout) {
-        seen <<- url
+        rec$seen <- url
         writeBin(f$ocsp_resp_good, tmp)
         200L
       }
@@ -266,7 +267,7 @@ test_that(
     q <- .rmbl_ocsp_query(leaf, ca, url, path)
     expect_true(q$ok)
     expect_identical(
-      seen,
+      rec$seen,
       paste0(url, .rmbl_url_encode(jsb64enc(f$ocsp_req_good)))
     )
     # nobody answers either way
@@ -300,7 +301,7 @@ test_that("rvkfetch walks the path with one note per URL", {
     }
   )
   r <- rvkfetch(list(leaf, ca))
-  expect_identical(names(r$notes), c("crl fetch [1]", "ocsp [1]"))
+  expect_named(r$notes, c("crl fetch [1]", "ocsp [1]"))
   expect_identical(r$ok, c(TRUE, TRUE))
   expect_length(r$crls, 1L)
   expect_identical(r$crls[[1]], f$ocsp_crl_der)
@@ -398,9 +399,9 @@ test_that(
   ),
   {
     # zeta(-n, 1) = -B_{n+1} / (n + 1): B_4 = -1/30, B_5 = 0, B_6 = 1/42
-    expect_equal(hurwzeta(-3, 1), 1 / 120)
-    expect_equal(hurwzeta(-4, 1), 0)
-    expect_equal(hurwzeta(-5, 1), -1 / 252)
+    expect_equal(hurwzeta(-3, 1), 1 / 120, tolerance = 1e-12)
+    expect_identical(hurwzeta(-4, 1), 0)
+    expect_equal(hurwzeta(-5, 1), -1 / 252, tolerance = 1e-12)
     neg <- "concentration measures need non-negative values"
     expect_identical(msg(.Call(C("C_rmbl_gini"), c(1, -1))), neg)
     expect_identical(msg(.Call(C("C_rmbl_lorenz"), c(1, -1))), neg)
@@ -412,8 +413,8 @@ test_that(
     # an even number of pairwise slopes takes the mean of the middle two:
     # slopes 2, 1/2, 4/3, -1, 1, 3 -> (1 + 4/3) / 2
     ts <- .Call(C("C_rmbl_theil_sen"), c(1, 2, 3, 4), c(1, 3, 2, 5))
-    expect_equal(ts$slope, 7 / 6)
-    expect_equal(ts$pairs, 6)
+    expect_equal(ts$slope, 7 / 6, tolerance = 1e-12)
+    expect_identical(ts$pairs, 6)
     # a constant x has no variance to autocorrelate: the kernel says so with NA
     mi <- .Call(
       C("C_rmbl_morans_i"),
@@ -434,7 +435,7 @@ test_that(
     t0 <- proc.time()[["elapsed"]]
     ts2 <- .Call(C("C_rmbl_top_share"), x, rep(0.5, 1e5))
     expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(5))
-    expect_equal(ts2$share[1], sum(50001:1e5) / sum(x))
+    expect_identical(ts2$share[1], sum(50001:1e5) / sum(x))
     expect_identical(ts2$units[1], 50000L)
     expect_identical(.Call(C("C_rmbl_quantile"), c(1, NaN), 0.5), NaN)
     expect_identical(
@@ -538,7 +539,7 @@ test_that(
       raw(0),
       "text/plain",
       1L,
-      c("X-A: b"),
+      "X-A: b",
       FALSE
     )
     expect_identical(r$status, -1L)
@@ -749,16 +750,16 @@ test_that(
     v <- .rmbl_json_list_to_vec(list(d1, d1 + 86400))
     expect_s3_class(v, "POSIXct")
     expect_identical(as.numeric(v), c(1577836800, 1577923200))
-    expect_identical(.rmbl_json_parse_date(TRUE), TRUE)
+    expect_true(.rmbl_json_parse_date(TRUE))
     a <- .rmbl_json_simplify(
       list(list(list(1, 2), list(3, 4)), list(list(5, 6), list(7, 8))),
       columnmajor = TRUE
     )
     expect_identical(dim(a), c(2L, 2L, 2L))
     # inner arrays are columns
-    expect_identical(a[,, 1], matrix(c(1, 2, 3, 4), 2))
-    expect_identical(.rmbl_json_written_integer("1e+"), NULL)
-    expect_identical(.rmbl_json_written_integer("1.25e1"), NULL)
+    expect_identical(a[1:2, 1:2, 1], matrix(c(1, 2, 3, 4), 2))
+    expect_null(.rmbl_json_written_integer("1e+"))
+    expect_null(.rmbl_json_written_integer("1.25e1"))
     expect_identical(.rmbl_json_written_integer("0e0"), "0")
     expect_identical(.rmbl_json_written_integer("1.5e1"), "15")
   }
@@ -951,7 +952,8 @@ test_that(
       n = c("1", "2"),
       pop = c(10, 20),
       g = c("a", "b"),
-      year = c(2000, 2001)
+      year = c(2000, 2001),
+      stringsAsFactors = FALSE
     )
     expect_error(
       rtcalc(d, count = "n", pop = "pop"),
@@ -1013,7 +1015,7 @@ test_that(
       rm(".Random.seed", envir = globalenv())
     }
     rec <- mnfrecseed(list())
-    expect_true(is.list(rec$rng))
+    expect_type(rec$rng, "list")
     expect_true(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
     # a record that names only the main generator kind restores it
     set.seed(11)
@@ -1043,18 +1045,27 @@ test_that(
       "no help page for 'no_such_fn'\n"
     )
     withr::with_envvar(c(OLLAMA_HOST = "off", MORIE_LLM_BASE_URL = NA), {
-      out <- character(0)
-      .bl_cli_models(function(s) out <<- c(out, s))
-      expect_match(out, "^No language-model route is set up on this machine:")
+      got <- new.env()
+      got$out <- character(0)
+      .bl_cli_models(function(s) got$out <- c(got$out, s))
+      expect_match(
+        got$out,
+        "^No language-model route is set up on this machine:"
+      )
     })
-    out <- character(0)
+    got <- new.env()
+    got$out <- character(0)
     rc <- .bl_cli_data(
       c("pull", "tbl"),
       function(f) "/nonexistent-dir-zz/out.csv",
-      function(s) out <<- c(out, s)
+      function(s) got$out <- c(got$out, s)
     )
     expect_identical(rc, 1L)
-    expect_match(out, "cannot write /nonexistent-dir-zz/out.csv", fixed = TRUE)
+    expect_match(
+      got$out,
+      "cannot write /nonexistent-dir-zz/out.csv",
+      fixed = TRUE
+    )
   }
 )
 
@@ -1099,14 +1110,18 @@ test_that("power, bounds, scan adjustment and falsification guards", {
   prev <- pubbnd(c(40, 100, 7), rnd = 5)
   expect_error(chgenv(now, prev), "same number of rows")
   e <- chgenv(now, prev[1:2, ], pop = c(1000, 2000), prepop = c(900, 1900))
-  expect_equal(e$ratelo, 1000 * now$lower / c(1000, 2000))
-  expect_equal(e$prerateup, 1000 * prev$upper[1:2] / c(900, 1900))
+  expect_identical(e$ratelo, 1000 * now$lower / c(1000, 2000))
+  expect_identical(e$prerateup, 1000 * prev$upper[1:2] / c(900, 1900))
   expect_error(yoypv(1), "`y` must come from yoy()")
   expect_error(scanadj(1), "`x` must be a data frame")
   expect_identical(.exact_ratio_p(c(0, 3), c(0, 3)), c(NA, 1))
   cal <- structure(
     list(
-      columns = data.frame(column = c("a", "b"), falsealarmrate = c(0.5, 0)),
+      columns = data.frame(
+        column = c("a", "b"),
+        falsealarmrate = c(0.5, 0),
+        stringsAsFactors = FALSE
+      ),
       anyflag = 0.5,
       alpha = 0.01,
       n = 10L,
@@ -1116,14 +1131,13 @@ test_that("power, bounds, scan adjustment and falsification guards", {
   )
   out <- capture.output(print(cal))
   expect_true(any(grepl(
-    "columns that fire on identical data",
+    "Columns that fire on identical data",
     out,
     fixed = TRUE
   )))
   expect_true(any(grepl(
-    "a                             50.0%",
-    out,
-    fixed = TRUE
+    "a  +50.0%",
+    out
   )))
   # a statistic that only works on the full table leaves every subset NA
   full <- data.frame(y = rnorm(20))
@@ -1238,8 +1252,8 @@ test_that(
     cur <- data.frame(a = 1:20, added = 1:20)
     s <- summary(cpsdrft(ref, cur))
     out <- capture.output(print(s))
-    expect_true(any(grepl("added:   added", out, fixed = TRUE)))
-    expect_true(any(grepl("removed: gone", out, fixed = TRUE)))
+    expect_true(any(grepl("Columns added    added", out, fixed = TRUE)))
+    expect_true(any(grepl("Columns removed  gone", out, fixed = TRUE)))
     pk <- signpubkey(pqckg(height = 4L))
     expect_output(print(pk), "scheme  xmss-sha256")
     expect_output(print(pk), "height  4")
@@ -1267,7 +1281,8 @@ test_that("yoy PDF with groups, verdict colours and notes", {
     data.frame(
       year = rep(2000:2003, 2),
       g = rep(c("a", "b"), each = 4),
-      n = c(10, 12, 9, 15, 5, 4, 6, 3)
+      n = c(10, 12, 9, 15, 5, 4, 6, 3),
+      stringsAsFactors = FALSE
     ),
     value = "n",
     prd = "year",
@@ -1280,6 +1295,6 @@ test_that("yoy PDF with groups, verdict colours and notes", {
   f <- tempfile(fileext = ".pdf")
   on.exit(unlink(f), add = TRUE)
   yoypdf(y, f, notes = c("one", "two"))
-  expect_true(file.size(f) > 0)
+  expect_gt(file.size(f), 0)
   expect_identical(readChar(f, 5L, useBytes = TRUE), "%PDF-")
 })

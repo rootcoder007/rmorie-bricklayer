@@ -1,0 +1,431 @@
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
+# Saved language-model settings (llmcfg(), `rmbl config`) and
+# the route `ask` takes with them. Everything is written under a temporary
+# XDG_CONFIG_HOME; nothing leaves the machine.
+
+cf_env <- function(env = parent.frame()) {
+  withr::local_envvar(
+    c(
+      MORIE_LLM_BASE_URL = NA,
+      MORIE_LLM_API_KEY = NA,
+      MORIE_LLM_MODEL = NA,
+      MORIE_LLM_ROUTE = NA,
+      OLLAMA_HOST = NA,
+      OLLAMA_BASE_URL = NA,
+      OLLAMA_MODEL = NA,
+      OLLAMA_API_KEY = NA,
+      MORIE_OPENAI_MODEL = NA,
+      XDG_CONFIG_HOME = withr::local_tempdir(.local_envir = env)
+    ),
+    .local_envir = env
+  )
+}
+cf_reply <- function(text) {
+  list(
+    status = 200L,
+    body = charToRaw(tojs(
+      list(
+        choices = list(list(message = list(role = "assistant", content = text)))
+      ),
+      auto_unbox = TRUE
+    ))
+  )
+}
+cf_tags <- function(...) {
+  list(
+    status = 200L,
+    body = charToRaw(tojs(
+      list(models = lapply(c(...), function(n) list(name = n))),
+      auto_unbox = TRUE
+    ))
+  )
+}
+cf_out <- function(args) {
+  acc <- new.env(parent = emptyenv())
+  acc$buf <- character()
+  st <- blcli(args, out = function(s) acc$buf <- c(acc$buf, s))
+  list(status = st, text = paste(acc$buf, collapse = ""))
+}
+
+test_that(
+  paste0(
+    "a running Ollama with nothing pulled no ",
+    "longer hides a provider's key"
+  ),
+  {
+    cf_env()
+    withr::local_envvar(c(
+      OPENAI_API_KEY = "sk-h",
+      MORIE_OPENAI_MODEL = "gpt-x"
+    ))
+    acc <- new.env(parent = emptyenv())
+    acc$sent <- NULL
+    testthat::local_mocked_bindings(
+      # Ollama answers, with no models
+      .bl_http_get_local = function(...) cf_tags(),
+      .bl_http_post = function(url, body, ...) {
+        acc$sent <- list(url = url, body = rawToChar(body))
+        cf_reply("provider says hi")
+      },
+      .bl_http_post_local = function(...) {
+        stop("an empty Ollama must not be asked")
+      },
+      .package = "rmoriebricklayer"
+    )
+    expect_identical(llmask("hi"), "provider says hi")
+    expect_match(acc$sent$url, "^https://api.openai.com/v1/chat/completions")
+    expect_identical(llmask("hi", model = "gpt-y"), "provider says hi")
+    expect_match(acc$sent$body, "\"model\":\"gpt-y\"", fixed = TRUE)
+    # insisting on Ollama still says what is missing
+    expect_error(
+      llmask("hi", route = "ollama"),
+      "local Ollama has no model to use"
+    )
+    # and an OLLAMA_MODEL makes the empty server a route again (it may pull on
+    # demand)
+    withr::local_envvar(c(OLLAMA_MODEL = "qwen3:8b", OPENAI_API_KEY = NA))
+    testthat::local_mocked_bindings(
+      .bl_http_post_local = function(url, ...) cf_reply(url),
+      .package = "rmoriebricklayer"
+    )
+    expect_match(llmask("hi"), "^http://localhost:11434/")
+  }
+)
+
+test_that(
+  paste0(
+    "settings are saved privately, shown with their source, and the ",
+    "environment wins"
+  ),
+  {
+    cf_env()
+    tab <- llmcfg()
+    expect_identical(tab$key[1:3], c("route", "own.url", "own.key"))
+    expect_true(all(tab$source == "default"))
+    # reading writes nothing
+    expect_false(file.exists(.bl_config_path()))
+    llmcfg(
+      route = "openai",
+      openai.model = "gpt-x",
+      ollama.url = "http://192.168.1.20:11434",
+      own.key = "sk-own-secret-key"
+    )
+    p <- .bl_config_path()
+    expect_true(file.exists(p))
+    if (.Platform$OS.type == "unix") {
+      expect_identical(format(file.mode(p)), "600")
+    }
+    tab <- llmcfg()
+    row <- function(k) tab[tab$key == k, ]
+    expect_identical(row("route")$value, "openai")
+    expect_identical(row("route")$source, "saved")
+    expect_identical(row("openai.model")$value, "gpt-x")
+    expect_identical(row("ollama.url")$value, "http://192.168.1.20:11434")
+    # no character of a key is ever shown
+    expect_identical(row("own.key")$value, "set")
+    expect_identical(
+      .bl_ollama_base(),
+      "http://192.168.1.20:11434"
+    )
+    withr::local_envvar(c(OPENAI_API_KEY = "sk-o"))
+    expect_identical(
+      .bl_provider_route("openai")$model,
+      "gpt-x"
+    )
+    # an environment variable that is set wins, and says so
+    withr::local_envvar(c(MORIE_OPENAI_MODEL = "gpt-y"))
+    expect_identical(
+      .bl_provider_route("openai")$model,
+      "gpt-y"
+    )
+    expect_identical(
+      llmcfg()$source[llmcfg()$key == "openai.model"],
+      "environment"
+    )
+    expect_warning(
+      llmcfg(openai.model = "x"),
+      "MORIE_OPENAI_MODEL is set in the environment"
+    )
+    # NULL or "" removes; the file goes when nothing is left
+    withr::local_envvar(c(MORIE_OPENAI_MODEL = NA))
+    llmcfg(route = NULL, openai.model = "", ollama.url = NULL, own.key = NULL)
+    expect_false(file.exists(p))
+  }
+)
+
+test_that("a saved route is the one ask takes; bad settings are refused", {
+  cf_env()
+  withr::local_envvar(c(OPENAI_API_KEY = "sk-h", MORIE_OPENAI_MODEL = "gpt-x"))
+  testthat::local_mocked_bindings(
+    .bl_http_get_local = function(...) cf_tags("llama3.2"),
+    .bl_http_post = function(url, ...) cf_reply(url),
+    .bl_http_post_local = function(url, ...) cf_reply(url),
+    .package = "rmoriebricklayer"
+  )
+  # auto: the provider's key first
+  expect_match(llmask("x"), paste0("^https://api.openai.", "com/v1/"))
+  llmcfg(route = "ollama")
+  expect_match(llmask("x"), "^http://localhost:11434/")
+  llmcfg(route = "openai")
+  expect_match(llmask("x"), "^https://api.openai.com/v1/")
+  # the argument wins
+  expect_match(
+    llmask("x", route = "ollama"),
+    paste0("^http://localhost:11", "434/")
+  )
+  withr::local_envvar(c(MORIE_LLM_ROUTE = "ollama"))
+  expect_match(llmask("x"), "^http://localhost:11434/")
+  withr::local_envvar(c(MORIE_LLM_ROUTE = NA))
+  llmcfg(own.url = "http://localhost:1234/v1", own.model = "m", route = "own")
+  expect_match(llmask("x"), "^http://localhost:1234/v1/chat")
+  expect_error(llmcfg(route = "cloud"), "route must be one of")
+  expect_error(llmcfg(own.url = "localhost:1234"), "own.url must be an http")
+  expect_error(
+    llmcfg(hosted.url = "http://llm.example.org"),
+    "unknown setting 'hosted.url'"
+  )
+  expect_error(llmcfg(colour = "red"), "unknown setting 'colour'")
+  expect_error(llmcfg("hosted"), "key = value")
+  # a route saved by an older version, hosted, is passed over for auto, said
+  # once
+  llmcfg(route = NULL)
+  cfg <- .bl_config_path()
+  writeLines('{"route":"hosted"}', cfg)
+  expect_match(suppressMessages(llmask("x")), "^https://api.openai.com/v1/")
+})
+
+test_that(
+  paste0(
+    "a provider's key is saved privately in llm.json and never shown; ",
+    "hosted.key is gone"
+  ),
+  {
+    cf_env()
+    llmcfg(openai.key = "sk-new-openai-key")
+    p <- .bl_config_path()
+    expect_true(file.exists(p))
+    if (.Platform$OS.type == "unix") {
+      expect_identical(format(file.mode(p)), "600")
+    }
+    expect_identical(
+      .bl_preset_key("openai"),
+      "sk-new-openai-key"
+    )
+    tab <- llmcfg()
+    expect_identical(tab$value[tab$key == "openai.key"], "set")
+    expect_false(any(grepl("sk-new-openai-key", unlist(tab), fixed = TRUE)))
+    expect_identical(tab$source[tab$key == "openai.key"], "saved")
+    llmcfg(openai.key = NULL)
+    expect_null(.bl_preset_key("openai"))
+    expect_error(llmcfg(hosted.key = "sk-x"), "unknown setting 'hosted.key'")
+  }
+)
+
+test_that(
+  paste0(
+    "`config` from the shell: show, help, set, get, unset, path; doctor ",
+    "names the route ask takes"
+  ),
+  {
+    cf_env()
+    withr::local_envvar(c(OLLAMA_HOST = "off"))
+    r <- cf_out("config")
+    expect_identical(r$status, 0L)
+    expect_match(r$text, "route +auto")
+    expect_match(r$text, "config setup")
+    expect_match(cf_out(c("config", "help"))$text, "MORIE_LLM_ROUTE")
+    r <- cf_out(c("config", "set", "route", "anthropic"))
+    expect_identical(r$status, 0L)
+    expect_match(r$text, "route = anthropic")
+    expect_identical(cf_out(c("config", "get", "route"))$text, "anthropic\n")
+    expect_match(cf_out("config")$text, "route +anthropic +\\(saved\\)")
+    expect_match(cf_out(c("config", "unset", "route"))$text, "route = auto")
+    expect_identical(
+      cf_out(c("config", "path"))$text,
+      paste0(.bl_config_path(), "\n")
+    )
+    expect_identical(cf_out(c("config", "set", "colour", "red"))$status, 2L)
+    expect_identical(cf_out(c("config", "set", "route"))$status, 2L)
+    expect_match(
+      cf_out(c("config", "set", "route", "cloud"))$text,
+      "route must be one of"
+    )
+    expect_identical(cf_out(c("config", "frobnicate"))$status, 2L)
+    expect_match(cf_out(c("config", "--help"))$text, "usage: .* config")
+    # doctor: no route yet, then the provider with its model
+    expect_match(cf_out("doctor")$text, "ask has no route yet")
+    withr::local_envvar(c(OPENAI_API_KEY = "sk-h"))
+    cf_out(c("config", "set", "openai.model", "gpt-oss-120b"))
+    expect_match(cf_out("doctor")$text, "ask uses: OpenAI, model gpt-oss-120b")
+  }
+)
+
+test_that("`ask --route` picks the route for one call", {
+  cf_env()
+  withr::local_envvar(c(
+    OPENAI_API_KEY = "sk-h",
+    MORIE_OPENAI_MODEL = "gpt-x",
+    MORIE_LLM_BASE_URL = "https://own.example.org",
+    MORIE_LLM_MODEL = "m"
+  ))
+  testthat::local_mocked_bindings(
+    .bl_http_post = function(url, ...) cf_reply(url),
+    .package = "rmoriebricklayer"
+  )
+  expect_match(cf_out(c("ask", "hi"))$text, "^https://own.example.org/")
+  expect_match(
+    cf_out(c("ask", "--route", "openai", "hi"))$text,
+    "^https://api.openai.com/v1/"
+  )
+  expect_match(cf_out(c("ask", "--route", "hosted", "hi"))$text, "retired")
+  expect_match(
+    cf_out(c("ask", "--route", "auto", "hi"))$text,
+    "^https://own.example.org/"
+  )
+  expect_identical(cf_out(c("ask", "--route", "cloud", "hi"))$status, 2L)
+})
+
+test_that("`config setup` walks through the settings and saves the answers", {
+  cf_env()
+  acc <- new.env(parent = emptyenv())
+  acc$answers <- c("ollama", "http://192.168.1.20:11434", "qwen3:8b")
+  testthat::local_mocked_bindings(
+    .bl_readline = function(prompt, con = NULL, ...) {
+      a <- acc$answers[1L]
+      acc$answers <- acc$answers[-1L]
+      if (is.na(a)) "" else a
+    },
+    .bl_http_get_local = function(...) list(status = -1L, body = raw()),
+    .package = "rmoriebricklayer"
+  )
+  r <- cf_out(c("config", "setup"))
+  expect_identical(r$status, 0L)
+  tab <- llmcfg()
+  expect_identical(tab$value[tab$key == "route"], "ollama")
+  expect_identical(
+    tab$value[tab$key == "ollama.url"],
+    "http://192.168.1.20:11434"
+  )
+  expect_identical(tab$value[tab$key == "ollama.model"], "qwen3:8b")
+  expect_match(r$text, "Saved in ")
+})
+
+test_that("`help` lists the verbs and has a page per topic", {
+  cf_env()
+  h <- cf_out("help")
+  expect_identical(h$status, 0L)
+  expect_match(h$text, "config setup")
+  expect_match(h$text, "help llm")
+  expect_match(cf_out(c("help", "start"))$text, "Getting started")
+  expect_match(cf_out(c("help", "llm"))$text, "config set route anthropic")
+  expect_match(cf_out(c("help", "config"))$text, "MORIE_ANTHROPIC_MODEL")
+  expect_match(cf_out(c("help", "r"))$text, "llmcfg\\(route = \"anthropic\"")
+  expect_match(cf_out(c("help", "ask"))$text, "usage: .* ask \\[--route")
+  expect_identical(cf_out(c("help", "nonsense"))$status, 2L)
+})
+
+test_that(
+  paste0(
+    "`config setup` covers a provider's key and model, and on auto Ollama ",
+    "and your own server"
+  ),
+  {
+    cf_env()
+    acc <- new.env(parent = emptyenv())
+    acc$answers <- c("openai", "sk-typed-key-1234", "gpt-x")
+    testthat::local_mocked_bindings(
+      .bl_readline = function(prompt, con = NULL, ...) {
+        a <- acc$answers[1L]
+        acc$answers <- acc$answers[-1L]
+        if (is.na(a)) "" else a
+      },
+      .bl_http_get = function(...) {
+        list(status = 200L, body = charToRaw('{"data":[{"id":"gpt-x"}]}'))
+      },
+      .bl_http_get_local = function(...) list(status = -1L, body = raw()),
+      .package = "rmoriebricklayer"
+    )
+    r <- suppressMessages(cf_out(c("config", "setup")))
+    expect_identical(r$status, 0L)
+    expect_match(r$text, "Models: gpt-x", fixed = TRUE)
+    expect_false(grepl("sk-typed-key-1234", r$text, fixed = TRUE))
+    tab <- llmcfg()
+    val <- function(k) tab$value[tab$key == k]
+    expect_identical(val("route"), "openai")
+    expect_identical(val("openai.key"), "set")
+    expect_identical(val("openai.model"), "gpt-x")
+    expect_match(r$text, "ask uses: OpenAI, model gpt-x")
+    acc$answers <- c(
+      "auto",
+      "off",
+      "",
+      "http://localhost:1234/v1",
+      "local-model",
+      "sk-own-key-5678"
+    )
+    r <- cf_out(c("config", "setup"))
+    tab <- llmcfg()
+    expect_identical(val("route"), "auto")
+    expect_identical(val("ollama.url"), "off")
+    expect_identical(val("own.url"), "http://localhost:1234/v1")
+    expect_identical(val("own.model"), "local-model")
+    expect_identical(val("own.key"), "set")
+    expect_match(r$text, "ask uses: own endpoint, model local-model")
+    # an unknown route answer falls back to auto
+    acc$answers <- c("cloud", "", "", "", "")
+    cf_out(c("config", "setup"))
+    expect_identical(llmcfg()$value[1], "auto")
+  }
+)
+
+test_that(
+  paste0(
+    "config refuses a malformed Ollama address and names settings it does ",
+    "not know"
+  ),
+  {
+    cf_env()
+    expect_error(llmcfg(ollama.url = "local host"), "ollama.url must be")
+    expect_error(llmcfg(route = c("a", "b")), "route takes one value")
+    llmcfg(route = "OLLAMA")
+    expect_identical(llmcfg()$value[1], "ollama")
+    expect_null(.bl_config_value("NOT_A_SETTING"))
+    # a damaged file is an error (the saved route must not be silently dropped);
+    # it is never written over, so it is removed before the settings below are
+    # saved
+    writeLines("not json at all", .bl_config_path())
+    expect_error(.bl_read_config(), "not a JSON object")
+    unlink(.bl_config_path())
+    # `config get` and `config set` of a key that is not there
+    expect_identical(cf_out(c("config", "get"))$status, 2L)
+    expect_identical(cf_out(c("config", "unset", "nope"))$status, 2L)
+    # a secret typed at the prompt when no value is given
+    testthat::local_mocked_bindings(
+      .bl_readline = function(prompt, con = NULL, ...) "sk-prompted-9999",
+      .package = "rmoriebricklayer"
+    )
+    expect_match(
+      cf_out(c("config", "set", "own.key"))$text,
+      "own.key = set",
+      fixed = TRUE
+    )
+    # an environment variable set over a saved one is reported from the shell,
+    # not raised
+    withr::local_envvar(c(OLLAMA_MODEL = "env-model"))
+    expect_match(
+      cf_out(c("config", "set", "ollama.model", "saved-model"))$text,
+      "OLLAMA_MODEL is set in the environment"
+    )
+  }
+)
+
+test_that("doctor says why ask would fail when a saved address is unusable", {
+  cf_env()
+  withr::local_envvar(c(OLLAMA_HOST = "off"))
+  testthat::local_mocked_bindings(
+    .bl_llm_route = function(...) stop("bad address"),
+    .package = "rmoriebricklayer"
+  )
+  expect_match(cf_out("doctor")$text, "ask would fail: bad address")
+})

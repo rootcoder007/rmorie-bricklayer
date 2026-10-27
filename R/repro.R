@@ -103,91 +103,9 @@ mnfrcmp <- function(man, data, stats, tol = NULL) {
   if (!is.list(man) || is.null(man$results)) {
     stop("`man` must be a manifest with recorded results", call. = FALSE)
   }
-  if (
-    !is.list(stats) ||
-      !length(stats) ||
-      is.null(names(stats)) ||
-      any(!nzchar(names(stats)))
-  ) {
-    stop("`stats` must be a non-empty named list of functions", call. = FALSE)
-  }
-  if (!all(vapply(stats, is.function, logical(1)))) {
-    stop("every element of `stats` must be a function", call. = FALSE)
-  }
+  .mnf_check_stats(stats)
   rows <- lapply(names(stats), function(nm) {
-    rec <- man$results[[nm]]
-    got <- tryCatch(stats[[nm]](data), error = function(e) e)
-    if (inherits(got, "error")) {
-      return(data.frame(
-        name = nm,
-        recorded = NA_real_,
-        recomputed = NA_real_,
-        delta = NA_real_,
-        tol = NA_real_,
-        status = "ERROR",
-        detail = conditionMessage(got),
-        stringsAsFactors = FALSE
-      ))
-    }
-    if (is.null(rec)) {
-      return(data.frame(
-        name = nm,
-        recorded = NA_real_,
-        recomputed = .rmbl_num_or_na(got),
-        delta = NA_real_,
-        tol = NA_real_,
-        status = "NOT_RECORDED",
-        detail = "the manifest has no result of this name",
-        stringsAsFactors = FALSE
-      ))
-    }
-    use_tol <- if (!is.null(tol)) {
-      as.numeric(tol)[1L]
-    } else if (is.null(rec$tol)) {
-      0
-    } else {
-      as.numeric(rec$tol)[1L]
-    }
-    # A non-numeric result is compared by identity: a recorded label
-    # that changed is as much a discrepancy as a number that moved.
-    if (!is.numeric(rec$observed) || !is.numeric(got)) {
-      same <- identical(as.character(rec$observed)[1L], as.character(got)[1L])
-      return(data.frame(
-        name = nm,
-        recorded = .rmbl_num_or_na(rec$observed),
-        recomputed = .rmbl_num_or_na(got),
-        delta = NA_real_,
-        tol = use_tol,
-        status = if (same) "MATCH" else "DIFFER",
-        detail = sprintf(
-          "recorded '%s', recomputed '%s'",
-          as.character(rec$observed)[1L],
-          as.character(got)[1L]
-        ),
-        stringsAsFactors = FALSE
-      ))
-    }
-    r <- as.numeric(rec$observed)[1L]
-    g <- as.numeric(got)[1L]
-    d <- abs(r - g)
-    # identical() first: NA, NaN and Inf recorded and recomputed alike are a
-    # match, and a delta of NA (one side missing) is a difference, not a
-    # crash of `d <= use_tol`
-    same <- identical(r, g) || (!is.na(d) && d <= use_tol)
-    data.frame(
-      name = nm,
-      recorded = r,
-      recomputed = g,
-      delta = d,
-      tol = use_tol,
-      status = if (same) "MATCH" else "DIFFER",
-      detail = if (is.finite(d)) {
-        sprintf("|recorded - recomputed| = %.17g", d)
-      } else {
-        sprintf("recorded %s, recomputed %s", format(r), format(g))
-      },
-      stringsAsFactors = FALSE
-    )
+    .mnf_row(nm, man$results[[nm]], stats[[nm]], data, tol)
   })
   df <- do.call(rbind, rows)
   rownames(df) <- NULL
@@ -203,47 +121,41 @@ mnfrcmp <- function(man, data, stats, tol = NULL) {
 
 #' @export
 format.bricklayer_recompute <- function(x, ...) {
-  c(
-    .rmbl_rule(sprintf(
-      "Recomputation: %s",
-      if (x$ok) {
-        "everything checked and matched"
-      } else {
-        "see below"
-      }
-    )),
-    sprintf(
-      "  %-24s %-10s %s",
-      x$results$name,
-      x$results$status,
-      substring(x$results$detail, 1L, 40L)
-    ),
-    if (length(x$unchecked)) {
-      c(
-        .rmbl_rule(),
-        sprintf(
-          "  %d recorded result(s) NOT recomputed: %s",
-          length(x$unchecked),
-          paste(utils::head(x$unchecked, 8L), collapse = ", ")
-        )
-      )
-    },
-    .rmbl_rule()
+  r <- x$results
+  cols <- intersect(
+    c("name", "recorded", "recomputed", "delta", "tol", "status"),
+    names(r)
   )
-}
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_recompute
-print.bricklayer_recompute <- .rmbl_print_via_format
-
-#' Reads the first element of a value as a number, NA when it is none.
-#' @param x The value.
-#' @return One number, or `NA_real_`.
-#' @noRd
-.rmbl_num_or_na <- function(x) {
-  v <- suppressWarnings(as.numeric(x)[1L])
-  if (length(v) != 1L) NA_real_ else v
+  off <- r[r$status != "MATCH", , drop = FALSE]
+  .rmbl_stat_block(
+    sprintf(
+      "Recomputation: %s",
+      if (isTRUE(x$ok)) "everything checked and matched" else "see below"
+    ),
+    facts = list(
+      Recomputed = nrow(r),
+      Matched = sum(r$status == "MATCH"),
+      `Not recomputed` = if (length(x$unchecked)) length(x$unchecked)
+    ),
+    table = r[cols],
+    reading = if (isTRUE(x$ok)) {
+      "Every recorded result was recomputed from the data and matched."
+    } else {
+      "Not every recorded result was recomputed and matched: see the notes."
+    },
+    notes = c(
+      if (nrow(off)) {
+        sprintf("%s: %s", off$name, substring(off$detail, 1L, 60L))
+      },
+      if (length(x$unchecked)) {
+        sprintf(
+          "%d recorded result(s) NOT recomputed: %s",
+          length(x$unchecked),
+          toString(utils::head(x$unchecked, 8L))
+        )
+      }
+    )
+  )
 }
 
 #' Record and restore the random number generator state
@@ -390,8 +302,8 @@ mnfrstseed <- function(man) {
 #'   version, platform and time of the build). Unavailable fields are \code{NA}
 #'   rather than omitted, so a reader can see that the information was absent
 #'   rather than forgotten; for a package that is not installed, every field
-#'   except \code{package} is \code{NA}. An empty \code{packages} gives a data
-#'   frame with no rows and the same columns.
+#'   except \code{package} is \code{NA}, and a warning names it. An empty
+#'   \code{pkgs} gives a data frame with no rows and the same columns.
 #' @seealso
 #' [capenv()],
 #' [envdiff()].
@@ -413,65 +325,237 @@ capdeps <- function(pkgs = loadedNamespaces()) {
     stop("`pkgs` must be a character vector of package names", call. = FALSE)
   }
   pkgs <- sort(unique(as.character(pkgs)))
-  field <- function(d, nm) {
-    if (is.null(d) || !nm %in% names(d)) {
-      return(NA_character_)
-    }
-    v <- d[[nm]]
-    if (is.null(v) || !nzchar(as.character(v)[1L])) {
-      return(NA_character_)
-    }
-    as.character(v)[1L]
-  }
   pg <- blprog("reading package descriptions", length(pkgs))
   on.exit(pg$done(), add = TRUE)
   rows <- lapply(pkgs, function(p) {
     pg$tick(info = p)
-    d <- suppressWarnings(tryCatch(
-      utils::packageDescription(p),
-      error = function(e) NULL
-    )) # absent: an NA row
-    if (inherits(d, "try-error") || !is.list(d)) {
-      d <- NULL
-    }
-    data.frame(
-      package = p,
-      version = tryCatch(
-        as.character(utils::packageVersion(p)),
-        error = function(e) NA_character_
-      ),
-      # system.file() is "" for a package that is not installed, and
-      # dirname(dirname("")) is ""
-      library = tryCatch(
-        {
-          sf <- system.file(package = p)
-          if (nzchar(sf)) dirname(sf) else NA_character_
-        },
-        error = function(e) NA_character_
-      ),
-      repository = field(d, "Repository"),
-      remote_url = field(d, "RemoteUrl"),
-      remote_sha = field(d, "RemoteSha"),
-      built = field(d, "Built"),
-      stringsAsFactors = FALSE
-    )
+    .rmbl_dep_row(p)
   })
   if (!length(rows)) {
     # An empty request returns an empty FRAME, not NULL: a caller that
     # rbinds or indexes the result should not have to special-case the
     # zero-package case.
-    return(data.frame(
-      package = character(0),
-      version = character(0),
-      library = character(0),
-      repository = character(0),
-      remote_url = character(0),
-      remote_sha = character(0),
-      built = character(0),
-      stringsAsFactors = FALSE
-    ))
+    return(.rmbl_dep_empty())
   }
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
+  # a typo ("statz") was recorded as an all-NA row without a word
+  miss <- out$package[is.na(out$version)]
+  if (length(miss)) {
+    warning(
+      .rmbl_fn(),
+      "not installed, recorded with NA fields: ",
+      toString(miss),
+      call. = FALSE
+    )
+  }
   out
+}
+
+#' One recorded result, recomputed and compared.
+#' @param nm The recorded result's name in the manifest.
+#' @param rec The manifest's record, or NULL.
+#' @param f The function that recomputes it.
+#' @param data The data the recompute function is applied to.
+#' @param tol As for mnfrcmp().
+#' @return A one-row data frame.
+#' @noRd
+.mnf_row <- function(nm, rec, f, data, tol) {
+  got <- tryCatch(f(data), error = function(e) e)
+  if (inherits(got, "error")) {
+    return(.mnf_frame(nm, "ERROR", conditionMessage(got)))
+  }
+  if (is.null(rec)) {
+    return(.mnf_frame(
+      nm,
+      "NOT_RECORDED",
+      "the manifest has no result of this name",
+      recomputed = .rmbl_num_or_na(got)
+    ))
+  }
+  use_tol <- .mnf_tol(tol, rec)
+  # A non-numeric result is compared by identity: a recorded label
+  # that changed is as much a discrepancy as a number that moved.
+  if (!is.numeric(rec$observed) || !is.numeric(got)) {
+    return(.mnf_label_row(nm, rec$observed, got, use_tol))
+  }
+  r <- as.numeric(rec$observed)[1L]
+  g <- as.numeric(got)[1L]
+  d <- abs(r - g)
+  # identical() first: NA, NaN and Inf recorded and recomputed alike are a
+  # match, and a delta of NA (one side missing) is a difference, not a
+  # crash of `d <= use_tol`
+  same <- identical(r, g) || (!is.na(d) && d <= use_tol)
+  .mnf_frame(
+    nm,
+    if (same) "MATCH" else "DIFFER",
+    if (is.finite(d)) {
+      sprintf("|recorded - recomputed| = %.17g", d)
+    } else {
+      sprintf("recorded %s, recomputed %s", format(r), format(g))
+    },
+    recorded = r,
+    recomputed = g,
+    delta = d,
+    tol = use_tol
+  )
+}
+
+#' Reads the first element of a value as a number, NA when it is none.
+#' @param x The value whose first element is read as a number.
+#' @return One number, or `NA_real_`.
+#' @noRd
+.rmbl_num_or_na <- function(x) {
+  v <- suppressWarnings(as.numeric(x)[1L])
+  if (length(v) != 1L) NA_real_ else v
+}
+
+#' Refuses a `stats` argument of mnfrcmp() that is not named functions.
+#' @param stats The argument.
+#' @return `stats`, invisibly.
+#' @noRd
+.mnf_check_stats <- function(stats) {
+  if (
+    !is.list(stats) ||
+      !length(stats) ||
+      is.null(names(stats)) ||
+      !all(nzchar(names(stats)))
+  ) {
+    stop("`stats` must be a non-empty named list of functions", call. = FALSE)
+  }
+  if (!all(vapply(stats, is.function, logical(1)))) {
+    stop("every element of `stats` must be a function", call. = FALSE)
+  }
+  invisible(stats)
+}
+
+#' The tolerance one recorded result is compared with.
+#' @param tol The caller's tolerance, or NULL.
+#' @param rec The recorded result.
+#' @return One number: `tol`, else the recorded one, else 0.
+#' @noRd
+.mnf_tol <- function(tol, rec) {
+  if (!is.null(tol)) {
+    as.numeric(tol)[1L]
+  } else if (is.null(rec$tol)) {
+    0
+  } else {
+    as.numeric(rec$tol)[1L]
+  }
+}
+
+#' One row of the mnfrcmp() results table.
+#' @param nm,status,detail The row's name, status and detail.
+#' @param recorded,recomputed,delta,tol Its numbers, NA when not known.
+#' @return A one-row data frame.
+#' @noRd
+.mnf_frame <- function(
+  nm,
+  status,
+  detail,
+  recorded = NA_real_,
+  recomputed = NA_real_,
+  delta = NA_real_,
+  tol = NA_real_
+) {
+  data.frame(
+    name = nm,
+    recorded = recorded,
+    recomputed = recomputed,
+    delta = delta,
+    tol = tol,
+    status = status,
+    detail = detail,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' One field of a package description.
+#' @param d The description (a list), or NULL.
+#' @param nm The field.
+#' @return One string, NA when the field is absent or empty.
+#' @noRd
+.rmbl_dep_field <- function(d, nm) {
+  if (is.null(d) || !nm %in% names(d)) {
+    return(NA_character_)
+  }
+  v <- d[[nm]]
+  if (is.null(v) || !nzchar(as.character(v)[1L])) {
+    return(NA_character_)
+  }
+  as.character(v)[1L]
+}
+
+#' The capdeps() row of one package.
+#' @param p The package name.
+#' @return A one-row data frame (NA columns for a package not installed).
+#' @noRd
+.rmbl_dep_row <- function(p) {
+  d <- suppressWarnings(tryCatch(
+    utils::packageDescription(p),
+    error = function(e) NULL
+  )) # absent: an NA row
+  if (inherits(d, "try-error") || !is.list(d)) {
+    d <- NULL
+  }
+  data.frame(
+    package = p,
+    version = tryCatch(
+      as.character(utils::packageVersion(p)),
+      error = function(e) NA_character_
+    ),
+    # system.file() is "" for a package that is not installed, and
+    # dirname(dirname("")) is ""
+    library = tryCatch(
+      {
+        sf <- system.file(package = p)
+        if (nzchar(sf)) dirname(sf) else NA_character_
+      },
+      error = function(e) NA_character_
+    ),
+    repository = .rmbl_dep_field(d, "Repository"),
+    remote_url = .rmbl_dep_field(d, "RemoteUrl"),
+    remote_sha = .rmbl_dep_field(d, "RemoteSha"),
+    built = .rmbl_dep_field(d, "Built"),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The capdeps() result for no packages: the columns, no rows.
+#' @return A zero-row data frame.
+#' @noRd
+.rmbl_dep_empty <- function() {
+  data.frame(
+    package = character(0),
+    version = character(0),
+    library = character(0),
+    repository = character(0),
+    remote_url = character(0),
+    remote_sha = character(0),
+    built = character(0),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The mnfrcmp() row of a result that is not a number: compared by identity.
+#' @param nm The result's name.
+#' @param observed The recorded value.
+#' @param got The recomputed value.
+#' @param use_tol The tolerance (reported, not used).
+#' @return A one-row data frame.
+#' @noRd
+.mnf_label_row <- function(nm, observed, got, use_tol) {
+  same <- identical(as.character(observed)[1L], as.character(got)[1L])
+  .mnf_frame(
+    nm,
+    if (same) "MATCH" else "DIFFER",
+    sprintf(
+      "recorded '%s', recomputed '%s'",
+      as.character(observed)[1L],
+      as.character(got)[1L]
+    ),
+    recorded = .rmbl_num_or_na(observed),
+    recomputed = .rmbl_num_or_na(got),
+    tol = use_tol
+  )
 }

@@ -4,10 +4,11 @@
 
 answers <- function(...) {
   a <- c(...)
-  i <- 0L
+  cnt <- new.env(parent = emptyenv())
+  cnt$i <- 0L
   function(prompt, ...) {
-    i <<- i + 1L
-    if (i <= length(a)) a[[i]] else ""
+    cnt$i <- cnt$i + 1L
+    if (cnt$i <= length(a)) a[[cnt$i]] else ""
   }
 }
 terms_reply <- function(json, status = 200L) {
@@ -15,9 +16,10 @@ terms_reply <- function(json, status = 200L) {
 }
 
 test_that("the terms version and address come from the sign-in service", {
-  seen <- NULL
+  box <- new.env(parent = emptyenv())
+  box$seen <- NULL
   local_mocked_bindings(.bl_http_get = function(url, timeout, headers) {
-    seen <<- url
+    box$seen <- url
     list(
       status = 200L,
       body = charToRaw(
@@ -26,7 +28,7 @@ test_that("the terms version and address come from the sign-in service", {
     )
   })
   t <- .bl_terms_info("https://data.example/auth")
-  expect_identical(seen, "https://data.example/terms.json")
+  expect_identical(box$seen, "https://data.example/terms.json")
   expect_identical(
     t,
     list(version = "2026-10-16", url = "https://data.example/terms")
@@ -218,39 +220,45 @@ test_that(
     "before it is asked"
   ),
   {
-    posted <- list()
+    box <- new.env(parent = emptyenv())
+    box$posted <- list()
     local_mocked_bindings(
       .bl_signin_profile = function(...) {
         list(accept_terms = "2026-10-16", name = "Ada")
       },
       .bl_post_json = function(url, payload, ...) {
-        posted[[length(posted) + 1L]] <<- list(url = url, payload = payload)
+        box$posted[[length(box$posted) + 1L]] <- list(
+          url = url,
+          payload = payload
+        )
         list(status = 503L, json = list(error = "down"), error = "")
       }
     )
     expect_error(dlogin(email = "not-an-address"), "is not an email address")
-    expect_length(posted, 0L)
+    expect_length(box$posted, 0L)
     expect_error(dlogin(email = "ada@example.org"), "503")
     expect_identical(
-      posted[[1L]]$payload,
+      box$posted[[1L]]$payload,
       list(email = "ada@example.org", accept_terms = "2026-10-16", name = "Ada")
     )
     expect_error(dlogin(openbro = FALSE), "503")
-    expect_match(posted[[2L]]$url, "/device/code$")
+    expect_match(box$posted[[2L]]$url, "/device/code$")
     expect_identical(
-      posted[[2L]]$payload,
+      box$posted[[2L]]$payload,
       list(accept_terms = "2026-10-16", name = "Ada")
     )
   }
 )
 
 test_that("rmbl login passes the terms and profile flags through", {
-  got <- NULL
+  box <- new.env(parent = emptyenv())
+  box$got <- NULL
   local_mocked_bindings(dlogin = function(...) {
-    got <<- list(...)
+    box$got <- list(...)
     invisible("k")
   })
-  buf <- character()
+  box2 <- new.env(parent = emptyenv())
+  box2$buf <- character()
   st <- blcli(
     c(
       "login",
@@ -269,12 +277,12 @@ test_that("rmbl login passes the terms and profile flags through", {
       "--supervisor-email",
       "b@uni.example"
     ),
-    out = function(x) buf <<- c(buf, x)
+    out = function(x) box2$buf <- c(box2$buf, x)
   )
   expect_identical(st, 0L)
-  expect_true(got$accter)
+  expect_true(box$got$accter)
   expect_identical(
-    got[c("name", "affil", "purp", "supnm", "suprole", "supemail")],
+    box$got[c("name", "affil", "purp", "supnm", "suprole", "supemail")],
     list(
       name = "Ada Lovelace",
       affil = "Uni",
@@ -284,11 +292,12 @@ test_that("rmbl login passes the terms and profile flags through", {
       supemail = "b@uni.example"
     )
   )
-  expect_true(got$restr)
+  expect_true(box$got$restr)
   blcli(c("login", "--no-browser"), out = function(x) NULL)
-  expect_false(got$accter)
-  expect_null(got$restr)
-  usage <- character()
-  blcli(c("login", "--help"), out = function(x) usage <<- c(usage, x))
-  expect_match(paste(usage, collapse = ""), "--accept-terms")
+  expect_false(box$got$accter)
+  expect_null(box$got$restr)
+  box3 <- new.env(parent = emptyenv())
+  box3$usage <- character()
+  blcli(c("login", "--help"), out = function(x) box3$usage <- c(box3$usage, x))
+  expect_match(paste(box3$usage, collapse = ""), "--accept-terms")
 })

@@ -53,7 +53,7 @@
 #' @return A path.
 #' @noRd
 .bl_answer_dir <- function() {
-  .rmbl_getopt("llmcachedir") %||%
+  .rmbl_getopt_ok("llmcachedir", NULL, .rmbl_is_str1, "one folder path") %||%
     file.path(tools::R_user_dir("rmoriebricklayer", "cache"), "answers")
 }
 
@@ -117,7 +117,7 @@
   if (!file.exists(f)) {
     return(NULL)
   }
-  days <- .rmbl_getopt("llmcachedays", 30)
+  days <- .bl_answer_days()
   if (difftime(Sys.time(), file.mtime(f), units = "days") > days) {
     unlink(f)
     return(NULL)
@@ -229,10 +229,16 @@
     return(invisible(0L))
   }
   age <- as.numeric(difftime(Sys.time(), file.mtime(fs), units = "days"))
-  drop <- age > .rmbl_getopt("llmcachedays", 30) |
+  days <- .bl_answer_days()
+  drop <- age > days |
     (endsWith(fs, ".tmp") & age > 1 / 24)
   keep <- fs[!drop & endsWith(fs, ".json")]
-  cap <- .rmbl_getopt("llmcachemax", 200L)
+  cap <- .rmbl_getopt_ok(
+    "llmcachemax",
+    200L,
+    function(v) .rmbl_is_num1(v) && v == round(v),
+    "one whole number of answers"
+  )
   if (length(keep) > cap) {
     drop[
       fs %in% keep[order(file.mtime(keep), decreasing = TRUE)][-seq_len(cap)]
@@ -240,4 +246,16 @@
   }
   unlink(fs[drop])
   invisible(sum(drop))
+}
+
+#' Days an answer is kept (option rmoriebricklayer.llmcachedays), checked.
+#' @return A non-negative number.
+#' @noRd
+.bl_answer_days <- function() {
+  .rmbl_getopt_ok(
+    "llmcachedays",
+    30,
+    function(v) .rmbl_is_num1(v, -Inf),
+    "one number of days (negative keeps nothing)"
+  )
 }

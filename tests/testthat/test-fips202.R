@@ -6,7 +6,7 @@
 
 shake <- function(which, x, n = 0L) {
   r <- .Call(
-    rmoriebricklayer:::C_rmbl_shake,
+    C_rmbl_shake,
     as.integer(which),
     if (is.character(x)) x else as.raw(x),
     as.integer(n)

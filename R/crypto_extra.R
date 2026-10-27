@@ -152,34 +152,10 @@ rndbytes <- function(n) {
 drvkey <- function(pass, salt, iter = 100000L, length = 32L) {
   pass <- .rmbl_text_input(pass, "pass")
   salt <- .rmbl_text_input(salt, "salt")
-  if (!is.raw(pass)) {
-    pass <- as.character(pass)
-    if (base::length(pass) != 1L || is.na(pass)) {
-      stop(
-        "`pass` must be a length-1 character vector or raw vector",
-        call. = FALSE
-      )
-    }
-  }
-  if (!is.raw(salt)) {
-    salt <- as.character(salt)
-    if (base::length(salt) != 1L || is.na(salt)) {
-      stop(
-        "`salt` must be a length-1 character vector or raw vector",
-        call. = FALSE
-      )
-    }
-  }
-  iter <- .rmbl_num(iter, "iter", integer = TRUE)
-  if (base::length(iter) != 1L || is.na(iter) || iter < 1L) {
-    stop("`iter` must be a single integer of at least 1", call. = FALSE)
-  }
-  length <- .rmbl_num(length, "length", integer = TRUE)
-  if (
-    base::length(length) != 1L || is.na(length) || length < 1L || length > 1024L
-  ) {
-    stop("`length` must be a single integer between 1 and 1024", call. = FALSE)
-  }
+  pass <- .rmbl_kdf_text1(pass, "pass")
+  salt <- .rmbl_kdf_text1(salt, "salt")
+  iter <- .rmbl_kdf_iter(iter)
+  length <- .rmbl_kdf_length(length)
   .bl_busy(
     sprintf(
       "deriving a key (%s PBKDF2 iterations)",
@@ -257,7 +233,7 @@ drvkey <- function(pass, salt, iter = 100000L, length = 32L) {
 #' @export
 cblake2b <- function(x, key = NULL, length = 32L) {
   .rmbl_no_fn(x = x, key = key)
-  if (!is.raw(x) && !is.null(x) && any(is.na(x))) {
+  if (!is.raw(x) && !is.null(x) && anyNA(x)) {
     x <- as.character(x)
     out <- rep(NA_character_, length(x))
     ok <- !is.na(x)
@@ -266,21 +242,8 @@ cblake2b <- function(x, key = NULL, length = 32L) {
     }
     return(out)
   }
-  length <- .rmbl_num(length, "length", integer = TRUE)
-  if (
-    base::length(length) != 1L || is.na(length) || length < 1L || length > 64L
-  ) {
-    stop("`length` must be a single integer between 1 and 64", call. = FALSE)
-  }
-  if (!is.null(key) && !is.raw(key)) {
-    key <- as.character(key)
-    if (base::length(key) != 1L || is.na(key)) {
-      stop(
-        "cblake2b: `key` must be a length-1 character vector or a raw vector",
-        call. = FALSE
-      )
-    }
-  }
+  length <- .rmbl_b2_length(length)
+  key <- .rmbl_b2_key(key)
   if (is.raw(x)) {
     return(.Call(C_rmbl_blake2b, x, key, length))
   }
@@ -398,7 +361,80 @@ dgstobj <- function(
 #'
 #' NULL when no operating-system source could be read; rndbytes() refuses to
 #' fall back. One line so the refusal can be exercised without breaking the OS.
-#' @param n The number of bytes.
+#' @param n The number of random bytes to read from the operating system.
 #' @return A raw vector, or NULL when no source could be read.
 #' @noRd
 .rmbl_os_random <- function(n) .Call(C_rmbl_os_random, n)
+
+#' A passphrase or salt for drvkey(): a raw vector, or a single string.
+#' @param v The value, already through .rmbl_text_input().
+#' @param what Its argument name, `"pass"` or `"salt"`.
+#' @return `v`, as character unless raw.
+#' @noRd
+.rmbl_kdf_text1 <- function(v, what) {
+  if (!is.raw(v)) {
+    v <- as.character(v)
+    if (length(v) != 1L || is.na(v)) {
+      stop(
+        "`",
+        what,
+        "` must be a length-1 character vector or raw vector",
+        call. = FALSE
+      )
+    }
+  }
+  v
+}
+
+#' drvkey()'s iteration count: a single integer of at least 1.
+#' @param iter The value given.
+#' @return The count as an integer.
+#' @noRd
+.rmbl_kdf_iter <- function(iter) {
+  iter <- .rmbl_num(iter, "iter", integer = TRUE)
+  if (length(iter) != 1L || is.na(iter) || iter < 1L) {
+    stop("`iter` must be a single integer of at least 1", call. = FALSE)
+  }
+  iter
+}
+
+#' drvkey()'s key length: a single integer from 1 to 1024.
+#' @param len The value given.
+#' @return The length as an integer.
+#' @noRd
+.rmbl_kdf_length <- function(len) {
+  len <- .rmbl_num(len, "length", integer = TRUE)
+  if (length(len) != 1L || is.na(len) || len < 1L || len > 1024L) {
+    stop("`length` must be a single integer between 1 and 1024", call. = FALSE)
+  }
+  len
+}
+
+#' cblake2b()'s digest length: a single integer from 1 to 64.
+#' @param len The value given.
+#' @return The length as an integer.
+#' @noRd
+.rmbl_b2_length <- function(len) {
+  len <- .rmbl_num(len, "length", integer = TRUE)
+  if (length(len) != 1L || is.na(len) || len < 1L || len > 64L) {
+    stop("`length` must be a single integer between 1 and 64", call. = FALSE)
+  }
+  len
+}
+
+#' cblake2b()'s key: NULL, a raw vector, or a single string.
+#' @param key The value given.
+#' @return `key`, as character unless NULL or raw.
+#' @noRd
+.rmbl_b2_key <- function(key) {
+  if (!is.null(key) && !is.raw(key)) {
+    key <- as.character(key)
+    if (length(key) != 1L || is.na(key)) {
+      stop(
+        "cblake2b: `key` must be a length-1 character vector or a raw vector",
+        call. = FALSE
+      )
+    }
+  }
+  key
+}

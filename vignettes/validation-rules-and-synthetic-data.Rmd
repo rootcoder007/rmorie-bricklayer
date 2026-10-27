@@ -8,10 +8,14 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
@@ -172,9 +176,13 @@ estimate inside its interval, a known quality flag, and a known group:
 d <- indiex("health")
 rules <- list(
   ruleinset("quality", c("ok", "E", "F", "x", "..")),
-  ruleinset("group", c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous")),
-  rul("estimate inside its interval",
-       function(x) is.na(x$estimate) | (x$lower <= x$estimate & x$estimate <= x$upper))
+  ruleinset(
+    "group",
+    c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous")
+  ),
+  rul("estimate inside its interval", function(x) {
+    is.na(x$estimate) | (x$lower <= x$estimate & x$estimate <= x$upper)
+  })
 )
 valrules(d, rules)
 ```
@@ -189,11 +197,22 @@ year (the recipe asks for 20%).
 
 ```{r validation-rules-and-synthetic-data-synthetic-plot, fig.width = 8, fig.height = 4}
 op <- par(mfrow = c(1, 2))
-barplot(table(df$visits), col = blpal()[1], xlab = "visits", ylab = "rows",
-        main = "Synthetic visits")
+barplot(
+  table(df$visits),
+  col = blpal()[1],
+  xlab = "visits",
+  ylab = "rows",
+  main = "Synthetic visits"
+)
 al <- tapply(df$alert == "Yes", df$year, mean)
-barplot(100 * al, col = blpal()[2], ylim = c(0, 100), xlab = "year", ylab = "rows with an alert (%)",
-        main = "Synthetic alert flag")
+barplot(
+  100 * al,
+  col = blpal()[2],
+  ylim = c(0, 100),
+  xlab = "year",
+  ylab = "rows with an alert (%)",
+  main = "Synthetic alert flag"
+)
 abline(h = 20, lty = 2)
 par(op)
 ```

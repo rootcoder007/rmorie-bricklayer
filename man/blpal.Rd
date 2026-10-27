@@ -72,8 +72,9 @@ unknown \code{palette} option.
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 blpal("okabe", 3)
-old <- plotopt(palette = "grey", grid = FALSE)
-plotopt()
+# plotopt() returns the options in force, so keep them before a change
+old <- plotopt()
+plotopt(palette = "grey", grid = FALSE)
 plotopt(palette = old$palette, grid = old$grid)
 
 # an interpolated sequential scale, shown as swatches

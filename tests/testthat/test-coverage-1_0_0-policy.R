@@ -85,16 +85,16 @@ test_that("clusters, covariates and weights are refused in words", {
     plndid(p, "district", "month", "crmrate", "reformed", cl = "one"),
     "two clusters at least"
   )
-  # .rmbl_cluster: `cluster` (%s) is not a column / must have no NA
+  # .rmbl_cluster: `cl` (%s) is not a column / must have no NA
   expect_error(
     plndid(p, "district", "month", "crmrate", "reformed", cl = "zz"),
-    "`cluster` \\(zz\\) is not a column"
+    "`cl` \\(zz\\) is not a column"
   )
   pc <- p
   pc$region[3] <- NA
   expect_error(
     plndid(pc, "district", "month", "crmrate", "reformed", cl = "region"),
-    "`cluster` must have no NA"
+    "`cl` must have no NA"
   )
   # reaches .rmbl_covariates's refusal naming the covariates not in the data
   expect_error(
@@ -108,11 +108,10 @@ test_that("clusters, covariates and weights are refused in words", {
     ),
     "not columns of `data`: zz"
   )
-  # .rmbl_weights: `weights` (%s) is not a column / must be 0 or more, with no
-  # NA
+  # .rmbl_weights: the argument is named as the caller names it (`w`)
   expect_error(
     plndid(p, "district", "month", "crmrate", "reformed", w = "zz"),
-    "`weights` \\(zz\\) is not a column"
+    "`w` \\(zz\\) is not a column"
   )
   p$wneg <- -1
   expect_error(
@@ -154,7 +153,7 @@ test_that("plndid() reads a logical treatment as 0 and 1", {
   # reaches plndid's reading of a logical treatment as numbers
   p <- polex()
   p$rl <- p$reformed == 1
-  expect_equal(
+  expect_identical(
     plndid(p, "district", "month", "crmrate", "rl")$estimate,
     plndid(p, "district", "month", "crmrate", "reformed")$estimate
   )
@@ -217,7 +216,8 @@ test_that(
       lags = 2
     )
     pt <- attr(e1, "pretrend")
-    expect_true(is.na(pt$F) && is.na(pt$p_value))
+    expect_true(is.na(pt$F))
+    expect_true(is.na(pt$p_value))
     expect_identical(pt$df1, 0L)
     expect_identical(pt$df2, attr(e1, "clusters") - 1L)
     # reaches tse's refusal when only the reference period precedes adoption
@@ -252,7 +252,7 @@ test_that(
     # NULL and is dropped
     d <- .cp_pan(c(3, Inf, Inf, Inf))
     r <- stgatt(d, "u", "t", "y", "g", ctrl = "never", reps = 30, seed = 2)
-    expect_equal(
+    expect_identical(
       r$attgt$estimate[r$attgt$period == 3],
       with(
         d,
@@ -347,7 +347,7 @@ test_that(
       reps = 0
     )
     expect_identical(unique(r$attgt$cohort), 3)
-    expect_equal(r$attgt$period, 3:6)
+    expect_identical(r$attgt$period, 3:6)
     # reaches .rmbl_etwfe's "no treated cohort-period cell" refusal: the one
     # cohort is its own comparison
     expect_error(
@@ -408,7 +408,7 @@ test_that(
     b <- bacondcmp(d, "u", "t", "y", "tr")
     tv <- b[b$type == "treated vs never", ]
     expect_identical(tv$treated, 4L)
-    expect_equal(sum(b$weight), 1)
+    expect_identical(sum(b$weight), 1)
     expect_false(any(b$type == "earlier vs later"))
   }
 )
@@ -443,8 +443,8 @@ test_that(
     )
     r <- swtdid(s, "u", "t", "y", "tr", reps = 0)
     y <- matrix(s$y, 2, byrow = TRUE)
-    expect_equal(r$estimate[1], (y[2, 3] - y[2, 2]) - (y[1, 3] - y[1, 2]))
-    expect_equal(r$estimate[2], (y[2, 2] - y[2, 1]) - (y[1, 2] - y[1, 1]))
+    expect_identical(r$estimate[1], (y[2, 3] - y[2, 2]) - (y[1, 3] - y[1, 2]))
+    expect_identical(r$estimate[2], (y[2, 2] - y[2, 1]) - (y[1, 2] - y[1, 1]))
     expect_identical(r$switchers, c(1, 1))
   }
 )
@@ -492,7 +492,7 @@ test_that(
       "numeric with no NA"
     )
     # reaches plnpois's reading of a logical treatment as numbers
-    expect_equal(
+    expect_identical(
       plnpois(transform(d, tl = tr == 1), "u", "t", "y", "tl")$estimate,
       plnpois(d, "u", "t", "y", "tr")$estimate
     )
@@ -515,7 +515,9 @@ test_that(
     d$tr <- as.numeric(d$u <= 4 & d$t >= 4)
     d$y <- .rmbl_with_seed(3, stats::rpois(nrow(d), 20 * exp(0.3 * d$tr)))
     expect_warning(
-      r <- plnpois(d, "u", "t", "y", "tr", family = "negbin"),
+      {
+        r <- plnpois(d, "u", "t", "y", "tr", family = "negbin")
+      },
       "theta is at its bound"
     )
     expect_gt(attr(r, "theta"), exp(14))
@@ -536,15 +538,16 @@ test_that("plnpois() says so when the count model does not converge", {
     d$y <- stats::rpois(nrow(d), 5)
     d$o <- stats::rnorm(nrow(d), 0, 20)
   })
-  seen <- character()
+  st <- new.env(parent = emptyenv())
+  st$seen <- character()
   withCallingHandlers(
     plnpois(d, "u", "t", "y", "tr", offset = "o"),
     warning = function(w) {
-      seen <<- c(seen, conditionMessage(w))
+      st$seen <- c(st$seen, conditionMessage(w))
       invokeRestart("muffleWarning")
     }
   )
-  expect_true("the count model did not converge" %in% seen)
+  expect_true("the count model did not converge" %in% st$seen)
 })
 
 # ---- synctl, sevidx, piperate, cmlrisk, bufasgn ------------------------------
@@ -583,7 +586,8 @@ test_that(
       city = "A",
       year = 2024,
       offence = c("homicide", "robbery"),
-      n = c(1, 5)
+      n = c(1, 5),
+      stringsAsFactors = FALSE
     )
     # sevidx: `%s` (%s) is not a column; `w` must be numbers named by offence
     expect_error(
@@ -648,8 +652,11 @@ test_that(
     d <- .cp_dml()
     d$y <- 0
     r <- plndml(d, "u", "t", "y", "d", "x1", folds = 3)
-    expect_equal(r$estimate, 0)
-    expect_equal(.rmbl_lasso_lambdas(cbind(d$x1), rep(0, nrow(d)), 3L)[1], 1)
+    expect_identical(r$estimate, 0)
+    expect_identical(
+      .rmbl_lasso_lambdas(cbind(d$x1), rep(0, nrow(d)), 3L)[1],
+      1
+    )
   }
 )
 
@@ -674,7 +681,8 @@ test_that(
       basis = "poly2",
       folds = 3
     )
-    expect_true(is.finite(r$estimate) && r$se > 0)
+    expect_true(is.finite(r$estimate))
+    expect_gt(r$se, 0)
   }
 )
 
@@ -784,7 +792,7 @@ test_that(
     expect_true(is.na(b$p_value))
     p <- polex()
     m <- mtchdid(p, "district", "month", "crmrate", "refmonth", caliper = 5)
-    expect_identical(length(unique(m$matches$treated)), 1L)
+    expect_length(unique(m$matches$treated), 1L)
   }
 )
 
@@ -803,7 +811,7 @@ test_that(
     expect_identical(nrow(full$matches), 15L)
     expect_identical(nrow(m$matches), 3L)
     kept <- full$matches[full$matches$treated %in% m$matches$treated, ]
-    expect_equal(m$matches$distance, kept$distance)
+    expect_identical(m$matches$distance, kept$distance)
     expect_error(
       mtchdid(p, "district", "month", "crmrate", "refmonth", caliper = 0),
       "no match within the caliper"
@@ -854,8 +862,9 @@ test_that(
     )
     s <- syndid(d, "u", "t", "y", "g", reps = 2)
     expect_identical(s$method, "jackknife")
-    expect_equal(unname(s$unitwts), c(1, 0))
-    expect_true(is.finite(s$se) && s$se < 1e-8)
+    expect_identical(unname(s$unitwts), c(1, 0))
+    expect_true(is.finite(s$se))
+    expect_lt(s$se, 1e-8)
   }
 )
 
@@ -973,7 +982,10 @@ test_that(
       reps = 10,
       seed = 1
     )
-    expect_equal(pw$effect, seq(0, 2 * stats::sd(pre$crmrate), length.out = 6L))
+    expect_identical(
+      pw$effect,
+      seq(0, 2 * stats::sd(pre$crmrate), length.out = 6L)
+    )
   }
 )
 
@@ -1023,13 +1035,14 @@ test_that(
     .cp_dev()
     r <- aipwcf(.cp_aipw(), "y", "t", "age", lrn = "ols", seed = 4)
     attr(r, "trim") <- NULL
-    ln <- NULL
+    st <- new.env(parent = emptyenv())
+    st$ln <- NULL
     local_mocked_bindings(
-      abline = function(...) ln <<- list(...),
+      abline = function(...) st$ln <- list(...),
       .package = "graphics"
     )
     o <- plot(r)
-    expect_identical(ln$v, c(0.01, 0.99))
+    expect_identical(st$ln$v, c(0.01, 0.99))
     expect_identical(unique(o$arm), c("treated", "untreated"))
   }
 )
@@ -1062,7 +1075,7 @@ test_that("plotevgrid() stacks the panels' estimates with their names", {
   )
   g <- plotevgrid(es, main = "Two outcomes")
   expect_identical(unique(g$panel), c("crime", "arrest"))
-  expect_equal(g$estimate[g$panel == "arrest"], es$arrest$estimate)
+  expect_identical(g$estimate[g$panel == "arrest"], es$arrest$estimate)
 })
 
 test_that("loounit() leaves out each treated unit when no units are named", {
@@ -1070,7 +1083,7 @@ test_that("loounit() leaves out each treated unit when no units are named", {
   d <- .cp_pan(c(3, 4, Inf, Inf, Inf))
   l <- loounit(d, "u", "t", "y", "tr")
   expect_identical(l$dropped, c("1", "2"))
-  expect_equal(
+  expect_identical(
     l$estimate[1],
     plndid(d[d$u != 1, ], "u", "t", "y", "tr")$estimate
   )
@@ -1088,10 +1101,11 @@ test_that("the policy plots fit their own or the caller's title to the panel", {
   # reaches the title lines (.bl_title of the default or given title) of the
   # event-study, synthetic control, synthetic DiD, power, AIPW (both types),
   # Bacon, permutation (both types), leave-one-out and cohort-trend plots
-  seen <- character()
+  st <- new.env(parent = emptyenv())
+  st$seen <- character()
   local_mocked_bindings(
     .bl_title = function(title) {
-      seen <<- c(seen, as.character(title))
+      st$seen <- c(st$seen, as.character(title))
       invisible(title)
     },
     .package = "rmoriebricklayer"
@@ -1137,7 +1151,7 @@ test_that("the policy plots fit their own or the caller's title to the panel", {
   plot(loounit(d, "u", "t", "y", "tr"), main = "t-lo")
   plot(cohtrnd(d, "u", "t", "y", "g", win = c(-3, 2), ma = 1), main = "t-ct")
   expect_true(all(
-    c("Event study", paste("Synthetic control:", sc$treunit)) %in% seen
+    c("Event study", paste("Synthetic control:", sc$treunit)) %in% st$seen
   ))
   expect_true(all(
     c(
@@ -1151,9 +1165,9 @@ test_that("the policy plots fit their own or the caller's title to the panel", {
       "t-lo",
       "t-ct"
     ) %in%
-      seen
+      st$seen
   ))
-  expect_true(any(grepl("t-pm", seen)))
+  expect_true(any(grepl("t-pm", st$seen, fixed = TRUE)))
 })
 
 # ---- R/plots.R and R/trc.R ---------------------------------------------------
@@ -1169,15 +1183,16 @@ test_that(
     .cp_dev()
     graphics::plot(c(1, 100), c(1, 1000), log = "xy")
     usr <- graphics::par("usr")
-    got <- NULL
+    st <- new.env(parent = emptyenv())
+    st$got <- NULL
     local_mocked_bindings(
-      legend = function(x, y, ...) got <<- c(x, y),
+      legend = function(x, y, ...) st$got <- c(x, y),
       .package = "graphics"
     )
     .bl_legend_below(legend = "a", pch = 19)
     inch <- graphics::par("csi") * 4.8
     y <- usr[3L] - inch / graphics::par("pin")[2L] * (usr[4L] - usr[3L])
-    expect_equal(got, c(10^mean(usr[1:2]), 10^y))
+    expect_identical(st$got, c(10^mean(usr[1:2]), 10^y))
   }
 )
 

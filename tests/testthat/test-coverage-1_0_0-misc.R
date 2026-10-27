@@ -56,7 +56,9 @@ test_that(
       }
     )
     expect_warning(
-      des <- svydes(d, w = "w", reps = paste0("r", 1:8), type = "brr"),
+      {
+        des <- svydes(d, w = "w", reps = paste0("r", 1:8), type = "brr")
+      },
       paste0(
         "replicate r1 leaves no row out and is no rescaled weight, as a BRR ",
         "replicate is"
@@ -166,10 +168,11 @@ test_that(
 test_that("the plots of R/plots.R fit their own or the caller's title", {
   # reaches the title lines (.bl_title of the default or given title) of the
   # band-sensitivity, power, funnel, bar and correlation plots
-  seen <- character()
+  rec <- new.env()
+  rec$seen <- character()
   local_mocked_bindings(
     .bl_title = function(title) {
-      seen <<- c(seen, as.character(title))
+      rec$seen <- c(rec$seen, as.character(title))
       invisible(title)
     },
     .package = "rmoriebricklayer"
@@ -208,11 +211,14 @@ test_that("the plots of R/plots.R fit their own or the caller's title", {
     area = c("a", "b", "c", "d"),
     main = "t-fn"
   )
-  plot(freqtbl(data.frame(g = c("a", "b", "b")), "g"), main = "t-fq")
+  plot(
+    freqtbl(data.frame(g = c("a", "b", "b"), stringsAsFactors = FALSE), "g"),
+    main = "t-fq"
+  )
   plot(
     topcors(data.frame(a = 1:20, b = (1:20)^2, c = rev(1:20))),
     main = "t-tc"
   )
-  expect_true("Sensitivity to the open band's cap" %in% seen)
-  expect_true(all(c("t-bs", "t-pw", "t-fn", "t-fq", "t-tc") %in% seen))
+  expect_true("Sensitivity to the open band's cap" %in% rec$seen)
+  expect_true(all(c("t-bs", "t-pw", "t-fn", "t-fq", "t-tc") %in% rec$seen))
 })

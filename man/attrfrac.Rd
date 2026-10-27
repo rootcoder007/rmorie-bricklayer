@@ -24,6 +24,10 @@ A single number, the attributable fraction: in \code{[0, 1)} for
 \code{rr >= 1}, negative for a protective exposure. When the limits
 were given it carries an attribute \code{ci}, a named numeric vector
 (\code{lower}, \code{upper}).
+It has class \code{c("rmbl_attrfrac", "rmbl_measure", "numeric")}, so it
+prints as a box with its inputs (kept in attribute \code{"lakner"});
+arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+numbers.
 }
 \description{
 The share of all cases in a population that is due to an exposure: the

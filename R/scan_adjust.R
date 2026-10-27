@@ -62,41 +62,6 @@ yoypv <- function(y) {
   y
 }
 
-#' Computes exact conditional p-values for the equality of two Poisson rates.
-#'
-#' Two-sided exact conditional test of v1 / w1 == v2 / w2 for Poisson
-#' counts: given the total, v1 ~ Binomial(v1 + v2, w1 / (w1 + w2)).
-#' @param v1 The first counts.
-#' @param v2 The second counts.
-#' @param w1 The first exposures, recycled.
-#' @param w2 The second exposures, recycled.
-#' @return A vector of p-values, NA where a comparison cannot be made.
-#' @noRd
-.exact_ratio_p <- function(v1, v2, w1 = 1, w2 = 1) {
-  n <- length(v1)
-  w1 <- rep_len(w1, n)
-  w2 <- rep_len(w2, n)
-  p <- rep(NA_real_, n)
-  pg <- blprog("exact p-values", n)
-  on.exit(pg$done(), add = TRUE)
-  for (i in seq_len(n)) {
-    pg$update(i - 1L, sprintf("comparison %d/%d", i, n))
-    if (is.na(v1[i]) || is.na(v2[i]) || is.na(w1[i]) || is.na(w2[i])) {
-      next
-    }
-    tot <- v1[i] + v2[i]
-    if (tot <= 0 || w1[i] <= 0 || w2[i] <= 0) {
-      next
-    }
-    p[i] <- stats::binom.test(
-      round(v1[i]),
-      round(tot),
-      p = w1[i] / (w1[i] + w2[i])
-    )$p.value
-  }
-  p
-}
-
 #' Adjust a scan of many comparisons for multiple testing
 #'
 #' @description
@@ -175,10 +140,8 @@ scanadj <- function(x, meth = "BH", alpha = 0.05) {
     x$p_value <- .exact_ratio_p(x$count, x$precnt, x$population, x$prepop)
   } else if (is.null(x$p_value)) {
     stop(
-      paste0(
-        "`x` has no `p_value` column and is not a yoy() or ",
-        "ratechg() result"
-      ),
+      "`x` has no `p_value` column and is not a yoy() or ",
+      "ratechg() result",
       call. = FALSE
     )
   }
@@ -187,9 +150,9 @@ scanadj <- function(x, meth = "BH", alpha = 0.05) {
     bad <- which(ok & (x$p_value < 0 | x$p_value > 1))
     stop(
       "`p_value` must lie in [0, 1]; row(s) ",
-      paste(bad, collapse = ", "),
+      toString(bad),
       " hold ",
-      paste(format(x$p_value[bad]), collapse = ", "),
+      toString(format(x$p_value[bad])),
       ". Nothing outside that range is a probability, so no adjustment ",
       "or significance decision is made.",
       call. = FALSE
@@ -317,34 +280,73 @@ drftcal <- function(data, n = 50L, alpha = 0.01, seed = 1L, ...) {
 }
 
 #' @export
-print.rmbl_drift_calibration <- function(x, ...) {
-  cat(sprintf(
-    "Drift screens on %d identical re-fetches (alpha = %g)\n",
-    x$n,
-    x$alpha
-  ))
-  cat(sprintf(
-    "  at least one column flagged: %.0f%% of re-fetches\n",
-    100 * x$anyflag
-  ))
-  worst <- x$columns[order(-x$columns$falsealarmrate), , drop = FALSE]
+format.rmbl_drift_calibration <- function(x, digits = 4L, ...) {
+  cols <- x$columns
+  worst <- cols[order(-cols$falsealarmrate), , drop = FALSE]
   worst <- worst[worst$falsealarmrate > 0, , drop = FALSE]
-  if (nrow(worst)) {
-    cat("  columns that fire on identical data:\n")
-    for (i in seq_len(min(8L, nrow(worst)))) {
-      cat(sprintf(
-        "    %-28s %5.1f%%\n",
-        worst$column[i],
-        100 * worst$falsealarmrate[i]
-      ))
+  worst$falsealarmrate <- sprintf("%.1f%%", 100 * worst$falsealarmrate)
+  .rmbl_res_block(
+    "Drift screen calibration",
+    facts = list(
+      `Identical re-fetches` = x$n,
+      Alpha = x$alpha,
+      `Columns screened` = nrow(cols),
+      `At least one column flagged` = sprintf(
+        "%.0f%% of re-fetches",
+        100 * x$anyflag
+      ),
+      `Per-screen alpha` = sprintf(
+        "%.2g for a family-wise %g",
+        x$alphafam,
+        x$alpha
+      )
+    ),
+    tables = if (nrow(worst)) {
+      list(`Columns that fire on identical data` = .rmbl_plain(worst))
+    },
+    reading = c(
+      paste(
+        "Each re-fetch splits the same table in two at random and runs the",
+        "drift screen on the halves, so every flag is a false alarm."
+      ),
+      if (!nrow(worst)) "No column fired on identical data."
+    ),
+    digits = digits,
+    maxrows = 12L
+  )
+}
+
+#' Computes exact conditional p-values for the equality of two Poisson rates.
+#'
+#' Two-sided exact conditional test of v1 / w1 == v2 / w2 for Poisson
+#' counts: given the total, v1 ~ Binomial(v1 + v2, w1 / (w1 + w2)).
+#' @param v1 The first counts.
+#' @param v2 The second counts.
+#' @param w1 The first exposures, recycled.
+#' @param w2 The second exposures, recycled.
+#' @return A vector of p-values, NA where a comparison cannot be made.
+#' @noRd
+.exact_ratio_p <- function(v1, v2, w1 = 1, w2 = 1) {
+  n <- length(v1)
+  w1 <- rep_len(w1, n)
+  w2 <- rep_len(w2, n)
+  p <- rep(NA_real_, n)
+  pg <- blprog("exact p-values", n)
+  on.exit(pg$done(), add = TRUE)
+  for (i in seq_len(n)) {
+    pg$update(i - 1L, sprintf("comparison %d/%d", i, n))
+    if (is.na(v1[i]) || is.na(v2[i]) || is.na(w1[i]) || is.na(w2[i])) {
+      next
     }
-  } else {
-    cat("  no column fired on identical data\n")
+    tot <- v1[i] + v2[i]
+    if (tot <= 0 || w1[i] <= 0 || w2[i] <= 0) {
+      next
+    }
+    p[i] <- stats::binom.test(
+      round(v1[i]),
+      round(tot),
+      p = w1[i] / (w1[i] + w2[i])
+    )$p.value
   }
-  cat(sprintf(
-    "  per-screen alpha for a family-wise %g: %.2g\n",
-    x$alpha,
-    x$alphafam
-  ))
-  invisible(x)
+  p
 }

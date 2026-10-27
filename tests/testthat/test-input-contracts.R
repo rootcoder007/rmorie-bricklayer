@@ -58,10 +58,10 @@ test_that("sketch registers are validated", {
   expect_error(dstncnt(-1), "non-negative integer")
   expect_error(dstncnt(c(1.5, 2)), "non-negative integer")
   expect_error(skchmrg("", ""), "must be numeric")
-  expect_equal(dstncnt(integer(0)), 0)
+  expect_identical(dstncnt(integer(0)), 0)
   s <- dstnskch(c("a", "b", "a"))
-  expect_equal(round(dstncnt(s)), 2)
-  expect_equal(dstncnt(NULL), 0)
+  expect_identical(round(dstncnt(s)), 2)
+  expect_identical(dstncnt(NULL), 0)
 })
 
 test_that("hashes treat NA as NA and signatures need text or bytes", {
@@ -69,7 +69,7 @@ test_that("hashes treat NA as NA and signatures need text or bytes", {
   expect_true(is.na(csha512(NA)))
   expect_true(is.na(cblake2b(NA)))
   expect_true(is.na(csha256(NA)))
-  expect_equal(csha512(c("a", NA))[1], csha512("a"))
+  expect_identical(csha512(c("a", NA))[1], csha512("a"))
   expect_error(chmac(-1, "m"), "character or raw")
   expect_error(drvkey(1, 2), "character or raw")
   expect_error(cpssign(-1, "k"), "character or raw")
@@ -103,7 +103,7 @@ test_that("parsers, rules, manifests and guards refuse wrong input", {
   expect_error(mnfdgst(NULL), "must be a list")
   expect_error(vrfrcd(NULL, NULL, c(a = "b")), "atomic vectors")
   expect_error(grdbin(NULL, "d"), "atomic vector")
-  expect_error(grdlvls(c("a"), NULL), "non-empty character")
+  expect_error(grdlvls("a", NULL), "non-empty character")
   expect_error(capdeps(-1), "package names")
 })
 
@@ -136,8 +136,9 @@ test_that("IPW weights refuse non-binary treatment, bad propensities", {
   expect_error(cipw(c(0, 1), c(-0.2, 0.5)), "\\[0, 1\\]")
   expect_error(cipw(c(0, 1), c(0.5, 1.4)), "\\[0, 1\\]")
   w <- cipw(c(1, NA, 0), c(0.5, 0.5, NA))
-  expect_true(is.na(w[2]) && is.na(w[3]))
-  expect_equal(w[1], 2)
+  expect_true(is.na(w[2]))
+  expect_true(is.na(w[3]))
+  expect_identical(w[1], 2)
 })
 
 test_that("sir separates excess from deficit and pubbnd labels NA", {
@@ -148,12 +149,12 @@ test_that("sir separates excess from deficit and pubbnd labels NA", {
   expect_true(r$excess[2])
   expect_false(r$deficit[2])
   b <- pubbnd(c(10, NA))
-  expect_equal(b$status, c("exact", "missing"))
+  expect_identical(b$status, c("exact", "missing"))
 })
 
 test_that("midranks keep NA in place and registers must be finite", {
   expect_equal(cmidrk(c(3, NA, 1, 3)), c(2.5, NA, 1, 2.5))
-  expect_equal(cmidrk(NA), NA_real_)
+  expect_identical(cmidrk(NA), NA_real_)
   expect_error(skchmrg(Inf, Inf), "non-negative integer registers")
   expect_error(dstncnt(c(1, NaN)), "non-negative integer registers")
 })

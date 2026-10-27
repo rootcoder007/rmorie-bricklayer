@@ -22,59 +22,6 @@
 # the same exact conditional construction yoy() uses for counts,
 # generalised to unequal denominators.
 
-.rate_per_names <- c(
-  "1k" = 1e3,
-  "10k" = 1e4,
-  "100k" = 1e5,
-  "1m" = 1e6,
-  "1000" = 1e3,
-  "10000" = 1e4,
-  "100000" = 1e5,
-  "1000000" = 1e6
-)
-
-#' Reads the `per` argument as a positive number.
-#'
-#' `per` accepts a number or one of the shorthands, because \dQuote{per 100k} is
-#' how the denominator is spoken and mistyping 1e5 as 1e6 is a silent
-#' factor of ten in a published number.
-#' @param per A number or a shorthand such as `"100k"`.
-#' @return The multiplier as a double.
-#' @noRd
-.rate_per <- function(per) {
-  if (is.character(per)) {
-    key <- tolower(gsub("[ ,_]", "", per[1L]))
-    key <- sub("^per", "", key)
-    if (!key %in% names(.rate_per_names)) {
-      stop(
-        sprintf(
-          "`per` shorthand not recognised: %s (use one of %s, or a number)",
-          per[1L],
-          paste(names(.rate_per_names)[1:4], collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    }
-    return(unname(.rate_per_names[[key]]))
-  }
-  per <- .rmbl_num(per, "per")[1L]
-  if (is.na(per) || !is.finite(per) || per <= 0) {
-    stop("`per` must be a single positive, finite number", call. = FALSE)
-  }
-  per
-}
-
-#' Writes the label for a rate's denominator.
-#'
-#' \dQuote{per 100,000}, not \dQuote{per 1e+05} -- the label goes into published
-#' tables, and 1e+05 in a table is a defect.
-#' @param per The multiplier.
-#' @return One string such as `"per 100,000"`.
-#' @noRd
-.rate_per_label <- function(per) {
-  paste0("per ", formatC(per, format = "d", big.mark = ","))
-}
-
 #' Event rates per unit of population
 #'
 #' @description
@@ -193,58 +140,11 @@ rtcalc.data.frame <- function(
 ) {
   count <- .yoy_col(substitute(count), count, x, "count")
   pop <- .yoy_col(substitute(pop), pop, x, "population")
-  if (!is.null(by)) {
-    by <- as.character(by)
-    miss <- setdiff(by, names(x))
-    if (length(miss)) {
-      stop(
-        sprintf(
-          "rtcalc: `by` column not found: %s",
-          paste(miss, collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    }
-  }
+  by <- .rate_by_check(x, by, "rtcalc")
   per <- .rate_per(per)
-  if (!is.numeric(x[[count]])) {
-    stop(
-      sprintf(
-        "rtcalc: `%s` must be numeric, not %s",
-        count,
-        class(x[[count]])[1L]
-      ),
-      call. = FALSE
-    )
-  }
-  if (!is.numeric(x[[pop]])) {
-    stop(
-      sprintf("rtcalc: `%s` must be numeric, not %s", pop, class(x[[pop]])[1L]),
-      call. = FALSE
-    )
-  }
-  if (is.null(by)) {
-    agg <- data.frame(
-      count = sum(x[[count]], na.rm = TRUE),
-      population = sum(x[[pop]], na.rm = TRUE),
-      stringsAsFactors = FALSE
-    )
-  } else {
-    # aggregate() drops grouping levels with no rows, which is the
-    # right behaviour here: a group with no rows has no exposure
-    # either, and inventing a zero denominator would invent an
-    # infinite rate.
-    agg <- stats::aggregate(
-      x[c(count, pop)],
-      by = x[by],
-      FUN = sum,
-      na.rm = TRUE
-    )
-    names(agg)[seq_along(by)] <- by
-    names(agg)[match(c(count, pop), names(agg))] <-
-      c("count", "population")
-  }
-  out <- .rate_compute(agg, per, conflvl, mincnt)
+  .rate_num_check(x, count, "rtcalc")
+  .rate_num_check(x, pop, "rtcalc")
+  out <- .rate_compute(.rate_agg(x, count, pop, by), per, conflvl, mincnt)
   structure(
     out,
     class = c("rmbl_rate", "data.frame"),
@@ -303,74 +203,43 @@ rtcalc.default <- function(
   )
 }
 
-#' Computes rates per `per` with exact Poisson intervals from aggregated counts
-#' and populations.
-#' @param agg A data frame with `count`, `population` and the grouping columns.
-#' @param per The multiplier.
-#' @param conf_level The confidence level.
-#' @param min_count Counts at or below this are flagged.
-#' @return A data frame with the grouping columns, `count`, `population`,
-#'   `rate`, `lower`, `upper` and `flag`.
-#' @noRd
-.rate_compute <- function(agg, per, conf_level, min_count) {
-  conf_level <- .rmbl_conf_level(conf_level)
-  cnt <- as.numeric(agg$count)
-  pop <- as.numeric(agg$population)
-  if (any(cnt < 0, na.rm = TRUE)) {
-    stop(.rmbl_fn(), "`count` must be non-negative", call. = FALSE)
-  }
-  nonint <- stats::na.omit(cnt)
-  if (length(nonint) && any(abs(nonint - round(nonint)) > 1e-8)) {
-    stop(
-      paste0(
-        "`count` must be whole numbers: a Poisson interval on a ",
-        "fractional count is not defined. Use a ratio instead."
-      ),
-      call. = FALSE
-    )
-  }
-  if (any(pop <= 0, na.rm = TRUE)) {
-    stop(
-      .rmbl_fn(),
-      "`pop` must be positive: a rate needs exposure",
-      call. = FALSE
-    )
-  }
-  a <- 1 - conf_level
-  # the exact Poisson interval through the gamma relation, matching
-  # stats::poisson.test, so zero counts give a lower limit of zero
-  lo <- ifelse(cnt == 0, 0, stats::qgamma(a / 2, shape = cnt))
-  hi <- stats::qgamma(1 - a / 2, shape = cnt + 1)
-  flag <- rep(NA_character_, length(cnt))
-  small <- !is.na(cnt) & cnt <= min_count
-  if (min_count > 0) {
-    flag[small] <- sprintf("count at or below %g", min_count)
-  }
-  keep <- setdiff(names(agg), c("count", "population"))
-  out <- agg[keep]
-  out$count <- cnt
-  out$population <- pop
-  out$rate <- per * cnt / pop
-  out$lower <- per * lo / pop
-  out$upper <- per * hi / pop
-  out$flag <- flag
-  rownames(out) <- NULL
-  out
-}
-
 #' @export
-print.rmbl_rate <- function(x, ...) {
-  meta <- attr(x, "rate")
-  .rmbl_print_table(
-    sprintf(
-      "Rate %s, %g%% exact Poisson interval",
-      meta$perlbl,
-      100 * meta$conflvl
+format.rmbl_rate <- function(x, digits = 4L, ...) {
+  title <- "Rate"
+  need <- c("count", "rate", "lower", "upper")
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  m <- attr(x, "rate")
+  fc <- .rmbl_flag_codes(.rmbl_ci_cols(.rmbl_plain(x), m$conflvl))
+  .rmbl_res_block(
+    paste("Rate", m$perlbl %||% ""),
+    facts = list(
+      Count = m$count,
+      Population = m$population,
+      Groups = if (length(m$by)) toString(m$by),
+      Rows = nrow(x),
+      Interval = if (length(m$conflvl)) {
+        paste(.rmbl_lvl(m$conflvl), "exact Poisson")
+      },
+      `Small-count flag` = if (isTRUE(m$mincnt > 0)) {
+        paste("counts at or below", m$mincnt)
+      }
     ),
-    x,
-    ...
+    tables = fc$df,
+    reading = .rate_reading(x, m),
+    notes = c(
+      fc$notes,
+      paste(
+        "Each rate is the count over the population times the base; the",
+        "exact Poisson interval stays honest for small counts, where a",
+        "normal one does not."
+      )
+    ),
+    digits = digits,
+    maxrows = 40L
   )
-  invisible(x)
 }
 
 #' Share of a total, in percent
@@ -409,8 +278,8 @@ print.rmbl_rate <- function(x, ...) {
 #'
 #' @param x A data frame, or a numeric vector of counts.
 #' @param ... Passed to methods.
-#' @param count Column of counts, unquoted or as a string: non-negative
-#'   whole numbers.
+#' @param count Column of counts (required), unquoted or as a string:
+#'   non-negative whole numbers.
 #' @param by Character vector of grouping columns. Shares are computed
 #'   over the groups, so they sum to 100 unless \code{total} says otherwise.
 #' @param total The denominator. \code{NULL} (default) sums \code{count},
@@ -456,86 +325,28 @@ shrs <- function(x, ...) UseMethod("shrs")
 #' @export
 shrs.data.frame <- function(
   x,
-  count,
+  count = NULL,
   by = NULL,
   total = NULL,
   conflvl = 0.95,
   ...
 ) {
-  if (missing(count)) {
+  # a bare column name is not evaluated here: substitute() is NULL only when
+  # `count` was not given
+  if (is.null(substitute(count))) {
     stop("`count` must name the column of counts", call. = FALSE)
   }
   count <- .yoy_col(substitute(count), count, x, "count")
-  if (!is.null(by)) {
-    by <- as.character(by)
-    miss <- setdiff(by, names(x))
-    if (length(miss)) {
-      stop(
-        sprintf(
-          "shrs: `by` column not found: %s",
-          paste(miss, collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    }
-  }
-  if (!is.numeric(x[[count]])) {
-    stop(
-      sprintf(
-        "shrs: `%s` must be numeric, not %s",
-        count,
-        class(x[[count]])[1L]
-      ),
-      call. = FALSE
-    )
-  }
-  if (is.null(by)) {
-    agg <- data.frame(
-      count = sum(x[[count]], na.rm = TRUE),
-      stringsAsFactors = FALSE
-    )
-  } else {
-    agg <- stats::aggregate(x[count], by = x[by], FUN = sum, na.rm = TRUE)
-    names(agg)[seq_along(by)] <- by
-    names(agg)[match(count, names(agg))] <- "count"
-  }
-  denom <- if (is.null(total)) {
-    sum(agg$count, na.rm = TRUE)
-  } else if (is.character(total) && length(total) == 1L && !is.na(total)) {
-    if (!total %in% names(x)) {
-      stop(sprintf("`total` column not found: %s", total), call. = FALSE)
-    }
-    sum(x[[total]], na.rm = TRUE)
-  } else {
-    .share_total(total, "a column name or ")
-  }
+  by <- .rate_by_check(x, by, "shrs")
+  .rate_num_check(x, count, "shrs")
+  agg <- .share_agg(x, count, by)
+  denom <- .share_denom(x, total, agg)
   out <- .share_compute(agg, denom, conflvl)
   structure(
     out,
     class = c("rmbl_share", "data.frame"),
     share = list(count = count, by = by, total = denom, conflvl = conflvl)
   )
-}
-
-#' Checks the `total` argument of shrs().
-#'
-#' One finite, non-negative number: a data frame or a vector in `total`
-#' (shrs(1e308, stops, by = \code{"division"})) failed in as.numeric()'s words
-#' (hostile battery, final audit of 1.0.0)
-#' @param total The value passed by the user.
-#' @param also Extra text for the error message naming other accepted forms.
-#' @return The total as a double.
-#' @noRd
-.share_total <- function(total, also) {
-  if (
-    !is.numeric(total) || length(total) != 1L || !is.finite(total) || total < 0
-  ) {
-    stop(
-      sprintf("`total` must be NULL, %sone finite non-negative number", also),
-      call. = FALSE
-    )
-  }
-  as.numeric(total)
 }
 
 #' @rdname shrs
@@ -559,66 +370,6 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
     .share_compute(agg, denom, conflvl),
     class = c("rmbl_share", "data.frame"),
     share = list(count = "count", by = NULL, total = denom, conflvl = conflvl)
-  )
-}
-
-#' Computes each count's share of a total, in percent, with Wilson intervals.
-#' @param agg A data frame with `count` and the grouping columns.
-#' @param denom The total the counts are shares of.
-#' @param conf_level The confidence level.
-#' @return A data frame with the grouping columns, `count`, `total`,
-#'   `share`, `lower` and `upper`.
-#' @noRd
-.share_compute <- function(agg, denom, conf_level) {
-  conf_level <- .rmbl_conf_level(conf_level)
-  cnt <- as.numeric(agg$count)
-  if (any(cnt < 0, na.rm = TRUE)) {
-    stop(.rmbl_fn(), "`count` must be non-negative", call. = FALSE)
-  }
-  if (is.na(denom) || denom <= 0) {
-    stop("the total must be positive", call. = FALSE)
-  }
-  if (any(cnt > denom, na.rm = TRUE)) {
-    stop(
-      paste0(
-        "a count is larger than the total, so these are not ",
-        "shares of it. Did you mean rtcalc()?"
-      ),
-      call. = FALSE
-    )
-  }
-  ci <- .share_wilson(cnt, denom, conf_level)
-  keep <- setdiff(names(agg), "count")
-  out <- agg[keep]
-  out$count <- cnt
-  out$total <- denom
-  out$share <- 100 * cnt / denom
-  out$lower <- ci$lower
-  out$upper <- ci$upper
-  rownames(out) <- NULL
-  out
-}
-
-#' Computes Wilson's score interval for a share, in percent.
-#'
-#' Wilson's score interval, in percent. Stays inside \[0, 100\] at the
-#' small counts and extreme shares where the normal approximation
-#' reports impossible values.
-#' @param cnt The counts.
-#' @param n The total.
-#' @param conf_level The confidence level.
-#' @return A list with `lower` and `upper`.
-#' @noRd
-.share_wilson <- function(cnt, n, conf_level) {
-  conf_level <- .rmbl_conf_level(conf_level)
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
-  p <- cnt / n
-  denom <- 1 + z^2 / n
-  centre <- (p + z^2 / (2 * n)) / denom
-  halfwidth <- (z / denom) * sqrt(p * (1 - p) / n + z^2 / (4 * n^2))
-  list(
-    lower = 100 * pmax(0, centre - halfwidth),
-    upper = 100 * pmin(1, centre + halfwidth)
   )
 }
 
@@ -744,85 +495,24 @@ ratechg.data.frame <- function(
   count <- .yoy_col(substitute(count), count, x, "count")
   pop <- .yoy_col(substitute(pop), pop, x, "population")
   prd <- .yoy_col(substitute(prd), prd, x, "period")
-  if (!is.null(by)) {
-    by <- as.character(by)
-    miss <- setdiff(by, names(x))
-    if (length(miss)) {
-      stop(
-        sprintf(
-          "ratechg: `by` column not found: %s",
-          paste(miss, collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    }
-  }
+  by <- .rate_by_check(x, by, "ratechg")
   per <- .rate_per(per)
   lag <- .rmbl_num(lag, "lag", integer = TRUE)
   if (length(lag) != 1L || is.na(lag) || lag < 1L) {
     stop("ratechg: `lag` must be a positive integer", call. = FALSE)
   }
   conflvl <- .rmbl_conf_level(conflvl)
-  keys <- c(by, prd)
-  agg <- stats::aggregate(
-    x[c(count, pop)],
-    by = x[keys],
-    FUN = sum,
-    na.rm = TRUE
+  pieces <- .rate_change_pieces(x, count, pop, prd, by)
+  .res <- lapply(
+    pieces,
+    .rate_change_group,
+    prd,
+    by,
+    lag,
+    per,
+    conflvl,
+    mincnt
   )
-  names(agg)[seq_along(keys)] <- keys
-  names(agg)[match(c(count, pop), names(agg))] <-
-    c("count", "population")
-  pieces <- if (is.null(by)) {
-    list(agg)
-  } else {
-    split(agg, agg[by], drop = TRUE, sep = "\r")
-  }
-  .res <- lapply(pieces, function(g) {
-    g <- g[order(g[[prd]]), , drop = FALSE]
-    cnt <- as.numeric(g$count)
-    .pop <- as.numeric(g$population)
-    if (any(.pop <= 0, na.rm = TRUE)) {
-      stop(
-        .rmbl_fn(),
-        "`pop` must be positive: a rate needs exposure",
-        call. = FALSE
-      )
-    }
-    p <- g[[prd]]
-    prev_i <- .rate_previous_index(p, lag)
-    prev_cnt <- ifelse(is.na(prev_i), NA_real_, cnt[prev_i])
-    prev_pop <- ifelse(is.na(prev_i), NA_real_, .pop[prev_i])
-    rate_now <- per * cnt / .pop
-    rate_prev <- per * prev_cnt / prev_pop
-    ratio <- rate_now / rate_prev
-    pct <- 100 * (ratio - 1)
-    pct[!is.finite(pct)] <- NA_real_
-    ci <- .rate_ratio_ci(cnt, prev_cnt, .pop, prev_pop, conflvl)
-    flag <- rep(NA_character_, length(cnt))
-    flag[is.na(prev_i)] <- "no comparison period"
-    small <- !is.na(prev_cnt) & prev_cnt <= mincnt
-    if (mincnt > 0) {
-      # flagged, never hidden: the percent change and its interval are still
-      # reported
-      flag[small] <- sprintf("earlier count at or below %g", mincnt)
-    }
-    zero <- !is.na(prev_cnt) & prev_cnt == 0
-    flag[zero] <- "earlier period is zero"
-    out <- g[c(by, prd)]
-    out$count <- cnt
-    out$population <- .pop
-    out$rate <- rate_now
-    out$prerate <- rate_prev
-    out$precnt <- prev_cnt
-    out$prepop <- prev_pop
-    out$rateratio <- ratio
-    out$pctchg <- pct
-    out$pctlo <- ci$lower
-    out$pctup <- ci$upper
-    out$flag <- flag
-    out
-  })
   out <- do.call(rbind, .res)
   rownames(out) <- NULL
   structure(
@@ -842,13 +532,291 @@ ratechg.data.frame <- function(
   )
 }
 
+#' @export
+format.rmbl_rate_change <- function(x, digits = 4L, ...) {
+  title <- "Change in rate"
+  need <- c("rate", "prerate", "pctchg", "pctlo", "pctup")
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  m <- attr(x, "ratechg")
+  sa <- attr(x, "scanadj")
+  keep <- c(
+    m$by, m$period, "count", "population", "rate", "precnt", "prepop",
+    "prerate", "rateratio", "pctchg", "pctlo", "pctup", "flag", "p_value",
+    "padj"
+  )
+  d <- .rmbl_plain(x, c(keep, "significant"))
+  d <- .rmbl_ci_cols(d, NULL, "pctlo", "pctup")
+  names(d)[names(d) == "interval"] <- "pct_interval"
+  names(d)[names(d) == "padj"] <- "adj_p"
+  fc <- .rmbl_flag_codes(d)
+  .rmbl_res_block(
+    paste("Change in rate", m$perlbl %||% ""),
+    facts = list(
+      Count = m$count,
+      Population = m$population,
+      Period = m$period,
+      Groups = if (length(m$by)) toString(m$by),
+      Lag = m$lag,
+      Interval = if (length(m$conflvl)) {
+        paste(.rmbl_lvl(m$conflvl), "exact conditional, on the % change")
+      },
+      Adjustment = if (is.list(sa)) {
+        sprintf("%s over %d tests, alpha %s", sa$method, sa$tests, sa$alpha)
+      }
+    ),
+    tables = fc$df,
+    reading = .rate_chg_reading(x, m),
+    notes = c(
+      fc$notes,
+      paste(
+        "pctchg is the percentage change in the rate from the period `lag`",
+        "before; an interval that includes 0 means the change could be",
+        "chance."
+      )
+    ),
+    digits = digits,
+    maxrows = 40L
+  )
+}
+
+#' @export
+format.rmbl_share <- function(x, digits = 4L, ...) {
+  title <- "Share"
+  need <- c("count", "share", "lower", "upper")
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  m <- attr(x, "share")
+  d <- .rmbl_ci_cols(.rmbl_plain(x), m$conflvl)
+  .rmbl_res_block(
+    "Share",
+    facts = list(
+      Count = m$count,
+      Total = m$total,
+      Groups = if (length(m$by)) toString(m$by),
+      Interval = if (length(m$conflvl)) paste(.rmbl_lvl(m$conflvl), "Wilson")
+    ),
+    tables = d,
+    reading = .rd_groups(
+      .rate_labels(x, m$by),
+      x$share,
+      x$lower,
+      x$upper,
+      "share"
+    ),
+    notes = paste(
+      "Each share is the count as a percentage of the total, with a Wilson",
+      "interval, which stays inside 0 to 100 for small counts."
+    ),
+    digits = digits,
+    maxrows = 40L
+  )
+}
+
+.rate_per_names <- c(
+  "1k" = 1e3,
+  "10k" = 1e4,
+  "100k" = 1e5,
+  "1m" = 1e6,
+  "1000" = 1e3,
+  "10000" = 1e4,
+  "100000" = 1e5,
+  "1000000" = 1e6
+)
+
+#' Reads the `per` argument as a positive number.
+#'
+#' `per` accepts a number or one of the shorthands, because \dQuote{per 100k} is
+#' how the denominator is spoken and mistyping 1e5 as 1e6 is a silent
+#' factor of ten in a published number.
+#' @param per A number or a shorthand such as `"100k"`.
+#' @return The multiplier as a double.
+#' @noRd
+.rate_per <- function(per) {
+  # c(1e5, 1e3) used the first and said nothing of the second
+  if (length(per) != 1L) {
+    stop(
+      .rmbl_fn(),
+      "`per` must be a single positive, finite number or one shorthand",
+      call. = FALSE
+    )
+  }
+  if (is.character(per)) {
+    key <- tolower(gsub("[ ,_]", "", per[1L]))
+    key <- sub("^per", "", key)
+    if (!key %in% names(.rate_per_names)) {
+      stop(
+        sprintf(
+          "`per` shorthand not recognised: %s (use one of %s, or a number)",
+          per[1L],
+          toString(names(.rate_per_names)[1:4])
+        ),
+        call. = FALSE
+      )
+    }
+    return(unname(.rate_per_names[[key]]))
+  }
+  per <- .rmbl_num(per, "per")[1L]
+  if (is.na(per) || !is.finite(per) || per <= 0) {
+    stop("`per` must be a single positive, finite number", call. = FALSE)
+  }
+  per
+}
+
+#' Writes the label for a rate's denominator.
+#'
+#' \dQuote{per 100,000}, not \dQuote{per 1e+05} -- the label goes into published
+#' tables, and 1e+05 in a table is a defect.
+#' @param per The multiplier.
+#' @return One string such as `"per 100,000"`.
+#' @noRd
+.rate_per_label <- function(per) {
+  paste0("per ", formatC(per, format = "d", big.mark = ","))
+}
+
+#' Computes rates per `per` with exact Poisson intervals from aggregated counts
+#' and populations.
+#' @param agg A data frame with `count`, `population` and the grouping columns.
+#' @param per The multiplier.
+#' @param conf_level The confidence level of the exact Poisson intervals.
+#' @param min_count Counts at or below this are flagged.
+#' @return A data frame with the grouping columns, `count`, `population`,
+#'   `rate`, `lower`, `upper` and `flag`.
+#' @noRd
+.rate_compute <- function(agg, per, conf_level, min_count) {
+  conf_level <- .rmbl_conf_level(conf_level)
+  cnt <- as.numeric(agg$count)
+  pop <- as.numeric(agg$population)
+  if (any(cnt < 0, na.rm = TRUE)) {
+    stop(.rmbl_fn(), "`count` must be non-negative", call. = FALSE)
+  }
+  nonint <- stats::na.omit(cnt)
+  if (length(nonint) && any(abs(nonint - round(nonint)) > 1e-8)) {
+    stop(
+      "`count` must be whole numbers: a Poisson interval on a ",
+      "fractional count is not defined. Use a ratio instead.",
+      call. = FALSE
+    )
+  }
+  if (any(pop <= 0, na.rm = TRUE)) {
+    stop(
+      .rmbl_fn(),
+      "`pop` must be positive: a rate needs exposure",
+      call. = FALSE
+    )
+  }
+  a <- 1 - conf_level
+  # the exact Poisson interval through the gamma relation, matching
+  # stats::poisson.test, so zero counts give a lower limit of zero
+  lo <- ifelse(cnt == 0, 0, stats::qgamma(a / 2, shape = cnt))
+  hi <- stats::qgamma(1 - a / 2, shape = cnt + 1)
+  flag <- rep(NA_character_, length(cnt))
+  small <- !is.na(cnt) & cnt <= min_count
+  if (min_count > 0) {
+    flag[small] <- sprintf("count at or below %g", min_count)
+  }
+  keep <- setdiff(names(agg), c("count", "population"))
+  out <- agg[keep]
+  out$count <- cnt
+  out$population <- pop
+  out$rate <- per * cnt / pop
+  out$lower <- per * lo / pop
+  out$upper <- per * hi / pop
+  out$flag <- flag
+  rownames(out) <- NULL
+  out
+}
+
+#' Checks the `total` argument of shrs().
+#'
+#' One finite, non-negative number: a data frame or a vector in `total`
+#' (shrs(1e308, stops, by = \code{"division"})) failed in as.numeric()'s words
+#' (hostile battery, final audit of 1.0.0)
+#' @param total The value passed by the user.
+#' @param also Extra text for the error message naming other accepted forms.
+#' @return The total as a double.
+#' @noRd
+.share_total <- function(total, also) {
+  if (
+    !is.numeric(total) || length(total) != 1L || !is.finite(total) || total < 0
+  ) {
+    stop(
+      sprintf("`total` must be NULL, %sone finite non-negative number", also),
+      call. = FALSE
+    )
+  }
+  as.numeric(total)
+}
+
+#' Computes each count's share of a total, in percent, with Wilson intervals.
+#' @param agg A data frame with `count` and the grouping columns.
+#' @param denom The total the counts are shares of.
+#' @param conf_level The confidence level of the shares' Wilson intervals.
+#' @return A data frame with the grouping columns, `count`, `total`,
+#'   `share`, `lower` and `upper`.
+#' @noRd
+.share_compute <- function(agg, denom, conf_level) {
+  conf_level <- .rmbl_conf_level(conf_level)
+  cnt <- as.numeric(agg$count)
+  if (any(cnt < 0, na.rm = TRUE)) {
+    stop(.rmbl_fn(), "`count` must be non-negative", call. = FALSE)
+  }
+  if (is.na(denom) || denom <= 0) {
+    stop("the total must be positive", call. = FALSE)
+  }
+  if (any(cnt > denom, na.rm = TRUE)) {
+    stop(
+      "a count is larger than the total, so these are not ",
+      "shares of it. Did you mean rtcalc()?",
+      call. = FALSE
+    )
+  }
+  ci <- .share_wilson(cnt, denom, conf_level)
+  keep <- setdiff(names(agg), "count")
+  out <- agg[keep]
+  out$count <- cnt
+  out$total <- denom
+  out$share <- 100 * cnt / denom
+  out$lower <- ci$lower
+  out$upper <- ci$upper
+  rownames(out) <- NULL
+  out
+}
+
+#' Computes Wilson's score interval for a share, in percent.
+#'
+#' Wilson's score interval, in percent. Stays inside \[0, 100\] at the
+#' small counts and extreme shares where the normal approximation
+#' reports impossible values.
+#' @param cnt The counts.
+#' @param n The total.
+#' @param conf_level The confidence level of the Wilson score interval.
+#' @return A list with `lower` and `upper`.
+#' @noRd
+.share_wilson <- function(cnt, n, conf_level) {
+  conf_level <- .rmbl_conf_level(conf_level)
+  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  p <- cnt / n
+  denom <- 1 + z^2 / n
+  centre <- (p + z^2 / (2 * n)) / denom
+  halfwidth <- (z / denom) * sqrt(p * (1 - p) / n + z^2 / (4 * n^2))
+  list(
+    lower = 100 * pmax(0, centre - halfwidth),
+    upper = 100 * pmin(1, centre + halfwidth)
+  )
+}
+
 #' Finds, for each row, the row whose period is `lag` steps earlier.
 #'
 #' Match on the PERIOD, not on position: the comparison row is the one
 #' whose period is `lag` steps earlier on the observed grid, and is NA
 #' when that period is absent. Position would compare 2023 against 2020
 #' whenever 2021 were missing and say nothing about it.
-#' @param p The periods.
+#' @param p The period of each row, numeric or labels in their order.
 #' @param lag The number of steps back.
 #' @return An integer index vector, NA where that period is absent.
 #' @noRd
@@ -879,11 +847,11 @@ ratechg.data.frame <- function(
 #' p = RR * ta / (RR * ta + tb); inverting a qbeta interval for p gives
 #' the interval for RR. With ta == tb this is the same construction
 #' yoy() uses for counts.
-#' @param a The current counts.
+#' @param a The current counts, the rate ratio's numerator events.
 #' @param b The comparison counts.
 #' @param ta The current exposures.
 #' @param tb The comparison exposures.
-#' @param conf_level The confidence level.
+#' @param conf_level The confidence level of the exact conditional interval.
 #' @return A list with `lower` and `upper`, as percent changes.
 #' @noRd
 .rate_ratio_ci <- function(a, b, ta, tb, conf_level) {
@@ -912,33 +880,210 @@ ratechg.data.frame <- function(
   list(lower = lower, upper = upper)
 }
 
-#' @export
-print.rmbl_rate_change <- function(x, ...) {
-  meta <- attr(x, "ratechg")
-  .rmbl_print_table(
-    sprintf(
-      "Change in rate %s, lag %d, %g%% exact conditional interval",
-      meta$perlbl,
-      meta$lag,
-      100 * meta$conflvl
-    ),
-    x,
-    ...
-  )
-  invisible(x)
+#' The `by` columns of a rate or share, checked against the data.
+#' @param x The data frame the `by` columns must be in.
+#' @param by The grouping columns, or NULL.
+#' @param fn The calling function's name, at the start of the error.
+#' @return `by` as character, or NULL.
+#' @noRd
+.rate_by_check <- function(x, by, fn) {
+  if (!is.null(by)) {
+    by <- as.character(by)
+    miss <- setdiff(by, names(x))
+    if (length(miss)) {
+      stop(
+        sprintf("%s: `by` column not found: %s", fn, toString(miss)),
+        call. = FALSE
+      )
+    }
+  }
+  by
 }
 
-#' @export
-print.rmbl_share <- function(x, ...) {
-  meta <- attr(x, "share")
-  .rmbl_print_table(
-    sprintf(
-      "Share of %s, %g%% Wilson interval",
-      format(meta$total, big.mark = ","),
-      100 * meta$conflvl
-    ),
-    x,
-    ...
+#' Stops unless a column of the data is numeric.
+#' @param x The data frame holding the column `col`.
+#' @param col The name of the column that must be numeric.
+#' @param fn The calling function's name, at the start of the type error.
+#' @return Nothing useful.
+#' @noRd
+.rate_num_check <- function(x, col, fn) {
+  if (!is.numeric(x[[col]])) {
+    stop(
+      sprintf(
+        "%s: `%s` must be numeric, not %s",
+        fn,
+        col,
+        class(x[[col]])[1L]
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' The counts and populations of rtcalc(), summed by group.
+#' @param x The data frame whose counts and populations are summed.
+#' @param count,pop The columns.
+#' @param by The grouping columns, or NULL.
+#' @return A data frame: the groups, `count`, `population`.
+#' @noRd
+.rate_agg <- function(x, count, pop, by) {
+  if (is.null(by)) {
+    return(data.frame(
+      count = sum(x[[count]], na.rm = TRUE),
+      population = sum(x[[pop]], na.rm = TRUE),
+      stringsAsFactors = FALSE
+    ))
+  }
+  # aggregate() drops grouping levels with no rows, which is the
+  # right behaviour here: a group with no rows has no exposure
+  # either, and inventing a zero denominator would invent an
+  # infinite rate.
+  agg <- stats::aggregate(
+    x[c(count, pop)],
+    by = x[by],
+    FUN = sum,
+    na.rm = TRUE
   )
-  invisible(x)
+  names(agg)[seq_along(by)] <- by
+  names(agg)[match(c(count, pop), names(agg))] <-
+    c("count", "population")
+  agg
+}
+
+#' The counts of shrs(), summed by group.
+#' @param x The data frame whose counts are summed by group.
+#' @param count The column.
+#' @param by The grouping columns, or NULL.
+#' @return A data frame: the groups and `count`.
+#' @noRd
+.share_agg <- function(x, count, by) {
+  if (is.null(by)) {
+    return(data.frame(
+      count = sum(x[[count]], na.rm = TRUE),
+      stringsAsFactors = FALSE
+    ))
+  }
+  agg <- stats::aggregate(x[count], by = x[by], FUN = sum, na.rm = TRUE)
+  names(agg)[seq_along(by)] <- by
+  names(agg)[match(count, names(agg))] <- "count"
+  agg
+}
+
+#' The denominator of shrs(): the counts' sum, a column's sum or a number.
+#' @param x The data frame a `total` column name is summed in.
+#' @param total As for shrs().
+#' @param agg The summed counts.
+#' @return One number.
+#' @noRd
+.share_denom <- function(x, total, agg) {
+  if (is.null(total)) {
+    sum(agg$count, na.rm = TRUE)
+  } else if (is.character(total) && length(total) == 1L && !is.na(total)) {
+    if (!total %in% names(x)) {
+      stop(sprintf("`total` column not found: %s", total), call. = FALSE)
+    }
+    sum(x[[total]], na.rm = TRUE)
+  } else {
+    .share_total(total, "a column name or ")
+  }
+}
+
+#' The row order of ratechg() periods: text periods (fiscal years,
+#' quarters, months) in time order, read the way yoy() reads them.
+#' @param p The periods to order.
+#' @return An integer order.
+#' @noRd
+.rate_prd_order <- function(p) {
+  if (is.character(p)) {
+    p <- .yoy_prd_read(p, quiet = TRUE)$p
+  }
+  order(p)
+}
+
+#' The changes of one group of ratechg(), period by period.
+#' @param g The group's summed rows.
+#' @param prd,by,lag,per,conflvl,mincnt As for ratechg(), checked.
+#' @return A data frame.
+#' @noRd
+.rate_change_group <- function(g, prd, by, lag, per, conflvl, mincnt) {
+  g <- g[.rate_prd_order(g[[prd]]), , drop = FALSE]
+  cnt <- as.numeric(g$count)
+  .pop <- as.numeric(g$population)
+  if (any(.pop <= 0, na.rm = TRUE)) {
+    stop(
+      .rmbl_fn(),
+      "`pop` must be positive: a rate needs exposure",
+      call. = FALSE
+    )
+  }
+  p <- g[[prd]]
+  prev_i <- .rate_previous_index(p, lag)
+  prev_cnt <- ifelse(is.na(prev_i), NA_real_, cnt[prev_i])
+  prev_pop <- ifelse(is.na(prev_i), NA_real_, .pop[prev_i])
+  rate_now <- per * cnt / .pop
+  rate_prev <- per * prev_cnt / prev_pop
+  ratio <- rate_now / rate_prev
+  pct <- 100 * (ratio - 1)
+  pct[!is.finite(pct)] <- NA_real_
+  ci <- .rate_ratio_ci(cnt, prev_cnt, .pop, prev_pop, conflvl)
+  flag <- .rate_change_flag(prev_i, prev_cnt, mincnt)
+  out <- g[c(by, prd)]
+  out$count <- cnt
+  out$population <- .pop
+  out$rate <- rate_now
+  out$prerate <- rate_prev
+  out$precnt <- prev_cnt
+  out$prepop <- prev_pop
+  out$rateratio <- ratio
+  out$pctchg <- pct
+  out$pctlo <- ci$lower
+  out$pctup <- ci$upper
+  out$flag <- flag
+  out
+}
+
+#' The flags of ratechg()'s rows: no comparison period, a small or a zero
+#' earlier count.
+#' @param prev_i The row of each row's comparison period, NA when none.
+#' @param prev_cnt The earlier counts.
+#' @param mincnt As for ratechg().
+#' @return A character vector, NA where nothing is flagged.
+#' @noRd
+.rate_change_flag <- function(prev_i, prev_cnt, mincnt) {
+  flag <- rep(NA_character_, length(prev_cnt))
+  flag[is.na(prev_i)] <- "no comparison period"
+  small <- !is.na(prev_cnt) & prev_cnt <= mincnt
+  if (mincnt > 0) {
+    # flagged, never hidden: the percent change and its interval are still
+    # reported
+    flag[small] <- sprintf("earlier count at or below %g", mincnt)
+  }
+  zero <- !is.na(prev_cnt) & prev_cnt == 0
+  flag[zero] <- "earlier period is zero"
+  flag
+}
+
+#' ratechg()'s counts and populations summed by group and period, split by
+#' group.
+#' @param x The data frame summed by group and period for ratechg().
+#' @param count,pop,prd,by As for ratechg(), checked.
+#' @return A list of data frames, one per group.
+#' @noRd
+.rate_change_pieces <- function(x, count, pop, prd, by) {
+  keys <- c(by, prd)
+  agg <- stats::aggregate(
+    x[c(count, pop)],
+    by = x[keys],
+    FUN = sum,
+    na.rm = TRUE
+  )
+  names(agg)[seq_along(keys)] <- keys
+  names(agg)[match(c(count, pop), names(agg))] <-
+    c("count", "population")
+  if (is.null(by)) {
+    list(agg)
+  } else {
+    split(agg, agg[by], drop = TRUE, sep = "\r")
+  }
 }

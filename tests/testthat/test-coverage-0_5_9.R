@@ -27,7 +27,8 @@ test_that("rptanl names the columns added and removed against the prior", {
     year = rep(2019:2021, each = 2),
     table = "a",
     group = rep(c("x", "y"), 3),
-    individuals = c(10, 20, 12, 22, 15, 25)
+    individuals = c(10, 20, 12, 22, 15, 25),
+    stringsAsFactors = FALSE
   )
   a <- anltab(
     d,
@@ -43,7 +44,8 @@ test_that("rptanl names the columns added and removed against the prior", {
       statistic = 0.1,
       p_value = 0.9,
       psi = 0.01,
-      drifted = FALSE
+      drifted = FALSE,
+      stringsAsFactors = FALSE
     ),
     added = c("new_col", "other"),
     removed = "old_col"
@@ -101,7 +103,7 @@ test_that("vrfrcdmnf reports a signature that does not verify", {
   writeLines(sub(sig, flipped, txt, fixed = TRUE), p)
   v <- vrfrcdmnf(p, x, y)
   expect_false(v$ok)
-  expect_true(any(grepl("signature does not verify", v$reasons)))
+  expect_true(any(grepl("signature does not verify", v$reasons, fixed = TRUE)))
 })
 
 test_that(
@@ -121,21 +123,23 @@ test_that(
       stdout = TRUE,
       stderr = FALSE
     )
-    expect_equal(out, "answer")
+    expect_identical(out, "answer")
     # and in-process, through the connection seam
     tc <- textConnection("  typed  ")
     on.exit(close(tc), add = TRUE)
     local_mocked_bindings(.bl_interactive = function() FALSE)
-    expect_equal(.bl_readline("p> ", con = tc), "typed")
+    expect_identical(.bl_readline("p> ", con = tc), "typed")
     # at a terminal the prompt goes to stderr, so a piped stdout stays clean
     tc2 <- textConnection("  at a tty  ")
     on.exit(close(tc2), add = TRUE)
     local_mocked_bindings(.bl_stdin_tty = function() TRUE)
     err <- utils::capture.output(
-      got <- .bl_readline("key> ", con = tc2),
+      {
+        got <- .bl_readline("key> ", con = tc2)
+      },
       type = "message"
     )
-    expect_equal(got, "at a tty")
+    expect_identical(got, "at a tty")
     expect_identical(err, "key> ")
     # no installed Rd database: the man/ directory of a source tree
     pkg <- tempfile("pkg")
@@ -188,19 +192,20 @@ test_that(
       df$e <- list(new.env(), new.env())
       df
     })
-    out <- character(0)
+    got <- new.env()
+    got$out <- character(0)
     dest <- tempfile(fileext = ".csv")
     rc <- .bl_cli_data(c("pull", "tbl"), function(f) dest, function(s) {
-      out <<- c(out, s)
+      got$out <- c(got$out, s)
     })
-    expect_equal(rc, 1L)
-    expect_match(paste(out, collapse = ""), "cannot write")
+    expect_identical(rc, 1L)
+    expect_match(paste(got$out, collapse = ""), "cannot write")
   }
 )
 
 test_that("hilltlidx: a zeta that underflows scores as infinitely unlikely", {
   r <- hilltlidx(c(1e300, 2e300, 3e300, 4e300), xmin = 1e300)
-  expect_true(is.list(r))
+  expect_type(r, "list")
   expect_true(is.na(r$alpha) || is.finite(r$alpha))
 })
 
@@ -214,7 +219,7 @@ test_that(
     times <- sort(runif(60, 0, 100))
     local_mocked_bindings(.rmbl_hk_cdf = function(...) stop("no cdf"))
     f <- chwkfit(times, 100, kernel = "weibull", meth = "inar")
-    expect_true(is.list(f))
+    expect_type(f, "list")
   }
 )
 
@@ -230,7 +235,7 @@ test_that("drbggen reseeds when the generator comes from another process", {
   e$pid <- -1L
   y <- drbggen(e, 16)
   expect_false(identical(x, y)) # reseeded from the OS first
-  expect_equal(e$pid, Sys.getpid())
+  expect_identical(e$pid, Sys.getpid())
 })
 
 test_that("drftks and drftpsi refuse a sample that is all missing", {
@@ -271,10 +276,11 @@ test_that(
     standalone <- sha256file
     env <- new.env(parent = baseenv())
     env$.rmbl_sha256_hex <- .rmbl_sha256_hex
+    env$.rmbl_sha256_path <- .rmbl_sha256_path
     environment(standalone) <- env
-    expect_equal(standalone(f), want)
+    expect_identical(standalone(f), want)
     local_mocked_bindings(.rmbl_has_stringi = function() FALSE)
-    expect_equal(toascii("Prof. Ángela"), "Prof. Angela")
+    expect_identical(toascii("Prof. Ángela"), "Prof. Angela")
   }
 )
 
@@ -348,7 +354,8 @@ test_that("siufprs parses the report its fetch saved", {
     dest
   })
   r <- siufprs(648)
-  expect_true(is.character(r) && length(r) > 1)
+  expect_type(r, "character")
+  expect_gt(length(r), 1)
 })
 
 test_that(".rmbl_needs_cols strips extra attributes before the plain print", {
@@ -357,7 +364,9 @@ test_that(".rmbl_needs_cols strips extra attributes before the plain print", {
     class = c("rmbl_zzz", "data.frame"),
     meta = "kept?"
   )
-  out <- utils::capture.output(res <- .rmbl_needs_cols(x, c("a", "b")))
+  out <- utils::capture.output({
+    res <- .rmbl_needs_cols(x, c("a", "b"))
+  })
   expect_true(res)
   expect_true(any(grepl("^1", trimws(out))))
 })
@@ -436,7 +445,8 @@ test_that(
     ca <- certprs(f$ocsp_ca)
     leaf$serial <- paste0("ff", substr(leaf$serial, 3, nchar(leaf$serial)))
     cid <- .rmbl_ocsp_certid(leaf, ca)
-    expect_true(is.raw(cid) && length(cid) > 40)
+    expect_type(cid, "raw")
+    expect_gt(length(cid), 40)
     expect_true(any(cid == as.raw(0xff)))
   }
 )
@@ -516,7 +526,7 @@ test_that(
 )
 
 test_that(".rmbl_fips_prehash: NA means none", {
-  expect_equal(.rmbl_fips_prehash(NA), "none")
+  expect_identical(.rmbl_fips_prehash(NA), "none")
 })
 
 test_that("cnttrnd refuses an infinite x", {
@@ -535,11 +545,12 @@ test_that(
     seg <- data.frame(
       year = rep(2019:2021, each = 2),
       gender = rep(c("Female", "Male"), 3),
-      n = c(31, 402, 28, 377, 12, 190)
+      n = c(31, 402, 28, 377, 12, 190),
+      stringsAsFactors = FALSE
     )
     g <- yoy(seg, value = "n", prd = "year", by = "gender", minbase = 0)
     out <- utils::capture.output(print(g))
-    expect_true(any(grepl("Female", out)))
+    expect_true(any(grepl("Female", out, fixed = TRUE)))
     f <- tempfile(fileext = ".pdf")
     on.exit(unlink(f), add = TRUE)
     long <- data.frame(
@@ -548,7 +559,7 @@ test_that(
     )
     yl <- yoy(long, value = "n", prd = "year")
     expect_silent(yoypdf(yl, f, title = "Up then down"))
-    expect_true(file.size(f) > 1000)
+    expect_gt(file.size(f), 1000)
   }
 )
 
@@ -559,7 +570,7 @@ test_that(
   ),
   {
     fn2 <- structure(function() 1, class = c("foo", "bar"))
-    expect_equal(as.character(tojs(fn2, force = TRUE)), "{}")
+    expect_identical(as.character(tojs(fn2, force = TRUE)), "{}")
     expect_error(
       tojs(structure(function() 1, class = c("foo", "bar"))),
       "No method"
@@ -567,7 +578,7 @@ test_that(
     s <- structure(1, class = c("scalar", "mycls"))
     expect_error(tojs(s), "No method")
     d <- tojs(structure(5, class = "difftime", units = "secs"), force = TRUE)
-    expect_equal(as.character(d), "[5]")
+    expect_identical(as.character(d), "[5]")
     z <- tojs(c(1 + 2i, NA), complex = "list")
     expect_match(as.character(z), "real")
     df <- data.frame(a = 1:2)
@@ -575,7 +586,7 @@ test_that(
     j <- tojs(df)
     expect_match(as.character(j), "\"b\"")
     cols <- tojs(
-      data.frame(a = 1:2, b = c("x", "y")),
+      data.frame(a = 1:2, b = c("x", "y"), stringsAsFactors = FALSE),
       dataframe = "columns",
       auto_unbox = TRUE
     )
@@ -584,12 +595,13 @@ test_that(
       .rmbl_json_pack(compiler::compile(quote(1 + 1))),
       "No encoding has been defined"
     )
-    expect_equal(as.character(tojs(new.env(), force = TRUE)), "{}")
+    expect_identical(as.character(tojs(new.env(), force = TRUE)), "{}")
     expect_error(tojs(new.env()), "No method")
   }
 )
 
-o_captured <- NULL
+captured <- new.env()
+captured$o <- NULL
 test_that(
   paste0(
     "json: the encoder's option object, captured for the direct-call ",
@@ -597,11 +609,11 @@ test_that(
   ),
   {
     local_mocked_bindings(.rmbl_json_as = function(x, o, ...) {
-      o_captured <<- o
+      captured$o <- o
       "null"
     })
     tojs(1, complex = "list")
-    expect_true(is.list(o_captured))
+    expect_type(captured$o, "list")
   }
 )
 
@@ -611,7 +623,7 @@ test_that(
     "one-dimensional array; unequal record columns"
   ),
   {
-    o <- o_captured
+    o <- captured$o
     z <- .rmbl_json_as_cplx(
       c(1 + 2i, NA),
       o,
@@ -632,10 +644,12 @@ test_that(
       o$indent,
       FALSE
     )
-    expect_equal(gsub("\\s", "", a), "[1,2,3]")
+    expect_identical(gsub("\\s", "", a), "[1,2,3]")
     r <- tryCatch(fromjs('[{"a":{"x":1}},{"b":2}]'), error = function(e) {
       conditionMessage(e)
     })
-    expect_true(is.data.frame(r) || grepl("not of equal length", r))
+    expect_true(
+      is.data.frame(r) || grepl("not of equal length", r, fixed = TRUE)
+    )
   }
 )

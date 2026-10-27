@@ -94,8 +94,8 @@ test_that(
     s3 <- s
     s3$signature <- character(0)
     expect_false(fipsvrfmu(k, mu, s3))
-    expect_null(rmoriebricklayer:::.rmbl_hex_or_null(c("00", "11")))
-    expect_null(rmoriebricklayer:::.rmbl_hex_or_null(NULL))
+    expect_null(.rmbl_hex_or_null(c("00", "11")))
+    expect_null(.rmbl_hex_or_null(NULL))
   }
 )
 
@@ -138,7 +138,7 @@ test_that(
       "Le nom d'un agent impliqué n'est pas divulgué. AI no 3 A ",
       "participé\nAI no 1\nAgents témoins\n"
     )
-    expect_equal(as.numeric(siuso(fr2)$count), 3)
+    expect_identical(as.numeric(siuso(fr2)$count), 3)
   }
 )
 
@@ -172,11 +172,11 @@ test_that(
     st <- function(r) r$status
     r <- vrfpol("pm25", expomean = 0, expoprev = 1)
     expect_identical(st(r), "ok")
-    expect_equal(r$pipeline$paf, 0)
-    expect_equal(r$pipeline$burden$attrcases, 0)
+    expect_identical(r$pipeline$paf, 0)
+    expect_identical(r$pipeline$burden$attrcases, 0)
     r2 <- vrfpol("pm25", expomean = 25, expoprev = 0)
     expect_identical(st(r2), "ok")
-    expect_equal(r2$pipeline$paf, 0)
+    expect_identical(r2$pipeline$paf, 0)
     expect_identical(st(vrfpol("pm25")), "error")
     expect_identical(attr(vrfpol("pm25"), "exitstat"), 2L)
   }
@@ -194,7 +194,8 @@ test_that(
       fsa = c("a", "b"),
       exposure = c(20, 30),
       population = c(40000, 60000),
-      brate = 800
+      brate = 800,
+      stringsAsFactors = FALSE
     )
     expect_error(polbrdarea(tab), "per 100,000")
     expect_error(mortdisp(10, 1e6, 800, 0.01), "per 100,000")
@@ -251,7 +252,7 @@ test_that(
       nsteps = 1
     ))
     expect_s3_class(r, "rmbl_field")
-    expect_equal(r$substeps, 10001L)
+    expect_identical(r$substeps, 10001L)
     r2 <- suppressWarnings(advdif2d(
       small,
       u = 1e4,
@@ -263,7 +264,7 @@ test_that(
       dt = 1,
       nsteps = 1
     ))
-    expect_equal(r2$substeps, 10000L)
+    expect_identical(r2$substeps, 10000L)
     # 201 x 201 cells at 9,999 sub-steps for 100 steps would take hours:
     # refused, naming the work
     big <- matrix(1, 201, 201)
@@ -297,7 +298,8 @@ test_that("M8: every input the pipeline refuses is a report, not a raw error", {
   r <- st(
     expcsv = csv(data.frame(
       exposure = c(20, 30, 40),
-      income = c("low", "mid", "high")
+      income = c("low", "mid", "high"),
+      stringsAsFactors = FALSE
     ))
   )
   expect_identical(r$status, "error")
@@ -334,17 +336,17 @@ test_that(
       .bl_ollama_tags = function(base, timeout = 2) NULL,
       .package = "rmoriebricklayer"
     )
-    expect_null(rmoriebricklayer:::.bl_llm_route())
+    expect_null(.bl_llm_route())
     expect_match(
-      rmoriebricklayer:::.bl_no_route_message(),
+      .bl_no_route_message(),
       "local Ollama: nothing answers at http://127.0.0.1:18099"
     )
     withr::local_envvar(c(GROQ_API_KEY = "gsk-x"))
-    expect_identical(rmoriebricklayer:::.bl_llm_route()$name, "Groq")
+    expect_identical(.bl_llm_route()$name, "Groq")
     withr::local_envvar(c(GROQ_API_KEY = NA))
     # the default address, never configured, is not announced
     withr::local_envvar(c(OLLAMA_HOST = NA))
-    expect_silent(rmoriebricklayer:::.bl_llm_route())
+    expect_silent(.bl_llm_route())
   }
 )
 
@@ -355,26 +357,26 @@ test_that(
   ),
   {
     cf_env2()
-    cfg <- rmoriebricklayer:::.bl_config_path()
+    cfg <- .bl_config_path()
     dir.create(dirname(cfg), recursive = TRUE, showWarnings = FALSE)
     for (bad in c("[]", "\"x\"", "5", "{not json")) {
       writeLines(bad, cfg)
-      expect_error(rmoriebricklayer:::.bl_read_config(), "not a JSON object")
+      expect_error(.bl_read_config(), "not a JSON object")
       expect_error(llmcfg(route = "hosted"), "not valid JSON|not a JSON object")
       expect_identical(readLines(cfg, warn = FALSE), bad)
     }
     unlink(cfg)
-    cred <- rmoriebricklayer:::.bl_credentials_path()
+    cred <- .bl_credentials_path()
     writeLines("{not json", cred)
-    expect_error(rmoriebricklayer:::.bl_read_credentials(), "shared with morie")
+    expect_error(.bl_read_credentials(), "shared with morie")
     expect_error(
-      rmoriebricklayer:::.bl_store_key("sk-new"),
+      .bl_store_key("sk-new"),
       "not a JSON object"
     )
     expect_identical(readLines(cred, warn = FALSE), "{not json")
     writeLines("[1, 2]", cred)
     expect_error(
-      rmoriebricklayer:::.bl_store_key("sk-new"),
+      .bl_store_key("sk-new"),
       "not a JSON object"
     )
   }
@@ -388,23 +390,23 @@ test_that(
   {
     cf_env2()
     withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "https://llm.example.org"))
-    rmoriebricklayer:::.bl_store_key("sk-saved")
-    expect_identical(rmoriebricklayer:::.bl_hosted_key(), "sk-saved")
+    .bl_store_key("sk-saved")
+    expect_identical(.bl_hosted_key(), "sk-saved")
     withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "https://other.example.org"))
-    expect_null(rmoriebricklayer:::.bl_hosted_key())
+    expect_null(.bl_hosted_key())
     withr::local_envvar(c(MORIE_HOSTED_KEY = "sk-env"))
-    expect_identical(rmoriebricklayer:::.bl_hosted_key(), "sk-env")
+    expect_identical(.bl_hosted_key(), "sk-env")
     withr::local_envvar(c(MORIE_HOSTED_KEY = NA, MORIE_HOSTED_BASE_URL = NA))
     llmcfg(own.url = "http://localhost:1234/v1", own.key = "k-one")
     expect_identical(
-      rmoriebricklayer:::.bl_config_value("MORIE_LLM_API_KEY"),
+      .bl_config_value("MORIE_LLM_API_KEY"),
       "k-one"
     )
     expect_message(
       llmcfg(own.url = "http://localhost:4321/v1"),
       "own.key was dropped"
     )
-    expect_null(rmoriebricklayer:::.bl_config_value("MORIE_LLM_API_KEY"))
+    expect_null(.bl_config_value("MORIE_LLM_API_KEY"))
     llmcfg(ollama.url = "http://localhost:11434", ollama.key = "k-two")
     expect_message(
       llmcfg(ollama.url = "http://192.168.1.20:11434"),
@@ -430,8 +432,8 @@ test_that(
 test_that("L12: accents survive the control-character filter in a C locale", {
   withr::local_locale(c(LC_CTYPE = "C"))
   nm <- paste0("Donn\u00e9es \u2014 Montr\u00e9al", "\033[31m")
-  tab <- rmoriebricklayer:::.bl_data_tables_df("db/t", nm, 3L, "x")
-  txt <- rmoriebricklayer:::.bl_format_data_tables(tab, width = 100)
+  tab <- .bl_data_tables_df("db/t", nm, 3L, "x")
+  txt <- .bl_format_data_tables(tab, width = 100)
   # the accents are kept (a C locale may print them as <U+00E9>, but never drops
   # them)
   expect_false(grepl("Donnes", txt, fixed = TRUE))
@@ -458,12 +460,12 @@ test_that(
       },
       .package = "rmoriebricklayer"
     )
-    expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", f))
+    expect_true(.bl_data_check_sha("db/t", f))
     con <- gzfile(f, "wb")
     writeLines("a,b\n1,3", con)
     close(con)
     expect_error(
-      rmoriebricklayer:::.bl_data_check_sha("db/t", f),
+      .bl_data_check_sha("db/t", f),
       "does not match the manifest"
     )
     expect_false(file.exists(f))
@@ -477,7 +479,7 @@ test_that(
     con <- gzfile(f, "wb")
     writeLines("a,b\n1,2", con)
     close(con)
-    expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", f))
+    expect_true(.bl_data_check_sha("db/t", f))
   }
 )
 
@@ -501,11 +503,11 @@ test_that(
     expect_match(loc("Antarctica/McMurdo")$method, "world average")
     # every geographic zone resolves to a row of the carbon table or to WORLD by
     # this path
-    tz <- rmoriebricklayer:::.rmbl_tz_table()
+    tz <- .rmbl_tz_table()
     ct <- co2inttab()
     for (z in tz$tz[!tz$location %in% ct$location]) {
       r <- loc(z)
-      expect_false(grepl("locale", r$method), info = z)
+      expect_false(grepl("locale", r$method, fixed = TRUE), info = z)
       expect_true(r$location %in% ct$location, info = z)
     }
   }
@@ -581,11 +583,11 @@ test_that(
       )),
       "non-decreasing"
     )
-    expect_true(is.finite(rmoriebricklayer:::.bl_left_margin(c(
+    expect_true(is.finite(.bl_left_margin(c(
       NA_real_,
       NA_real_
     ))))
-    expect_true(is.finite(rmoriebricklayer:::.bl_left_margin(
+    expect_true(is.finite(.bl_left_margin(
       labels = c(NA, NA)
     )))
   }
@@ -617,7 +619,7 @@ test_that(
     # exactly: one table page (ten rows fit) plus the notes pages of 42 lines
     # each
     per_note_page <- as.integer(floor(
-      0.76 * 5 / rmoriebricklayer:::.yoy_note_line(5)
+      0.76 * 5 / .yoy_note_line(5)
     ))
     expect_identical(pages, 1L + as.integer(ceiling(30 / per_note_page)))
     f2 <- withr::local_tempfile(fileext = ".pdf")
@@ -634,11 +636,11 @@ test_that(
     # would leave room for fewer rows than the table has, so they took pages of
     # their own and the table kept the rows of a note-free page, which hold all
     # ten
-    expect_lt(rmoriebricklayer:::.yoy_rows_per_page(5, 30L), nrow(d))
-    expect_gte(rmoriebricklayer:::.yoy_rows_per_page(5, 0L), nrow(d))
+    expect_lt(.yoy_rows_per_page(5, 30L), nrow(d))
+    expect_gte(.yoy_rows_per_page(5, 0L), nrow(d))
     expect_gt(
-      rmoriebricklayer:::.yoy_rows_per_page(5, 0L),
-      rmoriebricklayer:::.yoy_rows_per_page(5, 30L)
+      .yoy_rows_per_page(5, 0L),
+      .yoy_rows_per_page(5, 30L)
     )
   }
 )
@@ -653,40 +655,46 @@ test_that(
     seen <- NULL
     testthat::local_mocked_bindings(
       llmask = function(prompt, model = NULL, route = NULL, ...) {
-        seen <<- prompt
+        assign("seen", prompt, envir = parent.env(environment()))
         "reply"
       },
       .package = "rmoriebricklayer"
     )
     buf <- character()
     st <- blcli(c("ask", "--", "--weird", "prompt"), out = function(s) {
-      buf <<- c(buf, s)
+      assign("buf", c(buf, s), envir = parent.env(environment()))
     })
     expect_identical(st, 0L)
     expect_identical(seen, "--weird prompt")
     st <- blcli(
       c("ask", "--route", "ollama", "--", "--model"),
-      out = function(s) buf <<- c(buf, s)
+      out = function(s) {
+        assign("buf", c(buf, s), envir = parent.env(environment()))
+      }
     )
     expect_identical(seen, "--model")
     launcher <- system.file("bin", "rmbl", package = "rmoriebricklayer")
     skip_if(!nzchar(launcher))
     skip_on_os("windows") # no execute bit there
-    expect_true(file.access(launcher, 1L) == 0L)
+    expect_identical(unname(file.access(launcher, 1L)), 0L)
   }
 )
 
 test_that("the help never suggests a key on the command line", {
   expect_false(grepl(
     "--token KEY",
-    rmoriebricklayer:::.bl_access_hint(),
+    .bl_access_hint(),
     fixed = TRUE
   ))
   out <- character()
-  blcli("help", out = function(s) out <<- c(out, s))
+  blcli("help", out = function(s) {
+    assign("out", c(out, s), envir = parent.env(environment()))
+  })
   expect_false(any(grepl("login --token KEY", out, fixed = TRUE)))
   out <- character()
-  blcli(c("login", "--help"), out = function(s) out <<- c(out, s))
+  blcli(c("login", "--help"), out = function(s) {
+    assign("out", c(out, s), envir = parent.env(environment()))
+  })
   expect_false(any(grepl("login --token KEY", out, fixed = TRUE)))
 })
 
@@ -698,15 +706,15 @@ test_that(
   {
     known <- function(k) if (identical(k, "FR")) "FR" else NA_character_
     expect_identical(
-      rmoriebricklayer:::.rmbl_territory_location("MC", known),
+      .rmbl_territory_location("MC", known),
       "FR"
     )
     expect_identical(
-      rmoriebricklayer:::.rmbl_territory_location("AQ", known),
+      .rmbl_territory_location("AQ", known),
       "WORLD"
     )
     expect_identical(
-      rmoriebricklayer:::.rmbl_territory_location(
+      .rmbl_territory_location(
         "MC",
         known,
         proxies = c(MC = "ZZ")
@@ -714,7 +722,7 @@ test_that(
       "WORLD"
     )
     expect_identical(
-      rmoriebricklayer:::.rmbl_territory_location(
+      .rmbl_territory_location(
         "MC",
         known,
         proxies = c(XX = "FR")
@@ -736,29 +744,29 @@ test_that(
       "below 1e300"
     )
     cf_env2()
-    cfg <- rmoriebricklayer:::.bl_config_path()
+    cfg <- .bl_config_path()
     dir.create(dirname(cfg), recursive = TRUE, showWarnings = FALSE)
     writeLines("{\"route\": \"hosted\"}", cfg)
-    expect_identical(rmoriebricklayer:::.bl_config_object(cfg)$route, "hosted")
+    expect_identical(.bl_config_object(cfg)$route, "hosted")
     writeLines("{", cfg)
-    expect_null(rmoriebricklayer:::.bl_config_object(cfg))
+    expect_null(.bl_config_object(cfg))
     # the writer's own guard, for callers that write without reading first
     writeLines("[]", cfg)
     expect_error(
-      rmoriebricklayer:::.bl_write_config(list(route = "hosted")),
+      .bl_write_config(list(route = "hosted")),
       "not valid JSON"
     )
     expect_identical(readLines(cfg, warn = FALSE), "[]")
     unlink(cfg)
-    rmoriebricklayer:::.bl_write_config(list(route = "hosted"))
-    expect_identical(rmoriebricklayer:::.bl_read_config()$route, "hosted")
-    cred <- rmoriebricklayer:::.bl_credentials_path()
+    .bl_write_config(list(route = "hosted"))
+    expect_identical(.bl_read_config()$route, "hosted")
+    cred <- .bl_credentials_path()
     writeLines("{\"hosted_key\": \"k\"}", cred)
     expect_identical(
-      rmoriebricklayer:::.bl_credentials_object(cred)$hosted_key,
+      .bl_credentials_object(cred)$hosted_key,
       "k"
     )
     writeLines("{", cred)
-    expect_null(rmoriebricklayer:::.bl_credentials_object(cred))
+    expect_null(.bl_credentials_object(cred))
   }
 )

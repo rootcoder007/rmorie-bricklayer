@@ -1,0 +1,3 @@
+A throwaway test authority for the examples of certprs() and certchnvrf():
+test-root.der (a self-signed P-256 root), test-root.pem (the same root as PEM)
+and test-leaf.der (a leaf it issued). Trust them for nothing.

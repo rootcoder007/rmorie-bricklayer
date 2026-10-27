@@ -428,19 +428,6 @@ cwinsmean <- function(x, trim = 0.1) {
   .Call(C_rmbl_winsorized_mean, .rmbl_num_input(x, "x"), .rmbl_trim(trim))
 }
 
-#' One proportion in \[0, 0.5\]: outside it the core returned NaN, which reads
-#' as a result
-#' @param trim The trimming proportion passed by the user.
-#' @return The proportion as a double.
-#' @noRd
-.rmbl_trim <- function(trim) {
-  trim <- .rmbl_num(trim, "trim")
-  if (length(trim) != 1L || is.na(trim) || trim < 0 || trim > 0.5) {
-    stop("`trim` must be a single number in [0, 0.5]", call. = FALSE)
-  }
-  trim
-}
-
 #' Weighted mean and variance (C backend)
 #'
 #' The weighted mean and weighted variance of a numeric vector, for data
@@ -732,17 +719,11 @@ ccovm <- function(x) {
 #' # At least one replicate is needed.
 #' try(cbootmean(x, B = 0))
 #' @export
-#' @srrstats {G5.5} test-core-stats.R runs with set.seed(7) and seed = 11; the
+#' @srrstats {G5.5} test-core_stats.R runs with set.seed(7) and seed = 11; the
 #'   same seed reproduces the replicates exactly.
 cbootmean <- function(x, B = 1000L, seed = 42L) {
   x <- .rmbl_num_input(x, "x")
-  B <- .rmbl_num(B, "B")
-  if (length(B) != 1L || is.na(B) || !is.finite(B) || B < 1 || B != floor(B)) {
-    stop("`B` must be a single whole number >= 1", call. = FALSE)
-  }
-  if (B > .Machine$integer.max) {
-    stop("`B` must be at most 2147483647", call. = FALSE)
-  }
+  B <- .rmbl_boot_b(.rmbl_num(B, "B"))
   seed <- .rmbl_seed(seed)
   # the kernel polls for a Ctrl-C about every million draws, and each poll turns
   # the busy spinner
@@ -834,12 +815,11 @@ cipw <- function(treat, ps, trimlo = 0.01, trimhi = 0.99) {
   # to the trim bound and became a weight; both are refused. A missing
   # treatment or propensity gives a missing weight.
   ok_t <- !is.na(treat)
-  if (any(!(treat[ok_t] %in% c(0, 1)))) {
+  if (!all(treat[ok_t] %in% c(0, 1))) {
     stop(
       "`treat` must be coded 0/1 (got values ",
-      paste(
-        utils::head(unique(treat[ok_t][!(treat[ok_t] %in% c(0, 1))]), 3),
-        collapse = ", "
+      toString(
+        utils::head(unique(treat[ok_t][!(treat[ok_t] %in% c(0, 1))]), 3)
       ),
       ")",
       call. = FALSE
@@ -880,7 +860,7 @@ cipw <- function(treat, ps, trimlo = 0.01, trimhi = 0.99) {
 #' [stats::pgamma()].
 #'
 #' @param shape Shape parameter \eqn{a}, a single positive number.
-#' @param x Numeric vector of quantiles.
+#' @param x Numeric vector of quantiles at which the gamma CDF is evaluated.
 #' @return A numeric vector the length of `x`, each entry a probability in
 #'   \eqn{[0, 1]}.
 #' @seealso [stats::pgamma()], the base R equivalent.
@@ -963,7 +943,7 @@ cgamcdf <- function(shape, x) {
 #' @param kernel The triggering kernel, one of `"exponential"` (the
 #'   default), `"weibull"`, `"lomax"` and `"gamma"`. Partial names are
 #'   matched.
-#' @param par Numeric parameter vector, as described above: length 3
+#' @param par Numeric parameter vector (required), as described above: length 3
 #'   (`a0`, `eta`, `beta`) for `"exponential"`, length 4 (`a0`,
 #'   `eta` and
 #'   the kernel's two parameters) for the others. Rates are per unit of
@@ -1005,13 +985,51 @@ chwknll <- function(
   times,
   hor,
   kernel = c("exponential", "weibull", "lomax", "gamma"),
-  par
+  par = NULL
 ) {
-  if (missing(par)) {
+  if (is.null(par)) {
     stop("`par` must be the kernel parameters", call. = FALSE)
   }
   kernel <- .rmbl_arg(kernel)
   code <- switch(kernel, exponential = 0L, weibull = 1L, lomax = 2L, gamma = 3L)
+  times <- .chwk_check_times(times, hor)
+  hor <- .rmbl_num(hor, "hor")
+  par <- .rmbl_num(par, "par")
+  need <- if (code == 0L) 3L else 4L
+  if (length(par) != need) {
+    stop(
+      sprintf("the %s kernel needs `par` of length %d", kernel, need),
+      call. = FALSE
+    )
+  }
+  if (!.chwk_feasible(par, kernel)) {
+    return(1e12)
+  }
+  # the likelihood chwkfit() maximises (the shared C++ core), so the two agree
+  # for every kernel; the Lomax is g(u) = alpha c^alpha / (u + c)^(alpha + 1)
+  .rmbl_hk_call(times, hor, kernel, "constant", par, "exact", 1e-12, FALSE)[[
+    1L
+  ]]
+}
+
+#' One proportion in \[0, 0.5\]: outside it the core returned NaN, which reads
+#' as a result
+#' @param trim The trimming proportion passed by the user.
+#' @return The proportion as a double.
+#' @noRd
+.rmbl_trim <- function(trim) {
+  trim <- .rmbl_num(trim, "trim")
+  if (length(trim) != 1L || is.na(trim) || trim < 0 || trim > 0.5) {
+    stop("`trim` must be a single number in [0, 0.5]", call. = FALSE)
+  }
+  trim
+}
+
+#' chwknll()'s event times and horizon, checked.
+#' @param times,hor As for chwknll().
+#' @return The times, as numbers.
+#' @noRd
+.chwk_check_times <- function(times, hor) {
   times <- .rmbl_num(times, "times")
   if (anyNA(times)) {
     stop("chwknll: `times` must not contain NA", call. = FALSE)
@@ -1029,14 +1047,15 @@ chwknll <- function(
   if (length(times) > 0L && (min(times) < 0 || max(times) > hor)) {
     stop("`times` must lie within [0, hor]", call. = FALSE)
   }
-  par <- .rmbl_num(par, "par")
-  need <- if (code == 0L) 3L else 4L
-  if (length(par) != need) {
-    stop(
-      sprintf("the %s kernel needs `par` of length %d", kernel, need),
-      call. = FALSE
-    )
-  }
+  times
+}
+
+#' Whether Hawkes parameters lie in chwknll()'s feasible region.
+#' @param par The parameters.
+#' @param kernel The excitation kernel, which sets its parameters' ranges.
+#' @return TRUE or FALSE.
+#' @noRd
+.chwk_feasible <- function(par, kernel) {
   # outside the feasible region, the documented sentinel: a stationary branching
   # ratio, a bounded log-baseline and the kernel parameters' ranges (those of
   # the earlier routine; the Lomax takes chwkfit()'s)
@@ -1055,18 +1074,23 @@ chwknll <- function(
     lomax = c(30, 100)
   )
   psi <- par[-(1:2)]
-  if (
-    anyNA(par) ||
-      !(par[[2L]] > 1e-6 && par[[2L]] < 0.999) ||
-      !(par[[1L]] > -20 && par[[1L]] < 20) ||
-      any(psi < lo) ||
-      any(psi > hi)
-  ) {
-    return(1e12)
+  !(anyNA(par) ||
+    !(par[[2L]] > 1e-6 && par[[2L]] < 0.999) ||
+    !(par[[1L]] > -20 && par[[1L]] < 20) ||
+    any(psi < lo) ||
+    any(psi > hi))
+}
+
+#' cbootmean()'s `B`, checked: one whole number in [1, 2147483647].
+#' @param B The bootstrap replicate count, checked to be a whole number >= 1.
+#' @return `B`.
+#' @noRd
+.rmbl_boot_b <- function(B) {
+  if (length(B) != 1L || is.na(B) || !is.finite(B) || B < 1 || B != floor(B)) {
+    stop("`B` must be a single whole number >= 1", call. = FALSE)
   }
-  # the likelihood chwkfit() maximises (the shared C++ core), so the two agree
-  # for every kernel; the Lomax is g(u) = alpha c^alpha / (u + c)^(alpha + 1)
-  .rmbl_hk_call(times, hor, kernel, "constant", par, "exact", 1e-12, FALSE)[[
-    1L
-  ]]
+  if (B > .Machine$integer.max) {
+    stop("`B` must be at most 2147483647", call. = FALSE)
+  }
+  B
 }

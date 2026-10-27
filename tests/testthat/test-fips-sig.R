@@ -272,9 +272,19 @@ test_that("bad input is refused rather than silently coerced", {
 })
 
 test_that("the deprecated liboqs-era names still work", {
-  expect_warning(key <- oqskg("ML-DSA-44"), "fipskg")
+  expect_warning(
+    {
+      key <- oqskg("ML-DSA-44")
+    },
+    "fipskg"
+  )
   expect_identical(key$scheme, "ML-DSA-44")
-  expect_warning(pub <- oqspubkey(key), "fipspubkey")
+  expect_warning(
+    {
+      pub <- oqspubkey(key)
+    },
+    "fipspubkey"
+  )
   expect_identical(pub$public, key$public)
   # and the old class is still what they carry, so code that tested for
   # it keeps working
@@ -294,9 +304,9 @@ test_that("every parameter set signs in a time a test can afford", {
   for (s in c("SLH-DSA-SHAKE-192s", "SLH-DSA-SHA2-256s")) {
     sz <- fipssz(s)
     key <- fipskg(s, seed = as.raw(seq_len(sz[["seed"]]) %% 256L))
-    t <- system.time(
+    t <- system.time({
       sig <- cpssign("a manifest digest", key, ctx = "release", determ = TRUE)
-    )[["elapsed"]]
+    })[["elapsed"]]
     expect_lt(t, wall_limit(20))
     expect_true(
       cpsvrf("a manifest digest", sig, fipspubkey(key), ctx = "release"),
@@ -308,9 +318,9 @@ test_that("every parameter set signs in a time a test can afford", {
 test_that("the print methods say which scheme and withhold the secret", {
   key <- fipskg("ML-DSA-65")
   out <- format(key)
-  expect_true(any(grepl("FIPS 204", out)))
+  expect_true(any(grepl("FIPS 204", out, fixed = TRUE)))
   expect_true(any(grepl("ML-DSA-65", out, fixed = TRUE)))
-  expect_true(any(grepl("withheld", out)))
+  expect_true(any(grepl("withheld", out, fixed = TRUE)))
   # The secret must not appear, and the substring tested has to be one
   # that is actually secret: an ML-DSA secret key OPENS with rho, the
   # same 32 bytes the public key opens with, so its first characters
@@ -322,7 +332,7 @@ test_that("the print methods say which scheme and withhold the secret", {
     paste(out, collapse = ""),
     fixed = TRUE
   )))
-  expect_true(any(grepl("stateless", out)))
+  expect_true(any(grepl("stateless", out, fixed = TRUE)))
   pub <- format(fipspubkey(key))
   expect_true(any(grepl("ML-DSA-65", pub, fixed = TRUE)))
   expect_false(any(grepl(

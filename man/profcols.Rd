@@ -7,7 +7,7 @@
 profcols(data, qnts = c(0.25, 0.5, 0.75))
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame whose columns are profiled.}
 
 \item{qnts}{Numeric vector of quantile probabilities to include for
 numeric columns, one column each named \code{q} and the percentage (\code{q25},

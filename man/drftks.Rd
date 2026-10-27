@@ -14,6 +14,10 @@ vectors are read as 0/1.}
 A named length-3 numeric: \code{statistic} (the KS \eqn{D}) ,
 \code{p_value}, and \code{neff} (the harmonic-style effective size
 \eqn{n_xn_y/(n_x+n_y)}).
+It has class \code{c("rmbl_drftks", "rmbl_measure", "numeric")}, so it
+prints as a box with its inputs (kept in attribute \code{"lakner"});
+arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+numbers.
 }
 \description{
 Tests whether two numeric samples come from the same distribution, for

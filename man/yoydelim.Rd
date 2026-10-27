@@ -23,10 +23,10 @@ yoymd(x, file, digits = 1L, align = TRUE, ...)
 \item{file}{Character scalar, the output path, or \code{NULL} to return the
 text instead of writing it.}
 
-\item{digits}{Integer scalar or \code{NULL}: decimal places for the percent
-columns. For the CSV, TSV and JSON writers \code{NULL}, the default, writes them
-unrounded, which is what a downstream calculation wants; give a number for
-a figure meant to be read. For \code{yoymd()} the default is \code{1}.}
+\item{digits}{A whole number from 0 to 15, or \code{NULL}: decimal places for the
+percent columns. For the CSV, TSV and JSON writers \code{NULL}, the default,
+writes them unrounded, which is what a downstream calculation wants; give a
+number for a figure meant to be read. For \code{yoymd()} the default is \code{1}.}
 
 \item{na}{Character scalar, how to write a missing value (CSV and TSV). The
 default empty string is what most readers expect; \code{"NA"} keeps R's own
@@ -41,7 +41,7 @@ look. Markdown and JSON carry the same information structurally.}
 \item{comment}{Character scalar, the comment prefix for the metadata
 lines; default \code{"#"}.}
 
-\item{...}{Ignored.}
+\item{...}{Ignored: what \code{yoywr()} passes on for its HTML and PDF writers.}
 
 \item{pretty}{Logical scalar, default \code{TRUE}: indent the JSON.}
 

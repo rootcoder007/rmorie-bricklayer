@@ -95,8 +95,10 @@
 #' @export
 expcnts <- function(cnts, pop, area, strata = NULL) {
   .rmbl_no_fn(area = area, strata = strata)
-  cnts <- .rmbl_finite_input(cnts, "cnts", nonneg = TRUE)
-  pop <- .rmbl_finite_input(pop, "pop", nonneg = TRUE)
+  # the missing values are kept until the rows are dropped together: dropped
+  # from each vector alone, the counts and populations paired the wrong rows
+  cnts <- .ar_keep_na(cnts, "cnts")
+  pop <- .ar_keep_na(pop, "pop")
   area <- as.character(area)
   n <- length(cnts)
   if (length(pop) != n || length(area) != n) {
@@ -124,13 +126,13 @@ expcnts <- function(cnts, pop, area, strata = NULL) {
   rate <- num / den
   expected_row <- pop * rate[match(strata, names(rate))]
   areas <- sort(unique(area))
-  data.frame(
+  .rmbl_cls(data.frame(
     area = areas,
     observed = as.numeric(tapply(cnts, area, sum)[areas]),
     population = as.numeric(tapply(pop, area, sum)[areas]),
     expected = as.numeric(tapply(expected_row, area, sum)[areas]),
     stringsAsFactors = FALSE
-  )
+  ), "rmbl_expected")
 }
 
 #' Standardised incidence ratio, with an exact interval
@@ -153,8 +155,9 @@ expcnts <- function(cnts, pop, area, strata = NULL) {
 #' observed count of three is not an interval, it is a decoration.
 #'
 #' Each area's interval is a separate test; with many areas some will
-#' exclude one by chance (see \code{\link{scanadj}}). Missing values are
-#' dropped before the lengths are compared.
+#' exclude one by chance (see \code{\link{scanadj}}). A row with a missing
+#' observed or expected count is dropped whole (its area label with it), after
+#' the lengths are compared.
 #'
 #' Errors: negative, infinite or non-numeric counts; an expected count of
 #' zero or below; lengths that differ (a single \code{expd} is recycled).
@@ -195,8 +198,8 @@ expcnts <- function(cnts, pop, area, strata = NULL) {
 #' @srrstats {G2.0} .rmbl_conf_level()/.rmbl_scalar() refuse inputs of the wrong
 #'   length; test-docs-bugs-0513.R:34 refuses conflvl = c(0.9, 0.95).
 stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
-  obs <- .rmbl_finite_input(obs, "obs", nonneg = TRUE, min_n = 1L)
-  expd <- .rmbl_finite_input(expd, "expd", nonneg = TRUE, min_n = 1L)
+  obs <- .ar_keep_na(obs, "obs", min_n = 1L)
+  expd <- .ar_keep_na(expd, "expd", min_n = 1L)
   if (length(expd) == 1L) {
     expd <- rep(expd, length(obs))
   }
@@ -216,6 +219,10 @@ stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
     )
   }
   conflvl <- .rmbl_conf_level(conflvl)
+  ok <- .ar_complete(obs, expd)
+  obs <- obs[ok]
+  expd <- expd[ok]
+  area <- area[ok]
   a <- 1 - conflvl
   # the exact Poisson interval, via the gamma relation: an observed
   # count of zero has a lower limit of exactly zero rather than a
@@ -236,7 +243,7 @@ stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
   if (!is.null(area)) {
     out <- cbind(area = as.character(area), out, stringsAsFactors = FALSE)
   }
-  out
+  .rmbl_cls(out, "rmbl_sir")
 }
 
 #' Empirical Bayes rates, shrunk toward the overall experience
@@ -306,35 +313,8 @@ stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
 ebrates <- function(obs, expd, area = NULL) {
   obs <- .rmbl_num(obs, "obs")
   expd <- .rmbl_num(expd, "expd")
-  if (length(obs) != length(expd)) {
-    stop("ebrates: `obs` and `expd` must be the same length", call. = FALSE)
-  }
-  if (
-    !is.null(area) &&
-      (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))
-  ) {
-    stop(
-      "ebrates: `area` must be NULL or one label per area (as many as `obs`)",
-      call. = FALSE
-    )
-  }
-  # counts: finite and non-negative, as sir() requires of the same inputs
-  if (anyNA(obs) || any(!is.finite(obs)) || any(obs < 0)) {
-    stop("`obs` must be finite, non-negative counts", call. = FALSE)
-  }
-  if (anyNA(expd) || any(!is.finite(expd))) {
-    stop("`expd` must be finite", call. = FALSE)
-  }
-  if (any(expd <= 0)) {
-    stop("ebrates: `expd` must be positive", call. = FALSE)
-  }
+  .eb_check(obs, expd, area)
   n <- length(obs)
-  if (n < 2L) {
-    stop(
-      "shrinkage borrows strength across areas, so it needs at least two",
-      call. = FALSE
-    )
-  }
   theta <- obs / expd
   esum <- sum(expd)
   # the overall relative risk, which is the prior's mean
@@ -364,35 +344,6 @@ ebrates <- function(obs, expd, area = NULL) {
   # the weight the DATA carry, so shrinkage is one minus it
   w <- expd / (expd + alpha)
   .eb_frame(area, obs, expd, theta, eb, 1 - w, nu, alpha)
-}
-
-#' Builds the data frame of empirical Bayes estimates, with an `area` column
-#' when areas are named.
-#' @param area The area labels, or NULL.
-#' @param observed The observed counts.
-#' @param expected The expected counts.
-#' @param theta The standardised incidence ratios.
-#' @param eb The empirical Bayes estimates.
-#' @param shrink The shrinkage factors.
-#' @param nu The prior's shape.
-#' @param alpha The prior's rate.
-#' @return A data frame with one row per area.
-#' @noRd
-.eb_frame <- function(area, observed, expected, theta, eb, shrink, nu, alpha) {
-  out <- data.frame(
-    observed = observed,
-    expected = expected,
-    sir = theta,
-    eb = eb,
-    shrinkage = shrink,
-    nu = nu,
-    alpha = alpha,
-    stringsAsFactors = FALSE
-  )
-  if (!is.null(area)) {
-    out <- cbind(area = as.character(area), out, stringsAsFactors = FALSE)
-  }
-  out
 }
 
 #' Funnel-plot control limits
@@ -470,11 +421,21 @@ fnllim <- function(expd, target = 1, lvls = c(0.95, 0.998)) {
   if (any(expd <= 0, na.rm = TRUE)) {
     stop("fnllim: `expd` must be positive", call. = FALSE)
   }
-  target <- .rmbl_num(target, "target")[1L]
-  if (is.na(target) || target <= 0) {
-    stop("`target` must be positive", call. = FALSE)
+  # c(1, 2) used the first target and said nothing of the second
+  target <- .rmbl_num(target, "target")
+  if (length(target) != 1L || is.na(target) || target <= 0) {
+    stop(.rmbl_fn(), "`target` must be positive: one number", call. = FALSE)
   }
-  lvls <- sort(.rmbl_num(lvls, "lvls"))
+  lvls <- .rmbl_num(lvls, "lvls")
+  # NULL, NA and numeric(0) gave an empty frame of limits
+  if (!length(lvls) || anyNA(lvls)) {
+    stop(
+      .rmbl_fn(),
+      "`lvls` must be one or more levels, with no missing value",
+      call. = FALSE
+    )
+  }
+  lvls <- sort(lvls)
   if (any(lvls <= 0 | lvls >= 1)) {
     stop("`lvls` must lie strictly inside (0, 1)", call. = FALSE)
   }
@@ -573,7 +534,318 @@ morani <- function(x, nbrs, style = c("W", "B"), nperm = 9999L) {
     stop("`nperm` must be a single non-negative whole number", call. = FALSE)
   }
   n <- length(x)
-  if (n < 3L) {
+  .rmbl_moran_check(x)
+  nb <- .rmbl_neighbours(nbrs, n)
+  wts <- .rmbl_moran_wts(nb, style)
+  len <- lengths(nb)
+  start <- c(0L, cumsum(len)[-n])
+  idx <- as.integer(unlist(nb, use.names = FALSE)) - 1L
+  if (!length(idx)) {
+    stop("`nbrs` gives no area any neighbour", call. = FALSE)
+  }
+  r <- .Call(
+    C_rmbl_morans_i,
+    x,
+    idx,
+    as.integer(start),
+    as.integer(len),
+    as.numeric(wts),
+    as.integer(nperm),
+    NULL
+  )
+  .rmbl_cls(.rmbl_moran_result(r, n, style), "rmbl_moran")
+}
+
+#' @export
+format.rmbl_moran <- function(x, digits = 4L, ...) {
+  .rmbl_stat_block(
+    "Global Moran's I",
+    facts = list(
+      `Moran's I` = x$I,
+      `Expected, no pattern` = x$expectation,
+      `Permutation null` = .rmbl_moran_null(x),
+      z = x$z,
+      `p-value` = .rmbl_p_fact(x$p_value),
+      Permutations = x$nperm,
+      `Weight style` = if (identical(x$style, "W")) {
+        "W (row-standardised)"
+      } else {
+        "B (weights as given)"
+      },
+      `Total weight` = x$W,
+      Areas = x$n
+    ),
+    reading = .rmbl_wrap(.rmbl_moran_reading(x)),
+    digits = digits
+  )
+}
+
+#' @export
+format.rmbl_sir <- function(x, digits = 4L, ...) {
+  title <- "Standardised incidence ratios"
+  need <- c("observed", "expected", "sir", "lower", "upper", "excess")
+  fb <- .rmbl_df_fallback(x, title, c(need, "deficit"), digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  d <- .rmbl_plain(x)
+  tb <- d[intersect(c("area", "observed", "expected", "sir"), names(d))]
+  tb$interval <- .rmbl_fmt_ci(d$lower, d$upper, digits)
+  tb$finding <- c("", "excess", "deficit")[1L + d$excess + 2L * d$deficit]
+  .rmbl_res_block(
+    title,
+    facts = list(
+      Areas = nrow(d),
+      Observed = sum(d$observed),
+      Expected = sum(d$expected),
+      `Overall ratio` = sum(d$observed) / sum(d$expected),
+      Interval = "exact Poisson, at the level asked for (default 95%)",
+      `Above one` = sum(d$excess, na.rm = TRUE),
+      `Below one` = sum(d$deficit, na.rm = TRUE)
+    ),
+    tables = list(tb),
+    reading = paste(
+      "A ratio above 1 means more cases than the area's population would",
+      "give at the overall rates. An excess or a deficit is an interval",
+      "wholly above or below 1 (the significant column is either)."
+    ),
+    notes = paste(
+      "Each interval is a separate test: with many areas some exclude 1 by",
+      "chance (scanadj() allows for that)."
+    ),
+    digits = digits,
+    maxrows = 40L
+  )
+}
+
+#' @export
+format.rmbl_ebrates <- function(x, digits = 4L, ...) {
+  title <- "Empirical Bayes rates"
+  need <- c("observed", "expected", "sir", "eb", "shrinkage", "nu", "alpha")
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  d <- .rmbl_plain(x)
+  flat <- !nrow(d) || is.na(d$nu[1L])
+  .rmbl_res_block(
+    title,
+    facts = list(
+      Areas = nrow(d),
+      `Overall ratio` = sum(d$observed) / sum(d$expected),
+      `Prior shape (nu)` = if (flat) "none" else d$nu[1L],
+      `Prior rate (alpha)` = if (flat) "none" else d$alpha[1L],
+      Method = "gamma-Poisson, moments (Clayton and Kaldor 1987)"
+    ),
+    tables = list(d[setdiff(names(d), c("nu", "alpha"))]),
+    reading = if (flat) {
+      paste(
+        "The areas vary no more than chance would make them, so every",
+        "estimate is the overall ratio (shrinkage 1)."
+      )
+    } else {
+      paste(
+        "Each raw ratio (sir) is pulled toward the overall ratio; shrinkage",
+        "is the share of the pull (0 untouched, 1 replaced), largest for",
+        "areas with small expected counts. Use eb for maps and rankings,",
+        "stdinc() for each area's own evidence."
+      )
+    },
+    digits = digits,
+    maxrows = 40L
+  )
+}
+
+#' @export
+format.rmbl_expected <- function(x, digits = 4L, ...) {
+  title <- "Expected counts, indirect standardisation"
+  need <- c("area", "observed", "population", "expected")
+  fb <- .rmbl_df_fallback(x, title, need, digits)
+  if (!is.null(fb)) {
+    return(fb)
+  }
+  d <- .rmbl_plain(x)
+  .rmbl_res_block(
+    title,
+    facts = list(
+      Areas = nrow(d),
+      Observed = sum(d$observed),
+      Expected = sum(d$expected),
+      Population = sum(d$population)
+    ),
+    tables = list(d),
+    reading = paste(
+      "expected is the count an area would have at the overall rate of",
+      "each stratum, given its own population in it. stdinc() puts an",
+      "interval on the ratio of observed to expected."
+    ),
+    notes = paste(
+      "The expected counts sum to the observed ones: the reference rates",
+      "come from the same data."
+    ),
+    digits = digits,
+    maxrows = 40L
+  )
+}
+
+#' A neighbour list, from a list or from a weight matrix.
+#' @param neighbours A list of neighbour indices or an n by n weight matrix.
+#' @param n The number of areas.
+#' @return A list of neighbour indices, one element per area; from a matrix it
+#'   carries the weights in its `weights` attribute.
+#' @noRd
+.rmbl_neighbours <- function(neighbours, n) {
+  if (is.matrix(neighbours)) {
+    if (nrow(neighbours) != n || ncol(neighbours) != n) {
+      stop(sprintf("a weight matrix must be %d by %d", n, n), call. = FALSE)
+    }
+    if (anyNA(neighbours) || !all(is.finite(neighbours))) {
+      stop("a weight matrix must be finite", call. = FALSE)
+    }
+    nb <- lapply(seq_len(n), function(i) {
+      j <- which(neighbours[i, ] != 0)
+      j[j != i] # an area is not its own neighbour
+    })
+    # the magnitudes travel with the indices
+    attr(nb, "weights") <- lapply(seq_len(n), function(i) {
+      as.numeric(neighbours[i, nb[[i]]])
+    })
+    return(nb)
+  }
+  if (!is.list(neighbours)) {
+    stop(
+      .rmbl_fn(),
+      "`nbrs` must be a list of neighbour indices or a weight matrix",
+      call. = FALSE
+    )
+  }
+  if (length(neighbours) != n) {
+    stop(
+      .rmbl_fn(),
+      sprintf(
+        "`nbrs` has %d entries for %d areas",
+        length(neighbours),
+        n
+      ),
+      call. = FALSE
+    )
+  }
+  lapply(seq_along(neighbours), function(i) {
+    v <- as.integer(neighbours[[i]])
+    v <- v[!is.na(v)]
+    if (length(v) && (any(v < 1L) || any(v > n))) {
+      stop(
+        sprintf("area %d names a neighbour outside 1..%d", i, n),
+        call. = FALSE
+      )
+    }
+    # an area is not its own neighbour; keeping it would put the
+    # variable's own value on both sides of every product
+    v[v != i]
+  })
+}
+
+#' stdinc()'s complete rows: those with both an observed and an expected count.
+#' @param obs,expd The counts, NA kept.
+#' @return A logical vector, TRUE for a complete row.
+#' @noRd
+.ar_complete <- function(obs, expd) {
+  ok <- !is.na(obs) & !is.na(expd)
+  if (!any(ok)) {
+    stop(
+      "stdinc: no area has both an observed and an expected count",
+      call. = FALSE
+    )
+  }
+  ok
+}
+
+#' Checks counts as .rmbl_finite_input() does, keeping the missing values.
+#'
+#' The caller drops the incomplete rows itself, across every vector at once.
+#' @param x The argument's value.
+#' @param what The argument's name, for its errors.
+#' @param min_n The least count of non-missing values the check accepts.
+#' @return A double vector, NA where `x` is missing.
+#' @noRd
+.ar_keep_na <- function(x, what, min_n = 0L) {
+  v <- .rmbl_num_input(x, what)
+  .rmbl_finite_input(v, what, nonneg = TRUE, min_n = min_n)
+  v
+}
+
+#' Builds the data frame of empirical Bayes estimates, with an `area` column
+#' when areas are named.
+#' @param area The area labels, or NULL.
+#' @param observed The observed counts.
+#' @param expected The expected counts.
+#' @param theta The standardised incidence ratios.
+#' @param eb The empirical Bayes estimates.
+#' @param shrink The shrinkage factors.
+#' @param nu The prior's shape.
+#' @param alpha The prior's rate.
+#' @return A data frame with one row per area.
+#' @noRd
+.eb_frame <- function(area, observed, expected, theta, eb, shrink, nu, alpha) {
+  out <- data.frame(
+    observed = observed,
+    expected = expected,
+    sir = theta,
+    eb = eb,
+    shrinkage = shrink,
+    nu = nu,
+    alpha = alpha,
+    stringsAsFactors = FALSE
+  )
+  if (!is.null(area)) {
+    out <- cbind(area = as.character(area), out, stringsAsFactors = FALSE)
+  }
+  .rmbl_cls(out, "rmbl_ebrates")
+}
+
+#' Refuses the inputs of ebrates() it cannot shrink.
+#' @param obs,expd The observed and expected counts.
+#' @param area The area labels, or NULL.
+#' @return NULL, invisibly.
+#' @noRd
+.eb_check <- function(obs, expd, area) {
+  if (length(obs) != length(expd)) {
+    stop("ebrates: `obs` and `expd` must be the same length", call. = FALSE)
+  }
+  if (
+    !is.null(area) &&
+      (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))
+  ) {
+    stop(
+      "ebrates: `area` must be NULL or one label per area (as many as `obs`)",
+      call. = FALSE
+    )
+  }
+  # counts: finite and non-negative, as sir() requires of the same inputs
+  if (anyNA(obs) || !all(is.finite(obs)) || any(obs < 0)) {
+    stop("`obs` must be finite, non-negative counts", call. = FALSE)
+  }
+  if (anyNA(expd) || !all(is.finite(expd))) {
+    stop("`expd` must be finite", call. = FALSE)
+  }
+  if (any(expd <= 0)) {
+    stop("ebrates: `expd` must be positive", call. = FALSE)
+  }
+  if (length(obs) < 2L) {
+    stop(
+      "shrinkage borrows strength across areas, so it needs at least two",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' Refuses a variable morani() cannot autocorrelate.
+#' @param x The variable, one value per area.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_moran_check <- function(x) {
+  if (length(x) < 3L) {
     stop("Moran's I needs at least three areas", call. = FALSE)
   }
   if (anyNA(x)) {
@@ -585,7 +857,16 @@ morani <- function(x, nbrs, style = c("W", "B"), nperm = 9999L) {
       call. = FALSE
     )
   }
-  nb <- .rmbl_neighbours(nbrs, n)
+  invisible(NULL)
+}
+
+#' The weights morani() passes to the native statistic, in neighbour order.
+#' @param nb The neighbour list (.rmbl_neighbours()), its weights as an
+#'   attribute when a matrix was given.
+#' @param style "W" (row standardised) or "B" (as given).
+#' @return A numeric vector, one weight per neighbour pair.
+#' @noRd
+.rmbl_moran_wts <- function(nb, style) {
   # A weight matrix carries magnitudes (inverse distance, a
   # pre-standardised matrix); they are used as given under style "B" and
   # row-standardised under "W". A neighbour list is binary. Reducing a
@@ -598,7 +879,7 @@ morani <- function(x, nbrs, style = c("W", "B"), nperm = 9999L) {
     # matrix left I unchanged
     stop("spatial weights must be non-negative", call. = FALSE)
   }
-  wts <- if (!is.null(w_in)) {
+  if (!is.null(w_in)) {
     unlist(
       lapply(w_in, function(w) {
         if (!length(w)) {
@@ -616,29 +897,22 @@ morani <- function(x, nbrs, style = c("W", "B"), nperm = 9999L) {
     # so an area with many neighbours does not count for more
     unlist(
       lapply(nb, function(v) {
-        if (!length(v)) numeric(0) else rep(1 / length(v), length(v))
+        if (length(v)) rep(1 / length(v), length(v)) else numeric(0)
       }),
       use.names = FALSE
     )
   } else {
     rep(1, sum(lengths(nb)))
   }
-  len <- lengths(nb)
-  start <- c(0L, cumsum(len)[-n])
-  idx <- as.integer(unlist(nb, use.names = FALSE)) - 1L
-  if (!length(idx)) {
-    stop("`nbrs` gives no area any neighbour", call. = FALSE)
-  }
-  r <- .Call(
-    C_rmbl_morans_i,
-    x,
-    idx,
-    as.integer(start),
-    as.integer(len),
-    as.numeric(wts),
-    as.integer(nperm),
-    NULL
-  )
+}
+
+#' The morani() result from the native statistic and its permutation null.
+#' @param r The native result (I, null, W).
+#' @param n The number of areas.
+#' @param style The weight style.
+#' @return As for morani().
+#' @noRd
+.rmbl_moran_result <- function(r, n, style) {
   null <- r$null
   null <- null[is.finite(null)]
   expectation <- -1 / (n - 1)
@@ -668,57 +942,52 @@ morani <- function(x, nbrs, style = c("W", "B"), nperm = 9999L) {
   )
 }
 
-#' A neighbour list, from a list or from a weight matrix.
-#' @param neighbours A list of neighbour indices or an n by n weight matrix.
-#' @param n The number of areas.
-#' @return A list of neighbour indices, one element per area; from a matrix it
-#'   carries the weights in its `weights` attribute.
+#' The permutation null of a morani() result, as one fact.
+#' @param x A morani() result.
+#' @return One string.
 #' @noRd
-.rmbl_neighbours <- function(neighbours, n) {
-  if (is.matrix(neighbours)) {
-    if (nrow(neighbours) != n || ncol(neighbours) != n) {
-      stop(sprintf("a weight matrix must be %d by %d", n, n), call. = FALSE)
-    }
-    if (anyNA(neighbours) || any(!is.finite(neighbours))) {
-      stop("a weight matrix must be finite", call. = FALSE)
-    }
-    nb <- lapply(seq_len(n), function(i) {
-      j <- which(neighbours[i, ] != 0)
-      j[j != i] # an area is not its own neighbour
-    })
-    # the magnitudes travel with the indices
-    attr(nb, "weights") <- lapply(seq_len(n), function(i) {
-      as.numeric(neighbours[i, nb[[i]]])
-    })
-    return(nb)
+.rmbl_moran_null <- function(x) {
+  if (!length(x$nullmean) || is.na(x$nullmean)) {
+    return("none (no permutations)")
   }
-  if (!is.list(neighbours)) {
-    stop(
-      "`neighbours` must be a list of neighbour indices or a weight matrix",
-      call. = FALSE
+  sprintf(
+    "mean %s, sd %s",
+    .rmbl_fmt_num(x$nullmean),
+    .rmbl_fmt_num(x$nullsd)
+  )
+}
+
+#' What a morani() result says, in words, at the 5% level.
+#' @param x The morani() result to read.
+#' @return One string.
+#' @noRd
+.rmbl_moran_reading <- function(x) {
+  p <- x$p_value
+  if (!length(p) || is.na(p)) {
+    return("With no permutations there is no p-value to judge the pattern by.")
+  }
+  pt <- paste0("(p ", .rmbl_p_txt(p), "):")
+  if (p >= 0.05) {
+    return(paste(
+      "No clear spatial pattern",
+      pt,
+      "neighbouring areas are no more alike, or unlike, than a random",
+      "arrangement of the same values would make them."
+    ))
+  }
+  if (x$I > x$expectation) {
+    paste(
+      "Clustered",
+      pt,
+      "neighbouring areas have more similar values than a random",
+      "arrangement of the same values would give."
+    )
+  } else {
+    paste(
+      "Dispersed",
+      pt,
+      "neighbouring areas differ more than a random arrangement would",
+      "give, like a checkerboard."
     )
   }
-  if (length(neighbours) != n) {
-    stop(
-      sprintf(
-        "`neighbours` has %d entries for %d areas",
-        length(neighbours),
-        n
-      ),
-      call. = FALSE
-    )
-  }
-  lapply(seq_along(neighbours), function(i) {
-    v <- as.integer(neighbours[[i]])
-    v <- v[!is.na(v)]
-    if (length(v) && (any(v < 1L) || any(v > n))) {
-      stop(
-        sprintf("area %d names a neighbour outside 1..%d", i, n),
-        call. = FALSE
-      )
-    }
-    # an area is not its own neighbour; keeping it would put the
-    # variable's own value on both sides of every product
-    v[v != i]
-  })
 }

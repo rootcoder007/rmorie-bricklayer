@@ -140,12 +140,12 @@ test_that("the URL gate canonicalises instead of matching spellings", {
   )
   for (u in bad) {
     expect_error(
-      rmoriebricklayer:::.rmbl_check_public_url(u),
+      .rmbl_check_public_url(u),
       "local|private|refused",
       label = u
     )
   }
-  chk <- rmoriebricklayer:::.rmbl_check_public_url
+  chk <- .rmbl_check_public_url
   expect_identical(
     chk("https://data.ontario.ca/x.csv"),
     "https://data.ontario.ca/x.csv"
@@ -155,20 +155,20 @@ test_that("the URL gate canonicalises instead of matching spellings", {
     "https://DATA.ontario.ca:443/x"
   )
   expect_error(
-    rmoriebricklayer:::.rmbl_check_public_url(
+    .rmbl_check_public_url(
       "https://data.ontario.ca:99999/x"
     ),
     "port"
   )
   why <- function(h) {
-    rmoriebricklayer:::.rmbl_url_why(paste0("https://", h, "/"))
+    .rmbl_url_why(paste0("https://", h, "/"))
   }
   expect_true(nzchar(why("0x7f000001")))
   expect_true(nzchar(why("[::ffff:127.0.0.1]")))
   expect_false(nzchar(why("data.ontario.ca")))
   # the name resolves to loopback: refused when resolving, whatever it is called
   expect_error(
-    rmoriebricklayer:::.rmbl_check_public_url(
+    .rmbl_check_public_url(
       "https://localhost./x",
       resolve = TRUE
     ),
@@ -184,7 +184,11 @@ cap <- function() {
   dir.create(d, recursive = TRUE)
   f <- file.path(d, "data.csv")
   utils::write.csv(
-    data.frame(region = c("A", "B"), count = c(10, 20)),
+    data.frame(
+      region = c("A", "B"),
+      count = c(10, 20),
+      stringsAsFactors = FALSE
+    ),
     f,
     row.names = FALSE
   )
@@ -203,7 +207,11 @@ test_that("vrfcps contains the provenance path like every other path", {
   out <- file.path(dirname(cp$dir), "out")
   dir.create(out)
   utils::write.csv(
-    data.frame(region = c("A", "B"), count = c(10, 999)),
+    data.frame(
+      region = c("A", "B"),
+      count = c(10, 999),
+      stringsAsFactors = FALSE
+    ),
     cp$file,
     row.names = FALSE
   )
@@ -294,9 +302,14 @@ test_that(
     "in-process"
   ),
   {
-    st <- rmoriebricklayer:::.rmbl_synth_state
+    st <- .rmbl_synth_state
     old <- st$made
-    on.exit(st$made <- old, add = TRUE)
+    on.exit(
+      {
+        st$made <- old
+      },
+      add = TRUE
+    )
     st$made <- FALSE
     x <- mnfdgst(list(meta = list(dataset = "x"), results = list()))
     y <- mnfdgst(mkmnf(list(dataset = "x"), env = FALSE))
@@ -332,7 +345,9 @@ test_that(
   ),
   {
     txt <- paste0('["', strrep("\\n", 65536L), '"]')
-    t <- system.time(v <- fromjs(txt))[["elapsed"]]
+    t <- system.time({
+      v <- fromjs(txt)
+    })[["elapsed"]]
     expect_identical(nchar(v), 65536L)
     expect_lt(t, wall_limit(5))
     expect_error(fromjs('{"a":"\\ud83d"}'), "surrogate")
@@ -360,12 +375,12 @@ test_that(
     expect_warning(fromjs("[9007199254740993.0]"), "beyond 2\\^53")
     expect_warning(fromjs("[9.007199254740993e15]"), "beyond 2\\^53")
     expect_silent(fromjs("[9007199254740993.0]", bigint_warn = FALSE))
-    expect_silent(rmoriebricklayer:::.rmbl_read_json(
+    expect_silent(.rmbl_read_json(
       '{"id":9007199254740993,"a":1,"a":2}',
       strict = FALSE
     ))
     expect_error(
-      rmoriebricklayer:::.rmbl_read_json('{"a":1,"a":2}'),
+      .rmbl_read_json('{"a":1,"a":2}'),
       "duplicate key"
     )
   }
@@ -378,23 +393,42 @@ test_that(
   ),
   {
     set.seed(10)
-    a <- data.frame(id = as.character(sample(5000, 2000, TRUE)))
-    b <- data.frame(id = as.character(sample(5000, 2000, TRUE)))
+    a <- data.frame(
+      id = as.character(sample(5000, 2000, TRUE)),
+      stringsAsFactors = FALSE
+    )
+    b <- data.frame(
+      id = as.character(sample(5000, 2000, TRUE)),
+      stringsAsFactors = FALSE
+    )
     d <- cpsdrft(a, b, alpha = 0.01)
     expect_identical(d$columns$type, "identifier")
     expect_true(is.na(d$columns$drifted))
     expect_false(d$anydrft)
-    expect_true(d$columns$unseen_share > 0.3 && d$columns$unseen_share < 0.8)
+    expect_gt(d$columns$unseen_share, 0.3)
+    expect_lt(d$columns$unseen_share, 0.8)
     set.seed(11)
     fp <- 0L
     for (i in 1:20) {
-      a <- data.frame(g = as.character(sample(50, 2000, TRUE)))
-      b <- data.frame(g = as.character(sample(50, 2000, TRUE)))
+      a <- data.frame(
+        g = as.character(sample(50, 2000, TRUE)),
+        stringsAsFactors = FALSE
+      )
+      b <- data.frame(
+        g = as.character(sample(50, 2000, TRUE)),
+        stringsAsFactors = FALSE
+      )
       fp <- fp + isTRUE(cpsdrft(a, b, alpha = 0.01)$columns$drifted)
     }
     expect_lte(fp, 2L)
-    ref <- data.frame(day = as.character(as.Date("2020-01-01") + 1:400))
-    cur <- data.frame(day = as.character(as.Date("2024-06-01") + 1:400))
+    ref <- data.frame(
+      day = as.character(as.Date("2020-01-01") + 1:400),
+      stringsAsFactors = FALSE
+    )
+    cur <- data.frame(
+      day = as.character(as.Date("2024-06-01") + 1:400),
+      stringsAsFactors = FALSE
+    )
     dd <- cpsdrft(ref, cur)
     expect_identical(dd$columns$type, "date")
     expect_true(dd$columns$drifted)
@@ -437,7 +471,8 @@ test_that("chi-square sites carry the log p-value past the double's floor", {
   expect_lt(b$logpvalue, -100)
   expect_equal(
     exp(drftchisq(c(a = 60, b = 40), c(a = 50, b = 50))[["logpvalue"]]),
-    drftchisq(c(a = 60, b = 40), c(a = 50, b = 50))[["p_value"]]
+    drftchisq(c(a = 60, b = 40), c(a = 50, b = 50))[["p_value"]],
+    tolerance = testthat::testthat_tolerance()
   )
 })
 
@@ -446,7 +481,7 @@ test_that("cramerv drops an unused level instead of returning NaN", {
   expect_false(is.nan(cv$v))
   expect_identical(cv$df, 1L)
   expect_match(cv$method, "dropped")
-  expect_equal(cv$v, cramerv(matrix(c(5, 3, 4, 6), nrow = 2))$v)
+  expect_identical(cv$v, cramerv(matrix(c(5, 3, 4, 6), nrow = 2))$v)
 })
 
 test_that(
@@ -459,7 +494,7 @@ test_that(
     expect_error(ginicoef(rep(0, 5)), "every value is zero")
     expect_error(topshr(numeric(0), 0.1), "no values")
     expect_error(hilltlidx(numeric(0)), "no positive")
-    expect_equal(ginicoef(c(1, 1, 1, 1)), 0)
+    expect_identical(as.numeric(ginicoef(c(1, 1, 1, 1))), 0)
   }
 )
 
@@ -482,12 +517,12 @@ test_that(
       "less than 0.5",
       "under 0"
     ))
-    expect_equal(p$lower[1:3], c(18, 0, 5))
-    expect_equal(p$upper[1:3], c(24, 5, 9))
+    expect_identical(p$lower[1:3], c(18, 0, 5))
+    expect_identical(p$upper[1:3], c(24, 5, 9))
     expect_true(all(is.na(p$lower[4:7])))
     expect_true(all(is.na(p$upper[4:7])))
-    expect_equal(c(p$lower[8], p$upper[8]), c(1000, 2499))
-    expect_equal(c(p$lower[9], p$upper[9]), c(18, 24))
+    expect_identical(c(p$lower[8], p$upper[8]), c(1000, 2499))
+    expect_identical(c(p$lower[9], p$upper[9]), c(18, 24))
     # a decimal label is on a decimal scale: "less than 0.5" is below 0.5, not
     # at most -0.5
     expect_equal(p$upper[10], 0.5)
@@ -542,10 +577,10 @@ test_that(
   ),
   {
     expect_equal(hurwzeta(0, 1), -0.5)
-    expect_equal(hurwzeta(-1, 1), -1 / 12)
-    expect_equal(hurwzeta(-2, 1), 0)
+    expect_identical(hurwzeta(-1, 1), -1 / 12)
+    expect_identical(hurwzeta(-2, 1), 0)
     counts <- .Call(C("C_rmbl_first_digit_counts"), c(1e-310, 2e-300, 7e120))
-    expect_equal(counts, c(1, 1, 0, 0, 0, 0, 1, 0, 0))
+    expect_identical(counts, c(1, 1, 0, 0, 0, 0, 1, 0, 0))
   }
 )
 
@@ -557,8 +592,8 @@ test_that(
   {
     set.seed(5)
     x <- stats::rpois(5000, 3)
-    expect_equal(drftpsi(x, x + 1e-12)[["psi"]], 0)
-    expect_equal(drftpsi(x, x - 1e-12)[["psi"]], 0)
+    expect_identical(drftpsi(x, x + 1e-12)[["psi"]], 0)
+    expect_identical(drftpsi(x, x - 1e-12)[["psi"]], 0)
     expect_error(drftpsi(x, x, eps = 0), "eps")
     expect_error(drftpsi(x, x, eps = -1), "eps")
   }

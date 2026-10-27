@@ -15,7 +15,7 @@ yoysmry(object, ...)
 \arguments{
 \item{object}{An \code{rmbl_yoy} object returned by \code{\link{yoy}}.}
 
-\item{...}{Ignored.}
+\item{...}{Further arguments for methods; not used.}
 }
 \value{
 A data frame with one row per series or group and columns: the
@@ -36,9 +36,14 @@ report the whole span of a series in one line next to the detailed table.
 }
 \details{
 Rows whose \code{value} is missing are dropped before the summary,
-and the remaining rows are sorted by period. With \eqn{v_1} the first and
-\eqn{v_T} the last observed value, the total change is \deqn{100 (v_T / v_1 -
-1)} and, with \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
+and the remaining rows are sorted by period, text periods in the order
+\code{yoy()} read them (its \code{prd} and \code{prdord}). Periods with no
+order (text \code{yoy()} could not read, an unordered factor) have no first
+or last: \code{from}, \code{to}, \code{first}, \code{last}, \code{totalpct}
+and \code{cagrpct} are then \code{NA}, with a warning saying why. With
+\eqn{v_1} the first and \eqn{v_T} the last observed value, the total
+change is \deqn{100 (v_T / v_1 - 1)} and, with
+\eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
 \deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).} Both are \code{NA} when
 \eqn{v_1 \le 0}, because a growth rate out of zero does not exist;
 \code{cagrpct} is also \code{NA} for a single period. \code{"Annual"} in CAGR

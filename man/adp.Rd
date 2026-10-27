@@ -17,7 +17,12 @@ positive. Default \code{365}. A vector of several values is refused.
 }
 \value{
 A numeric scalar: person-days per day, that is the average number
-of people held on any one day of the period.
+of people held on any one day of the period. It has class
+\code{c("rmbl_adp", "rmbl_measure", "numeric")} and an attribute
+\code{"lakner"} (the total days and \code{t}), so it prints as a box
+with its inputs, formula and caveats; arithmetic, \code{round()},
+\code{sum()}, \code{mean()}, \code{[}, \code{c()} and
+\code{as.numeric()} give a plain number.
 }
 \description{
 The mean number of person-days served per day over a period: a

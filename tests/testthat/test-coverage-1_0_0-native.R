@@ -72,7 +72,7 @@ test_that(
         tolerance = 1e-14
       )
     }
-    expect_equal(.Call(C_rmbl_hurwitz_zeta, -1, 1), -1 / 12)
+    expect_identical(.Call(C_rmbl_hurwitz_zeta, -1, 1), -1 / 12)
     expect_true(is.na(.Call(C_rmbl_hurwitz_zeta, 0.5, 1)))
     expect_true(is.na(.Call(C_rmbl_hurwitz_zeta, -0.5, 1)))
     expect_true(is.na(.Call(C_rmbl_hurwitz_zeta, 2, -1)))
@@ -85,19 +85,20 @@ test_that(
     "zero total"
   ),
   {
-    # reaches C_rmbl_top_share_impl's NA share and NA count
-    # (src/rmbl_series.cpp)
+    # reaches C_rmbl_top_share_impl's NA
+    # share and NA count (src/rmbl_series.cpp)
     r <- .Call(C_rmbl_top_share, c(1, 2, 3), c(0.5, NA, -0.1, 1.5))
-    expect_equal(r[[1]], c(5 / 6, NA, NA, NA))
+    expect_identical(r[[1]], c(5 / 6, NA, NA, NA))
     expect_identical(r[[2]], c(2L, NA, NA, NA))
     z <- .Call(C_rmbl_top_share, c(0, 0), 0.5)
-    expect_true(is.na(z[[1]]) && is.na(z[[2]]))
+    expect_true(is.na(z[[1]]))
+    expect_true(is.na(z[[2]]))
   }
 )
 
 test_that("the native mean of values whose sum overflows is the running mean", {
-  # reaches morie::core::mean's fall back to mean_running when the sum is not
-  # finite (src/morie_core.h)
+  # reaches morie::core::mean's fall back to mean_running when the
+  # sum is not finite (src/morie_core.h)
   expect_identical(.Call(C_rmbl_mean, c(1e308, 1e308, 1e308)), 1e308)
   expect_equal(.Call(C_rmbl_mean, c(1.5e308, 1.7e308)), 1.6e308)
 })
@@ -117,7 +118,7 @@ test_that(
     # list cannot be coerced) unwinds the barrier, which puts its depth and flag
     # back
     expect_error(.Call(C_rmbl_cor, list(1:2), 1), "cannot be coerced")
-    expect_equal(
+    expect_identical(
       .Call(C_rmbl_cor, c(1, 2, 3), c(2, 4, 7)),
       stats::cor(c(1, 2, 3), c(2, 4, 7))
     )
@@ -202,8 +203,8 @@ test_that(
 )
 
 test_that("XMSS verification refuses a leaf index past the tree", {
-  # reaches C_rmbl_xmss_verify_impl's refusal of an index of 2^h or more
-  # (src/rmbl_pqc.cpp)
+  # reaches C_rmbl_xmss_verify_impl's refusal of an index
+  # of 2^h or more (src/rmbl_pqc.cpp)
   h <- function(n) strrep("00", n)
   expect_false(.Call(
     C_rmbl_xmss_verify,

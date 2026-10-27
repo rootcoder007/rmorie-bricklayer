@@ -298,6 +298,7 @@ reference:
       - tsvrf
       - certprs
       - certchnvrf
+      - idcrd
       - rvkfetch
       - cpssign
       - xmssadv
@@ -516,7 +517,7 @@ reference:
       - wcb
       - tse
       - plnpwr
-  - title: First Nations, Metis and Inuit health
+  - title: First Nations, Métis and Inuit health
     desc: >
       Statistics Canada tables read as published (suppressed cells never imputed),
       distinctions-based comparisons, age-standardised rates, intergenerational
@@ -536,7 +537,7 @@ reference:
       - trchlthgap
       - indtabs
       - indiex
-  - title: First Nations, Metis and Inuit mental health and wellness
+  - title: First Nations, Métis and Inuit mental health and wellness
     desc: >
       Survey estimates taken out of a table with their limits, rated scales compared
       as whole distributions, age-standardised percentages, and wellness reported

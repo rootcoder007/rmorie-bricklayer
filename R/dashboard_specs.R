@@ -109,6 +109,27 @@
 #'   (and linked, extra).
 #' @noRd
 .bl_app_specs <- function() {
+  k <- .bl_app_kit()
+  list(
+    .bl_app_tab_describe(k),
+    .bl_app_tab_yoy(k),
+    .bl_app_tab_rates(k),
+    .bl_app_tab_trends(k),
+    .bl_app_tab_survey(k),
+    .bl_app_tab_dist(k),
+    .bl_app_tab_policy(k),
+    .bl_app_tab_drift(k),
+    .bl_app_tab_fnmi(k),
+    .bl_app_tab_justice(k),
+    .bl_app_tab_air(k),
+    .bl_app_tab_hawkes(k)
+  )
+}
+
+#' The controls and demo data the dashboard's tabs share, part one.
+#' @return A named list.
+#' @noRd
+.bl_app_kit_base <- function() {
   D <- .ua("data", pos = TRUE)
   X <- .ua("data")
   col <- function(lab, def = NULL) .ua("col", label = lab, default = def)
@@ -138,37 +159,173 @@
     time = col("Period", "month"),
     y = col("Outcome", c("delay", "crmrate"))
   )
-  panel <- function(fn, out, ..., trt = "trtd", cl = TRUE) {
-    a <- c(list(data = D), pan, list(...))
-    a[[trt]] <- if (trt == "trtd") {
-      col("Treated (0/1)", "reformed")
-    } else {
-      col("First period treated", "refmonth")
-    }
-    if (cl) {
-      a$cl <- col("Cluster", "")
-    }
-    do.call(.us, c(list(fn, out), a))
-  }
-  ind <- list(
-    grp = col("Group", "group"),
-    est = col("Estimate", "estimate"),
-    lower = col("Lower", "lower"),
-    upper = col("Upper", "upper")
-  )
-  q <- list(qual = col("Quality flag", "quality"))
-  # the series a trend test reads, drawn as it is
-  series <- .us(
-    "plotsm",
-    "plot",
-    y = vec("Value", "n"),
-    prd = .ua("vec", label = "Period", default = "year", input = "x")
-  )
-  ser1 <- .ux(
-    "offences_annual",
-    "stats::aggregate(cbind(n, pop) ~ year, d, sum)"
-  )
   list(
+    D = D,
+    X = X,
+    col = col,
+    vec = vec,
+    num = num,
+    ch = ch,
+    seed = seed,
+    yoyex = yoyex,
+    ext = ext,
+    pan = pan
+  )
+}
+
+#' The controls the dashboard's tabs share, part two: built on part one.
+#' @param k Part one, from .bl_app_kit_base().
+#' @return A named list.
+#' @noRd
+.bl_app_kit_more <- function(k) {
+  with(k, {
+    panel <- function(fn, out, ..., trt = "trtd", cl = TRUE) {
+      a <- c(list(data = D), pan, list(...))
+      a[[trt]] <- if (trt == "trtd") {
+        col("Treated (0/1)", "reformed")
+      } else {
+        col("First period treated", "refmonth")
+      }
+      if (cl) {
+        a$cl <- col("Cluster", "")
+      }
+      do.call(.us, c(list(fn, out), a))
+    }
+    ind <- list(
+      grp = col("Group", "group"),
+      est = col("Estimate", "estimate"),
+      lower = col("Lower", "lower"),
+      upper = col("Upper", "upper")
+    )
+    q <- list(qual = col("Quality flag", "quality"))
+    # the series a trend test reads, drawn as it is
+    series <- .us(
+      "plotsm",
+      "plot",
+      y = vec("Value", "n"),
+      prd = .ua("vec", label = "Period", default = "year", input = "x")
+    )
+    ser1 <- .ux(
+      "offences_annual",
+      "stats::aggregate(cbind(n, pop) ~ year, d, sum)"
+    )
+
+    list(panel = panel, ind = ind, q = q, series = series, ser1 = ser1)
+  })
+}
+
+#' The controls and demo data the dashboard's tabs share.
+#' @return A named list.
+#' @noRd
+.bl_app_kit <- function() {
+  k <- .bl_app_kit_base()
+  c(k, .bl_app_kit_more(k))
+}
+
+#' The analyses of the "describe" tab, part 1.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_describe1 <- function(k) {
+  with(
+    k,
+    list(
+      profcols = .uf(
+        "Profile every column (profcols)",
+        list(.us("profcols", "prof", data = D)),
+        plot = FALSE
+      ),
+      freqtbl = .uf(
+        "Frequency table (freqtbl)",
+        list(.us(
+          "freqtbl",
+          "ft",
+          data = D,
+          col = col("Column", c("stratum", "Month"))
+        ))
+      ),
+      cortbl = .uf(
+        "Correlations (cortbl)",
+        list(.us(
+          "cortbl",
+          "ct",
+          data = D,
+          meth = ch("Method", c("spearman", "pearson"))
+        ))
+      ),
+      mahaoutl = .uf(
+        "Outlying rows (mahaoutl)",
+        list(.us(
+          "mahaoutl",
+          "out",
+          data = D,
+          alpha = num("Alpha", 0.001),
+          robust = .ua("flag", label = "Robust", default = TRUE)
+        )),
+        assume = paste0(
+          "The numeric columns are roughly elliptical (multivariate ",
+          "normal in the bulk)."
+        )
+      )
+    )
+  )
+}
+
+#' The analyses of the "describe" tab, part 2.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_describe2 <- function(k) {
+  with(
+    k,
+    list(
+      missgrid = .uf(
+        "Missingness grid (missgrid)",
+        list(.us("missgrid", "mg", data = D)),
+        plot = FALSE
+      ),
+      plotrdg = .ufp(
+        "Ridgeline by group (plotrdg)",
+        "plotrdg",
+        x = vec("Value", c("age", "Ozone")),
+        grp = vec("Group", c("stratum", "Month"))
+      ),
+      plotecdf = .ufp(
+        "Distribution functions by group (plotecdf)",
+        "plotecdf",
+        x = vec("Value", c("income", "Ozone")),
+        grp = vec("Group", c("stratum", "Month"))
+      ),
+      plotvln = .ufp(
+        "Violins by group (plotvln)",
+        "plotvln",
+        x = vec("Value", c("drinks", "Ozone")),
+        grp = vec("Group", c("stratum", "Month"))
+      ),
+      plothex = .ufp(
+        "Two columns in hexagons (plothex)",
+        "plothex",
+        x = vec("x", c("age", "Temp")),
+        y = vec("y", c("income", "Wind")),
+        bins = num("Hexagons across", 30)
+      ),
+      plotgain = .ufp(
+        "Concentration curves (plotgain)",
+        "plotgain",
+        x = vec("Value", c("income", "Ozone")),
+        grp = vec("Group", c("stratum", "Month"))
+      )
+    )
+  )
+}
+
+#' The dashboard's "describe" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_describe <- function(k) {
+  with(
+    k,
     list(
       id = "describe",
       title = "Describe",
@@ -188,82 +345,18 @@
         "Demo: court caseload panel (rmbldemo)" = .ux("court"),
         "Example: airquality" = "datasets::airquality"
       ),
-      fns = list(
-        profcols = .uf(
-          "Profile every column (profcols)",
-          list(.us("profcols", "prof", data = D)),
-          plot = FALSE
-        ),
-        freqtbl = .uf(
-          "Frequency table (freqtbl)",
-          list(.us(
-            "freqtbl",
-            "ft",
-            data = D,
-            col = col("Column", c("stratum", "Month"))
-          ))
-        ),
-        cortbl = .uf(
-          "Correlations (cortbl)",
-          list(.us(
-            "cortbl",
-            "ct",
-            data = D,
-            meth = ch("Method", c("spearman", "pearson"))
-          ))
-        ),
-        mahaoutl = .uf(
-          "Outlying rows (mahaoutl)",
-          list(.us(
-            "mahaoutl",
-            "out",
-            data = D,
-            alpha = num("Alpha", 0.001),
-            robust = .ua("flag", label = "Robust", default = TRUE)
-          )),
-          assume = paste0(
-            "The numeric columns are roughly elliptical (multivariate ",
-            "normal in the bulk)."
-          )
-        ),
-        missgrid = .uf(
-          "Missingness grid (missgrid)",
-          list(.us("missgrid", "mg", data = D)),
-          plot = FALSE
-        ),
-        plotrdg = .ufp(
-          "Ridgeline by group (plotrdg)",
-          "plotrdg",
-          x = vec("Value", c("age", "Ozone")),
-          grp = vec("Group", c("stratum", "Month"))
-        ),
-        plotecdf = .ufp(
-          "Distribution functions by group (plotecdf)",
-          "plotecdf",
-          x = vec("Value", c("income", "Ozone")),
-          grp = vec("Group", c("stratum", "Month"))
-        ),
-        plotvln = .ufp(
-          "Violins by group (plotvln)",
-          "plotvln",
-          x = vec("Value", c("drinks", "Ozone")),
-          grp = vec("Group", c("stratum", "Month"))
-        ),
-        plothex = .ufp(
-          "Two columns in hexagons (plothex)",
-          "plothex",
-          x = vec("x", c("age", "Temp")),
-          y = vec("y", c("income", "Wind")),
-          bins = num("Hexagons across", 30)
-        ),
-        plotgain = .ufp(
-          "Concentration curves (plotgain)",
-          "plotgain",
-          x = vec("Value", c("income", "Ozone")),
-          grp = vec("Group", c("stratum", "Month"))
-        )
-      )
-    ),
+      fns = c(.bl_app_fns_describe1(k), .bl_app_fns_describe2(k))
+    )
+  )
+}
+
+#' The dashboard's "yoy" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_yoy <- function(k) {
+  with(
+    k,
     list(
       id = "yoy",
       title = "Year over year",
@@ -301,7 +394,66 @@
           diag = list(.ud("The values, not the change", "y", what = "value"))
         ))
       )
-    ),
+    )
+  )
+}
+
+#' The analyses of the "rates" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_rates <- function(k) {
+  with(
+    k,
+    list(
+      rtcalc = .uf(
+        "Rate per population (rtcalc)",
+        list(.us(
+          "rtcalc",
+          "r",
+          x = D,
+          count = col("Count", "n"),
+          pop = col("Population", "pop"),
+          by = .ua("cols", label = "Groups", default = "area"),
+          per = num("Per", 1000),
+          conflvl = num("Confidence level", 0.95)
+        ))
+      ),
+      ratechg = .uf(
+        "Change in a rate (ratechg)",
+        list(.us(
+          "ratechg",
+          "rc",
+          x = D,
+          count = col("Count", "n"),
+          pop = col("Population", "pop"),
+          prd = col("Period", "year"),
+          by = .ua("cols", label = "Groups", default = "area"),
+          per = num("Per", 1000)
+        )),
+        hover = "prd"
+      ),
+      shrs = .uf(
+        "Shares of a total (shrs)",
+        list(.us(
+          "shrs",
+          "s",
+          x = D,
+          count = col("Count", "n"),
+          by = .ua("cols", label = "Groups", default = "area")
+        ))
+      )
+    )
+  )
+}
+
+#' The dashboard's "rates" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_rates <- function(k) {
+  with(
+    k,
     list(
       id = "rates",
       title = "Rates",
@@ -323,46 +475,133 @@
         ),
         "Example: counts by area" = yoyex
       ),
-      fns = list(
-        rtcalc = .uf(
-          "Rate per population (rtcalc)",
-          list(.us(
-            "rtcalc",
-            "r",
-            x = D,
-            count = col("Count", "n"),
-            pop = col("Population", "pop"),
-            by = .ua("cols", label = "Groups", default = "area"),
-            per = num("Per", 1000),
-            conflvl = num("Confidence level", 0.95)
-          ))
-        ),
-        ratechg = .uf(
-          "Change in a rate (ratechg)",
-          list(.us(
-            "ratechg",
-            "rc",
-            x = D,
-            count = col("Count", "n"),
-            pop = col("Population", "pop"),
-            prd = col("Period", "year"),
-            by = .ua("cols", label = "Groups", default = "area"),
-            per = num("Per", 1000)
-          )),
-          hover = "prd"
-        ),
-        shrs = .uf(
-          "Shares of a total (shrs)",
-          list(.us(
-            "shrs",
-            "s",
-            x = D,
-            count = col("Count", "n"),
-            by = .ua("cols", label = "Groups", default = "area")
-          ))
+      fns = .bl_app_fns_rates(k)
+    )
+  )
+}
+
+#' The `sources` of the dashboard's "trends" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return As the tab's `sources`.
+#' @noRd
+.bl_app_sources_trends <- function(k) {
+  with(
+    k,
+    c(
+      "Demo: offences per year, all areas (rmbldemo)" = ser1,
+      "Demo: offences by area and year (rmbldemo)" = .ux("offences_annual"),
+      "Example: a step in a series" = paste0(
+        "data.frame(year = 2014:2023, n = c(100, 104, 98, 101, ",
+        "97, 60, 63, 58, 61, 59))"
+      ),
+      "Example: a daily series" = paste0(
+        "local({ set.seed(1); d <- seq(as.Date(\"2024-01-01\"), ",
+        "as.Date(\"2024-12-31\"), by = \"day\"); data.frame(day = d, ",
+        "n = stats::rpois(length(d), 5)) })"
+      )
+    )
+  )
+}
+
+#' The analyses of the "trends" tab, part 1.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_trends1 <- function(k) {
+  with(
+    k,
+    list(
+      trndtst = list(
+        label = "Mann-Kendall and Theil-Sen (trndtst)",
+        steps = list(.us(
+          "trndtst",
+          "mk",
+          y = vec("Value", "n"),
+          x = vec("Period", "year"),
+          alt = ch("Alternative", c("two.sided", "increasing", "decreasing"))
+        )),
+        plot = series
+      ),
+      stepchg = list(
+        label = "Step change (stepchg)",
+        steps = list(.us(
+          "stepchg",
+          "st",
+          y = vec("Value", "n"),
+          x = vec("Period", "year"),
+          nperm = num("Permutations", 9999),
+          seed = seed
+        )),
+        plot = series,
+        long = TRUE,
+        assume = paste0(
+          "At most one step; the permutation test assumes the values ",
+          "are exchangeable with no step."
         )
       )
-    ),
+    )
+  )
+}
+
+#' The analyses of the "trends" tab, part 2.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_trends2 <- function(k) {
+  with(
+    k,
+    list(
+      cnttrnd = .uf(
+        "Trend in counts (cnttrnd)",
+        list(.us(
+          "cnttrnd",
+          "ct",
+          y = vec("Count", "n"),
+          x = vec("Period", "year")
+        )),
+        assume = paste0(
+          "Counts are Poisson with a log-linear trend; the dispersion ",
+          "check says when they are not."
+        )
+      ),
+      plotcal = .ufp(
+        "Calendar heatmap (plotcal)",
+        "plotcal",
+        x = .ua("date", label = "Day", default = "day"),
+        y = vec("Value", "n")
+      ),
+      plothrz = .ufp(
+        "Horizon chart (plothrz)",
+        "plothrz",
+        y = vec("Value", "n"),
+        prd = vec("Period", "year"),
+        grp = vec("Series", "area")
+      ),
+      plotsm = .ufp(
+        "Small multiples (plotsm)",
+        "plotsm",
+        y = vec("Value", "n"),
+        prd = vec("Period", "year"),
+        grp = vec("Series", "area")
+      ),
+      plotbump = .ufp(
+        "Ranks over time (plotbump)",
+        "plotbump",
+        y = vec("Value", "n"),
+        prd = vec("Period", "year"),
+        grp = vec("Series", "area")
+      )
+    )
+  )
+}
+
+#' The dashboard's "trends" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_trends <- function(k) {
+  with(
+    k,
     list(
       id = "trends",
       title = "Trends",
@@ -376,90 +615,117 @@
         "periods as exchangeable under no",
         "trend, so strong autocorrelation or seasonality inflates them."
       ),
-      sources = c(
-        "Demo: offences per year, all areas (rmbldemo)" = ser1,
-        "Demo: offences by area and year (rmbldemo)" = .ux("offences_annual"),
-        "Example: a step in a series" = paste0(
-          "data.frame(year = 2014:2023, n = c(100, 104, 98, 101, ",
-          "97, 60, 63, 58, 61, 59))"
-        ),
-        "Example: a daily series" = paste0(
-          "local({ set.seed(1); d <- seq(as.Date(\"2024-01-01\"), ",
-          "as.Date(\"2024-12-31\"), by = \"day\"); data.frame(day = d, ",
-          "n = stats::rpois(length(d), 5)) })"
-        )
-      ),
-      fns = list(
-        trndtst = list(
-          label = "Mann-Kendall and Theil-Sen (trndtst)",
-          steps = list(.us(
-            "trndtst",
-            "mk",
-            y = vec("Value", "n"),
-            x = vec("Period", "year"),
-            alt = ch("Alternative", c("two.sided", "increasing", "decreasing"))
-          )),
-          plot = series
-        ),
-        stepchg = list(
-          label = "Step change (stepchg)",
-          steps = list(.us(
-            "stepchg",
-            "st",
-            y = vec("Value", "n"),
-            x = vec("Period", "year"),
-            nperm = num("Permutations", 9999),
-            seed = seed
-          )),
-          plot = series,
-          long = TRUE,
-          assume = paste0(
-            "At most one step; the permutation test assumes the values ",
-            "are exchangeable with no step."
+      sources = .bl_app_sources_trends(k),
+      fns = c(.bl_app_fns_trends1(k), .bl_app_fns_trends2(k))
+    )
+  )
+}
+
+#' The analyses of the "survey" tab, part 1.
+#' @param k The shared controls, from .bl_app_kit().
+#' @param des Shared by these analyses.
+#' @return A named list.
+#' @noRd
+.bl_app_fns_survey1 <- function(k, des) {
+  with(
+    k,
+    list(
+      svyest = .uf(
+        "Estimates with standard errors (svyest)",
+        list(
+          des,
+          .us(
+            "svyest",
+            "est",
+            des = .ua("ref", name = "des"),
+            data = X,
+            y = col("Variable", "drinks"),
+            by = .ua(
+              "cols",
+              label = "Domains",
+              default = c("stratum", "region")
+            ),
+            stat = ch(
+              "Statistic",
+              c("mean", "total", "proportion", "ratio")
+            ),
+            den = col("Denominator (ratio)"),
+            lvls = .ua("texts", label = "Levels (proportion)")
           )
         ),
-        cnttrnd = .uf(
-          "Trend in counts (cnttrnd)",
-          list(.us(
-            "cnttrnd",
-            "ct",
-            y = vec("Count", "n"),
-            x = vec("Period", "year")
-          )),
-          assume = paste0(
-            "Counts are Poisson with a log-linear trend; the dispersion ",
-            "check says when they are not."
-          )
-        ),
-        plotcal = .ufp(
-          "Calendar heatmap (plotcal)",
-          "plotcal",
-          x = .ua("date", label = "Day", default = "day"),
-          y = vec("Value", "n")
-        ),
-        plothrz = .ufp(
-          "Horizon chart (plothrz)",
-          "plothrz",
-          y = vec("Value", "n"),
-          prd = vec("Period", "year"),
-          grp = vec("Series", "area")
-        ),
-        plotsm = .ufp(
-          "Small multiples (plotsm)",
-          "plotsm",
-          y = vec("Value", "n"),
-          prd = vec("Period", "year"),
-          grp = vec("Series", "area")
-        ),
-        plotbump = .ufp(
-          "Ranks over time (plotbump)",
-          "plotbump",
-          y = vec("Value", "n"),
-          prd = vec("Period", "year"),
-          grp = vec("Series", "area")
-        )
+        long = TRUE
       )
-    ),
+    )
+  )
+}
+
+#' The analyses of the "survey" tab, part 2.
+#' @param k The shared controls, from .bl_app_kit().
+#' @param des Shared by these analyses.
+#' @return A named list.
+#' @noRd
+.bl_app_fns_survey2 <- function(k, des) {
+  with(
+    k,
+    list(
+      svycmp = .uf(
+        "Compare domains (svycmp)",
+        list(
+          des,
+          .us(
+            "svycmp",
+            "cmp",
+            des = .ua("ref", name = "des"),
+            data = X,
+            y = col("Variable", "drinks"),
+            by = .ua(
+              "cols",
+              label = "Domains",
+              default = c("stratum", "region")
+            ),
+            stat = ch(
+              "Statistic",
+              c("mean", "total", "proportion", "ratio")
+            ),
+            ref = .ua("text", label = "Reference domain")
+          )
+        ),
+        long = TRUE
+      )
+    )
+  )
+}
+
+#' The analyses of the "survey" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_survey <- function(k) {
+  with(k, {
+    des <- .us(
+      "svydes",
+      "des",
+      data = D,
+      w = col("Weight", "w"),
+      strata = col("Strata", "stratum"),
+      psu = col("Clusters", "psu"),
+      reps = .ua("mat", label = "Replicate weights"),
+      type = ch(
+        "Replicate type",
+        c("bootstrap", "meanboot", "jk1", "jkn", "brr", "fay")
+      )
+    )
+    c(.bl_app_fns_survey1(k, des), .bl_app_fns_survey2(k, des))
+  })
+}
+
+#' The dashboard's "survey" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_survey <- function(k) {
+  with(
+    k,
     list(
       id = "survey",
       title = "Survey",
@@ -485,73 +751,90 @@
           "drinks = stats::rpois(150, 3), w = stats::runif(150, 50, 150)) })"
         )
       ),
-      fns = local({
-        des <- .us(
-          "svydes",
-          "des",
-          data = D,
-          w = col("Weight", "w"),
-          strata = col("Strata", "stratum"),
-          psu = col("Clusters", "psu"),
-          reps = .ua("mat", label = "Replicate weights"),
-          type = ch(
-            "Replicate type",
-            c("bootstrap", "meanboot", "jk1", "jkn", "brr", "fay")
-          )
+      fns = .bl_app_fns_survey(k)
+    )
+  )
+}
+
+#' The analyses of the "dist" tab, part 1.
+#' @param k The shared controls, from .bl_app_kit().
+#' @param fit Shared by these analyses.
+#' @return A named list.
+#' @noRd
+.bl_app_fns_dist1 <- function(k, fit) {
+  with(
+    k,
+    list(
+      dstfit = .uf(
+        "Fit and rank (dstfit)",
+        list(fit),
+        which = ch("View", c("density", "qq", "pp", "tail")),
+        long = TRUE,
+        diag = list(
+          .ud("QQ plot of the best fits", "fit", which = "qq"),
+          .ud("PP plot", "fit", which = "pp"),
+          .ud("The upper tail", "fit", which = "tail")
         )
-        list(
-          svyest = .uf(
-            "Estimates with standard errors (svyest)",
-            list(
-              des,
-              .us(
-                "svyest",
-                "est",
-                des = .ua("ref", name = "des"),
-                data = X,
-                y = col("Variable", "drinks"),
-                by = .ua(
-                  "cols",
-                  label = "Domains",
-                  default = c("stratum", "region")
-                ),
-                stat = ch(
-                  "Statistic",
-                  c("mean", "total", "proportion", "ratio")
-                ),
-                den = col("Denominator (ratio)"),
-                lvls = .ua("texts", label = "Levels (proportion)")
-              )
+      ),
+      synth = list(
+        label = "A synthetic sample from the best fit (mksyncol)",
+        long = TRUE,
+        about = paste0(
+          "Draws from the first-ranked fit; set the families to draw ",
+          "from another."
+        ),
+        steps = list(
+          fit,
+          .us(
+            "mksyncol",
+            "sim",
+            spec = .ua(
+              "fixed",
+              value = quote(list(type = "fitted", fit = fit))
             ),
-            long = TRUE
-          ),
-          svycmp = .uf(
-            "Compare domains (svycmp)",
-            list(
-              des,
-              .us(
-                "svycmp",
-                "cmp",
-                des = .ua("ref", name = "des"),
-                data = X,
-                y = col("Variable", "drinks"),
-                by = .ua(
-                  "cols",
-                  label = "Domains",
-                  default = c("stratum", "region")
-                ),
-                stat = ch(
-                  "Statistic",
-                  c("mean", "total", "proportion", "ratio")
-                ),
-                ref = .ua("text", label = "Reference domain")
-              )
-            ),
-            long = TRUE
+            n = num("Sample size", 500)
           )
-        )
-      })
-    ),
+        ),
+        plot = .us("plotecdf", "plot", x = .ua("ref", name = "sim")),
+        diag = list(.ud(
+          "QQ plot of the fit drawn from",
+          "fit",
+          which = "qq"
+        ))
+      )
+    )
+  )
+}
+
+#' The analyses of the "dist" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_dist <- function(k) {
+  with(k, {
+    fit <- .us(
+      "dstfit",
+      "fit",
+      x = vec("Variable", c("days", "wait")),
+      fams = .ua(
+        "choices",
+        label = "Families (none: every one the data allow)",
+        choices = names(.dst_fams())
+      ),
+      nboot = num("Bootstrap resamples", 50),
+      seed = seed
+    )
+    c(.bl_app_fns_dist1(k, fit))
+  })
+}
+
+#' The dashboard's "dist" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_dist <- function(k) {
+  with(
+    k,
     list(
       id = "dist",
       title = "Distributions",
@@ -575,60 +858,232 @@
           "ifelse(stats::runif(300) < 0.3, 0, stats::rpois(300, 4))) })"
         )
       ),
-      fns = local({
-        fit <- .us(
-          "dstfit",
-          "fit",
-          x = vec("Variable", c("days", "wait")),
-          fams = .ua(
-            "choices",
-            label = "Families (none: every one the data allow)",
-            choices = names(.dst_fams())
-          ),
-          nboot = num("Bootstrap resamples", 50),
+      fns = .bl_app_fns_dist(k)
+    )
+  )
+}
+
+#' The analyses of the "policy" tab, part 1.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_policy1 <- function(k) {
+  with(
+    k,
+    list(
+      plndid = .uf(
+        "Two-way difference in differences (plndid)",
+        list(panel("plndid", "did")),
+        plot = FALSE
+      ),
+      evstudy = .uf(
+        "Event study with pre-trends (evstudy)",
+        list(panel(
+          "evstudy",
+          "es",
+          trt = "ftreat",
+          leads = num("Leads", 4),
+          lags = num("Lags", 4)
+        ))
+      ),
+      stgatt = .uf(
+        "Staggered adoption (stgatt)",
+        list(panel(
+          "stgatt",
+          "s",
+          trt = "ftreat",
+          ctrl = ch("Controls", c("notyet", "never")),
+          reps = num("Bootstrap", 99),
           seed = seed
+        )),
+        long = TRUE,
+        assume = paste(
+          "Parallel trends for each cohort against its controls (not",
+          "yet or never treated),",
+          "no anticipation."
         )
-        list(
-          dstfit = .uf(
-            "Fit and rank (dstfit)",
-            list(fit),
-            which = ch("View", c("density", "qq", "pp", "tail")),
-            long = TRUE,
-            diag = list(
-              .ud("QQ plot of the best fits", "fit", which = "qq"),
-              .ud("PP plot", "fit", which = "pp"),
-              .ud("The upper tail", "fit", which = "tail")
-            )
+      ),
+      bacondcmp = .uf(
+        "Goodman-Bacon decomposition (bacondcmp)",
+        list(panel("bacondcmp", "b", cl = FALSE))
+      )
+    )
+  )
+}
+
+#' The analyses of the "policy" tab, part 2.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_policy2 <- function(k) {
+  with(
+    k,
+    list(
+      swtdid = .uf(
+        "Switching difference in differences (swtdid)",
+        list(panel("swtdid", "sw", reps = num("Bootstrap", 99), seed = seed)),
+        plot = FALSE,
+        long = TRUE
+      ),
+      perminf = .uf(
+        "Randomisation inference (perminf)",
+        list(panel(
+          "perminf",
+          "ri",
+          trt = "ftreat",
+          reps = num("Permutations", 199),
+          seed = seed
+        )),
+        type = ch("Plot", c("density", "histogram")),
+        long = TRUE,
+        assume = paste0(
+          "Adoption dates are exchangeable across units under no effect ",
+          "(the sharp null)."
+        )
+      ),
+      syndid = .uf(
+        "Synthetic difference in differences (syndid)",
+        list(panel(
+          "syndid",
+          "sd",
+          trt = "ftreat",
+          cl = FALSE,
+          reps = num("Replications", 50),
+          seed = seed
+        )),
+        long = TRUE,
+        assume = paste0(
+          "A weighted mix of controls tracks the treated units before ",
+          "adoption; one adoption date."
+        )
+      )
+    )
+  )
+}
+
+#' The analyses of the "policy" tab, part 3.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_policy3 <- function(k) {
+  with(
+    k,
+    list(
+      mtchdid = .uf(
+        "Matched difference in differences (mtchdid)",
+        list(panel(
+          "mtchdid",
+          "m",
+          trt = "ftreat",
+          cl = FALSE,
+          covs = .ua("cols", label = "Covariates", default = "caseload"),
+          ratio = num("Controls per treated", 1)
+        )),
+        plot = FALSE
+      ),
+      wcb = .uf(
+        "Wild cluster bootstrap (wcb)",
+        list(panel("wcb", "w", reps = num("Bootstrap", 999), seed = seed)),
+        plot = FALSE,
+        long = TRUE,
+        assume = paste0(
+          "Errors independent across clusters; few clusters are fine, ",
+          "that is what it is for."
+        )
+      ),
+      loounit = .uf(
+        "Leave one unit out (loounit)",
+        list(panel("loounit", "loo")),
+        long = TRUE
+      ),
+      cohtrnd = .uf(
+        "Cohort trends (cohtrnd)",
+        list(panel("cohtrnd", "ct", trt = "ftreat", cl = FALSE))
+      )
+    )
+  )
+}
+
+#' The analyses of the "policy" tab, part 4.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_policy4 <- function(k) {
+  with(
+    k,
+    list(
+      plnpwr = .uf(
+        "Power of the design (plnpwr)",
+        list(.us(
+          "plnpwr",
+          "pw",
+          data = D,
+          unit = pan$unit,
+          time = pan$time,
+          y = pan$y,
+          ntrt = num("Treated units", 6),
+          adopt = .ua(
+            "nums",
+            label = "Adoption periods",
+            default = "13, 19, 25, 31"
           ),
-          synth = list(
-            label = "A synthetic sample from the best fit (mksyncol)",
-            long = TRUE,
-            about = paste0(
-              "Draws from the first-ranked fit; set the families to draw ",
-              "from another."
-            ),
-            steps = list(
-              fit,
-              .us(
-                "mksyncol",
-                "sim",
-                spec = .ua(
-                  "fixed",
-                  value = quote(list(type = "fitted", fit = fit))
-                ),
-                n = num("Sample size", 500)
-              )
-            ),
-            plot = .us("plotecdf", "plot", x = .ua("ref", name = "sim")),
-            diag = list(.ud(
-              "QQ plot of the fit drawn from",
-              "fit",
-              which = "qq"
-            ))
+          eff = .ua("nums", label = "Effects", default = "0, 4, 8"),
+          reps = num("Simulations", 40),
+          seed = seed
+        )),
+        long = TRUE
+      ),
+      baltab = .uf(
+        "Covariate balance (baltab)",
+        list(.us(
+          "baltab",
+          "bal",
+          data = D,
+          grp = col("Group (0/1)", "reformed"),
+          covs = .ua(
+            "cols",
+            label = "Covariates",
+            default = c("caseload", "arrrate")
           )
-        )
-      })
-    ),
+        ))
+      )
+    )
+  )
+}
+
+#' The analyses of the "policy" tab, part 5.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_policy5 <- function(k) {
+  with(
+    k,
+    list(
+      tse = .uf(
+        "Sensitivity to pre-trends (tse)",
+        list(
+          panel("evstudy", "es", trt = "ftreat"),
+          .us(
+            "tse",
+            "sens",
+            x = .ua("ref", name = "es", pos = TRUE),
+            seed = seed
+          )
+        ),
+        plot = FALSE,
+        long = TRUE
+      )
+    )
+  )
+}
+
+#' The dashboard's "policy" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_policy <- function(k) {
+  with(
+    k,
     list(
       id = "policy",
       title = "Policy",
@@ -656,163 +1111,64 @@
         ),
         "Example: a staggered reform (polex)" = "polex()"
       ),
-      fns = list(
-        plndid = .uf(
-          "Two-way difference in differences (plndid)",
-          list(panel("plndid", "did")),
-          plot = FALSE
-        ),
-        evstudy = .uf(
-          "Event study with pre-trends (evstudy)",
-          list(panel(
-            "evstudy",
-            "es",
-            trt = "ftreat",
-            leads = num("Leads", 4),
-            lags = num("Lags", 4)
-          ))
-        ),
-        stgatt = .uf(
-          "Staggered adoption (stgatt)",
-          list(panel(
-            "stgatt",
-            "s",
-            trt = "ftreat",
-            ctrl = ch("Controls", c("notyet", "never")),
-            reps = num("Bootstrap", 99),
-            seed = seed
-          )),
-          long = TRUE,
-          assume = paste(
-            "Parallel trends for each cohort against its controls (not",
-            "yet or never treated),",
-            "no anticipation."
-          )
-        ),
-        bacondcmp = .uf(
-          "Goodman-Bacon decomposition (bacondcmp)",
-          list(panel("bacondcmp", "b", cl = FALSE))
-        ),
-        swtdid = .uf(
-          "Switching difference in differences (swtdid)",
-          list(panel("swtdid", "sw", reps = num("Bootstrap", 99), seed = seed)),
-          plot = FALSE,
-          long = TRUE
-        ),
-        perminf = .uf(
-          "Randomisation inference (perminf)",
-          list(panel(
-            "perminf",
-            "ri",
-            trt = "ftreat",
-            reps = num("Permutations", 199),
-            seed = seed
-          )),
-          type = ch("Plot", c("density", "histogram")),
-          long = TRUE,
-          assume = paste0(
-            "Adoption dates are exchangeable across units under no effect ",
-            "(the sharp null)."
-          )
-        ),
-        syndid = .uf(
-          "Synthetic difference in differences (syndid)",
-          list(panel(
-            "syndid",
-            "sd",
-            trt = "ftreat",
-            cl = FALSE,
-            reps = num("Replications", 50),
-            seed = seed
-          )),
-          long = TRUE,
-          assume = paste0(
-            "A weighted mix of controls tracks the treated units before ",
-            "adoption; one adoption date."
-          )
-        ),
-        mtchdid = .uf(
-          "Matched difference in differences (mtchdid)",
-          list(panel(
-            "mtchdid",
-            "m",
-            trt = "ftreat",
-            cl = FALSE,
-            covs = .ua("cols", label = "Covariates", default = "caseload"),
-            ratio = num("Controls per treated", 1)
-          )),
-          plot = FALSE
-        ),
-        wcb = .uf(
-          "Wild cluster bootstrap (wcb)",
-          list(panel("wcb", "w", reps = num("Bootstrap", 999), seed = seed)),
-          plot = FALSE,
-          long = TRUE,
-          assume = paste0(
-            "Errors independent across clusters; few clusters are fine, ",
-            "that is what it is for."
-          )
-        ),
-        loounit = .uf(
-          "Leave one unit out (loounit)",
-          list(panel("loounit", "loo")),
-          long = TRUE
-        ),
-        cohtrnd = .uf(
-          "Cohort trends (cohtrnd)",
-          list(panel("cohtrnd", "ct", trt = "ftreat", cl = FALSE))
-        ),
-        plnpwr = .uf(
-          "Power of the design (plnpwr)",
-          list(.us(
-            "plnpwr",
-            "pw",
-            data = D,
-            unit = pan$unit,
-            time = pan$time,
-            y = pan$y,
-            ntrt = num("Treated units", 6),
-            adopt = .ua(
-              "nums",
-              label = "Adoption periods",
-              default = "13, 19, 25, 31"
-            ),
-            eff = .ua("nums", label = "Effects", default = "0, 4, 8"),
-            reps = num("Simulations", 40),
-            seed = seed
-          )),
-          long = TRUE
-        ),
-        baltab = .uf(
-          "Covariate balance (baltab)",
-          list(.us(
-            "baltab",
-            "bal",
-            data = D,
-            grp = col("Group (0/1)", "reformed"),
-            covs = .ua(
-              "cols",
-              label = "Covariates",
-              default = c("caseload", "arrrate")
-            )
-          ))
-        ),
-        tse = .uf(
-          "Sensitivity to pre-trends (tse)",
-          list(
-            panel("evstudy", "es", trt = "ftreat"),
-            .us(
-              "tse",
-              "sens",
-              x = .ua("ref", name = "es", pos = TRUE),
-              seed = seed
-            )
-          ),
-          plot = FALSE,
-          long = TRUE
-        )
+      fns = c(
+        .bl_app_fns_policy1(k),
+        .bl_app_fns_policy2(k),
+        .bl_app_fns_policy3(k),
+        .bl_app_fns_policy4(k),
+        .bl_app_fns_policy5(k)
       )
-    ),
+    )
+  )
+}
+
+#' The analyses of the "drift" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_drift <- function(k) {
+  with(
+    k,
+    list(
+      cpsdrft = list(
+        label = "Drift between two snapshots (cpsdrft)",
+        steps = list(.us(
+          "cpsdrft",
+          "dr",
+          ref = .ua(
+            "fixed",
+            value = quote(data[data$snapshot == "reference", -1L])
+          ),
+          cur = .ua(
+            "fixed",
+            value = quote(data[data$snapshot == "current", -1L])
+          ),
+          alpha = num("Alpha", 0.01),
+          bins = num("Bins", 10)
+        )),
+        plot = .us(
+          "plot",
+          "plot",
+          x = .ua("ref", name = "dr", pos = TRUE),
+          what = ch("View", c("psi", "fingerprint"))
+        ),
+        diag = list(.ud(
+          "Fingerprint of every column",
+          "dr",
+          what = "fingerprint"
+        ))
+      )
+    )
+  )
+}
+
+#' The dashboard's "drift" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_drift <- function(k) {
+  with(
+    k,
     list(
       id = "drift",
       title = "Drift",
@@ -844,37 +1200,277 @@
       sources = c(
         "Demo: two snapshots, reference and current (rmbldemo)" = .ux("drift")
       ),
-      fns = list(
-        cpsdrft = list(
-          label = "Drift between two snapshots (cpsdrft)",
-          steps = list(.us(
-            "cpsdrft",
-            "dr",
-            ref = .ua(
-              "fixed",
-              value = quote(data[data$snapshot == "reference", -1L])
+      fns = .bl_app_fns_drift(k)
+    )
+  )
+}
+
+#' The `about` of the dashboard's "fnmi" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return As the tab's `about`.
+#' @noRd
+.bl_app_about_fnmi <- function(k) {
+  with(
+    k,
+    shiny::tagList(
+      shiny::tags$p(paste(
+        "Statistics Canada's published tables, read as published:",
+        "each distinction (First Nations, M\u00e9tis,",
+        "Inuit) is reported on its own and never pooled, suppressed",
+        "cells (quality F, x, ..) stay suppressed",
+        "and are never imputed, and the quality flags are shown",
+        "beside each estimate.",
+        "The First Nations figures are for people living off reserve.",
+        "The demo table is made up, in the same",
+        "layout."
+      )),
+      shiny::tags$p(
+        shiny::tags$strong("Whose data these are. "),
+        paste(
+          "OCAP\u00ae (First Nations Information Governance Centre):",
+          "Ownership, Control, Access and Possession;",
+          "First Nations own their information and decide how it is",
+          "collected, used and shared. The CARE",
+          "Principles (Carroll et al. 2020): Collective benefit,",
+          "Authority to control, Responsibility and Ethics.",
+          "The package mirrors only openly licensed aggregate tables,",
+          "never First Nations-held survey data."
+        )
+      ),
+      .bl_app_fnmi_links()
+    )
+  )
+}
+
+#' The analyses of the "fnmi" tab, part 1.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_fnmi1 <- function(k) {
+  with(
+    k,
+    list(
+      published = list(
+        label = "The table as published, with quality flags",
+        plot = NULL,
+        steps = list(.us("utils::head", "tab", x = D, n = num("Rows", 500)))
+      ),
+      indgap = .uf(
+        "Gap to a reference group (indgap)",
+        list(do.call(
+          .us,
+          c(
+            list("indgap", "g", data = D),
+            ind,
+            list(
+              ref = .ua(
+                "text",
+                label = "Reference group",
+                default = "Non-Indigenous"
+              )
             ),
-            cur = .ua(
-              "fixed",
-              value = quote(data[data$snapshot == "current", -1L])
+            q
+          )
+        )),
+        diag = list(.ud("The gap as a ratio", "g", what = "ratio"))
+      ),
+      dstntst = .uf(
+        "Distinctions against each other (dstntst)",
+        list(do.call(.us, c(list("dstntst", "dt", data = D), ind, q)))
+      )
+    )
+  )
+}
+
+#' The analyses of the "fnmi" tab, part 2.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_fnmi2 <- function(k) {
+  with(
+    k,
+    list(
+      ordcmp = .uf(
+        "Ordered ratings (ordcmp)",
+        list(do.call(
+          .us,
+          c(
+            list("ordcmp", "oc", data = D),
+            ind,
+            list(
+              cat = col("Rating", "rating"),
+              lvls = .ua(
+                "texts",
+                label = "Levels, lowest first",
+                default = "Fair or poor, Good, Very good, Excellent"
+              ),
+              ref = .ua(
+                "text",
+                label = "Reference group",
+                default = "M\u00e9tis"
+              )
             ),
-            alpha = num("Alpha", 0.01),
-            bins = num("Bins", 10)
-          )),
-          plot = .us(
-            "plot",
-            "plot",
-            x = .ua("ref", name = "dr", pos = TRUE),
-            what = ch("View", c("psi", "fingerprint"))
+            q
+          )
+        ))
+      )
+    )
+  )
+}
+
+#' The analyses of the "fnmi" tab, part 3.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_fnmi3 <- function(k) {
+  with(
+    k,
+    list(
+      welprof = .uf(
+        "Wellness beside distress (welprof, dualcont)",
+        list(
+          do.call(
+            .us,
+            c(
+              list(
+                "welprof",
+                "w",
+                data = D,
+                ind = col("Indicator", "indicator")
+              ),
+              ind,
+              list(
+                well = .ua(
+                  "texts",
+                  label = "Wellness indicators",
+                  default = "Always or often has a hopeful outlook"
+                ),
+                distress = .ua(
+                  "texts",
+                  label = "Distress indicators",
+                  default = "Life satisfaction rating between 0 and 5"
+                )
+              ),
+              q
+            )
           ),
-          diag = list(.ud(
-            "Fingerprint of every column",
-            "dr",
-            what = "fingerprint"
-          ))
+          .bl_app_fnmi_dualcont()
         )
       )
-    ),
+    )
+  )
+}
+
+#' The analyses of the "fnmi" tab, part 4.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_fnmi4 <- function(k) {
+  with(
+    k,
+    list(
+      healchg = .uf(
+        "Change between periods (healchg)",
+        list(do.call(
+          .us,
+          c(
+            list(
+              "healchg",
+              "hc",
+              data = D,
+              ind = col("Indicator", "indicator"),
+              prd = col("Period", "period")
+            ),
+            ind,
+            list(
+              from = .ua("text", label = "From", default = "2015/2018"),
+              to = .ua("text", label = "To", default = "2019/2022")
+            ),
+            q
+          )
+        ))
+      )
+    )
+  )
+}
+
+#' The analyses of the "fnmi" tab, part 5.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_fnmi5 <- function(k) {
+  with(
+    k,
+    list(
+      mhcont = .uf(
+        "Mental health continuum (mhcont)",
+        list(do.call(
+          .us,
+          c(
+            list(
+              "mhcont",
+              "mw",
+              data = D,
+              ind = col("Indicator", "indicator")
+            ),
+            ind,
+            list(
+              hope = .ua(
+                "text",
+                label = "Hope indicator",
+                default = "Always or often has a hopeful outlook"
+              )
+            ),
+            q
+          )
+        ))
+      ),
+      stdprev = .uf(
+        "Age-standardised prevalence (stdprev)",
+        list(.us(
+          "stdprev",
+          "sp",
+          est = vec("Estimate", "estimate"),
+          lower = vec("Lower", "lower"),
+          upper = vec("Upper", "upper"),
+          std = .ua(
+            "nums",
+            label = "Standard population weights, one per age group",
+            default = "20, 18, 17, 17, 28"
+          ),
+          grp = vec("Group", "group"),
+          qual = vec("Quality flag", "quality")
+        ))
+      )
+    )
+  )
+}
+
+#' The analyses of the "fnmi" tab, part 6.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_fnmi6 <- function(k) {
+  with(
+    k,
+    list(
+      trcprog = list(
+        label = "Truth and Reconciliation Calls to Action (trcprog)",
+        needs_data = FALSE,
+        steps = list(.us("trcprog", "p")),
+        plot = .us("plot", "plot", x = .ua("ref", name = "p"))
+      )
+    )
+  )
+}
+
+#' The dashboard's "fnmi" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_fnmi <- function(k) {
+  with(
+    k,
     list(
       id = "fnmi",
       title = "First Nations, M\u00e9tis and Inuit",
@@ -893,63 +1489,7 @@
         "cell (F) is not a zero, and an E-flagged estimate is used with",
         "caution."
       ),
-      about = shiny::tagList(
-        shiny::tags$p(paste(
-          "Statistics Canada's published tables, read as published:",
-          "each distinction (First Nations, M\u00e9tis,",
-          "Inuit) is reported on its own and never pooled, suppressed",
-          "cells (quality F, x, ..) stay suppressed",
-          "and are never imputed, and the quality flags are shown",
-          "beside each estimate.",
-          "The First Nations figures are for people living off reserve.",
-          "The demo table is made up, in the same",
-          "layout."
-        )),
-        shiny::tags$p(
-          shiny::tags$strong("Whose data these are. "),
-          paste(
-            "OCAP\u00ae (First Nations Information Governance Centre):",
-            "Ownership, Control, Access and Possession;",
-            "First Nations own their information and decide how it is",
-            "collected, used and shared. The CARE",
-            "Principles (Carroll et al. 2020): Collective benefit,",
-            "Authority to control, Responsibility and Ethics.",
-            "The package mirrors only openly licensed aggregate tables,",
-            "never First Nations-held survey data."
-          )
-        ),
-        local({
-          ids <- c(
-            "1310092401",
-            "4110006701",
-            "4110008201",
-            "4110002101",
-            "1710016001",
-            "1710016101"
-          )
-          links <- lapply(ids, function(id) {
-            shiny::tags$a(
-              href = paste0("https://doi.org/10.25318/", id, "-eng"),
-              target = "_blank",
-              rel = "noopener",
-              sprintf(
-                "%s-%s-%s-01",
-                substr(id, 1, 2),
-                substr(id, 3, 4),
-                substr(id, 5, 8)
-              )
-            )
-          })
-          shiny::tags$p(
-            "Source tables: ",
-            shiny::HTML(paste(
-              vapply(links, as.character, ""),
-              collapse = ", "
-            )),
-            " (Statistics Canada Open Licence)."
-          )
-        })
-      ),
+      about = .bl_app_about_fnmi(k),
       sources = c(
         "Demo: a published table with suppressed cells (rmbldemo)" = .ux(
           "fnmi"
@@ -959,175 +1499,232 @@
         "Wellbeing (indiex)" = "indiex(\"wellbeing\")",
         "Suicidal ideation (indiex)" = "indiex(\"suicide\")"
       ),
-      fns = list(
-        published = list(
-          label = "The table as published, with quality flags",
-          plot = NULL,
-          steps = list(.us("utils::head", "tab", x = D, n = num("Rows", 500)))
-        ),
-        indgap = .uf(
-          "Gap to a reference group (indgap)",
-          list(do.call(
-            .us,
-            c(
-              list("indgap", "g", data = D),
-              ind,
-              list(
-                ref = .ua(
-                  "text",
-                  label = "Reference group",
-                  default = "Non-Indigenous"
-                )
-              ),
-              q
-            )
-          )),
-          diag = list(.ud("The gap as a ratio", "g", what = "ratio"))
-        ),
-        dstntst = .uf(
-          "Distinctions against each other (dstntst)",
-          list(do.call(.us, c(list("dstntst", "dt", data = D), ind, q)))
-        ),
-        ordcmp = .uf(
-          "Ordered ratings (ordcmp)",
-          list(do.call(
-            .us,
-            c(
-              list("ordcmp", "oc", data = D),
-              ind,
-              list(
-                cat = col("Rating", "rating"),
-                lvls = .ua(
-                  "texts",
-                  label = "Levels, lowest first",
-                  default = "Fair or poor, Good, Very good, Excellent"
-                ),
-                ref = .ua(
-                  "text",
-                  label = "Reference group",
-                  default = "M\u00e9tis"
-                )
-              ),
-              q
-            )
-          ))
-        ),
-        welprof = .uf(
-          "Wellness beside distress (welprof, dualcont)",
-          list(
-            do.call(
-              .us,
-              c(
-                list(
-                  "welprof",
-                  "w",
-                  data = D,
-                  ind = col("Indicator", "indicator")
-                ),
-                ind,
-                list(
-                  well = .ua(
-                    "texts",
-                    label = "Wellness indicators",
-                    default = "Always or often has a hopeful outlook"
-                  ),
-                  distress = .ua(
-                    "texts",
-                    label = "Distress indicators",
-                    default = "Life satisfaction rating between 0 and 5"
-                  )
-                ),
-                q
-              )
-            ),
-            .us(
-              "dualcont",
-              "dc",
-              x = .ua("ref", name = "w"),
-              well = .ua(
-                "text",
-                label = "Wellness indicator for the dual continuum",
-                input = "dcwell",
-                default = "Always or often has a hopeful outlook"
-              ),
-              distress = .ua(
-                "text",
-                label = "Distress indicator for the dual continuum",
-                input = "dcdist",
-                default = "Life satisfaction rating between 0 and 5"
-              )
-            )
-          )
-        ),
-        healchg = .uf(
-          "Change between periods (healchg)",
-          list(do.call(
-            .us,
-            c(
-              list(
-                "healchg",
-                "hc",
-                data = D,
-                ind = col("Indicator", "indicator"),
-                prd = col("Period", "period")
-              ),
-              ind,
-              list(
-                from = .ua("text", label = "From", default = "2015/2018"),
-                to = .ua("text", label = "To", default = "2019/2022")
-              ),
-              q
-            )
-          ))
-        ),
-        mhcont = .uf(
-          "Mental health continuum (mhcont)",
-          list(do.call(
-            .us,
-            c(
-              list(
-                "mhcont",
-                "mw",
-                data = D,
-                ind = col("Indicator", "indicator")
-              ),
-              ind,
-              list(
-                hope = .ua(
-                  "text",
-                  label = "Hope indicator",
-                  default = "Always or often has a hopeful outlook"
-                )
-              ),
-              q
-            )
-          ))
-        ),
-        stdprev = .uf(
-          "Age-standardised prevalence (stdprev)",
-          list(.us(
-            "stdprev",
-            "sp",
-            est = vec("Estimate", "estimate"),
-            lower = vec("Lower", "lower"),
-            upper = vec("Upper", "upper"),
-            std = .ua(
-              "nums",
-              label = "Standard population weights, one per age group",
-              default = "20, 18, 17, 17, 28"
-            ),
-            grp = vec("Group", "group"),
-            qual = vec("Quality flag", "quality")
-          ))
-        ),
-        trcprog = list(
-          label = "Truth and Reconciliation Calls to Action (trcprog)",
-          needs_data = FALSE,
-          steps = list(.us("trcprog", "p")),
-          plot = .us("plot", "plot", x = .ua("ref", name = "p"))
-        )
+      fns = c(
+        .bl_app_fns_fnmi1(k),
+        .bl_app_fns_fnmi2(k),
+        .bl_app_fns_fnmi3(k),
+        .bl_app_fns_fnmi4(k),
+        .bl_app_fns_fnmi5(k),
+        .bl_app_fns_fnmi6(k)
       )
-    ),
+    )
+  )
+}
+
+#' The `sources` of the dashboard's "justice" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return As the tab's `sources`.
+#' @noRd
+.bl_app_sources_justice <- function(k) {
+  with(
+    k,
+    c(
+      "Demo: court case flow, all courts by month (rmbldemo)" = .ux(
+        "court",
+        "stats::aggregate(cbind(received, disposed, pending) ~ month, d, sum)"
+      ),
+      "Demo: custody admissions, all institutions by year (rmbldemo)" = .ux(
+        "otis",
+        "stats::aggregate(cbind(people, days) ~ year, d, sum)"
+      ),
+      "Demo: custody admissions by institution (rmbldemo)" = .ux("otis"),
+      "Ontario Court of Justice case flow" = ext("ocj_flow_ontario.csv"),
+      "Ontario Court of Justice offence groups" = ext(
+        "ocj_offence_groups.csv"
+      ),
+      "Ontario Court of Justice dispositions" = ext("ocj_dispositions.csv"),
+      "Toronto break and enter, D14 2024" = ext(
+        "tps_break_enter_d14_2024.csv"
+      )
+    )
+  )
+}
+
+#' The analyses of the "justice" tab, part 1.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_justice1 <- function(k) {
+  with(
+    k,
+    list(
+      caseflow = .uf(
+        "Case flow and clearance (caseflow)",
+        list(.us(
+          "caseflow",
+          "cf",
+          recv = vec("Received", "received"),
+          disp = vec("Disposed", "disposed"),
+          pend = vec("Pending", "pending"),
+          prd = vec("Period", "month"),
+          win = num("Rolling window", 12)
+        )),
+        diag = list(.ud(
+          "Clearance with its interval",
+          "cf",
+          what = "clearance"
+        ))
+      ),
+      stkflow = .uf(
+        "Stock and flow (stkflow)",
+        list(.us(
+          "stkflow",
+          "sf",
+          days = vec("Days in custody", "days"),
+          people = vec("People", "people"),
+          prd = vec("Period", "year")
+        )),
+        diag = list(.ud("Average length of stay", "sf", what = "alos"))
+      ),
+      clrdcmp = .uf(
+        "Clearance decomposition, Simpson (clrdcmp)",
+        list(.us(
+          "clrdcmp",
+          "cd",
+          num = vec("Disposed", "disposed"),
+          den = vec("Received", "received"),
+          grp = vec("Part", "offence_group"),
+          cmp = vec("Comparison", "year")
+        ))
+      )
+    )
+  )
+}
+
+#' The analyses of the "justice" tab, part 2.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_justice2 <- function(k) {
+  with(
+    k,
+    list(
+      dispmix = .uf(
+        "Mix of dispositions (dispmix)",
+        list(.us(
+          "dispmix",
+          "mix",
+          cnts = .ua("frame", label = "Outcome columns"),
+          prd = vec("Period", "year")
+        ))
+      ),
+      lifetbl = .uf(
+        "Time to disposition (lifetbl)",
+        list(.us(
+          "lifetbl",
+          "lt",
+          breaks = .ua(
+            "nums",
+            label = "Band edges",
+            default = "0, 10, 15, 18, Inf"
+          ),
+          events = .ua(
+            "nums",
+            label = "Cases per band",
+            default = "600, 150, 60, 90"
+          )
+        )),
+        needs_data = FALSE
+      ),
+      crmdens = .uf(
+        "Density of events (crmdens)",
+        list(.us(
+          "crmdens",
+          "kd",
+          lon = vec("Longitude", "lon"),
+          lat = vec("Latitude", "lat"),
+          ngrid = num("Grid", 120)
+        ))
+      )
+    )
+  )
+}
+
+#' The analyses of the "justice" tab, part 3.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_justice3 <- function(k) {
+  with(
+    k,
+    list(
+      knoxtst = .uf(
+        "Space-time clustering, Knox (knoxtst)",
+        list(.us(
+          "knoxtst",
+          "kn",
+          x = vec("Longitude", "lon"),
+          y = vec("Latitude", "lat"),
+          time = .ua("date", label = "Date", default = "occ_date"),
+          spcbands = .ua(
+            "nums",
+            label = "Distance bands (m)",
+            default = "100, 200, 400"
+          ),
+          tmbands = .ua(
+            "nums",
+            label = "Time bands (days)",
+            default = "7, 14, 28"
+          ),
+          nsim = num("Simulations", 199),
+          seed = seed
+        )),
+        long = TRUE
+      ),
+      rgnmapintg = .uf(
+        "Unit-to-region map checks (rgnmapintg)",
+        list(.us(
+          "rgnmapintg",
+          "rm",
+          map = D,
+          unit = col("Unit", "inst"),
+          reg = col("Region", "cd")
+        )),
+        plot = FALSE
+      )
+    )
+  )
+}
+
+#' The analyses of the "justice" tab, part 4.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_justice4 <- function(k) {
+  with(
+    k,
+    list(
+      siuprs = list(
+        label = "Read an SIU report (siuprs)",
+        needs_data = FALSE,
+        plot = NULL,
+        steps = list(.us(
+          "siuprs",
+          "rep",
+          html = .ua("area", label = "Report HTML (paste)")
+        ))
+      ),
+      siuso = list(
+        label = "Count subject officials in SIU text (siuso)",
+        needs_data = FALSE,
+        plot = NULL,
+        steps = list(.us(
+          "siuso",
+          "so",
+          text = .ua("area", label = "Report text (paste)")
+        ))
+      )
+    )
+  )
+}
+
+#' The dashboard's "justice" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_justice <- function(k) {
+  with(
+    k,
     list(
       id = "justice",
       title = "Courts and corrections",
@@ -1142,158 +1739,194 @@
         "a clearance rate above 100",
         "means the backlog shrank, not that every case was finished."
       ),
-      sources = c(
-        "Demo: court case flow, all courts by month (rmbldemo)" = .ux(
-          "court",
-          "stats::aggregate(cbind(received, disposed, pending) ~ month, d, sum)"
-        ),
-        "Demo: custody admissions, all institutions by year (rmbldemo)" = .ux(
-          "otis",
-          "stats::aggregate(cbind(people, days) ~ year, d, sum)"
-        ),
-        "Demo: custody admissions by institution (rmbldemo)" = .ux("otis"),
-        "Ontario Court of Justice case flow" = ext("ocj_flow_ontario.csv"),
-        "Ontario Court of Justice offence groups" = ext(
-          "ocj_offence_groups.csv"
-        ),
-        "Ontario Court of Justice dispositions" = ext("ocj_dispositions.csv"),
-        "Toronto break and enter, D14 2024" = ext(
-          "tps_break_enter_d14_2024.csv"
+      sources = .bl_app_sources_justice(k),
+      fns = c(
+        .bl_app_fns_justice1(k),
+        .bl_app_fns_justice2(k),
+        .bl_app_fns_justice3(k),
+        .bl_app_fns_justice4(k)
+      )
+    )
+  )
+}
+
+#' The analyses of the "air" tab, part 1.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_air1 <- function(k) {
+  with(
+    k,
+    list(
+      plmfld = list(
+        label = "Plume concentration map (plmfld)",
+        needs_data = FALSE,
+        steps = list(.us(
+          "plmfld",
+          "f",
+          q = num("Emission (g/s)", 10),
+          u = num("Wind (m/s)", 5),
+          h = num("Effective height (m)", 50),
+          x = .ua(
+            "seq",
+            label = "Downwind from, to, by (m)",
+            default = "100, 3000, 100"
+          ),
+          y = .ua(
+            "seq",
+            label = "Crosswind from, to, by (m)",
+            default = "-500, 500, 50"
+          ),
+          stab = ch("Stability class", c("D", "A", "B", "C", "E", "F")),
+          set = ch("Setting", c("rural", "urban"))
+        )),
+        plot = .us("plot", "plot", x = .ua("ref", name = "f", pos = TRUE))
+      ),
+      monitors = .ufp(
+        "The monitors' readings over time (plotsm)",
+        "plotsm",
+        y = vec("Value", "no2"),
+        prd = vec("Period", "hour"),
+        grp = vec("Series", "monitor")
+      )
+    )
+  )
+}
+
+#' The analyses of the "air" tab, part 2.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_air2 <- function(k) {
+  with(
+    k,
+    list(
+      profile = list(
+        label = "Downwind profile (gplume)",
+        needs_data = FALSE,
+        steps = list(.us(
+          "gplume",
+          "conc",
+          q = num("Emission (g/s)", 10),
+          u = num("Wind (m/s)", 5),
+          h = num("Effective height (m)", 50),
+          rcpt = .ua(
+            "fixed",
+            value = quote(cbind(seq(100, 5000, by = 50), 0, 0))
+          ),
+          stab = ch("Stability class", c("D", "A", "B", "C", "E", "F"))
+        )),
+        plot = .us(
+          "plotsm",
+          "plot",
+          y = .ua("ref", name = "conc"),
+          prd = .ua("fixed", value = quote(seq(100, 5000, by = 50)))
         )
       ),
-      fns = list(
-        caseflow = .uf(
-          "Case flow and clearance (caseflow)",
-          list(.us(
-            "caseflow",
-            "cf",
-            recv = vec("Received", "received"),
-            disp = vec("Disposed", "disposed"),
-            pend = vec("Pending", "pending"),
-            prd = vec("Period", "month"),
-            win = num("Rolling window", 12)
-          )),
-          diag = list(.ud(
-            "Clearance with its interval",
-            "cf",
-            what = "clearance"
-          ))
-        ),
-        stkflow = .uf(
-          "Stock and flow (stkflow)",
-          list(.us(
-            "stkflow",
-            "sf",
-            days = vec("Days in custody", "days"),
-            people = vec("People", "people"),
-            prd = vec("Period", "year")
-          )),
-          diag = list(.ud("Average length of stay", "sf", what = "alos"))
-        ),
-        clrdcmp = .uf(
-          "Clearance decomposition, Simpson (clrdcmp)",
-          list(.us(
-            "clrdcmp",
-            "cd",
-            num = vec("Disposed", "disposed"),
-            den = vec("Received", "received"),
-            grp = vec("Part", "offence_group"),
-            cmp = vec("Comparison", "year")
-          ))
-        ),
-        dispmix = .uf(
-          "Mix of dispositions (dispmix)",
-          list(.us(
-            "dispmix",
-            "mix",
-            cnts = .ua("frame", label = "Outcome columns"),
-            prd = vec("Period", "year")
-          ))
-        ),
-        lifetbl = .uf(
-          "Time to disposition (lifetbl)",
-          list(.us(
-            "lifetbl",
-            "lt",
-            breaks = .ua(
-              "nums",
-              label = "Band edges",
-              default = "0, 10, 15, 18, Inf"
-            ),
-            events = .ua(
-              "nums",
-              label = "Cases per band",
-              default = "600, 150, 60, 90"
-            )
-          )),
-          needs_data = FALSE
-        ),
-        crmdens = .uf(
-          "Density of events (crmdens)",
-          list(.us(
-            "crmdens",
-            "kd",
-            lon = vec("Longitude", "lon"),
-            lat = vec("Latitude", "lat"),
-            ngrid = num("Grid", 120)
-          ))
-        ),
-        knoxtst = .uf(
-          "Space-time clustering, Knox (knoxtst)",
-          list(.us(
-            "knoxtst",
-            "kn",
-            x = vec("Longitude", "lon"),
-            y = vec("Latitude", "lat"),
-            time = .ua("date", label = "Date", default = "occ_date"),
-            spcbands = .ua(
-              "nums",
-              label = "Distance bands (m)",
-              default = "100, 200, 400"
-            ),
-            tmbands = .ua(
-              "nums",
-              label = "Time bands (days)",
-              default = "7, 14, 28"
-            ),
-            nsim = num("Simulations", 199),
-            seed = seed
-          )),
-          long = TRUE
-        ),
-        rgnmapintg = .uf(
-          "Unit-to-region map checks (rgnmapintg)",
-          list(.us(
-            "rgnmapintg",
-            "rm",
-            map = D,
-            unit = col("Unit", "inst"),
-            reg = col("Region", "cd")
-          )),
-          plot = FALSE
-        ),
-        siuprs = list(
-          label = "Read an SIU report (siuprs)",
-          needs_data = FALSE,
-          plot = NULL,
-          steps = list(.us(
-            "siuprs",
-            "rep",
-            html = .ua("area", label = "Report HTML (paste)")
-          ))
-        ),
-        siuso = list(
-          label = "Count subject officials in SIU text (siuso)",
-          needs_data = FALSE,
-          plot = NULL,
-          steps = list(.us(
-            "siuso",
-            "so",
-            text = .ua("area", label = "Report text (paste)")
-          ))
-        )
+      gplume = .uf(
+        "Concentration at your receptors (gplume)",
+        list(.us(
+          "gplume",
+          "conc",
+          q = num("Emission (g/s)", 10),
+          u = num("Wind (m/s)", 5),
+          h = num("Effective height (m)", 50),
+          rcpt = .ua(
+            "mat",
+            label = "Receptor x, y, z columns",
+            default = c("x", "y", "z")
+          ),
+          stab = ch("Stability class", c("D", "A", "B", "C", "E", "F"))
+        )),
+        plot = FALSE
       )
-    ),
+    )
+  )
+}
+
+#' The analyses of the "air" tab, part 3.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_air3 <- function(k) {
+  with(
+    k,
+    list(
+      crfpm25 = .uf(
+        "PM2.5 concentration-response (crfpm25)",
+        list(.us(
+          "crfpm25",
+          "rr",
+          expo = .ua(
+            "nums",
+            label = "Concentrations",
+            default = "6, 10, 15, 22"
+          ),
+          y = ch("Outcome", c("allcause", "ihd", "stroke"))
+        )),
+        plot = FALSE,
+        needs_data = FALSE
+      ),
+      crfno2 = .uf(
+        "NO2 concentration-response (crfno2)",
+        list(.us(
+          "crfno2",
+          "rr",
+          expo = .ua("nums", label = "Concentrations", default = "25"),
+          y = ch("Outcome", c("allcause", "respiratory", "chiast"))
+        )),
+        plot = FALSE,
+        needs_data = FALSE
+      ),
+      polbrdn = .uf(
+        "Attributable burden (polbrdn)",
+        list(.us(
+          "polbrdn",
+          "b",
+          expomean = num("Mean exposure", 25),
+          expoprev = num("Share exposed", 1),
+          brate = num("Baseline rate", 0.008),
+          pop = num("Population", 1e6),
+          poll = ch("Pollutant", c("NO2", "PM2.5"))
+        )),
+        needs_data = FALSE
+      )
+    )
+  )
+}
+
+#' The analyses of the "air" tab, part 4.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_air4 <- function(k) {
+  with(
+    k,
+    list(
+      vrfpol = .uf(
+        "Verified pipeline (vrfpol)",
+        list(.us(
+          "vrfpol",
+          "r",
+          poll = ch("Pollutant", c("no2", "pm25")),
+          demo = .ua("flag", label = "Demonstration data", default = TRUE),
+          expomean = num("Mean exposure"),
+          expoprev = num("Share exposed"),
+          reg = .ua("text", label = "Region")
+        )),
+        needs_data = FALSE
+      )
+    )
+  )
+}
+
+#' The dashboard's "air" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_air <- function(k) {
+  with(
+    k,
     list(
       id = "air",
       title = "Air pollution",
@@ -1320,131 +1953,103 @@
           "y = c(0, 50, -100), z = 0)"
         )
       ),
-      fns = list(
-        plmfld = list(
-          label = "Plume concentration map (plmfld)",
-          needs_data = FALSE,
-          steps = list(.us(
-            "plmfld",
-            "f",
-            q = num("Emission (g/s)", 10),
-            u = num("Wind (m/s)", 5),
-            h = num("Effective height (m)", 50),
-            x = .ua(
-              "seq",
-              label = "Downwind from, to, by (m)",
-              default = "100, 3000, 100"
-            ),
-            y = .ua(
-              "seq",
-              label = "Crosswind from, to, by (m)",
-              default = "-500, 500, 50"
-            ),
-            stab = ch("Stability class", c("D", "A", "B", "C", "E", "F")),
-            set = ch("Setting", c("rural", "urban"))
-          )),
-          plot = .us("plot", "plot", x = .ua("ref", name = "f", pos = TRUE))
-        ),
-        monitors = .ufp(
-          "The monitors' readings over time (plotsm)",
-          "plotsm",
-          y = vec("Value", "no2"),
-          prd = vec("Period", "hour"),
-          grp = vec("Series", "monitor")
-        ),
-        profile = list(
-          label = "Downwind profile (gplume)",
-          needs_data = FALSE,
-          steps = list(.us(
-            "gplume",
-            "conc",
-            q = num("Emission (g/s)", 10),
-            u = num("Wind (m/s)", 5),
-            h = num("Effective height (m)", 50),
-            rcpt = .ua(
-              "fixed",
-              value = quote(cbind(seq(100, 5000, by = 50), 0, 0))
-            ),
-            stab = ch("Stability class", c("D", "A", "B", "C", "E", "F"))
-          )),
-          plot = .us(
-            "plotsm",
-            "plot",
-            y = .ua("ref", name = "conc"),
-            prd = .ua("fixed", value = quote(seq(100, 5000, by = 50)))
+      fns = c(
+        .bl_app_fns_air1(k),
+        .bl_app_fns_air2(k),
+        .bl_app_fns_air3(k),
+        .bl_app_fns_air4(k)
+      )
+    )
+  )
+}
+
+#' The analyses of the "hawkes" tab, part 1.
+#' @param k The shared controls, from .bl_app_kit().
+#' @param fit Shared by these analyses.
+#' @param qq Shared by these analyses.
+#' @return A named list.
+#' @noRd
+.bl_app_fns_hawkes1 <- function(k, fit, qq) {
+  with(
+    k,
+    list(
+      chwkfit = list(
+        label = "Fit (chwkfit)",
+        steps = list(fit),
+        long = TRUE,
+        diag = list(qq),
+        plot = .us(
+          "plothwk",
+          "plot",
+          fit = .ua("ref", name = "fit", pos = TRUE),
+          times = vec("Event times", "t"),
+          what = ch("View", c("intensity", "qq", "tree"))
+        )
+      ),
+      chwksim = list(
+        label = "Simulate from the fit (chwksim)",
+        long = TRUE,
+        diag = list(qq),
+        steps = list(
+          fit,
+          .us(
+            "chwksim",
+            "sim",
+            fit = .ua("ref", name = "fit", pos = TRUE),
+            seed = seed
           )
         ),
-        gplume = .uf(
-          "Concentration at your receptors (gplume)",
-          list(.us(
-            "gplume",
-            "conc",
-            q = num("Emission (g/s)", 10),
-            u = num("Wind (m/s)", 5),
-            h = num("Effective height (m)", 50),
-            rcpt = .ua(
-              "mat",
-              label = "Receptor x, y, z columns",
-              default = c("x", "y", "z")
-            ),
-            stab = ch("Stability class", c("D", "A", "B", "C", "E", "F"))
-          )),
-          plot = FALSE
-        ),
-        crfpm25 = .uf(
-          "PM2.5 concentration-response (crfpm25)",
-          list(.us(
-            "crfpm25",
-            "rr",
-            expo = .ua(
-              "nums",
-              label = "Concentrations",
-              default = "6, 10, 15, 22"
-            ),
-            y = ch("Outcome", c("allcause", "ihd", "stroke"))
-          )),
-          plot = FALSE,
-          needs_data = FALSE
-        ),
-        crfno2 = .uf(
-          "NO2 concentration-response (crfno2)",
-          list(.us(
-            "crfno2",
-            "rr",
-            expo = .ua("nums", label = "Concentrations", default = "25"),
-            y = ch("Outcome", c("allcause", "respiratory", "chiast"))
-          )),
-          plot = FALSE,
-          needs_data = FALSE
-        ),
-        polbrdn = .uf(
-          "Attributable burden (polbrdn)",
-          list(.us(
-            "polbrdn",
-            "b",
-            expomean = num("Mean exposure", 25),
-            expoprev = num("Share exposed", 1),
-            brate = num("Baseline rate", 0.008),
-            pop = num("Population", 1e6),
-            poll = ch("Pollutant", c("NO2", "PM2.5"))
-          )),
-          needs_data = FALSE
-        ),
-        vrfpol = .uf(
-          "Verified pipeline (vrfpol)",
-          list(.us(
-            "vrfpol",
-            "r",
-            poll = ch("Pollutant", c("no2", "pm25")),
-            demo = .ua("flag", label = "Demonstration data", default = TRUE),
-            expomean = num("Mean exposure"),
-            expoprev = num("Share exposed"),
-            reg = .ua("text", label = "Region")
-          )),
-          needs_data = FALSE
+        plot = .us(
+          "plothwk",
+          "plot",
+          fit = .ua("ref", name = "fit", pos = TRUE),
+          times = .ua("ref", name = "sim")
         )
+      ),
+      chwkjit = .uf(
+        "Spread tied times (chwkjit)",
+        list(.us("chwkjit", "jit", times = vec("Event times", "t"))),
+        plot = FALSE
       )
-    ),
+    )
+  )
+}
+
+#' The analyses of the "hawkes" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_fns_hawkes <- function(k) {
+  with(k, {
+    fit <- .us(
+      "chwkfit",
+      "fit",
+      times = vec("Event times", "t"),
+      hor = num("Horizon (window end)", 365),
+      kernel = ch("Kernel", c("exponential", "weibull", "gamma", "lomax")),
+      base = ch("Baseline", c("constant", "sinusoidal"))
+    )
+    qq <- list(
+      label = "Time-rescaling QQ plot",
+      step = .us(
+        "plothwk",
+        "plot",
+        fit = .ua("ref", name = "fit", pos = TRUE),
+        times = vec("Event times", "t"),
+        what = .ua("fixed", value = "qq")
+      )
+    )
+    c(.bl_app_fns_hawkes1(k, fit, qq))
+  })
+}
+
+#' The dashboard's "hawkes" tab.
+#' @param k The shared controls, from .bl_app_kit().
+#' @return A named list.
+#' @noRd
+.bl_app_tab_hawkes <- function(k) {
+  with(
+    k,
     list(
       id = "hawkes",
       title = "Hawkes",
@@ -1470,66 +2075,62 @@
           "365))) })"
         )
       ),
-      fns = local({
-        fit <- .us(
-          "chwkfit",
-          "fit",
-          times = vec("Event times", "t"),
-          hor = num("Horizon (window end)", 365),
-          kernel = ch("Kernel", c("exponential", "weibull", "gamma", "lomax")),
-          base = ch("Baseline", c("constant", "sinusoidal"))
-        )
-        qq <- list(
-          label = "Time-rescaling QQ plot",
-          step = .us(
-            "plothwk",
-            "plot",
-            fit = .ua("ref", name = "fit", pos = TRUE),
-            times = vec("Event times", "t"),
-            what = .ua("fixed", value = "qq")
-          )
-        )
-        list(
-          chwkfit = list(
-            label = "Fit (chwkfit)",
-            steps = list(fit),
-            long = TRUE,
-            diag = list(qq),
-            plot = .us(
-              "plothwk",
-              "plot",
-              fit = .ua("ref", name = "fit", pos = TRUE),
-              times = vec("Event times", "t"),
-              what = ch("View", c("intensity", "qq", "tree"))
-            )
-          ),
-          chwksim = list(
-            label = "Simulate from the fit (chwksim)",
-            long = TRUE,
-            diag = list(qq),
-            steps = list(
-              fit,
-              .us(
-                "chwksim",
-                "sim",
-                fit = .ua("ref", name = "fit", pos = TRUE),
-                seed = seed
-              )
-            ),
-            plot = .us(
-              "plothwk",
-              "plot",
-              fit = .ua("ref", name = "fit", pos = TRUE),
-              times = .ua("ref", name = "sim")
-            )
-          ),
-          chwkjit = .uf(
-            "Spread tied times (chwkjit)",
-            list(.us("chwkjit", "jit", times = vec("Event times", "t"))),
-            plot = FALSE
-          )
-        )
-      })
+      fns = .bl_app_fns_hawkes(k)
+    )
+  )
+}
+
+#' The links to the Statistics Canada tables of the "fnmi" tab's about.
+#' @return A shiny paragraph.
+#' @noRd
+.bl_app_fnmi_links <- function() {
+  ids <- c(
+    "1310092401",
+    "4110006701",
+    "4110008201",
+    "4110002101",
+    "1710016001",
+    "1710016101"
+  )
+  links <- lapply(ids, function(id) {
+    shiny::tags$a(
+      href = paste0("https://doi.org/10.25318/", id, "-eng"),
+      target = "_blank",
+      rel = "noopener",
+      sprintf(
+        "%s-%s-%s-01",
+        substr(id, 1, 2),
+        substr(id, 3, 4),
+        substr(id, 5, 8)
+      )
+    )
+  })
+  shiny::tags$p(
+    "Source tables: ",
+    shiny::HTML(toString(vapply(links, as.character, ""))),
+    " (Statistics Canada Open Licence)."
+  )
+}
+
+#' The dual-continuum step of the "fnmi" tab's welprof analysis.
+#' @return A step, as from .us().
+#' @noRd
+.bl_app_fnmi_dualcont <- function() {
+  .us(
+    "dualcont",
+    "dc",
+    x = .ua("ref", name = "w"),
+    well = .ua(
+      "text",
+      label = "Wellness indicator for the dual continuum",
+      input = "dcwell",
+      default = "Always or often has a hopeful outlook"
+    ),
+    distress = .ua(
+      "text",
+      label = "Distress indicator for the dual continuum",
+      input = "dcdist",
+      default = "Life satisfaction rating between 0 and 5"
     )
   )
 }

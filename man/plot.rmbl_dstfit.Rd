@@ -17,7 +17,7 @@
 \arguments{
 \item{x}{A \code{\link[=dstfit]{dstfit()}} result.}
 
-\item{...}{Further arguments to the first \code{plot()} call.}
+\item{...}{Further graphical arguments to the first panel's \code{plot()} call.}
 
 \item{which}{One of \code{"density"}, \code{"qq"}, \code{"pp"} or
 \code{"tail"}.}

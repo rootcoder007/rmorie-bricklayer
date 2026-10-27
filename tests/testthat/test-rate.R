@@ -58,7 +58,8 @@ test_that("the rate-ratio interval is the two-sample poisson.test", {
   want <- stats::poisson.test(c(455, 70), c(125000, 41000))$conf.int
   expect_equal(
     c(1 + rc$pctlo[2] / 100, 1 + rc$pctup[2] / 100),
-    as.numeric(want)
+    as.numeric(want),
+    tolerance = testthat::testthat_tolerance()
   )
 })
 
@@ -69,22 +70,27 @@ test_that("equal denominators reduce to yoy()'s interval exactly", {
   e <- data.frame(year = c(2022, 2023), n = c(70, 90), pop = c(50000, 50000))
   rc <- ratechg(e, n, pop, year, per = 1000)
   y <- yoy(e, n, year, units = "count")
-  expect_equal(rc$pctchg[2], y$pctchg[2])
-  expect_equal(rc$pctlo[2], y$pctlo[2])
-  expect_equal(rc$pctup[2], y$pctup[2])
+  expect_equal(
+    rc$pctchg[2],
+    y$pctchg[2],
+    tolerance = testthat::testthat_tolerance()
+  )
+  expect_identical(rc$pctlo[2], y$pctlo[2])
+  expect_identical(rc$pctup[2], y$pctup[2])
 })
 
 test_that("a rate is not a share, and the difference shows", {
   d <- data.frame(
     division = c("North", "South", "East"),
     stops = c(412, 77, 3),
-    residents = c(120000, 41000, 9500)
+    residents = c(120000, 41000, 9500),
+    stringsAsFactors = FALSE
   )
   r <- rtcalc(d, stops, residents, by = "division", per = "100k")
   s <- shrs(d, stops, by = "division")
   # shares over a complete grouping sum to 100; rates do not sum to
   # anything, because their denominators are different populations
-  expect_equal(sum(s$share), 100)
+  expect_identical(sum(s$share), 100)
   expect_false(isTRUE(all.equal(sum(r$rate), 100)))
   # East has the smallest count and the largest share interval, in
   # relative terms, and the largest rate interval too
@@ -98,9 +104,13 @@ test_that("the per denominator scales the rate and its interval together", {
   d <- data.frame(n = 412, pop = 120000)
   per_1k <- rtcalc(d, n, pop, per = 1000)
   per_100k <- rtcalc(d, n, pop, per = "100k")
-  expect_equal(per_100k$rate, per_1k$rate * 100)
-  expect_equal(per_100k$lower, per_1k$lower * 100)
-  expect_equal(per_100k$upper, per_1k$upper * 100)
+  expect_identical(per_100k$rate, per_1k$rate * 100)
+  expect_equal(
+    per_100k$lower,
+    per_1k$lower * 100,
+    tolerance = testthat::testthat_tolerance()
+  )
+  expect_identical(per_100k$upper, per_1k$upper * 100)
   # every shorthand means what it says
   expect_identical(
     rtcalc(d, n, pop, per = "1k")$rate,
@@ -141,7 +151,7 @@ test_that("the comparison period is matched on the period, not the row", {
   expect_identical(unique(rc$flag), "no comparison period")
   # with the year present, the comparison is made
   ok <- data.frame(year = c(2022, 2023), n = c(10, 20), pop = c(1000, 1000))
-  expect_equal(ratechg(ok, n, pop, year)$pctchg[2], 100)
+  expect_identical(ratechg(ok, n, pop, year)$pctchg[2], 100)
 })
 
 test_that("exposure is required to be exposure", {
@@ -161,20 +171,22 @@ test_that("grouping aggregates before dividing, not after", {
   d <- data.frame(
     division = c("North", "North"),
     n = c(200, 212),
-    pop = c(60000, 60000)
+    pop = c(60000, 60000),
+    stringsAsFactors = FALSE
   )
   r <- rtcalc(d, n, pop, by = "division", per = "100k")
   expect_identical(nrow(r), 1L)
-  expect_equal(r$rate, 1e5 * 412 / 120000)
-  expect_equal(r$count, 412)
-  expect_equal(r$population, 120000)
+  expect_identical(r$rate, 1e5 * 412 / 120000)
+  expect_identical(r$count, 412)
+  expect_identical(r$population, 120000)
 })
 
 test_that("mincnt flags a small count without hiding the rate", {
   d <- data.frame(
     division = c("North", "East"),
     n = c(412, 3),
-    pop = c(120000, 9500)
+    pop = c(120000, 9500),
+    stringsAsFactors = FALSE
   )
   r <- rtcalc(d, n, pop, by = "division", per = "100k", mincnt = 5)
   east <- r[r$division == "East", ]
@@ -184,7 +196,7 @@ test_that("mincnt flags a small count without hiding the rate", {
   # and in a change, the percent off the tiny base is still computed, only noted
   g <- data.frame(year = c(2022, 2023), n = c(2, 40), pop = c(1000, 1000))
   rc <- ratechg(g, n, pop, year, mincnt = 5)
-  expect_equal(rc$pctchg[2], 1900)
+  expect_identical(rc$pctchg[2], 1900)
   expect_lt(rc$pctlo[2], 1900)
   expect_gt(rc$pctup[2], 1900)
   expect_match(rc$flag[2], "earlier count at or below 5")
@@ -192,11 +204,11 @@ test_that("mincnt flags a small count without hiding the rate", {
 
 test_that("vectors and data frames agree", {
   d <- data.frame(n = 412, pop = 120000)
-  expect_equal(
+  expect_identical(
     rtcalc(d, n, pop, per = "100k")$rate,
     rtcalc(412, 120000, per = "100k")$rate
   )
-  expect_equal(shrs(d, n, total = 492)$share, shrs(412, total = 492)$share)
+  expect_identical(shrs(d, n, total = 492)$share, shrs(412, total = 492)$share)
 })
 
 test_that("the printed header states the denominator in words", {
@@ -217,7 +229,7 @@ test_that("the printed header states the denominator in words", {
 
 test_that("columns can be named as strings as well as symbols", {
   d <- data.frame(n = 412, pop = 120000)
-  expect_equal(
+  expect_identical(
     rtcalc(d, "n", "pop", per = "100k")$rate,
     rtcalc(d, n, pop, per = "100k")$rate
   )
@@ -235,18 +247,18 @@ test_that("periods that are not numbers step back along their own order", {
   )
   rc <- ratechg(q, n, pop, quarter)
   expect_identical(rc$flag[1], "no comparison period")
-  expect_equal(rc$pctchg[2], 100)
-  expect_equal(rc$pctchg[3], -25)
+  expect_identical(rc$pctchg[2], 100)
+  expect_identical(rc$pctchg[3], -25)
   # lag 2 reaches back two labels
   rc2 <- ratechg(q, n, pop, quarter, lag = 2L)
   expect_true(is.na(rc2$pctchg[2]))
-  expect_equal(rc2$pctchg[3], 50)
+  expect_identical(rc2$pctchg[3], 50)
 })
 
 test_that("a scalar population is recycled, a mismatched one is refused", {
   r <- rtcalc(c(3, 6, 9), 1000, per = 1000)
   expect_identical(nrow(r), 3L)
-  expect_equal(r$rate, c(3, 6, 9))
+  expect_identical(r$rate, c(3, 6, 9))
   expect_error(rtcalc(c(1, 2, 3), c(10, 20)), "same length")
 })
 
@@ -254,20 +266,21 @@ test_that("shrs() takes its denominator from a column when asked", {
   d <- data.frame(
     division = c("North", "South"),
     stops = c(30, 70),
-    everything = c(500, 500)
+    everything = c(500, 500),
+    stringsAsFactors = FALSE
   )
   # the column is summed, so the denominator is 1000, not 500
   s <- shrs(d, stops, by = "division", total = "everything")
-  expect_equal(unique(s$total), 1000)
-  expect_equal(sum(s$share), 10)
+  expect_identical(unique(s$total), 1000)
+  expect_identical(sum(s$share), 10)
   expect_error(shrs(d, stops, total = "nope"), "column not found")
 })
 
 test_that("shrs() on a bare vector totals itself by default", {
   s <- shrs(c(1, 2, 7))
-  expect_equal(s$share, c(10, 20, 70))
-  expect_equal(unique(s$total), 10)
-  expect_equal(shrs(c(1, 2, 7), total = 100)$share, c(1, 2, 7))
+  expect_identical(s$share, c(10, 20, 70))
+  expect_identical(unique(s$total), 10)
+  expect_identical(shrs(c(1, 2, 7), total = 100)$share, c(1, 2, 7))
 })
 
 test_that("a confidence level outside (0, 1) is refused everywhere", {
@@ -302,13 +315,14 @@ test_that("grouped ratechg keeps the groups apart", {
     year = rep(2022:2023, each = 2),
     division = rep(c("North", "South"), 2),
     n = c(100, 10, 200, 5),
-    pop = c(1000, 1000, 1000, 1000)
+    pop = c(1000, 1000, 1000, 1000),
+    stringsAsFactors = FALSE
   )
   rc <- ratechg(d, n, pop, year, by = "division")
   north <- rc[rc$division == "North" & rc$year == 2023, ]
   south <- rc[rc$division == "South" & rc$year == 2023, ]
-  expect_equal(north$pctchg, 100)
-  expect_equal(south$pctchg, -50)
+  expect_identical(north$pctchg, 100)
+  expect_identical(south$pctchg, -50)
 })
 
 test_that("a zero earlier count is named rather than reported as Inf", {
@@ -316,4 +330,114 @@ test_that("a zero earlier count is named rather than reported as Inf", {
   rc <- ratechg(g, n, pop, year)
   expect_identical(rc$flag[2], "earlier period is zero")
   expect_false(is.finite(rc$pctchg[2]) && !is.na(rc$pctchg[2]))
+})
+
+test_that("rtcalc() refuses a `per` of length other than one", {
+  expect_error(rtcalc(5, 1000, per = c(1e5, 1e3)), "`per` must be a single")
+  expect_error(
+    rtcalc(5, 1000, per = c("100k", "1k")),
+    "`per` must be a single"
+  )
+  expect_error(rtcalc(5, 1000, per = numeric(0)), "`per` must be a single")
+  expect_no_error(rtcalc(5, 1000, per = 1e5))
+})
+
+test_that("ratechg orders fiscal years in time order, as yoy does", {
+  d <- data.frame(
+    yr = c("2020/21", "2019/20", "2021/22"),
+    n = c(20, 10, 30),
+    pop = c(1000, 1000, 1000),
+    stringsAsFactors = FALSE
+  )
+  rc <- ratechg(d, n, pop, yr)
+  expect_identical(as.character(rc$yr), c("2019/20", "2020/21", "2021/22"))
+  expect_identical(rc$count, c(10, 20, 30))
+})
+
+# ---- boxed printouts -------------------------------------------------------
+
+# print() of a result in an 80-column ASCII console: the lines, whether the
+# value was visible, and the value.
+.o2_box <- function(x, ...) {
+  withr::local_options(rmoriebricklayer.width = 80, rmoriebricklayer.numcol = 1)
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  out <- utils::capture.output({
+    r <- withVisible(print(x, ...))
+  })
+  list(out = out, vis = r$visible, value = r$value)
+}
+
+# The checks every boxed printout passes: an ASCII box under its title, no
+# line past the console, print() returning its argument invisibly, format()
+# giving character lines that hold the facts.
+.o2_check <- function(x, title, facts = character(0)) {
+  b <- .o2_box(x)
+  testthat::expect_false(b$vis)
+  testthat::expect_identical(b$value, x)
+  testthat::expect_true(startsWith(b$out[1L], paste0("+-- ", title, " -")))
+  testthat::expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  testthat::expect_true(all(nchar(b$out) <= 80L))
+  txt <- format(x)
+  testthat::expect_type(txt, "character")
+  # the text with the box and the wrapping taken out, for phrases
+  flat <- gsub("[| ]+", " ", paste(b$out, collapse = " "))
+  for (f in facts) {
+    testthat::expect_true(grepl(f, flat, fixed = TRUE), info = f)
+  }
+  invisible(b$out)
+}
+
+test_that("rates, rate changes and shares print as boxes", {
+  rd <- data.frame(
+    g = c("a", "b", "a", "b"),
+    yr = c(1, 1, 2, 2),
+    n = c(3, 40, 5, 60),
+    pop = c(1000, 2000, 1000, 2000),
+    stringsAsFactors = FALSE
+  )
+  out <- .o2_check(rtcalc(rd, "n", "pop", by = "g", mincnt = 10),
+    "Rate per 1,000", c("95% exact Poisson", "[1] count at or below 10"))
+  rc <- ratechg(rd, "n", "pop", "yr", by = "g")
+  .o2_check(rc, "Change in rate per 1,000",
+    c("pct_interval", "[1] no comparison period"))
+  .o2_check(scanadj(rc), "Change in rate per 1,000",
+    c("Adjustment", "adj_p", "significant"))
+  .o2_check(shrs(c(a = 3, b = 7)), "Share", c("95% Wilson", "label"))
+})
+
+# ---- result-driven readings ------------------------------------------------
+
+ls_flat <- function(x) gsub("\\s+", " ", paste(format(x), collapse = " "))
+
+test_that("rtcalc()'s reading compares the groups and flags small counts", {
+  s <- data.frame(division = c("North", "South", "East"),
+    stops = c(412, 77, 3), residents = c(120000, 41000, 9500),
+    stringsAsFactors = FALSE)
+  r <- ls_flat(rtcalc(s, stops, residents, by = "division", mincnt = 5))
+  expect_match(r, "Highest rate: North", fixed = TRUE)
+  expect_match(r, "lowest: East", fixed = TRUE)
+  expect_match(r, "East rests on 5 or fewer events", fixed = TRUE)
+  s$stops <- c(10, 400, 30)
+  r2 <- ls_flat(rtcalc(s, stops, residents, by = "division"))
+  expect_match(r2, "Highest rate: South", fixed = TRUE)
+  expect_false(grepl("fewer events", r2, fixed = TRUE))
+})
+
+test_that("ratechg()'s reading separates real changes from chance", {
+  d <- data.frame(year = 2021:2022, n = c(400, 800), pop = 1e5)
+  up <- ls_flat(ratechg(d, n, pop, year))
+  expect_match(up,
+    "Rose by more than chance (interval above 0): 2022 (+100.0%)",
+    fixed = TRUE)
+  d$n <- c(400, 410)
+  same <- ls_flat(ratechg(d, n, pop, year))
+  expect_match(same, "Not distinguishable from 0", fixed = TRUE)
+  d$n <- c(800, 400)
+  expect_match(ls_flat(ratechg(d, n, pop, year)), "Fell by more than chance",
+    fixed = TRUE)
+})
+
+test_that("a subset of a rate change or share prints as a plain table", {
+  expect_df_fallback("rmbl_rate_change", "Change in rate")
+  expect_df_fallback("rmbl_share", "Share")
 })

@@ -175,51 +175,12 @@ siutxt <- function(html) {
 #' @export
 siuprs <- function(html) {
   .rmbl_no_fn(html = html)
-  if (!is.character(html) || anyNA(html) || !length(html)) {
-    stop(
-      "`html` must be report HTML (or the path of a saved report), not ",
-      if (!length(html)) {
-        "an empty vector"
-      } else if (anyNA(html)) {
-        "NA"
-      } else {
-        class(html)[1L]
-      },
-      call. = FALSE
-    )
-  }
+  .bl_siu_check_html(html)
   if (length(html) > 1L) {
     # several reports: one row each
-    rows <- lapply(html, siuprs)
-    cols <- unique(unlist(lapply(rows, names)))
-    out <- lapply(cols, function(cn) {
-      vapply(
-        rows,
-        function(r) if (cn %in% names(r)) r[[cn]] else NA_character_,
-        ""
-      )
-    })
-    names(out) <- cols
-    return(as.data.frame(out, stringsAsFactors = FALSE, check.names = FALSE))
+    return(.bl_siu_rows(html))
   }
-  # a path is short: file.exists() on a 4096-byte "path" warns (0.5.8 diff
-  # review)
-  if (
-    !grepl("<", html, fixed = TRUE) &&
-      nchar(html, type = "bytes") < 1000L &&
-      file.exists(html)
-  ) {
-    html <- paste(
-      readLines(html, warn = FALSE, encoding = "UTF-8"),
-      collapse = "\n"
-    )
-  } else if (
-    !grepl("[<\n]", html) &&
-      grepl("\\.html?$|[/\\\\]", html, ignore.case = TRUE)
-  ) {
-    # a mistyped path is not an empty report
-    stop("`html`: no such file: ", html, call. = FALSE)
-  }
+  html <- .bl_siu_read_html(html)
   .bl_siu_split_warn(.Call(C_rmbl_siu_parse_html, html))
 }
 
@@ -414,4 +375,70 @@ siuso <- function(text) {
     )
   }
   x
+}
+
+
+#' Refuses an `html` argument of siuprs() that is not text.
+#' @param html The argument.
+#' @return `html`, invisibly.
+#' @noRd
+.bl_siu_check_html <- function(html) {
+  if (!is.character(html) || anyNA(html) || !length(html)) {
+    stop(
+      "`html` must be report HTML (or the path of a saved report), not ",
+      if (!length(html)) {
+        "an empty vector"
+      } else if (anyNA(html)) {
+        "NA"
+      } else {
+        class(html)[1L]
+      },
+      call. = FALSE
+    )
+  }
+  invisible(html)
+}
+
+#' Parses several reports with siuprs(), one row each.
+#' @param html A character vector of report HTML or saved report paths.
+#' @return A data frame with the union of the reports' columns.
+#' @noRd
+.bl_siu_rows <- function(html) {
+  rows <- lapply(html, siuprs)
+  cols <- unique(unlist(lapply(rows, names)))
+  out <- lapply(cols, function(cn) {
+    vapply(
+      rows,
+      function(r) if (cn %in% names(r)) r[[cn]] else NA_character_,
+      ""
+    )
+  })
+  names(out) <- cols
+  as.data.frame(out, stringsAsFactors = FALSE, check.names = FALSE)
+}
+
+#' Reads a saved report when siuprs() is given its path.
+#' @param html One string: report HTML or the path of a saved report.
+#' @return The report HTML.
+#' @noRd
+.bl_siu_read_html <- function(html) {
+  # a path is short: file.exists() on a 4096-byte "path" warns (0.5.8 diff
+  # review)
+  if (
+    !grepl("<", html, fixed = TRUE) &&
+      nchar(html, type = "bytes") < 1000L &&
+      file.exists(html)
+  ) {
+    html <- paste(
+      readLines(html, warn = FALSE, encoding = "UTF-8"),
+      collapse = "\n"
+    )
+  } else if (
+    !grepl("[<\n]", html) &&
+      grepl("\\.html?$|[/\\\\]", html, ignore.case = TRUE)
+  ) {
+    # a mistyped path is not an empty report
+    stop("`html`: no such file: ", html, call. = FALSE)
+  }
+  html
 }

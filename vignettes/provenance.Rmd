@@ -8,13 +8,18 @@ vignette: >
 ---
 
 ```{r provenance-setup, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
-# the one-time index record of this vignette stays out of the reader's configuration directory
+# the one-time index record of this vignette stays out of the reader's
+# configuration directory
 options(rmoriebricklayer.xmssidxfile = tempfile())
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
@@ -51,7 +56,12 @@ An edited manifest has a different digest, which the signature does not
 cover:
 
 ```{r}
-edited <- sub("fetched=2026-09-12", "fetched=2026-01-01", manifest)
+edited <- sub(
+  "fetched=2026-09-12",
+  "fetched=2026-01-01",
+  manifest,
+  fixed = TRUE
+)
 cpsvrf(csha256(edited), sig, "team-secret")
 ```
 
@@ -330,9 +340,13 @@ read), and with `upload = "rmorie"` keeps it at archive.rmorie.com under your da
 `upload = "wayback"` asks the Wayback Machine as well.
 
 ```{r eval = FALSE}
-cap <- arccap("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", "captures",
-              upload = c("rmorie", "wayback"), reason = "Custody table cited in chapter 3")
-cap$archive                     # its page at archive.rmorie.com
+cap <- arccap(
+  "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip",
+  "captures",
+  upload = c("rmorie", "wayback"),
+  reason = "Custody table cited in chapter 3"
+)
+cap$archive # its page at archive.rmorie.com
 arcfind("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip")
 arcget(cap$capture_id, "table.zip", sha256 = cap$sha256)
 ```
@@ -341,8 +355,12 @@ When the source is gone and the Wayback Machine cannot be reached, `fetchvrf()` 
 failing that from the WARC files in your own folder, still checked against the pin:
 
 ```{r eval = FALSE}
-fetchvrf("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", "table.zip",
-         sha256 = cap$sha256, arcs = c("rmorie", "captures"))
+fetchvrf(
+  "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip",
+  "table.zip",
+  sha256 = cap$sha256,
+  arcs = c("rmorie", "captures")
+)
 ```
 
 From a terminal the same steps are `rmbl archive save URL --reason "..."`, `rmbl archive find URL` and
@@ -539,7 +557,7 @@ dates and licence) in the package's COPYRIGHTS file:
 
 ```{r provenance-indigenous-provenance}
 cr <- readLines(system.file("COPYRIGHTS", package = "rmoriebricklayer"))
-cat(cr[grep("indigenouslifeexpectancy", cr) + 0:4], sep = "\n")
+cat(cr[grep("indigenouslifeexpectancy", cr, fixed = TRUE) + 0:4], sep = "\n")
 ```
 
 With a data key (`dlogin()`), `indtabs()` lists the mirrored tables themselves:
@@ -557,6 +575,12 @@ The manifest above pins these ten values. A verifier that recomputes the digest 
 exactly what this chart shows.
 
 ```{r provenance-provenance-plot, fig.width = 6, fig.height = 4}
-barplot(d$x, names.arg = seq_len(nrow(d)), col = blpal()[1], xlab = "row", ylab = "x",
-        main = "The values the manifest pins")
+barplot(
+  d$x,
+  names.arg = seq_len(nrow(d)),
+  col = blpal()[1],
+  xlab = "row",
+  ylab = "x",
+  main = "The values the manifest pins"
+)
 ```

@@ -4,13 +4,17 @@
 \alias{duprows}
 \title{Duplicated rows, with their groups}
 \usage{
-duprows(data, cols = NULL)
+duprows(data, cols = NULL, quiet = FALSE)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame whose rows are checked for duplicates.}
 
 \item{cols}{Character vector of the columns defining a duplicate, or
 \code{NULL} (the default) for all of them.}
+
+\item{quiet}{Logical: \code{TRUE} skips the boxed count of duplicate rows
+and groups, which is otherwise sent through \code{message()}; default
+\code{FALSE}.}
 }
 \value{
 A data frame: the duplicated rows (every occurrence, including the
@@ -32,7 +36,7 @@ only once the offending rows are in front of you.
 
 Two rows are duplicates when their values, converted to text, are equal
 in every column of \code{cols}; two \code{NA}s are equal. Columns are
-taken by position when \code{columns = NULL}, so a table with repeated
+taken by position when \code{cols = NULL}, so a table with repeated
 column names can still be inspected. Errors when \code{data} is not a data
 frame, a named column does not exist, or a named column's name is shared
 by two columns.

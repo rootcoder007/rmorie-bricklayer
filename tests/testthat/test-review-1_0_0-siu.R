@@ -16,9 +16,9 @@ test_that("M9: the glossary strip is linear in the number of heads", {
   t2000 <- system.time(suppressWarnings(siuso(strrep(head, 2000L))))[[
     "elapsed"
   ]]
-  t8000 <- system.time(r <- suppressWarnings(siuso(strrep(head, 8000L))))[[
-    "elapsed"
-  ]]
+  t8000 <- system.time({
+    r <- suppressWarnings(siuso(strrep(head, 8000L)))
+  })[["elapsed"]]
   expect_type(r, "list")
   expect_lt(t8000 / max(t2000, 0.05), 8)
   expect_lt(t8000, wall_limit(6))
@@ -30,9 +30,9 @@ test_that("M9: unclosed script openers are one pass, not one scan each", {
   t5e4 <- system.time(suppressWarnings(siutxt(strrep("<script", 5e4))))[[
     "elapsed"
   ]]
-  t2e5 <- system.time(out <- suppressWarnings(siutxt(strrep("<script", 2e5))))[[
-    "elapsed"
-  ]]
+  t2e5 <- system.time({
+    out <- suppressWarnings(siutxt(strrep("<script", 2e5)))
+  })[["elapsed"]]
   expect_type(out, "character")
   expect_lt(t2e5 / max(t5e4, 0.05), 8)
   expect_lt(t2e5, wall_limit(6))

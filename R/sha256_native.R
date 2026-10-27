@@ -14,22 +14,7 @@
   # so bitwAnd/bitwXor on anything >= 2^31 returns NA and the old code
   # packed NaN bit patterns as the digest. XOR/AND run on 16-bit
   # halves; rotation and addition are exact double arithmetic mod 2^32.
-  bx <- function(a, b) {
-    bitwXor(a %/% 65536, b %/% 65536) * 65536 + bitwXor(a %% 65536, b %% 65536)
-  }
-  ba <- function(a, b) {
-    bitwAnd(a %/% 65536, b %/% 65536) * 65536 + bitwAnd(a %% 65536, b %% 65536)
-  }
-  bn <- function(a) 4294967295 - a
-  rotr <- function(x, n) (x %/% 2^n) + (x %% 2^n) * 2^(32 - n)
-  shr <- function(x, n) x %/% 2^n
-  bs <- as.integer(as.raw(bytes))
-  blen <- length(bs) * 8
-  bs <- c(bs, 0x80L)
-  while (length(bs) %% 64L != 56L) {
-    bs <- c(bs, 0x00L)
-  }
-  bs <- c(bs, (blen %/% 2^c(56, 48, 40, 32, 24, 16, 8, 0)) %% 256)
+  bs <- .rmbl_sha256_pad(bytes)
   H <- c(
     0x6a09e667,
     0xbb67ae85,
@@ -40,7 +25,128 @@
     0x1f83d9ab,
     0x5be0cd19
   )
-  K <- c(
+  K <- .rmbl_sha256_k()
+  for (block in seq(1L, length(bs), by = 64L)) {
+    W <- .rmbl_sha256_schedule(bs, block)
+    H <- .rmbl_sha256_compress(H, W, K)
+  }
+  as.raw(as.vector(vapply(
+    H,
+    function(w) {
+      (w %/% 2^c(24, 16, 8, 0)) %% 256
+    },
+    numeric(4)
+  )))
+}
+
+#' XOR of two 32-bit words held as doubles, on 16-bit halves.
+#' @param a,b Words in [0, 2^32).
+#' @return The word a XOR b.
+#' @noRd
+.rmbl_sha256_bx <- function(a, b) {
+  bitwXor(a %/% 65536, b %/% 65536) * 65536 + bitwXor(a %% 65536, b %% 65536)
+}
+
+#' AND of two 32-bit words held as doubles, on 16-bit halves.
+#' @param a,b Words in [0, 2^32).
+#' @return The word a AND b.
+#' @noRd
+.rmbl_sha256_ba <- function(a, b) {
+  bitwAnd(a %/% 65536, b %/% 65536) * 65536 + bitwAnd(a %% 65536, b %% 65536)
+}
+
+#' Right rotation of a 32-bit word held as a double.
+#' @param x A word in [0, 2^32).
+#' @param n The number of bits, 1 to 31.
+#' @return The rotated word.
+#' @noRd
+.rmbl_sha256_rotr <- function(x, n) (x %/% 2^n) + (x %% 2^n) * 2^(32 - n)
+
+#' Pads a message for SHA-256: a one bit, zeros, and the bit length.
+#' @param bytes The message bytes.
+#' @return The padded message as integers in [0, 255], a multiple of 64 long.
+#' @noRd
+.rmbl_sha256_pad <- function(bytes) {
+  bs <- as.integer(as.raw(bytes))
+  blen <- length(bs) * 8
+  bs <- c(bs, 0x80L)
+  while (length(bs) %% 64L != 56L) {
+    bs <- c(bs, 0x00L)
+  }
+  c(bs, (blen %/% 2^c(56, 48, 40, 32, 24, 16, 8, 0)) %% 256)
+}
+
+#' The SHA-256 message schedule of one 64-byte block.
+#' @param bs The padded message.
+#' @param block The index of the block's first byte.
+#' @return The 64 schedule words, as doubles.
+#' @noRd
+.rmbl_sha256_schedule <- function(bs, block) {
+  bx <- .rmbl_sha256_bx
+  rotr <- .rmbl_sha256_rotr
+  W <- numeric(64L)
+  for (i in 0:15) {
+    W[i + 1L] <- sum(bs[block + 4L * i + 0:3] * c(2^24, 2^16, 2^8, 1))
+  }
+  for (i in 16:63) {
+    w15 <- W[i - 15L + 1L]
+    w2 <- W[i - 2L + 1L]
+    s0 <- bx(bx(rotr(w15, 7), rotr(w15, 18)), w15 %/% 2^3)
+    s1 <- bx(bx(rotr(w2, 17), rotr(w2, 19)), w2 %/% 2^10)
+    W[i + 1L] <- (W[i - 16L + 1L] + s0 + W[i - 7L + 1L] + s1) %% 2^32
+  }
+  W
+}
+
+#' The SHA-256 compression of one block into the hash state.
+#' @param H The eight state words.
+#' @param W The block's 64 schedule words.
+#' @param K The 64 round constants.
+#' @return The new state words.
+#' @noRd
+.rmbl_sha256_compress <- function(H, W, K) {
+  bx <- .rmbl_sha256_bx
+  ba <- .rmbl_sha256_ba
+  rotr <- .rmbl_sha256_rotr
+  a <- H[1]
+  b <- H[2]
+  cc <- H[3]
+  d <- H[4]
+  e <- H[5]
+  f <- H[6]
+  g <- H[7]
+  hh <- H[8]
+  for (i in 0:63) {
+    S1 <- bx(bx(rotr(e, 6), rotr(e, 11)), rotr(e, 25))
+    ch <- bx(ba(e, f), ba(4294967295 - e, g))
+    T1 <- (hh + S1 + ch + K[i + 1L] + W[i + 1L]) %% 2^32
+    S0 <- bx(bx(rotr(a, 2), rotr(a, 13)), rotr(a, 22))
+    mj <- bx(bx(ba(a, b), ba(a, cc)), ba(b, cc))
+    T2 <- (S0 + mj) %% 2^32
+    hh <- g
+    g <- f
+    f <- e
+    e <- (d + T1) %% 2^32
+    d <- cc
+    cc <- b
+    b <- a
+    a <- (T1 + T2) %% 2^32
+  }
+  (H + c(a, b, cc, d, e, f, g, hh)) %% 2^32
+}
+
+#' The 64 SHA-256 round constants (FIPS 180-4, 4.2.2).
+#' @return A double vector of 64 words.
+#' @noRd
+.rmbl_sha256_k <- function() {
+  c(.rmbl_sha256_k1(), .rmbl_sha256_k2())
+}
+
+#' Round constants 1 to 32 of SHA-256.
+#' @return A double vector of 32 words.
+#' @noRd
+.rmbl_sha256_k1 <- function() {
+  c(
     0x428a2f98,
     0x71374491,
     0xb5c0fbcf,
@@ -72,7 +178,15 @@
     0xc6e00bf3,
     0xd5a79147,
     0x06ca6351,
-    0x14292967,
+    0x14292967
+  )
+}
+
+#' Round constants 33 to 64 of SHA-256.
+#' @return A double vector of 32 words.
+#' @noRd
+.rmbl_sha256_k2 <- function() {
+  c(
     0x27b70a85,
     0x2e1b2138,
     0x4d2c6dfc,
@@ -106,58 +220,6 @@
     0xbef9a3f7,
     0xc67178f2
   )
-  for (block in seq(1L, length(bs), by = 64L)) {
-    W <- numeric(64L)
-    for (i in 0:15) {
-      W[i + 1L] <- sum(bs[block + 4L * i + 0:3] * c(2^24, 2^16, 2^8, 1))
-    }
-    for (i in 16:63) {
-      w15 <- W[i - 15L + 1L]
-      w2 <- W[i - 2L + 1L]
-      s0 <- bx(bx(rotr(w15, 7), rotr(w15, 18)), shr(w15, 3))
-      s1 <- bx(bx(rotr(w2, 17), rotr(w2, 19)), shr(w2, 10))
-      W[i + 1L] <- (W[i - 16L + 1L] + s0 + W[i - 7L + 1L] + s1) %% 2^32
-    }
-    a <- H[1]
-    b <- H[2]
-    cc <- H[3]
-    d <- H[4]
-    e <- H[5]
-    f <- H[6]
-    g <- H[7]
-    hh <- H[8]
-    for (i in 0:63) {
-      S1 <- bx(bx(rotr(e, 6), rotr(e, 11)), rotr(e, 25))
-      ch <- bx(ba(e, f), ba(bn(e), g))
-      T1 <- (hh + S1 + ch + K[i + 1L] + W[i + 1L]) %% 2^32
-      S0 <- bx(bx(rotr(a, 2), rotr(a, 13)), rotr(a, 22))
-      mj <- bx(bx(ba(a, b), ba(a, cc)), ba(b, cc))
-      T2 <- (S0 + mj) %% 2^32
-      hh <- g
-      g <- f
-      f <- e
-      e <- (d + T1) %% 2^32
-      d <- cc
-      cc <- b
-      b <- a
-      a <- (T1 + T2) %% 2^32
-    }
-    H[1] <- (H[1] + a) %% 2^32
-    H[2] <- (H[2] + b) %% 2^32
-    H[3] <- (H[3] + cc) %% 2^32
-    H[4] <- (H[4] + d) %% 2^32
-    H[5] <- (H[5] + e) %% 2^32
-    H[6] <- (H[6] + f) %% 2^32
-    H[7] <- (H[7] + g) %% 2^32
-    H[8] <- (H[8] + hh) %% 2^32
-  }
-  as.raw(as.vector(vapply(
-    H,
-    function(w) {
-      (w %/% 2^c(24, 16, 8, 0)) %% 256
-    },
-    numeric(4)
-  )))
 }
 
 #' Writes bytes as lower-case hex text.

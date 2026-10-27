@@ -1,20 +1,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-library(testthat)
-library(rmoriebricklayer)
+# test_check() attaches testthat and the package itself.
 
 # On CRAN (NOT_CRAN unset) only the fast core runs: the test files that take 0.3
 # s or less each, about 9 s in all, so the CRAN check stays inside its time
 # budget. CI sets NOT_CRAN=true and r-universe sets MY_UNIVERSE; both run the
-# full suite.
+# full suite. A coverage run (covr sets R_COVR, as goodpractice's does) runs
+# the full suite too, with the tests CRAN skips, so it measures every line.
+if (nzchar(Sys.getenv("R_COVR"))) {
+  Sys.setenv(NOT_CRAN = "true")
+}
 core <- c(
-  "agent-bundle",
-  "archive-capture",
+  "agent_bundle",
+  "archive_capture",
   "branches",
   "bundle-fallbacks",
   "capsule",
-  "capsule-template",
+  "capsule_template",
   "census",
-  "compat-0-5",
+  "compat_0_5",
   "core",
   "coverage-0_5_7",
   "coverage-0_5_9",
@@ -26,46 +29,46 @@ core <- c(
   "coverage-1_0_0-policy",
   "cran-stress-0_5_14",
   "cran-stress-b617a3f",
-  "crypto-extra",
-  "data-hub",
+  "crypto_extra",
+  "data_hub",
   "data-key",
   "docs-bugs-0513",
   "download-branches",
-  "download-progress",
-  "explain-error",
-  "fetch-native",
-  "fetch-verified",
+  "download_progress",
+  "explain_error",
+  "fetch_native",
+  "fetch_verified",
   "final-audit-1_0_0",
   "fips-sig",
   "fips202",
   "hawkes-fit",
-  "hawkes-more",
+  "hawkes_more",
   "hotspot",
   "hqc",
   "hqc-round4",
-  "indigenous-mental-health",
+  "indigenous_mental_health",
   "input-contracts",
-  "json-native",
+  "json_native",
   "justice",
   "last-gaps",
   "leftovers-0513",
   "linkingto",
   "llm-byok",
-  "llm-config",
-  "llm-native",
+  "llm_config",
+  "llm_native",
   "llm-routes",
   "local-seed",
   "manifest",
   "mcar",
   "nameconstraints",
-  "panel-causal",
+  "panel_causal",
   "patch-0_5_12-byok",
   "patch-cover-0513",
   "patch-pr56",
   "plots",
   "plots-more",
-  "policy-evaluation",
-  "profile-extra",
+  "policy_evaluation",
+  "profile_extra",
   "progress-console",
   "progress-everywhere",
   "repro",
@@ -79,7 +82,7 @@ core <- c(
   "review5",
   "round5",
   "round8",
-  "rule-lib",
+  "rule_lib",
   "shax",
   "signin-profile",
   "siu-detectors",
@@ -102,7 +105,7 @@ core <- c(
   "ubsan-paths",
   "url-fallback",
   "vectors-0_5_10",
-  "wayback-save",
+  "wayback_save",
   "wycheproof",
   "x509",
   "xmss-kat"
@@ -110,9 +113,9 @@ core <- c(
 if (
   identical(Sys.getenv("NOT_CRAN"), "true") || nzchar(Sys.getenv("MY_UNIVERSE"))
 ) {
-  test_check("rmoriebricklayer")
+  testthat::test_check("rmoriebricklayer")
 } else {
-  test_check(
+  testthat::test_check(
     "rmoriebricklayer",
     filter = paste0("^(", paste(core, collapse = "|"), ")$")
   )

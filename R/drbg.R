@@ -255,24 +255,23 @@ drbgrsd <- function(drbg, entropy = NULL, addl = NULL) {
 
 #' @export
 format.bricklayer_drbg <- function(x, ...) {
-  c(
-    .rmbl_rule("Deterministic random bit generator"),
-    .rmbl_kv(list(
-      mechanism = "CTR_DRBG, AES-256, no derivation function (SP 800-90A)",
-      "requests since seeding" = format(
+  .rmbl_stat_block(
+    "Deterministic random bit generator",
+    facts = list(
+      Mechanism = "CTR_DRBG, AES-256, no derivation function (SP 800-90A)",
+      `Requests since seeding` = format(
         x$reseed_counter - 1,
         scientific = FALSE
       ),
-      state = "<withheld>"
-    )),
-    .rmbl_rule()
+      Process = x$pid,
+      State = "<withheld>"
+    ),
+    reading = paste(
+      "The same entropy and personalisation give the same bytes; the state",
+      "itself is never printed. drbgrsd() mixes in fresh entropy."
+    )
   )
 }
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_drbg
-print.bricklayer_drbg <- .rmbl_print_via_format
 
 #' Checks that an object is a DRBG state made by drbgnew().
 #' @param drbg The object passed by the user.

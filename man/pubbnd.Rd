@@ -74,7 +74,8 @@ Text cells are trimmed, and thousands separators (commas) are removed
 before they are read as numbers. A missing value (\code{NA}) that is not a
 suppression mark gets status \code{"missing"} and \code{NA} bounds.
 
-Errors: \code{rnd} not a positive number; an unknown
+Errors: \code{rnd} not one positive finite number; a negative or
+infinite count in \code{x}; an unknown
 \code{rndkind}; a text cell that is neither a number nor a
 suppression mark (the message lists the cells); a suppressed cell with no
 limit (neither \code{"<k"} nor \code{suplim}).

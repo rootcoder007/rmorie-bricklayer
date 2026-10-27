@@ -83,11 +83,15 @@ test_that(
 # rest by n / (n - 1)
 jk1 <- function(w) {
   n <- length(w)
-  sapply(seq_len(n), function(b) {
-    r <- w * n / (n - 1)
-    r[b] <- 0
-    r
-  })
+  vapply(
+    seq_len(n),
+    function(b) {
+      r <- w * n / (n - 1)
+      r[b] <- 0
+      r
+    },
+    numeric(n)
+  )
 }
 
 test_that(
@@ -102,7 +106,9 @@ test_that(
     R <- jk1(w)
     keep <- 1:60
     d <- data.frame(y = rnorm(60))
-    expect_silent(des <- svydes(d, w = w[keep], reps = R[keep, ], type = "jk1"))
+    expect_silent({
+      des <- svydes(d, w = w[keep], reps = R[keep, ], type = "jk1")
+    })
     expect_s3_class(des, "rmbl_svy_design")
     # a copy of the weight, exact or jittered, is still refused on the full data
     dd <- data.frame(y = rnorm(n))
@@ -136,13 +142,17 @@ test_that(
     set.seed(12)
     w <- runif(12, 5, 50)
     st <- rep(1:3, each = 4)
-    R <- sapply(seq_len(12), function(b) {
-      r <- w
-      h <- st == st[[b]]
-      r[h] <- w[h] * 4 / 3
-      r[b] <- 0
-      r
-    })
+    R <- vapply(
+      seq_len(12),
+      function(b) {
+        r <- w
+        h <- st == st[[b]]
+        r[h] <- w[h] * 4 / 3
+        r[b] <- 0
+        r
+      },
+      numeric(length(w))
+    )
     rs <- rep(3 / 4, 12)
     d <- data.frame(y = rnorm(12))
     expect_silent(svydes(d, w = w, reps = R, type = "jkn", rscales = rs))
@@ -174,7 +184,7 @@ test_that(
     w <- runif(n, 5, 50)
     # each replicate scales each row by its own factor, as calibration does; two
     # come back to the weight
-    R <- sapply(seq_len(30), function(b) w * runif(n, 0.6, 1.4))
+    R <- vapply(seq_len(30), function(b) w * runif(n, 0.6, 1.4), numeric(n))
     R[, 1] <- w
     R[, 2] <- w * (1 + runif(n, -0.003, 0.003))
     d <- data.frame(y = rnorm(n))
@@ -256,11 +266,15 @@ test_that(
     set.seed(14)
     m <- 30
     w <- runif(m, 5, 50)
-    jk <- sapply(seq_len(m), function(j) {
-      f <- rep(m / (m - 1), m)
-      f[j] <- 0
-      w * f
-    })
+    jk <- vapply(
+      seq_len(m),
+      function(j) {
+        f <- rep(m / (m - 1), m)
+        f[j] <- 0
+        w * f
+      },
+      numeric(m)
+    )
     d <- data.frame(
       y = rnorm(m),
       y2 = rnorm(m),

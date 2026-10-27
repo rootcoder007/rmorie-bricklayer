@@ -15,7 +15,14 @@ ltrlrng(x, W, model = c("invcube", "definite", "mbeta"), m = 1, navsd = 0)
 
 swpwdth(x, p = NULL)
 
-srchpod(coverage, model = c("random", "definite", "invcube", "mbeta"), m = 1)
+srchpod(
+  coverage = NULL,
+  model = c("random", "definite", "invcube", "mbeta"),
+  m = 1,
+  W = NULL,
+  effort = NULL,
+  area = NULL
+)
 
 pswppod(
   W,
@@ -49,7 +56,10 @@ opteffort(poc, area = NULL, W, effort, tol = 1e-14)
 sign. For \code{swpwdth()}, strictly increasing abscissae, or an
 \code{rmbl_ltrlrng} object (then \code{p} is taken from it).}
 
-\item{W}{Positive number: the sweep width.}
+\item{W}{Positive number: the sweep width, in the distance unit of the
+grid and the effort (nautical miles, kilometres: one unit throughout). For
+\code{srchpod()}, give it with \code{effort} and \code{area} in place of
+\code{coverage}; default \code{NULL}.}
 
 \item{model}{For \code{ltrlrng()} and \code{pswppod()}: \code{"invcube"}
 (the default), \code{"definite"} or \code{"mbeta"}. For
@@ -64,7 +74,22 @@ cross-track navigation error, in the units of \code{x}. Default 0.}
 
 \item{p}{Numeric vector in [0, 1]: the lateral range curve at \code{x}.}
 
-\item{coverage}{Non-negative numeric vector of coverages.}
+\item{coverage}{Non-negative numeric vector of coverages (sweep width
+times track length over the area searched; 1 means the effort equals the
+area). Default \code{NULL}: then \code{W}, \code{effort} and \code{area}
+give it, \code{W * effort / area}. Give one or the other, not both.}
+
+\item{effort}{Non-negative number: the total effort, as track length (the
+distance the searchers travel while searching, in the unit of \code{W}).
+For \code{srchpod()}, the track length in each area, one number or one per
+area (a matrix laid out like the map when \code{area} is one); default
+\code{NULL}.}
+
+\item{area}{Positive numeric vector, one per cell: the cell areas, in the
+square of the unit of \code{W}. May be \code{NULL} when \code{poc} is an
+\code{rmbl_datummap} (its cells' areas are used). For \code{srchpod()},
+the areas searched, or a map from \code{datumpmap()} whose cell areas are
+taken; default \code{NULL}.}
 
 \item{S}{Positive number: the track spacing.}
 
@@ -73,23 +98,33 @@ cross-track navigation error, in the units of \code{x}. Default 0.}
 on each side (at least 1; default 60).}
 
 \item{poc}{Numeric vector or matrix in [0, 1], summing to at most 1: the
-probability that each area contains the object. For \code{opteffort()}
-also an \code{rmbl_datummap} object from \code{datumpmap()}.}
+probability that each area contains the object (your own areas' shares,
+for example from a consensus of the planners' scenarios). For
+\code{srchscs()} and \code{opteffort()} also a probability map from
+\code{datumpmap()}: its cells are the areas, in the order of
+\code{as.vector(map$poc)}.}
 
 \item{pod}{Numeric vector in [0, 1], one per area, or a matrix with one
-row per search and one column per area.}
+row per search and one column per area. When \code{poc} is a map, also a
+matrix laid out like the map (one search, cell by cell), a
+\code{srchpod()} result with one value per cell, or an
+\code{opteffort()} result (its cells' PODs).}
 
 \item{xedg, yedg}{Strictly increasing numeric vectors: the cell edges of the
-grid.}
+grid laid over your search area, east-west and north-south, in the
+distance unit (\code{seq(-5, 5, by = 0.5)}: half-unit cells over ten
+units). Cells may differ in size.}
 
 \item{datum}{\code{"point"} (the default), \code{"line"}, \code{"area"},
 \code{"corridor"} or \code{"general"}.}
 
-\item{center}{Two numbers: the datum point, the start of a line datum or a
-corner of an area datum. Default \code{c(0, 0)}.}
+\item{center}{Two numbers, x then y in the grid's coordinates: the datum
+point (for example the last known position), the start of a line datum or
+a corner of an area datum. Default \code{c(0, 0)}.}
 
 \item{sigma}{Positive number: the standard deviation of the circular normal
-position error.}
+position error, in the distance unit (a total probable error \code{E} is
+\code{1.1774 sigma}). Default 1.}
 
 \item{end}{Two numbers: the end of a line datum or the opposite corner of
 an area datum; \code{NULL} for a point datum.}
@@ -99,11 +134,6 @@ datum. Default 64.}
 
 \item{wts}{For \code{datum = "general"}: a non-negative matrix of cell
 weights, one row per \code{y} cell and one column per \code{x} cell.}
-
-\item{effort}{Non-negative number: the total effort, as track length.}
-
-\item{area}{Positive numeric vector, one per cell: the cell areas. May be
-\code{NULL} when \code{poc} is an \code{rmbl_datummap}.}
 
 \item{tol}{Positive number: the bisection tolerance on log lambda.}
 }
@@ -115,7 +145,9 @@ class \code{rmbl_srchpod}. \code{swpwdth()} and \code{pswppod()}: one
 number. \code{srchscs()}: a list of class \code{rmbl_srchscs} with
 \code{pos} (the probability of success), \code{posarea} (per area),
 \code{pocupd} (the updated containment probabilities) and
-\code{cumpod} (the cumulative POD per area). \code{datumpmap()}: a list
+\code{cumpod} (the cumulative POD per area), and when \code{poc} is a
+map, \code{map}: the map after the unsuccessful search, ready for
+\code{opteffort()} and \code{plot()}. \code{datumpmap()}: a list
 of class \code{rmbl_datummap} with \code{poc}, a matrix with one row
 per \code{y} cell and one column per \code{x} cell, \code{outside}, and
 the inputs. \code{optcrcsrch()}: a list of class \code{rmbl_optcrc} with
@@ -218,7 +250,15 @@ search of a circular normal datum covers a disc of radius
 cell \code{i} is \code{z_i = (A_i / W) log(r_i / lambda)} where
 \code{r_i = POC_i W / A_i} exceeds \code{lambda}, and 0 elsewhere; the
 Lagrange multiplier \code{lambda} is found by bisection on its logarithm so
-that the efforts add up to \code{effort} (Stone 1975, chapter 2).
+that the efforts add up to \code{effort} (Stone 1975, chapter 2). It assumes
+random search detection in every cell (the exponential POD curve,
+\code{srchpod(model = "random")}), the conservative choice when the tracks
+are not laid evenly; a plan searched by parallel sweeps does at least as
+well.
+
+All distances (\code{x}, \code{W}, \code{S}, \code{navsd}, the grid
+edges, \code{center}, \code{end}, \code{sigma}, \code{effort}) are in one
+unit of your choice, and areas in its square.
 
 Every input is checked: numbers must be finite and of the right length,
 sweep widths, spacings and standard deviations positive, probabilities in
@@ -271,8 +311,26 @@ a$pos
 plot(a)
 optcrcsrch(sigma = 2, W = 1, effort = 30)$pos
 
+# your own search, step by step: a last known position 2 km east and 3 km
+# north of the base, known to about 1.5 km, on a grid of 1 km cells
+own <- datumpmap(seq(-3, 7), seq(-2, 8), center = c(2, 3), sigma = 1.5)
+own
+# 0.6 km sweep width; 12 km of track walked in each of the four cells round
+# the position, none elsewhere
+walked <- matrix(0, nrow(own$poc), ncol(own$poc))
+walked[5:6, 5:6] <- 12
+pd <- srchpod(W = 0.6, effort = walked, area = own, model = "invcube")
+# the chance that search found the hiker, and the map if it did not
+day1 <- srchscs(own, pd)
+day1
+# the best use of tomorrow's 40 km on what is left
+day2 <- opteffort(day1$map, W = 0.6, effort = 40)
+day2
+plot(day1$map)
+
 # inputs that cannot be right are refused
 try(ltrlrng(1, W = -1))
+try(srchpod(1, W = 0.6))
 try(srchscs(c(0.8, 0.8), c(0.5, 0.5)))
 \dontshow{\}) # examplesIf}
 }

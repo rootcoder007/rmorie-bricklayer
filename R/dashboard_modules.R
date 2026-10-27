@@ -4,7 +4,7 @@
 # ---- settings ----------------------------------------------------------------
 
 #' The settings panel.
-#' @param id The module id.
+#' @param id The settings module's id, for its input namespace.
 #' @return A tag list.
 #' @noRd
 .bl_set_ui <- function(id) {
@@ -47,7 +47,7 @@
 }
 
 #' The settings server.
-#' @param id The module id.
+#' @param id The settings module's id, as given to .bl_set_ui().
 #' @return A reactive list: digits and seed.
 #' @noRd
 .bl_set_server <- function(id) {
@@ -147,7 +147,7 @@
 
 #' The report as one self-contained HTML page, in yoyhtml()'s style.
 #' @param entries The entries.
-#' @param title The page title.
+#' @param title The report's title, in `<title>` and the page heading.
 #' @return One string.
 #' @noRd
 .bl_rpt_html <- function(entries, title = "Analysis report") {
@@ -161,40 +161,7 @@
   )
   sect <- vapply(
     seq_along(entries),
-    function(k) {
-      e <- entries[[k]]
-      tab <- if (!is.null(e$yoy)) {
-        yoyhtml(e$yoy, f, title = e$title)
-        h <- paste(readLines(f, warn = FALSE), collapse = "\n")
-        regmatches(
-          h,
-          regexpr("(?s)<div class=\"scroll\">.*?</table></div>", h, perl = TRUE)
-        )
-      }
-      # each SVG's ids made unique on the page: the glyphs of one plot must not
-      # resolve to another's
-      svg <- if (!is.null(e$svg)) {
-        gsub("(id=\"|href=\"#|url\\(#)", sprintf("\\1p%d-", k), e$svg)
-      } else {
-        ""
-      }
-      paste0(
-        "<section><h2>",
-        .yoy_esc(e$title),
-        "</h2>",
-        "<pre><code>",
-        .yoy_esc(paste(e$code, collapse = "\n")),
-        "</code></pre>",
-        if (length(tab)) {
-          tab
-        } else {
-          paste0("<pre>", .yoy_esc(paste(e$text, collapse = "\n")), "</pre>")
-        },
-        "<figure>",
-        svg,
-        "</figure></section>"
-      )
-    },
+    function(k) .bl_rpt_section(entries[[k]], k, f),
     ""
   )
   paste0(
@@ -221,7 +188,7 @@
 
 #' The report as Markdown (also the GitHub comment).
 #' @param entries The entries.
-#' @param title The title.
+#' @param title The report's title, as the level-one Markdown heading.
 #' @return One string.
 #' @noRd
 .bl_rpt_md <- function(entries, title = "Analysis report") {
@@ -250,7 +217,7 @@
 }
 
 #' The report panel.
-#' @param id The module id.
+#' @param id The report module's id, for its input namespace.
 #' @return A tag list.
 #' @noRd
 .bl_rpt_ui <- function(id) {
@@ -299,8 +266,8 @@
 }
 
 #' The report server.
-#' @param id The module id.
-#' @param rpt The report's entries.
+#' @param id The report module's id, as given to .bl_rpt_ui().
+#' @param rpt The reactive report entries, shown and cleared here.
 #' @return NULL, invisibly.
 #' @noRd
 .bl_rpt_server <- function(id, rpt) {
@@ -339,7 +306,7 @@
 # ---- capsule -----------------------------------------------------------------
 
 #' A two-column table of the scalar fields of a list.
-#' @param x The list.
+#' @param x The nested list to flatten into field names and values.
 #' @param prefix The prefix of nested names.
 #' @return A data frame: field, value.
 #' @noRd
@@ -359,7 +326,7 @@
         out,
         data.frame(
           field = key,
-          value = paste(as.character(v), collapse = ", "),
+          value = toString(as.character(v)),
           stringsAsFactors = FALSE
         )
       )
@@ -370,7 +337,7 @@
 
 #' What the capsule viewer shows: provenance, manifest, attestation and bundle
 #' files.
-#' @param dir The capsule directory.
+#' @param dir The capsule directory, with its provenance and manifest.
 #' @return A list of data frames (NULL where the capsule has no such file) and
 #'   the code.
 #' @noRd
@@ -430,10 +397,10 @@
 #' @noRd
 .bl_status_rows <- function(rows) {
   sev <- rows$severity %||% rep("error", nrow(rows))
-  st <- ifelse(
-    rows$ok,
-    "pass",
-    ifelse(sev == "note", "note", ifelse(sev == "warn", "warn", "FAIL"))
+  st <- .bl_ifelse_chain(
+    list(rows$ok, sev == "note", sev == "warn"),
+    list("pass", "note", "warn"),
+    "FAIL"
   )
   data.frame(
     status = st,
@@ -446,43 +413,14 @@
 }
 
 #' The capsule panel.
-#' @param id The module id.
+#' @param id The capsule module's id, for its input namespace.
 #' @return A tag list.
 #' @noRd
 .bl_cps_ui <- function(id) {
   ns <- shiny::NS(id)
-  card <- function(title, id) {
-    bslib::card(
-      full_screen = TRUE,
-      bslib::card_header(title),
-      shiny::tags$div(class = "bl-scroll", shiny::tableOutput(ns(id)))
-    )
-  }
   bslib::layout_sidebar(
     fillable = FALSE,
-    sidebar = bslib::sidebar(
-      title = "Capsule",
-      width = 330,
-      open = list(desktop = "open", mobile = "always-above"),
-      shiny::textInput(ns("dir"), "Capsule directory"),
-      shiny::actionButton(
-        ns("demo"),
-        "Build the demo capsule",
-        class = "btn-sm btn-outline-primary"
-      ),
-      shiny::actionButton(
-        ns("show"),
-        "Show the provenance",
-        class = "btn-primary"
-      ),
-      shiny::actionButton(ns("verify"), "Verify"),
-      shiny::actionButton(ns("refresh"), "Refresh the pin"),
-      shiny::actionButton(
-        ns("add"),
-        "Add to report",
-        class = "btn-outline-secondary"
-      )
-    ),
+    sidebar = .bl_cps_sidebar(ns),
     shiny::tags$div(
       class = "bl-lead",
       paste(
@@ -498,14 +436,14 @@
     shiny::uiOutput(ns("vbox")),
     bslib::layout_columns(
       col_widths = bslib::breakpoints(sm = 12, xl = c(6, 6)),
-      card("Provenance", "prov"),
-      card("Verification", "rows")
+      .bl_table_card(ns, "Provenance", "prov"),
+      .bl_table_card(ns, "Verification", "rows")
     ),
     bslib::layout_columns(
       col_widths = bslib::breakpoints(sm = 12, xl = c(4, 4, 4)),
-      card("Manifest", "manifest"),
-      card("Attestation", "atst"),
-      card("Bundle files", "files")
+      .bl_table_card(ns, "Manifest", "manifest"),
+      .bl_table_card(ns, "Attestation", "atst"),
+      .bl_table_card(ns, "Bundle files", "files")
     ),
     bslib::card(
       bslib::card_header("Reproducible R call"),
@@ -515,149 +453,26 @@
 }
 
 #' The capsule server.
-#' @param id The module id.
+#' @param id The capsule module's id, as given to .bl_cps_ui().
 #' @param dat The data loaded at the left (its capsule fills the directory).
-#' @param rpt The report's entries.
+#' @param rpt The reactive report entries, passed to the events.
 #' @return NULL, invisibly.
 #' @noRd
 .bl_cps_server <- function(id, dat, rpt, active = shiny::reactive("")) {
   shiny::moduleServer(id, function(input, output, session) {
     shiny::setBookmarkExclude(c("demo", "show", "verify", "refresh", "add"))
-    view <- shiny::reactiveVal(NULL)
-    rows <- shiny::reactiveVal(NULL)
-    err <- shiny::reactiveVal(NULL)
-    code <- shiny::reactiveVal(character())
+    st <- list(
+      view = shiny::reactiveVal(NULL),
+      rows = shiny::reactiveVal(NULL),
+      err = shiny::reactiveVal(NULL),
+      code = shiny::reactiveVal(character())
+    )
     shiny::observe({
       d <- dat()$capsule
       if (!is.null(d)) shiny::updateTextInput(session, "dir", value = d)
     })
-    take <- function(r, then) {
-      if (inherits(r, "bl_app_error")) {
-        err(r)
-      } else {
-        err(NULL)
-        then(r)
-      }
-    }
-    show <- function(dir) {
-      take(.bl_app_try(.bl_cps_view(dir)), function(r) {
-        view(r)
-        code(r$code)
-      })
-    }
-    demo <- function() {
-      take(.bl_app_try(.bl_cps_demo()), function(d) {
-        shiny::updateTextInput(session, "dir", value = d)
-        show(d)
-      })
-    }
-    shiny::observeEvent(input$show, show(input$dir))
-    shiny::observeEvent(input$demo, demo())
-    # the tab opens on the demo capsule unless a directory is given
-    shiny::observeEvent(active(), {
-      if (
-        identical(active(), id) && is.null(view()) && !nzchar(input$dir %||% "")
-      ) {
-        demo()
-      }
-    })
-    shiny::observeEvent(
-      input$verify,
-      take(
-        .bl_app_try({
-          v <- vrfcps(input$dir)
-          k <- cpschk(input$dir, fp = FALSE)
-          rbind(
-            .bl_status_rows(cbind(
-              part = "provenance",
-              v$checks,
-              stringsAsFactors = FALSE
-            )),
-            .bl_status_rows(k$rows)
-          )
-        }),
-        function(r) {
-          rows(r)
-          code(c(
-            sprintf("dir <- %s", deparse(input$dir)),
-            "vrfcps(dir)",
-            "cpschk(dir, fp = FALSE)$rows"
-          ))
-        }
-      )
-    )
-    shiny::observeEvent(
-      input$refresh,
-      take(.bl_app_try(cpsrfrsh(input$dir)), function(r) {
-        rows(as.data.frame(r))
-        code(c(sprintf("dir <- %s", deparse(input$dir)), "cpsrfrsh(dir)"))
-      })
-    )
-    shiny::observeEvent(
-      input$add,
-      if (!is.null(rows())) {
-        rpt(c(
-          rpt(),
-          list(.bl_rpt_entry(list(
-            title = paste("Capsule", basename(input$dir)),
-            code = code(),
-            value = rows(),
-            plot = NULL
-          )))
-        ))
-      }
-    )
-    output$err <- shiny::renderUI(if (!is.null(err())) .bl_app_err_ui(err()))
-    output$vbox <- shiny::renderUI({
-      r <- rows()
-      v <- view()
-      if (is.null(r) && is.null(v)) {
-        return(NULL)
-      }
-      vb <- function(t, x, th = NULL) {
-        bslib::value_box(t, x, theme = th, fill = FALSE, min_height = "100px")
-      }
-      bslib::layout_column_wrap(
-        width = "200px",
-        fill = FALSE,
-        class = "mb-3",
-        vb(
-          "Pinned file",
-          v$prov$value[v$prov$field == "resource.filename"][1L] %||% "-",
-          "primary"
-        ),
-        vb("Bundle files", if (is.null(v$files)) "none" else nrow(v$files)),
-        vb(
-          "Checks passed",
-          if (is.null(r) || is.null(r$status)) {
-            "Not verified"
-          } else {
-            sprintf("%d of %d", sum(r$status == "pass"), nrow(r))
-          }
-        ),
-        vb(
-          "Verdict",
-          if (is.null(r) || is.null(r$status)) {
-            "Verify to check"
-          } else if (any(r$status == "FAIL")) {
-            "Failed"
-          } else {
-            "Verified"
-          },
-          if (!is.null(r$status) && !any(r$status == "FAIL")) {
-            "success"
-          } else {
-            "secondary"
-          }
-        )
-      )
-    })
-    output$code <- shiny::renderText(paste(code(), collapse = "\n"))
-    output$prov <- shiny::renderTable(view()$prov)
-    output$manifest <- shiny::renderTable(view()$manifest)
-    output$atst <- shiny::renderTable(view()$atst)
-    output$files <- shiny::renderTable(view()$files)
-    output$rows <- shiny::renderTable(rows())
+    .bl_cps_events(input, session, st, id, rpt, active)
+    .bl_cps_outputs(output, st)
     invisible(NULL)
   })
 }
@@ -688,7 +503,7 @@
 #' The link to a theorem's line on the repository at the ledger's commit, or
 #' NULL.
 #' @param src The ledger's source.
-#' @param t The theorem.
+#' @param t The theorem record, with its `file` and `line`.
 #' @return One URL or NULL.
 #' @noRd
 .bl_ldgr_link <- function(src, t) {
@@ -710,40 +525,7 @@
 #' @noRd
 .bl_ldgr_table <- function(led) {
   t <- shiny::tags
-  chip <- function(s) {
-    t$span(
-      class = paste(
-        "bl-chip",
-        switch(s, proved = "bl-ok", sorry = "bl-bad", "bl-warn")
-      ),
-      s
-    )
-  }
-  rows <- lapply(led$theorems, function(th) {
-    url <- .bl_ldgr_link(led$source, th)
-    where <- sprintf("%s:%d", th$file, as.integer(th$line))
-    cov <- lapply(th$covers, function(cv) {
-      inst <- cv$language == "R" && requireNamespace(cv$package, quietly = TRUE)
-      t$li(
-        t$code(sprintf("%s::%s", cv$package, cv$`function`)),
-        if (inst) " installed" else " not installed"
-      )
-    })
-    t$tr(
-      t$td(th$id),
-      t$td(chip(th$status)),
-      t$td(th$sorry_count),
-      t$td(t$pre(t$code(th$statement))),
-      t$td(
-        if (is.null(url)) {
-          where
-        } else {
-          t$a(href = url, target = "_blank", rel = "noopener", where)
-        }
-      ),
-      t$td(if (length(cov)) t$ul(cov) else "none")
-    )
-  })
+  rows <- lapply(led$theorems, .bl_ldgr_row, src = led$source)
   t$table(
     class = "table table-sm table-striped",
     t$caption(sprintf(
@@ -765,56 +547,14 @@
 }
 
 #' The proof ledger panel.
-#' @param id The module id.
+#' @param id The ledger module's id, for its input namespace.
 #' @return A tag list.
 #' @noRd
 .bl_ldgr_ui <- function(id) {
   ns <- shiny::NS(id)
   bslib::layout_sidebar(
     fillable = FALSE,
-    sidebar = bslib::sidebar(
-      title = "Ledger",
-      width = 330,
-      open = list(desktop = "open", mobile = "always-above"),
-      shiny::radioButtons(
-        ns("src"),
-        NULL,
-        c(
-          "The demo ledger (rmbldemo)" = "demo",
-          "The sample ledger" = "sample",
-          "A file" = "file",
-          "A capsule directory" = "capsule",
-          "An installed package" = "inst"
-        )
-      ),
-      shiny::conditionalPanel(
-        "input.src == 'file'",
-        ns = ns,
-        shiny::fileInput(ns("file"), "Ledger JSON", accept = ".json")
-      ),
-      shiny::conditionalPanel(
-        "input.src == 'capsule'",
-        ns = ns,
-        shiny::textInput(ns("dir"), "Capsule directory")
-      ),
-      shiny::conditionalPanel(
-        "input.src == 'inst'",
-        ns = ns,
-        shiny::actionButton(
-          ns("find"),
-          "Find the ledgers installed packages ship",
-          class = "btn-sm"
-        ),
-        shiny::selectInput(ns("inst"), "Ledger", NULL)
-      ),
-      shiny::actionButton(ns("load"), "Load", class = "btn-primary"),
-      shiny::actionButton(ns("check"), "Run the checks"),
-      shiny::actionButton(
-        ns("add"),
-        "Add to report",
-        class = "btn-outline-secondary"
-      )
-    ),
+    sidebar = .bl_ldgr_sidebar(ns),
     shiny::tags$div(
       class = "bl-lead",
       paste(
@@ -833,11 +573,7 @@
     ),
     bslib::layout_columns(
       col_widths = bslib::breakpoints(sm = 12, xl = c(6, 6)),
-      bslib::card(
-        full_screen = TRUE,
-        bslib::card_header("Checks"),
-        shiny::tags$div(class = "bl-scroll", shiny::tableOutput(ns("rows")))
-      ),
+      .bl_table_card(ns, "Checks", "rows"),
       bslib::card(
         bslib::card_header("Provenance and attestation"),
         shiny::tags$div(
@@ -855,7 +591,7 @@
 }
 
 #' The path of the ledger the panel's source names.
-#' @param input The inputs.
+#' @param input The ledger module's inputs: `src`, `file` and `dir`.
 #' @return A list: path and the code that names it.
 #' @noRd
 .bl_ldgr_path <- function(input) {
@@ -906,18 +642,20 @@
 }
 
 #' The proof ledger server.
-#' @param id The module id.
+#' @param id The ledger module's id, as given to .bl_ldgr_ui().
 #' @param dat The data loaded at the left (its capsule fills the directory).
-#' @param rpt The report's entries.
+#' @param rpt The reactive report entries, passed to the events.
 #' @return NULL, invisibly.
 #' @noRd
 .bl_ldgr_server <- function(id, dat, rpt, active = shiny::reactive("")) {
   shiny::moduleServer(id, function(input, output, session) {
     shiny::setBookmarkExclude(c("find", "load", "check", "add", "file"))
-    led <- shiny::reactiveVal(NULL)
-    rows <- shiny::reactiveVal(NULL)
-    err <- shiny::reactiveVal(NULL)
-    code <- shiny::reactiveVal(character())
+    st <- list(
+      led = shiny::reactiveVal(NULL),
+      rows = shiny::reactiveVal(NULL),
+      err = shiny::reactiveVal(NULL),
+      code = shiny::reactiveVal(character())
+    )
     shiny::observe({
       d <- dat()$capsule
       if (!is.null(d)) shiny::updateTextInput(session, "dir", value = d)
@@ -925,96 +663,8 @@
     shiny::observeEvent(input$find, {
       shiny::updateSelectInput(session, "inst", choices = .bl_ldgr_installed())
     })
-    load <- function(inp) {
-      r <- .bl_app_try({
-        p <- .bl_ldgr_path(inp)
-        list(led = ldgrread(p$path), code = c(p$code, "led <- ldgrread(path)"))
-      })
-      if (inherits(r, "bl_app_error")) {
-        err(r)
-      } else {
-        err(NULL)
-        led(r$led)
-        rows(NULL)
-        code(r$code)
-      }
-    }
-    shiny::observeEvent(input$load, load(input))
-    # the tab opens on the demo ledger
-    shiny::observeEvent(active(), {
-      if (identical(active(), id) && is.null(led())) {
-        load(list(src = input$src %||% "demo"))
-      }
-    })
-    shiny::observeEvent(
-      input$check,
-      if (!is.null(led())) {
-        r <- .bl_app_try(.bl_status_rows(ldgrchk(led())))
-        if (inherits(r, "bl_app_error")) {
-          err(r)
-        } else {
-          rows(r)
-          code(unique(c(code(), "ldgrchk(led)")))
-        }
-      }
-    )
-    shiny::observeEvent(
-      input$add,
-      if (!is.null(rows())) {
-        rpt(c(
-          rpt(),
-          list(.bl_rpt_entry(list(
-            title = paste("Proof ledger:", led()$name),
-            code = code(),
-            value = rows(),
-            plot = NULL
-          )))
-        ))
-      }
-    )
-    capdir <- shiny::reactive({
-      l <- led()
-      d <- if (!is.null(l)) dirname(attr(l, "path"))
-      if (!is.null(d) && file.exists(file.path(d, "data_provenance.json"))) d
-    })
-    output$err <- shiny::renderUI(if (!is.null(err())) .bl_app_err_ui(err()))
-    output$code <- shiny::renderText(paste(code(), collapse = "\n"))
-    output$thm <- shiny::renderUI(if (!is.null(led())) .bl_ldgr_table(led()))
-    output$vbox <- shiny::renderUI({
-      l <- led()
-      if (is.null(l)) {
-        return(NULL)
-      }
-      st <- vapply(l$theorems, function(th) th$status, "")
-      r <- rows()
-      vb <- function(t, x, th = NULL) {
-        bslib::value_box(t, x, theme = th, fill = FALSE, min_height = "100px")
-      }
-      bslib::layout_column_wrap(
-        width = "190px",
-        fill = FALSE,
-        class = "mb-3",
-        vb("Theorems", length(st), "primary"),
-        vb("Proved", sum(st == "proved"), "success"),
-        vb("With sorry", sum(st == "sorry")),
-        vb("Axioms", sum(st == "axiom")),
-        vb(
-          "Checks",
-          if (is.null(r)) {
-            "Not run"
-          } else {
-            sprintf("%d of %d pass", sum(r$status == "pass"), nrow(r))
-          }
-        )
-      )
-    })
-    output$rows <- shiny::renderTable(rows())
-    output$prov <- shiny::renderTable(
-      if (!is.null(capdir())) .bl_cps_view(capdir())$prov
-    )
-    output$atst <- shiny::renderTable(
-      if (!is.null(capdir())) .bl_cps_view(capdir())$atst
-    )
+    .bl_ldgr_events(input, st, id, rpt, active)
+    .bl_ldgr_outputs(output, st)
     invisible(NULL)
   })
 }
@@ -1046,4 +696,482 @@
 .bl_drift_server <- function(input, output, session) {
   .bl_drift_parts()$server(input, output, session)
   invisible(NULL)
+}
+
+#' Hands a capsule-panel result on, or shows its error.
+#' @param st The panel's state (reactive values).
+#' @param r The result of `.bl_app_try()`: a value, or a `bl_app_error`.
+#' @param then The function to call with a result that is not an error.
+#' @return As `then`, or the error set.
+#' @noRd
+.bl_cps_take <- function(st, r, then) {
+  if (inherits(r, "bl_app_error")) {
+    st$err(r)
+  } else {
+    st$err(NULL)
+    then(r)
+  }
+}
+
+#' Shows a capsule's provenance in the capsule panel.
+#' @param st The panel's state.
+#' @param dir The capsule directory to read and show.
+#' @return As `.bl_cps_take()`.
+#' @noRd
+.bl_cps_show <- function(st, dir) {
+  .bl_cps_take(st, .bl_app_try(.bl_cps_view(dir)), function(r) {
+    st$view(r)
+    st$code(r$code)
+  })
+}
+
+#' Builds the demo capsule and shows it in the capsule panel.
+#' @param st The panel's state.
+#' @param session The capsule module's session, whose `dir` input is set.
+#' @return As `.bl_cps_take()`.
+#' @noRd
+.bl_cps_demo_show <- function(st, session) {
+  .bl_cps_take(st, .bl_app_try(.bl_cps_demo()), function(d) {
+    shiny::updateTextInput(session, "dir", value = d)
+    .bl_cps_show(st, d)
+  })
+}
+
+#' Verifies a capsule for the capsule panel: vrfcps() and cpschk() rows.
+#' @param dir The capsule directory checked by vrfcps() and cpschk().
+#' @return The status rows.
+#' @noRd
+.bl_cps_verify <- function(dir) {
+  v <- vrfcps(dir)
+  k <- cpschk(dir, fp = FALSE)
+  rbind(
+    .bl_status_rows(cbind(
+      part = "provenance",
+      v$checks,
+      stringsAsFactors = FALSE
+    )),
+    .bl_status_rows(k$rows)
+  )
+}
+
+#' The capsule panel's buttons.
+#' @param input,session The capsule module's input and session.
+#' @param st The panel's state.
+#' @param id The capsule module's id, compared with the active tab.
+#' @param rpt The reactive report entries; a capsule is added to them.
+#' @param active The active tab.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_cps_events <- function(input, session, st, id, rpt, active) {
+  shiny::observeEvent(input$show, .bl_cps_show(st, input$dir))
+  shiny::observeEvent(input$demo, .bl_cps_demo_show(st, session))
+  # the tab opens on the demo capsule unless a directory is given
+  shiny::observeEvent(active(), {
+    if (
+      identical(active(), id) &&
+        is.null(st$view()) &&
+        !nzchar(input$dir %||% "")
+    ) {
+      .bl_cps_demo_show(st, session)
+    }
+  })
+  shiny::observeEvent(
+    input$verify,
+    .bl_cps_take(st, .bl_app_try(.bl_cps_verify(input$dir)), function(r) {
+      st$rows(r)
+      st$code(c(
+        sprintf("dir <- %s", deparse(input$dir)),
+        "vrfcps(dir)",
+        "cpschk(dir, fp = FALSE)$rows"
+      ))
+    })
+  )
+  shiny::observeEvent(
+    input$refresh,
+    .bl_cps_take(st, .bl_app_try(cpsrfrsh(input$dir)), function(r) {
+      st$rows(as.data.frame(r))
+      st$code(c(sprintf("dir <- %s", deparse(input$dir)), "cpsrfrsh(dir)"))
+    })
+  )
+  shiny::observeEvent(
+    input$add,
+    if (!is.null(st$rows())) {
+      rpt(c(
+        rpt(),
+        list(.bl_rpt_entry(list(
+          title = paste("Capsule", basename(input$dir)),
+          code = st$code(),
+          value = st$rows(),
+          plot = NULL
+        )))
+      ))
+    }
+  )
+  invisible(NULL)
+}
+
+#' The capsule panel's outputs.
+#' @param output The capsule module's output, given its renderers.
+#' @param st The panel's state.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_cps_outputs <- function(output, st) {
+  output$err <- shiny::renderUI(
+    if (!is.null(st$err())) .bl_app_err_ui(st$err())
+  )
+  output$vbox <- shiny::renderUI(.bl_cps_vbox(st$rows(), st$view()))
+  output$code <- shiny::renderText(paste(st$code(), collapse = "\n"))
+  output$prov <- shiny::renderTable(st$view()$prov)
+  output$manifest <- shiny::renderTable(st$view()$manifest)
+  output$atst <- shiny::renderTable(st$view()$atst)
+  output$files <- shiny::renderTable(st$view()$files)
+  output$rows <- shiny::renderTable(st$rows())
+  invisible(NULL)
+}
+
+#' The capsule panel's value boxes.
+#' @param r The verification rows, or `NULL`.
+#' @param v The provenance view, or `NULL`.
+#' @return A tag, or `NULL` before anything is shown.
+#' @noRd
+.bl_cps_vbox <- function(r, v) {
+  if (is.null(r) && is.null(v)) {
+    return(NULL)
+  }
+  vb <- function(t, x, th = NULL) {
+    bslib::value_box(t, x, theme = th, fill = FALSE, min_height = "100px")
+  }
+  unchecked <- is.null(r) || is.null(r$status)
+  bslib::layout_column_wrap(
+    width = "200px",
+    fill = FALSE,
+    class = "mb-3",
+    vb(
+      "Pinned file",
+      v$prov$value[v$prov$field == "resource.filename"][1L] %||% "-",
+      "primary"
+    ),
+    vb("Bundle files", if (is.null(v$files)) "none" else nrow(v$files)),
+    vb(
+      "Checks passed",
+      if (unchecked) {
+        "Not verified"
+      } else {
+        sprintf("%d of %d", sum(r$status == "pass"), nrow(r))
+      }
+    ),
+    vb(
+      "Verdict",
+      if (unchecked) {
+        "Verify to check"
+      } else if (any(r$status == "FAIL")) {
+        "Failed"
+      } else {
+        "Verified"
+      },
+      if (!is.null(r$status) && !any(r$status == "FAIL")) {
+        "success"
+      } else {
+        "secondary"
+      }
+    )
+  )
+}
+
+#' A full-screen card holding one table output.
+#' @param ns The module's namespace function, for the table output's id.
+#' @param title The card's header text.
+#' @param id The table output's id.
+#' @return A tag.
+#' @noRd
+.bl_table_card <- function(ns, title, id) {
+  bslib::card(
+    full_screen = TRUE,
+    bslib::card_header(title),
+    shiny::tags$div(class = "bl-scroll", shiny::tableOutput(ns(id)))
+  )
+}
+
+#' The capsule panel's sidebar.
+#' @param ns The capsule module's namespace function, for the sidebar inputs.
+#' @return A sidebar.
+#' @noRd
+.bl_cps_sidebar <- function(ns) {
+  bslib::sidebar(
+    title = "Capsule",
+    width = 330,
+    open = list(desktop = "open", mobile = "always-above"),
+    shiny::textInput(ns("dir"), "Capsule directory"),
+    shiny::actionButton(
+      ns("demo"),
+      "Build the demo capsule",
+      class = "btn-sm btn-outline-primary"
+    ),
+    shiny::actionButton(
+      ns("show"),
+      "Show the provenance",
+      class = "btn-primary"
+    ),
+    shiny::actionButton(ns("verify"), "Verify"),
+    shiny::actionButton(ns("refresh"), "Refresh the pin"),
+    shiny::actionButton(
+      ns("add"),
+      "Add to report",
+      class = "btn-outline-secondary"
+    )
+  )
+}
+
+#' One theorem's row of the ledger table.
+#' @param th The theorem.
+#' @param src The ledger's source.
+#' @return A tag.
+#' @noRd
+.bl_ldgr_row <- function(th, src) {
+  t <- shiny::tags
+  url <- .bl_ldgr_link(src, th)
+  where <- sprintf("%s:%d", th$file, as.integer(th$line))
+  cov <- lapply(th$covers, function(cv) {
+    inst <- cv$language == "R" && requireNamespace(cv$package, quietly = TRUE)
+    t$li(
+      t$code(sprintf("%s::%s", cv$package, cv$`function`)),
+      if (inst) " installed" else " not installed"
+    )
+  })
+  t$tr(
+    t$td(th$id),
+    t$td(t$span(
+      class = paste(
+        "bl-chip",
+        switch(th$status, proved = "bl-ok", sorry = "bl-bad", "bl-warn")
+      ),
+      th$status
+    )),
+    t$td(th$sorry_count),
+    t$td(t$pre(t$code(th$statement))),
+    t$td(
+      if (is.null(url)) {
+        where
+      } else {
+        t$a(href = url, target = "_blank", rel = "noopener", where)
+      }
+    ),
+    t$td(if (length(cov)) t$ul(cov) else "none")
+  )
+}
+
+#' The proof ledger panel's sidebar.
+#' @param ns The ledger module's namespace function, for the sidebar inputs.
+#' @return A sidebar.
+#' @noRd
+.bl_ldgr_sidebar <- function(ns) {
+  bslib::sidebar(
+    title = "Ledger",
+    width = 330,
+    open = list(desktop = "open", mobile = "always-above"),
+    shiny::radioButtons(
+      ns("src"),
+      NULL,
+      c(
+        "The demo ledger (rmbldemo)" = "demo",
+        "The sample ledger" = "sample",
+        "A file" = "file",
+        "A capsule directory" = "capsule",
+        "An installed package" = "inst"
+      )
+    ),
+    shiny::conditionalPanel(
+      "input.src == 'file'",
+      ns = ns,
+      shiny::fileInput(ns("file"), "Ledger JSON", accept = ".json")
+    ),
+    shiny::conditionalPanel(
+      "input.src == 'capsule'",
+      ns = ns,
+      shiny::textInput(ns("dir"), "Capsule directory")
+    ),
+    shiny::conditionalPanel(
+      "input.src == 'inst'",
+      ns = ns,
+      shiny::actionButton(
+        ns("find"),
+        "Find the ledgers installed packages ship",
+        class = "btn-sm"
+      ),
+      shiny::selectInput(ns("inst"), "Ledger", NULL)
+    ),
+    shiny::actionButton(ns("load"), "Load", class = "btn-primary"),
+    shiny::actionButton(ns("check"), "Run the checks"),
+    shiny::actionButton(
+      ns("add"),
+      "Add to report",
+      class = "btn-outline-secondary"
+    )
+  )
+}
+
+#' Loads the ledger the panel's inputs name into the panel's state.
+#' @param st The panel's state (reactive values).
+#' @param inp The inputs (or a list with `src`).
+#' @return The state set, or the error.
+#' @noRd
+.bl_ldgr_load <- function(st, inp) {
+  r <- .bl_app_try({
+    p <- .bl_ldgr_path(inp)
+    list(led = ldgrread(p$path), code = c(p$code, "led <- ldgrread(path)"))
+  })
+  if (inherits(r, "bl_app_error")) {
+    st$err(r)
+  } else {
+    st$err(NULL)
+    st$led(r$led)
+    st$rows(NULL)
+    st$code(r$code)
+  }
+}
+
+#' The proof ledger panel's buttons.
+#' @param input The module's input.
+#' @param st The panel's state.
+#' @param id The ledger module's id, compared with the active tab.
+#' @param rpt The reactive report entries; a ledger is added to them.
+#' @param active The active tab.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_ldgr_events <- function(input, st, id, rpt, active) {
+  shiny::observeEvent(input$load, .bl_ldgr_load(st, input))
+  # the tab opens on the demo ledger
+  shiny::observeEvent(active(), {
+    if (identical(active(), id) && is.null(st$led())) {
+      .bl_ldgr_load(st, list(src = input$src %||% "demo"))
+    }
+  })
+  shiny::observeEvent(
+    input$check,
+    if (!is.null(st$led())) {
+      r <- .bl_app_try(.bl_status_rows(ldgrchk(st$led())))
+      if (inherits(r, "bl_app_error")) {
+        st$err(r)
+      } else {
+        st$rows(r)
+        st$code(unique(c(st$code(), "ldgrchk(led)")))
+      }
+    }
+  )
+  shiny::observeEvent(
+    input$add,
+    if (!is.null(st$rows())) {
+      rpt(c(
+        rpt(),
+        list(.bl_rpt_entry(list(
+          title = paste("Proof ledger:", st$led()$name),
+          code = st$code(),
+          value = st$rows(),
+          plot = NULL
+        )))
+      ))
+    }
+  )
+  invisible(NULL)
+}
+
+#' The proof ledger panel's outputs.
+#' @param output The ledger module's output, given its renderers.
+#' @param st The panel's state.
+#' @return `NULL`, invisibly.
+#' @noRd
+.bl_ldgr_outputs <- function(output, st) {
+  capdir <- shiny::reactive({
+    l <- st$led()
+    d <- if (!is.null(l)) dirname(attr(l, "path"))
+    if (!is.null(d) && file.exists(file.path(d, "data_provenance.json"))) d
+  })
+  output$err <- shiny::renderUI(
+    if (!is.null(st$err())) .bl_app_err_ui(st$err())
+  )
+  output$code <- shiny::renderText(paste(st$code(), collapse = "\n"))
+  output$thm <- shiny::renderUI(
+    if (!is.null(st$led())) .bl_ldgr_table(st$led())
+  )
+  output$vbox <- shiny::renderUI(.bl_ldgr_vbox(st$led(), st$rows()))
+  output$rows <- shiny::renderTable(st$rows())
+  output$prov <- shiny::renderTable(
+    if (!is.null(capdir())) .bl_cps_view(capdir())$prov
+  )
+  output$atst <- shiny::renderTable(
+    if (!is.null(capdir())) .bl_cps_view(capdir())$atst
+  )
+  invisible(NULL)
+}
+
+#' The proof ledger panel's value boxes.
+#' @param l The ledger, or `NULL`.
+#' @param r The check rows, or `NULL`.
+#' @return A tag, or `NULL` before a ledger is loaded.
+#' @noRd
+.bl_ldgr_vbox <- function(l, r) {
+  if (is.null(l)) {
+    return(NULL)
+  }
+  st <- vapply(l$theorems, function(th) th$status, "")
+  vb <- function(t, x, th = NULL) {
+    bslib::value_box(t, x, theme = th, fill = FALSE, min_height = "100px")
+  }
+  bslib::layout_column_wrap(
+    width = "190px",
+    fill = FALSE,
+    class = "mb-3",
+    vb("Theorems", length(st), "primary"),
+    vb("Proved", sum(st == "proved"), "success"),
+    vb("With sorry", sum(st == "sorry")),
+    vb("Axioms", sum(st == "axiom")),
+    vb(
+      "Checks",
+      if (is.null(r)) {
+        "Not run"
+      } else {
+        sprintf("%d of %d pass", sum(r$status == "pass"), nrow(r))
+      }
+    )
+  )
+}
+
+#' One entry of the HTML report: its call, its table or text, and its plot.
+#' @param e The report entry: its `title`, with a `yoy` table or an `svg`.
+#' @param k Its position, which makes its SVG ids unique on the page.
+#' @param f A scratch HTML file.
+#' @return A `<section>` as a string.
+#' @noRd
+.bl_rpt_section <- function(e, k, f) {
+  tab <- if (!is.null(e$yoy)) {
+    yoyhtml(e$yoy, f, title = e$title)
+    h <- paste(readLines(f, warn = FALSE), collapse = "\n")
+    regmatches(
+      h,
+      regexpr("(?s)<div class=\"scroll\">.*?</table></div>", h, perl = TRUE)
+    )
+  }
+  # each SVG's ids made unique on the page: the glyphs of one plot must not
+  # resolve to another's
+  svg <- if (!is.null(e$svg)) {
+    gsub("(id=\"|href=\"#|url\\(#)", sprintf("\\1p%d-", k), e$svg)
+  } else {
+    ""
+  }
+  paste0(
+    "<section><h2>",
+    .yoy_esc(e$title),
+    "</h2>",
+    "<pre><code>",
+    .yoy_esc(paste(e$code, collapse = "\n")),
+    "</code></pre>",
+    if (length(tab)) {
+      tab
+    } else {
+      paste0("<pre>", .yoy_esc(paste(e$text, collapse = "\n")), "</pre>")
+    },
+    "<figure>",
+    svg,
+    "</figure></section>"
+  )
 }

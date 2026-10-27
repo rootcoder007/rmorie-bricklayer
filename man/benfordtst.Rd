@@ -7,7 +7,7 @@
 benfordtst(x)
 }
 \arguments{
-\item{x}{Numeric vector.}
+\item{x}{Numeric vector; zero and non-finite values are dropped.}
 }
 \value{
 A list of class \code{bricklayer_benford} with \code{counts}

@@ -499,7 +499,8 @@ if (!is.null(.sf_pkg)) {
 } else {
   ## Beside the script is where a bundle puts them; ../../R is the
   ## repository layout, for running this file straight from a checkout.
-  for (.f in c("print_methods.R", "yoy.R", "rate.R", "custody.R")) {
+  for (.f in c("print_methods.R", "print_boxes.R", "yoy.R", "rate.R",
+               "custody.R")) {
     for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
       .fp <- file.path(.dir, .f)
       if (file.exists(.fp)) {

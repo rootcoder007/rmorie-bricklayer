@@ -143,7 +143,7 @@ r4_server <- function(env = parent.frame()) {
   up <- FALSE
   for (i in 1:40) {
     up <- isTRUE(
-      r4(".bl_http_get_local")(paste0(base, "/echo"), 2, NULL)$status == 200L
+      r4(".bl_http_get_local")(file.path(base, "echo"), 2, NULL)$status == 200L
     )
     if (up) {
       break
@@ -288,7 +288,7 @@ test_that(
     )
     # same origin: everything travels
     same <- r4_json(r4(".bl_http_get_local")(
-      paste0(srv$base, "/self"),
+      file.path(srv$base, "self"),
       10,
       hdrs
     ))
@@ -320,10 +320,14 @@ test_that(
     # the reply carries the server's Retry-After when it sends one, trimmed
     # (empty otherwise)
     expect_identical(
-      r4(".bl_http_get_local")(paste0(srv$base, "/echo"), 10, NULL)$retry_after,
+      r4(".bl_http_get_local")(
+        file.path(srv$base, "echo"),
+        10,
+        NULL
+      )$retry_after,
       ""
     )
-    slow <- r4(".bl_http_get_local")(paste0(srv$base, "/slow"), 10, NULL)
+    slow <- r4(".bl_http_get_local")(file.path(srv$base, "slow"), 10, NULL)
     expect_identical(as.integer(slow$status), 429L)
     expect_identical(slow$retry_after, "7")
     expect_identical(r4(".bl_wb_retry_after")(slow), 7)
@@ -395,7 +399,7 @@ test_that(
   ),
   {
     srv <- r4_server()
-    res <- r4(".bl_http_get_local")(paste0(srv$base, "/url-body"), 10, NULL)
+    res <- r4(".bl_http_get_local")(file.path(srv$base, "url-body"), 10, NULL)
     expect_identical(as.integer(res$status), 200L)
     expect_error(r4(".rmbl_json_text")(res$body), "not JSON")
     # the public parser given the same text as a USER argument would fetch it:
@@ -545,20 +549,24 @@ test_that(
     }
     expect_false(grepl(
       "sk-LEAK123456",
-      err("token sk-LEAK123456 rejected", "sk-LEAK123456")
+      err("token sk-LEAK123456 rejected", "sk-LEAK123456"),
+      fixed = TRUE
     ))
     # the sk- shape alone
     expect_false(grepl(
       "sk-LEAK123456",
-      err(paste0("token ", "sk-LEAK123456 ", "rejected"))
+      err(paste0("token ", "sk-LEAK123456 ", "rejected")),
+      fixed = TRUE
     ))
     expect_false(grepl(
       "ODD-KEY-9",
-      err("header was Authorization: Bearer ODD-KEY-9", "ODD-KEY-9")
+      err("header was Authorization: Bearer ODD-KEY-9", "ODD-KEY-9"),
+      fixed = TRUE
     ))
     expect_false(grepl(
       "ODD-KEY-9",
-      err("header was Authorization: Bearer ODD-KEY-9")
+      err("header was Authorization: Bearer ODD-KEY-9"),
+      fixed = TRUE
     )) # the bearer shape alone
     expect_match(
       err("Rate limit exceeded"),
@@ -608,10 +616,11 @@ test_that(
       MORIE_HOSTED_KEY = NA,
       MORIE_HOSTED_AUTH_URL = NA
     ))
-    opened <- NULL
+    rec <- new.env()
+    rec$opened <- NULL
     testthat::local_mocked_bindings(
       browseURL = function(url, ...) {
-        opened <<- url
+        rec$opened <- url
         invisible(NULL)
       },
       .package = "utils"
@@ -639,7 +648,7 @@ test_that(
       .package = "rmoriebricklayer"
     )
     suppressMessages(dlogin(openbro = TRUE, pollmaxsec = 5))
-    expect_null(opened)
+    expect_null(rec$opened)
   }
 )
 
@@ -653,7 +662,7 @@ test_that(
     # a server under 64 bytes/s for 30 s ends the transfer well inside a long
     # timeout
     t0 <- Sys.time()
-    res <- r4(".bl_http_get_local")(paste0(srv$base, "/drip"), 120, NULL)
+    res <- r4(".bl_http_get_local")(file.path(srv$base, "drip"), 120, NULL)
     expect_identical(as.integer(res$status), -1L)
     expect_match(res$error, "too slow|slow")
     expect_lt(
@@ -661,16 +670,16 @@ test_that(
       wall_limit(90)
     )
     # an unbounded in-memory reply: status -1 and NO body, with the limit named
-    res <- r4(".bl_http_get_local")(paste0(srv$base, "/endless"), 60, NULL)
+    res <- r4(".bl_http_get_local")(file.path(srv$base, "endless"), 60, NULL)
     expect_identical(as.integer(res$status), -1L)
-    expect_identical(length(res$body), 0L)
+    expect_length(res$body, 0L)
     expect_match(res$error, "16 MiB")
     # a capped file download: nothing left behind, a sibling part file untouched
     dest <- tempfile()
     writeLines("someone's", paste0(dest, ".rmbl-part"))
     res <- .Call(
       r4("C_rmbl_http_download"),
-      paste0(srv$base, "/endless"),
+      file.path(srv$base, "endless"),
       dest,
       60L,
       NULL,
@@ -692,7 +701,7 @@ test_that(
     # and a 2xx body is the only one moved into place
     ok <- .Call(
       r4("C_rmbl_http_download"),
-      paste0(srv$base, "/echo"),
+      file.path(srv$base, "echo"),
       dest,
       10L,
       NULL,
@@ -740,7 +749,7 @@ test_that(
     # FileSink overflow)
     r <- .Call(
       dl,
-      paste0(srv$base, "/endless"),
+      file.path(srv$base, "endless"),
       dest,
       20L,
       NULL,
@@ -763,7 +772,7 @@ test_that(
     # status comes back
     r <- .Call(
       dl,
-      paste0(srv$base, "/missing"),
+      file.path(srv$base, "missing"),
       dest,
       20L,
       NULL,
@@ -778,7 +787,7 @@ test_that(
     # not a file
     r <- .Call(
       dl,
-      paste0(srv$base, "/nowhere"),
+      file.path(srv$base, "nowhere"),
       dest,
       20L,
       NULL,

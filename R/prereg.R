@@ -91,7 +91,7 @@ prrgdecl <- function(hyps, note = NULL) {
     !is.character(hyps) ||
       !length(hyps) ||
       is.null(names(hyps)) ||
-      any(!nzchar(names(hyps)))
+      !all(nzchar(names(hyps)))
   ) {
     stop(
       "`hyps` must be a named character vector: one claim per ",
@@ -115,7 +115,7 @@ prrgdecl <- function(hyps, note = NULL) {
 #' @rdname prrgdecl
 #' @export
 prrgchk <- function(prereg, rptd) {
-  .rmbl_no_fn(reported = rptd)
+  .rmbl_no_fn(rptd = rptd)
   if (!inherits(prereg, "bricklayer_prereg")) {
     stop("`prereg` must come from prrgdecl()", call. = FALSE)
   }
@@ -146,50 +146,60 @@ prrgchk <- function(prereg, rptd) {
 
 #' @export
 format.bricklayer_prereg <- function(x, ...) {
-  c(
-    .rmbl_rule("Pre-registration"),
-    sprintf("  declared %s", x$decutc),
-    if (nzchar(x$note)) sprintf("  %s", x$note),
-    .rmbl_rule(),
-    sprintf("  %-22s %s", x$statistics, substring(x$hypotheses, 1L, 44L)),
-    .rmbl_rule()
+  .rmbl_stat_block(
+    "Pre-registration",
+    facts = list(
+      Declared = x$decutc,
+      Statistics = length(x$statistics),
+      Note = if (nzchar(x$note %||% "")) x$note
+    ),
+    table = data.frame(
+      statistic = x$statistics,
+      hypothesis = substring(x$hypotheses, 1L, 50L),
+      stringsAsFactors = FALSE
+    ),
+    reading = paste(
+      "The claims declared before the analysis; prrgchk() later shows",
+      "whether the report kept to them."
+    )
   )
 }
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_prereg
-print.bricklayer_prereg <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_prereg_check <- function(x, ...) {
-  c(
-    .rmbl_rule(sprintf(
+  .rmbl_stat_block(
+    sprintf(
       "Against the declaration of %s: %s",
       x$decutc,
-      if (x$ok) "as declared" else "departures below"
-    )),
-    if (length(x$decnotrep)) {
-      sprintf(
-        "  declared but not reported (outcome switching): %s",
-        paste(x$decnotrep, collapse = ", ")
-      )
+      if (isTRUE(x$ok)) "as declared" else "departures below"
+    ),
+    facts = list(
+      Declared = nrow(x$hypotheses),
+      Reported = sum(x$hypotheses$reported)
+    ),
+    table = x$hypotheses[c("statistic", "reported")],
+    reading = if (isTRUE(x$ok)) {
+      "The report gives exactly the statistics declared, and no others."
+    } else {
+      "The report departs from the declaration: see below."
     },
-    if (length(x$repnotdec)) {
-      sprintf(
-        "  reported but not declared (%d addition(s)): %s",
-        length(x$repnotdec),
-        paste(x$repnotdec, collapse = ", ")
-      )
-    },
-    .rmbl_rule()
+    notes = c(
+      if (length(x$decnotrep)) {
+        sprintf(
+          "FAIL declared but not reported (outcome switching): %s",
+          toString(x$decnotrep)
+        )
+      },
+      if (length(x$repnotdec)) {
+        sprintf(
+          "FAIL reported but not declared (%d addition(s)): %s",
+          length(x$repnotdec),
+          toString(x$repnotdec)
+        )
+      }
+    )
   )
 }
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_prereg_check
-print.bricklayer_prereg_check <- .rmbl_print_via_format
 
 #' Correct a family of falsification results for multiple testing
 #'
@@ -287,38 +297,10 @@ falsfam <- function(
   }
   meth <- .rmbl_arg(meth)
   alpha <- .rmbl_conf_level(alpha, "alpha")
-  at_floor <- character(0)
-  if (
-    is.list(x) &&
-      length(x) &&
-      all(vapply(x, inherits, logical(1), "bricklayer_falsification"))
-  ) {
-    nms <- names(x)
-    if (is.null(nms) || any(!nzchar(nms))) {
-      stop("`x` must be a NAMED list of falsification results", call. = FALSE)
-    }
-    p <- vapply(
-      x,
-      function(f) {
-        v <- f$controls$value[f$controls$control == "permutation"]
-        if (!length(v)) NA_real_ else as.numeric(v)[1L]
-      },
-      numeric(1)
-    )
-    floors <- vapply(x, function(f) 1 / (1 + f$n), numeric(1))
-    at_floor <- nms[is.finite(p) & abs(p - floors) < 1e-12]
-    names(p) <- nms
-  } else if (is.numeric(x)) {
-    p <- x
-    if (is.null(names(p))) names(p) <- paste0("p", seq_along(p))
-  } else {
-    stop(
-      "`x` must be a named list of falsification results or a ",
-      "numeric vector of p-values",
-      call. = FALSE
-    )
-  }
-  if (any(is.na(p))) {
+  fp <- .rmbl_fam_p(x)
+  p <- fp$p
+  at_floor <- fp$at_floor
+  if (anyNA(p)) {
     stop(
       "every member of the family needs a p-value; ",
       "a permutation control that was skipped has none",
@@ -349,73 +331,45 @@ falsfam <- function(
   out
 }
 
-#' Adjusts p-values for multiple comparisons.
-#'
-#' Holm, Benjamini-Hochberg and Bonferroni, written out rather than
-#' delegated so the step-up and step-down directions are visible: Holm
-#' accumulates a running maximum from the smallest p upward, BH a running
-#' minimum from the largest downward, and swapping them silently inverts
-#' which hypotheses survive.
-#' @param p The p-values.
-#' @param method One of \code{"holm"}, \code{"BH"}, \code{"bonferroni"} or
-#'   \code{"none"}.
-#' @return The adjusted p-values, in the order of `p`.
-#' @noRd
-.rmbl_p_adjust <- function(p, method) {
-  n <- length(p)
-  if (identical(method, "none") || n == 0L) {
-    return(pmin(1, p))
-  }
-  if (identical(method, "bonferroni")) {
-    return(pmin(1, n * p))
-  }
-  o <- order(p)
-  ro <- order(o)
-  ps <- p[o]
-  if (identical(method, "holm")) {
-    adj <- cummax((n - seq_len(n) + 1L) * ps)
-  } else {
-    adj <- rev(cummin(rev(n / seq_len(n) * ps)))
-  }
-  pmin(1, adj)[ro]
-}
-
 #' @export
 format.bricklayer_falsify_family <- function(x, ...) {
-  c(
-    .rmbl_rule(sprintf(
+  r <- x$results
+  .rmbl_stat_block(
+    sprintf(
       "Family of %d, corrected by %s at alpha %.3g",
       x$famsz,
       x$method,
       x$alpha
-    )),
-    sprintf(
-      "  %-22s p %-10.4g adjusted %-10.4g %s",
-      x$results$name,
-      x$results$p,
-      x$results$adjusted,
-      ifelse(x$results$survives, "survives", "")
     ),
-    if (length(x$atflr)) {
-      c(
-        .rmbl_rule(),
-        sprintf(
-          paste0(
-            "  at the permutation floor (more permutations ",
-            "would be needed to say more): %s"
-          ),
-          paste(x$atflr, collapse = ", ")
-        )
+    facts = list(
+      Method = x$method,
+      `Family size` = x$famsz,
+      Alpha = x$alpha,
+      Survive = sum(r$survives)
+    ),
+    table = data.frame(
+      name = r$name,
+      p = r$p,
+      adjusted_p = r$adjusted,
+      survives = ifelse(r$survives, "survives", ""),
+      stringsAsFactors = FALSE
+    ),
+    reading = sprintf(
+      "%d of %d result(s) survive once the size of the family is counted.",
+      sum(r$survives),
+      x$famsz
+    ),
+    notes = if (length(x$atflr)) {
+      sprintf(
+        paste0(
+          "at the permutation floor (more permutations ",
+          "would be needed to say more): %s"
+        ),
+        toString(x$atflr)
       )
-    },
-    .rmbl_rule()
+    }
   )
 }
-
-#' @rdname printmeth
-#' @export
-#' @method print bricklayer_falsify_family
-print.bricklayer_falsify_family <- .rmbl_print_via_format
 
 #' How strong would an unmeasured confounder have to be
 #'
@@ -485,15 +439,9 @@ print.bricklayer_falsify_family <- .rmbl_print_via_format
 #' try(evlrr(-2))
 #' @export
 evlrr <- function(rr, lo = NULL, hi = NULL, true = 1) {
-  one <- function(v) {
-    v <- .rmbl_num(v, "v")[1L]
-    if (!is.finite(v) || v <= 0) {
-      stop("risk ratios must be finite and positive", call. = FALSE)
-    }
-    v
-  }
-  true <- one(true)
-  rr <- one(rr) / true
+  one <- .rmbl_evl_one
+  true <- one(true, "true")
+  rr <- one(rr, "rr") / true
   # The measure is symmetric about the null: a halving is as hard to
   # explain away as a doubling, so a protective effect is inverted.
   if (rr < 1) {
@@ -502,17 +450,115 @@ evlrr <- function(rr, lo = NULL, hi = NULL, true = 1) {
   point <- rr + sqrt(rr * (rr - 1))
   out <- c(evlpoint = point)
   if (!is.null(lo) || !is.null(hi)) {
-    l <- if (is.null(lo)) NA_real_ else one(lo) / true
-    h <- if (is.null(hi)) NA_real_ else one(hi) / true
-    # the limit NEARER the null is what has to be moved
-    lim <- if (!is.na(l) && l > 1) {
-      l
-    } else if (!is.na(h) && h < 1) {
-      1 / h
-    } else {
-      NA_real_
-    }
+    l <- if (is.null(lo)) NA_real_ else one(lo, "lo") / true
+    h <- if (is.null(hi)) NA_real_ else one(hi, "hi") / true
+    lim <- .rmbl_evl_limit(l, h)
     out <- c(out, evllimit = if (is.na(lim)) 1 else lim + sqrt(lim * (lim - 1)))
   }
   out
+}
+
+#' Adjusts p-values for multiple comparisons.
+#'
+#' Holm, Benjamini-Hochberg and Bonferroni, written out rather than
+#' delegated so the step-up and step-down directions are visible: Holm
+#' accumulates a running maximum from the smallest p upward, BH a running
+#' minimum from the largest downward, and swapping them silently inverts
+#' which hypotheses survive.
+#' @param p The p-values.
+#' @param method One of \code{"holm"}, \code{"BH"}, \code{"bonferroni"} or
+#'   \code{"none"}.
+#' @return The adjusted p-values, in the order of `p`.
+#' @noRd
+.rmbl_p_adjust <- function(p, method) {
+  n <- length(p)
+  if (identical(method, "none") || n == 0L) {
+    return(pmin(1, p))
+  }
+  if (identical(method, "bonferroni")) {
+    return(pmin(1, n * p))
+  }
+  o <- order(p)
+  ro <- order(o)
+  ps <- p[o]
+  if (identical(method, "holm")) {
+    adj <- cummax((n - seq_len(n) + 1L) * ps)
+  } else {
+    adj <- rev(cummin(rev(n / seq_len(n) * ps)))
+  }
+  pmin(1, adj)[ro]
+}
+
+#' The p-values of a family: each falsification result's permutation
+#' p-value, or the p-values given.
+#' @param x As for falsfam().
+#' @return A list: `p` (named) and `at_floor` (the results whose p-value is
+#'   the permutation floor).
+#' @noRd
+.rmbl_fam_p <- function(x) {
+  at_floor <- character(0)
+  if (
+    is.list(x) &&
+      length(x) &&
+      all(vapply(x, inherits, logical(1), "bricklayer_falsification"))
+  ) {
+    nms <- names(x)
+    if (is.null(nms) || !all(nzchar(nms))) {
+      stop("`x` must be a NAMED list of falsification results", call. = FALSE)
+    }
+    p <- vapply(
+      x,
+      function(f) {
+        v <- f$controls$value[f$controls$control == "permutation"]
+        if (length(v)) as.numeric(v)[1L] else NA_real_
+      },
+      numeric(1)
+    )
+    floors <- vapply(x, function(f) 1 / (1 + f$n), numeric(1))
+    at_floor <- nms[is.finite(p) & abs(p - floors) < 1e-12]
+    names(p) <- nms
+  } else if (is.numeric(x)) {
+    p <- x
+    if (is.null(names(p))) names(p) <- paste0("p", seq_along(p))
+  } else {
+    stop(
+      "`x` must be a named list of falsification results or a ",
+      "numeric vector of p-values",
+      call. = FALSE
+    )
+  }
+  list(p = p, at_floor = at_floor)
+}
+
+#' One risk ratio of evlrr(), checked.
+#' @param v The value, checked to be one positive finite number.
+#' @param what The user's argument name, for the risk ratio error.
+#' @return The value, finite and positive.
+#' @noRd
+.rmbl_evl_one <- function(v, what) {
+  v <- .rmbl_num(v, what)
+  # one ratio: c(2, 3) was cut to 2 without a word
+  if (length(v) != 1L || !is.finite(v) || v <= 0) {
+    stop(
+      .rmbl_fn(),
+      sprintf("`%s` must be one risk ratio, finite and positive", what),
+      call. = FALSE
+    )
+  }
+  v
+}
+
+#' The confidence limit of evlrr() that has to be moved: the one nearer the
+#' null, on the side of the effect.
+#' @param l,h The lower and upper limits over the true ratio, NA when absent.
+#' @return The limit (above 1), or NA when the interval holds the null.
+#' @noRd
+.rmbl_evl_limit <- function(l, h) {
+  if (!is.na(l) && l > 1) {
+    l
+  } else if (!is.na(h) && h < 1) {
+    1 / h
+  } else {
+    NA_real_
+  }
 }

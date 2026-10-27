@@ -14,7 +14,9 @@ person; non-negative, no \code{NA} or \code{Inf}, at least one value.}
 confidence level for the interval on the mean. Default \code{0.95}.}
 }
 \value{
-A one-row data frame with numeric columns \code{n} (people),
+A one-row data frame of class
+\code{c("rmbl_stay_summary", "data.frame")} (its print method shows it as
+a box) with numeric columns \code{n} (people),
 \code{totaldays}, \code{mean}, \code{sd} (sample standard
 deviation), \code{median}, \code{iqr} (interquartile range, quantile
 type 7), \code{max}, \code{se} (standard error of the mean),

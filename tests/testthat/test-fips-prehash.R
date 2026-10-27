@@ -104,7 +104,7 @@ test_that("external mu signs without the message and agrees with it", {
   key <- fipskg("ML-DSA-65")
   pub <- fipspubkey(key)
   mu <- fipsmu(key, "a manifest digest", ctx = "release")
-  expect_true(is.raw(mu))
+  expect_type(mu, "raw")
   expect_length(mu, 64L)
   # computable from the public key alone: the message never has to reach
   # whatever holds the secret

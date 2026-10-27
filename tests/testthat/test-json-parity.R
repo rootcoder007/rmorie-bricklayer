@@ -122,7 +122,7 @@ test_that(
   {
     skip_if_not_installed("jsonlite")
     expect_error(fromjs('{"a":1,"a":2}'), "duplicate key")
-    expect_equal(
+    expect_identical(
       fromjs('{"a":1,"a":2}', duplicate_keys = "keep"),
       jsonlite::fromJSON('{"a":1,"a":2}')
     )
@@ -224,7 +224,7 @@ test_that("base64 and serialize agree with jsonlite", {
   expect_identical(jsb64udec(jsb64uenc(as.raw(250:255))), as.raw(250:255))
   expect_identical(jsb64enc(c("ab", "c")), jsonlite::base64_enc(c("ab", "c")))
   for (x in list(
-    data.frame(a = 1:2, b = c("x", NA)),
+    data.frame(a = 1:2, b = c("x", NA), stringsAsFactors = FALSE),
     list(a = 1, b = list(c = "z")),
     matrix(1:6, 2),
     factor(c("u", "v", "u")),
@@ -253,9 +253,9 @@ test_that("base64 and serialize agree with jsonlite", {
         invokeRestart("muffleWarning")
       }
     )
-    expect_equal(ours, suppressWarnings(jsonlite::unserializeJSON(theirs)))
+    expect_identical(ours, suppressWarnings(jsonlite::unserializeJSON(theirs)))
     # complex NA round-trips as NA+0i through jsonlite too; compare with its own
     # result
-    if (!is.complex(x)) expect_equal(jsunser(jsser(x)), x)
+    if (!is.complex(x)) expect_identical(jsunser(jsser(x)), x)
   }
 })

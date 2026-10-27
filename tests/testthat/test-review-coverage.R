@@ -83,11 +83,11 @@ test_that(
 test_that("path and URL gates: empty, NA, symlink out, no scheme", {
   d <- tempfile("s")
   dir.create(d)
-  safe <- rmoriebricklayer:::.rmbl_safe_rel
+  safe <- .rmbl_safe_rel
   expect_null(safe("", d))
   expect_null(safe(NA_character_, d))
   expect_null(safe(NULL, d))
-  chk <- rmoriebricklayer:::.rmbl_check_public_url
+  chk <- .rmbl_check_public_url
   expect_error(chk("", "url"), "is empty")
   expect_error(chk("data.ontario.ca/x.csv", "url"), "no URL scheme")
   skip_on_os("windows")
@@ -178,8 +178,8 @@ test_that(
     expect_true(inherits(d$a, "POSIXct") || is.numeric(d$a) || is.list(d$a))
     expect_true(is.array(fromjs("[[[1,2],[3,4]],[[5,6],[7,8]]]")))
     lst <- fromjs('[[{"a":1}],[]]')
-    expect_true(is.list(lst))
-    sdf <- rmoriebricklayer:::.rmbl_json_simplify_df
+    expect_type(lst, "list")
+    sdf <- .rmbl_json_simplify_df
     expect_identical(
       nrow(sdf(
         list(),
@@ -234,7 +234,7 @@ test_that(
     obj <- methods::new("RmblTmpNum", c(1, 2, 3))
     back <- jsunser(jsser(obj), trusted = TRUE)
     expect_s4_class(back, "RmblTmpNum")
-    expect_equal(as.numeric(back), c(1, 2, 3))
+    expect_identical(as.numeric(back), c(1, 2, 3))
     expect_error(jsb64dec("@@@@"), "alphabet")
   }
 )
@@ -357,7 +357,7 @@ test_that("entry points refuse a missing string and bad lengths", {
   )
   # DER high-tag-number form
   node <- .Call(C("C_rmbl_der_parse"), as.raw(c(0x1f, 0x81, 0x01, 0x00)))
-  expect_equal(node$tag, 129)
+  expect_identical(node$tag, 129)
   # ML-DSA entry guards
   expect_error(.Call(C("C_rmbl_mldsa_keypair"), 99L, raw(32)), "44, 65 or 87")
   expect_error(

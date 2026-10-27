@@ -8,8 +8,12 @@ testthat::skip_on_cran()
 test_that("vrfpol uses the NO2 counterfactual (10) for NO2 and 5.8 for PM2.5", {
   a <- vrfpol("no2", expomean = 25, expoprev = 1)
   b <- vrfpol("no2", expomean = 25, expoprev = 1, ref = 10)
-  expect_equal(a$inputs$refconc, 10)
-  expect_equal(a$pipeline$burden$attrcases, b$pipeline$burden$attrcases)
+  expect_equal(a$inputs$refconc, 10, tolerance = 1e-8)
+  expect_equal(
+    a$pipeline$burden$attrcases,
+    b$pipeline$burden$attrcases,
+    tolerance = 1e-8
+  )
   # recomputed by hand from the log-linear RR, Levin at prevalence 1 and the
   # baseline count
   rr <- exp(log(1.02) * 15 / 10)
@@ -29,19 +33,21 @@ test_that("advdif2d reports the real stability bound and sub-steps past it", {
   c0 <- matrix(0, 41, 41)
   c0[21, 21] <- 1
   expect_warning(
-    r <- advdif2d(c0, u = .5, v = .4, kx = .1, ky = .1, 1, 1, 1, 60),
+    {
+      r <- advdif2d(c0, u = 0.5, v = 0.4, kx = 0.1, ky = 0.1, 1, 1, 1, 60)
+    },
     "sub-steps"
   )
   expect_true(r$stable)
   expect_lte(r$stabn, 1)
-  expect_equal(r$substeps, 2L)
+  expect_equal(r$substeps, 2L, tolerance = 1e-8)
   expect_equal(r$dt, 0.5)
   expect_lt(max(abs(r$field)), 1) # a diffusing unit pulse, not an explosion
   expect_lte(r$mass, 1)
   expect_s3_class(r, "rmbl_field")
-  ok <- advdif2d(c0, u = .5, v = .4, kx = .1, ky = .1, 1, 1, 0.5, 60)
-  expect_equal(ok$stabn, 0.5 * (0.9 + 2 * 0.2))
-  expect_equal(ok$substeps, 1L)
+  ok <- advdif2d(c0, u = 0.5, v = 0.4, kx = 0.1, ky = 0.1, 1, 1, 0.5, 60)
+  expect_equal(ok$stabn, 0.5 * (0.9 + 2 * 0.2), tolerance = 1e-8)
+  expect_equal(ok$substeps, 1L, tolerance = 1e-8)
   expect_error(advdif2d(c0, 1, 1, 1, 1, 0, 1, 1, 1), "dx")
   expect_error(advdif2d(c0, 1, 1, -1, 1, 1, 1, 1, 1), "kx")
   expect_error(advdif2d(c0, 1, 1, 1, 1, 1, 1, 1, 2.5), "whole")
@@ -80,11 +86,11 @@ test_that("every geographic IANA zone resolves, aliases included", {
       label = pair[1L]
     )
   }
-  expect_equal(
+  expect_identical(
     dtctloc("", "", tz = "posix/Europe/Paris", locale = "C")$location,
     "FR"
   )
-  expect_equal(
+  expect_identical(
     dtctloc("", "", tz = "right/America/Toronto", locale = "C")$location,
     "CA"
   )
@@ -96,7 +102,7 @@ test_that("every geographic IANA zone resolves, aliases included", {
   missing <- setdiff(geo, tz$tz)
   expect_identical(missing, character(0))
   # no country for a fixed-offset zone: the locale decides
-  expect_equal(
+  expect_identical(
     dtctloc("", "", tz = "Etc/GMT+5", locale = "en_IN.UTF-8")$location,
     "IN"
   )
@@ -109,8 +115,8 @@ test_that("vrfpol evaluates the RR among the exposed", {
   on.exit(unlink(f))
   write.csv(data.frame(exposure = c(5, 8, 20, 30, 40)), f, row.names = FALSE)
   r <- vrfpol("no2", expcsv = f)
-  expect_equal(r$inputs$expoprev, 3 / 5)
-  expect_equal(r$inputs$expomean, 30)
+  expect_equal(r$inputs$expoprev, 3 / 5, tolerance = 1e-8)
+  expect_equal(r$inputs$expomean, 30, tolerance = 1e-8)
   rr <- exp(log(1.02) * (30 - 10) / 10)
   expect_equal(
     r$pipeline$paf,
@@ -119,7 +125,8 @@ test_that("vrfpol evaluates the RR among the exposed", {
   )
   d <- vrfpol("pm25", demo = TRUE)
   expect_gt(d$inputs$expomean, d$inputs$refconc)
-  expect_true(d$inputs$expoprev > 0 && d$inputs$expoprev <= 1)
+  expect_gt(d$inputs$expoprev, 0)
+  expect_lte(d$inputs$expoprev, 1)
 })
 
 # ---- P5, P10, P11, P12: guards -----------------------------------------------
@@ -130,7 +137,8 @@ test_that("attrfrac and the burden chain reject bad input", {
   expect_error(attrfrac(Inf, 1), "finite")
   expect_error(attrfrac("1.5", 1), "numeric")
   expect_error(attrfrac(1.5, 1.2), "\\[0,1\\]")
-  expect_equal(attrfrac(0.5, 1), -1) # a protective exposure
+  # a protective exposure
+  expect_equal(as.numeric(attrfrac(0.5, 1)), -1, tolerance = 1e-8)
   expect_error(polbrdn(25, 1, 0.008, -5), "non-negative")
   expect_error(polbrdn(25, 1, 0.008, 1e6, poll = "ozone"), "Unknown pollutant")
   expect_error(polbrdn(25, 1, 0.008, 1e6, poll = 5), "Unknown pollutant")
@@ -143,13 +151,19 @@ test_that("attrfrac and the burden chain reject bad input", {
   expect_error(crfno2(c(10, NA)), "missing")
   # population is a number, not an integer: 8e9 is fine
   b <- polbrdn(25, 1, 0.008, 8e9, poll = "NO2")
-  expect_equal(b$population, 8e9)
-  expect_equal(b$basecases, 0.008 * 8e9)
+  expect_equal(b$population, 8e9, tolerance = 1e-8)
+  expect_equal(b$basecases, 0.008 * 8e9, tolerance = 1e-8)
   # the pollutant spellings agree between the siblings
-  expect_equal(polbrdn(12, 1, 0.008, 1e6, poll = "pm2.5")$pollutant, "PM2.5")
-  expect_equal(polbrdn(12, 1, 0.008, 1e6, poll = "PM25")$pollutant, "PM2.5")
-  expect_equal(vrfpol("PM2.5", expomean = 12, expoprev = 1)$pollutant, "pm25")
-  expect_equal(
+  expect_identical(
+    polbrdn(12, 1, 0.008, 1e6, poll = "pm2.5")$pollutant,
+    "PM2.5"
+  )
+  expect_identical(polbrdn(12, 1, 0.008, 1e6, poll = "PM25")$pollutant, "PM2.5")
+  expect_identical(
+    vrfpol("PM2.5", expomean = 12, expoprev = 1)$pollutant,
+    "pm25"
+  )
+  expect_identical(
     polbrdn(25, 1, 0.008, 1e6, y = "chiast")$extra$unit,
     "incident cases"
   )
@@ -162,13 +176,13 @@ test_that(
   ),
   {
     r <- vrfpol("no2", expomean = 5, expoprev = 1)
-    expect_equal(r$status, "ok")
-    expect_equal(r$pipeline$paf, 0)
-    expect_equal(r$pipeline$burden$attrcases, 0)
+    expect_identical(r$status, "ok")
+    expect_equal(r$pipeline$paf, 0, tolerance = 1e-8)
+    expect_equal(r$pipeline$burden$attrcases, 0, tolerance = 1e-8)
     expect_true(all(vapply(r$assumptions, function(a) a$ok, logical(1))))
     bad <- vrfpol("no2", expomean = Inf, expoprev = 1)
-    expect_equal(bad$status, "assumption_failure")
-    expect_equal(attr(bad, "exitstat"), 1L)
+    expect_identical(bad$status, "assumption_failure")
+    expect_equal(attr(bad, "exitstat"), 1L, tolerance = 1e-8)
     expect_match(polrpttxt(bad), "FAIL\\] exposure finite")
   }
 )
@@ -190,23 +204,36 @@ test_that("a NAPS pull converts each row by its own unit", {
   f <- tempfile(fileext = ".csv")
   on.exit(unlink(f))
   write.csv(
-    data.frame(value = c(10, 20), unit = c("ppb", "ug/m3")),
+    data.frame(
+      value = c(10, 20),
+      unit = c("ppb", "ug/m3"),
+      stringsAsFactors = FALSE
+    ),
     f,
     row.names = FALSE
   )
-  expect_message(r <- vrfpol("no2", expcsv = f), "1 NO2 row")
-  expect_equal(r$inputs$expomean, mean(c(18.8, 20)))
+  expect_message(
+    {
+      r <- vrfpol("no2", expcsv = f)
+    },
+    "1 NO2 row"
+  )
+  expect_equal(r$inputs$expomean, mean(c(18.8, 20)), tolerance = 1e-8)
   write.csv(data.frame(value = c(10, 20)), f, row.names = FALSE)
   r2 <- vrfpol("no2", expcsv = f)
-  expect_equal(r2$status, "error")
+  expect_identical(r2$status, "error")
   expect_match(r2$error, "unit")
   write.csv(
-    data.frame(value = c(10, 20), unit = c("ppm", "ug/m3")),
+    data.frame(
+      value = c(10, 20),
+      unit = c("ppm", "ug/m3"),
+      stringsAsFactors = FALSE
+    ),
     f,
     row.names = FALSE
   )
   r3 <- vrfpol("no2", expcsv = f)
-  expect_equal(r3$status, "error")
+  expect_identical(r3$status, "error")
   expect_match(r3$error, "ppm")
 })
 
@@ -218,31 +245,41 @@ test_that(
     "to row order under tied incomes"
   ),
   {
+    # one income level for everyone: no gradient, so the index is undefined
+    # (it was reported as 0, "evenly distributed")
     d <- data.frame(exposure = c(1, 5, 2, 9), income = c(3, 3, 3, 3))
-    expect_equal(expconcidx(d, "exposure", "income")$concidx, 0)
+    expect_error(
+      expconcidx(d, "exposure", "income"),
+      "`income` must take at least two values"
+    )
     d2 <- data.frame(exposure = c(4, 1, 8, 2, 7), income = c(2, 1, 2, 1, 3))
     a <- expconcidx(d2, "exposure", "income")
     b <- expconcidx(d2[c(5, 3, 1, 4, 2), ], "exposure", "income")
-    expect_equal(a$concidx, b$concidx)
+    expect_equal(a$concidx, b$concidx, tolerance = 1e-8)
     # mid-ranks recomputed by hand
     n <- 5
     R <- (rank(d2$income) - 0.5) / n
     h <- d2$exposure
     expect_equal(
       a$concidx,
-      2 * sum((h - mean(h)) * (R - mean(R))) / n / mean(h)
+      2 * sum((h - mean(h)) * (R - mean(R))) / n / mean(h),
+      tolerance = 1e-8
     )
-    expect_equal(nrow(a$extra$curve), n)
-    expect_equal(a$extra$curve$exposure[n], 1)
+    expect_equal(nrow(a$extra$curve), n, tolerance = 1e-8)
+    expect_equal(a$extra$curve$exposure[n], 1, tolerance = 1e-8)
   }
 )
 
 # ---- P8: citations and coefficients ------------------------------------------
 
 test_that("the NO2 coefficients carry their sources", {
-  expect_equal(crfno2(20, y = "respiratory")$extra$betaper10, log(1.03))
+  expect_equal(
+    crfno2(20, y = "respiratory")$extra$betaper10,
+    log(1.03),
+    tolerance = 1e-8
+  )
   asthma <- crfno2(20, y = "chiast")
-  expect_equal(asthma$extra$betaper10, log(1.05) * 10 / 4)
+  expect_equal(asthma$extra$betaper10, log(1.05) * 10 / 4, tolerance = 1e-8)
   expect_match(asthma$citation, "Khreis")
   expect_match(crfno2(20)$citation, "Huangfu")
 })
@@ -269,26 +306,27 @@ test_that("the dispersion functions refuse unphysical input", {
   )
   expect_error(
     briggs(100, 4, diam = 0, exitvel = 12, stktmp = 420, ambtmp = 285),
-    "diameter"
+    "`diam`"
   )
   expect_error(lagrprt(10, c(0, 1), 0, 1, 1, 1, 1, 1, 2), "x0")
   expect_error(lagrprt(10, 0, 0, 1, 1, -1, 1, 1, 2), "kx")
   p <- lagrprt(10, 0, 0, 1, 1, 1, 1, 1, 2)
   expect_s3_class(p, "rmbl_particles")
-  expect_equal(p$mean_x, mean(p$x))
+  expect_equal(p$mean_x, mean(p$x), tolerance = 1e-8)
   expect_gt(gplume(q = 100, u = 5, h = 50, rcpt = rc), 0)
 })
 
 # ---- P12: the footprint checks its arguments first ---------------------------
 
 test_that("co2fp validates before it runs the expression", {
-  ran <- FALSE
+  rec <- new.env()
+  rec$ran <- FALSE
   mark <- function() {
-    ran <<- TRUE
+    rec$ran <- TRUE
     1
   }
   expect_error(co2fp(mark(), memgb = -16, loc = "CA"), "memgb")
-  expect_false(ran)
+  expect_false(rec$ran)
   expect_error(co2fp(1, cores = 0, loc = "CA"), "cores")
   expect_error(co2fp(1, cpupwrw = -1, loc = "CA"), "cpupwrw")
   expect_error(co2fp(1, rapldir = c("a", "b"), loc = "CA"), "rapldir")
@@ -304,12 +342,16 @@ test_that(
   ),
   {
     tab <- co2inttab()
-    expect_equal(sum(tab$name == "Kosovo"), 1L)
-    expect_equal(co2int("Kosovo")$location, "XK")
-    expect_equal(co2int("XK")$g_per_kwh, co2int("Kosovo")$g_per_kwh)
-    expect_equal(sum(tab$location == "WORLD"), 1L)
+    expect_equal(sum(tab$name == "Kosovo"), 1L, tolerance = 1e-8)
+    expect_identical(co2int("Kosovo")$location, "XK")
+    expect_equal(
+      co2int("XK")$g_per_kwh,
+      co2int("Kosovo")$g_per_kwh,
+      tolerance = 1e-8
+    )
+    expect_equal(sum(tab$location == "WORLD"), 1L, tolerance = 1e-8)
     expect_equal(co2int("TM")$g_per_kwh, 1306.27)
-    expect_false(any(duplicated(tab$location)))
+    expect_false(anyDuplicated(tab$location) > 0)
   }
 )
 
@@ -341,30 +383,30 @@ test_that("masked = FALSE and the session option give the same signatures", {
 # slashes ---
 
 test_that("the offline services fallback uses the www host", {
-  svc <- rmoriebricklayer:::.rmbl_services_off()
-  expect_equal(svc$llm$request_access, "https://www.rmorie.com/access/")
-  expect_equal(svc$data$license, "https://www.rmorie.com/data-license/")
+  svc <- .rmbl_services_off()
+  expect_identical(svc$llm$request_access, "https://www.rmorie.com/access/")
+  expect_identical(svc$data$license, "https://www.rmorie.com/data-license/")
 })
 
 # ---- D7: the two-part hash entry refuses a non-integer split -----------------
 
 test_that("C_rmbl_hash_two_part refuses non-integer and logical splits", {
   x <- as.raw(1:10)
-  ok <- .Call(rmoriebricklayer:::C_rmbl_hash_two_part, x, 4L)
-  expect_identical(.Call(rmoriebricklayer:::C_rmbl_hash_two_part, x, 4), ok)
+  ok <- .Call(C_rmbl_hash_two_part, x, 4L)
+  expect_identical(.Call(C_rmbl_hash_two_part, x, 4), ok)
   expect_error(
-    .Call(rmoriebricklayer:::C_rmbl_hash_two_part, x, 3.7),
+    .Call(C_rmbl_hash_two_part, x, 3.7),
     "integer"
   )
   expect_error(
-    .Call(rmoriebricklayer:::C_rmbl_hash_two_part, x, TRUE),
+    .Call(C_rmbl_hash_two_part, x, TRUE),
     "integer"
   )
   expect_error(
-    .Call(rmoriebricklayer:::C_rmbl_hash_two_part, x, c(1L, 2L)),
+    .Call(C_rmbl_hash_two_part, x, c(1L, 2L)),
     "single"
   )
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_hash_two_part, x, -1), "integer")
+  expect_error(.Call(C_rmbl_hash_two_part, x, -1), "integer")
 })
 
 # ---- D4: yoypdf at another page height ---------------------------------------
@@ -412,7 +454,7 @@ test_that(
       "impliqué a participé."
     )
     r <- siuso(txt)
-    expect_equal(r$count, 1L)
+    expect_equal(r$count, 1L, tolerance = 1e-8)
   }
 )
 
@@ -435,7 +477,7 @@ test_that("classical Mahalanobis distances survive wildly different scales", {
   set.seed(3)
   d <- data.frame(a = rnorm(100) * 1e160, b = rnorm(100))
   out <- mahaoutl(d, robust = FALSE)
-  expect_equal(nrow(out), 100L)
+  expect_equal(nrow(out), 100L, tolerance = 1e-8)
   expect_true(all(is.finite(out$distance)))
   # affine invariance: the distances equal those on the rescaled data
   out2 <- mahaoutl(data.frame(a = d$a / 1e160, b = d$b), robust = FALSE)

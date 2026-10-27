@@ -94,12 +94,40 @@
 #' @name jsgz
 #' @export
 jsgzenc <- function(x, raw = FALSE, ...) {
+  raw <- .rmbl_flag1(raw, "raw")
   txt <- tojs(x, ...)
   bytes <- .rmbl_gzip_member(charToRaw(as.character(txt)))
   if (isTRUE(raw)) {
     return(bytes)
   }
   jsb64enc(bytes)
+}
+
+#' @rdname jsgz
+#' @export
+jsgzdec <- function(txt, raw = FALSE, ...) {
+  .rmbl_no_fn(txt = txt)
+  raw <- .rmbl_flag1(raw, "raw")
+  # The input's own type settles how to read it: raw is already the gzip
+  # member, character is base64 around one. Trusting the flag instead
+  # meant that handing back what jsgzenc(raw = TRUE) returned,
+  # without repeating the flag, ran the bytes through as.character() and
+  # a base64 decode and failed inside the inflater rather than here.
+  bytes <- if (is.raw(txt)) {
+    txt
+  } else {
+    if (isTRUE(raw)) {
+      stop("`txt` must be a raw vector when `raw = TRUE`", call. = FALSE)
+    }
+    # one string: c(e1, e2) decoded e1 alone without a word
+    if (length(txt) != 1L || is.na(txt)) {
+      stop("jsgzdec: `txt` must be a single string", call. = FALSE)
+    }
+    jsb64dec(as.character(txt))
+  }
+  .rmbl_gzip_check(bytes)
+  json <- rawToChar(memDecompress(bytes, type = "gzip"))
+  fromjs(json, ...)
 }
 
 #' Wrap a deflate stream in a real gzip member (RFC 1952).
@@ -153,23 +181,12 @@ jsgzenc <- function(x, raw = FALSE, ...) {
   c(hdr, deflate, le32(ccrc32(bytes)), le32(n))
 }
 
-#' @rdname jsgz
-#' @export
-jsgzdec <- function(txt, raw = FALSE, ...) {
-  .rmbl_no_fn(txt = txt)
-  # The input's own type settles how to read it: raw is already the gzip
-  # member, character is base64 around one. Trusting the flag instead
-  # meant that handing back what jsgzenc(raw = TRUE) returned,
-  # without repeating the flag, ran the bytes through as.character() and
-  # a base64 decode and failed inside the inflater rather than here.
-  bytes <- if (is.raw(txt)) {
-    txt
-  } else {
-    if (isTRUE(raw)) {
-      stop("`txt` must be a raw vector when `raw = TRUE`", call. = FALSE)
-    }
-    jsb64dec(as.character(txt)[1L])
-  }
+#' Refuses bytes that are not one gzip member, or that declare more than 64 MiB
+#' uncompressed.
+#' @param bytes The raw bytes to inflate.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_gzip_check <- function(bytes) {
   # A gzip member is at least 18 bytes (10 of header, 8 of trailer) and
   # starts 1f 8b; R's own memDecompress() would return garbage on a short
   # zlib-framed input and, in R 4.6, dumps core on an empty one.
@@ -203,6 +220,5 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
       call. = FALSE
     )
   }
-  json <- rawToChar(memDecompress(bytes, type = "gzip"))
-  fromjs(json, ...)
+  invisible(NULL)
 }

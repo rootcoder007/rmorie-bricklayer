@@ -14,7 +14,7 @@ page <- function(...) {
 service <- function(...) siuprs(page(...))[["police_service"]]
 
 test_that("the subject official's service wins over the notifying force", {
-  expect_equal(
+  expect_identical(
     service(
       "Notification of the SIU",
       "The Lakeshore Police Service ( LPS ) notified the SIU of the injury.",
@@ -28,7 +28,7 @@ test_that("the subject official's service wins over the notifying force", {
     "Hillcrest Police Service"
   )
   # an abbreviation the page defined is read back as the full name
-  expect_equal(
+  expect_identical(
     service(
       "The Lakeshore Police Service ( LPS ) notified the SIU.",
       "Hillcrest Police Service ( HPS ) officers attended.",
@@ -45,7 +45,7 @@ test_that(
     "before it"
   ),
   {
-    expect_equal(
+    expect_identical(
       service(
         "The Lakeshore Police Service notified the SIU.",
         "Analysis and Director's Decision",
@@ -63,7 +63,7 @@ test_that(
     "service wins"
   ),
   {
-    expect_equal(
+    expect_identical(
       service(
         "The Lakeshore Police Service notified the SIU.",
         "Analysis and Director's Decision",
@@ -78,7 +78,7 @@ test_that(
       "Riverton Police Service"
     )
     # a page's own abbreviation replaces the default reading of the same letters
-    expect_equal(
+    expect_identical(
       service(
         "The Pinecrest Regional Police ( PRP ) notified the SIU.",
         "Analysis and Director's Decision",
@@ -91,7 +91,7 @@ test_that(
 
 test_that("the case-number letter rules out services of the wrong kind", {
   # P = Ontario Provincial Police
-  expect_equal(
+  expect_identical(
     service(
       "Director's Report for Case # 21-PCI-500",
       "Analysis and Director's Decision",
@@ -100,7 +100,7 @@ test_that("the case-number letter rules out services of the wrong kind", {
     "Ontario Provincial Police"
   )
   # T = Toronto Police Service, even when another service is named first
-  expect_equal(
+  expect_identical(
     service(
       "Director's Report for Case # 21-TCI-501",
       "Analysis and Director's Decision",
@@ -113,7 +113,7 @@ test_that("the case-number letter rules out services of the wrong kind", {
     "Toronto Police Service"
   )
   # O = any other service: the OPP is ruled out
-  expect_equal(
+  expect_identical(
     service(
       "Director's Report for Case # 21-OCI-502",
       "Analysis and Director's Decision",
@@ -127,7 +127,7 @@ test_that("the case-number letter rules out services of the wrong kind", {
 })
 
 test_that("French reports read the agent impliqu\u00e9's service", {
-  expect_equal(
+  expect_identical(
     service(
       "T\u00e9moins civils",
       "Agents impliqu\u00e9s",
@@ -148,7 +148,7 @@ test_that("French reports read the agent impliqu\u00e9's service", {
 })
 
 test_that("a legacy report's Police service header decides", {
-  expect_equal(
+  expect_identical(
     service(
       "File #: 10-OFD-900 Police service: Lakeshore Incident date: May 9, 2010",
       "Notification of the SIU The Riverton Police Service notified the SIU.",
@@ -157,7 +157,7 @@ test_that("a legacy report's Police service header decides", {
     "Lakeshore Police Service"
   )
   # the header alone, when no full name contains it
-  expect_equal(
+  expect_identical(
     service(
       "File #: 10-OFD-901 Police service: Elmwood Incident date: May 9, 2010",
       "Notification of the SIU The Riverton Police Service notified the SIU."

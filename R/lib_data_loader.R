@@ -50,6 +50,9 @@
 #' @return The parsed provenance as a nested named list (JSON objects become
 #'   named lists, arrays become unnamed lists, strings, numbers and booleans
 #'   become length-1 vectors), or \code{NULL} if the file does not exist.
+#'    The list has class \code{c("rmbl_provenance", "list")}, which only
+#'   changes how it prints (a box); its elements, and the JSON written from it,
+#'   are those of a plain list.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' provfile <- tempfile(fileext = ".json")
 #' writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', provfile)
@@ -77,7 +80,32 @@ loadprov <- function(path) {
       call. = FALSE
     )
   }
-  .rmbl_read_json(path, simplify = FALSE)
+  p <- .rmbl_read_json(path, simplify = FALSE)
+  if (is.list(p) && !is.data.frame(p) && !is.object(p)) {
+    p <- .rmbl_cls(p, "rmbl_provenance")
+  }
+  p
+}
+
+#' @export
+format.rmbl_provenance <- function(x, ...) {
+  fl <- .mf_flat(unclass(x))
+  more <- nrow(fl) - 60L
+  .an_block(
+    "Provenance record",
+    facts = list(
+      Name = .mf_s1(x$name),
+      Source = .mf_s1(x$resource$direct_url) %||% .mf_s1(x$source$url),
+      `Data file` = .mf_s1(x$resource$filename),
+      `Pinned SHA-256` = .mf_s1(x$resource$sha256),
+      Fields = nrow(fl)
+    ),
+    tables = list(utils::head(fl, 60L)),
+    reading = .mf_prov_reading(x),
+    notes = if (more > 0L) {
+      sprintf("... and %d more fields: unclass(x) has them all.", more)
+    }
+  )
 }
 
 ## ----- CKAN package_show by slug + name match -----
@@ -160,13 +188,8 @@ rslvckan <- function(prov) {
       call. = FALSE
     )
   }
-  ds <- prov$dataset
-  res <- prov$resource
-  if (is.null(ds$ckan_api_endpoint) || is.null(res$name_match_pattern)) {
-    return(NULL)
-  }
-  api_url <- ds$ckan_api_endpoint
-  if (is.null(api_url) || !nzchar(api_url)) {
+  api_url <- .rmbl_ckan_endpoint(prov)
+  if (is.null(api_url)) {
     return(NULL)
   }
   api_url <- .rmbl_check_public_url(api_url, "ckan_api_endpoint")
@@ -177,15 +200,7 @@ rslvckan <- function(prov) {
   if (is.null(resp) || !isTRUE(resp$success)) {
     return(NULL)
   }
-  pat <- res$name_match_pattern
-  for (r in resp$result$resources) {
-    name <- if (is.null(r$name)) "" else r$name
-    if (grepl(pat, name, ignore.case = TRUE)) {
-      # a hostile record is an error in words, not "source unreachable"
-      return(.rmbl_check_public_url(r$url, "the CKAN resource URL"))
-    }
-  }
-  NULL
+  .rmbl_ckan_pick(resp$result$resources, prov$resource$name_match_pattern)
 }
 
 ## ----- CKAN package_search (fallback if slug changes) -----
@@ -298,29 +313,6 @@ rslvckns <- function(prov) {
   .rmbl_ckan_match(resp, res)
 }
 
-#' The first resource in a CKAN package_search reply whose name matches the
-#' provenance's pattern and whose format is CSV or the one it records.
-#' @param resp The reply.
-#' @param res The provenance's resource.
-#' @return The resource's checked URL, or NULL.
-#' @noRd
-.rmbl_ckan_match <- function(resp, res) {
-  pat <- res$name_match_pattern
-  for (pkg in resp$result$results) {
-    for (r in pkg$resources) {
-      name <- if (is.null(r$name)) "" else r$name
-      fmt <- toupper(r$format %||% "")
-      if (
-        grepl(pat, name, ignore.case = TRUE) &&
-          (fmt == "CSV" || is.null(res$format) || toupper(res$format) == fmt)
-      ) {
-        return(.rmbl_check_public_url(r$url, "the CKAN resource URL"))
-      }
-    }
-  }
-  NULL
-}
-
 ## ----- Tiny `%||%` operator (R 4.4+ has it natively) -----
 
 ## ----- Download -----
@@ -424,7 +416,9 @@ dldata <- function(url, tpath, mode = "wb", quiet = FALSE, allowfile = FALSE) {
 #'
 #' \code{NULL} is returned when the API has no snapshot, when the request
 #' fails (offline, an HTTP error, invalid JSON) or when the answer has no
-#' usable URL. Error: \code{url} that is not a single non-empty string.
+#' usable URL. Errors: \code{url} that is not a single non-empty string or
+#' is not a public web address; \code{ts} that is not \code{NULL},
+#' \code{""} or a string of 1 to 14 digits.
 #' Nothing is written.
 #'
 #' @param url The original source URL to look up, a single string.
@@ -438,6 +432,7 @@ dldata <- function(url, tpath, mode = "wb", quiet = FALSE, allowfile = FALSE) {
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # argument errors come before any request
 #' try(wbsnpurl(NA))
+#' try(wbsnpurl("https://www.r-project.org/", ts = "2020&x=1"))
 #' try(wbsnpurl(c("https://a.org", "https://b.org")))
 #'
 #' @examplesIf interactive()
@@ -448,23 +443,23 @@ dldata <- function(url, tpath, mode = "wb", quiet = FALSE, allowfile = FALSE) {
 #' @export
 wbsnpurl <- function(url, ts = NULL) {
   url <- .rmbl_string1(url, "url")
+  # the page is looked up, never fetched: http is fine, a private address
+  # is not (as wbsnpnat())
+  .rmbl_check_public_url(url, "url", allow_http = TRUE)
+  ts <- .rmbl_wb_ts(ts, "ts")
   # https: over cleartext a MITM chose the fallback snapshot
   api <- paste0(
     "https://archive.org/wayback/available?url=",
     utils::URLencode(url, reserved = TRUE)
   )
-  if (!is.null(ts) && nzchar(ts)) {
+  if (nzchar(ts)) {
     api <- paste0(api, "&timestamp=", ts)
   }
   res <- tryCatch(.rmbl_read_json(api, strict = FALSE), error = function(e) {
     NULL
   })
-  snap <- tryCatch(res$archived_snapshots$closest, error = function(e) NULL)
-  if (is.null(snap) || !isTRUE(snap$available) || is.null(snap$url)) {
-    return(NULL)
-  }
-  snap_url <- unlist(snap$url)
-  if (!is.character(snap_url) || length(snap_url) != 1L || !nzchar(snap_url)) {
+  snap_url <- .rmbl_wb_snapshot(res)
+  if (is.null(snap_url)) {
     return(NULL)
   }
   ## Prefer HTTPS; the API sometimes returns http:// snapshot URLs. And
@@ -474,46 +469,6 @@ wbsnpurl <- function(url, ts = NULL) {
     sub("^http://", "https://", snap_url),
     "the Wayback snapshot URL"
   )
-}
-
-#' Downloads a URL to a file.
-#'
-#' The one transport fdl() uses, live and Wayback alike (tests
-#' mock it). Inside the package it is bldl() with its live
-#' progress bar; a staged bundle (which copies this file alone) uses base R.
-#' @param url The URL to fetch.
-#' @param dest The file to write.
-#' @param allow_file Whether a `file://` URL is accepted.
-#' @return What `bldl()` or `utils::download.file()` returns.
-#' @noRd
-.bl_fetch_file <- function(url, dest, allow_file = FALSE) {
-  url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
-  if (exists("bldl", mode = "function")) {
-    bldl(url, dest, quiet = FALSE, allowfile = allow_file)
-  } else {
-    utils::download.file(url, dest, mode = "wb", quiet = FALSE)
-  }
-}
-
-#' Tells whether an error is R's time limit (setTimeLimit()), in English or
-#' translated.
-#' @param msg The error's message.
-#' @return TRUE or FALSE.
-#' @noRd
-.rmbl_time_limit <- function(msg) {
-  k <- c(
-    "reached elapsed time limit",
-    "reached CPU time limit",
-    "reached session elapsed time limit",
-    "reached session CPU time limit"
-  )
-  any(vapply(
-    unique(c(k, gettext(k, domain = "R"))),
-    grepl,
-    NA,
-    msg,
-    fixed = TRUE
-  ))
 }
 
 ## ----- fdl: wraps bldl with diagnostic
@@ -614,133 +569,6 @@ fdl <- function(url, tpath, attwb = NULL, allowfile = FALSE) {
   )
 }
 
-#' What fdl() does when the download failed: says why, then tries the Wayback
-#' snapshot.
-#' @param e The error.
-#' @param url,tpath,attwb As for fdl().
-#' @param said The warnings the download gave.
-#' @return TRUE when the snapshot was retrieved, else FALSE.
-#' @noRd
-.fdl_failed <- function(e, url, tpath, attwb, said) {
-  msg <- conditionMessage(e)
-  # a time limit (setTimeLimit()) is the caller's, not a failed download: it
-  # was swallowed and the fallback ran on, 34 s under a 3 s limit (audit of
-  # 30bed8e, #17)
-  if (.rmbl_time_limit(msg)) {
-    stop(e)
-  }
-  if (length(said) && grepl("cannot open the connection", msg, fixed = TRUE)) {
-    msg <- said[[length(said)]]
-  }
-  message("  ! Download failed.")
-  message("    URL:   ", url)
-  message("    Error: ", msg, "\n\n")
-  message("  Common causes (in rough order of likelihood):")
-  .fdl_causes(msg)
-  .fdl_wayback(url, tpath, attwb)
-}
-
-#' The likely causes of a failed download, from its error message.
-#' @param msg The message.
-#' @noRd
-.fdl_causes <- function(msg) {
-  has <- function(p) grepl(p, msg, ignore.case = TRUE)
-  known <- has(paste0(
-    "429|too ",
-    "many|rate|SSL|TLS|certificate|handshake|UNEXPECTED_EOF|could ",
-    "not|",
-    "unable to resolve|resolve host|name ",
-    "not|getaddrinfo|timeout|timed out|",
-    "connection (refused|reset)|couldn.t connect|",
-    "403|forbidden"
-  ))
-  if (has("429|too many|rate")) {
-    message("    * Rate-limited (HTTP 429). VPNs share IPs across users")
-    message("      and often trip rate limits. Try disabling your VPN.")
-  }
-  if (has("SSL|TLS|certificate|handshake|UNEXPECTED_EOF")) {
-    message("    * SSL/TLS handshake failed.")
-    message(
-      "      VPNs with TLS inspection (Cisco AnyConnect, GlobalProtect,"
-    )
-    message("      Zscaler, NetSkope) break R's HTTPS. Try disabling.")
-  }
-  if (
-    has(paste0(
-      "could not resolve|unable to resolve|resolve host|name ",
-      "not|getaddrinfo"
-    ))
-  ) {
-    message("    * DNS lookup failed; check network connectivity.")
-  }
-  if (has("could not connect|connection (refused|reset)|couldn.t connect")) {
-    message(
-      "    * Could not connect to the server (offline, or a proxy ",
-      "or firewall refused the connection)."
-    )
-  }
-  if (has("timeout|timed out")) {
-    message("    * Connection timed out (firewall, often institutional).")
-  }
-  if (has("403|forbidden")) {
-    message(
-      "    * HTTP 403 Forbidden (geo-restriction; try a different ",
-      "VPN region)."
-    )
-  }
-  if (!known) {
-    message(
-      "    * The server did not serve the file (see the error ",
-      "above): the URL may have moved or the"
-    )
-    message("      portal may be down.")
-  }
-  invisible(NULL)
-}
-
-#' The Wayback fallback of fdl(): a snapshot given, or looked up (NULL = auto;
-#' "" = explicitly disabled).
-#' @param url,tpath,attwb As for fdl().
-#' @return TRUE when the snapshot was retrieved, else FALSE.
-#' @noRd
-.fdl_wayback <- function(url, tpath, attwb) {
-  if (isFALSE(attwb) || identical(attwb, "")) {
-    message("  The Wayback fallback is switched off; nothing more to try.")
-    return(FALSE)
-  }
-  if (is.null(attwb)) {
-    attwb <- tryCatch(wbsnpurl(url), error = function(e) NULL)
-  }
-  if (
-    !is.character(attwb) ||
-      length(attwb) != 1L ||
-      is.na(attwb) ||
-      !nzchar(attwb)
-  ) {
-    message(
-      "  The Wayback Machine has no snapshot of it (or did not ",
-      "answer); nothing more to try."
-    )
-    return(FALSE)
-  }
-  message("  Trying Wayback Machine fallback snapshot...")
-  tryCatch(
-    {
-      .bl_fetch_file(attwb, tpath)
-      message("  [ok] Wayback snapshot retrieved.")
-      TRUE
-    },
-    error = function(e2) {
-      message(
-        "  ! Wayback fallback also failed: ",
-        conditionMessage(e2),
-        ""
-      )
-      FALSE
-    }
-  )
-}
-
 ## ----- SHA256 check -----
 
 #' Verify a File's SHA256 Against an Expected Digest
@@ -794,7 +622,7 @@ fdl <- function(url, tpath, attwb = NULL, allowfile = FALSE) {
 #' try(vrfsha256(f, c("a", "b")))
 #' @export
 vrfsha256 <- function(path, expsha) {
-  .rmbl_no_fn(expected_sha = expsha)
+  .rmbl_no_fn(expsha = expsha)
   actual <- sha256file(path)
   # provenance JSON hands the pinned digest over as a length-1 list;
   # identical() on list-vs-character never matched, so every intact
@@ -940,39 +768,16 @@ valsch <- function(dfraw, prov) {
   if (!is.data.frame(dfraw)) {
     stop("valsch: `dfraw` must be a data frame", call. = FALSE)
   }
-  if (!is.null(prov) && !is.list(prov)) {
-    stop(
-      "`prov` must be a provenance list (from read_provenance()), or NULL",
-      call. = FALSE
-    )
-  }
-  issues <- list()
-  if (is.null(prov) || is.null(prov$schema)) {
-    return(issues)
-  }
-  sch <- prov$schema
-  if (!is.list(sch)) {
-    stop(
-      sprintf(
-        "`provenance$schema` must be a list (from infsch()), not %s",
-        class(sch)[1L]
-      ),
-      call. = FALSE
-    )
+  sch <- .vs_schema(prov)
+  if (is.null(sch)) {
+    return(list())
   }
   # a schema with no fields checks nothing: it passed as valid (review of
   # e57fed5, the M2 leftover)
   if (!length(sch)) {
-    issues$schema_empty <- list(
-      severity = "warning",
-      message = paste0(
-        "the schema is empty (list()): it lists no columns, types or ",
-        "invariants, so nothing would be checked"
-      )
-    )
-    return(issues)
+    return(.vs_empty_schema())
   }
-  issues <- .vs_merge(issues, .vs_unknown_fields(sch))
+  issues <- .vs_merge(list(), .vs_unknown_fields(sch))
   issues <- .vs_merge(issues, .vs_unknown_invariants(sch))
   if (is.null(sch$expected_types) && !is.null(sch$expected_dtypes)) {
     sch$expected_types <- sch$expected_dtypes
@@ -990,13 +795,435 @@ valsch <- function(dfraw, prov) {
   issues
 }
 
+## ----- Apply schema validation; stop on fatal, warn otherwise -----
+
+#' Apply Schema Validation, Stopping on Fatal Issues
+#'
+#' Runs [valsch()] (or, for a list of rules,
+#' [valrules()]) and
+#' acts on the result: the first fatal issue stops with an error, and every
+#' warning-severity issue is raised as an R warning. Put it at the top of an
+#' analysis script so that a re-released file with a missing column stops
+#' the run before any result is computed.
+#'
+#' @details
+#' Issues are handled in the order the validator returns them; a fatal issue
+#' stops at once, so warnings after it are not raised. With a list of rules
+#' the same contract applies to each rule's \code{severity}.
+#'
+#' Unlike [valsch()], this function refuses to
+#' check against
+#' nothing, because a validation that checks nothing must not report success.
+#' Errors: \code{dfraw} not a data frame; \code{prov} a data frame;
+#' \code{prov} \code{NULL} or an empty list; a list that mixes rules
+#' with other elements; an unnamed list that is not all rules; something
+#' other than a list; a provenance list with no \code{schema} element (the
+#' message names the elements it has, so a typo such as \code{scheme}
+#' shows); an empty schema (\code{list(schema = list())}).
+#'
+#' @param dfraw The data frame to validate.
+#' @param prov A provenance list as returned by
+#'   [loadprov()] (with a \code{schema} element), or
+#'   one rule or a list
+#'   of rules from [rul()], run with
+#'   [valrules()] under the same
+#'   stop-on-fatal contract.
+#' @return Invisibly, \code{TRUE} if no issues were found and \code{FALSE}
+#'   if only warning-severity issues were found (each raised as a warning).
+#'   Errors if any fatal issue is present.
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' prov <- list(schema = list(expected_columns = "id"))
+#' schval(data.frame(id = 1), prov)
+#' # A missing required column is fatal:
+#' try(schval(data.frame(x = 1), prov))
+#'
+#' # a warning-level issue is raised as a warning and the result is FALSE
+#' ranged <- list(schema = list(numeric_ranges = list(v = c(min = 0, max = 1))))
+#' ok <- withCallingHandlers(
+#'   schval(data.frame(v = c(0.5, 3)), ranged),
+#'   warning = function(w) {
+#'     message("warning: ", conditionMessage(w))
+#'     invokeRestart("muffleWarning")
+#'   }
+#' )
+#' ok
+#'
+#' # rules work the same way
+#' rules <- list(rul(
+#'   "id_positive",
+#'   function(v) v > 0,
+#'   col = "id",
+#'   sev = "fatal"
+#' ))
+#' try(schval(data.frame(id = c(1, -2)), rules))
+#'
+#' # a provenance without a schema is refused, not passed
+#' try(schval(data.frame(id = 1), list(scheme = list())))
+#' @export
+schval <- function(dfraw, prov) {
+  if (!is.data.frame(dfraw)) {
+    stop("schval: `dfraw` must be a data frame", call. = FALSE)
+  }
+  if (is.data.frame(prov)) {
+    stop(
+      "`prov` must be a provenance list or a list of rules, not a data frame",
+      call. = FALSE
+    )
+  }
+  is_rule <- vapply(prov, inherits, logical(1), "bricklayer_rule")
+  is_rule_list <- inherits(prov, "bricklayer_rule") ||
+    (is.list(prov) && length(prov) && all(is_rule))
+  if (is_rule_list) {
+    .sv_check_nonempty(prov)
+  } else {
+    .sv_check_provenance(prov, is_rule)
+  }
+  issues <- if (is_rule_list) valrules(dfraw, prov) else valsch(dfraw, prov)
+  for (nm in names(issues)) {
+    iss <- issues[[nm]]
+    if (iss$severity == "fatal") {
+      stop(iss$message, call. = FALSE)
+    }
+    if (iss$severity == "warning") warning(iss$message, call. = FALSE)
+  }
+  invisible(length(issues) == 0L)
+}
+
+## ----- Socrata + ArcGIS resolvers (same contract as rslvckan) -----
+
+#' Resolve a Download URL via the Socrata Metadata API
+#'
+#' Checks that a dataset still exists on a Socrata open-data portal and
+#' returns its full CSV export URL. Socrata powers the Calgary, Chicago and
+#' New York City portals used across the MORIE family; a dataset is named by
+#' its portal domain and a four-by-four id such as \code{ijzp-q8t2}.
+#'
+#' @details
+#' One request is made, to \code{https://<domain>/api/views/<id>.json}. If
+#' it answers with JSON that has an \code{id} field the dataset is taken to
+#' exist. The function then returns the portal's export of every row, the URL
+#' \code{https://<domain>/api/views/<id>/} followed by
+#' \code{rows.csv?accessType=DOWNLOAD}. The id is not checked further, and the
+#' export URL is not fetched.
+#'
+#' \code{NULL} is returned when \code{prov} is \code{NULL}, when the
+#' domain or id is missing, when the request fails (offline, HTTP error,
+#' invalid JSON) or when the metadata has no \code{id}. Errors: a
+#' \code{prov} that is not a list; a domain that is not a public host
+#' (\code{localhost}, a private address, a single-label name).
+#'
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or \code{NULL}.
+#'   It must have two fields. The first is \code{dataset$socrata_domain}, a
+#'   host name without scheme such as \code{"data.cityofchicago.org"}. The
+#'   second is \code{dataset$socrata_id}, the four-by-four dataset id such as
+#'   \code{"ijzp-q8t2"}.
+#' @return The CSV export URL as a length-1 character string, or \code{NULL}
+#'   if the fields are missing, the request fails, or the metadata reports an
+#'   error.
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' # Missing fields return NULL rather than erroring:
+#' rslvsoc(list())
+#' rslvsoc(list(dataset = list(socrata_domain = "data.cityofchicago.org")))
+#'
+#' # a local host is refused before any request
+#' try(rslvsoc(list(dataset = list(
+#'   socrata_domain = "localhost", socrata_id = "abcd-1234"))))
+#'
+#' @examplesIf interactive()
+#' # needs the network
+#' prov <- list(dataset = list(
+#'   socrata_domain = "data.cityofchicago.org",
+#'   socrata_id = "ijzp-q8t2"
+#' ))
+#' rslvsoc(prov)
+#' @export
+rslvsoc <- function(prov) {
+  if (is.null(prov)) {
+    return(NULL)
+  }
+  if (!is.list(prov)) {
+    stop(
+      "rslvsoc: `prov` must be a provenance list (loadprov())",
+      call. = FALSE
+    )
+  }
+  domain <- prov$dataset$socrata_domain
+  id <- prov$dataset$socrata_id
+  if (is.null(domain) || is.null(id)) {
+    return(NULL)
+  }
+  base <- .rmbl_check_public_url(paste0("https://", domain), "socrata_domain")
+  meta_url <- paste0(base, "/api/views/", id, ".json")
+  meta <- tryCatch(
+    .rmbl_read_json(meta_url, strict = FALSE),
+    error = function(e) NULL
+  )
+  if (is.null(meta) || is.null(meta$id)) {
+    return(NULL)
+  }
+  file.path(base, "api", "views", id, "rows.csv?accessType=DOWNLOAD")
+}
+
+#' Resolve a Query URL via ArcGIS FeatureServer Metadata
+#'
+#' Checks that an ArcGIS FeatureServer layer still exists and returns a
+#' query URL that downloads every feature of the layer as GeoJSON.
+#' FeatureServer layers back the Toronto Police Service open-data portal
+#' and many municipal portals used across the MORIE family.
+#'
+#' @details
+#' Trailing slashes are dropped from \code{dataset$arcgis_layer_url}, the
+#' URL is checked (public \code{https} only), and one request is made to
+#' \code{<layer>?f=json}. If the answer is JSON with a \code{name} and no
+#' \code{error} element, the function returns
+#' \code{<layer>/query?where=1\%3D1&outFields=*&f=geojson}: every row
+#' (\code{where=1=1}), every field, as GeoJSON. ArcGIS servers return at
+#' most their \code{maxRecordCount} features per request, so a large layer
+#' needs paging (\code{resultOffset}) by the caller; the URL is not fetched
+#' here.
+#'
+#' \code{NULL} is returned when \code{prov} is \code{NULL}, when the
+#' field is missing, when the request fails or when the metadata reports an
+#' error. Errors: a \code{prov} that is not a list; a layer URL that is
+#' not public \code{https}.
+#'
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or \code{NULL}.
+#'   It must have the field \code{dataset$arcgis_layer_url}, a
+#'   FeatureServer layer root. An example is\cr
+#'   \code{https://services.arcgis.com/.../}\cr
+#'   followed by \code{Assault_Open_Data/FeatureServer/0}.
+#' @return The layer query URL as a length-1 character string, or
+#'   \code{NULL} if the field is missing, the request fails, or the layer
+#'   metadata reports an error.
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' # Missing fields return NULL rather than erroring:
+#' rslvarc(list())
+#'
+#' # only https layer URLs are accepted
+#' try(rslvarc(list(dataset = list(
+#'   arcgis_layer_url = "ftp://example.org/FeatureServer/0"))))
+#' try(rslvarc("not a list"))
+#'
+#' @examplesIf interactive()
+#' # needs the network
+#' prov <- list(dataset = list(arcgis_layer_url = paste0(
+#'   "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
+#'   "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0"
+#' )))
+#' rslvarc(prov)
+#' @export
+rslvarc <- function(prov) {
+  if (is.null(prov)) {
+    return(NULL)
+  }
+  if (!is.list(prov)) {
+    stop(
+      "rslvarc: `prov` must be a provenance list (loadprov())",
+      call. = FALSE
+    )
+  }
+  layer <- prov$dataset$arcgis_layer_url
+  if (is.null(layer)) {
+    return(NULL)
+  }
+  layer <- .rmbl_check_public_url(sub("/+$", "", layer), "arcgis_layer_url")
+  meta <- tryCatch(
+    .rmbl_read_json(paste0(layer, "?f=json"), strict = FALSE),
+    error = function(e) NULL
+  )
+  if (is.null(meta) || !is.null(meta$error) || is.null(meta$name)) {
+    return(NULL)
+  }
+  file.path(layer, "query?where=1%3D1&outFields=*&f=geojson")
+}
+
+#' The first resource in a CKAN package_search reply whose name matches the
+#' provenance's pattern and whose format is CSV or the one it records.
+#' @param resp The reply.
+#' @param res The provenance's resource.
+#' @return The resource's checked URL, or NULL.
+#' @noRd
+.rmbl_ckan_match <- function(resp, res) {
+  pat <- res$name_match_pattern
+  for (pkg in resp$result$results) {
+    for (r in pkg$resources) {
+      name <- if (is.null(r$name)) "" else r$name
+      fmt <- toupper(r$format %||% "")
+      if (
+        grepl(pat, name, ignore.case = TRUE) &&
+          (fmt == "CSV" || is.null(res$format) || toupper(res$format) == fmt)
+      ) {
+        return(.rmbl_check_public_url(r$url, "the CKAN resource URL"))
+      }
+    }
+  }
+  NULL
+}
+
+#' Downloads a URL to a file.
+#'
+#' The one transport fdl() uses, live and Wayback alike (tests
+#' mock it). Inside the package it is bldl() with its live
+#' progress bar; a staged bundle (which copies this file alone) uses base R.
+#' @param url The URL to download, checked to be public first.
+#' @param dest The file the download is written to.
+#' @param allow_file Whether a `file://` URL is accepted.
+#' @return What `bldl()` or `utils::download.file()` returns.
+#' @noRd
+.bl_fetch_file <- function(url, dest, allow_file = FALSE) {
+  url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
+  if (exists("bldl", mode = "function")) {
+    bldl(url, dest, quiet = FALSE, allowfile = allow_file)
+  } else {
+    utils::download.file(url, dest, mode = "wb", quiet = FALSE)
+  }
+}
+
+#' Tells whether an error is R's time limit (setTimeLimit()), in English or
+#' translated.
+#' @param msg The error's message.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_time_limit <- function(msg) {
+  k <- c(
+    "reached elapsed time limit",
+    "reached CPU time limit",
+    "reached session elapsed time limit",
+    "reached session CPU time limit"
+  )
+  any(vapply(
+    unique(c(k, gettext(k, domain = "R"))),
+    grepl,
+    NA,
+    msg,
+    fixed = TRUE
+  ))
+}
+
+#' What fdl() does when the download failed: says why, then tries the Wayback
+#' snapshot.
+#' @param e The error.
+#' @param url,tpath,attwb As for fdl().
+#' @param said The warnings the download gave.
+#' @return TRUE when the snapshot was retrieved, else FALSE.
+#' @noRd
+.fdl_failed <- function(e, url, tpath, attwb, said) {
+  msg <- conditionMessage(e)
+  # a time limit (setTimeLimit()) is the caller's, not a failed download: it
+  # was swallowed and the fallback ran on, 34 s under a 3 s limit (audit of
+  # 30bed8e, #17)
+  if (.rmbl_time_limit(msg)) {
+    stop(e)
+  }
+  if (length(said) && grepl("cannot open the connection", msg, fixed = TRUE)) {
+    msg <- said[[length(said)]]
+  }
+  message("  ! Download failed.")
+  message("    URL:   ", url)
+  message("    Error: ", msg, "\n\n")
+  message("  Common causes (in rough order of likelihood):")
+  .fdl_causes(msg)
+  .fdl_wayback(url, tpath, attwb)
+}
+
+#' The likely causes of a failed download, from its error message.
+#' @param msg The failed download's error message, matched for known causes.
+#' @noRd
+.fdl_causes <- function(msg) {
+  has <- function(p) grepl(p, msg, ignore.case = TRUE)
+  known <- has(paste0(
+    "429|too ",
+    "many|rate|SSL|TLS|certificate|handshake|UNEXPECTED_EOF|could ",
+    "not|",
+    "unable to resolve|resolve host|name ",
+    "not|getaddrinfo|timeout|timed out|",
+    "connection (refused|reset)|couldn.t connect|",
+    "403|forbidden"
+  ))
+  if (has("429|too many|rate")) {
+    message("    * Rate-limited (HTTP 429). VPNs share IPs across users")
+    message("      and often trip rate limits. Try disabling your VPN.")
+  }
+  if (has("SSL|TLS|certificate|handshake|UNEXPECTED_EOF")) {
+    message("    * SSL/TLS handshake failed.")
+    message(
+      "      VPNs with TLS inspection (Cisco AnyConnect, GlobalProtect,"
+    )
+    message("      Zscaler, NetSkope) break R's HTTPS. Try disabling.")
+  }
+  if (
+    has(paste0(
+      "could not resolve|unable to resolve|resolve host|name ",
+      "not|getaddrinfo"
+    ))
+  ) {
+    message("    * DNS lookup failed; check network connectivity.")
+  }
+  .fdl_causes_more(has)
+  if (!known) {
+    message(
+      "    * The server did not serve the file (see the error ",
+      "above): the URL may have moved or the"
+    )
+    message("      portal may be down.")
+  }
+  invisible(NULL)
+}
+
+#' The Wayback fallback of fdl(): a snapshot given, or looked up (NULL = auto;
+#' "" = explicitly disabled).
+#' @param url,tpath,attwb As for fdl().
+#' @return TRUE when the snapshot was retrieved, else FALSE.
+#' @noRd
+.fdl_wayback <- function(url, tpath, attwb) {
+  if (isFALSE(attwb) || identical(attwb, "")) {
+    message("  The Wayback fallback is switched off; nothing more to try.")
+    return(FALSE)
+  }
+  if (is.null(attwb)) {
+    attwb <- tryCatch(wbsnpurl(url), error = function(e) NULL)
+  }
+  if (
+    !is.character(attwb) ||
+      length(attwb) != 1L ||
+      is.na(attwb) ||
+      !nzchar(attwb)
+  ) {
+    message(
+      "  The Wayback Machine has no snapshot of it (or did not ",
+      "answer); nothing more to try."
+    )
+    return(FALSE)
+  }
+  message("  Trying Wayback Machine fallback snapshot...")
+  tryCatch(
+    {
+      .bl_fetch_file(attwb, tpath)
+      message("  [ok] Wayback snapshot retrieved.")
+      TRUE
+    },
+    error = function(e2) {
+      message(
+        "  ! Wayback fallback also failed: ",
+        conditionMessage(e2),
+        ""
+      )
+      FALSE
+    }
+  )
+}
+
 #' Adds issues by name: one with a name already there replaces it in place.
 #' @param issues The issues so far.
 #' @param new The issues to add.
 #' @return The issues.
 #' @noRd
 .vs_merge <- function(issues, new) {
-  for (nm in names(new)) issues[[nm]] <- new[[nm]]
+  for (nm in names(new)) {
+    issues[[nm]] <- new[[nm]]
+  }
   issues
 }
 
@@ -1060,8 +1287,8 @@ valsch <- function(dfraw, prov) {
 #' @return TRUE or FALSE.
 #' @noRd
 .vs_swapped <- function(nm, k) {
-  a <- strsplit(nm, "")[[1L]]
-  b <- strsplit(k, "")[[1L]]
+  a <- strsplit(nm, "", fixed = TRUE)[[1L]]
+  b <- strsplit(k, "", fixed = TRUE)[[1L]]
   # lengths first: a != b on two lengths warned "longer object length is not a
   # multiple"
   if (length(a) != length(b)) {
@@ -1127,7 +1354,7 @@ valsch <- function(dfraw, prov) {
       severity = "fatal",
       message = paste0(
         "Missing required columns: ",
-        paste(missing_cols, collapse = ", ")
+        toString(missing_cols)
       )
     )
   )
@@ -1274,106 +1501,12 @@ valsch <- function(dfraw, prov) {
         message = sprintf(
           "Column '%s' has unexpected values: %s",
           col,
-          paste(unexpected, collapse = ", ")
+          toString(unexpected)
         )
       )
     }
   }
   issues
-}
-
-## ----- Apply schema validation; stop on fatal, warn otherwise -----
-
-#' Apply Schema Validation, Stopping on Fatal Issues
-#'
-#' Runs [valsch()] (or, for a list of rules,
-#' [valrules()]) and
-#' acts on the result: the first fatal issue stops with an error, and every
-#' warning-severity issue is raised as an R warning. Put it at the top of an
-#' analysis script so that a re-released file with a missing column stops
-#' the run before any result is computed.
-#'
-#' @details
-#' Issues are handled in the order the validator returns them; a fatal issue
-#' stops at once, so warnings after it are not raised. With a list of rules
-#' the same contract applies to each rule's \code{severity}.
-#'
-#' Unlike [valsch()], this function refuses to
-#' check against
-#' nothing, because a validation that checks nothing must not report success.
-#' Errors: \code{dfraw} not a data frame; \code{prov} a data frame;
-#' \code{prov} \code{NULL} or an empty list; a list that mixes rules
-#' with other elements; an unnamed list that is not all rules; something
-#' other than a list; a provenance list with no \code{schema} element (the
-#' message names the elements it has, so a typo such as \code{scheme}
-#' shows); an empty schema (\code{list(schema = list())}).
-#'
-#' @param dfraw The data frame to validate.
-#' @param prov A provenance list as returned by
-#'   [loadprov()] (with a \code{schema} element), or
-#'   one rule or a list
-#'   of rules from [rul()], run with
-#'   [valrules()] under the same
-#'   stop-on-fatal contract.
-#' @return Invisibly, \code{TRUE} if no issues were found and \code{FALSE}
-#'   if only warning-severity issues were found (each raised as a warning).
-#'   Errors if any fatal issue is present.
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' prov <- list(schema = list(expected_columns = "id"))
-#' schval(data.frame(id = 1), prov)
-#' # A missing required column is fatal:
-#' try(schval(data.frame(x = 1), prov))
-#'
-#' # a warning-level issue is raised as a warning and the result is FALSE
-#' ranged <- list(schema = list(numeric_ranges = list(v = c(min = 0, max = 1))))
-#' ok <- withCallingHandlers(
-#'   schval(data.frame(v = c(0.5, 3)), ranged),
-#'   warning = function(w) {
-#'     message("warning: ", conditionMessage(w))
-#'     invokeRestart("muffleWarning")
-#'   }
-#' )
-#' ok
-#'
-#' # rules work the same way
-#' rules <- list(rul(
-#'   "id_positive",
-#'   function(v) v > 0,
-#'   col = "id",
-#'   sev = "fatal"
-#' ))
-#' try(schval(data.frame(id = c(1, -2)), rules))
-#'
-#' # a provenance without a schema is refused, not passed
-#' try(schval(data.frame(id = 1), list(scheme = list())))
-#' @export
-schval <- function(dfraw, prov) {
-  if (!is.data.frame(dfraw)) {
-    stop("schval: `dfraw` must be a data frame", call. = FALSE)
-  }
-  if (is.data.frame(prov)) {
-    stop(
-      "`prov` must be a provenance list or a list of rules, not a data frame",
-      call. = FALSE
-    )
-  }
-  is_rule <- vapply(prov, inherits, logical(1), "bricklayer_rule")
-  is_rule_list <- inherits(prov, "bricklayer_rule") ||
-    (is.list(prov) && length(prov) && all(is_rule))
-  if (is_rule_list) {
-    .sv_check_nonempty(prov)
-  } else {
-    .sv_check_provenance(prov, is_rule)
-  }
-  issues <- if (is_rule_list) valrules(dfraw, prov) else valsch(dfraw, prov)
-  for (nm in names(issues)) {
-    iss <- issues[[nm]]
-    if (iss$severity == "fatal") {
-      stop(iss$message, call. = FALSE)
-    }
-    if (iss$severity == "warning") warning(iss$message, call. = FALSE)
-  }
-  invisible(length(issues) == 0L)
 }
 
 #' Asked to validate, there must be something to validate against: NULL, an
@@ -1431,7 +1564,7 @@ schval <- function(dfraw, prov) {
           "`prov` has no `schema` element (it has %s): nothing would be ",
           "validated"
         ),
-        paste(names(prov), collapse = ", ")
+        toString(names(prov))
       ),
       call. = FALSE
     )
@@ -1448,152 +1581,147 @@ schval <- function(dfraw, prov) {
   invisible(NULL)
 }
 
-## ----- Socrata + ArcGIS resolvers (same contract as rslvckan) -----
-
-#' Resolve a Download URL via the Socrata Metadata API
-#'
-#' Checks that a dataset still exists on a Socrata open-data portal and
-#' returns its full CSV export URL. Socrata powers the Calgary, Chicago and
-#' New York City portals used across the MORIE family; a dataset is named by
-#' its portal domain and a four-by-four id such as \code{ijzp-q8t2}.
-#'
-#' @details
-#' One request is made, to \code{https://<domain>/api/views/<id>.json}. If
-#' it answers with JSON that has an \code{id} field the dataset is taken to
-#' exist. The function then returns the portal's export of every row, the URL
-#' \code{https://<domain>/api/views/<id>/} followed by
-#' \code{rows.csv?accessType=DOWNLOAD}. The id is not checked further, and the
-#' export URL is not fetched.
-#'
-#' \code{NULL} is returned when \code{prov} is \code{NULL}, when the
-#' domain or id is missing, when the request fails (offline, HTTP error,
-#' invalid JSON) or when the metadata has no \code{id}. Errors: a
-#' \code{prov} that is not a list; a domain that is not a public host
-#' (\code{localhost}, a private address, a single-label name).
-#'
-#' @param prov A provenance list as returned by
-#'   [loadprov()], or \code{NULL}.
-#'   It must have two fields. The first is \code{dataset$socrata_domain}, a
-#'   host name without scheme such as \code{"data.cityofchicago.org"}. The
-#'   second is \code{dataset$socrata_id}, the four-by-four dataset id such as
-#'   \code{"ijzp-q8t2"}.
-#' @return The CSV export URL as a length-1 character string, or \code{NULL}
-#'   if the fields are missing, the request fails, or the metadata reports an
-#'   error.
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' # Missing fields return NULL rather than erroring:
-#' rslvsoc(list())
-#' rslvsoc(list(dataset = list(socrata_domain = "data.cityofchicago.org")))
-#'
-#' # a local host is refused before any request
-#' try(rslvsoc(list(dataset = list(
-#'   socrata_domain = "localhost", socrata_id = "abcd-1234"))))
-#'
-#' @examplesIf interactive()
-#' # needs the network
-#' prov <- list(dataset = list(
-#'   socrata_domain = "data.cityofchicago.org",
-#'   socrata_id = "ijzp-q8t2"
-#' ))
-#' rslvsoc(prov)
-#' @export
-rslvsoc <- function(prov) {
-  if (is.null(prov)) {
+#' The CKAN API endpoint a provenance names, when it also names a resource
+#' pattern.
+#' @param prov A provenance list.
+#' @return The endpoint, unchecked, or NULL.
+#' @noRd
+.rmbl_ckan_endpoint <- function(prov) {
+  ds <- prov$dataset
+  res <- prov$resource
+  if (is.null(ds$ckan_api_endpoint) || is.null(res$name_match_pattern)) {
     return(NULL)
   }
-  if (!is.list(prov)) {
-    stop(
-      "rslvsoc: `prov` must be a provenance list (loadprov())",
-      call. = FALSE
-    )
-  }
-  domain <- prov$dataset$socrata_domain
-  id <- prov$dataset$socrata_id
-  if (is.null(domain) || is.null(id)) {
+  api_url <- ds$ckan_api_endpoint
+  if (is.null(api_url) || !nzchar(api_url)) {
     return(NULL)
   }
-  base <- .rmbl_check_public_url(paste0("https://", domain), "socrata_domain")
-  meta_url <- paste0(base, "/api/views/", id, ".json")
-  meta <- tryCatch(
-    .rmbl_read_json(meta_url, strict = FALSE),
-    error = function(e) NULL
-  )
-  if (is.null(meta) || is.null(meta$id)) {
-    return(NULL)
-  }
-  paste0(base, "/api/views/", id, "/rows.csv?accessType=DOWNLOAD")
+  api_url
 }
 
-#' Resolve a Query URL via ArcGIS FeatureServer Metadata
-#'
-#' Checks that an ArcGIS FeatureServer layer still exists and returns a
-#' query URL that downloads every feature of the layer as GeoJSON.
-#' FeatureServer layers back the Toronto Police Service open-data portal
-#' and many municipal portals used across the MORIE family.
-#'
-#' @details
-#' Trailing slashes are dropped from \code{dataset$arcgis_layer_url}, the
-#' URL is checked (public \code{https} only), and one request is made to
-#' \code{<layer>?f=json}. If the answer is JSON with a \code{name} and no
-#' \code{error} element, the function returns
-#' \code{<layer>/query?where=1\%3D1&outFields=*&f=geojson}: every row
-#' (\code{where=1=1}), every field, as GeoJSON. ArcGIS servers return at
-#' most their \code{maxRecordCount} features per request, so a large layer
-#' needs paging (\code{resultOffset}) by the caller; the URL is not fetched
-#' here.
-#'
-#' \code{NULL} is returned when \code{prov} is \code{NULL}, when the
-#' field is missing, when the request fails or when the metadata reports an
-#' error. Errors: a \code{prov} that is not a list; a layer URL that is
-#' not public \code{https}.
-#'
-#' @param prov A provenance list as returned by
-#'   [loadprov()], or \code{NULL}.
-#'   It must have the field \code{dataset$arcgis_layer_url}, a
-#'   FeatureServer layer root. An example is\cr
-#'   \code{https://services.arcgis.com/.../}\cr
-#'   followed by \code{Assault_Open_Data/FeatureServer/0}.
-#' @return The layer query URL as a length-1 character string, or
-#'   \code{NULL} if the field is missing, the request fails, or the layer
-#'   metadata reports an error.
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' # Missing fields return NULL rather than erroring:
-#' rslvarc(list())
-#'
-#' # only https layer URLs are accepted
-#' try(rslvarc(list(dataset = list(
-#'   arcgis_layer_url = "ftp://example.org/FeatureServer/0"))))
-#' try(rslvarc("not a list"))
-#'
-#' @examplesIf interactive()
-#' # needs the network
-#' prov <- list(dataset = list(arcgis_layer_url = paste0(
-#'   "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
-#'   "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0"
-#' )))
-#' rslvarc(prov)
-#' @export
-rslvarc <- function(prov) {
-  if (is.null(prov)) {
-    return(NULL)
+#' The first resource of a CKAN package_show reply whose name matches.
+#' @param resources The reply's resources.
+#' @param pat The provenance's name pattern.
+#' @return The resource's checked URL, or NULL.
+#' @noRd
+.rmbl_ckan_pick <- function(resources, pat) {
+  for (r in resources) {
+    name <- if (is.null(r$name)) "" else r$name
+    if (grepl(pat, name, ignore.case = TRUE)) {
+      # a hostile record is an error in words, not "source unreachable"
+      return(.rmbl_check_public_url(r$url, "the CKAN resource URL"))
+    }
   }
-  if (!is.list(prov)) {
+  NULL
+}
+
+#' Checks a Wayback timestamp: NULL, "" or one string of 1 to 14 digits.
+#'
+#' It is pasted into the query: "2020&url=evil.org" added a parameter, and NA
+#' or TRUE was sent as text.
+#' @param ts The timestamp passed by the user.
+#' @param what The user's argument name, for the timestamp error.
+#' @return The timestamp, "" for none.
+#' @noRd
+.rmbl_wb_ts <- function(ts, what) {
+  if (is.null(ts)) {
+    return("")
+  }
+  ok <- is.character(ts) &&
+    length(ts) == 1L &&
+    !is.na(ts) &&
+    grepl("^[0-9]{0,14}$", ts)
+  if (!ok) {
     stop(
-      "rslvarc: `prov` must be a provenance list (loadprov())",
+      .rmbl_fn(),
+      sprintf(
+        "`%s` must be NULL, \"\" or a string of 1 to 14 digits (%s)",
+        what,
+        "YYYYMMDDhhmmss or a prefix of it"
+      ),
       call. = FALSE
     )
   }
-  layer <- prov$dataset$arcgis_layer_url
-  if (is.null(layer)) {
+  ts
+}
+
+#' The closest snapshot's URL in a Wayback availability reply.
+#' @param res The reply, or NULL.
+#' @return One URL, unchecked, or NULL when there is none.
+#' @noRd
+.rmbl_wb_snapshot <- function(res) {
+  snap <- tryCatch(res$archived_snapshots$closest, error = function(e) NULL)
+  if (is.null(snap) || !isTRUE(snap$available) || is.null(snap$url)) {
     return(NULL)
   }
-  layer <- .rmbl_check_public_url(sub("/+$", "", layer), "arcgis_layer_url")
-  meta <- tryCatch(
-    .rmbl_read_json(paste0(layer, "?f=json"), strict = FALSE),
-    error = function(e) NULL
+  snap_url <- unlist(snap$url)
+  if (!is.character(snap_url) || length(snap_url) != 1L || !nzchar(snap_url)) {
+    return(NULL)
+  }
+  snap_url
+}
+
+#' valsch()'s schema: NULL when there is none to check against.
+#' @param prov A provenance list, or NULL.
+#' @return The schema list, or NULL.
+#' @noRd
+.vs_schema <- function(prov) {
+  if (!is.null(prov) && !is.list(prov)) {
+    stop(
+      "`prov` must be a provenance list (from read_provenance()), or NULL",
+      call. = FALSE
+    )
+  }
+  if (is.null(prov) || is.null(prov$schema)) {
+    return(NULL)
+  }
+  sch <- prov$schema
+  if (!is.list(sch)) {
+    stop(
+      sprintf(
+        "`provenance$schema` must be a list (from infsch()), not %s",
+        class(sch)[1L]
+      ),
+      call. = FALSE
+    )
+  }
+  sch
+}
+
+#' valsch()'s issue for an empty schema.
+#' @return A list of one issue, `schema_empty`.
+#' @noRd
+.vs_empty_schema <- function() {
+  list(
+    schema_empty = list(
+      severity = "warning",
+      message = paste0(
+        "the schema is empty (list()): it lists no columns, types or ",
+        "invariants, so nothing would be checked"
+      )
+    )
   )
-  if (is.null(meta) || !is.null(meta$error) || is.null(meta$name)) {
-    return(NULL)
+}
+
+#' Prints the connection, timeout and HTTP 403 causes of a failed download.
+#' @param has A function: whether the error message matches a pattern.
+#' @return NULL, invisibly.
+#' @noRd
+.fdl_causes_more <- function(has) {
+  if (has("could not connect|connection (refused|reset)|couldn.t connect")) {
+    message(
+      "    * Could not connect to the server (offline, or a proxy ",
+      "or firewall refused the connection)."
+    )
   }
-  paste0(layer, "/query?where=1%3D1&outFields=*&f=geojson")
+  if (has("timeout|timed out")) {
+    message("    * Connection timed out (firewall, often institutional).")
+  }
+  if (has("403|forbidden")) {
+    message(
+      "    * HTTP 403 Forbidden (geo-restriction; try a different ",
+      "VPN region)."
+    )
+  }
+  invisible(NULL)
 }

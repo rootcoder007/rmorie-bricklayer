@@ -6,21 +6,21 @@ ang <- "\u00c1ngela" # R parses \u00c1 as accented A; source stays ASCII
 test_that("toascii transliterates accents to plain ASCII", {
   res <- toascii(ang)
   expect_false(grepl("[^ -~]", res)) # pure 7-bit ASCII
-  expect_equal(res, "Angela")
-  expect_equal(
+  expect_identical(res, "Angela")
+  expect_identical(
     toascii(paste("Prof.", ang, "Zorro Medina")),
     "Prof. Angela Zorro Medina"
   )
 })
 
 test_that("asciifb preserves valid UTF-8 by default", {
-  expect_equal(asciifb(ang), ang) # accent kept
-  expect_equal(asciifb("plain text"), "plain text")
+  expect_identical(asciifb(ang), ang) # accent kept
+  expect_identical(asciifb("plain text"), "plain text")
 })
 
 test_that("asciifb(force = TRUE) transliterates to ASCII", {
   res <- asciifb(ang, force = TRUE)
-  expect_equal(res, "Angela")
+  expect_identical(res, "Angela")
   expect_false(grepl("[^ -~]", res))
 })
 
@@ -49,17 +49,17 @@ test_that(
   {
     # The iconv("ASCII//TRANSLIT") it replaces gave "?" under a C locale;
     # the table-driven fallback must not depend on stringi or the locale.
-    expect_equal(rmoriebricklayer:::.to_ascii_fallback(ang), "Angela")
-    expect_equal(
-      rmoriebricklayer:::.to_ascii_fallback("J\u00fcrgen Stra\u00dfe"),
+    expect_identical(.to_ascii_fallback(ang), "Angela")
+    expect_identical(
+      .to_ascii_fallback("J\u00fcrgen Stra\u00dfe"),
       "Jurgen Strasse"
     )
-    expect_equal(
-      rmoriebricklayer:::.to_ascii_fallback("\u0141ukasz \u017bak"),
+    expect_identical(
+      .to_ascii_fallback("\u0141ukasz \u017bak"),
       "Lukasz Zak"
     )
-    out <- rmoriebricklayer:::.to_ascii_fallback("\u0152uvre \u00c6on")
-    expect_equal(out, "OEuvre AEon")
+    out <- .to_ascii_fallback("\u0152uvre \u00c6on")
+    expect_identical(out, "OEuvre AEon")
     expect_false(any(grepl("[^ -~]", out)))
   }
 )

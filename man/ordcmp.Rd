@@ -109,6 +109,17 @@ oc <- ordcmp(
 )
 oc
 plot(oc)
+
+# your own table: a made-up four-level rating for two groups, with limits
+own <- data.frame(
+  group = rep(c("Nation A", "Everyone else"), each = 4),
+  rating = rep(c("Poor", "Fair", "Good", "Excellent"), 2),
+  pct = c(10, 25, 40, 25, 6, 20, 44, 30),
+  lo = c(7, 21, 35, 21, 5, 18, 42, 28),
+  hi = c(13, 29, 45, 29, 7, 22, 46, 32)
+)
+ordcmp(own, "group", "rating", "pct", "lo", "hi",
+       lvls = c("Poor", "Fair", "Good", "Excellent"), ref = "Everyone else")
 \dontshow{\}) # examplesIf}
 }
 \references{

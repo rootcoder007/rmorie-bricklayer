@@ -16,7 +16,12 @@ people both admitted AND released within the period, because anyone still
 held has an unfinished stay.}
 }
 \value{
-A numeric scalar: days per person, \eqn{\sum X_i / n}.
+A numeric scalar: days per person, \eqn{\sum X_i / n}. It has
+class \code{c("rmbl_alos", "rmbl_measure", "numeric")} and an attribute
+\code{"lakner"} (the total days and \code{n}), so it prints as a box
+with its inputs, formula and caveats; arithmetic, \code{round()},
+\code{sum()}, \code{mean()}, \code{[}, \code{c()} and
+\code{as.numeric()} give a plain number.
 }
 \description{
 The mean number of person-days served per person: the FLOW side of

@@ -131,6 +131,7 @@ canonicalised
 Canty
 capacitive
 capitalised
+capturer's
 Cassiers
 Catalogue
 catalogue
@@ -139,6 +140,8 @@ CAVP
 cb
 CBD
 cdot
+CDX
+CDXJ
 Centre
 centre
 centre's
@@ -235,6 +238,7 @@ customisation
 Customising
 CVE
 CWB
+cyclomatic
 d'enquêteurs
 D'Haultfoeuille
 D'Haultfoeuille's
@@ -404,6 +408,7 @@ glibc
 glm
 GlobalProtect
 Golub
+goodpractice
 Goubin
 gpt
 grapher
@@ -415,6 +420,7 @@ gro
 Groq
 GW
 gzip
+gzipped
 gzips
 Hackett
 Hadamard
@@ -438,6 +444,8 @@ Hoboken
 Hochberg
 Hoek
 Holm
+homebrew
+Homebrew
 Homebrew's
 honoured
 honours
@@ -465,6 +473,7 @@ IANA
 ias
 iconv
 ICPSR
+iD
 ideation
 ideographic
 IDJ
@@ -610,6 +619,7 @@ lifecycle
 linearized
 LinkingTo
 linux
+LKP
 LLM
 llm
 LM
@@ -744,6 +754,7 @@ Ogata
 Ogata's
 OHRC
 OID
+OIDC
 OIDs
 Ojibway
 Okabe
@@ -764,6 +775,7 @@ OpenSSL's
 optimisation
 optimiser
 optimiser's
+ORCID
 org's
 organisation
 organisation's
@@ -805,6 +817,7 @@ PKE
 pkgcheck
 pkgdown
 PMULL
+PODs
 Polselli
 POS
 positionally
@@ -839,6 +852,7 @@ PSU
 PSUs
 PUE
 pyreadstat
+pywb
 qquad
 Quant
 quintile
@@ -1056,6 +1070,7 @@ tps
 Transcultural
 trc
 Tremblay
+Trivy
 Tschuprow's
 TSV
 TVLA
@@ -1101,6 +1116,7 @@ unrounded
 unserializeJSON
 unserved
 unstaged
+untrusted
 unvouched
 unwiped
 unwritable
@@ -1136,6 +1152,8 @@ VPNs
 Waakebiness
 Wagstaff
 Wahba
+WARC
+warcio
 Waterman
 Wayback
 wayback

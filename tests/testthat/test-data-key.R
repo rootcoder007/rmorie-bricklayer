@@ -17,7 +17,7 @@ test_that(
       "/manifest.json" = list(status = 200L)
     )
     local_mocked_bindings(.bl_http_get = function(url, timeout, headers) {
-      seen <<- c(seen, url)
+      assign("seen", c(seen, url), envir = parent.env(environment()))
       replies[[sub("^https://data.example.org", "", url)]]
     })
     expect_identical(
@@ -49,7 +49,7 @@ test_that(
         list(mode = "key", base_url = "https://data.example.org")
       },
       .bl_key_reply = function(base, key, timeout = 10) {
-        asked <<- base
+        assign("asked", base, envir = parent.env(environment()))
         list(status = 403L)
       }
     )

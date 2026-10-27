@@ -12,19 +12,23 @@ test_that("the KS statistic matches stats::ks.test", {
     b <- stats::rnorm(50, mean = i / 4)
     got <- drftks(a, b)
     want <- suppressWarnings(stats::ks.test(a, b))
-    expect_equal(got[["statistic"]], as.numeric(want$statistic))
+    expect_equal(
+      got[["statistic"]],
+      as.numeric(want$statistic),
+      tolerance = testthat::testthat_tolerance()
+    )
   }
   expect_named(drftks(1:10, 2:11), c("statistic", "p_value", "neff"))
   # the effective size is the harmonic-style combination
   k <- drftks(stats::rnorm(70), stats::rnorm(50))
-  expect_equal(k[["neff"]], 70 * 50 / (70 + 50))
+  expect_identical(k[["neff"]], 70 * 50 / (70 + 50))
 
   # a sample against itself has nowhere to differ
   x <- stats::rnorm(100)
-  expect_equal(drftks(x, x)[["statistic"]], 0)
-  expect_equal(drftks(x, x)[["p_value"]], 1)
+  expect_identical(drftks(x, x)[["statistic"]], 0)
+  expect_identical(drftks(x, x)[["p_value"]], 1)
   # completely separated samples are the maximum statistic
-  expect_equal(drftks(1:10, 101:110)[["statistic"]], 1)
+  expect_identical(drftks(1:10, 101:110)[["statistic"]], 1)
   expect_lt(drftks(1:50, 101:150)[["p_value"]], 1e-6)
   # a real shift is detected and a null one is not
   expect_lt(drftks(stats::rnorm(300), stats::rnorm(300, 1))[["p_value"]], 0.01)
@@ -35,12 +39,17 @@ test_that("the KS statistic matches stats::ks.test", {
     0.01
   )
   # p-values are probabilities, and the statistic is a proportion
-  expect_true(k[["p_value"]] >= 0 && k[["p_value"]] <= 1)
-  expect_true(k[["statistic"]] >= 0 && k[["statistic"]] <= 1)
+  expect_gte(k[["p_value"]], 0)
+  expect_lte(k[["p_value"]], 1)
+  expect_gte(k[["statistic"]], 0)
+  expect_lte(k[["statistic"]], 1)
   # ties are handled by comparing the EDFs, without a warning
   expect_silent(drftks(c(1, 1, 2, 2, 3), c(1, 2, 2, 3, 3)))
   # NA is dropped rather than poisoning the statistic
-  expect_equal(drftks(c(x, NA), x)[["statistic"]], drftks(x, x)[["statistic"]])
+  expect_identical(
+    drftks(c(x, NA), x)[["statistic"]],
+    drftks(x, x)[["statistic"]]
+  )
 
   expect_error(drftks(numeric(0), 1:5), "at least one non-missing")
   expect_error(drftks(c(NA, NA), 1:5), "at least one non-missing")
@@ -85,28 +94,28 @@ test_that("the chi-square drift statistic matches stats::chisq.test", {
   obs <- c(a = 40, b = 60, c = 100)
   got <- drftchisq(obs, ref)
   want <- stats::chisq.test(obs, p = ref / sum(ref))
-  expect_equal(got[["statistic"]], as.numeric(want$statistic))
-  expect_equal(got[["df"]], as.numeric(want$parameter))
-  expect_equal(got[["p_value"]], want$p.value)
+  expect_identical(got[["statistic"]], as.numeric(want$statistic))
+  expect_identical(got[["df"]], as.numeric(want$parameter))
+  expect_identical(got[["p_value"]], want$p.value)
   expect_named(got, c("statistic", "df", "p_value", "logpvalue"))
-  expect_equal(exp(got[["logpvalue"]]), got[["p_value"]])
+  expect_identical(exp(got[["logpvalue"]]), got[["p_value"]])
 
   # counts in the reference proportions have nothing to explain
-  expect_equal(drftchisq(c(a = 100, b = 60, c = 40), ref)[["statistic"]], 0)
-  expect_equal(drftchisq(c(a = 100, b = 60, c = 40), ref)[["p_value"]], 1)
+  expect_identical(drftchisq(c(a = 100, b = 60, c = 40), ref)[["statistic"]], 0)
+  expect_identical(drftchisq(c(a = 100, b = 60, c = 40), ref)[["p_value"]], 1)
   # the reference may be given as proportions or as counts alike
-  expect_equal(
+  expect_identical(
     drftchisq(obs, ref)[["statistic"]],
     drftchisq(obs, ref / sum(ref))[["statistic"]]
   )
   # raw vectors are tabulated
   t1 <- drftchisq(c("a", "a", "b", "b"), c("a", "b"))
-  expect_equal(t1[["statistic"]], 0)
+  expect_identical(t1[["statistic"]], 0)
   # a category the reference rules out, but which occurs, contradicts the
   # pinned distribution outright rather than being dropped from the sum
   newcat <- drftchisq(c("a", "a", "b", "d"), c("a", "a", "b", "b"))
-  expect_equal(newcat[["statistic"]], Inf)
-  expect_equal(newcat[["p_value"]], 0)
+  expect_identical(newcat[["statistic"]], Inf)
+  expect_identical(newcat[["p_value"]], 0)
   # whereas a category with a positive expectation contributes finitely
   fin <- drftchisq(c(a = 1, b = 99), c(a = 50, b = 50))
   expect_true(is.finite(fin[["statistic"]]))
@@ -120,7 +129,7 @@ test_that("the chi-square drift statistic matches stats::chisq.test", {
     drftchisq(c(a = 60, b = 80, c = 60), ref)[["statistic"]]
   )
   # the p-value is the chi-square tail
-  expect_equal(
+  expect_identical(
     got[["p_value"]],
     stats::pchisq(got[["statistic"]], got[["df"]], lower.tail = FALSE)
   )
@@ -137,11 +146,11 @@ test_that("the Benford screen is the log10 law", {
   expect_gt(ok$p_value, 0.01)
   # the expected proportions ARE the closed form
   expect_equal(ok$expected / ok$n, log10(1 + 1 / (1:9)), ignore_attr = TRUE)
-  expect_equal(sum(ok$expected), ok$n)
-  expect_equal(names(ok$counts), as.character(1:9))
-  expect_equal(sum(ok$counts), ok$n)
-  expect_equal(ok$df, 8L)
-  expect_equal(ok$proportion, ok$counts / ok$n)
+  expect_identical(sum(ok$expected), ok$n)
+  expect_named(ok$counts, as.character(1:9))
+  expect_identical(sum(ok$counts), ok$n)
+  expect_identical(ok$df, 8L)
+  expect_identical(ok$proportion, ok$counts / ok$n)
   # leading 1s are the most common digit under the law
   expect_equal(which.max(ok$counts), 1L, ignore_attr = TRUE)
 
@@ -152,14 +161,17 @@ test_that("the Benford screen is the log10 law", {
   expect_lt(benfordtst(rep(5000, 500))$p_value, 1e-6)
 
   # the sign is irrelevant and zeros carry no leading digit
-  expect_equal(benfordtst(c(-19, 19))$counts[["1"]], 2)
-  expect_equal(benfordtst(c(0, 0, 1, 2, 3))$n, 3)
-  expect_equal(benfordtst(c(0.00023, 2.3, 230))$counts[["2"]], 3)
+  expect_identical(benfordtst(c(-19, 19))$counts[["1"]], 2)
+  expect_identical(benfordtst(c(0, 0, 1, 2, 3))$n, 3)
+  expect_identical(benfordtst(c(0.00023, 2.3, 230))$counts[["2"]], 3)
   # non-finite values are excluded
-  expect_equal(benfordtst(c(1, 2, NA, Inf, -Inf))$n, 2)
+  expect_identical(benfordtst(c(1, 2, NA, Inf, -Inf))$n, 2)
   # the p-value is the chi-square tail on 8 df
-  expect_equal(ok$p_value, stats::pchisq(ok$statistic, 8, lower.tail = FALSE))
-  expect_equal(summary(ok)[["n"]], ok$n)
+  expect_identical(
+    ok$p_value,
+    stats::pchisq(ok$statistic, 8, lower.tail = FALSE)
+  )
+  expect_identical(summary(ok)[["n"]], ok$n)
 
   expect_error(benfordtst(c(0, 0, 0)), "no finite non-zero")
   expect_error(benfordtst(numeric(0)), "no finite non-zero")
@@ -184,15 +196,15 @@ test_that("cpsdrft tests every shared column and flags the movers", {
   d <- cpsdrft(ref, same)
   expect_s3_class(d, "bricklayer_drift")
   expect_false(d$anydrft)
-  expect_equal(nrow(d$columns), 3L)
-  expect_equal(sort(d$columns$column), c("grade", "size", "value"))
-  expect_equal(d$columns$type[d$columns$column == "grade"], "categorical")
-  expect_equal(d$columns$type[d$columns$column == "value"], "numeric")
-  expect_equal(d$nref, n)
-  expect_equal(d$ncur, n)
+  expect_identical(nrow(d$columns), 3L)
+  expect_identical(sort(d$columns$column), c("grade", "size", "value"))
+  expect_identical(d$columns$type[d$columns$column == "grade"], "categorical")
+  expect_identical(d$columns$type[d$columns$column == "value"], "numeric")
+  expect_equal(d$nref, n, tolerance = testthat::testthat_tolerance())
+  expect_equal(d$ncur, n, tolerance = testthat::testthat_tolerance())
   expect_length(d$added, 0L)
   expect_length(d$removed, 0L)
-  expect_true(all(!d$columns$drifted))
+  expect_false(any(d$columns$drifted))
   # every column reports a PSI: binned for a numeric one, over the union
   # of categories for a categorical one (which is what sees a disjoint
   # high-cardinality column the homogeneity test has no power against)
@@ -211,24 +223,24 @@ test_that("cpsdrft tests every shared column and flags the movers", {
 
   # structural changes are reported rather than tested
   fewer <- cpsdrft(ref, same[, c("value", "grade")])
-  expect_equal(fewer$removed, "size")
-  expect_equal(nrow(fewer$columns), 2L)
+  expect_identical(fewer$removed, "size")
+  expect_identical(nrow(fewer$columns), 2L)
   expect_true(fewer$anydrft)
   extra <- same
   extra$brand_new <- 1
-  expect_equal(cpsdrft(ref, extra)$added, "brand_new")
+  expect_identical(cpsdrft(ref, extra)$added, "brand_new")
   expect_true(cpsdrft(ref, extra)$anydrft)
   # no shared columns at all is an empty table, not an error
   none <- cpsdrft(ref, data.frame(q = 1:3))
-  expect_equal(nrow(none$columns), 0L)
+  expect_identical(nrow(none$columns), 0L)
   expect_true(none$anydrft)
 
   # a stricter alpha flags fewer columns
   mild <- same
   mild$value <- mild$value + 0.22
-  expect_true(
-    sum(cpsdrft(ref, mild, alpha = 0.2)$columns$drifted) >=
-      sum(cpsdrft(ref, mild, alpha = 1e-8)$columns$drifted)
+  expect_gte(
+    sum(cpsdrft(ref, mild, alpha = 0.2)$columns$drifted),
+    sum(cpsdrft(ref, mild, alpha = 1e-8)$columns$drifted)
   )
   # the PSI threshold can flag a column on its own, but only once both
   # samples are large enough for the band to mean anything
@@ -270,10 +282,53 @@ test_that("cpsdrft tests every shared column and flags the movers", {
   # the summary condenses the same verdict
   s <- summary(m)
   expect_true(s$anydrft)
-  expect_equal(s$ntes, 3L)
+  expect_identical(s$ntes, 3L)
   expect_true(all(c("size", "grade") %in% s$drifted))
 
   expect_error(cpsdrft(ref, 1:5), "data frames")
   expect_error(cpsdrft(ref, same, alpha = 0), "strictly inside")
   expect_error(cpsdrft(ref, same, alpha = 1), "strictly inside")
+})
+
+# ---- the drift tests print as boxes and stay numbers -------------------------
+
+test_that("drftks() and drftpsi() are boxed measures with readings", {
+  set.seed(1)
+  ref <- stats::rnorm(200)
+  same <- drftks(ref, stats::rnorm(200))
+  moved <- drftks(ref, stats::rnorm(200, mean = 0.8))
+  expect_s3_class(same, c("rmbl_drftks", "rmbl_measure", "numeric"))
+  expect_type(same[["statistic"]], "double")
+  expect_null(attributes(same["p_value"])$class)
+  expect_box2(same, "Kolmogorov-Smirnov", "No difference in distribution")
+  expect_box2(moved, "Kolmogorov-Smirnov", "The two samples differ")
+  p0 <- drftpsi(ref, ref)
+  p1 <- drftpsi(ref, stats::rnorm(200, mean = 2))
+  expect_box2(p0, "Population stability index", "stable")
+  expect_box2(p1, "Population stability index", "a material shift")
+})
+
+test_that("drftchisq() and drfthomog() are boxed measures with readings", {
+  ref <- c(a = 50, b = 30, c = 20)
+  ok <- drftchisq(c(a = 100, b = 60, c = 40), ref)
+  bad <- drftchisq(c(a = 40, b = 60, c = 100), ref)
+  expect_s3_class(ok, c("rmbl_drftchisq", "rmbl_measure", "numeric"))
+  expect_box2(ok, "Chi-square test against", "agree with the reference")
+  expect_box2(bad, "Chi-square test against", "depart from the reference")
+  inf <- drftchisq(c("a", "a", "b", "d"), c("a", "a", "b", "b"))
+  expect_box2(inf, "Chi-square test against", "flat contradiction")
+  h <- drfthomog(c(a = 30, b = 20), c(a = 25, b = 25))
+  expect_s3_class(h, c("rmbl_drfthomog", "rmbl_measure", "numeric"))
+  expect_identical(attr(h, "method"), "chi-square approximation")
+  expect_box2(h, "Chi-square test of homogeneity", "mixes of categories agree")
+  h2 <- drfthomog(c(a = 80, b = 20), c(a = 20, b = 80))
+  expect_box2(h2, "Chi-square test of homogeneity",
+    "mixes of categories differ")
+})
+
+test_that("a drift test without its record formats as its numbers", {
+  for (cls in c("rmbl_drftks", "rmbl_drftpsi", "rmbl_drftchisq",
+    "rmbl_drfthomog")) {
+    expect_plain_measure(cls)
+  }
 })

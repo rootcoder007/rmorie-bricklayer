@@ -36,8 +36,8 @@ test_that(
 )
 
 test_that("cmn survives a sum that overflows when every value is finite", {
-  expect_equal(cmn(c(1e308, 1e308)), 1e308)
-  expect_equal(cmn(c(1e308, 1e308, -1e308)), 1e308 / 3)
+  expect_identical(cmn(c(1e308, 1e308)), 1e308)
+  expect_identical(cmn(c(1e308, 1e308, -1e308)), 1e308 / 3)
 })
 
 test_that(
@@ -48,7 +48,7 @@ test_that(
   {
     r <- .Call(C_rmbl_theil_sen, c(1, 2, 3, 4), c(1, 3, 2, 5))
     slopes <- c(2, 0.5, 4 / 3, -1, 1, 3) # the six pairwise slopes
-    expect_equal(r[[1]], stats::median(slopes))
+    expect_identical(r[[1]], stats::median(slopes))
   }
 )
 
@@ -210,7 +210,7 @@ test_that(
     # R's own parser on macOS reads the largest finite double as Inf; the
     # correctly rounded value is DBL_MAX
     want[xs == "1.7976931348623157e308"] <- .Machine$double.xmax
-    expect_equal(got, want)
+    expect_equal(got, want, tolerance = testthat::testthat_tolerance())
   }
 )
 
@@ -230,9 +230,9 @@ test_that(
       "</body></html>"
     )
     r <- siuprs(fr)
-    expect_true(is.character(r))
+    expect_type(r, "character")
     # a number, not one of the twelve words
-    expect_equal(unname(r[["siu_investigators"]]), "15")
+    expect_identical(unname(r[["siu_investigators"]]), "15")
     en <- paste0(
       "<html><body><h2>The Investigation</h2><p>Mandate ",
       "engaged</p><p>Witness Officers</p>",
@@ -240,7 +240,7 @@ test_that(
       "dispatched.</p></body></html>"
     )
     r2 <- siuprs(en)
-    expect_equal(unname(r2[["siu_forensics_investigators"]]), "14")
+    expect_identical(unname(r2[["siu_forensics_investigators"]]), "14")
     so <- siuso(fr)
     expect_true(is.list(so) || is.character(so) || is.numeric(so))
     one <- paste0(
@@ -304,15 +304,18 @@ test_that(
     )
     dest2 <- tempfile()
     out <- utils::capture.output(
-      res <- bldl(
-        "https://cloud.r-project.org/favicon.ico",
-        dest2,
-        quiet = FALSE,
-        tty = FALSE,
-        tmout = 60
-      ),
+      {
+        res <- bldl(
+          "https://cloud.r-project.org/favicon.ico",
+          dest2,
+          quiet = FALSE,
+          tty = FALSE,
+          tmout = 60
+        )
+      },
       type = "message"
     )
-    expect_true(file.exists(dest2) && file.size(dest2) > 0)
+    expect_true(file.exists(dest2))
+    expect_gt(file.size(dest2), 0)
   }
 )

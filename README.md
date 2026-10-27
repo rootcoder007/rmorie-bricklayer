@@ -293,6 +293,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   square for a point datum, one search or a series). Each result prints and
   plots, and `srchfig()` draws every figure of Frost's *The Theory of
   Search* (1996) from them; `vignette("search-and-rescue")`.
+  For a search of your own, see its section "Your own search, step by step".
 - **Evaluating a policy** — `plndid()` (two-way fixed effects with
   cluster-robust errors), `evstudy()` (leads, lags and the pre-trend
   test), `stgatt()` (Callaway-Sant'Anna and Wooldridge),
@@ -302,7 +303,8 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   `piperate()`, `cmlrisk()`, `bufasgn()` for justice
   data. Each matches the reference implementation;
   `vignette("policy-evaluation")`.
-- **First Nations, Metis and Inuit health, mental health and wellness** —
+  For a panel of your own, see its section "Your own panel, step by step".
+- **First Nations, Métis and Inuit health, mental health and wellness** —
   distinctions-based methods for Statistics Canada's published tables:
   - `sctidy()` and `scests()` read every layout of limit,
     coefficient of variation and standard error;
@@ -329,6 +331,8 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   excerpts ship in `inst/extdata` (`?indiex`), and
   `indtabs()` lists the 233 mirrored tables;
   `vignette("first-nations-metis-inuit-health")`.
+  For a table or microdata of your own, see its section "Your own data, step
+  by step".
 - **Complex surveys** — `svydes()` (replicate weights: bootstrap,
   mean bootstrap, JK1, JKn, BRR and Fay's BRR; or strata, PSUs and a finite
   population correction for Taylor linearization), `svyest()`

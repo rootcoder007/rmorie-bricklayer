@@ -59,14 +59,29 @@ test_that("trndtst(): a constant series has p = 1 at every length", {
 })
 
 test_that("cnttrnd(): zeros at one end have no finite trend, and say so", {
-  expect_warning(r <- cnttrnd(c(0, 0, 5)), "no finite estimate")
+  expect_warning(
+    {
+      r <- cnttrnd(c(0, 0, 5))
+    },
+    "no finite estimate"
+  )
   expect_identical(r$rateratio, Inf)
-  expect_true(is.na(r$lower) && is.na(r$upper) && is.na(r$p_value))
-  expect_warning(r <- cnttrnd(c(5, 0, 0)), "reported as 0")
+  expect_true(is.na(r$lower))
+  expect_true(is.na(r$upper))
+  expect_true(is.na(r$p_value))
+  expect_warning(
+    {
+      r <- cnttrnd(c(5, 0, 0))
+    },
+    "reported as 0"
+  )
   expect_identical(r$rateratio, 0)
   # an ordinary series is untouched
-  expect_silent(r <- cnttrnd(c(20, 18, 15, 13, 12)))
-  expect_true(is.finite(r$rateratio) && r$rateratio < 1)
+  expect_silent({
+    r <- cnttrnd(c(20, 18, 15, 13, 12))
+  })
+  expect_true(is.finite(r$rateratio))
+  expect_lt(r$rateratio, 1)
 })
 
 test_that("valrules(): a table of no rows fails no row-wise rule", {
@@ -75,7 +90,7 @@ test_that("valrules(): a table of no rows fails no row-wise rule", {
     rul("one row at least", function(d) nrow(d) > 0)
   )
   out <- valrules(data.frame(a = numeric()), rl)
-  expect_identical(names(out), "one row at least")
+  expect_named(out, "one row at least")
 })
 
 test_that("onlsmry(): values far from zero keep their digits", {
@@ -177,19 +192,20 @@ test_that(
 )
 
 test_that("the manifest is fetched with a size cap", {
-  got <- NULL
+  rec <- new.env()
+  rec$got <- NULL
   local_mocked_bindings(.bl_data_get = function(
     path,
     dest,
     timeout = 600,
     max_bytes = 2^31
   ) {
-    got <<- max_bytes
+    rec$got <- max_bytes
     writeLines('{"datasets": [{"key": "a/b"}]}', dest)
   })
   withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
   dmnf(refresh = TRUE)
-  expect_identical(got, 32 * 2^20)
+  expect_identical(rec$got, 32 * 2^20)
 })
 
 test_that(
@@ -202,7 +218,9 @@ test_that(
     nat <- ns(".rmbl_native")
     slow <- function(t, ...) {
       nat$json <- FALSE
-      on.exit(nat$json <- NULL)
+      on.exit({
+        nat$json <- NULL
+      })
       tryCatch(
         P(t, ...),
         error = function(e) conditionMessage(e),
@@ -256,7 +274,9 @@ test_that(
       ),
       "]"
     )
-    t <- system.time(v <- P(big))[["elapsed"]]
+    t <- system.time({
+      v <- P(big)
+    })[["elapsed"]]
     expect_length(v, 50000L)
     expect_lt(t, wall_limit(5))
   }
@@ -364,7 +384,11 @@ test_that(
       v * as.numeric(tot[st] / s[st])
     }
     w0 <- post(w)
-    R <- sapply(1:15, function(j) post(ifelse(psu == j, 0, w * 15 / 14)))
+    R <- vapply(
+      1:15,
+      function(j) post(ifelse(psu == j, 0, w * 15 / 14)),
+      numeric(length(w))
+    )
     y <- stats::rnorm(60)
     d <- data.frame(y = y, w = w0, st = st)
     h <- st == "H"
@@ -374,7 +398,11 @@ test_that(
     tb <- apply(R[h, ], 2, function(r) sum(r * y[h]) / sum(r))
     expect_equal(est$se, sqrt(14 / 15 * sum((tb - th)^2)), tolerance = 1e-10)
     # an unadjusted set with the weight passed beside it is still refused
-    J <- sapply(1:15, function(j) ifelse(psu == j, 0, w * 15 / 14))
+    J <- vapply(
+      1:15,
+      function(j) ifelse(psu == j, 0, w * 15 / 14),
+      numeric(length(w))
+    )
     # (unnamed: a column named as the weight is set aside, as documented)
     expect_error(
       svydes(
@@ -562,7 +590,7 @@ test_that("every new refusal is reached (one call per branch)", {
   f <- tempfile()
   writeLines("x", f)
   w(usecpstmpl(f), "is a file, not a directory")
-  cat_d <- data.frame(g = c("a", "b"))
+  cat_d <- data.frame(g = c("a", "b"), stringsAsFactors = FALSE)
   w(audcats(cat_d, cols = 1), "`cols` must be column names")
   w(audcats(cat_d, cols = "zz"), "`cols` names no column of `data`: zz")
   w(
@@ -705,13 +733,15 @@ test_that(
   ),
   {
     expect_error(
-      mksyncol(data.frame(type = "normal"), 3),
+      mksyncol(data.frame(type = "normal", stringsAsFactors = FALSE), 3),
       "`spec` must be a column spec list"
     )
     expect_error(mksyncol(list(1, 2), 3), "`spec` must be a column spec list")
     ours <- get(".bl_csv_from_bytes", asNamespace("rmoriebricklayer"))
     expect_identical(ours(charToRaw("a,b\n\"x\"y\"\rz\",1\n"))$a, "xy\nz")
-    expect_silent(h <- ours(charToRaw("\"\"\nx")))
+    expect_silent({
+      h <- ours(charToRaw("\"\"\nx"))
+    })
     expect_identical(dim(h), c(1L, 0L))
     expect_error(
       ours(charToRaw("\"\"")),
@@ -731,18 +761,22 @@ test_that(
     set.seed(8)
     n <- 40
     w <- stats::runif(n, 1, 3)
-    B <- sapply(1:20, function(b) w * stats::rpois(n, 1))
+    B <- vapply(1:20, function(b) w * stats::rpois(n, 1), numeric(n))
     B[, 3] <- 0
     d <- data.frame(y = stats::rnorm(n), w = w)
     expect_s3_class(
       suppressWarnings(svydes(d, "w", reps = B, type = "bootstrap")),
       "rmbl_svy_design"
     )
-    J <- sapply(1:n, function(j) {
-      r <- w * n / (n - 1)
-      r[j] <- 0
-      r
-    })
+    J <- vapply(
+      1:n,
+      function(j) {
+        r <- w * n / (n - 1)
+        r[j] <- 0
+        r
+      },
+      numeric(n)
+    )
     J[, 2] <- 0
     r <- tryCatch(
       suppressWarnings(svydes(d, "w", reps = J, type = "jkn")),

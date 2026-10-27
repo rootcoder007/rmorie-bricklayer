@@ -14,30 +14,6 @@
 # reported odds ratios against a labelled table under every relabelling,
 # and record the whole chain in a manifest that can be signed.
 
-#' Wraps text in typographic single quotes.
-#' @param v A character vector.
-#' @return `v` with each element in curly single quotes.
-#' @noRd
-.rmbl_squote <- function(v) paste0("\u2018", v, "\u2019")
-
-#' Lists every ordering of a set of labels.
-#' @param v The labels.
-#' @return A list of character vectors, one per permutation of `v`.
-#' @noRd
-.rmbl_label_perms <- function(v) {
-  n <- length(v)
-  if (n <= 1L) {
-    return(list(v))
-  }
-  out <- list()
-  for (i in seq_len(n)) {
-    for (rest in .rmbl_label_perms(v[-i])) {
-      out[[length(out) + 1L]] <- c(v[i], rest)
-    }
-  }
-  out
-}
-
 #' Decode numeric category codes with an explicit code-to-label dictionary
 #'
 #' @description
@@ -191,7 +167,7 @@ deccodes <- function(x, vlabs, keepna = TRUE) {
 #'   \code{\link{rcdmnf}} to record the chain.
 #' @export
 #' @srrstats {G2.4e} A factor is converted with as.character() and read by its
-#'   labels, not its codes; test-categorical-guard.R grdrcd(factor(...)).
+#'   labels, not its codes; test-categorical_guard.R grdrcd(factor(...)).
 grdrcd <- function(x, map, keep = character()) {
   .rmbl_no_fn(x = x)
   if (is.factor(x)) {
@@ -205,17 +181,14 @@ grdrcd <- function(x, map, keep = character()) {
   if (length(unmapped)) {
     stop(
       "grdrcd: values with NO mapping: ",
-      paste(.rmbl_squote(unmapped), collapse = ", "),
+      toString(.rmbl_squote(unmapped)),
       ". Every observed category must be mapped by name (or listed in ",
       "`keep`); silent pass-through is how group labels get corrupted.",
       call. = FALSE
     )
   }
-  out <- ifelse(
-    is.na(x),
-    NA_character_,
-    ifelse(x %in% names(map), unname(map[x]), x)
-  )
+  mapped <- ifelse(x %in% names(map), unname(map[x]), x)
+  out <- ifelse(is.na(x), NA_character_, mapped)
   attr(out, "recode_audit") <- list(
     mapping = map,
     kept = keep,
@@ -267,8 +240,8 @@ grdrcd <- function(x, map, keep = character()) {
 #' try(grdlvls(c("White", "Black"), c("White", "Black"), ref = "Black"))
 #' @export
 grdlvls <- function(x, lvls, ref = NULL) {
-  .rmbl_no_fn(x = x, reference = ref)
-  if (!is.character(lvls) || !length(lvls) || any(is.na(lvls))) {
+  .rmbl_no_fn(x = x, ref = ref)
+  if (!is.character(lvls) || !length(lvls) || anyNA(lvls)) {
     stop("`lvls` must be a non-empty character vector", call. = FALSE)
   }
   if (is.factor(x)) {
@@ -278,7 +251,7 @@ grdlvls <- function(x, lvls, ref = NULL) {
   if (length(stray)) {
     stop(
       "grdlvls: values outside the declared levels: ",
-      paste(.rmbl_squote(stray), collapse = ", "),
+      toString(.rmbl_squote(stray)),
       call. = FALSE
     )
   }
@@ -330,7 +303,7 @@ grdlvls <- function(x, lvls, ref = NULL) {
 #' The function only reports; it never changes \code{data}. It errors when
 #' \code{data} is not a data frame.
 #'
-#' @param data A data frame.
+#' @param data A data frame whose categorical columns are audited.
 #' @param cols Character vector of column names to audit, default
 #'   \code{NULL}: every factor, character or haven-labelled column. Columns of
 #'   other types can be named explicitly and are audited by their distinct
@@ -365,7 +338,7 @@ grdlvls <- function(x, lvls, ref = NULL) {
 #' try(audcats(1:3))
 #' @export
 #' @srrstats {G2.11} Columns with non-standard classes are processed:
-#'   test-categorical-guard.R:238 audits a haven_labelled I() column; a yoy Date
+#'   test-categorical_guard.R:238 audits a haven_labelled I() column; a yoy Date
 #'   period keeps its class (test-yoy.R:203).
 audcats <- function(data, cols = NULL) {
   if (!is.data.frame(data)) {
@@ -391,155 +364,12 @@ audcats <- function(data, cols = NULL) {
     stop(
       sprintf(
         "`cols` names no column of `data`: %s",
-        paste(gone, collapse = ", ")
+        toString(gone)
       ),
       call. = FALSE
     )
   }
-  rows <- lapply(cols, function(cn) {
-    v <- data[[cn]]
-    hazards <- character(0)
-    if (inherits(v, c("haven_labelled", "labelled"))) {
-      hazards <- c(
-        hazards,
-        paste0(
-          "still carries foreign value labels: decode ",
-          "with deccodes() BEFORE analysis (the ",
-          "numeric codes are NOT the categories)"
-        )
-      )
-      v <- as.character(v)
-    }
-    lv <- if (is.factor(v)) {
-      levels(v)
-    } else {
-      as.character(sort(unique(v[!is.na(v)]), method = "radix"))
-    }
-    obs <- unique(as.character(v[!is.na(v)]))
-    if (length(lv) && all(grepl("^[0-9.]+$", lv))) {
-      hazards <- c(
-        hazards,
-        paste0(
-          "all labels numeric-looking (",
-          paste(utils::head(lv, 4), collapse = ","),
-          "...): likely imported CODES whose value labels were lost; ",
-          "as.numeric() on this column returns level INDICES, not data"
-        )
-      )
-    }
-    if (length(lv) && all(grepl("^[0-9]+[.):]? ?[A-Za-z]", lv))) {
-      hazards <- c(
-        hazards,
-        paste0(
-          "labels carry code prefixes (",
-          paste(utils::head(lv, 3), collapse = ","),
-          "...): the code is part of the string, so the level order is ",
-          "the CODE ",
-          "order; any positional relabel with labels in another order rotates ",
-          "the groups. Decode by code (deccodes / relabel), never by position"
-        )
-      )
-    }
-    inv <- "[\\s\u00a0\u1680\u2000-\u200b\u2028\u2029\u202f\u205f\u3000\ufeff]"
-    padded <- lv[grepl(paste0("^", inv, "|", inv, "$"), lv, perl = TRUE)]
-    if (length(padded)) {
-      hazards <- c(
-        hazards,
-        paste0(
-          "labels with leading/trailing whitespace (incl. non-breaking): ",
-          paste(.rmbl_squote(padded), collapse = ", "),
-          ": a space splits one category into two"
-        )
-      )
-    }
-    core <- gsub(paste0("^", inv, "+|", inv, "+$"), "", lv, perl = TRUE)
-    if (anyDuplicated(core)) {
-      hazards <- c(
-        hazards,
-        paste0(
-          "whitespace-variant duplicate labels: ",
-          paste(
-            .rmbl_squote(lv[core %in% core[duplicated(core)]]),
-            collapse = ", "
-          )
-        )
-      )
-    }
-    if (any(!nzchar(core))) {
-      hazards <- c(
-        hazards,
-        "empty-string label \"\": missingness stored as a category"
-      )
-    }
-    sentinels <- c("NA", "N/A", "NAN", "NULL", "NONE", ".", "-", "?")
-    sentinel <- lv[toupper(core) %in% sentinels]
-    if (length(sentinel)) {
-      hazards <- c(
-        hazards,
-        paste0(
-          "missing-value sentinel stored as a label: ",
-          paste(.rmbl_squote(sentinel), collapse = ", ")
-        )
-      )
-    }
-    if (
-      length(lv) &&
-        (!nzchar(core[1]) || lv[1] != core[1] || lv[1] %in% sentinel)
-    ) {
-      hazards <- c(
-        hazards,
-        paste0(
-          "the REFERENCE level ",
-          .rmbl_squote(lv[1]),
-          " is empty, a sentinel, or differs from a real label only by ",
-          "invisible characters: every model on this column is baselined on it"
-        )
-      )
-    }
-    lc <- tolower(core)
-    # a case-variant pair is two DIFFERENT trimmed labels that agree once
-    # lower-cased; a pair that differs only by whitespace was reported above
-    case_groups <- split(core, lc)
-    is_pair <- vapply(case_groups, function(g) length(unique(g)) > 1L, TRUE)
-    case_groups <- case_groups[is_pair]
-    if (length(case_groups)) {
-      cv <- lv[lc %in% names(case_groups)]
-      hazards <- c(
-        hazards,
-        paste0(
-          "case-variant duplicate labels: ",
-          paste(.rmbl_squote(cv), collapse = ", ")
-        )
-      )
-    }
-    if (is.factor(v) && length(setdiff(lv, obs))) {
-      hazards <- c(
-        hazards,
-        paste0(
-          "unused levels: ",
-          paste(.rmbl_squote(setdiff(lv, obs)), collapse = ", ")
-        )
-      )
-    }
-    if (length(lv) > 50L) {
-      hazards <- c(
-        hazards,
-        paste0(
-          length(lv),
-          " levels: identifier mistaken for a category?"
-        )
-      )
-    }
-    data.frame(
-      column = cn,
-      storage = paste(class(data[[cn]]), collapse = "/"),
-      n_levels = length(lv),
-      levels = paste(utils::head(lv, 8), collapse = "|"),
-      reference = if (length(lv)) lv[1] else NA_character_,
-      hazards = if (length(hazards)) paste(hazards, collapse = " ;; ") else "",
-      stringsAsFactors = FALSE
-    )
-  })
+  rows <- lapply(cols, .ac_column, data = data)
   out <- if (length(rows)) {
     do.call(rbind, rows)
   } else {
@@ -559,26 +389,42 @@ audcats <- function(data, cols = NULL) {
 }
 
 #' @export
-print.bricklayer_category_audit <- function(x, ...) {
-  cat("Categorical audit:", nrow(x), "column(s)\n")
-  for (i in seq_len(nrow(x))) {
-    cat(sprintf(
-      "  %-16s %-10s %d level(s), reference %s\n",
-      x$column[i],
-      x$storage[i],
-      x$n_levels[i],
-      .rmbl_squote(x$reference[i])
-    ))
-    if (nzchar(x$hazards[i])) {
-      for (h in strsplit(x$hazards[i], " ;; ", fixed = TRUE)[[1]]) {
-        cat("    !! HAZARD:", h, "\n")
+format.bricklayer_category_audit <- function(x, ...) {
+  need <- c("column", "storage", "n_levels", "reference", "hazards")
+  if (!all(need %in% names(x))) {
+    return(utils::capture.output(print(as.data.frame(unclass(x)))))
+  }
+  hz <- lapply(x$hazards, function(h) {
+    if (nzchar(h)) strsplit(h, " ;; ", fixed = TRUE)[[1L]] else character()
+  })
+  notes <- unlist(lapply(seq_len(nrow(x)), function(i) {
+    if (length(hz[[i]])) sprintf("!! HAZARD (%s): %s", x$column[i], hz[[i]])
+  }))
+  .rmbl_stat_block(
+    "Categorical audit",
+    facts = list(
+      Columns = sprintf("%d column(s)", nrow(x)),
+      Hazards = if (isTRUE(attr(x, "clean"))) {
+        "no hazards detected"
+      } else {
+        sprintf("%d in %d column(s)", length(notes), sum(lengths(hz) > 0L))
       }
-    }
-  }
-  if (isTRUE(attr(x, "clean"))) {
-    cat("  no hazards detected\n")
-  }
-  invisible(x)
+    ),
+    table = if (nrow(x)) {
+      data.frame(
+        column = x$column,
+        storage = x$storage,
+        levels = x$n_levels,
+        reference = .rmbl_squote(x$reference),
+        stringsAsFactors = FALSE
+      )
+    },
+    reading = paste(
+      "Each column's reference level is the group every model contrast is",
+      "measured against: check it is the one you meant."
+    ),
+    notes = notes
+  )
 }
 
 #' Prove a recode with a before/after cross-tabulation
@@ -626,60 +472,21 @@ print.bricklayer_category_audit <- function(x, ...) {
 #' try(vrfrcd(c("W", "B"), c("White", NA), c(W = "White", B = "Black")))
 #' @export
 vrfrcd <- function(orig, recd, decl) {
-  if (!is.atomic(orig) || is.null(orig) || !is.atomic(recd) || is.null(recd)) {
-    stop("`orig` and `recd` must be atomic vectors", call. = FALSE)
-  }
-  if (is.factor(orig)) {
-    orig <- as.character(orig)
-  }
-  if (is.factor(recd)) {
-    recd <- as.character(recd)
-  }
-  if (length(orig) != length(recd)) {
-    stop(
-      "vrfrcd: length mismatch (",
-      length(orig),
-      " vs ",
-      length(recd),
-      "): rows were lost or duplicated during the recode.",
-      call. = FALSE
-    )
-  }
-  if (!identical(is.na(orig), is.na(recd))) {
-    stop(
-      "vrfrcd: missingness changed during the recode (values ",
-      "silently became NA, or NAs were filled).",
-      call. = FALSE
-    )
-  }
+  io <- .vrf_inputs(orig, recd)
+  orig <- io$orig
+  recd <- io$recd
   ok <- !is.na(orig)
   tab <- table(original = orig[ok], recoded = recd[ok])
   fan_out <- rowSums(tab > 0)
   if (any(fan_out > 1L)) {
     stop(
       "vrfrcd: original category mapped to MULTIPLE new categories: ",
-      paste(.rmbl_squote(names(fan_out)[fan_out > 1L]), collapse = ", "),
+      toString(.rmbl_squote(names(fan_out)[fan_out > 1L])),
       ". The recode is not a function of the category label.",
       call. = FALSE
     )
   }
-  realized <- apply(tab, 1L, function(r) colnames(tab)[which(r > 0)])
-  for (old in names(realized)) {
-    expected <- if (old %in% names(decl)) unname(decl[old]) else old
-    if (!identical(realized[[old]], expected)) {
-      stop(
-        "vrfrcd: ",
-        .rmbl_squote(old),
-        " was mapped to ",
-        .rmbl_squote(realized[[old]]),
-        " but the declared mapping says ",
-        .rmbl_squote(expected),
-        ". THIS is how groups get swapped; fix the ",
-        "recode before any model runs.",
-        call. = FALSE
-      )
-    }
-  }
+  .vrf_mapping(tab, decl)
   invisible(as.data.frame(tab))
 }
 
@@ -720,7 +527,8 @@ vrfrcd <- function(orig, recd, decl) {
 #'   the \code{permutation} that would explain the counts and the
 #'   \code{message} the error would have carried, for callers that want to
 #'   report it or pass the permutation to \code{\link{rlblfrns}}.
-#' @return A list with elements \code{counts} (named numeric, observed count
+#' @return A list of class \code{rmbl_margin_check} (it prints as a box)
+#'   with elements \code{counts} (named numeric, observed count
 #'   per published label), \code{published} (named numeric), \code{ok}
 #'   (logical), \code{permutation} (named character, true label = label it
 #'   would have to be read as, or \code{NULL}) and \code{message}
@@ -753,43 +561,16 @@ vrfmrg <- function(x, pub, tol = 0, strict = TRUE) {
     x <- as.character(x)
   }
   tol <- .rmbl_scalar(tol, "tol", 0)
-  if (!is.numeric(pub) || is.null(names(pub)) || !all(nzchar(names(pub)))) {
-    stop("vrfmrg: `pub` must be a named numeric vector", call. = FALSE)
-  }
+  .vrfmrg_pub(pub)
   labs <- names(pub)
   obs <- vapply(labs, function(l) sum(!is.na(x) & x == l), numeric(1))
-  extra <- setdiff(unique(x[!is.na(x)]), labs)
-  if (length(extra)) {
-    msg <- paste0(
-      "vrfmrg: labels present in the data but not in the ",
-      "published counts: ",
-      paste(.rmbl_squote(extra), collapse = ", ")
-    )
-    if (strict) {
-      stop(msg, call. = FALSE)
-    }
-    return(list(
-      counts = obs,
-      published = pub[labs],
-      ok = FALSE,
-      permutation = NULL,
-      message = msg
-    ))
+  ex <- .vrfmrg_extra(x, labs, obs, pub, strict)
+  if (!is.null(ex)) {
+    class(ex) <- c("rmbl_margin_check", "list")
+    return(ex)
   }
   ok <- all(abs(obs - pub[labs]) <= tol)
-  perm <- NULL
-  if (!ok && length(labs) <= 7L) {
-    for (p in .rmbl_label_perms(labs)) {
-      relabelled <- stats::setNames(obs, p)[labs]
-      if (
-        !identical(p, labs) &&
-          all(abs(relabelled - pub[labs]) <= tol)
-      ) {
-        perm <- stats::setNames(p, labs)
-        break
-      }
-    }
-  }
+  perm <- if (!ok && length(labs) <= 7L) .vrfmrg_perm(obs, pub, labs, tol)
   out <- list(
     counts = obs,
     published = pub[labs],
@@ -797,34 +578,47 @@ vrfmrg <- function(x, pub, tol = 0, strict = TRUE) {
     permutation = perm,
     message = NULL
   )
+  class(out) <- c("rmbl_margin_check", "list")
   if (!ok) {
-    detail <- paste(
-      sprintf("%s: observed %s, published %s", labs, obs, pub[labs]),
-      collapse = "; "
-    )
-    hint <- if (!is.null(perm)) {
-      moved <- names(perm)[perm != names(perm)]
-      paste0(
-        " The observed counts match the published ones if the labels are ",
-        "permuted (",
-        paste(sprintf("%s -> %s", moved, perm[moved]), collapse = ", "),
-        "): the labels are attached to the wrong groups."
-      )
-    } else {
-      ""
-    }
-    out$message <- paste0(
-      "vrfmrg: recoded counts do not match the published counts. ",
-      detail,
-      ".",
-      hint
-    )
+    out$message <- .vrfmrg_message(labs, obs, pub, perm)
     if (strict) {
       stop(out$message, call. = FALSE)
     }
     return(out)
   }
   invisible(out)
+}
+
+#' @export
+format.rmbl_margin_check <- function(x, ...) {
+  pub <- as.numeric(x$published)
+  obs <- as.numeric(x$counts)
+  .rmbl_stat_block(
+    "Published counts check",
+    facts = list(
+      Status = if (isTRUE(x$ok)) "the counts match" else "the counts differ",
+      Labels = length(obs),
+      Rows = sum(obs)
+    ),
+    table = data.frame(
+      label = names(x$counts) %||% character(length(obs)),
+      observed = obs,
+      published = pub,
+      difference = obs - pub,
+      stringsAsFactors = FALSE
+    ),
+    reading = if (isTRUE(x$ok)) {
+      "Every label has the count the source published for it."
+    } else {
+      x$message
+    },
+    notes = if (length(x$permutation)) {
+      paste(
+        "the counts fit if labels were swapped:",
+        toString(paste(names(x$permutation), "->", x$permutation))
+      )
+    }
+  )
 }
 
 #' Check reported odds ratios against a labelled table, under every relabelling
@@ -861,7 +655,8 @@ vrfmrg <- function(x, pub, tol = 0, strict = TRUE) {
 #'   one per non-reference group, named by group. Extra names are ignored.
 #' @param tol Number, default \code{0.05}: the relative tolerance for a
 #'   match (5 percent), to allow for rounding in the report.
-#' @return A list with elements \code{computed} (named numeric odds ratios
+#' @return A list of class \code{rmbl_or_check} (it prints as a box)
+#'   with elements \code{computed} (named numeric odds ratios
 #'   from the table as labelled), \code{reported} (the reported values, in
 #'   the same order), \code{consistent} (logical), \code{matches} (a data frame
 #'   with character \code{relabelling}, for example \code{"B -> C, C -> B"},
@@ -885,45 +680,12 @@ vrfmrg <- function(x, pub, tol = 0, strict = TRUE) {
 #' # every non-reference group needs a reported value
 #' try(orchk(tab, "A", c(B = 3.857)))
 #' @export
-orchk <- function(cnts, ref, rptd, tol = 0.05) {
-  if (!missing(ref) && (!is.atomic(ref) || length(ref) != 1L || is.na(ref))) {
-    stop("`ref` must be one group label (a row name of `cnts`)", call. = FALSE)
-  }
+orchk <- function(cnts, ref = NULL, rptd, tol = 0.05) {
+  .orchk_check(cnts, ref, rptd)
   tol <- .rmbl_scalar(tol, "tol", 0)
-  if (
-    is.null(cnts) || !(is.matrix(cnts) || is.data.frame(cnts) || is.table(cnts))
-  ) {
-    stop(
-      "`cnts` must be a 2-column matrix or table of counts (rows named)",
-      call. = FALSE
-    )
-  }
   cnts <- as.matrix(cnts)
-  if (ncol(cnts) != 2L || is.null(rownames(cnts))) {
-    stop(
-      "orchk: `cnts` must be a k-by-2 matrix with row names ",
-      "(groups) and columns outcome-absent, outcome-present.",
-      call. = FALSE
-    )
-  }
   labs <- rownames(cnts)
-  if (!ref %in% labs) {
-    stop(
-      "orchk: reference ",
-      .rmbl_squote(ref),
-      " is not a row of `cnts`.",
-      call. = FALSE
-    )
-  }
   others <- setdiff(labs, ref)
-  if (is.null(names(rptd)) || !all(others %in% names(rptd))) {
-    stop(
-      "orchk: `rptd` must be named by every ",
-      "non-reference row: ",
-      paste(.rmbl_squote(others), collapse = ", "),
-      call. = FALSE
-    )
-  }
   rptd <- rptd[others]
   or_of <- function(m) {
     ref_odds <- m[ref, 2L] / m[ref, 1L]
@@ -935,66 +697,48 @@ orchk <- function(cnts, ref, rptd, tol = 0.05) {
   }
   computed <- or_of(cnts)
   consistent <- close_to(computed, rptd)
-  rows <- list()
-  if (length(labs) <= 7L) {
-    for (p in .rmbl_label_perms(labs)) {
-      for (swap_cols in c(FALSE, TRUE)) {
-        if (identical(p, labs) && !swap_cols) {
-          next
-        }
-        m <- cnts
-        if (swap_cols) {
-          m <- m[, 2:1, drop = FALSE]
-        }
-        rownames(m) <- p
-        m <- m[labs, , drop = FALSE]
-        if (close_to(or_of(m), rptd)) {
-          moved <- labs[p != labs]
-          rows[[length(rows) + 1L]] <- data.frame(
-            relabelling = if (length(moved)) {
-              paste(sprintf("%s -> %s", moved, p[p != labs]), collapse = ", ")
-            } else {
-              "none"
-            },
-            outcome_columns_swapped = swap_cols,
-            stringsAsFactors = FALSE
-          )
-        }
-      }
-    }
-  }
-  matches <- if (length(rows)) {
-    do.call(rbind, rows)
-  } else {
-    data.frame(
-      relabelling = character(),
-      outcome_columns_swapped = logical(),
-      stringsAsFactors = FALSE
-    )
-  }
-  verdict <- if (consistent) {
-    "the reported odds ratios follow from the table as labelled"
-  } else if (nrow(matches)) {
-    paste0(
-      "the reported odds ratios do NOT follow from the table as labelled; ",
-      "they are reproduced under a relabelling (",
-      matches$relabelling[1L],
-      if (matches$outcome_columns_swapped[1L]) {
-        "; outcome columns swapped"
-      } else {
-        ""
-      },
-      "): the groups were mislabelled, not the software"
-    )
-  } else {
-    "the reported odds ratios follow from no relabelling of this table"
-  }
-  list(
+  matches <- .orchk_matches(cnts, labs, rptd, or_of, close_to)
+  verdict <- .orchk_verdict(consistent, matches)
+  out <- list(
     computed = computed,
     reported = rptd,
     consistent = consistent,
     matches = matches,
     verdict = verdict
+  )
+  class(out) <- c("rmbl_or_check", "list")
+  out
+}
+
+#' @export
+format.rmbl_or_check <- function(x, ...) {
+  mt <- x$matches
+  .rmbl_stat_block(
+    "Reported odds ratios check",
+    facts = list(
+      Status = if (isTRUE(x$consistent)) {
+        "consistent with the table as labelled"
+      } else {
+        "NOT consistent with the table as labelled"
+      },
+      Relabellings = if (is.data.frame(mt)) {
+        sprintf("%d reproduce the reported values", nrow(mt))
+      }
+    ),
+    table = data.frame(
+      group = names(x$computed),
+      computed = as.numeric(x$computed),
+      reported = as.numeric(x$reported),
+      stringsAsFactors = FALSE
+    ),
+    reading = x$verdict,
+    notes = if (is.data.frame(mt) && nrow(mt)) {
+      sprintf(
+        "fits under %s%s",
+        mt$relabelling,
+        ifelse(mt$outcome_columns_swapped, " (outcome columns swapped)", "")
+      )
+    }
   )
 }
 
@@ -1041,7 +785,7 @@ grdbin <- function(x, col) {
       "Column ",
       .rmbl_squote(col),
       " is categorical (",
-      paste(.rmbl_squote(utils::head(lv, 4)), collapse = ", "),
+      toString(.rmbl_squote(utils::head(lv, 4))),
       "...). Refusing to coerce: as.numeric() on a factor returns level ",
       "INDICES (1, 2, ...), not your data, and a mis-ordered level silently ",
       "relabels every observation. Encode explicitly first, e.g. ",
@@ -1055,7 +799,7 @@ grdbin <- function(x, col) {
       "Column ",
       .rmbl_squote(col),
       " must be binary 0/1 (saw: ",
-      paste(utils::head(ux, 5), collapse = ", "),
+      toString(utils::head(ux, 5)),
       ").",
       call. = FALSE
     )
@@ -1129,7 +873,7 @@ grdbin <- function(x, col) {
 #' try(rcdmnf(x, y, map, pub = c(White = 1, Black = 2, Indigenous = 1)))
 #' @export
 rcdmnf <- function(orig, recd, map, pub = NULL, key = NULL, ctx = NULL) {
-  .rmbl_no_fn(context = ctx)
+  .rmbl_no_fn(ctx = ctx)
   vrfrcd(orig, recd, map)
   marg <- if (!is.null(pub)) {
     vrfmrg(recd, pub)
@@ -1170,6 +914,50 @@ rcdmnf <- function(orig, recd, map, pub = NULL, key = NULL, ctx = NULL) {
   }
   class(body) <- c("bricklayer_recode_manifest", "list")
   body
+}
+
+#' @export
+format.bricklayer_recode_manifest <- function(x, ...) {
+  ck <- x$checks
+  mark <- function(v) {
+    if (isTRUE(v)) "ok  " else if (isFALSE(v)) "FAIL" else "--  "
+  }
+  lines <- vapply(
+    names(ck),
+    function(nm) {
+      sprintf(
+        "%s %s%s",
+        mark(ck[[nm]]),
+        gsub("_", " ", nm, fixed = TRUE),
+        if (is.na(ck[[nm]])) " (not checked)" else ""
+      )
+    },
+    ""
+  )
+  map <- unlist(x$mapping)
+  .rmbl_stat_block(
+    "Recode manifest",
+    facts = list(
+      Context = if (nzchar(x$context %||% "")) x$context,
+      Created = x$created,
+      Rows = sprintf("%s (%s missing)", x$n, x$n_missing),
+      Mapping = sprintf("%d codes, SHA-256 %s", length(map), x$mapping_sha256),
+      `Body SHA-256` = x$body_sha256,
+      Signature = if (is.null(x$signature)) "unsigned" else "signed"
+    ),
+    table = if (length(map)) {
+      data.frame(
+        code = names(map),
+        label = unname(map),
+        stringsAsFactors = FALSE
+      )
+    },
+    reading = paste(
+      "A record of how the codes were recoded and that the recode kept every",
+      "row; write it with wrrcdmnf() and check it later with vrfrcdmnf()."
+    ),
+    notes = unname(lines)
+  )
 }
 
 #' Write and verify a recode manifest
@@ -1237,37 +1025,21 @@ wrrcdmnf <- function(man, path) {
 #' @rdname wrrcdmnf
 #' @param orig,recd The vectors before and after the recode, to check
 #'   the manifest against.
-#' @return \code{vrfrcdmnf()} returns a list with \code{ok}
+#' @return \code{vrfrcdmnf()} returns a list of class
+#'   \code{rmbl_recode_manifest_check} (it prints as a box) with \code{ok}
 #'   (logical), \code{reasons} (character; empty, \code{character(0)}, when
 #'   \code{ok}), \code{signature_ok} (logical, \code{NA} when the manifest is
 #'   unsigned) and \code{manifest} (the parsed JSON as a list).
 #' @export
 vrfrcdmnf <- function(path, orig, recd) {
-  .rmbl_no_fn(recoded = recd)
+  .rmbl_no_fn(recd = recd)
   path <- .rmbl_file1(path, "path")
   m <- .rmbl_json_text(paste(
     readLines(path, warn = FALSE, encoding = "UTF-8"),
     collapse = "\n"
   ))
-  reasons <- character(0)
   mapping <- unlist(m$mapping)
-  sha <- csha256(charToRaw(
-    paste(names(mapping), mapping, sep = "=", collapse = ";")
-  ))
-  if (!identical(sha, m$mapping_sha256)) {
-    reasons <- c(
-      reasons,
-      "mapping checksum does not match the mapping in the manifest"
-    )
-  }
-  check <- m
-  check$body_sha256 <- NULL
-  check$signature <- NULL
-  check$public_key <- NULL
-  body_sha <- csha256(charToRaw(tojs(check)))
-  if (!identical(body_sha, m$body_sha256)) {
-    reasons <- c(reasons, "manifest body was altered after it was written")
-  }
+  reasons <- .rcm_sums(m, mapping)
   r <- tryCatch(
     {
       vrfrcd(orig, recd, mapping)
@@ -1278,33 +1050,44 @@ vrfrcdmnf <- function(path, orig, recd) {
   if (!isTRUE(r)) {
     reasons <- c(reasons, r)
   }
-  after <- table(as.character(recd), useNA = "no")
-  after_num <- stats::setNames(as.numeric(after), names(after))
-  man_num <- vapply(m$counts_after, as.numeric, numeric(1))
-  if (
-    !identical(names(after_num), names(man_num)) ||
-      !isTRUE(all.equal(unname(after_num), unname(man_num)))
-  ) {
-    reasons <- c(reasons, "recoded counts differ from the manifest")
+  reasons <- c(reasons, .rcm_counts(m, recd))
+  sig_ok <- .rcm_signature(m)
+  if (isFALSE(sig_ok)) {
+    reasons <- c(reasons, "signature does not verify")
   }
-  sig_ok <- NA
-  if (!is.null(m$signature)) {
-    sig <- m$signature
-    class(sig) <- c("bricklayer_signature", "list")
-    pk <- m$public_key
-    class(pk) <- if (!is.null(pk$root)) {
-      c("bricklayer_public_key", "list")
-    } else {
-      c("bricklayer_fips_public_key", "bricklayer_oqs_public_key", "list")
-    }
-    sig_ok <- isTRUE(cpsvrf(m$body_sha256, sig, pk))
-    if (!sig_ok) reasons <- c(reasons, "signature does not verify")
-  }
-  list(
+  out <- list(
     ok = !length(reasons),
     reasons = reasons,
     signature_ok = sig_ok,
     manifest = m
+  )
+  class(out) <- c("rmbl_recode_manifest_check", "list")
+  out
+}
+
+#' @export
+format.rmbl_recode_manifest_check <- function(x, ...) {
+  m <- x$manifest
+  .rmbl_stat_block(
+    "Recode manifest check",
+    facts = list(
+      Status = if (isTRUE(x$ok)) "as recorded" else "does NOT match",
+      Signature = if (is.na(x$signature_ok)) {
+        "unsigned"
+      } else if (isTRUE(x$signature_ok)) {
+        "verified"
+      } else {
+        "does not verify"
+      },
+      Context = if (nzchar(m$context %||% "")) m$context,
+      Created = m$created
+    ),
+    reading = if (isTRUE(x$ok)) {
+      "The data were recoded exactly as the manifest records."
+    } else {
+      "The data or the manifest changed since the recode was recorded."
+    },
+    notes = if (length(x$reasons)) paste("FAIL", x$reasons)
   )
 }
 
@@ -1364,21 +1147,7 @@ vrfrcdmnf <- function(path, orig, recd) {
 #' try(relbl(f, c("Black", "Other", "White")))
 #' @export
 relbl <- function(x, map, keep = character()) {
-  if (is.null(x) || !is.atomic(x) || is.complex(x) || is.raw(x)) {
-    stop(
-      "`x` must be a vector of labels (character, factor or numbers)",
-      call. = FALSE
-    )
-  }
-  if (is.null(names(map)) || !all(nzchar(names(map)))) {
-    stop(
-      "relabel: `map` must be NAMED (old label = new label). ",
-      "Assigning labels by POSITION is how four race codes were rotated ",
-      "in a published analysis (OHRC correction, 26 January 2023): the ",
-      "labels were in alphabetical order, the codes were not.",
-      call. = FALSE
-    )
-  }
+  .relbl_check(x, map)
   old <- if (is.factor(x)) {
     levels(x)
   } else {
@@ -1388,7 +1157,7 @@ relbl <- function(x, map, keep = character()) {
   if (length(unmapped)) {
     stop(
       "relabel: level(s) with NO mapping: ",
-      paste(.rmbl_squote(unmapped), collapse = ", "),
+      toString(.rmbl_squote(unmapped)),
       ". Name every level or list it in `keep`.",
       call. = FALSE
     )
@@ -1531,7 +1300,7 @@ declbld <- function(x, vlabs = NULL) {
 #' try(rlblfrns(vl, c(White = "Black")))
 #' @export
 rlblfrns <- function(vlabs, obs, cnts = NULL) {
-  .rmbl_no_fn(value_labels = vlabs, observed = obs, counts = cnts)
+  .rmbl_no_fn(vlabs = vlabs, obs = obs, cnts = cnts)
   if (!is.null(cnts)) {
     cnts <- stats::setNames(.rmbl_num(cnts, "cnts"), names(cnts))
   } # read by label
@@ -1544,7 +1313,6 @@ rlblfrns <- function(vlabs, obs, cnts = NULL) {
     )
   }
   labs <- unname(vlabs)
-  k <- length(labs)
   if (!setequal(names(obs), labs) || !setequal(unname(obs), labs)) {
     stop(
       "rlblfrns: `obs` must be a permutation of the labels ",
@@ -1553,41 +1321,12 @@ rlblfrns <- function(vlabs, obs, cnts = NULL) {
     )
   }
   .obs <- unname(obs[labs])
-  mech <- list(
-    "labels sorted alphabetically, assigned by code position" = sort(
-      labs,
-      method = "radix"
-    ),
-    "labels sorted case-insensitively, assigned by code position" = labs[order(
-      tolower(labs),
-      method = "radix"
-    )],
-    "labels sorted in reverse, assigned by code position" = rev(sort(
-      labs,
-      method = "radix"
-    )),
-    "labels reversed" = rev(labs),
-    "codes sorted as strings, labels assigned in that order" = labs[order(
-      as.character(names(vlabs)),
-      method = "radix"
-    )]
-  )
-  for (r in seq_len(k - 1L)) {
-    mech[[sprintf("rotation by %d position(s)", r)]] <-
-      labs[((seq_len(k) - 1L + r) %% k) + 1L]
-  }
-  if (!is.null(cnts)) {
-    cnt <- cnts[labs]
-    dec <- "labels ordered by decreasing frequency, assigned by code position"
-    inc <- "labels ordered by increasing frequency, assigned by code position"
-    mech[[dec]] <- labs[order(-as.numeric(cnt), method = "radix")]
-    mech[[inc]] <- labs[order(as.numeric(cnt), method = "radix")]
-  }
+  mech <- .rlbl_mechanisms(vlabs, labs, cnts)
   rows <- lapply(names(mech), function(nm) {
     perm <- mech[[nm]]
     data.frame(
       mechanism = nm,
-      permutation = paste(paste0(labs, " -> ", perm), collapse = ", "),
+      permutation = toString(paste0(labs, " -> ", perm)),
       matches = identical(perm, .obs),
       stringsAsFactors = FALSE
     )
@@ -1603,46 +1342,39 @@ rlblfrns <- function(vlabs, obs, cnts = NULL) {
     return(out)
   }
   hit <- out$mechanism[out$matches]
-  attr(out, "verdict") <- if (length(hit)) {
-    paste0(
-      "The observed permutation is reproduced EXACTLY by: ",
-      paste(hit, collapse = "; "),
-      ". No import routine (haven, foreign, pandas, ",
-      "pyreadstat) reorders value labels; each carries them keyed by code. A ",
-      "transfer fault does not select the sort order of the labels. The step ",
-      "that did this was a positional relabel in the analysis, and it is ",
-      "reproducible from the code book alone."
-    )
-  } else {
-    paste0(
-      "No positional or sort-based mechanism reproduces the observed ",
-      "permutation. Look at merges/joins on the category column, manual ",
-      "edits, and the file ",
-      "itself before blaming either program."
-    )
-  }
+  attr(out, "verdict") <- .rlbl_verdict(hit)
   class(out) <- c("bricklayer_relabel_forensics", "data.frame")
   out
 }
 
 #' @export
-print.bricklayer_relabel_forensics <- function(x, ...) {
-  m <- x[x$matches, , drop = FALSE]
-  if (nrow(m)) {
-    cat("Mechanism(s) reproducing the observed permutation:\n")
-    for (i in seq_len(nrow(m))) {
-      cat("  * ", m$mechanism[i], "\n      ", m$permutation[i], "\n", sep = "")
-    }
-  } else {
-    cat(
-      "No mechanism among ",
-      nrow(x),
-      " reproduces the observed permutation.\n",
-      sep = ""
-    )
+format.bricklayer_relabel_forensics <- function(x, ...) {
+  if (!all(c("mechanism", "permutation", "matches") %in% names(x))) {
+    return(utils::capture.output(print(as.data.frame(unclass(x)))))
   }
-  cat("\n", attr(x, "verdict"), "\n", sep = "")
-  invisible(x)
+  m <- x[x$matches, , drop = FALSE]
+  .rmbl_stat_block(
+    "Relabelling forensics",
+    facts = list(
+      `Mechanisms tried` = nrow(x),
+      Reproducing = nrow(m)
+    ),
+    reading = attr(x, "verdict"),
+    notes = if (nrow(m)) {
+      c(
+        "Mechanism(s) reproducing the observed permutation:",
+        as.vector(rbind(
+          paste("*", m$mechanism),
+          paste("   ", m$permutation)
+        ))
+      )
+    } else {
+      sprintf(
+        "No mechanism among %d reproduces the observed permutation.",
+        nrow(x)
+      )
+    }
+  )
 }
 
 #' Verify a categorical variable that crossed from one program to another
@@ -1688,7 +1420,8 @@ print.bricklayer_relabel_forensics <- function(x, ...) {
 #'   When \code{FALSE} the result comes back with \code{ok = FALSE},
 #'   \code{reasons}, and \code{marginals$permutation} ready for
 #'   \code{\link{rlblfrns}}.
-#' @return A list with \code{ok} (logical), \code{decoded} (a factor; in code
+#' @return A list of class \code{rmbl_transfer_check} (it prints as a box)
+#'   with \code{ok} (logical), \code{decoded} (a factor; in code
 #'   order when decoded from codes), \code{marginals} (the
 #'   \code{\link{vrfmrg}} result), \code{code_book_ok} (logical, or
 #'   \code{NA} when there was nothing to compare) and \code{reasons}
@@ -1715,8 +1448,532 @@ print.bricklayer_relabel_forensics <- function(x, ...) {
 #' ))
 #' @export
 xfrvrf <- function(imported, soucnts, codebook = NULL, tol = 0, strict = TRUE) {
-  .rmbl_no_fn(imported = imported, code_book = codebook)
+  .rmbl_no_fn(imported = imported, codebook = codebook)
   strict <- .rmbl_flag1(strict, "strict")
+  .xfr_codebook_arg(codebook)
+  tol <- .rmbl_scalar(tol, "tol", 0)
+  lab <- attr(imported, "labels", exact = TRUE)
+  code_book_ok <- .xfr_codebook_ok(lab, codebook, strict)
+  decoded <- .xfr_decode(imported, lab, codebook, soucnts)
+  m <- vrfmrg(as.character(decoded), soucnts, tol = tol, strict = strict)
+  ok <- isTRUE(m$ok) && !isFALSE(code_book_ok)
+  reasons <- c(
+    if (isFALSE(code_book_ok)) {
+      "value labels disagree with the source code book"
+    },
+    if (!isTRUE(m$ok)) m$message
+  )
+  out <- list(
+    ok = ok,
+    decoded = decoded,
+    marginals = m,
+    code_book_ok = code_book_ok,
+    reasons = reasons
+  )
+  class(out) <- c("rmbl_transfer_check", "list")
+  out
+}
+
+#' @export
+format.rmbl_transfer_check <- function(x, ...) {
+  m <- x$marginals
+  .rmbl_stat_block(
+    "Transferred variable check",
+    facts = list(
+      Status = if (isTRUE(x$ok)) "as the source reported" else "does NOT match",
+      `Code book` = if (is.na(x$code_book_ok)) {
+        "nothing to compare"
+      } else if (isTRUE(x$code_book_ok)) {
+        "agrees"
+      } else {
+        "disagrees"
+      },
+      Values = length(x$decoded)
+    ),
+    table = if (is.list(m) && length(m$counts)) {
+      data.frame(
+        label = names(m$counts),
+        observed = as.numeric(m$counts),
+        source = as.numeric(m$published),
+        stringsAsFactors = FALSE
+      )
+    },
+    reading = if (isTRUE(x$ok)) {
+      "The imported values reproduce the source program's counts and labels."
+    } else {
+      "The imported values do not reproduce what the source program reported."
+    },
+    notes = if (length(x$reasons)) paste("FAIL", x$reasons)
+  )
+}
+
+#' Wraps text in typographic single quotes.
+#' @param v A character vector.
+#' @return `v` with each element in curly single quotes.
+#' @noRd
+.rmbl_squote <- function(v) paste0("\u2018", v, "\u2019")
+
+#' Lists every ordering of a set of labels.
+#' @param v The labels.
+#' @return A list of character vectors, one per permutation of `v`.
+#' @noRd
+.rmbl_label_perms <- function(v) {
+  n <- length(v)
+  if (n <= 1L) {
+    return(list(v))
+  }
+  out <- list()
+  for (i in seq_len(n)) {
+    for (rest in .rmbl_label_perms(v[-i])) {
+      out[[length(out) + 1L]] <- c(v[i], rest)
+    }
+  }
+  out
+}
+
+#' One column's audit row.
+#' @param cn The column.
+#' @param data The data frame holding column `cn`.
+#' @return A one-row data frame.
+#' @noRd
+.ac_column <- function(cn, data) {
+  v <- data[[cn]]
+  hazards <- character(0)
+  if (inherits(v, c("haven_labelled", "labelled"))) {
+    hazards <- c(
+      hazards,
+      paste0(
+        "still carries foreign value labels: decode ",
+        "with deccodes() BEFORE analysis (the ",
+        "numeric codes are NOT the categories)"
+      )
+    )
+    v <- as.character(v)
+  }
+  lv <- if (is.factor(v)) {
+    levels(v)
+  } else {
+    as.character(sort(unique(v[!is.na(v)]), method = "radix"))
+  }
+  obs <- unique(as.character(v[!is.na(v)]))
+  hazards <- c(hazards, .ac_code_hazards(lv))
+  hazards <- c(hazards, .ac_text_hazards(lv))
+  hazards <- c(hazards, .ac_level_hazards(v, lv, obs))
+  data.frame(
+    column = cn,
+    storage = paste(class(data[[cn]]), collapse = "/"),
+    n_levels = length(lv),
+    levels = paste(utils::head(lv, 8), collapse = "|"),
+    reference = if (length(lv)) lv[1] else NA_character_,
+    hazards = if (length(hazards)) paste(hazards, collapse = " ;; ") else "",
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The hazards in a column's label text: invisible padding, whitespace and
+#' case variants, empty labels, missing-value sentinels and a bad
+#' reference level.
+#' @param lv The levels.
+#' @return The hazards.
+#' @noRd
+.ac_text_hazards <- function(lv) {
+  inv <- "[\\s\u00a0\u1680\u2000-\u200b\u2028\u2029\u202f\u205f\u3000\ufeff]"
+  core <- gsub(paste0("^", inv, "+|", inv, "+$"), "", lv, perl = TRUE)
+  c(.ac_space_hazards(lv, core, inv), .ac_label_hazards(lv, core))
+}
+
+#' orchk()'s table, reference and reported odds ratios, checked.
+#' @param cnts,ref,rptd As for orchk().
+#' @noRd
+.orchk_check <- function(cnts, ref, rptd) {
+  if (!is.null(ref) && (!is.atomic(ref) || length(ref) != 1L || is.na(ref))) {
+    stop("`ref` must be one group label (a row name of `cnts`)", call. = FALSE)
+  }
+  if (
+    is.null(cnts) || !(is.matrix(cnts) || is.data.frame(cnts) || is.table(cnts))
+  ) {
+    stop(
+      "`cnts` must be a 2-column matrix or table of counts (rows named)",
+      call. = FALSE
+    )
+  }
+  cnts <- as.matrix(cnts)
+  if (ncol(cnts) != 2L || is.null(rownames(cnts))) {
+    stop(
+      "orchk: `cnts` must be a k-by-2 matrix with row names ",
+      "(groups) and columns outcome-absent, outcome-present.",
+      call. = FALSE
+    )
+  }
+  labs <- rownames(cnts)
+  if (is.null(ref)) {
+    stop("argument \"ref\" is missing, with no default", call. = FALSE)
+  }
+  if (!ref %in% labs) {
+    stop(
+      "orchk: reference ",
+      .rmbl_squote(ref),
+      " is not a row of `cnts`.",
+      call. = FALSE
+    )
+  }
+  others <- setdiff(labs, ref)
+  if (is.null(names(rptd)) || !all(others %in% names(rptd))) {
+    stop(
+      "orchk: `rptd` must be named by every ",
+      "non-reference row: ",
+      toString(.rmbl_squote(others)),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' The relabellings of rows (and the outcome columns) under which the table
+#' reproduces the reported odds ratios.
+#' @param cnts The table.
+#' @param labs Its groups.
+#' @param rptd The reported odds ratios.
+#' @param or_of,close_to The odds ratios of a table, and the tolerance
+#'   test.
+#' @return A data frame, one row per match.
+#' @noRd
+.orchk_matches <- function(cnts, labs, rptd, or_of, close_to) {
+  rows <- list()
+  if (length(labs) <= 7L) {
+    for (p in .rmbl_label_perms(labs)) {
+      for (swap_cols in c(FALSE, TRUE)) {
+        if (identical(p, labs) && !swap_cols) {
+          next
+        }
+        m <- cnts
+        if (swap_cols) {
+          m <- m[, 2:1, drop = FALSE]
+        }
+        rownames(m) <- p
+        m <- m[labs, , drop = FALSE]
+        if (close_to(or_of(m), rptd)) {
+          moved <- labs[p != labs]
+          rows[[length(rows) + 1L]] <- data.frame(
+            relabelling = if (length(moved)) {
+              toString(sprintf("%s -> %s", moved, p[p != labs]))
+            } else {
+              "none"
+            },
+            outcome_columns_swapped = swap_cols,
+            stringsAsFactors = FALSE
+          )
+        }
+      }
+    }
+  }
+  if (length(rows)) {
+    do.call(rbind, rows)
+  } else {
+    data.frame(
+      relabelling = character(),
+      outcome_columns_swapped = logical(),
+      stringsAsFactors = FALSE
+    )
+  }
+}
+
+#' orchk()'s verdict.
+#' @param consistent Whether the table as labelled fits.
+#' @param matches The relabellings that fit.
+#' @return One sentence.
+#' @noRd
+.orchk_verdict <- function(consistent, matches) {
+  if (consistent) {
+    "the reported odds ratios follow from the table as labelled"
+  } else if (nrow(matches)) {
+    paste0(
+      "the reported odds ratios do NOT follow from the table as labelled; ",
+      "they are reproduced under a relabelling (",
+      matches$relabelling[1L],
+      if (matches$outcome_columns_swapped[1L]) {
+        "; outcome columns swapped"
+      } else {
+        ""
+      },
+      "): the groups were mislabelled, not the software"
+    )
+  } else {
+    "the reported odds ratios follow from no relabelling of this table"
+  }
+}
+
+#' vrfrcd()'s two vectors, checked: atomic, factors as text, same length and
+#' the same missingness.
+#' @param orig,recd The vectors before and after the recode.
+#' @return list(orig, recd).
+#' @noRd
+.vrf_inputs <- function(orig, recd) {
+  if (!is.atomic(orig) || is.null(orig) || !is.atomic(recd) || is.null(recd)) {
+    stop("`orig` and `recd` must be atomic vectors", call. = FALSE)
+  }
+  if (is.factor(orig)) {
+    orig <- as.character(orig)
+  }
+  if (is.factor(recd)) {
+    recd <- as.character(recd)
+  }
+  if (length(orig) != length(recd)) {
+    stop(
+      "vrfrcd: length mismatch (",
+      length(orig),
+      " vs ",
+      length(recd),
+      "): rows were lost or duplicated during the recode.",
+      call. = FALSE
+    )
+  }
+  if (!identical(is.na(orig), is.na(recd))) {
+    stop(
+      "vrfrcd: missingness changed during the recode (values ",
+      "silently became NA, or NAs were filled).",
+      call. = FALSE
+    )
+  }
+  list(orig = orig, recd = recd)
+}
+
+#' Refuses a recode whose realised mapping is not the declared one.
+#' @param tab The cross-tabulation of original by recoded.
+#' @param decl The declared mapping (old = new).
+#' @return NULL, invisibly.
+#' @noRd
+.vrf_mapping <- function(tab, decl) {
+  realized <- apply(tab, 1L, function(r) colnames(tab)[which(r > 0)])
+  for (old in names(realized)) {
+    expected <- if (old %in% names(decl)) unname(decl[old]) else old
+    if (!identical(realized[[old]], expected)) {
+      stop(
+        "vrfrcd: ",
+        .rmbl_squote(old),
+        " was mapped to ",
+        .rmbl_squote(realized[[old]]),
+        " but the declared mapping says ",
+        .rmbl_squote(expected),
+        ". THIS is how groups get swapped; fix the ",
+        "recode before any model runs.",
+        call. = FALSE
+      )
+    }
+  }
+  invisible(NULL)
+}
+
+#' The permutation of the labels under which the observed counts match the
+#' published ones, if there is one.
+#' @param obs,pub The observed and published counts.
+#' @param labs The category labels whose orderings are tried.
+#' @param tol The largest difference from the published counts accepted.
+#' @return The permutation (named by label), or NULL.
+#' @noRd
+.vrfmrg_perm <- function(obs, pub, labs, tol) {
+  for (p in .rmbl_label_perms(labs)) {
+    relabelled <- stats::setNames(obs, p)[labs]
+    if (
+      !identical(p, labs) &&
+        all(abs(relabelled - pub[labs]) <= tol)
+    ) {
+      return(stats::setNames(p, labs))
+    }
+  }
+  NULL
+}
+
+#' Says how vrfmrg()'s counts differ from the published ones.
+#' @param labs The category labels, one message line each.
+#' @param obs,pub The observed and published counts.
+#' @param perm The permutation that would match them, or NULL.
+#' @return One string.
+#' @noRd
+.vrfmrg_message <- function(labs, obs, pub, perm) {
+  detail <- paste(
+    sprintf("%s: observed %s, published %s", labs, obs, pub[labs]),
+    collapse = "; "
+  )
+  hint <- if (!is.null(perm)) {
+    moved <- names(perm)[perm != names(perm)]
+    paste0(
+      " The observed counts match the published ones if the labels are ",
+      "permuted (",
+      toString(sprintf("%s -> %s", moved, perm[moved])),
+      "): the labels are attached to the wrong groups."
+    )
+  } else {
+    ""
+  }
+  paste0(
+    "vrfmrg: recoded counts do not match the published counts. ",
+    detail,
+    ".",
+    hint
+  )
+}
+
+#' Checks relbl()'s labels and that its map is named.
+#' @param x The labels to relabel: character, factor or numbers.
+#' @param map The map.
+#' @return NULL, invisibly.
+#' @noRd
+.relbl_check <- function(x, map) {
+  if (is.null(x) || !is.atomic(x) || is.complex(x) || is.raw(x)) {
+    stop(
+      "`x` must be a vector of labels (character, factor or numbers)",
+      call. = FALSE
+    )
+  }
+  if (is.null(names(map)) || !all(nzchar(names(map)))) {
+    stop(
+      "relabel: `map` must be NAMED (old label = new label). ",
+      "Assigning labels by POSITION is how four race codes were rotated ",
+      "in a published analysis (OHRC correction, 26 January 2023): the ",
+      "labels were in alphabetical order, the codes were not.",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' The checksums of a recode manifest: its mapping and its body.
+#' @param m The manifest.
+#' @param mapping Its mapping, unlisted.
+#' @return The reasons it fails, character(0) when none.
+#' @noRd
+.rcm_sums <- function(m, mapping) {
+  reasons <- character(0)
+  sha <- csha256(charToRaw(
+    paste(names(mapping), mapping, sep = "=", collapse = ";")
+  ))
+  if (!identical(sha, m$mapping_sha256)) {
+    reasons <- c(
+      reasons,
+      "mapping checksum does not match the mapping in the manifest"
+    )
+  }
+  check <- m
+  check$body_sha256 <- NULL
+  check$signature <- NULL
+  check$public_key <- NULL
+  body_sha <- csha256(charToRaw(tojs(check)))
+  if (!identical(body_sha, m$body_sha256)) {
+    reasons <- c(reasons, "manifest body was altered after it was written")
+  }
+  reasons
+}
+
+#' Whether the recoded counts are the manifest's.
+#' @param m The manifest.
+#' @param recd The recoded vector.
+#' @return The reason it fails, or character(0).
+#' @noRd
+.rcm_counts <- function(m, recd) {
+  after <- table(as.character(recd), useNA = "no")
+  after_num <- stats::setNames(as.numeric(after), names(after))
+  man_num <- vapply(m$counts_after, as.numeric, numeric(1))
+  if (
+    !identical(names(after_num), names(man_num)) ||
+      !isTRUE(all.equal(unname(after_num), unname(man_num)))
+  ) {
+    return("recoded counts differ from the manifest")
+  }
+  character(0)
+}
+
+#' Verifies a recode manifest's signature.
+#' @param m The manifest.
+#' @return TRUE or FALSE, NA when it is not signed.
+#' @noRd
+.rcm_signature <- function(m) {
+  sig_ok <- NA
+  if (!is.null(m$signature)) {
+    sig <- m$signature
+    class(sig) <- c("bricklayer_signature", "list")
+    pk <- m$public_key
+    class(pk) <- if (!is.null(pk$root)) {
+      c("bricklayer_public_key", "list")
+    } else {
+      c("bricklayer_fips_public_key", "bricklayer_oqs_public_key", "list")
+    }
+    sig_ok <- isTRUE(cpsvrf(m$body_sha256, sig, pk))
+  }
+  sig_ok
+}
+
+#' The mechanisms rlblfrns() tries, each as the permutation it produces.
+#' @param vlabs The value labels (code = label).
+#' @param labs The labels, in code order.
+#' @param cnts The counts by label, or NULL.
+#' @return A named list of permutations of `labs`.
+#' @noRd
+.rlbl_mechanisms <- function(vlabs, labs, cnts) {
+  k <- length(labs)
+  mech <- list(
+    "labels sorted alphabetically, assigned by code position" = sort(
+      labs,
+      method = "radix"
+    ),
+    "labels sorted case-insensitively, assigned by code position" = labs[order(
+      tolower(labs),
+      method = "radix"
+    )],
+    "labels sorted in reverse, assigned by code position" = rev(sort(
+      labs,
+      method = "radix"
+    )),
+    "labels reversed" = rev(labs),
+    "codes sorted as strings, labels assigned in that order" = labs[order(
+      as.character(names(vlabs)),
+      method = "radix"
+    )]
+  )
+  for (r in seq_len(k - 1L)) {
+    mech[[sprintf("rotation by %d position(s)", r)]] <-
+      labs[((seq_len(k) - 1L + r) %% k) + 1L]
+  }
+  if (!is.null(cnts)) {
+    cnt <- cnts[labs]
+    dec <- "labels ordered by decreasing frequency, assigned by code position"
+    inc <- "labels ordered by increasing frequency, assigned by code position"
+    mech[[dec]] <- labs[order(-as.numeric(cnt), method = "radix")]
+    mech[[inc]] <- labs[order(as.numeric(cnt), method = "radix")]
+  }
+  mech
+}
+
+#' rlblfrns()'s verdict from the mechanisms that reproduce the permutation.
+#' @param hit The names of those mechanisms.
+#' @return One string.
+#' @noRd
+.rlbl_verdict <- function(hit) {
+  if (length(hit)) {
+    paste0(
+      "The observed permutation is reproduced EXACTLY by: ",
+      paste(hit, collapse = "; "),
+      ". No import routine (haven, foreign, pandas, ",
+      "pyreadstat) reorders value labels; each carries them keyed by code. A ",
+      "transfer fault does not select the sort order of the labels. The step ",
+      "that did this was a positional relabel in the analysis, and it is ",
+      "reproducible from the code book alone."
+    )
+  } else {
+    paste0(
+      "No positional or sort-based mechanism reproduces the observed ",
+      "permutation. Look at merges/joins on the category column, manual ",
+      "edits, and the file ",
+      "itself before blaming either program."
+    )
+  }
+}
+
+#' Checks xfrvrf()'s code book: a named vector, or NULL.
+#' @param codebook The code book.
+#' @return NULL, invisibly.
+#' @noRd
+.xfr_codebook_arg <- function(codebook) {
   if (
     !is.null(codebook) &&
       (!is.atomic(codebook) ||
@@ -1728,8 +1985,16 @@ xfrvrf <- function(imported, soucnts, codebook = NULL, tol = 0, strict = TRUE) {
       call. = FALSE
     )
   }
-  tol <- .rmbl_scalar(tol, "tol", 0)
-  lab <- attr(imported, "labels", exact = TRUE)
+  invisible(NULL)
+}
+
+#' Whether the value labels that arrived agree with the source code book.
+#' @param lab The labels that arrived (label = code), or NULL.
+#' @param codebook The source code book (code = label), or NULL.
+#' @param strict Whether a disagreement is an error.
+#' @return TRUE or FALSE, NA when either is absent.
+#' @noRd
+.xfr_codebook_ok <- function(lab, codebook, strict) {
   code_book_ok <- NA
   if (!is.null(lab) && !is.null(codebook)) {
     got <- stats::setNames(names(lab), as.character(unname(lab)))
@@ -1744,16 +2009,27 @@ xfrvrf <- function(imported, soucnts, codebook = NULL, tol = 0, strict = TRUE) {
         "xfrvrf: the value labels that arrived disagree with the ",
         "source code ",
         "book at code(s) ",
-        paste(bad, collapse = ", "),
+        toString(bad),
         ": arrived ",
-        paste(paste0(bad, "=", got[bad]), collapse = ", "),
+        toString(paste0(bad, "=", got[bad])),
         "; source ",
-        paste(paste0(bad, "=", want[bad]), collapse = ", "),
+        toString(paste0(bad, "=", want[bad])),
         call. = FALSE
       )
     }
   }
-  decoded <- if (!is.null(lab)) {
+  code_book_ok
+}
+
+#' The imported column decoded to labels.
+#' @param imported The imported column.
+#' @param lab Its value labels, or NULL.
+#' @param codebook The source code book, or NULL.
+#' @param soucnts The source counts, named by label.
+#' @return A factor.
+#' @noRd
+.xfr_decode <- function(imported, lab, codebook, soucnts) {
+  if (!is.null(lab)) {
     declbld(imported)
   } else if (!is.null(codebook)) {
     declbld(imported, vlabs = codebook)
@@ -1764,19 +2040,196 @@ xfrvrf <- function(imported, soucnts, codebook = NULL, tol = 0, strict = TRUE) {
     seen <- lab_all[!is.na(lab_all)]
     factor(lab_all, levels = unique(c(names(soucnts), seen)))
   }
-  m <- vrfmrg(as.character(decoded), soucnts, tol = tol, strict = strict)
-  ok <- isTRUE(m$ok) && !isFALSE(code_book_ok)
-  reasons <- c(
-    if (isFALSE(code_book_ok)) {
-      "value labels disagree with the source code book"
-    },
-    if (!isTRUE(m$ok)) m$message
-  )
-  list(
-    ok = ok,
-    decoded = decoded,
-    marginals = m,
-    code_book_ok = code_book_ok,
-    reasons = reasons
-  )
+}
+
+#' Hazards of labels that look like codes.
+#' @param lv The levels.
+#' @return The hazards found, as text.
+#' @noRd
+.ac_code_hazards <- function(lv) {
+  hazards <- character(0)
+  if (length(lv) && all(grepl("^[0-9.]+$", lv))) {
+    hazards <- c(
+      hazards,
+      paste0(
+        "all labels numeric-looking (",
+        paste(utils::head(lv, 4), collapse = ","),
+        "...): likely imported CODES whose value labels were lost; ",
+        "as.numeric() on this column returns level INDICES, not data"
+      )
+    )
+  }
+  if (length(lv) && all(grepl("^[0-9]+[.):]? ?[A-Za-z]", lv))) {
+    hazards <- c(
+      hazards,
+      paste0(
+        "labels carry code prefixes (",
+        paste(utils::head(lv, 3), collapse = ","),
+        "...): the code is part of the string, so the level order is ",
+        "the CODE ",
+        "order; any positional relabel with labels in another order rotates ",
+        "the groups. Decode by code (deccodes / relabel), never by position"
+      )
+    )
+  }
+  hazards
+}
+
+#' Hazards of the number of levels: unused ones, or too many.
+#' @param v The column audited; a factor's unused levels are flagged.
+#' @param lv Its levels.
+#' @param obs The values observed.
+#' @return The hazards found, as text.
+#' @noRd
+.ac_level_hazards <- function(v, lv, obs) {
+  hazards <- character(0)
+  if (is.factor(v) && length(setdiff(lv, obs))) {
+    hazards <- c(
+      hazards,
+      paste0(
+        "unused levels: ",
+        toString(.rmbl_squote(setdiff(lv, obs)))
+      )
+    )
+  }
+  if (length(lv) > 50L) {
+    hazards <- c(
+      hazards,
+      paste0(
+        length(lv),
+        " levels: identifier mistaken for a category?"
+      )
+    )
+  }
+  hazards
+}
+
+#' Hazards of invisible characters in labels: padding, duplicates that differ
+#' only by it, empty labels.
+#' @param lv The levels.
+#' @param core The levels with leading and trailing invisible characters cut.
+#' @param inv The pattern of one invisible character.
+#' @return The hazards found, as text.
+#' @noRd
+.ac_space_hazards <- function(lv, core, inv) {
+  hazards <- character(0)
+  padded <- lv[grepl(paste0("^", inv, "|", inv, "$"), lv, perl = TRUE)]
+  if (length(padded)) {
+    hazards <- c(
+      hazards,
+      paste0(
+        "labels with leading/trailing whitespace (incl. non-breaking): ",
+        toString(.rmbl_squote(padded)),
+        ": a space splits one category into two"
+      )
+    )
+  }
+  if (anyDuplicated(core)) {
+    hazards <- c(
+      hazards,
+      paste0(
+        "whitespace-variant duplicate labels: ",
+        toString(.rmbl_squote(lv[core %in% core[duplicated(core)]]))
+      )
+    )
+  }
+  if (!all(nzchar(core))) {
+    hazards <- c(
+      hazards,
+      "empty-string label \"\": missingness stored as a category"
+    )
+  }
+  hazards
+}
+
+#' Hazards of sentinel labels, the reference level and case variants.
+#' @param lv The levels.
+#' @param core The levels with leading and trailing invisible characters cut.
+#' @return The hazards found, as text.
+#' @noRd
+.ac_label_hazards <- function(lv, core) {
+  hazards <- character(0)
+  sentinels <- c("NA", "N/A", "NAN", "NULL", "NONE", ".", "-", "?")
+  sentinel <- lv[toupper(core) %in% sentinels]
+  if (length(sentinel)) {
+    hazards <- c(
+      hazards,
+      paste0(
+        "missing-value sentinel stored as a label: ",
+        toString(.rmbl_squote(sentinel))
+      )
+    )
+  }
+  if (
+    length(lv) &&
+      (!nzchar(core[1]) || lv[1] != core[1] || lv[1] %in% sentinel)
+  ) {
+    hazards <- c(
+      hazards,
+      paste0(
+        "the REFERENCE level ",
+        .rmbl_squote(lv[1]),
+        " is empty, a sentinel, or differs from a real label only by ",
+        "invisible characters: every model on this column is baselined on it"
+      )
+    )
+  }
+  lc <- tolower(core)
+  # a case-variant pair is two DIFFERENT trimmed labels that agree once
+  # lower-cased; a pair that differs only by whitespace was reported above
+  case_groups <- split(core, lc)
+  is_pair <- vapply(case_groups, function(g) length(unique(g)) > 1L, TRUE)
+  case_groups <- case_groups[is_pair]
+  if (length(case_groups)) {
+    cv <- lv[lc %in% names(case_groups)]
+    hazards <- c(
+      hazards,
+      paste0(
+        "case-variant duplicate labels: ",
+        toString(.rmbl_squote(cv))
+      )
+    )
+  }
+  hazards
+}
+
+#' Checks vrfmrg()'s published counts: a named numeric vector.
+#' @param pub The published counts.
+#' @return NULL, invisibly.
+#' @noRd
+.vrfmrg_pub <- function(pub) {
+  if (!is.numeric(pub) || is.null(names(pub)) || !all(nzchar(names(pub)))) {
+    stop("vrfmrg: `pub` must be a named numeric vector", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' Labels in the data that the published counts do not have: an error when
+#' strict, else vrfmrg()'s failed result.
+#' @param x The labels observed, checked for ones outside `labs`.
+#' @param labs The published labels.
+#' @param obs,pub The observed and published counts.
+#' @param strict Whether the difference is an error.
+#' @return The failed result, or NULL when there is no such label.
+#' @noRd
+.vrfmrg_extra <- function(x, labs, obs, pub, strict) {
+  extra <- setdiff(unique(x[!is.na(x)]), labs)
+  if (length(extra)) {
+    msg <- paste0(
+      "vrfmrg: labels present in the data but not in the ",
+      "published counts: ",
+      toString(.rmbl_squote(extra))
+    )
+    if (strict) {
+      stop(msg, call. = FALSE)
+    }
+    return(list(
+      counts = obs,
+      published = pub[labs],
+      ok = FALSE,
+      permutation = NULL,
+      message = msg
+    ))
+  }
+  NULL
 }

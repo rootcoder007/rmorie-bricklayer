@@ -16,7 +16,7 @@ fetchvrf(
 \arguments{
 \item{url}{The source URL (https).}
 
-\item{dest}{The file to write.}
+\item{dest}{Path the verified file is written to (by way of a \code{.part} file).}
 
 \item{sha256}{The expected SHA-256, 64 hexadecimal characters, or
 \code{NULL}.}
@@ -32,7 +32,8 @@ folders written by \code{\link{arccap}} (read from their WARC files), in
 order. \code{character()} tries none.}
 }
 \value{
-Invisibly, a list: \code{source} (\code{"live"}, \code{"wayback"},
+Invisibly, a list of class \code{rmbl_fetch} (it prints as a
+box): \code{source} (\code{"live"}, \code{"wayback"},
 \code{"mirror"}, \code{"rmorie"} or \code{"local"}), \code{url} (the URL
 that served the kept copy), \code{sha256}, \code{bytes}, and \code{tried}
 (a data frame of every attempt: \code{url}, \code{outcome}).

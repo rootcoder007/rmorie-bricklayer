@@ -158,14 +158,14 @@ test_that(
       c3_write(gzfile, rows[1:10001], ".gz"),
       c3_write(gzfile, rows[10002:20001], ".gz")
     )
-    d <- rmoriebricklayer:::.pollution_read_csv(two)
+    d <- .pollution_read_csv(two)
     expect_identical(nrow(d), 20000L)
     expect_match(
       vrfpol("pm25", expcsv = c3_cut(two, 0.97, ".csv.gz"))$error,
       "is truncated"
     )
     expect_error(
-      rmoriebricklayer:::.rmbl_decompress_checked(c3_join(charToRaw(
+      .rmbl_decompress_checked(c3_join(charToRaw(
         "not gzip"
       ))),
       NA
@@ -191,13 +191,13 @@ test_that("C3: a truncated bzip2 or xz file is refused, a whole one is read", {
   }
   short <- tempfile()
   writeBin(charToRaw("BZh9"), short)
-  expect_false(rmoriebricklayer:::.rmbl_bzip2_complete(short))
+  expect_false(.rmbl_bzip2_complete(short))
 })
 
 test_that("C3: the decompressed size is capped while it is read", {
   bomb <- tempfile(fileext = ".csv.gz")
   con <- gzfile(bomb, "wb")
-  z <- charToRaw(paste(rep("1,2\n", 1e5), collapse = ""))
+  z <- charToRaw(strrep("1,2\n", 1e5))
   for (i in 1:20) {
     writeBin(z, con)
   }
@@ -211,7 +211,7 @@ test_that("C3: the decompressed size is capped while it is read", {
     close(con)
     withr::with_options(list(rmoriebricklayer.maxcsvbytes = 1e5), {
       expect_error(
-        rmoriebricklayer:::.rmbl_decompress_checked(f),
+        .rmbl_decompress_checked(f),
         "more than the size limit"
       )
     })
@@ -219,25 +219,25 @@ test_that("C3: the decompressed size is capped while it is read", {
   withr::with_options(
     list(rmoriebricklayer.maxcsvbytes = -1),
     expect_error(
-      rmoriebricklayer:::.rmbl_decompress_checked(bomb),
+      .rmbl_decompress_checked(bomb),
       "non-negative number"
     )
   )
   expect_error(
-    .Call(rmoriebricklayer:::C_rmbl_gunzip_checked, "x", 10),
+    .Call(C_rmbl_gunzip_checked, "x", 10),
     "raw vector"
   )
   expect_error(
-    .Call(rmoriebricklayer:::C_rmbl_gunzip_checked, as.raw(1:3), NA_real_),
+    .Call(C_rmbl_gunzip_checked, as.raw(1:3), NA_real_),
     "non-negative number"
   )
   expect_error(
-    .Call(rmoriebricklayer:::C_rmbl_gunzip_checked, raw(0), 10),
+    .Call(C_rmbl_gunzip_checked, raw(0), 10),
     "not gzip data"
   )
   expect_error(
     .Call(
-      rmoriebricklayer:::C_rmbl_gunzip_checked,
+      C_rmbl_gunzip_checked,
       as.raw(c(0x1f, 0x8b, 1, 2, 3)),
       10
     ),
@@ -312,9 +312,9 @@ test_that(
   {
     withr::local_envvar(R_USER_CONFIG_DIR = tempfile("cfg-"))
     quiet <- function(...) invisible(NULL)
-    code <- function(...) rmoriebricklayer:::blcli(c(...), out = quiet)
+    code <- function(...) blcli(c(...), out = quiet)
     expect_identical(code("config", "set", "own.key", "--force"), 2L)
-    expect_false(file.exists(rmoriebricklayer:::.bl_config_path()))
+    expect_false(file.exists(.bl_config_path()))
     for (a in list(
       c("config", "unset", "route", "--force"),
       c("config", "show", "--force"),
@@ -351,10 +351,10 @@ test_that(
     dir.create(d)
     p <- file.path(d, "xmss_used_indices.txt")
     j <- file.path(d, "xmss_index.json")
-    expect_identical(rmoriebricklayer:::.rmbl_xmss_legacy_json(p), integer(0))
+    expect_identical(.rmbl_xmss_legacy_json(p), integer(0))
     dir.create(j)
     expect_error(
-      rmoriebricklayer:::.rmbl_xmss_legacy_json(p),
+      .rmbl_xmss_legacy_json(p),
       "is a directory, not a regular file"
     )
     unlink(j, recursive = TRUE)
@@ -362,7 +362,7 @@ test_that(
     system2("mkfifo", j)
     t0 <- proc.time()[["elapsed"]]
     expect_error(
-      rmoriebricklayer:::.rmbl_xmss_legacy_json(p),
+      .rmbl_xmss_legacy_json(p),
       "device or other special file"
     )
     expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(2))
@@ -478,11 +478,11 @@ test_that(
   {
     for (fd in 0:2) {
       expect_error(
-        .Call(rmoriebricklayer:::C_rmbl_flock_release, fd),
+        .Call(C_rmbl_flock_release, fd),
         "not a lock"
       )
     }
-    expect_null(.Call(rmoriebricklayer:::C_rmbl_flock_release, -1L))
+    expect_null(.Call(C_rmbl_flock_release, -1L))
   }
 )
 
@@ -497,7 +497,7 @@ test_that(
     p <- file.path(d, "rec")
     tmp <- file.path(d, "rec.tmp")
     expect_null(.Call(
-      rmoriebricklayer:::C_rmbl_write_file_checked,
+      C_rmbl_write_file_checked,
       tmp,
       p,
       charToRaw("abc\n")
@@ -523,7 +523,7 @@ test_that(
     writeLines("", file.path(d, "rec.txt.flock"))
     Sys.chmod(file.path(d, "rec.txt.flock"), "0400")
     expect_error(
-      rmoriebricklayer:::.rmbl_xmss_with_lock(
+      .rmbl_xmss_with_lock(
         file.path(d, "rec.txt"),
         function() NULL
       ),
@@ -553,12 +553,12 @@ test_that(
       .package = "base"
     )
     got <- tryCatch(
-      rmoriebricklayer:::.bl_readline("key: ", secret = FALSE),
+      .bl_readline("key: ", secret = FALSE),
       interrupt = function(i) "interrupt"
     )
     expect_identical(got, "interrupt")
     got <- tryCatch(
-      rmoriebricklayer:::.bl_readline("key: ", secret = TRUE),
+      .bl_readline("key: ", secret = TRUE),
       interrupt = function(i) "interrupt"
     )
     expect_identical(got, "interrupt")
@@ -618,7 +618,10 @@ test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
       system(cmd)
     )
     seen <- if (file.exists(ty)) {
-      utils::tail(gsub("\r", "", readLines(ty, warn = FALSE)), 15L)
+      utils::tail(
+        gsub("\r", "", readLines(ty, warn = FALSE), fixed = TRUE),
+        15L
+      )
     } else {
       "(no transcript)"
     }
@@ -646,13 +649,13 @@ test_that(
         as.raw(c(0, 0, 0xfe, 0xff))
       }
       writeBin(c(bom, iconv(txt, "UTF-8", enc, toRaw = TRUE)[[1]]), f)
-      d <- rmoriebricklayer:::.pollution_read_csv(f)
+      d <- .pollution_read_csv(f)
       expect_identical(d$exposure, c(30L, 40L), info = enc)
     }
     bad <- tempfile(fileext = ".csv")
     writeBin(c(as.raw(c(0xff, 0xfe, 0, 0)), as.raw(c(0x41, 0, 0))), bad)
     e <- tryCatch(
-      rmoriebricklayer:::.pollution_read_csv(bad),
+      .pollution_read_csv(bad),
       error = conditionMessage
     )
     expect_lt(nchar(e), 200)
@@ -668,16 +671,16 @@ test_that(
     f <- tempfile(fileext = ".csv")
     writeLines(c("exposure,income", "30,10", "40,20,99", "50,30"), f)
     expect_error(
-      rmoriebricklayer:::.pollution_read_csv(f),
+      .pollution_read_csv(f),
       "line 3 has 3 fields where the header has 2"
     )
     writeLines(c("site,exposure,exposure", "a,30,99", "b,40,98"), f)
     expect_error(
-      rmoriebricklayer:::.pollution_read_csv(f),
+      .pollution_read_csv(f),
       "'exposure' more than once"
     )
     writeLines(c("exposure,note", "30,\"a, quoted, note\"", "40,plain"), f)
-    expect_identical(nrow(rmoriebricklayer:::.pollution_read_csv(f)), 2L)
+    expect_identical(nrow(.pollution_read_csv(f)), 2L)
   }
 )
 
@@ -720,22 +723,23 @@ test_that(
       file.path(d, "morie", "credentials.json")
     )
     rm(
-      list = ls(rmoriebricklayer:::.bl_said_once),
-      envir = rmoriebricklayer:::.bl_said_once
+      list = ls(.bl_said_once),
+      envir = .bl_said_once
     )
     expect_message(
-      expect_null(rmoriebricklayer:::.bl_hosted_key()),
+      expect_null(.bl_hosted_key()),
       "issued for https://old.example.org/v1"
     )
-    expect_silent(expect_null(rmoriebricklayer:::.bl_hosted_key()))
-    out <- character()
-    rmoriebricklayer:::.bl_cli_doctor(function(x) out <<- c(out, x))
+    expect_silent(expect_null(.bl_hosted_key()))
+    got <- new.env()
+    got$out <- character()
+    .bl_cli_doctor(function(x) got$out <- c(got$out, x))
     expect_true(any(grepl(
       paste0(
         "data key: issued for https://old.example.org/v1, so not sent to ",
         "https://llm.example.org/v1"
       ),
-      out,
+      got$out,
       fixed = TRUE
     )))
   }
@@ -747,7 +751,7 @@ test_that(
     "expected_dtypes is checked"
   ),
   {
-    df <- data.frame(a = 1:3, b = c("x", "y", "z"))
+    df <- data.frame(a = 1:3, b = c("x", "y", "z"), stringsAsFactors = FALSE)
     expect_error(schval(df, NULL), "no schema to validate against")
     expect_error(schval(df, list()), "no schema to validate against")
     expect_error(
@@ -788,12 +792,12 @@ test_that(
 )
 
 test_that("LOW: default-ignorable characters are removed from the data list", {
-  # written with escapes: in a C locale R reads raw non-ASCII source text as
-  # "<U+00AD>"
+  # written with escapes: in a C locale R reads raw
+  # non-ASCII source text as "<U+00AD>"
   hidden <- "a\u00adb\u034fc\u115fd\u3164e\u180ef\ufeffg\ufff9h\U000e0041i"
-  tabs <- rmoriebricklayer:::.bl_data_tables_df("db/t", hidden, 1L, "src")
+  tabs <- .bl_data_tables_df("db/t", hidden, 1L, "src")
   out <- paste(
-    rmoriebricklayer:::.bl_format_data_tables(tabs, width = 200),
+    .bl_format_data_tables(tabs, width = 200),
     collapse = "\n"
   )
   expect_match(out, "abcdefghi", fixed = TRUE)
@@ -813,8 +817,8 @@ test_that(
     # remove (e57fed5, E11)
     other <- file.path(d, "other.txt.xmss-live456.tmp")
     writeLines("in flight", other)
-    rmoriebricklayer:::.rmbl_xmss_with_lock(p, function() {
-      rmoriebricklayer:::.rmbl_xmss_record_write(p, c(`k:aa` = 3L))
+    .rmbl_xmss_with_lock(p, function() {
+      .rmbl_xmss_record_write(p, c(`k:aa` = 3L))
     })
     expect_false(file.exists(stale))
     expect_true(file.exists(other))
@@ -831,18 +835,18 @@ test_that(
     d <- withr::local_tempdir()
     f <- file.path(d, "c.json")
     writeBin(c(charToRaw('{"a": "b"}'), as.raw(0), charToRaw('{"c": 1}')), f)
-    expect_error(rmoriebricklayer:::.bl_read_text(f), "NUL byte")
+    expect_error(.bl_read_text(f), "NUL byte")
     writeBin(c(charToRaw('{"name": "caf'), as.raw(0xe9), charToRaw('"}')), f)
-    expect_error(rmoriebricklayer:::.bl_read_text(f), "not UTF-8 text")
+    expect_error(.bl_read_text(f), "not UTF-8 text")
     writeBin(charToRaw(paste0('{"x": "', strrep("y", 1100000), '"}')), f)
     expect_error(
-      rmoriebricklayer:::.bl_read_text(f),
+      .bl_read_text(f),
       "too large to be a credentials file"
     )
     # the exact bytes: writeLines() writes CRLF on Windows
     writeBin(charToRaw('{"hosted_key": "k"}\n'), f)
     expect_identical(
-      rmoriebricklayer:::.bl_read_text(f),
+      .bl_read_text(f),
       '{"hosted_key": "k"}\n'
     )
   }
@@ -904,24 +908,25 @@ test_that(
       structure(list(status = "ok"), class = "rmbl_pollution_report")
     )) {
       expect_error(
-        rmoriebricklayer:::plot.rmbl_pollution_report(bad),
+        plot.rmbl_pollution_report(bad),
         "must be a report from vrfpol"
       )
     }
     # the NA bar's label never takes a real level's name
-    lab <- NULL
+    got <- new.env()
+    got$lab <- NULL
     local_mocked_bindings(.bl_label_fit = function(labels) {
-      lab <<- labels
+      got$lab <- labels
       list(labels = labels, mar = 4)
     })
-    rmoriebricklayer:::.bl_hbars(
+    .bl_hbars(
       c(1, 2, 3, 4),
       c("(missing)", "(NA)", NA, "a"),
       "n",
       "t",
       rep("grey", 4)
     )
-    expect_identical(anyDuplicated(lab), 0L)
-    expect_true("(NA 2)" %in% lab)
+    expect_identical(anyDuplicated(got$lab), 0L)
+    expect_true("(NA 2)" %in% got$lab)
   }
 )

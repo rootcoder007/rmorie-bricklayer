@@ -168,6 +168,33 @@ yoy_summary.default <- function(object, ...) {
   )
 }
 
+#' @rdname rmbl-aliases
+#' @usage NULL
+#' @export
+print.rmbl_old <- function(x, ...) {
+  .rmbl_old_call("print", .rmbl_old_arg(x), ...)
+  invisible(x)
+}
+
+#' @rdname rmbl-aliases
+#' @usage NULL
+#' @export
+format.rmbl_old <- function(x, ...) {
+  .rmbl_old_call("format", .rmbl_old_arg(x), ...)
+}
+
+#' @rdname rmbl-aliases
+#' @usage NULL
+#' @export
+plot.rmbl_old <- function(x, ...) .rmbl_old_call("plot", .rmbl_old_arg(x), ...)
+
+#' @rdname rmbl-aliases
+#' @usage NULL
+#' @export
+summary.rmbl_old <- function(object, ...) {
+  .rmbl_old_call("summary", .rmbl_old_arg(object), ...)
+}
+
 # The generics an "rmbl_old" result is drawn, printed or summarised with: the
 # package's own method gets the result in its 1.0.0 names (and print() returns
 # the object as given); with no method of the package's, R's own runs on the
@@ -203,33 +230,6 @@ yoy_summary.default <- function(object, ...) {
   attr(x, "rmbl_names") <- NULL
   r <- match.fun(generic)(x, ...)
   if (identical(generic, "print")) invisible(x) else r
-}
-
-#' @rdname rmbl-aliases
-#' @usage NULL
-#' @export
-print.rmbl_old <- function(x, ...) {
-  .rmbl_old_call("print", .rmbl_old_arg(x), ...)
-  invisible(x)
-}
-
-#' @rdname rmbl-aliases
-#' @usage NULL
-#' @export
-format.rmbl_old <- function(x, ...) {
-  .rmbl_old_call("format", .rmbl_old_arg(x), ...)
-}
-
-#' @rdname rmbl-aliases
-#' @usage NULL
-#' @export
-plot.rmbl_old <- function(x, ...) .rmbl_old_call("plot", .rmbl_old_arg(x), ...)
-
-#' @rdname rmbl-aliases
-#' @usage NULL
-#' @export
-summary.rmbl_old <- function(object, ...) {
-  .rmbl_old_call("summary", .rmbl_old_arg(object), ...)
 }
 
 #' The argument of an rmbl_old method must be a translated result: called by

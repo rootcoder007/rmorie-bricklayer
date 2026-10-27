@@ -105,14 +105,18 @@ test_that("a constrained CA cannot issue outside its name space", {
     r <- certchnvrf(f[[nm]], trust = ca, attm = at)
     expect_false(r$ok, info = nm)
     bad <- r$checks[!r$checks$ok, ]
-    expect_true(any(grepl("name constraints", bad$check)), info = nm)
+    expect_true(
+      any(grepl("name constraints", bad$check, fixed = TRUE)),
+      info = nm
+    )
   }
   # the reason is reported, not just the verdict
   out <- certchnvrf(f$nc_leaf_outside, trust = ca, attm = at)
   expect_match(
     out$checks$detail[grepl(
       "name constraints",
-      out$checks$check
+      out$checks$check,
+      fixed = TRUE
     )],
     "outside every permitted subtree"
   )
@@ -120,7 +124,8 @@ test_that("a constrained CA cannot issue outside its name space", {
   expect_match(
     exc$checks$detail[grepl(
       "name constraints",
-      exc$checks$check
+      exc$checks$check,
+      fixed = TRUE
     )],
     "excluded subtree"
   )
@@ -228,7 +233,7 @@ test_that("the policy state machine honours its counters", {
     initial = "1.2.3"
   )
   expect_length(t4$valid, 0L)
-  expect_true(any(grepl("anyPolicy", t4$notes)))
+  expect_true(any(grepl("anyPolicy", t4$notes, fixed = TRUE)))
 })
 
 test_that("the OCSP request is the one OpenSSL builds", {
@@ -259,7 +264,7 @@ test_that("a revoked certificate is caught, and fetching is opt-in", {
   at <- ca$not_before + 86400
   r <- certchnvrf(f$nc_leaf_good, trust = ca, attm = at, crls = f$nc_crl)
   expect_false(r$ok)
-  rev <- r$checks[grepl("revocation", r$checks$check), ]
+  rev <- r$checks[grepl("revocation", r$checks$check, fixed = TRUE), ]
   expect_false(rev$ok[1])
   expect_match(rev$detail[1], "is on a CRL")
 
@@ -272,7 +277,7 @@ test_that("a revoked certificate is caught, and fetching is opt-in", {
     rvk = "none"
   )
   expect_true(skipped$ok)
-  expect_false(any(grepl("revocation", skipped$checks$check)))
+  expect_false(any(grepl("revocation", skipped$checks$check, fixed = TRUE)))
 
   # and the default never reaches the network: with no CRL supplied
   # there is no revocation row at all, rather than a silent pass

@@ -8,10 +8,14 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
@@ -39,7 +43,7 @@ stopped), and `missgrid()` draws an inline text map of where the gaps are.
 set.seed(1)
 big <- data.frame(id = 1:40, v = stats::rnorm(40), w = stats::rnorm(40))
 big$v[c(10:14, 30)] <- NA
-big$w[c(10:14)] <- NA
+big$w[10:14] <- NA
 misspat(big)
 missruns(big)
 ```
@@ -50,7 +54,11 @@ gaps; the first points at the source, the second at the records.
 ## Duplicates
 
 ```{r missingness-and-outliers-dup}
-d <- data.frame(id = c(1, 2, 2, 3, 3, 3), x = c("a", "b", "b", "c", "c", "d"))
+d <- data.frame(
+  id = c(1, 2, 2, 3, 3, 3),
+  x = c("a", "b", "b", "c", "c", "d"),
+  stringsAsFactors = FALSE
+)
 duprows(d)
 duprows(d, cols = "id")
 ```
@@ -70,7 +78,7 @@ set.seed(1)
 n <- 200
 df <- data.frame(height = stats::rnorm(n, 170, 10))
 df$weight <- df$height * 0.5 + stats::rnorm(n, 0, 5)
-df[1, ] <- list(height = 155, weight = 100)      # ordinary on each, unlikely jointly
+df[1, ] <- list(height = 155, weight = 100) # ordinary on each, unlikely jointly
 
 out <- mahaoutl(df)
 head(out, 3)
@@ -170,10 +178,21 @@ distance places them further out.
 ```{r missingness-and-outliers-outliers-plots, fig.width = 7, fig.height = 4.5}
 plot(out)
 planted <- dclassical$row %in% 2:21
-plot(dclassical$distance, drobust$distance[match(dclassical$row, drobust$row)],
-     pch = 19, col = ifelse(planted, blpal()[2], blpal()[1]),
-     xlab = "classical distance", ylab = "robust distance",
-     main = "Planted rows: classical against robust distance")
+plot(
+  dclassical$distance,
+  drobust$distance[match(dclassical$row, drobust$row)],
+  pch = 19,
+  col = ifelse(planted, blpal()[2], blpal()[1]),
+  xlab = "classical distance",
+  ylab = "robust distance",
+  main = "Planted rows: classical against robust distance"
+)
 abline(0, 1, lty = 2)
-legend("topleft", c("planted rows", "other rows"), pch = 19, col = blpal()[c(2, 1)], bty = "n")
+legend(
+  "topleft",
+  c("planted rows", "other rows"),
+  pch = 19,
+  col = blpal()[c(2, 1)],
+  bty = "n"
+)
 ```

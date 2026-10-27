@@ -19,10 +19,11 @@ of the synthetic-cohort assumption.}
 \item{dthrate}{Optional death rates by age (probability of dying within the
 age).}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of the cumulative risk limits (default 0.95).}
 }
 \value{
-A data frame: \code{age}, \code{hazard}, \code{atrisk},
+A data frame of class \code{rmbl_cumrisk}: \code{age},
+\code{hazard}, \code{atrisk},
 \code{cmlrisk}, \code{lower}, \code{upper}.
 }
 \description{

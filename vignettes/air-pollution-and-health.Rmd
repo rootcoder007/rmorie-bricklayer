@@ -8,13 +8,22 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 3.6)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 3.6
+)
 library(rmoriebricklayer)
 ```
 
@@ -65,10 +74,22 @@ x <- seq(200, 5000, by = 100)
 h <- 30 + r$finalrise
 cd <- gplume(q = 100, u = 4, h = h, rcpt = cbind(x, 0, 0), stab = "D")
 cb <- gplume(q = 100, u = 4, h = h, rcpt = cbind(x, 0, 0), stab = "B")
-plot(x, cd, type = "l", xlab = "downwind distance (m)", ylab = "concentration (g/m^3)",
-     main = "Ground-level centreline concentration")
+plot(
+  x,
+  cd,
+  type = "l",
+  xlab = "downwind distance (m)",
+  ylab = "concentration (g/m^3)",
+  main = "Ground-level centreline concentration"
+)
 lines(x, cb, col = 2)
-legend("topright", c("class D (neutral)", "class B (unstable)"), col = 1:2, lty = 1, bty = "n")
+legend(
+  "topright",
+  c("class D (neutral)", "class B (unstable)"),
+  col = 1:2,
+  lty = 1,
+  bty = "n"
+)
 ```
 
 `gspuff()` is the instantaneous-release counterpart; `advdif2d()` and
@@ -78,8 +99,19 @@ takes any normal generator through `normals=`, so another package's random strea
 reproduced exactly.
 
 ```{r air-pollution-and-health-particles}
-p <- lagrprt(n = 500, x0 = 0, y0 = 0, u = 1, v = 0, kx = 0.5, ky = 0.5,
-                          dt = 1, nsteps = 50, seed = 1, grid = c(0, 100, -30, 30, 20, 12))
+p <- lagrprt(
+  n = 500,
+  x0 = 0,
+  y0 = 0,
+  u = 1,
+  v = 0,
+  kx = 0.5,
+  ky = 0.5,
+  dt = 1,
+  nsteps = 50,
+  seed = 1,
+  grid = c(0, 100, -30, 30, 20, 12)
+)
 c(mean_x = p$mean_x, meany = p$meany)
 ```
 
@@ -136,8 +168,13 @@ b$citation
 Per area, sorted worst first:
 
 ```{r air-pollution-and-health-area}
-areas <- data.frame(fsa = c("M6H", "M5V", "M4W", "M1B"), exposure = c(28, 18, 15, 24),
-                    population = c(40000, 60000, 25000, 70000), brate = 0.008)
+areas <- data.frame(
+  fsa = c("M6H", "M5V", "M4W", "M1B"),
+  exposure = c(28, 18, 15, 24),
+  population = c(40000, 60000, 25000, 70000),
+  brate = 0.008,
+  stringsAsFactors = FALSE
+)
 polbrdarea(areas)
 ```
 
@@ -318,17 +355,21 @@ any community.
 
 ```{r air-pollution-and-health-indigenous-air}
 cp <- indiex("censuspop")
-tot <- cp[cp$GEO_LEVEL != "Country" & cp$AGE_GROUP == "Total - Age groups" &
-            cp$RESIDENCE == "Total - Residence on or off reserve" &
-            grepl("^Total - Average age", cp$CHARACTERISTIC_NAME), ]
+tot <- cp[
+  cp$GEO_LEVEL != "Country" &
+    cp$AGE_GROUP == "Total - Age groups" &
+    cp$RESIDENCE == "Total - Residence on or off reserve" &
+    grepl("^Total - Average age", cp$CHARACTERISTIC_NAME),
+]
 pop <- stats::setNames(tot$FIRST_NATIONS, tot$GEO_NAME)
 head(pop[order(-pop)], 5)
-# relative risk of all-cause mortality from PM2.5, and the share of deaths attributable to
-# the excess above the guideline if the whole population breathes the scenario level
-sapply(c(8, 12), function(conc) {
+# relative risk of all-cause mortality from PM2.5, and the share of deaths
+# attributable to the excess above the guideline if the whole population
+# breathes the scenario level
+vapply(c(8, 12), function(conc) {
   rr <- crfpm25(conc, refconc = 5)$rr
   c(pm25 = conc, rr = rr, attributable = attrfrac(rr, 1))
-})
+}, numeric(3))
 ```
 
 ## References

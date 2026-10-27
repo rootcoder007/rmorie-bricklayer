@@ -24,7 +24,9 @@ test_that("the ASCII fallbacks are exercised, not just declared", {
   # the histogram's ASCII level set
   h <- inlhist(stats::rnorm(500))
   expect_false(grepl("[^\x01-\x7f]", h, useBytes = TRUE))
-  expect_true(all(strsplit(h, "")[[1]] %in% c(" ", ".", ":", "-", "=", "#")))
+  expect_true(all(
+    strsplit(h, "", fixed = TRUE)[[1]] %in% c(" ", ".", ":", "-", "=", "#")
+  ))
   # a constant column in ASCII mode
   expect_false(grepl("[^\x01-\x7f]", inlhist(rep(2, 10)), useBytes = TRUE))
 
@@ -75,47 +77,49 @@ test_that("every print method survives having its columns subset away", {
   expect_output(print(missruns(gap)[, c("column", "length")]), "column")
   expect_output(print(mahaoutl(num)[1:3, c("row", "distance")]), "row")
   # and none of them returns visibly
-  expect_identical(
+  expect_false(
     withVisible(print(
       profcols(df)[, "column", drop = FALSE]
-    ))$visible,
-    FALSE
+    ))$visible
   )
 })
 
 test_that("the name cleaner handles the shapes that produce nothing", {
   # a data frame with no columns
-  expect_equal(ncol(clncolnms(data.frame())), 0L)
-  expect_equal(clncolnms(character(0)), character(0))
+  expect_equal(ncol(clncolnms(data.frame())), 0L, tolerance = 1e-8)
+  expect_identical(clncolnms(character(0)), character(0))
   # names that reduce to nothing become a valid name anyway
-  expect_equal(clncolnms(c("!!!", "@@@")), c("x", "x_2"))
-  expect_equal(clncolnms("   "), "x")
+  expect_identical(clncolnms(c("!!!", "@@@")), c("x", "x_2"))
+  expect_identical(clncolnms("   "), "x")
   # case = "none" normalises the separators only, keeping the case
-  expect_equal(clncolnms("Total Pop Count", case = "none"), "Total_Pop_Count")
+  expect_identical(
+    clncolnms("Total Pop Count", case = "none"),
+    "Total_Pop_Count"
+  )
   # a single word through the camel cases exercises the empty tail
-  expect_equal(clncolnms("total", case = "lower_camel"), "total")
-  expect_equal(clncolnms("total", case = "upper_camel"), "Total")
+  expect_identical(clncolnms("total", case = "lower_camel"), "total")
+  expect_identical(clncolnms("total", case = "upper_camel"), "Total")
   # a name that is only punctuation alongside a real one still
   # disambiguates
-  expect_equal(length(unique(clncolnms(c("a", "!!", "??", "a")))), 4L)
+  expect_length(unique(clncolnms(c("a", "!!", "??", "a"))), 4L)
 })
 
 test_that("drpconst and drpempty handle a frame with no columns", {
   empty <- data.frame()
-  expect_equal(ncol(drpconst(empty)), 0L)
+  expect_equal(ncol(drpconst(empty)), 0L, tolerance = 1e-8)
   expect_length(attr(drpconst(empty), "dropped"), 0L)
-  expect_equal(ncol(drpempty(empty)), 0L)
+  expect_equal(ncol(drpempty(empty)), 0L, tolerance = 1e-8)
   # a frame with columns but no rows
   norows <- data.frame(
     a = numeric(0),
     b = character(0),
     stringsAsFactors = FALSE
   )
-  expect_equal(nrow(drpempty(norows)), 0L)
+  expect_equal(nrow(drpempty(norows)), 0L, tolerance = 1e-8)
   # every column constant leaves nothing behind
   allconst <- data.frame(a = c(1, 1), b = c("x", "x"), stringsAsFactors = FALSE)
-  expect_equal(ncol(drpconst(allconst)), 0L)
-  expect_equal(sort(attr(drpconst(allconst), "dropped")), c("a", "b"))
+  expect_equal(ncol(drpconst(allconst)), 0L, tolerance = 1e-8)
+  expect_identical(sort(attr(drpconst(allconst), "dropped")), c("a", "b"))
 })
 
 test_that("Mahalanobis distances refuse what they cannot compute", {
@@ -123,7 +127,7 @@ test_that("Mahalanobis distances refuse what they cannot compute", {
   # a matrix is accepted as well as a data frame
   m <- cbind(a = stats::rnorm(40), b = stats::rnorm(40))
   expect_s3_class(mahaoutl(m), "bricklayer_outliers")
-  expect_equal(nrow(mahaoutl(m)), 40L)
+  expect_equal(nrow(mahaoutl(m)), 40L, tolerance = 1e-8)
   # perfectly collinear columns have no distance defined
   coll <- data.frame(a = 1:40)
   coll$b <- coll$a * 2
@@ -131,7 +135,7 @@ test_that("Mahalanobis distances refuse what they cannot compute", {
   # a single numeric column still works: it is the standardised distance
   one <- mahaoutl(data.frame(v = c(stats::rnorm(40), 50)))
   expect_true(one$outlier[1])
-  expect_equal(one$row[1], 41L)
+  expect_equal(one$row[1], 41L, tolerance = 1e-8)
   expect_error(mahaoutl("not data"), "data frame or a numeric matrix")
   expect_error(mahaoutl(data.frame(a = letters[1:5])), "no numeric columns")
 })
@@ -139,10 +143,10 @@ test_that("Mahalanobis distances refuse what they cannot compute", {
 test_that("the missingness tools handle empty and single-column frames", {
   # one column: the pattern matrix degenerates to a vector
   one <- misspat(data.frame(v = c(1, NA, 3)))
-  expect_equal(nrow(one), 2L)
+  expect_equal(nrow(one), 2L, tolerance = 1e-8)
   expect_true(all(c(".", "X") %in% one$pattern))
-  expect_equal(one$n_rows[one$pattern == "X"], 1L)
-  expect_equal(attr(one, "columns"), "v")
+  expect_equal(one$n_rows[one$pattern == "X"], 1L, tolerance = 1e-8)
+  expect_identical(attr(one, "columns"), "v")
 
   # no columns at all
   expect_error(misspat(data.frame()), "no columns")
@@ -152,13 +156,13 @@ test_that("the missingness tools handle empty and single-column frames", {
 
   # a column whose gaps are all shorter than minrun contributes nothing
   short <- data.frame(v = c(1, NA, 3, NA, 5))
-  expect_equal(nrow(missruns(short, minrun = 2L)), 0L)
-  expect_equal(nrow(missruns(short, minrun = 1L)), 2L)
+  expect_equal(nrow(missruns(short, minrun = 2L)), 0L, tolerance = 1e-8)
+  expect_equal(nrow(missruns(short, minrun = 1L)), 2L, tolerance = 1e-8)
   # a frame where one column qualifies and another does not
   mixed <- data.frame(a = c(1, NA, 3, NA, 5), b = c(1, NA, NA, NA, 5))
   mr <- missruns(mixed, minrun = 2L)
-  expect_equal(mr$column, "b")
-  expect_equal(mr$length, 3L)
+  expect_identical(mr$column, "b")
+  expect_equal(mr$length, 3L, tolerance = 1e-8)
 })
 
 test_that("Merkle helpers reject malformed input rather than guessing", {
@@ -195,8 +199,8 @@ test_that("chnkfile handles a file that is an exact multiple of the block", {
   # and a block larger than the file
   expect_length(chnkfile(p, chnkbytes = 1000L), 1L)
   # the digests agree whatever the block size
-  expect_equal(sha512file(p, blkbytes = 7L), sha512file(p))
-  expect_equal(crc32file(p, blkbytes = 3L), crc32file(p))
+  expect_equal(sha512file(p, blkbytes = 7L), sha512file(p), tolerance = 1e-8)
+  expect_equal(crc32file(p, blkbytes = 3L), crc32file(p), tolerance = 1e-8)
 })
 
 test_that("the key helpers reject malformed keys and salts", {
@@ -237,7 +241,7 @@ test_that("cpsdrft reports untestable columns rather than guessing", {
   cur$cat <- NA_character_
   d <- cpsdrft(ref, cur)
   row <- d$columns[d$columns$column == "cat", ]
-  expect_equal(row$type, "categorical")
+  expect_identical(row$type, "categorical")
   expect_true(is.na(row$drifted))
   expect_true(is.na(row$statistic))
   # and an all-missing NUMERIC one likewise
@@ -265,9 +269,9 @@ test_that("topcors reports a pair with too little overlap as NA", {
   df <- data.frame(a = stats::rnorm(50), b = stats::rnorm(50))
   # leave only two complete pairs, below the three a correlation needs
   df$a[3:50] <- NA
-  expect_equal(nrow(topcors(df)), 0L)
+  expect_equal(nrow(topcors(df)), 0L, tolerance = 1e-8)
   expect_true(is.na(cortbl(df)$correlation))
-  expect_equal(cortbl(df)$nprs, 2L)
+  expect_equal(cortbl(df)$nprs, 2L, tolerance = 1e-8)
 })
 
 test_that("envdiff renders the version and platform rows", {
@@ -278,14 +282,14 @@ test_that("envdiff renders the version and platform rows", {
   txt <- paste(format(envdiff(a, b)), collapse = "\n")
   expect_match(txt, "R version")
   expect_match(txt, "0\\.0\\.0")
-  expect_match(txt, "platform")
+  expect_match(txt, "Platform")
   expect_match(txt, "nowhere-unknown")
   expect_match(txt, "environments differ")
   # an environment record with no package list still compares
   bare <- list(r_version = "4.5.0", platform = "x", packages = NULL)
-  expect_true(is.list(envdiff(bare, bare)))
+  expect_type(envdiff(bare, bare), "list")
   expect_true(envdiff(bare, bare)$identical)
-  expect_equal(nrow(envdiff(bare, bare)$packages), 0L)
+  expect_equal(nrow(envdiff(bare, bare)$packages), 0L, tolerance = 1e-8)
 })
 
 test_that("the MCAR machinery handles its degenerate cases", {
@@ -322,13 +326,13 @@ test_that("the MCAR machinery handles its degenerate cases", {
 
   # the positive-definite repair, called directly on an indefinite matrix
   ind <- matrix(c(1, 2, 2, 1), 2, 2) # eigenvalues 3 and -1
-  expect_true(min(eigen(ind, symmetric = TRUE)$values) < 0)
-  fixed <- rmoriebricklayer:::.rmbl_make_pd(ind)
-  expect_true(min(eigen(fixed, symmetric = TRUE)$values) > 0)
-  expect_equal(fixed, t(fixed))
+  expect_lt(min(eigen(ind, symmetric = TRUE)$values), 0)
+  fixed <- .rmbl_make_pd(ind)
+  expect_gt(min(eigen(fixed, symmetric = TRUE)$values), 0)
+  expect_equal(fixed, t(fixed), tolerance = 1e-8)
   # an already positive-definite matrix is returned untouched
   pd <- diag(2)
-  expect_equal(rmoriebricklayer:::.rmbl_make_pd(pd), pd)
+  expect_equal(.rmbl_make_pd(pd), pd, tolerance = 1e-8)
 
   # a row with nothing observed contributes only the prior, which is the
   # EM's other branch; reachable by calling the estimator directly
@@ -336,15 +340,15 @@ test_that("the MCAR machinery handles its degenerate cases", {
   X <- cbind(stats::rnorm(40), stats::rnorm(40))
   X[1, ] <- NA # a wholly missing row
   X[5, 2] <- NA
-  fit <- rmoriebricklayer:::.rmbl_em_mvn(X)
+  fit <- .rmbl_em_mvn(X)
   expect_false(is.null(fit))
   expect_length(fit$mu, 2L)
   expect_true(all(is.finite(fit$mu)))
-  expect_true(min(eigen(fit$sigma, symmetric = TRUE)$values) > 0)
+  expect_gt(min(eigen(fit$sigma, symmetric = TRUE)$values), 0)
 
   # the printed report on complete data, where no test is possible
   complete <- mcartst(data.frame(a = stats::rnorm(40), b = stats::rnorm(40)))
-  txt <- paste(format(complete), collapse = "\n")
+  txt <- gsub("\\s+", " ", paste(format(complete), collapse = "\n"))
   expect_match(txt, "no test possible")
   expect_match(txt, "nothing to test")
   expect_true(is.na(complete$p_value))

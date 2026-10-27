@@ -66,63 +66,13 @@
 
 #' Splits text into lower-case search terms, stop words dropped and lightly
 #' stemmed.
-#' @param x One string.
+#' @param x One string of text, split into lower-case search terms.
 #' @return A character vector of terms.
 #' @noRd
 .bl_kn_tokens <- function(x) {
   w <- strsplit(tolower(x), "[^a-z0-9_]+")[[1L]]
   w <- w[nchar(w) >= 2L]
-  stop_words <- c(
-    "the",
-    "of",
-    "and",
-    "to",
-    "in",
-    "is",
-    "for",
-    "an",
-    "or",
-    "by",
-    "on",
-    "be",
-    "as",
-    "it",
-    "at",
-    "with",
-    "from",
-    "that",
-    "this",
-    "are",
-    "its",
-    "when",
-    "which",
-    "not",
-    "one",
-    "each",
-    "if",
-    "can",
-    "do",
-    "does",
-    "how",
-    "what",
-    "use",
-    "using",
-    "my",
-    "me",
-    "into",
-    "per",
-    "function",
-    "functions",
-    "package",
-    "packages",
-    "want",
-    "need",
-    "way",
-    "there",
-    "any",
-    "some"
-  )
-  w <- w[!w %in% stop_words]
+  w <- w[!w %in% .bl_kn_stop_words()]
   # a light stem, so "emissions" finds "emission" and "testing" finds "test":
   # the same word in the question and on the page, however each is inflected
   long <- nchar(w) > 4L
@@ -158,47 +108,17 @@
   exports <- tryCatch(getNamespaceExports(pkg), error = function(e) character())
   pages <- list()
   for (f in names(db)) {
-    rd <- db[[f]]
-    kw <- unlist(lapply(rd[.bl_rd_tags(rd) == "\\keyword"], .bl_rd_plain))
-    if ("internal" %in% trimws(kw)) {
-      next
+    rec <- .bl_kn_page_record(pkg, f, db[[f]], exports)
+    if (!is.null(rec)) {
+      pages[[length(pages) + 1L]] <- rec
     }
-    al <- .bl_rd_aliases(rd)
-    exp <- intersect(al, exports)
-    title <- .bl_rd_section(rd, "\\title")
-    desc <- .bl_rd_section(rd, "\\description")
-    usage <- .bl_rd_section(rd, "\\usage")
-    text <- paste(
-      title,
-      title,
-      title,
-      paste(al, collapse = " "),
-      paste(al, collapse = " "),
-      desc,
-      usage,
-      .bl_rd_plain(rd[
-        !.bl_rd_tags(rd) %in% c("\\examples", "\\alias", "\\name")
-      ])
-    )
-    pages[[length(pages) + 1L]] <- list(
-      pkg = pkg,
-      file = f,
-      name = if (length(exp)) exp[[1L]] else al[[1L]],
-      aliases = al,
-      exported = exp,
-      title = title,
-      desc = desc,
-      usage = usage,
-      tokens = .bl_kn_tokens(text),
-      rd = rd
-    )
   }
   assign(key, pages, envir = .bl_kn_cache)
   pages
 }
 
 #' Collects the help page records of several packages.
-#' @param pkgs The package names.
+#' @param pkgs The names of the packages whose help pages are collected.
 #' @return A list of page records.
 #' @noRd
 .bl_kn_all_pages <- function(pkgs) {
@@ -219,7 +139,7 @@
   if (at < 0L) {
     return(fn)
   }
-  ch <- strsplit(substring(usage, at), "")[[1L]]
+  ch <- strsplit(substring(usage, at), "", fixed = TRUE)[[1L]]
   depth <- 0L
   for (i in seq_along(ch)) {
     if (ch[i] == "(") {
@@ -309,7 +229,7 @@
 .bl_kn_render <- function(p) paste(.bl_rd_text(p$rd), collapse = "\n")
 
 #' Cuts text to a number of characters and marks the cut.
-#' @param x One string.
+#' @param x One string, cut to `n` characters.
 #' @param n The most characters kept.
 #' @return The text, cut when longer than `n`.
 #' @noRd
@@ -323,67 +243,13 @@
 #' @return A list of tools, each with a name, a description and a JSON schema.
 #' @noRd
 .bl_kn_tools <- function() {
-  str <- function(d) list(type = "string", description = d)
-  obj <- function(props, req) {
-    list(type = "object", properties = props, required = I(req))
-  }
-  list(
-    list(
-      name = "search_docs",
-      description = paste(
-        "Search the help pages of the MORIE R packages; returns the",
-        "best matching functions with their titles."
-      ),
-      parameters = obj(
-        list(query = str("what to look for, in plain words")),
-        "query"
-      )
-    ),
-    list(
-      name = "get_help",
-      description = paste0(
-        "The full help page of one function: usage, arguments, value, ",
-        "details."
-      ),
-      parameters = obj(
-        list(name = str("the function name, e.g. svydes")),
-        "name"
-      )
-    ),
-    list(
-      name = "get_examples",
-      description = "The runnable examples from one function's help page.",
-      parameters = obj(list(name = str("the function name")), "name")
-    ),
-    list(
-      name = "list_datasets",
-      description = paste(
-        "Datasets the packages ship or can load (bundled files and",
-        "the curated tables at data.rmorie.com), filtered by a word."
-      ),
-      parameters = obj(
-        list(filter = str("a word to filter by, or empty for all")),
-        character()
-      )
-    ),
-    list(
-      name = "get_vignette",
-      description = paste0(
-        "A package vignette (a long worked ",
-        "guide); with no name, the list."
-      ),
-      parameters = obj(
-        list(name = str("the vignette name, or empty to list them")),
-        character()
-      )
-    )
-  )
+  c(.bl_kn_tools_help(), .bl_kn_tools_data())
 }
 
 #' Lists the datasets the packages ship and the curated tables in the cached
 #' manifest.
 #' @param filter A word to filter by, or \code{""} for all.
-#' @param pkgs The package names.
+#' @param pkgs The names of the packages whose extdata files are listed.
 #' @return The list as text.
 #' @noRd
 .bl_kn_datasets <- function(filter, pkgs) {
@@ -402,28 +268,7 @@
       )
     }
   }
-  # the curated tables, from the manifest already on disk (no network from a
-  # tool)
-  m <- file.path(.bl_data_cache_dir(), "manifest.json")
-  if (file.exists(m)) {
-    j <- tryCatch(
-      .rmbl_json_text(
-        paste(readLines(m, warn = FALSE), collapse = "\n"),
-        simplifyVector = FALSE
-      ),
-      error = function(e) NULL
-    )
-    for (d in j$datasets %||% list()) {
-      out <- c(
-        out,
-        sprintf(
-          "data.rmorie.com: dload(\"%s\")  %s",
-          d$key %||% "",
-          substr(.bl_data_name(d), 1L, 90L)
-        )
-      )
-    }
-  }
+  out <- c(out, .bl_kn_curated())
   # plain text, not a pattern: a model's "([" is not an error (review of
   # 29a55d8, L2)
   if (nzchar(filter %||% "")) {
@@ -441,14 +286,14 @@
 }
 
 #' The installed doc/ folder of each package (\code{""} when it has none).
-#' @param p The package name.
+#' @param p The name of the package whose doc/ folder is looked up.
 #' @return The folder's path, or \code{""}.
 #' @noRd
 .bl_kn_doc_dir <- function(p) system.file("doc", package = p)
 
 #' Reads an installed vignette, or lists them when no name is given.
 #' @param name The vignette name, or \code{""} to list them.
-#' @param pkgs The package names.
+#' @param pkgs The names of the packages whose vignettes are searched.
 #' @return The vignette's source, or the list, as text.
 #' @noRd
 .bl_kn_vignette <- function(name, pkgs) {
@@ -486,7 +331,7 @@
 #' words). `clip` is the most text a page may return (smaller for a local model,
 #' whose context is small).
 #' @param call The tool call, with its name and arguments.
-#' @param pkgs The package names.
+#' @param pkgs The names of the packages whose help the tool call reads.
 #' @param clip The most characters a page may return.
 #' @return The tool's answer as text.
 #' @noRd
@@ -497,18 +342,6 @@
     if (is.character(v) && length(v) == 1L) v else ""
   }
   pages <- .bl_kn_all_pages(pkgs)
-  missing <- function(nm) {
-    if (!nzchar(nm)) {
-      return("give the function's name as a string (search_docs finds it)")
-    }
-    sprintf(
-      paste0(
-        "'%s' does not exist in these packages: do not use it ",
-        "(search_docs finds what does)"
-      ),
-      nm
-    )
-  }
   # a call without a usable name (none, a list, several) is answered in words,
   # never an error
   nm <- call$name
@@ -517,43 +350,16 @@
   }
   switch(
     nm,
-    search_docs = {
-      hit <- .bl_kn_search(arg("query"), pages, 10L)
-      if (!length(hit)) {
-        "nothing matches; try other words"
-      } else {
-        paste(
-          vapply(
-            hit,
-            function(p) sprintf("%s (%s): %s", p$name, p$pkg, p$title),
-            ""
-          ),
-          collapse = "\n"
-        )
-      }
-    },
+    search_docs = .bl_kn_tool_search(arg("query"), pages),
     get_help = {
       p <- .bl_kn_find(arg("name"), pages)
       if (is.null(p)) {
-        missing(arg("name"))
+        .bl_kn_no_page(arg("name"))
       } else {
         .bl_kn_clip(.bl_kn_render(p), clip)
       }
     },
-    get_examples = {
-      p <- .bl_kn_find(arg("name"), pages)
-      if (is.null(p)) {
-        missing(arg("name"))
-      } else {
-        txt <- .bl_rd_text(p$rd)
-        s <- which(txt == "Examples:")
-        if (!length(s)) {
-          "no examples on that page"
-        } else {
-          .bl_kn_clip(paste(txt[-seq_len(s[1L])], collapse = "\n"), clip)
-        }
-      }
-    },
+    get_examples = .bl_kn_tool_examples(arg("name"), pages, clip),
     list_datasets = .bl_kn_datasets(arg("filter"), pkgs),
     get_vignette = .bl_kn_vignette(arg("name"), pkgs),
     sprintf("there is no tool '%s'", .rmbl_printable(nm))
@@ -573,7 +379,7 @@
 #' picked for a question travel with the question), so a server's prompt cache
 #' can reuse them: Ollama, OpenAI, DeepSeek and Gemini do it on their own for an
 #' unchanged start, Anthropic when asked (.bl_anthropic_body).
-#' @param pkgs The package names.
+#' @param pkgs The names of the packages the model is told it helps with.
 #' @param index_lines The index of exported functions, or none.
 #' @param extra More lines for the instructions, or NULL.
 #' @return The instructions as one string.
@@ -627,7 +433,7 @@
 #'
 #' A model that says it cannot take tools (HTTP 400 naming them, as Ollama and
 #' many servers answer)
-#' @param e The condition.
+#' @param e The condition raised by the model call, read for a tools refusal.
 #' @return TRUE or FALSE.
 #' @noRd
 .bl_kn_no_tools <- function(e) {
@@ -650,8 +456,8 @@
 #' the whole prompt again every round. Your own endpoint is taken as large when
 #' it is remote and as 8,192 when it is on this machine (LM Studio and llama.cpp
 #' start small too). MORIE_LLM_CONTEXT (tokens) overrides.
-#' @param rt The route.
-#' @param model The model name.
+#' @param rt The route to the model; its `id`, `name` and `context` are read.
+#' @param model The model name whose context size is looked up.
 #' @return The number of tokens.
 #' @noRd
 .bl_llm_capacity <- function(rt, model) {
@@ -667,7 +473,7 @@
     # any Ollama not on this machine or the LAN, is the server's business: its
     # models run in their own context
     if (model %in% (rt$remote %||% character()) || !isTRUE(rt$local)) {
-      v <- unname((rt$context %||% c())[model])
+      v <- unname((rt$context %||% NULL)[model])
       return(if (length(v) && is.finite(v)) v else 128000)
     }
     srv <- suppressWarnings(as.numeric(Sys.getenv(
@@ -712,30 +518,15 @@
   list(name = "small", index = 40L, clip = 2500L, rounds = 3L, pages = 2L)
 }
 
-#' Asks a model a question with the packages' help at hand.
-#'
-#' Ask with the packages' help at hand: tools when the model takes them, else
-#' the matching pages in the prompt. Returns the reply text.
-#' @param rt The route.
-#' @param model The model name.
-#' @param prompt The question.
-#' @param pkgs The package names.
-#' @param system_extra More lines for the instructions, or NULL.
-#' @param timeout The request timeout in seconds.
-#' @param max_rounds The most rounds of tool calls, or NULL for the tier's.
-#' @return The reply text.
+#' The instructions and the question for the assistant: the package index (or
+#' the functions nearest the question, for a small model or a large package)
+#' and the help pages nearest the question.
+#' @param pages The help pages.
+#' @param pkgs,prompt,system_extra As for .bl_llm_assist().
+#' @param tier The model's tier.
+#' @return A list: sys and ask.
 #' @noRd
-.bl_llm_assist <- function(
-  rt,
-  model,
-  prompt,
-  pkgs,
-  system_extra = NULL,
-  timeout = 120,
-  max_rounds = NULL
-) {
-  pages <- .bl_kn_all_pages(pkgs)
-  tier <- .bl_llm_tier(.bl_llm_capacity(rt, model))
+.bl_llm_assist_prompt <- function(pages, pkgs, prompt, tier, system_extra) {
   # a package with thousands of pages (rmorie) is not listed whole: its
   # functions nearest the question are, and the tools reach the rest
   big <- names(which(
@@ -756,214 +547,128 @@
     index <- character()
     near <- .bl_kn_search(prompt, pages, tier$index)
   }
-  clip <- tier$clip
-  max_rounds <- max_rounds %||% tier$rounds
-  if (length(big)) {
-    system_extra <- c(
-      system_extra,
-      sprintf(
-        paste(
-          "%s has %d more functions than are listed below: search_docs finds",
-          "the right one by what it does, and get_help reads it."
-        ),
-        paste(big, collapse = " and "),
-        sum(vapply(pages, function(p) p$pkg %in% big, NA)) - length(near_big)
-      )
-    )
-  }
+  system_extra <- c(system_extra, .bl_kn_big_note(big, pages, near_big))
   sys <- .bl_kn_system(pkgs, index, system_extra)
   # the help pages closest to the question go with it for every model, so a
   # large one starts from them too instead of from memory
   if (!length(near)) {
     near <- .bl_kn_search(prompt, pages, 6L)
   }
-  ask <- prompt
-  if (length(near)) {
-    # the budget is in lines: a help page that documents several functions gives
-    # a line each, so 40 pages could be more than the 40 lines a small model has
-    # room for
-    nl <- .bl_kn_index_lines(near)
-    cap <- if (is.finite(tier$index)) {
-      tier$index
-    } else if (length(big)) {
-      40L
-    } else {
-      Inf
-    }
-    if (is.finite(cap)) {
-      nl <- utils::head(nl, cap)
-    }
-    ask <- paste(
-      c(
-        prompt,
-        "",
-        "Functions nearest this question (name(arguments)  -- title):",
-        nl
-      ),
-      collapse = "\n"
+  ask <- .bl_kn_ask(prompt, near, tier, big)
+  list(sys = sys, ask = ask)
+}
+
+#' One assistant turn's tool calls, run (up to the cap per turn) and added to
+#' the conversation.
+#' @param msgs The conversation.
+#' @param res The model's turn.
+#' @param pkgs The packages.
+#' @param clip The tool results' length cap.
+#' @return The conversation.
+#' @noRd
+.bl_llm_assist_tools <- function(msgs, res, pkgs, clip) {
+  calls <- utils::head(res$tool_calls, .bl_kn_calls_per_turn)
+  msgs[[length(msgs) + 1L]] <- list(
+    role = "assistant",
+    content = res$text,
+    tool_calls = calls
+  )
+  for (tc in calls) {
+    msgs[[length(msgs) + 1L]] <- list(
+      role = "tool",
+      tool_call_id = tc$id,
+      name = tc$name,
+      content = .bl_kn_run_tool(tc, pkgs, clip)
     )
   }
+  if (length(res$tool_calls) > length(calls)) {
+    # the note goes with the last tool result: as a turn of its own it
+    # followed the tool results, which Anthropic and Gemini carry in a user
+    # turn, so they got two user turns in a row (network stress test of
+    # 5e1dce5)
+    last <- length(msgs)
+    msgs[[last]]$content <- paste0(
+      msgs[[last]]$content,
+      "\n\n",
+      sprintf(
+        paste0(
+          "(Only the first %d of your %d tool calls were run; ask for ",
+          "the rest in later turns, a few at a time.)"
+        ),
+        length(calls),
+        length(res$tool_calls)
+      )
+    )
+  }
+  msgs
+}
+
+#' Asks a model a question with the packages' help at hand.
+#'
+#' Ask with the packages' help at hand: tools when the model takes them, else
+#' the matching pages in the prompt. Returns the reply text.
+#' @param rt The route the help-assisted question is sent on.
+#' @param model The model asked, whose context size sets the tier.
+#' @param prompt The user's question about the packages.
+#' @param pkgs The names of the packages whose help is at hand.
+#' @param system_extra More lines for the instructions, or NULL.
+#' @param timeout One call's timeout in seconds; the whole gets three times it.
+#' @param max_rounds The most rounds of tool calls, or NULL for the tier's.
+#' @return The reply text.
+#' @noRd
+.bl_llm_assist <- function(
+  rt,
+  model,
+  prompt,
+  pkgs,
+  system_extra = NULL,
+  timeout = 120,
+  max_rounds = NULL
+) {
+  pages <- .bl_kn_all_pages(pkgs)
+  tier <- .bl_llm_tier(.bl_llm_capacity(rt, model))
+  pr <- .bl_llm_assist_prompt(pages, pkgs, prompt, tier, system_extra)
+  sys <- pr$sys
+  ask <- pr$ask
+  clip <- tier$clip
+  max_rounds <- max_rounds %||% tier$rounds
   msgs <- list(
     list(role = "system", content = sys),
     list(role = "user", content = ask)
   )
   tools <- .bl_kn_tools()
-  looked <- 0L
-  on.exit(.bl_wait$what <- NULL, add = TRUE)
+  on.exit(assign("what", NULL, envir = .bl_wait), add = TRUE)
   # the whole conversation gets three times one call's timeout: a turn that
   # would start past that is not started, and each turn gets what is left (seven
   # rounds of two minutes each were possible; review of 29a55d8, L6)
   deadline <- proc.time()[["elapsed"]] + 3 * timeout
-  left <- function() {
-    rem <- deadline - proc.time()[["elapsed"]]
-    if (rem < 1) {
-      stop(
-        sprintf(
-          paste0(
-            "%s gave no answer within %g seconds of help-page lookups ",
-            "(try again, or a smaller question)"
-          ),
-          .bl_route_what(rt),
-          3 * timeout
-        ),
-        call. = FALSE
-      )
-    }
-    min(timeout, rem)
-  }
-  for (round in seq_len(max_rounds)) {
-    if (proc.time()[["elapsed"]] >= deadline) {
-      break
-    }
-    # the budget is taken outside the handler: a spent budget raised inside it
-    # read as a model that takes no tools, and the plain fallback then sent the
-    # question with a full timeout
-    tmo <- left()
-    res <- tryCatch(
-      .bl_llm_chat(
-        rt,
-        model,
-        msgs,
-        tools = tools,
-        timeout = tmo,
-        allow_empty = TRUE
-      ),
-      error = function(e) e
-    )
-    if (inherits(res, "error")) {
-      if (round == 1L && .bl_kn_no_tools(res)) {
-        return(.bl_llm_assist_plain(
-          rt,
-          model,
-          prompt,
-          pkgs,
-          sys,
-          timeout,
-          tier
-        ))
-      }
-      stop(res)
-    }
-    if (!length(res$tool_calls)) {
-      if (nzchar(res$text)) {
-        return(res$text)
-      }
-      # an empty turn after its lookups: asked once more below, for the answer
-      # itself
-      break
-    }
-    # the assistant turn is ours to write: past the cap the calls are not kept,
-    # so neither their results nor 3,000 "not run" rows are built or sent
-    # (review of 46de6a9)
-    calls <- utils::head(res$tool_calls, .bl_kn_calls_per_turn)
-    msgs[[length(msgs) + 1L]] <- list(
-      role = "assistant",
-      content = res$text,
-      tool_calls = calls
-    )
-    for (tc in calls) {
-      msgs[[length(msgs) + 1L]] <- list(
-        role = "tool",
-        tool_call_id = tc$id,
-        name = tc$name,
-        content = .bl_kn_run_tool(tc, pkgs, clip)
-      )
-    }
-    if (length(res$tool_calls) > length(calls)) {
-      # the note goes with the last tool result: as a turn of its own it
-      # followed the tool results, which Anthropic and Gemini carry in a user
-      # turn, so they got two user turns in a row (network stress test of
-      # 5e1dce5)
-      last <- length(msgs)
-      msgs[[last]]$content <- paste0(
-        msgs[[last]]$content,
-        "\n\n",
-        sprintf(
-          paste0(
-            "(Only the first %d of your %d tool calls were run; ask for ",
-            "the rest in later turns, a few at a time.)"
-          ),
-          length(calls),
-          length(res$tool_calls)
-        )
-      )
-    }
-    looked <- looked + length(res$tool_calls)
-    .bl_wait$what <- sprintf(
-      "thinking (%d help %s read so far)",
-      looked,
-      if (looked == 1L) "page" else "pages"
-    )
-  }
-  # the rounds are spent, or a turn came back empty: one last turn, asked for
-  # the answer. The request goes with the last tool result (or the question),
-  # not as a turn of its own: Anthropic and Gemini carry tool results in a user
-  # turn, so it made two user turns in a row; and the tools stay declared with
-  # calls turned off, since a history holding tool calls without them is refused
-  # ("must define tools") by Anthropic (CRAN stress test of b617a3f, #11) (the
-  # last message is the question or a tool result: an assistant turn is kept
-  # only with its results)
-  last <- length(msgs)
-  msgs[[last]]$content <- paste0(
-    msgs[[last]]$content,
-    "\n\nAnswer now with what you have found; do not look ",
-    "anything else up."
-  )
-  used_tools <- any(vapply(msgs, function(m) identical(m$role, "tool"), NA))
-  # an empty answer is .bl_llm_chat()'s error, which names the finish reason
-  # ("length": no room left); a model that calls a tool again though calls are
-  # off returns no text either, said here
-  ans <- .bl_llm_chat(
+  r <- .bl_llm_assist_rounds(
     rt,
     model,
     msgs,
-    tools = if (used_tools) tools,
-    timeout = left(),
-    no_calls = TRUE
-  )$text
-  if (!nzchar(ans)) {
-    stop(
-      sprintf(
-        paste0(
-          "%s returned no text after %d rounds of help-page lookups (try ",
-          "again, or another model)"
-        ),
-        .bl_route_what(rt),
-        max_rounds
-      ),
-      call. = FALSE
-    )
+    tools,
+    pkgs,
+    clip,
+    max_rounds,
+    deadline,
+    timeout
+  )
+  if (!is.null(r$answer)) {
+    return(r$answer)
   }
-  ans
+  if (isTRUE(r$no_tools)) {
+    return(.bl_llm_assist_plain(rt, model, prompt, pkgs, sys, timeout, tier))
+  }
+  .bl_llm_assist_final(rt, model, r$msgs, tools, deadline, timeout, max_rounds)
 }
 
 #' No tools: the pages that match the question go into the prompt.
-#' @param rt The route.
-#' @param model The model name.
-#' @param prompt The question.
-#' @param pkgs The package names.
+#' @param rt The route the tool-free question is sent on.
+#' @param model The model asked without tools.
+#' @param prompt The user's question, also used to pick matching help pages.
+#' @param pkgs The names of the packages whose matching pages go in the prompt.
 #' @param sys The instructions.
-#' @param timeout The request timeout in seconds.
+#' @param timeout The timeout of the single model call, in seconds.
 #' @param tier The tier, from .bl_llm_tier().
 #' @return The reply text.
 #' @noRd
@@ -991,4 +696,444 @@
     ),
     timeout = timeout
   )$text
+}
+
+#' The stop words .bl_kn_tokens() drops.
+#' @return A character vector.
+#' @noRd
+.bl_kn_stop_words <- function() {
+  words <- paste(
+    "the of and to in is for an or by on be as it at with from that",
+    "this are its when which not one each if can do does how what use",
+    "using my me into per function functions package packages want need",
+    "way there any some"
+  )
+  strsplit(words, " ", fixed = TRUE)[[1L]]
+}
+
+#' The search record of one help page.
+#' @param pkg The package name.
+#' @param f The page's file name.
+#' @param rd The parsed page.
+#' @param exports The package's exports.
+#' @return A page record, or NULL for an internal page.
+#' @noRd
+.bl_kn_page_record <- function(pkg, f, rd, exports) {
+  kw <- unlist(lapply(rd[.bl_rd_tags(rd) == "\\keyword"], .bl_rd_plain))
+  if ("internal" %in% trimws(kw)) {
+    return(NULL)
+  }
+  al <- .bl_rd_aliases(rd)
+  exp <- intersect(al, exports)
+  title <- .bl_rd_section(rd, "\\title")
+  desc <- .bl_rd_section(rd, "\\description")
+  usage <- .bl_rd_section(rd, "\\usage")
+  text <- paste(
+    title,
+    title,
+    title,
+    paste(al, collapse = " "),
+    paste(al, collapse = " "),
+    desc,
+    usage,
+    .bl_rd_plain(rd[
+      !.bl_rd_tags(rd) %in% c("\\examples", "\\alias", "\\name")
+    ])
+  )
+  list(
+    pkg = pkg,
+    file = f,
+    name = if (length(exp)) exp[[1L]] else al[[1L]],
+    aliases = al,
+    exported = exp,
+    title = title,
+    desc = desc,
+    usage = usage,
+    tokens = .bl_kn_tokens(text),
+    rd = rd
+  )
+}
+
+#' A string parameter of a tool's JSON schema.
+#' @param d Its description.
+#' @return A list.
+#' @noRd
+.bl_kn_tool_str <- function(d) list(type = "string", description = d)
+
+#' A tool's parameters, as a JSON schema object.
+#' @param props The properties.
+#' @param req The names of the required ones.
+#' @return A list.
+#' @noRd
+.bl_kn_tool_obj <- function(props, req) {
+  list(type = "object", properties = props, required = I(req))
+}
+
+#' The help-page tools: search_docs, get_help and get_examples.
+#' @return A list of tools.
+#' @noRd
+.bl_kn_tools_help <- function() {
+  list(
+    list(
+      name = "search_docs",
+      description = paste(
+        "Search the help pages of the MORIE R packages; returns the",
+        "best matching functions with their titles."
+      ),
+      parameters = .bl_kn_tool_obj(
+        list(query = .bl_kn_tool_str("what to look for, in plain words")),
+        "query"
+      )
+    ),
+    list(
+      name = "get_help",
+      description = paste0(
+        "The full help page of one function: usage, arguments, value, ",
+        "details."
+      ),
+      parameters = .bl_kn_tool_obj(
+        list(name = .bl_kn_tool_str("the function name, e.g. svydes")),
+        "name"
+      )
+    ),
+    list(
+      name = "get_examples",
+      description = "The runnable examples from one function's help page.",
+      parameters = .bl_kn_tool_obj(
+        list(name = .bl_kn_tool_str("the function name")),
+        "name"
+      )
+    )
+  )
+}
+
+#' The dataset and vignette tools: list_datasets and get_vignette.
+#' @return A list of tools.
+#' @noRd
+.bl_kn_tools_data <- function() {
+  list(
+    list(
+      name = "list_datasets",
+      description = paste(
+        "Datasets the packages ship or can load (bundled files and",
+        "the curated tables at data.rmorie.com), filtered by a word."
+      ),
+      parameters = .bl_kn_tool_obj(
+        list(filter = .bl_kn_tool_str("a word to filter by, or empty for all")),
+        character()
+      )
+    ),
+    list(
+      name = "get_vignette",
+      description = paste0(
+        "A package vignette (a long worked ",
+        "guide); with no name, the list."
+      ),
+      parameters = .bl_kn_tool_obj(
+        list(
+          name = .bl_kn_tool_str("the vignette name, or empty to list them")
+        ),
+        character()
+      )
+    )
+  )
+}
+
+#' The curated tables listed in the cached data manifest.
+#' @return A character vector, one line per table; empty with no manifest.
+#' @noRd
+.bl_kn_curated <- function() {
+  # the curated tables, from the manifest already on disk (no network from a
+  # tool)
+  out <- character()
+  m <- file.path(.bl_data_cache_dir(), "manifest.json")
+  if (file.exists(m)) {
+    j <- tryCatch(
+      .rmbl_json_text(
+        paste(readLines(m, warn = FALSE), collapse = "\n"),
+        simplifyVector = FALSE
+      ),
+      error = function(e) NULL
+    )
+    for (d in j$datasets %||% list()) {
+      out <- c(
+        out,
+        sprintf(
+          "data.rmorie.com: dload(\"%s\")  %s",
+          d$key %||% "",
+          substr(.bl_data_name(d), 1L, 90L)
+        )
+      )
+    }
+  }
+  out
+}
+
+#' What a tool answers for a function these packages lack.
+#' @param nm The name asked for, or "".
+#' @return One string.
+#' @noRd
+.bl_kn_no_page <- function(nm) {
+  if (!nzchar(nm)) {
+    return("give the function's name as a string (search_docs finds it)")
+  }
+  sprintf(
+    paste0(
+      "'%s' does not exist in these packages: do not use it ",
+      "(search_docs finds what does)"
+    ),
+    nm
+  )
+}
+
+#' The search_docs tool: the pages that best match a query.
+#' @param query The query.
+#' @param pages The page records.
+#' @return One string.
+#' @noRd
+.bl_kn_tool_search <- function(query, pages) {
+  hit <- .bl_kn_search(query, pages, 10L)
+  if (length(hit)) {
+    paste(
+      vapply(
+        hit,
+        function(p) sprintf("%s (%s): %s", p$name, p$pkg, p$title),
+        ""
+      ),
+      collapse = "\n"
+    )
+  } else {
+    "nothing matches; try other words"
+  }
+}
+
+#' The get_examples tool: the examples of one function's help page.
+#' @param name The name of the function whose examples are returned.
+#' @param pages The page records.
+#' @param clip The most characters returned.
+#' @return One string.
+#' @noRd
+.bl_kn_tool_examples <- function(name, pages, clip) {
+  p <- .bl_kn_find(name, pages)
+  if (is.null(p)) {
+    return(.bl_kn_no_page(name))
+  }
+  txt <- .bl_rd_text(p$rd)
+  s <- which(txt == "Examples:")
+  if (length(s)) {
+    .bl_kn_clip(paste(txt[-seq_len(s[1L])], collapse = "\n"), clip)
+  } else {
+    "no examples on that page"
+  }
+}
+
+#' The instruction line that says a large package is not listed whole.
+#' @param big The packages too large to list.
+#' @param pages The help pages.
+#' @param near_big Their pages picked for the question.
+#' @return One string, or NULL when no package is too large.
+#' @noRd
+.bl_kn_big_note <- function(big, pages, near_big) {
+  if (!length(big)) {
+    return(NULL)
+  }
+  sprintf(
+    paste(
+      "%s has %d more functions than are listed below: search_docs finds",
+      "the right one by what it does, and get_help reads it."
+    ),
+    paste(big, collapse = " and "),
+    sum(vapply(pages, function(p) p$pkg %in% big, NA)) - length(near_big)
+  )
+}
+
+#' The question as sent: the prompt, then the functions nearest it.
+#' @param prompt The user's question, sent first.
+#' @param near The page records picked for it.
+#' @param tier The model's tier.
+#' @param big The packages too large to list.
+#' @return One string.
+#' @noRd
+.bl_kn_ask <- function(prompt, near, tier, big) {
+  if (!length(near)) {
+    return(prompt)
+  }
+  # the budget is in lines: a help page that documents several functions gives
+  # a line each, so 40 pages could be more than the 40 lines a small model has
+  # room for
+  nl <- .bl_kn_index_lines(near)
+  cap <- if (is.finite(tier$index)) {
+    tier$index
+  } else if (length(big)) {
+    40L
+  } else {
+    Inf
+  }
+  if (is.finite(cap)) {
+    nl <- utils::head(nl, cap)
+  }
+  paste(
+    c(
+      prompt,
+      "",
+      "Functions nearest this question (name(arguments)  -- title):",
+      nl
+    ),
+    collapse = "\n"
+  )
+}
+
+#' The seconds the next turn of .bl_llm_assist() may take.
+#' @param deadline When the conversation must end, in elapsed seconds.
+#' @param timeout One call's timeout in seconds.
+#' @param rt The route, named in the error when the time has run out.
+#' @return The seconds left, at most `timeout`; an error when under one.
+#' @noRd
+.bl_llm_left <- function(deadline, timeout, rt) {
+  rem <- deadline - proc.time()[["elapsed"]]
+  if (rem < 1) {
+    stop(
+      sprintf(
+        paste0(
+          "%s gave no answer within %g seconds of help-page lookups ",
+          "(try again, or a smaller question)"
+        ),
+        .bl_route_what(rt),
+        3 * timeout
+      ),
+      call. = FALSE
+    )
+  }
+  min(timeout, rem)
+}
+
+#' The rounds of .bl_llm_assist(): the model answers, or calls tools whose
+#' results are added to the conversation.
+#' @param rt,model,pkgs As for .bl_llm_assist().
+#' @param msgs The conversation.
+#' @param tools The tools declared.
+#' @param clip The tool results' length cap.
+#' @param max_rounds The most rounds.
+#' @param deadline When the conversation must end, in elapsed seconds.
+#' @param timeout One call's timeout in seconds.
+#' @return A list: `answer` (the reply), `no_tools` (TRUE when the model takes
+#'   no tools) or `msgs` (the conversation, for a last turn).
+#' @noRd
+.bl_llm_assist_rounds <- function(
+  rt,
+  model,
+  msgs,
+  tools,
+  pkgs,
+  clip,
+  max_rounds,
+  deadline,
+  timeout
+) {
+  looked <- 0L
+  for (round in seq_len(max_rounds)) {
+    if (proc.time()[["elapsed"]] >= deadline) {
+      break
+    }
+    # the budget is taken outside the handler: a spent budget raised inside it
+    # read as a model that takes no tools, and the plain fallback then sent the
+    # question with a full timeout
+    tmo <- .bl_llm_left(deadline, timeout, rt)
+    res <- tryCatch(
+      .bl_llm_chat(
+        rt,
+        model,
+        msgs,
+        tools = tools,
+        timeout = tmo,
+        allow_empty = TRUE
+      ),
+      error = function(e) e
+    )
+    if (inherits(res, "error")) {
+      if (round == 1L && .bl_kn_no_tools(res)) {
+        return(list(no_tools = TRUE))
+      }
+      stop(res)
+    }
+    if (!length(res$tool_calls)) {
+      if (nzchar(res$text)) {
+        return(list(answer = res$text))
+      }
+      # an empty turn after its lookups: asked once more below, for the answer
+      # itself
+      break
+    }
+    # the assistant turn is ours to write: past the cap the calls are not kept,
+    # so neither their results nor 3,000 "not run" rows are built or sent
+    # (review of 46de6a9)
+    msgs <- .bl_llm_assist_tools(msgs, res, pkgs, clip)
+    looked <- looked + length(res$tool_calls)
+    .bl_wait$what <- sprintf(
+      "thinking (%d help %s read so far)",
+      looked,
+      if (looked == 1L) "page" else "pages"
+    )
+  }
+  list(msgs = msgs)
+}
+
+#' The last turn of .bl_llm_assist(), asked for the answer with calls off.
+#' @param rt,model As for .bl_llm_assist().
+#' @param msgs The conversation.
+#' @param tools The tools declared.
+#' @param deadline When the conversation must end, in elapsed seconds.
+#' @param timeout One call's timeout in seconds.
+#' @param max_rounds The most rounds, for the error message.
+#' @return The reply text.
+#' @noRd
+.bl_llm_assist_final <- function(
+  rt,
+  model,
+  msgs,
+  tools,
+  deadline,
+  timeout,
+  max_rounds
+) {
+  # the rounds are spent, or a turn came back empty: one last turn, asked for
+  # the answer. The request goes with the last tool result (or the question),
+  # not as a turn of its own: Anthropic and Gemini carry tool results in a user
+  # turn, so it made two user turns in a row; and the tools stay declared with
+  # calls turned off, since a history holding tool calls without them is refused
+  # ("must define tools") by Anthropic (CRAN stress test of b617a3f, #11) (the
+  # last message is the question or a tool result: an assistant turn is kept
+  # only with its results)
+  last <- length(msgs)
+  msgs[[last]]$content <- paste0(
+    msgs[[last]]$content,
+    "\n\nAnswer now with what you have found; do not look ",
+    "anything else up."
+  )
+  used_tools <- any(vapply(msgs, function(m) identical(m$role, "tool"), NA))
+  # an empty answer is .bl_llm_chat()'s error, which names the finish reason
+  # ("length": no room left); a model that calls a tool again though calls are
+  # off returns no text either, said here
+  ans <- .bl_llm_chat(
+    rt,
+    model,
+    msgs,
+    tools = if (used_tools) tools,
+    timeout = .bl_llm_left(deadline, timeout, rt),
+    no_calls = TRUE
+  )$text
+  if (!nzchar(ans)) {
+    stop(
+      sprintf(
+        paste0(
+          "%s returned no text after %d rounds of help-page lookups (try ",
+          "again, or another model)"
+        ),
+        .bl_route_what(rt),
+        max_rounds
+      ),
+      call. = FALSE
+    )
+  }
+  ans
 }

@@ -8,7 +8,7 @@ svycmp(
   des,
   data,
   y,
-  by,
+  by = NULL,
   stat = c("mean", "total", "proportion", "ratio"),
   den = NULL,
   lvls = NULL,

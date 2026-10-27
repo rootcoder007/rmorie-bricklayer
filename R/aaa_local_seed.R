@@ -27,7 +27,7 @@
 #' (\dQuote{supplied seed is not a valid integer}) named neither the function
 #' nor the argument (CRAN stress test of b617a3f). 2^53 is where doubles stop
 #' holding every whole number, the native kernels' seed range too.
-#' @param seed The value passed by the user.
+#' @param seed The caller's seed, checked to be one whole number in range.
 #' @return The seed as an integer when it fits, otherwise as a double.
 #' @noRd
 .rmbl_r_seed <- function(seed) {

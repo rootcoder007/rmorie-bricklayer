@@ -6,15 +6,19 @@
 \alias{drpconst}
 \title{Drop empty or constant columns and rows}
 \usage{
-drpempty(data, which = c("rows", "cols"))
+drpempty(data, which = c("rows", "cols"), quiet = FALSE)
 
-drpconst(data, naasval = FALSE)
+drpconst(data, naasval = FALSE, quiet = FALSE)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame whose empty rows or columns are dropped.}
 
 \item{which}{\code{"rows"}, \code{"cols"}, or both (the
 default, \code{c("rows", "cols")}).}
+
+\item{quiet}{Logical: \code{TRUE} skips the boxed summary of what was
+dropped (rows and columns before and after, the columns removed), which is
+otherwise sent through \code{message()}; default \code{FALSE}.}
 
 \item{naasval}{Logical: treat \code{NA} as a distinct
 value, so a column of \code{NA}s plus one real value counts as two

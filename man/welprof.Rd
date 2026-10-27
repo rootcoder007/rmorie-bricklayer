@@ -32,7 +32,7 @@ those that measure distress; rows for any other indicator (totals,
 holistic domain, for example \code{c("Life satisfaction 8 to 10" =
 "mental", ...)}.}
 
-\item{qual}{Optional column of quality flags.}
+\item{qual}{Optional column of quality flags, one per row of \code{data}.}
 }
 \value{
 A data frame of class \code{rmbl_wellness_profile}, wellness rows
@@ -101,6 +101,19 @@ w <- welprof(
 )
 w
 plot(w)
+
+# your own table: made-up percentages for two communities, with limits
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 4),
+  item = rep(c("Hopeful", "Satisfied", "Rarely hopeful", "Low satisfaction"),
+             2),
+  pct = c(64, 71, 12, 18, 58, 66, 16, 22),
+  lo = c(59, 66, 9, 14, 52, 60, 12, 17),
+  hi = c(69, 76, 15, 22, 64, 72, 20, 27)
+)
+welprof(own, "community", "item", "pct", "lo", "hi",
+        well = c("Hopeful", "Satisfied"),
+        distress = c("Rarely hopeful", "Low satisfaction"))
 \dontshow{\}) # examplesIf}
 }
 \references{

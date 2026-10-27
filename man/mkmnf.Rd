@@ -24,6 +24,9 @@ A list with elements \code{meta} (the list given, plus
 filled by \code{\link[=recrd]{recrd()}}) and, when \code{environment = TRUE},
 \code{environment} (the list from
 \code{\link[=capenv]{capenv()}}).
+The list has class \code{c("rmbl_manifest", "list")}, which only changes
+how it prints (a box); its elements, and the JSON written from it, are
+those of a plain list.
 }
 \description{
 Creates an empty manifest: the record of one analysis run that collects

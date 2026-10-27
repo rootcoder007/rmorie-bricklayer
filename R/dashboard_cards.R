@@ -68,7 +68,7 @@
 
 #' A number for a card.
 #' @param x A number or NULL.
-#' @param digits Significant digits.
+#' @param digits Significant digits of the card's number (default 4).
 #' @param big Whether to mark thousands.
 #' @return One string, or NULL.
 #' @noRd
@@ -113,7 +113,7 @@
   e <- if (length(est)) est[[1L]]
   lo <- if (!is.null(e) && !is.na(.bl_hl_lo[e])) one(.bl_hl_lo[[e]])
   up <- if (!is.null(e) && !is.na(.bl_hl_lo[e])) {
-    one(sub("lo$", "up", sub("lower", "upper", .bl_hl_lo[[e]])))
+    one(sub("lo$", "up", sub("lower", "upper", .bl_hl_lo[[e]], fixed = TRUE)))
   }
   p <- one("p_value") %||%
     if (is.list(v) && !is.data.frame(v)) {
@@ -201,13 +201,13 @@
   )
   list(
     h = lapply(h, function(z) z[[i]]),
-    rowlab = if (length(lab)) paste(lab[!is.na(lab)], collapse = ", ")
+    rowlab = if (length(lab)) toString(lab[!is.na(lab)])
   )
 }
 
 #' One number of the headline row.
 #' @param h The row.
-#' @param nm The field.
+#' @param nm The headline field to read, kept when one number.
 #' @return The number, or NULL.
 #' @noRd
 .bl_hl_one <- function(h, nm) {
@@ -227,7 +227,11 @@
   if (inherits(v, "bricklayer_drift")) {
     good <- isTRUE(v$anydrft)
     return(list(
-      verdict = if (good) "Drift in at least one column" else "No column drifted",
+      verdict = if (good) {
+        "Drift in at least one column"
+      } else {
+        "No column drifted"
+      },
       good = good
     ))
   }
@@ -281,16 +285,7 @@
 #' @return A tag.
 #' @noRd
 .bl_vbox_ui <- function(h) {
-  vb <- function(title, value, sub, theme = NULL) {
-    bslib::value_box(
-      title = title,
-      value = value,
-      if (!is.null(sub)) shiny::tags$p(sub),
-      theme = theme,
-      fill = FALSE,
-      min_height = "110px"
-    )
-  }
+  vb <- .bl_vbox
   iv <- if (!is.null(h$lo) && !is.null(h$up)) {
     sprintf("%s to %s", .bl_num(h$lo), .bl_num(h$up))
   }
@@ -299,23 +294,7 @@
     fill = FALSE,
     heights_equal = "row",
     class = "mb-3",
-    vb(
-      if (identical(h$estlab, "estimate")) {
-        "Estimate"
-      } else if (!is.null(h$estlab)) {
-        paste("Estimate:", h$estlab)
-      } else {
-        "Result"
-      },
-      .bl_num(h$est) %||%
-        if (!is.null(h$rows)) {
-          sprintf("%s rows", format(h$rows, big.mark = ","))
-        } else {
-          "See the table"
-        },
-      h$rowlab,
-      "primary"
-    ),
+    vb(.bl_vbox_title(h), .bl_vbox_value(h), h$rowlab, "primary"),
     vb(
       "Interval",
       iv %||% "None reported",
@@ -333,6 +312,50 @@
       if (isTRUE(h$good)) "success" else "secondary"
     )
   )
+}
+
+#' One value box of the headline row.
+#' @param title,value The box's title and value.
+#' @param sub A line under the value, or NULL.
+#' @param theme The box's theme, or NULL.
+#' @return A bslib value box.
+#' @noRd
+.bl_vbox <- function(title, value, sub, theme = NULL) {
+  bslib::value_box(
+    title = title,
+    value = value,
+    if (!is.null(sub)) shiny::tags$p(sub),
+    theme = theme,
+    fill = FALSE,
+    min_height = "110px"
+  )
+}
+
+#' The title of the headline's estimate box.
+#' @param h The headline.
+#' @return One string.
+#' @noRd
+.bl_vbox_title <- function(h) {
+  if (identical(h$estlab, "estimate")) {
+    "Estimate"
+  } else if (!is.null(h$estlab)) {
+    paste("Estimate:", h$estlab)
+  } else {
+    "Result"
+  }
+}
+
+#' The value of the headline's estimate box.
+#' @param h The headline.
+#' @return One string.
+#' @noRd
+.bl_vbox_value <- function(h) {
+  .bl_num(h$est) %||%
+    if (!is.null(h$rows)) {
+      sprintf("%s rows", format(h$rows, big.mark = ","))
+    } else {
+      "See the table"
+    }
 }
 
 #' The first sentence of a function's help page description.
@@ -372,28 +395,39 @@
 #' @return A character vector of sentences.
 #' @noRd
 .bl_effect_lines <- function(v) {
-  get <- function(nm) {
-    x <- if (is.list(v)) v[[nm]]
-    if (is.numeric(x) && length(x)) x
-  }
-  band <- function(x, cuts, labs) labs[findInterval(abs(x), cuts) + 1L]
+  c(
+    .bl_effect_smd(v),
+    .bl_effect_spread(v),
+    .bl_effect_ratio(v),
+    .bl_effect_fit(v)
+  )
+}
+
+#' One number of a result, when it is a non-empty numeric field.
+#' @param v The result.
+#' @param nm The result field to read, kept when a non-empty numeric.
+#' @return The number(s), or NULL.
+#' @noRd
+.bl_eff_get <- function(v, nm) {
+  x <- if (is.list(v)) v[[nm]]
+  if (is.numeric(x) && length(x)) x
+}
+
+#' The band a size of effect falls in.
+#' @param x The size.
+#' @param cuts The bands' lower ends.
+#' @param labs The bands' names, one more than `cuts`.
+#' @return The name.
+#' @noRd
+.bl_eff_band <- function(x, cuts, labs) labs[findInterval(abs(x), cuts) + 1L]
+
+#' The effect lines on association and heterogeneity.
+#' @param v The result.
+#' @return Lines of text, possibly none.
+#' @noRd
+.bl_effect_spread <- function(v) {
   out <- character()
-  smd <- get("smd") %||% get("smdafter")
-  if (!is.null(smd)) {
-    m <- max(abs(smd), na.rm = TRUE)
-    out <- c(
-      out,
-      sprintf(
-        paste0(
-          "Largest standardised mean difference %s: %s (below 0.1 is ",
-          "usually read as balanced)."
-        ),
-        .bl_num(m, 3L),
-        if (m < 0.1) "balanced" else "not balanced"
-      )
-    )
-  }
-  cv <- get("cramerv") %||%
+  cv <- .bl_eff_get(v, "cramerv") %||%
     if (is.list(v) && is.data.frame(v$homogeneity)) v$homogeneity$cramerv
   if (!is.null(cv)) {
     out <- c(
@@ -401,7 +435,7 @@
       sprintf(
         "Cramer's V %s: a %s association (0.1 small, 0.3 moderate, 0.5 large).",
         .bl_num(cv, 2L),
-        band(
+        .bl_eff_band(
           cv,
           c(0.1, 0.3, 0.5),
           c("negligible", "small", "moderate", "large")
@@ -409,7 +443,7 @@
       )
     )
   }
-  i2 <- get("i2")
+  i2 <- .bl_eff_get(v, "i2")
   if (!is.null(i2)) {
     out <- c(
       out,
@@ -420,11 +454,24 @@
           "error would give (%s heterogeneity)."
         ),
         .bl_num(100 * i2, 2L),
-        band(i2, c(0.25, 0.5, 0.75), c("low", "low", "moderate", "high"))
+        .bl_eff_band(
+          i2,
+          c(0.25, 0.5, 0.75),
+          c("low", "low", "moderate", "high")
+        )
       )
     )
   }
-  r <- get("correlation") %||% get("tau")
+  out
+}
+
+#' The effect lines on correlation and ratios.
+#' @param v The result.
+#' @return Lines of text, possibly none.
+#' @noRd
+.bl_effect_ratio <- function(v) {
+  out <- character()
+  r <- .bl_eff_get(v, "correlation") %||% .bl_eff_get(v, "tau")
   if (!is.null(r)) {
     m <- r[which.max(abs(r))]
     out <- c(
@@ -432,11 +479,17 @@
       sprintf(
         "Strongest correlation %s: %s (0.1 small, 0.3 moderate, 0.5 large).",
         .bl_num(m, 2L),
-        band(m, c(0.1, 0.3, 0.5), c("negligible", "small", "moderate", "large"))
+        .bl_eff_band(
+          m,
+          c(0.1, 0.3, 0.5),
+          c("negligible", "small", "moderate", "large")
+        )
       )
     )
   }
-  rr <- get("rateratio") %||% get("rr") %||% get("strratio")
+  rr <- .bl_eff_get(v, "rateratio") %||%
+    .bl_eff_get(v, "rr") %||%
+    .bl_eff_get(v, "strratio")
   if (!is.null(rr) && length(rr) == 1L && is.finite(rr)) {
     out <- c(
       out,
@@ -448,7 +501,7 @@
       )
     )
   }
-  br <- get("braratio")
+  br <- .bl_eff_get(v, "braratio")
   if (!is.null(br)) {
     out <- c(
       out,
@@ -463,7 +516,16 @@
       )
     )
   }
-  ks <- get("kspva")
+  out
+}
+
+#' The effect lines on the fit of a model and on drift.
+#' @param v The result.
+#' @return Lines of text, possibly none.
+#' @noRd
+.bl_effect_fit <- function(v) {
+  out <- character()
+  ks <- .bl_eff_get(v, "kspva")
   if (!is.null(ks)) {
     out <- c(
       out,
@@ -474,7 +536,7 @@
       )
     )
   }
-  dsp <- get("dispersion")
+  dsp <- .bl_eff_get(v, "dispersion")
   if (!is.null(dsp)) {
     out <- c(
       out,
@@ -499,7 +561,11 @@
           "above 0.25 major)."
         ),
         .bl_num(m, 3L),
-        band(m, c(0.1, 0.25), c("stable", "moderate shift", "major shift"))
+        .bl_eff_band(
+          m,
+          c(0.1, 0.25),
+          c("stable", "moderate shift", "major shift")
+        )
       )
     )
   }
@@ -559,8 +625,8 @@
 
 #' The method card: the method, its assumptions, what the numbers mean, and the
 #' help.
-#' @param f The analysis spec.
-#' @param s The tab spec.
+#' @param f The analysis spec: its steps, method and assumptions.
+#' @param s The tab spec, whose `assume` stands in when `f` has none.
 #' @param h The headline, or NULL before a run.
 #' @param v The result, or NULL.
 #' @return A tag.
@@ -591,7 +657,7 @@
 
 #' A cell of a table, as text.
 #' @param x One value.
-#' @param digits Significant digits.
+#' @param digits Significant digits of a numeric cell.
 #' @return One string.
 #' @noRd
 .bl_cell <- function(x, digits) {
@@ -602,22 +668,21 @@
     return("")
   }
   if (is.numeric(x)) {
-    return(paste(
+    return(toString(
       vapply(
         x,
         function(z) if (is.na(z)) "NA" else .bl_num(z, digits, FALSE),
         ""
-      ),
-      collapse = ", "
+      )
     ))
   }
-  paste(as.character(x), collapse = ", ")
+  toString(as.character(x))
 }
 
 #' A data frame as an accessible HTML table; a `column` that names a data column
 #' becomes a button that opens its distribution.
 #' @param t The data frame.
-#' @param digits Significant digits.
+#' @param digits Significant digits of the table's numeric cells (default 4).
 #' @param link NULL, or list(ns, cols).
 #' @return A tag.
 #' @noRd
@@ -689,7 +754,11 @@
 #' @noRd
 .bl_scalars <- function(v) {
   if (!is.list(v) || is.data.frame(v)) {
-    return(data.frame(field = character(), value = character()))
+    return(data.frame(
+      field = character(),
+      value = character(),
+      stringsAsFactors = FALSE
+    ))
   }
   keep <- names(v)[vapply(v, function(x) is.atomic(x) && length(x) == 1L, TRUE)]
   data.frame(
@@ -702,7 +771,7 @@
 
 #' The table card.
 #' @param v The result.
-#' @param digits Significant digits.
+#' @param digits Significant digits of the table card's numbers (default 4).
 #' @param link NULL, or list(ns, cols) to make the profile's columns open their
 #'   distribution.
 #' @return A tag.
@@ -751,42 +820,10 @@
     parts <- c(parts, list(tg$h6("Checks and statistics"), .bl_html_table(sc)))
   }
   if (is.list(v) && !is.data.frame(v)) {
-    dfs <- names(v)[vapply(v, is.data.frame, TRUE)]
-    main <- if (is.data.frame(v$table)) "table" else dfs[1L]
-    for (nm in setdiff(dfs, main)) {
-      parts <- c(
-        parts,
-        list(
-          tg$h6(nm),
-          .bl_html_table(utils::head(as.data.frame(v[[nm]]), 15L))
-        )
-      )
-    }
+    parts <- c(parts, .bl_diag_tables(v))
   }
   if (is.data.frame(v)) {
-    fl <- intersect(
-      c(
-        "flag",
-        "verdict",
-        "usewithcau",
-        "poogrp",
-        "quality",
-        "drifted",
-        "outlier",
-        "pass"
-      ),
-      names(v)
-    )
-    for (nm in fl) {
-      tb <- table(v[[nm]], useNA = "ifany")
-      parts <- c(
-        parts,
-        list(
-          tg$h6(sprintf("Rows by %s", nm)),
-          .bl_html_table(data.frame(value = names(tb), rows = as.integer(tb)))
-        )
-      )
-    }
+    parts <- c(parts, .bl_diag_flags(v))
   }
   if (!length(parts)) {
     return(tg$p(
@@ -795,6 +832,60 @@
     ))
   }
   shiny::tagList(parts)
+}
+
+#' The diagnostics card's tables: a result's data frames besides its main one.
+#' @param v The result, a list.
+#' @return A list of tags.
+#' @noRd
+.bl_diag_tables <- function(v) {
+  tg <- shiny::tags
+  parts <- list()
+  dfs <- names(v)[vapply(v, is.data.frame, TRUE)]
+  main <- if (is.data.frame(v$table)) "table" else dfs[1L]
+  for (nm in setdiff(dfs, main)) {
+    parts <- c(
+      parts,
+      list(
+        tg$h6(nm),
+        .bl_html_table(utils::head(as.data.frame(v[[nm]]), 15L))
+      )
+    )
+  }
+  parts
+}
+
+#' The diagnostics card's counts of a table's rows by its flag columns.
+#' @param v The result, a data frame.
+#' @return A list of tags.
+#' @noRd
+.bl_diag_flags <- function(v) {
+  tg <- shiny::tags
+  parts <- list()
+  fl <- intersect(
+    c(
+      "flag",
+      "verdict",
+      "usewithcau",
+      "poogrp",
+      "quality",
+      "drifted",
+      "outlier",
+      "pass"
+    ),
+    names(v)
+  )
+  for (nm in fl) {
+    tb <- table(v[[nm]], useNA = "ifany")
+    parts <- c(
+      parts,
+      list(
+        tg$h6(sprintf("Rows by %s", nm)),
+        .bl_html_table(data.frame(value = names(tb), rows = as.integer(tb)))
+      )
+    )
+  }
+  parts
 }
 
 #' The rows of a result that carry an estimate and an interval, for a plot of
@@ -809,7 +900,7 @@
   }
   for (e in intersect(names(.bl_hl_lo), names(t))) {
     lo <- .bl_hl_lo[[e]]
-    up <- sub("lo$", "up", sub("lower", "upper", lo))
+    up <- sub("lo$", "up", sub("lower", "upper", lo, fixed = TRUE))
     if (!all(c(lo, up) %in% names(t)) || !is.numeric(t[[e]])) {
       next
     }
@@ -885,7 +976,7 @@
 }
 
 #' A plot with a message and nothing else.
-#' @param msg The message.
+#' @param msg The message drawn in the middle of an empty plot.
 #' @return NULL, invisibly.
 #' @noRd
 .bl_noplot <- function(msg) {
@@ -898,19 +989,22 @@
 
 #' Sets the plot's ink for the page's colour mode.
 #' @param mode \code{"light"} or \code{"dark"}.
-#' @return NULL, invisibly.
+#' @return The previous parameters, for `par(op)` (an empty list for light),
+#'   invisibly.
 #' @noRd
 .bl_par_mode <- function(mode) {
-  if (identical(mode, "dark")) {
-    graphics::par(
-      fg = "#e6e3de",
-      col.axis = "#cfcac3",
-      col.lab = "#e6e3de",
-      col.main = "#e6e3de",
-      col.sub = "#cfcac3"
-    )
+  if (!identical(mode, "dark")) {
+    return(invisible(list()))
   }
-  invisible(NULL)
+  # fg sets col too: col is saved with the rest, for par(op)
+  invisible(.bl_par_set(
+    fg = "#e6e3de",
+    col.axis = "#cfcac3",
+    col.lab = "#e6e3de",
+    col.main = "#e6e3de",
+    col.sub = "#cfcac3",
+    keep = "col"
+  ))
 }
 
 #' Draws a run's plot: its plot call, else its estimates with their intervals,
@@ -921,7 +1015,8 @@
 #' @return NULL, invisibly.
 #' @noRd
 .bl_plot_run <- function(pl, r, mode = "light") {
-  .bl_par_mode(mode)
+  opm <- .bl_par_mode(mode)
+  on.exit(graphics::par(opm), add = TRUE)
   if (!is.null(pl)) {
     eval(pl, r$env)
   } else if (!.bl_forest(r$value)) {
@@ -961,12 +1056,13 @@
 #' @return NULL, invisibly.
 #' @noRd
 .bl_draw_diag <- function(r, w, mode = "light") {
-  .bl_par_mode(mode)
+  opm <- .bl_par_mode(mode)
+  on.exit(graphics::par(opm), add = TRUE)
   if (w %in% names(r$diag)) {
     eval(r$diag[[w]], r$env)
   } else if (identical(w, "Observed and fitted")) {
     v <- r$value
-    op <- graphics::par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
+    op <- .bl_par_set(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
     on.exit(graphics::par(op), add = TRUE)
     graphics::plot(
       v$data$x,
@@ -1027,7 +1123,7 @@
 
 #' Writes a run's plot to a PNG or SVG file.
 #' @param r The run.
-#' @param file The file.
+#' @param file The PNG or SVG file the run's plot is written to.
 #' @param type \code{"png"} or \code{"svg"}.
 #' @return The file, invisibly.
 #' @noRd
@@ -1050,15 +1146,16 @@
 
 #' The distribution of one column: histogram and distribution function, or the
 #' counts of its values.
-#' @param x The column.
-#' @param nm Its name.
+#' @param x The column whose distribution is drawn.
+#' @param nm The column's name, the plots' title and axis label.
 #' @param mode The colour mode.
 #' @return NULL, invisibly.
 #' @noRd
 .bl_col_plot <- function(x, nm, mode = "light") {
-  .bl_par_mode(mode)
+  opm <- .bl_par_mode(mode)
+  on.exit(graphics::par(opm), add = TRUE)
   if (is.numeric(x) && sum(is.finite(x)) > 1L) {
-    op <- graphics::par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
+    op <- .bl_par_set(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
     on.exit(graphics::par(op), add = TRUE)
     graphics::hist(
       x,
@@ -1100,7 +1197,7 @@
 }
 
 #' A summary of one column.
-#' @param x The column.
+#' @param x The column summarised: quantiles if numeric, else counts.
 #' @return A data frame: statistic, value.
 #' @noRd
 .bl_col_summary <- function(x) {
@@ -1129,7 +1226,8 @@
         mean(x, na.rm = TRUE),
         stats::sd(x, na.rm = TRUE),
         q
-      )
+      ),
+      stringsAsFactors = FALSE
     ))
   }
   tb <- utils::head(
@@ -1147,7 +1245,7 @@
 
 #' The card of the two snapshots' densities, whose brushed range gives each
 #' one's share.
-#' @param ns The namespace function.
+#' @param ns The module's namespace function for the card's output ids.
 #' @return A tag.
 #' @noRd
 .bl_drift_brush_ui <- function(ns) {
@@ -1195,7 +1293,7 @@
 
 #' The share of each snapshot's rows in a range of a column.
 #' @param sn The two snapshots.
-#' @param col The column.
+#' @param col The numeric column whose rows in the range are counted.
 #' @param lo,hi The range.
 #' @return A data frame: snapshot, rows, share (percent).
 #' @noRd
@@ -1239,27 +1337,7 @@
       s <- sn()
       col <- shiny::req(input$dcol)
       shiny::req(col %in% names(s[[1L]]))
-      .bl_par_mode(mode())
-      ds <- lapply(s, function(d) stats::density(d[[col]][is.finite(d[[col]])]))
-      cl <- .bl_cols(2L)
-      graphics::plot(
-        ds[[1L]],
-        col = cl[[1L]],
-        lwd = 2,
-        main = sprintf("%s: drag across a range", col),
-        font.main = 1,
-        xlab = col,
-        ylim = c(0, max(vapply(ds, function(z) max(z$y), 1)))
-      )
-      graphics::lines(ds[[2L]], col = cl[[2L]], lwd = 2, lty = 2)
-      graphics::legend(
-        "topright",
-        names(s),
-        col = cl,
-        lwd = 2,
-        lty = 1:2,
-        bty = "n"
-      )
+      .bl_drift_density(s, col, mode)
     },
     res = 96,
     bg = "transparent"
@@ -1288,4 +1366,60 @@
     )
   })
   invisible(NULL)
+}
+
+#' Draws one column's density in the two snapshots, for brushing.
+#' @param s The two snapshots.
+#' @param col The numeric column whose two densities are drawn.
+#' @param mode The reactive light or dark mode.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_drift_density <- function(s, col, mode) {
+  opm <- .bl_par_mode(mode())
+  on.exit(graphics::par(opm), add = TRUE)
+  ds <- lapply(s, function(d) stats::density(d[[col]][is.finite(d[[col]])]))
+  cl <- .bl_cols(2L)
+  graphics::plot(
+    ds[[1L]],
+    col = cl[[1L]],
+    lwd = 2,
+    main = sprintf("%s: drag across a range", col),
+    font.main = 1,
+    xlab = col,
+    ylim = c(0, max(vapply(ds, function(z) max(z$y), 1)))
+  )
+  graphics::lines(ds[[2L]], col = cl[[2L]], lwd = 2, lty = 2)
+  graphics::legend(
+    "topright",
+    names(s),
+    col = cl,
+    lwd = 2,
+    lty = 1:2,
+    bty = "n"
+  )
+  invisible(NULL)
+}
+
+#' The effect line on balance: the largest standardised mean difference.
+#' @param v The result.
+#' @return Lines of text, possibly none.
+#' @noRd
+.bl_effect_smd <- function(v) {
+  out <- character()
+  smd <- .bl_eff_get(v, "smd") %||% .bl_eff_get(v, "smdafter")
+  if (!is.null(smd)) {
+    m <- max(abs(smd), na.rm = TRUE)
+    out <- c(
+      out,
+      sprintf(
+        paste0(
+          "Largest standardised mean difference %s: %s (below 0.1 is ",
+          "usually read as balanced)."
+        ),
+        .bl_num(m, 3L),
+        if (m < 0.1) "balanced" else "not balanced"
+      )
+    )
+  }
+  out
 }

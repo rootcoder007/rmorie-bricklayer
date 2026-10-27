@@ -4,78 +4,6 @@
 # options(morie.progress = TRUE)); milestone lines when stderr is not a
 # terminal; nothing when quiet. options(morie.quiet = TRUE) silences it.
 
-#' Tells whether a download should draw no progress line.
-#' @return `TRUE` when the session is quiet or not interactive and progress is
-#'   not forced on.
-#' @noRd
-.bl_dl_quiet <- function() {
-  isTRUE(getOption("morie.quiet")) ||
-    !(interactive() || isTRUE(getOption("morie.progress")))
-}
-
-#' Formats a byte count in B, KB, MB or GB.
-#' @param n The number of bytes.
-#' @return A string; \dQuote{?} for a count that is not finite.
-#' @noRd
-.bl_fmt_bytes <- function(n) {
-  if (!is.finite(n)) {
-    return("?")
-  }
-  units <- c("B", "KB", "MB", "GB")
-  i <- 1L
-  while (n >= 1024 && i < 4L) {
-    n <- n / 1024
-    i <- i + 1L
-  }
-  if (i == 1L) {
-    return(sprintf("%d B", as.integer(n)))
-  }
-  sprintf("%.1f %s", n, units[i])
-}
-
-#' Formats one line of a download progress display.
-#' @param label The text shown before the bar.
-#' @param got The amount received so far.
-#' @param size The total size, or a non-finite value when it is unknown (a
-#'   spinner is drawn).
-#' @param t0 The elapsed time at the start, from `proc.time()`.
-#' @param spin The spinner step.
-#' @param unit The unit of `got` and `size`; \code{"B"} formats them as bytes.
-#' @return A string.
-#' @noRd
-.bl_dl_line <- function(label, got, size, t0, spin, unit = "B") {
-  elapsed <- max(proc.time()[["elapsed"]] - t0, 1e-6)
-  fmt <- .bl_fmt_bytes
-  if (!identical(unit, "B")) {
-    fmt <- function(n) {
-      paste(format(round(n), big.mark = ",", scientific = FALSE), unit)
-    }
-  }
-  rate <- paste0(fmt(got / elapsed), "/s")
-  if (is.finite(size) && size > 0) {
-    pct <- min(100L, as.integer((100 * got) %/% size))
-    n <- pct %/% 4L
-    sprintf(
-      "%s  [%s%s] %3d%%  %s / %s  %s",
-      label,
-      strrep("#", n),
-      strrep(".", 25L - n),
-      pct,
-      fmt(got),
-      fmt(size),
-      rate
-    )
-  } else {
-    sprintf(
-      "%s  %s %s  %s",
-      label,
-      c("|", "/", "-", "\\")[spin %% 4L + 1L],
-      fmt(got),
-      rate
-    )
-  }
-}
-
 #' Download a file with live progress
 #'
 #' @description
@@ -181,8 +109,150 @@ bldl <- function(
   }
   dest <- .rmbl_string1(dest, "dest")
   quiet <- .rmbl_flag1(quiet, "quiet")
-  # the size only sizes the bar: text that is no number means no size, as
-  # before; a list, a data frame or a function is refused in words
+  size <- .bl_dl_size(size)
+  # a console that redraws a line in place: a terminal, or the RStudio, Positron
+  # or R.app console
+  auto_tty <- is.null(tty)
+  if (auto_tty) {
+    tty <- .bl_stderr_tty()
+  }
+  a <- .bl_dl_args(headers, tmout, maxbytes)
+  st <- .bl_dl_state(size, quiet, tty, auto_tty, label)
+  # a transfer that fails or is interrupted ends its bar with a cross
+  on.exit(if (!is.null(st$anim)) .bl_anim_done(st$anim, ok = FALSE), add = TRUE)
+  if (!quiet && !tty) {
+    .bl_dl_announce(label, size)
+  }
+  # The transport calls this about ten times a second with the bytes so far
+  # and the total the server announced (0 when it did not).
+  draw <- function(got, total) .bl_dl_draw(st, got, total)
+  got <- if (grepl("^file://", url, ignore.case = TRUE)) {
+    .bl_dl_file(url, dest, size, draw)
+  } else {
+    .bl_dl_net(url, dest, a, draw, quiet, label)
+  }
+  if (!quiet) {
+    .bl_dl_finish(st, got)
+  }
+  invisible(dest)
+}
+
+#' What bldl()'s progress callback updates between calls.
+#'
+#' The size once the server announces it, the bar, and the last milestone
+#' printed without a terminal.
+#' @param size,quiet,tty,label As for bldl(), checked.
+#' @param auto_tty Whether `tty` was detected rather than given.
+#' @return An environment.
+#' @noRd
+.bl_dl_state <- function(size, quiet, tty, auto_tty, label) {
+  t0 <- proc.time()[["elapsed"]]
+  st <- new.env(parent = emptyenv())
+  st$size <- size
+  st$mile <- 0L
+  st$anim <- NULL
+  st$quiet <- quiet
+  st$tty <- tty
+  st$auto_tty <- auto_tty
+  st$label <- label
+  st$t0 <- t0
+  st
+}
+
+#' Prints the line that starts a download when there is no terminal.
+#' @param label,size As for bldl().
+#' @return NULL, invisibly.
+#' @noRd
+.bl_dl_announce <- function(label, size) {
+  cat(
+    sprintf(
+      "%s: downloading%s\n",
+      label,
+      if (is.finite(size)) paste0(" ", .bl_fmt_bytes(size)) else ""
+    ),
+    file = stderr()
+  )
+  invisible(NULL)
+}
+
+#' Tells whether a download should draw no progress line.
+#' @return `TRUE` when the session is quiet or not interactive and progress is
+#'   not forced on.
+#' @noRd
+.bl_dl_quiet <- function() {
+  isTRUE(getOption("morie.quiet")) ||
+    !(interactive() || isTRUE(getOption("morie.progress")))
+}
+
+#' Formats a byte count in B, KB, MB or GB.
+#' @param n The number of bytes to format, `?` when not finite.
+#' @return A string; \dQuote{?} for a count that is not finite.
+#' @noRd
+.bl_fmt_bytes <- function(n) {
+  if (!is.finite(n)) {
+    return("?")
+  }
+  units <- c("B", "KB", "MB", "GB")
+  i <- 1L
+  while (n >= 1024 && i < 4L) {
+    n <- n / 1024
+    i <- i + 1L
+  }
+  if (i == 1L) {
+    return(sprintf("%d B", as.integer(n)))
+  }
+  sprintf("%.1f %s", n, units[i])
+}
+
+#' Formats one line of a download progress display.
+#' @param label The text shown before the bar.
+#' @param got The amount received so far.
+#' @param size The total size, or a non-finite value when it is unknown (a
+#'   spinner is drawn).
+#' @param t0 The elapsed time at the start, from `proc.time()`.
+#' @param spin The spinner step.
+#' @param unit The unit of `got` and `size`; \code{"B"} formats them as bytes.
+#' @return A string.
+#' @noRd
+.bl_dl_line <- function(label, got, size, t0, spin, unit = "B") {
+  elapsed <- max(proc.time()[["elapsed"]] - t0, 1e-6)
+  fmt <- .bl_fmt_bytes
+  if (!identical(unit, "B")) {
+    fmt <- function(n) {
+      paste(format(round(n), big.mark = ",", scientific = FALSE), unit)
+    }
+  }
+  rate <- sprintf("%s/s", fmt(got / elapsed))
+  if (is.finite(size) && size > 0) {
+    pct <- min(100L, as.integer((100 * got) %/% size))
+    n <- pct %/% 4L
+    sprintf(
+      "%s  [%s%s] %3d%%  %s / %s  %s",
+      label,
+      strrep("#", n),
+      strrep(".", 25L - n),
+      pct,
+      fmt(got),
+      fmt(size),
+      rate
+    )
+  } else {
+    sprintf(
+      "%s  %s %s  %s",
+      label,
+      c("|", "/", "-", "\\")[spin %% 4L + 1L],
+      fmt(got),
+      rate
+    )
+  }
+}
+
+#' The size the bar is drawn for: text that is no number means no size, as
+#' before; a list, a data frame or a function is refused in words.
+#' @param size As for bldl().
+#' @return The size, or NA.
+#' @noRd
+.bl_dl_size <- function(size) {
   size <- if (is.null(size)) {
     NA_real_
   } else if (is.character(size)) {
@@ -190,22 +260,21 @@ bldl <- function(
   } else {
     .rmbl_num(size, "size")[1L]
   }
-  if (!is.finite(size) || size <= 0) {
-    size <- NA_real_
-  }
-  # a console that redraws a line in place: a terminal, or the RStudio, Positron
-  # or R.app console
-  auto_tty <- is.null(tty)
-  if (auto_tty) {
-    tty <- .bl_stderr_tty()
-  }
+  if (!is.finite(size) || size <= 0) NA_real_ else size
+}
+
+#' bldl()'s headers, time limit and byte cap, checked.
+#' @param headers,tmout,maxbytes As for bldl().
+#' @return A list: hdr_lines, tmout and maxbytes.
+#' @noRd
+.bl_dl_args <- function(headers, tmout, maxbytes) {
   hdr_lines <- NULL
   if (!is.null(headers)) {
     if (
       !is.character(headers) ||
         anyNA(headers) ||
         is.null(names(headers)) ||
-        any(!nzchar(names(headers)))
+        !all(nzchar(names(headers)))
     ) {
       stop("`headers` must be a named character vector", call. = FALSE)
     }
@@ -222,160 +291,168 @@ bldl <- function(
   if (is.na(maxbytes) || maxbytes < 1) {
     stop("`maxbytes` must be a number of bytes, at least one", call. = FALSE)
   }
-  t0 <- proc.time()[["elapsed"]]
-  # what the progress callback updates between calls: the size once the server
-  # announces it, the bar, and the last milestone printed without a terminal
-  st <- new.env(parent = emptyenv())
-  st$size <- size
-  st$mile <- 0L
-  st$anim <- NULL
-  # a transfer that fails or is interrupted ends its bar with a cross
-  on.exit(if (!is.null(st$anim)) .bl_anim_done(st$anim, ok = FALSE), add = TRUE)
-  if (!quiet && !tty) {
+  list(hdr_lines = hdr_lines, tmout = tmout, maxbytes = maxbytes)
+}
+
+#' Draws the download's progress: the animated bar in a terminal, a line at
+#' each tenth (or each 50 MiB) otherwise.
+#' @param st The download's state.
+#' @param got The bytes so far.
+#' @param total The size the server announced (0 when it did not).
+#' @noRd
+.bl_dl_draw <- function(st, got, total) {
+  if (st$quiet) {
+    return(invisible(NULL))
+  }
+  if (is.na(st$size) && is.finite(total) && total > 0) {
+    st$size <- total
+  }
+  size <- st$size
+  if (st$tty) {
+    # the animated bar from the native renderer once the size is known; until
+    # then a spinner with the bytes so far
+    if (is.null(st$anim)) {
+      st$anim <- .bl_anim_new(
+        st$label,
+        if (is.finite(size)) size else 0,
+        quiet = FALSE,
+        tty = if (st$auto_tty) NULL else TRUE,
+        unit = "B"
+      )
+    }
+    st$anim$total <- if (is.finite(size)) size else 0
+    .bl_anim_update(st$anim, got, "")
+    return(invisible(NULL))
+  }
+  step <- if (is.finite(size)) {
+    as.integer((10 * got) %/% size)
+  } else {
+    as.integer(got %/% 52428800)
+  }
+  if (step > st$mile) {
+    st$mile <- step
     cat(
-      sprintf(
-        "%s: downloading%s\n",
-        label,
-        if (is.finite(size)) paste0(" ", .bl_fmt_bytes(size)) else ""
-      ),
+      "  ",
+      .bl_dl_line(st$label, got, size, st$t0, 0L),
+      "\n",
+      sep = "",
       file = stderr()
     )
   }
-  # The transport calls this about ten times a second with the bytes so far
-  # and the total the server announced (0 when it did not).
-  draw <- function(got, total) {
-    if (quiet) {
-      return(invisible(NULL))
+  invisible(NULL)
+}
+
+#' An offline test's local file, copied through the same bar.
+#' @param url The file:// address.
+#' @param dest The file the local source is copied to.
+#' @param size The size, or NA.
+#' @param draw The progress callback.
+#' @return The bytes copied.
+#' @noRd
+.bl_dl_file <- function(url, dest, size, draw) {
+  con <- file(sub("^file://", "", url, ignore.case = TRUE), open = "rb")
+  on.exit(close(con), add = TRUE)
+  out <- file(dest, open = "wb")
+  on.exit(close(out), add = TRUE)
+  got <- 0
+  repeat {
+    chunk <- readBin(con, what = "raw", n = 1048576L)
+    if (!length(chunk)) {
+      break
     }
-    if (is.na(st$size) && is.finite(total) && total > 0) {
-      st$size <- total
-    }
-    size <- st$size
-    if (tty) {
-      # the animated bar from the native renderer once the size is known; until
-      # then a spinner with the bytes so far
-      if (is.null(st$anim)) {
-        st$anim <- .bl_anim_new(
-          label,
-          if (is.finite(size)) size else 0,
-          quiet = FALSE,
-          tty = if (auto_tty) NULL else TRUE,
-          unit = "B"
-        )
-      }
-      st$anim$total <- if (is.finite(size)) size else 0
-      .bl_anim_update(st$anim, got, "")
-    } else {
-      step <- if (is.finite(size)) {
-        as.integer((10 * got) %/% size)
-      } else {
-        as.integer(got %/% 52428800)
-      }
-      if (step > st$mile) {
-        st$mile <- step
-        cat(
-          "  ",
-          .bl_dl_line(label, got, size, t0, 0L),
-          "\n",
-          sep = "",
-          file = stderr()
-        )
-      }
-    }
-    invisible(NULL)
+    writeBin(chunk, out)
+    got <- got + length(chunk)
+    draw(got, if (is.na(size)) 0 else size)
   }
-  if (grepl("^file://", url, ignore.case = TRUE)) {
-    # an offline test's local file, copied through the same bar
-    con <- file(sub("^file://", "", url, ignore.case = TRUE), open = "rb")
-    on.exit(close(con), add = TRUE)
-    out <- file(dest, open = "wb")
-    on.exit(close(out), add = TRUE)
-    got <- 0
-    repeat {
-      chunk <- readBin(con, what = "raw", n = 1048576L)
-      if (!length(chunk)) {
-        break
-      }
-      writeBin(chunk, out)
-      got <- got + length(chunk)
-      draw(got, if (is.na(size)) 0 else size)
+  got
+}
+
+#' A download through the package's transport.
+#'
+#' Every network byte of the package goes through src/rmbl_fetch.cpp: the URL is
+#' checked again there, resolved and pinned, every redirect hop is re-checked
+#' (no https -> http, credentials dropped across hosts) and the body is capped;
+#' base R's url() did none of that (0.5.7 review) a server busy for a moment
+#' (429, 500, 502, 503 or 504; data.rmorie.com answers 503 when many clients
+#' fetch one table at once) is asked again up to three times, after its
+#' Retry-After (at most a minute) or else 1, 2 and 4 seconds with jitter; any
+#' other answer is final
+#' @param url,dest,quiet,label As for bldl().
+#' @param a The checked arguments (.bl_dl_args()).
+#' @param draw The progress callback.
+#' @return The bytes written.
+#' @noRd
+.bl_dl_net <- function(url, dest, a, draw, quiet, label) {
+  for (i in 0:3) {
+    res <- .bl_http_download(
+      url,
+      dest,
+      as.integer(a$tmout),
+      a$hdr_lines,
+      draw,
+      a$maxbytes,
+      FALSE
+    )
+    if (i == 3L || !(res$status %in% c(429L, 500L, 502L, 503L, 504L))) {
+      break
     }
-  } else {
-    # every network byte of the package goes through src/rmbl_fetch.cpp: the URL
-    # is checked again there, resolved and pinned, every redirect hop is
-    # re-checked (no https -> http, credentials dropped across hosts) and the
-    # body is capped; base R's url() did none of that (0.5.7 review) a server
-    # busy for a moment (429, 500, 502, 503 or 504; data.rmorie.com answers 503
-    # when many clients fetch one table at once) is asked again up to three
-    # times, after its Retry-After (at most a minute) or else 1, 2 and 4 seconds
-    # with jitter; any other answer is final
-    for (i in 0:3) {
-      res <- .bl_http_download(
-        url,
-        dest,
-        as.integer(tmout),
-        hdr_lines,
-        draw,
-        maxbytes,
-        FALSE
-      )
-      if (i == 3L || !(res$status %in% c(429L, 500L, 502L, 503L, 504L))) {
-        break
-      }
-      wait <- .bl_wb_retry_after(res)
-      if (is.na(wait)) {
-        wait <- 2^i * (0.5 + (as.numeric(Sys.time()) * 1000) %% 1000 / 1000)
-      }
-      wait <- min(wait, 60)
-      if (!quiet) {
-        cat(
-          sprintf(
-            "%s: %s answered HTTP %d; trying again in %.0f s\n",
-            label,
-            url,
-            res$status,
-            wait
-          ),
-          file = stderr()
-        )
-      }
-      .bl_sleep(wait)
+    wait <- .bl_wb_retry_after(res)
+    if (is.na(wait)) {
+      wait <- 2^i * (0.5 + (as.numeric(Sys.time()) * 1000) %% 1000 / 1000)
     }
-    if (res$status < 0) {
-      stop(sprintf("bldl: %s: %s", url, res$error), call. = FALSE)
-    }
-    if (res$status >= 400) {
-      stop(sprintf("bldl: %s answered HTTP %d", url, res$status), call. = FALSE)
-    }
-    got <- res$bytes
-  }
-  if (!quiet) {
-    took <- proc.time()[["elapsed"]] - t0
-    if (!is.null(st$anim)) {
-      .bl_anim_done(
-        st$anim,
-        sprintf(
-          "%s: %s in %s",
-          label,
-          .bl_fmt_bytes(got),
-          .bl_fmt_elapsed(took)
-        )
-      )
-      st$anim <- NULL
-    } else {
+    wait <- min(wait, 60)
+    if (!quiet) {
       cat(
-        sprintf("%s: %s in %.0f s\n", label, .bl_fmt_bytes(got), took),
+        sprintf(
+          "%s: %s answered HTTP %d; trying again in %.0f s\n",
+          label,
+          url,
+          res$status,
+          wait
+        ),
         file = stderr()
       )
     }
+    .bl_sleep(wait)
   }
-  invisible(dest)
+  if (res$status < 0) {
+    stop(sprintf("bldl: %s: %s", url, res$error), call. = FALSE)
+  }
+  if (res$status >= 400) {
+    stop(sprintf("bldl: %s answered HTTP %d", url, res$status), call. = FALSE)
+  }
+  res$bytes
+}
+
+#' The download's closing line: the bar ended with a check, or a line.
+#' @param st The download's state.
+#' @param got The bytes written.
+#' @noRd
+.bl_dl_finish <- function(st, got) {
+  took <- proc.time()[["elapsed"]] - st$t0
+  if (!is.null(st$anim)) {
+    .bl_anim_done(
+      st$anim,
+      sprintf(
+        "%s: %s in %s",
+        st$label,
+        .bl_fmt_bytes(got),
+        .bl_fmt_elapsed(took)
+      )
+    )
+    st$anim <- NULL
+  } else {
+    cat(
+      sprintf("%s: %s in %.0f s\n", st$label, .bl_fmt_bytes(got), took),
+      file = stderr()
+    )
+  }
 }
 
 #' The one call into the native transport, named so a test can stand a reply in
 #' for it
-#' @param url The URL to fetch.
-#' @param dest The file to write.
+#' @param url The URL the native transport fetches.
+#' @param dest The file the response body is written to.
 #' @param tmout The timeout in seconds.
 #' @param headers The request headers.
 #' @param draw Whether to draw a progress line.

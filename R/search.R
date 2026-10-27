@@ -6,201 +6,6 @@
 # (LateralRange() and the rest); tests/testthat/test-search.R holds the two to
 # 1e-12.
 
-#' Stops with the calling function's name and a formatted message.
-#' @param fmt A sprintf() format.
-#' @param ... Values for the format.
-#' @return Does not return.
-#' @noRd
-.sr_stop <- function(fmt, ...) {
-  stop(.rmbl_fn(), sprintf(fmt, ...), call. = FALSE)
-}
-
-#' Checks a numeric search input and returns it as a double vector.
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
-#' @param scalar Whether a single number is required.
-#' @param min,max The range accepted.
-#' @param positive Whether the value must be above zero.
-#' @param whole Whether the value must be a whole number.
-#' @return A double vector, with the dimensions of `x` kept.
-#' @noRd
-.sr_num <- function(
-  x,
-  what,
-  scalar = TRUE,
-  min = -Inf,
-  max = Inf,
-  positive = FALSE,
-  whole = FALSE
-) {
-  if (is.logical(x) && !all(is.na(x))) {
-    .sr_stop("`%s` must be numeric, not logical", what)
-  }
-  v <- .rmbl_num_input(x, what, allow_null = FALSE)
-  if (!length(v)) {
-    .sr_stop("`%s` must have at least one value", what)
-  }
-  if (scalar && length(v) != 1L) {
-    .sr_stop("`%s` must be a single number", what)
-  }
-  if (anyNA(v) || any(!is.finite(v))) {
-    .sr_stop("`%s` must be finite, with no missing values", what)
-  }
-  if (positive && any(v <= 0)) {
-    .sr_stop("`%s` must be positive", what)
-  }
-  if (any(v < min | v > max)) {
-    .sr_stop(
-      "`%s` must be %s",
-      what,
-      if (is.finite(max)) {
-        sprintf("between %s and %s", format(min), format(max))
-      } else {
-        sprintf("at least %s", format(min))
-      }
-    )
-  }
-  if (whole && any(v != round(v))) {
-    .sr_stop("`%s` must be a whole number", what)
-  }
-  if (!is.null(dim(x))) {
-    dim(v) <- dim(x)
-  } else {
-    names(v) <- names(x)
-  }
-  v
-}
-
-#' Checks that grid edges or abscissae strictly increase.
-#' @param x The value passed by the user.
-#' @param what The argument's name, used in the error message.
-#' @return A double vector.
-#' @noRd
-.sr_incr <- function(x, what) {
-  v <- .sr_num(x, what, scalar = FALSE)
-  if (length(v) < 2L || is.unsorted(v, strictly = TRUE)) {
-    .sr_stop("`%s` must hold at least two strictly increasing values", what)
-  }
-  v
-}
-
-#' Checks containment probabilities: each in \[0, 1\], at least one positive,
-#' summing to at most 1.
-#' @param poc The value passed by the user.
-#' @return A double vector, with the dimensions of `poc` kept.
-#' @noRd
-.sr_poc <- function(poc) {
-  poc <- .sr_num(poc, "poc", scalar = FALSE, min = 0, max = 1)
-  if (sum(poc) > 1 + 1e-9) {
-    .sr_stop("`poc` must sum to at most 1, got %s", format(sum(poc)))
-  }
-  if (!any(poc > 0)) {
-    .sr_stop("`poc` must have at least one cell with a positive probability")
-  }
-  poc
-}
-
-#' The lateral range curve without input checks.
-#' @param x Lateral ranges.
-#' @param W Sweep width.
-#' @param model \code{"invcube"}, \code{"definite"} or \code{"mbeta"}.
-#' @param m The M-Beta height.
-#' @return Detection probabilities, one per `x`.
-#' @noRd
-.sr_lr <- function(x, W, model, m) {
-  a <- abs(x)
-  switch(
-    model,
-    definite = ifelse(a <= W / 2, 1, 0),
-    mbeta = ifelse(a <= W / (2 * m), m, 0),
-    invcube = ifelse(a == 0, 1, 1 - exp(-W^2 / (4 * pi * a^2)))
-  )
-}
-
-#' The lateral range curve seen through a normal cross-track navigation error.
-#'
-#' The convolution of the curve with a normal of standard deviation `navsd`
-#' (Frost 1996, equation 5-14): exact for the rectangular curves, the trapezoid
-#' rule on 641 points over 8 standard deviations either side for the inverse
-#' cube.
-#' @param x Lateral ranges.
-#' @param W Sweep width.
-#' @param model \code{"invcube"}, \code{"definite"} or \code{"mbeta"}.
-#' @param m The M-Beta height.
-#' @param navsd The navigation error's standard deviation.
-#' @return Detection probabilities, one per `x`.
-#' @noRd
-.sr_lr_nav <- function(x, W, model, m, navsd) {
-  if (navsd == 0) {
-    return(.sr_lr(x, W, model, m))
-  }
-  if (model != "invcube") {
-    h <- if (model == "mbeta") m else 1
-    r <- W / (2 * h)
-    return(h * (stats::pnorm((x + r) / navsd) - stats::pnorm((x - r) / navsd)))
-  }
-  # trapezoid over +-8 sd: Gauss-Hermite rippled once the error is as wide as
-  # the curve
-  t <- seq(-8, 8, length.out = 641) * navsd
-  w <- stats::dnorm(t, sd = navsd) * (t[2L] - t[1L])
-  drop(matrix(.sr_lr(outer(x, t, "-"), W, model, m), length(x)) %*% w)
-}
-
-#' Gauss-Hermite or Gauss-Legendre nodes and weights by the Golub-Welsch
-#' eigenvalue method.
-#' @param n The number of nodes.
-#' @param kind \code{"hermite"} or \code{"legendre"}.
-#' @return A list with nodes `t` and weights `w`.
-#' @noRd
-.sr_gauss <- function(n, kind) {
-  i <- seq_len(n - 1)
-  b <- if (kind == "hermite") sqrt(i / 2) else i / sqrt(4 * i^2 - 1)
-  J <- matrix(0, n, n)
-  J[cbind(i + 1, i)] <- b
-  J[cbind(i, i + 1)] <- b
-  e <- eigen(J, symmetric = TRUE)
-  o <- order(e$values)
-  list(
-    t = e$values[o],
-    w = (if (kind == "hermite") sqrt(pi) else 2) * e$vectors[1, o]^2
-  )
-}
-
-#' POD from coverage without input checks.
-#' @param cv Coverages.
-#' @param model \code{"random"}, \code{"definite"}, \code{"invcube"} or
-#'   \code{"mbeta"}.
-#' @param m The M-Beta height.
-#' @return The PODs.
-#' @noRd
-.sr_pod <- function(cv, model, m = 1) {
-  switch(
-    model,
-    random = 1 - exp(-cv),
-    definite = pmin(cv, 1),
-    invcube = 2 * stats::pnorm(sqrt(pi) * cv / 2 * sqrt(2)) - 1,
-    mbeta = ifelse(cv < m, cv, 1 - (1 - m)^(cv / m))
-  )
-}
-
-#' A model's name for a title.
-#' @param model The model code.
-#' @return A string.
-#' @noRd
-.sr_model_name <- function(model) {
-  c(
-    invcube = "inverse cube",
-    definite = "definite range",
-    mbeta = "M-Beta",
-    random = "random search",
-    corridor = "corridor",
-    general = "generalized",
-    point = "point",
-    line = "line",
-    area = "area"
-  )[[model]]
-}
-
 #' Search theory for search and rescue planning
 #'
 #' @description
@@ -287,7 +92,15 @@
 #' cell \code{i} is \code{z_i = (A_i / W) log(r_i / lambda)} where
 #' \code{r_i = POC_i W / A_i} exceeds \code{lambda}, and 0 elsewhere; the
 #' Lagrange multiplier \code{lambda} is found by bisection on its logarithm so
-#' that the efforts add up to \code{effort} (Stone 1975, chapter 2).
+#' that the efforts add up to \code{effort} (Stone 1975, chapter 2). It assumes
+#' random search detection in every cell (the exponential POD curve,
+#' \code{srchpod(model = "random")}), the conservative choice when the tracks
+#' are not laid evenly; a plan searched by parallel sweeps does at least as
+#' well.
+#'
+#' All distances (\code{x}, \code{W}, \code{S}, \code{navsd}, the grid
+#' edges, \code{center}, \code{end}, \code{sigma}, \code{effort}) are in one
+#' unit of your choice, and areas in its square.
 #'
 #' Every input is checked: numbers must be finite and of the right length,
 #' sweep widths, spacings and standard deviations positive, probabilities in
@@ -297,7 +110,10 @@
 #' @param x Numeric vector: lateral ranges (distances from the track), any
 #'   sign. For \code{swpwdth()}, strictly increasing abscissae, or an
 #'   \code{rmbl_ltrlrng} object (then \code{p} is taken from it).
-#' @param W Positive number: the sweep width.
+#' @param W Positive number: the sweep width, in the distance unit of the
+#'   grid and the effort (nautical miles, kilometres: one unit throughout). For
+#'   \code{srchpod()}, give it with \code{effort} and \code{area} in place of
+#'   \code{coverage}; default \code{NULL}.
 #' @param model For \code{ltrlrng()} and \code{pswppod()}: \code{"invcube"}
 #'   (the default), \code{"definite"} or \code{"mbeta"}. For
 #'   \code{srchpod()}: \code{"random"} (the default), \code{"definite"},
@@ -305,7 +121,10 @@
 #' @param m Number in (0, 1]: the M-Beta detection probability inside its
 #'   range. Default 1.
 #' @param p Numeric vector in \[0, 1\]: the lateral range curve at \code{x}.
-#' @param coverage Non-negative numeric vector of coverages.
+#' @param coverage Non-negative numeric vector of coverages (sweep width
+#'   times track length over the area searched; 1 means the effort equals the
+#'   area). Default \code{NULL}: then \code{W}, \code{effort} and \code{area}
+#'   give it, \code{W * effort / area}. Give one or the other, not both.
 #' @param S Positive number: the track spacing.
 #' @param navsd Non-negative number: the standard deviation of the
 #'   cross-track navigation error, in the units of \code{x}. Default 0.
@@ -313,25 +132,42 @@
 #'   (at least 3, raised to the next odd number; default 2001) and the tracks
 #'   on each side (at least 1; default 60).
 #' @param poc Numeric vector or matrix in \[0, 1\], summing to at most 1: the
-#'   probability that each area contains the object. For \code{opteffort()}
-#'   also an \code{rmbl_datummap} object from \code{datumpmap()}.
+#'   probability that each area contains the object (your own areas' shares,
+#'   for example from a consensus of the planners' scenarios). For
+#'   \code{srchscs()} and \code{opteffort()} also a probability map from
+#'   \code{datumpmap()}: its cells are the areas, in the order of
+#'   \code{as.vector(map$poc)}.
 #' @param pod Numeric vector in \[0, 1\], one per area, or a matrix with one
-#'   row per search and one column per area.
+#'   row per search and one column per area. When \code{poc} is a map, also a
+#'   matrix laid out like the map (one search, cell by cell), a
+#'   \code{srchpod()} result with one value per cell, or an
+#'   \code{opteffort()} result (its cells' PODs).
 #' @param xedg,yedg Strictly increasing numeric vectors: the cell edges of the
-#'   grid.
+#'   grid laid over your search area, east-west and north-south, in the
+#'   distance unit (\code{seq(-5, 5, by = 0.5)}: half-unit cells over ten
+#'   units). Cells may differ in size.
 #' @param datum \code{"point"} (the default), \code{"line"}, \code{"area"},
 #'   \code{"corridor"} or \code{"general"}.
-#' @param center Two numbers: the datum point, the start of a line datum or a
-#'   corner of an area datum. Default \code{c(0, 0)}.
+#' @param center Two numbers, x then y in the grid's coordinates: the datum
+#'   point (for example the last known position), the start of a line datum or
+#'   a corner of an area datum. Default \code{c(0, 0)}.
 #' @param sigma Positive number: the standard deviation of the circular normal
-#'   position error.
+#'   position error, in the distance unit (a total probable error \code{E} is
+#'   \code{1.1774 sigma}). Default 1.
 #' @param end Two numbers: the end of a line datum or the opposite corner of
 #'   an area datum; \code{NULL} for a point datum.
 #' @param nodes Whole number from 2 to 1000: Gauss-Legendre nodes along a line
 #'   datum. Default 64.
-#' @param effort Non-negative number: the total effort, as track length.
-#' @param area Positive numeric vector, one per cell: the cell areas. May be
-#'   \code{NULL} when \code{poc} is an \code{rmbl_datummap}.
+#' @param effort Non-negative number: the total effort, as track length (the
+#'   distance the searchers travel while searching, in the unit of \code{W}).
+#'   For \code{srchpod()}, the track length in each area, one number or one per
+#'   area (a matrix laid out like the map when \code{area} is one); default
+#'   \code{NULL}.
+#' @param area Positive numeric vector, one per cell: the cell areas, in the
+#'   square of the unit of \code{W}. May be \code{NULL} when \code{poc} is an
+#'   \code{rmbl_datummap} (its cells' areas are used). For \code{srchpod()},
+#'   the areas searched, or a map from \code{datumpmap()} whose cell areas are
+#'   taken; default \code{NULL}.
 #' @param tol Positive number: the bisection tolerance on log lambda.
 #' @param wts For \code{datum = "general"}: a non-negative matrix of cell
 #'   weights, one row per \code{y} cell and one column per \code{x} cell.
@@ -342,7 +178,9 @@
 #'   number. \code{srchscs()}: a list of class \code{rmbl_srchscs} with
 #'   \code{pos} (the probability of success), \code{posarea} (per area),
 #'   \code{pocupd} (the updated containment probabilities) and
-#'   \code{cumpod} (the cumulative POD per area). \code{datumpmap()}: a list
+#'   \code{cumpod} (the cumulative POD per area), and when \code{poc} is a
+#'   map, \code{map}: the map after the unsuccessful search, ready for
+#'   \code{opteffort()} and \code{plot()}. \code{datumpmap()}: a list
 #'   of class \code{rmbl_datummap} with \code{poc}, a matrix with one row
 #'   per \code{y} cell and one column per \code{x} cell, \code{outside}, and
 #'   the inputs. \code{optcrcsrch()}: a list of class \code{rmbl_optcrc} with
@@ -456,8 +294,26 @@
 #' plot(a)
 #' optcrcsrch(sigma = 2, W = 1, effort = 30)$pos
 #'
+#' # your own search, step by step: a last known position 2 km east and 3 km
+#' # north of the base, known to about 1.5 km, on a grid of 1 km cells
+#' own <- datumpmap(seq(-3, 7), seq(-2, 8), center = c(2, 3), sigma = 1.5)
+#' own
+#' # 0.6 km sweep width; 12 km of track walked in each of the four cells round
+#' # the position, none elsewhere
+#' walked <- matrix(0, nrow(own$poc), ncol(own$poc))
+#' walked[5:6, 5:6] <- 12
+#' pd <- srchpod(W = 0.6, effort = walked, area = own, model = "invcube")
+#' # the chance that search found the hiker, and the map if it did not
+#' day1 <- srchscs(own, pd)
+#' day1
+#' # the best use of tomorrow's 40 km on what is left
+#' day2 <- opteffort(day1$map, W = 0.6, effort = 40)
+#' day2
+#' plot(day1$map)
+#'
 #' # inputs that cannot be right are refused
 #' try(ltrlrng(1, W = -1))
+#' try(srchpod(1, W = 0.6))
 #' try(srchscs(c(0.8, 0.8), c(0.5, 0.5)))
 #' @export
 ltrlrng <- function(
@@ -505,12 +361,15 @@ swpwdth <- function(x, p = NULL) {
 #' @rdname ltrlrng
 #' @export
 srchpod <- function(
-  coverage,
+  coverage = NULL,
   model = c("random", "definite", "invcube", "mbeta"),
-  m = 1
+  m = 1,
+  W = NULL,
+  effort = NULL,
+  area = NULL
 ) {
   model <- .rmbl_arg(model)
-  cv <- as.vector(.sr_num(coverage, "coverage", scalar = FALSE, min = 0))
+  cv <- .sr_coverage(coverage, W, effort, area)
   m <- .sr_num(m, "m", positive = TRUE, min = 0, max = 1)
   structure(
     .sr_pod(cv, model, m),
@@ -584,16 +443,10 @@ pswppod <- function(
 #' @rdname ltrlrng
 #' @export
 srchscs <- function(poc, pod) {
-  poc <- as.vector(.sr_poc(poc))
-  pod <- .sr_num(pod, "pod", scalar = FALSE, min = 0, max = 1)
-  D <- if (is.matrix(pod)) pod else matrix(pod, 1)
-  if (ncol(D) != length(poc)) {
-    .sr_stop(
-      "`pod` must have one value (or column) per area of `poc` (%d), got %d",
-      length(poc),
-      ncol(D)
-    )
-  }
+  inp <- .sr_scs_inputs(poc, pod)
+  poc <- inp$poc
+  D <- inp$D
+  map <- inp$map
   cur <- poc
   for (k in seq_len(nrow(D))) {
     pos <- sum(cur * D[k, ])
@@ -611,13 +464,16 @@ srchscs <- function(poc, pod) {
   }
   cum <- 1 - apply(1 - D, 2, prod)
   structure(
-    list(
-      pos = sum(poc * cum),
-      posarea = poc * cum,
-      pocupd = cur,
-      cumpod = cum,
-      poc = poc,
-      nsrch = nrow(D)
+    c(
+      list(
+        pos = sum(poc * cum),
+        posarea = poc * cum,
+        pocupd = cur,
+        cumpod = cum,
+        poc = poc,
+        nsrch = nrow(D)
+      ),
+      if (!is.null(map)) list(map = .sr_map_update(map, cur))
     ),
     class = "rmbl_srchscs"
   )
@@ -653,84 +509,13 @@ datumpmap <- function(
   nodes <- .sr_num(nodes, "nodes", min = 2, max = 1000, whole = TRUE)
   nx <- length(xedg) - 1
   ny <- length(yedg) - 1
-  cell <- function(px, py) {
-    outer(
-      diff(stats::pnorm((yedg - py) / sigma)),
-      diff(stats::pnorm((xedg - px) / sigma))
-    )
-  }
   grid <- switch(
     datum,
-    point = cell(center[1], center[2]),
-    line = {
-      gl <- .sr_gauss(nodes, "legendre")
-      Reduce(
-        `+`,
-        lapply(seq_along(gl$t), function(k) {
-          f <- (gl$t[k] + 1) / 2
-          gl$w[k] /
-            2 *
-            cell(
-              center[1] + f * (end[1] - center[1]),
-              center[2] + f * (end[2] - center[2])
-            )
-        })
-      )
-    },
-    corridor = {
-      # ponytail: along x or y only; an oblique corridor needs a 2-D integral
-      # over each cell
-      hz <- center[2] == end[2]
-      if (!hz && center[1] != end[1]) {
-        .sr_stop("a corridor datum must run along x or along y")
-      }
-      if (identical(center, end)) {
-        .sr_stop("a corridor datum needs `center` and `end` to differ")
-      }
-      along <- function(e, a, b) {
-        pmax(0, pmin(b, e[-1]) - pmax(a, e[-length(e)])) / (b - a)
-      }
-      across <- function(e, c0) diff(stats::pnorm((e - c0) / sigma))
-      if (hz) {
-        xr <- sort(c(center[1], end[1]))
-        outer(across(yedg, center[2]), along(xedg, xr[1], xr[2]))
-      } else {
-        yr <- sort(c(center[2], end[2]))
-        outer(along(yedg, yr[1], yr[2]), across(xedg, center[1]))
-      }
-    },
-    general = {
-      if (is.null(wts)) {
-        .sr_stop("a general datum needs `wts`, a matrix of cell weights")
-      }
-      w <- .sr_num(wts, "wts", scalar = FALSE, min = 0)
-      if (!identical(dim(w), c(as.integer(ny), as.integer(nx)))) {
-        .sr_stop(
-          paste0(
-            "`wts` must be a matrix with one row per y cell (%d) and one ",
-            "column per x cell (%d)"
-          ),
-          ny,
-          nx
-        )
-      }
-      if (!any(w > 0)) {
-        .sr_stop("`wts` must have at least one positive weight")
-      }
-      w / sum(w)
-    },
-    area = {
-      xr <- sort(c(center[1], end[1]))
-      yr <- sort(c(center[2], end[2]))
-      if (diff(xr) <= 0 || diff(yr) <= 0) {
-        .sr_stop(
-          "an area datum needs `center` and `end` to differ in x and in y"
-        )
-      }
-      ox <- pmax(0, pmin(xr[2], xedg[-1]) - pmax(xr[1], xedg[-(nx + 1)]))
-      oy <- pmax(0, pmin(yr[2], yedg[-1]) - pmax(yr[1], yedg[-(ny + 1)]))
-      outer(oy, ox) / (diff(xr) * diff(yr))
-    }
+    point = .sr_datum_cell(xedg, yedg, sigma, center[1], center[2]),
+    line = .sr_datum_line(xedg, yedg, sigma, center, end, nodes),
+    corridor = .sr_datum_corridor(xedg, yedg, sigma, center, end),
+    general = .sr_datum_general(wts, nx, ny),
+    area = .sr_datum_area(xedg, yedg, center, end)
   )
   structure(
     list(
@@ -771,48 +556,15 @@ optcrcsrch <- function(sigma, W, effort) {
 #' @rdname ltrlrng
 #' @export
 opteffort <- function(poc, area = NULL, W, effort, tol = 1e-14) {
-  edges <- NULL
-  if (inherits(poc, "rmbl_datummap")) {
-    edges <- list(xedg = poc$xedg, yedg = poc$yedg)
-    if (is.null(area)) {
-      area <- outer(diff(poc$yedg), diff(poc$xedg))
-    }
-    poc <- poc$poc
-  }
-  poc <- .sr_poc(poc)
-  if (is.null(area)) {
-    .sr_stop("`area` must be given, one positive number per cell")
-  }
-  area <- .sr_num(area, "area", scalar = FALSE, positive = TRUE)
-  if (length(area) != length(poc)) {
-    .sr_stop(
-      "`area` must have one value per cell of `poc` (%d), got %d",
-      length(poc),
-      length(area)
-    )
-  }
+  pa <- .sr_opt_cells(poc, area)
+  poc <- pa$poc
+  area <- pa$area
+  edges <- pa$edges
   W <- .sr_num(W, "W", positive = TRUE)
   effort <- .sr_num(effort, "effort", min = 0)
   tol <- .sr_num(tol, "tol", positive = TRUE)
   r <- poc * W / area
-  total <- function(lam) sum(ifelse(r / lam > 1, area / W * log(r / lam), 0))
-  lo <- log(min(r[poc > 0])) - 50
-  # ponytail: rmorie's floor, lowered only for an effort it cannot hold (average
-  # coverage above 50)
-  while (total(exp(lo)) <= effort) {
-    lo <- lo - 50
-  }
-  hi <- log(max(r))
-  for (it in 1:400) {
-    mid <- (lo + hi) / 2
-    if (total(exp(mid)) > effort) {
-      lo <- mid
-    } else {
-      hi <- mid
-    }
-    if (hi - lo < tol) break
-  }
-  lam <- exp((lo + hi) / 2)
+  lam <- .sr_opt_lambda(r, poc, area, W, effort, tol)
   z <- ifelse(r / lam > 1, area / W * log(r / lam), 0)
   cov <- W * z / area
   pod <- 1 - exp(-cov)
@@ -837,139 +589,188 @@ opteffort <- function(poc, area = NULL, W, effort, tol = 1e-14) {
 # ---- print methods -----------------------------------------------------------
 
 #' @export
-print.rmbl_ltrlrng <- function(x, ...) {
-  d <- data.frame(range = attr(x, "x"), pod = signif(as.vector(unclass(x)), 6))
-  .rmbl_print_table(
+format.rmbl_ltrlrng <- function(x, ...) {
+  d <- data.frame(range = attr(x, "x"), pod = as.vector(unclass(x)))
+  h <- .an_head(d, 20L)
+  .an_block(
     "Lateral range curve",
-    utils::head(d, 20L),
-    notes = sprintf(
-      "%s model, sweep width W = %s%s%s",
-      .sr_model_name(attr(x, "model")),
-      format(attr(x, "W")),
-      if (attr(x, "model") == "mbeta") {
-        sprintf(", m = %s", format(attr(x, "m")))
-      } else {
-        ""
-      },
-      if (isTRUE(attr(x, "navsd") > 0)) {
-        sprintf(", navigation error sd %s", format(attr(x, "navsd")))
-      } else {
-        ""
-      }
+    facts = list(
+      Model = .sr_model_name(attr(x, "model")),
+      `Sweep width W` = attr(x, "W"),
+      `Ranges` = sprintf(
+        "%d, from %s to %s",
+        nrow(d),
+        .rmbl_fmt_num(min(d$range)),
+        .rmbl_fmt_num(max(d$range))
+      ),
+      `Highest pod` = max(d$pod)
     ),
-    footer = if (nrow(d) > 20L) sprintf("... and %d more", nrow(d) - 20L),
-    ...
+    tables = list(h$df),
+    reading = c(
+      .sr_lr_note(x),
+      "pod: the chance of detecting the object at that distance from the track."
+    ),
+    notes = c(
+      if (nrow(d) > 20L) sprintf("... and %d more", nrow(d) - 20L),
+      "The sweep width W is the area under this curve."
+    ),
+    digits = 6L
   )
-  invisible(x)
 }
 
 #' @export
-print.rmbl_srchpod <- function(x, ...) {
+format.rmbl_srchpod <- function(x, ...) {
   d <- data.frame(
     coverage = attr(x, "coverage"),
-    pod = signif(as.vector(unclass(x)), 6)
+    pod = as.vector(unclass(x))
   )
-  .rmbl_print_table(
+  h <- .an_head(d, 20L)
+  .an_block(
     "Probability of detection",
-    utils::head(d, 20L),
-    notes = sprintf(
-      "%s model%s",
-      .sr_model_name(attr(x, "model")),
-      if (attr(x, "model") == "mbeta") {
-        sprintf(", M = %s", format(attr(x, "m")))
-      } else {
-        ""
-      }
+    facts = list(
+      Model = .sr_model_name(attr(x, "model")),
+      M = if (attr(x, "model") == "mbeta") attr(x, "m"),
+      Coverages = nrow(d)
     ),
-    footer = if (nrow(d) > 20L) sprintf("... and %d more", nrow(d) - 20L),
-    ...
+    tables = list(h$df),
+    reading = c(
+      sprintf(
+        "%s model%s",
+        .sr_model_name(attr(x, "model")),
+        if (attr(x, "model") == "mbeta") {
+          sprintf(", M = %s", format(attr(x, "m")))
+        } else {
+          ""
+        }
+      ),
+      "Coverage is effort over area (sweep width x track length / area);",
+      "pod is the chance a search at that coverage finds the object."
+    ),
+    notes = if (nrow(d) > 20L) sprintf("... and %d more", nrow(d) - 20L),
+    digits = 6L
   )
-  invisible(x)
 }
 
 #' @export
-print.rmbl_srchscs <- function(x, ...) {
+format.rmbl_srchscs <- function(x, ...) {
   d <- data.frame(
     area = seq_along(x$poc),
-    poc = signif(x$poc, 4),
-    cumpod = signif(x$cumpod, 4),
-    posarea = signif(x$posarea, 4),
-    pocupd = signif(x$pocupd, 4)
+    poc = x$poc,
+    cumpod = x$cumpod,
+    posarea = x$posarea,
+    pocupd = x$pocupd
   )
-  .rmbl_print_table(
+  # a map's cells: the 20 most likely, the whole map is in x$map
+  big <- !is.null(x$map) && nrow(d) > 20L
+  if (big) {
+    d <- d[utils::head(order(d$poc, decreasing = TRUE), 20L), ]
+  }
+  .an_block(
     "Probability of success",
-    d,
-    notes = sprintf(
-      "POS %.4g after %d search%s",
-      x$pos,
-      x$nsrch,
-      if (x$nsrch == 1L) "" else "es"
+    facts = list(
+      Areas = length(x$poc),
+      Searches = x$nsrch,
+      `Overall POS` = x$pos,
+      Map = if (!is.null(x$map)) {
+        sprintf(
+          "%d x %d cells (x by y), updated in $map",
+          ncol(x$map$poc),
+          nrow(x$map$poc)
+        )
+      }
     ),
-    ...
+    tables = list(d),
+    notes = if (big) {
+      sprintf("The %d most likely of %d cells.", nrow(d), length(x$poc))
+    },
+    reading = c(
+      sprintf(
+        "POS %.4g after %d search%s",
+        x$pos,
+        x$nsrch,
+        if (x$nsrch == 1L) "" else "es"
+      ),
+      "poc: chance the object is in the area; cumpod: chance the searches",
+      "detect it there; pocupd: the poc after the searches found nothing."
+    ),
+    digits = 4L
   )
-  invisible(x)
 }
 
 #' @export
-print.rmbl_datummap <- function(x, ...) {
+format.rmbl_datummap <- function(x, ...) {
   p <- x$poc
   xc <- x$xedg[-1] - diff(x$xedg) / 2
   yc <- x$yedg[-1] - diff(x$yedg) / 2
   o <- utils::head(order(p, decreasing = TRUE), 5L)
-  d <- data.frame(x = xc[col(p)[o]], y = yc[row(p)[o]], poc = signif(p[o], 4))
-  .rmbl_print_table(
+  d <- data.frame(x = xc[col(p)[o]], y = yc[row(p)[o]], poc = p[o])
+  .an_block(
     sprintf("Datum probability map (%s datum)", x$datum),
-    d,
-    notes = c(
-      sprintf(
-        paste0(
-          "%d x %d cells (x by y); %.1f%% of the probability lies outside ",
-          "the grid"
-        ),
-        ncol(p),
-        nrow(p),
-        100 * x$outside
-      ),
-      "The most likely cells:"
+    facts = list(
+      Datum = .sr_model_name(x$datum),
+      Centre = toString(format(x$center)),
+      End = if (!is.null(x$end)) toString(format(x$end)),
+      Sigma = x$sigma,
+      Grid = sprintf("%d x %d cells (x by y)", ncol(p), nrow(p))
     ),
-    ...
+    tables = list(`The most likely cells` = d),
+    reading = sprintf(
+      paste0(
+        "%d x %d cells (x by y); %.1f%% of the probability lies outside ",
+        "the grid"
+      ),
+      ncol(p),
+      nrow(p),
+      100 * x$outside
+    ),
+    digits = 4L
   )
-  invisible(x)
 }
 
 #' @export
-print.rmbl_optcrc <- function(x, ...) {
-  cat(.rmbl_rule("Optimal search of a circular normal datum"), "\n")
-  cat(
-    .rmbl_kv(list(
+format.rmbl_optcrc <- function(x, ...) {
+  .an_block(
+    "Optimal search of a circular normal datum",
+    facts = list(
       sigma = x$sigma,
       W = x$W,
       effort = x$total,
       radius = signif(x$radius, 6),
       pos = signif(x$pos, 6),
       cntrdns = signif(x$cntrdns, 6)
-    )),
-    sep = "\n"
+    ),
+    reading = c(
+      sprintf(
+        "Spread the effort evenly over a circle of radius %.4g: the chance",
+        x$radius
+      ),
+      sprintf("of finding the object is then %.1f%%.", 100 * x$pos)
+    ),
+    notes = "cntrdns: the coverage at the centre of the circle."
   )
-  cat(.rmbl_rule(), "\n")
-  invisible(x)
 }
 
 #' @export
-print.rmbl_opteffort <- function(x, ...) {
+format.rmbl_opteffort <- function(x, ...) {
   used <- which(as.vector(x$effort) > 0)
   o <- utils::head(used[order(as.vector(x$poc)[used], decreasing = TRUE)], 20L)
   d <- data.frame(
     cell = o,
-    poc = signif(as.vector(x$poc)[o], 4),
-    effort = signif(as.vector(x$effort)[o], 4),
-    coverage = signif(as.vector(x$coverage)[o], 4),
-    pod = signif(as.vector(x$pod)[o], 4)
+    poc = as.vector(x$poc)[o],
+    effort = as.vector(x$effort)[o],
+    coverage = as.vector(x$coverage)[o],
+    pod = as.vector(x$pod)[o]
   )
-  .rmbl_print_table(
+  .an_block(
     "Optimal allocation of effort",
-    d,
-    notes = sprintf(
+    facts = list(
+      `Total effort` = x$total,
+      `Sweep width W` = x$W,
+      `Cells searched` = sprintf("%d of %d", length(used), length(x$poc)),
+      POS = x$pos
+    ),
+    tables = list(d),
+    reading = sprintf(
       "POS %.4g from effort %s over %d of %d cells (W = %s)",
       x$pos,
       format(x$total),
@@ -977,12 +778,415 @@ print.rmbl_opteffort <- function(x, ...) {
       length(x$poc),
       format(x$W)
     ),
-    footer = if (length(used) > 20L) {
+    notes = if (length(used) > 20L) {
       sprintf("... and %d more cells", length(used) - 20L)
     },
+    digits = 4L
+  )
+}
+
+#' @rdname plot-methods
+#' @param equiv Whether to draw the equivalent definite-range rectangle and the
+#'   A and B areas (figure 4-7 of the book).
+#' @param spacing NULL, or the distance to a second track, drawn beside the
+#'   first.
+#' @usage \method{plot}{rmbl_ltrlrng}(x, ..., equiv = FALSE, spacing = NULL,
+#'   main = NULL, col = NULL, palette = NULL)
+#' @export
+plot.rmbl_ltrlrng <- function(
+  x,
+  ...,
+  equiv = FALSE,
+  spacing = NULL,
+  main = NULL,
+  col = NULL,
+  palette = NULL
+) {
+  if (!is.numeric(x) || is.null(attr(x, "W"))) {
+    .sr_stop("`x` must be an rmbl_ltrlrng object, as ltrlrng() returns")
+  }
+  equiv <- .rmbl_flag1(equiv, "equiv")
+  W <- attr(x, "W")
+  model <- attr(x, "model")
+  m <- attr(x, "m")
+  navsd <- attr(x, "navsd") %||% 0
+  if (!is.null(spacing)) {
+    spacing <- .sr_num(spacing, "spacing", positive = TRUE)
+  }
+  lim <- max(
+    2 * W,
+    1.25 * W / (2 * (if (model == "mbeta") m else 1)),
+    abs(attr(x, "x"))
+  ) +
+    3 * navsd
+  xs <- seq(-lim, lim + (spacing %||% 0), length.out = 801)
+  cols <- .bl_cols(3, col, palette)
+  op <- .bl_par(c(0, 1))
+  on.exit(graphics::par(op), add = TRUE)
+  .sr_lr_axes(xs, equiv, model, W, navsd, main, ...)
+  if (!equiv && is.null(spacing)) {
+    graphics::abline(v = c(-W, W) / 2, col = "#8C8C8C", lty = 2)
+  }
+  d <- .sr_draw_lr(
+    xs,
+    W,
+    model,
+    m,
+    navsd,
+    cols,
+    equiv = isTRUE(equiv),
+    spacing = spacing
+  )
+  if (is.null(spacing)) {
+    graphics::points(
+      attr(x, "x"),
+      as.vector(unclass(x)),
+      pch = 21,
+      bg = cols[2L],
+      col = "white",
+      lwd = 1.5,
+      cex = 1.4
+    )
+  }
+  invisible(d)
+}
+
+#' @rdname plot-methods
+#' @param models Model codes (\code{"random"}, \code{"definite"},
+#'   \code{"invcube"}, \code{"mbeta"}), one curve each; NULL draws the fitted
+#'   model.
+#' @param m M-Beta heights, one curve each when \code{"mbeta"} is among the
+#'   models.
+#' @param cmax The largest coverage drawn.
+#' @usage \method{plot}{rmbl_srchpod}(x, ..., models = NULL, m = NULL,
+#'   cmax = NULL, main = NULL, col = NULL, palette = NULL)
+#' @export
+plot.rmbl_srchpod <- function(
+  x,
+  ...,
+  models = NULL,
+  m = NULL,
+  cmax = NULL,
+  main = NULL,
+  col = NULL,
+  palette = NULL
+) {
+  if (!is.numeric(x) || is.null(attr(x, "coverage"))) {
+    .sr_stop("`x` must be an rmbl_srchpod object, as srchpod() returns")
+  }
+  cv <- attr(x, "coverage")
+  mod <- attr(x, "model")
+  m0 <- attr(x, "m") %||% 1
+  if (is.null(models)) {
+    models <- c(mod, setdiff(c("random", "definite", "invcube"), mod))
+  }
+  models <- .rmbl_arg(
+    models,
+    c("random", "definite", "invcube", "mbeta"),
+    several = TRUE
+  )
+  rg <- .sr_pod_ranges(m, cmax, m0, cv)
+  ms <- rg$ms
+  cmax <- rg$cmax
+  cols <- .bl_cols(length(models) + length(ms), col, palette)
+  op <- .bl_par(c(0, 1))
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::plot(
+    c(0, cmax),
+    c(0, 1.05),
+    type = "n",
+    xlab = "",
+    ylab = "",
+    main = "",
     ...
   )
-  invisible(x)
+  .bl_ylab("Probability of detection")
+  .bl_xlab("Coverage")
+  .bl_title(.bl_main(main, "Probability of detection by coverage"))
+  .bl_grid(NULL)
+  d <- .sr_draw_pod(seq(0, cmax, length.out = 201), models, ms, cols)
+  if (mod %in% models) {
+    graphics::points(
+      cv,
+      .sr_pod(cv, mod, m0),
+      pch = 21,
+      bg = cols[match(mod, models)],
+      col = "white",
+      lwd = 1.5,
+      cex = 1.4
+    )
+  }
+  invisible(d)
+}
+
+#' @rdname plot-methods
+#' @param view \code{"map"} (the top view), \code{"persp"} (the surface),
+#'   \code{"both"} (side by side, in the book's colour bands) or \code{"cells"}
+#'   (the probability map as a grid of percentages).
+#' @param digits Decimal places of the percentages in the \code{"cells"} view.
+#' @usage \method{plot}{rmbl_datummap}(x, ...,
+#'   view = c("map", "persp", "both", "cells"), contours = 8L, digits = 2,
+#'   main = NULL, col = NULL, palette = NULL)
+#' @export
+plot.rmbl_datummap <- function(
+  x,
+  ...,
+  view = c("map", "persp", "both", "cells"),
+  contours = 8L,
+  digits = 2,
+  main = NULL,
+  col = NULL,
+  palette = NULL
+) {
+  .rmbl_plot_check(x, "rmbl_datummap")
+  view <- .rmbl_arg(view)
+  digits <- .sr_num(digits, "digits", min = 0, max = 6, whole = TRUE)
+  cols <- if (!is.null(col)) {
+    .bl_cols(length(col), col)
+  } else {
+    blpal(palette %||% "sequential", 64)
+  }
+  # the surface and its top view take the book's height bands unless colours are
+  # given
+  bands <- if (is.null(col) && is.null(palette)) .sr_bands() else cols
+  op <- .bl_par(x$yedg)
+  on.exit(graphics::par(op), add = TRUE)
+  ttl <- .bl_main(
+    main,
+    sprintf("Probability of containment, %s datum", .sr_model_name(x$datum))
+  )
+  # "both" takes the device as two panels, unless the caller set a layout: then
+  # the next two of its panels
+  own <- view == "both" && prod(graphics::par("mfrow")) == 1L
+  if (own) {
+    op2 <- .bl_par_set(mfrow = c(1L, 2L), oma = c(0, 0, 1.8, 0))
+    # undone before .bl_par()'s op, which restores the cex the layout reset
+    on.exit(graphics::par(op2), add = TRUE, after = FALSE)
+  }
+  .sr_map_views(x, view, contours, digits, bands, cols, ttl, ...)
+  if (own) {
+    graphics::mtext(
+      ttl,
+      side = 3,
+      outer = TRUE,
+      font = 2,
+      line = 0.3,
+      col = "#1F2430"
+    )
+  }
+  invisible(.sr_map_frame(x))
+}
+
+#' @rdname plot-methods
+#' @export
+plot.rmbl_opteffort <- function(
+  x,
+  ...,
+  main = NULL,
+  col = NULL,
+  palette = NULL
+) {
+  .rmbl_plot_check(x, "rmbl_opteffort")
+  ttl <- .bl_main(main, sprintf("Optimal effort, POS %.3f", x$pos))
+  if (!is.null(x$xedg)) {
+    return(invisible(.sr_opt_image(x, ttl, col, palette, ...)))
+  }
+  invisible(.sr_opt_bars(x, ttl, col, palette, ...))
+}
+
+#' Stops with the calling function's name and a formatted message.
+#' @param fmt A sprintf() format.
+#' @param ... Values for the format.
+#' @return Does not return.
+#' @noRd
+.sr_stop <- function(fmt, ...) {
+  stop(.rmbl_fn(), sprintf(fmt, ...), call. = FALSE)
+}
+
+#' Checks a numeric search input and returns it as a double vector.
+#' @param x The numeric search input, NA allowed only where checked.
+#' @param what The argument's name, quoted in each .sr_stop() error.
+#' @param scalar Whether exactly one number is required (default TRUE).
+#' @param min,max The range accepted.
+#' @param positive Whether every value must be above zero (default FALSE).
+#' @param whole Whether every value must be a whole number (default FALSE).
+#' @return A double vector, with the dimensions of `x` kept.
+#' @noRd
+.sr_num <- function(
+  x,
+  what,
+  scalar = TRUE,
+  min = -Inf,
+  max = Inf,
+  positive = FALSE,
+  whole = FALSE
+) {
+  if (is.logical(x) && !all(is.na(x))) {
+    .sr_stop("`%s` must be numeric, not logical", what)
+  }
+  v <- .rmbl_num_input(x, what, allow_null = FALSE)
+  if (!length(v)) {
+    .sr_stop("`%s` must have at least one value", what)
+  }
+  if (scalar && length(v) != 1L) {
+    .sr_stop("`%s` must be a single number", what)
+  }
+  if (anyNA(v) || !all(is.finite(v))) {
+    .sr_stop("`%s` must be finite, with no missing values", what)
+  }
+  if (positive && any(v <= 0)) {
+    .sr_stop("`%s` must be positive", what)
+  }
+  if (any(v < min | v > max)) {
+    .sr_stop(
+      "`%s` must be %s",
+      what,
+      if (is.finite(max)) {
+        sprintf("between %s and %s", format(min), format(max))
+      } else {
+        sprintf("at least %s", format(min))
+      }
+    )
+  }
+  if (whole && any(v != round(v))) {
+    .sr_stop("`%s` must be a whole number", what)
+  }
+  if (!is.null(dim(x))) {
+    dim(v) <- dim(x)
+  } else {
+    names(v) <- names(x)
+  }
+  v
+}
+
+#' Checks that grid edges or abscissae strictly increase.
+#' @param x The grid edges or abscissae, at least two and increasing.
+#' @param what The argument's name, quoted when the values do not increase.
+#' @return A double vector.
+#' @noRd
+.sr_incr <- function(x, what) {
+  v <- .sr_num(x, what, scalar = FALSE)
+  if (length(v) < 2L || is.unsorted(v, strictly = TRUE)) {
+    .sr_stop("`%s` must hold at least two strictly increasing values", what)
+  }
+  v
+}
+
+#' Checks containment probabilities: each in \[0, 1\], at least one positive,
+#' summing to at most 1.
+#' @param poc The value passed by the user.
+#' @return A double vector, with the dimensions of `poc` kept.
+#' @noRd
+.sr_poc <- function(poc) {
+  poc <- .sr_num(poc, "poc", scalar = FALSE, min = 0, max = 1)
+  if (sum(poc) > 1 + 1e-9) {
+    .sr_stop("`poc` must sum to at most 1, got %s", format(sum(poc)))
+  }
+  if (!any(poc > 0)) {
+    .sr_stop("`poc` must have at least one cell with a positive probability")
+  }
+  poc
+}
+
+#' The lateral range curve without input checks.
+#' @param x Lateral ranges.
+#' @param W Sweep width.
+#' @param model \code{"invcube"}, \code{"definite"} or \code{"mbeta"}.
+#' @param m The M-Beta height.
+#' @return Detection probabilities, one per `x`.
+#' @noRd
+.sr_lr <- function(x, W, model, m) {
+  a <- abs(x)
+  switch(
+    model,
+    definite = (a <= W / 2) * 1,
+    mbeta = ifelse(a <= W / (2 * m), m, 0),
+    invcube = ifelse(a == 0, 1, 1 - exp(-W^2 / (4 * pi * a^2)))
+  )
+}
+
+#' The lateral range curve seen through a normal cross-track navigation error.
+#'
+#' The convolution of the curve with a normal of standard deviation `navsd`
+#' (Frost 1996, equation 5-14): exact for the rectangular curves, the trapezoid
+#' rule on 641 points over 8 standard deviations either side for the inverse
+#' cube.
+#' @param x Lateral ranges.
+#' @param W Sweep width.
+#' @param model \code{"invcube"}, \code{"definite"} or \code{"mbeta"}.
+#' @param m The M-Beta height.
+#' @param navsd The navigation error's standard deviation.
+#' @return Detection probabilities, one per `x`.
+#' @noRd
+.sr_lr_nav <- function(x, W, model, m, navsd) {
+  if (navsd == 0) {
+    return(.sr_lr(x, W, model, m))
+  }
+  if (model != "invcube") {
+    h <- if (model == "mbeta") m else 1
+    r <- W / (2 * h)
+    return(h * (stats::pnorm((x + r) / navsd) - stats::pnorm((x - r) / navsd)))
+  }
+  # trapezoid over +-8 sd: Gauss-Hermite rippled once the error is as wide as
+  # the curve
+  t <- seq(-8, 8, length.out = 641) * navsd
+  w <- stats::dnorm(t, sd = navsd) * (t[2L] - t[1L])
+  drop(matrix(.sr_lr(outer(x, t, "-"), W, model, m), length(x)) %*% w)
+}
+
+#' Gauss-Hermite or Gauss-Legendre nodes and weights by the Golub-Welsch
+#' eigenvalue method.
+#' @param n The number of nodes.
+#' @param kind \code{"hermite"} or \code{"legendre"}.
+#' @return A list with nodes `t` and weights `w`.
+#' @noRd
+.sr_gauss <- function(n, kind) {
+  i <- seq_len(n - 1)
+  b <- if (kind == "hermite") sqrt(i / 2) else i / sqrt(4 * i^2 - 1)
+  J <- matrix(0, n, n)
+  J[cbind(i + 1, i)] <- b
+  J[cbind(i, i + 1)] <- b
+  e <- eigen(J, symmetric = TRUE)
+  o <- order(e$values)
+  list(
+    t = e$values[o],
+    w = (if (kind == "hermite") sqrt(pi) else 2) * e$vectors[1, o]^2
+  )
+}
+
+#' POD from coverage without input checks.
+#' @param cv Coverages.
+#' @param model \code{"random"}, \code{"definite"}, \code{"invcube"} or
+#'   \code{"mbeta"}.
+#' @param m The M-Beta height.
+#' @return The PODs.
+#' @noRd
+.sr_pod <- function(cv, model, m = 1) {
+  switch(
+    model,
+    random = 1 - exp(-cv),
+    definite = pmin(cv, 1),
+    invcube = 2 * stats::pnorm(sqrt(pi) * cv / 2 * sqrt(2)) - 1,
+    mbeta = ifelse(cv < m, cv, 1 - (1 - m)^(cv / m))
+  )
+}
+
+#' A model's name for a title.
+#' @param model The model code.
+#' @return A string.
+#' @noRd
+.sr_model_name <- function(model) {
+  c(
+    invcube = "inverse cube",
+    definite = "definite range",
+    mbeta = "M-Beta",
+    random = "random search",
+    corridor = "corridor",
+    general = "generalized",
+    point = "point",
+    line = "line",
+    area = "area"
+  )[[model]]
 }
 
 # ---- plot methods ------------------------------------------------------------
@@ -1019,43 +1223,7 @@ print.rmbl_opteffort <- function(x, ...) {
   }
   p <- .sr_lr_nav(xs, W, model, m, navsd)
   if (equiv) {
-    # Frost's figure 4-7: A, missed inside the sweep width (light), B, seen
-    # outside it (dark)
-    inn <- abs(xs) <= W / 2
-    graphics::polygon(
-      c(xs[inn], rev(xs[inn])),
-      c(p[inn], rep(1, sum(inn))),
-      col = "#E3E3E3",
-      border = NA
-    )
-    for (o in list(xs < -W / 2, xs > W / 2)) {
-      graphics::polygon(
-        c(xs[o], rev(xs[o])),
-        c(p[o], rep(0, sum(o))),
-        col = "#9A9A9A",
-        border = NA
-      )
-    }
-    graphics::rect(-W / 2, 0, W / 2, 1, border = "#3D4350", lty = 2)
-    ax <- c(-0.38, 0.38) * W
-    graphics::text(ax, 0.86, "A", font = 2, col = "#1F2430")
-    graphics::text(c(-0.62, 0.62) * W, 0.07, "B", font = 2, col = "#1F2430")
-    graphics::arrows(
-      c(-0.3, 0.3) * W,
-      0.2,
-      c(-0.5, 0.5) * W,
-      0.2,
-      length = 0.07
-    )
-    graphics::text(0, 0.2, "SWEEP WIDTH", cex = 0.7)
-    graphics::text(
-      0,
-      1.11,
-      "Missed within the sweep width (A)",
-      cex = 0.75,
-      xpd = NA
-    )
-    graphics::arrows(c(-0.3, 0.3) * W, 1.08, ax, 0.9, length = 0.06, xpd = NA)
+    .sr_draw_lr_equiv(xs, p, W)
   }
   if (is.null(spacing)) {
     .bl_line(xs, p, cols[1L], label = FALSE, points = FALSE)
@@ -1073,97 +1241,6 @@ print.rmbl_opteffort <- function(x, ...) {
   graphics::lines(xs, p2, col = cols[2L], lwd = 2.4, lty = 2)
   graphics::abline(v = c(0, spacing), col = "#8C8C8C", lty = 3)
   data.frame(x = xs, p = p, p2 = p2, pod = pod)
-}
-
-#' @rdname plot-methods
-#' @param equiv Whether to draw the equivalent definite-range rectangle and the
-#'   A and B areas (figure 4-7 of the book).
-#' @param spacing NULL, or the distance to a second track, drawn beside the
-#'   first.
-#' @usage \method{plot}{rmbl_ltrlrng}(x, ..., equiv = FALSE, spacing = NULL,
-#'   main = NULL, col = NULL, palette = NULL)
-#' @export
-plot.rmbl_ltrlrng <- function(
-  x,
-  ...,
-  equiv = FALSE,
-  spacing = NULL,
-  main = NULL,
-  col = NULL,
-  palette = NULL
-) {
-  if (!is.numeric(x) || is.null(attr(x, "W"))) {
-    .sr_stop("`x` must be an rmbl_ltrlrng object, as ltrlrng() returns")
-  }
-  W <- attr(x, "W")
-  model <- attr(x, "model")
-  m <- attr(x, "m")
-  navsd <- attr(x, "navsd") %||% 0
-  if (!is.null(spacing)) {
-    spacing <- .sr_num(spacing, "spacing", positive = TRUE)
-  }
-  lim <- max(
-    2 * W,
-    1.25 * W / (2 * (if (model == "mbeta") m else 1)),
-    abs(attr(x, "x"))
-  ) +
-    3 * navsd
-  xs <- seq(-lim, lim + (spacing %||% 0), length.out = 801)
-  cols <- .bl_cols(3, col, palette)
-  op <- .bl_par(c(0, 1))
-  on.exit(graphics::par(op), add = TRUE)
-  graphics::plot(
-    range(xs),
-    c(0, if (isTRUE(equiv)) 1.13 else 1.05),
-    type = "n",
-    xlab = "",
-    ylab = "",
-    main = "",
-    ...
-  )
-  .bl_ylab("Probability of detection")
-  .bl_xlab(
-    if (isTRUE(equiv)) {
-      "Lateral range (B: detected outside the sweep width)"
-    } else {
-      "Lateral range (distance from the track)"
-    }
-  )
-  .bl_title(.bl_main(
-    main,
-    sprintf(
-      "Lateral range curve, %s, W = %s%s",
-      .sr_model_name(model),
-      format(W),
-      if (navsd > 0) sprintf(", navigation error %s", format(navsd)) else ""
-    )
-  ))
-  .bl_grid(NULL)
-  if (!equiv && is.null(spacing)) {
-    graphics::abline(v = c(-W, W) / 2, col = "#8C8C8C", lty = 2)
-  }
-  d <- .sr_draw_lr(
-    xs,
-    W,
-    model,
-    m,
-    navsd,
-    cols,
-    equiv = isTRUE(equiv),
-    spacing = spacing
-  )
-  if (is.null(spacing)) {
-    graphics::points(
-      attr(x, "x"),
-      as.vector(unclass(x)),
-      pch = 21,
-      bg = cols[2L],
-      col = "white",
-      lwd = 1.5,
-      cex = 1.4
-    )
-  }
-  invisible(d)
 }
 
 #' Draws POD-by-coverage curves on an open frame.
@@ -1208,97 +1285,8 @@ plot.rmbl_ltrlrng <- function(
       )
     }
   }
-  lab <- ifelse(
-    spec$model == "mbeta",
-    sprintf("M-Beta (M = %s)", as.character(spec$m)),
-    vapply(spec$model, .sr_model_name, "")
-  )
-  graphics::legend(
-    "bottomright",
-    legend = lab,
-    col = cols,
-    lwd = c(2.4, rep(2, nrow(spec) - 1L)),
-    lty = c(1, 1 + seq_len(nrow(spec) - 1L) %% 5L),
-    bty = "n",
-    cex = 0.8,
-    inset = 0.02
-  )
+  .sr_pod_legend(spec, cols)
   d
-}
-
-#' @rdname plot-methods
-#' @param models Model codes (\code{"random"}, \code{"definite"},
-#'   \code{"invcube"}, \code{"mbeta"}), one curve each; NULL draws the fitted
-#'   model.
-#' @param m M-Beta heights, one curve each when \code{"mbeta"} is among the
-#'   models.
-#' @param cmax The largest coverage drawn.
-#' @usage \method{plot}{rmbl_srchpod}(x, ..., models = NULL, m = NULL,
-#'   cmax = NULL, main = NULL, col = NULL, palette = NULL)
-#' @export
-plot.rmbl_srchpod <- function(
-  x,
-  ...,
-  models = NULL,
-  m = NULL,
-  cmax = NULL,
-  main = NULL,
-  col = NULL,
-  palette = NULL
-) {
-  if (!is.numeric(x) || is.null(attr(x, "coverage"))) {
-    .sr_stop("`x` must be an rmbl_srchpod object, as srchpod() returns")
-  }
-  cv <- attr(x, "coverage")
-  mod <- attr(x, "model")
-  m0 <- attr(x, "m") %||% 1
-  if (is.null(models)) {
-    models <- c(mod, setdiff(c("random", "definite", "invcube"), mod))
-  }
-  models <- .rmbl_arg(
-    models,
-    c("random", "definite", "invcube", "mbeta"),
-    several = TRUE
-  )
-  ms <- if (is.null(m)) {
-    m0
-  } else {
-    .sr_num(m, "m", scalar = FALSE, positive = TRUE, min = 0, max = 1)
-  }
-  cmax <- if (is.null(cmax)) {
-    max(2, 1.1 * cv)
-  } else {
-    .sr_num(cmax, "cmax", positive = TRUE)
-  }
-  cols <- .bl_cols(length(models) + length(ms), col, palette)
-  op <- .bl_par(c(0, 1))
-  on.exit(graphics::par(op), add = TRUE)
-  graphics::plot(
-    c(0, cmax),
-    c(0, 1.05),
-    type = "n",
-    xlab = "",
-    ylab = "",
-    main = "",
-    ...
-  )
-  .bl_ylab("Probability of detection")
-  .bl_xlab("Coverage")
-  .bl_title(.bl_main(main, "Probability of detection by coverage"))
-  .bl_grid(NULL)
-  d <- .sr_draw_pod(seq(0, cmax, length.out = 201), models, ms, cols)
-  if (mod %in% models) {
-    graphics::points(
-      cv,
-      .sr_pod(cv, mod, m0),
-      pch = 21,
-      bg = cols[match(mod, models)],
-      col = "white",
-      lwd = 1.5,
-      cex = 1.4
-    )
-  }
-  invisible(d)
 }
 
 #' Cell centres of a map.
@@ -1343,37 +1331,7 @@ plot.rmbl_srchpod <- function(
       labcex = 0.7
     )
   }
-  mark <- "#D55E00"
-  switch(
-    x$datum,
-    point = graphics::points(
-      x$center[1],
-      x$center[2],
-      pch = 3,
-      cex = 1.6,
-      lwd = 2,
-      col = mark
-    ),
-    line = ,
-    corridor = graphics::segments(
-      x$center[1],
-      x$center[2],
-      x$end[1],
-      x$end[2],
-      lwd = 2.4,
-      col = mark
-    ),
-    area = graphics::rect(
-      x$center[1],
-      x$center[2],
-      x$end[1],
-      x$end[2],
-      lwd = 2,
-      border = mark
-    ),
-    general = NULL
-  )
-  invisible(NULL)
+  .sr_map_mark(x)
 }
 
 #' The book's height bands: blue base, maroon, yellow, cyan, purple, salmon,
@@ -1529,12 +1487,382 @@ plot.rmbl_srchpod <- function(
   lab <- sprintf(paste0("%.", digits, "f%%"), 100 * as.vector(x$poc))
   cw <- min(diff(x$xedg))
   ch <- min(diff(x$yedg))
-  cex <- min(
-    1.2,
-    0.8 * cw / max(graphics::strwidth(lab, cex = 1)),
-    0.45 * ch / graphics::strheight("0", cex = 1)
-  )
+  cex <- .sr_cells_cex(lab, cw, ch)
   yt <- rep(.sr_mid(x$yedg), nx)
+  yt <- .sr_cells_line(x, yt, cw, cex)
+  graphics::rect(
+    rep(x$xedg[-(nx + 1L)], each = ny),
+    rep(x$yedg[-(ny + 1L)], nx),
+    rep(x$xedg[-1L], each = ny),
+    rep(x$yedg[-1L], nx),
+    border = "#1F2430",
+    lwd = 2
+  )
+  graphics::text(
+    rep(.sr_mid(x$xedg), each = ny),
+    yt,
+    lab,
+    cex = cex,
+    col = "#1F2430"
+  )
+  if (!is.null(circle)) {
+    .sr_cells_circle(circle, cex)
+  }
+  invisible(cex)
+}
+
+#' The probability that a point datum spread by `sigma` lies in each cell.
+#' @param xedg,yedg,sigma As for datumpmap().
+#' @param px,py The point.
+#' @return A matrix, one row per y cell.
+#' @noRd
+.sr_datum_cell <- function(xedg, yedg, sigma, px, py) {
+  outer(
+    diff(stats::pnorm((yedg - py) / sigma)),
+    diff(stats::pnorm((xedg - px) / sigma))
+  )
+}
+
+#' datumpmap()'s line datum: point datums spread along the segment.
+#' @param xedg,yedg,sigma,center,end,nodes As for datumpmap(), checked.
+#' @return A matrix, one row per y cell.
+#' @noRd
+.sr_datum_line <- function(xedg, yedg, sigma, center, end, nodes) {
+  gl <- .sr_gauss(nodes, "legendre")
+  Reduce(
+    `+`,
+    lapply(seq_along(gl$t), function(k) {
+      f <- (gl$t[k] + 1) / 2
+      gl$w[k] /
+        2 *
+        .sr_datum_cell(
+          xedg,
+          yedg,
+          sigma,
+          center[1] + f * (end[1] - center[1]),
+          center[2] + f * (end[2] - center[2])
+        )
+    })
+  )
+}
+
+#' datumpmap()'s corridor datum, along x or along y.
+#' @param xedg,yedg,sigma,center,end As for datumpmap(), checked.
+#' @return A matrix, one row per y cell.
+#' @noRd
+.sr_datum_corridor <- function(xedg, yedg, sigma, center, end) {
+  # ponytail: along x or y only; an oblique corridor needs a 2-D integral
+  # over each cell
+  hz <- center[2] == end[2]
+  if (!hz && center[1] != end[1]) {
+    .sr_stop("a corridor datum must run along x or along y")
+  }
+  if (identical(center, end)) {
+    .sr_stop("a corridor datum needs `center` and `end` to differ")
+  }
+  along <- function(e, a, b) {
+    pmax(0, pmin(b, e[-1]) - pmax(a, e[-length(e)])) / (b - a)
+  }
+  across <- function(e, c0) diff(stats::pnorm((e - c0) / sigma))
+  if (hz) {
+    xr <- sort(c(center[1], end[1]))
+    outer(across(yedg, center[2]), along(xedg, xr[1], xr[2]))
+  } else {
+    yr <- sort(c(center[2], end[2]))
+    outer(along(yedg, yr[1], yr[2]), across(xedg, center[1]))
+  }
+}
+
+#' datumpmap()'s general datum: the caller's cell weights, normalised.
+#' @param wts As for datumpmap().
+#' @param nx,ny The numbers of x and y cells.
+#' @return A matrix, one row per y cell.
+#' @noRd
+.sr_datum_general <- function(wts, nx, ny) {
+  if (is.null(wts)) {
+    .sr_stop("a general datum needs `wts`, a matrix of cell weights")
+  }
+  w <- .sr_num(wts, "wts", scalar = FALSE, min = 0)
+  if (!identical(dim(w), c(as.integer(ny), as.integer(nx)))) {
+    .sr_stop(
+      paste0(
+        "`wts` must be a matrix with one row per y cell (%d) and one ",
+        "column per x cell (%d)"
+      ),
+      ny,
+      nx
+    )
+  }
+  if (!any(w > 0)) {
+    .sr_stop("`wts` must have at least one positive weight")
+  }
+  w / sum(w)
+}
+
+#' datumpmap()'s area datum: uniform over the rectangle.
+#' @param xedg,yedg,center,end As for datumpmap(), checked.
+#' @return A matrix, one row per y cell.
+#' @noRd
+.sr_datum_area <- function(xedg, yedg, center, end) {
+  nx <- length(xedg) - 1
+  ny <- length(yedg) - 1
+  xr <- sort(c(center[1], end[1]))
+  yr <- sort(c(center[2], end[2]))
+  if (diff(xr) <= 0 || diff(yr) <= 0) {
+    .sr_stop(
+      "an area datum needs `center` and `end` to differ in x and in y"
+    )
+  }
+  ox <- pmax(0, pmin(xr[2], xedg[-1]) - pmax(xr[1], xedg[-(nx + 1)]))
+  oy <- pmax(0, pmin(yr[2], yedg[-1]) - pmax(yr[1], yedg[-(ny + 1)]))
+  outer(oy, ox) / (diff(xr) * diff(yr))
+}
+
+#' srchscs()'s containment and detection probabilities, checked: a map gives
+#' its cells' containment, an allocation its cells' PODs.
+#' @param poc,pod As for srchscs().
+#' @return A list: poc (a vector), D (one row per search) and map (the
+#'   rmbl_datummap given, or NULL).
+#' @noRd
+.sr_scs_inputs <- function(poc, pod) {
+  map <- if (inherits(poc, "rmbl_datummap")) poc
+  if (!is.null(map)) {
+    poc <- map$poc
+  }
+  if (inherits(pod, "rmbl_opteffort")) {
+    pod <- pod$pod
+  }
+  # a POD matrix laid out like the map is one search, cell by cell
+  if (!is.null(map) && identical(dim(pod), dim(map$poc))) {
+    pod <- as.vector(pod)
+  }
+  poc <- as.vector(.sr_poc(poc))
+  pod <- .sr_num(pod, "pod", scalar = FALSE, min = 0, max = 1)
+  D <- if (is.matrix(pod)) pod else matrix(pod, 1)
+  if (ncol(D) != length(poc)) {
+    .sr_stop(
+      "`pod` must have one value (or column) per area of `poc` (%d), got %d",
+      length(poc),
+      ncol(D)
+    )
+  }
+  list(poc = poc, D = D, map = map)
+}
+
+#' A probability map after an unsuccessful search: the cells' updated
+#' containment, and the share outside the grid that makes the map sum to 1.
+#' @param map The rmbl_datummap searched.
+#' @param cur The updated containment, one per cell, in the map's cell order.
+#' @return The rmbl_datummap, its poc and outside updated.
+#' @noRd
+.sr_map_update <- function(map, cur) {
+  map$poc[] <- cur
+  map$outside <- 1 - sum(cur)
+  map
+}
+
+#' srchpod()'s coverages: given, or from sweep width, effort and area.
+#' @param coverage,W,effort,area As for srchpod().
+#' @return A double vector of coverages.
+#' @noRd
+.sr_coverage <- function(coverage, W, effort, area) {
+  parts <- !vapply(list(W, effort, area), is.null, NA)
+  if (!is.null(coverage)) {
+    if (any(parts)) {
+      .sr_stop("give either `coverage` or `W`, `effort` and `area`, not both")
+    }
+    return(as.vector(.sr_num(coverage, "coverage", scalar = FALSE, min = 0)))
+  }
+  if (!all(parts)) {
+    .sr_stop("give `coverage`, or all three of `W`, `effort` and `area`")
+  }
+  W <- .sr_num(W, "W", positive = TRUE)
+  if (inherits(area, "rmbl_datummap")) {
+    area <- outer(diff(area$yedg), diff(area$xedg))
+  }
+  effort <- as.vector(.sr_num(effort, "effort", scalar = FALSE, min = 0))
+  area <- as.vector(.sr_num(area, "area", scalar = FALSE, positive = TRUE))
+  if (length(effort) != length(area) && min(length(effort), length(area)) > 1) {
+    .sr_stop(
+      "`effort` and `area` must have the same length, or one of them length 1"
+    )
+  }
+  W * effort / area
+}
+
+#' opteffort()'s cells: their probabilities and areas, checked.
+#' @param poc,area As for opteffort().
+#' @return A list: poc, area and edges (the map's edges, or NULL).
+#' @noRd
+.sr_opt_cells <- function(poc, area) {
+  edges <- NULL
+  if (inherits(poc, "rmbl_datummap")) {
+    edges <- list(xedg = poc$xedg, yedg = poc$yedg)
+    if (is.null(area)) {
+      area <- outer(diff(poc$yedg), diff(poc$xedg))
+    }
+    poc <- poc$poc
+  }
+  poc <- .sr_poc(poc)
+  if (is.null(area)) {
+    .sr_stop("`area` must be given, one positive number per cell")
+  }
+  area <- .sr_num(area, "area", scalar = FALSE, positive = TRUE)
+  if (length(area) != length(poc)) {
+    .sr_stop(
+      "`area` must have one value per cell of `poc` (%d), got %d",
+      length(poc),
+      length(area)
+    )
+  }
+  list(poc = poc, area = area, edges = edges)
+}
+
+#' opteffort()'s Lagrange multiplier, by bisection on its logarithm.
+#' @param r The cells' detection rates per unit effort.
+#' @param poc,area,W,effort,tol As for opteffort(), checked.
+#' @return The multiplier.
+#' @noRd
+.sr_opt_lambda <- function(r, poc, area, W, effort, tol) {
+  total <- function(lam) sum(ifelse(r / lam > 1, area / W * log(r / lam), 0))
+  lo <- log(min(r[poc > 0])) - 50
+  # ponytail: rmorie's floor, lowered only for an effort it cannot hold (average
+  # coverage above 50)
+  while (total(exp(lo)) <= effort) {
+    lo <- lo - 50
+  }
+  hi <- log(max(r))
+  for (it in 1:400) {
+    mid <- (lo + hi) / 2
+    if (total(exp(mid)) > effort) {
+      lo <- mid
+    } else {
+      hi <- mid
+    }
+    if (hi - lo < tol) break
+  }
+  exp((lo + hi) / 2)
+}
+
+#' Shades the areas of Frost's sweep-width figure under a lateral range curve.
+#' @param xs,p The curve.
+#' @param W The sweep width.
+#' @return NULL, invisibly.
+#' @noRd
+.sr_draw_lr_equiv <- function(xs, p, W) {
+  # Frost's figure 4-7: A, missed inside the sweep width (light), B, seen
+  # outside it (dark)
+  inn <- abs(xs) <= W / 2
+  graphics::polygon(
+    c(xs[inn], rev(xs[inn])),
+    c(p[inn], rep(1, sum(inn))),
+    col = "#E3E3E3",
+    border = NA
+  )
+  for (o in list(xs < -W / 2, xs > W / 2)) {
+    graphics::polygon(
+      c(xs[o], rev(xs[o])),
+      c(p[o], rep(0, sum(o))),
+      col = "#9A9A9A",
+      border = NA
+    )
+  }
+  graphics::rect(-W / 2, 0, W / 2, 1, border = "#3D4350", lty = 2)
+  ax <- c(-0.38, 0.38) * W
+  graphics::text(ax, 0.86, "A", font = 2, col = "#1F2430")
+  graphics::text(c(-0.62, 0.62) * W, 0.07, "B", font = 2, col = "#1F2430")
+  graphics::arrows(
+    c(-0.3, 0.3) * W,
+    0.2,
+    c(-0.5, 0.5) * W,
+    0.2,
+    length = 0.07
+  )
+  graphics::text(0, 0.2, "SWEEP WIDTH", cex = 0.7)
+  graphics::text(
+    0,
+    1.11,
+    "Missed within the sweep width (A)",
+    cex = 0.75,
+    xpd = NA
+  )
+  graphics::arrows(c(-0.3, 0.3) * W, 1.08, ax, 0.9, length = 0.06, xpd = NA)
+  invisible(NULL)
+}
+
+#' The legend of the probability-of-detection curves.
+#' @param spec The curves drawn: model and m.
+#' @param cols Their colours.
+#' @return NULL, invisibly.
+#' @noRd
+.sr_pod_legend <- function(spec, cols) {
+  lab <- ifelse(
+    spec$model == "mbeta",
+    sprintf("M-Beta (M = %s)", as.character(spec$m)),
+    vapply(spec$model, .sr_model_name, "")
+  )
+  graphics::legend(
+    "bottomright",
+    legend = lab,
+    col = cols,
+    lwd = c(2.4, rep(2, nrow(spec) - 1L)),
+    lty = c(1, 1 + seq_len(nrow(spec) - 1L) %% 5L),
+    bty = "n",
+    cex = 0.8,
+    inset = 0.02
+  )
+  invisible(NULL)
+}
+
+#' Marks the datum on the top view of a probability map.
+#' @param x The rmbl_datummap.
+#' @return NULL, invisibly.
+#' @noRd
+.sr_map_mark <- function(x) {
+  mark <- "#D55E00"
+  switch(
+    x$datum,
+    point = graphics::points(
+      x$center[1],
+      x$center[2],
+      pch = 3,
+      cex = 1.6,
+      lwd = 2,
+      col = mark
+    ),
+    line = ,
+    corridor = graphics::segments(
+      x$center[1],
+      x$center[2],
+      x$end[1],
+      x$end[2],
+      lwd = 2.4,
+      col = mark
+    ),
+    area = graphics::rect(
+      x$center[1],
+      x$center[2],
+      x$end[1],
+      x$end[2],
+      lwd = 2,
+      border = mark
+    ),
+    general = NULL
+  )
+  invisible(NULL)
+}
+
+#' Draws a corridor's datum line across the cells, and moves the labels it
+#' would cover.
+#' @param x The rmbl_datummap.
+#' @param yt The labels' heights.
+#' @param cw The narrowest cell's width.
+#' @param cex The labels' size.
+#' @return The labels' heights.
+#' @noRd
+.sr_cells_line <- function(x, yt, cw, cex) {
+  ny <- nrow(x$poc)
+  nx <- ncol(x$poc)
   line <- if (x$datum == "corridor") x$center[2] else NA_real_
   if (!is.na(line) && x$center[2] == x$end[2]) {
     on <- rep(x$yedg[-(ny + 1L)] < line & x$yedg[-1L] > line, nx)
@@ -1557,90 +1885,106 @@ plot.rmbl_srchpod <- function(
       xpd = NA
     )
   }
-  graphics::rect(
-    rep(x$xedg[-(nx + 1L)], each = ny),
-    rep(x$yedg[-(ny + 1L)], nx),
-    rep(x$xedg[-1L], each = ny),
-    rep(x$yedg[-1L], nx),
-    border = "#1F2430",
-    lwd = 2
-  )
-  graphics::text(
-    rep(.sr_mid(x$xedg), each = ny),
-    yt,
-    lab,
-    cex = cex,
-    col = "#1F2430"
-  )
-  if (!is.null(circle)) {
-    a <- seq(0, 2 * pi, length.out = 181)
-    graphics::lines(
-      circle[1] + circle[3] * cos(a),
-      circle[2] + circle[3] * sin(a),
-      lty = 2,
-      col = "#1F2430"
-    )
-    graphics::arrows(
-      circle[1],
-      circle[2],
-      circle[1] + circle[3] * cos(-pi / 4),
-      circle[2] + circle[3] * sin(-pi / 4),
-      length = 0.05
-    )
-    graphics::text(
-      circle[1] + 0.35 * circle[3],
-      circle[2] - 0.55 * circle[3],
-      "E",
-      font = 3,
-      cex = cex
-    )
-  }
-  invisible(cex)
+  yt
 }
 
-#' @rdname plot-methods
-#' @param view \code{"map"} (the top view), \code{"persp"} (the surface),
-#'   \code{"both"} (side by side, in the book's colour bands) or \code{"cells"}
-#'   (the probability map as a grid of percentages).
-#' @param digits Decimal places of the percentages in the \code{"cells"} view.
-#' @usage \method{plot}{rmbl_datummap}(x, ...,
-#'   view = c("map", "persp", "both", "cells"), contours = 8L, digits = 2,
-#'   main = NULL, col = NULL, palette = NULL)
-#' @export
-plot.rmbl_datummap <- function(
-  x,
-  ...,
-  view = c("map", "persp", "both", "cells"),
-  contours = 8L,
-  digits = 2,
-  main = NULL,
-  col = NULL,
-  palette = NULL
-) {
-  .rmbl_plot_check(x, "rmbl_datummap")
-  view <- .rmbl_arg(view)
-  digits <- .sr_num(digits, "digits", min = 0, max = 6, whole = TRUE)
-  cols <- if (!is.null(col)) {
-    .bl_cols(length(col), col)
-  } else {
-    blpal(palette %||% "sequential", 64)
-  }
-  # the surface and its top view take the book's height bands unless colours are
-  # given
-  bands <- if (is.null(col) && is.null(palette)) .sr_bands() else cols
-  op <- .bl_par(x$yedg)
-  on.exit(graphics::par(op), add = TRUE)
-  ttl <- .bl_main(
-    main,
-    sprintf("Probability of containment, %s datum", .sr_model_name(x$datum))
+#' Draws the circle of a search radius over the cells.
+#' @param circle The centre's x and y, and the radius.
+#' @param cex The labels' size.
+#' @return NULL, invisibly.
+#' @noRd
+.sr_cells_circle <- function(circle, cex) {
+  a <- seq(0, 2 * pi, length.out = 181)
+  graphics::lines(
+    circle[1] + circle[3] * cos(a),
+    circle[2] + circle[3] * sin(a),
+    lty = 2,
+    col = "#1F2430"
   )
-  # "both" takes the device as two panels, unless the caller set a layout: then
-  # the next two of its panels
-  own <- view == "both" && prod(graphics::par("mfrow")) == 1L
-  if (own) {
-    op2 <- graphics::par(mfrow = c(1L, 2L), oma = c(0, 0, 1.8, 0))
-    on.exit(graphics::par(op2), add = TRUE)
+  graphics::arrows(
+    circle[1],
+    circle[2],
+    circle[1] + circle[3] * cos(-pi / 4),
+    circle[2] + circle[3] * sin(-pi / 4),
+    length = 0.05
+  )
+  graphics::text(
+    circle[1] + 0.35 * circle[3],
+    circle[2] - 0.55 * circle[3],
+    "E",
+    font = 3,
+    cex = cex
+  )
+  invisible(NULL)
+}
+
+#' plot.rmbl_ltrlrng()'s empty plot, labels, title and grid.
+#' @param xs The ranges drawn.
+#' @param equiv,main As for plot.rmbl_ltrlrng().
+#' @param model,W,navsd The curve's model, sweep width and navigation error.
+#' @param ... Passed to plot() for the lateral range curve's empty frame.
+#' @return NULL, invisibly.
+#' @noRd
+.sr_lr_axes <- function(xs, equiv, model, W, navsd, main, ...) {
+  graphics::plot(
+    range(xs),
+    c(0, if (isTRUE(equiv)) 1.13 else 1.05),
+    type = "n",
+    xlab = "",
+    ylab = "",
+    main = "",
+    ...
+  )
+  .bl_ylab("Probability of detection")
+  .bl_xlab(
+    if (isTRUE(equiv)) {
+      "Lateral range (B: detected outside the sweep width)"
+    } else {
+      "Lateral range (distance from the track)"
+    }
+  )
+  .bl_title(.bl_main(
+    main,
+    sprintf(
+      "Lateral range curve, %s, W = %s%s",
+      .sr_model_name(model),
+      format(W),
+      if (navsd > 0) sprintf(", navigation error %s", format(navsd)) else ""
+    )
+  ))
+  .bl_grid(NULL)
+  invisible(NULL)
+}
+
+#' plot.rmbl_srchpod()'s M-Beta heights and largest coverage, checked.
+#' @param m,cmax As for plot.rmbl_srchpod().
+#' @param m0 The fitted curve's M-Beta height.
+#' @param cv The fitted coverage.
+#' @return A list: ms and cmax.
+#' @noRd
+.sr_pod_ranges <- function(m, cmax, m0, cv) {
+  ms <- if (is.null(m)) {
+    m0
+  } else {
+    .sr_num(m, "m", scalar = FALSE, positive = TRUE, min = 0, max = 1)
   }
+  cmax <- if (is.null(cmax)) {
+    max(2, 1.1 * cv)
+  } else {
+    .sr_num(cmax, "cmax", positive = TRUE)
+  }
+  list(ms = ms, cmax = cmax)
+}
+
+#' plot.rmbl_datummap()'s views, drawn in the panels already set up.
+#' @param x The rmbl_datummap.
+#' @param view,contours,digits As for plot.rmbl_datummap(), checked.
+#' @param bands,cols The colours of the surface and of the map.
+#' @param ttl The map or surface title, drawn above the single view.
+#' @param ... Passed to image() for the datum map view.
+#' @return NULL, invisibly.
+#' @noRd
+.sr_map_views <- function(x, view, contours, digits, bands, cols, ttl, ...) {
   if (view %in% c("persp", "both")) {
     .sr_draw_persp(x, bands)
     .bl_title(if (view == "both") "Probability density" else ttl)
@@ -1657,77 +2001,80 @@ plot.rmbl_datummap <- function(
     .sr_draw_cells(x, digits)
     .bl_title(ttl)
   }
-  if (own) {
-    graphics::mtext(
-      ttl,
-      side = 3,
-      outer = TRUE,
-      font = 2,
-      line = 0.3,
-      col = "#1F2430"
-    )
-  }
+  invisible(NULL)
+}
+
+#' A probability map's cells as a table: centres and probabilities.
+#' @param x The rmbl_datummap.
+#' @return A data frame: x, y and poc.
+#' @noRd
+.sr_map_frame <- function(x) {
   xc <- .sr_mid(x$xedg)
   yc <- .sr_mid(x$yedg)
-  invisible(data.frame(
+  data.frame(
     x = rep(xc, times = length(yc)),
     y = rep(yc, each = length(xc)),
     poc = as.vector(t(x$poc))
+  )
+}
+
+#' plot.rmbl_opteffort()'s map of the effort over the grid's cells.
+#' @param x The rmbl_opteffort, with the grid's edges.
+#' @param ttl The title of the effort map.
+#' @param col,palette As for plot.rmbl_opteffort().
+#' @param ... Passed to image() for the effort map.
+#' @return A data frame: x, y and effort, invisibly.
+#' @noRd
+.sr_opt_image <- function(x, ttl, col, palette, ...) {
+  xc <- .sr_mid(x$xedg)
+  yc <- .sr_mid(x$yedg)
+  z <- t(matrix(x$effort, length(yc), length(xc)))
+  cols <- if (!is.null(col)) {
+    .bl_cols(length(col), col)
+  } else {
+    blpal(palette %||% "sequential", 64)
+  }
+  op <- .bl_par(yc)
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::image(
+    x$xedg,
+    x$yedg,
+    z,
+    col = c("#F4F5F7", cols),
+    xlab = "x",
+    ylab = "",
+    main = "",
+    ...
+  )
+  .bl_title(ttl)
+  .bl_ylab("y")
+  if (length(xc) > 1L && length(yc) > 1L && any(z > 0)) {
+    graphics::contour(
+      xc,
+      yc,
+      z,
+      levels = max(z) * 1e-9,
+      drawlabels = FALSE,
+      add = TRUE,
+      col = "#D55E00",
+      lwd = 2
+    )
+  }
+  invisible(data.frame(
+    x = rep(xc, times = length(yc)),
+    y = rep(yc, each = length(xc)),
+    effort = as.vector(z)
   ))
 }
 
-#' @rdname plot-methods
-#' @export
-plot.rmbl_opteffort <- function(
-  x,
-  ...,
-  main = NULL,
-  col = NULL,
-  palette = NULL
-) {
-  .rmbl_plot_check(x, "rmbl_opteffort")
-  ttl <- .bl_main(main, sprintf("Optimal effort, POS %.3f", x$pos))
-  if (!is.null(x$xedg)) {
-    xc <- .sr_mid(x$xedg)
-    yc <- .sr_mid(x$yedg)
-    z <- t(matrix(x$effort, length(yc), length(xc)))
-    cols <- if (!is.null(col)) {
-      .bl_cols(length(col), col)
-    } else {
-      blpal(palette %||% "sequential", 64)
-    }
-    op <- .bl_par(yc)
-    on.exit(graphics::par(op), add = TRUE)
-    graphics::image(
-      x$xedg,
-      x$yedg,
-      z,
-      col = c("#F4F5F7", cols),
-      xlab = "x",
-      ylab = "",
-      main = "",
-      ...
-    )
-    .bl_title(ttl)
-    .bl_ylab("y")
-    if (length(xc) > 1L && length(yc) > 1L && any(z > 0)) {
-      graphics::contour(
-        xc,
-        yc,
-        z,
-        levels = max(z) * 1e-9,
-        drawlabels = FALSE,
-        add = TRUE,
-        col = "#D55E00",
-        lwd = 2
-      )
-    }
-    return(invisible(data.frame(
-      x = rep(xc, times = length(yc)),
-      y = rep(yc, each = length(xc)),
-      effort = as.vector(z)
-    )))
-  }
+#' plot.rmbl_opteffort()'s bars of the effort in each cell.
+#' @param x The rmbl_opteffort.
+#' @param ttl The title of the effort bar chart.
+#' @param col,palette As for plot.rmbl_opteffort().
+#' @param ... Passed to barplot().
+#' @return A data frame: cell, effort and pod, invisibly.
+#' @noRd
+.sr_opt_bars <- function(x, ttl, col, palette, ...) {
   e <- as.vector(x$effort)
   lab <- names(x$poc) %||% as.character(seq_along(e))
   cols <- .bl_cols(1, col, palette)
@@ -1746,4 +2093,40 @@ plot.rmbl_opteffort <- function(
   .bl_ylab("Effort (track length)")
   .bl_xlab("Cell")
   invisible(data.frame(cell = lab, effort = e, pod = as.vector(x$pod)))
+}
+
+#' The size of the cells' labels: as large as fits the smallest cell.
+#' @param lab The labels.
+#' @param cw,ch The smallest cell's width and height.
+#' @return The size.
+#' @noRd
+.sr_cells_cex <- function(lab, cw, ch) {
+  min(
+    1.2,
+    0.8 * cw / max(graphics::strwidth(lab, cex = 1)),
+    0.45 * ch / graphics::strheight("0", cex = 1)
+  )
+}
+
+#' The settings line of a lateral range curve: its model, sweep width, M and
+#' navigation error.
+#' @param x The ltrlrng() result.
+#' @return One string.
+#' @noRd
+.sr_lr_note <- function(x) {
+  sprintf(
+    "%s model, sweep width W = %s%s%s",
+    .sr_model_name(attr(x, "model")),
+    format(attr(x, "W")),
+    if (attr(x, "model") == "mbeta") {
+      sprintf(", m = %s", format(attr(x, "m")))
+    } else {
+      ""
+    },
+    if (isTRUE(attr(x, "navsd") > 0)) {
+      sprintf(", navigation error sd %s", format(attr(x, "navsd")))
+    } else {
+      ""
+    }
+  )
 }

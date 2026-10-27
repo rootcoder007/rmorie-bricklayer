@@ -13,14 +13,18 @@ test_that(
   ),
   {
     expect_message(
-      out <- to(c(a = 1, b = 2), keep_vec_names = TRUE),
+      {
+        out <- to(c(a = 1, b = 2), keep_vec_names = TRUE)
+      },
       "keep_vec_names"
     )
     expect_identical(out, '{"a":1,"b":2}')
     expect_message(to(c(a = "x"), keep_vec_names = TRUE), "keep_vec_names")
     expect_message(to(c(a = TRUE), keep_vec_names = TRUE), "keep_vec_names")
     expect_message(
-      out <- to(factor(c(a = "u")), keep_vec_names = TRUE),
+      {
+        out <- to(factor(c(a = "u")), keep_vec_names = TRUE)
+      },
       "keep_vec_names"
     )
     expect_identical(out, '{"a":"u"}')
@@ -204,7 +208,12 @@ test_that("parser rejects what yajl rejects, with a position", {
   # the literal lives in a variable: deparsing U+FEFF into a test label is
   # itself a translation warning in a C locale
   bom_txt <- paste0(rawToChar(as.raw(c(0xef, 0xbb, 0xbf))), "[1]")
-  expect_warning(v <- fromjs(bom_txt), "byte-order-mark")
+  expect_warning(
+    {
+      v <- fromjs(bom_txt)
+    },
+    "byte-order-mark"
+  )
   expect_identical(v, 1L)
   expect_identical(fromjs("\x1e[1]"), 1L)
   expect_identical(fromjs("\"\\ud83d\\ude00\""), "\U0001F600")
@@ -247,12 +256,16 @@ test_that(
   ),
   {
     expect_warning(
-      df <- fromjs('[{"_row":"a","x":1},{"_row":"a","x":2}]'),
+      {
+        df <- fromjs('[{"_row":"a","x":1},{"_row":"a","x":2}]')
+      },
       "Duplicate names"
     )
     expect_identical(row.names(df), c("a", "a.1"))
     expect_warning(
-      df2 <- fromjs('[{"_row":1,"x":1},{"_row":1,"x":2}]'),
+      {
+        df2 <- fromjs('[{"_row":1,"x":1},{"_row":1,"x":2}]')
+      },
       "Duplicate names"
     )
     expect_identical(row.names(df2), c("1", "2"))
@@ -287,7 +300,7 @@ test_that("serializer covers every storage mode digest of an R object needs", {
   expect_identical(rt(as.name("sym")), as.name("sym"))
   expect_identical(rt(expression(a * 2)), expression(a * 2))
   expect_identical(rt(sum), sum)
-  expect_true(is.environment(rt(new.env())))
+  expect_type(rt(new.env()), "environment")
   expect_identical(
     rt(structure(1:3, dim = 3L, myattr = "k")),
     structure(1:3, dim = 3L, myattr = "k")
@@ -335,7 +348,13 @@ test_that("unbox edge cases", {
     '{"t":"2024-05-06 07:08:09"}'
   )
   expect_identical(
-    to(list(d = bricklayer_json_unbox(data.frame(a = 1, b = "x")))),
+    to(list(
+      d = bricklayer_json_unbox(data.frame(
+        a = 1,
+        b = "x",
+        stringsAsFactors = FALSE
+      ))
+    )),
     '{"d":{"a":1,"b":"x"}}'
   )
 })

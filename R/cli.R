@@ -6,199 +6,6 @@
 # directory on PATH (an R package cannot install executables itself,
 # and it only does so when the user calls instcli()).
 
-#' Calls interactive(), so that tests can mock it.
-#'
-#' interactive() is a primitive: tests cannot mock it in the installed package,
-#' so they mock this
-#' @return `interactive()`.
-#' @noRd
-.bl_interactive <- function() interactive()
-
-#' Signals an interrupt condition and stops.
-#'
-#' Ctrl-C at a prompt read by a shell child: the same condition R raises for its
-#' own interrupt, so the command exits 130 (128 + SIGINT) and not as a usage
-#' error
-#' @return Does not return.
-#' @noRd
-.bl_signal_interrupt <- function() {
-  signalCondition(structure(
-    class = c("interrupt", "condition"),
-    list(message = "interrupted", call = NULL)
-  ))
-  stop("interrupted", call. = FALSE)
-}
-#' Tells whether standard input is a terminal.
-#' @return TRUE or FALSE.
-#' @noRd
-.bl_stdin_tty <- function() isatty(stdin())
-#' Finds a program on PATH, /bin or /usr/bin without starting a child process.
-#'
-#' A program in the usual places, found without a child process: Sys.which()
-#' runs one, and R ignores SIGINT while a child runs (as system() does), so a
-#' Ctrl-C landing there killed only the child. Sys.which(\code{"sh"}) came back
-#' \code{""}, the prompt fell back to a blocking read of stdin that ignores
-#' Ctrl-C, and the command waited at the prompt (a Ctrl-C 0.18 s after start,
-#' 2026-10-14). The search runs over PATH, as the shell does, then /bin and
-#' /usr/bin: /bin and /usr/bin alone missed stty on a NixOS-style layout, so the
-#' key was echoed as it was typed (network stress test of 5e1dce5).
-#' @param name The program's file name.
-#' @return The program's path, or \code{""} when it is not found.
-#' @noRd
-.bl_find_program <- function(name) {
-  dirs <- c(
-    strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed = TRUE)[[1L]],
-    "/bin",
-    "/usr/bin"
-  )
-  p <- file.path(unique(dirs[nzchar(dirs)]), name)
-  p <- p[file.exists(p) & !dir.exists(p)]
-  p <- p[file.access(p, 1L) == 0L]
-  if (length(p)) p[[1L]] else ""
-}
-#' Tells whether a program can be found by `.bl_find_program()`.
-#' @param name The program's file name.
-#' @return TRUE or FALSE.
-#' @noRd
-.bl_have_program <- function(name) nzchar(.bl_find_program(name))
-#' Tells whether standard output is a terminal.
-#' @return TRUE or FALSE.
-#' @noRd
-.bl_stdout_tty <- function() isatty(stdout())
-
-#' Reads one typed line for a prompt.
-#'
-#' One typed line for a prompt (the key of `login --token`, the emailed code).
-#' The launchers run Rscript, where readline() returns \code{""} at once, so
-#' outside an interactive session read one line of stdin: typed at a terminal,
-#' or piped (`echo KEY | rmbl login --token` keeps the key out of the shell
-#' history). Closed or empty stdin gives \code{""}.
-#' @param prompt The prompt text.
-#' @param con A connection to read from instead of the terminal or standard
-#'   input, or NULL.
-#' @param secret Whether the line is a key, read without echo at a terminal.
-#' @return The line, trimmed; \code{""} for closed or empty input.
-#' @noRd
-.bl_readline <- function(prompt, con = NULL, secret = FALSE) {
-  # a key typed at a terminal is not echoed (stty, where there is one);
-  # elsewhere it is read as any other line, which is what piping `echo KEY |`
-  # relies on
-  hide <- isTRUE(secret) &&
-    is.null(con) &&
-    .Platform$OS.type == "unix" &&
-    .bl_stdin_tty() &&
-    .bl_have_program("stty")
-  if (.bl_interactive()) {
-    if (hide) {
-      system2("stty", "-echo", stdout = FALSE, stderr = FALSE)
-      on.exit(
-        {
-          system2("stty", "echo", stdout = FALSE, stderr = FALSE)
-          cat("\n", file = stderr())
-        },
-        add = TRUE
-      )
-    }
-    return(trimws(readline(prompt)))
-  }
-  if (
-    is.null(con) &&
-      .bl_stdin_tty() &&
-      .Platform$OS.type == "unix" &&
-      .bl_have_program("sh")
-  ) {
-    # R's blocking read of a terminal ignores Ctrl-C until Enter: a shell `read`
-    # child sees the terminal's interrupt at once, and Ctrl-D ends it with an
-    # empty line. the line comes back over a pipe, never through a shell
-    # argument or the history. The echo is switched off and back on by the shell
-    # itself, with a trap, so Ctrl-C cannot leave the terminal silent (review of
-    # 52a8883, B6); an interrupted read exits 130 and is an interrupt here too
-    # The trap also prints a marker: where /bin/sh is dash (Debian, Ubuntu),
-    # system2() reports no exit status for the trapped `exit 130`, so Ctrl-C
-    # came back as an empty line and a usage error (exit 2; review of 02a38be,
-    # C10; bash keeps the status). A typed line cannot hold the marker: Ctrl-C
-    # never reaches the input. The shell prints the prompt itself, once its trap
-    # is set and the echo is off, and marks a read that completed: R printed the
-    # prompt before the child started, so a key typed at once was echoed, and a
-    # Ctrl-C in those milliseconds killed the child before its trap and came
-    # back as an empty line, exit 2 (review of e57fed5, the C10 leftovers).
-    # Output without the completion mark is a read that never finished: an
-    # interrupt. The prompt reaches the shell in the environment, never in the
-    # script.
-    mark <- "\001RMBL-INTERRUPTED\001"
-    done <- "\002RMBL-LINE\002"
-    # the prompt goes straight to the terminal (this branch runs only when stdin
-    # is one): the child's stderr stays discarded, as before, which keeps R's
-    # wait on it what it was
-    ask <- "printf '%s' \"$RMBL_PROMPT\" > /dev/tty; IFS= read -r l; "
-    script <- if (hide) {
-      paste0(
-        "trap 'stty echo; printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' ",
-        "INT TERM HUP; ",
-        "stty -echo; ",
-        ask,
-        "stty echo; printf '\\002RMBL-LINE\\002%s' \"$l\""
-      )
-    } else {
-      paste0(
-        "trap 'printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' INT TERM HUP; ",
-        ask,
-        "printf '\\002RMBL-LINE\\002%s' \"$l\""
-      )
-    }
-    # the prompt is handed over in the environment R passes on, not as a
-    # `VAR=value sh` prefix: with the prefix /bin/sh kept itself alive as the
-    # child's parent, Ctrl-C killed it, and R raised an interrupt of its own
-    # after the handled one (exit 1, not 130)
-    old_prompt <- Sys.getenv("RMBL_PROMPT", unset = NA)
-    Sys.setenv(RMBL_PROMPT = prompt)
-    on.exit(
-      if (is.na(old_prompt)) {
-        Sys.unsetenv("RMBL_PROMPT")
-      } else {
-        Sys.setenv(RMBL_PROMPT = old_prompt)
-      },
-      add = TRUE
-    )
-    # Ctrl-C reaches R as well as the child (one foreground process group): R's
-    # own interrupt is held until the read is over, so it arrives once, here,
-    # inside the caller's handler, rather than a moment later on top of the
-    # interrupt the child reported (exit 1, "Execution halted"; R-devel CI on
-    # 487b956 and a704645) a Ctrl-C already pending (one that landed while R or
-    # the package was starting) is taken now: left pending, it was lost once the
-    # read began, and the command waited at the prompt
-    .Call(C_rmbl_check_interrupt)
-    # the sh found above, not whichever `sh` comes first on PATH
-    l <- suspendInterrupts(suppressWarnings(system2(
-      .bl_find_program("sh"),
-      c("-c", shQuote(script)),
-      stdout = TRUE,
-      stderr = FALSE
-    )))
-    if (hide) {
-      cat("\n", file = stderr())
-    }
-    st <- attr(l, "status")
-    l <- paste(as.character(l), collapse = "")
-    if (
-      identical(as.integer(st), 130L) ||
-        grepl(mark, l, fixed = TRUE) ||
-        !grepl(done, l, fixed = TRUE)
-    ) {
-      .bl_signal_interrupt()
-    }
-    return(trimws(substring(l, regexpr(done, l, fixed = TRUE) + nchar(done))))
-  }
-  if (is.null(con)) {
-    con <- file("stdin")
-    on.exit(close(con), add = TRUE)
-  }
-  if (.bl_stdin_tty()) {
-    cat(prompt, file = stderr())
-  }
-  trimws(paste(readLines(con, n = 1L, warn = FALSE), collapse = ""))
-}
-
 #' Run the rmoriebricklayer command line
 #'
 #' Dispatches the verbs of the \code{rmoriebricklayer} launcher: \describe{
@@ -405,15 +212,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   }
   old_progress <- options(morie.progress = TRUE) # downloads draw their bar
   on.exit(options(old_progress), add = TRUE)
-  if (nzchar(Sys.getenv("RMBL_PROG")) && is.null(.rmbl_getopt("dcache"))) {
-    # from the shell every call is a new R session: keep the data.rmorie.com
-    # manifest and tables in the user cache (tools::R_user_dir) instead of a
-    # fresh tempdir() each time
-    old_cache <- options(
-      rmoriebricklayer.dcache = tools::R_user_dir("rmoriebricklayer", "cache")
-    )
-    on.exit(options(old_cache), add = TRUE)
-  }
+  old_cache <- .bl_cli_cache_opt()
+  on.exit(options(old_cache), add = TRUE)
   # NA or a closure failed in R's words further on (pre-CRAN audit of 30bed8e)
   if (!is.null(args) && (!is.atomic(args) || anyNA(args))) {
     stop(
@@ -423,10 +223,341 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
     )
   }
   a <- .bl_cli_words(as.character(args))
-  verb <- a$verb
-  rest <- a$rest
-  tail_args <- a$tail_args
   prog <- .bl_prog()
+  st <- .bl_cli_precheck(a$verb, a$rest, prog, out)
+  if (!is.null(st)) {
+    return(invisible(st))
+  }
+  invisible(.bl_cli_dispatch(a$verb, a$rest, a$tail_args, out, prog))
+}
+
+#' Install the rmoriebricklayer command-line launcher
+#'
+#' Writes small launcher scripts into a directory on your PATH so that
+#' \code{rmoriebricklayer login}, \code{rmbl ask ...} and the other verbs of
+#' \code{\link{blcli}} work from any shell. Run it once after
+#' installing or upgrading the package. Nothing outside \code{dir} is
+#' touched, and only when you call this.
+#'
+#' @details
+#' On Unix-alikes each launcher is a \code{/bin/sh} script (mode 0755) that
+#' sets \code{RMBL_PROG} to its own name and runs
+#' \code{Rscript -e "rmoriebricklayer::blcli()"} with the shell's
+#' arguments, exiting with the function's status (130 on Ctrl-C). The library
+#' this copy of the package is installed in is pinned inside R with
+#' \code{.libPaths()}, so an \code{R_LIBS} set in the shell or in
+#' \code{~/.Renviron} cannot make the command run another copy. An existing
+#' file or link of the same name in \code{dir} is replaced. On Windows a
+#' \code{NAME.cmd} batch wrapper doing the same is written instead. A message
+#' names the files written and, when \code{dir} is not on the \code{PATH},
+#' says to add it. Re-run it after moving the package to another library.
+#'
+#' Errors when the package installation has no launcher in
+#' \code{inst/bin} (a damaged installation); when \code{dir}
+#' cannot be created or written, or is not one string; and
+#' when \code{name} is not a character vector of one or more command names
+#' (empty, \code{NA}, an empty string or a name with a directory part is
+#' refused).
+#'
+#' @param dir Character scalar, the target directory; default
+#'   \code{~/.local/bin}. Created (with its parents) if absent.
+#' @param name Character vector of command names to install; default both
+#'   \code{rmoriebricklayer} and its short form \code{rmbl} (every verb works
+#'   under either).
+#' @return The path of the first launcher written (normally
+#'   \code{rmoriebricklayer}), invisibly; the others are written beside it.
+#' @seealso \code{\link{blcli}} for the verbs.
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
+#' # into a scratch folder, so nothing on your PATH changes
+#' d <- file.path(tempdir(), "bin")
+#' p <- instcli(dir = d)
+#' list.files(d)
+#' readLines(p)[1:4]
+#'
+#' # one name only
+#' instcli(dir = d, name = "rmbl")
+#'
+#' @examplesIf interactive()
+#' instcli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
+#' @export
+instcli <- function(
+  dir = file.path(path.expand("~"), ".local", "bin"),
+  name = c("rmoriebricklayer", "rmbl")
+) {
+  .bl_cli_names_check(name)
+  dir <- .rmbl_string1(dir, "dir")
+  src <- .bl_launcher()
+  if (!nzchar(src)) {
+    stop("the launcher is missing from this installation", call. = FALSE)
+  }
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  # a folder that cannot be made or written failed later in file()'s words
+  # (pre-CRAN audit of 30bed8e)
+  if (!dir.exists(dir) || file.access(dir, 2L) != 0L) {
+    stop(
+      .rmbl_fn(),
+      sprintf("`dir` %s cannot be created or written", dir),
+      call. = FALSE
+    )
+  }
+  # the launcher pins the library this copy of the package lives in, inside R
+  # with .libPaths(), so the shell's R_LIBS or an R_LIBS in ~/.Renviron cannot
+  # swap in another copy
+  lib <- normalizePath(
+    dirname(system.file(package = "rmoriebricklayer")),
+    winslash = "/"
+  )
+  targets <- vapply(name, function(nm) .bl_write_launcher(dir, nm, lib), "")
+  targets <- unname(targets)
+  on_path <- dir %in% strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1L]]
+  message(sprintf(
+    "Installed %s%s",
+    paste(targets, collapse = " and "),
+    if (on_path) "" else sprintf("; add %s to your PATH", dir)
+  ))
+  invisible(targets[[1L]]) # the primary launcher's path; rmbl sits beside it
+}
+
+#' Signals an interrupt condition and stops.
+#'
+#' Ctrl-C at a prompt read by a shell child: the same condition R raises for its
+#' own interrupt, so the command exits 130 (128 + SIGINT) and not as a usage
+#' error
+#' @return Does not return.
+#' @noRd
+.bl_signal_interrupt <- function() {
+  signalCondition(structure(
+    class = c("interrupt", "condition"),
+    list(message = "interrupted", call = NULL)
+  ))
+  stop("interrupted", call. = FALSE)
+}
+
+#' Finds a program on PATH, /bin or /usr/bin without starting a child process.
+#'
+#' A program in the usual places, found without a child process: Sys.which()
+#' runs one, and R ignores SIGINT while a child runs (as system() does), so a
+#' Ctrl-C landing there killed only the child. Sys.which(\code{"sh"}) came back
+#' \code{""}, the prompt fell back to a blocking read of stdin that ignores
+#' Ctrl-C, and the command waited at the prompt (a Ctrl-C 0.18 s after start,
+#' 2026-10-14). The search runs over PATH, as the shell does, then /bin and
+#' /usr/bin: /bin and /usr/bin alone missed stty on a NixOS-style layout, so the
+#' key was echoed as it was typed (network stress test of 5e1dce5).
+#' @param name The program's file name.
+#' @return The program's path, or \code{""} when it is not found.
+#' @noRd
+.bl_find_program <- function(name) {
+  dirs <- c(
+    strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed = TRUE)[[1L]],
+    "/bin",
+    "/usr/bin"
+  )
+  p <- file.path(unique(dirs[nzchar(dirs)]), name)
+  p <- p[file.exists(p) & !dir.exists(p)]
+  p <- p[file.access(p, 1L) == 0L]
+  if (length(p)) p[[1L]] else ""
+}
+
+#' Tells whether a program can be found by `.bl_find_program()`.
+#' @param name The program's file name.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_have_program <- function(name) nzchar(.bl_find_program(name))
+
+#' Tells whether standard output is a terminal.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_stdout_tty <- function() isatty(stdout())
+
+#' .bl_readline() at a terminal on unix: the line read by a shell child, which
+#' sees Ctrl-C at once.
+#' @param prompt The prompt text, handed to the shell in `RMBL_PROMPT`.
+#' @param hide Whether the echo is switched off.
+#' @return The line.
+#' @noRd
+.bl_readline_sh <- function(prompt, hide) {
+  # R's blocking read of a terminal ignores Ctrl-C until Enter: a shell `read`
+  # child sees the terminal's interrupt at once, and Ctrl-D ends it with an
+  # empty line. the line comes back over a pipe, never through a shell
+  # argument or the history. The echo is switched off and back on by the shell
+  # itself, with a trap, so Ctrl-C cannot leave the terminal silent (review of
+  # 52a8883, B6); an interrupted read exits 130 and is an interrupt here too
+  # The trap also prints a marker: where /bin/sh is dash (Debian, Ubuntu),
+  # system2() reports no exit status for the trapped `exit 130`, so Ctrl-C
+  # came back as an empty line and a usage error (exit 2; review of 02a38be,
+  # C10; bash keeps the status). A typed line cannot hold the marker: Ctrl-C
+  # never reaches the input. The shell prints the prompt itself, once its trap
+  # is set and the echo is off, and marks a read that completed: R printed the
+  # prompt before the child started, so a key typed at once was echoed, and a
+  # Ctrl-C in those milliseconds killed the child before its trap and came
+  # back as an empty line, exit 2 (review of e57fed5, the C10 leftovers).
+  # Output without the completion mark is a read that never finished: an
+  # interrupt. The prompt reaches the shell in the environment, never in the
+  # script.
+  script <- .bl_readline_script(hide)
+  # the prompt is handed over in the environment R passes on, not as a
+  # `VAR=value sh` prefix: with the prefix /bin/sh kept itself alive as the
+  # child's parent, Ctrl-C killed it, and R raised an interrupt of its own
+  # after the handled one (exit 1, not 130)
+  old_prompt <- Sys.getenv("RMBL_PROMPT", unset = NA)
+  Sys.setenv(RMBL_PROMPT = prompt)
+  on.exit(.bl_restore_prompt(old_prompt), add = TRUE)
+  # Ctrl-C reaches R as well as the child (one foreground process group): R's
+  # own interrupt is held until the read is over, so it arrives once, here,
+  # inside the caller's handler, rather than a moment later on top of the
+  # interrupt the child reported (exit 1, "Execution halted"; R-devel CI on
+  # 487b956 and a704645) a Ctrl-C already pending (one that landed while R or
+  # the package was starting) is taken now: left pending, it was lost once the
+  # read began, and the command waited at the prompt
+  .Call(C_rmbl_check_interrupt)
+  # the sh found above, not whichever `sh` comes first on PATH
+  l <- suspendInterrupts(suppressWarnings(system2(
+    .bl_find_program("sh"),
+    c("-c", shQuote(script)),
+    stdout = TRUE,
+    stderr = FALSE
+  )))
+  if (hide) {
+    cat("\n", file = stderr())
+  }
+  .bl_readline_sh_line(l)
+}
+
+#' The shell script .bl_readline_sh() runs: the prompt, one read, and the
+#' markers of an interrupt and of a completed read.
+#' @param hide Whether the echo is switched off.
+#' @return One string.
+#' @noRd
+.bl_readline_script <- function(hide) {
+  # the prompt goes straight to the terminal (this branch runs only when stdin
+  # is one): the child's stderr stays discarded, as before, which keeps R's
+  # wait on it what it was
+  ask <- "printf '%s' \"$RMBL_PROMPT\" > /dev/tty; IFS= read -r l; "
+  if (hide) {
+    paste0(
+      "trap 'stty echo; printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' ",
+      "INT TERM HUP; ",
+      "stty -echo; ",
+      ask,
+      "stty echo; printf '\\002RMBL-LINE\\002%s' \"$l\""
+    )
+  } else {
+    paste0(
+      "trap 'printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' INT TERM HUP; ",
+      ask,
+      "printf '\\002RMBL-LINE\\002%s' \"$l\""
+    )
+  }
+}
+
+#' Puts RMBL_PROMPT back as it was before .bl_readline_sh().
+#' @param old Its old value, NA when it was unset.
+#' @return Nothing useful.
+#' @noRd
+.bl_restore_prompt <- function(old) {
+  if (is.na(old)) {
+    Sys.unsetenv("RMBL_PROMPT")
+  } else {
+    Sys.setenv(RMBL_PROMPT = old)
+  }
+}
+
+#' The line the shell child of .bl_readline_sh() read, or an interrupt.
+#' @param l Its output, with the exit status as attribute "status".
+#' @return The line, trimmed.
+#' @noRd
+.bl_readline_sh_line <- function(l) {
+  mark <- "\001RMBL-INTERRUPTED\001"
+  done <- "\002RMBL-LINE\002"
+  st <- attr(l, "status")
+  l <- paste(as.character(l), collapse = "")
+  if (
+    identical(as.integer(st), 130L) ||
+      grepl(mark, l, fixed = TRUE) ||
+      !grepl(done, l, fixed = TRUE)
+  ) {
+    .bl_signal_interrupt()
+  }
+  trimws(substring(l, regexpr(done, l, fixed = TRUE) + nchar(done)))
+}
+
+#' Reads one typed line for a prompt.
+#'
+#' One typed line for a prompt (the key of `login --token`, the emailed code).
+#' The launchers run Rscript, where readline() returns \code{""} at once, so
+#' outside an interactive session read one line of stdin: typed at a terminal,
+#' or piped (`echo KEY | rmbl login --token` keeps the key out of the shell
+#' history). Closed or empty stdin gives \code{""}.
+#' @param prompt The prompt text.
+#' @param con A connection to read from instead of the terminal or standard
+#'   input, or NULL.
+#' @param secret Whether the line is a key, read without echo at a terminal.
+#' @return The line, trimmed; \code{""} for closed or empty input.
+#' @noRd
+.bl_readline <- function(prompt, con = NULL, secret = FALSE) {
+  # a key typed at a terminal is not echoed (stty, where there is one);
+  # elsewhere it is read as any other line, which is what piping `echo KEY |`
+  # relies on
+  hide <- isTRUE(secret) &&
+    is.null(con) &&
+    .Platform$OS.type == "unix" &&
+    .bl_stdin_tty() &&
+    .bl_have_program("stty")
+  if (.bl_interactive()) {
+    if (hide) {
+      system2("stty", "-echo", stdout = FALSE, stderr = FALSE)
+      on.exit(.bl_echo_on(), add = TRUE)
+    }
+    return(trimws(readline(prompt)))
+  }
+  if (
+    is.null(con) &&
+      .bl_stdin_tty() &&
+      .Platform$OS.type == "unix" &&
+      .bl_have_program("sh")
+  ) {
+    return(.bl_readline_sh(prompt, hide))
+  }
+  if (is.null(con)) {
+    con <- file("stdin")
+    on.exit(close(con), add = TRUE)
+  }
+  if (.bl_stdin_tty()) {
+    cat(prompt, file = stderr())
+  }
+  trimws(paste(readLines(con, n = 1L, warn = FALSE), collapse = ""))
+}
+
+#' Switches the terminal's echo back on after a key was read without it.
+#' @return Nothing useful.
+#' @noRd
+.bl_echo_on <- function() {
+  system2("stty", "echo", stdout = FALSE, stderr = FALSE)
+  cat("\n", file = stderr())
+}
+
+#' Points the data cache at the user cache when run from the shell.
+#'
+#' From the shell every call is a new R session: the data.rmorie.com manifest
+#' and tables are kept in the user cache (tools::R_user_dir) instead of a fresh
+#' tempdir() each time, unless the option is set already.
+#' @return The old options, for options(), or an empty list when none changed.
+#' @noRd
+.bl_cli_cache_opt <- function() {
+  if (nzchar(Sys.getenv("RMBL_PROG")) && is.null(.rmbl_getopt("dcache"))) {
+    return(options(
+      rmoriebricklayer.dcache = tools::R_user_dir("rmoriebricklayer", "cache")
+    ))
+  }
+  list()
+}
+
+#' What blcli() does before running a verb: `VERB --help` and unknown options.
+#' @param verb,rest,prog The verb, its words and the command's name.
+#' @param out The function that prints the usage and error lines.
+#' @return The exit status when nothing is to be run, else NULL.
+#' @noRd
+.bl_cli_precheck <- function(verb, rest, prog, out) {
   # `VERB --help` describes the verb and never runs it (logout --help used to
   # forget the key)
   if (
@@ -435,10 +566,10 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
     u <- .bl_verb_usage(verb, prog)
     if (is.null(u)) {
       out(sprintf("%s: %s\n", prog, .bl_unknown_verb(verb, prog)))
-      return(invisible(2L))
+      return(2L)
     }
     out(u)
-    return(invisible(0L))
+    return(0L)
   }
   bad <- .bl_cli_bad_opts(verb, rest, prog)
   if (length(bad)) {
@@ -450,11 +581,19 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
       prog,
       verb
     ))
-    return(invisible(2L))
+    return(2L)
   }
-  # the handlers return the exit status: usage error 2, any other error 1,
-  # Ctrl-C 130
-  status <- tryCatch(
+  NULL
+}
+
+#' Runs a verb's handler and turns its errors into the exit status.
+#' @param verb,rest,tail_args The verb, its words and those after `--`.
+#' @param out The function that prints the verb's output and its errors.
+#' @param prog The command's name, put before each error line.
+#' @return The exit status: usage error 2, any other error 1, Ctrl-C 130.
+#' @noRd
+.bl_cli_dispatch <- function(verb, rest, tail_args, out, prog) {
+  tryCatch(
     {
       # arguments after a bare `--` are a prompt or a request: only ask and
       # bundle take one, and every other verb ignored them (`functions -- a b`
@@ -492,7 +631,6 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
       130L
     }
   )
-  invisible(status)
 }
 
 #' The command-line words as a verb, its options and the words after a bare
@@ -528,7 +666,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 }
 
 #' Stops with a usage error (exit status 2).
-#' @param msg What is wrong.
+#' @param msg The usage error's message.
 #' @noRd
 .bl_cli_usage_error <- function(msg) {
   stop(structure(
@@ -564,6 +702,13 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 #' @return A list by verb.
 #' @noRd
 .bl_cli_known_opts <- function(rest) {
+  c(.bl_cli_opts_a(), .bl_cli_opts_b(rest))
+}
+
+#' The options of login, ask, models, data, app, wayback and archive.
+#' @return A list by verb.
+#' @noRd
+.bl_cli_opts_a <- function() {
   list(
     login = c(
       "--email",
@@ -602,7 +747,16 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
       "--from",
       "--to",
       "--json"
-    ),
+    )
+  )
+}
+
+#' The options of the capsule verbs, migrate and config.
+#' @param rest The words after the verb.
+#' @return A list by verb.
+#' @noRd
+.bl_cli_opts_b <- function(rest) {
+  list(
     verify = c("--json", "--fail-on", .bl_capsule_opts),
     drift = c("--json", "--fail-on", .bl_capsule_opts, "--html", "--app"),
     report = c("--format", .bl_capsule_opts),
@@ -628,7 +782,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 }
 
 #' The options given that the verb does not take.
-#' @param verb The verb.
+#' @param verb The verb whose known options the arguments are checked against.
 #' @param rest The words after it.
 #' @param prog The program's name.
 #' @return The unknown options (empty when there are none to report).
@@ -682,71 +836,25 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 #' @return A named list of functions.
 #' @noRd
 .bl_cli_handlers <- function() {
-  capsule <- function(ctx) {
-    .bl_cli_capsule(
-      ctx$verb,
-      ctx$rest,
-      .bl_cli_flagger(ctx$rest),
-      ctx$out,
-      .bl_cli_usage_error
-    )
-  }
-  version <- function(ctx) {
-    if (length(c(ctx$rest, ctx$tail_args))) {
-      .bl_cli_usage_error("version takes no arguments")
-    }
-    ctx$out(sprintf(
-      "rmoriebricklayer %s\n",
-      as.character(utils::packageVersion("rmoriebricklayer"))
-    ))
-    NULL
-  }
-  help <- function(ctx) {
-    if (length(ctx$rest) > 1L) {
-      .bl_cli_usage_error(sprintf("usage: %s help [VERB]", ctx$prog))
-    }
-    .bl_cli_help(ctx$rest, ctx$out)
-  }
   list(
     login = .bl_v_login,
     logout = function(ctx) .bl_v_noargs(ctx, "logout", dlogout),
-    doctor = function(ctx) {
-      .bl_v_noargs(ctx, "doctor", function() .bl_cli_doctor(ctx$out))
-    },
-    config = function(ctx) {
-      .bl_cli_config(ctx$rest, ctx$out, .bl_cli_usage_error)
-      NULL
-    },
+    doctor = .bl_v_doctor,
+    config = .bl_v_config,
     models = .bl_v_models,
     ask = .bl_v_ask,
     bundle = .bl_v_bundle,
     functions = .bl_v_functions,
     describe = function(ctx) .bl_v_describe(ctx, .bl_describe),
     examples = function(ctx) .bl_v_describe(ctx, .bl_examples, "examples"),
-    migrate = function(ctx) {
-      .bl_cli_migrate(
-        ctx$rest,
-        function(name) name %in% ctx$rest,
-        ctx$out,
-        .bl_cli_usage_error,
-        ctx$prog
-      )
-    },
+    migrate = .bl_v_migrate,
     run = function(ctx) {
       .bl_cli_run(ctx$rest, ctx$out, .bl_cli_usage_error, ctx$prog)
     },
     data = function(ctx) {
       .bl_cli_data(ctx$rest, .bl_cli_flagger(ctx$rest), ctx$out)
     },
-    app = function(ctx) {
-      .bl_cli_app(
-        ctx$rest,
-        .bl_cli_flagger(ctx$rest),
-        function(name) name %in% ctx$rest,
-        ctx$out,
-        .bl_cli_usage_error
-      )
-    },
+    app = .bl_v_app,
     `explain-error` = function(ctx) {
       .bl_cli_explain(c(ctx$rest, ctx$tail_args), ctx$out, ctx$prog)
     },
@@ -756,17 +864,102 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
     archive = function(ctx) {
       .bl_cli_archive(ctx$rest, .bl_cli_flagger(ctx$rest), ctx$out)
     },
-    sign = capsule,
-    verify = capsule,
-    drift = capsule,
-    refresh = capsule,
-    report = capsule,
-    `--version` = version,
-    `-v` = version,
-    version = version,
-    help = help,
-    `--help` = help,
-    `-h` = help
+    sign = .bl_v_capsule,
+    verify = .bl_v_capsule,
+    drift = .bl_v_capsule,
+    refresh = .bl_v_capsule,
+    report = .bl_v_capsule,
+    `--version` = .bl_v_version,
+    `-v` = .bl_v_version,
+    version = .bl_v_version,
+    help = .bl_v_help,
+    `--help` = .bl_v_help,
+    `-h` = .bl_v_help
+  )
+}
+
+#' The capsule verbs: sign, verify, drift, refresh and report.
+#' @param ctx The command's context.
+#' @return The exit status.
+#' @noRd
+.bl_v_capsule <- function(ctx) {
+  .bl_cli_capsule(
+    ctx$verb,
+    ctx$rest,
+    .bl_cli_flagger(ctx$rest),
+    ctx$out,
+    .bl_cli_usage_error
+  )
+}
+
+#' `version`: the package version.
+#' @param ctx The command's context.
+#' @return NULL (exit status 0).
+#' @noRd
+.bl_v_version <- function(ctx) {
+  if (length(c(ctx$rest, ctx$tail_args))) {
+    .bl_cli_usage_error("version takes no arguments")
+  }
+  ctx$out(sprintf(
+    "rmoriebricklayer %s\n",
+    as.character(utils::packageVersion("rmoriebricklayer"))
+  ))
+  NULL
+}
+
+#' `help [TOPIC]`.
+#' @param ctx The command's context.
+#' @return The exit status.
+#' @noRd
+.bl_v_help <- function(ctx) {
+  if (length(ctx$rest) > 1L) {
+    .bl_cli_usage_error(sprintf("usage: %s help [VERB]", ctx$prog))
+  }
+  .bl_cli_help(ctx$rest, ctx$out)
+}
+
+#' `doctor`: the language-model routes available here.
+#' @param ctx The command's context.
+#' @return NULL (exit status 0).
+#' @noRd
+.bl_v_doctor <- function(ctx) {
+  .bl_v_noargs(ctx, "doctor", function() .bl_cli_doctor(ctx$out))
+}
+
+#' `config`: the language-model settings.
+#' @param ctx The command's context.
+#' @return NULL (exit status 0).
+#' @noRd
+.bl_v_config <- function(ctx) {
+  .bl_cli_config(ctx$rest, ctx$out, .bl_cli_usage_error)
+  NULL
+}
+
+#' `migrate`: the 0.5.x names in R scripts.
+#' @param ctx The command's context.
+#' @return The exit status.
+#' @noRd
+.bl_v_migrate <- function(ctx) {
+  .bl_cli_migrate(
+    ctx$rest,
+    function(name) name %in% ctx$rest,
+    ctx$out,
+    .bl_cli_usage_error,
+    ctx$prog
+  )
+}
+
+#' `app`: the analysis dashboard.
+#' @param ctx The command's context.
+#' @return The exit status.
+#' @noRd
+.bl_v_app <- function(ctx) {
+  .bl_cli_app(
+    ctx$rest,
+    .bl_cli_flagger(ctx$rest),
+    function(name) name %in% ctx$rest,
+    ctx$out,
+    .bl_cli_usage_error
   )
 }
 
@@ -877,7 +1070,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 .bl_v_bad_route <- function() {
   .bl_cli_usage_error(sprintf(
     "--route takes auto, own, ollama or a provider (%s)",
-    paste(.bl_llm_presets()$id, collapse = ", ")
+    toString(.bl_llm_presets()$id)
   ))
 }
 
@@ -903,8 +1096,49 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 #' @return NULL (exit status 0).
 #' @noRd
 .bl_v_ask <- function(ctx) {
-  rest <- ctx$rest
+  o <- .bl_v_ask_opts(ctx$rest)
+  rest <- o$rest
   prog <- ctx$prog
+  if (!length(rest) && !length(ctx$tail_args)) {
+    .bl_cli_usage_error(sprintf(
+      paste0(
+        "usage: %s ask [--route ROUTE] [--model NAME] [--fresh] ",
+        "[--] PROMPT..."
+      ),
+      prog
+    ))
+  }
+  prompt <- paste(c(rest, ctx$tail_args), collapse = " ")
+  if (!nzchar(trimws(prompt))) {
+    .bl_cli_usage_error(sprintf(
+      paste(
+        "the prompt is empty (usage: %s ask [--route ROUTE]",
+        "[--model NAME]",
+        "[--fresh] PROMPT...)"
+      ),
+      prog
+    ))
+  }
+  ans <- llmask(prompt, model = o$mdl, route = o$rte, fresh = o$fresh)
+  ctx$out(paste0(ans, "\n"))
+  if (!is.null(attr(ans, "cached"))) {
+    ctx$out(sprintf(
+      paste0(
+        "(the answer saved on %s for this question; `%s ask ",
+        "--fresh ...` asks the model again)\n"
+      ),
+      attr(ans, "cached"),
+      prog
+    ))
+  }
+  NULL
+}
+
+#' The options of `ask`, taken out of its words.
+#' @param rest The words after the verb.
+#' @return A list: `rest` (the prompt's words), `mdl`, `fresh` and `rte`.
+#' @noRd
+.bl_v_ask_opts <- function(rest) {
   for (f in c("--model", "--route")) {
     if (sum(rest == f) > 1L) {
       .bl_cli_usage_error(sprintf(
@@ -934,39 +1168,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
       .bl_v_bad_route()
     }
   }
-  if (!length(rest) && !length(ctx$tail_args)) {
-    .bl_cli_usage_error(sprintf(
-      paste0(
-        "usage: %s ask [--route ROUTE] [--model NAME] [--fresh] ",
-        "[--] PROMPT..."
-      ),
-      prog
-    ))
-  }
-  prompt <- paste(c(rest, ctx$tail_args), collapse = " ")
-  if (!nzchar(trimws(prompt))) {
-    .bl_cli_usage_error(sprintf(
-      paste(
-        "the prompt is empty (usage: %s ask [--route ROUTE]",
-        "[--model NAME]",
-        "[--fresh] PROMPT...)"
-      ),
-      prog
-    ))
-  }
-  ans <- llmask(prompt, model = mdl, route = rte, fresh = fresh)
-  ctx$out(paste0(ans, "\n"))
-  if (!is.null(attr(ans, "cached"))) {
-    ctx$out(sprintf(
-      paste0(
-        "(the answer saved on %s for this question; `%s ask ",
-        "--fresh ...` asks the model again)\n"
-      ),
-      attr(ans, "cached"),
-      prog
-    ))
-  }
-  NULL
+  list(rest = rest, mdl = mdl, fresh = fresh, rte = rte)
 }
 
 #' `bundle`: an agent bundle for a request.
@@ -988,7 +1190,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   # nothing was produced, so the command fails
   routed <- !is.null(.bl_llm_route())
   ctx$out(paste0(agentbndl(paste(rest, collapse = " ")), "\n"))
-  if (!routed) 1L else NULL
+  if (routed) NULL else 1L
 }
 
 #' `functions`: the exported functions, or those matching a pattern.
@@ -1058,24 +1260,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   if (!length(args)) {
     return(FALSE)
   }
-  q <- args[[1L]]
-  # a tab is a pasted command line, not a question: `$'cnfig\tset\topenai.key'`
-  # went to the model (re-test of the b617a3f CRAN stress fixes, finding 3)
-  if (
-    !nzchar(q) ||
-      startsWith(q, "-") ||
-      grepl("[\t\r\n\v\f]", q) ||
-      grepl("[/\\]", q)
-  ) {
-    return(FALSE)
-  }
-  # a key-shaped run anywhere in the line, not only as a whole word: "KEY?",
-  # "KEY," or "my key is KEY, thanks" went to a model, and to the wrong provider
-  # (CRAN stress test of b617a3f, #2) zero-width characters are no characters: a
-  # key broken by one every eleven characters read as words and went to a model
-  # (final audit of 1.0.0, #7)
-  q <- gsub("[\u200b\u200c\u200d\u2060\ufeff]", "", q)
-  if (.bl_key_shaped(q)) {
+  q <- .bl_bq_text(args[[1L]])
+  if (is.null(q)) {
     return(FALSE)
   }
   # ideographic and no-break spaces split words like a space
@@ -1093,14 +1279,22 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   if (length(wordy) < 2L && !endsWith(q, "?")) {
     return(FALSE)
   }
-  if (length(wordy) == 1L) {
-    w <- tolower(gsub("[[:punct:]]+", "", wordy[[1L]]))
-    if (
-      min(utils::adist(w, gsub("-", "", .bl_verb_names(), fixed = TRUE))) <= 2L
-    ) {
-      return(FALSE)
-    }
+  if (length(wordy) == 1L && .bl_bq_near_verb(wordy[[1L]])) {
+    return(FALSE)
   }
+  if (.bl_bq_command_like(q, words, wordy)) {
+    return(FALSE)
+  }
+  .bl_bq_flags_ok(args[-1L])
+}
+
+#' Whether a one-argument line is a command typed as one, not a question.
+#' @param q The line.
+#' @param words Its words.
+#' @param wordy The words that hold a letter or a digit.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_bq_command_like <- function(q, words, wordy) {
   # a line that opens with a verb or a near miss of one and is not asked as a
   # question is a command typed as one argument: "cnfig set openai.key" was sent
   # to the first provider. A question mark does not make a sentence of a
@@ -1113,7 +1307,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
     .bl_verb_near(words[[1L]]) &&
       (!endsWith(trimws(q), "?") || length(wordy) <= 3L)
   ) {
-    return(FALSE)
+    return(TRUE)
   }
   # a short line naming a file is a command's argument, not a question:
   # `urls.txt?` and `my urls.txt` were sent (18 of 64 bare file names; CRAN
@@ -1123,9 +1317,53 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
     length(wordy) <= 3L &&
       any(grepl("^[^.[:space:]]+\\.[A-Za-z][A-Za-z0-9]{0,4}[?!.,]*$", words))
   ) {
-    return(FALSE)
+    return(TRUE)
   }
-  rest <- args[-1L]
+  FALSE
+}
+
+#' The first argument as a question's text, or NULL when it cannot be one.
+#' @param q The argument.
+#' @return The text without zero-width characters, or NULL.
+#' @noRd
+.bl_bq_text <- function(q) {
+  # a tab is a pasted command line, not a question: `$'cnfig\tset\topenai.key'`
+  # went to the model (re-test of the b617a3f CRAN stress fixes, finding 3)
+  if (
+    !nzchar(q) ||
+      startsWith(q, "-") ||
+      grepl("[\t\r\n\v\f]", q) ||
+      grepl("[/\\]", q)
+  ) {
+    return(NULL)
+  }
+  # a key-shaped run anywhere in the line, not only as a whole word: "KEY?",
+  # "KEY," or "my key is KEY, thanks" went to a model, and to the wrong provider
+  # (CRAN stress test of b617a3f, #2) zero-width characters are no characters: a
+  # key broken by one every eleven characters read as words and went to a model
+  # (final audit of 1.0.0, #7)
+  q <- gsub("[\u200b\u200c\u200d\u2060\ufeff]", "", q)
+  if (.bl_key_shaped(q)) {
+    return(NULL)
+  }
+  q
+}
+
+#' Whether one word is a verb, or within two edits of one.
+#' @param word The word.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_bq_near_verb <- function(word) {
+  w <- tolower(gsub("[[:punct:]]+", "", word))
+  min(utils::adist(w, gsub("-", "", .bl_verb_names(), fixed = TRUE))) <= 2L
+}
+
+#' Whether the arguments after a question are only `--route`, `--model` (each
+#' with its value) and `--fresh`.
+#' @param rest The arguments.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_bq_flags_ok <- function(rest) {
   i <- 1L
   while (i <= length(rest)) {
     if (rest[[i]] %in% c("--route", "--model")) {
@@ -1149,32 +1387,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 #' @return TRUE or FALSE.
 #' @noRd
 .bl_key_shaped <- function(x) {
-  # a provider's key prefix and twelve key characters or more, a digit among
-  # them, is a key however short: `sk-` and 20 characters went to a model
-  # (re-test of the b617a3f CRAN stress fixes, finding 4)
-  pre <- regmatches(
-    x,
-    gregexpr(
-      paste0(
-        "(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
-        "github_pat_|glpat-|nvapi-)[A-Za-z0-9_-]{12,}"
-      ),
-      x
-    )
-  )[[1L]]
-  if (
-    any(grepl(
-      "[0-9]",
-      sub(
-        paste0(
-          "^(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
-          "github_pat_|glpat-|nvapi-)"
-        ),
-        "",
-        pre
-      )
-    ))
-  ) {
+  if (.bl_key_prefixed(x)) {
     return(TRUE)
   }
   if (.bl_key_dense(x)) {
@@ -1208,6 +1421,46 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   if (length(runs)) {
     return(TRUE)
   }
+  .bl_key_grouped(x)
+}
+
+#' Tells whether a text holds a provider's key prefix and twelve key
+#' characters or more, a digit among them.
+#' @param x A string.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_key_prefixed <- function(x) {
+  # a provider's key prefix and twelve key characters or more, a digit among
+  # them, is a key however short: `sk-` and 20 characters went to a model
+  # (re-test of the b617a3f CRAN stress fixes, finding 4)
+  pre <- regmatches(
+    x,
+    gregexpr(
+      paste0(
+        "(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
+        "github_pat_|glpat-|nvapi-)[A-Za-z0-9_-]{12,}"
+      ),
+      x
+    )
+  )[[1L]]
+  any(grepl(
+    "[0-9]",
+    sub(
+      paste0(
+        "^(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
+        "github_pat_|glpat-|nvapi-)"
+      ),
+      "",
+      pre
+    )
+  ))
+}
+
+#' Tells whether a text holds a key typed in groups.
+#' @param x A string.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_key_grouped <- function(x) {
   # a key typed in groups (abcd1234efgh ijkl5678mnop qrst9012uvwx): three words
   # or more in a row of 8 to 16 letters and digits each, every one holding both
   # (final audit of 1.0.0, #7) zero-width characters are no characters and a
@@ -1254,7 +1507,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   any(vapply(
     letters_only,
     function(t) {
-      cls <- grepl("[A-Z]", strsplit(t, "")[[1L]])
+      cls <- grepl("[A-Z]", strsplit(t, "", fixed = TRUE)[[1L]])
       sum(cls[-1L] != cls[-length(cls)]) >= 4L
     },
     NA
@@ -1339,7 +1592,21 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 #' @return One usage string, the verb names, or NULL.
 #' @noRd
 .bl_verb_usage <- function(verb, prog = "rmoriebricklayer") {
-  u <- c(
+  u <- c(.bl_usage_a(), .bl_usage_b(), .bl_usage_c(), .bl_usage_d())
+  if (is.null(verb)) {
+    return(names(u))
+  }
+  if (!verb %in% names(u)) {
+    return(NULL)
+  }
+  sprintf("usage: %s %s\n", prog, u[[verb]])
+}
+
+#' The usage lines of the verbs login to examples.
+#' @return A named character vector.
+#' @noRd
+.bl_usage_a <- function() {
+  c(
     login = paste(
       "login [--email ADDRESS [--code CODE]] [--no-browser]",
       "[--accept-terms] [--name NAME]",
@@ -1376,7 +1643,15 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
       "describe NAME   help page of one function (a 0.5.x name: what it ",
       "became, then its page)"
     ),
-    examples = "examples NAME   the examples of one function",
+    examples = "examples NAME   the examples of one function"
+  )
+}
+
+#' The usage lines of the verbs run to archive.
+#' @return A named character vector.
+#' @noRd
+.bl_usage_b <- function() {
+  c(
     run = paste(
       "run NAME [VALUE...] [--ARG VALUE...]   call a function by its",
       "1.0.0 or 0.5.x name (old",
@@ -1411,7 +1686,15 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
       "captures (URL* for a prefix);",
       "archive get ID|URL -o FILE [--sha256 HEX] [--at YYYYMMDD]   the",
       "exact bytes, checked"
-    ),
+    )
+  )
+}
+
+#' The usage lines of the verbs verify, drift and refresh.
+#' @return A named character vector.
+#' @noRd
+.bl_usage_c <- function() {
+  c(
     verify = paste(
       "verify PATH [--json] [--fail-on error|warn|drift] [--public-key",
       "HEX] [--base MANIFEST|DIR]",
@@ -1438,7 +1721,15 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
     refresh = paste0(
       "refresh PATH   fetch each capsule's source and pin its new bytes ",
       "in the provenance (cpsrfrsh())"
-    ),
+    )
+  )
+}
+
+#' The usage lines of the verbs sign, report and version.
+#' @return A named character vector.
+#' @noRd
+.bl_usage_d <- function() {
+  c(
     sign = paste(
       "sign PATH [--scheme hmac|ML-DSA-44|...|xmss-sha256] [--key-file",
       "FILE] [--public-key HEX]",
@@ -1464,13 +1755,6 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
     ),
     version = "version   package version"
   )
-  if (is.null(verb)) {
-    return(names(u))
-  }
-  if (!verb %in% names(u)) {
-    return(NULL)
-  }
-  sprintf("usage: %s %s\n", prog, u[[verb]])
 }
 
 #' Returns the Rd database of this package.
@@ -1512,7 +1796,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 }
 
 #' Finds the help page whose aliases include a name.
-#' @param name The function name.
+#' @param name The function name to look up among the help pages' aliases.
 #' @return An Rd object, or NULL.
 #' @noRd
 .bl_rd_for <- function(name) {
@@ -1567,7 +1851,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 }
 
 #' Returns the help page of one function as text, without its examples.
-#' @param name The function name.
+#' @param name The function name whose help page is described.
 #' @return One string.
 #' @noRd
 .bl_describe <- function(name) {
@@ -1584,7 +1868,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 }
 
 #' Returns the examples section of one function's help page as text.
-#' @param name The function name.
+#' @param name The function name whose help-page examples are shown.
 #' @return One string.
 #' @noRd
 .bl_examples <- function(name) {
@@ -1610,169 +1894,9 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   system.file("bin", "rmoriebricklayer", package = "rmoriebricklayer")
 }
 
-#' Install the rmoriebricklayer command-line launcher
-#'
-#' Writes small launcher scripts into a directory on your PATH so that
-#' \code{rmoriebricklayer login}, \code{rmbl ask ...} and the other verbs of
-#' \code{\link{blcli}} work from any shell. Run it once after
-#' installing or upgrading the package. Nothing outside \code{dir} is
-#' touched, and only when you call this.
-#'
-#' @details
-#' On Unix-alikes each launcher is a \code{/bin/sh} script (mode 0755) that
-#' sets \code{RMBL_PROG} to its own name and runs
-#' \code{Rscript -e "rmoriebricklayer::blcli()"} with the shell's
-#' arguments, exiting with the function's status (130 on Ctrl-C). The library
-#' this copy of the package is installed in is pinned inside R with
-#' \code{.libPaths()}, so an \code{R_LIBS} set in the shell or in
-#' \code{~/.Renviron} cannot make the command run another copy. An existing
-#' file or link of the same name in \code{dir} is replaced. On Windows a
-#' \code{NAME.cmd} batch wrapper doing the same is written instead. A message
-#' names the files written and, when \code{dir} is not on the \code{PATH},
-#' says to add it. Re-run it after moving the package to another library.
-#'
-#' Errors when the package installation has no launcher in
-#' \code{inst/bin} (a damaged installation); when \code{dir}
-#' cannot be created or written, or is not one string; and
-#' when \code{name} is not a character vector of one or more command names
-#' (empty, \code{NA}, an empty string or a name with a directory part is
-#' refused).
-#'
-#' @param dir Character scalar, the target directory; default
-#'   \code{~/.local/bin}. Created (with its parents) if absent.
-#' @param name Character vector of command names to install; default both
-#'   \code{rmoriebricklayer} and its short form \code{rmbl} (every verb works
-#'   under either).
-#' @return The path of the first launcher written (normally
-#'   \code{rmoriebricklayer}), invisibly; the others are written beside it.
-#' @seealso \code{\link{blcli}} for the verbs.
-#' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' # into a scratch folder, so nothing on your PATH changes
-#' d <- file.path(tempdir(), "bin")
-#' p <- instcli(dir = d)
-#' list.files(d)
-#' readLines(p)[1:4]
-#'
-#' # one name only
-#' instcli(dir = d, name = "rmbl")
-#'
-#' @examplesIf interactive()
-#' instcli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
-#' @export
-instcli <- function(
-  dir = file.path(path.expand("~"), ".local", "bin"),
-  name = c("rmoriebricklayer", "rmbl")
-) {
-  # an empty `name` wrote nothing, printed "Installed ;" and failed on
-  # targets[[1L]]
-  if (
-    !is.character(name) ||
-      !length(name) ||
-      anyNA(name) ||
-      any(!nzchar(name)) ||
-      any(basename(name) != name)
-  ) {
-    stop(
-      "`name` must be one or more command names (non-empty, no NA, no ",
-      "directory part)",
-      call. = FALSE
-    )
-  }
-  dir <- .rmbl_string1(dir, "dir")
-  src <- .bl_launcher()
-  if (!nzchar(src)) {
-    stop("the launcher is missing from this installation", call. = FALSE)
-  }
-  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  # a folder that cannot be made or written failed later in file()'s words
-  # (pre-CRAN audit of 30bed8e)
-  if (!dir.exists(dir) || file.access(dir, 2L) != 0L) {
-    stop(
-      .rmbl_fn(),
-      sprintf("`dir` %s cannot be created or written", dir),
-      call. = FALSE
-    )
-  }
-  # the launcher pins the library this copy of the package lives in, inside R
-  # with .libPaths(), so the shell's R_LIBS or an R_LIBS in ~/.Renviron cannot
-  # swap in another copy
-  lib <- normalizePath(
-    dirname(system.file(package = "rmoriebricklayer")),
-    winslash = "/"
-  )
-  targets <- character()
-  for (nm in name) {
-    if (.Platform$OS.type == "windows") {
-      # nocov start -- the Windows wrapper; the coverage runner is Linux
-      target <- file.path(dir, paste0(nm, ".cmd"))
-      writeLines(
-        sprintf(
-          paste0(
-            "@echo off\r\nset RMBL_PROG=",
-            nm,
-            "\r\nRscript --no-save --no-restore -e ",
-            "\".libPaths(c('%s', .libPaths())); ",
-            "q <- tryCatch(rmoriebricklayer::blcli(), interrupt = ",
-            "function(e) 130L); ",
-            "quit(status = as.integer(q))\" %%*"
-          ),
-          lib
-        ),
-        target
-      )
-      # nocov end
-    } else {
-      target <- file.path(dir, nm)
-      if (file.exists(target) || !is.na(Sys.readlink(target))) {
-        unlink(target)
-      }
-      # the library path is an R string literal (deparse() escapes it) inside
-      # a single-quoted shell argument (a quote in the path becomes '\'')
-      # a Ctrl-C that reaches the top level exits 130, not 1 (as inst/bin/rmbl)
-      body <- paste0(
-        "suppressPackageStartupMessages({ .libPaths(c(",
-        deparse(lib),
-        ", .libPaths())); ",
-        "q <- tryCatch(rmoriebricklayer::blcli(), interrupt = ",
-        "function(e) 130L); ",
-        "quit(status = as.integer(q)) })"
-      )
-      body <- gsub("'", "'\\\\''", body)
-      writeLines(
-        c(
-          "#!/bin/sh",
-          sprintf(
-            paste0(
-              "# %s: the rmoriebricklayer command line (written by ",
-              "rmoriebricklayer::instcli())"
-            ),
-            nm
-          ),
-          sprintf(
-            "# runs the package in %s (pinned with .libPaths() inside R)",
-            lib
-          ),
-          sprintf("export RMBL_PROG=%s", nm),
-          sprintf("exec Rscript --no-save --no-restore -e '%s' \"$@\"", body)
-        ),
-        target
-      )
-      Sys.chmod(target, "0755")
-    }
-    targets <- c(targets, target)
-  }
-  on_path <- dir %in% strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1L]]
-  message(sprintf(
-    "Installed %s%s",
-    paste(targets, collapse = " and "),
-    if (on_path) "" else sprintf("; add %s to your PATH", dir)
-  ))
-  invisible(targets[[1L]]) # the primary launcher's path; rmbl sits beside it
-}
-
 #' The models verb: the models the route `ask` would take offers (or the one
 #' named), default marked.
-#' @param out The function that prints the verb's output.
+#' @param out The function that prints the list of models.
 #' @param route The route named with `--route`, or NULL.
 #' @return The exit status, invisibly.
 #' @noRd
@@ -1817,14 +1941,66 @@ instcli <- function(
   invisible(0L)
 }
 
+#' `wayback --retry FILE`: an earlier run's failures, looked up and
+#' captured again.
+#' @param pos The positional arguments.
+#' @param gone Whether gone pages are tried again.
+#' @param cap The capture cap.
+#' @param flag,out As for .bl_cli_wayback().
+#' @return The exit status.
+#' @noRd
+.bl_cli_wayback_retry <- function(pos, gone, cap, flag, out) {
+  if (length(pos) != 1L || !file.exists(pos[[1L]])) {
+    out(sprintf(
+      "--retry takes the results file of an earlier run: %s\n",
+      if (length(pos) == 1L) {
+        paste("no such file", pos[[1L]])
+      } else {
+        "give one FILE.jsonl"
+      }
+    ))
+    return(if (length(pos) == 1L) 1L else 2L)
+  }
+  res <- wbrtry(
+    pos[[1L]],
+    incgone = gone,
+    jobs = flag("--jobs") %||% "4",
+    within = flag("--within") %||% "30d",
+    maxcap = cap
+  )
+  r <- attr(res, "retry")
+  tab <- table(factor(
+    res$status,
+    levels = c("saved", "existing", "failed", "submitted")
+  ))
+  out(sprintf(
+    paste(
+      "%d failures: %d found already archived, %d captured again, %d",
+      "left as gone,",
+      "%d left for tomorrow (a daily limit); now %d saved, %d",
+      "existing, %d failed in %s\n"
+    ),
+    r$failed,
+    r$found_by_lookup,
+    r$captured_again,
+    r$left_as_gone,
+    r$left_for_tomorrow,
+    tab[["saved"]],
+    tab[["existing"]],
+    tab[["failed"]],
+    pos[[1L]]
+  ))
+  if (tab[["failed"]] > 0L || tab[["submitted"]] > 0L) 1L else 0L
+}
+
 #' Runs the wayback verb.
 #'
 #' The wayback verb: every URL in a file (one per line; blank lines and #
 #' comments skipped) saved in the Wayback Machine by wbsave(), results in --out
 #' (default FILE.wayback.jsonl), which also lets a stopped run carry on.
-#' @param rest The arguments after the verb.
-#' @param flag A function that returns the value of an option, or NULL.
-#' @param out The function that prints the verb's output.
+#' @param rest The arguments after `wayback`: the file and its options.
+#' @param flag Looks up `--max`, `--jobs`, `--within` or `--out`, or gives NULL.
+#' @param out The function that prints the wayback usage and messages.
 #' @return The exit status.
 #' @noRd
 .bl_cli_wayback <- function(rest, flag, out) {
@@ -1840,47 +2016,7 @@ instcli <- function(
   gone <- "--include-gone" %in% pos
   pos <- setdiff(pos, c("--retry", "--include-gone"))
   if (retry) {
-    if (length(pos) != 1L || !file.exists(pos[[1L]])) {
-      out(sprintf(
-        "--retry takes the results file of an earlier run: %s\n",
-        if (length(pos) == 1L) {
-          paste("no such file", pos[[1L]])
-        } else {
-          "give one FILE.jsonl"
-        }
-      ))
-      return(if (length(pos) == 1L) 1L else 2L)
-    }
-    res <- wbrtry(
-      pos[[1L]],
-      incgone = gone,
-      jobs = flag("--jobs") %||% "4",
-      within = flag("--within") %||% "30d",
-      maxcap = cap
-    )
-    r <- attr(res, "retry")
-    tab <- table(factor(
-      res$status,
-      levels = c("saved", "existing", "failed", "submitted")
-    ))
-    out(sprintf(
-      paste(
-        "%d failures: %d found already archived, %d captured again, %d",
-        "left as gone,",
-        "%d left for tomorrow (a daily limit); now %d saved, %d",
-        "existing, %d failed in %s\n"
-      ),
-      r$failed,
-      r$found_by_lookup,
-      r$captured_again,
-      r$left_as_gone,
-      r$left_for_tomorrow,
-      tab[["saved"]],
-      tab[["existing"]],
-      tab[["failed"]],
-      pos[[1L]]
-    ))
-    return(if (tab[["failed"]] > 0L || tab[["submitted"]] > 0L) 1L else 0L)
+    return(.bl_cli_wayback_retry(pos, gone, cap, flag, out))
   }
   if (length(pos) != 1L || pos[[1L]] %in% c("help", "--help", "-h")) {
     out(.bl_verb_usage("wayback", .bl_prog()))
@@ -1916,10 +2052,45 @@ instcli <- function(
   if (tab[["failed"]] > 0L || ns > 0L) 1L else 0L
 }
 
+#' `data pull TABLE`: one table, written to a CSV file.
+#' @param rest,flag,out As for .bl_cli_data().
+#' @return The exit status.
+#' @noRd
+.bl_cli_data_pull <- function(rest, flag, out) {
+  dest <- flag("--out") %||%
+    paste0(gsub("[^A-Za-z0-9_.-]", "_", rest[[2L]]), ".csv")
+  # refuse an unwritable destination before downloading the table, not after
+  dir <- dirname(dest)
+  if (!dir.exists(dir) || file.access(dir, 2L) != 0L || dir.exists(dest)) {
+    out(sprintf(
+      "cannot write %s (the directory does not exist, or no permission)\n",
+      dest
+    ))
+    return(1L)
+  }
+  df <- dload(rest[[2L]])
+  ok <- tryCatch(
+    {
+      suppressWarnings(utils::write.csv(df, dest, row.names = FALSE))
+      TRUE
+    },
+    error = function(e) FALSE
+  )
+  if (!ok) {
+    out(sprintf(
+      "cannot write %s (the directory does not exist, or no permission)\n",
+      dest
+    ))
+    return(1L)
+  }
+  out(sprintf("wrote %s  (%d rows, %d cols)\n", dest, nrow(df), ncol(df)))
+  0L
+}
+
 #' The data verb: the curated tables at data.rmorie.com.
-#' @param rest The arguments after the verb.
-#' @param flag A function that returns the value of an option, or NULL.
-#' @param out The function that prints the verb's output.
+#' @param rest The arguments after `data`: `list`, or `pull` and a table key.
+#' @param flag Looks up an option's value (here `--out`), or gives NULL.
+#' @param out The function that prints the table list or the usage.
 #' @return The exit status.
 #' @noRd
 .bl_cli_data <- function(rest, flag, out) {
@@ -1953,33 +2124,7 @@ instcli <- function(
       )
     ))
   } else if (identical(sub, "pull") && length(rest) >= 2L) {
-    dest <- flag("--out") %||%
-      paste0(gsub("[^A-Za-z0-9_.-]", "_", rest[[2L]]), ".csv")
-    # refuse an unwritable destination before downloading the table, not after
-    dir <- dirname(dest)
-    if (!dir.exists(dir) || file.access(dir, 2L) != 0L || dir.exists(dest)) {
-      out(sprintf(
-        "cannot write %s (the directory does not exist, or no permission)\n",
-        dest
-      ))
-      return(1L)
-    }
-    df <- dload(rest[[2L]])
-    ok <- tryCatch(
-      {
-        suppressWarnings(utils::write.csv(df, dest, row.names = FALSE))
-        TRUE
-      },
-      error = function(e) FALSE
-    )
-    if (!ok) {
-      out(sprintf(
-        "cannot write %s (the directory does not exist, or no permission)\n",
-        dest
-      ))
-      return(1L)
-    }
-    out(sprintf("wrote %s  (%d rows, %d cols)\n", dest, nrow(df), ncol(df)))
+    return(.bl_cli_data_pull(rest, flag, out))
   } else {
     out(paste0(
       sprintf("usage: %s data list | ", .bl_prog()),
@@ -1987,31 +2132,49 @@ instcli <- function(
     ))
     # asking for help is not a mistake: --help exits 0 like every other verb's
     # help
-    return(
-      if (
-        identical(sub, "--help") ||
-          identical(sub, "-h") ||
-          identical(sub, "help")
-      ) {
-        0L
-      } else {
-        2L
-      }
-    )
+    return(if (sub %in% c("--help", "-h", "help")) 0L else 2L)
   }
   0L
 }
 
 #' `rmbl help [TOPIC]`: the verbs, a getting-started guide, and one page per
 #' topic.
-#' @param rest The arguments after the verb.
-#' @param out The function that prints the verb's output.
+#' @param rest The arguments after `help`; the first word names the topic.
+#' @param out The function that prints the help text.
 #' @return The exit status.
 #' @noRd
 .bl_cli_help <- function(rest, out) {
   prog <- .bl_prog()
   topic <- if (length(rest) && !startsWith(rest[[1L]], "-")) rest[[1L]] else ""
-  verbs <- paste0(
+  if (!nzchar(topic)) {
+    out(paste0(
+      .bl_help_verbs1(prog),
+      .bl_help_verbs2(prog),
+      .bl_help_verbs3(prog)
+    ))
+  } else if (topic %in% c("start", "getting-started", "quickstart")) {
+    out(paste0(.bl_help_start(prog), .bl_help_start2(prog)))
+  } else if (topic %in% c("llm", "routes", "providers", "byok", "ollama")) {
+    out(paste0(.bl_help_llm1(prog), .bl_help_llm2(prog)))
+  } else if (identical(topic, "config")) {
+    .bl_cli_config("help", out, function(m) stop(m, call. = FALSE))
+  } else if (topic %in% c("r", "R", "rscript", "Rscript")) {
+    out(.bl_help_r())
+  } else if (!is.null(.bl_verb_usage(topic, prog))) {
+    out(.bl_verb_usage(topic, prog))
+  } else {
+    out(sprintf("%s: no help topic '%s' (try: %s help)\n", prog, topic, prog))
+    return(2L)
+  }
+  0L
+}
+
+#' Part 1 of the list of verbs `help` prints.
+#' @param prog The command's name, shown in each example line of the help.
+#' @return One string.
+#' @noRd
+.bl_help_verbs1 <- function(prog) {
+  paste0(
     sprintf(
       paste0(
         "usage: %s <verb> [options]   (rmbl is the same command as ",
@@ -2040,7 +2203,16 @@ instcli <- function(
     "  bundle REQUEST...                         agentbndl() from the shell\n",
     "\nData and functions\n",
     "  login [--token] [--email ADDRESS]         sign in for the ",
-    "curated tables at data.rmorie.com\n",
+    "curated tables at data.rmorie.com\n"
+  )
+}
+
+#' Part 2 of the list of verbs `help` prints.
+#' @param prog The command's name, shown in each example line of the help.
+#' @return One string.
+#' @noRd
+.bl_help_verbs2 <- function(prog) {
+  paste0(
     "        [--code CODE] [--no-browser]\n",
     "  logout                                    forget the data key\n",
     "  data list                                 curated tables at ",
@@ -2062,7 +2234,16 @@ instcli <- function(
     "  describe NAME                             help page of one function\n",
     "  examples NAME                             its examples\n",
     "  version                                   package version\n",
-    "\nCapsules (the checks of the rmbl GitHub Action)\n",
+    "\nCapsules (the checks of the rmbl GitHub Action)\n"
+  )
+}
+
+#' Part 3 of the list of verbs `help` prints.
+#' @param prog The command's name, shown in each example line of the help.
+#' @return One string.
+#' @noRd
+.bl_help_verbs3 <- function(prog) {
+  paste0(
     "  verify PATH [--json] [--fail-on LEVEL]    schemas, digests, ",
     "bundle signature (hmac secret: RMBL_KEY)\n",
     "        [--base MANIFEST|DIR] [--snapshot]  manifests against ",
@@ -2098,7 +2279,14 @@ instcli <- function(
     sprintf("  %s help r          the same from R and Rscript\n", prog),
     sprintf("  %s VERB --help     one verb's usage\n", prog)
   )
-  start <- paste0(
+}
+
+#' The getting-started guide of `help start`.
+#' @param prog The command's name, shown in each example line of the help.
+#' @return One string.
+#' @noRd
+.bl_help_start <- function(prog) {
+  paste0(
     "Getting started\n\n",
     "1. Check what is set up:\n",
     sprintf("     %s doctor\n", prog),
@@ -2121,7 +2309,16 @@ instcli <- function(
       ),
       prog
     ),
-    sprintf("   or answer a few questions instead:  %s config setup\n", prog),
+    sprintf("   or answer a few questions instead:  %s config setup\n", prog)
+  )
+}
+
+#' The getting-started guide of `help start`, from its step 3.
+#' @param prog The command's name, shown in each example line of the help.
+#' @return One string.
+#' @noRd
+.bl_help_start2 <- function(prog) {
+  paste0(
     "3. Ask:\n",
     sprintf("     %s ask \"what is a Benford screen for\"\n", prog),
     sprintf(
@@ -2154,8 +2351,15 @@ instcli <- function(
       prog
     )
   )
+}
+
+#' Part 1 of the page of `help llm`: where ask sends a prompt.
+#' @param prog The command's name, shown in each example line of the help.
+#' @return One string.
+#' @noRd
+.bl_help_llm1 <- function(prog) {
   ps <- .bl_llm_presets()
-  llm <- paste0(
+  paste0(
     "Where ask sends a prompt\n\n",
     "Bring your own key, or run a model locally: nothing is sent ",
     "anywhere you did not set up.\n",
@@ -2182,7 +2386,16 @@ instcli <- function(
     "  ollama serve                              start the server (or ",
     "open the Ollama app)\n",
     "  ollama pull qwen3:8b                      a model to use\n",
-    sprintf("  %s config set ollama.url http://192.168.1.20:11434\n", prog),
+    sprintf("  %s config set ollama.url http://192.168.1.20:11434\n", prog)
+  )
+}
+
+#' Part 2 of the page of `help llm`: where ask sends a prompt.
+#' @param prog The command's name, shown in each example line of the help.
+#' @return One string.
+#' @noRd
+.bl_help_llm2 <- function(prog) {
+  paste0(
     sprintf("  %s config set ollama.model qwen3:8b\n", prog),
     sprintf(
       "  %s config set ollama.url off          never try Ollama\n\n",
@@ -2211,7 +2424,13 @@ instcli <- function(
     "  MORIE_LLM_ROUTE=groq rmbl ask \"...\"      (environment variables ",
     "win over saved settings)\n"
   )
-  r_help <- paste0(
+}
+
+#' The page of `help r`: the same from R and Rscript.
+#' @return One string.
+#' @noRd
+.bl_help_r <- function() {
+  paste0(
     "From R (or Rscript -e '...': single quotes outside, double quotes ",
     "inside)\n\n",
     "  library(rmoriebricklayer)\n",
@@ -2234,28 +2453,73 @@ instcli <- function(
     "  Rscript -e 'cat(rmoriebricklayer::llmask(\"What can a Benford ",
     "screen show?\"), \"\\n\")'\n"
   )
-  if (!nzchar(topic)) {
-    out(verbs)
-  } else if (topic %in% c("start", "getting-started", "quickstart")) {
-    out(start)
-  } else if (topic %in% c("llm", "routes", "providers", "byok", "ollama")) {
-    out(llm)
-  } else if (identical(topic, "config")) {
-    .bl_cli_config("help", out, function(m) stop(m, call. = FALSE))
-  } else if (topic %in% c("r", "R", "rscript", "Rscript")) {
-    out(r_help)
-  } else if (!is.null(.bl_verb_usage(topic, prog))) {
-    out(.bl_verb_usage(topic, prog))
-  } else {
-    out(sprintf("%s: no help topic '%s' (try: %s help)\n", prog, topic, prog))
+}
+
+#' `archive save`: the captures, reported.
+#' @param pos The URLs.
+#' @param args The verb's arguments.
+#' @param flag,out As for .bl_cli_archive().
+#' @return The exit status.
+#' @noRd
+.bl_cli_archive_save <- function(pos, args, flag, out) {
+  also <- flag("--also")
+  if (!is.null(also) && !identical(also, "wayback")) {
+    out("--also takes one value: wayback\n")
     return(2L)
   }
-  0L
+  reason <- flag("--reason")
+  if (is.null(reason)) {
+    out(
+      paste0(
+        "save needs --reason \"why you keep it\" (one sentence, 20 ",
+        "characters or more)\n"
+      )
+    )
+    return(2L)
+  }
+  dir <- flag("--dir") %||% file.path(getwd(), "captures")
+  cap <- arccap(
+    pos,
+    dir,
+    tsa = NULL,
+    upload = c("rmorie", if (!is.null(also)) "wayback"),
+    reason = reason,
+    visibility = if ("--private" %in% args) "private" else "public"
+  )
+  d <- as.data.frame(unclass(cap))
+  for (i in seq_len(nrow(d))) {
+    out(sprintf(
+      "%s  %s%s\n",
+      d$status[i],
+      d$url[i],
+      if (!is.na(d$archive[i])) paste0("\n  ", d$archive[i]) else ""
+    ))
+  }
+  out(sprintf("local copies and WARC files: %s\n", dir))
+  if (all(d$status == "archived")) 0L else 1L
+}
+
+#' `archive find`: a URL's captures, as a table or JSON.
+#' @param pos The URL.
+#' @param args The verb's arguments.
+#' @param flag,out As for .bl_cli_archive().
+#' @return The exit status.
+#' @noRd
+.bl_cli_archive_find <- function(pos, args, flag, out) {
+  f <- arcfind(pos[[1L]], from = flag("--from"), to = flag("--to"))
+  if ("--json" %in% args) {
+    d <- as.data.frame(unclass(f))
+    d$captured <- format(d$captured, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+    out(paste0(tojs(d, dataframe = "rows", auto_unbox = TRUE), "\n"))
+  } else {
+    out(paste0(paste(utils::capture.output(print(f)), collapse = "\n"), "\n"))
+  }
+  if (nrow(f)) 0L else 1L
 }
 
 #' The archive verb: archive.rmorie.com from a terminal (arccap(upload =
 #' "rmorie"), arcfind(), arcget()).
-#' @param rest The arguments after the verb.
+#' @param rest The arguments after `archive`: the subcommand and its arguments.
 #' @param flag Looks up an option's value.
 #' @param out Writes text.
 #' @return The exit status.
@@ -2290,52 +2554,10 @@ instcli <- function(
     return(usage(2L))
   }
   if (sub == "save") {
-    also <- flag("--also")
-    if (!is.null(also) && !identical(also, "wayback")) {
-      out("--also takes one value: wayback\n")
-      return(2L)
-    }
-    reason <- flag("--reason")
-    if (is.null(reason)) {
-      out(
-        paste0(
-          "save needs --reason \"why you keep it\" (one sentence, 20 ",
-          "characters or more)\n"
-        )
-      )
-      return(2L)
-    }
-    dir <- flag("--dir") %||% file.path(getwd(), "captures")
-    cap <- arccap(
-      pos,
-      dir,
-      tsa = NULL,
-      upload = c("rmorie", if (!is.null(also)) "wayback"),
-      reason = reason,
-      visibility = if ("--private" %in% args) "private" else "public"
-    )
-    d <- as.data.frame(unclass(cap))
-    for (i in seq_len(nrow(d))) {
-      out(sprintf(
-        "%s  %s%s\n",
-        d$status[i],
-        d$url[i],
-        if (!is.na(d$archive[i])) paste0("\n  ", d$archive[i]) else ""
-      ))
-    }
-    out(sprintf("local copies and WARC files: %s\n", dir))
-    return(if (all(d$status == "archived")) 0L else 1L)
+    return(.bl_cli_archive_save(pos, args, flag, out))
   }
   if (sub == "find") {
-    f <- arcfind(pos[[1L]], from = flag("--from"), to = flag("--to"))
-    if ("--json" %in% args) {
-      d <- as.data.frame(unclass(f))
-      d$captured <- format(d$captured, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
-      out(paste0(tojs(d, dataframe = "rows", auto_unbox = TRUE), "\n"))
-    } else {
-      out(paste0(paste(utils::capture.output(print(f)), collapse = "\n"), "\n"))
-    }
-    return(if (nrow(f)) 0L else 1L)
+    return(.bl_cli_archive_find(pos, args, flag, out))
   }
   dest <- flag("-o") %||% flag("--out")
   if (is.null(dest)) {
@@ -2350,4 +2572,113 @@ instcli <- function(
     attr(g, "sha256")
   ))
   0L
+}
+
+#' Writes one launcher of instcli().
+#' @param dir The target directory.
+#' @param nm The command's name.
+#' @param lib The library the package is installed in.
+#' @return The launcher's path.
+#' @noRd
+.bl_write_launcher <- function(dir, nm, lib) {
+  if (.Platform$OS.type == "windows") {
+    .bl_launcher_cmd(dir, nm, lib) # nocov -- the coverage runner is Linux
+  } else {
+    .bl_launcher_sh(dir, nm, lib)
+  }
+}
+
+#' Writes the Windows batch wrapper of instcli().
+#' @param dir,nm,lib As for .bl_write_launcher().
+#' @return The wrapper's path.
+#' @noRd
+# nocov start -- the Windows wrapper; the coverage runner is Linux
+.bl_launcher_cmd <- function(dir, nm, lib) {
+  target <- file.path(dir, paste0(nm, ".cmd"))
+  writeLines(
+    sprintf(
+      paste0(
+        "@echo off\r\nset RMBL_PROG=",
+        nm,
+        "\r\nRscript --no-save --no-restore -e ",
+        "\".libPaths(c('%s', .libPaths())); ",
+        "q <- tryCatch(rmoriebricklayer::blcli(), interrupt = ",
+        "function(e) 130L); ",
+        "quit(status = as.integer(q))\" %%*"
+      ),
+      lib
+    ),
+    target
+  )
+  target
+}
+
+# nocov end
+
+#' Writes the /bin/sh launcher of instcli().
+#' @param dir,nm,lib As for .bl_write_launcher().
+#' @return The launcher's path.
+#' @noRd
+.bl_launcher_sh <- function(dir, nm, lib) {
+  target <- file.path(dir, nm)
+  if (file.exists(target) || !is.na(Sys.readlink(target))) {
+    unlink(target)
+  }
+  # the library path is an R string literal (deparse() escapes it) inside
+  # a single-quoted shell argument (a quote in the path becomes '\'')
+  # a Ctrl-C that reaches the top level exits 130, not 1 (as inst/bin/rmbl)
+  body <- paste0(
+    "suppressPackageStartupMessages({ .libPaths(c(",
+    deparse(lib),
+    ", .libPaths())); ",
+    "q <- tryCatch(rmoriebricklayer::blcli(), interrupt = ",
+    "function(e) 130L); ",
+    "quit(status = as.integer(q)) })"
+  )
+  body <- gsub("'", "'\\''", body, fixed = TRUE)
+  writeLines(
+    c(
+      "#!/bin/sh",
+      sprintf(
+        paste0(
+          "# %s: the rmoriebricklayer command line (written by ",
+          "rmoriebricklayer::instcli())"
+        ),
+        nm
+      ),
+      sprintf(
+        "# runs the package in %s (pinned with .libPaths() inside R)",
+        lib
+      ),
+      sprintf("export RMBL_PROG=%s", nm),
+      sprintf("exec Rscript --no-save --no-restore -e '%s' \"$@\"", body)
+    ),
+    target
+  )
+  Sys.chmod(target, "0755")
+  target
+}
+
+#' Stops unless instcli()'s `name` is one or more command names.
+#'
+#' An empty `name` wrote nothing, printed "Installed ;" and failed on
+#' targets[[1L]].
+#' @param name As for instcli().
+#' @return Nothing useful.
+#' @noRd
+.bl_cli_names_check <- function(name) {
+  if (
+    !is.character(name) ||
+      !length(name) ||
+      anyNA(name) ||
+      !all(nzchar(name)) ||
+      any(basename(name) != name)
+  ) {
+    stop(
+      "`name` must be one or more command names (non-empty, no NA, no ",
+      "directory part)",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }

@@ -7,7 +7,7 @@
 dualcont(x, well, distress, conflvl = 0.95)
 }
 \arguments{
-\item{x}{A \code{\link{welprof}}.}
+\item{x}{A wellness profile from \code{\link{welprof}}.}
 
 \item{well, distress}{One wellness and one distress indicator of \code{x}.}
 
@@ -61,6 +61,19 @@ dc <- dualcont(w, "Always or often has a hopeful outlook",
                      "Life satisfaction rating between 0 and 5")
 dc
 plot(dc)
+
+# your own table: made-up percentages for two communities, with limits
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 4),
+  item = rep(c("Hopeful", "Satisfied", "Rarely hopeful", "Low satisfaction"),
+             2),
+  pct = c(64, 71, 12, 18, 58, 66, 16, 22),
+  lo = c(59, 66, 9, 14, 52, 60, 12, 17),
+  hi = c(69, 76, 15, 22, 64, 72, 20, 27)
+)
+w <- welprof(own, "community", "item", "pct", "lo", "hi",
+             well = "Hopeful", distress = "Rarely hopeful")
+dualcont(w, "Hopeful", "Rarely hopeful")
 \dontshow{\}) # examplesIf}
 }
 \references{

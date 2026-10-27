@@ -26,7 +26,7 @@ test_that("an aggregation restores each key column's own type", {
     minbase = 0
   )
   expect_type(as.data.frame(int)$p, "integer")
-  expect_equal(as.data.frame(int)$value, c(3, 7, 11))
+  expect_identical(as.data.frame(int)$value, c(3, 7, 11))
 
   dbl <- yoy(
     mk(rep(c(1.5, 2.5, 3.5), each = 2L)),
@@ -62,7 +62,7 @@ test_that("an aggregation restores each key column's own type", {
     minbase = 0
   )
   expect_s3_class(as.data.frame(fac)$g, "factor")
-  expect_equal(levels(as.data.frame(fac)$g), c("a", "b"))
+  expect_identical(levels(as.data.frame(fac)$g), c("a", "b"))
 
   # a logical grouping column
   lg <- yoy(
@@ -90,7 +90,8 @@ test_that("a gap inside groups is completed within each group", {
   d <- data.frame(
     year = rep(c(2019, 2020, 2022), each = 2L),
     region = rep(c("N", "S"), 3L),
-    n = c(100, 200, 110, 210, 130, 230)
+    n = c(100, 200, 110, 210, 130, 230),
+    stringsAsFactors = FALSE
   )
   got <- as.data.frame(yoy(
     d,
@@ -100,12 +101,12 @@ test_that("a gap inside groups is completed within each group", {
     minbase = 0
   ))
   # both regions gain a 2021 row with no value
-  expect_equal(nrow(got), 8L)
-  expect_equal(sum(got$year == 2021), 2L)
+  expect_identical(nrow(got), 8L)
+  expect_identical(sum(got$year == 2021), 2L)
   expect_true(all(is.na(got$value[got$year == 2021])))
   # and 2022 has no comparison period in either region
   expect_true(all(is.na(got$previous[got$year == 2022])))
-  expect_equal(sort(unique(got$region)), c("N", "S"))
+  expect_identical(sort(unique(got$region)), c("N", "S"))
 })
 
 test_that("a period column that is not a grid is left alone", {
@@ -122,17 +123,17 @@ test_that("a period column that is not a grid is left alone", {
     prd = "p",
     minbase = 0
   ))
-  expect_equal(nrow(irr), 11L)
-  expect_equal(irr$p, 1:11)
-  expect_equal(sum(!is.na(irr$value)), 4L)
+  expect_identical(nrow(irr), 11L)
+  expect_identical(irr$p, as.double(1:11))
+  expect_identical(sum(!is.na(irr$value)), 4L)
   # A predecessor is found wherever the period one step back carries a
   # value: period 2 follows 1, and periods 3 and 6 follow the observed
   # 2 and 5 -- so an empty period does not hide the year before it, it
   # only stops the year AFTER it from reaching across.
-  expect_equal(irr$previous[irr$p == 2], 10)
-  expect_equal(irr$previous[irr$p == 3], 20)
-  expect_equal(irr$previous[irr$p == 6], 30)
-  expect_equal(sum(!is.na(irr$previous)), 3L)
+  expect_identical(irr$previous[irr$p == 2], 10)
+  expect_identical(irr$previous[irr$p == 3], 20)
+  expect_identical(irr$previous[irr$p == 6], 30)
+  expect_identical(sum(!is.na(irr$previous)), 3L)
   # and the periods following a gap have none
   expect_true(is.na(irr$previous[irr$p == 5]))
   expect_true(is.na(irr$previous[irr$p == 11]))
@@ -151,29 +152,35 @@ test_that("a period column that is not a grid is left alone", {
     minbase = 0
   ))
   expect_true(4.2 %in% odd$p)
-  expect_equal(odd$value[odd$p == 4.2], 30)
-  expect_equal(sum(!is.na(odd$value)), 3L)
+  expect_identical(odd$value[odd$p == 4.2], 30)
+  expect_identical(sum(!is.na(odd$value)), 3L)
 
   # a single period has no step either
   one <- as.data.frame(yoy(data.frame(p = 2019, n = 5), value = "n", prd = "p"))
-  expect_equal(nrow(one), 1L)
+  expect_identical(nrow(one), 1L)
   expect_true(is.na(one$previous))
 
   # A character period has no arithmetic, so "one period earlier" means
   # nothing. It must report that rather than raising: taking diff() of
   # it failed with "non-numeric argument to binary operator" and killed
   # the whole call.
-  chr <- as.data.frame(yoy(
-    data.frame(
-      p = c("Q1", "Q2", "Q3"),
-      n = c(10, 20, 30)
-    ),
-    value = "n",
-    prd = "p",
-    minbase = 0
-  ))
-  expect_equal(nrow(chr), 3L)
-  expect_equal(chr$value, c(10, 20, 30))
+  expect_warning(
+    {
+      chr <- as.data.frame(yoy(
+        data.frame(
+          p = c("Q1", "Q2", "Q3"),
+          n = c(10, 20, 30),
+          stringsAsFactors = FALSE
+        ),
+        value = "n",
+        prd = "p",
+        minbase = 0
+      ))
+    },
+    "prdord"
+  )
+  expect_identical(nrow(chr), 3L)
+  expect_identical(chr$value, c(10, 20, 30))
   expect_true(all(is.na(chr$previous)))
   expect_true(all(chr$flag == "no comparison period"))
   # a factor period is the same case
@@ -186,7 +193,7 @@ test_that("a period column that is not a grid is left alone", {
     prd = "p",
     minbase = 0
   ))
-  expect_equal(nrow(fct), 2L)
+  expect_identical(nrow(fct), 2L)
   expect_true(all(is.na(fct$previous)))
 
   # a period range so wide that completing it would fabricate a vast
@@ -200,7 +207,7 @@ test_that("a period column that is not a grid is left alone", {
     prd = "p",
     minbase = 0
   ))
-  expect_equal(nrow(huge), 3L)
+  expect_identical(nrow(huge), 3L)
 
   # a column name must be a name or a string, not an expression
   expect_error(
@@ -292,7 +299,8 @@ test_that("the settings line reports the units and the direction", {
     data.frame(
       p = rep(2019:2020, each = 2L),
       k = rep(c("a", "b"), 2L),
-      n = c(1, 2, 3, 4)
+      n = c(1, 2, 3, 4),
+      stringsAsFactors = FALSE
     ),
     value = "n",
     prd = "p",
@@ -323,9 +331,9 @@ test_that("the tail index reports when there is nothing to estimate", {
   expect_true(is.na(fb$alpha))
   expect_match(fb$method, "not estimable")
   # a value of zero cannot be logged, so it is not in the tail at all
-  expect_equal(hilltlidx(c(0, 0, 3, 4, 5, 9), xmin = 3)$ntl, 4L)
+  expect_identical(hilltlidx(c(0, 0, 3, 4, 5, 9), xmin = 3)$ntl, 4L)
   # an infinite value is not data
-  expect_equal(hilltlidx(c(Inf, 3, 4, 5, 9), xmin = 3)$ntl, 4L)
+  expect_identical(hilltlidx(c(Inf, 3, 4, 5, 9), xmin = 3)$ntl, 4L)
 })
 
 test_that("the discrete distance degrades on degenerate input", {
@@ -346,7 +354,8 @@ test_that("the discrete distance degrades on degenerate input", {
     c(1, 1, 2, 3),
     function(q) stats::pbinom(q, 3, 0.4)
   )
-  expect_true(d >= 0 && d <= 1)
+  expect_gte(d, 0)
+  expect_lte(d, 1)
 })
 
 test_that("the zeta likelihood refuses an exponent it cannot normalise", {

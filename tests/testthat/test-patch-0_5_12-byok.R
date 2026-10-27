@@ -95,7 +95,7 @@ test_that("a help page marked internal is left out of the knowledge index", {
   pages <- ns(".bl_kn_pages")("stats")
   nm <- vapply(pages, function(p) p$name, "")
   expect_false("stats-defunct" %in% nm)
-  expect_true(length(pages) > 100L)
+  expect_gt(length(pages), 100L)
 })
 
 test_that("the lock hint names what to check", {
@@ -166,13 +166,14 @@ test_that(
       stderr = FALSE
     )
     Sys.sleep(1)
-    got <- NULL
+    rec <- new.env()
+    rec$got <- NULL
     prog <- function(now, total) {
-      if (!is.null(got)) {
+      if (!is.null(rec$got)) {
         return(invisible())
       }
       tools::pskill(Sys.getpid(), tools::SIGINT)
-      got <<- tryCatch(
+      rec$got <- tryCatch(
         .Call(
           ns("C_rmbl_svy_reptotals"),
           matrix(1, 10, 1),
@@ -200,15 +201,15 @@ test_that(
     # a signal that arrived after the kernel had run is taken here, not by the
     # next test
     tryCatch(Sys.sleep(0.3), interrupt = function(i) NULL)
-    skip_if(is.null(got), "the progress callback did not run")
+    skip_if(is.null(rec$got), "the progress callback did not run")
     skip_if(
-      is.numeric(got),
+      is.numeric(rec$got),
       "the signal reached R after the kernel had run (timing)"
     )
     # the kernel stopped: either with its own "interrupted" error, or R
     # delivered the pending interrupt as a condition to the handler around the
     # call before the kernel's check (what R 4.5+ does when a tryCatch(interrupt
     # = ) is on the stack); what matters is that no result came back
-    expect_true(got %in% c("interrupted", "interrupt"))
+    expect_true(rec$got %in% c("interrupted", "interrupt"))
   }
 )

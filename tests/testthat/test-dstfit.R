@@ -11,10 +11,13 @@ test_that(
     x <- stats::rgamma(400, shape = 2, rate = 0.5)
     f <- dstfit(x, nboot = 0)
     expect_s3_class(f, "rmbl_dstfit")
-    expect_equal(unname(f$fits$normal), c(mean(x), sqrt(mean((x - mean(x))^2))))
-    expect_equal(unname(f$fits$exponential), 1 / mean(x))
-    expect_equal(unname(f$fits$lognormal[1L]), mean(log(x)))
-    expect_equal(
+    expect_identical(
+      unname(f$fits$normal),
+      c(mean(x), sqrt(mean((x - mean(x))^2)))
+    )
+    expect_identical(unname(f$fits$exponential), 1 / mean(x))
+    expect_identical(unname(f$fits$lognormal[1L]), mean(log(x)))
+    expect_identical(
       unname(f$fits$pareto),
       c(min(x), length(x) / sum(log(x / min(x))))
     )
@@ -32,7 +35,11 @@ test_that(
     # the gamma is the best fit to gamma data, and the table is ranked by AIC
     expect_true("gamma" %in% f$table$family[1:2])
     expect_false(is.unsorted(f$table$aic))
-    expect_equal(f$table$bic - f$table$aic, (log(400) - 2) * f$table$npar)
+    expect_equal(
+      f$table$bic - f$table$aic,
+      (log(400) - 2) * f$table$npar,
+      tolerance = testthat::testthat_tolerance()
+    )
     y <- stats::rnbinom(500, size = 2, mu = 5)
     g <- dstfit(y, fams = c("negbin", "poisson"), nboot = 0)
     expect_equal(
@@ -73,13 +80,15 @@ test_that("the bootstrap is seeded for the call and covers the estimate", {
   expect_identical(.Random.seed, before)
   b <- dstfit(x, fams = "exponential", nboot = 99, seed = 4)
   expect_identical(a$boot, b$boot)
-  expect_true(a$boot$lower < a$boot$estimate && a$boot$estimate < a$boot$upper)
+  expect_lt(a$boot$lower, a$boot$estimate)
+  expect_lt(a$boot$estimate, a$boot$upper)
   expect_true(is.na(dstfit(x, fams = "exponential", nboot = 0)$boot$lower))
   # a resample whose refit fails is left out of the interval
   calls <- 0L
+  te <- environment()
   real <- asNamespace("rmoriebricklayer")$.dst_fit1
   local_mocked_bindings(.dst_fit1 = function(f, x) {
-    calls <<- calls + 1L
+    assign("calls", calls + 1L, envir = te)
     if (calls %% 2L == 0L) NULL else real(f, x)
   })
   expect_true(is.finite(dstfit(x, fams = "exponential", nboot = 20)$boot$lower))
@@ -91,7 +100,8 @@ test_that("the Hill estimate recovers a Pareto tail index", {
   h <- dstfit(x, fams = "pareto", nboot = 0, k = 500)$hill
   expect_equal(h$alpha, 1.5, tolerance = 0.1)
   expect_identical(h$k, 500L)
-  expect_true(h$lower < h$alpha && h$alpha < h$upper)
+  expect_lt(h$lower, h$alpha)
+  expect_lt(h$alpha, h$upper)
   expect_null(dstfit(c(-1, 0, 1, 2, 3, 4, 5, 6, 7, 8), nboot = 0)$hill)
   expect_equal(
     unname(dstfit(x, fams = "pareto", nboot = 0)$fits$pareto[2L]),
@@ -198,11 +208,68 @@ test_that("mksyncol() draws a synthetic sample from a fit", {
       tolerance = 0.04,
       info = nm
     )
-    expect_equal(exp(fams[[nm]]$d(med, pars[[nm]])) > 0, TRUE, info = nm)
+    expect_gt(exp(fams[[nm]]$d(med, pars[[nm]])), 0, label = nm)
   }
   expect_identical(fams$pareto$p(0.5, c(1, 2)), 0)
   expect_identical(fams$pareto$d(0.5, c(1, 2)), -Inf)
   expect_identical(fams$zip$p(-1, c(0.3, 3)), 0)
   expect_identical(fams$zinb$p(-1, c(0.3, 2, 4)), 0)
   expect_identical(fams$zip$q(0.1, c(0.3, 3)), 0)
+})
+
+# ---- boxed printouts -------------------------------------------------------
+
+# print() of a result in an 80-column ASCII console: the lines, whether the
+# value was visible, and the value.
+.o2_box <- function(x, ...) {
+  withr::local_options(rmoriebricklayer.width = 80, rmoriebricklayer.numcol = 1)
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  out <- utils::capture.output({
+    r <- withVisible(print(x, ...))
+  })
+  list(out = out, vis = r$visible, value = r$value)
+}
+
+# The checks every boxed printout passes: an ASCII box under its title, no
+# line past the console, print() returning its argument invisibly, format()
+# giving character lines that hold the facts.
+.o2_check <- function(x, title, facts = character(0)) {
+  b <- .o2_box(x)
+  testthat::expect_false(b$vis)
+  testthat::expect_identical(b$value, x)
+  testthat::expect_true(startsWith(b$out[1L], paste0("+-- ", title, " -")))
+  testthat::expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  testthat::expect_true(all(nchar(b$out) <= 80L))
+  txt <- format(x)
+  testthat::expect_type(txt, "character")
+  # the text with the box and the wrapping taken out, for phrases
+  flat <- gsub("[| ]+", " ", paste(b$out, collapse = " "))
+  for (f in facts) {
+    testthat::expect_true(grepl(f, flat, fixed = TRUE), info = f)
+  }
+  invisible(b$out)
+}
+
+test_that("dstfit() prints as a box", {
+  set.seed(4)
+  f <- dstfit(stats::rexp(80), fams = c("exponential", "gamma"), nboot = 0)
+  .o2_check(f, "Distribution fit",
+    c("Best by AIC", "ranked by AIC", "Parameters", "Hill tail index"))
+})
+
+# ---- result-driven reading -------------------------------------------------
+
+test_that("dstfit()'s reading weighs the best family against the next", {
+  t <- data.frame(family = c("a", "b"), aic = c(100, 101),
+    stringsAsFactors = FALSE)
+  expect_match(.rmbl_dstfit_reading(t), "do not choose between the two",
+    fixed = TRUE)
+  t$aic <- c(100, 130)
+  expect_match(.rmbl_dstfit_reading(t), "a fits best (AIC 100); b, next, is 30",
+    fixed = TRUE)
+  expect_match(.rmbl_dstfit_reading(t), "strong support", fixed = TRUE)
+  expect_match(.rmbl_dstfit_reading(t[1L, ]), "Only a converged", fixed = TRUE)
+  set.seed(1)
+  f <- dstfit(stats::rgamma(300, shape = 2, rate = 0.5), nboot = 0)
+  expect_match(paste(format(f), collapse = " "), "fits best \\(AIC")
 })

@@ -24,7 +24,7 @@
   bits <- c(bits, integer((5L - length(bits) %% 5L) %% 5L))
   idx <- colSums(matrix(bits, 5L) * c(16L, 8L, 4L, 2L, 1L)) + 1L
   out <- paste(
-    strsplit("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567", "")[[1L]][idx],
+    strsplit("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567", "", fixed = TRUE)[[1L]][idx],
     collapse = ""
   )
   paste0(out, strrep("=", (8L - nchar(out) %% 8L) %% 8L))
@@ -155,51 +155,10 @@
   sha_hex <- sha256file(payload)
   digest <- paste0("sha256:", .bl_base32(.bl_hex_raw(sha_hex)))
   wdate <- format(ts, "%Y-%m-%dT%H:%M:%OS6Z", tz = "UTC")
-  headers <- headers[
-    !tolower(names(headers)) %in% c("transfer-encoding", "content-length")
-  ]
-  if (!any(tolower(names(headers)) == "content-type")) {
-    headers <- c(headers, "Content-Type" = mime)
-  }
-  headers <- c(headers, "Content-Length" = as.character(length(body)))
-  reason <- c(
-    `200` = "OK",
-    `201` = "Created",
-    `203` = "Non-Authoritative Information",
-    `204` = "No Content",
-    `206` = "Partial Content"
-  )[as.character(status)]
-  http <- c(
-    charToRaw(sprintf(
-      "HTTP/1.1 %d %s\r\n%s\r\n",
-      as.integer(status),
-      if (is.na(reason)) "" else reason,
-      paste0(names(headers), ": ", headers, "\r\n", collapse = "")
-    )),
-    body
-  )
+  http <- .bl_warc_http(headers, mime, status, body)
   info_id <- .bl_uuid()
   resp_id <- .bl_uuid()
-  fields <- function(x) {
-    charToRaw(paste0(names(x), ": ", x, "\r\n", collapse = ""))
-  }
-  warcinfo <- .bl_warc_record(
-    "warcinfo",
-    c(
-      "WARC-Record-ID" = info_id,
-      "WARC-Date" = wdate,
-      "WARC-Filename" = basename(warc),
-      "Content-Type" = "application/warc-fields"
-    ),
-    fields(c(
-      software = paste0(
-        "rmoriebricklayer/",
-        utils::packageVersion(.packageName)
-      ),
-      format = "WARC File Format 1.1",
-      info
-    ))
-  )
+  warcinfo <- .bl_warc_info(warc, info_id, wdate, info)
   response <- .bl_warc_record(
     "response",
     c(
@@ -213,24 +172,9 @@
     ),
     http
   )
-  metadata <- .bl_warc_record(
-    "metadata",
-    c(
-      "WARC-Record-ID" = .bl_uuid(),
-      "WARC-Concurrent-To" = resp_id,
-      "WARC-Target-URI" = url,
-      "WARC-Date" = wdate,
-      "Content-Type" = "application/warc-fields"
-    ),
-    fields(c(
-      "capture-id" = capture_id,
-      "file-sha256" = sha_hex,
-      "headers-normalised" = "Transfer-Encoding removed; Content-Length set",
-      meta
-    ))
-  )
+  metadata <- .bl_warc_meta(url, resp_id, wdate, capture_id, sha_hex, meta)
   con <- file(warc, "wb")
-  on.exit(close(con))
+  on.exit(close(con), add = TRUE)
   writeBin(c(warcinfo, response, metadata), con)
   rec <- list(
     url = url,
@@ -247,6 +191,106 @@
     .bl_surt(url),
     format(ts, "%Y%m%d%H%M%S", tz = "UTC"),
     tojs(rec, auto_unbox = TRUE)
+  )
+}
+
+#' The HTTP part of a response record: status line, headers and payload.
+#'
+#' Transfer-Encoding and Content-Length are dropped from `headers`,
+#' Content-Type is added from `mime` when absent and Content-Length is set to
+#' the payload's length.
+#' @param headers Named character vector of response headers.
+#' @param mime The payload's media type.
+#' @param status HTTP status code.
+#' @param body The payload, as raw.
+#' @return A raw vector.
+#' @noRd
+.bl_warc_http <- function(headers, mime, status, body) {
+  headers <- headers[
+    !tolower(names(headers)) %in% c("transfer-encoding", "content-length")
+  ]
+  if (!any(tolower(names(headers)) == "content-type")) {
+    headers <- c(headers, "Content-Type" = mime)
+  }
+  headers <- c(headers, "Content-Length" = as.character(length(body)))
+  reason <- c(
+    `200` = "OK",
+    `201` = "Created",
+    `203` = "Non-Authoritative Information",
+    `204` = "No Content",
+    `206` = "Partial Content"
+  )[as.character(status)]
+  c(
+    charToRaw(sprintf(
+      "HTTP/1.1 %d %s\r\n%s\r\n",
+      as.integer(status),
+      if (is.na(reason)) "" else reason,
+      paste0(names(headers), ": ", headers, "\r\n", collapse = "")
+    )),
+    body
+  )
+}
+
+#' A WARC fields block ("name: value" lines).
+#' @param x A named character vector.
+#' @return A raw vector.
+#' @noRd
+.bl_warc_fields <- function(x) {
+  charToRaw(paste0(names(x), ": ", x, "\r\n", collapse = ""))
+}
+
+#' The warcinfo record of a capture file.
+#' @param warc Path of the .warc file.
+#' @param info_id The record id.
+#' @param wdate The WARC-Date.
+#' @param info Named character vector of extra warcinfo fields.
+#' @return A raw vector.
+#' @noRd
+.bl_warc_info <- function(warc, info_id, wdate, info) {
+  .bl_warc_record(
+    "warcinfo",
+    c(
+      "WARC-Record-ID" = info_id,
+      "WARC-Date" = wdate,
+      "WARC-Filename" = basename(warc),
+      "Content-Type" = "application/warc-fields"
+    ),
+    .bl_warc_fields(c(
+      software = sprintf(
+        "rmoriebricklayer/%s",
+        utils::packageVersion(.packageName)
+      ),
+      format = "WARC File Format 1.1",
+      info
+    ))
+  )
+}
+
+#' The metadata record of a capture file.
+#' @param url The URL captured.
+#' @param resp_id The response record's id.
+#' @param wdate The WARC-Date.
+#' @param capture_id The capture id.
+#' @param sha_hex The payload's SHA-256 (hex).
+#' @param meta Named character vector of extra metadata fields.
+#' @return A raw vector.
+#' @noRd
+.bl_warc_meta <- function(url, resp_id, wdate, capture_id, sha_hex, meta) {
+  .bl_warc_record(
+    "metadata",
+    c(
+      "WARC-Record-ID" = .bl_uuid(),
+      "WARC-Concurrent-To" = resp_id,
+      "WARC-Target-URI" = url,
+      "WARC-Date" = wdate,
+      "Content-Type" = "application/warc-fields"
+    ),
+    .bl_warc_fields(c(
+      "capture-id" = capture_id,
+      "file-sha256" = sha_hex,
+      "headers-normalised" = "Transfer-Encoding removed; Content-Length set",
+      meta
+    ))
   )
 }
 
@@ -268,7 +312,7 @@
 #' index and WARC files).
 #' @param dir The capture folder.
 #' @param url The address.
-#' @param dest The file to write.
+#' @param dest The file the capture's payload is written to.
 #' @param sha256 The SHA-256 to match, or NULL for the latest capture.
 #' @return `dest`.
 #' @noRd
@@ -298,21 +342,8 @@
   rec <- readBin(con, "raw", as.numeric(r$length))
   # the response record: WARC headers, a blank line, the HTTP head, a blank
   # line, the payload, CRLF CRLF
-  crlf2 <- function(x, from) {
-    for (k in seq.int(from, length(x) - 3L)) {
-      if (
-        x[k] == 0x0d &&
-          x[k + 1L] == 0x0a &&
-          x[k + 2L] == 0x0d &&
-          x[k + 3L] == 0x0a
-      ) {
-        return(k)
-      }
-    }
-    stop("a damaged WARC record", call. = FALSE)
-  }
-  a <- crlf2(rec, 1L)
-  b <- crlf2(rec, a + 4L)
+  a <- .bl_crlf2(rec, 1L)
+  b <- .bl_crlf2(rec, a + 4L)
   body <- rec[(b + 4L):(length(rec) - 4L)]
   writeBin(body, dest)
   if (!identical(sha256file(dest), r$sha256)) {
@@ -322,4 +353,23 @@
     )
   }
   dest
+}
+
+#' The position of the first CRLF CRLF in a WARC record at or after `from`.
+#' @param x A raw vector.
+#' @param from The position to search from.
+#' @return The index of the first byte of the CRLF CRLF.
+#' @noRd
+.bl_crlf2 <- function(x, from) {
+  for (k in seq.int(from, length(x) - 3L)) {
+    if (
+      x[k] == 0x0d &&
+        x[k + 1L] == 0x0a &&
+        x[k + 2L] == 0x0d &&
+        x[k + 3L] == 0x0a
+    ) {
+      return(k)
+    }
+  }
+  stop("a damaged WARC record", call. = FALSE)
 }

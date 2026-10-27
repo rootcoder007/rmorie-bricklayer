@@ -18,7 +18,7 @@ in the same order.}
 
 \item{per}{Rate per this many people (default 100,000).}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of the Fay-Feuer intervals (default 0.95).}
 }
 \value{
 A data frame with \code{group}, \code{events}, \code{rate},

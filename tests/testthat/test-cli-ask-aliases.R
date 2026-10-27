@@ -2,10 +2,11 @@
 # unknown word is still an unknown verb, so a typo never reaches a model.
 
 ask_via_cli <- function(args) {
-  seen <- NULL
+  rec <- new.env()
+  rec$seen <- NULL
   testthat::local_mocked_bindings(
     llmask = function(prompt, model = NULL, route = NULL, fresh = FALSE) {
-      seen <<- list(
+      rec$seen <- list(
         prompt = prompt,
         model = model,
         route = route,
@@ -15,9 +16,9 @@ ask_via_cli <- function(args) {
     },
     .package = "rmoriebricklayer"
   )
-  txt <- character()
-  st <- blcli(args, out = function(s) txt <<- c(txt, s))
-  list(status = st, out = paste(txt, collapse = ""), seen = seen)
+  rec$txt <- character()
+  st <- blcli(args, out = function(s) rec$txt <- c(rec$txt, s))
+  list(status = st, out = paste(rec$txt, collapse = ""), seen = rec$seen)
 }
 
 test_that("aye and tellme ask, with every option ask takes", {
@@ -83,18 +84,20 @@ test_that("aye and tellme with no prompt say how to ask", {
     expect_null(r$seen)
   }
   # `aye --help` describes ask
-  txt <- character()
+  rec <- new.env()
+  rec$txt <- character()
   expect_identical(
-    blcli(c("aye", "--help"), out = function(s) txt <<- c(txt, s)),
+    blcli(c("aye", "--help"), out = function(s) rec$txt <- c(rec$txt, s)),
     0L
   )
-  expect_match(paste(txt, collapse = ""), "ask the model", fixed = TRUE)
+  expect_match(paste(rec$txt, collapse = ""), "ask the model", fixed = TRUE)
 })
 
 test_that("help lists the other names of ask", {
-  txt <- character()
-  blcli("help", out = function(s) txt <<- c(txt, s))
-  expect_match(paste(txt, collapse = ""), "aye, tellme", fixed = TRUE)
+  rec <- new.env()
+  rec$txt <- character()
+  blcli("help", out = function(s) rec$txt <- c(rec$txt, s))
+  expect_match(paste(rec$txt, collapse = ""), "aye, tellme", fixed = TRUE)
 })
 
 test_that("every launcher turns a top-level Ctrl-C into exit 130", {
@@ -127,12 +130,12 @@ test_that(
   ),
   {
     skip_on_os("windows")
-    have <- rmoriebricklayer:::.bl_have_program
+    have <- .bl_have_program
     expect_true(have("sh"))
     expect_false(have("no-such-program-rmbl"))
     # .bl_readline asks it, never Sys.which(), which runs a child that a Ctrl-C
     # kills alone
-    body_txt <- paste(deparse(rmoriebricklayer:::.bl_readline), collapse = "\n")
+    body_txt <- paste(deparse(.bl_readline), collapse = "\n")
     expect_false(grepl("Sys.which", body_txt, fixed = TRUE))
   }
 )
@@ -158,7 +161,7 @@ test_that(
       paste("please use", strrep("k", 40)),
       c("what", "is", "PSI?"),
       c("how do I weight a survey?", "extra"),
-      c("line one\nline two")
+      "line one\nline two"
     )
     for (a in cases) {
       r <- ask_via_cli(a)

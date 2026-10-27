@@ -88,8 +88,8 @@ test_that(
     # a "fresh session": the in-memory registry is cleared, the file is not, and
     # index 0 is refused
     rm(
-      list = ls(rmoriebricklayer:::.rmbl_xmss_used, all.names = TRUE),
-      envir = rmoriebricklayer:::.rmbl_xmss_used
+      list = ls(.rmbl_xmss_used, all.names = TRUE),
+      envir = .rmbl_xmss_used
     )
     expect_error(cpssign("again", k), "already used")
     xmssfgt()
@@ -132,8 +132,8 @@ test_that("Y4: a cue sentence ended by a newline keeps the line break", {
     "confidentiel\n",
     "Agents t\u00e9moins\nAI no 7 (narrative)\n"
   )
-  expect_equal(as.numeric(siuso(fa)$count), 2)
-  expect_equal(as.numeric(siuso(fb)$count), 1)
+  expect_identical(as.numeric(siuso(fa)$count), 2)
+  expect_identical(as.numeric(siuso(fb)$count), 1)
   # the property, with the line-end position included
   bp <- "Le nom d'un agent impliqu\u00e9 est confidentiel"
   lines <- c(
@@ -153,7 +153,7 @@ test_that("Y4: a cue sentence ended by a newline keeps the line break", {
       paste0(ln, " ", bp, "."),
       paste0(ln, "\n", bp),
       paste0(bp, "\n", ln),
-      paste0(sub("\\. ", paste0(". ", bp, ". "), ln))
+      paste0(sub(". ", paste0(". ", bp, ". "), ln, fixed = TRUE))
     )
     for (v in variants) {
       got <- as.numeric(
@@ -195,7 +195,9 @@ test_that(
     c1 <- matrix(0, 5, 5)
     c1[3, 3] <- 1
     expect_warning(
-      a <- advdif2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 3600, 1),
+      {
+        a <- advdif2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 3600, 1)
+      },
       "outside its stability bound"
     )
     b <- advdif2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 0.5, 7200)
@@ -212,7 +214,9 @@ test_that(
     expect_match(ea, "above maxwork")
     expect_match(eb, "above maxwork")
     expect_warning(
-      f <- advdif2d(c1, 0, 0, 50, 50, 10, 10, 3600, 1, maxwork = Inf),
+      {
+        f <- advdif2d(c1, 0, 0, 50, 50, 10, 10, 3600, 1, maxwork = Inf)
+      },
       "outside its stability bound"
     )
     expect_s3_class(f, "rmbl_field")
@@ -251,9 +255,11 @@ test_that(
 test_that("Y6: a frequency table with a missing level plots", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  ft <- freqtbl(data.frame(g = c("a", "b", NA)), "g")
-  expect_silent(d <- plot(ft))
-  expect_true(is.data.frame(d))
+  ft <- freqtbl(data.frame(g = c("a", "b", NA), stringsAsFactors = FALSE), "g")
+  expect_silent({
+    d <- plot(ft)
+  })
+  expect_s3_class(d, "data.frame")
 })
 
 test_that(
@@ -306,13 +312,15 @@ test_that(
       .package = "rmoriebricklayer"
     )
     expect_message(
-      hit <- rmoriebricklayer:::.bl_llm_route(),
+      {
+        hit <- .bl_llm_route()
+      },
       "no address .*; using the local Ollama"
     )
     expect_identical(hit$model, "qwen3:8b")
     withr::local_envvar(c(MORIE_LLM_MODEL = NA))
     withr::local_envvar(c(OLLAMA_MODEL = NA))
-    cfg <- rmoriebricklayer:::.bl_config_path()
+    cfg <- .bl_config_path()
     dir.create(dirname(cfg), recursive = TRUE, showWarnings = FALSE)
     for (bad in c(
       '{"route": 5}',
@@ -322,7 +330,7 @@ test_that(
     )) {
       writeLines(bad, cfg)
       expect_error(
-        rmoriebricklayer:::.bl_read_config(),
+        .bl_read_config(),
         "must be a non-empty string"
       )
     }
@@ -330,23 +338,23 @@ test_that(
     # a credentials file without hosted_base_url (morie writes one) sends the
     # key only to the document's address
     withr::local_envvar(c(MORIE_HOSTED_KEY = NA))
-    cred <- rmoriebricklayer:::.bl_credentials_path()
+    cred <- .bl_credentials_path()
     writeLines(
       paste0(
         '{"hosted_key": "sk-saved", "other": ["x"], "n": null, "big": ',
-        '9007199254740993}'
+        "9007199254740993}"
       ),
       cred
     )
     withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "https://other.example.org"))
     expect_message(
-      expect_null(rmoriebricklayer:::.bl_hosted_key()),
+      expect_null(.bl_hosted_key()),
       "not sent to"
     )
     withr::local_envvar(c(MORIE_HOSTED_BASE_URL = NA))
     # login and logout keep the other package's entries as they were
     withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "https://llm.example.org"))
-    rmoriebricklayer:::.bl_store_key("sk-new")
+    .bl_store_key("sk-new")
     flat <- function() {
       gsub(
         "[[:space:]]",
@@ -368,11 +376,11 @@ test_that(
       MORIE_DATA_URL = "https://elsewhere.example.org"
     ))
     expect_message(
-      expect_null(rmoriebricklayer:::.bl_data_key()),
+      expect_null(.bl_data_key()),
       "not sent to it"
     )
     withr::local_envvar(c(MORIE_DATA_URL = NA))
-    expect_identical(rmoriebricklayer:::.bl_data_key(), "sk-h")
+    expect_identical(.bl_data_key(), "sk-h")
     # a saved address is one address
     for (bad in c(
       "http://local host:1234/v1",
@@ -392,12 +400,16 @@ test_that(
   ),
   {
     out <- character()
-    blcli("help", out = function(s) out <<- c(out, s))
-    blcli(c("login", "--help"), out = function(s) out <<- c(out, s))
+    blcli("help", out = function(s) {
+      assign("out", c(out, s), envir = parent.env(environment()))
+    })
+    blcli(c("login", "--help"), out = function(s) {
+      assign("out", c(out, s), envir = parent.env(environment()))
+    })
     expect_false(any(grepl("--token KEY|--token \\[KEY\\]", out)))
     expect_false(grepl(
       "--token KEY|\\[KEY\\]",
-      rmoriebricklayer:::.bl_access_hint()
+      .bl_access_hint()
     ))
     for (lc in c("C", "en_US.UTF-8")) {
       r <- try(
@@ -409,8 +421,8 @@ test_that(
             "\u202e",
             "Montr\u00e9al"
           )
-          tab <- rmoriebricklayer:::.bl_data_tables_df("db/t", nm, 3L, "x")
-          txt <- rmoriebricklayer:::.bl_format_data_tables(tab, width = 100)
+          tab <- .bl_data_tables_df("db/t", nm, 3L, "x")
+          txt <- .bl_format_data_tables(tab, width = 100)
           expect_false(grepl("\u009b", txt, fixed = TRUE))
           expect_false(grepl("\u202e", txt, fixed = TRUE))
           expect_false(grepl("Donnes", txt, fixed = TRUE))
@@ -438,13 +450,13 @@ test_that("D1 gaps and M2, M4, M6, M8 leftovers", {
     dmnf = man(paste0("sha256:", good)),
     .package = "rmoriebricklayer"
   )
-  expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", f))
+  expect_true(.bl_data_check_sha("db/t", f))
   testthat::local_mocked_bindings(
     dmnf = man("not-a-digest"),
     .package = "rmoriebricklayer"
   )
   expect_error(
-    rmoriebricklayer:::.bl_data_check_sha("db/t", f),
+    .bl_data_check_sha("db/t", f),
     "not a SHA-256"
   )
   expect_false(file.exists(f)) # the unverified file does not stay in the cache
@@ -455,7 +467,7 @@ test_that("D1 gaps and M2, M4, M6, M8 leftovers", {
   calls <- 0L
   testthat::local_mocked_bindings(
     dmnf = function(refresh = FALSE) {
-      calls <<- calls + 1L
+      assign("calls", calls + 1L, envir = parent.env(environment()))
       list(
         datasets = list(list(
           key = "db/t",
@@ -465,7 +477,7 @@ test_that("D1 gaps and M2, M4, M6, M8 leftovers", {
     },
     .package = "rmoriebricklayer"
   )
-  expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", f))
+  expect_true(.bl_data_check_sha("db/t", f))
   expect_gte(calls, 2L)
   # an error since the review of 02a38be (M2): a typo that validates nothing
   # must not pass
@@ -478,7 +490,8 @@ test_that("D1 gaps and M2, M4, M6, M8 leftovers", {
   expect_identical(r$status, "assumption_failure")
   expect_true(any(grepl(
     "per person-year",
-    vapply(r$assumptions, function(a) a$note, "")
+    vapply(r$assumptions, function(a) a$note, ""),
+    fixed = TRUE
   )))
   expect_error(crfpm25(TRUE), "not logical")
   expect_error(crfno2(TRUE), "not logical")
@@ -522,10 +535,8 @@ test_that("the earlier round's weak tests, sharpened", {
   yoypdf(y, f, notes = sprintf("note %d", 1:30), height = 5)
   bytes <- readBin(f, "raw", file.size(f))
   bytes[bytes == as.raw(0L)] <- as.raw(32L)
-  expect_identical(
-    length(gregexpr("/Type /Page[^s]", rawToChar(bytes), useBytes = TRUE)[[
-      1L
-    ]]),
+  expect_length(
+    gregexpr("/Type /Page[^s]", rawToChar(bytes), useBytes = TRUE)[[1L]],
     2L
   )
   # plots: the frequency path with an NA level (above) and the margin helper,
@@ -533,7 +544,7 @@ test_that("the earlier round's weak tests, sharpened", {
   # in the tests directory (CRAN stress test of b617a3f)
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  expect_true(is.finite(rmoriebricklayer:::.bl_left_margin(
+  expect_true(is.finite(.bl_left_margin(
     labels = c(NA, "a")
   )))
 })
@@ -577,7 +588,7 @@ test_that(
     withr::local_options(rmoriebricklayer.xmssidxfile = NULL)
     withr::local_envvar(RMBL_XMSS_INDEX_FILE = NA)
     expect_identical(
-      rmoriebricklayer:::.rmbl_xmss_index_file(),
+      .rmbl_xmss_index_file(),
       path.expand(file.path(
         tools::R_user_dir("rmoriebricklayer", "config"),
         "xmss_used_indices.txt"
@@ -586,10 +597,10 @@ test_that(
     if (.Platform$OS.type != "windows") {
       # Windows unsets an environment variable set to ""
       withr::local_envvar(RMBL_XMSS_INDEX_FILE = "")
-      expect_null(rmoriebricklayer:::.rmbl_xmss_index_file())
+      expect_null(.rmbl_xmss_index_file())
     }
     withr::local_options(rmoriebricklayer.xmssidxfile = FALSE)
-    expect_null(rmoriebricklayer:::.rmbl_xmss_index_file())
+    expect_null(.rmbl_xmss_index_file())
     # the file written by one "session" is read by the next: a reloaded stale
     # key is refused
     f <- withr::local_tempfile(fileext = ".json")
@@ -644,8 +655,12 @@ test_that(
     )
     testthat::local_mocked_bindings(
       system2 = function(command, args = character(), ...) {
-        calls <<- c(calls, command)
-        seen <<- c(seen, Sys.getenv("RMBL_PROMPT"))
+        assign("calls", c(calls, command), envir = parent.env(environment()))
+        assign(
+          "seen",
+          c(seen, Sys.getenv("RMBL_PROMPT")),
+          envir = parent.env(environment())
+        )
         # the sh found on PATH, by its full path (network stress test of
         # 5e1dce5)
         if (identical(basename(command), "sh")) {
@@ -659,7 +674,7 @@ test_that(
     seen <- character()
     withr::local_envvar(RMBL_PROMPT = "before")
     got <- .bl_readline("key> ")
-    expect_equal(got, "sk-typed")
+    expect_identical(got, "sk-typed")
     expect_true("sh" %in% basename(calls))
     # the shell prints the prompt once it is ready to read (review of e57fed5):
     # it is handed over in the environment, and the variable is put back
@@ -682,7 +697,12 @@ test_that(
       sk_prf = k[["skprf"]],
       next_index = 1L
     )
-    expect_warning(ok <- cpsvrf("m", s, signpubkey(k)), "carries the signer")
+    expect_warning(
+      {
+        ok <- cpsvrf("m", s, signpubkey(k))
+      },
+      "carries the signer"
+    )
     expect_true(ok)
     a <- cpsatst(list(n = 1), xmssadv(k, s))
     a$signature$key_state <- s$key_state
@@ -713,11 +733,18 @@ test_that(
     expect_error(xmssadv(k, bad), "no valid index")
     # with the index file off, signing still works and nothing is saved
     withr::local_options(rmoriebricklayer.xmssidxfile = FALSE)
-    expect_warning(s2 <- cpssign("m2", xmssadv(k, s)), "record is off")
+    expect_warning(
+      {
+        s2 <- cpssign("m2", xmssadv(k, s))
+      },
+      "record is off"
+    )
     expect_s3_class(s2, "bricklayer_signature")
     # a FIPS public-key object is compared by its `public` field
     expect_warning(
-      a <- cpsatst(list(n = 1), pqckg(height = 2)),
+      {
+        a <- cpsatst(list(n = 1), pqckg(height = 2))
+      },
       "record is off"
     )
     fk <- structure(list(public = "abcd"), class = "bricklayer_oqs_public_key")
@@ -739,14 +766,14 @@ test_that(
       }
     )
     withr::local_envvar(MORIE_DATA_URL = "https://data.example.org")
-    expect_identical(rmoriebricklayer:::.bl_data_key(), "sk-data")
+    expect_identical(.bl_data_key(), "sk-data")
     withr::local_envvar(MORIE_DATA_URL = "https://other.example.org")
-    expect_message(expect_null(rmoriebricklayer:::.bl_data_key()), "not sent")
+    expect_message(expect_null(.bl_data_key()), "not sent")
     withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
-    cred <- rmoriebricklayer:::.bl_credentials_path()
+    cred <- .bl_credentials_path()
     dir.create(dirname(cred), recursive = TRUE, showWarnings = FALSE)
     writeLines("[1, 2]", cred)
-    expect_error(rmoriebricklayer:::.bl_read_credentials(), "not a JSON object")
+    expect_error(.bl_read_credentials(), "not a JSON object")
   }
 )
 

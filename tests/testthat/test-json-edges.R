@@ -19,26 +19,26 @@ test_that("awkward numbers are written in a form that reads back", {
   # notation, matching jsonlite
   big <- tojs(1e20)
   expect_match(as.character(big), "e", fixed = TRUE)
-  expect_equal(as.numeric(fromjs(big)), 1e20)
-  expect_equal(as.numeric(rt(-1e20)), -1e20)
+  expect_identical(as.numeric(fromjs(big)), 1e20)
+  expect_identical(as.numeric(rt(-1e20)), -1e20)
   expect_match(as.character(tojs(1e300)), "e", fixed = TRUE)
   # values that fit are written in full, including past the 32-bit range
-  expect_equal(as.character(tojs(3e9)), "[3000000000]")
-  expect_equal(
+  expect_identical(as.character(tojs(3e9)), "[3000000000]")
+  expect_identical(
     as.character(tojs(2147483648)),
     "[2147483648]"
   )
-  expect_equal(as.numeric(rt(3e9)), 3e9)
+  expect_identical(as.numeric(rt(3e9)), 3e9)
   expect_false(grepl("e", as.character(tojs(1000)), fixed = TRUE))
 
   # a value that rounds up at the requested precision carries correctly
-  expect_equal(
+  expect_identical(
     as.numeric(fromjs(
       tojs(0.99999, digits = 2)
     )),
     1
   )
-  expect_equal(
+  expect_identical(
     as.numeric(fromjs(
       tojs(9.9999, digits = 2)
     )),
@@ -56,7 +56,8 @@ test_that("awkward numbers are written in a form that reads back", {
       as.numeric(fromjs(
         tojs(v, digits = NA)
       )),
-      v
+      v,
+      tolerance = testthat::testthat_tolerance()
     )
   }
   # The special values map the way jsonlite maps them, which is NOT to
@@ -64,17 +65,17 @@ test_that("awkward numbers are written in a form that reads back", {
   # because JSON has no way to express them and a null would be
   # indistinguishable from an absent value. A character NA does become
   # null, since there the quoting would be ambiguous instead.
-  expect_equal(
+  expect_identical(
     as.character(tojs(c(1, NA))),
     "[1,\"NA\"]"
   )
-  expect_equal(as.character(tojs(NaN)), "[\"NaN\"]")
-  expect_equal(as.character(tojs(Inf)), "[\"Inf\"]")
-  expect_equal(
+  expect_identical(as.character(tojs(NaN)), "[\"NaN\"]")
+  expect_identical(as.character(tojs(Inf)), "[\"Inf\"]")
+  expect_identical(
     as.character(tojs(NA_real_)),
     "[\"NA\"]"
   )
-  expect_equal(
+  expect_identical(
     as.character(tojs(c("a", NA))),
     "[\"a\",null]"
   )
@@ -82,15 +83,15 @@ test_that("awkward numbers are written in a form that reads back", {
 
 test_that("an empty object and empty containers round trip", {
   # a named list with nothing in it is an object, not an array
-  expect_equal(
+  expect_identical(
     as.character(tojs(
       structure(list(), names = character(0))
     )),
     "{}"
   )
   # an empty unnamed list is an array
-  expect_equal(as.character(tojs(list())), "[]")
-  expect_equal(as.character(tojs(character(0))), "[]")
+  expect_identical(as.character(tojs(list())), "[]")
+  expect_identical(as.character(tojs(character(0))), "[]")
   # and they read back as the same shapes
   expect_length(fromjs("{}"), 0L)
   expect_length(fromjs("[]"), 0L)
@@ -102,7 +103,7 @@ test_that("an empty object and empty containers round trip", {
 test_that("classed objects are written by their underlying data", {
   # a classed atomic vector: the class is stripped and the data written
   f <- factor(c("b", "a", "b"), levels = c("a", "b"))
-  expect_equal(
+  expect_identical(
     as.character(fromjs(
       tojs(f)
     )),
@@ -114,8 +115,8 @@ test_that("classed objects are written by their underlying data", {
   # a custom S3 class falls through to the next class in the chain
   obj <- structure(list(a = 1, b = "x"), class = c("mycls", "list"))
   back <- rt(obj)
-  expect_equal(back$a, 1)
-  expect_equal(back$b, "x")
+  expect_equal(back$a, 1, tolerance = testthat::testthat_tolerance())
+  expect_identical(back$b, "x")
   # a class chain with NOTHING the codec handles is refused by name,
   # exactly as jsonlite refuses it -- writing the bare data would be a
   # guess about what the class meant
@@ -139,22 +140,22 @@ test_that("classed objects are written by their underlying data", {
 
 test_that("auto_unbox and the na options behave as documented", {
   # a length-1 vector is an array by default and a scalar when unboxed
-  expect_equal(as.character(tojs(5)), "[5]")
-  expect_equal(
+  expect_identical(as.character(tojs(5)), "[5]")
+  expect_identical(
     as.character(tojs(5, auto_unbox = TRUE)),
     "5"
   )
-  expect_equal(
+  expect_identical(
     as.character(tojs("x", auto_unbox = TRUE)),
     "\"x\""
   )
   # a longer vector is unaffected by auto_unbox
-  expect_equal(
+  expect_identical(
     as.character(tojs(c(1, 2), auto_unbox = TRUE)),
     "[1,2]"
   )
   # unbox() marks one value as a scalar regardless
-  expect_equal(
+  expect_identical(
     as.character(tojs(
       list(a = bricklayer_json_unbox(1))
     )),
@@ -170,11 +171,11 @@ test_that("matrices, arrays and nested lists keep their shape", {
   m <- matrix(1:6, nrow = 2)
   # a matrix is written row-wise as nested arrays
   back <- fromjs(tojs(m))
-  expect_equal(dim(back), dim(m))
-  expect_equal(as.numeric(back), as.numeric(m))
+  expect_identical(dim(back), dim(m))
+  expect_identical(as.numeric(back), as.numeric(m))
   # a named matrix keeps its values
   dimnames(m) <- list(c("r1", "r2"), c("a", "b", "c"))
-  expect_equal(
+  expect_identical(
     as.numeric(fromjs(
       tojs(m)
     )),
@@ -183,25 +184,25 @@ test_that("matrices, arrays and nested lists keep their shape", {
   # a 3-d array
   a <- array(1:24, dim = c(2, 3, 4))
   ba <- fromjs(tojs(a))
-  expect_equal(dim(ba), dim(a))
-  expect_equal(as.numeric(ba), as.numeric(a))
+  expect_identical(dim(ba), dim(a))
+  expect_identical(as.numeric(ba), as.numeric(a))
 
   # deeply nested lists
   deep <- list(a = list(b = list(c = list(d = 1:3))))
-  expect_equal(rt(deep)$a$b$c$d, 1:3)
+  expect_identical(rt(deep)$a$b$c$d, 1:3)
   # a list of lists of unequal shape stays a list
   ragged <- list(list(x = 1), list(x = 2, y = 3))
   rr <- fromjs(tojs(ragged), simplifyVector = FALSE)
   expect_length(rr, 2L)
   # a list containing NULL keeps the name: NULL becomes an empty object
   # rather than vanishing, so the key is still there to be seen
-  expect_equal(
+  expect_identical(
     as.character(tojs(list(a = 1, b = NULL))),
     "{\"a\":[1],\"b\":{}}"
   )
   nulls <- rt(list(a = 1, b = NULL))
   expect_length(nulls, 2L)
-  expect_equal(names(nulls), c("a", "b"))
+  expect_named(nulls, c("a", "b"))
   expect_length(nulls$b, 0L)
 })
 
@@ -217,7 +218,7 @@ test_that("data frames with awkward columns round trip", {
   expect_match(as.character(js), "2026")
   expect_false(grepl("\"sec\"", as.character(js), fixed = TRUE))
   back <- fromjs(js)
-  expect_equal(nrow(back), 2L)
+  expect_identical(nrow(back), 2L)
 
   # a NAMED vector inside a data frame: the names are dropped, because a
   # column's names are not part of the tabular value
@@ -225,7 +226,11 @@ test_that("data frames with awkward columns round trip", {
   df2$v <- c(a = 1, b = 2, c = 3)
   j2 <- as.character(tojs(df2))
   expect_false(grepl("\"a\"", j2, fixed = TRUE))
-  expect_equal(fromjs(j2)$v, c(1, 2, 3))
+  expect_equal(
+    fromjs(j2)$v,
+    c(1, 2, 3),
+    tolerance = testthat::testthat_tolerance()
+  )
 
   # the three data-frame orientations
   d3 <- data.frame(x = 1:2, y = c("a", "b"), stringsAsFactors = FALSE)
@@ -233,7 +238,7 @@ test_that("data frames with awkward columns round trip", {
   expect_match(as.character(tojs(d3, dataframe = "columns")), "\\{")
   expect_match(as.character(tojs(d3, dataframe = "values")), "\\[")
   # rows orientation round trips to the same frame
-  expect_equal(
+  expect_identical(
     fromjs(
       tojs(d3, dataframe = "rows")
     )$x,
@@ -241,7 +246,7 @@ test_that("data frames with awkward columns round trip", {
   )
   # a zero-row data frame is an empty array, which reads back as an
   # empty list -- there are no rows from which to infer the columns
-  expect_equal(
+  expect_identical(
     as.character(tojs(d3[0, ], dataframe = "rows")),
     "[]"
   )
@@ -259,25 +264,25 @@ test_that("a malformed base64 payload is refused", {
   # outside the alphabet, since silently dropping it would return the
   # wrong bytes
   ok <- jsb64enc("payload")
-  expect_equal(rawToChar(jsb64dec(ok)), "payload")
+  expect_identical(rawToChar(jsb64dec(ok)), "payload")
   # a non-alphabet character is stripped by the pre-filter, so the
   # decoder sees valid input; what it must reject is a payload that is
   # entirely unusable
-  expect_equal(length(jsb64dec("")), 0L)
+  expect_length(jsb64dec(""), 0L)
   # the url-safe decoder re-pads before decoding
   u <- jsb64uenc("payload")
   expect_false(grepl("=", u, fixed = TRUE))
-  expect_equal(rawToChar(jsb64udec(u)), "payload")
+  expect_identical(rawToChar(jsb64udec(u)), "payload")
   # every length modulo 3 exercises a different padding branch
   for (n in 1:6) {
     s <- strrep("z", n)
-    expect_equal(
+    expect_identical(
       rawToChar(jsb64dec(
         jsb64enc(s)
       )),
       s
     )
-    expect_equal(
+    expect_identical(
       rawToChar(jsb64udec(
         jsb64uenc(s)
       )),

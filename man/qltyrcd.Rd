@@ -17,7 +17,9 @@ qltyrcd(x, suppr = c("F", "x", "..", "..."), caution = "E")
 }
 \value{
 A character vector of \code{"ok"}, \code{"E"} and \code{"x"}; empty
-and missing flags are \code{"ok"}.
+and missing flags are \code{"ok"}. \code{x} must be character (or a
+factor); a flag in neither \code{suppr} nor \code{caution} (other than
+\code{"ok"}) becomes \code{"ok"} and is named in a warning.
 }
 \description{
 The comparisons of this family read Statistics Canada's quality flags:

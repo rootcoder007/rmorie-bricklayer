@@ -20,7 +20,8 @@ the nearest major intersections).}
 (default \code{3 * radius}).}
 }
 \value{
-A data frame with the columns \code{group} (\code{"treated"},
+A data frame of class \code{rmbl_buffer} with the columns
+\code{group} (\code{"treated"},
 \code{"comparison"} or \code{"excluded"}), \code{site_distance} and
 \code{comparison_distance}.
 }

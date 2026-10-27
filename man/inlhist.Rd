@@ -7,7 +7,7 @@
 inlhist(x, bins = 10L)
 }
 \arguments{
-\item{x}{Numeric vector.}
+\item{x}{Numeric vector drawn as an inline histogram.}
 
 \item{bins}{Number of bins, and so of characters, one positive whole
 number (default 10).}

@@ -50,14 +50,19 @@ capsule_sign <- function(
   prehash = "none",
   masked = getOption("rmoriebricklayer.masked", TRUE)
 ) {
-  cpssign(
-    message,
-    key,
-    scheme = scheme,
-    ctx = context,
-    determ = deterministic,
-    prehash = prehash,
-    masked = masked
+  .rmbl_compat_errors(
+    cpssign(
+      message,
+      key,
+      scheme = scheme,
+      ctx = context,
+      determ = deterministic,
+      prehash = prehash,
+      masked = masked
+    ),
+    "cpssign",
+    "capsule_sign",
+    c(msg = "message", ctx = "context", determ = "deterministic")
   )
 }
 
@@ -70,7 +75,12 @@ capsule_verify <- function(
   context = NULL,
   prehash = NULL
 ) {
-  cpsvrf(message, signature, key, ctx = context, prehash = prehash)
+  .rmbl_compat_errors(
+    cpsvrf(message, signature, key, ctx = context, prehash = prehash),
+    "cpsvrf",
+    "capsule_verify",
+    c(msg = "message", sig = "signature", ctx = "context")
+  )
 }
 
 #' @rdname rmbl-compat
@@ -81,7 +91,12 @@ pqc_keygen <- function(
   pub_seed = NULL,
   sk_prf = NULL
 ) {
-  pqckg(height, skseed = sk_seed, pubseed = pub_seed, skprf = sk_prf)
+  .rmbl_compat_errors(
+    pqckg(height, skseed = sk_seed, pubseed = pub_seed, skprf = sk_prf),
+    "pqckg",
+    "pqc_keygen",
+    c(skseed = "sk_seed", pubseed = "pub_seed", skprf = "sk_prf")
+  )
 }
 
 #' @rdname rmbl-compat
@@ -111,11 +126,51 @@ bricklayer_json_from_json <- function(txt, ...) fromjs(txt, ...)
 #' @rdname rmbl-compat
 #' @export
 bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
-  blfetch(url, dest, wb = wayback, tmout = timeout)
+  .rmbl_compat_errors(
+    blfetch(url, dest, wb = wayback, tmout = timeout),
+    "blfetch",
+    "bricklayer_fetch",
+    c(wb = "wayback", tmout = "timeout")
+  )
 }
 
 #' @rdname rmbl-compat
 #' @export
 wayback_snapshot_url <- function(url, timestamp = NULL) {
-  wbsnpurl(url, ts = timestamp)
+  .rmbl_compat_errors(
+    wbsnpurl(url, ts = timestamp),
+    "wbsnpurl",
+    "wayback_snapshot_url",
+    c(ts = "timestamp")
+  )
+}
+
+#' Rewrites a forwarded function's errors in the 0.5.x alias's own words.
+#'
+#' An error from the new function named the new arguments (`skseed` for
+#' pqc_keygen()'s `sk_seed`); the alias's caller only knows its own names.
+#' An error that names none of them is passed on unchanged.
+#' @param expr The forwarded call.
+#' @param fn The new function's name, as an error's prefix gives it.
+#' @param alias The alias's name.
+#' @param map The alias's argument names, named by the new ones.
+#' @return The value of `expr`.
+#' @noRd
+.rmbl_compat_errors <- function(expr, fn, alias, map) {
+  tryCatch(expr, error = function(e) {
+    m <- conditionMessage(e)
+    new <- sub(paste0("^", fn, ": "), paste0(alias, ": "), m)
+    for (k in names(map)) {
+      new <- gsub(
+        sprintf("`%s`", k),
+        sprintf("`%s`", map[[k]]),
+        new,
+        fixed = TRUE
+      )
+    }
+    if (identical(new, m)) {
+      stop(e)
+    }
+    stop(new, call. = FALSE)
+  })
 }

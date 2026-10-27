@@ -3,15 +3,11 @@
 # POS numbers, the four plots and the R call that reproduces them.
 
 #' The search and rescue panel.
-#' @param id The module id.
+#' @param id The search module's id, for its input namespace.
 #' @return A tag list.
 #' @noRd
 .bl_srch_ui <- function(id) {
   ns <- shiny::NS(id)
-  num <- function(name, label, value, min = 0, step = 0.1) {
-    shiny::numericInput(ns(name), label, value, min = min, step = step)
-  }
-  col <- function(...) shiny::column(4, ...)
   figs <- srchfig()
   shiny::tagList(
     shiny::tags$div(
@@ -24,46 +20,69 @@
         "optcrcsrch())."
       )
     ),
-    shiny::fluidRow(
-      col(
-        shiny::selectInput(
-          ns("model"),
-          "Lateral range model",
-          c(
-            "Inverse cube" = "invcube",
-            "Definite range" = "definite",
-            "M-Beta" = "mbeta"
-          )
-        ),
-        num("m", "M-Beta detection probability", 0.8, step = 0.05),
-        num("W", "Sweep width W", 1),
-        num("effort", "Effort (track length)", 30, step = 1)
+    .bl_srch_inputs(ns),
+    .bl_srch_outputs(ns, figs)
+  )
+}
+
+#' The search and rescue panel's inputs.
+#' @param ns The search module's namespace function, for its inputs.
+#' @return A fluid row of three input columns.
+#' @noRd
+.bl_srch_inputs <- function(ns) {
+  num <- function(name, label, value, min = 0, step = 0.1) {
+    shiny::numericInput(ns(name), label, value, min = min, step = step)
+  }
+  col <- function(...) shiny::column(4, ...)
+  shiny::fluidRow(
+    col(
+      shiny::selectInput(
+        ns("model"),
+        "Lateral range model",
+        c(
+          "Inverse cube" = "invcube",
+          "Definite range" = "definite",
+          "M-Beta" = "mbeta"
+        )
       ),
-      col(
-        num("coverage", "Coverage", 1),
-        shiny::selectInput(
-          ns("podmodel"),
-          "POD model for the coverage",
-          c(
-            "Random search" = "random",
-            "Definite range" = "definite",
-            "Inverse cube" = "invcube"
-          )
-        ),
-        num("S", "Track spacing S", 1.3),
-        num("navsd", "Navigation error (standard deviation)", 0)
-      ),
-      col(
-        shiny::selectInput(
-          ns("datum"),
-          "Datum",
-          c("Point" = "point", "Line" = "line", "Area" = "area")
-        ),
-        num("sigma", "Datum sigma", 2),
-        num("endx", "Line end or area corner, x", 4, min = NA),
-        num("endy", "Line end or area corner, y", 2, min = NA)
-      )
+      num("m", "M-Beta detection probability", 0.8, step = 0.05),
+      num("W", "Sweep width W", 1),
+      num("effort", "Effort (track length)", 30, step = 1)
     ),
+    col(
+      num("coverage", "Coverage", 1),
+      shiny::selectInput(
+        ns("podmodel"),
+        "POD model for the coverage",
+        c(
+          "Random search" = "random",
+          "Definite range" = "definite",
+          "Inverse cube" = "invcube"
+        )
+      ),
+      num("S", "Track spacing S", 1.3),
+      num("navsd", "Navigation error (standard deviation)", 0)
+    ),
+    col(
+      shiny::selectInput(
+        ns("datum"),
+        "Datum",
+        c("Point" = "point", "Line" = "line", "Area" = "area")
+      ),
+      num("sigma", "Datum sigma", 2),
+      num("endx", "Line end or area corner, x", 4, min = NA),
+      num("endy", "Line end or area corner, y", 2, min = NA)
+    )
+  )
+}
+
+#' The search and rescue panel's outputs.
+#' @param ns The search module's namespace function, for its outputs.
+#' @param figs The figure table from srchfig().
+#' @return A tag list.
+#' @noRd
+.bl_srch_outputs <- function(ns, figs) {
+  shiny::tagList(
     shiny::actionButton(ns("add"), "Add to report"),
     shiny::uiOutput(ns("err")),
     shiny::tags$h3("Probability of detection and of success"),
@@ -167,39 +186,14 @@
 }
 
 #' The search and rescue server.
-#' @param id The module id.
-#' @param rpt The report's entries.
+#' @param id The search module's id, as given to .bl_srch_ui().
+#' @param rpt The reactive report entries; a search is added to them.
 #' @return The reactive run (results, calls and the environment they ran in),
 #'   invisibly.
 #' @noRd
 .bl_srch_server <- function(id, rpt) {
   shiny::moduleServer(id, function(input, output, session) {
-    keys <- c(
-      "model",
-      "m",
-      "W",
-      "coverage",
-      "podmodel",
-      "S",
-      "navsd",
-      "datum",
-      "sigma",
-      "endx",
-      "endy",
-      "effort"
-    )
-    res <- shiny::reactive({
-      i <- stats::setNames(lapply(keys, function(k) input[[k]]), keys)
-      .bl_app_try({
-        calls <- .bl_srch_calls(i)
-        env <- new.env(parent = environment(.bl_srch_server))
-        for (cl in calls) {
-          eval(cl, env)
-        }
-        r <- mget(names(calls), envir = env)
-        list(r = r, calls = calls, env = env, numbers = .bl_srch_numbers(r, i))
-      })
-    })
+    res <- .bl_srch_res(input)
     ok <- function() {
       r <- res()
       shiny::req(!inherits(r, "bl_app_error"))
@@ -215,23 +209,7 @@
         )
       )
     })
-    output$err <- shiny::renderUI(
-      if (inherits(res(), "bl_app_error")) .bl_app_err_ui(res())
-    )
-    output$numbers <- shiny::renderTable(ok()$numbers, digits = 4)
-    output$lrplot <- shiny::renderPlot(plot(ok()$r$lr))
-    output$podplot <- shiny::renderPlot(plot(ok()$r$pod))
-    output$mapplot <- shiny::renderPlot(plot(ok()$r$map))
-    output$effplot <- shiny::renderPlot(plot(ok()$r$alloc))
-    output$code <- shiny::renderText(paste(code(), collapse = "\n"))
-    output$figplot <- shiny::renderPlot({
-      shiny::req(input$fig)
-      srchfig(input$fig)
-    })
-    output$figcode <- shiny::renderText({
-      shiny::req(input$fig)
-      sprintf("library(rmoriebricklayer)\nsrchfig(%s)", deparse(input$fig))
-    })
+    .bl_srch_render(input, output, res, ok, code)
     shiny::observeEvent(input$add, {
       r <- ok()
       rpt(c(
@@ -247,4 +225,66 @@
     })
     invisible(res)
   })
+}
+
+#' The search and rescue panel's run, as a reactive.
+#' @param input The module's inputs.
+#' @return A reactive giving the results, calls, environment and numbers, or
+#'   the app's error object.
+#' @noRd
+.bl_srch_res <- function(input) {
+  keys <- c(
+    "model",
+    "m",
+    "W",
+    "coverage",
+    "podmodel",
+    "S",
+    "navsd",
+    "datum",
+    "sigma",
+    "endx",
+    "endy",
+    "effort"
+  )
+  shiny::reactive({
+    i <- stats::setNames(lapply(keys, function(k) input[[k]]), keys)
+    .bl_app_try({
+      calls <- .bl_srch_calls(i)
+      env <- new.env(parent = environment(.bl_srch_server))
+      for (cl in calls) {
+        eval(cl, env)
+      }
+      r <- mget(names(calls), envir = env)
+      list(r = r, calls = calls, env = env, numbers = .bl_srch_numbers(r, i))
+    })
+  })
+}
+
+#' Fills the search and rescue panel's outputs.
+#' @param input,output The module's inputs and outputs.
+#' @param res The panel's run, a reactive.
+#' @param ok A function giving the run once it has no error.
+#' @param code The reactive R call text.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_srch_render <- function(input, output, res, ok, code) {
+  output$err <- shiny::renderUI(
+    if (inherits(res(), "bl_app_error")) .bl_app_err_ui(res())
+  )
+  output$numbers <- shiny::renderTable(ok()$numbers, digits = 4)
+  output$lrplot <- shiny::renderPlot(plot(ok()$r$lr))
+  output$podplot <- shiny::renderPlot(plot(ok()$r$pod))
+  output$mapplot <- shiny::renderPlot(plot(ok()$r$map))
+  output$effplot <- shiny::renderPlot(plot(ok()$r$alloc))
+  output$code <- shiny::renderText(paste(code(), collapse = "\n"))
+  output$figplot <- shiny::renderPlot({
+    shiny::req(input$fig)
+    srchfig(input$fig)
+  })
+  output$figcode <- shiny::renderText({
+    shiny::req(input$fig)
+    sprintf("library(rmoriebricklayer)\nsrchfig(%s)", deparse(input$fig))
+  })
+  invisible(NULL)
 }

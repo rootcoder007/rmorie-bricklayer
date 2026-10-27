@@ -263,7 +263,7 @@ test_that(
     expect_true(all(
       c("x-api-key: sk-ant", "anthropic-version: 2023-06-01") %in% req$headers
     ))
-    expect_false(any(grepl("Authorization", req$headers)))
+    expect_false(any(grepl("Authorization", req$headers, fixed = TRUE)))
     expect_identical(req$payload$system, "be brief")
     expect_identical(req$payload$tools[[1L]]$input_schema$type, "object")
     roles <- vapply(req$payload$messages, function(m) m$role, "")
@@ -439,8 +439,16 @@ test_that(
     expect_error(ns(".bl_llm_route")("hosted"), "retired")
     expect_error(llmask("x", route = "hosted"), "retired")
     withr::local_envvar(MORIE_LLM_ROUTE = "hosted")
+    # the note is said once a session: this test starts it unsaid, whatever
+    # ran before
+    said <- ns(".bl_said_once")
+    was <- said[["hosted-retired"]]
+    withr::defer(assign("hosted-retired", was, envir = said))
+    assign("hosted-retired", NULL, envir = said)
     expect_message(
-      rt2 <- ns(".bl_llm_route")(),
+      {
+        rt2 <- ns(".bl_llm_route")()
+      },
       "saved route `hosted` is ignored"
     )
     expect_identical(rt2$name, "own endpoint")
@@ -482,7 +490,7 @@ test_that(
 test_that("each API's model list is read in its own shape", {
   lm <- ns(".bl_llm_list_models")
   local_mocked_bindings(.bl_http_get = function(url, timeout, headers) {
-    body <- if (grepl("anthropic", url)) {
+    body <- if (grepl("anthropic", url, fixed = TRUE)) {
       '{"data":[{"id":"claude-opus-5-5","type":"model"}]}'
     } else {
       paste0(
@@ -949,7 +957,7 @@ test_that(
       list(
         n = length(grep(
           "^[[:alnum:]._]+\\(.*  -- ",
-          strsplit(sys, "\n")[[1L]]
+          strsplit(sys, "\n", fixed = TRUE)[[1L]]
         )),
         sys = sys
       )
@@ -984,10 +992,10 @@ test_that(
     })
     out <- character()
     st <- blcli(c("models", "--route", "groq"), out = function(x) {
-      out <<- c(out, x)
+      assign("out", c(out, x), envir = parent.env(environment()))
     })
     expect_identical(st, 0L)
-    expect_true(any(grepl("\\* llama-x", out)))
+    expect_true(any(grepl("* llama-x", out, fixed = TRUE)))
     expect_identical(
       blcli(c("models", "--route", "nowhere"), out = function(x) NULL),
       2L
@@ -1003,11 +1011,11 @@ test_that(
     out <- character()
     expect_identical(
       blcli(c("ask", "--route", "groq", "ping"), out = function(x) {
-        out <<- c(out, x)
+        assign("out", c(out, x), envir = parent.env(environment()))
       }),
       0L
     )
-    expect_true(any(grepl("pong", out)))
+    expect_true(any(grepl("pong", out, fixed = TRUE)))
     expect_identical(
       s$calls[[1L]]$url,
       "https://api.groq.com/openai/v1/chat/completions"
@@ -1015,16 +1023,21 @@ test_that(
     out <- character()
     expect_identical(
       blcli(c("ask", "--route", "hosted", "x"), out = function(x) {
-        out <<- c(out, x)
+        assign("out", c(out, x), envir = parent.env(environment()))
       }),
       1L
     )
-    expect_true(any(grepl("retired", out)))
+    expect_true(any(grepl("retired", out, fixed = TRUE)))
     # no route: models says what to set up
     withr::local_envvar(GROQ_API_KEY = NA)
     out <- character()
-    expect_identical(blcli("models", out = function(x) out <<- c(out, x)), 1L)
-    expect_true(any(grepl("bring your own key", out)))
+    expect_identical(
+      blcli("models", out = function(x) {
+        assign("out", c(out, x), envir = parent.env(environment()))
+      }),
+      1L
+    )
+    expect_true(any(grepl("bring your own key", out, fixed = TRUE)))
   }
 )
 
@@ -1257,7 +1270,10 @@ test_that(
       )
     )
     expect_lte(
-      length(grep("^[[:alnum:]._]+\\(.*  -- ", strsplit(sys, "\n")[[1L]])),
+      length(grep(
+        "^[[:alnum:]._]+\\(.*  -- ",
+        strsplit(sys, "\n", fixed = TRUE)[[1L]]
+      )),
       40L
     )
     expect_match(sys, "svydes")
@@ -1391,7 +1407,12 @@ test_that(
     local_mocked_bindings(.bl_stderr_tty = function() TRUE)
     expect_identical(.bl_llm_wait_label("gemma3:4b"), "gemma3:4b is thinking")
     .bl_wait$what <- "thinking (2 help pages read so far)"
-    on.exit(.bl_wait$what <- NULL, add = TRUE)
+    on.exit(
+      {
+        .bl_wait$what <- NULL
+      },
+      add = TRUE
+    )
     expect_identical(
       .bl_llm_wait_label(NULL),
       "the model is thinking (2 help pages read so far)"
@@ -1407,7 +1428,11 @@ test_that(
     withr::local_options(morie.quiet = NULL)
     seen <- character()
     local_mocked_bindings(.bl_post_json = function(...) {
-      seen <<- c(seen, .bl_llm_wait_label("m"))
+      assign(
+        "seen",
+        c(seen, .bl_llm_wait_label("m")),
+        envir = parent.env(environment())
+      )
       list(
         status = 200L,
         json = list(
@@ -1541,7 +1566,7 @@ test_that(
     # package is named here
     local_mocked_bindings(
       .bl_llm_chat = function(...) {
-        n <<- n + 1L
+        assign("n", n + 1L, envir = parent.env(environment()))
         list(text = sprintf("answer %d", n), tool_calls = list())
       },
       .bl_stdin_tty = function() TRUE,
@@ -1549,7 +1574,9 @@ test_that(
       .package = "rmoriebricklayer"
     )
     expect_message(
-      a1 <- llmask("How do I sign?", docs = FALSE),
+      {
+        a1 <- llmask("How do I sign?", docs = FALSE)
+      },
       "answers are kept on this machine"
     )
     # spacing aside, the same question
@@ -1592,7 +1619,7 @@ test_that(
     expect_length(list.files(d), 1L)
     # a damaged file is a miss, not an error
     writeLines("{not json", list.files(d, full.names = TRUE)[1L])
-    expect_true(is.character(llmask("How do I sign?", docs = FALSE)))
+    expect_type(llmask("How do I sign?", docs = FALSE), "character")
     withr::local_envvar(MORIE_LLM_CACHE = "off")
     before <- n
     llmask("How do I sign?", docs = FALSE)
@@ -1620,7 +1647,9 @@ test_that(
     withr::local_options(morie.progress = TRUE)
     out <- function(...) {
       b <- character()
-      blcli(c(...), out = function(x) b <<- c(b, x))
+      blcli(c(...), out = function(x) {
+        assign("b", c(b, x), envir = parent.env(environment()))
+      })
       paste(b, collapse = "")
     }
     first <- out("ask", "what", "is", "a", "capsule")
@@ -1651,10 +1680,12 @@ test_that(
       writeLines("{}", f)
       Sys.setFileTime(f, Sys.time() - i * 3600)
     }
-    writeLines("{}", old <- file.path(d, nm(9)))
+    old <- file.path(d, nm(9))
+    writeLines("{}", old)
     writeLines("{}", file.path(d, "notes.json")) # not an answer: left alone
     Sys.setFileTime(old, Sys.time() - 40 * 86400)
-    writeLines("x", tmp <- file.path(d, "half.json.tmp"))
+    tmp <- file.path(d, "half.json.tmp")
+    writeLines("x", tmp)
     Sys.setFileTime(tmp, Sys.time() - 7200)
     withr::local_options(
       rmoriebricklayer.llmcachemax = 3L,
@@ -1811,7 +1842,8 @@ test_that(
       error = function(e) conditionMessage(e)
     )
     expect_true(
-      identical(got, "use svydes()") || grepl("help-page lookups", got),
+      identical(got, "use svydes()") ||
+        grepl("help-page lookups", got, fixed = TRUE),
       info = got
     )
     expect_lte(length(s$calls), 2L)

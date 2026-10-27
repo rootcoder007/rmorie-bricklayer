@@ -29,7 +29,9 @@ the estimate (percent) and its published limits.}
 \item{hope, belong, meaning, purp}{The indicators taken as proxies for each
 direction, or \code{NULL} where the tables have none.}
 
-\item{qual}{Optional column of quality flags.}
+\item{qual}{Optional column of quality flags: \code{"E"} rows are marked use
+with caution, and suppressed ones (\code{"F"}, \code{"x"}, \code{".."})
+get no estimate.}
 
 \item{conflvl}{Confidence level of the published intervals (default 0.95).}
 }
@@ -92,6 +94,18 @@ mw <- mhcont(
 )
 mw
 plot(mw)
+
+# your own table: made-up percentages for two communities, with limits;
+# one item stands for both meaning and purpose, and none for belonging
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 2),
+  item = rep(c("Hopeful", "Life has meaning"), 2),
+  pct = c(64, 70, 58, 75),
+  lo = c(59, 65, 52, 70),
+  hi = c(69, 75, 64, 80)
+)
+mhcont(own, "community", "item", "pct", "lo", "hi", hope = "Hopeful",
+       meaning = "Life has meaning", purp = "Life has meaning")
 \dontshow{\}) # examplesIf}
 }
 \references{

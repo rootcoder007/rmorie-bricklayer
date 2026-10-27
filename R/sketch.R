@@ -99,6 +99,8 @@ onlsmry <- function(x = NULL) {
   if (is.null(x)) {
     return(acc)
   }
+  # checked here, so a refusal names onlsmry(), not smryupd()
+  x <- .rmbl_num(x, "x")
   smryupd(acc, x)
 }
 
@@ -163,21 +165,23 @@ smrystat <- function(acc) {
 }
 
 #' @export
-print.bricklayer_online <- function(x, ...) {
+format.bricklayer_online <- function(x, ...) {
   s <- smrystat(x)
-  cat(.rmbl_rule("Accumulated summary"), "\n")
-  cat(
-    .rmbl_kv(list(
+  .rmbl_stat_block(
+    "Accumulated summary",
+    facts = list(
       n = format(s[["n"]], big.mark = ","),
-      mean = formatC(s[["mean"]], format = "g", digits = 6),
-      sd = formatC(s[["sd"]], format = "g", digits = 6),
-      skewness = formatC(s[["skewness"]], format = "g", digits = 4),
-      kurtosis = formatC(s[["kurtosis"]], format = "g", digits = 4)
-    )),
-    sep = "\n"
+      Mean = formatC(s[["mean"]], format = "g", digits = 6),
+      `Standard deviation` = formatC(s[["sd"]], format = "g", digits = 6),
+      Variance = formatC(s[["variance"]], format = "g", digits = 6),
+      Skewness = formatC(s[["skewness"]], format = "g", digits = 4),
+      `Excess kurtosis` = formatC(s[["kurtosis"]], format = "g", digits = 4)
+    ),
+    reading = paste(
+      "Moments of every value seen so far, kept in one pass; smryupd() adds",
+      "more and smrymrg() combines two summaries exactly."
+    )
   )
-  cat(.rmbl_rule(), "\n")
-  invisible(x)
 }
 
 #' Uniform sample of a stream in one pass
@@ -257,15 +261,8 @@ print.bricklayer_online <- function(x, ...) {
 rsvidx <- function(n, k, seed = 42L) {
   n <- .rmbl_num(n, "n")
   k <- .rmbl_num(k, "k")
-  if (length(n) != 1L || is.na(n) || !is.finite(n) || n < 0 || n != floor(n)) {
-    stop(
-      "rsvidx: `n` must be a single non-negative whole number",
-      call. = FALSE
-    )
-  }
-  if (length(k) != 1L || is.na(k) || !is.finite(k) || k < 0 || k != floor(k)) {
-    stop("`k` must be a single non-negative whole number", call. = FALSE)
-  }
+  .rsv_check_whole(n, "rsvidx: `n`")
+  .rsv_check_whole(k, "`k`")
   if (k > .Machine$integer.max) {
     stop("`k` must be at most 2147483647", call. = FALSE)
   }
@@ -368,19 +365,9 @@ rsvsmp <- function(x, k, seed = 42L) {
 #' @export
 dstnskch <- function(x, p = 14L, regstr = NULL) {
   .rmbl_no_fn(x = x)
-  p <- .rmbl_num(p, "p", integer = TRUE)
-  if (length(p) != 1L || is.na(p) || p < 4L || p > 20L) {
-    stop("`p` must be a single integer between 4 and 20", call. = FALSE)
-  }
+  p <- .rmbl_sketch_p(p)
   if (!is.null(regstr)) {
-    regstr <- .rmbl_num(regstr, "regstr", integer = TRUE)
-    if (length(regstr) != bitwShiftL(1L, p)) {
-      stop(
-        "`regstr` must have 2^p entries, from a sketch with the ",
-        "same `p`",
-        call. = FALSE
-      )
-    }
+    regstr <- .rmbl_sketch_regs(regstr, p)
   }
   # in blocks of a million, so a long vector shows its progress (a register
   # keeps its maximum, so the blocks give exactly the registers of one pass)
@@ -422,14 +409,54 @@ skchmrg <- function(a, b) {
   pmax(a, b)
 }
 
+#' One non-negative whole number, checked.
+#' @param v The value checked to be a non-negative whole number.
+#' @param what How the error names it.
+#' @noRd
+.rsv_check_whole <- function(v, what) {
+  if (length(v) != 1L || is.na(v) || !is.finite(v) || v < 0 || v != floor(v)) {
+    stop(what, " must be a single non-negative whole number", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' Checks a sketch's precision: a whole number from 4 to 20.
+#' @param p The precision given.
+#' @return It, as an integer.
+#' @noRd
+.rmbl_sketch_p <- function(p) {
+  p <- .rmbl_num(p, "p", integer = TRUE)
+  if (length(p) != 1L || is.na(p) || p < 4L || p > 20L) {
+    stop("`p` must be a single integer between 4 and 20", call. = FALSE)
+  }
+  p
+}
+
+#' Checks the registers a sketch is continued from.
+#' @param regstr The registers given.
+#' @param p The sketch's precision.
+#' @return The registers as integers.
+#' @noRd
+.rmbl_sketch_regs <- function(regstr, p) {
+  regstr <- .rmbl_num(regstr, "regstr", integer = TRUE)
+  if (length(regstr) != bitwShiftL(1L, p)) {
+    stop(
+      "`regstr` must have 2^p entries, from a sketch with the ",
+      "same `p`",
+      call. = FALSE
+    )
+  }
+  regstr
+}
+
 #' HyperLogLog registers: non-negative integers.
 #' @param r The registers passed by the user.
-#' @param what The argument's name, used in the error message.
+#' @param what The argument's name, quoted if the registers are invalid.
 #' @return The registers as an integer vector.
 #' @noRd
 .rmbl_registers <- function(r, what) {
   r <- .rmbl_num_input(r, what)
-  if (any(!is.finite(r)) || any(r < 0) || any(r > 64) || any(r != floor(r))) {
+  if (!all(is.finite(r)) || any(r < 0) || any(r > 64) || any(r != floor(r))) {
     stop(
       sprintf("`%s` must be non-negative integer registers", what),
       call. = FALSE

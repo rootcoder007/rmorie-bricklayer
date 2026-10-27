@@ -24,7 +24,8 @@ instead when \eqn{n!} is at most \code{nperm}.}
 p-value is reproducible.}
 }
 \value{
-A list with \code{breakafter} (the period the series changes
+A list of class \code{rmbl_step_change} with \code{breakafter}
+(the period the series changes
 after, from \code{x}), \code{index} (its position), \code{before} and
 \code{after} (the segment means), \code{difference} (after minus
 before), \code{statistic} (\eqn{T_{\max}}), \code{p_value},

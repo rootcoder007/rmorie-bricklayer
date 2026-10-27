@@ -65,7 +65,7 @@ test_that("a recorded generator state replays exactly", {
   invisible(stats::runif(1000))
   mnfrstseed(m)
   expect_identical(stats::runif(3), first)
-  expect_true(is.integer(m$rng$state))
+  expect_type(m$rng$state, "integer")
   expect_gt(length(m$rng$state), 1L)
   expect_error(
     mnfrstseed(mkmnf(list(a = 1), env = FALSE)),
@@ -90,7 +90,7 @@ test_that("dependency capture records where a package came from", {
       names(d)
   ))
   expect_identical(d$package, c("stats", "utils"))
-  expect_false(any(is.na(d$version)))
+  expect_false(anyNA(d$version))
   # a field that is absent is NA rather than omitted, so a reader can
   # see the information was missing rather than forgotten
   expect_true(all(is.na(d$remote_sha)))
@@ -139,7 +139,10 @@ test_that("a declaration catches switching and additions differently", {
   )
 
   expect_error(prrgdecl("unnamed"), "named character vector")
-  expect_error(prrgdecl(c(a = "x", a = "y")), "duplicate names")
+  expect_error(
+    prrgdecl(stats::setNames(c("x", "y"), c("a", "a"))),
+    "duplicate names"
+  )
   expect_error(prrgchk(list(), "a"), "prrgdecl")
   expect_output(print(plan), "Pre-registration")
   expect_output(print(sw), "outcome switching")
@@ -221,10 +224,10 @@ test_that("the E-value is its closed form", {
   # 2 + sqrt(2 * 1) = 3.414214, by hand
   expect_equal(unname(evlrr(2)), 2 + sqrt(2), tolerance = 1e-12)
   # the measure is symmetric about the null
-  expect_equal(evlrr(0.5), evlrr(2))
-  expect_equal(unname(evlrr(1)), 1)
+  expect_identical(evlrr(0.5), evlrr(2))
+  expect_identical(unname(evlrr(1)), 1)
   # an interval that already includes the null needs no confounding
-  expect_equal(unname(evlrr(2, lo = 0.9, hi = 4.4)["evllimit"]), 1)
+  expect_identical(unname(evlrr(2, lo = 0.9, hi = 4.4)["evllimit"]), 1)
   # and a limit above the null needs some
   expect_equal(
     unname(evlrr(3, lo = 2.1, hi = 4.3)["evllimit"]),
@@ -283,7 +286,7 @@ test_that("a bundle covers the files, the manifest and itself", {
   # the file digests are INSIDE the signature, so rewriting one in the
   # bundle is caught twice over
   raw <- readLines(p)
-  i <- grep("sha256", raw)[1]
+  i <- grep("sha256", raw, fixed = TRUE)[1]
   raw[i] <- sub("[0-9a-f]{64}", strrep("a", 64), raw[i])
   tf <- tempfile(fileext = ".json")
   writeLines(raw, tf)
@@ -293,7 +296,7 @@ test_that("a bundle covers the files, the manifest and itself", {
 
   # and so is the bundle's own timestamp, which nothing else covers
   raw2 <- readLines(p)
-  j <- grep("bundled_utc", raw2)[1]
+  j <- grep("bundled_utc", raw2, fixed = TRUE)[1]
   raw2[j] <- sub("20[0-9]{2}", "1999", raw2[j])
   tf2 <- tempfile(fileext = ".json")
   writeLines(raw2, tf2)
@@ -392,4 +395,57 @@ test_that("an RFC 3161 token verifies, and every tamper is caught", {
   expect_false(tsvrf(charToRaw("not der"), f$payload)$ok)
   expect_error(tsvrf(42, f$payload), "raw vector")
   expect_output(print(res), "Timestamp token")
+})
+
+test_that("capdeps warns about a package that is not installed", {
+  expect_warning(
+    capdeps(c("stats", "statz.c1.none")),
+    "capdeps: not installed, recorded with NA fields: statz.c1.none"
+  )
+  d <- suppressWarnings(capdeps(c("stats", "statz.c1.none")))
+  expect_true(is.na(d$version[d$package == "statz.c1.none"]))
+  expect_no_warning(capdeps("stats"))
+})
+
+# Prints `x` on an ASCII console: the lines and what print() returned.
+o1_box <- function(x, ...) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  tmp <- withr::local_tempfile()
+  v <- withr::with_output_sink(tmp, withVisible(print(x, ...)))
+  list(out = readLines(tmp), v = v)
+}
+
+# The box's frame, its title and the facts expected in it.
+o1_expect_box <- function(b, x, title, facts = character()) {
+  expect_false(b$v$visible)
+  expect_identical(b$v$value, x)
+  expect_match(b$out[1L], "^\\+-- ")
+  expect_true(grepl(title, b$out[1L], fixed = TRUE))
+  expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  for (f in facts) {
+    expect_true(any(grepl(f, b$out, fixed = TRUE)), info = f)
+  }
+}
+
+test_that("a recomputation prints as a box", {
+  d <- data.frame(x = 1:10)
+  m <- mkmnf(list(dataset = "demo"), env = FALSE)
+  m <- recrd(m, "mean_x", obs = mean(d$x), expd = 5.5)
+  m <- recrd(m, "n", obs = nrow(d), expd = 10)
+  r <- mnfrcmp(m, d, list(mean_x = function(z) mean(z$x)))
+  b <- o1_box(r)
+  o1_expect_box(b, r, "Recomputation: see below", c("NOT recomputed", "n"))
+  ok <- mnfrcmp(m, d, list(mean_x = function(z) mean(z$x), n = nrow))
+  expect_true(any(grepl("VERIFIED", o1_box(ok)$out, fixed = TRUE)))
+})
+
+test_that("a recomputation that differs names each row that did not match", {
+  d <- data.frame(x = 1:10)
+  m <- mkmnf(list(dataset = "demo"), env = FALSE)
+  m <- suppressMessages(recrd(m, "mean_x", obs = mean(d$x), expd = 5.5))
+  r <- mnfrcmp(m, data.frame(x = 1:11), list(mean_x = function(z) {
+    mean(z$x)
+  }))
+  expect_false(r$ok)
+  expect_match(box_text(r), "mean_x: ", fixed = TRUE)
 })

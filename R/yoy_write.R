@@ -139,10 +139,10 @@ yoywr <- function(x, file, format = "auto", ...) {
 #' [yoy()].
 #' @param file Character scalar, the output path, or `NULL` to return the
 #' text instead of writing it.
-#' @param digits Integer scalar or `NULL`: decimal places for the percent
-#' columns. For the CSV, TSV and JSON writers `NULL`, the default, writes them
-#' unrounded, which is what a downstream calculation wants; give a number for
-#' a figure meant to be read. For `yoymd()` the default is `1`.
+#' @param digits A whole number from 0 to 15, or `NULL`: decimal places for the
+#' percent columns. For the CSV, TSV and JSON writers `NULL`, the default,
+#' writes them unrounded, which is what a downstream calculation wants; give a
+#' number for a figure meant to be read. For `yoymd()` the default is `1`.
 #' @param na Character scalar, how to write a missing value (CSV and TSV). The
 #' default empty string is what most readers expect; `"NA"` keeps R's own
 #' spelling.
@@ -156,7 +156,7 @@ yoywr <- function(x, file, format = "auto", ...) {
 #' @param align Logical scalar, default `TRUE`: pad the Markdown columns so
 #' the source table is readable unrendered.
 #' @param pretty Logical scalar, default `TRUE`: indent the JSON.
-#' @param ... Ignored.
+#' @param ... Ignored: what `yoywr()` passes on for its HTML and PDF writers.
 #' @return `file`, invisibly; or, when `file` is `NULL`, the text as a
 #' character scalar.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
@@ -195,6 +195,7 @@ yoycsv <- function(
   comment = "#",
   ...
 ) {
+  meta <- .rmbl_flag1(meta, "meta")
   .yoy_delim(
     x,
     file,
@@ -217,6 +218,7 @@ yoytsv <- function(
   comment = "#",
   ...
 ) {
+  meta <- .rmbl_flag1(meta, "meta")
   .yoy_delim(
     x,
     file,
@@ -226,6 +228,77 @@ yoytsv <- function(
     metadata = meta,
     comment = comment
   )
+}
+
+#' @rdname yoydelim
+#' @export
+yoyjs <- function(x, file, digits = NULL, pretty = TRUE, ...) {
+  if (!inherits(x, "rmbl_yoy")) {
+    stop("yoyjs: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+  }
+  file <- .rmbl_out_file(file)
+  pretty <- .rmbl_flag1(pretty, "pretty")
+  m <- .yoy_meta(x)
+  d <- .yoy_export_frame(x, digits)
+  # Written with this package's own JSON codec, so the file is produced
+  # by the same writer whose output the manifest digests.
+  settings <- list(value = m$value, period = m$period)
+  # An absent grouping is an absent key, not an empty object: a NULL
+  # inside a list serialises as {}, which reads as "grouped by nothing
+  # in particular" rather than "not grouped".
+  if (!is.null(m$by)) {
+    settings$by <- as.list(m$by)
+  }
+  settings <- c(
+    settings,
+    list(
+      lag = m$lag,
+      units = m$units,
+      minbase = m$minbase,
+      conflvl = m$conflvl,
+      direction = m$direction
+    )
+  )
+  obj <- list(
+    settings = settings,
+    # yoy() has already warned about periods with no order
+    summary = suppressWarnings(yoysmry(x)),
+    rows = d
+  )
+  txt <- as.character(tojs(
+    obj,
+    pretty = pretty,
+    auto_unbox = TRUE,
+    na = "null"
+  ))
+  if (is.null(file)) {
+    return(txt)
+  }
+  writeLines(txt, file, useBytes = TRUE)
+  invisible(file)
+}
+
+#' @rdname yoydelim
+#' @export
+yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
+  if (!inherits(x, "rmbl_yoy")) {
+    stop("yoymd: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+  }
+  file <- .rmbl_out_file(file)
+  align <- .rmbl_flag1(align, "align")
+  m <- .yoy_meta(x)
+  d <- as.data.frame(x)
+  chgcol <- .yoy_change_col(x)
+  pp <- identical(chgcol, "ppchg")
+  cols <- .yoy_md_cols(d, m, chgcol, pp, digits)
+  lines <- .yoy_md_lines(cols, align, length(m$by), nrow(d))
+  meta <- paste0("_", .yoy_meta_lines(m), "_")
+  txt <- paste0(paste(c(lines, "", meta), collapse = "\n"), "\n")
+  if (is.null(file)) {
+    return(txt)
+  }
+  writeLines(txt, file, useBytes = TRUE)
+  invisible(file)
 }
 
 #' Writes a year-over-year table as delimited text, with its metadata.
@@ -260,14 +333,16 @@ yoytsv <- function(
       return(gsub("[\t\r\n]", " ", out))
     }
     needs <- grepl("[,\"\r\n]", out)
-    out[needs] <- paste0("\"", gsub("\"", "\"\"", out[needs]), "\"")
+    out[needs] <- paste0(
+      "\"",
+      gsub("\"", "\"\"", out[needs], fixed = TRUE),
+      "\""
+    )
     out
   }
   hdr <- paste(cell(names(d)), collapse = sep)
   body <- if (nrow(d)) {
-    apply(vapply(d, cell, character(nrow(d))), 1L, function(r) {
-      paste(r, collapse = sep)
-    })
+    apply(vapply(d, cell, character(nrow(d))), 1L, paste, collapse = sep)
   } else {
     character(0)
   }
@@ -276,169 +351,6 @@ yoytsv <- function(
     return(txt)
   }
   writeLines(txt, file, sep = "", useBytes = TRUE)
-  invisible(file)
-}
-
-#' @rdname yoydelim
-#' @export
-yoyjs <- function(x, file, digits = NULL, pretty = TRUE, ...) {
-  if (!inherits(x, "rmbl_yoy")) {
-    stop("yoyjs: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
-  }
-  file <- .rmbl_out_file(file)
-  m <- .yoy_meta(x)
-  d <- .yoy_export_frame(x, digits)
-  # Written with this package's own JSON codec, so the file is produced
-  # by the same writer whose output the manifest digests.
-  settings <- list(value = m$value, period = m$period)
-  # An absent grouping is an absent key, not an empty object: a NULL
-  # inside a list serialises as {}, which reads as "grouped by nothing
-  # in particular" rather than "not grouped".
-  if (!is.null(m$by)) {
-    settings$by <- as.list(m$by)
-  }
-  settings <- c(
-    settings,
-    list(
-      lag = m$lag,
-      units = m$units,
-      minbase = m$minbase,
-      conflvl = m$conflvl,
-      direction = m$direction
-    )
-  )
-  obj <- list(
-    settings = settings,
-    summary = yoysmry(x),
-    rows = d
-  )
-  txt <- as.character(tojs(
-    obj,
-    pretty = pretty,
-    auto_unbox = TRUE,
-    na = "null"
-  ))
-  if (is.null(file)) {
-    return(txt)
-  }
-  writeLines(txt, file, useBytes = TRUE)
-  invisible(file)
-}
-
-#' @rdname yoydelim
-#' @export
-yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
-  if (!inherits(x, "rmbl_yoy")) {
-    stop("yoymd: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
-  }
-  file <- .rmbl_out_file(file)
-  m <- .yoy_meta(x)
-  d <- as.data.frame(x)
-  chgcol <- .yoy_change_col(x)
-  pp <- identical(chgcol, "ppchg")
-  vd <- if (is.null(m$valuedig)) 0L else m$valuedig
-  cols <- list()
-  if (!is.null(m$by)) {
-    for (b in m$by) {
-      cols[[b]] <- as.character(d[[b]])
-    }
-  }
-  cols[[m$period]] <- .yoy_period_text(d, m)
-  cols[[m$value]] <- .yoy_fmt_num(d$value, vd)
-  cols[["previous"]] <- .yoy_fmt_num(d$previous, vd)
-  cols[["change"]] <- .yoy_fmt_num(d$change, vd)
-  cols[[if (pp) "points" else "change %"]] <-
-    .yoy_fmt_pct(d[[chgcol]], digits, pp)
-  if (all(c("pctlo", "pctup") %in% names(d))) {
-    cols[["interval"]] <- ifelse(
-      is.na(d$pctlo),
-      "",
-      sprintf("[%s, %s]", .yoy_fmt_pct(d$pctlo, 0L), .yoy_fmt_pct(d$pctup, 0L))
-    )
-  }
-  cols[["note"]] <- ifelse(is.na(d$flag), "", d$flag)
-  # a pipe inside a cell would end the cell
-  cols <- lapply(cols, function(v) gsub("|", "\\|", v, fixed = TRUE))
-  nms <- names(cols)
-  # Display WIDTH, not character count: the em dash standing in for a
-  # missing value is one character and one column, but a byte count
-  # would misjudge it and the rule under the header would not line up
-  # with the header.
-  w <- if (isTRUE(align)) {
-    vapply(
-      seq_along(cols),
-      function(i) {
-        max(3L, nchar(c(nms[i], cols[[i]]), type = "width"), na.rm = TRUE)
-      },
-      0L
-    )
-  } else {
-    rep(0L, length(cols))
-  }
-  padr <- function(s, k, right) {
-    gap <- max(0L, w[k] - nchar(s, type = "width"))
-    if (right) paste0(strrep(" ", gap), s) else paste0(s, strrep(" ", gap))
-  }
-  # every numeric column right-aligned: counting back from the end had left the
-  # value and the previous value aligned left while the change beside them was
-  # aligned right
-  right <- seq_along(cols) > length(m$by) + 1L & nms != "note"
-  row <- function(vals) {
-    paste0(
-      "| ",
-      paste(
-        vapply(
-          seq_along(vals),
-          function(k) {
-            padr(vals[k], k, right[k])
-          },
-          ""
-        ),
-        collapse = " | "
-      ),
-      " |"
-    )
-  }
-  # the rule is exactly as wide as its column, with a trailing colon
-  # marking a right-aligned one
-  rule <- paste0(
-    "| ",
-    paste(
-      vapply(
-        seq_along(cols),
-        function(k) {
-          # three dashes is the shortest rule Markdown accepts, and with
-          # align = FALSE the widths are zero
-          width <- max(3L, w[k])
-          if (right[k]) {
-            paste0(strrep("-", width - 1L), ":")
-          } else {
-            strrep("-", width)
-          }
-        },
-        ""
-      ),
-      collapse = " | "
-    ),
-    " |"
-  )
-  lines <- c(
-    row(nms),
-    rule,
-    vapply(
-      seq_len(nrow(d)),
-      function(r) {
-        row(vapply(cols, function(v) v[r], ""))
-      },
-      ""
-    )
-  )
-  meta <- paste0("_", .yoy_meta_lines(m), "_")
-  txt <- paste0(paste(c(lines, "", meta), collapse = "\n"), "\n")
-  if (is.null(file)) {
-    return(txt)
-  }
-  writeLines(txt, file, useBytes = TRUE)
   invisible(file)
 }
 
@@ -451,7 +363,7 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   bits <- c(
     sprintf("value: %s", m$value),
     sprintf("period: %s", m$period),
-    if (!is.null(m$by)) sprintf("by: %s", paste(m$by, collapse = ", ")),
+    if (!is.null(m$by)) sprintf("by: %s", toString(m$by)),
     sprintf("lag: %d", m$lag),
     sprintf("units: %s", m$units)
   )
@@ -486,10 +398,152 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
 .yoy_export_frame <- function(x, digits) {
   d <- as.data.frame(x)
   if (!is.null(digits)) {
-    digits <- .rmbl_num(digits, "digits", integer = TRUE)[1L]
+    # one whole number from 0 to 15, as yoymd() takes it: digits[1] of a
+    # vector, or a negative count, was used as given
+    digits <- .rmbl_scalar(digits, "digits", 0, 15, integer = TRUE)
     for (nm in intersect(c("pctchg", "ppchg", "pctlo", "pctup"), names(d))) {
       d[[nm]] <- round(d[[nm]], digits)
     }
   }
   d
+}
+
+#' The cells of yoymd()'s table, by column, a pipe in a cell escaped.
+#' @param d The change table whose cells are formatted, as a data frame.
+#' @param m The table's metadata, from .yoy_meta(): columns and digits.
+#' @param chgcol The name of the change column, percent or points.
+#' @param pp Whether the change column holds percentage points.
+#' @param digits As for yoymd().
+#' @return A named list of character vectors.
+#' @noRd
+.yoy_md_cols <- function(d, m, chgcol, pp, digits) {
+  vd <- if (is.null(m$valuedig)) 0L else m$valuedig
+  cols <- list()
+  if (!is.null(m$by)) {
+    for (b in m$by) {
+      cols[[b]] <- as.character(d[[b]])
+    }
+  }
+  cols[[m$period]] <- .yoy_period_text(d, m)
+  cols[[m$value]] <- .yoy_fmt_num(d$value, vd)
+  cols[["previous"]] <- .yoy_fmt_num(d$previous, vd)
+  cols[["change"]] <- .yoy_fmt_num(d$change, vd)
+  cols[[if (pp) "points" else "change %"]] <-
+    .yoy_fmt_pct(d[[chgcol]], digits, pp)
+  if (all(c("pctlo", "pctup") %in% names(d))) {
+    cols[["interval"]] <- ifelse(
+      is.na(d$pctlo),
+      "",
+      sprintf("[%s, %s]", .yoy_fmt_pct(d$pctlo, 0L), .yoy_fmt_pct(d$pctup, 0L))
+    )
+  }
+  cols[["note"]] <- ifelse(is.na(d$flag), "", d$flag)
+  # a pipe inside a cell would end the cell
+  cols <- lapply(cols, function(v) gsub("|", "\\|", v, fixed = TRUE))
+  cols
+}
+
+#' The lines of a Markdown table: the header, the rule and the rows.
+#' @param cols The cells by column, from .yoy_md_cols().
+#' @param align As for yoymd().
+#' @param nby The number of grouping columns.
+#' @param nrows The number of body rows of the Markdown table.
+#' @return A character vector.
+#' @noRd
+.yoy_md_lines <- function(cols, align, nby, nrows) {
+  nms <- names(cols)
+  # Display WIDTH, not character count: the em dash standing in for a
+  # missing value is one character and one column, but a byte count
+  # would misjudge it and the rule under the header would not line up
+  # with the header.
+  w <- .yoy_md_widths(cols, nms, align)
+  padr <- function(s, k, right) {
+    gap <- max(0L, w[k] - nchar(s, type = "width"))
+    if (right) paste0(strrep(" ", gap), s) else paste0(s, strrep(" ", gap))
+  }
+  # every numeric column right-aligned: counting back from the end had left the
+  # value and the previous value aligned left while the change beside them was
+  # aligned right
+  right <- seq_along(cols) > nby + 1L & nms != "note"
+  row <- function(vals) {
+    paste0(
+      "| ",
+      paste(
+        vapply(
+          seq_along(vals),
+          function(k) {
+            padr(vals[k], k, right[k])
+          },
+          ""
+        ),
+        collapse = " | "
+      ),
+      " |"
+    )
+  }
+  rule <- .yoy_md_rule(w, right)
+  lines <- c(
+    row(nms),
+    rule,
+    vapply(
+      seq_len(nrows),
+      function(r) {
+        row(vapply(cols, function(v) v[r], ""))
+      },
+      ""
+    )
+  )
+  lines
+}
+
+#' The rule under a Markdown table's header: as wide as each column, with a
+#' trailing colon marking a right-aligned one.
+#' @param w The column widths.
+#' @param right Which columns are right-aligned.
+#' @return One string.
+#' @noRd
+.yoy_md_rule <- function(w, right) {
+  # the rule is exactly as wide as its column, with a trailing colon
+  # marking a right-aligned one
+  paste0(
+    "| ",
+    paste(
+      vapply(
+        seq_along(w),
+        function(k) {
+          # three dashes is the shortest rule Markdown accepts, and with
+          # align = FALSE the widths are zero
+          width <- max(3L, w[k])
+          if (right[k]) {
+            paste0(strrep("-", width - 1L), ":")
+          } else {
+            strrep("-", width)
+          }
+        },
+        ""
+      ),
+      collapse = " | "
+    ),
+    " |"
+  )
+}
+
+#' The display width of each column of a Markdown table (zero when not
+#' aligned).
+#' @param cols The cells by column.
+#' @param nms The column names, counted with the cells for the widths.
+#' @param align As for yoymd().
+#' @return An integer vector.
+#' @noRd
+.yoy_md_widths <- function(cols, nms, align) {
+  if (!isTRUE(align)) {
+    return(rep(0L, length(cols)))
+  }
+  vapply(
+    seq_along(cols),
+    function(i) {
+      max(3L, nchar(c(nms[i], cols[[i]]), type = "width"), na.rm = TRUE)
+    },
+    0L
+  )
 }

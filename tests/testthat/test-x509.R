@@ -39,7 +39,7 @@ test_that("ECDSA verifies on every curve, and rejects what it must", {
   for (cv in c("P-256", "P-384", "P-521")) {
     n <- .Call(C_rmbl_ec_order, cv)
     expect_true(.Call(C_rmbl_ec_mul, cv, n)$infinity, info = cv)
-    expect_identical(length(n), switch(cv, "P-256" = 32L, "P-384" = 48L, 66L))
+    expect_length(n, switch(cv, "P-256" = 32L, "P-384" = 48L, 66L))
   }
   expect_error(.Call(C_rmbl_ec_mul, "P-192", as.raw(1L)), "unsupported")
 })
@@ -57,7 +57,7 @@ test_that("a certificate parses into the fields a verifier needs", {
   # the leaf is issued for timestamping and nothing else
   expect_identical(cert$extended_key_usage, "1.3.6.1.5.5.7.3.8")
   expect_s3_class(cert$not_before, "POSIXct")
-  expect_true(cert$not_after > cert$not_before)
+  expect_gt(cert$not_after, cert$not_before)
   expect_false(cert$self_signed)
 
   ec <- certprs(f$ecdsa_cert)
@@ -254,4 +254,75 @@ test_that("the positive control finds an injected effect, or says not", {
     cpspwr(d, function(z) 1, "notafunction", trt = "x"),
     "must both be functions"
   )
+})
+
+test_that("certchnvrf names purp and pols", {
+  f <- function() 1
+  expect_error(certchnvrf(NULL, NULL, purp = f), "certchnvrf: `purp` must be")
+  expect_error(certchnvrf(NULL, NULL, pols = f), "certchnvrf: `pols` must be")
+})
+
+# Prints `x` on an ASCII console: the lines and what print() returned.
+o1_box <- function(x, ...) {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  tmp <- withr::local_tempfile()
+  v <- withr::with_output_sink(tmp, withVisible(print(x, ...)))
+  list(out = readLines(tmp), v = v)
+}
+
+# The box's frame, its title and the facts expected in it.
+o1_expect_box <- function(b, x, title, facts = character()) {
+  expect_false(b$v$visible)
+  expect_identical(b$v$value, x)
+  expect_match(b$out[1L], "^\\+-- ")
+  expect_true(grepl(title, b$out[1L], fixed = TRUE))
+  expect_match(b$out[length(b$out)], "^\\+-+\\+$")
+  for (f in facts) {
+    expect_true(any(grepl(f, b$out, fixed = TRUE)), info = f)
+  }
+}
+
+test_that("certificates and chain checks print as boxes", {
+  f <- ts_fixtures()
+  cert <- certprs(f$rsa_cert)
+  o1_expect_box(
+    o1_box(cert),
+    cert,
+    "X.509 certificate",
+    c("Subject", "Valid to", "certchnvrf()")
+  )
+  ok <- certchnvrf(cert, trust = list(certprs(f$ca)))
+  b <- o1_box(ok)
+  o1_expect_box(b, ok, "Certificate chain:", c("Certificates", "Checked at"))
+  expect_true(any(grepl("VERIFIED", b$out, fixed = TRUE)))
+})
+
+# ---- restored key usage and result-driven reading --------------------------
+
+test_that("certprs()'s box shows both key usages and reads its validity", {
+  f <- system.file("extdata", "x509", "test-root.der",
+    package = "rmoriebricklayer")
+  root <- certprs(f)
+  txt <- gsub("\\s+", " ", paste(format(root), collapse = " "))
+  expect_match(txt, "Key usage keyCertSign", fixed = TRUE)
+  expect_match(txt, "Extended key usage none stated", fixed = TRUE)
+  early <- .rmbl_cert_reading(root, root$not_before - 86400)
+  mid <- .rmbl_cert_reading(root, root$not_before + 86400)
+  late <- .rmbl_cert_reading(root, root$not_after + 2 * 86400)
+  expect_match(early[1L], "^Not yet valid")
+  expect_match(mid[1L], "^In force now")
+  expect_match(late[1L], "^Expired on .*, 2 days ago")
+  expect_match(mid[2L], "self-signed CA", fixed = TRUE)
+  leaf <- certprs(system.file("extdata", "x509", "test-leaf.der",
+    package = "rmoriebricklayer"))
+  expect_match(.rmbl_cert_reading(leaf, Sys.time())[2L], "end-entity",
+    fixed = TRUE)
+})
+
+test_that("a certificate with no key usage says none is stated", {
+  f <- system.file("extdata", "x509", "test-root.der",
+    package = "rmoriebricklayer")
+  root <- certprs(f)
+  root$key_usage <- character()
+  expect_match(box_text(root), "Key usage none stated", fixed = TRUE)
 })

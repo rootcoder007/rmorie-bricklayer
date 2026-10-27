@@ -40,164 +40,11 @@
 #' ti[ti$call == "19", c("indicator", "table", "measure", "better")]
 #' @export
 trcind <- function() {
-  r <- function(call, indicator, table, measure, better, note = "") {
-    data.frame(
-      call = call,
-      indicator = indicator,
-      table = table,
-      measure = measure,
-      better = better,
-      note = note,
-      stringsAsFactors = FALSE
-    )
-  }
-  do.call(
-    rbind,
-    list(
-      r(
-        "19",
-        "infant mortality",
-        "17-10-0161",
-        "Infant mortality rate",
-        "lower",
-        "by Indigenous identity, Canada; Inuit regions in 13-10-0100"
-      ),
-      r(
-        "19",
-        "maternal health",
-        "13-10-0064",
-        "Low birth weight; Pre-term births",
-        "lower",
-        "birth outcomes only, Canada and Inuit regions"
-      ),
-      r(
-        "19",
-        "suicide",
-        "41-10-0021",
-        "Seriously contemplated suicide in the past 12 months",
-        "lower",
-        "suicidal thoughts; deaths by cause in Inuit regions in 13-10-0157"
-      ),
-      r(
-        "19",
-        "mental health",
-        "13-10-0924",
-        "Perceived mental health, very good or excellent",
-        "higher"
-      ),
-      r("19", "mental health", "13-10-0924", "Mood disorder", "lower"),
-      r("19", "mental health", "13-10-0924", "Anxiety disorder", "lower"),
-      r(
-        "19",
-        "mental health",
-        "13-10-0924",
-        "Perceived life stress, most days quite a bit or extremely stressful",
-        "lower"
-      ),
-      r("19", "addictions", "13-10-0924", "Heavy drinking", "lower", "a proxy"),
-      r(
-        "19",
-        "addictions",
-        "13-10-0924",
-        "Current smoker, daily or occasional",
-        "lower",
-        "a proxy"
-      ),
-      r(
-        "19",
-        "life expectancy",
-        "17-10-0160",
-        "Life expectancy at birth",
-        "higher",
-        paste0(
-          "by Indigenous identity, Canada and regions; Inuit regions in ",
-          "13-10-0403"
-        )
-      ),
-      r(
-        "19",
-        "birth rates",
-        "census profile",
-        "Population aged 0 to 4",
-        "",
-        "no direction: a measure of population, not of health"
-      ),
-      r(
-        "19",
-        "infant and child health issues",
-        "13-10-0064",
-        "Small for gestational age",
-        "lower",
-        "Canada and Inuit regions"
-      ),
-      r(
-        "19",
-        "chronic diseases",
-        "13-10-0924",
-        "At least one underlying chronic health condition",
-        "lower"
-      ),
-      r("19", "chronic diseases", "13-10-0924", "Diabetes", "lower"),
-      r("19", "chronic diseases", "13-10-0924", "High blood pressure", "lower"),
-      r("19", "chronic diseases", "13-10-0924", "Arthritis", "lower"),
-      r(
-        "19",
-        "illness and injury incidence",
-        "13-10-0157",
-        "Mortality",
-        "lower",
-        "deaths by cause, injuries among them, Canada and Inuit regions"
-      ),
-      r(
-        "19",
-        "availability of appropriate health services",
-        "13-10-0924",
-        "Has a regular healthcare provider",
-        "higher",
-        "a proxy: having a provider, not its cultural safety"
-      ),
-      r(
-        "55",
-        "children in care",
-        "census profile",
-        "Foster children",
-        "lower",
-        "foster children among children in census families (profshr)"
-      ),
-      r(
-        "55",
-        "educational attainment",
-        "census profile",
-        "No certificate, diploma or degree",
-        "lower",
-        "aged 25 and over"
-      ),
-      r(
-        "55",
-        "educational attainment",
-        "census profile",
-        "Bachelor's degree or higher",
-        "higher",
-        "aged 25 and over"
-      ),
-      r(
-        "55",
-        "income attainment",
-        "census profile",
-        paste0(
-          "Prevalence of low income based on the Low-income measure, ",
-          "after tax (LIM-AT) (%)"
-        ),
-        "lower"
-      ),
-      r(
-        "55",
-        "income attainment",
-        "census profile",
-        "Average total income in 2020 among recipients ($)",
-        "higher"
-      )
-    )
+  rbind(
+    .trc_rows_1(),
+    .trc_rows_2(),
+    .trc_rows_3(),
+    .trc_rows_4()
   )
 }
 
@@ -243,10 +90,16 @@ trcind <- function() {
 #' @param lifeexp Life expectancy (default
 #'   \code{indiex("lifeexp")}, table 17-10-0160), or \code{NULL}.
 #' @param infmort Infant mortality (default
-#'   \code{indiex("infmort")}, table 17-10-0161), or \code{NULL}.
-#' @param suiide Suicidal thoughts (default
-#'   \code{indiex("suiide")}, table 41-10-0021), or \code{NULL}.
+#'   \code{indiex("infantmort")}, table 17-10-0161), or \code{NULL}.
+#' @param suiide Suicidal thoughts (default \code{indiex("suicide")}, table
+#'   41-10-0021), or \code{NULL}. The name is kept as it was first published;
+#'   it is the suicidal-ideation table.
 #' @param ref The reference group's label (default \code{"Non-Indigenous"}).
+#' @param agetot The label of the all-ages row in the \code{age} column, one
+#'   string for both tables or two (\code{health}, then \code{suiide}).
+#'   Default \code{NULL}: Statistics Canada's \code{"Total, 18 years and
+#'   over"} and \code{"Total, 15 years and over"}. A table of your own with no
+#'   \code{age} column is used whole.
 #' @return A data frame of class \code{rmbl_trc_gaps}: \code{indicator},
 #'   \code{measure}, \code{period}, \code{group}, \code{estimate},
 #'   \code{refest}, \code{difference} (group minus reference, on the indicator's
@@ -261,133 +114,50 @@ trcind <- function() {
 #'                         "lower",
 #'                         "upper")]
 #' plot(g)
+#'
+#' # your own table: made-up life expectancies with their limits, in the
+#' # layout of indiex("lifeexp"); the tables you do not have are NULL
+#' le <- data.frame(
+#'   period = "2017/2019",
+#'   group = c("First Nations", "Inuit", "Non-Indigenous"),
+#'   estimate = c(74.2, 70.9, 81.8),
+#'   lower = c(73.6, 69.1, 81.6),
+#'   upper = c(74.8, 72.7, 82.0),
+#'   quality = "ok"
+#' )
+#' trchlthgap(health = NULL, lifeexp = le, infmort = NULL, suiide = NULL)
 #' @export
 trchlthgap <- function(
   health = indiex("health"),
   lifeexp = indiex("lifeexp"),
   infmort = indiex("infantmort"),
   suiide = indiex("suicide"),
-  ref = "Non-Indigenous"
+  ref = "Non-Indigenous",
+  agetot = NULL
 ) {
   ref <- .rmbl_string1(ref, "ref")
-  for (nm in c("health", "lifeexp", "infmort", "suiide")) {
-    v <- get(nm)
-    if (is.null(v)) {
-      next
-    }
-    if (!is.data.frame(v) || !all(c("group", "estimate") %in% names(v))) {
-      stop(
-        sprintf(
-          paste(
-            "`%s` must be a data frame of indicators as indiex()",
-            "returns them (columns group,",
-            "estimate): the tables must be data frames or NULL"
-          ),
-          nm
-        ),
-        call. = FALSE
-      )
-    }
-  }
+  agetot <- .trc_agetot(agetot)
+  .trc_check_tables(list(
+    health = health,
+    lifeexp = lifeexp,
+    infmort = infmort,
+    suiide = suiide
+  ))
   ti <- trcind()
   ti <- ti[ti$call == "19" & nzchar(ti$better), ]
-  pieces <- list()
-  one <- function(d, measure, period, indicator, better) {
-    d <- d[!is.na(d$group), ]
-    if (!ref %in% d$group) {
-      return(NULL)
-    }
-    if (anyDuplicated(d$group)) {
-      warning(
-        sprintf(
-          paste0(
-            "%s (%s): more than one row per group, skipped; filter the ",
-            "table to one row each"
-          ),
-          measure,
-          period
-        ),
-        call. = FALSE
-      )
-      return(NULL)
-    }
-    g <- suppressWarnings(indgap(
-      d,
-      "group",
-      "estimate",
-      "lower",
-      "upper",
-      ref = ref,
-      qual = "quality"
-    ))
-    low <- better == "lower"
-    data.frame(
-      indicator = indicator,
-      measure = measure,
-      period = period,
-      group = g$group,
-      estimate = g$estimate,
-      refest = g$refest,
-      difference = g$difference,
-      disratio = if (low) g$ratio else 1 / g$ratio,
-      lower = if (low) g$ratiolo else 1 / g$ratioup,
-      upper = if (low) g$ratioup else 1 / g$ratiolo,
-      usewithcau = g$usewithcau,
-      stringsAsFactors = FALSE
-    )
-  }
-  latest <- function(p) sort(unique(p))[length(unique(p))]
-  if (!is.null(health)) {
-    h <- health[health$age == "Total, 18 years and over", ]
-    pr <- latest(h$period)
-    for (i in which(ti$table == "13-10-0924")) {
-      d <- h[h$period == pr & h$indicator == ti$measure[i], ]
-      pieces[[length(pieces) + 1L]] <- one(
-        d,
-        ti$measure[i],
-        pr,
-        ti$indicator[i],
-        ti$better[i]
-      )
-    }
-  }
-  for (src in list(list(lifeexp, "17-10-0160"), list(infmort, "17-10-0161"))) {
-    d <- src[[1L]]
-    if (is.null(d)) {
-      next
-    }
-    i <- which(ti$table == src[[2L]])
-    ok <- d[is.finite(d$estimate), ]
-    pr <- latest(ok$period)
-    pieces[[length(pieces) + 1L]] <- one(
-      d[d$period == pr, ],
-      ti$measure[i],
-      pr,
-      ti$indicator[i],
-      ti$better[i]
-    )
-  }
-  if (!is.null(suiide)) {
-    i <- which(ti$table == "41-10-0021")
-    d <- suiide[
-      suiide$measure == ti$measure[i] &
-        suiide$age == "Total, 15 years and over",
-    ]
-    # 41-10-0021 has no non-Indigenous rows: Indigenous groups only, so it is
-    # not part of the gaps
-    if (ref %in% d$group) {
-      pieces[[length(pieces) + 1L]] <- one(
-        d,
-        ti$measure[i],
-        "2017",
-        ti$indicator[i],
-        ti$better[i]
-      )
-    }
-  }
+  pieces <- c(
+    .trc_health_gaps(health, ti, ref, agetot[1L]),
+    .trc_series_gaps(
+      list(list(lifeexp, "17-10-0160"), list(infmort, "17-10-0161")),
+      ti,
+      ref
+    ),
+    .trc_suicide_gap(suiide, ti, ref, agetot[2L])
+  )
   out <- do.call(rbind, pieces)
   if (is.null(out)) {
     stop(
+      .rmbl_fn(),
       sprintf(
         "no table given measures a Call 19 indicator against \"%s\"",
         ref
@@ -453,4 +223,480 @@ plot.rmbl_trc_gaps <- function(
     ...
   )
   invisible(d[c("indicator", "measure", "group", "disratio", "lower", "upper")])
+}
+
+#' @export
+format.rmbl_trc_gaps <- function(x, ...) {
+  need <- c("indicator", "measure", "period", "group", "estimate", "refest")
+  need <- c(need, "disratio", "lower", "upper", "worse")
+  if (!all(need %in% names(x)) || !nrow(x)) {
+    return(.an_plain(x, ...))
+  }
+  d <- as.data.frame(x)
+  d$.key <- sprintf("%s: %s (%s)", d$indicator, d$measure, d$period)
+  tabs <- .an_by(d, ".key", .trc_gap_table)
+  .an_block(
+    "Truth and Reconciliation Call 19: health gaps",
+    facts = list(
+      Measures = length(unique(d$measure)),
+      Groups = paste(unique(d$group), collapse = "; "),
+      Periods = .an_values(d$period),
+      `Clearly worse` = sprintf(
+        "%d of %d gaps (interval above 1)",
+        sum(.an_true(d$worse)),
+        nrow(d)
+      )
+    ),
+    tables = tabs,
+    reading = c(
+      "disratio is the disparity ratio, turned so that above 1 is worse for",
+      "the group than for the reference (refest)."
+    ),
+    notes = c(
+      "Call 19 asks for measurable goals to close the gaps in health",
+      "outcomes; Call 55 for annual reports on progress.",
+      .an_caution(d$usewithcau)
+    )
+  )
+}
+
+#' Builds one row of the indicator table of trcind().
+#' @param call The Call to Action.
+#' @param indicator The indicator the Call names.
+#' @param table The Statistics Canada table.
+#' @param measure The measure in it.
+#' @param better Which way is better: "lower", "higher" or "".
+#' @param note A note.
+#' @return A one-row data frame.
+#' @noRd
+.trc_row <- function(call, indicator, table, measure, better, note = "") {
+  data.frame(
+    call = call,
+    indicator = indicator,
+    table = table,
+    measure = measure,
+    better = better,
+    note = note,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' Part 1 of the indicator table of trcind().
+#' @return A data frame.
+#' @noRd
+.trc_rows_1 <- function() {
+  rbind(
+    .trc_row(
+      "19",
+      "infant mortality",
+      "17-10-0161",
+      "Infant mortality rate",
+      "lower",
+      "by Indigenous identity, Canada; Inuit regions in 13-10-0100"
+    ),
+    .trc_row(
+      "19",
+      "maternal health",
+      "13-10-0064",
+      "Low birth weight; Pre-term births",
+      "lower",
+      "birth outcomes only, Canada and Inuit regions"
+    ),
+    .trc_row(
+      "19",
+      "suicide",
+      "41-10-0021",
+      "Seriously contemplated suicide in the past 12 months",
+      "lower",
+      "suicidal thoughts; deaths by cause in Inuit regions in 13-10-0157"
+    ),
+    .trc_row(
+      "19",
+      "mental health",
+      "13-10-0924",
+      "Perceived mental health, very good or excellent",
+      "higher"
+    ),
+    .trc_row("19", "mental health", "13-10-0924", "Mood disorder", "lower"),
+    .trc_row("19", "mental health", "13-10-0924", "Anxiety disorder", "lower"),
+    .trc_row(
+      "19",
+      "mental health",
+      "13-10-0924",
+      "Perceived life stress, most days quite a bit or extremely stressful",
+      "lower"
+    )
+  )
+}
+
+#' Part 2 of the indicator table of trcind().
+#' @return A data frame.
+#' @noRd
+.trc_rows_2 <- function() {
+  rbind(
+    .trc_row(
+      "19",
+      "addictions",
+      "13-10-0924",
+      "Heavy drinking",
+      "lower",
+      "a proxy"
+    ),
+    .trc_row(
+      "19",
+      "addictions",
+      "13-10-0924",
+      "Current smoker, daily or occasional",
+      "lower",
+      "a proxy"
+    ),
+    .trc_row(
+      "19",
+      "life expectancy",
+      "17-10-0160",
+      "Life expectancy at birth",
+      "higher",
+      paste0(
+        "by Indigenous identity, Canada and regions; Inuit regions in ",
+        "13-10-0403"
+      )
+    ),
+    .trc_row(
+      "19",
+      "birth rates",
+      "census profile",
+      "Population aged 0 to 4",
+      "",
+      "no direction: a measure of population, not of health"
+    ),
+    .trc_row(
+      "19",
+      "infant and child health issues",
+      "13-10-0064",
+      "Small for gestational age",
+      "lower",
+      "Canada and Inuit regions"
+    )
+  )
+}
+
+#' Part 3 of the indicator table of trcind().
+#' @return A data frame.
+#' @noRd
+.trc_rows_3 <- function() {
+  rbind(
+    .trc_row(
+      "19",
+      "chronic diseases",
+      "13-10-0924",
+      "At least one underlying chronic health condition",
+      "lower"
+    ),
+    .trc_row("19", "chronic diseases", "13-10-0924", "Diabetes", "lower"),
+    .trc_row(
+      "19",
+      "chronic diseases",
+      "13-10-0924",
+      "High blood pressure",
+      "lower"
+    ),
+    .trc_row("19", "chronic diseases", "13-10-0924", "Arthritis", "lower"),
+    .trc_row(
+      "19",
+      "illness and injury incidence",
+      "13-10-0157",
+      "Mortality",
+      "lower",
+      "deaths by cause, injuries among them, Canada and Inuit regions"
+    ),
+    .trc_row(
+      "19",
+      "availability of appropriate health services",
+      "13-10-0924",
+      "Has a regular healthcare provider",
+      "higher",
+      "a proxy: having a provider, not its cultural safety"
+    ),
+    .trc_row(
+      "55",
+      "children in care",
+      "census profile",
+      "Foster children",
+      "lower",
+      "foster children among children in census families (profshr)"
+    )
+  )
+}
+
+#' Part 4 of the indicator table of trcind().
+#' @return A data frame.
+#' @noRd
+.trc_rows_4 <- function() {
+  rbind(
+    .trc_row(
+      "55",
+      "educational attainment",
+      "census profile",
+      "No certificate, diploma or degree",
+      "lower",
+      "aged 25 and over"
+    ),
+    .trc_row(
+      "55",
+      "educational attainment",
+      "census profile",
+      "Bachelor's degree or higher",
+      "higher",
+      "aged 25 and over"
+    ),
+    .trc_row(
+      "55",
+      "income attainment",
+      "census profile",
+      paste0(
+        "Prevalence of low income based on the Low-income measure, ",
+        "after tax (LIM-AT) (%)"
+      ),
+      "lower"
+    ),
+    .trc_row(
+      "55",
+      "income attainment",
+      "census profile",
+      "Average total income in 2020 among recipients ($)",
+      "higher"
+    )
+  )
+}
+
+#' Refuses an indicator table that is neither NULL nor a frame as indiex()
+#' returns.
+#' @param tabs The tables, named as trchlthgap()'s arguments.
+#' @return NULL, invisibly.
+#' @noRd
+.trc_check_tables <- function(tabs) {
+  for (nm in names(tabs)) {
+    v <- tabs[[nm]]
+    if (is.null(v)) {
+      next
+    }
+    if (!is.data.frame(v) || !all(c("group", "estimate") %in% names(v))) {
+      stop(
+        sprintf(
+          paste(
+            "`%s` must be a data frame of indicators as indiex()",
+            "returns them (columns group,",
+            "estimate): the tables must be data frames or NULL"
+          ),
+          nm
+        ),
+        call. = FALSE
+      )
+    }
+  }
+  invisible(NULL)
+}
+
+#' The latest period.
+#' @param p The periods, whose largest sorted value is returned.
+#' @return The last of them in sort order.
+#' @noRd
+.trc_latest <- function(p) sort(unique(p))[length(unique(p))]
+
+#' One indicator's gaps against the reference group, the ratio oriented so
+#' that above 1 is worse.
+#' @param d The indicator's rows for one period.
+#' @param measure,period,indicator The measure, its period and the indicator.
+#' @param better Which way is better: "lower" or "higher".
+#' @param ref The reference group the ratios and differences are taken against.
+#' @return A data frame, one row per group, or NULL without the reference group
+#'   or with more than one row per group.
+#' @noRd
+.trc_gap1 <- function(d, measure, period, indicator, better, ref) {
+  d <- d[!is.na(d$group), ]
+  if (!ref %in% d$group) {
+    return(NULL)
+  }
+  if (anyDuplicated(d$group)) {
+    warning(
+      sprintf(
+        paste0(
+          "%s (%s): more than one row per group, skipped; filter the ",
+          "table to one row each"
+        ),
+        measure,
+        period
+      ),
+      call. = FALSE
+    )
+    return(NULL)
+  }
+  g <- suppressWarnings(indgap(
+    d,
+    "group",
+    "estimate",
+    "lower",
+    "upper",
+    ref = ref,
+    qual = "quality"
+  ))
+  low <- better == "lower"
+  data.frame(
+    indicator = indicator,
+    measure = measure,
+    period = period,
+    group = g$group,
+    estimate = g$estimate,
+    refest = g$refest,
+    difference = g$difference,
+    disratio = if (low) g$ratio else 1 / g$ratio,
+    lower = if (low) g$ratiolo else 1 / g$ratioup,
+    upper = if (low) g$ratioup else 1 / g$ratiolo,
+    usewithcau = g$usewithcau,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The gaps of the Canadian Health Survey measures (13-10-0924).
+#' @param health The health table, or NULL.
+#' @param ti The Call 19 indicators with a direction.
+#' @param ref The reference group, passed to each health measure's gaps.
+#' @return A list of gap frames.
+#' @noRd
+.trc_health_gaps <- function(health, ti, ref, agetot) {
+  pieces <- list()
+  if (!is.null(health)) {
+    h <- .trc_all_ages(health, agetot)
+    pr <- .trc_latest(h$period)
+    for (i in which(ti$table == "13-10-0924")) {
+      d <- h[h$period == pr & h$indicator == ti$measure[i], ]
+      pieces[[length(pieces) + 1L]] <- .trc_gap1(
+        d,
+        ti$measure[i],
+        pr,
+        ti$indicator[i],
+        ti$better[i],
+        ref
+      )
+    }
+  }
+  pieces
+}
+
+#' The gaps of the tables with one measure each: life expectancy and infant
+#' mortality.
+#' @param srcs A list of pairs: the table, or NULL, and its table number.
+#' @param ti The Call 19 indicators with a direction.
+#' @param ref The reference group, passed to each single-measure table's gaps.
+#' @return A list of gap frames.
+#' @noRd
+.trc_series_gaps <- function(srcs, ti, ref) {
+  pieces <- list()
+  for (src in srcs) {
+    d <- src[[1L]]
+    if (is.null(d)) {
+      next
+    }
+    i <- which(ti$table == src[[2L]])
+    ok <- d[is.finite(d$estimate), ]
+    pr <- .trc_latest(ok$period)
+    pieces[[length(pieces) + 1L]] <- .trc_gap1(
+      d[d$period == pr, ],
+      ti$measure[i],
+      pr,
+      ti$indicator[i],
+      ti$better[i],
+      ref
+    )
+  }
+  pieces
+}
+
+#' The gap of suicidal thoughts (41-10-0021), when the table has the reference
+#' group.
+#' @param suiide The table, or NULL.
+#' @param ti The Call 19 indicators with a direction.
+#' @param ref The reference group; a table without it has no gap.
+#' @param agetot The label of the table's all-ages rows.
+#' @return A list of gap frames.
+#' @noRd
+.trc_suicide_gap <- function(suiide, ti, ref, agetot) {
+  pieces <- list()
+  if (!is.null(suiide)) {
+    i <- which(ti$table == "41-10-0021")
+    d <- .trc_all_ages(suiide, agetot)
+    d <- d[d$measure == ti$measure[i], ]
+    pr <- "2017"
+    dp <- d[["period"]]
+    if (!is.null(dp) && !all(is.na(dp))) {
+      pr <- .trc_latest(dp[!is.na(dp)])
+      d <- d[dp %in% pr, ]
+    }
+    # 41-10-0021 has no non-Indigenous rows: Indigenous groups only, so it is
+    # not part of the gaps
+    if (ref %in% d$group) {
+      pieces[[length(pieces) + 1L]] <- .trc_gap1(
+        d,
+        ti$measure[i],
+        pr,
+        ti$indicator[i],
+        ti$better[i],
+        ref
+      )
+    }
+  }
+  pieces
+}
+
+#' One measure's table of Call 19 gaps, a row per group.
+#' @param g The measure's rows of a trchlthgap() result.
+#' @return A data frame.
+#' @noRd
+.trc_gap_table <- function(g) {
+  out <- data.frame(
+    group = .an_star(g$group, g$usewithcau),
+    stringsAsFactors = FALSE
+  )
+  out$estimate <- g$estimate
+  out$refest <- g$refest
+  out$disratio <- g$disratio
+  out$interval <- .an_ci(g$lower, g$upper, 3L)
+  out$worse <- ifelse(.an_true(g$worse), "yes", "")
+  out
+}
+
+#' trchlthgap()'s all-ages labels: the health table's, then the suicide
+#' table's.
+#' @param agetot As for trchlthgap(): NULL, one string or two.
+#' @return Two strings.
+#' @noRd
+.trc_agetot <- function(agetot) {
+  if (is.null(agetot)) {
+    return(c("Total, 18 years and over", "Total, 15 years and over"))
+  }
+  if (
+    !is.character(agetot) ||
+      !length(agetot) %in% 1:2 ||
+      anyNA(agetot)
+  ) {
+    stop(
+      .rmbl_fn(),
+      "`agetot` must be one or two age labels (health, then suicide)",
+      call. = FALSE
+    )
+  }
+  rep_len(agetot, 2L)
+}
+
+#' A table's all-ages rows: those with the label in `age`, or every row of a
+#' table without an age column.
+#' @param d The table whose all-ages rows are kept.
+#' @param agetot The label of its all-ages rows.
+#' @return The rows.
+#' @noRd
+.trc_all_ages <- function(d, agetot) {
+  if (is.null(d[["age"]])) {
+    return(d)
+  }
+  d[d[["age"]] %in% agetot, ]
 }

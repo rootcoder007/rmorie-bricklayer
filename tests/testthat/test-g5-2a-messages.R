@@ -14,7 +14,7 @@ test_that(
       drftchisq(c(a = -1, b = 2), c(a = 1, b = 1)),
       "drftchisq: `obs` must be finite, non-negative counts"
     )
-    err(briggs(100, 3, -2, 10, 300, 285), "briggs: `diameter` must be positive")
+    err(briggs(100, 3, -2, 10, 300, 285), "briggs: `diam` must be positive")
     err(adp(numeric(0)), "adp: `days` must not be empty")
     err(attrfrac(0, 0.5), "attrfrac: `rr` must be positive")
     err(crfpm25(10, refconc = -1), "crfpm25: `refconc` must be non-negative")
@@ -35,7 +35,7 @@ test_that(
     # function it calls
     err(do.call(cspr, list("a", 1)), "cspr: `x` must be numeric, got character")
     # called on its own, a guard has no exported caller to name
-    expect_error(rmoriebricklayer:::.rmbl_num("a", "x"), "^`x` must be numeric")
+    expect_error(.rmbl_num("a", "x"), "^`x` must be numeric")
   }
 )
 
@@ -53,7 +53,7 @@ test_that("a damaged credentials file is named", {
   dir.create(file.path(dir, "morie"))
   writeLines("[1]", file.path(dir, "morie", "credentials.json"))
   expect_error(
-    rmoriebricklayer:::.bl_read_credentials(),
+    .bl_read_credentials(),
     "is not a JSON object; fix or remove it"
   )
 })
@@ -68,7 +68,8 @@ test_that(
       g = c("a", "b", "c"),
       e = c(5, 5, 6),
       lo = c(1, 1, 1),
-      hi = c(2, 9, 9)
+      hi = c(2, 9, 9),
+      stringsAsFactors = FALSE
     )
     expect_warning(
       dstntst(d, "g", "e", "lo", "hi"),
@@ -79,7 +80,7 @@ test_that(
 )
 
 test_that("literal copies in function bodies start with the function name", {
-  df <- data.frame(a = 1:3, b = c("x", "y", "z"))
+  df <- data.frame(a = 1:3, b = c("x", "y", "z"), stringsAsFactors = FALSE)
   err(
     anltab(data.frame(v = 1, p = 1), value = "zz", prd = "p"),
     "anltab: column `zz` not found in `data`"

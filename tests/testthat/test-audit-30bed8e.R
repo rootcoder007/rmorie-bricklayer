@@ -2,7 +2,7 @@
 # reproduced first.
 
 # a result an alias returned, in its 1.0.0 names again
-nn <- function(x) rmoriebricklayer:::.rmbl_new_names(x)
+nn <- function(x) .rmbl_new_names(x)
 
 test_that(
   paste0(
@@ -25,7 +25,8 @@ test_that(
     d <- data.frame(
       n = c(5, 8, 3),
       pop = c(1000, 1200, 900),
-      g = c("a", "b", "c")
+      g = c("a", "b", "c"),
+      stringsAsFactors = FALSE
     )
     expect_identical(
       nn(rate(d, count = "n", population = "pop", by = "g")),
@@ -55,7 +56,8 @@ test_that(
       year = rep(2019:2021, 2),
       g = rep(c("a", "b"), each = 3),
       n = c(4, 6, 9, 3, 2, 5),
-      pop = 1000
+      pop = 1000,
+      stringsAsFactors = FALSE
     )
     expect_identical(
       nn(rate_change(
@@ -295,13 +297,15 @@ test_that(
       mse = TRUE
     )
     expect_silent(
-      z <- svydes(
-        d[k, ],
-        w = d$w[k],
-        reps = a[k, ],
-        type = "jkn",
-        rscales = rp$rscales
-      )
+      {
+        z <- svydes(
+          d[k, ],
+          w = d$w[k],
+          reps = a[k, ],
+          type = "jkn",
+          rscales = rp$rscales
+        )
+      }
     )
     expect_equal(
       svyest(z, d[k, ], "y")$se,
@@ -336,7 +340,11 @@ test_that(
     b <- stepchg(y * 1e-200, seed = 1, nperm = 99)
     expect_identical(b$breakafter, a$breakafter)
     expect_identical(b$p_value, a$p_value)
-    expect_equal(b$difference, a$difference * 1e-200)
+    expect_equal(
+      b$difference,
+      a$difference * 1e-200,
+      tolerance = testthat::testthat_tolerance()
+    )
     expect_error(
       stepchg(c(1, 2, 3, 4, 5, 6), x = as.character(40:35)),
       "stepchg: `x` must be numbers or dates"
@@ -358,10 +366,10 @@ test_that(
 )
 
 test_that("text periods are drawn in time order", {
-  ax <- rmoriebricklayer:::.bl_period_axis(c("2019/20", "2021/22", "2020/21"))
+  ax <- .bl_period_axis(c("2019/20", "2021/22", "2020/21"))
   expect_identical(ax$tlab[order(ax$ticks)], c("2019/20", "2020/21", "2021/22"))
   expect_identical(ax$at, c(1L, 3L, 2L))
-  ord <- rmoriebricklayer:::.bl_period_order
+  ord <- .bl_period_order
   expect_identical(
     ord(c("2020-03", "2019-11", "2020-01")),
     c("2019-11", "2020-01", "2020-03")
@@ -373,14 +381,15 @@ test_that("text periods are drawn in time order", {
   expect_identical(ord(c("2021", "2019")), c("2019", "2021"))
   expect_identical(ord(c("b", "a")), c("a", "b"))
   f <- factor(c("lo", "hi"), levels = c("lo", "hi"))
-  expect_identical(rmoriebricklayer:::.bl_period_axis(f)$at, 1:2)
+  expect_identical(.bl_period_axis(f)$at, 1:2)
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
   r <- plot(yoy(
     data.frame(
       fy = c("2019/20", "2021/22", "2020/21"),
       grp = c("A", "A", "B"),
-      n = c(10, 20, 30)
+      n = c(10, 20, 30),
+      stringsAsFactors = FALSE
     ),
     value = "n",
     prd = "fy",
@@ -426,8 +435,8 @@ test_that(
     expect_identical(why[1], "first period: nothing to compare with")
     expect_identical(why[5], "no data")
     expect_identical(why[6], "no data in the previous period")
-    # an ordered factor with a missing level, and a gap inside a group with
-    # complete = FALSE
+    # an ordered factor with a missing level, and a gap inside a
+    # group with complete = FALSE
     lv <- c("q1", "q2", "q3", "q4")
     of <- data.frame(
       q = factor(c("q1", "q2", "q4"), levels = lv, ordered = TRUE),
@@ -438,7 +447,8 @@ test_that(
     g <- data.frame(
       year = c(2019, 2020, 2022, 2019, 2020, 2021),
       grp = rep(c("A", "B"), each = 3),
-      n = c(5, 6, 7, 2, 3, 4)
+      n = c(5, 6, 7, 2, 3, 4),
+      stringsAsFactors = FALSE
     )
     plot(yoy(g, value = "n", prd = "year", by = "grp", complete = FALSE))
     w <- seen$note[[3]]

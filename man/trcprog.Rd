@@ -23,7 +23,7 @@ trcprog(
 \item{start}{When counting began, as a year with a fraction (2015.96:
 December 15, 2015).}
 
-\item{conflvl}{Confidence level (default 0.95).}
+\item{conflvl}{Confidence level of the completion rate (default 0.95).}
 }
 \value{
 A one-row data frame of class \code{rmbl_trc_progress} with the
@@ -55,6 +55,9 @@ can be modelled the same way: set \code{total} and \code{start}.
 p <- trcprog()
 p
 plot(p)
+
+# your own count: Calls completed by the end of each year, made up
+trcprog(done = c(2, 6, 9, 13), yearend = 2016:2019)
 \dontshow{\}) # examplesIf}
 }
 \seealso{

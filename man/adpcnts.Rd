@@ -18,7 +18,13 @@ positive. Default \code{365}.}
 A numeric scalar: the estimated person-days over the period,
 \code{mean(counts) * t}. Despite the function's name this is a total of
 person-days, not an average daily population; divide by \code{t} (or
-pass it to \code{\link[=adp]{adp()}}) for the population held on an average day.
+pass it to \code{\link[=adp]{adp()}}) for the population held on an average day. It has
+class \code{c("rmbl_adpcnts", "rmbl_measure", "numeric")} and an
+attribute \code{"lakner"} (the number of counts, their mean and
+\code{t}), so it prints as a box with its inputs, formula and caveats;
+arithmetic, \code{round()}, \code{sum()}, \code{mean()}, \code{[},
+\code{c()} and \code{as.numeric()} give a plain number, and
+\code{\link[=adp]{adp()}} takes it as \code{days}.
 }
 \description{
 When only a count of people present on certain days is available --

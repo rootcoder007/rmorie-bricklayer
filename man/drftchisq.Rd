@@ -18,6 +18,10 @@ to the total of \code{obs}.}
 A named length-4 numeric: \code{statistic}, \code{df},
 \code{p_value} and \code{logpvalue}, the natural log of the upper tail, which
 keeps its information where \code{p_value} underflows to 0.
+It has class \code{c("rmbl_drftchisq", "rmbl_measure", "numeric")}, so it
+prints as a box with its inputs (kept in attribute \code{"lakner"});
+arithmetic, \code{[}, \code{c()} and \code{as.numeric()} give plain
+numbers.
 }
 \description{
 Tests whether the category counts of a new sample agree with a reference

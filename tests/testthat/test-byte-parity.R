@@ -34,7 +34,7 @@ byte_lengths <- sort(unique(c(
 
 # strtoi() gives NA above 2^31 - 1, so it cannot read a full CRC-32
 hex_to_num <- function(h) {
-  d <- strtoi(strsplit(h, "")[[1L]], base = 16L)
+  d <- strtoi(strsplit(h, "", fixed = TRUE)[[1L]], base = 16L)
   sum(d * 16^rev(seq_along(d) - 1L))
 }
 
@@ -309,7 +309,7 @@ test_that("the JSON writer agrees with jsonlite", {
   }
   # and the round trip returns the same structure
   for (x in cases[-6]) {
-    expect_equal(
+    expect_identical(
       fromjs(
         as.character(tojs(x, auto_unbox = FALSE))
       ),
@@ -325,7 +325,7 @@ test_that("the gzip codec is real gzip", {
   # with base R's own inflater rather than with the encoder's inverse
   x <- list(a = 1:100, b = strrep("compress me ", 200))
   enc <- jsgzenc(x, raw = TRUE)
-  expect_true(is.raw(enc))
+  expect_type(enc, "raw")
   # the gzip magic number and deflate method, per RFC 1952
   expect_identical(enc[1:3], as.raw(c(0x1f, 0x8b, 0x08)))
   txt <- rawToChar(memDecompress(enc, type = "gzip"))
@@ -335,7 +335,7 @@ test_that("the gzip codec is real gzip", {
   # while a character input still has to be base64
   expect_error(jsgzdec("not base64 at all", raw = TRUE), "must be a raw vector")
   skip_if_no("jsonlite")
-  expect_equal(jsonlite::fromJSON(txt, simplifyVector = FALSE)$a[[1]], 1L)
+  expect_identical(jsonlite::fromJSON(txt, simplifyVector = FALSE)$a[[1]], 1L)
   # the header records no modification time, so the same input always
   # gives the same bytes and a capsule digest does not move with the
   # clock

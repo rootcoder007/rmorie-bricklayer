@@ -8,10 +8,14 @@ vignette: >
 ---
 
 ```{r describe-setup, include = FALSE}
-# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
-# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
-# re-builds it in its check, none of these is set and only this chunk runs
-if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN),
+# on r-universe (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an
+# interactive session; when CRAN re-builds it in its check, none of these is set
+# and only this chunk runs
+if (
+  !interactive() &&
+    !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+) {
   knitr::knit_exit()
 }
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
@@ -289,13 +293,21 @@ op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 for (nm in names(messy)) {
   x <- messy[[nm]]
   if (nm == "skewed") {
-    hist(log10(x), breaks = 30, col = blpal()[2], main = "skewed (log10 scale)", xlab = "log10(value)")
+    hist(
+      log10(x),
+      breaks = 30,
+      col = blpal()[2],
+      main = "skewed (log10 scale)",
+      xlab = "log10(value)"
+    )
   } else {
     hist(x, breaks = 30, col = blpal()[2], main = nm, xlab = "value")
   }
 }
 par(op)
-plotecdf(c(reference$score, fresh$score),
-         rep(c("reference", "fresh"), c(nrow(reference), nrow(fresh))),
-         main = "Fresh scores against the reference")
+plotecdf(
+  c(reference$score, fresh$score),
+  rep(c("reference", "fresh"), c(nrow(reference), nrow(fresh))),
+  main = "Fresh scores against the reference"
+)
 ```

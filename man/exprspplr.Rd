@@ -23,7 +23,8 @@ returning a list with \code{ate} and \code{se}. The default is
 has the same interface.}
 }
 \value{
-A list with \code{ate} (the full-sample estimate),
+A list of class \code{c("rmbl_plr_boot", "list")} (its print
+method shows it as a box) with \code{ate} (the full-sample estimate),
 \code{seana} (the estimator's standard error),
 \code{seboot} (the standard deviation of the replicates),
 \code{cilobs} and \code{ciupbs} (the 95\% percentile

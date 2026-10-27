@@ -7,7 +7,7 @@
 misspat(data, maxpat = 20L)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame whose missingness patterns are counted.}
 
 \item{maxpat}{Maximum patterns to return, most
 frequent first, one positive whole number (default 20).}

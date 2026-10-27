@@ -310,17 +310,16 @@ std::string canonical_url(const std::string &url) {
  * proxy named by http_proxy / https_proxy, or a second resolution -- meets
  * the policy too. Anything that is not IPv4 or IPv6 is refused. */
 bool sockaddr_private(const struct sockaddr *sa) {
-    if (sa->sa_family == AF_INET) {
-        const struct sockaddr_in *s4 = reinterpret_cast<const struct sockaddr_in *>(sa);
-        return ipv4_private(ntohl(s4->sin_addr.s_addr));
-    }
     if (sa->sa_family == AF_INET6) {
         const struct sockaddr_in6 *s6 = reinterpret_cast<const struct sockaddr_in6 *>(sa);
         unsigned char b[16];
         std::memcpy(b, &s6->sin6_addr, 16);
         return ipv6_private(b);
     }
-    return true;
+    /* libcurl opens IPv4 and IPv6 sockets only, so the refusal of any other family is folded into
+     * the IPv4 test: the address is read as IPv4 only when it is one */
+    return sa->sa_family != AF_INET ||
+           ipv4_private(ntohl(reinterpret_cast<const struct sockaddr_in *>(sa)->sin_addr.s_addr));
 }
 
 /* `local_ok` is set for a hop the policy admitted to the loopback host or a
@@ -429,6 +428,8 @@ std::string url_check(const std::string &url_in, bool allow_http, bool resolve,
                 return "could not resolve " + u.host;
             }
             std::string bad;
+            /* an address of another family (getaddrinfo() gives none for these hints) leaves `buf`
+             * empty and is not pinned */
             for (struct addrinfo *ai = res; ai; ai = ai->ai_next) {
                 char buf[INET6_ADDRSTRLEN];
                 buf[0] = '\0';
@@ -443,8 +444,6 @@ std::string url_check(const std::string &url_in, bool allow_http, bool resolve,
                     std::memcpy(b, &sa->sin6_addr, 16);
                     inet_ntop(AF_INET6, &sa->sin6_addr, buf, sizeof buf);
                     if (ipv6_private(b)) { bad = buf; break; }
-                } else {
-                    continue;
                 }
                 if (addrs && buf[0]) addrs->push_back(buf);
             }
@@ -466,7 +465,7 @@ std::string url_check(const std::string &url_in, bool allow_http, bool resolve,
 bool header_travels(const std::string &hdr) {
     std::string name = hdr.substr(0, hdr.find(':'));
     for (char &c : name) c = static_cast<char>(rmbl_ascii_lower(c));
-    while (!name.empty() && name.back() == ' ') name.pop_back();
+    name.erase(name.find_last_not_of(' ') + 1);   /* the blanks before the colon (all of them: npos + 1 is 0) */
     static const char *const kTravels[] = {
         "accept", "accept-encoding", "accept-language", "user-agent", "content-type",
         "content-length", "range", "if-none-match", "if-modified-since", "expect",
@@ -539,7 +538,8 @@ CURLcode secure_perform(CURL *h, const std::string &start_url,
     const bool allow_http = allow_http_option();
     std::string url = canonical_url(start_url);
     bool drop_auth = false;
-    for (int hop = 0; hop <= 5; ++hop) {
+    /* every pass returns: the last hop (5) stops at "too many redirects" below */
+    for (int hop = 0;; ++hop) {
         UrlParts u;
         std::vector<std::string> addrs;
         std::string why;
@@ -611,7 +611,6 @@ CURLcode secure_perform(CURL *h, const std::string &start_url,
         reset();
         url = canonical_url(next);
     }
-    return CURLE_TOO_MANY_REDIRECTS;
 }
 
 /* Download progress: the R closure (bytes so far, total or 0) at most ten
@@ -1252,6 +1251,8 @@ std::string wayback_snapshot(const std::string &url, long timeout_s, bool *inter
                              const std::string &base = "") {
     bool stop = false;
     if (interrupted) *interrupted = false;
+    /* the Wayback Machine archives web pages only: nothing to ask about for any other scheme */
+    if (url.rfind("http://", 0) != 0 && url.rfind("https://", 0) != 0) return "";
     if (timeout_s < 1) timeout_s = 30;   /* 0 would be no limit at all (M1) */
     const bool local = !base.empty();
     std::string api = (local ? base : std::string("https://archive.org")) + "/wayback/available?url=" + url_encode(url);
@@ -1411,7 +1412,10 @@ static int wayback_raise(const char *url, char *out, int cap, int timeout_s, con
     return n;
 }
 
+/* The C API: another package's call. A NULL pointer or no room is 0 snapshots, not a crash in
+ * the caller; an address that is not http(s) has none, answered without asking archive.org. */
 int rmbl_wayback_snapshot(const char *url, char *out, int cap, int timeout_s) {
+    if (!url || !out || cap <= 0) return 0;
     return wayback_raise(url, out, cap, timeout_s, "");
 }
 
@@ -1447,10 +1451,11 @@ SEXP C_rmbl_wait_label_impl(SEXP label, SEXP unicode, SEXP color) {
         rmbl::fail("`label` must be a single string");
     }
     int colors = 1, status = -1;
+    double ran = 0;   /* seconds the clock starts at: a fifth element, the tests' way to minutes */
     bool dynamic = true, to_stdout = false;
     if (TYPEOF(color) == LGLSXP) {
         colors = Rf_asLogical(color) == TRUE ? 256 : 1;
-    } else if (TYPEOF(color) == REALSXP && (XLENGTH(color) == 3 || XLENGTH(color) == 4)) {
+    } else if (TYPEOF(color) == REALSXP && XLENGTH(color) >= 3 && XLENGTH(color) <= 5) {
         const double *m = REAL(color);
         for (R_xlen_t i = 0; i < XLENGTH(color); ++i) {
             if (!R_FINITE(m[i]) || m[i] < 0) rmbl::fail("`color` must be TRUE, FALSE or c(colours, redraws, to stdout)");
@@ -1458,7 +1463,8 @@ SEXP C_rmbl_wait_label_impl(SEXP label, SEXP unicode, SEXP color) {
         colors = m[0] >= 16777216 ? 16777216 : static_cast<int>(m[0]);
         dynamic = m[1] != 0;
         to_stdout = m[2] != 0;
-        if (XLENGTH(color) == 4) status = m[3] != 0;
+        if (XLENGTH(color) >= 4) status = m[3] != 0;
+        if (XLENGTH(color) == 5) ran = m[4] > 1e6 ? 1e6 : m[4];
     } else {
         rmbl::fail("`color` must be TRUE, FALSE or c(colours, redraws, to stdout)");
     }
@@ -1468,7 +1474,9 @@ SEXP C_rmbl_wait_label_impl(SEXP label, SEXP unicode, SEXP color) {
     if (g_wait_thread == std::thread::id()) g_wait_thread = std::this_thread::get_id();
     g_busy_width = 0;
     g_busy_said = -1;
-    g_busy_t0 = g_busy_last = std::chrono::steady_clock::now();
+    g_busy_last = std::chrono::steady_clock::now();
+    g_busy_t0 = g_busy_last - std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                                  std::chrono::duration<double>(ran));
     g_wait_label = std::string(Rf_translateCharUTF8(STRING_ELT(label, 0))).substr(0, 200);
     g_wait_unicode = Rf_asLogical(unicode) == TRUE;
     g_wait_colors = colors;
