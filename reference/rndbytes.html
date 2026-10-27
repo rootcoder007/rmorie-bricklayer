@@ -104,7 +104,7 @@ no readable operating-system source.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 77 7a 2e 09 88 31 48 52</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0d ec e6 9c 7b c4 33 7c</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Independent between calls, unlike a seeded generator.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">16</span><span class="op">)</span>, <span class="fu">rndbytes</span><span class="op">(</span><span class="fl">16</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -120,7 +120,7 @@ no readable operating-system source.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># As hex, for a seed argument.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "ef3ab59c"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "d035112e"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `n` must be a single integer between 1 and 1048576</span>
