@@ -124,7 +124,7 @@ test_that("survival, MASS and survey models get boxes", {
                           data = survival::lung)
   expect_match(fbox(sr), "Parametric survival model", fixed = TRUE)
   skip_if_not_installed("MASS")
-  nb <- MASS::glm.nb(carb ~ wt, data = mtcars)
+  nb <- MASS::glm.nb(Days ~ Sex + Age, data = MASS::quine)
   expect_match(fbox(nb), "Negative binomial model", fixed = TRUE)
   po <- MASS::polr(factor(gear) ~ wt, data = mtcars, Hess = TRUE)
   b <- fbox(po)

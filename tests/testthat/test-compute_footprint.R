@@ -412,9 +412,12 @@ test_that(
       memgb = 16,
       pue = 1.67
     )
-    expect_identical(
+    # the code sums CPU and memory before the PUE: the same formula in another
+    # order differs in the last bits, so compare to 12 significant digits
+    expect_equal(
       fp2$enekwh$total,
-      (fp2$durs / 3600) * (65 * 0.5 + 16 * 0.3725) / 1000 * 1.67
+      (fp2$durs / 3600) * (65 * 0.5 + 16 * 0.3725) / 1000 * 1.67,
+      tolerance = 1e-12
     )
     expect_match(paste(fp2$assumptions, collapse = ";"), "PUE 1.67")
     # the unknown-CPU fallback is codecarbon's 85 W x 50%, not scaled by usage,
