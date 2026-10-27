@@ -3734,7 +3734,8 @@ plotbump <- function(
 #' @noRd
 .bl_row_notes <- function(est, note) {
   n <- length(est)
-  say <- !is.finite(est) & !is.na(note) & nzchar(note)
+  say <- !is.finite(est) & !is.na(note) & nzchar(note) &
+    !startsWith(note, "first period")
   if (any(say)) {
     # from the left edge and sized to the plot: centred on the reference line,
     # a long note ran off the panel ("othing to compare")
@@ -3896,7 +3897,7 @@ plotbump <- function(
   .bl_time_marks(x, est, lower, upper, rep_len(cols, length(est)), pch)
   .bl_period_ticks(ax)
   if (!is.null(note)) {
-    .bl_time_notes(x, est, note)
+    .bl_time_notes(x, est, note, ax$at)
   }
   if (ng > 1L) {
     graphics::legend(
@@ -3962,10 +3963,20 @@ plotbump <- function(
 #' @param x The points' positions on the time axis.
 #' @param est The estimates; a non-finite one shows its note at its time.
 #' @param note One note per point.
+#' @param at Each point's period on the axis (its centre, the same for every
+#'   group): a reason the groups share is written once, at the period.
 #' @return NULL, invisibly.
 #' @noRd
-.bl_time_notes <- function(x, est, note) {
-  say <- !is.finite(est) & !is.na(note) & nzchar(note)
+.bl_time_notes <- function(x, est, note, at = x) {
+  # the first period is empty in every series, which needs no label (the
+  # printed table says it once); any other reason is written once per period,
+  # not once per group stacked on itself
+  say <- !is.finite(est) & !is.na(note) & nzchar(note) &
+    !startsWith(note, "first period")
+  shared <- duplicated(paste(at, note)) | duplicated(paste(at, note),
+    fromLast = TRUE)
+  x <- ifelse(shared, at, x)
+  say <- say & !duplicated(paste(at, note))
   if (any(say)) {
     usr <- graphics::par("usr")
     room <- graphics::par("pin")[2L] * 0.9

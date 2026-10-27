@@ -144,7 +144,7 @@ yoyhtml <- function(
     # yoy() has already warned about periods with no order
     suppressWarnings(yoysmry(x)),
     m,
-    notes
+    c(.yoy_first_note(d, m), notes)
   )
   writeLines(html, file, useBytes = TRUE)
   invisible(file)
@@ -963,7 +963,8 @@ yoypdf <- function(
 #' @return One string, empty for no flag.
 #' @noRd
 .yoy_html_note <- function(flag, ncells) {
-  if (is.na(flag)) {
+  # the first periods are said once, in the notes under the table
+  if (is.na(flag) || flag == "no comparison period") {
     ""
   } else {
     sprintf(

@@ -1039,3 +1039,50 @@ test_that("the period readers handle numbers, factors and month labels", {
   expect_identical(.yoy_prd_sort(c(3, 1, 2)), c(1, 2, 3))
   expect_identical(.yoy_lab_month("JAN 2020", 12 * 2021 + 1), "FEB 2021")
 })
+
+test_that("the first period is said once, not once per group or on the plot", {
+  d <- data.frame(
+    year = rep(2021:2024, 5),
+    g = rep(letters[1:5], each = 4),
+    n = c(10, 12, 15, 11, 20, 0, 25, 30, 5, 0, 7, 9, 8, 9, 10, 12, 3, 4, 5, 6)
+  )
+  y <- yoy(d, value = "n", prd = "year", by = "g")
+  out <- format(y)
+  expect_false(any(grepl("note: no comparison period", out, fixed = TRUE)))
+  fn <- grep("first period of each group", out, fixed = TRUE)
+  expect_length(fn, 1L)
+  expect_match(out[fn], "has nothing to compare with")
+  # the zero bases keep their own note, one per row
+  expect_length(grep("previous period is zero", out, fixed = TRUE), 2L)
+  y1 <- yoy(c(10, 12, 15))
+  expect_true(any(grepl("Note: the first period has nothing", format(y1),
+                        fixed = TRUE)))
+  y2 <- yoy(c(10, 12, 15, 11), lag = 2)
+  expect_true(any(grepl("the first 2 periods have nothing", format(y2),
+                        fixed = TRUE)))
+  # the plot draws no first-period label and each other reason once
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  rec <- new.env()
+  rec$calls <- character()
+  local_mocked_bindings(
+    text = function(x, y, labels, ...) rec$calls <- c(rec$calls, labels),
+    .package = "graphics"
+  )
+  plot(y)
+  expect_false(any(grepl("first period", rec$calls, fixed = TRUE)))
+  expect_identical(
+    sum(grepl("previous period is zero", rec$calls, fixed = TRUE)), 1L
+  )
+  # the HTML table says it once too, under the table
+  f <- withr::local_tempfile(fileext = ".html")
+  yoyhtml(y, f)
+  h <- paste(readLines(f, encoding = "UTF-8"), collapse = "\n")
+  expect_false(grepl("note: no comparison period", h, fixed = TRUE))
+  expect_identical(
+    lengths(regmatches(h, gregexpr("first period of each group", h,
+                                   fixed = TRUE))),
+    1L
+  )
+})
+

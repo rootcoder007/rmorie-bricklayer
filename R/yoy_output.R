@@ -132,12 +132,14 @@ format.rmbl_yoy <- function(
   hdr[hdr == "period"] <- m$period
   hdr[hdr == "value"] <- m$value
   rows <- .yoy_print_rows(shown, cols, hdr, isTRUE(color), pal, palette)
+  fn <- .yoy_first_note(shown, m)
   c(
     .rmbl_rule(sprintf("Change in %s by %s", m$value, m$period)),
     .rmbl_kv(.yoy_facts(d, m, pp)),
     "",
     paste0("  ", rows),
     if (nrow(d) > n) sprintf("  ... %d more rows", nrow(d) - n),
+    if (length(fn)) c("", paste0("  ", fn)),
     "",
     paste0("  ", .yoy_footer_bits(m)),
     .rmbl_rule()
@@ -579,11 +581,32 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
       }
     }
     out <- c(out, line)
-    if (!is.na(d$flag[r])) {
+    # the first period has nothing to compare with in every table: said once
+    # under the table (.yoy_first_note()), not under each group's first row
+    if (!is.na(d$flag[r]) && d$flag[r] != "no comparison period") {
       out <- c(out, paste0(.yg("  \u21b3 note: "), d$flag[r]))
     }
   }
   out
+}
+
+#' The one line that says the first periods have nothing to compare with.
+#' @param d The rows shown.
+#' @param m The table's period record.
+#' @return One string, or NULL when no row is a first period.
+#' @noRd
+.yoy_first_note <- function(d, m) {
+  if (!any(!is.na(d$flag) & d$flag == "no comparison period")) {
+    return(NULL)
+  }
+  lag <- m$lag %||% 1L
+  sprintf(
+    "Note: the first %s%s %s nothing to compare with, so %s no change.",
+    if (lag == 1L) "period" else sprintf("%d periods", lag),
+    if (length(m$by)) " of each group" else "",
+    if (lag == 1L) "has" else "have",
+    if (lag == 1L) "it shows" else "they show"
+  )
 }
 
 #' The facts shown above a year-over-year table.

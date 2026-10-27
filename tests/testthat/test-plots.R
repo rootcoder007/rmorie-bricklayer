@@ -551,9 +551,9 @@ test_that(
       "x",
       c("red", "blue"),
       ref = 0,
-      note = c("first period: nothing to compare with", NA)
+      note = c("no percentage: previous period is zero", NA)
     )
-    expect_identical(said[[1]], "first period")
+    expect_identical(said[[1]], "no percentage")
     expect_gte(said[[2]], 0.6)
   }
 )

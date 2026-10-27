@@ -1283,7 +1283,8 @@ test_that("a period-over-period plot says why a row has no percentage", {
     .package = "graphics"
   )
   plot(y)
-  expect_true(any(grepl("first period", rec$calls, fixed = TRUE)))
+  # the first period needs no label: the printed table says it once
+  expect_false(any(grepl("first period", rec$calls, fixed = TRUE)))
   expect_true(any(grepl(
     "no percentage: previous period is zero",
     rec$calls,
@@ -1311,7 +1312,7 @@ test_that(
       .package = "graphics"
     )
     plot(y)
-    expect_true(any(rec$calls == "first period"))
+    expect_false(any(rec$calls == "first period"))
     expect_true(any(rec$calls == "no percentage"))
     expect_false(any(grepl(
       "nothing to compare with|previous period is zero",
