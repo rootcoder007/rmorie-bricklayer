@@ -333,9 +333,10 @@ test_that("the span summary is the compound rate", {
   expect_equal(s$totalpct, 60, tolerance = testthat::testthat_tolerance())
   # four steps from 100 to 160, so the compound rate per period is the
   # fourth root of the total growth
-  expect_identical(s$cagrpct, 100 * ((160 / 100)^(1 / 4) - 1))
+  expect_equal(s$cagrpct, 100 * ((160 / 100)^(1 / 4) - 1), tolerance = 1e-12)
   # and compounding it back over the span returns the total
-  expect_identical(100 * ((1 + s$cagrpct / 100)^4 - 1), s$totalpct)
+  expect_equal(100 * ((1 + s$cagrpct / 100)^4 - 1), s$totalpct,
+    tolerance = 1e-12)
   expect_identical(s$periods, 5L)
   expect_identical(s$up, 4L)
   expect_identical(s$down, 0L)

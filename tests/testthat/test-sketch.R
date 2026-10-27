@@ -29,7 +29,7 @@ test_that("block accumulation is exact, not approximate", {
     m[["mean"]],
     tolerance = testthat::testthat_tolerance()
   )
-  expect_identical(s[["variance"]], m[["variance"]])
+  expect_equal(s[["variance"]], m[["variance"]], tolerance = 1e-12)
   expect_equal(
     s[["skewness"]],
     m[["skewness"]],

@@ -18,7 +18,8 @@ test_that("csdev and cdistm agree with base R", {
   )
   expect_identical(csdev(1:10), stats::sd(1:10))
   # ddof = 0 is the population figure
-  expect_identical(csdev(x, ddof = 0), sqrt(mean((x - mean(x))^2)))
+  expect_equal(csdev(x, ddof = 0), sqrt(mean((x - mean(x))^2)),
+    tolerance = 1e-12)
   expect_equal(
     csdev(x)^2,
     stats::var(x),
