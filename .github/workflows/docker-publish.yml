@@ -5,8 +5,9 @@
 # Pushes only on a v*.*.* tag, a manual dispatch or the weekly rebuild; plain pushes build-only.
 # The weekly rebuild takes the latest release again with a fresh base image and no cache, so the
 # Ubuntu and R packages in `latest` and `<version>` pick up their security fixes without a
-# release. Every build is scanned with Trivy and fails on a vulnerability that has a fix
-# (HIGH or CRITICAL), before anything is pushed.
+# release. Every build is scanned with Trivy and fails on a vulnerability of
+# any severity that has a fix, before anything is pushed; the pushed image is
+# scanned again by its digest.
 name: docker-publish
 
 on:
@@ -112,18 +113,27 @@ jobs:
           TRIVY_VERSION: "0.75.0"
         run: |
           set -euo pipefail
-          base="https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}"
-          tgz="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          # the scanner lives outside the build context, so the Push step's
+          # `COPY . /bricklayer` cannot put it in the image
+          mkdir -p "$RUNNER_TEMP/trivy"
+          cd "$RUNNER_TEMP/trivy"
+          v="$TRIVY_VERSION"
+          base="https://github.com/aquasecurity/trivy/releases/download/v$v"
+          tgz="trivy_${v}_Linux-64bit.tar.gz"
           curl -fsSLO "$base/$tgz"
-          curl -fsSLO "$base/trivy_${TRIVY_VERSION}_checksums.txt"
-          grep " $tgz\$" "trivy_${TRIVY_VERSION}_checksums.txt" | sha256sum -c -
+          curl -fsSLO "$base/trivy_${v}_checksums.txt"
+          grep " $tgz\$" "trivy_${v}_checksums.txt" | sha256sum -c -
           tar -xzf "$tgz" trivy
+          echo "$RUNNER_TEMP/trivy" >> "$GITHUB_PATH"
           # every finding, for the log
-          ./trivy image --quiet --scanners vuln --format table --severity HIGH,CRITICAL rmorie-bricklayer:scan || true
-          # the gate: a HIGH or CRITICAL vulnerability that a package update would fix
-          ./trivy image --quiet --scanners vuln --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1 rmorie-bricklayer:scan
+          ./trivy image --quiet --scanners vuln --format table \
+            rmorie-bricklayer:scan || true
+          # the gate: a vulnerability of any severity that an update would fix
+          ./trivy image --quiet --scanners vuln --ignore-unfixed \
+            --exit-code 1 rmorie-bricklayer:scan
 
       - name: Push
+        id: push
         if: steps.decide.outputs.push == 'true'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v6
         with:
@@ -131,3 +141,14 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Scan the image as pushed
+        if: steps.decide.outputs.push == 'true'
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/rmorie-bricklayer
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          set -euo pipefail
+          # what users pull: it must hold no fixable vulnerability either
+          trivy image --quiet --scanners vuln --ignore-unfixed \
+            --exit-code 1 "${IMAGE,,}@$DIGEST"

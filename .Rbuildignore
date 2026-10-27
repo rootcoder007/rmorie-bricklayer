@@ -43,3 +43,4 @@
 ^.*Rplots\.pdf$
 ^tests/testthat/testthat-problems\.rds$
 ^air\.toml$
+^\.dockerignore$

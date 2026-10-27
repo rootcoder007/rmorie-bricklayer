@@ -1,0 +1,10 @@
+# Kept out of the image build context: version control, CI, scanner
+# downloads and build output (the Dockerfile copies the checkout with
+# `COPY . /bricklayer`)
+.git
+.github
+.Rproj.user
+trivy
+trivy_*
+*.tar.gz
+*.Rcheck
