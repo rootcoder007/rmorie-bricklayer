@@ -496,7 +496,8 @@ SEXP C_rmbl_morans_i_impl(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
     long double ss = 0.0L;
     for (R_xlen_t i = 0; i < n; ++i) {
         z[static_cast<size_t>(i)] = x[i] - mean;
-        ss += z[static_cast<size_t>(i)] * z[static_cast<size_t>(i)];
+        ss += static_cast<long double>(z[static_cast<size_t>(i)]) *
+              z[static_cast<size_t>(i)];
     }
     long double wsum = 0.0L;
     for (R_xlen_t i = 0; i < n; ++i) {
@@ -524,7 +525,7 @@ SEXP C_rmbl_morans_i_impl(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
         for (R_xlen_t i = 0; i < n; ++i) {
             const double zi = v[static_cast<size_t>(i)];
             for (int k = 0; k < len[i]; ++k) {
-                acc += wts[start[i] + k] *
+                acc += static_cast<long double>(wts[start[i] + k]) *
                        zi * v[static_cast<size_t>(idx[start[i] + k])];
             }
         }

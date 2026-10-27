@@ -701,8 +701,8 @@ constexpr uint32_t M = 8;
 
 inline void subset_sums(uint16_t *ss, const uint16_t *set, uint16_t n) {
     ss[0] = 0;
-    for (uint16_t i = 0; i < n; ++i)
-        for (uint16_t j = 0; j < (1 << i); ++j) ss[(1 << i) + j] = set[i] ^ ss[j];
+    for (uint32_t i = 0; i < n; ++i)
+        for (uint32_t j = 0; j < (1u << i); ++j) ss[(1u << i) + j] = set[i] ^ ss[j];
 }
 
 template <uint32_t FFTP>

@@ -8,6 +8,8 @@
 [![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 [![r-universe](https://rootcoder007.r-universe.dev/badges/rmoriebricklayer)](https://rootcoder007.r-universe.dev/rmoriebricklayer)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://spdx.org/licenses/AGPL-3.0-or-later.html)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16000/badge)](https://www.bestpractices.dev/projects/16000)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/rootcoder007/rmorie-bricklayer/badge)](https://scorecard.dev/viewer/?uri=github.com/rootcoder007/rmorie-bricklayer)
 <!-- badges: end -->
 
 > Analyze a published table, and be able to show later exactly which data the result came from.

@@ -30,7 +30,8 @@ jobs:
   check:
     runs-on: ${{ matrix.config.os }}
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})${{ matrix.config.locale && ' C-locale' || '' }}
-    timeout-minutes: 60
+    # R-devel builds every dependency from source, about 50 minutes
+    timeout-minutes: 100
     strategy:
       fail-fast: false
       matrix:

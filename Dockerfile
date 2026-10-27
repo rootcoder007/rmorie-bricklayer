@@ -14,7 +14,12 @@
 # kept. To install further R packages that need compiling, add the
 # toolchain back first:
 #   apk add build-base gfortran R-dev
-FROM cgr.dev/chainguard/wolfi-base
+# Pinned by digest; Dependabot moves the pin weekly, and apk upgrade below
+# takes the newest packages on every build.
+FROM cgr.dev/chainguard/wolfi-base@sha256:0b179206ab162b12a43bacea1b525a4023e0272005c92d08555c61b1beaedc40
+
+# Wolfi sets no locale, so R would run in C; C.UTF-8 is built into glibc
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 # R, the tools the kit uses, and what the R packages need to build
 RUN apk update && apk upgrade --no-cache && apk add --no-cache \

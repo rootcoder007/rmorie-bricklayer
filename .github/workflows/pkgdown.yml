@@ -5,13 +5,16 @@ on:
     paths-ignore: ['docs/**', 'dist/**', 'examples/**', 'dev/**']
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: pkgdown-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   pkgdown:
     runs-on: ubuntu-24.04
+    # deploys the site to the gh-pages branch
+    permissions:
+      contents: write
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       # pak queries 5 Bioconductor repos by default; this package needs

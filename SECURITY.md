@@ -5,7 +5,8 @@
 Report privately, never in a public issue:
 
 1. **GitHub private reporting (preferred):** the "Report a vulnerability"
-   button on this repository's Security tab.
+   button on this repository's Security tab, or directly at
+   <https://github.com/rootcoder007/rmorie-bricklayer/security/advisories/new>.
 2. **Email** the maintainer address in `DESCRIPTION`.
 
 A useful report says which version and platform, what an attacker gains

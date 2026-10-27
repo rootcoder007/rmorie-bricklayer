@@ -122,3 +122,44 @@ test_that("bundles and bundle checks print as boxes", {
   ck <- cpsbndlvrf(bnd, d)
   o1_expect_box(o1_box(ck), ck, "Bundle check: OK", "VERIFIED")
 })
+
+test_that(
+  paste0(
+    "a bundle whose note is not ASCII verifies in a C locale too ",
+    "(JSON is read as UTF-8 whatever the locale)"
+  ),
+  {
+    # the parser itself: UTF-8 bytes of unknown encoding come back marked
+    v <- .rmbl_json_text(rawToChar(as.raw(c(0x22, 0xc3, 0xa9, 0x22))))
+    expect_identical(Encoding(v), "UTF-8")
+    expect_identical(charToRaw(v), as.raw(c(0xc3, 0xa9)))
+    skip_on_cran()
+    dir <- withr::local_tempdir()
+    writeLines(c("x,y", "1,a", "2,b"), file.path(dir, "d.csv"))
+    m <- mkmnf(list(dataset = "demo"), env = FALSE)
+    note <- "Métis \U1F600 line sep"
+    b <- cpsbndl(dir, m, fx_secret, note = note)
+    mf <- file.path(withr::local_tempdir(), "m.rds")
+    saveRDS(m, mf)
+    code <- paste0(
+      "r <- rmoriebricklayer::cpsbndlvrf(", deparse(attr(b, "path")),
+      ", ", deparse(dir), ", man = readRDS(", deparse(mf), "), key = ",
+      deparse(fx_secret), "); cat(l10n_info()[['UTF-8']], isTRUE(r$ok))"
+    )
+    out <- withr::with_envvar(
+      c(
+        LC_ALL = "C",
+        LANG = "C",
+        R_TESTS = NA,
+        R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep)
+      ),
+      system2(
+        file.path(R.home("bin"), "Rscript"),
+        c("--vanilla", "-e", shQuote(code)),
+        stdout = TRUE,
+        stderr = FALSE
+      )
+    )
+    expect_identical(utils::tail(out, 1L), "FALSE TRUE")
+  }
+)

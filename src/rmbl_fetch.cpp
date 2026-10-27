@@ -43,6 +43,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 #include <unistd.h>
 #endif
 
@@ -1130,8 +1131,19 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
             std::chrono::steady_clock::now().time_since_epoch().count() % 1000000007ULL)) +
         "-" + std::to_string(++part_seq);
     FileSink fs;
-    /* "x": the scratch name is created here or not at all, never an existing file reopened */
+    /* "x" / O_EXCL: the scratch name is created here or not at all, never an
+     * existing file reopened; on POSIX with an explicit 0644, so a permissive
+     * umask cannot leave the download writable by others */
+#ifdef _WIN32
     fs.fp = std::fopen(part.c_str(), "wbx");
+#else
+    {
+        const int fd = ::open(part.c_str(),
+                              O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0644);
+        fs.fp = fd < 0 ? nullptr : ::fdopen(fd, "wb");
+        if (fd >= 0 && !fs.fp) { ::close(fd); std::remove(part.c_str()); }
+    }
+#endif
     fs.path = part;
     fs.written = 0;
     fs.cap = max_bytes;

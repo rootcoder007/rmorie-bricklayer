@@ -116,3 +116,48 @@ test_that("cpsxvrf refuses a signature that is not one", {
   der <- .rmbl_xvrf_spki(17L, as.raw(rep(1, 1312)))
   expect_identical(der[1:4], as.raw(c(0x30, 0x82, 0x05, 0x32)))
 })
+
+test_that("both verdicts of an OpenSSL 3.5 are read and explained", {
+  skip_on_os("windows")
+  # a stand-in for openssl 3.5: reports its version, logs its arguments
+  # and answers as RMBL_FAKE_VERDICT says, so every reading is covered on
+  # machines without a real 3.5
+  d <- withr::local_tempdir()
+  fake <- file.path(d, "openssl-35")
+  log <- file.path(d, "args.log")
+  writeLines(c(
+    "#!/bin/sh",
+    "if [ \"$1\" = version ]; then echo 'OpenSSL 3.5.4'; exit 0; fi",
+    "echo \"$@\" >> \"$RMBL_FAKE_LOG\"",
+    "if [ \"$RMBL_FAKE_VERDICT\" = pass ]; then",
+    "  echo 'Signature Verified Successfully'; exit 0",
+    "fi",
+    "echo 'Signature Verification failure'; exit 1"
+  ), fake)
+  Sys.chmod(fake, "0755")
+  withr::local_envvar(RMBL_FAKE_LOG = log, RMBL_FAKE_VERDICT = "pass")
+  k <- fipskg("ML-DSA-44")
+  sg <- cpssign("m", k)
+  both <- cpsxvrf("m", sg, k, openssl = fake)
+  expect_true(both$ok)
+  expect_identical(both$version, "OpenSSL 3.5.4")
+  expect_box2(both, "VERIFIED by both implementations",
+              c("accepts (OpenSSL 3.5.4)", "share no code"))
+  # OpenSSL rejects what this package accepts: reported as a disagreement
+  withr::local_envvar(RMBL_FAKE_VERDICT = "fail")
+  split <- cpsxvrf("m", sg, k, openssl = fake)
+  expect_identical(c(split$ours, split$openssl, split$agree),
+                   c(TRUE, FALSE, FALSE))
+  expect_box2(split, "implementations disagree",
+              c("rejects (OpenSSL 3.5.4)", "one of them has a bug"))
+  # a context is passed to OpenSSL as hex
+  sc <- cpssign("m", k, ctx = "release")
+  cpsxvrf("m", sc, k, ctx = "release", openssl = fake)
+  expect_match(utils::tail(readLines(log), 1L),
+               "hexcontext-string:72656c65617365", fixed = TRUE)
+  # a key of another scheme is refused before OpenSSL is run
+  n <- length(readLines(log))
+  other <- cpsxvrf("m", sg, fipskg("ML-DSA-65"), openssl = fake)
+  expect_false(other$openssl)
+  expect_identical(length(readLines(log)), n)
+})

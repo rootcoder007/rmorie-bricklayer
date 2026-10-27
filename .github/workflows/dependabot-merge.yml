@@ -1,0 +1,77 @@
+# Merges Dependabot's pull requests by itself once every check on them has
+# passed, so the monthly action and base-image bumps need no one to click.
+# Runs after R-CMD-check finishes on a pull request, in the context of main
+# (no pull-request code is checked out or run here). It merges only when
+# the pull request was opened by Dependabot, its head is still the commit
+# that was checked, and no check on that commit failed or is still going.
+name: dependabot-merge
+
+on:
+  workflow_run:
+    workflows: [R-CMD-check]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  merge:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      SHA: ${{ github.event.workflow_run.head_sha }}
+      BRANCH: ${{ github.event.workflow_run.head_branch }}
+    steps:
+      - name: Find the pull request
+        id: pr
+        run: |
+          set -euo pipefail
+          pr=$(gh pr list -R "$REPO" --head "$BRANCH" --state open \
+            --json number,author,headRefOid \
+            --jq '.[] | select(.author.login == "app/dependabot"
+                             or .author.login == "dependabot[bot]")
+                      | select(.headRefOid == env.SHA) | .number')
+          if [ -z "$pr" ]; then
+            echo "No open Dependabot pull request at $SHA; nothing to do."
+          fi
+          echo "number=$pr" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for every check on the commit
+        if: steps.pr.outputs.number != ''
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 80); do
+            runs=$(gh api --paginate \
+              "repos/$REPO/commits/$SHA/check-runs?per_page=100" \
+              --jq '.check_runs[] | "\(.status) \(.conclusion)"')
+            pending=$(printf '%s\n' "$runs" | grep -vc '^completed' || true)
+            bad=$(printf '%s\n' "$runs" |
+              grep '^completed' |
+              grep -vcE ' (success|skipped|neutral)$' || true)
+            echo "check runs: $(printf '%s\n' "$runs" | grep -c .)," \
+              "pending $pending, failed $bad"
+            if [ "$bad" -gt 0 ]; then
+              echo "A check failed; leaving the pull request for review."
+              exit 1
+            fi
+            if [ "$pending" -eq 0 ]; then exit 0; fi
+            sleep 60
+          done
+          echo "Checks still running after 80 minutes; not merging."
+          exit 1
+
+      - name: Merge
+        if: steps.pr.outputs.number != ''
+        run: |
+          gh pr merge "${{ steps.pr.outputs.number }}" -R "$REPO" \
+            --rebase --delete-branch --match-head-commit "$SHA"

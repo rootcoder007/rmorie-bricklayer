@@ -796,6 +796,27 @@ jsunser <- function(txt, trusted = FALSE) {
 
 # ================================================================ strings
 
+#' Converts strings to UTF-8 without depending on the session locale.
+#'
+#' A string of unknown encoding whose bytes are valid UTF-8 is marked as
+#' UTF-8; everything else goes through enc2utf8(). enc2utf8() alone treats
+#' unknown text as the native encoding, and in a C locale that rewrote every
+#' non-ASCII letter as "<e9>"-style escapes, so a bundle note read or written
+#' in C did not match the digest it was signed under.
+#' @param x A character vector.
+#' @return \code{x} in UTF-8.
+#' @noRd
+.rmbl_as_utf8 <- function(x) {
+  unk <- Encoding(x) == "unknown" & !is.na(x) & validUTF8(x)
+  if (any(unk)) {
+    Encoding(x)[unk] <- "UTF-8"
+  }
+  if (any(!unk)) {
+    x[!unk] <- enc2utf8(x[!unk])
+  }
+  x
+}
+
 #' Escape a character vector as JSON string literals (jsonlite's
 #' C_escape_chars)
 #' @param x The strings to escape for JSON.
@@ -805,7 +826,7 @@ jsunser <- function(txt, trusted = FALSE) {
   if (!length(x)) {
     return(character(0))
   }
-  x <- enc2utf8(x)
+  x <- .rmbl_as_utf8(x)
   x <- gsub("\\", "\\\\", x, fixed = TRUE)
   x <- gsub("\"", "\\\"", x, fixed = TRUE)
   x <- gsub("\n", "\\n", x, fixed = TRUE)
@@ -2223,7 +2244,7 @@ bricklayer_json_unbox <- function(x) {
   if (Encoding(s) != "latin1" && !validUTF8(s)) {
     stop("the JSON text is not valid UTF-8", call. = FALSE)
   }
-  s <- enc2utf8(s)
+  s <- .rmbl_as_utf8(s)
   if (startsWith(s, "\x1e")) {
     s <- substring(s, 2L)
   }

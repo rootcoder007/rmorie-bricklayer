@@ -36,6 +36,8 @@ jobs:
       NOT_CRAN: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
         with:
           r-version: release
@@ -48,6 +50,36 @@ jobs:
       - name: Roxygenise (generate NAMESPACE + man)
         run: roxygen2::roxygenise()
         shell: Rscript {0}
+      # Ubuntu 24.04 ships OpenSSL 3.0, and cpsxvrf() needs the openssl
+      # program at 3.5 or later (the first with ML-DSA and SLH-DSA): without
+      # it the cross-check's tests skip and its lines read as uncovered.
+      # Built once from the release tarball (checksum pinned) and cached.
+      - name: Cache OpenSSL 3.5
+        id: ossl
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/openssl-3.5
+          key: openssl-3.5.9-${{ runner.os }}-${{ runner.arch }}
+      - name: Build OpenSSL 3.5
+        if: steps.ossl.outputs.cache-hit != 'true'
+        env:
+          V: "3.5.9"
+          SHA: >-
+            603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          u=https://github.com/openssl/openssl/releases/download
+          curl -fsSLo o.tgz "$u/openssl-$V/openssl-$V.tar.gz"
+          echo "$SHA  o.tgz" | sha256sum -c -
+          tar xzf o.tgz && cd "openssl-$V"
+          ./Configure --prefix="$HOME/openssl-3.5" --libdir=lib \
+            no-shared no-docs no-tests > /dev/null
+          make -j"$(nproc)" > /dev/null && make install_sw > /dev/null
+      - name: Put OpenSSL 3.5 first on the PATH
+        run: |
+          echo "$HOME/openssl-3.5/bin" >> "$GITHUB_PATH"
+          "$HOME/openssl-3.5/bin/openssl" version
       - name: Compute coverage
         # the tests as the check jobs run them (r-lib's check action sets NOT_CRAN): the local-server
         # transport and interrupt tests are skipped on CRAN, and were missing from coverage
