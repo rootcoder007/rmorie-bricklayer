@@ -87,4 +87,19 @@ jobs:
       # error_on = "warning": an undeclared import is a WARNING, and it
       # passed this matrix for a release
       - name: R CMD check
-        run: Rscript -e 'rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = "warning")'
+        run: >-
+          Rscript -e 'rcmdcheck::rcmdcheck(".",
+          args = c("--no-manual", "--as-cran"),
+          error_on = "warning", check_dir = "check")'
+
+      # a failed leg keeps its full test output: the check log shows only
+      # the last 13 lines of it
+      - name: Keep the test output
+        if: failure()
+        # actions/upload-artifact v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: >-
+            tests-${{ matrix.config.os }}-${{ matrix.config.r
+            }}${{ matrix.config.locale && '-C' || '' }}
+          path: check/*.Rcheck/tests/
