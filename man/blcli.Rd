@@ -46,6 +46,12 @@ question with no verb (\code{rmbl "how do I weight a survey?"}) is asked too}
 \item{\code{explain-error MESSAGE...}}{where an error of these packages comes
 from (\code{\link{explerr}}), without a model or the network}
 \item{\code{bundle REQUEST...}}{\code{\link{agentbndl}} from the shell}
+\item{\code{pack DIR [--dest D] [--data FILE] [--version V]
+[--overwrite]}}{a reproducibility bundle of the project in DIR, or of a
+shipped example such as \code{otis-mrp}, with \code{\link{mkbndl}}: one
+zip a reviewer unzips and double-clicks (default \code{--dest}: the
+working directory); \code{pack --new DIR [--title T] [--author A]
+[--contact C]} writes a starter project with \code{\link{mkbndlproj}}}
 \item{\code{wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max
 N]}}{save every URL listed in FILE (one per line; blank lines and \code{#}
 comments skipped) in the Internet Archive's Wayback Machine with

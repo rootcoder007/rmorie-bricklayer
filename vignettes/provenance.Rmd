@@ -409,6 +409,93 @@ about what else was put beside it.
 unlink(dir, recursive = TRUE)
 ```
 
+## A bundle a reviewer double-clicks
+
+The capsule above is for someone who runs R. A reproducibility bundle is
+for anyone: one zip a reviewer unzips and double-clicks
+(`START_HERE.command` on macOS, `START_HERE.bat` on Windows,
+`start_here.sh` on Linux), with nothing installed but R. The runner
+inside finds the data, checks it against the pinned SHA-256, runs your
+analysis and says, for every number you report, what it got.
+
+**Step 1: start a project.** `mkbndlproj()` writes three files that
+already build and run, so every step can be tried before the analysis
+is written.
+
+```{r}
+proj <- file.path(tempdir(), "my-study")
+p <- mkbndlproj(proj, title = "My study", author = "A. Researcher",
+                contact = "a.researcher@example.org", overwrite = TRUE)
+p
+```
+
+`config.json` says who and what (and `r_packages`, the packages your
+analysis needs); `data_provenance.json` names the data file, where it
+can be downloaded and its SHA-256, plus a recipe for synthetic data;
+`analysis.R` reads the data and records one check per number the paper
+reports with `recrd()`.
+
+**Step 2: pin your data.** Point the provenance at the real file and its
+digest. A reviewer whose copy differs is stopped, not given different
+numbers.
+
+```{r}
+dat <- data.frame(group = rep(c("a", "b"), 50), value = rep(c(4, 6), 50))
+csv <- file.path(tempdir(), "my_data.csv")
+write.csv(dat, csv, row.names = FALSE)
+pv <- file.path(proj, "data_provenance.json")
+prov <- fromjs(pv, simplifyVector = FALSE)
+prov$resource$sha256 <- sha256file(csv)
+writeLines(tojs(prov, auto_unbox = TRUE, pretty = TRUE), pv)
+```
+
+With `resource$direct_url` set too, a bundle without the data downloads
+it and checks it; here the data travels inside.
+
+**Step 3: build the zip.** Before writing it, `mkbndl()` checks that
+every function the bundled files call is in the bundle, so it cannot
+stop on the reviewer's machine with "could not find function".
+
+```{r}
+b <- mkbndl(proj, dest = tempdir(), data = csv, overwrite = TRUE)
+b
+```
+
+Send `b$sha256` separately from the zip: the reviewer checks it before
+opening anything.
+
+**Step 4: what the reviewer sees.** Unzipped and started (here from R;
+a reviewer double-clicks), the runner uses the data inside, checks it
+and runs the analysis:
+
+```{r}
+out <- file.path(tempdir(), "reviewer")
+unzip(b$path, exdir = out)
+st <- file.path(out, sub("[.]zip$", "", basename(b$path)))
+res <- system2(file.path(R.home("bin"), "Rscript"),
+               c(shQuote(file.path(st, "setup_and_run.R")), "--quick"),
+               stdout = TRUE, stderr = TRUE)
+cat(grep("PASS:|DIFFER:|INFO:", res, value = TRUE), sep = "\n")
+```
+
+Both checks pass on the real data. Run with `--synthetic` the same
+checks come out INFO: generated data never counts as a reproduction.
+`--data FILE` takes a copy the reviewer already has.
+
+The same from a terminal, once `instcli()` has put `rmbl` on the path:
+
+```sh
+rmbl pack --new my-study --title "My study"
+rmbl pack my-study --data my_data.csv       # writes my-study_v1_with_data.zip here
+```
+
+The package ships a full example, the Ontario restrictive confinement
+analysis with 55 checks: `mkbndl("otis-mrp", dest = tempdir())`.
+
+```{r}
+unlink(c(proj, out, csv, b$path), recursive = TRUE)
+```
+
 ## When, not just in what order
 
 The chain proves the order of a sequence of manifests. It does not prove

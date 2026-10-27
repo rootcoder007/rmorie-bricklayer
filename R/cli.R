@@ -34,6 +34,12 @@
 #' \item{\code{explain-error MESSAGE...}}{where an error of these packages comes
 #' from (\code{\link{explerr}}), without a model or the network}
 #' \item{\code{bundle REQUEST...}}{\code{\link{agentbndl}} from the shell}
+#' \item{\code{pack DIR [--dest D] [--data FILE] [--version V]
+#' [--overwrite]}}{a reproducibility bundle of the project in DIR, or of a
+#' shipped example such as \code{otis-mrp}, with \code{\link{mkbndl}}: one
+#' zip a reviewer unzips and double-clicks (default \code{--dest}: the
+#' working directory); \code{pack --new DIR [--title T] [--author A]
+#' [--contact C]} writes a starter project with \code{\link{mkbndlproj}}}
 #' \item{\code{wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max
 #' N]}}{save every URL listed in FILE (one per line; blank lines and \code{#}
 #' comments skipped) in the Internet Archive's Wayback Machine with
@@ -751,7 +757,7 @@ instcli <- function(
   )
 }
 
-#' The options of the capsule verbs, migrate and config.
+#' The options of the capsule verbs, migrate, pack and config.
 #' @param rest The words after the verb.
 #' @return A list by verb.
 #' @noRd
@@ -777,6 +783,7 @@ instcli <- function(
       "--seen-log"
     ),
     migrate = "--write",
+    pack = c(.bl_pack_valued, "--overwrite"),
     config = if (length(rest) && identical(rest[[1L]], "reset")) "--force"
   )
 }
@@ -807,7 +814,8 @@ instcli <- function(
       "--supervisor-email",
       "--port",
       .bl_capsule_valued,
-      "--html"
+      "--html",
+      .bl_pack_valued
     ),
     function(f) {
       i <- match(f, rest)
@@ -863,6 +871,9 @@ instcli <- function(
     },
     archive = function(ctx) {
       .bl_cli_archive(ctx$rest, .bl_cli_flagger(ctx$rest), ctx$out)
+    },
+    pack = function(ctx) {
+      .bl_cli_pack(ctx$rest, .bl_cli_flagger(ctx$rest), ctx$out)
     },
     sign = .bl_v_capsule,
     verify = .bl_v_capsule,
@@ -1638,7 +1649,10 @@ instcli <- function(
       "keys, models)"
     ),
     bundle = "bundle REQUEST...   agentbndl() from the shell",
-    functions = "functions [PATTERN]   exported functions and their titles",
+    functions = paste0(
+      "functions [PATTERN]   exported functions and their titles ",
+      "(PATTERN matches the name or the title)"
+    ),
     describe = paste0(
       "describe NAME   help page of one function (a 0.5.x name: what it ",
       "became, then its page)"
@@ -1686,6 +1700,13 @@ instcli <- function(
       "captures (URL* for a prefix);",
       "archive get ID|URL -o FILE [--sha256 HEX] [--at YYYYMMDD]   the",
       "exact bytes, checked"
+    ),
+    pack = paste(
+      "pack DIR [--dest D] [--data FILE] [--version V] [--overwrite]",
+      "  a reproducibility bundle of the project in DIR (or a shipped",
+      "example: otis-mrp), written to D (default: here);",
+      "pack --new DIR [--title T] [--author A] [--contact C]   start a",
+      "project that builds and runs as it is"
     )
   )
 }
@@ -1823,15 +1844,14 @@ instcli <- function(
 }
 
 #' Lists the exported functions and the titles of their help pages.
-#' @param pattern A regular expression the names must match, or NULL for all.
+#' @param pattern A regular expression the name or the title must match
+#'   (the title ignoring case: the names are short, so "bundle" finds
+#'   mkbndl() by its title), or NULL for all.
 #' @return A data frame with columns `name` and `title`.
 #' @noRd
 .bl_function_index <- function(pattern = NULL) {
   ns <- getNamespaceExports("rmoriebricklayer")
   ns <- sort(ns[!startsWith(ns, ".")])
-  if (!is.null(pattern)) {
-    ns <- ns[grepl(pattern, ns)]
-  }
   titles <- character(length(ns))
   names(titles) <- ns
   for (rd in .bl_rd_db()) {
@@ -1847,7 +1867,16 @@ instcli <- function(
       ))
     }
   }
-  data.frame(name = ns, title = unname(titles), stringsAsFactors = FALSE)
+  keep <- if (is.null(pattern)) {
+    rep(TRUE, length(ns))
+  } else {
+    grepl(pattern, ns) | grepl(pattern, titles, ignore.case = TRUE)
+  }
+  data.frame(
+    name = ns[keep],
+    title = unname(titles[keep]),
+    stringsAsFactors = FALSE
+  )
 }
 
 #' Returns the help page of one function as text, without its examples.
@@ -2229,6 +2258,10 @@ instcli <- function(
     "connection to archive.rmorie.com\n",
     "  archive find URL | get ID -o FILE         list its captures; ",
     "fetch the exact bytes, checked\n",
+    "  pack DIR [--dest D] [--data FILE]         a reproducibility ",
+    "bundle a reviewer double-clicks\n",
+    "  pack --new DIR [--title T]                start a bundle project ",
+    "that runs as it is\n",
     "  functions [PATTERN]                       exported functions and ",
     "their titles\n",
     "  describe NAME                             help page of one function\n",
@@ -2681,4 +2714,57 @@ instcli <- function(
     )
   }
   invisible(NULL)
+}
+
+#' The options of pack that take a value.
+#' @noRd
+.bl_pack_valued <- c(
+  "--dest",
+  "--data",
+  "--version",
+  "--new",
+  "--title",
+  "--author",
+  "--contact"
+)
+
+#' The pack verb: mkbndl() and mkbndlproj() from a terminal.
+#' @param rest The arguments after `pack`.
+#' @param flag Looks up an option's value.
+#' @param out Writes text.
+#' @return The exit status.
+#' @noRd
+.bl_cli_pack <- function(rest, flag, out) {
+  pos <- rest
+  for (f in .bl_pack_valued) {
+    i <- match(f, pos)
+    if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
+  }
+  pos <- setdiff(pos, "--overwrite")
+  ow <- "--overwrite" %in% rest
+  show <- function(x) {
+    out(paste0(paste(utils::capture.output(print(x)), collapse = "\n"), "\n"))
+    0L
+  }
+  new <- flag("--new")
+  if (!is.null(new)) {
+    return(show(mkbndlproj(
+      new,
+      title = flag("--title") %||% basename(new),
+      author = flag("--author") %||% "",
+      contact = flag("--contact") %||% "",
+      overwrite = ow
+    )))
+  }
+  if (length(pos) != 1L || pos[[1L]] %in% c("help", "--help", "-h")) {
+    out(.bl_verb_usage("pack", .bl_prog()))
+    return(if (length(pos) == 1L) 0L else 2L)
+  }
+  show(mkbndl(
+    pos[[1L]],
+    flag("--dest") %||% getwd(),
+    data = flag("--data"),
+    version = flag("--version") %||% "1",
+    overwrite = ow
+  ))
 }

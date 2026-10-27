@@ -298,3 +298,43 @@ test_that("an unzipped bundle runs on synthetic and on real data", {
   expect_identical(run("--quick"), c("PASS", "PASS"))
   expect_identical(run("--quick", "--synthetic"), c("INFO", "INFO"))
 })
+
+test_that("rmbl pack starts a project and builds its bundle", {
+  d <- withr::local_tempdir()
+  run <- function(...) {
+    rec <- new.env()
+    rec$buf <- character()
+    st <- blcli(c(...), out = function(s) rec$buf <- c(rec$buf, s))
+    list(status = st, text = paste(rec$buf, collapse = ""))
+  }
+  p <- file.path(d, "proj")
+  r <- run("pack", "--new", p, "--title", "Shell study", "--author", "Me",
+           "--contact", "me@example.org")
+  expect_identical(r$status, 0L)
+  expect_match(r$text, "Bundle project", fixed = TRUE)
+  cfg <- fromjs(file.path(p, "config.json"), simplifyVector = FALSE)
+  expect_identical(cfg$project$title, "Shell study")
+  expect_identical(run("pack", "--new", file.path(d, "p2"))$status, 0L)
+  r <- run("pack", p, "--dest", d, "--version", "3")
+  expect_identical(r$status, 0L)
+  expect_match(r$text, "proj_v3.zip", fixed = TRUE)
+  expect_true(file.exists(file.path(d, "proj_v3.zip")))
+  r <- run("pack", p, "--dest", d, "--version", "3")
+  expect_identical(r$status, 1L)
+  expect_match(r$text, "overwrite", fixed = TRUE)
+  expect_identical(
+    run("pack", p, "--dest", d, "--version", "3", "--overwrite")$status, 0L
+  )
+  csv <- file.path(d, "x.csv")
+  writeLines(c("group,value", "a,1"), csv)
+  expect_identical(run("pack", p, "--dest", d, "--data", csv)$status, 0L)
+  expect_true(file.exists(file.path(d, "proj_v1_with_data.zip")))
+  withr::with_dir(d, expect_identical(run("pack", p)$status, 0L))
+  expect_true(file.exists(file.path(d, "proj_v1.zip")))
+  r <- run("pack")
+  expect_identical(r$status, 2L)
+  expect_match(r$text, "pack DIR", fixed = TRUE)
+  expect_identical(run("pack", "help")$status, 0L)
+  expect_identical(run("pack", "--help")$status, 0L)
+  expect_identical(run("pack", p, "--bogus")$status, 2L)
+})

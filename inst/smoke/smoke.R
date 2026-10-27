@@ -81,6 +81,13 @@ cases <- list(
     r <- run("archive", "find", "https://cran.r-project.org/web/packages/rmoriebricklayer/index.html", "--json")
     check(r$status %in% c(0L, 1L) && startsWith(trimws(r$text), "["), substr(r$text, 1, 300))
   },
+  pack = function() {
+    # a starter project, then its zip, in the empty HOME
+    d <- file.path(home, "packproj")
+    r <- run("pack", "--new", d, "--title", "Smoke study"); check(r$status == 0L && file.exists(file.path(d, "analysis.R")), r$text)
+    r <- run("pack", d, "--dest", home); check(r$status == 0L && file.exists(file.path(home, "packproj_v1.zip")), r$text)
+    r <- run("pack"); check(r$status == 2L && grepl("pack DIR", r$text, fixed = TRUE), r$text)
+  },
   config = function() {
     r <- run("config"); check(r$status == 0 && grepl("route", r$text, fixed = TRUE), r$text)
     check(run("config", "help")$status == 0, "config help")

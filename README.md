@@ -797,6 +797,24 @@ refused at index 0 until `xmssregkey(key)` vouches that it has never signed; or 
 See `vignette("drift")` for the distributional checks and
 `vignette("provenance")` for signing, Merkle pinning and manifest chains.
 
+## Finding a function
+
+The names are short (`anltab()`, `mkbndl()`, `svyest()`), so look for a
+function by what it does:
+
+```r
+library(rmoriebricklayer)
+help.search("bundle", package = "rmoriebricklayer")   # titles and descriptions
+ls("package:rmoriebricklayer", pattern = "^plot")     # by name
+```
+
+From a terminal, `rmbl functions bundle` lists the exported functions whose
+name or help title matches, `rmbl describe mkbndl` prints one help page and
+`rmbl examples mkbndl` its examples. A name from before 1.0.0 still works and
+says what it is called now (`?rmbl-aliases`; `rmbl migrate script.R` shows the
+rewrite of a script). Each vignette (`browseVignettes("rmoriebricklayer")`)
+starts from a worked example and ends with one on your own data.
+
 ## Asking a model
 
 The package can put a question to a language model, from R or from the
@@ -911,6 +929,8 @@ rmoriebricklayer wayback urls.txt --out w.jsonl # archive every URL in a file (a
 rmoriebricklayer wayback --retry w.jsonl        # retry the ones that failed
 rmoriebricklayer archive save URL --reason TEXT # save from this connection to archive.rmorie.com
 rmoriebricklayer archive find URL               # its captures; archive get ID -o FILE fetches one
+rmoriebricklayer pack --new my-study            # start a reproducibility bundle project (mkbndlproj())
+rmoriebricklayer pack my-study --data data.csv  # its zip, data inside; a reviewer double-clicks it (mkbndl())
 rmoriebricklayer bundle "your request"          # agentbndl() from the shell
 rmoriebricklayer verify capsules --fail-on warn # every capsule under a folder, as the rmbl GitHub Action checks it
 rmoriebricklayer verify capsules --json         # the check rows as JSON (hmac secret: RMBL_KEY)
