@@ -17,7 +17,7 @@ cannot move a number."><meta property="og:image" content="https://rootcoder007.g
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,7 +77,8 @@ cannot move a number.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>An <code>rmbl_yoy</code> object from <code><a href="yoy.html">yoy()</a></code>.</p></dd>
+<dd><p>An <code>rmbl_yoy</code> object from <code><a href="yoy.html">yoy()</a></code>,
+whose periods are labelled.</p></dd>
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
@@ -89,12 +90,11 @@ its label.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The object, still of class <code>rmbl_yoy</code>, with an added
-character column <code>perlbl</code>. Its <code>yoy</code> attribute gets
-<code>perlbl</code> set to <code>TRUE</code>, as <code>attr(x, "yoy")$perlbl</code>, so the labels
-are used by <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>,
-<code><a href="yoyren.html">yoyhtml()</a></code>,
-<code><a href="yoyren.html">yoypdf()</a></code> and the delimited writers.</p>
+    <p>The object, still of class <code>rmbl_yoy</code>, with an added character
+column <code>perlbl</code>. Its <code>yoy</code> attribute gets <code>perlbl</code> set to
+<code>TRUE</code>, as <code>attr(x, "yoy")$perlbl</code>, so the labels are used by
+<code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="yoyren.html">yoyhtml()</a></code>, <code><a href="yoyren.html">yoypdf()</a></code> and
+the delimited writers.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -127,42 +127,72 @@ per row.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># 2023 means the fiscal year 2022/23, so say so.</span></span></span>
 <span class="r-in"><span><span class="fu">yoylbl</span><span class="op">(</span><span class="va">y</span>, <span class="va">fylbl</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> EndFiscalYear  n    previous  change  change %  interval    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ─────────────  ───  ────────  ──────  ────────  ────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2018/19        402  —         —         —       —           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2019/20        377  402       -25     ▼ -6.2%   [-19%, +8%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2020/21        190  377       -187    ▼ -49.6%  [-58%, -40%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2021/22        268  190       78      ▲ +41.1%  [+17%, +71%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2022/23        331  268       63      ▲ +23.5%  [+5%, +46%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: count · 95% exact rate-ratio interval</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change in n by EndFiscalYear</span> ─────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows    5                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Change  in percent                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Better  not set (direction neutral): the colour shows no verdict          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   EndFiscalYear  n    previous  change  change %  interval                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ─────────────  ───  ────────  ──────  ────────  ────────────              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2018/19        402  —         —         —       —                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2019/20        377  402       -25     ▼ -6.2%   [-19%, +8%]               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2020/21        190  377       -187    ▼ -49.6%  [-58%, -40%]              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2021/22        268  190       78      ▲ +41.1%  [+17%, +71%]              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2022/23        331  268       63      ▲ +23.5%  [+5%, +46%]               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Note: the first period has nothing to compare with, so it shows no        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   change.                                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   lag 1 period                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units: count                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   95% exact rate-ratio interval                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Any function will do.</span></span></span>
 <span class="r-in"><span><span class="fu">yoylbl</span><span class="op">(</span><span class="va">y</span>, <span class="kw">function</span><span class="op">(</span><span class="va">p</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"FY"</span>, <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">p</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> EndFiscalYear  n    previous  change  change %  interval    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ─────────────  ───  ────────  ──────  ────────  ────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FY19           402  —         —         —       —           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FY20           377  402       -25     ▼ -6.2%   [-19%, +8%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FY21           190  377       -187    ▼ -49.6%  [-58%, -40%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FY22           268  190       78      ▲ +41.1%  [+17%, +71%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FY23           331  268       63      ▲ +23.5%  [+5%, +46%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: count · 95% exact rate-ratio interval</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change in n by EndFiscalYear</span> ─────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows    5                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Change  in percent                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Better  not set (direction neutral): the colour shows no verdict          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   EndFiscalYear  n    previous  change  change %  interval                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ─────────────  ───  ────────  ──────  ────────  ────────────              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   FY19           402  —         —         —       —                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   FY20           377  402       -25     ▼ -6.2%   [-19%, +8%]               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   FY21           190  377       -187    ▼ -49.6%  [-58%, -40%]              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   FY22           268  190       78      ▲ +41.1%  [+17%, +71%]              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   FY23           331  268       63      ▲ +23.5%  [+5%, +46%]               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Note: the first period has nothing to compare with, so it shows no        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   change.                                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   lag 1 period                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units: count                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   95% exact rate-ratio interval                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Or an explicit mapping, for the periods that need one.</span></span></span>
 <span class="r-in"><span><span class="fu">yoylbl</span><span class="op">(</span><span class="va">y</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2020"</span> <span class="op">=</span> <span class="st">"2019/20 (COVID)"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> EndFiscalYear    n    previous  change  change %  interval    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ───────────────  ───  ────────  ──────  ────────  ────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2019             402  —         —         —       —           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2019/20 (COVID)  377  402       -25     ▼ -6.2%   [-19%, +8%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2021             190  377       -187    ▼ -49.6%  [-58%, -40%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2022             268  190       78      ▲ +41.1%  [+17%, +71%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2023             331  268       63      ▲ +23.5%  [+5%, +46%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: count · 95% exact rate-ratio interval</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change in n by EndFiscalYear</span> ─────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows    5                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Change  in percent                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Better  not set (direction neutral): the colour shows no verdict          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   EndFiscalYear    n    previous  change  change %  interval                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ───────────────  ───  ────────  ──────  ────────  ────────────            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2019             402  —         —         —       —                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2019/20 (COVID)  377  402       -25     ▼ -6.2%   [-19%, +8%]             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2021             190  377       -187    ▼ -49.6%  [-58%, -40%]            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2022             268  190       78      ▲ +41.1%  [+17%, +71%]            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2023             331  268       63      ▲ +23.5%  [+5%, +46%]             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Note: the first period has nothing to compare with, so it shows no        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   change.                                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   lag 1 period                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units: count                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   95% exact rate-ratio interval                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the numbers are untouched</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">yoylbl</span><span class="op">(</span><span class="va">y</span>, <span class="va">fylbl</span><span class="op">)</span><span class="op">$</span><span class="va">change</span>, <span class="va">y</span><span class="op">$</span><span class="va">change</span><span class="op">)</span></span></span>

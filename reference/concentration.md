@@ -46,7 +46,12 @@ frame with numeric columns `population` (cumulative share of units, from
 order), `n + 1` rows including the origin. `topshr()`: a data frame with
 columns `fraction` (the requested fraction of units), `units` (how many
 of the largest units that fraction is) and `share` (the share of the
-total those units hold).
+total those units hold). It has class
+`c("rmbl_gini", "rmbl_measure", "numeric")`, so it prints as a box with
+its inputs (kept in attribute `"lakner"`); arithmetic, `[`,
+[`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give plain
+numbers.
 
 ## Details
 
@@ -88,24 +93,74 @@ further the greater the concentration.
 ``` r
 # Ten units holding one each: no concentration.
 ginicoef(rep(1, 10))
-#> [1] 0
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0                                                       │
+#> │   Units             10                                                      │
+#> │   Total             10                                                      │
+#> │   Largest unit      1 (10.0% of the total)                                  │
+#> │   Most for n units  0.9                                                     │
+#> │                                                                             │
+#> │   A Gini of 0: the total is close to equal shares.                          │
+#> │   That is 0% of the way from equal shares (0) to one unit holding all of    │
+#> │   it (0.9 for 10 units).                                                    │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # One unit holding everything: the maximum for ten units.
 ginicoef(c(rep(0, 9), 1))
-#> [1] 0.9
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0.9                                                     │
+#> │   Units             10                                                      │
+#> │   Total             1                                                       │
+#> │   Largest unit      1 (100.0% of the total)                                 │
+#> │   Most for n units  0.9                                                     │
+#> │                                                                             │
+#> │   A Gini of 0.9: the total is very highly concentrated.                     │
+#> │   That is 100% of the way from equal shares (0) to one unit holding all of  │
+#> │   it (0.9 for 10 units).                                                    │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 1 - 1 / 10
 #> [1] 0.9
 
 placements <- c(rep(1, 1200), rep(3, 430), rep(8, 110), rep(20, 38))
 ginicoef(placements)
-#> [1] 0.461225
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0.4612                                                  │
+#> │   Units             1,778                                                   │
+#> │   Total             4,130                                                   │
+#> │   Largest unit      20 (0.5% of the total)                                  │
+#> │   Most for n units  0.9994                                                  │
+#> │                                                                             │
+#> │   A Gini of 0.4612: the total is highly concentrated.                       │
+#> │   That is 46% of the way from equal shares (0) to one unit holding all of   │
+#> │   it (0.9994 for 1,778 units).                                              │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # What the most frequent few account for.
 topshr(placements, c(0.01, 0.05, 0.1))
-#>   fraction units      share
-#> 1     0.01    18 0.08716707
-#> 2     0.05    89 0.28280872
-#> 3     0.10   178 0.41888620
+#> ╭── Top shares of a total ────────────────────────────────────────────────╮
+#> │   Fractions  3                                                          │
+#> │                                                                         │
+#> │   top  units  share                                                     │
+#> │   ---  -----  ------                                                    │
+#> │   1%      18  8.717%                                                    │
+#> │   5%      89  28.28%                                                    │
+#> │   10%    178  41.89%                                                    │
+#> │                                                                         │
+#> │   The top 1% of units (18 of them) hold 8.717% of the total; with equal │
+#> │   shares they would hold 1%.                                            │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 head(lorenzc(placements))
 #>     population        value
@@ -118,7 +173,21 @@ head(lorenzc(placements))
 
 # missing values are dropped
 ginicoef(c(1, NA, 3))
-#> [1] 0.25
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0.25                                                    │
+#> │   Units             2                                                       │
+#> │   Total             4                                                       │
+#> │   Largest unit      3 (75.0% of the total)                                  │
+#> │   Most for n units  0.5                                                     │
+#> │                                                                             │
+#> │   A Gini of 0.25: the total is moderately concentrated.                     │
+#> │   That is 50% of the way from equal shares (0) to one unit holding all of   │
+#> │   it (0.5 for 2 units).                                                     │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a zero total has no Gini coefficient
 try(ginicoef(c(0, 0, 0)))

@@ -15,7 +15,7 @@ the distribution as earlier unsuccessful searches left it."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,15 +110,15 @@ that one of the searches so far succeeded).</p>
     <p>The search factor <code>f</code> is the half side of the square in units
 of the total probable error of position <code>E</code> (the radius of the circle
 holding half the distribution, <code>E = 1.1774 sigma</code>). For relative effort
-<code>z = Z / E^2</code> the coverage is <code>C = z / (2 f)^2</code>, the containment
-is the circular normal's mass in the square, <code>(2 Phi(f E / sigma) - 1)^2</code>
+<code>z = Z / E^2</code> the coverage is <code>C = z / (2 f)^2</code>, the containment is
+the circular normal's mass in the square, <code>(2 Phi(f E / sigma) - 1)^2</code>
 for a first search, and the probability of success <code>POC x POD(C)</code> with
-the POD curve of <code>model</code> (<code><a href="ltrlrng.html">srchpod</a></code>). The factor is found
-on a grid of 241 values from 0.02 to 10 and refined by <code><a href="https://rdrr.io/r/stats/optimize.html" class="external-link">optimize()</a></code>.
-After a search the density inside its square is multiplied by
-<code>1 - POD</code>; every later search is optimized against what is left, and
-its <code>poc</code> and <code>pos</code> are conditional on the earlier searches having
-failed. Frost's figures 6-3 to 6-6 are drawn from it by <code><a href="srchfig.html">srchfig</a></code>.</p>
+the POD curve of <code>model</code> (<code><a href="ltrlrng.html">srchpod</a></code>). The factor is found on
+a grid of 241 values from 0.02 to 10 and refined by <code><a href="https://rdrr.io/r/stats/optimize.html" class="external-link">optimize()</a></code>. After
+a search the density inside its square is multiplied by <code>1 - POD</code>; every
+later search is optimized against what is left, and its <code>poc</code> and
+<code>pos</code> are conditional on the earlier searches having failed. Frost's
+figures 6-3 to 6-6 are drawn from it by <code><a href="srchfig.html">srchfig</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -134,26 +134,68 @@ distribution of searching effort. Operations Research 5(5), 613-626.
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Frost's example: an effort of 4 E^2 on a point datum</span></span></span>
 <span class="r-in"><span><span class="fu">optsqr</span><span class="op">(</span><span class="fl">4</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   search effort releff cumeff   factor     side       poc  coverage       pod</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1      1      4      4      4 1.021043 2.042086 0.5939919 0.9592059 0.7707087</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         pos    cumpos</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.4577947 0.4577947</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Optimal square searches</span> ────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Searches                 1                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Total effort             4                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Chance found by the end  0.4578                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   search  effort  releff  cumeff  factor   side     poc  coverage     pod │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ------  ------  ------  ------  -----  ------  --------  ------ │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        1       4       4       4   1.021  2.042  0.5940    0.9592  0.7707 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   search     pos  cumpos                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ------  ------                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        1  0.4578  0.4578                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each search covers the square (of side 'side') that gives it the best   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   chance of success after the searches before it. poc is the chance the   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   object is in that square, pod the chance of detecting it there, pos     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   their product and cumpos the running chance it has been found.          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="co"># poor search conditions: the random search curve</span></span></span>
 <span class="r-in"><span><span class="fu">optsqr</span><span class="op">(</span><span class="fl">4</span>, model <span class="op">=</span> <span class="st">"random"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   search effort releff cumeff factor     side       poc  coverage       pod</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1      1      4      4      4 1.0276 2.055199 0.5985885 0.9470049 0.6120989</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         pos    cumpos</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.3663954 0.3663954</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Optimal square searches</span> ────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Searches                 1                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Total effort             4                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Chance found by the end  0.3664                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   search  effort  releff  cumeff  factor   side     poc  coverage     pod │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ------  ------  ------  ------  -----  ------  --------  ------ │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        1       4       4       4   1.028  2.055  0.5986    0.9470  0.6121 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   search     pos  cumpos                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ------  ------                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        1  0.3664  0.3664                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each search covers the square (of side 'side') that gives it the best   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   chance of success after the searches before it. poc is the chance the   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   object is in that square, pod the chance of detecting it there, pos     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   their product and cumpos the running chance it has been found.          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="co"># three searches in a row, each optimal for what the last ones left</span></span></span>
 <span class="r-in"><span><span class="fu">optsqr</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span>, E <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   search effort releff cumeff    factor     side       poc  coverage       pod</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1      1      4      1      1 0.6432168 2.572867 0.3037639 0.6042619 0.5511478</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2      2      4      1      2 0.9359534 3.743814 0.4381650 0.2853853 0.2794152</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3      3      8      2      4 1.1183366 4.473346 0.5339275 0.3997836 0.3836672</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         pos    cumpos</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1674188 0.1674188</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1224300 0.2693517</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 0.2048504 0.4190253</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Optimal square searches</span> ────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Searches                 3                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Total effort             16                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Chance found by the end  0.419                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   search  effort  releff  cumeff  factor   side     poc  coverage     pod │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ------  ------  ------  ------  -----  ------  --------  ------ │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        1       4       1       1  0.6432  2.573  0.3038    0.6043  0.5511 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        2       4       1       2  0.9360  3.744  0.4382    0.2854  0.2794 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        3       8       2       4  1.1183  4.473  0.5339    0.3998  0.3837 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   search     pos  cumpos                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ------  ------                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        1  0.1674  0.1674                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        2  0.1224  0.2694                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        3  0.2049  0.4190                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each search covers the square (of side 'side') that gives it the best   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   chance of success after the searches before it. poc is the chance the   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   object is in that square, pod the chance of detecting it there, pos     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   their product and cumpos the running chance it has been found.          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">optsqr</span><span class="op">(</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : optsqr: `effort` must be positive</span>
 </code></pre></div>

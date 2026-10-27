@@ -13,7 +13,7 @@ arithmetic wrong.
 ## Usage
 
 ``` r
-orchk(cnts, ref, rptd, tol = 0.05)
+orchk(cnts, ref = NULL, rptd, tol = 0.05)
 ```
 
 ## Arguments
@@ -39,12 +39,13 @@ orchk(cnts, ref, rptd, tol = 0.05)
 
 ## Value
 
-A list with elements `computed` (named numeric odds ratios from the
-table as labelled), `reported` (the reported values, in the same order),
-`consistent` (logical), `matches` (a data frame with character
-`relabelling`, for example `"B -> C, C -> B"`, and logical
-`outcome_columns_swapped`, one row per relabelling that reproduces the
-reported values) and `verdict` (a one-sentence character summary).
+A list of class `rmbl_or_check` (it prints as a box) with elements
+`computed` (named numeric odds ratios from the table as labelled),
+`reported` (the reported values, in the same order), `consistent`
+(logical), `matches` (a data frame with character `relabelling`, for
+example `"B -> C, C -> B"`, and logical `outcome_columns_swapped`, one
+row per relabelling that reproduces the reported values) and `verdict`
+(a one-sentence character summary).
 
 ## Details
 

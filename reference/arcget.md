@@ -21,7 +21,7 @@ arcget(x, dest, sha256 = NULL, at = NULL, tmout = 600L)
 
 - dest:
 
-  The file to write.
+  The file the fetched bytes are written to.
 
 - sha256:
 

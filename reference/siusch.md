@@ -62,8 +62,10 @@ s[s$count, c("name", "description")]
 #> 9 the count of distinct SUBJECT officers/officials (SO); a witness-officer-only investigation is 0
 
 # an empty hand-coding sheet with one column per field
-sheet <- as.data.frame(setNames(replicate(nrow(s), character(0), simplify = FALSE),
-                                 s$name))
+sheet <- as.data.frame(setNames(
+  replicate(nrow(s), character(0), simplify = FALSE),
+  s$name
+))
 ncol(sheet)
 #> [1] 16
 ```

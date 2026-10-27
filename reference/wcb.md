@@ -63,7 +63,7 @@ wcb(
 
 - seed:
 
-  Optional seed.
+  Optional seed for the bootstrap weights.
 
 - ties:
 
@@ -72,7 +72,7 @@ wcb(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the intervals reported (default 0.95).
 
 ## Value
 
@@ -126,6 +126,47 @@ p <- polex()
 wcb(p, "district", "month", "crmrate", "reformed",
                        cl = "region", wtype = "webb", reps = 99,
                        seed = 1)
-#>   estimate         t    p_value     lower     upper clusters draws enumerated
-#> 1 -3.23164 -19.51674 0.01010101 -3.563541 -2.910293        4    99      FALSE
+#> ╭── Wild cluster bootstrap ───────────────────────────────────────────────╮
+#> │   Method    wild cluster bootstrap-t, null imposed                      │
+#> │   Clusters  4                                                           │
+#> │   Draws     99                                                          │
+#> │   Weights   random draws                                                │
+#> │                                                                         │
+#> │   estimate  interval               t  p_value                           │
+#> │   --------  ----------------  ------  -------                           │
+#> │     -3.232  [-3.564, -2.910]  -19.52    0.010                           │
+#> │                                                                         │
+#> │   The treatment's effect is -3.232 (its interval [-3.564, -2.910]): the │
+#> │   interval excludes 0, so the data distinguish it from no effect.       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+# eight towns: every one of the 2^8 sign patterns
+wcb(own, "town", "year", "rate", "bylaw", covs = "income")
+#> ╭── Wild cluster bootstrap ───────────────────────────────────────────────╮
+#> │   Method    wild cluster bootstrap-t, null imposed                      │
+#> │   Clusters  8                                                           │
+#> │   Draws     256                                                         │
+#> │   Weights   every sign pattern (exact)                                  │
+#> │                                                                         │
+#> │   estimate  interval               t  p_value                           │
+#> │   --------  ----------------  ------  -------                           │
+#> │     -4.022  [-4.482, -3.521]  -18.70    0.008                           │
+#> │                                                                         │
+#> │   The treatment's effect is -4.022 (its interval [-4.482, -3.521]): the │
+#> │   interval excludes 0, so the data distinguish it from no effect.       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```

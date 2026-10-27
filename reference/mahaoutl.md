@@ -105,14 +105,23 @@ df[1, ] <- list(height = 155, weight = 100)
 
 out <- mahaoutl(df)
 head(out, 3)
-#> ── Mahalanobis outliers (robust) ───────────────────────────────── 
-#>   ! 1 of 3 rows beyond alpha = 0.001
-#> 
-#>  row distance  p_value logpvalue outlier
-#>    1     4.30 9.61e-05 -9.249997    TRUE
-#>   32     2.90   0.0149 -4.204956   FALSE
-#>   14     2.81   0.0194 -3.940191   FALSE
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Mahalanobis outliers (robust) ──────────────────────────────────────╮
+#> │   Verdict  ! 1 of 3 rows beyond alpha = 0.001                         │
+#> │                                                                       │
+#> │   Largest distances first                                             │
+#> │   row  distance  p_value  logpvalue  outlier                          │
+#> │   ---  --------  -------  ---------  -------                          │
+#> │     1     4.301  < 0.001     -9.250  TRUE                             │
+#> │    32     2.900    0.015     -4.205  FALSE                            │
+#> │    14     2.807    0.019     -3.940  FALSE                            │
+#> │                                                                       │
+#> │   1 of 3 rows lie beyond alpha = 0.001: row 1 (distance 4.3).         │
+#> │                                                                       │
+#> │   The distance measures how far a row is from the centre of the data  │
+#> │   once the columns' scales and correlations are allowed for; the      │
+#> │   p-value is from the chi-square distribution it would follow without │
+#> │   outliers, and logpvalue its natural log, for rows far in the tail.  │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # It is flagged, although both values lie inside the other rows' ranges.
 out$row[1] == 1

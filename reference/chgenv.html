@@ -21,7 +21,7 @@ about what the release withheld."><meta property="og:image" content="https://roo
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -135,21 +135,54 @@ rows. The populations are not checked; give one per row (or one value).</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">now</span> <span class="op">&lt;-</span> <span class="fu"><a href="pubbnd.html">pubbnd</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">45</span>, <span class="fl">120</span><span class="op">)</span>, rnd <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">prev</span> <span class="op">&lt;-</span> <span class="fu"><a href="pubbnd.html">pubbnd</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40</span>, <span class="fl">100</span><span class="op">)</span>, rnd <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">chgenv</span><span class="op">(</span><span class="va">now</span>, <span class="va">prev</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   chglo chgup    pctlo    pctup</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     0    10  0.00000 26.66667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    15    25 14.63415 25.64103</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change between published values</span> ─────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cells          2                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Certain rises  1                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Certain falls  0                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   cell  change    change %                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----  --------  --------------                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      1  [0, 10]   [0.00, 26.67]                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      2  [15, 25]  [14.63, 25.64]                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each interval holds every change consistent with the two published   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   (rounded or suppressed) values. An interval that spans 0 cannot tell │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a rise from a fall.                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># with rates per 1,000 residents in both years</span></span></span>
 <span class="r-in"><span><span class="fu">chgenv</span><span class="op">(</span><span class="va">now</span>, <span class="va">prev</span>, pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10000</span>, <span class="fl">20000</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                prepop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10000</span>, <span class="fl">19000</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   chglo chgup    pctlo    pctup ratelo rateup preratelo prerateup</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     0    10  0.00000 26.66667  4.250  4.750  3.750000  4.250000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    15    25 14.63415 25.64103  5.875  6.125  5.131579  5.394737</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change between published values</span> ─────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cells          2                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Certain rises  1                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Certain falls  0                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   cell  change    change %        rate            previous rate        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----  --------  --------------  --------------  --------------       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      1  [0, 10]   [0.00, 26.67]   [4.250, 4.750]  [3.750, 4.250]       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      2  [15, 25]  [14.63, 25.64]  [5.875, 6.125]  [5.132, 5.395]       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each interval holds every change consistent with the two published   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   (rounded or suppressed) values. An interval that spans 0 cannot tell │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a rise from a fall.                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a suppressed previous cell could have been zero: no upper percentage</span></span></span>
 <span class="r-in"><span><span class="fu">chgenv</span><span class="op">(</span><span class="fu"><a href="pubbnd.html">pubbnd</a></span><span class="op">(</span><span class="fl">12</span><span class="op">)</span>, <span class="fu"><a href="pubbnd.html">pubbnd</a></span><span class="op">(</span><span class="st">"&lt;5"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   chglo chgup pctlo pctup</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     8    12   200    NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change between published values</span> ─────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cells          1                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Certain rises  1                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Certain falls  0                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   cell  change   change %                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----  -------  --------                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      1  [8, 12]  [200, ]                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each interval holds every change consistent with the two published   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   (rounded or suppressed) values. An interval that spans 0 cannot tell │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a rise from a fall.                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the two sides must line up</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">chgenv</span><span class="op">(</span><span class="va">now</span>, <span class="va">prev</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>

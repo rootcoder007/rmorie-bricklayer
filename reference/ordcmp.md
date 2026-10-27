@@ -126,18 +126,69 @@ asymptotic theory and a small-sample approximation. Biometrical Journal
 ## Examples
 
 ``` r
-# Self-perceived mental health, 15 years and older, Canada, 2022 (table 41-10-0067-01)
+# Self-perceived mental health, 15 years and older, Canada, 2022 (table
+# 41-10-0067-01)
 mh <- indiex("mentalhealth")
 mh <- mh[mh$region == "Canada", ]
-oc <- ordcmp(mh, "group", "rating", "estimate", "lower", "upper",
-                      lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
-                      ref = "M\u00e9tis", qual = "quality")
+oc <- ordcmp(
+  mh,
+  "group",
+  "rating",
+  "estimate",
+  "lower",
+  "upper",
+  lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
+  ref = "M\u00e9tis",
+  qual = "quality"
+)
 oc
-#>           group reference   probbet     lower     upper      delta     neff
-#> 1 First Nations     Métis 0.4653023 0.4531475 0.4774984 -0.0693954 4021.444
-#> 2         Inuit     Métis 0.5062337 0.4928231 0.5196353  0.0124674 2791.908
-#>    neffref usewithcau poogrp
-#> 1 3884.405      FALSE  FALSE
-#> 2 3884.405      FALSE  FALSE
+#> ╭── Ordinal comparison against a reference group ────────────────────────╮
+#> │   Reference       Métis                                                │
+#> │   Reference neff  3,884                                                │
+#> │   Levels          4                                                    │
+#> │   Measure         chance a person in the group rates higher, ties half │
+#> │                                                                        │
+#> │   group          probbet  95% CI             delta   neff              │
+#> │   -------------  -------  --------------  --------  -----              │
+#> │   First Nations   0.4653  [0.453, 0.477]  -0.06940  4,021              │
+#> │   Inuit           0.5062  [0.493, 0.520]   0.01247  2,792              │
+#> │                                                                        │
+#> │   Rate lower than Métis (interval below 0.5): First Nations.           │
+#> │   Not distinguishable from 0.5 (interval includes it): Inuit.          │
+#> │                                                                        │
+#> │   probbet 0.5 is no difference; above 0.5 the group rates higher.      │
+#> │   delta (Cliff's) = share rating higher less share rating lower.       │
+#> │   neff: the effective sample size the published limits imply (it       │
+#> │   carries the survey's design effect).                                 │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 plot(oc)
+
+
+# your own table: a made-up four-level rating for two groups, with limits
+own <- data.frame(
+  group = rep(c("Nation A", "Everyone else"), each = 4),
+  rating = rep(c("Poor", "Fair", "Good", "Excellent"), 2),
+  pct = c(10, 25, 40, 25, 6, 20, 44, 30),
+  lo = c(7, 21, 35, 21, 5, 18, 42, 28),
+  hi = c(13, 29, 45, 29, 7, 22, 46, 32)
+)
+ordcmp(own, "group", "rating", "pct", "lo", "hi",
+       lvls = c("Poor", "Fair", "Good", "Excellent"), ref = "Everyone else")
+#> ╭── Ordinal comparison against a reference group ────────────────────────╮
+#> │   Reference       Everyone else                                        │
+#> │   Reference neff  2,092                                                │
+#> │   Levels          4                                                    │
+#> │   Measure         chance a person in the group rates higher, ties half │
+#> │                                                                        │
+#> │   group     probbet  95% CI            delta  neff                     │
+#> │   --------  -------  --------------  -------  ----                     │
+#> │   Nation A   0.4475  [0.419, 0.477]  -0.1050   417                     │
+#> │                                                                        │
+#> │   Rate lower than Everyone else (interval below 0.5): Nation A.        │
+#> │                                                                        │
+#> │   probbet 0.5 is no difference; above 0.5 the group rates higher.      │
+#> │   delta (Cliff's) = share rating higher less share rating lower.       │
+#> │   neff: the effective sample size the published limits imply (it       │
+#> │   carries the survey's design effect).                                 │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

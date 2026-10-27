@@ -42,7 +42,8 @@ mhcont(
 
 - qual:
 
-  Optional column of quality flags.
+  Optional column of quality flags: `"E"` rows are marked use with
+  caution, and suppressed ones (`"F"`, `"x"`, `".."`) get no estimate.
 
 - conflvl:
 
@@ -102,54 +103,110 @@ sac-isc.gc.ca/eng/1576093687903/1576093725971
 ## Examples
 
 ``` r
-# well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked
-# together);
-# this table has no measure of belonging, so that direction is reported as missing
+# well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose
+# (asked together); this table has no measure of belonging, so that direction
+# is reported as missing
 wb <- indiex("wellbeing")
-mw <- mhcont(wb, "group", "indicator", "estimate", "lower", "upper",
-        hope = "Always or often has a hopeful outlook",
-        meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
-        purp = "Sense of meaning and purpose rating of 8, 9 or 10",
-        qual = "quality")
+mw <- mhcont(
+  wb,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  hope = "Always or often has a hopeful outlook",
+  meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
+  purp = "Sense of meaning and purpose rating of 8, 9 or 10",
+  qual = "quality"
+)
 mw
-#>            group indicator     side
-#> 1  First Nations      hope wellness
-#> 2  First Nations belonging wellness
-#> 3  First Nations   meaning wellness
-#> 4  First Nations   purpose wellness
-#> 5          Métis      hope wellness
-#> 6          Métis belonging wellness
-#> 7          Métis   meaning wellness
-#> 8          Métis   purpose wellness
-#> 9          Inuit      hope wellness
-#> 10         Inuit belonging wellness
-#> 11         Inuit   meaning wellness
-#> 12         Inuit   purpose wellness
-#>                                               domain estimate lower upper
-#> 1              Always or often has a hopeful outlook     50.2 45.90 54.50
-#> 2                                 no published proxy       NA    NA    NA
-#> 3  Sense of meaning and purpose rating of 8, 9 or 10     47.5 43.40 51.60
-#> 4  Sense of meaning and purpose rating of 8, 9 or 10     47.5 43.40 51.60
-#> 5              Always or often has a hopeful outlook     52.3 47.60 57.00
-#> 6                                 no published proxy       NA    NA    NA
-#> 7  Sense of meaning and purpose rating of 8, 9 or 10     51.6 47.00 56.20
-#> 8  Sense of meaning and purpose rating of 8, 9 or 10     51.6 47.00 56.20
-#> 9              Always or often has a hopeful outlook     54.4 45.85 62.95
-#> 10                                no published proxy       NA    NA    NA
-#> 11 Sense of meaning and purpose rating of 8, 9 or 10     50.5 42.45 58.55
-#> 12 Sense of meaning and purpose rating of 8, 9 or 10     50.5 42.45 58.55
-#>    usewithcau shared proxy
-#> 1       FALSE  FALSE  TRUE
-#> 2       FALSE  FALSE  TRUE
-#> 3       FALSE   TRUE  TRUE
-#> 4       FALSE   TRUE  TRUE
-#> 5       FALSE  FALSE  TRUE
-#> 6       FALSE  FALSE  TRUE
-#> 7       FALSE   TRUE  TRUE
-#> 8       FALSE   TRUE  TRUE
-#> 9       FALSE  FALSE  TRUE
-#> 10      FALSE  FALSE  TRUE
-#> 11      FALSE   TRUE  TRUE
-#> 12      FALSE   TRUE  TRUE
+#> ╭── First Nations Mental Wellness Continuum: the four directions ────────╮
+#> │   Groups      First Nations; Métis; Inuit                              │
+#> │   Directions  hope, belonging, meaning, purpose                        │
+#> │   Estimates   percent, from the published tables                       │
+#> │                                                                        │
+#> │   First Nations                                                        │
+#> │   direction  estimate  95% CI          proxy                           │
+#> │   ---------  --------  --------------  --------------                  │
+#> │   hope          50.20  [45.90, 54.50]  yes                             │
+#> │   belonging                            none published                  │
+#> │   meaning       47.50  [43.40, 51.60]  yes (shared)                    │
+#> │   purpose       47.50  [43.40, 51.60]  yes (shared)                    │
+#> │                                                                        │
+#> │   Métis                                                                │
+#> │   direction  estimate  95% CI          proxy                           │
+#> │   ---------  --------  --------------  --------------                  │
+#> │   hope          52.30  [47.60, 57.00]  yes                             │
+#> │   belonging                            none published                  │
+#> │   meaning       51.60  [47.00, 56.20]  yes (shared)                    │
+#> │   purpose       51.60  [47.00, 56.20]  yes (shared)                    │
+#> │                                                                        │
+#> │   Inuit                                                                │
+#> │   direction  estimate  95% CI          proxy                           │
+#> │   ---------  --------  --------------  --------------                  │
+#> │   hope          54.40  [45.85, 62.95]  yes                             │
+#> │   belonging                            none published                  │
+#> │   meaning       50.50  [42.45, 58.55]  yes (shared)                    │
+#> │   purpose       50.50  [42.45, 58.55]  yes (shared)                    │
+#> │                                                                        │
+#> │   No published proxy: belonging                                        │
+#> │   -- reported as missing, never filled from another direction.         │
+#> │   First Nations: highest hope (50.2), lowest meaning (47.5).           │
+#> │   Métis: highest hope (52.3), lowest meaning (51.6).                   │
+#> │   Inuit: highest hope (54.4), lowest meaning (50.5).                   │
+#> │                                                                        │
+#> │   Proxy for hope: Always or often has a hopeful outlook                │
+#> │   Proxy for meaning: Sense of meaning and purpose rating of 8, 9 or 10 │
+#> │   Proxy for purpose: Sense of meaning and purpose rating of 8, 9 or 10 │
+#> │   Every level is a proxy: no survey table measures the directions as   │
+#> │   the Framework defines them (Health Canada and AFN 2015).             │
+#> │   yes (shared): one indicator serves two directions, counted for each. │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 plot(mw)
+
+
+# your own table: made-up percentages for two communities, with limits;
+# one item stands for both meaning and purpose, and none for belonging
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 2),
+  item = rep(c("Hopeful", "Life has meaning"), 2),
+  pct = c(64, 70, 58, 75),
+  lo = c(59, 65, 52, 70),
+  hi = c(69, 75, 64, 80)
+)
+mhcont(own, "community", "item", "pct", "lo", "hi", hope = "Hopeful",
+       meaning = "Life has meaning", purp = "Life has meaning")
+#> ╭── First Nations Mental Wellness Continuum: the four directions ────────╮
+#> │   Groups      Lakeside; Riverbend                                      │
+#> │   Directions  hope, belonging, meaning, purpose                        │
+#> │   Estimates   percent, from the published tables                       │
+#> │                                                                        │
+#> │   Lakeside                                                             │
+#> │   direction  estimate  95% CI    proxy                                 │
+#> │   ---------  --------  --------  --------------                        │
+#> │   hope             64  [59, 69]  yes                                   │
+#> │   belonging                      none published                        │
+#> │   meaning          70  [65, 75]  yes (shared)                          │
+#> │   purpose          70  [65, 75]  yes (shared)                          │
+#> │                                                                        │
+#> │   Riverbend                                                            │
+#> │   direction  estimate  95% CI    proxy                                 │
+#> │   ---------  --------  --------  --------------                        │
+#> │   hope             58  [52, 64]  yes                                   │
+#> │   belonging                      none published                        │
+#> │   meaning          75  [70, 80]  yes (shared)                          │
+#> │   purpose          75  [70, 80]  yes (shared)                          │
+#> │                                                                        │
+#> │   No published proxy: belonging                                        │
+#> │   -- reported as missing, never filled from another direction.         │
+#> │   Lakeside: highest meaning (70), lowest hope (64).                    │
+#> │   Riverbend: highest meaning (75), lowest hope (58).                   │
+#> │                                                                        │
+#> │   Proxy for hope: Hopeful                                              │
+#> │   Proxy for meaning: Life has meaning                                  │
+#> │   Proxy for purpose: Life has meaning                                  │
+#> │   Every level is a proxy: no survey table measures the directions as   │
+#> │   the Framework defines them (Health Canada and AFN 2015).             │
+#> │   yes (shared): one indicator serves two directions, counted for each. │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

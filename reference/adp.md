@@ -31,7 +31,15 @@ adp(days, t = 365)
 ## Value
 
 A numeric scalar: person-days per day, that is the average number of
-people held on any one day of the period.
+people held on any one day of the period. It has class
+`c("rmbl_adp", "rmbl_measure", "numeric")` and an attribute `"lakner"`
+(the total days and `t`), so it prints as a box with its inputs, formula
+and caveats; arithmetic, [`round()`](https://rdrr.io/r/base/Round.html),
+[`sum()`](https://rdrr.io/r/base/sum.html),
+[`mean()`](https://rdrr.io/r/base/mean.html), `[`,
+[`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give a plain
+number.
 
 ## Details
 
@@ -71,15 +79,51 @@ Corrections Planners*. University of Illinois at Urbana-Champaign.
 # Lakner's own worked example (p.15): 3,000 inmates served 13,500
 # detention days in a year.
 adp(13500)
-#> [1] 36.9863
+#> ╭── Average daily population ──────────────────────────────────────────────╮
+#> │   Average daily population  36.99 people on an average day               │
+#> │   Person-days               13,500                                       │
+#> │   Period                    365 days                                     │
+#> │   Formula                   adp = days / t = 13,500 / 365                │
+#> │                                                                          │
+#> │   13,500 person-days over 365 days: 36.99 people held on an average day. │
+#> │                                                                          │
+#> │   Lakner (1976, p.15): a stock -- people held at once, not people who    │
+#> │   passed through. Count only the days served inside the period.          │
+#> │   adp = n x alos / t links it to alos() and admits(), exactly only in a  │
+#> │   steady state.                                                          │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 
 # per-person days give the same total
 adp(c(10, 20, 30), t = 30)
-#> [1] 2
+#> ╭── Average daily population ─────────────────────────────────────────────╮
+#> │   Average daily population  2 people on an average day                  │
+#> │   Person-days               60                                          │
+#> │   Period                    30 days                                     │
+#> │   Formula                   adp = days / t = 60 / 30                    │
+#> │                                                                         │
+#> │   60 person-days over 30 days: 2 people held on an average day.         │
+#> │                                                                         │
+#> │   Lakner (1976, p.15): a stock -- people held at once, not people who   │
+#> │   passed through. Count only the days served inside the period.         │
+#> │   adp = n x alos / t links it to alos() and admits(), exactly only in a │
+#> │   steady state.                                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a leap year, with the period length taken from the dates
 adp(13500, t = perdays("2024-01-01", "2024-12-31"))
-#> [1] 36.88525
+#> ╭── Average daily population ──────────────────────────────────────────────╮
+#> │   Average daily population  36.89 people on an average day               │
+#> │   Person-days               13,500                                       │
+#> │   Period                    366 days                                     │
+#> │   Formula                   adp = days / t = 13,500 / 366                │
+#> │                                                                          │
+#> │   13,500 person-days over 366 days: 36.89 people held on an average day. │
+#> │                                                                          │
+#> │   Lakner (1976, p.15): a stock -- people held at once, not people who    │
+#> │   passed through. Count only the days served inside the period.          │
+#> │   adp = n x alos / t links it to alos() and admits(), exactly only in a  │
+#> │   steady state.                                                          │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 
 # negative days are refused
 try(adp(c(10, -2)))

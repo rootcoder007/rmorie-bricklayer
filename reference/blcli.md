@@ -64,6 +64,17 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   [`agentbndl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agentbndl.md)
   from the shell
 
+- `pack DIR [--dest D] [--data FILE] [--version V] [--overwrite]`:
+
+  a reproducibility bundle of the project in DIR, or of a shipped
+  example such as `otis-mrp`, with
+  [`mkbndl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md):
+  one zip a reviewer unzips and double-clicks (default `--dest`: the
+  working directory);
+  `pack --new DIR [--title T] [--author A] [--contact C]` writes a
+  starter project with
+  [`mkbndlproj`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlproj.md)
+
 - `wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max N]`:
 
   save every URL listed in FILE (one per line; blank lines and `#`
@@ -291,7 +302,7 @@ to put the command on your PATH.
 
 ``` r
 blcli("version")
-#> rmoriebricklayer 1.0.2
+#> rmoriebricklayer 1.0.3
 blcli("help")
 #> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command as rmoriebricklayer)
 #> 
@@ -318,6 +329,8 @@ blcli("help")
 #>   wayback --retry F.jsonl                   retry the failed URLs of an earlier wayback run
 #>   archive save URL... --reason TEXT         save from this connection to archive.rmorie.com
 #>   archive find URL | get ID -o FILE         list its captures; fetch the exact bytes, checked
+#>   pack DIR [--dest D] [--data FILE]         a reproducibility bundle a reviewer double-clicks
+#>   pack --new DIR [--title T]                start a bundle project that runs as it is
 #>   functions [PATTERN]                       exported functions and their titles
 #>   describe NAME                             help page of one function
 #>   examples NAME                             its examples
@@ -346,7 +359,9 @@ blcli(c("help", "data"))
 
 # capture the output instead of printing it
 con <- textConnection("lines", "w")
-status <- blcli(c("functions", "^drbg_"), out = function(x) cat(x, file = con))
+status <- blcli(c("functions", "^drbg_"), out = function(x) {
+  cat(x, file = con)
+})
 close(con)
 status
 #> [1] 0
@@ -361,39 +376,39 @@ blcli("nonsense")
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 invisible(cpsrfrsh(d))
 blcli(c("verify", d))
-#> ## rmbl capsule verify with [rmoriebricklayer 1.0.2](https://github.com/rootcoder007/rmorie-bricklayer)
+#> ## rmbl capsule verify with [rmoriebricklayer 1.0.3](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpshpHV7/capsule-1f253d9902a6`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/Rtmp8mkWXN/capsule-21975fd944a2`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpshpHV7/capsule-1f253d9902a6` | /tmp/RtmpshpHV7/temp_libpath1f25191e1ec1/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/Rtmp8mkWXN/capsule-21975fd944a2` | /tmp/Rtmp8mkWXN/temp_libpath2197c49bee9/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpshpHV7/capsule-1f253d9902a6</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/Rtmp8mkWXN/capsule-21975fd944a2</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpshpHV7/temp_libpath1f25191e1ec1/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/Rtmp8mkWXN/temp_libpath2197c49bee9/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpshpHV7/capsule-1f253d9902a6/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpshpHV7/capsule-1f253d9902a6/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/Rtmp8mkWXN/capsule-21975fd944a2/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/Rtmp8mkWXN/capsule-21975fd944a2/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpshpHV7/capsule-1f253d9902a6/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/Rtmp8mkWXN/capsule-21975fd944a2/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 6.71e-05 Wh, 3.08e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000201 Wh, 9.23e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
 #> 
 #> ---
 #> 
-#> mode `verify` · fail-on `error` · rmoriebricklayer 1.0.2 · R version 4.6.1 (2026-06-24)
+#> mode `verify` · fail-on `error` · rmoriebricklayer 1.0.3 · R version 4.6.1 (2026-06-24)
 if (FALSE) { # interactive()
 # these read every help page, which takes a few seconds
 blcli(c("functions", "json"))

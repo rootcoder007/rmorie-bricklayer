@@ -19,7 +19,7 @@ by hand."><meta property="og:image" content="https://rootcoder007.github.io/rmor
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,31 +103,27 @@ shipped OTIS table as the source so the skeleton runs immediately;
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The files:</p><dl><dt><code>data_provenance.json</code></dt>
 <dd><p>the fields
-<code><a href="loadprov.html">loadprov</a></code> and <code><a href="vrfcps.html">vrfcps</a></code> expect:
-<code>name</code>, <code>source</code> (<code>url</code>, <code>publisher</code>,
-<code>licence</code>, <code>retrieved</code>, <code>sha256</code>) and <code>table</code>
-(<code>value</code>, <code>period</code>, <code>by</code>, <code>rounding</code>,
-<code>suplim</code>). Every field that must be filled in is
-marked <code>TODO</code>.</p></dd>
-
-<dt><code>analysis.R</code></dt>
-<dd><p>reads the provenance, downloads the source
-with <code><a href="fdl.html">fdl</a></code> (a local path is read directly),
-computes its SHA-256 with <code><a href="sha256file.html">sha256file</a></code> and stops if it no
-longer matches the pinned value, runs <code><a href="anltab.html">anltab</a></code>,
-and writes <code>manifest.json</code>, <code>report.html</code> and <code>report.md</code>
-in <code>results/</code>.</p></dd>
-
-<dt><code>README.md</code></dt>
-<dd><p>the three steps to fill in and run the capsule.</p></dd>
-
+<code><a href="loadprov.html">loadprov</a></code> and <code><a href="vrfcps.html">vrfcps</a></code> expect: <code>name</code>,
+<code>source</code> (<code>url</code>, <code>publisher</code>, <code>licence</code>,
+<code>retrieved</code>, <code>sha256</code>) and <code>table</code> (<code>value</code>,
+<code>period</code>, <code>by</code>, <code>rounding</code>, <code>suplim</code>). Every field that
+must be filled in is marked <code>TODO</code>.</p></dd>
+ <dt><code>analysis.R</code></dt>
+<dd><p>reads the
+provenance, downloads the source with <code><a href="fdl.html">fdl</a></code> (a local path is read
+directly), computes its SHA-256 with <code><a href="sha256file.html">sha256file</a></code> and stops if it
+no longer matches the pinned value, runs <code><a href="anltab.html">anltab</a></code>, and writes
+<code>manifest.json</code>, <code>report.html</code> and <code>report.md</code> in
+<code>results/</code>.</p></dd>
+ <dt><code>README.md</code></dt>
+<dd><p>the three steps to fill in and run
+the capsule.</p></dd>
 
 </dl><p>With <code>example = TRUE</code> the source is the OTIS table
-<code>otis_a01_individuals.csv</code> shipped in the package's <code>extdata</code> folder, so
-<code>Rscript analysis.R</code> runs as written. The table settings in the
-template (<code>value = "individuals"</code>, <code>period = "year"</code>,
-<code>by = c("table", "group")</code>) fit that example and must be edited for
-other data.</p>
+<code>otis_a01_individuals.csv</code> shipped in the package's <code>extdata</code>
+folder, so <code>Rscript analysis.R</code> runs as written. The table settings in
+the template (<code>value = "individuals"</code>, <code>period = "year"</code>, <code>by
+= c("table", "group")</code>) fit that example and must be edited for other data.</p>
 <p>Side effects: creates <code>path</code> (and its parents) and writes the three
 files. Errors: <code>path</code> exists and is not empty; <code>name</code> is not a
 single non-empty string. The <code>name</code> and source are written as escaped
@@ -148,9 +144,9 @@ JSON strings, so quotes and backslashes are safe.</p>
 <span class="r-in"><span><span class="co"># the provenance file to fill in</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"data_provenance.json"</span><span class="op">)</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "name": "capsule-1f2551d364dc",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   "name": "capsule-219737e10c35",</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   "source": {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     "url": "/tmp/RtmpshpHV7/temp_libpath1f25191e1ec1/rmoriebricklayer/extdata/otis_a01_individuals.csv",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "url": "/tmp/Rtmp8mkWXN/temp_libpath2197c49bee9/rmoriebricklayer/extdata/otis_a01_individuals.csv",</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     "publisher": "TODO: who publishes the table",</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     "licence": "TODO: e.g. Open Government Licence - Ontario",</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     "retrieved": "TODO: YYYY-MM-DD",</span>

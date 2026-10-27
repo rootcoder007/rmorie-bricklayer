@@ -19,7 +19,7 @@ come out of the data."><meta property="og:image" content="https://rootcoder007.g
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,15 +103,15 @@ the original run did. <code>NULL</code> (the default) uses the recorded one.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of class <code>c("bricklayer_recompute", "list")</code>:</p><dl><dt><code>ok</code></dt>
-<dd><p>logical, every statistic matched and none was left unchecked.</p></dd>
-
-<dt><code>results</code></dt>
-<dd><p>data frame, one row per recomputed statistic, with the
-columns <code>name</code> (character), <code>recorded</code> and <code>recomputed</code> (numeric,
-<code>NA</code> for non-numeric values), <code>delta</code> (numeric absolute
-difference), <code>tol</code> (numeric), <code>status</code> (<code>"MATCH"</code>,
-<code>"DIFFER"</code>, <code>"NOT_RECORDED"</code> or <code>"ERROR"</code>) and <code>detail</code>
-(character explanation).</p></dd>
+<dd><p>logical, every statistic matched and none was left
+unchecked.</p></dd>
+ <dt><code>results</code></dt>
+<dd><p>data frame, one row per recomputed
+statistic, with the columns <code>name</code> (character), <code>recorded</code> and
+<code>recomputed</code> (numeric, <code>NA</code> for non-numeric values), <code>delta</code>
+(numeric absolute difference), <code>tol</code> (numeric), <code>status</code>
+(<code>"MATCH"</code>, <code>"DIFFER"</code>, <code>"NOT_RECORDED"</code> or <code>"ERROR"</code>)
+and <code>detail</code> (character explanation).</p></dd>
 
 <dt><code>unchecked</code></dt>
 <dd><p>character, the names recorded but not recomputed.</p></dd>

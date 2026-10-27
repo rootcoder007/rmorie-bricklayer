@@ -19,7 +19,7 @@ confirm which labels went where and that nothing was changed afterwards."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,26 +107,31 @@ such as the dataset, table and analyst. Only the first element is kept.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>bricklayer_recode_manifest</code> with these elements:</p><ul><li><p><code>context</code>;</p></li>
-<li><p><code>created</code> (ISO 8601 UTC time);</p></li>
+    <p>A list of class <code>bricklayer_recode_manifest</code> with these
+elements:</p><ul><li><p><code>context</code>;</p></li>
+<li><p><code>created</code> (ISO 8601
+UTC time);</p></li>
 <li><p><code>mapping</code> (list) and <code>mapping_sha256</code>;</p></li>
 <li><p><code>n</code> (number of rows) and <code>n_missing</code>;</p></li>
-<li><p><code>counts_before</code> and <code>counts_after</code> (named lists of counts);</p></li>
-<li><p><code>checks</code>, a list: <code>crosstab_is_function</code>,
-<code>missingness_unchanged</code> and <code>matches_published</code>;</p></li>
+<li><p><code>counts_before</code>
+and <code>counts_after</code> (named lists of counts);</p></li>
+<li><p><code>checks</code>, a
+list: <code>crosstab_is_function</code>, <code>missingness_unchanged</code> and
+<code>matches_published</code>;</p></li>
 <li><p><code>published</code> (list or <code>NULL</code>);</p></li>
 <li><p><code>body_sha256</code>;</p></li>
-<li><p>with a key, <code>signature</code> and <code>public_key</code>.</p></li>
+<li><p>with a key, <code>signature</code> and
+<code>public_key</code>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function first runs <code><a href="vrfrcd.html">vrfrcd</a></code>, as
 <code>vrfrcd(original, recoded, mapping)</code>. When <code>pub</code> is given it then
 runs <code><a href="vrfmrg.html">vrfmrg</a></code>, as <code>vrfmrg(recoded, published)</code>, with the
-default <code>strict = TRUE</code>. Either check failing is an error, so a manifest is
-only produced for a recode that passed. For that reason
-<code>checks$matches_published</code> is <code>TRUE</code> or <code>NA</code> (no published counts), never
-<code>FALSE</code>.</p>
+default <code>strict = TRUE</code>. Either check failing is an error, so a manifest
+is only produced for a recode that passed. For that reason
+<code>checks$matches_published</code> is <code>TRUE</code> or <code>NA</code> (no published
+counts), never <code>FALSE</code>.</p>
 <p><code>body_sha256</code> is <code><a href="csha256.html">csha256</a></code> of the canonical JSON of
 every other field. With a <code>key</code>, <code><a href="cpssign.html">cpssign</a></code> signs that
 hash and the manifest also stores the public key: a

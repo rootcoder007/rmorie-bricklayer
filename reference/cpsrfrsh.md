@@ -72,13 +72,19 @@ schema the provenance pins
 ``` r
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 cpsrfrsh(d)            # the first pin: the data file is added
-#> Manifest diff: 0 changed, 1 added, 0 removed, 0 unchanged
-#>   added     otis_a01_individuals.csv  sha256 - -> 6b1a0d2d11f6, - -> 462 bytes
+#> ╭── Manifest diff ────────────────────────────────────────────────────────────╮
+#> │   Resources  0 changed, 1 added, 0 removed, 0 unchanged                     │
+#> │                                                                             │
+#> │   Files below differ between the two manifests (old -> new).                │
+#> │                                                                             │
+#> │   added     otis_a01_individuals.csv sha256 - -> 6b1a0d2d11f6, - -> 462     │
+#> │             bytes                                                           │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 vrfcps(d)$ok
 #> [1] TRUE
 cpsrfrsh(d)$change     # the source has not changed since
 #> [1] "unchanged"
 
 try(cpsrfrsh(tempfile()))
-#> Error : cpsrfrsh: `dir` is not an existing directory: /tmp/RtmpshpHV7/file1f254dda0555
+#> Error : cpsrfrsh: `dir` is not an existing directory: /tmp/Rtmp8mkWXN/file21974fbde126
 ```

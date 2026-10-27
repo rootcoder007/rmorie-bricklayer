@@ -99,7 +99,8 @@ smrystat(acc)
 #>      kurtosis 
 #> -1.775465e-03 
 
-# The batch answer to rounding (the formulas are exact; the arithmetic is double):
+# The batch answer to rounding (the formulas are exact; the arithmetic is
+# double):
 all.equal(smrystat(acc)[["variance"]], stats::var(x))
 #> [1] TRUE
 all.equal(smrystat(acc)[["mean"]], mean(x))
@@ -122,5 +123,5 @@ smrystat(onlsmry(c(1, NA, 3)))[c("n", "mean")]
 #>    n mean 
 #>    2    2 
 try(onlsmry(c("a", "b")))
-#> Error : smryupd: `x` must be numeric, not text such as "a"
+#> Error : onlsmry: `x` must be numeric, not text such as "a"
 ```

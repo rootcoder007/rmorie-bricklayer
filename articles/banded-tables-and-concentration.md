@@ -74,7 +74,21 @@ table(x)
 #>   1 3.5   9 
 #>  10   4   2
 ginicoef(x)
-#> [1] 0.452381
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0.4524                                                  │
+#> │   Units             16                                                      │
+#> │   Total             42                                                      │
+#> │   Largest unit      9 (21.4% of the total)                                  │
+#> │   Most for n units  0.9375                                                  │
+#> │                                                                             │
+#> │   A Gini of 0.4524: the total is highly concentrated.                       │
+#> │   That is 48% of the way from equal shares (0) to one unit holding all of   │
+#> │   it (0.9375 for 16 units).                                                 │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Concentration
@@ -90,20 +104,70 @@ gives the curve behind the Gini.
 ``` r
 
 ginicoef(rep(1, 10))             # no concentration
-#> [1] 0
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0                                                       │
+#> │   Units             10                                                      │
+#> │   Total             10                                                      │
+#> │   Largest unit      1 (10.0% of the total)                                  │
+#> │   Most for n units  0.9                                                     │
+#> │                                                                             │
+#> │   A Gini of 0: the total is close to equal shares.                          │
+#> │   That is 0% of the way from equal shares (0) to one unit holding all of    │
+#> │   it (0.9 for 10 units).                                                    │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ginicoef(c(rep(0, 9), 1))        # one unit holds everything
-#> [1] 0.9
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0.9                                                     │
+#> │   Units             10                                                      │
+#> │   Total             1                                                       │
+#> │   Largest unit      1 (100.0% of the total)                                 │
+#> │   Most for n units  0.9                                                     │
+#> │                                                                             │
+#> │   A Gini of 0.9: the total is very highly concentrated.                     │
+#> │   That is 100% of the way from equal shares (0) to one unit holding all of  │
+#> │   it (0.9 for 10 units).                                                    │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 1 - 1 / 10                   # the maximum for ten units
 #> [1] 0.9
 
 placements <- c(rep(1, 1200), rep(3, 430), rep(8, 110), rep(20, 38))
 ginicoef(placements)
-#> [1] 0.461225
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0.4612                                                  │
+#> │   Units             1,778                                                   │
+#> │   Total             4,130                                                   │
+#> │   Largest unit      20 (0.5% of the total)                                  │
+#> │   Most for n units  0.9994                                                  │
+#> │                                                                             │
+#> │   A Gini of 0.4612: the total is highly concentrated.                       │
+#> │   That is 46% of the way from equal shares (0) to one unit holding all of   │
+#> │   it (0.9994 for 1,778 units).                                              │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 topshr(placements, c(0.01, 0.05, 0.1))
-#>   fraction units      share
-#> 1     0.01    18 0.08716707
-#> 2     0.05    89 0.28280872
-#> 3     0.10   178 0.41888620
+#> ╭── Top shares of a total ────────────────────────────────────────────────╮
+#> │   Fractions  3                                                          │
+#> │                                                                         │
+#> │   top  units  share                                                     │
+#> │   ---  -----  ------                                                    │
+#> │   1%      18  8.717%                                                    │
+#> │   5%      89  28.28%                                                    │
+#> │   10%    178  41.89%                                                    │
+#> │                                                                         │
+#> │   The top 1% of units (18 of them) hold 8.717% of the total; with equal │
+#> │   shares they would hold 1%.                                            │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 head(lorenzc(placements))
 #>     population        value
 #> 1 0.0000000000 0.0000000000
@@ -129,47 +193,59 @@ recomputes a statistic over a range of caps:
 
 counts <- c(1200, 430, 110, 38)
 bandsens(b, counts)
-#> ── Sensitivity to the open top band's assumed cap ──────────────── 
-#>        cap     value
-#>   11.55000 0.4254708
-#>   15.09841 0.4346095
-#>   19.73696 0.4461100
-#>   25.80058 0.4604302
-#>   33.72707 0.4780278
-#>   44.08875 0.4993060
-#>   57.63375 0.5245371
-#>   75.34008 0.5537719
-#>   98.48616 0.5867522
-#>  128.74322 0.6228545
-#>  168.29590 0.6610951
-#>  220.00000 0.7002144
-#> 
-#>   span over the caps tried: 0.2747 (53.7% of the typical value)
-#>   The statistic moves by more than a tenth of itself across the
-#>   caps tried, so it is a property of the assumption as much as
-#>   of the data. Report the range, not a single figure.
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Sensitivity to the open top band's assumed cap ───────────────────────╮
+#> │   Open band starts at         11                                        │
+#> │   Caps tried                  12                                        │
+#> │   Span over the caps          0.2747                                    │
+#> │   Share of the typical value  53.7%                                     │
+#> │                                                                         │
+#> │      cap   value                                                        │
+#> │   ------  ------                                                        │
+#> │    11.55  0.4255                                                        │
+#> │    15.10  0.4346                                                        │
+#> │    19.74  0.4461                                                        │
+#> │    25.80  0.4604                                                        │
+#> │    33.73  0.4780                                                        │
+#> │    44.09  0.4993                                                        │
+#> │    57.63  0.5245                                                        │
+#> │    75.34  0.5538                                                        │
+#> │    98.49  0.5868                                                        │
+#> │   128.74  0.6229                                                        │
+#> │   168.30  0.6611                                                        │
+#> │   220.00  0.7002                                                        │
+#> │                                                                         │
+#> │   span over the caps tried: 0.2747 (53.7% of the typical value). The    │
+#> │   statistic moves by more than a tenth of itself across the caps tried, │
+#> │   so it is a property of the assumption as much as of the data. Report  │
+#> │   the range, not a single figure.                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 bandsens(b, counts, stat = mean)
-#> ── Sensitivity to the open top band's assumed cap ──────────────── 
-#>        cap    value
-#>   11.55000 2.257283
-#>   15.09841 2.295202
-#>   19.73696 2.344771
-#>   25.80058 2.409567
-#>   33.72707 2.494271
-#>   44.08875 2.604998
-#>   57.63375 2.749742
-#>   75.34008 2.938955
-#>   98.48616 3.186298
-#>  128.74322 3.509629
-#>  168.29590 3.932296
-#>  220.00000 4.484814
-#> 
-#>   span over the caps tried: 2.228 (83.2% of the typical value)
-#>   The statistic moves by more than a tenth of itself across the
-#>   caps tried, so it is a property of the assumption as much as
-#>   of the data. Report the range, not a single figure.
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Sensitivity to the open top band's assumed cap ───────────────────────╮
+#> │   Open band starts at         11                                        │
+#> │   Caps tried                  12                                        │
+#> │   Span over the caps          2.228                                     │
+#> │   Share of the typical value  83.2%                                     │
+#> │                                                                         │
+#> │      cap  value                                                         │
+#> │   ------  -----                                                         │
+#> │    11.55  2.257                                                         │
+#> │    15.10  2.295                                                         │
+#> │    19.74  2.345                                                         │
+#> │    25.80  2.410                                                         │
+#> │    33.73  2.494                                                         │
+#> │    44.09  2.605                                                         │
+#> │    57.63  2.750                                                         │
+#> │    75.34  2.939                                                         │
+#> │    98.49  3.186                                                         │
+#> │   128.74  3.510                                                         │
+#> │   168.30  3.932                                                         │
+#> │   220.00  4.485                                                         │
+#> │                                                                         │
+#> │   span over the caps tried: 2.228 (83.2% of the typical value). The     │
+#> │   statistic moves by more than a tenth of itself across the caps tried, │
+#> │   so it is a property of the assumption as much as of the data. Report  │
+#> │   the range, not a single figure.                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Heavy tails
@@ -231,11 +307,33 @@ tot <- cp[cp$GEO_LEVEL != "Country" & cp$AGE_GROUP == "Total - Age groups" &
             cp$RESIDENCE == "Total - Residence on or off reserve" &
             grepl("^Total - Average age", cp$CHARACTERISTIC_NAME), ]
 ginicoef(tot$FIRST_NATIONS)
-#> [1] 0.5291808
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0.5292                                                  │
+#> │   Units             13                                                      │
+#> │   Total             1,048,410                                               │
+#> │   Largest unit      251,030 (23.9% of the total)                            │
+#> │   Most for n units  0.9231                                                  │
+#> │                                                                             │
+#> │   A Gini of 0.5292: the total is highly concentrated.                       │
+#> │   That is 57% of the way from equal shares (0) to one unit holding all of   │
+#> │   it (0.9231 for 13 units).                                                 │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 topshr(tot$FIRST_NATIONS, fracs = c(0.25, 0.5))
-#>   fraction units     share
-#> 1     0.25     4 0.6787850
-#> 2     0.50     7 0.9326599
+#> ╭── Top shares of a total ────────────────────────────────────────────────╮
+#> │   Fractions  2                                                          │
+#> │                                                                         │
+#> │   top  units  share                                                     │
+#> │   ---  -----  ------                                                    │
+#> │   25%      4  67.88%                                                    │
+#> │   50%      7  93.27%                                                    │
+#> │                                                                         │
+#> │   The top 25% of units (4 of them) hold 67.88% of the total; with equal │
+#> │   shares they would hold 25%.                                           │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## The bands and the curve in a picture
@@ -249,7 +347,13 @@ is spread.
 ``` r
 
 op <- par(mfrow = c(1, 2))
-barplot(counts, names.arg = b$label, col = blpal()[2], main = "Counts by band", ylab = "count")
+barplot(
+  counts,
+  names.arg = b$label,
+  col = blpal()[2],
+  main = "Counts by band",
+  ylab = "count"
+)
 plotlrnz(placements, main = "Concentration of placements")
 ```
 

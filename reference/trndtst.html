@@ -17,7 +17,7 @@ series lengths an annual administrative extract actually has."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,7 +120,8 @@ the slope interval.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>S</code>, <code>tau</code>, <code>p_value</code>, <code>slope</code>
+    <p>A list of class <code>rmbl_trend_test</code> with <code>S</code>,
+<code>tau</code>, <code>p_value</code>, <code>slope</code>
 (Theil-Sen, in units of <code>y</code> per unit of <code>x</code>),
 <code>intercept</code>, <code>slopelo</code> and <code>slopeup</code> (the
 distribution-free interval), <code>slopecicla</code> (<code>TRUE</code> when
@@ -151,12 +152,12 @@ Mann-Kendall's variance places at the chosen level, so it is consistent
 with the test rather than derived from a different model. At small
 \(n\) the slopes may not reach the requested confidence; the bound is
 then the most extreme slope and <code>slopecicla</code> is <code>TRUE</code>.</p>
-<p>Missing periods are dropped and the series is sorted by <code>x</code>. Errors: fewer
-than three periods; infinite values; <code>x</code> and <code>y</code> of different lengths; a
-period given twice in <code>x</code>; a data frame without <code>value</code> or with a column
-not found; more than 20,000 periods (the pairwise slopes would not fit in memory);
-a <code>conflvl</code> outside (0, 1). <code>exact = TRUE</code> with \(n &gt; 8\) warns and
-uses the normal approximation.</p>
+<p>Missing periods are dropped and the series is sorted by <code>x</code>. Errors:
+fewer than three periods; infinite values; <code>x</code> and <code>y</code> of different
+lengths; a period given twice in <code>x</code>; a data frame without <code>value</code>
+or with a column not found; more than 20,000 periods (the pairwise slopes
+would not fit in memory); a <code>conflvl</code> outside (0, 1). <code>exact =
+TRUE</code> with \(n &gt; 8\) warns and uses the normal approximation.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -179,88 +180,44 @@ preferring it on a series this short.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Five years of placements.</span></span></span>
 <span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">402</span>, <span class="fl">377</span>, <span class="fl">190</span>, <span class="fl">268</span>, <span class="fl">331</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">trndtst</span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $S</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $tau</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $p_value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.4833333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $slope</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -21.375</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $intercept</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 419.75</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $slopelo</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -187</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $slopeup</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 78</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $slopecicla</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $var_S</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 16.66667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $alternative</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "two.sided"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $conflvl</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.95</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $method</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Mann-Kendall, exact over all 120 orderings"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Trend test</span> ───────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Method       Mann-Kendall, exact over all 120 orderings               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Periods      5                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   S            -4                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Alternative  two.sided                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Confidence   95%                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   term         estimate  95% CI          p                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----------  --------  ----------  -----                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Kendall tau     -0.40              0.483                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Sen slope      -21.38  [-187, 78]                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Kendall's tau of -0.4 means a downward tendency (p = 0.483); the Sen  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   slope says the series moves by about -21.38 per period.               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The slope's interval was clamped to the range of the pairwise slopes. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A monotone series is detected even at n = 5, where a regression's</span></span></span>
 <span class="r-in"><span><span class="co"># standard error would be nearly uninformative.</span></span></span>
 <span class="r-in"><span><span class="fu">trndtst</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $S</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $tau</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $p_value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.01666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $slope</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $intercept</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $slopelo</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $slopeup</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $slopecicla</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $var_S</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 16.66667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $alternative</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "two.sided"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $conflvl</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.95</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $method</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Mann-Kendall, exact over all 120 orderings"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Trend test</span> ───────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Method       Mann-Kendall, exact over all 120 orderings               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Periods      5                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   S            10                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Alternative  two.sided                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Confidence   95%                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   term         estimate  95% CI      p                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----------  --------  ------  -----                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Kendall tau         1          0.017                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Sen slope           1  [1, 1]                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Kendall's tau of 1 means an upward tendency (p = 0.017); the Sen      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   slope says the series moves by about 1 per period.                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The slope's interval was clamped to the range of the pairwise slopes. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># One aberrant period does not create a trend.</span></span></span>
 <span class="r-in"><span><span class="fu">trndtst</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">900</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">p_value</span></span></span>

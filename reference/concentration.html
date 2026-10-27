@@ -23,7 +23,7 @@ values."><meta property="og:image" content="https://rootcoder007.github.io/rmori
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,7 +118,11 @@ share of the total, units in ascending order), <code>n + 1</code> rows
 including the origin. <code>topshr()</code>: a data frame with columns
 <code>fraction</code> (the requested fraction of units), <code>units</code> (how
 many of the largest units that fraction is) and <code>share</code> (the share
-of the total those units hold).</p>
+of the total those units hold).
+It has class <code>c("rmbl_gini", "rmbl_measure", "numeric")</code>, so it
+prints as a box with its inputs (kept in attribute <code>"lakner"</code>);
+arithmetic, <code>[</code>, <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> and <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code> give plain
+numbers.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -158,24 +162,74 @@ further the greater the concentration.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Ten units holding one each: no concentration.</span></span></span>
 <span class="r-in"><span><span class="fu">ginicoef</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Gini coefficient  0                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Units             10                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Total             10                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Largest unit      1 (10.0% of the total)                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Most for n units  0.9                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A Gini of 0: the total is close to equal shares.                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   That is 0% of the way from equal shares (0) to one unit holding all of    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   it (0.9 for 10 units).                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   doubling every value leaves it unchanged. It says how unequal, not        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   which units: topshr() and lorenzc() show where the total sits.            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># One unit holding everything: the maximum for ten units.</span></span></span>
 <span class="r-in"><span><span class="fu">ginicoef</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">9</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Gini coefficient  0.9                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Units             10                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Total             1                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Largest unit      1 (100.0% of the total)                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Most for n units  0.9                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A Gini of 0.9: the total is very highly concentrated.                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   That is 100% of the way from equal shares (0) to one unit holding all of  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   it (0.9 for 10 units).                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   doubling every value leaves it unchanged. It says how unequal, not        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   which units: topshr() and lorenzc() show where the total sits.            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fl">1</span> <span class="op">-</span> <span class="fl">1</span> <span class="op">/</span> <span class="fl">10</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">placements</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">430</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">8</span>, <span class="fl">110</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">38</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">ginicoef</span><span class="op">(</span><span class="va">placements</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.461225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Gini coefficient  0.4612                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Units             1,778                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Total             4,130                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Largest unit      20 (0.5% of the total)                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Most for n units  0.9994                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A Gini of 0.4612: the total is highly concentrated.                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   That is 46% of the way from equal shares (0) to one unit holding all of   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   it (0.9994 for 1,778 units).                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   doubling every value leaves it unchanged. It says how unequal, not        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   which units: topshr() and lorenzc() show where the total sits.            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># What the most frequent few account for.</span></span></span>
 <span class="r-in"><span><span class="fu">topshr</span><span class="op">(</span><span class="va">placements</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   fraction units      share</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     0.01    18 0.08716707</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2     0.05    89 0.28280872</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3     0.10   178 0.41888620</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Top shares of a total</span> ────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Fractions  3                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   top  units  share                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---  -----  ------                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   1%      18  8.717%                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   5%      89  28.28%                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   10%    178  41.89%                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The top 1% of units (18 of them) hold 8.717% of the total; with equal │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   shares they would hold 1%.                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">lorenzc</span><span class="op">(</span><span class="va">placements</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     population        value</span>
@@ -188,7 +242,21 @@ further the greater the concentration.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># missing values are dropped</span></span></span>
 <span class="r-in"><span><span class="fu">ginicoef</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">NA</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Gini coefficient  0.25                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Units             2                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Total             4                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Largest unit      3 (75.0% of the total)                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Most for n units  0.5                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A Gini of 0.25: the total is moderately concentrated.                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   That is 50% of the way from equal shares (0) to one unit holding all of   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   it (0.5 for 2 units).                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   doubling every value leaves it unchanged. It says how unequal, not        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   which units: topshr() and lorenzc() show where the total sits.            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a zero total has no Gini coefficient</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">ginicoef</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

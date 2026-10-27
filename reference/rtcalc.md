@@ -121,40 +121,98 @@ stops <- data.frame(
 
 # per 1,000 residents, the default
 rtcalc(stops, stops, residents, by = "division")
-#> ── Rate per 1,000, 95% exact Poisson interval ──────────────────── 
-#>  division count population      rate      lower     upper flag
-#>      East     3       9500 0.3157895 0.06512338 0.9228708 <NA>
-#>     North   412     120000 3.4333333 3.10977110 3.7814142 <NA>
-#>     South    77      41000 1.8780488 1.48212673 2.3472387 <NA>
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Rate per 1,000 ──────────────────────────────────────────────────────╮
+#> │   Count       stops                                                    │
+#> │   Population  residents                                                │
+#> │   Groups      division                                                 │
+#> │   Rows        3                                                        │
+#> │   Interval    95% exact Poisson                                        │
+#> │                                                                        │
+#> │   division  count  population   rate  95% CI                           │
+#> │   --------  -----  ----------  -----  --------------                   │
+#> │   East          3       9,500  0.316  [0.065, 0.923]                   │
+#> │   North       412     120,000  3.433  [3.110, 3.781]                   │
+#> │   South        77      41,000  1.878  [1.482, 2.347]                   │
+#> │                                                                        │
+#> │   Highest rate: North (3.433); lowest: East (0.3158). Their intervals  │
+#> │   do not overlap: the gap is more than sampling error.                 │
+#> │                                                                        │
+#> │   Each rate is the count over the population times the base; the exact │
+#> │   Poisson interval stays honest for small counts, where a normal one   │
+#> │   does not.                                                            │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # the denominator published guidance usually asks for
 rtcalc(stops, stops, residents, by = "division", per = "100k")
-#> ── Rate per 100,000, 95% exact Poisson interval ────────────────── 
-#>  division count population      rate      lower     upper flag
-#>      East     3       9500  31.57895   6.512338  92.28708 <NA>
-#>     North   412     120000 343.33333 310.977110 378.14142 <NA>
-#>     South    77      41000 187.80488 148.212673 234.72387 <NA>
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Rate per 100,000 ─────────────────────────────────────────────────────╮
+#> │   Count       stops                                                     │
+#> │   Population  residents                                                 │
+#> │   Groups      division                                                  │
+#> │   Rows        3                                                         │
+#> │   Interval    95% exact Poisson                                         │
+#> │                                                                         │
+#> │   division  count  population   rate  95% CI                            │
+#> │   --------  -----  ----------  -----  --------------                    │
+#> │   East          3       9,500   31.6  [6.5, 92.3]                       │
+#> │   North       412     120,000  343.3  [311.0, 378.1]                    │
+#> │   South        77      41,000  187.8  [148.2, 234.7]                    │
+#> │                                                                         │
+#> │   Highest rate: North (343.3); lowest: East (31.58). Their intervals do │
+#> │   not overlap: the gap is more than sampling error.                     │
+#> │                                                                         │
+#> │   Each rate is the count over the population times the base; the exact  │
+#> │   Poisson interval stays honest for small counts, where a normal one    │
+#> │   does not.                                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # East's three events: the interval is wider than the estimate, and
 # flagging it is the point of mincnt
 rtcalc(stops, stops, residents, by = "division", per = "100k",
      mincnt = 5)
-#> ── Rate per 100,000, 95% exact Poisson interval ────────────────── 
-#>  division count population      rate      lower     upper                flag
-#>      East     3       9500  31.57895   6.512338  92.28708 count at or below 5
-#>     North   412     120000 343.33333 310.977110 378.14142                <NA>
-#>     South    77      41000 187.80488 148.212673 234.72387                <NA>
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Rate per 100,000 ─────────────────────────────────────────────────────╮
+#> │   Count             stops                                               │
+#> │   Population        residents                                           │
+#> │   Groups            division                                            │
+#> │   Rows              3                                                   │
+#> │   Interval          95% exact Poisson                                   │
+#> │   Small-count flag  counts at or below 5                                │
+#> │                                                                         │
+#> │   division  count  population   rate  95% CI          flag              │
+#> │   --------  -----  ----------  -----  --------------  ----              │
+#> │   East          3       9,500   31.6  [6.5, 92.3]     [1]               │
+#> │   North       412     120,000  343.3  [311.0, 378.1]                    │
+#> │   South        77      41,000  187.8  [148.2, 234.7]                    │
+#> │                                                                         │
+#> │   Highest rate: North (343.3); lowest: East (31.58). Their intervals do │
+#> │   not overlap: the gap is more than sampling error. East rests on 5 or  │
+#> │   fewer events: read their rates with their wide intervals.             │
+#> │                                                                         │
+#> │   [1] count at or below 5                                               │
+#> │   Each rate is the count over the population times the base; the exact  │
+#> │   Poisson interval stays honest for small counts, where a normal one    │
+#> │   does not.                                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # vectors work too, for a single figure; a zero count has a lower limit of 0
 rtcalc(c(3, 0), 9500, per = "100k")
-#> ── Rate per 100,000, 95% exact Poisson interval ────────────────── 
-#>  count population     rate    lower    upper flag
-#>      3       9500 31.57895 6.512338 92.28708 <NA>
-#>      0       9500  0.00000 0.000000 38.83031 <NA>
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Rate per 100,000 ────────────────────────────────────────────────────╮
+#> │   Count       count                                                    │
+#> │   Population  population                                               │
+#> │   Rows        2                                                        │
+#> │   Interval    95% exact Poisson                                        │
+#> │                                                                        │
+#> │   count  population   rate  95% CI                                     │
+#> │   -----  ----------  -----  -------------                              │
+#> │       3       9,500  31.58  [6.51, 92.29]                              │
+#> │       0       9,500   0.00  [0.00, 38.83]                              │
+#> │                                                                        │
+#> │   Highest rate: row 1 (31.58); lowest: row 2 (0). Their intervals      │
+#> │   overlap: the data cannot tell the two apart.                         │
+#> │                                                                        │
+#> │   Each rate is the count over the population times the base; the exact │
+#> │   Poisson interval stays honest for small counts, where a normal one   │
+#> │   does not.                                                            │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # a fractional count has no Poisson interval
 try(rtcalc(2.5, 1000))

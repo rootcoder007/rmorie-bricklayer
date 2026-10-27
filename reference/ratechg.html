@@ -17,7 +17,7 @@ interval here accounts for the randomness in the counts."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -201,22 +201,40 @@ measured quantity.</p></div>
 <span class="r-in"><span><span class="co"># North's count rose while its population rose too: the rate change</span></span></span>
 <span class="r-in"><span><span class="co"># is smaller than the count change, which is the reason to use it</span></span></span>
 <span class="r-in"><span><span class="fu">ratechg</span><span class="op">(</span><span class="va">d</span>, <span class="va">stops</span>, <span class="va">residents</span>, <span class="va">year</span>, by <span class="op">=</span> <span class="st">"division"</span>, per <span class="op">=</span> <span class="st">"100k"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Change in rate per 100,000, lag 1, 95% exact conditional interval  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  division year count population     rate  prerate precnt prepop rateratio</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2021   400     120000 333.3333       NA     NA     NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2022   430     122000 352.4590 333.3333    400 120000 1.0573770</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2023   455     125000 364.0000 352.4590    430 122000 1.0327442</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2021    70      41000 170.7317       NA     NA     NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2022    66      41500 159.0361 170.7317     70  41000 0.9314974</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2023    61      42000 145.2381 159.0361     66  41500 0.9132395</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     pctchg      pctlo    pctup                 flag</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         NA         NA       NA no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5.737705  -7.937165 21.46533                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3.274419  -9.679876 18.10199                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         NA         NA       NA no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  -6.850258 -34.473784 32.29053                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  -8.676046 -36.596300 31.35600                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change in rate per 100,000</span> ───────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Count       stops                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Population  residents                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Period      year                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Groups      division                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lag         1                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Interval    95% exact conditional, on the % change                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   division  year  count  population   rate  precnt   prepop  prerate    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   --------  ----  -----  ----------  -----  ------  -------  -------    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North     2021    400     120,000  333.3                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North     2022    430     122,000  352.5     400  120,000    333.3    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North     2023    455     125,000  364.0     430  122,000    352.5    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South     2021     70      41,000  170.7                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South     2022     66      41,500  159.0      70   41,000    170.7    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South     2023     61      42,000  145.2      66   41,500    159.0    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   division  rateratio  pctchg  pct_interval     flag                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   --------  ---------  ------  ---------------  ----                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North                                         [1]                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North        1.0574   5.738  [-7.94, 21.47]                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North        1.0327   3.274  [-9.68, 18.10]                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South                                         [1]                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South        0.9315  -6.850  [-34.47, 32.29]                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South        0.9132  -8.676  [-36.60, 31.36]                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Not distinguishable from 0 (interval includes it): North 2022         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   (+5.7%), North 2023 (+3.3%), South 2022 (-6.9%) and South 2023        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   (-8.7%).                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   [1] no comparison period                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   pctchg is the percentage change in the rate from the period `lag`     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   before; an interval that includes 0 means the change could be chance. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a missing year gives no comparison rather than a wrong one</span></span></span>
 <span class="r-in"><span><span class="va">gap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2019</span>, <span class="fl">2020</span>, <span class="fl">2022</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">14</span>, <span class="fl">12</span><span class="op">)</span>,</span></span>
@@ -227,22 +245,39 @@ measured quantity.</p></div>
 <span class="r-in"><span><span class="co"># two-year change, flagging small earlier counts</span></span></span>
 <span class="r-in"><span><span class="fu">ratechg</span><span class="op">(</span><span class="va">d</span>, <span class="va">stops</span>, <span class="va">residents</span>, <span class="va">year</span>, by <span class="op">=</span> <span class="st">"division"</span>, lag <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>            mincnt <span class="op">=</span> <span class="fl">65</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Change in rate per 1,000, lag 2, 95% exact conditional interval  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  division year count population     rate  prerate precnt prepop rateratio</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2021   400     120000 3.333333       NA     NA     NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2022   430     122000 3.524590       NA     NA     NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2023   455     125000 3.640000 3.333333    400 120000 1.0920000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2021    70      41000 1.707317       NA     NA     NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2022    66      41500 1.590361       NA     NA     NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2023    61      42000 1.452381 1.707317     70  41000 0.8506803</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     pctchg      pctlo    pctup                 flag</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         NA         NA       NA no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         NA         NA       NA no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    9.20000  -4.737636 25.21520                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         NA         NA       NA no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         NA         NA       NA no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  -14.93197 -40.656914 21.65731                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change in rate per 1,000</span> ─────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Count       stops                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Population  residents                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Period      year                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Groups      division                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lag         2                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Interval    95% exact conditional, on the % change                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   division  year  count  population   rate  precnt   prepop  prerate    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   --------  ----  -----  ----------  -----  ------  -------  -------    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North     2021    400     120,000  3.333                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North     2022    430     122,000  3.525                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North     2023    455     125,000  3.640     400  120,000    3.333    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South     2021     70      41,000  1.707                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South     2022     66      41,500  1.590                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South     2023     61      42,000  1.452      70   41,000    1.707    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   division  rateratio  pctchg  pct_interval     flag                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   --------  ---------  ------  ---------------  ----                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North                                         [1]                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North                                         [1]                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North        1.0920    9.20  [-4.74, 25.22]                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South                                         [1]                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South                                         [1]                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South        0.8507  -14.93  [-40.66, 21.66]                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Not distinguishable from 0 (interval includes it): North 2023 (+9.2%) │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   and South 2023 (-14.9%).                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   [1] no comparison period                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   pctchg is the percentage change in the rate from the period `lag`     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   before; an interval that includes 0 means the change could be chance. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">ratechg</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `x` must be a data frame, not integer</span>

@@ -220,8 +220,14 @@ cat(polrpttxt(r))
 #> STATUS: ok
 
 # Scalar inputs: a city of 2.8 million at a PM2.5 mean of 9.
-s <- vrfpol("pm25", expomean = 9, expoprev = 1,
-                      brate = 750, pop = 2.8e6, reg = "Toronto")
+s <- vrfpol(
+  "pm25",
+  expomean = 9,
+  expoprev = 1,
+  brate = 750,
+  pop = 2.8e6,
+  reg = "Toronto"
+)
 s$pipeline$burden$attrcases
 #> [1] 510.8617
 attr(s, "exitstat")
@@ -229,14 +235,16 @@ attr(s, "exitstat")
 
 # A CSV of measurements with an income column.
 f <- tempfile(fileext = ".csv")
-utils::write.csv(data.frame(exposure = c(12, 18, 25, 31, 9), income = 1:5), f,
-                 row.names = FALSE)
+utils::write.csv(
+  data.frame(exposure = c(12, 18, 25, 31, 9), income = 1:5),
+  f,
+  row.names = FALSE
+)
 vrfpol("no2", expcsv = f)$pipeline$equity$concidx
 #> [1] 0.02947368
 
 # A rate per person-year passed as per 100,000 fails an assumption ...
-bad <- vrfpol("no2", expomean = 20, expoprev = 1,
-                        brate = 0.008)
+bad <- vrfpol("no2", expomean = 20, expoprev = 1, brate = 0.008)
 bad$status
 #> [1] "assumption_failure"
 # ... and an argument it cannot use is an error report, not an R error.

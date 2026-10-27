@@ -21,7 +21,7 @@ than scattered through code."><meta property="og:image" content="https://rootcod
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,16 +136,37 @@ checks that need no rules.</p></div>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># A column predicate, applied row-wise.</span></span></span>
 <span class="r-in"><span><span class="fu">rul</span><span class="op">(</span><span class="st">"agenonnegative"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="va">v</span> <span class="op">&gt;=</span> <span class="fl">0</span>, col <span class="op">=</span> <span class="st">"age"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;rule&gt; agenonnegative [warning] on `age`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Rule agenonnegative</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Severity  warning                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Applies   on `age`                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Message   Rule 'agenonnegative' failed                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A check the data must pass; valrules() runs it and reports the rows that  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   break it.                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A whole-column property.</span></span></span>
 <span class="r-in"><span><span class="fu">rul</span><span class="op">(</span><span class="st">"idunique"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/duplicated.html" class="external-link">anyDuplicated</a></span><span class="op">(</span><span class="va">v</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"id"</span>,</span></span>
 <span class="r-in"><span>     sev <span class="op">=</span> <span class="st">"fatal"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;rule&gt; idunique [fatal] on `id`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Rule idunique</span> ────────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Severity  fatal                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Applies   on `id`                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Message   Rule 'idunique' failed                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A check the data must pass; valrules() runs it and reports the rows that  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   break it.                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A table-level rule spanning two columns.</span></span></span>
 <span class="r-in"><span><span class="fu">rul</span><span class="op">(</span><span class="st">"datesordered"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">start</span> <span class="op">&lt;=</span> <span class="va">df</span><span class="op">$</span><span class="va">end</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;rule&gt; datesordered [warning] table-level</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Rule datesordered</span> ────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Severity  warning                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Applies   table-level                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Message   Rule 'datesordered' failed                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A check the data must pass; valrules() runs it and reports the rows that  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   break it.                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># with a message that says what a failure means</span></span></span>
 <span class="r-in"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu">rul</span><span class="op">(</span><span class="st">"releaseafteradmission"</span>,</span></span>

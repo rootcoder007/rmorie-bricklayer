@@ -47,8 +47,9 @@ nearest to it, before or after.
 
 `NULL` is returned when the API has no snapshot, when the request fails
 (offline, an HTTP error, invalid JSON) or when the answer has no usable
-URL. Error: `url` that is not a single non-empty string. Nothing is
-written.
+URL. Errors: `url` that is not a single non-empty string or is not a
+public web address; `ts` that is not `NULL`, `""` or a string of 1 to 14
+digits. Nothing is written.
 
 ## Examples
 
@@ -56,6 +57,8 @@ written.
 # argument errors come before any request
 try(wbsnpurl(NA))
 #> Error : wbsnpurl: `url` must be a single non-empty string
+try(wbsnpurl("https://www.r-project.org/", ts = "2020&x=1"))
+#> Error : wbsnpurl: `ts` must be NULL, "" or a string of 1 to 14 digits (YYYYMMDDhhmmss or a prefix of it)
 try(wbsnpurl(c("https://a.org", "https://b.org")))
 #> Error : wbsnpurl: `url` must be a single non-empty string
 if (FALSE) { # interactive()

@@ -30,10 +30,14 @@ stand-in.
 
 ``` r
 
+ckan <- paste0(
+  "https://data.ontario.ca/api/3/action/package_show",
+  "?id=ontario-public-library-statistics"
+)
 provjson <- '{
   "dataset": {
     "title": "Demo library statistics",
-    "ckan_api_endpoint": "https://data.ontario.ca/api/3/action/package_show?id=ontario-public-library-statistics"
+    "ckan_api_endpoint": "CKAN"
   },
   "resource": { "name_match_pattern": "2014" },
   "schema": {
@@ -52,6 +56,7 @@ provjson <- '{
     }
   }
 }'
+provjson <- sub("CKAN", ckan, provjson, fixed = TRUE)
 
 provpath <- file.path(tempdir(), "data_provenance.json")
 writeLines(provjson, provpath)
@@ -166,7 +171,7 @@ summarypath <- wrsmrytxt(
 cat(readLines(summarypath)[7:12], sep = "\n")
 #> Project:   demo-study
 #> Author:    A. Author
-#> When:      2026-10-22 12:15:28 UTC
+#> When:      2026-10-27 13:58:26 UTC
 #> OS:        Linux
 #> R:         R version 4.6.1 (2026-06-24)
 #> Mode:      SYNTHETIC (not real data -- pipeline check only)
@@ -200,10 +205,16 @@ d <- indiex("wellbeing")
 f <- file.path(tempdir(), "indigenous_wellbeing.csv")
 utils::write.csv(d, f, row.names = FALSE)
 h <- sha256file(f)
-m <- mkmnf(list(dataset = "indigenouswellbeing", rows = nrow(d), sha256 = h,
-                        source = "Statistics Canada, Indigenous Peoples Survey 2022",
-                        licence = "Statistics Canada Open Licence"),
-                   env = FALSE)
+m <- mkmnf(
+  list(
+    dataset = "indigenouswellbeing",
+    rows = nrow(d),
+    sha256 = h,
+    source = "Statistics Canada, Indigenous Peoples Survey 2022",
+    licence = "Statistics Canada Open Licence"
+  ),
+  env = FALSE
+)
 vrfsha256(f, h)
 #> $actual
 #> [1] "c4b3e61f660856d89b302f1050393f99d84363ad7540b838ebecfbac5e4e5c2a"
@@ -229,8 +240,17 @@ ci_plot <- function(t, lab, main) {
   y <- seq_len(nrow(t))
   op <- par(mar = c(4, 10, 3, 1))
   on.exit(par(op))
-  plot(t$estimate, y, xlim = range(t$lower, t$upper, na.rm = TRUE), yaxt = "n", pch = 19,
-       col = blpal()[1], xlab = "estimate and 95% interval", ylab = "", main = main)
+  plot(
+    t$estimate,
+    y,
+    xlim = range(t$lower, t$upper, na.rm = TRUE),
+    yaxt = "n",
+    pch = 19,
+    col = blpal()[1],
+    xlab = "estimate and 95% interval",
+    ylab = "",
+    main = main
+  )
   segments(t$lower, y, t$upper, y, col = blpal()[1])
   axis(2, y, lab[o], las = 1, cex.axis = 0.7)
 }
@@ -243,7 +263,13 @@ ci_plot(t1, t1$group, t1$indicator[1])
 ``` r
 
 v <- tapply(df$visits, df$year, sum)
-barplot(v, col = blpal()[2], main = "Visits by year", xlab = "year", ylab = "visits")
+barplot(
+  v,
+  col = blpal()[2],
+  main = "Visits by year",
+  xlab = "year",
+  ylab = "visits"
+)
 ```
 
 ![](capsules_files/figure-html/capsules-capsule-plots-2.png)

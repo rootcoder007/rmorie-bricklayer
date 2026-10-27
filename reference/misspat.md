@@ -18,7 +18,7 @@ misspat(data, maxpat = 20L)
 
 - data:
 
-  A data frame.
+  A data frame whose missingness patterns are counted.
 
 - maxpat:
 
@@ -68,13 +68,19 @@ structural <- data.frame(
   b = c(rep(NA, 3), 4:10)
 )
 misspat(structural)
-#> ── Missingness patterns ────────────────────────────────────────── 
-#>   columns, in pattern order: id, a, b
-#> 
-#>  pattern n_rows pctrows n_missing columns
-#>      ...      7    70.0         0        
-#>      .XX      3    30.0         2    a, b
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Missingness patterns ─────────────────────────────────────────────────────╮
+#> │   Columns   in pattern order: id, a, b                                      │
+#> │   Patterns  2                                                               │
+#> │   Rows      10                                                              │
+#> │                                                                             │
+#> │   pattern  n_rows  pctrows  n_missing  columns                              │
+#> │   -------  ------  -------  ---------  -------                              │
+#> │   ...           7  70.0             0                                       │
+#> │   .XX           3  30.0             2  a, b                                 │
+#> │                                                                             │
+#> │   Each pattern marks the columns missing together; a few large patterns     │
+#> │   point to a cause worth naming before rows are dropped.                    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # The same per-column rates, but missing independently.
 scattered <- data.frame(
@@ -83,32 +89,50 @@ scattered <- data.frame(
   b = c(1:7, rep(NA, 3))
 )
 misspat(scattered)
-#> ── Missingness patterns ────────────────────────────────────────── 
-#>   columns, in pattern order: id, a, b
-#> 
-#>  pattern n_rows pctrows n_missing columns
-#>      ...      4    40.0         0        
-#>      ..X      3    30.0         1       b
-#>      .X.      3    30.0         1       a
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Missingness patterns ─────────────────────────────────────────────────────╮
+#> │   Columns   in pattern order: id, a, b                                      │
+#> │   Patterns  3                                                               │
+#> │   Rows      10                                                              │
+#> │                                                                             │
+#> │   pattern  n_rows  pctrows  n_missing  columns                              │
+#> │   -------  ------  -------  ---------  -------                              │
+#> │   ...           4  40.0             0                                       │
+#> │   ..X           3  30.0             1  b                                    │
+#> │   .X.           3  30.0             1  a                                    │
+#> │                                                                             │
+#> │   Each pattern marks the columns missing together; a few large patterns     │
+#> │   point to a cause worth naming before rows are dropped.                    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # A complete frame has exactly one pattern.
 misspat(data.frame(x = 1:3, y = 4:6))
-#> ── Missingness patterns ────────────────────────────────────────── 
-#>   columns, in pattern order: x, y
-#> 
-#>  pattern n_rows pctrows n_missing columns
-#>       ..      3   100.0         0        
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Missingness patterns ─────────────────────────────────────────────────────╮
+#> │   Columns   in pattern order: x, y                                          │
+#> │   Patterns  1                                                               │
+#> │   Rows      3                                                               │
+#> │                                                                             │
+#> │   pattern  n_rows  pctrows  n_missing  columns                              │
+#> │   -------  ------  -------  ---------  -------                              │
+#> │   ..            3  100.0            0                                       │
+#> │                                                                             │
+#> │   Each pattern marks the columns missing together; a few large patterns     │
+#> │   point to a cause worth naming before rows are dropped.                    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # keep only the most common pattern
 misspat(scattered, maxpat = 1)
-#> ── Missingness patterns ────────────────────────────────────────── 
-#>   columns, in pattern order: id, a, b
-#> 
-#>  pattern n_rows pctrows n_missing columns
-#>      ...      4    40.0         0        
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Missingness patterns ─────────────────────────────────────────────────────╮
+#> │   Columns   in pattern order: id, a, b                                      │
+#> │   Patterns  1                                                               │
+#> │   Rows      4                                                               │
+#> │                                                                             │
+#> │   pattern  n_rows  pctrows  n_missing  columns                              │
+#> │   -------  ------  -------  ---------  -------                              │
+#> │   ...           4  40.0             0                                       │
+#> │                                                                             │
+#> │   Each pattern marks the columns missing together; a few large patterns     │
+#> │   point to a cause worth naming before rows are dropped.                    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a frame without columns has no patterns
 try(misspat(data.frame()))

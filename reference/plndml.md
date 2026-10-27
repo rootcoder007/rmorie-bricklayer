@@ -80,7 +80,7 @@ plndml(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the intervals reported (default 0.95).
 
 ## Value
 
@@ -150,8 +150,59 @@ p$unemployment <- 6 + sin(p$month / 6) + stats::rnorm(nrow(p), 0, 0.5)
 p$patrols <- 0.5 * p$unemployment + p$reformed + stats::rnorm(nrow(p))
 plndml(p, "district", "month", "crmrate", "patrols",
           c("unemployment", "arrrate"), lrn = "ridge")
-#> Double machine learning with fixed effects (ridge, 5 folds of units, 1 split)
-#>  estimate      se   lower   upper      t   p_value
-#>   -0.2957 0.05072 -0.4019 -0.1896 -5.831 1.287e-05
-#> 720 observations, 20 clusters; out-of-fold R-squared: outcome -0.000, treatment 0.081
+#> ╭── Double machine learning with fixed effects ──────────────────────────╮
+#> │   Learner                ridge                                         │
+#> │   Cross-fitting          5 folds of units, 1 split                     │
+#> │   Observations           720                                           │
+#> │   Clusters               20                                            │
+#> │   Out-of-fold R-squared  outcome -0.000, treatment 0.081               │
+#> │   Confidence             95%                                           │
+#> │                                                                        │
+#> │   term       estimate       se  95% CI                   t  p_value    │
+#> │   ---------  --------  -------  ------------------  ------  -------    │
+#> │   treatment   -0.2957  0.05072  [-0.4019, -0.1896]  -5.831  < 0.001    │
+#> │                                                                        │
+#> │   With the covariates partialled out by the learner, the effect is     │
+#> │   -0.2957 (95% interval [-0.4019, -0.1896]): the interval excludes 0,  │
+#> │   so the data distinguish it from no effect.                           │
+#> │                                                                        │
+#> │   Folds are drawn over units, so a unit's rows are never split between │
+#> │   fitting and prediction.                                              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+# the by-law as the treatment, income as the confounder
+plndml(own, "town", "year", "rate", "bylaw", "income", lrn = "ridge")
+#> ╭── Double machine learning with fixed effects ──────────────────────────╮
+#> │   Learner                ridge                                         │
+#> │   Cross-fitting          5 folds of units, 1 split                     │
+#> │   Observations           80                                            │
+#> │   Clusters               8                                             │
+#> │   Out-of-fold R-squared  outcome -0.022, treatment -0.000              │
+#> │   Confidence             95%                                           │
+#> │                                                                        │
+#> │   term       estimate      se  95% CI                 t  p_value       │
+#> │   ---------  --------  ------  ----------------  ------  -------       │
+#> │   treatment    -4.127  0.2048  [-4.612, -3.643]  -20.15  < 0.001       │
+#> │                                                                        │
+#> │   With the covariates partialled out by the learner, the effect is     │
+#> │   -4.127 (95% interval [-4.612, -3.643]): the interval excludes 0, so  │
+#> │   the data distinguish it from no effect.                              │
+#> │                                                                        │
+#> │   Folds are drawn over units, so a unit's rows are never split between │
+#> │   fitting and prediction.                                              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

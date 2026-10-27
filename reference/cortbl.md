@@ -15,7 +15,7 @@ cortbl(data, meth = c("spearman", "pearson"), minprs = 3L)
 
 - data:
 
-  A data frame; non-numeric columns are ignored.
+  A data frame; its numeric columns are correlated in pairs.
 
 - meth:
 
@@ -68,32 +68,56 @@ df <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100))
 df$c <- df$a + stats::rnorm(100, sd = 0.2)
 
 cortbl(df)
-#> ── Correlations (spearman) ─────────────────────────────────────── 
-#>  x y correlation nprs
-#>  a b       0.039  100
-#>  a c       0.967  100
-#>  b c       0.015  100
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Correlations (spearman) ──────────────────────────────────────────────╮
+#> │   Method         Spearman (rank)                                        │
+#> │   Pairs          3                                                      │
+#> │   Strongest |r|  0.9665                                                 │
+#> │                                                                         │
+#> │   x  y  correlation  nprs                                               │
+#> │   -  -  -----------  ----                                               │
+#> │   a  b       0.0387   100                                               │
+#> │   a  c       0.9665   100                                               │
+#> │   b  c       0.0151   100                                               │
+#> │                                                                         │
+#> │   Each row is one pair of numeric columns, over the rows where both are │
+#> │   present (nprs); a correlation is blank when too few pairs remain.     │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # Pearson instead of Spearman
 cortbl(df, meth = "pearson")
-#> ── Correlations (pearson) ──────────────────────────────────────── 
-#>  x y correlation nprs
-#>  a b      -0.001  100
-#>  a c       0.975  100
-#>  b c      -0.012  100
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Correlations (pearson) ───────────────────────────────────────────────╮
+#> │   Method         pearson                                                │
+#> │   Pairs          3                                                      │
+#> │   Strongest |r|  0.9747                                                 │
+#> │                                                                         │
+#> │   x  y  correlation  nprs                                               │
+#> │   -  -  -----------  ----                                               │
+#> │   a  b      -0.0010   100                                               │
+#> │   a  c       0.9747   100                                               │
+#> │   b  c      -0.0120   100                                               │
+#> │                                                                         │
+#> │   Each row is one pair of numeric columns, over the rows where both are │
+#> │   present (nprs); a correlation is blank when too few pairs remain.     │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # nprs shows how much data each figure rests on.
 gappy <- df
 gappy$a[1:80] <- NA
 cortbl(gappy)
-#> ── Correlations (spearman) ─────────────────────────────────────── 
-#>  x y correlation nprs
-#>  a b       0.165   20
-#>  a c       0.959   20
-#>  b c       0.015  100
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Correlations (spearman) ──────────────────────────────────────────────╮
+#> │   Method         Spearman (rank)                                        │
+#> │   Pairs          3                                                      │
+#> │   Strongest |r|  0.9594                                                 │
+#> │                                                                         │
+#> │   x  y  correlation  nprs                                               │
+#> │   -  -  -----------  ----                                               │
+#> │   a  b        0.165    20                                               │
+#> │   a  c        0.959    20                                               │
+#> │   b  c        0.015   100                                               │
+#> │                                                                         │
+#> │   Each row is one pair of numeric columns, over the rows where both are │
+#> │   present (nprs); a correlation is blank when too few pairs remain.     │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # A pair with too little overlap is NA, not a number from nothing.
 thin <- df

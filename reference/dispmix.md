@@ -85,36 +85,63 @@ d <- read.csv(system.file("extdata", "ocj_dispositions.csv",
                           package = "rmoriebricklayer"))
 mix <- dispmix(d[, -(1:2)], prd = d$year)
 mix
-#> ── Outcome shares by period (95% Goodman simultaneous intervals in $shares)  
-#>   Same mix in every period: chi-square 43792.1 on 66 df, p <2e-16, Cramer's V 0.052
-#> 
-#>                        outcome   2012   2013   2014   2015   2016   2017   2018
-#>  withdrawn_stayed_before_trial 0.3796 0.3922 0.3980 0.4016 0.4093 0.4270 0.4411
-#>       guilty_plea_before_trial 0.4236 0.4146 0.4094 0.4191 0.4199 0.4107 0.3999
-#>             other_before_trial 0.0361 0.0349 0.0358 0.0364 0.0371 0.0377 0.0435
-#>             withdrawn_at_trial 0.0554 0.0549 0.0547 0.0482 0.0452 0.0421 0.0386
-#>           guilty_plea_at_trial 0.0536 0.0521 0.0499 0.0462 0.0426 0.0388 0.0366
-#>                 other_at_trial 0.0012 0.0011 0.0012 0.0010 0.0009 0.0007 0.0006
-#>                following_trial 0.0506 0.0502 0.0510 0.0475 0.0450 0.0430 0.0397
-#>    2019   2021   2022   2024   2025
-#>  0.4365 0.5326 0.5429 0.5180 0.5088
-#>  0.4112 0.3490 0.3338 0.3418 0.3430
-#>  0.0418 0.0368 0.0380 0.0362 0.0358
-#>  0.0378 0.0286 0.0296 0.0381 0.0426
-#>  0.0342 0.0210 0.0209 0.0277 0.0317
-#>  0.0006 0.0006 0.0005 0.0005 0.0006
-#>  0.0379 0.0315 0.0344 0.0377 0.0376
-#> ────────────────────────────────────────────────────────────────── 
-#> ── Cochran-Armitage trend in each share (Holm-adjusted) ────────── 
-#>                        outcome statistic  p_value    pholm  change
-#>  withdrawn_stayed_before_trial  29543.56   <2e-16   <2e-16  0.1292
-#>       guilty_plea_before_trial  10090.69   <2e-16   <2e-16 -0.0806
-#>             other_before_trial     20.29 6.64e-06 6.64e-06 -0.0003
-#>             withdrawn_at_trial   3208.77   <2e-16   <2e-16 -0.0128
-#>           guilty_plea_at_trial   7080.55   <2e-16   <2e-16 -0.0219
-#>                 other_at_trial    187.10   <2e-16   <2e-16 -0.0006
-#>                following_trial   2172.85   <2e-16   <2e-16 -0.0131
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Outcome shares by period ─────────────────────────────────────────────────╮
+#> │   Periods                   12                                              │
+#> │   Outcomes                  7                                               │
+#> │   Cases                     2,651,849                                       │
+#> │   Intervals                 95% Goodman simultaneous (in $shares)           │
+#> │   Same mix in every period  chi-square 43792.1 on 66 df, p < 0.001,         │
+#> │                             Cramer's V 0.052                                │
+#> │                                                                             │
+#> │   Share of each period's cases                                              │
+#> │   outcome                           2012     2013     2014     2015         │
+#> │   -----------------------------  -------  -------  -------  -------         │
+#> │   withdrawn_stayed_before_trial  0.37958  0.39219  0.39803  0.40161         │
+#> │   guilty_plea_before_trial       0.42359  0.41458  0.40938  0.41909         │
+#> │   other_before_trial             0.03608  0.03489  0.03582  0.03635         │
+#> │   withdrawn_at_trial             0.05538  0.05490  0.05471  0.04824         │
+#> │   guilty_plea_at_trial           0.05356  0.05213  0.04988  0.04619         │
+#> │   other_at_trial                 0.00118  0.00108  0.00120  0.00097         │
+#> │   following_trial                0.05063  0.05022  0.05098  0.04755         │
+#> │                                                                             │
+#> │   outcome                           2016     2017     2018     2019         │
+#> │   -----------------------------  -------  -------  -------  -------         │
+#> │   withdrawn_stayed_before_trial  0.40928  0.42702  0.44114  0.43649         │
+#> │   guilty_plea_before_trial       0.41992  0.41070  0.39989  0.41120         │
+#> │   other_before_trial             0.03710  0.03769  0.04347  0.04176         │
+#> │   withdrawn_at_trial             0.04520  0.04207  0.03858  0.03785         │
+#> │   guilty_plea_at_trial           0.04263  0.03878  0.03660  0.03421         │
+#> │   other_at_trial                 0.00085  0.00074  0.00061  0.00063         │
+#> │   following_trial                0.04501  0.04301  0.03971  0.03787         │
+#> │                                                                             │
+#> │   outcome                           2021     2022     2024     2025         │
+#> │   -----------------------------  -------  -------  -------  -------         │
+#> │   withdrawn_stayed_before_trial  0.53260  0.54286  0.51803  0.50879         │
+#> │   guilty_plea_before_trial       0.34898  0.33376  0.34176  0.34300         │
+#> │   other_before_trial             0.03676  0.03798  0.03623  0.03581         │
+#> │   withdrawn_at_trial             0.02858  0.02960  0.03809  0.04260         │
+#> │   guilty_plea_at_trial           0.02103  0.02090  0.02766  0.03166         │
+#> │   other_at_trial                 0.00055  0.00054  0.00052  0.00058         │
+#> │   following_trial                0.03149  0.03435  0.03771  0.03756         │
+#> │                                                                             │
+#> │   Cochran-Armitage trend in each share (Holm-adjusted)                      │
+#> │   outcome                        statistic  p_value    pholm    change      │
+#> │   -----------------------------  ---------  -------  -------  --------      │
+#> │   withdrawn_stayed_before_trial  29,543.56  < 0.001  < 0.001   0.12920      │
+#> │   guilty_plea_before_trial       10,090.69  < 0.001  < 0.001  -0.08060      │
+#> │   other_before_trial                 20.29  < 0.001  < 0.001  -0.00026      │
+#> │   withdrawn_at_trial              3,208.77  < 0.001  < 0.001  -0.01278      │
+#> │   guilty_plea_at_trial            7,080.55  < 0.001  < 0.001  -0.02190      │
+#> │   other_at_trial                    187.10  < 0.001  < 0.001  -0.00061      │
+#> │   following_trial                 2,172.85  < 0.001  < 0.001  -0.01306      │
+#> │                                                                             │
+#> │   From 2012 to 2025:                                                        │
+#> │   withdrawn_stayed_before_trial rose most, +12.9 points of the share;       │
+#> │   guilty_plea_before_trial fell most, -8.1 points.                          │
+#> │   7 of 7 shares trend at the Holm-adjusted 0.05 level: 1 up                 │
+#> │   (withdrawn_stayed_before_trial), 6 down (guilty_plea_before_trial,        │
+#> │   other_before_trial, withdrawn_at_trial and 3 more).                       │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(mix)
 
 

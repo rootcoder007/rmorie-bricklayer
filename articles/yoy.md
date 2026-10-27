@@ -16,7 +16,8 @@ and by group. A realistic shape:
 seg <- data.frame(
   EndFiscalYear = rep(2019:2023, each = 2),
   Gender = rep(c("Female", "Male"), 5),
-  NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
+  NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331),
+  stringsAsFactors = FALSE
 )
 ```
 
@@ -32,22 +33,45 @@ y <- yoy(seg,
   dir = "lower"
 )
 y
-#> Gender  EndFiscalYear  NumberOfPlacements  previous  change  change %  interval     
-#> ──────  ─────────────  ──────────────────  ────────  ──────  ────────  ─────────────
-#> Female  2019           31                  —         —         —       —            
-#>     ↳ note: no comparison period
-#> Female  2020           28                  31        -3      ▼ -9.7%   [-48%, +56%] 
-#> Female  2021           12                  28        -16     ▼ -57.1%  [-80%, -13%] 
-#> Female  2022           19                  12        7       ▲ +58.3%  [-27%, +258%]
-#> Female  2023           24                  19        5       ▲ +26.3%  [-34%, +144%]
-#> Male    2019           402                 —         —         —       —            
-#>     ↳ note: no comparison period
-#> Male    2020           377                 402       -25     ▼ -6.2%   [-19%, +8%]  
-#> Male    2021           190                 377       -187    ▼ -49.6%  [-58%, -40%] 
-#> Male    2022           268                 190       78      ▲ +41.1%  [+17%, +71%] 
-#> Male    2023           331                 268       63      ▲ +23.5%  [+5%, +46%]  
-#> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval · lower is better
+#> ╭── Change in NumberOfPlacements by EndFiscalYear ────────────────────────────╮
+#> │   Rows    10                                                                │
+#> │   Change  in percent                                                        │
+#> │   Better  lower values                                                      │
+#> │   Groups  2 (by Gender)                                                     │
+#> │                                                                             │
+#> │   Gender  EndFiscalYear  NumberOfPlacements previous change change %        │
+#> │                          interval                                           │
+#> │   ──────  ─────────────  ────────────────── ──────── ────── ────────        │
+#> │                          ─────────────                                      │
+#> │   Female  2019           31 — — — —                                         │
+#> │                                                                             │
+#> │   Female  2020           28 31 -3 ▼ -9.7% [-48%, +56%]                      │
+#> │                                                                             │
+#> │   Female  2021           12 28 -16 ▼ -57.1% [-80%, -13%]                    │
+#> │                                                                             │
+#> │   Female  2022           19 12 7 ▲ +58.3% [-27%, +258%]                     │
+#> │                                                                             │
+#> │   Female  2023           24 19 5 ▲ +26.3% [-34%, +144%]                     │
+#> │                                                                             │
+#> │   Male    2019           402 — — — —                                        │
+#> │                                                                             │
+#> │   Male    2020           377 402 -25 ▼ -6.2% [-19%, +8%]                    │
+#> │                                                                             │
+#> │   Male    2021           190 377 -187 ▼ -49.6% [-58%, -40%]                 │
+#> │                                                                             │
+#> │   Male    2022           268 190 78 ▲ +41.1% [+17%, +71%]                   │
+#> │                                                                             │
+#> │   Male    2023           331 268 63 ▲ +23.5% [+5%, +46%]                    │
+#> │                                                                             │
+#> │                                                                             │
+#> │   Note: the first period of each group has nothing to compare with, so it   │
+#> │   shows no change.                                                          │
+#> │                                                                             │
+#> │   lag 1 period                                                              │
+#> │   units: count                                                              │
+#> │   95% exact rate-ratio interval                                             │
+#> │   lower is better                                                           │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 The interval is exact. Conditional on the two periods’ total, the
@@ -74,18 +98,27 @@ value cannot do that:
 
 gap <- data.frame(year = c(2019, 2020, 2022, 2023), n = c(100, 120, 140, 150))
 yoy(gap, value = n, prd = year)
-#> year  n    previous  change  change %  interval    
-#> ────  ───  ────────  ──────  ────────  ────────────
-#> 2019  100  —         —         —       —           
-#>     ↳ note: no comparison period
-#> 2020  120  100       20      ▲ +20.0%  [-9%, +58%] 
-#> 2021  —    120       —         —       —           
-#>     ↳ note: no data
-#> 2022  140  —         —         —       —           
-#>     ↳ note: no comparison period
-#> 2023  150  140       10      ▲ +7.1%   [-15%, +36%]
-#> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval
+#> ╭── Change in n by year ──────────────────────────────────────────────────────╮
+#> │   Rows    5                                                                 │
+#> │   Change  in percent                                                        │
+#> │   Better  not set (direction neutral): the colour shows no verdict          │
+#> │                                                                             │
+#> │   year  n    previous  change  change %  interval                           │
+#> │   ────  ───  ────────  ──────  ────────  ────────────                       │
+#> │   2019  100  —         —         —       —                                  │
+#> │   2020  120  100       20      ▲ +20.0%  [-9%, +58%]                        │
+#> │   2021  —    120       —         —       —                                  │
+#> │     ↳ note: no data                                                         │
+#> │   2022  140  —         —         —       —                                  │
+#> │   2023  150  140       10      ▲ +7.1%   [-15%, +36%]                       │
+#> │                                                                             │
+#> │   Note: the first period has nothing to compare with, so it shows no        │
+#> │   change.                                                                   │
+#> │                                                                             │
+#> │   lag 1 period                                                              │
+#> │   units: count                                                              │
+#> │   95% exact rate-ratio interval                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 2021 appears as a row with no value, and 2022 has no comparison period
@@ -127,16 +160,26 @@ If a rate moves from 4% to 5% that is one percentage point. Calling it
 
 rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
 yoy(rate, value = share, prd = year, units = "percent")
-#> year  share  previous  change  points  
-#> ────  ─────  ────────  ──────  ────────
-#> 2019  4.1    —         —         —     
-#>     ↳ note: no comparison period
-#> 2020  4.6    4.1       0.5     ▲ +0.5pp
-#> 2021  5.2    4.6       0.6     ▲ +0.6pp
-#> 2022  5.0    5.2       -0.2    ▼ -0.2pp
-#> 2023  5.4    5.0       0.4     ▲ +0.4pp
-#> 
-#> lag 1 period · units: percent · percentage-point change, not percent of a percent
+#> ╭── Change in share by year ──────────────────────────────────────────────────╮
+#> │   Rows    5                                                                 │
+#> │   Change  in percentage points                                              │
+#> │   Better  not set (direction neutral): the colour shows no verdict          │
+#> │                                                                             │
+#> │   year  share  previous  change  points                                     │
+#> │   ────  ─────  ────────  ──────  ────────                                   │
+#> │   2019  4.1    —         —         —                                        │
+#> │   2020  4.6    4.1       0.5     ▲ +0.5pp                                   │
+#> │   2021  5.2    4.6       0.6     ▲ +0.6pp                                   │
+#> │   2022  5.0    5.2       -0.2    ▼ -0.2pp                                   │
+#> │   2023  5.4    5.0       0.4     ▲ +0.4pp                                   │
+#> │                                                                             │
+#> │   Note: the first period has nothing to compare with, so it shows no        │
+#> │   change.                                                                   │
+#> │                                                                             │
+#> │   lag 1 period                                                              │
+#> │   units: percent                                                            │
+#> │   percentage-point change, not percent of a percent                         │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 The column is named `points`, and no count interval is offered, because
@@ -164,9 +207,23 @@ head(as.data.frame(yoy(m, minbase = 0))[12:14, c("period", "value",
 ``` r
 
 yoysmry(y)
-#>   Gender from   to first last  totalpct   cagrpct periods up down flat
-#> 1 Female 2019 2023    31   24 -22.58065 -6.197938       5  2    2    0
-#> 2   Male 2019 2023   402  331 -17.66169 -4.742214       5  2    2    0
+#> ╭── Year-over-year summary ───────────────────────────────────────────────╮
+#> │   Series  2                                                             │
+#> │                                                                         │
+#> │   Gender  from  to    first  last  totalpct  cagrpct  periods  up  down │
+#> │   ------  ----  ----  -----  ----  --------  -------  -------  --  ---- │
+#> │   Female  2019  2023     31    24    -22.58   -6.198        5   2     2 │
+#> │   Male    2019  2023    402   331    -17.66   -4.742        5   2     2 │
+#> │                                                                         │
+#> │   Gender  flat                                                          │
+#> │   ------  ----                                                          │
+#> │   Female     0                                                          │
+#> │   Male       0                                                          │
+#> │                                                                         │
+#> │   totalpct is the change from the first period to the last and cagrpct  │
+#> │   the compound rate per step; up, down and flat count the changes from  │
+#> │   one period to the next.                                               │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 `cagrpct` is the compound rate per period: applying it across the span
@@ -184,15 +241,30 @@ but a rate is not made trustworthy by being a rate.
 stops <- data.frame(
   division = c("North", "South", "East"),
   stops = c(412, 77, 3),
-  residents = c(120000, 41000, 9500))
+  residents = c(120000, 41000, 9500),
+  stringsAsFactors = FALSE)
 
 rtcalc(stops, stops, residents, by = "division", per = "100k")
-#> ── Rate per 100,000, 95% exact Poisson interval ────────────────── 
-#>  division count population      rate      lower     upper flag
-#>      East     3       9500  31.57895   6.512338  92.28708 <NA>
-#>     North   412     120000 343.33333 310.977110 378.14142 <NA>
-#>     South    77      41000 187.80488 148.212673 234.72387 <NA>
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Rate per 100,000 ─────────────────────────────────────────────────────╮
+#> │   Count       stops                                                     │
+#> │   Population  residents                                                 │
+#> │   Groups      division                                                  │
+#> │   Rows        3                                                         │
+#> │   Interval    95% exact Poisson                                         │
+#> │                                                                         │
+#> │   division  count  population   rate  95% CI                            │
+#> │   --------  -----  ----------  -----  --------------                    │
+#> │   East          3       9,500   31.6  [6.5, 92.3]                       │
+#> │   North       412     120,000  343.3  [311.0, 378.1]                    │
+#> │   South        77      41,000  187.8  [148.2, 234.7]                    │
+#> │                                                                         │
+#> │   Highest rate: North (343.3); lowest: East (31.58). Their intervals do │
+#> │   not overlap: the gap is more than sampling error.                     │
+#> │                                                                         │
+#> │   Each rate is the count over the population times the base; the exact  │
+#> │   Poisson interval stays honest for small counts, where a normal one    │
+#> │   does not.                                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 East’s interval is wider than its own estimate. That is the honest
@@ -208,12 +280,24 @@ same events, not a population, so shares over a complete grouping sum to
 ``` r
 
 shrs(stops, stops, by = "division")
-#> ── Share of 492, 95% Wilson interval ───────────────────────────── 
-#>  division count total      share      lower     upper
-#>      East     3   492  0.6097561  0.2075843  1.777215
-#>     North   412   492 83.7398374 80.2200225 86.736863
-#>     South    77   492 15.6504065 12.7074531 19.125597
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Share ───────────────────────────────────────────────────────────────╮
+#> │   Count     stops                                                      │
+#> │   Total     492                                                        │
+#> │   Groups    division                                                   │
+#> │   Interval  95% Wilson                                                 │
+#> │                                                                        │
+#> │   division  count  total  share  95% CI                                │
+#> │   --------  -----  -----  -----  --------------                        │
+#> │   East          3    492   0.61  [0.21, 1.78]                          │
+#> │   North       412    492  83.74  [80.22, 86.74]                        │
+#> │   South        77    492  15.65  [12.71, 19.13]                        │
+#> │                                                                        │
+#> │   Highest share: North (83.74); lowest: East (0.6098). Their intervals │
+#> │   do not overlap: the gap is more than sampling error.                 │
+#> │                                                                        │
+#> │   Each share is the count as a percentage of the total, with a Wilson  │
+#> │   interval, which stays inside 0 to 100 for small counts.              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```
 
 “40% of stops” and “40 stops per 1,000 residents” are different claims,
@@ -228,25 +312,44 @@ d <- data.frame(
   year = rep(2021:2023, each = 2),
   division = rep(c("North", "South"), 3),
   stops = c(400, 70, 430, 66, 455, 61),
-  residents = c(120000, 41000, 122000, 41500, 125000, 42000))
+  residents = c(120000, 41000, 122000, 41500, 125000, 42000),
+  stringsAsFactors = FALSE)
 
 ratechg(d, stops, residents, year, by = "division", per = "100k")
-#> ── Change in rate per 100,000, lag 1, 95% exact conditional interval  
-#>  division year count population     rate  prerate precnt prepop rateratio
-#>     North 2021   400     120000 333.3333       NA     NA     NA        NA
-#>     North 2022   430     122000 352.4590 333.3333    400 120000 1.0573770
-#>     North 2023   455     125000 364.0000 352.4590    430 122000 1.0327442
-#>     South 2021    70      41000 170.7317       NA     NA     NA        NA
-#>     South 2022    66      41500 159.0361 170.7317     70  41000 0.9314974
-#>     South 2023    61      42000 145.2381 159.0361     66  41500 0.9132395
-#>     pctchg      pctlo    pctup                 flag
-#>         NA         NA       NA no comparison period
-#>   5.737705  -7.937165 21.46533                 <NA>
-#>   3.274419  -9.679876 18.10199                 <NA>
-#>         NA         NA       NA no comparison period
-#>  -6.850258 -34.473784 32.29053                 <NA>
-#>  -8.676046 -36.596300 31.35600                 <NA>
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Change in rate per 100,000 ───────────────────────────────────────────╮
+#> │   Count       stops                                                     │
+#> │   Population  residents                                                 │
+#> │   Period      year                                                      │
+#> │   Groups      division                                                  │
+#> │   Lag         1                                                         │
+#> │   Interval    95% exact conditional, on the % change                    │
+#> │                                                                         │
+#> │   division  year  count  population   rate  precnt   prepop  prerate    │
+#> │   --------  ----  -----  ----------  -----  ------  -------  -------    │
+#> │   North     2021    400     120,000  333.3                              │
+#> │   North     2022    430     122,000  352.5     400  120,000    333.3    │
+#> │   North     2023    455     125,000  364.0     430  122,000    352.5    │
+#> │   South     2021     70      41,000  170.7                              │
+#> │   South     2022     66      41,500  159.0      70   41,000    170.7    │
+#> │   South     2023     61      42,000  145.2      66   41,500    159.0    │
+#> │                                                                         │
+#> │   division  rateratio  pctchg  pct_interval     flag                    │
+#> │   --------  ---------  ------  ---------------  ----                    │
+#> │   North                                         [1]                     │
+#> │   North        1.0574   5.738  [-7.94, 21.47]                           │
+#> │   North        1.0327   3.274  [-9.68, 18.10]                           │
+#> │   South                                         [1]                     │
+#> │   South        0.9315  -6.850  [-34.47, 32.29]                          │
+#> │   South        0.9132  -8.676  [-36.60, 31.36]                          │
+#> │                                                                         │
+#> │   Not distinguishable from 0 (interval includes it): North 2022         │
+#> │   (+5.7%), North 2023 (+3.3%), South 2022 (-6.9%) and South 2023        │
+#> │   (-8.7%).                                                              │
+#> │                                                                         │
+#> │   [1] no comparison period                                              │
+#> │   pctchg is the percentage change in the rate from the period `lag`     │
+#> │   before; an interval that includes 0 means the change could be chance. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 North’s count rose, and so did its population, so the rate change is
@@ -273,7 +376,7 @@ for (ext in c("csv", "tsv", "json", "md", "html", "pdf")) {
 #> tsv      952 bytes
 #> json    3233 bytes
 #> md      1575 bytes
-#> html    6769 bytes
+#> html    6754 bytes
 #> pdf     5092 bytes
 ```
 

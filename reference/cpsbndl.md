@@ -186,12 +186,18 @@ res$checks[!res$checks$ok, c("check", "detail")]
 # read back, and checked against the key you expected to have signed
 b2 <- cpsbndlrd(attr(b, "path"))
 b2
-#> ── Capsule bundle ────────────────────────────────────────────────
-#>   files            1
-#>   manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e4167960781a579
-#>   bundled          2026-10-22T12:13:27Z
-#>   scheme           ML-DSA-44
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Capsule bundle ───────────────────────────────────────────────────────────╮
+#> │   Files            1                                                        │
+#> │   Manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e416796 │
+#> │                    0781a579                                                 │
+#> │   Bundled          2026-10-27T13:56:49Z                                     │
+#> │   Scheme           ML-DSA-44                                                │
+#> │   Note             as published                                             │
+#> │   Path             /tmp/Rtmp8mkWXN/file2197905e7b7/capsule_bundle.json      │
+#> │                                                                             │
+#> │   A signed list of the capsule's files and their digests; check the files   │
+#> │   against it with cpsbndlvrf().                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 cpsbndlvrf(b2, dir, keyexp = "00ff")$ok
 #> [1] FALSE
 
@@ -222,6 +228,6 @@ unlink(dir2, recursive = TRUE)
 
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/RtmpshpHV7/no-such-capsule
+#> Error : `dir` does not exist: /tmp/Rtmp8mkWXN/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

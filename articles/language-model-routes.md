@@ -82,10 +82,17 @@ if (is.na(old)) Sys.unsetenv("OLLAMA_HOST") else Sys.setenv(OLLAMA_HOST = old)
 
 ``` r
 
-llmask("How do I estimate a weighted proportion with bootstrap replicate weights?")
-llmask(paste(c("Summarise this table:", capture.output(print(head(mtcars)))),
-                         collapse = "\n"),
-                   syspro = "Answer in two sentences.", docs = FALSE)
+llmask(
+  "How do I estimate a weighted proportion with bootstrap replicate weights?"
+)
+llmask(
+  paste(
+    c("Summarise this table:", capture.output(print(head(mtcars)))),
+    collapse = "\n"
+  ),
+  syspro = "Answer in two sentences.",
+  docs = FALSE
+)
 ```
 
 With `docs = TRUE` (the default) the model is told every function of the
@@ -214,9 +221,11 @@ is not run here):
 
 ``` r
 
-llmask(paste("How do I compare perceived mental health of First Nations,",
-                         "Metis and Inuit adults with non-Indigenous adults, using",
-                         "indiex('health_indicators')?"))
+llmask(paste(
+  "How do I compare perceived mental health of First Nations,",
+  "M\u00e9tis and Inuit adults with non-Indigenous adults, using",
+  "indiex('health_indicators')?"
+))
 ```
 
 ## The providers in a picture
@@ -229,7 +238,12 @@ every OpenAI-compatible provider shares one request builder.
 ``` r
 
 pv <- llmprvd()
-barplot(table(pv$api), col = blpal()[1], ylab = "providers", main = "Providers by request shape")
+barplot(
+  table(pv$api),
+  col = blpal()[1],
+  ylab = "providers",
+  main = "Providers by request shape"
+)
 ```
 
 ![](language-model-routes_files/figure-html/language-model-routes-providers-plot-1.png)

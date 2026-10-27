@@ -151,7 +151,7 @@ to remove the key.
 
 ``` r
 old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
-Sys.setenv(XDG_CONFIG_HOME = tempfile())   # never touch your real credentials
+Sys.setenv(XDG_CONFIG_HOME = tempfile()) # never touch your real credentials
 
 # input checks that need no network
 try(dlogin(token = "   "))
@@ -159,7 +159,11 @@ try(dlogin(token = "   "))
 try(dlogin(email = "not-an-email"))
 #> Error : dlogin: 'not-an-email' is not an email address
 
-if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
+if (is.na(old)) {
+  Sys.unsetenv("XDG_CONFIG_HOME")
+} else {
+  Sys.setenv(XDG_CONFIG_HOME = old)
+}
 if (FALSE) { # interactive()
 # these contact the sign-in service
 dlogin(token = "<key issued at https://www.rmorie.com/access/>")

@@ -199,22 +199,28 @@ moved <- same
 moved$size <- moved$size * 3
 moved$grade[1:100] <- "z"
 cpsdrft(ref, moved)
-#> ── Capsule drift report ──────────────────────────────────────────
-#>   ✗ DRIFT DETECTED
-#> 
-#>   reference rows  300
-#>   current rows    300
-#>   columns tested  3
-#>   alpha           0.01
-#> 
-#> ── Per-column tests ──────────────────────────────────────────────
-#>      column        type  stat      p   psi
-#>    ✗   size     numeric 0.743 <2e-16 4.299
-#>    ✗  grade categorical   121 <2e-16 4.381
-#>    ✓  value     numeric  0.05  0.847 0.092
-#> 
-#>   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes an interactive report
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Capsule drift report ─────────────────────────────────────────────────╮
+#> │   Verdict          ✗ DRIFT DETECTED                                     │
+#> │   Reference rows   300                                                  │
+#> │   Current rows     300                                                  │
+#> │   Columns tested   3                                                    │
+#> │   Columns drifted  2                                                    │
+#> │   Alpha            0.01                                                 │
+#> │                                                                         │
+#> │   Per-column tests                                                      │
+#> │      column  type             stat        p    psi                      │
+#> │   -  ------  -----------  --------  -------  -----                      │
+#> │   ✖  size    numeric        0.7433  < 0.001  4.299                      │
+#> │   ✖  grade   categorical  120.9261  < 0.001  4.381                      │
+#> │   ✔  value   numeric        0.0500    0.847  0.092                      │
+#> │                                                                         │
+#> │   2 of 3 columns changed between the reference and the current table by │
+#> │   more than chance at alpha 0.01; check those columns before trusting   │
+#> │   results built on the reference.                                       │
+#> │                                                                         │
+#> │   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes │
+#> │   an interactive report.                                                │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # The PSI is always reported as an effect size, but on a sample this
 # small it is not allowed to raise the flag by itself -- binning noise

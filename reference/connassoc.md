@@ -53,7 +53,7 @@ connassoc(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of rho's drawn interval (default 0.95).
 
 ## Value
 
@@ -115,19 +115,58 @@ are interconnected. Research in the Sociology of Health Care 34:85-96.
 ## Examples
 
 ``` r
-# across regions, 2022 (table 41-10-0067-01): where First Nations people report
-# excellent or
-# very good mental health, do Metis people living in the same region too?
+# across regions, 2022 (table 41-10-0067-01): where First Nations people
+# report excellent or very good mental health, do Metis people living in the
+# same region too?
 mh <- indiex("mentalhealth")
 mh <- mh[mh$rating == "Excellent or very good" & mh$region != "Canada", ]
 fn <- mh[mh$group == "First Nations", ]
 me <- mh[mh$group == "M\u00e9tis", ]
 d <- merge(fn, me, by = "region", suffixes = c("fn", "me"))
-ca <- connassoc(d, "region", "estimatefn", "estimateme", "lowerfn",
-                             "upperfn",
-                             "lowerme", "upperme")
+ca <- connassoc(
+  d,
+  "region",
+  "estimatefn",
+  "estimateme",
+  "lowerfn",
+  "upperfn",
+  "lowerme",
+  "upperme"
+)
 ca
-#> Rank correlation across 11 places: rho = 0.52, permutation p = 0.106; with the published sampling error, 95% interval -0.19 to 0.77
-#> An association across places: it does not show that one causes the other for any person.
+#> ╭── Connection across places ──────────────────────────────────────────────╮
+#> │   Places            11                                                   │
+#> │   Indicators        estimatefn and estimateme                            │
+#> │   Rank correlation  rho = 0.52                                           │
+#> │   p-value           0.106 (permutation)                                  │
+#> │   Interval          95% [-0.19, 0.77], with the published sampling error │
+#> │                                                                          │
+#> │   Rank correlation across 11 places: rho = 0.52, permutation p = 0.106   │
+#> │   Across these places the two rank moderately together.                  │
+#> │                                                                          │
+#> │   An association across places only:                                     │
+#> │   it does not show that one causes the other for any person.             │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 plot(ca)
+
+
+# your own places: made-up shares in six regions, without limits
+own <- data.frame(
+  region = c("North", "South", "East", "West", "Coast", "Interior"),
+  language = c(41, 18, 27, 33, 22, 38),
+  wellbeing = c(68, 55, 60, 66, 57, 63)
+)
+connassoc(own, "region", "language", "wellbeing", reps = 2000)
+#> ╭── Connection across places ──────────────────────────────────────╮
+#> │   Places            6                                            │
+#> │   Indicators        language and wellbeing                       │
+#> │   Rank correlation  rho = 0.94                                   │
+#> │   p-value           0.017 (exact, every permutation)             │
+#> │                                                                  │
+#> │   Rank correlation across 6 places: rho = 0.94, exact p = 0.0167 │
+#> │   Across these places the two rank strongly together.            │
+#> │                                                                  │
+#> │   An association across places only:                             │
+#> │   it does not show that one causes the other for any person.     │
+#> ╰──────────────────────────────────────────────────────────────────╯
 ```

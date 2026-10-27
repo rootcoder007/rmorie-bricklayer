@@ -18,7 +18,7 @@ inlhist(x, bins = 10L)
 
 - x:
 
-  Numeric vector.
+  Numeric vector drawn as an inline histogram.
 
 - bins:
 

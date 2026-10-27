@@ -141,7 +141,8 @@ What the forwarded function returns.
 ## Examples
 
 ``` r
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
 # one-time index record out of your configuration directory
 k <- pqc_keygen(height = 2)
 s <- capsule_sign(core_sha256("manifest"), k)

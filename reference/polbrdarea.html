@@ -15,7 +15,7 @@ to rank neighbourhoods for an intervention."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -133,9 +133,26 @@ is spread across income.</p></div>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">t</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>fsa <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"M6H"</span>, <span class="st">"M5V"</span><span class="op">)</span>, exposure <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">28</span>, <span class="fl">18</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                population <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40000</span>, <span class="fl">60000</span><span class="op">)</span>, brate <span class="op">=</span> <span class="fl">0.008</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">polbrdarea</span><span class="op">(</span><span class="va">t</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   fsa exposure population brate       rr        paf attrcases basecases</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 M6H       28      40000 0.008 1.036288 0.03501694 11.205420       320</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 M5V       18      60000 0.008 1.015968 0.01571728  7.544292       480</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Pollution burden by area</span> ─────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Areas               2                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Attributable cases  18.75                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Baseline cases      800                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Share attributable  2.34%                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   fsa  exposure  population     brate     rr      paf  attrcases        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---  --------  ----------  --------  -----  -------  ---------        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   M6H        28      40,000  0.008000  1.036  0.03502     11.205        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   M5V        18      60,000  0.008000  1.016  0.01572      7.544        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   fsa  basecases                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---  ---------                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   M6H        320                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   M5V        480                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The areas are sorted by the cases attributable to the exposure,       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   largest first: rr is the relative risk at the area's exposure and paf │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the share of its cases the exposure accounts for.                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># PM2.5 and different column names.</span></span></span>
 <span class="r-in"><span><span class="va">u</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>tract <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span><span class="op">)</span>, pm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">11</span>, <span class="fl">9</span><span class="op">)</span>,</span></span>
@@ -143,10 +160,22 @@ is spread across income.</p></div>
 <span class="r-in"><span><span class="fu">polbrdarea</span><span class="op">(</span><span class="va">u</span>, areacol <span class="op">=</span> <span class="st">"tract"</span>, expcol <span class="op">=</span> <span class="st">"pm"</span>,</span></span>
 <span class="r-in"><span>                         popcol <span class="op">=</span> <span class="st">"pop"</span>, basratecol <span class="op">=</span> <span class="st">"rate"</span>,</span></span>
 <span class="r-in"><span>                         poll <span class="op">=</span> <span class="st">"PM2.5"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   tract pm  pop   rate       rr        paf attrcases basecases</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     B 11 8000 0.0075 1.040831 0.03922953 2.3537717     60.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2     C  9 6500 0.0075 1.024933 0.02432675 1.1859290     48.75</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3     A  7 5000 0.0075 1.009278 0.00919281 0.3447304     37.50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Pollution burden by area</span> ─────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Areas               3                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Attributable cases  3.884                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Baseline cases      146.2                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Share attributable  2.66%                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   tract  pm    pop      rate     rr      paf  attrcases  basecases      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  --  -----  --------  -----  -------  ---------  ---------      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   B      11  8,000  0.007500  1.041  0.03923      2.354      60.00      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   C       9  6,500  0.007500  1.025  0.02433      1.186      48.75      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A       7  5,000  0.007500  1.009  0.00919      0.345      37.50      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The areas are sorted by the cases attributable to the exposure,       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   largest first: rr is the relative risk at the area's exposure and paf │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the share of its cases the exposure accounts for.                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A missing column is named in the error.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">polbrdarea</span><span class="op">(</span><span class="va">t</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fsa"</span>, <span class="st">"exposure"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>

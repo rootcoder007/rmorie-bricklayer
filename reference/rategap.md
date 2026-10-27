@@ -51,6 +51,24 @@ r <- agestd(events = c(4, 9, 11, 6, 3, 2, 4, 6, 5, 4),
 plot(r)
 
 rategap(r, "Inuit", "Non-Indigenous")
-#>   group      reference    ratio  ratiolo  ratioup difference    diflo    difup
-#> 1 Inuit Non-Indigenous 4.970305 2.853819 8.656449   92.36184 51.22394 133.4997
+#> ╭── Gap between two standardised rates ──────────────────────────────────╮
+#> │   Group      Inuit                                                     │
+#> │   Reference  Non-Indigenous                                            │
+#> │                                                                        │
+#> │   group  reference       ratio  ratio CI        difference             │
+#> │   -----  --------------  -----  --------------  ----------             │
+#> │   Inuit  Non-Indigenous  4.970  [2.854, 8.656]       92.36             │
+#> │                                                                        │
+#> │   group  difference CI                                                 │
+#> │   -----  ---------------                                               │
+#> │   Inuit  [51.22, 133.50]                                               │
+#> │                                                                        │
+#> │   The rate ratio is 4.97 (its interval [2.854, 8.656]): the interval   │
+#> │   excludes 1, so the data distinguish it from no effect. A ratio of    │
+#> │   4.97 is a 397% rise. The difference, per the rates' unit, is 92.36   │
+#> │   (its interval [51.22, 133.50]): the interval excludes 0, so the data │
+#> │   distinguish it from no effect.                                       │
+#> │                                                                        │
+#> │   The intervals are at the level agestd() was given.                   │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

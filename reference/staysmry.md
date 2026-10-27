@@ -26,11 +26,12 @@ staysmry(daysperper, conflvl = 0.95)
 
 ## Value
 
-A one-row data frame with numeric columns `n` (people), `totaldays`,
-`mean`, `sd` (sample standard deviation), `median`, `iqr` (interquartile
-range, quantile type 7), `max`, `se` (standard error of the mean),
-`lower` and `upper` (the t interval on the mean). With a single person
-`sd`, `se`, `lower` and `upper` are `NA`.
+A one-row data frame of class `c("rmbl_stay_summary", "data.frame")`
+(its print method shows it as a box) with numeric columns `n` (people),
+`totaldays`, `mean`, `sd` (sample standard deviation), `median`, `iqr`
+(interquartile range, quantile type 7), `max`, `se` (standard error of
+the mean), `lower` and `upper` (the t interval on the mean). With a
+single person `sd`, `se`, `lower` and `upper` are `NA`.
 
 ## Details
 
@@ -62,8 +63,23 @@ negative values, and when `conflvl` is not strictly inside (0, 1).
 # a skewed distribution: most stays short, a few long
 stays <- c(rep(1, 40), rep(3, 30), rep(10, 20), 60, 90, 120)
 staysmry(stays)
-#>    n totaldays     mean       sd median iqr max       se    lower    upper
-#> 1 93       600 6.451613 16.33183      3   2 120 1.693532 3.088113 9.815113
+#> ╭── Length of stay ─────────────────────────────────────────────────────╮
+#> │   People               93                                             │
+#> │   Days served          600                                            │
+#> │   Mean stay            6.452 days                                     │
+#> │   Median stay          3 days                                         │
+#> │   Interquartile range  2 days                                         │
+#> │   Longest stay         120 days                                       │
+#> │   Standard deviation   16.33                                          │
+#> │   Mean, interval       [3.088, 9.815] 95% t interval                  │
+#> │                                                                       │
+#> │   The mean stay is 2.2 times the median: a few long stays pull it up, │
+#> │   so the median says more about a typical stay.                       │
+#> │                                                                       │
+#> │   The interval is on the AVERAGE stay, not the spread of stays.       │
+#> │   Lakner (1976, p.16-17): a person still held has an unfinished stay, │
+#> │   so a window shorter than the longest stay biases the mean downward. │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # the mean is pulled well above the median by the long tail
 staysmry(stays)[, c("mean", "median", "max")]

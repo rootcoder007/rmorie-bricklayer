@@ -19,7 +19,7 @@ error."><meta property="og:image" content="https://rootcoder007.github.io/rmorie
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,7 +94,11 @@ to the total of <code>obs</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named length-4 numeric: <code>statistic</code>, <code>df</code>,
 <code>p_value</code> and <code>logpvalue</code>, the natural log of the upper tail, which
-keeps its information where <code>p_value</code> underflows to 0.</p>
+keeps its information where <code>p_value</code> underflows to 0.
+It has class <code>c("rmbl_drftchisq", "rmbl_measure", "numeric")</code>, so it
+prints as a box with its inputs (kept in attribute <code>"lakner"</code>);
+arithmetic, <code>[</code>, <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> and <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code> give plain
+numbers.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -139,13 +143,43 @@ counts; a total of zero on either side.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Counts matching the reference proportions: nothing to report.</span></span></span>
 <span class="r-in"><span><span class="fu">drftchisq</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">100</span>, b <span class="op">=</span> <span class="fl">60</span>, c <span class="op">=</span> <span class="fl">40</span><span class="op">)</span>, <span class="va">ref</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> statistic        df   p_value logpvalue </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         0         2         1         0 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Chi-square test against a reference distribution</span> ─────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Counts      200                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Categories  3                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  value                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -----                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  0                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   df         2                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p_value    1.000                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   logpvalue  0                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The counts agree with the reference distribution (p = 1.000, not below    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0.05).                                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The reference is taken as known; when it is itself a sample,              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   drfthomog() allows for its own sampling error.                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A reallocated mix is detected.</span></span></span>
 <span class="r-in"><span><span class="fu">drftchisq</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">40</span>, b <span class="op">=</span> <span class="fl">60</span>, c <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>, <span class="va">ref</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    statistic           df      p_value    logpvalue </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  1.26000e+02  2.00000e+00  4.35961e-28 -6.30000e+01 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Chi-square test against a reference distribution</span> ─────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Counts      200                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Categories  3                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  value                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -------                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  126                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   df         2                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p_value    &lt; 0.001                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   logpvalue  -63                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The counts depart from the reference distribution (p &lt; 0.001, below       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0.05).                                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The reference is taken as known; when it is itself a sample,              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   drfthomog() allows for its own sampling error.                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Agrees with stats::chisq.test().</span></span></span>
 <span class="r-in"><span><span class="va">o</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">40</span>, b <span class="op">=</span> <span class="fl">60</span>, c <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
@@ -155,21 +189,64 @@ counts; a total of zero on either side.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Raw vectors are tabulated for you.</span></span></span>
 <span class="r-in"><span><span class="fu">drftchisq</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> statistic        df   p_value logpvalue </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         0         1         1         0 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Chi-square test against a reference distribution</span> ─────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Counts      4                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Categories  2                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  value                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -----                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  0                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   df         1                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p_value    1.000                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   logpvalue  0                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The counts agree with the reference distribution (p = 1.000, not below    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0.05).                                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The reference is taken as known; when it is itself a sample,              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   drfthomog() allows for its own sampling error.                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A category the reference rules out, but which occurs, is a flat</span></span></span>
 <span class="r-in"><span><span class="co"># contradiction rather than a large finite statistic.</span></span></span>
 <span class="r-in"><span><span class="fu">drftchisq</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"d"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> statistic        df   p_value logpvalue </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       Inf         1         0      -Inf </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Chi-square test against a reference distribution</span> ─────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Counts      4                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Categories  3                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  value                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -------                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  Inf                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   df         1                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p_value    &lt; 0.001                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   logpvalue  -Inf                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A category the reference rules out occurs: a flat contradiction of the    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   reference, not a large finite statistic.                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The reference is taken as known; when it is itself a sample,              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   drfthomog() allows for its own sampling error.                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># When a new category is legitimate, compare two samples instead.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="drfthomog.html">drfthomog</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"d"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> statistic        df   p_value logpvalue </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  1.333333  2.000000  1.000000  0.000000 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"method")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Monte Carlo permutation (small expected counts)"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Chi-square test of homogeneity</span> ─────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Samples     4 and 4 values                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Categories  3                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Method      Monte Carlo permutation (small expected counts)             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  value                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -----                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  1.333                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   df         2                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p_value    1.000                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   logpvalue  0                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The two samples' mixes of categories agree (p = 1.000, not below 0.05). │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Both samples carry sampling error; with an expected count below 5       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the p-value is a Monte Carlo one under a fixed seed.                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────────╯</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

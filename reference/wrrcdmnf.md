@@ -38,9 +38,10 @@ vrfrcdmnf(path, orig, recd)
 
 `wrrcdmnf()` returns `path` invisibly.
 
-`vrfrcdmnf()` returns a list with `ok` (logical), `reasons` (character;
-empty, `character(0)`, when `ok`), `signature_ok` (logical, `NA` when
-the manifest is unsigned) and `manifest` (the parsed JSON as a list).
+`vrfrcdmnf()` returns a list of class `rmbl_recode_manifest_check` (it
+prints as a box) with `ok` (logical), `reasons` (character; empty,
+`character(0)`, when `ok`), `signature_ok` (logical, `NA` when the
+manifest is unsigned) and `manifest` (the parsed JSON as a list).
 
 ## Details
 

@@ -74,16 +74,37 @@ for the structural checks that need no rules.
 ``` r
 # A column predicate, applied row-wise.
 rul("agenonnegative", function(v) v >= 0, col = "age")
-#> <rule> agenonnegative [warning] on `age`
+#> ╭── Rule agenonnegative ──────────────────────────────────────────────────────╮
+#> │   Severity  warning                                                         │
+#> │   Applies   on `age`                                                        │
+#> │   Message   Rule 'agenonnegative' failed                                    │
+#> │                                                                             │
+#> │   A check the data must pass; valrules() runs it and reports the rows that  │
+#> │   break it.                                                                 │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # A whole-column property.
 rul("idunique", function(v) !anyDuplicated(v), col = "id",
      sev = "fatal")
-#> <rule> idunique [fatal] on `id`
+#> ╭── Rule idunique ────────────────────────────────────────────────────────────╮
+#> │   Severity  fatal                                                           │
+#> │   Applies   on `id`                                                         │
+#> │   Message   Rule 'idunique' failed                                          │
+#> │                                                                             │
+#> │   A check the data must pass; valrules() runs it and reports the rows that  │
+#> │   break it.                                                                 │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # A table-level rule spanning two columns.
 rul("datesordered", function(df) all(df$start <= df$end))
-#> <rule> datesordered [warning] table-level
+#> ╭── Rule datesordered ────────────────────────────────────────────────────────╮
+#> │   Severity  warning                                                         │
+#> │   Applies   table-level                                                     │
+#> │   Message   Rule 'datesordered' failed                                      │
+#> │                                                                             │
+#> │   A check the data must pass; valrules() runs it and reports the rows that  │
+#> │   break it.                                                                 │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # with a message that says what a failure means
 r <- rul("releaseafteradmission",

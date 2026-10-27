@@ -19,7 +19,7 @@ every shared numeric or date column."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,15 +88,19 @@ vectors are read as 0/1.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named length-3 numeric: <code>statistic</code> (the KS \(D\)) ,
 <code>p_value</code>, and <code>neff</code> (the harmonic-style effective size
-\(n_xn_y/(n_x+n_y)\)).</p>
+\(n_xn_y/(n_x+n_y)\)).
+It has class <code>c("rmbl_drftks", "rmbl_measure", "numeric")</code>, so it
+prints as a box with its inputs (kept in attribute <code>"lakner"</code>);
+arithmetic, <code>[</code>, <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> and <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code> give plain
+numbers.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The statistic is the largest vertical gap between the two empirical distribution
-functions, with the asymptotic two-sided p-value from the Kolmogorov
-distribution. Distribution-free: it assumes nothing about the shape of
-either sample, which is what makes it the right first test on a column
-whose distribution was never specified.</p>
+    <p>The statistic is the largest vertical gap between the two empirical
+distribution functions, with the asymptotic two-sided p-value from the
+Kolmogorov distribution. Distribution-free: it assumes nothing about the
+shape of either sample, which is what makes it the right first test on a
+column whose distribution was never specified.</p>
 <p>The p-value is the ASYMPTOTIC one, \(2\sum_k (-1)^{k-1} e^{-2k^2t^2}\)
 with \(t = \sqrt{n_{\mathrm{eff}}}D\). It is accurate for moderate
 samples and conservative for small ones; for an exact small-sample
@@ -122,18 +126,63 @@ but the p-value is only meaningful for samples of a few dozen or more.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The same distribution: a small D and a large p-value.</span></span></span>
 <span class="r-in"><span><span class="fu">drftks</span><span class="op">(</span><span class="va">ref</span>, <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   statistic     p_value        neff </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   0.0600000   0.8642828 100.0000000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Two-sample Kolmogorov-Smirnov test</span> ───────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Samples  200 and 200 values                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  value                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -----                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  0.06                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p_value    0.864                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   neff       100                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   No difference in distribution is detected (p = 0.864, not below 0.05).    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   At its widest the two cumulative distributions are 6.0 percentage points  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   apart.                                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   D is the largest gap between the two empirical distribution               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   functions. The p-value is the asymptotic one: rough below a few           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   dozen values; stats::ks.test() gives an exact one.                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A shifted distribution is detected.</span></span></span>
 <span class="r-in"><span><span class="fu">drftks</span><span class="op">(</span><span class="va">ref</span>, <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, mean <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    statistic      p_value         neff </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3.250000e-01 1.338317e-09 1.000000e+02 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Two-sample Kolmogorov-Smirnov test</span> ───────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Samples  200 and 200 values                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  value                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -------                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  0.325                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p_value    &lt; 0.001                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   neff       100                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The two samples differ in distribution (p &lt; 0.001, below 0.05).           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   At its widest the two cumulative distributions are 32.5 percentage        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   points apart.                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   D is the largest gap between the two empirical distribution               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   functions. The p-value is the asymptotic one: rough below a few           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   dozen values; stats::ks.test() gives an exact one.                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># So is a change in spread alone, which a mean comparison would miss.</span></span></span>
 <span class="r-in"><span><span class="fu">drftks</span><span class="op">(</span><span class="va">ref</span>, <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, sd <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    statistic      p_value         neff </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3.150000e-01 4.813445e-09 1.000000e+02 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Two-sample Kolmogorov-Smirnov test</span> ───────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Samples  200 and 200 values                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  value                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -------                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  0.315                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p_value    &lt; 0.001                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   neff       100                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The two samples differ in distribution (p &lt; 0.001, below 0.05).           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   At its widest the two cumulative distributions are 31.5 percentage        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   points apart.                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   D is the largest gap between the two empirical distribution               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   functions. The p-value is the asymptotic one: rough below a few           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   dozen values; stats::ks.test() gives an exact one.                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The statistic agrees with stats::ks.test().</span></span></span>
 <span class="r-in"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span><span class="op">)</span>; <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">45</span>, <span class="fl">0.6</span><span class="op">)</span></span></span>

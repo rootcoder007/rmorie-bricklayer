@@ -19,7 +19,7 @@ valrules(data, rules)
 
 - data:
 
-  A data frame.
+  A data frame the rules are applied to.
 
 - rules:
 

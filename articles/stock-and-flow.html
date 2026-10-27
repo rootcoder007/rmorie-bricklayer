@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,11 +97,35 @@ period:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Lakner's worked example: 3,000 inmates served 13,500 detention days in a year</span></span>
 <span><span class="fu"><a href="../reference/adp.html">adp</a></span><span class="op">(</span><span class="fl">13500</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 36.9863</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Average daily population</span> ──────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Average daily population  36.99 people on an average day               │</span></span>
+<span><span class="co">#&gt; │   Person-days               13,500                                       │</span></span>
+<span><span class="co">#&gt; │   Period                    365 days                                     │</span></span>
+<span><span class="co">#&gt; │   Formula                   adp = days / t = 13,500 / 365                │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   13,500 person-days over 365 days: 36.99 people held on an average day. │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   Lakner (1976, p.15): a stock -- people held at once, not people who    │</span></span>
+<span><span class="co">#&gt; │   passed through. Count only the days served inside the period.          │</span></span>
+<span><span class="co">#&gt; │   adp = n x alos / t links it to alos() and admits(), exactly only in a  │</span></span>
+<span><span class="co">#&gt; │   steady state.                                                          │</span></span>
+<span><span class="co">#&gt; ╰──────────────────────────────────────────────────────────────────────────╯</span></span>
 <span></span>
 <span><span class="co"># per-person days over a 30-day period give the same total</span></span>
 <span><span class="fu"><a href="../reference/adp.html">adp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">20</span>, <span class="fl">30</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 2</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Average daily population</span> ─────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Average daily population  2 people on an average day                  │</span></span>
+<span><span class="co">#&gt; │   Person-days               60                                          │</span></span>
+<span><span class="co">#&gt; │   Period                    30 days                                     │</span></span>
+<span><span class="co">#&gt; │   Formula                   adp = days / t = 60 / 30                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   60 person-days over 30 days: 2 people held on an average day.         │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Lakner (1976, p.15): a stock -- people held at once, not people who   │</span></span>
+<span><span class="co">#&gt; │   passed through. Count only the days served inside the period.         │</span></span>
+<span><span class="co">#&gt; │   adp = n x alos / t links it to alos() and admits(), exactly only in a │</span></span>
+<span><span class="co">#&gt; │   steady state.                                                         │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p><code><a href="../reference/adpcnts.html">adpcnts()</a></code> estimates person-days from periodic headcounts
 (a monthly census) when daily data are not published.</p>
 </div>
@@ -113,7 +137,18 @@ stay:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Lakner: 2,700 inmates admitted and released served 12,150 detention days</span></span>
 <span><span class="fu"><a href="../reference/alos.html">alos</a></span><span class="op">(</span><span class="fl">12150</span>, <span class="fl">2700</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 4.5</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Average length of stay</span> ─────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Average stay  4.5 days per person                                       │</span></span>
+<span><span class="co">#&gt; │   Person-days   12,150                                                    │</span></span>
+<span><span class="co">#&gt; │   People        2,700                                                     │</span></span>
+<span><span class="co">#&gt; │   Formula       alos = days / n = 12,150 / 2,700                          │</span></span>
+<span><span class="co">#&gt; │                                                                           │</span></span>
+<span><span class="co">#&gt; │   2,700 people served 12,150 days between them: 4.5 days each on average. │</span></span>
+<span><span class="co">#&gt; │                                                                           │</span></span>
+<span><span class="co">#&gt; │   Lakner (1976, p.16-17): n should be the people admitted AND released    │</span></span>
+<span><span class="co">#&gt; │   in the period. A period shorter than the longest stay cuts unfinished   │</span></span>
+<span><span class="co">#&gt; │   stays short, so alos is biased downward. staysmry() gives the median.   │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="admissions-implied-by-stock-and-stay">Admissions implied by stock and stay<a class="anchor" aria-label="anchor" href="#admissions-implied-by-stock-and-stay"></a>
@@ -127,7 +162,20 @@ a year imply a stay of 5.2 days, and back again:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">alosimplied</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 5.2</span></span>
 <span><span class="fu"><a href="../reference/admits.html">admits</a></span><span class="op">(</span><span class="fl">25</span>, <span class="va">alosimplied</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1750</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Admissions implied by stock and stay</span> ─────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Admissions                1,750 over the period                           │</span></span>
+<span><span class="co">#&gt; │   Average daily population  25                                              │</span></span>
+<span><span class="co">#&gt; │   Average stay              5.214 days                                      │</span></span>
+<span><span class="co">#&gt; │   Period                    365 days                                        │</span></span>
+<span><span class="co">#&gt; │   Formula                   admits = adp x t / alos = 25 x 365 / 5.214      │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   25 held on an average day, staying 5.214 days each, imply 1,750           │</span></span>
+<span><span class="co">#&gt; │   admissions over 365 days.                                                 │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Lakner (1976, p.18-20): adp = admissions x alos / t is exact only in      │</span></span>
+<span><span class="co">#&gt; │   a steady state; with a population growing or shrinking quickly the        │</span></span>
+<span><span class="co">#&gt; │   result is an approximation. It is not rounded.                            │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="stock-and-flow-together">Stock and flow together<a class="anchor" aria-label="anchor" href="#stock-and-flow-together"></a>
@@ -143,14 +191,27 @@ longer</strong>, so the flow falls while the stock rises.</p>
 <span>  prd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2023"</span>, <span class="st">"2025"</span><span class="op">)</span>,</span>
 <span>  expo <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15495050</span>, <span class="fl">16256538</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Stock and flow over 2 periods ───────────────────────────────── </span></span>
-<span><span class="co">#&gt;  period people   days      alos      adp flowrate  stkrate</span></span>
-<span><span class="co">#&gt;    2023  12647 115674  9.146359 316.9151 81.61961 2.045267</span></span>
-<span><span class="co">#&gt;    2025   9608 126121 13.126665 345.5370 59.10237 2.125526</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   2023 to 2025: people -24.0%, stay +43.5%, days +9.0%</span></span>
-<span><span class="co">#&gt;   flow rate -27.6%, stock rate +3.9%  &lt;- opposite signs: quote both</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Stock and flow over 2 periods</span> ────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Periods          2023 to 2025                                             │</span></span>
+<span><span class="co">#&gt; │   Period length    365 days                                                 │</span></span>
+<span><span class="co">#&gt; │   Changes against  the first period                                         │</span></span>
+<span><span class="co">#&gt; │   Rates per        100,000 residents                                        │</span></span>
+<span><span class="co">#&gt; │   Columns          alos = days per person; adp = people held on an average  │</span></span>
+<span><span class="co">#&gt; │                    day                                                      │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   period  people     days   alos    adp  flowrate  stkrate                  │</span></span>
+<span><span class="co">#&gt; │   ------  ------  -------  -----  -----  --------  -------                  │</span></span>
+<span><span class="co">#&gt; │   2023    12,647  115,674   9.15  316.9     81.62    2.045                  │</span></span>
+<span><span class="co">#&gt; │   2025     9,608  126,121  13.13  345.5     59.10    2.126                  │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   2023 to 2025: people -24.0%, stay +43.5%, days +9.0%                      │</span></span>
+<span><span class="co">#&gt; │   flow rate -27.6%, stock rate +3.9%                                        │</span></span>
+<span><span class="co">#&gt; │   &lt;- opposite signs: quote both, neither alone tells the story              │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Lakner (1976): adp = people x alos / t, exact only in a steady state.     │</span></span>
+<span><span class="co">#&gt; │   A period shorter than the longest stay cuts unfinished stays short,       │</span></span>
+<span><span class="co">#&gt; │   so alos is biased downward (p.16-17).                                     │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>A table that reported only admissions would show a decline; one that
 reported only the daily count would show growth. Both are true, and the
 length of stay is the reason.</p>
@@ -163,8 +224,23 @@ the summary that matters is the whole distribution:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">stays</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">40</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">30</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">20</span><span class="op">)</span>, <span class="fl">60</span>, <span class="fl">90</span>, <span class="fl">120</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/staysmry.html">staysmry</a></span><span class="op">(</span><span class="va">stays</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    n totaldays     mean       sd median iqr max       se    lower    upper</span></span>
-<span><span class="co">#&gt; 1 93       600 6.451613 16.33183      3   2 120 1.693532 3.088113 9.815113</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Length of stay</span> ─────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   People               93                                             │</span></span>
+<span><span class="co">#&gt; │   Days served          600                                            │</span></span>
+<span><span class="co">#&gt; │   Mean stay            6.452 days                                     │</span></span>
+<span><span class="co">#&gt; │   Median stay          3 days                                         │</span></span>
+<span><span class="co">#&gt; │   Interquartile range  2 days                                         │</span></span>
+<span><span class="co">#&gt; │   Longest stay         120 days                                       │</span></span>
+<span><span class="co">#&gt; │   Standard deviation   16.33                                          │</span></span>
+<span><span class="co">#&gt; │   Mean, interval       [3.088, 9.815] 95% t interval                  │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   The mean stay is 2.2 times the median: a few long stays pull it up, │</span></span>
+<span><span class="co">#&gt; │   so the median says more about a typical stay.                       │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   The interval is on the AVERAGE stay, not the spread of stays.       │</span></span>
+<span><span class="co">#&gt; │   Lakner (1976, p.16-17): a person still held has an unfinished stay, │</span></span>
+<span><span class="co">#&gt; │   so a window shorter than the longest stay biases the mean downward. │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="../reference/staysmry.html">staysmry</a></span><span class="op">(</span><span class="va">stays</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>, <span class="st">"median"</span>, <span class="st">"max"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;       mean median max</span></span>
 <span><span class="co">#&gt; 1 6.451613      3 120</span></span></code></pre></div>
@@ -179,7 +255,18 @@ days or less, and the longest was 120” instead of “the average stay was
 <p>Published series use fiscal years and uneven periods:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/perdays.html">perdays</a></span><span class="op">(</span><span class="st">"2024-04-01"</span>, <span class="st">"2025-03-31"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 365</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Period length</span> ──────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Length   365 days                                                   │</span></span>
+<span><span class="co">#&gt; │   From     2024-04-01                                                 │</span></span>
+<span><span class="co">#&gt; │   To       2025-03-31                                                 │</span></span>
+<span><span class="co">#&gt; │   Formula  t = to - from + 1 (both ends counted)                      │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   From 2024-04-01 to 2025-03-31 is 365 days.                          │</span></span>
+<span><span class="co">#&gt; │   Pass it as t to adp(), admits(), adpcnts() or stkflow().            │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   Both ends count: the 1st to the 31st is 31 days of exposure. A leap │</span></span>
+<span><span class="co">#&gt; │   year comes out at 366 from the dates, without anyone choosing.      │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="../reference/fylbl.html">fylbl</a></span><span class="op">(</span><span class="fl">2024</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "2023/24"</span></span></code></pre></div>
 </div>
@@ -209,11 +296,23 @@ in custody or care. The census excerpt bundled with the package counts
 foster children, a stock on census day:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"censuspop"</span><span class="op">)</span></span>
-<span><span class="va">fc</span> <span class="op">&lt;-</span> <span class="va">cp</span><span class="op">[</span><span class="va">cp</span><span class="op">$</span><span class="va">GEO_NAME</span> <span class="op">==</span> <span class="st">"Canada"</span> <span class="op">&amp;</span> <span class="va">cp</span><span class="op">$</span><span class="va">AGE_GROUP</span> <span class="op">==</span> <span class="st">"0 to 14 years"</span> <span class="op">&amp;</span></span>
-<span>           <span class="va">cp</span><span class="op">$</span><span class="va">RESIDENCE</span> <span class="op">==</span> <span class="st">"Total - Residence on or off reserve"</span>, <span class="op">]</span></span>
-<span><span class="va">kids</span> <span class="op">&lt;-</span> <span class="va">fc</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Total - Children in census families"</span>, <span class="va">fc</span><span class="op">$</span><span class="va">CHARACTERISTIC_NAME</span><span class="op">)</span>,</span>
-<span>           <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"FIRST_NATIONS"</span>, <span class="st">"NON_IND"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">fost</span> <span class="op">&lt;-</span> <span class="va">fc</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Foster children"</span>, <span class="va">fc</span><span class="op">$</span><span class="va">CHARACTERISTIC_NAME</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"FIRST_NATIONS"</span>, <span class="st">"NON_IND"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">fc</span> <span class="op">&lt;-</span> <span class="va">cp</span><span class="op">[</span></span>
+<span>  <span class="va">cp</span><span class="op">$</span><span class="va">GEO_NAME</span> <span class="op">==</span> <span class="st">"Canada"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">cp</span><span class="op">$</span><span class="va">AGE_GROUP</span> <span class="op">==</span> <span class="st">"0 to 14 years"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">cp</span><span class="op">$</span><span class="va">RESIDENCE</span> <span class="op">==</span> <span class="st">"Total - Residence on or off reserve"</span>,</span>
+<span><span class="op">]</span></span>
+<span><span class="va">kids</span> <span class="op">&lt;-</span> <span class="va">fc</span><span class="op">[</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Total - Children in census families"</span>,</span>
+<span>    <span class="va">fc</span><span class="op">$</span><span class="va">CHARACTERISTIC_NAME</span>,</span>
+<span>    fixed <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"FIRST_NATIONS"</span>, <span class="st">"NON_IND"</span><span class="op">)</span></span>
+<span><span class="op">]</span></span>
+<span><span class="va">fost</span> <span class="op">&lt;-</span> <span class="va">fc</span><span class="op">[</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Foster children"</span>, <span class="va">fc</span><span class="op">$</span><span class="va">CHARACTERISTIC_NAME</span>, fixed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"FIRST_NATIONS"</span>, <span class="st">"NON_IND"</span><span class="op">)</span></span>
+<span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fl">100</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">fost</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">kids</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; FIRST_NATIONS       NON_IND </span></span>
 <span><span class="co">#&gt;          4.42          0.23</span></span></code></pre></div>
@@ -231,9 +330,20 @@ and the median differ.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">per1000</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">fost</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">kids</span><span class="op">)</span> <span class="op">*</span> <span class="fl">1000</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">per1000</span>, names.arg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"non-Indigenous"</span><span class="op">)</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>,</span>
-<span>        ylab <span class="op">=</span> <span class="st">"per 1,000 children"</span>, main <span class="op">=</span> <span class="st">"Children in foster care"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">stays</span>, breaks <span class="op">=</span> <span class="fl">30</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, xlab <span class="op">=</span> <span class="st">"length of stay"</span>, main <span class="op">=</span> <span class="st">"Lengths of stay"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span></span>
+<span>  <span class="va">per1000</span>,</span>
+<span>  names.arg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"non-Indigenous"</span><span class="op">)</span>,</span>
+<span>  col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"per 1,000 children"</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"Children in foster care"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span></span>
+<span>  <span class="va">stays</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="fl">30</span>,</span>
+<span>  col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="st">"length of stay"</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"Lengths of stay"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="stock-and-flow_files/figure-html/stock-and-flow-stock-flow-plots-1.png" class="r-plt" alt="" width="768"></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></code></pre></div>

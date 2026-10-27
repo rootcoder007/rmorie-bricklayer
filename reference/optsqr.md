@@ -78,26 +78,68 @@ distribution of searching effort. Operations Research 5(5), 613-626.
 ``` r
 # Frost's example: an effort of 4 E^2 on a point datum
 optsqr(4)
-#>   search effort releff cumeff   factor     side       poc  coverage       pod
-#> 1      1      4      4      4 1.021043 2.042086 0.5939919 0.9592059 0.7707087
-#>         pos    cumpos
-#> 1 0.4577947 0.4577947
+#> ╭── Optimal square searches ────────────────────────────────────────────────╮
+#> │   Searches                 1                                              │
+#> │   Total effort             4                                              │
+#> │   Chance found by the end  0.4578                                         │
+#> │                                                                           │
+#> │   search  effort  releff  cumeff  factor   side     poc  coverage     pod │
+#> │   ------  ------  ------  ------  ------  -----  ------  --------  ------ │
+#> │        1       4       4       4   1.021  2.042  0.5940    0.9592  0.7707 │
+#> │                                                                           │
+#> │   search     pos  cumpos                                                  │
+#> │   ------  ------  ------                                                  │
+#> │        1  0.4578  0.4578                                                  │
+#> │                                                                           │
+#> │   Each search covers the square (of side 'side') that gives it the best   │
+#> │   chance of success after the searches before it. poc is the chance the   │
+#> │   object is in that square, pod the chance of detecting it there, pos     │
+#> │   their product and cumpos the running chance it has been found.          │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 # poor search conditions: the random search curve
 optsqr(4, model = "random")
-#>   search effort releff cumeff factor     side       poc  coverage       pod
-#> 1      1      4      4      4 1.0276 2.055199 0.5985885 0.9470049 0.6120989
-#>         pos    cumpos
-#> 1 0.3663954 0.3663954
+#> ╭── Optimal square searches ────────────────────────────────────────────────╮
+#> │   Searches                 1                                              │
+#> │   Total effort             4                                              │
+#> │   Chance found by the end  0.3664                                         │
+#> │                                                                           │
+#> │   search  effort  releff  cumeff  factor   side     poc  coverage     pod │
+#> │   ------  ------  ------  ------  ------  -----  ------  --------  ------ │
+#> │        1       4       4       4   1.028  2.055  0.5986    0.9470  0.6121 │
+#> │                                                                           │
+#> │   search     pos  cumpos                                                  │
+#> │   ------  ------  ------                                                  │
+#> │        1  0.3664  0.3664                                                  │
+#> │                                                                           │
+#> │   Each search covers the square (of side 'side') that gives it the best   │
+#> │   chance of success after the searches before it. poc is the chance the   │
+#> │   object is in that square, pod the chance of detecting it there, pos     │
+#> │   their product and cumpos the running chance it has been found.          │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 # three searches in a row, each optimal for what the last ones left
 optsqr(c(4, 4, 8), E = 2)
-#>   search effort releff cumeff    factor     side       poc  coverage       pod
-#> 1      1      4      1      1 0.6432168 2.572867 0.3037639 0.6042619 0.5511478
-#> 2      2      4      1      2 0.9359534 3.743814 0.4381650 0.2853853 0.2794152
-#> 3      3      8      2      4 1.1183366 4.473346 0.5339275 0.3997836 0.3836672
-#>         pos    cumpos
-#> 1 0.1674188 0.1674188
-#> 2 0.1224300 0.2693517
-#> 3 0.2048504 0.4190253
+#> ╭── Optimal square searches ────────────────────────────────────────────────╮
+#> │   Searches                 3                                              │
+#> │   Total effort             16                                             │
+#> │   Chance found by the end  0.419                                          │
+#> │                                                                           │
+#> │   search  effort  releff  cumeff  factor   side     poc  coverage     pod │
+#> │   ------  ------  ------  ------  ------  -----  ------  --------  ------ │
+#> │        1       4       1       1  0.6432  2.573  0.3038    0.6043  0.5511 │
+#> │        2       4       1       2  0.9360  3.744  0.4382    0.2854  0.2794 │
+#> │        3       8       2       4  1.1183  4.473  0.5339    0.3998  0.3837 │
+#> │                                                                           │
+#> │   search     pos  cumpos                                                  │
+#> │   ------  ------  ------                                                  │
+#> │        1  0.1674  0.1674                                                  │
+#> │        2  0.1224  0.2694                                                  │
+#> │        3  0.2049  0.4190                                                  │
+#> │                                                                           │
+#> │   Each search covers the square (of side 'side') that gives it the best   │
+#> │   chance of success after the searches before it. poc is the chance the   │
+#> │   object is in that square, pod the chance of detecting it there, pos     │
+#> │   their product and cumpos the running chance it has been found.          │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 try(optsqr(-1))
 #> Error : optsqr: `effort` must be positive
 ```

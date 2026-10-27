@@ -21,7 +21,7 @@ which shows the groups were mislabelled rather than the arithmetic wrong."><meta
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,7 +75,7 @@ which shows the groups were mislabelled rather than the arithmetic wrong.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">orchk</span><span class="op">(</span><span class="va">cnts</span>, <span class="va">ref</span>, <span class="va">rptd</span>, tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">orchk</span><span class="op">(</span><span class="va">cnts</span>, ref <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">rptd</span>, tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -104,7 +104,8 @@ match (5 percent), to allow for rounding in the report.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with elements <code>computed</code> (named numeric odds ratios
+    <p>A list of class <code>rmbl_or_check</code> (it prints as a box)
+with elements <code>computed</code> (named numeric odds ratios
 from the table as labelled), <code>reported</code> (the reported values, in
 the same order), <code>consistent</code> (logical), <code>matches</code> (a data frame
 with character <code>relabelling</code>, for example <code>"B -&gt; C, C -&gt; B"</code>,
@@ -116,15 +117,13 @@ character summary).</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>With row \(r\) holding \(a_r\) (outcome absent) and \(b_r\)
 (outcome present), the odds ratio of group \(r\) against the reference
-\(0\) is
-$$OR_r = \frac{b_r / a_r}{b_0 / a_0}.$$
-A reported value matches when \(|OR_r - \widehat{OR}_r| \le\)
-<code>tol</code> \(\times |\widehat{OR}_r|\) for every non-reference
-group, and all values are finite. The search covers all \(k!\)
-permutations of the row labels, each with and without the outcome columns
-swapped (the identity without a swap is the “as labelled” check), and is
-only run for \(k \le 7\) groups. A zero cell gives an infinite or
-undefined odds ratio, which never matches.</p>
+\(0\) is $$OR_r = \frac{b_r / a_r}{b_0 / a_0}.$$ A reported value
+matches when \(|OR_r - \widehat{OR}_r| \le\) <code>tol</code> \(\times
+|\widehat{OR}_r|\) for every non-reference group, and all values are finite.
+The search covers all \(k!\) permutations of the row labels, each with and
+without the outcome columns swapped (the identity without a swap is the
+“as labelled” check), and is only run for \(k \le 7\) groups. A zero
+cell gives an infinite or undefined odds ratio, which never matches.</p>
 <p>Errors: <code>cnts</code> not a matrix, data frame or table with two columns
 and row names; <code>ref</code> not a row name; <code>rptd</code> not named
 by every non-reference row.</p>

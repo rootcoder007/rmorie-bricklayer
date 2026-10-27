@@ -102,13 +102,15 @@ NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard
 ## Examples
 
 ``` r
-# NIST's rng.c, as the post-quantum known-answer files use it: vector 0's seed
+# NIST's rng.c, as the post-quantum known-answer files use it: vector 0's
+# seed
 d <- drbgnew(as.raw(0:47))
 drbggen(d, 48)
 #>  [1] 06 15 50 23 4d 15 8c 5e c9 55 95 fe 04 ef 7a 25 76 7f 2e 24 cc 2b c4 79 d0
 #> [26] 9d 86 dc 9a bc fd e7 05 6a 8c 26 6f 9e f9 7e d0 85 41 db d2 e1 ff a1
 
-# the same inputs give the same bytes; a personalization string separates streams
+# the same inputs give the same bytes; a personalization string separates
+# streams
 a <- drbgnew(as.raw(1:48), person = charToRaw("session 1"))
 b <- drbgnew(as.raw(1:48), person = charToRaw("session 2"))
 identical(drbggen(a, 16), drbggen(b, 16))

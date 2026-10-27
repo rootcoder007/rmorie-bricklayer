@@ -135,54 +135,89 @@ for the clearance rate over time.
 ## Examples
 
 ``` r
-g <- read.csv(system.file("extdata", "ocj_offence_groups.csv",
-                          package = "rmoriebricklayer"))
+g <- read.csv(system.file(
+  "extdata",
+  "ocj_offence_groups.csv",
+  package = "rmoriebricklayer"
+))
 g <- g[g$year %in% c(2014, 2022), ]
 cd <- clrdcmp(g$disposed, g$received, g$offence_group, g$year)
 cd
-#> ── Clearance rate, 2022 against 2014: rate and case-mix effects (Kitagawa)  
-#>   2014: 0.9760   2022: 0.9749   change -0.0011 = rate effect +0.0096 + mix effect -0.0107
-#>   2022 standardised to the 2014 mix: 0.9912; to the average mix: 0.9830
-#>   4 of 6 parts rose, 2 fell. Simpson's paradox through the mix: the aggregate fell, but at a fixed mix it rose
-#> 
-#>                       part rate 2014 rate 2022 share 2014 share 2022  ratio
-#>  Administration of Justice    0.9788    1.0378     0.2689     0.2818 1.0603
-#>    Crimes Against Property    0.9851    0.9692     0.2279     0.1973 0.9839
-#>  Crimes Against the Person    0.9180    0.8576     0.2620     0.3187 0.9343
-#>      Criminal Code Traffic    1.0105    1.0212     0.0808     0.0948 1.0106
-#>            Federal Statute    1.0232    1.1734     0.1148     0.0534 1.1468
-#>        Other Criminal Code    1.0675    1.0818     0.0455     0.0539 1.0134
-#>   lower  upper   rateeff    mixeff
-#>  1.0484 1.0725  0.016300  4.24e-04
-#>  0.9710 0.9969 -0.003370 -5.16e-05
-#>  0.9233 0.9454 -0.017500 -4.97e-03
-#>  0.9905 1.0311  0.000939  5.66e-04
-#>  1.1230 1.1710  0.012600 -7.54e-03
-#>  0.9874 1.0402  0.000713  8.34e-04
-#> 
-#>   Rate ratio 2022/2014: crude 0.9989 (0.9929 to 1.0050); within parts (Mantel-Haenszel) 1.0085 (1.0024 to 1.0146), p 0.00644
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Clearance rate, 2022 against 2014 (Kitagawa) ─────────────────────────────╮
+#> │   Rate 2014                0.976                                            │
+#> │   Rate 2022                0.9749                                           │
+#> │   Change                   -0.0011 = rate effect +0.0096 + mix effect       │
+#> │                            -0.0107                                          │
+#> │   2022 at the 2014 mix     0.9912                                           │
+#> │   2022 at the average mix  0.9830                                           │
+#> │   Parts                    6                                                │
+#> │                                                                             │
+#> │   part                       rate 2014  rate 2022  share 2014  share 2022   │
+#> │   -------------------------  ---------  ---------  ----------  ----------   │
+#> │   Administration of Justice     0.9788      1.038      0.2689      0.2818   │
+#> │   Crimes Against Property       0.9851      0.969      0.2279      0.1973   │
+#> │   Crimes Against the Person     0.9180      0.858      0.2620      0.3187   │
+#> │   Criminal Code Traffic         1.0105      1.021      0.0808      0.0948   │
+#> │   Federal Statute               1.0232      1.173      0.1148      0.0534   │
+#> │   Other Criminal Code           1.0675      1.082      0.0455      0.0539   │
+#> │                                                                             │
+#> │   part                       ratio  95% CI            rateeff     mixeff    │
+#> │   -------------------------  -----  --------------  ---------  ---------    │
+#> │   Administration of Justice  1.060  [1.048, 1.072]   0.016263   0.000424    │
+#> │   Crimes Against Property    0.984  [0.971, 0.997]  -0.003375  -0.000052    │
+#> │   Crimes Against the Person  0.934  [0.923, 0.945]  -0.017526  -0.004966    │
+#> │   Criminal Code Traffic      1.011  [0.990, 1.031]   0.000939   0.000566    │
+#> │   Federal Statute            1.147  [1.123, 1.171]   0.012631  -0.007535    │
+#> │   Other Criminal Code        1.013  [0.987, 1.040]   0.000713   0.000834    │
+#> │                                                                             │
+#> │   4 of 6 parts rose, 2 fell.                                                │
+#> │   Simpson's paradox through the mix: the aggregate fell, but at a fixed     │
+#> │   mix it rose                                                               │
+#> │   Rate effect: the change at a fixed case mix; mix effect: the change       │
+#> │   from the mix of cases alone.                                              │
+#> │                                                                             │
+#> │   Rate ratio 2022/2014: crude 0.9989 (0.9929 to 1.0050); within parts       │
+#> │   (Mantel-Haenszel) 1.0085 (1.0024 to 1.0146), p 0.006                      │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(cd)
 
 
 # Simpson's paradox in four numbers: each part clears better in B, yet the
 # aggregate falls, because B's workload moved to the part that clears less
-toy <- clrdcmp(num = c(90, 20, 19, 60),
-                               den = c(100, 50, 20, 140),
-                               grp = c("minor", "serious", "minor", "serious"),
-                               cmp = c("A", "A", "B", "B"))
+toy <- clrdcmp(
+  num = c(90, 20, 19, 60),
+  den = c(100, 50, 20, 140),
+  grp = c("minor", "serious", "minor", "serious"),
+  cmp = c("A", "A", "B", "B")
+)
 toy
-#> ── Clearance rate, B against A: rate and case-mix effects (Kitagawa)  
-#>   A: 0.7333   B: 0.4938   change -0.2396 = rate effect +0.0371 + mix effect -0.2766
-#>   B standardised to the A mix: 0.7762; to the average mix: 0.6350
-#>   2 of 2 parts rose, 0 fell. Simpson's paradox: every part moved the other way to the aggregate (2 of 2)
-#> 
-#>     part rate A rate B share A share B  ratio  lower  upper rateeff mixeff
-#>    minor    0.9 0.9500  0.6667   0.125 1.0556 0.6075 1.7454  0.0198 -0.169
-#>  serious    0.4 0.4286  0.3333   0.875 1.0714 0.6367 1.8767  0.0173 -0.108
-#> 
-#>   Rate ratio B/A: crude 0.6733 (0.4978 to 0.9072); within parts (Mantel-Haenszel) 1.0634 (0.7465 to 1.5149), p 0.733
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Clearance rate, B against A (Kitagawa) ───────────────────────────────────╮
+#> │   Rate A                0.7333                                              │
+#> │   Rate B                0.4938                                              │
+#> │   Change                -0.2396 = rate effect +0.0371 + mix effect -0.2766  │
+#> │   B at the A mix        0.7762                                              │
+#> │   B at the average mix  0.6350                                              │
+#> │   Parts                 2                                                   │
+#> │                                                                             │
+#> │   part     rate A  rate B  share A  share B  ratio  95% CI          rateeff │
+#> │   -------  ------  ------  -------  -------  -----  --------------  ------- │
+#> │   minor    0.9000  0.9500   0.6667   0.1250  1.056  [0.607, 1.745]  0.01979 │
+#> │   serious  0.4000  0.4286   0.3333   0.8750  1.071  [0.637, 1.877]  0.01726 │
+#> │                                                                             │
+#> │   part      mixeff                                                          │
+#> │   -------  -------                                                          │
+#> │   minor    -0.1687                                                          │
+#> │   serious  -0.1079                                                          │
+#> │                                                                             │
+#> │   2 of 2 parts rose, 0 fell.                                                │
+#> │   Simpson's paradox: every part moved the other way to the aggregate (2 of  │
+#> │   2)                                                                        │
+#> │   Rate effect: the change at a fixed case mix; mix effect: the change       │
+#> │   from the mix of cases alone.                                              │
+#> │                                                                             │
+#> │   Rate ratio B/A: crude 0.6733 (0.4978 to 0.9072); within parts             │
+#> │   (Mantel-Haenszel) 1.0634 (0.7465 to 1.5149), p 0.733                      │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # every part must appear in both comparisons
 try(clrdcmp(c(5, 6, 7), c(10, 10, 10), c("x", "y", "x"), c(1, 1, 2)))

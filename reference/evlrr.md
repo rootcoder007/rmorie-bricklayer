@@ -100,5 +100,5 @@ evlrr(3, true = 1.5)
 #> 3.414214 
 
 try(evlrr(-2))
-#> Error : risk ratios must be finite and positive
+#> Error : evlrr: `rr` must be one risk ratio, finite and positive
 ```

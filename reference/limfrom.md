@@ -16,7 +16,7 @@ limfrom(est, se = NULL, cv = NULL, moe = NULL, moelev = 0.9, conflvl = 0.95)
 
 - est:
 
-  The estimates.
+  The estimates the limits are centred on.
 
 - se, cv, moe:
 
@@ -53,10 +53,28 @@ estimate's scale.
 
 ``` r
 limfrom(c(24.1, 31.5), cv = c(8, 12))
-#>   estimate    lower    upper    se
-#> 1     24.1 20.32119 27.87881 1.928
-#> 2     31.5 24.09134 38.90866 3.780
+#> ╭── Intervals from published precision ───────────────────────────────╮
+#> │   Estimates  2                                                      │
+#> │   Interval   normal, estimate +/- z x se (default 95%)              │
+#> │                                                                     │
+#> │   estimate     se  interval                                         │
+#> │   --------  -----  --------------                                   │
+#> │      24.10  1.928  [20.32, 27.88]                                   │
+#> │      31.50  3.780  [24.09, 38.91]                                   │
+#> │                                                                     │
+#> │   Each interval is rebuilt from the published standard error, CV or │
+#> │   margin of error, assuming a normal sampling distribution.         │
+#> ╰─────────────────────────────────────────────────────────────────────╯
 limfrom(1520, moe = 210)                 # a 90% margin of error
-#>   estimate   lower   upper       se
-#> 1     1520 1269.77 1770.23 127.6709
+#> ╭── Intervals from published precision ───────────────────────────────╮
+#> │   Estimates  1                                                      │
+#> │   Interval   normal, estimate +/- z x se (default 95%)              │
+#> │                                                                     │
+#> │   estimate     se  interval                                         │
+#> │   --------  -----  ------------                                     │
+#> │      1,520  127.7  [1270, 1770]                                     │
+#> │                                                                     │
+#> │   Each interval is rebuilt from the published standard error, CV or │
+#> │   margin of error, assuming a normal sampling distribution.         │
+#> ╰─────────────────────────────────────────────────────────────────────╯
 ```

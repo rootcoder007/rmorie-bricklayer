@@ -29,7 +29,7 @@ method returns the data it drew, invisibly, as a data frame."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -121,9 +121,6 @@ method returns the data it drew, invisibly, as a data frame.</p>
 <span>  col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  palette <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for class 'rmbl_prevalence'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_dsr'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
@@ -370,12 +367,13 @@ method returns the data it drew, invisibly, as a data frame.</p>
 <span>  main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_srchpod'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, models <span class="op">=</span> <span class="cn">NULL</span>, m <span class="op">=</span> <span class="cn">NULL</span>, cmax <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, models <span class="op">=</span> <span class="cn">NULL</span>, m <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cmax <span class="op">=</span> <span class="cn">NULL</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_datummap'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, view <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"map"</span>, <span class="st">"persp"</span>, <span class="st">"both"</span>, <span class="st">"cells"</span><span class="op">)</span>,</span>
-<span>  contours <span class="op">=</span> <span class="fl">8L</span>, digits <span class="op">=</span> <span class="fl">2</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>,</span>
+<span>  view <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"map"</span>, <span class="st">"persp"</span>, <span class="st">"both"</span>, <span class="st">"cells"</span><span class="op">)</span>, contours <span class="op">=</span> <span class="fl">8L</span>, digits <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_opteffort'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
@@ -395,7 +393,7 @@ method returns the data it drew, invisibly, as a data frame.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>The result.</p></dd>
+<dd><p>An <code>rmbl_stock_flow</code> result.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -405,9 +403,9 @@ or <code>image</code>). They are passed on to each panel's method for a
 
 
 <dt id="arg-component">component<a class="anchor" aria-label="anchor" href="#arg-component"></a></dt>
-<dd><p>For <code>rmbl_census_cwb</code>: <code>"cwb"</code> (the index, default) or one
-of its components <code>"income"</code>, <code>"education"</code>, <code>"housing"</code>,
-<code>"labour"</code>.</p></dd>
+<dd><p>For <code>rmbl_census_cwb</code>: <code>"cwb"</code> (the index,
+default) or one of its components <code>"income"</code>, <code>"education"</code>,
+<code>"housing"</code>, <code>"labour"</code>.</p></dd>
 
 
 <dt id="arg-main">main<a class="anchor" aria-label="anchor" href="#arg-main"></a></dt>
@@ -424,19 +422,20 @@ session option.</p></dd>
 
 
 <dt id="arg-what">what<a class="anchor" aria-label="anchor" href="#arg-what"></a></dt>
-<dd><p>Depends on the class:</p><ul><li><p><code>rmbl_indigenous_gap</code>: <code>"difference"</code> or <code>"ratio"</code>;</p></li>
-<li><p><code>rmbl_stock_flow</code>: the measures to draw (one panel each), any
-of <code>"adp"</code>, <code>"alos"</code>, <code>"people"</code>, <code>"days"</code>,
-<code>"flowrate"</code>, <code>"stkrate"</code>;</p></li>
+<dd><p>Depends on the class:</p><ul><li><p><code>rmbl_indigenous_gap</code>:
+<code>"difference"</code> or <code>"ratio"</code>;</p></li>
+<li><p><code>rmbl_stock_flow</code>: the
+measures to draw (one panel each), any of <code>"adp"</code>, <code>"alos"</code>,
+<code>"people"</code>, <code>"days"</code>, <code>"flowrate"</code>, <code>"stkrate"</code>;</p></li>
 <li><p><code>rmbl_yoy</code>: <code>"pctchg"</code> or <code>"value"</code>;</p></li>
-<li><p><code>bricklayer_drift</code>: <code>"psi"</code>, <code>"columns"</code>,
-<code>"benford"</code>, <code>"ecdf"</code>, <code>"quantiles"</code> or
-<code>"fingerprint"</code>;</p></li>
+<li><p><code>bricklayer_drift</code>: <code>"psi"</code>, <code>"columns"</code>, <code>"benford"</code>,
+<code>"ecdf"</code>, <code>"quantiles"</code> or <code>"fingerprint"</code>;</p></li>
 <li><p><code>rmbl_case_flow</code>: <code>"flow"</code> and/or <code>"clearance"</code>;</p></li>
-<li><p><code>rmbl_clearance_decomposition</code>: any of <code>"rates"</code>,
-<code>"mix"</code> and <code>"effects"</code> (the default fits the device).</p></li>
-</ul><p>The 0.5.x values <code>"pct_change"</code>, <code>"flow_rate"</code> and <code>"stock_rate"</code> are
-still accepted, as is <code>"rate_change"</code> for <code>which</code>.</p></dd>
+<li><p><code>rmbl_clearance_decomposition</code>: any of <code>"rates"</code>, <code>"mix"</code>
+and <code>"effects"</code> (the default fits the device).</p></li>
+</ul><p>The 0.5.x values
+<code>"pct_change"</code>, <code>"flow_rate"</code> and <code>"stock_rate"</code> are still
+accepted, as is <code>"rate_change"</code> for <code>which</code>.</p></dd>
 
 
 <dt id="arg-points">points<a class="anchor" aria-label="anchor" href="#arg-points"></a></dt>
@@ -445,42 +444,42 @@ over the surface.</p></dd>
 
 
 <dt id="arg-maxparts">maxparts<a class="anchor" aria-label="anchor" href="#arg-maxparts"></a></dt>
-<dd><p>For <code>rmbl_clearance_decomposition</code>, the most parts drawn: past
-it,
-the parts that moved the aggregate most, and the rest summed into one row. The 0.5.x
-name <code>max_parts</code> is still accepted.</p></dd>
+<dd><p>For <code>rmbl_clearance_decomposition</code>, the most parts
+drawn: past it, the parts that moved the aggregate most, and the rest
+summed into one row. The 0.5.x name <code>max_parts</code> is still accepted.</p></dd>
 
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
-<dd><p>For <code>rmbl_balance</code>: the absolute standardised difference
-drawn as the line of acceptable balance (default 0.1).</p></dd>
+<dd><p>For <code>rmbl_balance</code>: the absolute standardised
+difference drawn as the line of acceptable balance (default 0.1).</p></dd>
 
 
 <dt id="arg-after">after<a class="anchor" aria-label="anchor" href="#arg-after"></a></dt>
-<dd><p>For <code>rmbl_balance</code>: optionally a second <code><a href="baltab.html">baltab</a></code>
-on the same covariates (after weighting or matching), drawn beside the first.</p></dd>
+<dd><p>For <code>rmbl_balance</code>: optionally a second
+<code><a href="baltab.html">baltab</a></code> on the same covariates (after weighting or matching),
+drawn beside the first.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>For a permutation test: <code>"density"</code> (a kernel density of the
-permuted statistics, their 5th and 95th percentiles dashed, the observed one in
-red; the default) or <code>"histogram"</code>. For a cross-fitted AIPW result:
-<code>"overlap"</code> (the weighted distribution of the out-of-fold propensity in each
-arm with the clipping bounds; the default) or <code>"estimate"</code> (the effect with
-its confidence interval).</p></dd>
+permuted statistics, their 5th and 95th percentiles dashed, the observed
+one in red; the default) or <code>"histogram"</code>. For a cross-fitted AIPW
+result: <code>"overlap"</code> (the weighted distribution of the out-of-fold
+propensity in each arm with the clipping bounds; the default) or
+<code>"estimate"</code> (the effect with its confidence interval).</p></dd>
 
 
 <dt id="arg-xlab">xlab<a class="anchor" aria-label="anchor" href="#arg-xlab"></a></dt>
-<dd><p>For the plots over time (<code>rmbl_stock_flow</code>,
-<code>rmbl_yoy</code>, <code>rmbl_rate_change</code>, <code>rmbl_count_trend</code>,
-<code>rmbl_event_study</code>, and <code>rmbl_rate</code> with <code>period</code>),
-the title of the period axis. The default
-<code>NULL</code> names the unit the period implies: <code>"Date"</code> for dates,
-<code>"Time"</code> for date-times, <code>"Fiscal year"</code> for fiscal-year labels
-such as <code>"2022/23"</code>, <code>"Periods since adoption"</code> for an event
-study, otherwise <code>"Period"</code>. A number or a date is drawn on its own
-continuous scale, so a missing period leaves its gap; any other period
-(text, a factor) is drawn at evenly spaced positions labelled with its text.</p></dd>
+<dd><p>For the plots over time (<code>rmbl_stock_flow</code>, <code>rmbl_yoy</code>,
+<code>rmbl_rate_change</code>, <code>rmbl_count_trend</code>, <code>rmbl_event_study</code>,
+and <code>rmbl_rate</code> with <code>period</code>), the title of the period axis. The
+default <code>NULL</code> names the unit the period implies: <code>"Date"</code> for
+dates, <code>"Time"</code> for date-times, <code>"Fiscal year"</code> for fiscal-year
+labels such as <code>"2022/23"</code>, <code>"Periods since adoption"</code> for an
+event study, otherwise <code>"Period"</code>. A number or a date is drawn on its
+own continuous scale, so a missing period leaves its gap; any other period
+(text, a factor) is drawn at evenly spaced positions labelled with its
+text.</p></dd>
 
 
 <dt id="arg-gaps">gaps<a class="anchor" aria-label="anchor" href="#arg-gaps"></a></dt>
@@ -492,10 +491,9 @@ inserted is a visible gap; <code>"join"</code> draws the line straight over it.<
 
 
 <dt id="arg-period">period<a class="anchor" aria-label="anchor" href="#arg-period"></a></dt>
-<dd><p>For <code>rmbl_rate</code>, a <code>by</code> column holding the period: the rate
-is
-drawn over time with its interval band, one panel per group of the other <code>by</code>
-columns.</p></dd>
+<dd><p>For <code>rmbl_rate</code>, a <code>by</code> column holding the period:
+the rate is drawn over time with its interval band, one panel per group of
+the other <code>by</code> columns.</p></dd>
 
 
 <dt id="arg-cols">cols<a class="anchor" aria-label="anchor" href="#arg-cols"></a></dt>
@@ -527,9 +525,9 @@ every panel the analysis has.</p></dd>
 
 
 <dt id="arg-style">style<a class="anchor" aria-label="anchor" href="#arg-style"></a></dt>
-<dd><p>For an event study: <code>"dot"</code> (filled points with solid capped
-bars, the default) or <code>"stata"</code> (hollow points joined by a line, dashed
-capped bars, dashed reference lines).</p></dd>
+<dd><p>For an event study: <code>"dot"</code> (filled points with solid
+capped bars, the default) or <code>"stata"</code> (hollow points joined by a
+line, dashed capped bars, dashed reference lines).</p></dd>
 
 
 <dt id="arg-shadepost">shadepost<a class="anchor" aria-label="anchor" href="#arg-shadepost"></a></dt>
@@ -542,22 +540,24 @@ between the reference period and adoption; <code>0</code> puts it at adoption).<
 
 
 <dt id="arg-equiv">equiv<a class="anchor" aria-label="anchor" href="#arg-equiv"></a></dt>
-<dd><p>Whether to draw the equivalent definite-range rectangle and the A and B areas
-(figure 4-7 of the book).</p></dd>
+<dd><p>Whether to draw the equivalent definite-range rectangle and the
+A and B areas (figure 4-7 of the book).</p></dd>
 
 
 <dt id="arg-spacing">spacing<a class="anchor" aria-label="anchor" href="#arg-spacing"></a></dt>
-<dd><p>NULL, or the distance to a second track, drawn beside the first.</p></dd>
+<dd><p>NULL, or the distance to a second track, drawn beside the
+first.</p></dd>
 
 
 <dt id="arg-models">models<a class="anchor" aria-label="anchor" href="#arg-models"></a></dt>
-<dd><p>Model codes (<code>"random"</code>, <code>"definite"</code>, <code>"invcube"</code>,
-<code>"mbeta"</code>), one curve each; NULL
-draws the fitted model.</p></dd>
+<dd><p>Model codes (<code>"random"</code>, <code>"definite"</code>,
+<code>"invcube"</code>, <code>"mbeta"</code>), one curve each; NULL draws the fitted
+model.</p></dd>
 
 
 <dt id="arg-m">m<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
-<dd><p>M-Beta heights, one curve each when <code>"mbeta"</code> is among the models.</p></dd>
+<dd><p>M-Beta heights, one curve each when <code>"mbeta"</code> is among the
+models.</p></dd>
 
 
 <dt id="arg-cmax">cmax<a class="anchor" aria-label="anchor" href="#arg-cmax"></a></dt>
@@ -566,9 +566,8 @@ draws the fitted model.</p></dd>
 
 <dt id="arg-view">view<a class="anchor" aria-label="anchor" href="#arg-view"></a></dt>
 <dd><p><code>"map"</code> (the top view), <code>"persp"</code> (the surface),
-<code>"both"</code> (side by side,
-in the book's colour bands) or <code>"cells"</code> (the probability map as a grid of
-percentages).</p></dd>
+<code>"both"</code> (side by side, in the book's colour bands) or <code>"cells"</code>
+(the probability map as a grid of percentages).</p></dd>
 
 
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
@@ -587,210 +586,205 @@ carries the x position of each point drawn: an <code>at</code> column
 
 <dl><dt><code>rmbl_stock_flow</code></dt>
 <dd><p>(<code><a href="stkflow.html">stkflow</a></code>) the average
-daily population, length of stay, people and person-days over the
-periods, one panel per measure in <code>what</code>; with an exposure,
-the flow and stock rates too.</p></dd>
-
-<dt><code>rmbl_yoy</code></dt>
-<dd><p>(<code><a href="yoy.html">yoy</a></code>) the period-over-period
-percent change with its interval over the periods, the period across and
-the change up, groups side by side, coloured by verdict;
+daily population, length of stay, people and person-days over the periods,
+one panel per measure in <code>what</code>; with an exposure, the flow and stock
+rates too.</p></dd>
+ <dt><code>rmbl_yoy</code></dt>
+<dd><p>(<code><a href="yoy.html">yoy</a></code>) the
+period-over-period percent change with its interval over the periods, the
+period across and the change up, groups side by side, coloured by verdict;
 <code>what = "value"</code> draws the values instead.</p></dd>
-
-<dt><code>rmbl_rate</code>, <code>rmbl_share</code></dt>
-<dd><p>(<code><a href="rtcalc.html">rtcalc</a></code>, <code><a href="shrs.html">shrs</a></code>) the rate or share per group with
-its interval.</p></dd>
+ <dt><code>rmbl_rate</code>,
+<code>rmbl_share</code></dt>
+<dd><p>(<code><a href="rtcalc.html">rtcalc</a></code>, <code><a href="shrs.html">shrs</a></code>) the rate or
+share per group with its interval.</p></dd>
 
 <dt><code>rmbl_rate_change</code></dt>
 <dd><p>(<code><a href="ratechg.html">ratechg</a></code>) the percent change
 in the rate with its interval over the periods, groups side by side.</p></dd>
 
 <dt><code>rmbl_band_sensitivity</code></dt>
-<dd><p>(<code><a href="bandsens.html">bandsens</a></code>)
-the statistic against the cap applied to the open band.</p></dd>
+<dd><p>(<code><a href="bandsens.html">bandsens</a></code>) the statistic
+against the cap applied to the open band.</p></dd>
 
 <dt><code>rmbl_drift_calibration</code>, <code>bricklayer_drift</code></dt>
-<dd><p>(<code><a href="drftcal.html">drftcal</a></code>, <code><a href="cpsdrft.html">cpsdrft</a></code>) the
-false-alarm rate per column against alpha; for a drift result,
-<code>what = "psi"</code> (the default) the population stability index
-per column, worst first, coloured by verdict, with the warn and fail
-bands as dashed lines; <code>"columns"</code> the reference and current
-distributions of up to six columns (<code>cols</code>, or the worst), each
-PSI bin's term written on it; <code>"benford"</code> the first digits of
-numeric columns against Benford's law with its 95% band, and the
-test's verdict; <code>"ecdf"</code> both ECDFs with the area between them
-shaded; <code>"quantiles"</code> the current quantiles against the
-reference's on the identity line; <code>"fingerprint"</code> one spoke
-per column, its PSI as the distance out, with the bands as rings.</p></dd>
+<dd><p>(<code><a href="drftcal.html">drftcal</a></code>, <code><a href="cpsdrft.html">cpsdrft</a></code>) the false-alarm rate per
+column against alpha; for a drift result, <code>what = "psi"</code> (the default)
+the population stability index per column, worst first, coloured by
+verdict, with the warn and fail bands as dashed lines; <code>"columns"</code> the
+reference and current distributions of up to six columns (<code>cols</code>, or
+the worst), each PSI bin's term written on it; <code>"benford"</code> the first
+digits of numeric columns against Benford's law with its 95% band, and the
+test's verdict; <code>"ecdf"</code> both ECDFs with the area between them shaded;
+<code>"quantiles"</code> the current quantiles against the reference's on the
+identity line; <code>"fingerprint"</code> one spoke per column, its PSI as the
+distance out, with the bands as rings.</p></dd>
 
 <dt><code>bricklayer_benford</code></dt>
 <dd><p>(<code><a href="benfordtst.html">benfordtst</a></code>) observed
 first-digit proportions against Benford's law.</p></dd>
 
 <dt><code>bricklayer_power</code></dt>
-<dd><p>(<code><a href="cpspwr.html">cpspwr</a></code>) the power
-curve: detection rate against injected effect size, with the 0.8
-line.</p></dd>
+<dd><p>(<code><a href="cpspwr.html">cpspwr</a></code>) the power curve:
+detection rate against injected effect size, with the 0.8 line.</p></dd>
 
 <dt><code>bricklayer_freq</code>, <code>bricklayer_missingness</code>,
 <code>rmbl_region_coverage</code></dt>
-<dd><p>(<code><a href="freqtbl.html">freqtbl</a></code>,
-<code><a href="misspat.html">misspat</a></code> and <code><a href="rgncov.html">rgncov</a></code>) horizontal bars.</p></dd>
+<dd><p>(<code><a href="freqtbl.html">freqtbl</a></code>, <code><a href="misspat.html">misspat</a></code>
+and <code><a href="rgncov.html">rgncov</a></code>) horizontal bars.</p></dd>
 
 <dt><code>bricklayer_outliers</code></dt>
-<dd><p>(<code><a href="mahaoutl.html">mahaoutl</a></code>)
-the distance of every row, outliers marked.</p></dd>
-
-<dt><code>bricklayer_correlations</code>, <code>bricklayer_cortable</code></dt>
-<dd><p>(<code><a href="topcors.html">topcors</a></code>, <code><a href="cortbl.html">cortbl</a></code>) the
-correlation of every pair as a diverging bar.</p></dd>
+<dd><p>(<code><a href="mahaoutl.html">mahaoutl</a></code>) the distance of
+every row, outliers marked.</p></dd>
+ <dt><code>bricklayer_correlations</code>,
+<code>bricklayer_cortable</code></dt>
+<dd><p>(<code><a href="topcors.html">topcors</a></code>, <code><a href="cortbl.html">cortbl</a></code>)
+the correlation of every pair as a diverging bar.</p></dd>
 
 <dt><code>bricklayer_falsification</code></dt>
-<dd><p>(<code><a href="cpsfals.html">cpsfals</a></code>)
-the permutation null distribution with the observed statistic.</p></dd>
+<dd><p>(<code><a href="cpsfals.html">cpsfals</a></code>) the
+permutation null distribution with the observed statistic.</p></dd>
 
 <dt><code>rmbl_bounds</code></dt>
-<dd><p>(<code><a href="pubbnd.html">pubbnd</a></code>) each value
-inside its published-rounding envelope.</p></dd>
-
-<dt><code>rmbl_indigenous_gap</code>, <code>rmbl_dsr</code>, <code>rmbl_prevalence</code></dt>
-<dd><p>each group's difference or ratio, rate, percentage, odds ratio or index
-with its interval, for these classes and for <code>rmbl_exposure_trend</code>
-and <code>rmbl_community_index</code> (<code><a href="indgap.html">indgap</a></code>, <code><a href="agestd.html">agestd</a></code>,
-<code><a href="stdprev.html">stdprev</a></code>, <code><a href="exptrnd.html">exptrnd</a></code>, <code><a href="commidx.html">commidx</a></code>);
-<code>what = "ratio"</code> draws the ratio of a gap.</p></dd>
+<dd><p>(<code><a href="pubbnd.html">pubbnd</a></code>) each value inside its
+published-rounding envelope.</p></dd>
+ <dt><code>rmbl_indigenous_gap</code>,
+<code>rmbl_dsr</code>, <code>rmbl_prevalence</code></dt>
+<dd><p>each group's difference or ratio,
+rate, percentage, odds ratio or index with its interval, for these classes
+and for <code>rmbl_exposure_trend</code> and <code>rmbl_community_index</code>
+(<code><a href="indgap.html">indgap</a></code>, <code><a href="agestd.html">agestd</a></code>, <code><a href="stdprev.html">stdprev</a></code>,
+<code><a href="exptrnd.html">exptrnd</a></code>, <code><a href="commidx.html">commidx</a></code>); <code>what = "ratio"</code> draws
+the ratio of a gap.</p></dd>
 
 <dt><code>rmbl_trc_progress</code></dt>
-<dd><p>(<code><a href="trcprog.html">trcprog</a></code>) the Calls to
-Action completed, and the pace projected with the band its interval gives.</p></dd>
+<dd><p>(<code><a href="trcprog.html">trcprog</a></code>) the Calls to Action
+completed, and the pace projected with the band its interval gives.</p></dd>
 
 <dt><code>rmbl_ordinal_compare</code></dt>
-<dd><p>(<code><a href="ordcmp.html">ordcmp</a></code>) each
-group's ratings as one stacked bar, lowest rating on the left.</p></dd>
+<dd><p>(<code><a href="ordcmp.html">ordcmp</a></code>) each group's
+ratings as one stacked bar, lowest rating on the left.</p></dd>
 
 <dt><code>rmbl_wellness_profile</code>, <code>rmbl_wellness_continuum</code></dt>
 <dd><p>wellness indicators above, distress below, each group's estimate and
 interval (<code><a href="welprof.html">welprof</a></code>, <code><a href="mhcont.html">mhcont</a></code>).</p></dd>
 
 <dt><code>rmbl_dual_continuum</code></dt>
-<dd><p>(<code><a href="dualcont.html">dualcont</a></code>) each group
-on the two axes, wellness up and distress across.</p></dd>
+<dd><p>(<code><a href="dualcont.html">dualcont</a></code>) each group on
+the two axes, wellness up and distress across.</p></dd>
 
 <dt><code>rmbl_holistic_balance</code></dt>
-<dd><p>(<code><a href="holbal.html">holbal</a></code>) the
-domains as spokes and each group's levels on them, with its balance.</p></dd>
+<dd><p>(<code><a href="holbal.html">holbal</a></code>) the domains as
+spokes and each group's levels on them, with its balance.</p></dd>
 
 <dt><code>rmbl_distinctions</code></dt>
-<dd><p>(<code><a href="dstntst.html">dstntst</a></code>) each
-group's estimate and the pooled figure, with I-squared.</p></dd>
+<dd><p>(<code><a href="dstntst.html">dstntst</a></code>) each group's
+estimate and the pooled figure, with I-squared.</p></dd>
 
 <dt><code>rmbl_connection</code></dt>
-<dd><p>(<code><a href="connassoc.html">connassoc</a></code>) the
-places on the two indicators, with their intervals; <code>xlab</code> and
-<code>ylab</code> name the axes (default: the indicators' column names).</p></dd>
+<dd><p>(<code><a href="connassoc.html">connassoc</a></code>) the places on the
+two indicators, with their intervals; <code>xlab</code> and <code>ylab</code> name the
+axes (default: the indicators' column names).</p></dd>
 
 <dt><code>rmbl_healing_change</code></dt>
-<dd><p>(<code><a href="healchg.html">healchg</a></code>) the change
-in each indicator between the periods, wellness first.</p></dd>
+<dd><p>(<code><a href="healchg.html">healchg</a></code>) the change in
+each indicator between the periods, wellness first.</p></dd>
 
 <dt><code>rmbl_profile_share</code></dt>
-<dd><p>(<code><a href="profshr.html">profshr</a></code>) each group's
-share of a census characteristic with its interval.</p></dd>
-
-<dt><code>rmbl_crf</code>, <code>rmbl_burden</code>, <code>rmbl_equity</code></dt>
-<dd><p>and
-<code>rmbl_pollution_report</code>: in turn, the concentration-response curve with
-the exposure marked; baseline against attributable cases; the
-concentration curve of exposure over income rank; and, for a report,
-all three on one page (<code><a href="crfpm25.html">crfpm25</a></code>, <code><a href="polbrdn.html">polbrdn</a></code>,
-<code><a href="expconcidx.html">expconcidx</a></code>, <code><a href="vrfpol.html">vrfpol</a></code>).</p></dd>
-
-<dt><code>rmbl_footprint</code></dt>
-<dd><p>(<code><a href="co2fp.html">co2fp</a></code>) the
-CPU, memory and total emission in one unit chosen to fit, with the
+<dd><p>(<code><a href="profshr.html">profshr</a></code>) each group's share
+of a census characteristic with its interval.</p></dd>
+ <dt><code>rmbl_crf</code>,
+<code>rmbl_burden</code>, <code>rmbl_equity</code></dt>
+<dd><p>and <code>rmbl_pollution_report</code>:
+in turn, the concentration-response curve with the exposure marked;
+baseline against attributable cases; the concentration curve of exposure
+over income rank; and, for a report, all three on one page
+(<code><a href="crfpm25.html">crfpm25</a></code>, <code><a href="polbrdn.html">polbrdn</a></code>, <code><a href="expconcidx.html">expconcidx</a></code>,
+<code><a href="vrfpol.html">vrfpol</a></code>).</p></dd>
+ <dt><code>rmbl_footprint</code></dt>
+<dd><p>(<code><a href="co2fp.html">co2fp</a></code>)
+the CPU, memory and total emission in one unit chosen to fit, with the
 car-kilometre and tree-month equivalents as a caption; “Too short to
 measure” when the work took no measurable time.</p></dd>
-
-<dt><code>rmbl_field</code>, <code>rmbl_particles</code></dt>
+ <dt><code>rmbl_field</code>,
+<code>rmbl_particles</code></dt>
 <dd><p>(<code><a href="plmfld.html">plmfld</a></code>, <code><a href="pgsig.html">advdif2d</a></code>,
-<code><a href="pgsig.html">lagrprt</a></code>) a concentration field as an
-image with contours; particle positions, with the counting grid
-behind them when one was given.</p></dd>
+<code><a href="pgsig.html">lagrprt</a></code>) a concentration field as an image with contours;
+particle positions, with the counting grid behind them when one was given.</p></dd>
 
 <dt><code>rmbl_count_trend</code></dt>
-<dd><p>(<code><a href="cnttrnd.html">cnttrnd</a></code>) the counts
-with the fitted trend.</p></dd>
-
-<dt><code>bricklayer_analysis</code></dt>
+<dd><p>(<code><a href="cnttrnd.html">cnttrnd</a></code>) the counts with the
+fitted trend.</p></dd>
+ <dt><code>bricklayer_analysis</code></dt>
 <dd><p>(<code><a href="anltab.html">anltab</a></code>) the
 change, rates and rate change of a published table, one panel each.</p></dd>
 
 <dt><code>rmbl_event_study</code>, <code>rmbl_staggered_att</code></dt>
-<dd><p>(<code><a href="evstudy.html">evstudy</a></code>, <code><a href="stgatt.html">stgatt</a></code>) the effect at each
-period since adoption with its interval, the reference period at zero.</p></dd>
+<dd><p>(<code><a href="evstudy.html">evstudy</a></code>, <code><a href="stgatt.html">stgatt</a></code>) the effect at each period
+since adoption with its interval, the reference period at zero.</p></dd>
 
 <dt><code>rmbl_synth</code>, <code>rmbl_synthdid</code></dt>
 <dd><p>(<code><a href="synctl.html">synctl</a></code>,
-<code><a href="syndid.html">syndid</a></code>) the treated unit (or mean) and its synthetic or weighted
-comparison over time, adoption marked.</p></dd>
+<code><a href="syndid.html">syndid</a></code>) the treated unit (or mean) and its synthetic or
+weighted comparison over time, adoption marked.</p></dd>
 
 <dt><code>rmbl_power</code></dt>
-<dd><p>(<code><a href="plnpwr.html">plnpwr</a></code>) power against effect size, with
-the 0.8 line and the minimum detectable effect.</p></dd>
+<dd><p>(<code><a href="plnpwr.html">plnpwr</a></code>) power against effect size,
+with the 0.8 line and the minimum detectable effect.</p></dd>
 
 <dt><code>rmbl_prevalence</code></dt>
 <dd><p>(<code><a href="stdprev.html">stdprev</a></code>) each group's
 age-standardised prevalence with its interval.</p></dd>
 
 <dt><code>rmbl_census_cwb</code></dt>
-<dd><p>(<code><a href="cnscwb.html">cnscwb</a></code>) the Community Well-Being
-index, or one <code>component</code>, by place, one colour per group.</p></dd>
+<dd><p>(<code><a href="cnscwb.html">cnscwb</a></code>) the Community
+Well-Being index, or one <code>component</code>, by place, one colour per group.</p></dd>
 
 <dt><code>rmbl_balance</code></dt>
 <dd><p>(<code><a href="baltab.html">baltab</a></code>) a love plot: each
-covariate's absolute standardised difference against the <code>threshold</code> line,
-with a second table (<code>after</code>, after weighting or matching) beside it.</p></dd>
-
-<dt><code>rmbl_aipw</code></dt>
-<dd><p>(<code><a href="aipwcf.html">aipwcf</a></code>) the overlap of the two
-groups' out-of-fold propensities (<code>type = "overlap"</code>) or the estimate with
-its interval (<code>type = "estimate"</code>).</p></dd>
+covariate's absolute standardised difference against the <code>threshold</code>
+line, with a second table (<code>after</code>, after weighting or matching)
+beside it.</p></dd>
+ <dt><code>rmbl_aipw</code></dt>
+<dd><p>(<code><a href="aipwcf.html">aipwcf</a></code>) the overlap of
+the two groups' out-of-fold propensities (<code>type = "overlap"</code>) or the
+estimate with its interval (<code>type = "estimate"</code>).</p></dd>
 
 <dt><code>rmbl_event_study</code>, <code>rmbl_staggered_att</code></dt>
-<dd><p>also take <code>style =
-    "stata"</code> (hollow points joined by a line, dashed bars) and <code>shadepost</code>;
-<code><a href="plotevgrid.html">plotevgrid</a></code> puts several in one grid.</p></dd>
+<dd><p>also take
+<code>style = "stata"</code> (hollow points joined by a line, dashed bars) and
+<code>shadepost</code>; <code><a href="plotevgrid.html">plotevgrid</a></code> puts several in one grid.</p></dd>
 
 <dt><code>rmbl_bacon</code></dt>
 <dd><p>(<code><a href="bacondcmp.html">bacondcmp</a></code>) each two-group
-comparison's estimate against its weight, by type, with the two-way estimate.</p></dd>
-
-<dt><code>rmbl_permutation</code></dt>
-<dd><p>(<code><a href="perminf.html">perminf</a></code>) the permuted
-statistics as a density (5th and 95th percentiles dashed) or histogram, the observed
-one in red, one panel per outcome.</p></dd>
+comparison's estimate against its weight, by type, with the two-way
+estimate.</p></dd>
+ <dt><code>rmbl_permutation</code></dt>
+<dd><p>(<code><a href="perminf.html">perminf</a></code>) the
+permuted statistics as a density (5th and 95th percentiles dashed) or
+histogram, the observed one in red, one panel per outcome.</p></dd>
 
 <dt><code>rmbl_loo</code>, <code>rmbl_cohort_trends</code></dt>
 <dd><p>(<code><a href="loounit.html">loounit</a></code>,
-<code><a href="cohtrnd.html">cohtrnd</a></code>) the leave-one-out estimates with the full-sample one;
-each cohort's outcome by time since adoption.</p></dd>
+<code><a href="cohtrnd.html">cohtrnd</a></code>) the leave-one-out estimates with the full-sample
+one; each cohort's outcome by time since adoption.</p></dd>
 
 <dt><code>rmbl_case_flow</code></dt>
-<dd><p>(<code><a href="caseflow.html">caseflow</a></code>) cases received
-and disposed, shaded where the inventory grew or fell, and the
-clearance rate with its interval and rolling value.</p></dd>
+<dd><p>(<code><a href="caseflow.html">caseflow</a></code>) cases received and
+disposed, shaded where the inventory grew or fell, and the clearance rate
+with its interval and rolling value.</p></dd>
 
 <dt><code>rmbl_life_table</code></dt>
-<dd><p>(<code><a href="lifetbl.html">lifetbl</a></code>) the share of
-cases still open at each band edge with its interval, and the median.</p></dd>
+<dd><p>(<code><a href="lifetbl.html">lifetbl</a></code>) the share of cases
+still open at each band edge with its interval, and the median.</p></dd>
 
 <dt><code>rmbl_disposition_mix</code></dt>
-<dd><p>(<code><a href="dispmix.html">dispmix</a></code>) the
-shares of each outcome over the periods, stacked.</p></dd>
+<dd><p>(<code><a href="dispmix.html">dispmix</a></code>) the shares of
+each outcome over the periods, stacked.</p></dd>
 
 <dt><code>rmbl_density</code></dt>
-<dd><p>(<code><a href="crmdens.html">crmdens</a></code>) the density of
-incidents as a heat map, with the highest-density regions outlined.</p></dd>
+<dd><p>(<code><a href="crmdens.html">crmdens</a></code>) the density of incidents
+as a heat map, with the highest-density regions outlined.</p></dd>
 
 <dt><code>rmbl_knox</code></dt>
 <dd><p>(<code><a href="knoxtst.html">knoxtst</a></code>) the Knox ratio of each
@@ -798,49 +792,61 @@ distance-by-time cell, coloured on a log scale around 1.</p></dd>
 
 <dt><code>rmbl_hotspot</code></dt>
 <dd><p>(<code><a href="hotpers.html">hotpers</a></code>) the share of places
-holding half the incidents and the overlap of hot spots with the period before,
-over
-time, and a map of the cells coloured by how often they were hot.</p></dd>
-
-<dt><code>rmbl_svy_estimate</code>,
+holding half the incidents and the overlap of hot spots with the period
+before, over time, and a map of the cells coloured by how often they were
+hot.</p></dd>
+ <dt><code>rmbl_svy_estimate</code>,
 <code>rmbl_svy_compare</code></dt>
-<dd><p>(<code><a href="svyest.html">svyest</a></code>,
-<code><a href="svycmp.html">svycmp</a></code>) each domain's estimate with its interval, flagged
-domains
-marked; each difference from the reference domain with its interval.</p></dd>
+<dd><p>(<code><a href="svyest.html">svyest</a></code>, <code><a href="svycmp.html">svycmp</a></code>) each
+domain's estimate with its interval, flagged domains marked; each
+difference from the reference domain with its interval.</p></dd>
 
 <dt><code>rmbl_clearance_decomposition</code></dt>
-<dd><p>(<code><a href="clrdcmp.html">clrdcmp</a></code>)
-the parts' rates in both comparisons with the aggregate on top, where the
+<dd><p>(<code><a href="clrdcmp.html">clrdcmp</a></code>) the
+parts' rates in both comparisons with the aggregate on top, where the
 workload moved (coloured by whether a part clears above or below the
 average), and the change as a waterfall of rate and mix effects: the
 pictures that show a Simpson's-paradox reversal and why it happened.</p></dd>
-
 
 </dl></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="stkflow.html">stkflow</a></span><span class="op">(</span>days <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">13500</span>, <span class="fl">14600</span>, <span class="fl">15100</span><span class="op">)</span>, people <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">320</span>, <span class="fl">310</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                 prd <span class="op">=</span> <span class="fl">2021</span><span class="op">:</span><span class="fl">2023</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="stkflow.html">stkflow</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  days <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">13500</span>, <span class="fl">14600</span>, <span class="fl">15100</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  people <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">320</span>, <span class="fl">310</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  prd <span class="op">=</span> <span class="fl">2021</span><span class="op">:</span><span class="fl">2023</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sf</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sf</span>, what <span class="op">=</span> <span class="st">"alos"</span>, col <span class="op">=</span> <span class="st">"firebrick"</span>, main <span class="op">=</span> <span class="st">"Length of stay"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-2.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="yoy.html">yoy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">400</span>, <span class="fl">420</span>, <span class="fl">390</span>, <span class="fl">460</span>, <span class="fl">450</span><span class="op">)</span><span class="op">)</span>, value <span class="op">=</span> <span class="st">"n"</span>,</span></span>
-<span class="r-in"><span>         prd <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="yoy.html">yoy</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">400</span>, <span class="fl">420</span>, <span class="fl">390</span>, <span class="fl">460</span>, <span class="fl">450</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  value <span class="op">=</span> <span class="st">"n"</span>,</span></span>
+<span class="r-in"><span>  prd <span class="op">=</span> <span class="st">"year"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># small counts: each percentage carries its exact interval</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="yoy.html">yoy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">12</span>, <span class="fl">11</span>, <span class="fl">15</span>, <span class="fl">14</span><span class="op">)</span><span class="op">)</span>, value <span class="op">=</span> <span class="st">"n"</span>,</span></span>
-<span class="r-in"><span>         prd <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="yoy.html">yoy</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">12</span>, <span class="fl">11</span>, <span class="fl">15</span>, <span class="fl">14</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  value <span class="op">=</span> <span class="st">"n"</span>,</span></span>
+<span class="r-in"><span>  prd <span class="op">=</span> <span class="st">"year"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">12</span>, <span class="fl">123</span>, <span class="fl">1234</span>, <span class="fl">2</span>, <span class="fl">23</span>, <span class="fl">3</span>, <span class="fl">31</span>, <span class="fl">4</span>, <span class="fl">45</span>, <span class="fl">5</span>, <span class="fl">6</span>, <span class="fl">7</span>, <span class="fl">8</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-5.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="crfpm25.html">crfno2</a></span><span class="op">(</span><span class="fl">25</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-6.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="co2fp.html">co2fp</a></span><span class="op">(</span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">2e5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, loc <span class="op">=</span> <span class="st">"CA"</span>,</span></span>
-<span class="r-in"><span>                       cpupwrw <span class="op">=</span> <span class="fl">45</span>, memgb <span class="op">=</span> <span class="fl">8</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="co2fp.html">co2fp</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">2e5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span>,</span></span>
+<span class="r-in"><span>  loc <span class="op">=</span> <span class="st">"CA"</span>,</span></span>
+<span class="r-in"><span>  cpupwrw <span class="op">=</span> <span class="fl">45</span>,</span></span>
+<span class="r-in"><span>  memgb <span class="op">=</span> <span class="fl">8</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-7.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># the courts and crime data shipped with the package</span></span></span>
 <span class="r-in"><span><span class="va">ext</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="op">{</span></span></span>
@@ -864,46 +870,87 @@ pictures that show a Simpson's-paradox reversal and why it happened.</p></dd>
 <span class="r-in"><span><span class="va">be</span> <span class="op">&lt;-</span> <span class="va">be</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">be</span><span class="op">$</span><span class="va">lon</span><span class="op">)</span>, <span class="op">]</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="crmdens.html">crmdens</a></span><span class="op">(</span><span class="va">be</span><span class="op">$</span><span class="va">lon</span>, <span class="va">be</span><span class="op">$</span><span class="va">lat</span>, ngrid <span class="op">=</span> <span class="fl">60</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-12.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="knoxtst.html">knoxtst</a></span><span class="op">(</span><span class="va">be</span><span class="op">$</span><span class="va">lon</span>, <span class="va">be</span><span class="op">$</span><span class="va">lat</span>, <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">be</span><span class="op">$</span><span class="va">occ_date</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span>, <span class="fl">400</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">14</span>, <span class="fl">28</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>               nsim <span class="op">=</span> <span class="fl">99</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="knoxtst.html">knoxtst</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">be</span><span class="op">$</span><span class="va">lon</span>,</span></span>
+<span class="r-in"><span>  <span class="va">be</span><span class="op">$</span><span class="va">lat</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">be</span><span class="op">$</span><span class="va">occ_date</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span>, <span class="fl">400</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">14</span>, <span class="fl">28</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  nsim <span class="op">=</span> <span class="fl">99</span>,</span></span>
+<span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">1</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-13.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="hotpers.html">hotpers</a></span><span class="op">(</span><span class="va">be</span><span class="op">$</span><span class="va">lon</span>, <span class="va">be</span><span class="op">$</span><span class="va">lat</span>, <span class="fu"><a href="https://rdrr.io/r/base/weekday.POSIXt.html" class="external-link">quarters</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">be</span><span class="op">$</span><span class="va">occ_date</span><span class="op">)</span><span class="op">)</span>, cell <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-14.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># rates, shares and the change in a rate</span></span></span>
-<span class="r-in"><span><span class="va">rt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>division <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"e"</span>, <span class="st">"w"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>, year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2022</span><span class="op">:</span><span class="fl">2023</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                 stops <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">90</span>, <span class="fl">60</span>, <span class="fl">150</span>, <span class="fl">85</span>, <span class="fl">70</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                 residents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1e4</span>, <span class="fl">8e3</span>, <span class="fl">5e3</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">rt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  division <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"e"</span>, <span class="st">"w"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2022</span><span class="op">:</span><span class="fl">2023</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  stops <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">90</span>, <span class="fl">60</span>, <span class="fl">150</span>, <span class="fl">85</span>, <span class="fl">70</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  residents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1e4</span>, <span class="fl">8e3</span>, <span class="fl">5e3</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">r23</span> <span class="op">&lt;-</span> <span class="va">rt</span><span class="op">[</span><span class="va">rt</span><span class="op">$</span><span class="va">year</span> <span class="op">==</span> <span class="fl">2023</span>, <span class="op">]</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="rtcalc.html">rtcalc</a></span><span class="op">(</span><span class="va">r23</span>, count <span class="op">=</span> <span class="st">"stops"</span>, pop <span class="op">=</span> <span class="st">"residents"</span>, by <span class="op">=</span> <span class="st">"division"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-15.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="shrs.html">shrs</a></span><span class="op">(</span><span class="va">r23</span>, count <span class="op">=</span> <span class="st">"stops"</span>, by <span class="op">=</span> <span class="st">"division"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-16.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="ratechg.html">ratechg</a></span><span class="op">(</span><span class="va">rt</span>, count <span class="op">=</span> <span class="st">"stops"</span>, pop <span class="op">=</span> <span class="st">"residents"</span>, prd <span class="op">=</span> <span class="st">"year"</span>,</span></span>
-<span class="r-in"><span>                 by <span class="op">=</span> <span class="st">"division"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="ratechg.html">ratechg</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">rt</span>,</span></span>
+<span class="r-in"><span>  count <span class="op">=</span> <span class="st">"stops"</span>,</span></span>
+<span class="r-in"><span>  pop <span class="op">=</span> <span class="st">"residents"</span>,</span></span>
+<span class="r-in"><span>  prd <span class="op">=</span> <span class="st">"year"</span>,</span></span>
+<span class="r-in"><span>  by <span class="op">=</span> <span class="st">"division"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-17.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># a rate over time, one panel per group</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="rtcalc.html">rtcalc</a></span><span class="op">(</span><span class="va">rt</span>, count <span class="op">=</span> <span class="st">"stops"</span>, pop <span class="op">=</span> <span class="st">"residents"</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"division"</span>, <span class="st">"year"</span><span class="op">)</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>     period <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="rtcalc.html">rtcalc</a></span><span class="op">(</span><span class="va">rt</span>, count <span class="op">=</span> <span class="st">"stops"</span>, pop <span class="op">=</span> <span class="st">"residents"</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"division"</span>, <span class="st">"year"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  period <span class="op">=</span> <span class="st">"year"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-18.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># complex survey estimates by domain, and the differences between domains</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">sv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"north"</span>, <span class="st">"south"</span>, <span class="st">"east"</span><span class="op">)</span>, length.out <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                 smoker <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">1</span>, <span class="fl">0.25</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">50</span>, <span class="fl">150</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"north"</span>, <span class="st">"south"</span>, <span class="st">"east"</span><span class="op">)</span>, length.out <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  smoker <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">1</span>, <span class="fl">0.25</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  w <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">50</span>, <span class="fl">150</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sd</span> <span class="op">&lt;-</span> <span class="fu"><a href="svydes.html">svydes</a></span><span class="op">(</span><span class="va">sv</span>, w <span class="op">=</span> <span class="st">"w"</span>, strata <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="svyest.html">svyest</a></span><span class="op">(</span><span class="va">sd</span>, <span class="va">sv</span>, <span class="st">"smoker"</span>, by <span class="op">=</span> <span class="st">"region"</span>, stat <span class="op">=</span> <span class="st">"proportion"</span>, lvls <span class="op">=</span> <span class="st">"1"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="svyest.html">svyest</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sd</span>,</span></span>
+<span class="r-in"><span>  <span class="va">sv</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"smoker"</span>,</span></span>
+<span class="r-in"><span>  by <span class="op">=</span> <span class="st">"region"</span>,</span></span>
+<span class="r-in"><span>  stat <span class="op">=</span> <span class="st">"proportion"</span>,</span></span>
+<span class="r-in"><span>  lvls <span class="op">=</span> <span class="st">"1"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-19.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="svycmp.html">svycmp</a></span><span class="op">(</span><span class="va">sd</span>, <span class="va">sv</span>, <span class="st">"smoker"</span>, by <span class="op">=</span> <span class="st">"region"</span>, stat <span class="op">=</span> <span class="st">"proportion"</span>, lvls <span class="op">=</span> <span class="st">"1"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="svycmp.html">svycmp</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sd</span>,</span></span>
+<span class="r-in"><span>  <span class="va">sv</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"smoker"</span>,</span></span>
+<span class="r-in"><span>  by <span class="op">=</span> <span class="st">"region"</span>,</span></span>
+<span class="r-in"><span>  stat <span class="op">=</span> <span class="st">"proportion"</span>,</span></span>
+<span class="r-in"><span>  lvls <span class="op">=</span> <span class="st">"1"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-20.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># a published table in one call: change, rates and rate change</span></span></span>
-<span class="r-in"><span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2020</span><span class="op">:</span><span class="fl">2023</span>, each <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                  n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">20</span>, <span class="fl">12</span>, <span class="fl">22</span>, <span class="fl">11</span>, <span class="fl">25</span>, <span class="fl">15</span>, <span class="fl">24</span><span class="op">)</span>, pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">2000</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2020</span><span class="op">:</span><span class="fl">2023</span>, each <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">20</span>, <span class="fl">12</span>, <span class="fl">22</span>, <span class="fl">11</span>, <span class="fl">25</span>, <span class="fl">15</span>, <span class="fl">24</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">2000</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="anltab.html">anltab</a></span><span class="op">(</span><span class="va">tab</span>, value <span class="op">=</span> <span class="st">"n"</span>, prd <span class="op">=</span> <span class="st">"year"</span>, by <span class="op">=</span> <span class="st">"g"</span>, pop <span class="op">=</span> <span class="st">"pop"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-21.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="cnttrnd.html">cnttrnd</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21000</span>, <span class="fl">23000</span>, <span class="fl">22000</span>, <span class="fl">25000</span>, <span class="fl">24000</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-22.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># banded tables</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="bandsens.html">bandsens</a></span><span class="op">(</span><span class="fu"><a href="prsbands.html">prsbands</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0-17"</span>, <span class="st">"18-24"</span>, <span class="st">"25-44"</span>, <span class="st">"45+"</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">20</span>, <span class="fl">30</span>, <span class="fl">40</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                      caps <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">70</span>, <span class="fl">80</span>, <span class="fl">90</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="bandsens.html">bandsens</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="prsbands.html">prsbands</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0-17"</span>, <span class="st">"18-24"</span>, <span class="st">"25-44"</span>, <span class="st">"45+"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">20</span>, <span class="fl">30</span>, <span class="fl">40</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  caps <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">70</span>, <span class="fl">80</span>, <span class="fl">90</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-23.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="pubbnd.html">pubbnd</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">20</span><span class="op">)</span>, rnd <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-24.png" alt="" width="700" height="433"></span>
@@ -947,25 +994,50 @@ pictures that show a Simpson's-paradox reversal and why it happened.</p></dd>
 <span class="r-in"><span>  <span class="va">z</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">z</span><span class="op">$</span><span class="va">y</span> <span class="op">+</span> <span class="va">s</span> <span class="op">*</span> <span class="va">z</span><span class="op">$</span><span class="va">x</span></span></span>
 <span class="r-in"><span>  <span class="va">z</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="cpspwr.html">cpspwr</a></span><span class="op">(</span><span class="va">xy</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">x</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, inject <span class="op">=</span> <span class="va">shift</span>, trt <span class="op">=</span> <span class="st">"x"</span>,</span></span>
-<span class="r-in"><span>                   sizes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">19</span>, reps <span class="op">=</span> <span class="fl">3</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="cpspwr.html">cpspwr</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">xy</span>,</span></span>
+<span class="r-in"><span>  <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">x</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  inject <span class="op">=</span> <span class="va">shift</span>,</span></span>
+<span class="r-in"><span>  trt <span class="op">=</span> <span class="st">"x"</span>,</span></span>
+<span class="r-in"><span>  sizes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  n <span class="op">=</span> <span class="fl">19</span>,</span></span>
+<span class="r-in"><span>  reps <span class="op">=</span> <span class="fl">3</span>,</span></span>
+<span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">1</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-38.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="cpsfals.html">cpsfals</a></span><span class="op">(</span><span class="va">xy</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">x</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, trt <span class="op">=</span> <span class="st">"x"</span>, n <span class="op">=</span> <span class="fl">29</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-39.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># air pollution: burden, equity, and the full report</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="polbrdn.html">polbrdn</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">1</span>, <span class="fl">0.008</span>, <span class="fl">1e6</span>, poll <span class="op">=</span> <span class="st">"NO2"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-40.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="expconcidx.html">expconcidx</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>exposure <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">1</span>, <span class="fl">8</span>, <span class="fl">2</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                                             income <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                                  <span class="st">"exposure"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="expconcidx.html">expconcidx</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>exposure <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">1</span>, <span class="fl">8</span>, <span class="fl">2</span><span class="op">)</span>, income <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"exposure"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"income"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-41.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="vrfpol.html">vrfpol</a></span><span class="op">(</span><span class="st">"no2"</span>, demo <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-42.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="pgsig.html">lagrprt</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">20</span>,</span></span>
-<span class="r-in"><span>                          grid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">40</span>, <span class="op">-</span><span class="fl">15</span>, <span class="fl">25</span>, <span class="fl">10</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="pgsig.html">lagrprt</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fl">200</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">0</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">0</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">0.5</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">20</span>,</span></span>
+<span class="r-in"><span>  grid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">40</span>, <span class="op">-</span><span class="fl">15</span>, <span class="fl">25</span>, <span class="fl">10</span>, <span class="fl">8</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-43.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="plmfld.html">plmfld</a></span><span class="op">(</span>q <span class="op">=</span> <span class="fl">100</span>, u <span class="op">=</span> <span class="fl">5</span>, h <span class="op">=</span> <span class="fl">50</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">2000</span>, by <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                 y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">300</span>, <span class="fl">300</span>, by <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="plmfld.html">plmfld</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  q <span class="op">=</span> <span class="fl">100</span>,</span></span>
+<span class="r-in"><span>  u <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span>  h <span class="op">=</span> <span class="fl">50</span>,</span></span>
+<span class="r-in"><span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">2000</span>, by <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">300</span>, <span class="fl">300</span>, by <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-44.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>

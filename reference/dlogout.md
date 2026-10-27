@@ -39,7 +39,7 @@ file; in both cases the file is left as it was.
 
 ``` r
 old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
-Sys.setenv(XDG_CONFIG_HOME = tempfile())   # a scratch credentials folder
+Sys.setenv(XDG_CONFIG_HOME = tempfile()) # a scratch credentials folder
 
 # nothing stored yet
 dlogout()
@@ -48,7 +48,10 @@ dlogout()
 # a file holding a key and another tool's entry: only the key goes
 d <- file.path(Sys.getenv("XDG_CONFIG_HOME"), "morie")
 dir.create(d, recursive = TRUE)
-writeLines('{"hosted_key": "k-123", "other_tool": 1}', file.path(d, "credentials.json"))
+writeLines(
+  '{"hosted_key": "k-123", "other_tool": 1}',
+  file.path(d, "credentials.json")
+)
 dlogout()
 #> Logged out: the MORIE data key was removed.
 readLines(file.path(d, "credentials.json"))
@@ -57,7 +60,11 @@ readLines(file.path(d, "credentials.json"))
 # a damaged file is refused, not overwritten
 writeLines("not json", file.path(d, "credentials.json"))
 try(dlogout())
-#> Error : /tmp/RtmpshpHV7/file1f255e8cd606/morie/credentials.json is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it (it is shared with morie and rmorie)
+#> Error : /tmp/Rtmp8mkWXN/file21973fb0ba23/morie/credentials.json is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it (it is shared with morie and rmorie)
 
-if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
+if (is.na(old)) {
+  Sys.unsetenv("XDG_CONFIG_HOME")
+} else {
+  Sys.setenv(XDG_CONFIG_HOME = old)
+}
 ```

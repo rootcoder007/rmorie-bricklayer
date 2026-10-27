@@ -13,7 +13,7 @@ The counterpart of corrr::correlate()."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,7 +71,7 @@ The counterpart of <code>corrr::correlate()</code>.</p>
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>A data frame; non-numeric columns are ignored.</p></dd>
+<dd><p>A data frame; its numeric columns are correlated in pairs.</p></dd>
 
 
 <dt id="arg-meth">meth<a class="anchor" aria-label="anchor" href="#arg-meth"></a></dt>
@@ -124,32 +124,56 @@ strongest, <code><a href="ccovm.html">ccovm()</a></code> for the matrix form.</p
 <span class="r-in"><span><span class="va">df</span><span class="op">$</span><span class="va">c</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">$</span><span class="va">a</span> <span class="op">+</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, sd <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">cortbl</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Correlations (spearman) ─────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  x y correlation nprs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  a b       0.039  100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  a c       0.967  100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  b c       0.015  100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Correlations (spearman)</span> ──────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Method         Spearman (rank)                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Pairs          3                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Strongest |r|  0.9665                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   x  y  correlation  nprs                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -  -  -----------  ----                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a  b       0.0387   100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a  c       0.9665   100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   b  c       0.0151   100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each row is one pair of numeric columns, over the rows where both are │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   present (nprs); a correlation is blank when too few pairs remain.     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Pearson instead of Spearman</span></span></span>
 <span class="r-in"><span><span class="fu">cortbl</span><span class="op">(</span><span class="va">df</span>, meth <span class="op">=</span> <span class="st">"pearson"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Correlations (pearson) ──────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  x y correlation nprs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  a b      -0.001  100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  a c       0.975  100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  b c      -0.012  100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Correlations (pearson)</span> ───────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Method         pearson                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Pairs          3                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Strongest |r|  0.9747                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   x  y  correlation  nprs                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -  -  -----------  ----                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a  b      -0.0010   100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a  c       0.9747   100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   b  c      -0.0120   100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each row is one pair of numeric columns, over the rows where both are │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   present (nprs); a correlation is blank when too few pairs remain.     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># nprs shows how much data each figure rests on.</span></span></span>
 <span class="r-in"><span><span class="va">gappy</span> <span class="op">&lt;-</span> <span class="va">df</span></span></span>
 <span class="r-in"><span><span class="va">gappy</span><span class="op">$</span><span class="va">a</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">80</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span></span>
 <span class="r-in"><span><span class="fu">cortbl</span><span class="op">(</span><span class="va">gappy</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Correlations (spearman) ─────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  x y correlation nprs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  a b       0.165   20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  a c       0.959   20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  b c       0.015  100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Correlations (spearman)</span> ──────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Method         Spearman (rank)                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Pairs          3                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Strongest |r|  0.9594                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   x  y  correlation  nprs                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -  -  -----------  ----                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a  b        0.165    20                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a  c        0.959    20                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   b  c        0.015   100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each row is one pair of numeric columns, over the rows where both are │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   present (nprs); a correlation is blank when too few pairs remain.     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A pair with too little overlap is NA, not a number from nothing.</span></span></span>
 <span class="r-in"><span><span class="va">thin</span> <span class="op">&lt;-</span> <span class="va">df</span></span></span>

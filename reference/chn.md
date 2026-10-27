@@ -121,24 +121,29 @@ for pinning the contents of one capsule rather than a history.
 ## Examples
 
 ``` r
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-# one-time index record out of your configuration directory; leave the default in use
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+# one-time index record out of your configuration directory; leave the
+# default in use
 ch <- chnnew()
 ch <- chnapp(ch, "manifest for run 1", label = "run-1")
 ch <- chnapp(ch, "manifest for run 2", label = "run-2")
 ch <- chnapp(ch, "manifest for run 3", label = "run-3")
 ch
-#> ── Manifest chain ────────────────────────────────────────────────
-#>   ✓ chain intact
-#> 
-#>   entries  3
-#>   head     b9ccb96106a68f3d4d2a0cfb8e2ae160f7996393e28e93d7f4650c2bbd81ff49
-#>   seal     940721e3704268b570bcbf1c9ae841bde02927f584ec44dc3cf053ef7404d8a0
-#> 
-#>     1  run-1            cb25fa776c693a106b2d08a1
-#>     2  run-2            03a645a531c93fbb12bb2c07
-#>     3  run-3            b9ccb96106a68f3d4d2a0cfb
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Manifest chain ───────────────────────────────────────────────────────────╮
+#> │   Status   ✓ chain intact (3 entries)                                       │
+#> │   Entries  3                                                                │
+#> │   Head     b9ccb96106a68f3d4d2a0cfb8e2ae160f7996393e28e93d7f4650c2bbd81ff49 │
+#> │   Seal     940721e3704268b570bcbf1c9ae841bde02927f584ec44dc3cf053ef7404d8a0 │
+#> │                                                                             │
+#> │   Every entry links to the one before it, so none was edited, dropped or    │
+#> │   reordered after it was added.                                             │
+#> │                                                                             │
+#> │     #  label            digest                                              │
+#> │     1  run-1            cb25fa776c693a106b2d08a1                            │
+#> │     2  run-2            03a645a531c93fbb12bb2c07                            │
+#> │     3  run-3            b9ccb96106a68f3d4d2a0cfb                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # An intact chain verifies.
 chnvrf(ch)$valid

@@ -15,7 +15,7 @@ facilities, not to build a per-capita rate (see Details)."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -145,20 +145,21 @@ negative or fractional <code>units</code>.</p>
 <span class="r-in"><span>  units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">cov</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── 4 units in 2 of 4 regions ───────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   those regions hold 1,650,000 of 2,540,000 residents (65.0%)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2 regions hold none; 890,000 residents (35.0%) live there</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  region population units hasunit    popshr</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       A    1200000     3    TRUE 47.244094</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       C     450000     1    TRUE 17.716535</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       B     800000     0   FALSE 31.496063</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       D      90000     0   FALSE  3.543307</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   The covered share is context, not a denominator: units serve</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   catchments, so a rate over these regions alone would take its</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   numerator from the whole territory and is inflated.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">4 units in 2 of 4 regions</span> ─────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Covered    those regions hold 1,650,000 of 2,540,000 residents (65.0%) │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Uncovered  2 regions hold none; 890,000 residents (35.0%) live there   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   region  population  units  hasunit  popshr                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ----------  -----  -------  ------                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A        1,200,000      3  TRUE      47.24                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   C          450,000      1  TRUE      17.72                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   B          800,000      0  FALSE     31.50                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   D           90,000      0  FALSE      3.54                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The covered share is context, not a denominator: units serve           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   catchments, so a rate over these regions alone would take its          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   numerator from the whole territory and is inflated.                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰──────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The covered share is reported, and is not a rate denominator.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">cov</span>, <span class="st">"coverage"</span><span class="op">)</span><span class="op">$</span><span class="va">covshr</span></span></span>

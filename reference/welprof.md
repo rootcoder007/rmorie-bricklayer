@@ -51,7 +51,7 @@ welprof(
 
 - qual:
 
-  Optional column of quality flags.
+  Optional column of quality flags, one per row of `data`.
 
 ## Value
 
@@ -118,45 +118,119 @@ Research and Public Health 19(20):13402.
 ``` r
 # well-being, 2024 (table 41-10-0082-01)
 wb <- indiex("wellbeing")
-w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
-                      well = c("Life satisfaction rating of 8, 9 or 10",
-                                   "Sense of meaning and purpose rating of 8, 9 or 10",
-                                   "Always or often has a hopeful outlook"),
-                      distress = c("Life satisfaction rating between 0 and 5",
-                                   "Rarely or never has a hopeful outlook"),
-                      qual = "quality")
+w <- welprof(
+  wb,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  well = c(
+    "Life satisfaction rating of 8, 9 or 10",
+    "Sense of meaning and purpose rating of 8, 9 or 10",
+    "Always or often has a hopeful outlook"
+  ),
+  distress = c(
+    "Life satisfaction rating between 0 and 5",
+    "Rarely or never has a hopeful outlook"
+  ),
+  qual = "quality"
+)
 w
-#>            group                                         indicator     side
-#> 1  First Nations            Life satisfaction rating of 8, 9 or 10 wellness
-#> 2          Métis            Life satisfaction rating of 8, 9 or 10 wellness
-#> 3          Inuit            Life satisfaction rating of 8, 9 or 10 wellness
-#> 4  First Nations Sense of meaning and purpose rating of 8, 9 or 10 wellness
-#> 5          Métis Sense of meaning and purpose rating of 8, 9 or 10 wellness
-#> 6          Inuit Sense of meaning and purpose rating of 8, 9 or 10 wellness
-#> 7  First Nations             Always or often has a hopeful outlook wellness
-#> 8          Métis             Always or often has a hopeful outlook wellness
-#> 9          Inuit             Always or often has a hopeful outlook wellness
-#> 10 First Nations          Life satisfaction rating between 0 and 5 distress
-#> 11         Métis          Life satisfaction rating between 0 and 5 distress
-#> 12         Inuit          Life satisfaction rating between 0 and 5 distress
-#> 13 First Nations             Rarely or never has a hopeful outlook distress
-#> 14         Métis             Rarely or never has a hopeful outlook distress
-#> 15         Inuit             Rarely or never has a hopeful outlook distress
-#>    domain estimate lower upper usewithcau
-#> 1    <NA>     36.1  31.9  40.4      FALSE
-#> 2    <NA>     38.4  34.1  42.9      FALSE
-#> 3    <NA>     38.8  31.5  46.4      FALSE
-#> 4    <NA>     47.5  43.4  51.6      FALSE
-#> 5    <NA>     51.6  47.0  56.2      FALSE
-#> 6    <NA>     50.5  42.4  58.5      FALSE
-#> 7    <NA>     50.2  45.9  54.5      FALSE
-#> 8    <NA>     52.3  47.6  57.0      FALSE
-#> 9    <NA>     54.4  45.7  62.8      FALSE
-#> 10   <NA>     31.4  27.4  35.7      FALSE
-#> 11   <NA>     28.4  24.0  33.1      FALSE
-#> 12   <NA>     25.2  19.4  31.8      FALSE
-#> 13   <NA>     17.9  14.6  21.7      FALSE
-#> 14   <NA>     14.1  11.0  17.7      FALSE
-#> 15   <NA>     16.7   8.2  28.9      FALSE
+#> ╭── Wellness profile ─────────────────────────────────────────────────────────╮
+#> │   Groups               First Nations; Métis; Inuit                          │
+#> │   Wellness indicators  3                                                    │
+#> │   Distress indicators  2                                                    │
+#> │                                                                             │
+#> │   Life satisfaction rating of 8, 9 or 10 (wellness)                         │
+#> │   group          estimate  interval                                         │
+#> │   -------------  --------  --------------                                   │
+#> │   First Nations     36.10  [31.90, 40.40]                                   │
+#> │   Métis             38.40  [34.10, 42.90]                                   │
+#> │   Inuit             38.80  [31.50, 46.40]                                   │
+#> │                                                                             │
+#> │   Sense of meaning and purpose rating of 8, 9 or 10 (wellness)              │
+#> │   group          estimate  interval                                         │
+#> │   -------------  --------  --------------                                   │
+#> │   First Nations     47.50  [43.40, 51.60]                                   │
+#> │   Métis             51.60  [47.00, 56.20]                                   │
+#> │   Inuit             50.50  [42.40, 58.50]                                   │
+#> │                                                                             │
+#> │   Always or often has a hopeful outlook (wellness)                          │
+#> │   group          estimate  interval                                         │
+#> │   -------------  --------  --------------                                   │
+#> │   First Nations     50.20  [45.90, 54.50]                                   │
+#> │   Métis             52.30  [47.60, 57.00]                                   │
+#> │   Inuit             54.40  [45.70, 62.80]                                   │
+#> │                                                                             │
+#> │   Life satisfaction rating between 0 and 5 (distress)                       │
+#> │   group          estimate  interval                                         │
+#> │   -------------  --------  --------------                                   │
+#> │   First Nations     31.40  [27.40, 35.70]                                   │
+#> │   Métis             28.40  [24.00, 33.10]                                   │
+#> │   Inuit             25.20  [19.40, 31.80]                                   │
+#> │                                                                             │
+#> │   Rarely or never has a hopeful outlook (distress)                          │
+#> │   group          estimate  interval                                         │
+#> │   -------------  --------  --------------                                   │
+#> │   First Nations     17.90  [14.60, 21.70]                                   │
+#> │   Métis             14.10  [11.00, 17.70]                                   │
+#> │   Inuit             16.70  [8.20, 28.90]                                    │
+#> │                                                                             │
+#> │   On none of the 5 indicators do the groups' intervals part: the data       │
+#> │   cannot rank the groups on any of them.                                    │
+#> │                                                                             │
+#> │   Wellness indicators come first, so each group's strengths are read        │
+#> │   before its distress (Stewart 2008).                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(w)
+
+
+# your own table: made-up percentages for two communities, with limits
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 4),
+  item = rep(c("Hopeful", "Satisfied", "Rarely hopeful", "Low satisfaction"),
+             2),
+  pct = c(64, 71, 12, 18, 58, 66, 16, 22),
+  lo = c(59, 66, 9, 14, 52, 60, 12, 17),
+  hi = c(69, 76, 15, 22, 64, 72, 20, 27)
+)
+welprof(own, "community", "item", "pct", "lo", "hi",
+        well = c("Hopeful", "Satisfied"),
+        distress = c("Rarely hopeful", "Low satisfaction"))
+#> ╭── Wellness profile ─────────────────────────────────────────────────────────╮
+#> │   Groups               Lakeside; Riverbend                                  │
+#> │   Wellness indicators  2                                                    │
+#> │   Distress indicators  2                                                    │
+#> │                                                                             │
+#> │   Hopeful (wellness)                                                        │
+#> │   group      estimate  interval                                             │
+#> │   ---------  --------  --------                                             │
+#> │   Lakeside         64  [59, 69]                                             │
+#> │   Riverbend        58  [52, 64]                                             │
+#> │                                                                             │
+#> │   Satisfied (wellness)                                                      │
+#> │   group      estimate  interval                                             │
+#> │   ---------  --------  --------                                             │
+#> │   Lakeside         71  [66, 76]                                             │
+#> │   Riverbend        66  [60, 72]                                             │
+#> │                                                                             │
+#> │   Rarely hopeful (distress)                                                 │
+#> │   group      estimate  interval                                             │
+#> │   ---------  --------  --------                                             │
+#> │   Lakeside         12  [9, 15]                                              │
+#> │   Riverbend        16  [12, 20]                                             │
+#> │                                                                             │
+#> │   Low satisfaction (distress)                                               │
+#> │   group      estimate  interval                                             │
+#> │   ---------  --------  --------                                             │
+#> │   Lakeside         18  [14, 22]                                             │
+#> │   Riverbend        22  [17, 27]                                             │
+#> │                                                                             │
+#> │   On none of the 4 indicators do the groups' intervals part: the data       │
+#> │   cannot rank the groups on any of them.                                    │
+#> │                                                                             │
+#> │   Wellness indicators come first, so each group's strengths are read        │
+#> │   before its distress (Stewart 2008).                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```

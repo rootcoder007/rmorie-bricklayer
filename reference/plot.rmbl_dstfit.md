@@ -32,7 +32,7 @@ plot(
 
 - ...:
 
-  Further arguments to the first
+  Further graphical arguments to the first panel's
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) call.
 
 - which:

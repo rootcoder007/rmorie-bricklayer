@@ -67,15 +67,27 @@ vl <- c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
 obs <- c(White = "Black", Black = "Other", Other = "Unknown",
          Unknown = "White")
 rlblfrns(vl, obs)
-#> Mechanism(s) reproducing the observed permutation:
-#>   * labels sorted alphabetically, assigned by code position
-#>       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White
-#>   * labels sorted case-insensitively, assigned by code position
-#>       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White
-#>   * rotation by 1 position(s)
-#>       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White
-#> 
-#> The observed permutation is reproduced EXACTLY by: labels sorted alphabetically, assigned by code position; labels sorted case-insensitively, assigned by code position; rotation by 1 position(s). No import routine (haven, foreign, pandas, pyreadstat) reorders value labels; each carries them keyed by code. A transfer fault does not select the sort order of the labels. The step that did this was a positional relabel in the analysis, and it is reproducible from the code book alone.
+#> ╭── Relabelling forensics ────────────────────────────────────────────────────╮
+#> │   Mechanisms tried  8                                                       │
+#> │   Reproducing       3                                                       │
+#> │                                                                             │
+#> │   The observed permutation is reproduced EXACTLY by: labels sorted          │
+#> │   alphabetically, assigned by code position; labels sorted                  │
+#> │   case-insensitively, assigned by code position; rotation by 1              │
+#> │   position(s). No import routine (haven, foreign, pandas, pyreadstat)       │
+#> │   reorders value labels; each carries them keyed by code. A transfer fault  │
+#> │   does not select the sort order of the labels. The step that did this was  │
+#> │   a positional relabel in the analysis, and it is reproducible from the     │
+#> │   code book alone.                                                          │
+#> │                                                                             │
+#> │   Mechanism(s) reproducing the observed permutation:                        │
+#> │   * labels sorted alphabetically, assigned by code position                 │
+#> │       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White    │
+#> │   * labels sorted case-insensitively, assigned by code position             │
+#> │       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White    │
+#> │   * rotation by 1 position(s)                                               │
+#> │       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a frequency-ordered relabel needs the counts
 obs2 <- c(White = "White", Black = "Other", Other = "Black",

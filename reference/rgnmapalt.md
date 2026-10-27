@@ -84,7 +84,8 @@ cw <- data.frame(
 
 # a name-based route that is known to mis-place one unit
 route <- c(
-  "North Jail" = "3557", "South Jail" = "3520",
+  "North Jail" = "3557",
+  "South Jail" = "3520",
   "Hill Jail" = "3519"
 )
 rgnmapalt(cw, "inst", "cd", route, known = "Hill Jail")
@@ -98,7 +99,10 @@ sum(!d$known)
 #> [1] 1
 
 # the route as a data frame with the same column names
-routedf <- data.frame(inst = c("North Jail", "Hill Jail"), cd = c("3557", "3506"))
+routedf <- data.frame(
+  inst = c("North Jail", "Hill Jail"),
+  cd = c("3557", "3506")
+)
 nrow(rgnmapalt(cw, "inst", "cd", routedf))
 #> [1] 0
 

@@ -69,7 +69,13 @@ as an image with contours (see
 ## Examples
 
 ``` r
-f <- plmfld(100, 5, 50, x = seq(100, 3000, by = 100), y = seq(-500, 500, by = 50))
+f <- plmfld(
+  100,
+  5,
+  50,
+  x = seq(100, 3000, by = 100),
+  y = seq(-500, 500, by = 50)
+)
 dim(f$field)
 #> [1] 30 21
 plot(f)
@@ -80,8 +86,14 @@ f$x[which.max(apply(f$field, 1, max))]
 #> [1] 800
 
 # a more unstable atmosphere brings the plume down sooner
-fb <- plmfld(100, 5, 50, x = seq(100, 3000, by = 100), y = seq(-500, 500, by = 50),
-                  stab = "B")
+fb <- plmfld(
+  100,
+  5,
+  50,
+  x = seq(100, 3000, by = 100),
+  y = seq(-500, 500, by = 50),
+  stab = "B"
+)
 fb$x[which.max(apply(fb$field, 1, max))]
 #> [1] 300
 

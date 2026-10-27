@@ -38,7 +38,14 @@ ltrlrng(x, W, model = c("invcube", "definite", "mbeta"), m = 1, navsd = 0)
 
 swpwdth(x, p = NULL)
 
-srchpod(coverage, model = c("random", "definite", "invcube", "mbeta"), m = 1)
+srchpod(
+  coverage = NULL,
+  model = c("random", "definite", "invcube", "mbeta"),
+  m = 1,
+  W = NULL,
+  effort = NULL,
+  area = NULL
+)
 
 pswppod(
   W,
@@ -78,7 +85,10 @@ opteffort(poc, area = NULL, W, effort, tol = 1e-14)
 
 - W:
 
-  Positive number: the sweep width.
+  Positive number: the sweep width, in the distance unit of the grid and
+  the effort (nautical miles, kilometres: one unit throughout). For
+  `srchpod()`, give it with `effort` and `area` in place of `coverage`;
+  default `NULL`.
 
 - model:
 
@@ -102,7 +112,24 @@ opteffort(poc, area = NULL, W, effort, tol = 1e-14)
 
 - coverage:
 
-  Non-negative numeric vector of coverages.
+  Non-negative numeric vector of coverages (sweep width times track
+  length over the area searched; 1 means the effort equals the area).
+  Default `NULL`: then `W`, `effort` and `area` give it,
+  `W * effort / area`. Give one or the other, not both.
+
+- effort:
+
+  Non-negative number: the total effort, as track length (the distance
+  the searchers travel while searching, in the unit of `W`). For
+  `srchpod()`, the track length in each area, one number or one per area
+  (a matrix laid out like the map when `area` is one); default `NULL`.
+
+- area:
+
+  Positive numeric vector, one per cell: the cell areas, in the square
+  of the unit of `W`. May be `NULL` when `poc` is an `rmbl_datummap`
+  (its cells' areas are used). For `srchpod()`, the areas searched, or a
+  map from `datumpmap()` whose cell areas are taken; default `NULL`.
 
 - S:
 
@@ -117,17 +144,25 @@ opteffort(poc, area = NULL, W, effort, tol = 1e-14)
 - poc:
 
   Numeric vector or matrix in \[0, 1\], summing to at most 1: the
-  probability that each area contains the object. For `opteffort()` also
-  an `rmbl_datummap` object from `datumpmap()`.
+  probability that each area contains the object (your own areas'
+  shares, for example from a consensus of the planners' scenarios). For
+  `srchscs()` and `opteffort()` also a probability map from
+  `datumpmap()`: its cells are the areas, in the order of
+  `as.vector(map$poc)`.
 
 - pod:
 
   Numeric vector in \[0, 1\], one per area, or a matrix with one row per
-  search and one column per area.
+  search and one column per area. When `poc` is a map, also a matrix
+  laid out like the map (one search, cell by cell), a `srchpod()` result
+  with one value per cell, or an `opteffort()` result (its cells' PODs).
 
 - xedg, yedg:
 
-  Strictly increasing numeric vectors: the cell edges of the grid.
+  Strictly increasing numeric vectors: the cell edges of the grid laid
+  over your search area, east-west and north-south, in the distance unit
+  (`seq(-5, 5, by = 0.5)`: half-unit cells over ten units). Cells may
+  differ in size.
 
 - datum:
 
@@ -136,13 +171,15 @@ opteffort(poc, area = NULL, W, effort, tol = 1e-14)
 
 - center:
 
-  Two numbers: the datum point, the start of a line datum or a corner of
-  an area datum. Default `c(0, 0)`.
+  Two numbers, x then y in the grid's coordinates: the datum point (for
+  example the last known position), the start of a line datum or a
+  corner of an area datum. Default `c(0, 0)`.
 
 - sigma:
 
   Positive number: the standard deviation of the circular normal
-  position error.
+  position error, in the distance unit (a total probable error `E` is
+  `1.1774 sigma`). Default 1.
 
 - end:
 
@@ -159,15 +196,6 @@ opteffort(poc, area = NULL, W, effort, tol = 1e-14)
   For `datum = "general"`: a non-negative matrix of cell weights, one
   row per `y` cell and one column per `x` cell.
 
-- effort:
-
-  Non-negative number: the total effort, as track length.
-
-- area:
-
-  Positive numeric vector, one per cell: the cell areas. May be `NULL`
-  when `poc` is an `rmbl_datummap`.
-
 - tol:
 
   Positive number: the bisection tolerance on log lambda.
@@ -181,13 +209,15 @@ probabilities, with the inputs as attributes;
 `pswppod()`: one number. `srchscs()`: a list of class `rmbl_srchscs`
 with `pos` (the probability of success), `posarea` (per area), `pocupd`
 (the updated containment probabilities) and `cumpod` (the cumulative POD
-per area). `datumpmap()`: a list of class `rmbl_datummap` with `poc`, a
-matrix with one row per `y` cell and one column per `x` cell, `outside`,
-and the inputs. `optcrcsrch()`: a list of class `rmbl_optcrc` with
-`radius`, `pos` and `cntrdns` (the coverage at the centre).
-`opteffort()`: a list of class `rmbl_opteffort` with `effort`,
-`coverage` and `pod` per cell (a matrix when `poc` is one), `pos` and
-`lambda`. Every class has a
+per area), and when `poc` is a map, `map`: the map after the
+unsuccessful search, ready for `opteffort()` and
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html). `datumpmap()`:
+a list of class `rmbl_datummap` with `poc`, a matrix with one row per
+`y` cell and one column per `x` cell, `outside`, and the inputs.
+`optcrcsrch()`: a list of class `rmbl_optcrc` with `radius`, `pos` and
+`cntrdns` (the coverage at the centre). `opteffort()`: a list of class
+`rmbl_opteffort` with `effort`, `coverage` and `pod` per cell (a matrix
+when `poc` is one), `pos` and `lambda`. Every class has a
 [`print()`](https://rdrr.io/r/base/print.html) method, and
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
 lateral range curve (`equiv = TRUE` adds the equivalent definite-range
@@ -258,7 +288,14 @@ circular normal datum covers a disc of radius
 `i` is `z_i = (A_i / W) log(r_i / lambda)` where `r_i = POC_i W / A_i`
 exceeds `lambda`, and 0 elsewhere; the Lagrange multiplier `lambda` is
 found by bisection on its logarithm so that the efforts add up to
-`effort` (Stone 1975, chapter 2).
+`effort` (Stone 1975, chapter 2). It assumes random search detection in
+every cell (the exponential POD curve, `srchpod(model = "random")`), the
+conservative choice when the tracks are not laid evenly; a plan searched
+by parallel sweeps does at least as well.
+
+All distances (`x`, `W`, `S`, `navsd`, the grid edges, `center`, `end`,
+`sigma`, `effort`) are in one unit of your choice, and areas in its
+square.
 
 Every input is checked: numbers must be finite and of the right length,
 sweep widths, spacings and standard deviations positive, probabilities
@@ -292,14 +329,23 @@ Stone, L. D. (1975). Theory of Optimal Search. Academic Press.
 ``` r
 # inverse cube detection 0.5, 1 and 2 sweep widths off the track
 ltrlrng(c(0.5, 1, 2), W = 1)
-#> ── Lateral range curve ─────────────────────────────────────────── 
-#>   inverse cube model, sweep width W = 1
-#> 
-#>  range       pod
-#>    0.5 0.2726230
-#>    1.0 0.0764935
-#>    2.0 0.0196978
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Lateral range curve ─────────────────────────────────────────────────────╮
+#> │   Model          inverse cube                                              │
+#> │   Sweep width W  1                                                         │
+#> │   Ranges         3, from 0.5 to 2                                          │
+#> │   Highest pod    0.2726                                                    │
+#> │                                                                            │
+#> │     range       pod                                                        │
+#> │   -------  --------                                                        │
+#> │   0.50000  0.272623                                                        │
+#> │   1.00000  0.076494                                                        │
+#> │   2.00000  0.019698                                                        │
+#> │                                                                            │
+#> │   inverse cube model, sweep width W = 1                                    │
+#> │   pod: the chance of detecting the object at that distance from the track. │
+#> │                                                                            │
+#> │   The sweep width W is the area under this curve.                          │
+#> ╰────────────────────────────────────────────────────────────────────────────╯
 plot(ltrlrng(seq(-3, 3, by = 0.5), W = 2))
 
 
@@ -310,28 +356,44 @@ swpwdth(xs, ltrlrng(xs, W = 1, model = "definite"))
 
 # POD at coverage 1 under the three models
 srchpod(1)
-#> ── Probability of detection ────────────────────────────────────── 
-#>   random search model
-#> 
-#>  coverage      pod
-#>         1 0.632121
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Probability of detection ─────────────────────────────────────────╮
+#> │   Model      random search                                          │
+#> │   Coverages  1                                                      │
+#> │                                                                     │
+#> │   coverage       pod                                                │
+#> │   --------  --------                                                │
+#> │          1  0.632121                                                │
+#> │                                                                     │
+#> │   random search model                                               │
+#> │   Coverage is effort over area (sweep width x track length / area); │
+#> │   pod is the chance a search at that coverage finds the object.     │
+#> ╰─────────────────────────────────────────────────────────────────────╯
 srchpod(c(0.5, 1, 2), model = "invcube")
-#> ── Probability of detection ────────────────────────────────────── 
-#>   inverse cube model
-#> 
-#>  coverage      pod
-#>       0.5 0.469116
-#>       1.0 0.789909
-#>       2.0 0.987811
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Probability of detection ─────────────────────────────────────────╮
+#> │   Model      inverse cube                                           │
+#> │   Coverages  3                                                      │
+#> │                                                                     │
+#> │   coverage       pod                                                │
+#> │   --------  --------                                                │
+#> │    0.50000  0.469116                                                │
+#> │    1.00000  0.789909                                                │
+#> │    2.00000  0.987811                                                │
+#> │                                                                     │
+#> │   inverse cube model                                                │
+#> │   Coverage is effort over area (sweep width x track length / area); │
+#> │   pod is the chance a search at that coverage finds the object.     │
+#> ╰─────────────────────────────────────────────────────────────────────╯
 plot(srchpod(c(0.5, 1, 1.5)))
 
 # the book's M-Beta curves against random search and the definite range
-plot(srchpod(1, "mbeta", m = 0.5), models = c("random", "definite", "mbeta"),
-     m = c(0.5, 0.25))
+plot(
+  srchpod(1, "mbeta", m = 0.5),
+  models = c("random", "definite", "mbeta"),
+  m = c(0.5, 0.25)
+)
 
-# the expected curve under a navigation error as large as half the sweep width
+# the expected curve under a navigation error as large as half the sweep
+# width
 plot(ltrlrng(0, W = 1, navsd = 0.5), equiv = TRUE)
 
 
@@ -343,14 +405,21 @@ pswppod(1, 1.3, navsd = 0.3, npts = 201)
 
 # three areas searched once; the containment after finding nothing
 srchscs(c(0.5, 0.3, 0.2), c(0.8, 0.5, 0))
-#> ── Probability of success ──────────────────────────────────────── 
-#>   POS 0.55 after 1 search
-#> 
-#>  area poc cumpod posarea pocupd
-#>     1 0.5    0.8    0.40 0.2222
-#>     2 0.3    0.5    0.15 0.3333
-#>     3 0.2    0.0    0.00 0.4444
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Probability of success ────────────────────────────────────────────╮
+#> │   Areas        3                                                     │
+#> │   Searches     1                                                     │
+#> │   Overall POS  0.55                                                  │
+#> │                                                                      │
+#> │   area     poc  cumpod  posarea  pocupd                              │
+#> │   ----  ------  ------  -------  ------                              │
+#> │      1  0.5000  0.8000   0.4000  0.2222                              │
+#> │      2  0.3000  0.5000   0.1500  0.3333                              │
+#> │      3  0.2000  0.0000   0.0000  0.4444                              │
+#> │                                                                      │
+#> │   POS 0.55 after 1 search                                            │
+#> │   poc: chance the object is in the area; cumpod: chance the searches │
+#> │   detect it there; pocupd: the poc after the searches found nothing. │
+#> ╰──────────────────────────────────────────────────────────────────────╯
 
 # a point datum on a 10 x 10 grid, and the best use of 30 units of track
 m <- datumpmap(seq(-5, 5), seq(-5, 5), sigma = 2)
@@ -359,8 +428,11 @@ plot(m)
 plot(m, view = "both")
 
 # the book's line datum: normal across the line, uniform along it
-plot(datumpmap(0:10, seq(-3, 3, by = 1.2), "corridor", c(0, 0), end = c(10, 0)),
-     view = "cells", digits = 1)
+plot(
+  datumpmap(0:10, seq(-3, 3, by = 1.2), "corridor", c(0, 0), end = c(10, 0)),
+  view = "cells",
+  digits = 1
+)
 
 a <- opteffort(m, W = 1, effort = 30)
 a$pos
@@ -370,9 +442,114 @@ plot(a)
 optcrcsrch(sigma = 2, W = 1, effort = 30)$pos
 #> [1] 0.4571532
 
+# your own search, step by step: a last known position 2 km east and 3 km
+# north of the base, known to about 1.5 km, on a grid of 1 km cells
+own <- datumpmap(seq(-3, 7), seq(-2, 8), center = c(2, 3), sigma = 1.5)
+own
+#> ╭── Datum probability map (point datum) ──────────────────────────────────╮
+#> │   Datum   point                                                         │
+#> │   Centre  2, 3                                                          │
+#> │   Sigma   1.5                                                           │
+#> │   Grid    10 x 10 cells (x by y)                                        │
+#> │                                                                         │
+#> │   The most likely cells                                                 │
+#> │       x      y      poc                                                 │
+#> │   -----  -----  -------                                                 │
+#> │   1.500  2.500  0.06126                                                 │
+#> │   1.500  3.500  0.06126                                                 │
+#> │   2.500  2.500  0.06126                                                 │
+#> │   2.500  3.500  0.06126                                                 │
+#> │   0.500  2.500  0.03992                                                 │
+#> │                                                                         │
+#> │   10 x 10 cells (x by y); 0.2% of the probability lies outside the grid │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
+# 0.6 km sweep width; 12 km of track walked in each of the four cells round
+# the position, none elsewhere
+walked <- matrix(0, nrow(own$poc), ncol(own$poc))
+walked[5:6, 5:6] <- 12
+pd <- srchpod(W = 0.6, effort = walked, area = own, model = "invcube")
+# the chance that search found the hiker, and the map if it did not
+day1 <- srchscs(own, pd)
+day1
+#> ╭── Probability of success ────────────────────────────────────────────╮
+#> │   Areas        100                                                   │
+#> │   Searches     1                                                     │
+#> │   Overall POS  0.245                                                 │
+#> │   Map          10 x 10 cells (x by y), updated in $map               │
+#> │                                                                      │
+#> │   area      poc  cumpod  posarea   pocupd                            │
+#> │   ----  -------  ------  -------  -------                            │
+#> │     45  0.06126       1  0.06126  0.00000                            │
+#> │     46  0.06126       1  0.06126  0.00000                            │
+#> │     55  0.06126       1  0.06126  0.00000                            │
+#> │     56  0.06126       1  0.06126  0.00000                            │
+#> │     35  0.03992       0  0.00000  0.05287                            │
+#> │     36  0.03992       0  0.00000  0.05287                            │
+#> │     44  0.03992       0  0.00000  0.05287                            │
+#> │     54  0.03992       0  0.00000  0.05287                            │
+#> │     47  0.03992       0  0.00000  0.05287                            │
+#> │     57  0.03992       0  0.00000  0.05287                            │
+#> │     65  0.03992       0  0.00000  0.05287                            │
+#> │     66  0.03992       0  0.00000  0.05287                            │
+#> │     34  0.02601       0  0.00000  0.03445                            │
+#> │     37  0.02601       0  0.00000  0.03445                            │
+#> │     64  0.02601       0  0.00000  0.03445                            │
+#> │     67  0.02601       0  0.00000  0.03445                            │
+#> │     48  0.01694       0  0.00000  0.02244                            │
+#> │     58  0.01694       0  0.00000  0.02244                            │
+#> │     75  0.01694       0  0.00000  0.02244                            │
+#> │     76  0.01694       0  0.00000  0.02244                            │
+#> │                                                                      │
+#> │   POS 0.245 after 1 search                                           │
+#> │   poc: chance the object is in the area; cumpod: chance the searches │
+#> │   detect it there; pocupd: the poc after the searches found nothing. │
+#> │                                                                      │
+#> │   The 20 most likely of 100 cells.                                   │
+#> ╰──────────────────────────────────────────────────────────────────────╯
+# the best use of tomorrow's 40 km on what is left
+day2 <- opteffort(day1$map, W = 0.6, effort = 40)
+day2
+#> ╭── Optimal allocation of effort ────────────────────────────╮
+#> │   Total effort    40                                       │
+#> │   Sweep width W   0.6                                      │
+#> │   Cells searched  28 of 100                                │
+#> │   POS             0.5369                                   │
+#> │                                                            │
+#> │   cell      poc  effort  coverage     pod                  │
+#> │   ----  -------  ------  --------  ------                  │
+#> │     35  0.05287   2.551     1.530  0.7835                  │
+#> │     36  0.05287   2.551     1.530  0.7835                  │
+#> │     44  0.05287   2.551     1.530  0.7835                  │
+#> │     54  0.05287   2.551     1.530  0.7835                  │
+#> │     47  0.05287   2.551     1.530  0.7835                  │
+#> │     57  0.05287   2.551     1.530  0.7835                  │
+#> │     65  0.05287   2.551     1.530  0.7835                  │
+#> │     66  0.05287   2.551     1.530  0.7835                  │
+#> │     34  0.03445   1.837     1.102  0.6678                  │
+#> │     37  0.03445   1.837     1.102  0.6678                  │
+#> │     64  0.03445   1.837     1.102  0.6678                  │
+#> │     67  0.03445   1.837     1.102  0.6678                  │
+#> │     48  0.02244   1.122     0.673  0.4901                  │
+#> │     58  0.02244   1.122     0.673  0.4901                  │
+#> │     75  0.02244   1.122     0.673  0.4901                  │
+#> │     76  0.02244   1.122     0.673  0.4901                  │
+#> │     25  0.02244   1.122     0.673  0.4901                  │
+#> │     26  0.02244   1.122     0.673  0.4901                  │
+#> │     43  0.02244   1.122     0.673  0.4901                  │
+#> │     53  0.02244   1.122     0.673  0.4901                  │
+#> │                                                            │
+#> │   POS 0.5369 from effort 40 over 28 of 100 cells (W = 0.6) │
+#> │                                                            │
+#> │   ... and 8 more cells                                     │
+#> ╰────────────────────────────────────────────────────────────╯
+plot(day1$map)
+
+
 # inputs that cannot be right are refused
 try(ltrlrng(1, W = -1))
 #> Error : ltrlrng: `W` must be positive
+try(srchpod(1, W = 0.6))
+#> Error : srchpod: give either `coverage` or `W`, `effort` and `area`, not both
 try(srchscs(c(0.8, 0.8), c(0.5, 0.5)))
 #> Error : srchscs: `poc` must sum to at most 1, got 1.6
 ```

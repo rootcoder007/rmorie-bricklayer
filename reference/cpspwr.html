@@ -17,7 +17,7 @@ size that matters."><meta property="og:image" content="https://rootcoder007.gith
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,7 +87,7 @@ size that matters.</p>
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>A data frame.</p></dd>
+<dd><p>A data frame, passed to <code>stat</code> and <code>inject</code>.</p></dd>
 
 
 <dt id="arg-stat">stat<a class="anchor" aria-label="anchor" href="#arg-stat"></a></dt>
@@ -144,15 +144,14 @@ session's random number state.</p></dd>
 and <code>rate</code> (<code>detected / reps</code>, <code>NA</code> when none was usable).</p></dd>
 
 <dt><code>alpha</code>, <code>n</code>, <code>reps</code>, <code>treatment</code></dt>
-<dd><p>the settings used.</p></dd>
-
-<dt><code>smadet</code></dt>
+<dd><p>the settings
+used.</p></dd>
+ <dt><code>smadet</code></dt>
 <dd><p>the smallest positive size found at a rate of
 at least 0.8, or <code>NA</code> when no size reached it.</p></dd>
 
 <dt><code>false_positive_rate</code></dt>
 <dd><p>the rate at size 0.</p></dd>
-
 
 </dl></div>
     <div class="section level2">
@@ -214,17 +213,24 @@ negative controls.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2  0.3        5    5    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3  0.6        5    5    1</span>
 <span class="r-in"><span><span class="va">pw</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Positive controls: an injected effect of known size ───────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   99 permutations, 5 repetition(s) per size, alpha 0.05</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   size 0          detected  0/5   rate 0.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   size 0.3        detected  5/5   rate 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   size 0.6        detected  5/5   rate 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   smallest size detected at a rate of 0.8: 0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   a null result is informative only about effects at least this</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   large; smaller ones would have been missed</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Positive controls: an injected effect of known size</span> ──────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Permutations          99                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Repetitions per size  5                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Alpha                 0.05                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Treatment             x                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   False positive rate   0                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Smallest detected     0.3                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     size  detected  rate                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  --------  ----                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0.0000  0/5          0                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0.3000  5/5          1                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0.6000  5/5          1                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   smallest size detected at a rate of 0.8: 0.3;                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a null result is informative only about effects at least this │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   large; smaller ones would have been missed.                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The rate at size 0 estimates the false-positive rate. With few</span></span></span>
 <span class="r-in"><span><span class="co"># repetitions it is usually 0, because alpha is small -- five draws</span></span></span>

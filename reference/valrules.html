@@ -21,7 +21,7 @@ hold."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +83,7 @@ hold.</p>
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>A data frame.</p></dd>
+<dd><p>A data frame the rules are applied to.</p></dd>
 
 
 <dt id="arg-rules">rules<a class="anchor" aria-label="anchor" href="#arg-rules"></a></dt>
@@ -106,14 +106,14 @@ it twice buries
 the real finding. A rule that ERRORS is reported as a failure naming the
 error, never swallowed: a rule that cannot run has not passed. On a table
 of no rows a row-wise rule has no row to fail and passes.</p>
-<p>How a rule's result is read: a result that is not logical, or has length
-0, is a failure (<code>"rule returned &lt;class&gt;, not a logical"</code>); a single value
-fails unless it is <code>TRUE</code> (so <code>NA</code> fails); a longer vector is
-read row by row, and rows that are <code>FALSE</code> or <code>NA</code> fail (a rule
-that cannot decide has not been satisfied). The length of a row-wise
-result is not checked against the number of rows. The issue is named by
-the rule's <code>name</code>; two rules with the same name keep only the later
-failure. Rules run in the order given and only read the data.</p>
+<p>How a rule's result is read: a result that is not logical, or has length 0,
+is a failure (<code>"rule returned &lt;class&gt;, not a logical"</code>); a single value
+fails unless it is <code>TRUE</code> (so <code>NA</code> fails); a longer vector is read
+row by row, and rows that are <code>FALSE</code> or <code>NA</code> fail (a rule that
+cannot decide has not been satisfied). The length of a row-wise result is not
+checked against the number of rows. The issue is named by the rule's
+<code>name</code>; two rules with the same name keep only the later failure. Rules
+run in the order given and only read the data.</p>
 <p>Errors: <code>data</code> not a data frame (or with missing or duplicated
 column names); <code>rules</code> not a rule or a list; an element that is not
 a rule.</p>

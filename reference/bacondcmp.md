@@ -64,11 +64,78 @@ treatment timing. Journal of Econometrics 225(2):254-277.
 p <- polex()
 b <- bacondcmp(p, "district", "month", "crmrate", "reformed")
 b
-#> Goodman-Bacon decomposition: two-way estimate -3.232
-#>   earlier vs later   weight 0.209, average estimate -3.558
-#>   later vs earlier   weight 0.209, average estimate -3.414
-#>   treated vs never   weight 0.581, average estimate -3.048
+#> ╭── Goodman-Bacon decomposition ──────────────────────────────────────────╮
+#> │   Two-way estimate            -3.232                                    │
+#> │   Comparisons                 9                                         │
+#> │   Weight on later vs earlier  20.9%                                     │
+#> │                                                                         │
+#> │   By kind of comparison                                                 │
+#> │   type              comparisons  weight  estimate                       │
+#> │   ----------------  -----------  ------  --------                       │
+#> │   treated vs never            3  0.5814    -3.048                       │
+#> │   earlier vs later            3  0.2093    -3.558                       │
+#> │   later vs earlier            3  0.2093    -3.414                       │
+#> │                                                                         │
+#> │   Each comparison (control Inf = never treated)                         │
+#> │   type              treated  control  estimate   weight                 │
+#> │   ----------------  -------  -------  --------  -------                 │
+#> │   treated vs never       13      Inf    -3.181  0.18605                 │
+#> │   treated vs never       19      Inf    -3.137  0.20930                 │
+#> │   treated vs never       25      Inf    -2.817  0.18605                 │
+#> │   earlier vs later       13       19    -3.650  0.04651                 │
+#> │   later vs earlier       19       13    -3.624  0.06977                 │
+#> │   earlier vs later       13       25    -3.506  0.09302                 │
+#> │   later vs earlier       25       13    -3.332  0.09302                 │
+#> │   earlier vs later       19       25    -3.568  0.06977                 │
+#> │   later vs earlier       25       19    -3.261  0.04651                 │
+#> │                                                                         │
+#> │   The two-way estimate -3.232 is the weighted average of these 9        │
+#> │   two-group comparisons. 20.9% of the weight is on comparisons that use │
+#> │   already-treated units as controls; if the effect grows over time,     │
+#> │   that part pulls the two-way estimate away from the true effect.       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 tapply(b$weight, b$type, sum)
 #> earlier vs later later vs earlier treated vs never 
 #>        0.2093023        0.2093023        0.5813953 
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+bacondcmp(own, "town", "year", "rate", "bylaw")
+#> ╭── Goodman-Bacon decomposition ─────────────────────────────────────────╮
+#> │   Two-way estimate            -4.039                                   │
+#> │   Comparisons                 4                                        │
+#> │   Weight on later vs earlier  7.1%                                     │
+#> │                                                                        │
+#> │   By kind of comparison                                                │
+#> │   type              comparisons   weight  estimate                     │
+#> │   ----------------  -----------  -------  --------                     │
+#> │   treated vs never            2  0.85714    -4.026                     │
+#> │   earlier vs later            1  0.07143    -4.136                     │
+#> │   later vs earlier            1  0.07143    -4.096                     │
+#> │                                                                        │
+#> │   Each comparison (control Inf = never treated)                        │
+#> │   type              treated  control  estimate  weight                 │
+#> │   ----------------  -------  -------  --------  ------                 │
+#> │   treated vs never    2,019      Inf    -4.240  0.4286                 │
+#> │   treated vs never    2,021      Inf    -3.813  0.4286                 │
+#> │   earlier vs later    2,019    2,021    -4.136  0.0714                 │
+#> │   later vs earlier    2,021    2,019    -4.096  0.0714                 │
+#> │                                                                        │
+#> │   The two-way estimate -4.039 is the weighted average of these 4       │
+#> │   two-group comparisons. 7.1% of the weight is on comparisons that use │
+#> │   already-treated units as controls; if the effect grows over time,    │
+#> │   that part pulls the two-way estimate away from the true effect.      │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

@@ -111,18 +111,73 @@ for weighted surveys with strata and clusters.
 ``` r
 x <- c(12, 15, 9, 20, 14)
 sprd(x)                                   # a sample: n - 1
-#> n 5, mean 14, variance 16.5, sd 4.06202, standard error of the mean 1.81659
-#> Rule: sample (denominator n - 1 (Bessel)): the values are a sample from a larger population, so the spread is measured around the mean of the sample itself and n - 1 corrects the bias that causes.
+#> ╭── Mean and spread ──────────────────────────────────────────────────────╮
+#> │   Values                      5                                         │
+#> │   Mean                        14                                        │
+#> │   Variance                    16.5                                      │
+#> │   Standard deviation          4.06202                                   │
+#> │   Standard error of the mean  1.81659                                   │
+#> │   Design                      sample                                    │
+#> │   Denominator                 n - 1 (Bessel)                            │
+#> │                                                                         │
+#> │   Rule: the values are a sample from a larger population, so the spread │
+#> │   is measured around the mean of the sample itself and n - 1 corrects   │
+#> │   the bias that causes.                                                 │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 sprd(x, des = "census")                # the whole population: n
-#> n 5, mean 14, variance 13.2, sd 3.63318, standard error of the mean 0
-#> Rule: census (denominator n): the values are the whole population and it is described as it is: the mean is the population mean, so no correction, and the mean has no sampling error.
+#> ╭── Mean and spread ────────────────────────────────────────────────────╮
+#> │   Values                      5                                       │
+#> │   Mean                        14                                      │
+#> │   Variance                    13.2                                    │
+#> │   Standard deviation          3.63318                                 │
+#> │   Standard error of the mean  0                                       │
+#> │   Design                      census                                  │
+#> │   Denominator                 n                                       │
+#> │                                                                       │
+#> │   Rule: the values are the whole population and it is described as it │
+#> │   is: the mean is the population mean, so no correction, and the mean │
+#> │   has no sampling error.                                              │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 sprd(x, N = 40)             # 5 of 40 drawn: finite-population correction
-#> n 5, mean 14, variance 16.5, sd 4.06202, standard error of the mean 1.69926
-#> Rule: finite (denominator n - 1 (Bessel)): 5 of 40 units were drawn without replacement: n - 1 for the variance, and the finite-population correction 1 - n/N = 0.875 for the standard error.
+#> ╭── Mean and spread ───────────────────────────────────────────────────╮
+#> │   Values                      5                                      │
+#> │   Mean                        14                                     │
+#> │   Variance                    16.5                                   │
+#> │   Standard deviation          4.06202                                │
+#> │   Standard error of the mean  1.69926                                │
+#> │   Design                      finite                                 │
+#> │   Denominator                 n - 1 (Bessel)                         │
+#> │                                                                      │
+#> │   Rule: 5 of 40 units were drawn without replacement: n - 1 for the  │
+#> │   variance, and the finite-population correction 1 - n/N = 0.875 for │
+#> │   the standard error.                                                │
+#> ╰──────────────────────────────────────────────────────────────────────╯
 sprd(x, N = 5)              # n = N: a census
-#> n 5, mean 14, variance 13.2, sd 3.63318, standard error of the mean 0
-#> Rule: census (denominator n): the values are the whole population and it is described as it is: the mean is the population mean, so no correction, and the mean has no sampling error.
+#> ╭── Mean and spread ────────────────────────────────────────────────────╮
+#> │   Values                      5                                       │
+#> │   Mean                        14                                      │
+#> │   Variance                    13.2                                    │
+#> │   Standard deviation          3.63318                                 │
+#> │   Standard error of the mean  0                                       │
+#> │   Design                      census                                  │
+#> │   Denominator                 n                                       │
+#> │                                                                       │
+#> │   Rule: the values are the whole population and it is described as it │
+#> │   is: the mean is the population mean, so no correction, and the mean │
+#> │   has no sampling error.                                              │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 sprd(c(1, 2, 3), w = c(10, 5, 1))   # frequency weights
-#> n 3, mean 1.4375, variance 0.395833, sd 0.629153, standard error of the mean 0.157288
-#> Rule: sample (denominator sum of weights - 1): the values are a sample from a larger population, so the spread is measured around the mean of the sample itself and n - 1 corrects the bias that causes.
+#> ╭── Mean and spread ──────────────────────────────────────────────────────╮
+#> │   Values                      3                                         │
+#> │   Mean                        1.4375                                    │
+#> │   Variance                    0.395833                                  │
+#> │   Standard deviation          0.629153                                  │
+#> │   Standard error of the mean  0.157288                                  │
+#> │   Design                      sample                                    │
+#> │   Denominator                 sum of weights - 1                        │
+#> │                                                                         │
+#> │   Rule: the values are a sample from a larger population, so the spread │
+#> │   is measured around the mean of the sample itself and n - 1 corrects   │
+#> │   the bias that causes.                                                 │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```

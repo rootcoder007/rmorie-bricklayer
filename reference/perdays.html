@@ -17,7 +17,7 @@ a fiscal year, a quarter or a leap year wrong by a day."><meta property="og:imag
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,7 +90,12 @@ before <code>from</code>.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A numeric scalar: the number of days in the period,
-<code>to - from + 1</code>, for use as <code>t</code>.</p>
+<code>to - from + 1</code>, for use as <code>t</code>. It has class
+<code>c("rmbl_perdays", "rmbl_measure", "numeric")</code> and an attribute
+<code>"lakner"</code> (<code>from</code> and <code>to</code> as dates), so it prints as a
+box; arithmetic, <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code>, <code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code>, <code><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean()</a></code>,
+<code>[</code>, <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> and <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code> give a plain number, and
+every <code>t</code> argument takes it as it is.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -110,15 +115,60 @@ date fails inside <code><a href="https://rdrr.io/r/base/as.Date.html" class="ext
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">perdays</span><span class="op">(</span><span class="st">"2024-01-01"</span>, <span class="st">"2024-12-31"</span><span class="op">)</span> <span class="co"># a leap year</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 366</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Period length</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Length   366 days                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   From     2024-01-01                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   To       2024-12-31                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula  t = to - from + 1 (both ends counted)                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   From 2024-01-01 to 2024-12-31 is 366 days.                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Pass it as t to adp(), admits(), adpcnts() or stkflow().            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Both ends count: the 1st to the 31st is 31 days of exposure. A leap │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   year comes out at 366 from the dates, without anyone choosing.      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu">perdays</span><span class="op">(</span><span class="st">"2023-01-01"</span>, <span class="st">"2023-12-31"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 365</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Period length</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Length   365 days                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   From     2023-01-01                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   To       2023-12-31                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula  t = to - from + 1 (both ends counted)                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   From 2023-01-01 to 2023-12-31 is 365 days.                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Pass it as t to adp(), admits(), adpcnts() or stkflow().            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Both ends count: the 1st to the 31st is 31 days of exposure. A leap │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   year comes out at 366 from the dates, without anyone choosing.      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu">perdays</span><span class="op">(</span><span class="st">"2025-04-01"</span>, <span class="st">"2026-03-31"</span><span class="op">)</span> <span class="co"># a fiscal year</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 365</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Period length</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Length   365 days                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   From     2025-04-01                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   To       2026-03-31                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula  t = to - from + 1 (both ends counted)                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   From 2025-04-01 to 2026-03-31 is 365 days.                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Pass it as t to adp(), admits(), adpcnts() or stkflow().            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Both ends count: the 1st to the 31st is 31 days of exposure. A leap │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   year comes out at 366 from the dates, without anyone choosing.      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a quarter as the period of an average daily population</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="adp.html">adp</a></span><span class="op">(</span><span class="fl">4200</span>, t <span class="op">=</span> <span class="fu">perdays</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2025-01-01"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2025-03-31"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 46.66667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Average daily population</span> ─────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Average daily population  46.67 people on an average day              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Person-days               4,200                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Period                    90 days                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula                   adp = days / t = 4,200 / 90                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   4,200 person-days over 90 days: 46.67 people held on an average day.  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakner (1976, p.15): a stock -- people held at once, not people who   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   passed through. Count only the days served inside the period.         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   adp = n x alos / t links it to alos() and admits(), exactly only in a │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   steady state.                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># numbers are not dates, and the end cannot come first</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">perdays</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">31</span><span class="op">)</span><span class="op">)</span></span></span>

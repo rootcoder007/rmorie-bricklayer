@@ -21,7 +21,7 @@ envdiff()."><meta property="og:image" content="https://rootcoder007.github.io/rm
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,23 +99,25 @@ every currently loaded namespace (<code><a href="https://rdrr.io/r/base/ns-load.
 <dd><p>character, the system name and release.</p></dd>
 
 <dt><code>captured_utc</code></dt>
-<dd><p>character, ISO 8601 time <code>YYYY-MM-DDThh:mm:ssZ</code>.</p></dd>
-
-<dt><code>rng_kind</code></dt>
-<dd><p>character, the three <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGkind()</a></code> values joined by
-commas.</p></dd>
+<dd><p>character, ISO 8601 time
+<code>YYYY-MM-DDThh:mm:ssZ</code>.</p></dd>
+ <dt><code>rng_kind</code></dt>
+<dd><p>character, the three
+<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGkind()</a></code> values joined by commas.</p></dd>
 
 <dt><code>rng_seeded</code></dt>
 <dd><p>logical, whether <code>.Random.seed</code> exists.</p></dd>
 
 <dt><code>packages</code></dt>
 <dd><p>named list of version strings, sorted by name
-(<code>NA</code> for a package that is not installed). A list, not a vector,
-so the names survive the manifest's JSON: a named vector is written as
-a bare array.</p></dd>
+(<code>NA</code> for a package that is not installed). A list, not a vector, so
+the names survive the manifest's JSON: a named vector is written as a bare
+array.</p></dd>
 
-
-</dl></div>
+</dl><p>The list has class <code>c("rmbl_capenv", "list")</code>, which only changes
+how it prints (a box); its elements, and the JSON written from it, are
+those of a plain list.</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Package versions come from <code><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">utils::packageVersion()</a></code>; a package that

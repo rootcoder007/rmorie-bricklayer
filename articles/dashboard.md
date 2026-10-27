@@ -106,10 +106,26 @@ and the courts share a trend, so the parallel-trends assumption holds:
 
 court <- rmbldemo("court")
 plndid(court, unit = "court", time = "month", y = "delay", trtd = "reformed")
-#> Difference in differences: 576 observations, 16 clusters
-#>     term estimate     se  lower  upper     t   p_value
-#>  treated   -12.61 0.4724 -13.62 -11.61 -26.7 4.643e-14
-#> Effect relative to the comparison units' pre-period mean (100): -12.6%
+#> ╭── Difference in differences ────────────────────────────────────────────────╮
+#> │   Method           fixed-effects least squares, cluster-robust (CR1) errors │
+#> │   Observations     576                                                      │
+#> │   Clusters         16                                                       │
+#> │   Confidence       95%                                                      │
+#> │   Comparison mean  100                                                      │
+#> │   Relative effect  -12.6% of the comparison mean                            │
+#> │                                                                             │
+#> │   Estimates                                                                 │
+#> │   term     estimate      se  95% CI                 t  p_value              │
+#> │   -------  --------  ------  ----------------  ------  -------              │
+#> │   treated    -12.61  0.4724  [-13.62, -11.61]  -26.70  < 0.001              │
+#> │                                                                             │
+#> │   The policy's effect on the outcome is -12.61 (95% interval [-13.62,       │
+#> │   -11.61]): the interval excludes 0, so the data distinguish it from no     │
+#> │   effect.                                                                   │
+#> │                                                                             │
+#> │   The comparison mean is the pre-period mean outcome of the units not       │
+#> │   (yet) treated.                                                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 The **Data** sidebar (the arrow at the left) takes a demo dataset, a CSV
@@ -261,10 +277,31 @@ And what the Proof ledger tab runs on the sample ledger:
 
 ``` r
 
-led <- ldgrread(system.file("extdata", "ledger_sample.json", package = "rmoriebricklayer"))
+led <- ldgrread(system.file(
+  "extdata",
+  "ledger_sample.json",
+  package = "rmoriebricklayer"
+))
 led
-#> Proof ledger rmoriebricklayer sample ledger: 3 theorems (1 proved, 1 sorry, 1 axiom)
-#>   https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab, Lean v4.12.0
+#> ╭── Proof ledger rmoriebricklayer sample ledger ──────────────────────────────╮
+#> │   Theorems  3 theorems (1 proved, 1 sorry, 1 axiom)                         │
+#> │   Source    https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab    │
+#> │   Lean      v4.12.0                                                         │
+#> │   File      /tmp/Rtmp8mkWXN/temp_libpath2197c49bee9/rmoriebricklayer/extdat │
+#> │             a/ledger_sample.json                                            │
+#> │                                                                             │
+#> │   id               theorem                         status  sorry            │
+#> │   ---------------  ------------------------------  ------  -----            │
+#> │   gini-equal       Rmorie.Gini.gini_const_eq_zero  proved      0            │
+#> │   lorenz-monotone  Rmorie.Gini.lorenz_monotone     sorry       1            │
+#> │   float-round      Rmorie.Float.round_nearest      axiom       0            │
+#> │                                                                             │
+#> │   1 of 3 theorems are proved; the others are 1 axiom and 1 sorry: not       │
+#> │   proofs yet.                                                               │
+#> │                                                                             │
+#> │   A theorem marked proved has a machine-checked proof with no sorry;        │
+#> │   ldgrchk() checks that and that the R functions it covers exist.           │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ldgrchk(led)[, c("check", "ok", "severity")]
 #>                                                check    ok severity
 #> 1                                 proved: gini-equal  TRUE    error

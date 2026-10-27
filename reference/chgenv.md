@@ -67,21 +67,54 @@ populations are not checked; give one per row (or one value).
 now <- pubbnd(c(45, 120), rnd = 5)
 prev <- pubbnd(c(40, 100), rnd = 5)
 chgenv(now, prev)
-#>   chglo chgup    pctlo    pctup
-#> 1     0    10  0.00000 26.66667
-#> 2    15    25 14.63415 25.64103
+#> ╭── Change between published values ─────────────────────────────────────╮
+#> │   Cells          2                                                     │
+#> │   Certain rises  1                                                     │
+#> │   Certain falls  0                                                     │
+#> │                                                                        │
+#> │   cell  change    change %                                             │
+#> │   ----  --------  --------------                                       │
+#> │      1  [0, 10]   [0.00, 26.67]                                        │
+#> │      2  [15, 25]  [14.63, 25.64]                                       │
+#> │                                                                        │
+#> │   Each interval holds every change consistent with the two published   │
+#> │   (rounded or suppressed) values. An interval that spans 0 cannot tell │
+#> │   a rise from a fall.                                                  │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # with rates per 1,000 residents in both years
 chgenv(now, prev, pop = c(10000, 20000),
                 prepop = c(10000, 19000))
-#>   chglo chgup    pctlo    pctup ratelo rateup preratelo prerateup
-#> 1     0    10  0.00000 26.66667  4.250  4.750  3.750000  4.250000
-#> 2    15    25 14.63415 25.64103  5.875  6.125  5.131579  5.394737
+#> ╭── Change between published values ─────────────────────────────────────╮
+#> │   Cells          2                                                     │
+#> │   Certain rises  1                                                     │
+#> │   Certain falls  0                                                     │
+#> │                                                                        │
+#> │   cell  change    change %        rate            previous rate        │
+#> │   ----  --------  --------------  --------------  --------------       │
+#> │      1  [0, 10]   [0.00, 26.67]   [4.250, 4.750]  [3.750, 4.250]       │
+#> │      2  [15, 25]  [14.63, 25.64]  [5.875, 6.125]  [5.132, 5.395]       │
+#> │                                                                        │
+#> │   Each interval holds every change consistent with the two published   │
+#> │   (rounded or suppressed) values. An interval that spans 0 cannot tell │
+#> │   a rise from a fall.                                                  │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # a suppressed previous cell could have been zero: no upper percentage
 chgenv(pubbnd(12), pubbnd("<5"))
-#>   chglo chgup pctlo pctup
-#> 1     8    12   200    NA
+#> ╭── Change between published values ─────────────────────────────────────╮
+#> │   Cells          1                                                     │
+#> │   Certain rises  1                                                     │
+#> │   Certain falls  0                                                     │
+#> │                                                                        │
+#> │   cell  change   change %                                              │
+#> │   ----  -------  --------                                              │
+#> │      1  [8, 12]  [200, ]                                               │
+#> │                                                                        │
+#> │   Each interval holds every change consistent with the two published   │
+#> │   (rounded or suppressed) values. An interval that spans 0 cannot tell │
+#> │   a rise from a fall.                                                  │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # the two sides must line up
 try(chgenv(now, prev[1, ]))

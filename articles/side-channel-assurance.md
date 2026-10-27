@@ -9,7 +9,10 @@ installed package and run in continuous integration on every change.
 
 ``` r
 
-list.files(system.file(package = "rmoriebricklayer"), pattern = "^(ctcheck|dudect|tvla|fuzz)$")
+list.files(
+  system.file(package = "rmoriebricklayer"),
+  pattern = "^(ctcheck|dudect|tvla|fuzz)$"
+)
 #> [1] "ctcheck" "dudect"  "fuzz"    "tvla"
 ```
 
@@ -162,7 +165,10 @@ on a masked leak under either model. The full table is in
 
 ``` r
 
-readLines(system.file("tvla", "README.md", package = "rmoriebricklayer"), n = 12)
+readLines(
+  system.file("tvla", "README.md", package = "rmoriebricklayer"),
+  n = 12
+)
 #>  [1] "# Simulated power analysis (TVLA)"                                                         
 #>  [2] ""                                                                                          
 #>  [3] "`inst/ctcheck` shows no branch or memory address depends on a secret, and `inst/dudect`"   
@@ -247,10 +253,13 @@ indistinguishable.
 ``` r
 
 bad <- sent$ciphertext
-substr(bad, 1, 1) <- if (substr(bad, 1, 1) == "0") "1" else "0"  # one hex digit changed
+# one hex digit changed
+substr(bad, 1, 1) <- if (substr(bad, 1, 1) == "0") "1" else "0"
 tm <- function(ct) {
   s <- proc.time()[["elapsed"]]
-  for (i in 1:200) kemdecap(key, ct)
+  for (i in 1:200) {
+    kemdecap(key, ct)
+  }
   (proc.time()[["elapsed"]] - s) / 200 * 1e6
 }
 honest <- tampered <- numeric(60)
@@ -258,8 +267,11 @@ for (k in 1:60) {
   honest[k] <- tm(sent$ciphertext)
   tampered[k] <- tm(bad)
 }
-plotecdf(c(honest, tampered), rep(c("honest ciphertext", "one digit changed"), each = 60),
-         main = "ML-KEM-512 decapsulation time (microseconds)")
+plotecdf(
+  c(honest, tampered),
+  rep(c("honest ciphertext", "one digit changed"), each = 60),
+  main = "ML-KEM-512 decapsulation time (microseconds)"
+)
 ```
 
 ![](side-channel-assurance_files/figure-html/side-channel-assurance-decap-timing-plot-1.png)

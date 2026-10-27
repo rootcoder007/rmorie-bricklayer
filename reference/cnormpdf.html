@@ -15,7 +15,7 @@ it agrees with dnorm."><meta property="og:image" content="https://rootcoder007.g
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,7 +74,7 @@ it agrees with <code><a href="https://rdrr.io/r/stats/Normal.html" class="extern
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>Numeric vector of quantiles.</p></dd>
+<dd><p>Numeric vector of quantiles at which the density is evaluated.</p></dd>
 
 
 <dt id="arg-mean">mean<a class="anchor" aria-label="anchor" href="#arg-mean"></a></dt>
@@ -92,14 +92,13 @@ must be positive for a finite result.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>$$f(x) = \frac{1}{\sigma\sqrt{2\pi}}
-  \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right).$$
-The function is vectorised over <code>x</code> only; <code>mean</code> must be a single
-finite number and <code>sd</code> a single positive number, and anything else is
-an error (<code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm()</a></code> recycles them, and gives <code>Inf</code> or <code>NaN</code> for
-<code>sd = 0</code> or below).
-<code>NA</code> in <code>x</code> gives <code>NA</code>; <code>x = Inf</code> gives 0. Character,
-factor or list input for <code>x</code> is an error.</p>
+    <p>$$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x -
+\mu)^2}{2\sigma^2}\right).$$ The function is vectorised over <code>x</code> only;
+<code>mean</code> must be a single finite number and <code>sd</code> a single positive
+number, and anything else is an error (<code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm()</a></code> recycles them, and
+gives <code>Inf</code> or <code>NaN</code> for <code>sd = 0</code> or below). <code>NA</code> in
+<code>x</code> gives <code>NA</code>; <code>x = Inf</code> gives 0. Character, factor or list
+input for <code>x</code> is an error.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

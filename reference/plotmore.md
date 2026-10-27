@@ -49,7 +49,7 @@ plotgain(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
 
 - x:
 
-  Numeric vector.
+  Numeric vector to plot, one value per observation.
 
 - grp:
 
@@ -58,13 +58,15 @@ plotgain(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
 - bw:
 
   Bandwidth passed to
-  [`stats::density()`](https://rdrr.io/r/stats/density.html), default
-  `"nrd0"`.
+  [`stats::density()`](https://rdrr.io/r/stats/density.html): one
+  positive number or the name of a rule (`"nrd0"`, the default, `"nrd"`,
+  `"ucv"`, `"bcv"`, `"sj"`, `"sj-ste"`, `"sj-dpi"`).
 
 - ...:
 
-  Further arguments to the first
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) call.
+  Further arguments to the
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) call that
+  opens each frame.
 
 - main, col, pal:
 

@@ -27,7 +27,7 @@ director's-report corpus yourself."><meta property="og:image" content="https://r
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,10 +122,11 @@ report page.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The URL fetched is<br><code>https://www.siu.on.ca/&lt;lang&gt;/directors_report_details.php?drid=&lt;drid&gt;</code><br>
-through <code><a href="blfetch.html">blfetch</a></code>, which tries the live page first
-and falls back to a Wayback Machine snapshot (the one given in
-<code>wb</code>, or one it looks up).</p>
+    <p>The URL fetched is</p><div class="sourceCode"><pre><code>
+https://www.siu.on.ca/&lt;lang&gt;/directors_report_details.php?drid=&lt;drid&gt;
+</code></pre></div><p>through <code><a href="blfetch.html">blfetch</a></code>, which tries the live page first and falls back
+to a Wayback Machine snapshot (the one given in <code>wb</code>, or one it looks
+up).</p>
 <p>Network: one or more HTTPS requests to www.siu.on.ca and, on failure,
 web.archive.org. Side effect: writes <code>dest</code>.</p>
 <p>Errors, before any request: <code>drid</code> not one positive whole number

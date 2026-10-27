@@ -72,7 +72,8 @@ file.exists(path)
 
 # Round-trips back through the package's own codec.
 back <- fromjs(path, simplifyVector = FALSE)
-back$results$rowcount$status # "PASS" ("INFO" after synthetic data, see mkmnf())
+# "PASS" ("INFO" after synthetic data, see mkmnf())
+back$results$rowcount$status
 #> [1] "INFO"
 
 # the canonical form: one line whose SHA-256 is the manifest digest

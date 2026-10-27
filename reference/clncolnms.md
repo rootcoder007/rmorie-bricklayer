@@ -13,7 +13,8 @@ backticks.
 clncolnms(
   data,
   case = c("snake", "lower_camel", "upper_camel", "screaming_snake", "none"),
-  sep = "_"
+  sep = "_",
+  quiet = FALSE
 )
 ```
 
@@ -34,6 +35,14 @@ clncolnms(
   Separator, a string, used between words for `"snake"`,
   `"screaming_snake"` and `"none"`, and before the number that
   disambiguates a duplicate in every case (default `"_"`).
+
+- quiet:
+
+  Logical: `TRUE` skips the boxed list of the names that changed, which
+  is otherwise sent through
+  [`message()`](https://rdrr.io/r/base/message.html) (so
+  [`suppressMessages()`](https://rdrr.io/r/base/message.html) also
+  silences it); default `FALSE`.
 
 ## Value
 
@@ -70,6 +79,21 @@ in its `"orignms"` attribute for exactly that.
 ``` r
 clncolnms(c("Total  Population (2021)", "% change",
                      "Ville / City", "dup", "dup"))
+#> ╭── Column names cleaned ───────────────────────────────────────╮
+#> │   Names    5                                                  │
+#> │   Renamed  4                                                  │
+#> │                                                               │
+#> │   from                      to                                │
+#> │   ------------------------  ---------------------             │
+#> │   Total  Population (2021)  total_population_2021             │
+#> │   % change                  pct_change                        │
+#> │   Ville / City              ville_city                        │
+#> │   dup                       dup_2                             │
+#> │                                                               │
+#> │   4 of 5 names changed.                                       │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #> [1] "total_population_2021" "pct_change"            "ville_city"           
 #> [4] "dup"                   "dup_2"                
 
@@ -77,6 +101,20 @@ clncolnms(c("Total  Population (2021)", "% change",
 df <- data.frame(`Total Pop` = 1:2, `% change` = 3:4,
                  check.names = FALSE)
 cleaned <- clncolnms(df)
+#> ╭── Column names cleaned ─────────────────────────────────────────╮
+#> │   Table    2 rows, 2 columns                                    │
+#> │   Names    2                                                    │
+#> │   Renamed  2                                                    │
+#> │                                                                 │
+#> │   from       to                                                 │
+#> │   ---------  ----------                                         │
+#> │   Total Pop  total_pop                                          │
+#> │   % change   pct_change                                         │
+#> │                                                                 │
+#> │   2 of 2 names changed; attr(x, "orignms") keeps the originals. │
+#> │                                                                 │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary.   │
+#> ╰─────────────────────────────────────────────────────────────────╯
 names(cleaned)
 #> [1] "total_pop"  "pct_change"
 attr(cleaned, "orignms")
@@ -84,14 +122,63 @@ attr(cleaned, "orignms")
 
 # Other cases.
 clncolnms(c("Total Pop"), case = "lower_camel")
+#> ╭── Column names cleaned ───────────────────────────────────────╮
+#> │   Names    1                                                  │
+#> │   Renamed  1                                                  │
+#> │                                                               │
+#> │   from       to                                               │
+#> │   ---------  --------                                         │
+#> │   Total Pop  totalPop                                         │
+#> │                                                               │
+#> │   1 of 1 names changed.                                       │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #> [1] "totalPop"
 clncolnms(c("Total Pop"), case = "upper_camel")
+#> ╭── Column names cleaned ───────────────────────────────────────╮
+#> │   Names    1                                                  │
+#> │   Renamed  1                                                  │
+#> │                                                               │
+#> │   from       to                                               │
+#> │   ---------  --------                                         │
+#> │   Total Pop  TotalPop                                         │
+#> │                                                               │
+#> │   1 of 1 names changed.                                       │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #> [1] "TotalPop"
 clncolnms(c("Total Pop"), case = "screaming_snake")
+#> ╭── Column names cleaned ───────────────────────────────────────╮
+#> │   Names    1                                                  │
+#> │   Renamed  1                                                  │
+#> │                                                               │
+#> │   from       to                                               │
+#> │   ---------  ---------                                        │
+#> │   Total Pop  TOTAL_POP                                        │
+#> │                                                               │
+#> │   1 of 1 names changed.                                       │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #> [1] "TOTAL_POP"
 
 # a different separator, and a name that starts with a digit
 clncolnms(c("2021 count", "Rate per 1000"), sep = ".")
+#> ╭── Column names cleaned ───────────────────────────────────────╮
+#> │   Names    2                                                  │
+#> │   Renamed  2                                                  │
+#> │                                                               │
+#> │   from           to                                           │
+#> │   -------------  -------------                                │
+#> │   2021 count     x2021.count                                  │
+#> │   Rate per 1000  rate.per.1000                                │
+#> │                                                               │
+#> │   2 of 2 names changed.                                       │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #> [1] "x2021.count"   "rate.per.1000"
 
 # an unknown case is an error

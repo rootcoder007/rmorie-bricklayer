@@ -45,7 +45,10 @@ anltab(
 - prd:
 
   Name of the column with the period (fiscal year, quarter, ...);
-  numeric periods are used as the time axis of the trend tests.
+  numeric periods are used as the time axis of the trend tests. Text
+  periods (`"2019/20"`, `"2021 Q3"`, `"Mar 2021"`) are ordered as
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  reads them (see its `prd`).
 
 - by:
 
@@ -212,10 +215,23 @@ otis <- read.csv(path)
 a <- anltab(otis, value = "individuals", prd = "year",
                    by = c("table", "group"))
 a
-#> Analysis of `individuals` by year over 3 period(s) (2023 to 2025), grouped by table x group
-#>   rows 15, columns 4; no missing values
-#>   change: 10 comparison(s), 9 significant after BH at 0.05
-#>   trend: 0 of 5 series with Mann-Kendall p < 0.05
+#> ╭── Analysis of a published table ────────────────────────────────────────╮
+#> │   Value       `individuals`                                             │
+#> │   Period      year                                                      │
+#> │   Periods     3 (2023 to 2025)                                          │
+#> │   Grouped by  table x group                                             │
+#> │   Rows        15                                                        │
+#> │   Columns     4                                                         │
+#> │   Missing     no missing values                                         │
+#> │   Changes     10 comparison(s), 9 significant after BH at 0.05          │
+#> │   Trend       0 of 5 series with Mann-Kendall p < 0.05                  │
+#> │                                                                         │
+#> │   Changes are between consecutive periods with exact or interval tests, │
+#> │   adjusted for the number of comparisons; rptanl() writes the full      │
+#> │   tables as a report, and x$change, x$rates and x$trend hold them.      │
+#> │                                                                         │
+#> │   Run 2026-10-27 13:56                                                  │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 a$change[, c("table", "group", "year", "pctchg", "padj")]
 #>           table    group year     pctchg          padj
 #> 1  age_category 18 to 24 2023         NA            NA
@@ -256,17 +272,24 @@ d <- data.frame(year = rep(2019:2022, 2), site = rep(c("A", "B"), each = 4),
                 pop = rep(c(1000, 2000), each = 4))
 r <- anltab(d, "n", "year", by = "site", pop = "pop", per = 1000)
 r$ratechg[, c("site", "year", "rate", "rateratio", "padj")]
-#> ──  ────────────────────────────────────────────────────────────── 
-#>  site year rate rateratio      padj
-#>     A 2019 10.0        NA        NA
-#>     A 2020 12.0 1.2000000 0.8956832
-#>     A 2021 15.0 1.2500000 0.8956832
-#>     A 2022  9.0 0.6000000 0.8956832
-#>     B 2019 15.0        NA        NA
-#>     B 2020 14.0 0.9333333 0.8956832
-#>     B 2021 17.5 1.2500000 0.8956832
-#>     B 2022 20.0 1.1428571 0.8956832
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Change in rate ─────────────────────────────────────────────────────╮
+#> │   Rows     8                                                          │
+#> │   Columns  5                                                          │
+#> │                                                                       │
+#> │   site  year   rate  rateratio   padj                                 │
+#> │   ----  ----  -----  ---------  -----                                 │
+#> │   A     2019  10.00                                                   │
+#> │   A     2020  12.00      1.200  0.896                                 │
+#> │   A     2021  15.00      1.250  0.896                                 │
+#> │   A     2022   9.00      0.600  0.896                                 │
+#> │   B     2019  15.00                                                   │
+#> │   B     2020  14.00      0.933  0.896                                 │
+#> │   B     2021  17.50      1.250  0.896                                 │
+#> │   B     2022  20.00      1.143  0.896                                 │
+#> │                                                                       │
+#> │   Some of this result's columns are not here (a subset of it?), so it │
+#> │   is shown as a plain table.                                          │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # a column that is not in the data is an error
 try(anltab(otis, value = "count", prd = "year"))

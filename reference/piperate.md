@@ -33,8 +33,9 @@ piperate(num, den, win = 12L, lag = 0L, grp = NULL)
 
 ## Value
 
-A data frame: `group`, `index` (the period's position within its group),
-`numerator`, `denominator` (the window sums), `rate`.
+A data frame of class `rmbl_pipeline_rate`: `group`, `index` (the
+period's position within its group), `numerator`, `denominator` (the
+window sums), `rate`.
 
 ## Details
 
@@ -69,12 +70,23 @@ set.seed(2)
 reports <- rpois(36, 400)
 charges <- rpois(36, 90)
 piperate(charges, reports, win = 12, lag = 3)[30:36, ]
-#>    group index numerator denominator      rate
-#> 30   all    30      1091        4882 0.2234740
-#> 31   all    31      1093        4810 0.2272349
-#> 32   all    32      1088        4799 0.2267139
-#> 33   all    33      1109        4796 0.2312344
-#> 34   all    34      1106        4826 0.2291753
-#> 35   all    35      1095        4879 0.2244312
-#> 36   all    36      1088        4858 0.2239605
+#> ╭── Lagged pipeline rate ────────────────────────────────────────────────╮
+#> │   Groups          1                                                    │
+#> │   Periods         36                                                   │
+#> │   Rates computed  7                                                    │
+#> │                                                                        │
+#> │   group  index  numerator  denominator    rate                         │
+#> │   -----  -----  ---------  -----------  ------                         │
+#> │   all       30      1,091        4,882  0.2235                         │
+#> │   all       31      1,093        4,810  0.2272                         │
+#> │   all       32      1,088        4,799  0.2267                         │
+#> │   all       33      1,109        4,796  0.2312                         │
+#> │   all       34      1,106        4,826  0.2292                         │
+#> │   all       35      1,095        4,879  0.2244                         │
+#> │   all       36      1,088        4,858  0.2240                         │
+#> │                                                                        │
+#> │   Each rate is the numerator summed over the window over the           │
+#> │   denominator summed over the same window moved back by the lag (cases │
+#> │   out over cases in earlier); it is missing until a full window is in. │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

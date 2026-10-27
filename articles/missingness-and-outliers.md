@@ -36,22 +36,36 @@ draws an inline text map of where the gaps are.
 set.seed(1)
 big <- data.frame(id = 1:40, v = stats::rnorm(40), w = stats::rnorm(40))
 big$v[c(10:14, 30)] <- NA
-big$w[c(10:14)] <- NA
+big$w[10:14] <- NA
 misspat(big)
-#> ── Missingness patterns ────────────────────────────────────────── 
-#>   columns, in pattern order: id, v, w
-#> 
-#>  pattern n_rows pctrows n_missing columns
-#>      ...     34    85.0         0        
-#>      .XX      5    12.5         2    v, w
-#>      .X.      1     2.5         1       v
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Missingness patterns ─────────────────────────────────────────────────────╮
+#> │   Columns   in pattern order: id, v, w                                      │
+#> │   Patterns  3                                                               │
+#> │   Rows      40                                                              │
+#> │                                                                             │
+#> │   pattern  n_rows  pctrows  n_missing  columns                              │
+#> │   -------  ------  -------  ---------  -------                              │
+#> │   ...          34  85.0             0                                       │
+#> │   .XX           5  12.5             2  v, w                                 │
+#> │   .X.           1  2.5              1  v                                    │
+#> │                                                                             │
+#> │   Each pattern marks the columns missing together; a few large patterns     │
+#> │   point to a cause worth naming before rows are dropped.                    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 missruns(big)
-#> ── Runs of consecutive missing values ──────────────────────────── 
-#>  column start end length
-#>       v    10  14      5
-#>       w    10  14      5
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Runs of consecutive missing values ───────────────────────────────────╮
+#> │   Runs               2                                                  │
+#> │   Columns with runs  2                                                  │
+#> │   Longest run        5                                                  │
+#> │                                                                         │
+#> │   column  start  end  length                                            │
+#> │   ------  -----  ---  ------                                            │
+#> │   v          10   14       5                                            │
+#> │   w          10   14       5                                            │
+#> │                                                                         │
+#> │   Long runs of missing rows usually mean a source stopped reporting for │
+#> │   a while, not values missing at random.                                │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 Five rows missing both `v` and `w` in a block is a different problem
@@ -62,14 +76,42 @@ the records.
 
 ``` r
 
-d <- data.frame(id = c(1, 2, 2, 3, 3, 3), x = c("a", "b", "b", "c", "c", "d"))
+d <- data.frame(
+  id = c(1, 2, 2, 3, 3, 3),
+  x = c("a", "b", "b", "c", "c", "d"),
+  stringsAsFactors = FALSE
+)
 duprows(d)
+#> ╭── Duplicate rows ───────────────────────────────────────────────────────────╮
+#> │   Table           6 rows, 2 columns                                         │
+#> │   Compared on     every column                                              │
+#> │   Duplicate rows  4                                                         │
+#> │   Groups          2                                                         │
+#> │   Extra copies    2                                                         │
+#> │                                                                             │
+#> │   4 rows fall in 2 groups of identical rows: dropping the repeats would     │
+#> │   remove 2.                                                                 │
+#> │                                                                             │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary.               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 #>   id x dupe_count
 #> 1  2 b          2
 #> 2  2 b          2
 #> 3  3 c          2
 #> 4  3 c          2
 duprows(d, cols = "id")
+#> ╭── Duplicate rows ───────────────────────────────────────────────────────────╮
+#> │   Table           6 rows, 2 columns                                         │
+#> │   Compared on     id                                                        │
+#> │   Duplicate rows  5                                                         │
+#> │   Groups          2                                                         │
+#> │   Extra copies    3                                                         │
+#> │                                                                             │
+#> │   5 rows fall in 2 groups of identical rows: dropping the repeats would     │
+#> │   remove 3.                                                                 │
+#> │                                                                             │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary.               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 #>   id x dupe_count
 #> 1  2 b          2
 #> 2  2 b          2
@@ -95,18 +137,27 @@ set.seed(1)
 n <- 200
 df <- data.frame(height = stats::rnorm(n, 170, 10))
 df$weight <- df$height * 0.5 + stats::rnorm(n, 0, 5)
-df[1, ] <- list(height = 155, weight = 100)      # ordinary on each, unlikely jointly
+df[1, ] <- list(height = 155, weight = 100) # ordinary on each, unlikely jointly
 
 out <- mahaoutl(df)
 head(out, 3)
-#> ── Mahalanobis outliers (robust) ───────────────────────────────── 
-#>   ! 1 of 3 rows beyond alpha = 0.001
-#> 
-#>  row distance  p_value logpvalue outlier
-#>    1     4.30 9.61e-05 -9.249997    TRUE
-#>   32     2.90   0.0149 -4.204956   FALSE
-#>   14     2.81   0.0194 -3.940191   FALSE
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Mahalanobis outliers (robust) ──────────────────────────────────────╮
+#> │   Verdict  ! 1 of 3 rows beyond alpha = 0.001                         │
+#> │                                                                       │
+#> │   Largest distances first                                             │
+#> │   row  distance  p_value  logpvalue  outlier                          │
+#> │   ---  --------  -------  ---------  -------                          │
+#> │     1     4.301  < 0.001     -9.250  TRUE                             │
+#> │    32     2.900    0.015     -4.205  FALSE                            │
+#> │    14     2.807    0.019     -3.940  FALSE                            │
+#> │                                                                       │
+#> │   1 of 3 rows lie beyond alpha = 0.001: row 1 (distance 4.3).         │
+#> │                                                                       │
+#> │   The distance measures how far a row is from the centre of the data  │
+#> │   once the columns' scales and correlations are allowed for; the      │
+#> │   p-value is from the chi-square distribution it would follow without │
+#> │   outliers, and logpvalue its natural log, for rows far in the tail.  │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 out$row[1] == 1
 #> [1] TRUE
 range(df$height[-1])
@@ -253,12 +304,23 @@ plot(out)
 ``` r
 
 planted <- dclassical$row %in% 2:21
-plot(dclassical$distance, drobust$distance[match(dclassical$row, drobust$row)],
-     pch = 19, col = ifelse(planted, blpal()[2], blpal()[1]),
-     xlab = "classical distance", ylab = "robust distance",
-     main = "Planted rows: classical against robust distance")
+plot(
+  dclassical$distance,
+  drobust$distance[match(dclassical$row, drobust$row)],
+  pch = 19,
+  col = ifelse(planted, blpal()[2], blpal()[1]),
+  xlab = "classical distance",
+  ylab = "robust distance",
+  main = "Planted rows: classical against robust distance"
+)
 abline(0, 1, lty = 2)
-legend("topleft", c("planted rows", "other rows"), pch = 19, col = blpal()[c(2, 1)], bty = "n")
+legend(
+  "topleft",
+  c("planted rows", "other rows"),
+  pch = 19,
+  col = blpal()[c(2, 1)],
+  bty = "n"
+)
 ```
 
 ![](missingness-and-outliers_files/figure-html/missingness-and-outliers-outliers-plots-2.png)

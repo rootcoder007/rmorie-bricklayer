@@ -46,6 +46,9 @@ when flagged), `results` (an empty list, filled by
 [`recrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recrd.md))
 and, when `environment = TRUE`, `environment` (the list from
 [`capenv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capenv.md)).
+The list has class `c("rmbl_manifest", "list")`, which only changes how
+it prints (a box); its elements, and the JSON written from it, are those
+of a plain list.
 
 ## Details
 

@@ -47,7 +47,8 @@ yoypdf(
 - x:
 
   An `rmbl_yoy` object from
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+  written as HTML.
 
 - file:
 
@@ -91,7 +92,7 @@ yoypdf(
 
 - ...:
 
-  Ignored.
+  Further arguments; the HTML writer does not use them.
 
 - width, height:
 

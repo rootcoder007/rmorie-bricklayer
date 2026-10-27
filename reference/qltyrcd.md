@@ -32,7 +32,9 @@ qltyrcd(x, suppr = c("F", "x", "..", "..."), caution = "E")
 ## Value
 
 A character vector of `"ok"`, `"E"` and `"x"`; empty and missing flags
-are `"ok"`.
+are `"ok"`. `x` must be character (or a factor); a flag in neither
+`suppr` nor `caution` (other than `"ok"`) becomes `"ok"` and is named in
+a warning.
 
 ## See also
 

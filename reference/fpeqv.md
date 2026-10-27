@@ -52,25 +52,24 @@ sequestration from Bernal et al. (2018) via the same file.
 
 ``` r
 fpeqv(1200)
-#> $carkm
-#> [1] 6.857143
-#> 
-#> $treemon
-#> [1] 1.308615
-#> 
-#> $sources
-#>                                                                  car 
-#> "175 gCO2/km, European passenger car (Green Algorithms context.csv)" 
-#>                                                                 tree 
-#>             "917 gCO2 per tree-month (Green Algorithms context.csv)" 
-#> 
+#> ╭── Footprint in everyday terms ────────────────────────────────────────╮
+#> │   Car travel   6.857 km                                               │
+#> │   Tree uptake  1.309 tree-months                                      │
+#> │                                                                       │
+#> │   The same emissions as driving a European passenger car this far, or │
+#> │   what this many trees take up in a month.                            │
+#> │                                                                       │
+#> │   car: 175 gCO2/km, European passenger car (Green Algorithms          │
+#> │   context.csv). tree: 917 gCO2 per tree-month (Green Algorithms       │
+#> │   context.csv).                                                       │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # the footprint of a small computation, in everyday terms
 fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON",
                         cpupwrw = 45, memgb = 8)
 unlist(fpeqv(fp$co2eg)[c("carkm", "treemon")])
 #>        carkm      treemon 
-#> 2.485069e-09 4.742499e-10 
+#> 4.109534e-09 7.842621e-10 
 
 # a vector is refused: convert one total at a time
 try(fpeqv(c(10, 20)))

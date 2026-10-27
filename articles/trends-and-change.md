@@ -18,44 +18,23 @@ the median of all pairwise slopes, a robust rate of change.
 
 y <- c(402, 377, 190, 268, 331)        # five years of placements
 trndtst(y)
-#> $S
-#> [1] -4
-#> 
-#> $tau
-#> [1] -0.4
-#> 
-#> $p_value
-#> [1] 0.4833333
-#> 
-#> $slope
-#> [1] -21.375
-#> 
-#> $intercept
-#> [1] 419.75
-#> 
-#> $slopelo
-#> [1] -187
-#> 
-#> $slopeup
-#> [1] 78
-#> 
-#> $slopecicla
-#> [1] TRUE
-#> 
-#> $n
-#> [1] 5
-#> 
-#> $var_S
-#> [1] 16.66667
-#> 
-#> $alternative
-#> [1] "two.sided"
-#> 
-#> $conflvl
-#> [1] 0.95
-#> 
-#> $method
-#> [1] "Mann-Kendall, exact over all 120 orderings"
+#> ╭── Trend test ───────────────────────────────────────────────────────────╮
+#> │   Method       Mann-Kendall, exact over all 120 orderings               │
+#> │   Periods      5                                                        │
+#> │   S            -4                                                       │
+#> │   Alternative  two.sided                                                │
+#> │   Confidence   95%                                                      │
+#> │                                                                         │
+#> │   term         estimate  95% CI          p                              │
+#> │   -----------  --------  ----------  -----                              │
+#> │   Kendall tau     -0.40              0.483                              │
+#> │   Sen slope      -21.38  [-187, 78]                                     │
+#> │                                                                         │
+#> │   Kendall's tau of -0.4 means a downward tendency (p = 0.483); the Sen  │
+#> │   slope says the series moves by about -21.38 per period.               │
+#> │                                                                         │
+#> │   The slope's interval was clamped to the range of the pairwise slopes. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 A monotone series is detected even at *n* = 5:
@@ -63,44 +42,23 @@ A monotone series is detected even at *n* = 5:
 ``` r
 
 trndtst(c(1, 2, 3, 4, 5))
-#> $S
-#> [1] 10
-#> 
-#> $tau
-#> [1] 1
-#> 
-#> $p_value
-#> [1] 0.01666667
-#> 
-#> $slope
-#> [1] 1
-#> 
-#> $intercept
-#> [1] 0
-#> 
-#> $slopelo
-#> [1] 1
-#> 
-#> $slopeup
-#> [1] 1
-#> 
-#> $slopecicla
-#> [1] TRUE
-#> 
-#> $n
-#> [1] 5
-#> 
-#> $var_S
-#> [1] 16.66667
-#> 
-#> $alternative
-#> [1] "two.sided"
-#> 
-#> $conflvl
-#> [1] 0.95
-#> 
-#> $method
-#> [1] "Mann-Kendall, exact over all 120 orderings"
+#> ╭── Trend test ───────────────────────────────────────────────────────────╮
+#> │   Method       Mann-Kendall, exact over all 120 orderings               │
+#> │   Periods      5                                                        │
+#> │   S            10                                                       │
+#> │   Alternative  two.sided                                                │
+#> │   Confidence   95%                                                      │
+#> │                                                                         │
+#> │   term         estimate  95% CI      p                                  │
+#> │   -----------  --------  ------  -----                                  │
+#> │   Kendall tau         1          0.017                                  │
+#> │   Sen slope           1  [1, 1]                                         │
+#> │                                                                         │
+#> │   Kendall's tau of 1 means an upward tendency (p = 0.017); the Sen      │
+#> │   slope says the series moves by about 1 per period.                    │
+#> │                                                                         │
+#> │   The slope's interval was clamped to the range of the pairwise slopes. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 One aberrant period does not create a trend:
@@ -160,32 +118,20 @@ split:
 ``` r
 
 stepchg(c(100, 104, 98, 60, 63, 58))
-#> $breakafter
-#> [1] 3
-#> 
-#> $index
-#> [1] 3
-#> 
-#> $before
-#> [1] 100.6667
-#> 
-#> $after
-#> [1] 60.33333
-#> 
-#> $difference
-#> [1] -40.33333
-#> 
-#> $statistic
-#> [1] 2440.167
-#> 
-#> $p_value
-#> [1] 0.1
-#> 
-#> $nperm
-#> [1] 720
-#> 
-#> $method
-#> [1] "exact over all 720 orderings"
+#> ╭── Step change ──────────────────────────────────────────────────────────╮
+#> │   Method          exact over all 720 orderings                          │
+#> │   Permutations    720                                                   │
+#> │   Break after     3                                                     │
+#> │   Break at index  3                                                     │
+#> │                                                                         │
+#> │   before  after  difference  statistic      p                           │
+#> │   ------  -----  ----------  ---------  -----                           │
+#> │    100.7  60.33      -40.33      2,440  0.100                           │
+#> │                                                                         │
+#> │   The best single split is after 3: the mean moves from 100.7 to 60.33. │
+#> │   The p-value compares that best split with the best split of shuffled  │
+#> │   series, so it allows for having searched every split (p = 0.100).     │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 Pure noise still yields a best split, and it is not significant:
@@ -215,16 +161,29 @@ h <- h[h$age == "Total, 18 years and over" &
          h$indicator == "Perceived mental health, very good or excellent", ]
 healchg(h, "group", "indicator", "period", "estimate", "lower", "upper",
                from = "2015/2018", to = "2019/2022", qual = "quality")
-#>            group                                       indicator side from   to
-#> 1  First Nations Perceived mental health, very good or excellent <NA> 59.8 45.8
-#> 2          Métis Perceived mental health, very good or excellent <NA> 61.0 52.8
-#> 3          Inuit Perceived mental health, very good or excellent <NA> 49.1 47.8
-#> 4 Non-Indigenous Perceived mental health, very good or excellent <NA> 70.6 61.5
-#>   change      lower      upper usewithcau
-#> 1  -14.0 -17.687818 -10.312182      FALSE
-#> 2   -8.2 -11.925923  -4.474077      FALSE
-#> 3   -1.3  -9.974243   7.374243      FALSE
-#> 4   -9.1  -9.702080  -8.497920      FALSE
+#> ╭── Healing as change between two periods ────────────────────────────────────╮
+#> │   Periods     2015/2018 to 2019/2022                                        │
+#> │   Groups      First Nations; Métis; Inuit; Non-Indigenous                   │
+#> │   Indicators  1                                                             │
+#> │   Units       the estimate's own (percentage points for percentages)        │
+#> │                                                                             │
+#> │   Perceived mental health, very good or excellent                           │
+#> │   group            from     to   change  interval                           │
+#> │   --------------  -----  -----  -------  ------------------                 │
+#> │   First Nations   59.80  45.80  -14.000  [-17.688, -10.312]                 │
+#> │   Métis           61.00  52.80   -8.200  [-11.926, -4.474]                  │
+#> │   Inuit           49.10  47.80   -1.300  [-9.974, 7.374]                    │
+#> │   Non-Indigenous  70.60  61.50   -9.100  [-9.702, -8.498]                   │
+#> │                                                                             │
+#> │   3 of 4 changes have an interval clear of zero.                            │
+#> │   Wellness: 0 rose and 0 fell by more than chance; distress: 0 rose and 0   │
+#> │   fell.                                                                     │
+#> │   No change is larger than its interval, on either side.                    │
+#> │                                                                             │
+#> │   Wellness indicators come first: a change is read as part of healing.      │
+#> │   A change is only as comparable as the two periods' questions and          │
+#> │   designs: across a break in the series it is not a change in people.       │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## A pace, projected
@@ -239,10 +198,18 @@ of the pace, not a forecast.
 ``` r
 
 trcprog()
-#>   completed remaining years     rate    ratelo   rateup   cmplby cmplbyearly
-#> 1        13        81  7.04 1.846591 0.9832319 3.157727 2066.865    2048.651
-#>   cmplbylate
-#> 1   2105.381
+#> ╭── Truth and Reconciliation Calls to Action: progress ────────────────────╮
+#> │   Completed        13 of 94                                              │
+#> │   Remaining        81                                                    │
+#> │   Years counted    7.04                                                  │
+#> │   Calls a year     1.85 [0.983, 3.160]                                   │
+#> │   All complete by  2066 (2048 to 2105)                                   │
+#> │                                                                          │
+#> │   At this pace the remaining 81 Calls are complete around 2066.          │
+#> │                                                                          │
+#> │   Completions taken as a Poisson process at a constant rate; the range   │
+#> │   comes from the rate's interval. Trackers count completion differently. │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Choosing between them

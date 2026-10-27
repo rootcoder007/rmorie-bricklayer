@@ -23,7 +23,7 @@ period-over-period changes to a manager, a journalist or a court."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,7 +111,7 @@ period-over-period changes to a manager, a journalist or a court.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>An <code>rmbl_yoy</code> object from <code><a href="yoy.html">yoy()</a></code>.</p></dd>
+<dd><p>An <code>rmbl_yoy</code> object from <code><a href="yoy.html">yoy()</a></code>, written as HTML.</p></dd>
 
 
 <dt id="arg-file">file<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>
@@ -158,7 +158,7 @@ the change, scaled to the largest absolute change in the table
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Ignored.</p></dd>
+<dd><p>Further arguments; the HTML writer does not use them.</p></dd>
 
 
 <dt id="arg-width-height">width, height<a class="anchor" aria-label="anchor" href="#arg-width-height"></a></dt>
@@ -183,9 +183,9 @@ with <code><a href="yoylbl.html">yoylbl()</a></code> replace the period. For per
 the change is
 shown in points. The page ends with the package version that wrote it.</p>
 <p>The PDF is drawn on R's own <code><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">pdf()</a></code> device with its standard fonts,
-which cannot draw arrows or dashes, so those are written in ASCII
-(<code>+</code>, <code>-</code>). Long tables are split over pages at 0.22 inch per row,
-with “page i of n” labels; notes go under the last page's rows when they
+which cannot draw arrows or dashes, so those are written in ASCII (<code>+</code>,
+<code>-</code>). Long tables are split over pages at 0.22 inch per row, with
+“page i of n” labels; notes go under the last page's rows when they
 fit and on pages of their own otherwise. The interval column appears only
 when the table has <code>pctlo</code> and <code>pctup</code> (counts).</p>
 <p>Both overwrite <code>file</code>. Errors: <code>x</code> not from <code><a href="yoy.html">yoy()</a></code>; a

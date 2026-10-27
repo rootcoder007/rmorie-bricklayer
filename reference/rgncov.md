@@ -83,20 +83,21 @@ cov <- rgncov(
   units = c(3, 0, 1, 0)
 )
 cov
-#> ── 4 units in 2 of 4 regions ───────────────────────────────────── 
-#>   those regions hold 1,650,000 of 2,540,000 residents (65.0%)
-#>   2 regions hold none; 890,000 residents (35.0%) live there
-#> 
-#>  region population units hasunit    popshr
-#>       A    1200000     3    TRUE 47.244094
-#>       C     450000     1    TRUE 17.716535
-#>       B     800000     0   FALSE 31.496063
-#>       D      90000     0   FALSE  3.543307
-#> 
-#>   The covered share is context, not a denominator: units serve
-#>   catchments, so a rate over these regions alone would take its
-#>   numerator from the whole territory and is inflated.
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── 4 units in 2 of 4 regions ─────────────────────────────────────────────╮
+#> │   Covered    those regions hold 1,650,000 of 2,540,000 residents (65.0%) │
+#> │   Uncovered  2 regions hold none; 890,000 residents (35.0%) live there   │
+#> │                                                                          │
+#> │   region  population  units  hasunit  popshr                             │
+#> │   ------  ----------  -----  -------  ------                             │
+#> │   A        1,200,000      3  TRUE      47.24                             │
+#> │   C          450,000      1  TRUE      17.72                             │
+#> │   B          800,000      0  FALSE     31.50                             │
+#> │   D           90,000      0  FALSE      3.54                             │
+#> │                                                                          │
+#> │   The covered share is context, not a denominator: units serve           │
+#> │   catchments, so a rate over these regions alone would take its          │
+#> │   numerator from the whole territory and is inflated.                    │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 
 # The covered share is reported, and is not a rate denominator.
 attr(cov, "coverage")$covshr

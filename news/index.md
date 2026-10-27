@@ -1,6 +1,444 @@
 # Changelog
 
+## rmoriebricklayer 1.0.3
+
+### Printed results
+
+- Every result prints as one box: a title, the facts a reader needs to
+  judge it (method, number of observations, groups, periods, confidence
+  level, data source and edition), an estimate table with aligned
+  columns, intervals as \[lower, upper\] and p-values as 0.017 or \<
+  0.001, a plain-language reading, and the cautions the result records.
+  The box fits the console’s width, uses colour and Unicode only where
+  the console takes them (ASCII `+--` boxes otherwise), and a
+  verification (attestation, certificate chain, bundle, capsule, ledger,
+  identity card) opens with VERIFIED or NOT VERIFIED and how many of its
+  checks passed. [`format()`](https://rdrr.io/r/base/format.html) still
+  returns the plain lines.
+- This covers the statistical results (difference in differences, event
+  studies, staggered and switching designs, Bacon decomposition,
+  synthetic control, DML, matching, wild bootstrap, permutation
+  inference, fixed-effects Poisson, balance, power, survey estimates,
+  rates, drift, Benford), the Lakner custody measures
+  ([`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md),
+  [`staysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/staysmry.md),
+  with Lakner’s steady-state caution), the justice, Indigenous, Truth
+  and Reconciliation, census, search, pollution and air-dispersion
+  results, and the signing, provenance and archive objects. 49 classes
+  that printed as a raw list now have a method; a signing key prints its
+  scheme, fingerprint and public key, never its secret.
+- [`ldgrchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md),
+  [`vrfmrg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfmrg.md),
+  [`orchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/orchk.md),
+  [`vrfrcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrrcdmnf.md),
+  [`xfrvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xfrvrf.md),
+  [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md),
+  [`staysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/staysmry.md),
+  [`plrcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plrcf.md),
+  [`exprspplr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exprspplr.md),
+  [`piperate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/piperate.md),
+  [`cmlrisk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cmlrisk.md),
+  [`bufasgn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bufasgn.md),
+  [`trndtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trndtst.md)
+  and
+  [`stepchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stepchg.md)
+  return their result with a class put in front of its existing ones, so
+  it prints as a box; no element or value changed, and a data frame
+  stays a data frame.
+- The Lakner single measures
+  [`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
+  [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md),
+  [`admits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admits.md),
+  [`adpcnts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adpcnts.md)
+  and
+  [`perdays()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/perdays.md)
+  print as a box too: the number, the inputs it came from, the formula
+  (`adp = days / t`, `alos = days / n`, `admits = adp x t / alos`), a
+  plain reading and Lakner’s caveats (steady state; a short period
+  biases the average stay downward). The value is unchanged, with class
+  `rmbl_<name>` and `rmbl_measure` put in front; arithmetic,
+  [`round()`](https://rdrr.io/r/base/Round.html),
+  [`sum()`](https://rdrr.io/r/base/sum.html),
+  [`mean()`](https://rdrr.io/r/base/mean.html), `[`,
+  [`c()`](https://rdrr.io/r/base/c.html) and
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html) give a plain
+  number, and the measures still feed each other
+  (`adp(days, t = perdays(...))`).
+- A box shows everything the plain printout showed before it. Restored:
+  the residence, gender, age, DGUID, geographic level, hierarchy
+  (`level`, `parid`, `rootid`), sample and non-response columns of
+  [`cnsprof()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnsprof.md)
+  and the gender, age, DGUID and quality columns of
+  [`profshr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profshr.md);
+  every row of
+  [`cnscwb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnscwb.md)
+  (up to 100 rows for the census tables, where 8 or 16 were shown); the
+  pooled row’s mark in
+  [`indgap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indgap.md)
+  and
+  [`ordcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ordcmp.md);
+  which proxies are shared in
+  [`mhcont()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mhcont.md);
+  a domain in
+  [`welprof()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/welprof.md);
+  `logpvalue` in
+  [`mahaoutl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mahaoutl.md);
+  the trend statistics of
+  [`dispmix()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dispmix.md)
+  to two decimals; the key usage of
+  [`certprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certprs.md);
+  the whole check names of
+  [`ldgrchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  and a WARN mark for a check that only warns; and, in
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
+  each capsule’s source, pinned SHA-256, size, rows and bounds, every
+  check row with its detail, whole digests, the footprint line and the
+  package and R versions.
+- Every box’s reading now comes from the result itself: which group is
+  highest and lowest and whether their intervals overlap, which rows lie
+  above, below or across the value of no difference, whether a test
+  rejects at the result’s level, how many changes rose or fell by more
+  than chance, whether a certificate is in force, how many theorems are
+  proved, whether a Benford screen departs and where. The definitions
+  the readings used to repeat are kept in the notes.
+- [`ginicoef()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
+  [`attrfrac()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/attrfrac.md),
+  [`drftks()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftks.md),
+  [`drftpsi()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftpsi.md),
+  [`drftchisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftchisq.md)
+  and
+  [`drfthomog()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthomog.md)
+  print as a box like the Lakner measures: the number (or a small table
+  of the named statistics), the inputs it came from, what the scale
+  means, a reading and the caveats. The values are unchanged, with class
+  `rmbl_<name>` and `rmbl_measure` put in front; arithmetic, `[`,
+  [`c()`](https://rdrr.io/r/base/c.html) and
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html) give plain
+  numbers. Code that compares one of these results with
+  [`identical()`](https://rdrr.io/r/base/identical.html) against a bare
+  number now needs [`as.numeric()`](https://rdrr.io/r/base/numeric.html)
+  first (`identical(as.numeric(ginicoef(x)), g)`), because the class is
+  kept on the value. The arithmetic primitives
+  ([`cmn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md),
+  [`csdev()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cspread.md)
+  and the rest) stay plain numbers.
+- [`mkmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkmnf.md),
+  [`capenv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capenv.md),
+  [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md)
+  and
+  [`citecps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/citecps.md)
+  return their list with a class put in front (`rmbl_manifest`,
+  `rmbl_capenv`, `rmbl_provenance`, `rmbl_citation`), so they print as a
+  box; every element is unchanged.
+  [`dgstobj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dgstobj.md)
+  of these objects differs from 1.0.2 because they now carry a class;
+  signatures
+  ([`mnfdgst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfcanon.md),
+  [`mnfcanon()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfcanon.md))
+  and the JSON written to disk
+  ([`tojs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tojs.md),
+  [`wrmnfjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrmnfjs.md))
+  are byte for byte unchanged.
+- A period-over-period table says once, under the table, that the first
+  period has nothing to compare with, where it wrote a note under each
+  group’s first row; its plot no longer labels the first period at all
+  (it is empty in every series), and a reason the groups share at one
+  period (a zero base) is written once, not stacked once per group. The
+  `flag` column is unchanged.
+- New
+  [`ralloc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ralloc.md)
+  makes the randomisation list of a trial: simple, permuted-block (block
+  sizes drawn at random) or stratified, in any ratio, with kit codes for
+  blinded dispensing, reproducible from a seed through the package’s
+  NIST SP 800-90A generator and exactly unbiased (rejection sampling,
+  Fisher-Yates). It returns one SHA-256 commitment to the list and the
+  seed, to sign and timestamp before the first participant; its box
+  shows the counts per arm, never who is in which arm, nor the seed. At
+  unblinding
+  [`rallocvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rallocvrf.md)
+  shows that the list used is the one committed to and that the seed and
+  settings produce it row for row.
+  [`vignette("provenance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/provenance.md)
+  walks a trial from the declared outcomes to the check at unblinding.
+- [`mkset()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkset.md)
+  boxes results from base R and other packages too: models (`lm`, `glm`,
+  `nls`, survival’s `coxph` and `survreg`, lme4, nlme’s `lme`, mgcv’s
+  `gam`, fixest, MASS’s `polr` and `glm.nb`, nnet’s `multinom`, survey’s
+  `svyglm`) with their estimates, 95% intervals, hazard, odds or rate
+  ratios where the link gives one, and a reading of which terms differ
+  from zero; tests ([`t.test()`](https://rdrr.io/r/stats/t.test.html),
+  [`chisq.test()`](https://rdrr.io/r/stats/chisq.test.html),
+  [`cor.test()`](https://rdrr.io/r/stats/cor.test.html) and the rest),
+  analysis-of-variance tables,
+  [`TukeyHSD()`](https://rdrr.io/r/stats/TukeyHSD.html),
+  [`prcomp()`](https://rdrr.io/r/stats/prcomp.html),
+  [`kmeans()`](https://rdrr.io/r/stats/kmeans.html), survival curves,
+  tables and data frames each in a box of their own; anything else as
+  its own printout inside a box. Their own
+  [`print()`](https://rdrr.io/r/base/print.html) is unchanged.
+- New
+  [`mkset()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkset.md)
+  puts several results into one report: printed, a box of contents and
+  then each result’s box at one width; written, one self-contained HTML
+  page (each box with its plot), Markdown for a GitHub comment or a
+  paper, or plain text, the file’s extension picking which. A name gives
+  a result its heading
+  (`mkset("Change by year" = anltab(...), "Rates" = rtcalc(...))`).
+- [`drpconst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drp.md),
+  [`drpempty()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drp.md),
+  [`duprows()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/duprows.md)
+  and
+  [`clncolnms()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clncolnms.md)
+  gain `quiet = FALSE`: unless quiet, they show one boxed summary of
+  what they did (rows and columns before and after, the columns dropped
+  or renamed, how many rows are duplicates) through
+  [`message()`](https://rdrr.io/r/base/message.html), so
+  [`suppressMessages()`](https://rdrr.io/r/base/message.html) silences
+  it too. What they return is unchanged.
+
+### Your own data
+
+- Search and rescue:
+  [`srchpod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  takes the sweep width, track length and area (`W`, `effort`, `area`)
+  in place of `coverage`, one area or one per cell, with `area` also a
+  probability map from
+  [`datumpmap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  whose cell areas it uses.
+  [`srchscs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  takes a map and an
+  [`opteffort()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  allocation (or PODs laid out like the map) and returns the map after a
+  search that found nothing as `map`, ready for the next
+  [`opteffort()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  and [`plot()`](https://rdrr.io/r/graphics/plot.default.html). The help
+  page and
+  [`vignette("search-and-rescue")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/search-and-rescue.md)
+  (“Your own search, step by step”) walk a search from the last known
+  position to the next day’s plan, one call a step. Defaults are
+  unchanged.
+- Policy evaluation:
+  [`evstudy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evstudy.md)
+  takes weights (`w`),
+  [`loounit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loounit.md)
+  passes weights to each fit (`w`),
+  [`mtchdid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mtchdid.md)
+  clusters its standard errors (`cl`), and
+  [`tse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tse.md)
+  takes the confidence level of its robust interval (`conflvl`; it was
+  fixed at 95%). Every estimator’s help page and
+  [`vignette("policy-evaluation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/policy-evaluation.md)
+  (“Your own panel, step by step”) show a panel typed in the example:
+  unit, time, outcome, treatment, covariates, clusters and weights.
+- [`trchlthgap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trchlthgap.md)
+  takes the label of the all-ages row (`agetot`) and uses a table of
+  your own without an `age` column whole; its help page named two of
+  [`indiex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indiex.md)‘s
+  tables wrongly. The Indigenous estimators’ help pages show a table of
+  your own, and
+  [`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md)
+  (“Your own data, step by step”) goes from a published table, from
+  microdata through
+  [`svydes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svydes.md)
+  and
+  [`svyest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svyest.md),
+  and from plain numbers to the estimators.
+- Errors from the search, Indigenous and policy functions start with the
+  function’s name (`tse: x must come from evstudy()`).
+
+### Reproducibility bundles
+
+- New
+  [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md)
+  builds a reproducibility bundle from any project folder: one zip a
+  reviewer unzips and double-clicks (`START_HERE.command` on macOS,
+  `START_HERE.bat` on Windows, `start_here.sh` on Linux). The runner
+  checks the packages the project lists, finds the data file, takes it
+  from `--data`, uses the copy inside the bundle or downloads it and
+  checks it against the pinned SHA-256 (or runs on synthetic data from
+  the project’s recipe), runs the analysis and summarises its
+  `manifest.json`. It is written in R: no zip program, Python or shell
+  is needed, so bundles build on Windows too, and the launchers keep
+  their executable bit inside the zip. Before zipping it checks that
+  every internal function the bundled files call is in the bundle, and
+  refuses a bundle that would stop with “could not find function” on the
+  reviewer’s machine.
+- From a terminal: `rmbl pack DIR [--dest D] [--data FILE]` builds the
+  zip and `rmbl pack --new DIR` starts a project.
+  [`vignette("provenance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/provenance.md)
+  walks through one, from the starter project to what the reviewer sees.
+- `rmbl functions PATTERN` (and `blcli(c("functions", PATTERN))`)
+  matches the help page’s title as well as the name, ignoring case in
+  the title, so `rmbl functions bundle` finds
+  [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md).
+- New
+  [`mkbndlproj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlproj.md)
+  writes a starter project (`config.json`, `data_provenance.json`,
+  `analysis.R`) that builds and runs as it is, on synthetic or real
+  data, for a project of your own.
+- The Ontario restrictive confinement example
+  (`mkbndl("otis-mrp", ...)`), the launchers and the page templates now
+  ship with the package (`inst/bundle`), so an installed package builds
+  bundles; before they were only in the source repository, and
+  `make_bundle.sh` (now a wrapper over
+  [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md))
+  needed bash, Python, zip and shasum. The runner’s OTIS-only steps (the
+  DML recompute, the region map shapefile, `OTIS_MRP_SYNTHETIC`) are now
+  settings of that project’s `config.json` (`optional_stages`,
+  `env_packages`, `synthetic_env`), so other projects get none of them.
+- Fixed: a bundle built from 1.0.3’s development code stopped at its
+  first step, because the boxed print-outs added a helper the runner did
+  not source; and the bundle’s pages named version 0.1 of the package
+  and a repository address that no longer exists.
+
+### Periods
+
+- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  reads text periods in time order whatever the years: fiscal years
+  (`"2019/20"`, `"2019-2020"`, `"FY 2019-20"`; `"2020/21"` no longer
+  comes before `"2019/20"`), one-year fiscal labels (`"FY2020"`),
+  quarters (`"2021 Q3"`, `"Q3 2021"`), months (`"2021-03"`,
+  `"Mar 2021"`) and dates. A period missing from the data is a gap. The
+  new argument `prdord` gives the order of any other labels; labels
+  whose order cannot be read keep the old behaviour, with one warning
+  that names them.
+  [`yoysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md)
+  and
+  [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
+  follow the same order, and
+  [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+  orders text periods the same way.
+
+### Fixes
+
+- A gzipped table too large to decompress in memory was read a piece at
+  a time without checking the gzip stream, so a truncated file came back
+  as a shorter table with no error. The stream is now checked whole
+  first (trailer, CRC and size), and a truncated or damaged file is
+  refused, as smaller files already were.
+
+- The C function `rmbl_wayback_snapshot()`, which other packages call
+  through `LinkingTo`, answers 0 for a NULL address or buffer, or a
+  buffer of no size, where it crashed the calling session, and for an
+  address that is not http(s) without asking archive.org.
+
+- The file readers refuse a directory by name (“`path` is a directory,
+  not a file”) instead of opening it.
+
+- [`wcb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wcb.md)
+  refuses a covariate the fixed effects absorb (one that does not vary
+  within units), naming it, instead of failing in
+  [`solve()`](https://rdrr.io/r/base/solve.html) with “system is
+  computationally singular”.
+
+- Plots restore every graphics setting they change, colours included,
+  and panel layouts restore their margins and text size; a test runs
+  every plot example and checks the device is left as it was.
+
+- Errors name the argument as you typed it (for example `diam`, `cl`,
+  `lvl`, `msg`), and the arguments that take one TRUE or FALSE, one
+  number or one name refuse anything else instead of using its first
+  element or ignoring it.
+  [`expconcidx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expconcidx.md)
+  refuses an income with a single value, where it returned an index
+  of 0.
+  [`capdeps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capdeps.md)
+  warns about a package that is not installed.
+  [`envdiff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/envdiff.md)
+  reports any other field that differs (`fields`).
+  [`jsb64dec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md)
+  refuses `=` padding before the end.
+
+- [`idcrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md),
+  [`idcrdrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
+  and
+  [`idcrdvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
+  make, read and verify an identity card for a signing key: your public
+  key (ML-DSA, SLH-DSA or XMSS) with your name and, if you give them,
+  your ORCID iD, e-mail address, web page and affiliation, signed with
+  the key itself under its own context. Publish the card and give its
+  fingerprint where people know you;
+  [`idcrdvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
+  checks the card is intact and in date, that its fingerprint is the one
+  you gave, and that an attestation or a bundle was signed by its key.
+  No authority and no network are involved.
+
+- The examples of
+  [`certprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certprs.md)
+  and
+  [`certchnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certchnvrf.md)
+  read a test chain shipped as files (`inst/extdata/x509/`) rather than
+  certificates pasted as hexadecimal.
+
+- [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  reads a table of any size when its SHA-256 matches the manifest: it is
+  then the file data.rmorie.com holds, so the 1 GiB limit on what an
+  untrusted CSV may decompress to (option
+  `rmoriebricklayer.maxcsvbytes`) no longer applies. Tables of about 95
+  MB of gzip and more decompress past 1 GiB and were refused. A table
+  the manifest lists without a digest keeps the limit, and a gzip file
+  over 2 GB is read a piece at a time.
+
+- The reference index lists the categorical-integrity functions once
+  (the section appeared twice).
+
+- Vignettes, the README and the reference index spell Métis with its
+  accent in their text and headings (the plots already did).
+
+- [`plotopt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blpal.md)
+  refuses a `grid`, `cex`, `las`, `bg` or `panel` value the plots cannot
+  use (for example `grid = "x"`); it used to store it, and every later
+  plot of the session then failed.
+
+- The rule constructors
+  ([`rulenull()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md),
+  [`ruleuniq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md),
+  [`ruleincr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md),
+  [`rulemad()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md),
+  [`rulebtw()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md),
+  [`ruleinset()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md),
+  [`rulerx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md))
+  give one message whether `col` is left out or `NULL`: “`col` must name
+  a column: a single non-empty string”.
+
+### Code health
+
+- goodpractice passes every one of its checks. Every exported function’s
+  cyclomatic complexity is at most 15 and every function is at most 50
+  lines: long functions are split into named helpers, with no change in
+  what they return or the errors they give (every exported function was
+  run on the old and the new code with the same inputs and compared). In
+  each file the exported functions come first; arguments that were
+  tested with [`missing()`](https://rdrr.io/r/base/missing.html) default
+  to `NULL`; each R file has a test file of the same name.
+- [`explerr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/explerr.md)
+  lists the exported functions an error is reached from through any
+  helpers a function is split into, as well as up to four calls of
+  shared code. Every line of R, of the tests and of the vignettes’ code
+  is at most 80 characters, and
+  [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html)
+  reports nothing. The source is formatted with air (`air.toml`).
+- A function defined twice, the second copy silently replacing the
+  first, is defined once:
+  [`plot.rmbl_prevalence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  (its help page showed it twice), `.bl_interactive()`,
+  `.bl_stdin_tty()` and `.rmbl_permutations()`.
+- Continuous integration runs goodpractice with every check, and fails
+  on any that fails.
+
+### Docker image and Homebrew
+
+- The Docker image installs every system and R package at its latest
+  version, then removes the compilers and header packages it needed only
+  to build; it is rebuilt every week from the latest release, and Trivy
+  refuses an image with a fixable high or critical vulnerability. Known
+  vulnerabilities went from 3,089 to 65, none of them high or critical.
+- A release updates the rmoriebricklayer formula in the homebrew-morie
+  tap and checks that it installs and passes its test on macOS.
+
 ## rmoriebricklayer 1.0.2
+
+CRAN release: 2026-10-22
 
 ### Keeping your own copy of a source: archive.rmorie.com and WARC files
 
@@ -216,7 +654,7 @@ CRAN release: 2026-10-21
   pinned data or a data.rmorie.com table, then describe, compare years,
   compute rates, test trends, estimate from a survey, fit distributions,
   check a capsule, evaluate a policy on a panel, read the First Nations,
-  Metis and Inuit tables, work through courts and corrections counts,
+  Métis and Inuit tables, work through courts and corrections counts,
   model a plume and its burden, fit a Hawkes process, or check a proof
   ledger. Each analysis shows the R call it ran and runs exactly that
   call; a refusal is shown in the package’s words with
@@ -609,13 +1047,13 @@ and the help-aware language-model tools list the new names. Wire formats
 tables) keep their names, so files written by earlier versions still
 read.
 
-### First Nations, Metis and Inuit health, mental health and wellness
+### First Nations, Métis and Inuit health, mental health and wellness
 
 Methods for the published tables, distinctions-based (First Nations,
-Metis and Inuit are each reported on their own), with suppressed cells
+Métis and Inuit are each reported on their own), with suppressed cells
 never imputed. Data governance follows OCAP® and the CARE Principles:
 only openly licensed aggregate tables are used, and First Nations-held
-survey data are not mirrored. A new vignette, “First Nations, Metis and
+survey data are not mirrored. A new vignette, “First Nations, Métis and
 Inuit health: published tables, distinctions and governance”, covers
 them all.
 

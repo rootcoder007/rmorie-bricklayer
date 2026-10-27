@@ -116,14 +116,22 @@ b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
                           package = "rmoriebricklayer"))
 kd <- crmdens(b$lon, b$lat, ngrid = 120)
 kd
-#> ── Kernel density of incidents: smallest areas holding each share  
-#>   508 incidents; bandwidth 0.337 km east-west, 0.412 km north-south
-#>   Peak density 77.9 incidents per square kilometre
-#> 
-#>  incidents areakm2 shrofmaparea densatedge
-#>        50%   5.506        11.9%      31.91
-#>        90%  14.840        32.0%      11.26
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Kernel density of incidents ───────────────────────────────────────╮
+#> │   Incidents     508                                                  │
+#> │   Coordinates   longitude and latitude, centred on -79.4114, 43.6508 │
+#> │   Grid          120 x 120 cells                                      │
+#> │   Bandwidth     0.337 km east-west, 0.412 km north-south             │
+#> │   Peak density  77.9 incidents per km2                               │
+#> │                                                                      │
+#> │   The smallest areas holding each share of incidents                 │
+#> │   incidents  areakm2  shrofmaparea  densatedge                       │
+#> │   ---------  -------  ------------  ----------                       │
+#> │   50%           5.51  11.9%              31.91                       │
+#> │   90%          14.84  32.0%              11.26                       │
+#> │                                                                      │
+#> │   508 incidents; bandwidth 0.337 km east-west, 0.412 km north-south  │
+#> │   50% of the incidents lie in 11.9% of the mapped area.              │
+#> ╰──────────────────────────────────────────────────────────────────────╯
 plot(kd)
 
 

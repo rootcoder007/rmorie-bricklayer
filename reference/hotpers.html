@@ -17,7 +17,7 @@ responses."><meta property="og:image" content="https://rootcoder007.github.io/rm
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,28 +105,24 @@ each period, in (0, 1]; default 0.05 (the busiest 5%).</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>rmbl_hotspot</code>, a list:</p><dl><dt><code>periods</code></dt>
 <dd><p>data frame, one row per period: <code>period</code>
-(character), <code>incidents</code>, <code>actcells</code>, <code>cellsforhalf</code>
-(fewest cells holding half the incidents), <code>shrforhalf</code>
-(that number over the ever-active cells), <code>hotcells</code>,
-<code>tiedin</code> (the cells made hot only by a tie with the k-th busiest),
-<code>tiedout</code> (the tied cells left out when the tie would have made
-more than twice <code>k</code> cells hot, which printing says),
-<code>hotshr</code> (share of the incidents in hot cells) and
-<code>jacpre</code> (<code>NA</code> for the first period). Shares are
-proportions in \([0, 1]\).</p></dd>
-
-<dt><code>cells</code></dt>
-<dd><p>data frame, one row per ever-active cell: <code>x</code>, <code>y</code>
-(its centre in the input's units), <code>incidents</code> and
-<code>perhot</code>.</p></dd>
-
-<dt><code>cell</code>, <code>top</code>, <code>coords</code></dt>
+(character), <code>incidents</code>, <code>actcells</code>, <code>cellsforhalf</code> (fewest
+cells holding half the incidents), <code>shrforhalf</code> (that number over the
+ever-active cells), <code>hotcells</code>, <code>tiedin</code> (the cells made hot only
+by a tie with the k-th busiest), <code>tiedout</code> (the tied cells left out
+when the tie would have made more than twice <code>k</code> cells hot, which
+printing says), <code>hotshr</code> (share of the incidents in hot cells) and
+<code>jacpre</code> (<code>NA</code> for the first period). Shares are proportions in
+\([0, 1]\).</p></dd>
+ <dt><code>cells</code></dt>
+<dd><p>data frame, one row per ever-active
+cell: <code>x</code>, <code>y</code> (its centre in the input's units),
+<code>incidents</code> and <code>perhot</code>.</p></dd>
+ <dt><code>cell</code>, <code>top</code>,
+<code>coords</code></dt>
 <dd><p>the settings.</p></dd>
-
-<dt><code>ncells</code>, <code>hotk</code></dt>
-<dd><p>the number of ever-active cells and
-\(k\).</p></dd>
-
+ <dt><code>ncells</code>, <code>hotk</code></dt>
+<dd><p>the number
+of ever-active cells and \(k\).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -203,15 +199,36 @@ than two usable incidents.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hotpers</span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span>, <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                    <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2023</span><span class="op">:</span><span class="fl">2024</span>, <span class="fl">100</span><span class="op">)</span>, cell <span class="op">=</span> <span class="fl">2</span>, top <span class="op">=</span> <span class="fl">0.2</span>, xy <span class="op">=</span> <span class="st">"planar"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Hot spots: 25 active cells of side 2 units over 2 periods; hot = busiest 5 (20%)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  period incidents actcells cellsforhalf shrforhalf hotcells tiedin tiedout</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2023       100       25            9      36.0%        4      0       8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2024       100       24            9      36.0%        5      0       0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  hotshr jacpre</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   26.0%       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   33.0%   0.12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Cells hot in at least half the periods: 8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Note: cells tied with the busiest 5 were left out of the hot set (period 2023: 8 cells tied); the counts are too even (or the cells too small) to single out hot spots</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Hot spots</span> ──────────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Active cells             25                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cell side                2 units                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Periods                  2                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Hot cells                the busiest 5 (20%)                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Hot in half the periods  8                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   By period                                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   period  incidents  actcells  cellsforhalf  shrforhalf  hotcells  tiedin │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ---------  --------  ------------  ----------  --------  ------ │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2023          100        25             9  36.0%              4       0 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024          100        24             9  36.0%              5       0 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   period  tiedout  hotshr  jacpre                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  -------  ------  ------                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2023          8  26.0%                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024          0  33.0%   0.1250                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The busiest 5 cells hold 26.0% to 33.0% of a period's incidents.        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Their overlap with the period before averages 0.125: the hot set is     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   mostly new each period, so these spots do not persist. 8 cells are      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   hot in at least half the periods.                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   shrforhalf is the share of active cells that hold half the incidents,   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   hotshr the share of incidents in the hot cells, and jacpre the          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   overlap of the hot cells with the period before (1 = the same cells).   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cells tied with the busiest 5 were left out of the hot set: the         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   counts are too even (or the cells too small) to single out hot spots.   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   period 2023: 8 cells tied                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a share of zero hot cells is refused</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">hotpers</span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span>, <span class="va">b</span><span class="op">$</span><span class="va">lat</span>, <span class="va">q</span>, top <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>

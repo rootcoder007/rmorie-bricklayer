@@ -87,5 +87,5 @@ nchar(key$public) / 2 == hqcsz(1)[["public"]]
 
 # an unknown level is refused rather than mapped to a default
 try(hqcsz(2))
-#> Error : `level` must be one of 1, 3 or 5 (HQC-1, HQC-3, HQC-5)
+#> Error : `lvl` must be one of 1, 3 or 5 (HQC-1, HQC-3, HQC-5) or 128, 192, 256
 ```

@@ -58,8 +58,9 @@ plotbump(y, prd, grp, desc = TRUE, ..., main = NULL, col = NULL, pal = NULL)
 
 - ...:
 
-  Further arguments to the first
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) call.
+  Further arguments to the
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) call that
+  opens the frame.
 
 - main, col, pal:
 
@@ -98,8 +99,14 @@ set.seed(5)
 days <- seq(as.Date("2024-01-01"), as.Date("2024-12-31"), by = "day")
 plotcal(days, stats::rpois(length(days), 5 + 3 * (format(days, "%u") > "5")))
 
-d <- expand.grid(year = 2015:2024, area = c("north", "south", "east", "west"))
-d$n <- stats::rpois(nrow(d), 50 + 10 * as.integer(d$area) + 2 * (d$year - 2015))
+d <- expand.grid(
+  year = 2015:2024,
+  area = c("north", "south", "east", "west")
+)
+d$n <- stats::rpois(
+  nrow(d),
+  50 + 10 * as.integer(d$area) + 2 * (d$year - 2015)
+)
 plotsm(d$n, d$year, d$area)
 
 plothrz(d$n, d$year, d$area)

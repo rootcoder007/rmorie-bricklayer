@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,6 +69,13 @@
 
         </dt>
         <dd>Write an analysis as a Markdown or HTML report</dd>
+
+        <dt>
+
+          <code><a href="mkset.html">mkset()</a></code>
+
+        </dt>
+        <dd>Combine Results into One Report</dd>
 
         <dt>
 
@@ -434,6 +441,34 @@
 
         </dt>
         <dd>Write a Plain-Language Run Summary</dd>
+
+        <dt>
+
+          <code><a href="mkbndl.html">mkbndl()</a></code>
+
+        </dt>
+        <dd>Build a Reproducibility Bundle</dd>
+
+        <dt>
+
+          <code><a href="ralloc.html">ralloc()</a></code> <code><a href="ralloc.html">plot(<i>&lt;rmbl_alloc&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Make a Randomisation List with a Sealed Commitment</dd>
+
+        <dt>
+
+          <code><a href="rallocvrf.html">rallocvrf()</a></code>
+
+        </dt>
+        <dd>Check a Randomisation List at Unblinding</dd>
+
+        <dt>
+
+          <code><a href="mkbndlproj.html">mkbndlproj()</a></code>
+
+        </dt>
+        <dd>Start a Reproducibility Bundle Project</dd>
       </dl></div><div class="section level2">
       <h2 id="language-model-and-command-line">Language model and command line<a class="anchor" aria-label="anchor" href="#language-model-and-command-line"></a></h2>
 
@@ -588,7 +623,7 @@
 
         <dt>
 
-          <code><a href="dstfit.html">dstfit()</a></code> <code><a href="dstfit.html">print(<i>&lt;rmbl_dstfit&gt;</i>)</a></code>
+          <code><a href="dstfit.html">dstfit()</a></code> <code><a href="dstfit.html">format(<i>&lt;rmbl_dstfit&gt;</i>)</a></code> <code><a href="dstfit.html">print(<i>&lt;rmbl_dstfit&gt;</i>)</a></code>
 
         </dt>
         <dd>Fit and rank candidate distributions</dd>
@@ -630,7 +665,7 @@
 
         <dt>
 
-          <code><a href="ldgrread.html">ldgrread()</a></code> <code><a href="ldgrread.html">print(<i>&lt;rmbl_ledger&gt;</i>)</a></code> <code><a href="ldgrread.html">ldgrchk()</a></code>
+          <code><a href="ldgrread.html">ldgrread()</a></code> <code><a href="ldgrread.html">format(<i>&lt;rmbl_ledger&gt;</i>)</a></code> <code><a href="ldgrread.html">ldgrchk()</a></code> <code><a href="ldgrread.html">format(<i>&lt;rmbl_ledger_check&gt;</i>)</a></code> <code><a href="ldgrread.html">print(<i>&lt;rmbl_ledger_check&gt;</i>)</a></code> <code><a href="ldgrread.html">print(<i>&lt;rmbl_ledger&gt;</i>)</a></code>
 
         </dt>
         <dd>Read and check a proof ledger</dd>
@@ -794,85 +829,6 @@
 
         </dt>
         <dd>Name the mechanical step that reproduces a label permutation</dd>
-
-        <dt>
-
-          <code><a href="grdbin.html">grdbin()</a></code>
-
-        </dt>
-        <dd>Refuse a categorical column where a numeric 0/1 treatment is required</dd>
-
-        <dt>
-
-          <code><a href="rcdmnf.html">rcdmnf()</a></code>
-
-        </dt>
-        <dd>Record a recode as a manifest that can be signed and verified later</dd>
-
-        <dt>
-
-          <code><a href="wrrcdmnf.html">wrrcdmnf()</a></code> <code><a href="wrrcdmnf.html">vrfrcdmnf()</a></code>
-
-        </dt>
-        <dd>Write and verify a recode manifest</dd>
-      </dl></div><div class="section level2">
-      <h2 id="categorical-integrity-1">Categorical integrity<a class="anchor" aria-label="anchor" href="#categorical-integrity-1"></a></h2>
-
-      <div class="section-desc"><p>Labels that cannot be swapped quietly: name-based recodes that refuse anything unmapped, explicit levels, an import audit, a before/after cross-tabulation proof, counts checked against what was published, reported odds ratios checked under every relabelling, and a signed manifest of the whole chain.</p></div>
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="grdrcd.html">grdrcd()</a></code>
-
-        </dt>
-        <dd>Recode a categorical column by explicit name-to-name mapping</dd>
-
-        <dt>
-
-          <code><a href="deccodes.html">deccodes()</a></code>
-
-        </dt>
-        <dd>Decode numeric category codes with an explicit code-to-label dictionary</dd>
-
-        <dt>
-
-          <code><a href="grdlvls.html">grdlvls()</a></code>
-
-        </dt>
-        <dd>Build a factor with explicit, verified levels</dd>
-
-        <dt>
-
-          <code><a href="audcats.html">audcats()</a></code>
-
-        </dt>
-        <dd>Audit the categorical columns of a data frame for coding hazards</dd>
-
-        <dt>
-
-          <code><a href="vrfrcd.html">vrfrcd()</a></code>
-
-        </dt>
-        <dd>Prove a recode with a before/after cross-tabulation</dd>
-
-        <dt>
-
-          <code><a href="vrfmrg.html">vrfmrg()</a></code>
-
-        </dt>
-        <dd>Verify recoded category counts against the counts a release published</dd>
-
-        <dt>
-
-          <code><a href="orchk.html">orchk()</a></code>
-
-        </dt>
-        <dd>Check reported odds ratios against a labelled table, under every relabelling</dd>
 
         <dt>
 
@@ -1243,6 +1199,13 @@
 
         <dt>
 
+          <code><a href="idcrd.html">idcrd()</a></code> <code><a href="idcrd.html">idcrdrd()</a></code> <code><a href="idcrd.html">idcrdvrf()</a></code>
+
+        </dt>
+        <dd>Make, read and verify an identity card for your signing key</dd>
+
+        <dt>
+
           <code><a href="rvkfetch.html">rvkfetch()</a></code>
 
         </dt>
@@ -1550,7 +1513,7 @@
 
       <dl><dt>
 
-          <code><a href="yoy.html">yoy()</a></code> <code><a href="yoy.html">print(<i>&lt;rmbl_yoy&gt;</i>)</a></code>
+          <code><a href="yoy.html">yoy()</a></code> <code><a href="yoy.html">format(<i>&lt;rmbl_yoy&gt;</i>)</a></code> <code><a href="yoy.html">print(<i>&lt;rmbl_yoy&gt;</i>)</a></code>
 
         </dt>
         <dd>Year-over-year (and period-over-period) change</dd>
@@ -1724,7 +1687,7 @@
 
         <dt>
 
-          <code><a href="bandsens.html">bandsens()</a></code> <code><a href="bandsens.html">print(<i>&lt;rmbl_band_sensitivity&gt;</i>)</a></code>
+          <code><a href="bandsens.html">bandsens()</a></code> <code><a href="bandsens.html">format(<i>&lt;rmbl_band_sensitivity&gt;</i>)</a></code> <code><a href="bandsens.html">print(<i>&lt;rmbl_band_sensitivity&gt;</i>)</a></code>
 
         </dt>
         <dd>How much a result depends on the open band's assumed cap</dd>
@@ -2170,7 +2133,7 @@
         </dt>
         <dd>Power and minimum detectable effect of a difference-in-differences design</dd>
       </dl></div><div class="section level2">
-      <h2 id="first-nations-metis-and-inuit-health">First Nations, Metis and Inuit health<a class="anchor" aria-label="anchor" href="#first-nations-metis-and-inuit-health"></a></h2>
+      <h2 id="first-nations-m-tis-and-inuit-health">First Nations, Métis and Inuit health<a class="anchor" aria-label="anchor" href="#first-nations-m-tis-and-inuit-health"></a></h2>
 
       <div class="section-desc"><p>Statistics Canada tables read as published (suppressed cells never imputed), distinctions-based comparisons, age-standardised rates, intergenerational exposure, and the Truth and Reconciliation Commission Calls to Action.</p></div>
 
@@ -2277,7 +2240,7 @@
         </dt>
         <dd>First Nations, Metis and Inuit health and mental health: bundled Statistics Canada excerpts</dd>
       </dl></div><div class="section level2">
-      <h2 id="first-nations-metis-and-inuit-mental-health-and-wellness">First Nations, Metis and Inuit mental health and wellness<a class="anchor" aria-label="anchor" href="#first-nations-metis-and-inuit-mental-health-and-wellness"></a></h2>
+      <h2 id="first-nations-m-tis-and-inuit-mental-health-and-wellness">First Nations, Métis and Inuit mental health and wellness<a class="anchor" aria-label="anchor" href="#first-nations-m-tis-and-inuit-mental-health-and-wellness"></a></h2>
 
       <div class="section-desc"><p>Survey estimates taken out of a table with their limits, rated scales compared as whole distributions, age-standardised percentages, and wellness reported beside distress; Indigenous frameworks of mental wellness put to work as estimators (holistic balance, the four directions of the First Nations Mental Wellness Continuum, healing as change, connection across places, community-set weights), the Community Well-Being index, a test before pooling, and an audit of deficit framing.</p></div>
 
@@ -2761,7 +2724,7 @@
 
       <dl><dt>
 
-          <code><a href="printmeth.html">print(<i>&lt;bricklayer_attestation&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_attestation_check&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_bundle&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_bundle_check&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_chain&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_drbg&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_falsification&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_hqc_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_hqc_public_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_hqc_capsule&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_kem_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_kem_public_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_kem_capsule&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_mcar&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_power&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_prereg&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_prereg_check&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_falsify_family&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="printmeth.html">summary(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_signing_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_public_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_signature&gt;</i>)</a></code> <code><a href="printmeth.html">summary(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_env_diff&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="printmeth.html">summary(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_recompute&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_schema&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_oqs_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_oqs_public_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_timestamp&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_certificate&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_certpath_check&gt;</i>)</a></code>
+          <code><a href="printmeth.html">print(<i>&lt;bricklayer_attestation&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_bundle&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_attestation_check&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_bundle_check&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_certificate&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_certpath_check&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_chain&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_drbg&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_env_diff&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_falsification&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_falsify_family&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_fips_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_fips_public_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_hqc_capsule&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_hqc_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_hqc_public_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_kem_capsule&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_kem_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_kem_public_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_mcar&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_oqs_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_oqs_public_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_power&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_prereg&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_prereg_check&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_public_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_recode_manifest&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_recompute&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_schema&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_signature&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_signing_key&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;bricklayer_timestamp&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;rmbl_bounds&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;rmbl_fetch&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;rmbl_margin_check&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;rmbl_or_check&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;rmbl_recode_manifest_check&gt;</i>)</a></code> <code><a href="printmeth.html">print(<i>&lt;rmbl_transfer_check&gt;</i>)</a></code> <code><a href="printmeth.html">summary(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="printmeth.html">summary(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="printmeth.html">summary(<i>&lt;bricklayer_report&gt;</i>)</a></code>
 
         </dt>
         <dd>Printed reports for bricklayer objects</dd>
@@ -2777,7 +2740,7 @@
 
       <dl><dt>
 
-          <code><a href="plot-methods.html">plot(<i>&lt;rmbl_census_cwb&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_profile_share&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_hotspot&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_connection&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_healing_change&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_community_index&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_indigenous_gap&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_prevalence&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_dsr&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_exposure_trend&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_trc_progress&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_ordinal_compare&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_wellness_profile&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_holistic_balance&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_dual_continuum&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_distinctions&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_case_flow&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_life_table&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_disposition_mix&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_density&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_knox&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_clearance_decomposition&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_synthdid&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_power&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_balance&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_aipw&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_stock_flow&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_yoy&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_rate&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_share&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_rate_change&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_band_sensitivity&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_drift_calibration&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_power&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_freq&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_missingness&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_region_coverage&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_outliers&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_correlations&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_cortable&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_falsification&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_bounds&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_crf&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_burden&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_equity&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_pollution_report&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_footprint&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_field&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_particles&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_count_trend&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_analysis&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_event_study&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_staggered_att&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_synth&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_bacon&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_permutation&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_loo&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_cohort_trends&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_ltrlrng&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_srchpod&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_datummap&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_opteffort&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_svy_estimate&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_svy_compare&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_trc_gaps&gt;</i>)</a></code>
+          <code><a href="plot-methods.html">plot(<i>&lt;rmbl_census_cwb&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_profile_share&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_hotspot&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_connection&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_healing_change&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_community_index&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_indigenous_gap&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_dsr&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_prevalence&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_exposure_trend&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_trc_progress&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_ordinal_compare&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_wellness_profile&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_holistic_balance&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_dual_continuum&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_distinctions&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_case_flow&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_life_table&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_disposition_mix&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_density&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_knox&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_clearance_decomposition&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_synthdid&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_power&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_balance&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_aipw&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_stock_flow&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_yoy&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_rate&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_share&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_rate_change&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_band_sensitivity&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_drift_calibration&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_power&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_freq&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_missingness&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_region_coverage&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_outliers&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_correlations&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_cortable&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_falsification&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_bounds&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_crf&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_burden&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_equity&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_pollution_report&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_footprint&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_field&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_particles&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_count_trend&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_analysis&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_event_study&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_staggered_att&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_synth&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_bacon&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_permutation&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_loo&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_cohort_trends&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_ltrlrng&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_srchpod&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_datummap&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_opteffort&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_svy_estimate&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_svy_compare&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_trc_gaps&gt;</i>)</a></code>
 
         </dt>
         <dd>Plot methods for the package's results</dd>

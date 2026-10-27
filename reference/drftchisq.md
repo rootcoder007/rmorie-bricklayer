@@ -30,7 +30,12 @@ drftchisq(obs, expd)
 
 A named length-4 numeric: `statistic`, `df`, `p_value` and `logpvalue`,
 the natural log of the upper tail, which keeps its information where
-`p_value` underflows to 0.
+`p_value` underflows to 0. It has class
+`c("rmbl_drftchisq", "rmbl_measure", "numeric")`, so it prints as a box
+with its inputs (kept in attribute `"lakner"`); arithmetic, `[`,
+[`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give plain
+numbers.
 
 ## Details
 
@@ -81,13 +86,43 @@ ref <- c(a = 50, b = 30, c = 20)
 
 # Counts matching the reference proportions: nothing to report.
 drftchisq(c(a = 100, b = 60, c = 40), ref)
-#> statistic        df   p_value logpvalue 
-#>         0         2         1         0 
+#> ╭── Chi-square test against a reference distribution ─────────────────────────╮
+#> │   Counts      200                                                           │
+#> │   Categories  3                                                             │
+#> │                                                                             │
+#> │   statistic  value                                                          │
+#> │   ---------  -----                                                          │
+#> │   statistic  0                                                              │
+#> │   df         2                                                              │
+#> │   p_value    1.000                                                          │
+#> │   logpvalue  0                                                              │
+#> │                                                                             │
+#> │   The counts agree with the reference distribution (p = 1.000, not below    │
+#> │   0.05).                                                                    │
+#> │                                                                             │
+#> │   The reference is taken as known; when it is itself a sample,              │
+#> │   drfthomog() allows for its own sampling error.                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # A reallocated mix is detected.
 drftchisq(c(a = 40, b = 60, c = 100), ref)
-#>    statistic           df      p_value    logpvalue 
-#>  1.26000e+02  2.00000e+00  4.35961e-28 -6.30000e+01 
+#> ╭── Chi-square test against a reference distribution ─────────────────────────╮
+#> │   Counts      200                                                           │
+#> │   Categories  3                                                             │
+#> │                                                                             │
+#> │   statistic  value                                                          │
+#> │   ---------  -------                                                        │
+#> │   statistic  126                                                            │
+#> │   df         2                                                              │
+#> │   p_value    < 0.001                                                        │
+#> │   logpvalue  -63                                                            │
+#> │                                                                             │
+#> │   The counts depart from the reference distribution (p < 0.001, below       │
+#> │   0.05).                                                                    │
+#> │                                                                             │
+#> │   The reference is taken as known; when it is itself a sample,              │
+#> │   drfthomog() allows for its own sampling error.                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # Agrees with stats::chisq.test().
 o <- c(a = 40, b = 60, c = 100)
@@ -97,19 +132,62 @@ all.equal(drftchisq(o, ref)[["statistic"]],
 
 # Raw vectors are tabulated for you.
 drftchisq(c("a", "a", "b", "b"), c("a", "b"))
-#> statistic        df   p_value logpvalue 
-#>         0         1         1         0 
+#> ╭── Chi-square test against a reference distribution ─────────────────────────╮
+#> │   Counts      4                                                             │
+#> │   Categories  2                                                             │
+#> │                                                                             │
+#> │   statistic  value                                                          │
+#> │   ---------  -----                                                          │
+#> │   statistic  0                                                              │
+#> │   df         1                                                              │
+#> │   p_value    1.000                                                          │
+#> │   logpvalue  0                                                              │
+#> │                                                                             │
+#> │   The counts agree with the reference distribution (p = 1.000, not below    │
+#> │   0.05).                                                                    │
+#> │                                                                             │
+#> │   The reference is taken as known; when it is itself a sample,              │
+#> │   drfthomog() allows for its own sampling error.                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # A category the reference rules out, but which occurs, is a flat
 # contradiction rather than a large finite statistic.
 drftchisq(c("a", "a", "b", "d"), c("a", "a", "b", "b"))
-#> statistic        df   p_value logpvalue 
-#>       Inf         1         0      -Inf 
+#> ╭── Chi-square test against a reference distribution ─────────────────────────╮
+#> │   Counts      4                                                             │
+#> │   Categories  3                                                             │
+#> │                                                                             │
+#> │   statistic  value                                                          │
+#> │   ---------  -------                                                        │
+#> │   statistic  Inf                                                            │
+#> │   df         1                                                              │
+#> │   p_value    < 0.001                                                        │
+#> │   logpvalue  -Inf                                                           │
+#> │                                                                             │
+#> │   A category the reference rules out occurs: a flat contradiction of the    │
+#> │   reference, not a large finite statistic.                                  │
+#> │                                                                             │
+#> │   The reference is taken as known; when it is itself a sample,              │
+#> │   drfthomog() allows for its own sampling error.                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # When a new category is legitimate, compare two samples instead.
 drfthomog(c("a", "a", "b", "b"), c("a", "a", "b", "d"))
-#> statistic        df   p_value logpvalue 
-#>  1.333333  2.000000  1.000000  0.000000 
-#> attr(,"method")
-#> [1] "Monte Carlo permutation (small expected counts)"
+#> ╭── Chi-square test of homogeneity ─────────────────────────────────────────╮
+#> │   Samples     4 and 4 values                                              │
+#> │   Categories  3                                                           │
+#> │   Method      Monte Carlo permutation (small expected counts)             │
+#> │                                                                           │
+#> │   statistic  value                                                        │
+#> │   ---------  -----                                                        │
+#> │   statistic  1.333                                                        │
+#> │   df         2                                                            │
+#> │   p_value    1.000                                                        │
+#> │   logpvalue  0                                                            │
+#> │                                                                           │
+#> │   The two samples' mixes of categories agree (p = 1.000, not below 0.05). │
+#> │                                                                           │
+#> │   Both samples carry sampling error; with an expected count below 5       │
+#> │   the p-value is a Monte Carlo one under a fixed seed.                    │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 ```

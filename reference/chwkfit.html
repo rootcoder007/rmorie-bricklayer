@@ -17,7 +17,7 @@ events cluster in time beyond what a steady or seasonal rate explains."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -130,127 +130,111 @@ are moved onto it. <code>NULL</code> (the default) uses a start from the data.</
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list:</p><dl><dt><code>theta</code></dt>
-<dd><p>numeric, all estimates in the order baseline, <code>eta</code>,
-kernel.</p></dd>
-
-<dt><code>basepar</code></dt>
-<dd><p>numeric, <code>a0</code> (constant) or <code>a0..a3</code>
-(sinusoidal), on the log scale.</p></dd>
+<dd><p>numeric, all estimates in the
+order baseline, <code>eta</code>, kernel.</p></dd>
+ <dt><code>basepar</code></dt>
+<dd><p>numeric,
+<code>a0</code> (constant) or <code>a0..a3</code> (sinusoidal), on the log scale.</p></dd>
 
 <dt><code>braratio</code></dt>
 <dd><p>numeric, \(\eta\), the expected number of events
-each
-event triggers.</p></dd>
-
-<dt><code>kerpar</code></dt>
-<dd><p>numeric, the kernel parameters (<code>beta</code>;
-<code>alpha, lambda</code>; <code>alpha, beta</code>; or <code>alpha, c</code>).</p></dd>
-
-<dt><code>nll</code>, <code>aic</code>, <code>bic</code></dt>
+each event triggers.</p></dd>
+ <dt><code>kerpar</code></dt>
+<dd><p>numeric, the kernel parameters
+(<code>beta</code>; <code>alpha, lambda</code>; <code>alpha, beta</code>; or <code>alpha,
+  c</code>).</p></dd>
+ <dt><code>nll</code>, <code>aic</code>, <code>bic</code></dt>
 <dd><p>numeric: the exact negative
-log-likelihood,
-\(2k + 2\,nll\) and \(k \log n + 2\,nll\).</p></dd>
+log-likelihood, \(2k + 2\,nll\) and \(k \log n + 2\,nll\).</p></dd>
 
 <dt><code>n</code>, <code>horizon</code>, <code>kpar</code></dt>
-<dd><p>the number of events (integer),
-the
-window end and the number of parameters (integer).</p></dd>
+<dd><p>the number of events
+(integer), the window end and the number of parameters (integer).</p></dd>
 
 <dt><code>ksstat</code>, <code>kspva</code></dt>
 <dd><p>numeric, the Kolmogorov-Smirnov test of
-the
-time-rescaling residuals against the uniform.</p></dd>
-
-<dt><code>kernel</code>, <code>baseline</code>, <code>method</code></dt>
-<dd><p>character, the choices used
-(<code>method</code> after <code>"auto"</code> is resolved).</p></dd>
-
-<dt><code>eps</code></dt>
-<dd><p>numeric, <code>eps</code> for <code>"soe"</code> and <code>"truncate"</code>,
-<code>NA</code> otherwise.</p></dd>
+the time-rescaling residuals against the uniform.</p></dd>
+ <dt><code>kernel</code>,
+<code>baseline</code>, <code>method</code></dt>
+<dd><p>character, the choices used (<code>method</code>
+after <code>"auto"</code> is resolved).</p></dd>
+ <dt><code>eps</code></dt>
+<dd><p>numeric, <code>eps</code>
+for <code>"soe"</code> and <code>"truncate"</code>, <code>NA</code> otherwise.</p></dd>
 
 <dt><code>converged</code></dt>
-<dd><p>logical, the optimiser stopped at a maximum within the
-parameter box (before its iteration limit, at a finite likelihood). A maximum
-on the box counts: <code>atbound</code> names the parameters that lie on it.</p></dd>
+<dd><p>logical, the optimiser stopped at a maximum within
+the parameter box (before its iteration limit, at a finite likelihood). A
+maximum on the box counts: <code>atbound</code> names the parameters that lie on
+it.</p></dd>
+ <dt><code>atbound</code></dt>
+<dd><p>character, the names of parameters that lie on
+the box (<code>character(0)</code> for an interior maximum).</p></dd>
 
-<dt><code>atbound</code></dt>
-<dd><p>character, the names of parameters that lie on the box
-(<code>character(0)</code> for an interior maximum).</p></dd>
-
-
-</dl><p>A warning is given when \(\eta\) reaches its upper bound 0.99 (a near-critical,
-probably non-stationary fit).
-An estimate on the box is not an interior maximum of the likelihood:
-day-dated (tied) times drive a shape or decay to its wall, and a Lomax
-fitted to exponential data runs to its exponential limit.</p>
+</dl><p>A warning is
+given when \(\eta\) reaches its upper bound 0.99 (a near-critical,
+probably non-stationary fit). An estimate on the box is not an interior
+maximum of the likelihood: day-dated (tied) times drive a shape or decay to
+its wall, and a Lomax fitted to exponential data runs to its exponential
+limit.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The model is the univariate Hawkes process
-$$\lambda(t) = \nu(t) + \eta \sum_{t_j &lt; t} g(t - t_j)$$
-with a constant baseline (\(\nu = e^{a_0}\)) or a sinusoidal one
-(\(\nu(t) = \exp(a_0 + a_1 t/T + a_2 \sin(2\pi t/365.25) + a_3 \cos(2\pi t/365.25))\),
-a trend plus a yearly cycle when times are in days, its integral by the
-trapezoid rule on <code>max(64, floor(T) + 1)</code> points), branching ratio
-\(\eta \in [0.001, 0.99]\) and one of four normalised kernels \(g\):
-exponential (decay <code>beta</code>), Weibull (shape <code>alpha</code>, scale
-<code>lambda</code>), gamma (shape <code>alpha</code>, rate <code>beta</code>) or Lomax
-(shape <code>alpha</code>, scale <code>c</code>). The log-likelihood is
-\(\sum_i \log \lambda(t_i) - \int_0^T \lambda(t)\,dt\). Every route uses
-the analytic gradient of the shared C++ core (the code morie's Python arm
-calls), so one likelihood evaluation per point instead of one per
-parameter. The optimiser is a projected BFGS inside a fixed parameter box
-(\(a_0 \in [-15, 15]\), the other baseline terms in \([-5, 5]\),
-kernel parameters bounded as listed in the source), at most 2000
-iterations.</p>
+    <p>The model is the univariate Hawkes process $$\lambda(t) = \nu(t)
++ \eta \sum_{t_j &lt; t} g(t - t_j)$$ with a constant baseline (\(\nu =
+e^{a_0}\)) or a sinusoidal one (\(\nu(t) = \exp(a_0 + a_1 t/T + a_2
+\sin(2\pi t/365.25) + a_3 \cos(2\pi t/365.25))\), a trend plus a yearly cycle
+when times are in days, its integral by the trapezoid rule on <code>max(64,
+floor(T) + 1)</code> points), branching ratio \(\eta \in [0.001, 0.99]\) and one
+of four normalised kernels \(g\): exponential (decay <code>beta</code>), Weibull
+(shape <code>alpha</code>, scale <code>lambda</code>), gamma (shape <code>alpha</code>, rate
+<code>beta</code>) or Lomax (shape <code>alpha</code>, scale <code>c</code>). The
+log-likelihood is \(\sum_i \log \lambda(t_i) - \int_0^T \lambda(t)\,dt\).
+Every route uses the analytic gradient of the shared C++ core (the code
+morie's Python arm calls), so one likelihood evaluation per point instead of
+one per parameter. The optimiser is a projected BFGS inside a fixed parameter
+box (\(a_0 \in [-15, 15]\), the other baseline terms in \([-5, 5]\),
+kernel parameters bounded as listed in the source), at most 2000 iterations.</p>
 <dl><dt><code>"exact"</code></dt>
-<dd><p>Ozaki's O(n) recursion for the exponential kernel; for Weibull
-and
-gamma the double sum stops where the kernel underflows to exactly 0 (the same
-value as
-the full sum); Lomax the full O(n^2) sum.</p></dd>
+<dd><p>Ozaki's O(n) recursion for the exponential
+kernel; for Weibull and gamma the double sum stops where the kernel
+underflows to exactly 0 (the same value as the full sum); Lomax the full
+O(n^2) sum.</p></dd>
+ <dt><code>"soe"</code></dt>
+<dd><p>the completely monotone kernels (Lomax;
+gamma with shape &lt; 1) as a sum of exponentials (Beylkin &amp; Monzon 2010):
+relative error <code>eps</code> on every intensity, O(n K); a gamma kernel with
+shape &gt;= 1 is truncated at <code>eps</code>.</p></dd>
+ <dt><code>"truncate"</code></dt>
+<dd><p>each event
+excites only lags with kernel tail mass above <code>eps</code>: an approximation
+for light-tailed kernels, O(n w).</p></dd>
+ <dt><code>"em"</code></dt>
+<dd><p>the EM algorithm
+(Veen &amp; Schoenberg 2008), finished by the projected BFGS on the exact
+likelihood from EM's point (EM's steps shrink before it reaches the
+maximum). It is an R loop of up to 500 iterations and much slower than the
+other routes (tens of seconds for a few hundred events); because it starts
+from the same point but moves differently, it can end at a different local
+maximum.</p></dd>
+ <dt><code>"inar"</code></dt>
+<dd><p>Kirchner's (2017) INAR(p) least-squares
+estimator on binned counts (constant baseline only): a different, fast,
+approximate estimator.</p></dd>
+ <dt><code>"auto"</code></dt>
+<dd><p><code>"exact"</code> for the
+exponential kernel, <code>"truncate"</code> for Weibull, <code>"soe"</code> for gamma
+and Lomax.</p></dd>
 
-<dt><code>"soe"</code></dt>
-<dd><p>the completely monotone kernels (Lomax; gamma with shape &lt; 1) as
-a
-sum of exponentials (Beylkin &amp; Monzon 2010): relative error <code>eps</code> on every
-intensity, O(n K); a gamma kernel with shape &gt;= 1 is truncated at <code>eps</code>.</p></dd>
-
-<dt><code>"truncate"</code></dt>
-<dd><p>each event excites only lags with kernel tail mass above
-<code>eps</code>: an approximation for light-tailed kernels, O(n w).</p></dd>
-
-<dt><code>"em"</code></dt>
-<dd><p>the EM algorithm (Veen &amp; Schoenberg 2008), finished by the
-projected BFGS on the exact likelihood from EM's point (EM's steps shrink before
-it
-reaches the maximum). It is an R loop of up to 500 iterations and much slower than
-the
-other routes (tens of seconds for a few hundred events); because it starts from
-the
-same point but moves differently, it can end at a different local maximum.</p></dd>
-
-<dt><code>"inar"</code></dt>
-<dd><p>Kirchner's (2017) INAR(p) least-squares estimator on binned
-counts
-(constant baseline only): a different, fast, approximate estimator.</p></dd>
-
-<dt><code>"auto"</code></dt>
-<dd><p><code>"exact"</code> for the exponential kernel, <code>"truncate"</code>
-for
-Weibull, <code>"soe"</code> for gamma and Lomax.</p></dd>
-
-
-</dl><p>For the Weibull, gamma and Lomax kernels without <code>start</code>, a second
-deterministic start at the exponential fit (the shape-1 member) is also
-run and the better optimum kept, because the likelihood is multimodal.
-The exponential kernel without <code>start</code> is also run from a second
-start (branching ratio 0.1 and a decay a quarter of the reciprocal mean
-gap), and the better optimum kept: on data with little clustering its
-likelihood can have more than one maximum, one of them with the decay on
-its bound. A parameter on its bound (see <code>atbound</code>) is still a
-reason to refit from another <code>start</code> and compare <code>nll</code>.</p>
+</dl><p>For the Weibull, gamma and Lomax kernels without
+<code>start</code>, a second deterministic start at the exponential fit (the
+shape-1 member) is also run and the better optimum kept, because the
+likelihood is multimodal. The exponential kernel without <code>start</code> is
+also run from a second start (branching ratio 0.1 and a decay a quarter of
+the reciprocal mean gap), and the better optimum kept: on data with little
+clustering its likelihood can have more than one maximum, one of them with
+the decay on its bound. A parameter on its bound (see <code>atbound</code>) is
+still a reason to refit from another <code>start</code> and compare <code>nll</code>.</p>
 <p>The reported <code>nll</code> is the exact likelihood at the estimate whatever
 the route, so AIC is comparable across routes. An event exactly at
 <code>hor</code> is part of the record and counted, as in morie's Python
@@ -278,20 +262,21 @@ Long fits show a progress spinner (EM a bar) on stderr unless
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Ozaki T (1979). Maximum likelihood estimation of Hawkes' self-exciting
-point
-processes. <em>Ann. Inst. Statist. Math.</em> 31, 145–155. <a href="https://doi.org/10.1007/BF02480272" class="external-link">doi:10.1007/BF02480272</a></p>
+    <p>Ozaki T (1979). Maximum likelihood estimation of Hawkes'
+self-exciting point processes. <em>Ann. Inst. Statist. Math.</em> 31,
+145–155. <a href="https://doi.org/10.1007/BF02480272" class="external-link">doi:10.1007/BF02480272</a></p>
 <p>Beylkin G, Monzon L (2010). Approximation by exponential sums revisited.
-<em>Appl. Comput. Harmon. Anal.</em> 28, 131–149. <a href="https://doi.org/10.1016/j.acha.2009.08.011" class="external-link">doi:10.1016/j.acha.2009.08.011</a></p>
-<p>Veen A, Schoenberg FP (2008). Estimation of space-time branching process models in
-seismology using an EM-type algorithm. <em>JASA</em> 103, 614–624.
+<em>Appl. Comput. Harmon. Anal.</em> 28, 131–149.
+<a href="https://doi.org/10.1016/j.acha.2009.08.011" class="external-link">doi:10.1016/j.acha.2009.08.011</a></p>
+<p>Veen A, Schoenberg FP (2008). Estimation of space-time branching process
+models in seismology using an EM-type algorithm. <em>JASA</em> 103, 614–624.
 <a href="https://doi.org/10.1198/016214508000000148" class="external-link">doi:10.1198/016214508000000148</a></p>
 <p>Kirchner M (2017). An estimation procedure for the Hawkes process.
 <em>Quant. Finance</em> 17, 571–595. <a href="https://doi.org/10.1080/14697688.2016.1211312" class="external-link">doi:10.1080/14697688.2016.1211312</a></p>
-<p>Filimonov V, Sornette D (2015). Apparent criticality and calibration issues in the
-Hawkes self-excited point process model: application to high-frequency financial
-data.
-<em>Quant. Finance</em> 15(8), 1293–1314. <a href="https://doi.org/10.1080/14697688.2015.1032544" class="external-link">doi:10.1080/14697688.2015.1032544</a></p>
+<p>Filimonov V, Sornette D (2015). Apparent criticality and calibration issues
+in the Hawkes self-excited point process model: application to
+high-frequency financial data. <em>Quant. Finance</em> 15(8), 1293–1314.
+<a href="https://doi.org/10.1080/14697688.2015.1032544" class="external-link">doi:10.1080/14697688.2015.1032544</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

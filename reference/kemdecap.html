@@ -17,7 +17,7 @@ key."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-b
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,10 +89,10 @@ as a hex string or a raw vector, of the length for the key's level.</p></dd>
 
 <dt id="arg-masked">masked<a class="anchor" aria-label="anchor" href="#arg-masked"></a></dt>
 <dd><p>Logical, <code>TRUE</code> or <code>FALSE</code>.</p>
-<p><code>rmoriebricklayer.masked</code>, an option, gives the default when it is set;
-otherwise the default is <code>TRUE</code>.
-<code>TRUE</code> runs the first-order masked decapsulation, <code>FALSE</code> the plain one.
-Both return the same secret.</p></dd>
+<p><code>rmoriebricklayer.masked</code>, an option, gives the default when it is
+set; otherwise the default is <code>TRUE</code>. <code>TRUE</code> runs the first-order
+masked decapsulation, <code>FALSE</code> the plain one. Both return the same
+secret.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -102,16 +102,15 @@ Both return the same secret.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This is ML-KEM.Decaps of FIPS 203 (Algorithm 21). For a ciphertext of
-the right length there is no failure path, and that is deliberate. A ciphertext that
-was
-not produced by a correct encapsulation under this key yields a shared
-secret derived from a value held only inside the decapsulation key – so
-it is a real secret, just not the sender's. Whoever sent it learns
-nothing about whether it was accepted, which is what closes off a
-chosen-ciphertext attack. The consequence for a caller: a mismatch
-between the two sides' secrets is the signal that something was wrong,
-not an error from this function.</p>
+    <p>This is ML-KEM.Decaps of FIPS 203 (Algorithm 21). For a ciphertext
+of the right length there is no failure path, and that is deliberate. A
+ciphertext that was not produced by a correct encapsulation under this key
+yields a shared secret derived from a value held only inside the
+decapsulation key – so it is a real secret, just not the sender's. Whoever
+sent it learns nothing about whether it was accepted, which is what closes
+off a chosen-ciphertext attack. The consequence for a caller: a mismatch
+between the two sides' secrets is the signal that something was wrong, not an
+error from this function.</p>
 <p>Masked by default. With <code>masked = TRUE</code> every value that depends on the
 secret key is held as two random shares from the moment the key is read
 (first-order masking): decryption, the decoding of the message, the

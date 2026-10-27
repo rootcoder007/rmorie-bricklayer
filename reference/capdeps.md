@@ -28,8 +28,9 @@ A data frame with one row per package and character columns `package`,
 `remote_url`, `remote_sha` and `built` (R version, platform and time of
 the build). Unavailable fields are `NA` rather than omitted, so a reader
 can see that the information was absent rather than forgotten; for a
-package that is not installed, every field except `package` is `NA`. An
-empty `packages` gives a data frame with no rows and the same columns.
+package that is not installed, every field except `package` is `NA`, and
+a warning names it. An empty `pkgs` gives a data frame with no rows and
+the same columns.
 
 ## Details
 
@@ -68,6 +69,7 @@ is.na(capdeps("stats")$repository)
 
 # a package that is not installed is a row of NAs, not an error
 capdeps("notapackage123")[, c("package", "version")]
+#> Warning: capdeps: not installed, recorded with NA fields: notapackage123
 #>          package version
 #> 1 notapackage123    <NA>
 

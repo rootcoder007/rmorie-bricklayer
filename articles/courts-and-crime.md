@@ -29,7 +29,10 @@ clear at the recent pace.
 
 f <- ext("ocj_flow_ontario.csv")
 cf <- caseflow(f$received, f$disposed, pend = f$pending, prd = f$month)
-cf[c(1, 12, 24), c("period", "received", "disposed", "clearance", "rolclr", "pertoclear")]
+cf[
+  c(1, 12, 24),
+  c("period", "received", "disposed", "clearance", "rolclr", "pertoclear")
+]
 #>    period received disposed clearance    rolclr pertoclear
 #> 1 2024-04    21265    22053  1.037056        NA   6.752097
 #> 2 2025-03    20688    20996  1.014888 0.9742875   7.466076
@@ -57,23 +60,42 @@ edge, with a Greenwood interval, and the median.
 d <- ext("ocj_time_to_disposition.csv")
 last <- nrow(d)
 shares <- unlist(d[last, c("under_10", "m10_15", "m15_18", "over_18")])
-lt <- lifetbl(c("Under 10 Months", "Between 10-15 Months", "Between 15-18 Months", "Over 18 Months"),
-                 events = shares * f$disposed[last])
+lt <- lifetbl(
+  c(
+    "Under 10 Months",
+    "Between 10-15 Months",
+    "Between 15-18 Months",
+    "Over 18 Months"
+  ),
+  events = shares * f$disposed[last]
+)
 lt
-#> ── Life table (actuarial), 95% log-log Greenwood interval ──────── 
-#>   Median time: 6.36 (linear within its band)
-#> 
-#>  lower upper  entering    events censored    atrisk      q survival     se
-#>      0    10 23136.000 18184.896        0 23136.000 0.7860    0.214 0.0027
-#>     10    15  4951.104  2868.864        0  4951.104 0.5794    0.090 0.0019
-#>     15    18  2082.240   879.168        0  2082.240 0.4222    0.052 0.0015
-#>     18   Inf  1203.072  1203.072        0  1203.072 1.0000    0.000     NA
-#>  conflo confup hazard
-#>  0.2087 0.2193 0.1295
-#>  0.0864 0.0937 0.1632
-#>  0.0492 0.0549 0.1784
-#>      NA     NA     NA
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Life table (actuarial) ────────────────────────────────────────────────╮
+#> │   Bands     4                                                            │
+#> │   Cases     23,136                                                       │
+#> │   Events    23,136                                                       │
+#> │   Censored  0                                                            │
+#> │   Interval  95% log-log Greenwood                                        │
+#> │                                                                          │
+#> │   lower  upper  entering  events  censored  atrisk      q  survival      │
+#> │   -----  -----  --------  ------  --------  ------  -----  --------      │
+#> │       0     10    23,136  18,185         0  23,136  0.786   0.21400      │
+#> │      10     15     4,951   2,869         0   4,951  0.579   0.09000      │
+#> │      15     18     2,082     879         0   2,082  0.422   0.05200      │
+#> │      18    Inf     1,203   1,203         0   1,203  1.000   0.00000      │
+#> │                                                                          │
+#> │   lower  95% CI              hazard                                      │
+#> │   -----  ------------------  ------                                      │
+#> │       0  [0.20874, 0.21931]  0.1295                                      │
+#> │      10  [0.08636, 0.09373]  0.1632                                      │
+#> │      15  [0.04919, 0.05491]  0.1784                                      │
+#> │      18                                                                  │
+#> │                                                                          │
+#> │   Median time: 6.36 (linear within its band)                             │
+#> │   survival is the share still without the event at the end of each band. │
+#> │                                                                          │
+#> │   A censored case counts as half a case at risk in its band.             │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 plot(lt)
 ```
 
@@ -129,28 +151,42 @@ g <- ext("ocj_offence_groups.csv")
 g <- g[g$year %in% c(2014, 2022), ]
 cd <- clrdcmp(g$disposed, g$received, g$offence_group, g$year)
 cd
-#> ── Clearance rate, 2022 against 2014: rate and case-mix effects (Kitagawa)  
-#>   2014: 0.9760   2022: 0.9749   change -0.0011 = rate effect +0.0096 + mix effect -0.0107
-#>   2022 standardised to the 2014 mix: 0.9912; to the average mix: 0.9830
-#>   4 of 6 parts rose, 2 fell. Simpson's paradox through the mix: the aggregate fell, but at a fixed mix it rose
-#> 
-#>                       part rate 2014 rate 2022 share 2014 share 2022  ratio
-#>  Administration of Justice    0.9788    1.0378     0.2689     0.2818 1.0603
-#>    Crimes Against Property    0.9851    0.9692     0.2279     0.1973 0.9839
-#>  Crimes Against the Person    0.9180    0.8576     0.2620     0.3187 0.9343
-#>      Criminal Code Traffic    1.0105    1.0212     0.0808     0.0948 1.0106
-#>            Federal Statute    1.0232    1.1734     0.1148     0.0534 1.1468
-#>        Other Criminal Code    1.0675    1.0818     0.0455     0.0539 1.0134
-#>   lower  upper   rateeff    mixeff
-#>  1.0484 1.0725  0.016300  4.24e-04
-#>  0.9710 0.9969 -0.003370 -5.16e-05
-#>  0.9233 0.9454 -0.017500 -4.97e-03
-#>  0.9905 1.0311  0.000939  5.66e-04
-#>  1.1230 1.1710  0.012600 -7.54e-03
-#>  0.9874 1.0402  0.000713  8.34e-04
-#> 
-#>   Rate ratio 2022/2014: crude 0.9989 (0.9929 to 1.0050); within parts (Mantel-Haenszel) 1.0085 (1.0024 to 1.0146), p 0.00644
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Clearance rate, 2022 against 2014 (Kitagawa) ─────────────────────────────╮
+#> │   Rate 2014                0.976                                            │
+#> │   Rate 2022                0.9749                                           │
+#> │   Change                   -0.0011 = rate effect +0.0096 + mix effect       │
+#> │                            -0.0107                                          │
+#> │   2022 at the 2014 mix     0.9912                                           │
+#> │   2022 at the average mix  0.9830                                           │
+#> │   Parts                    6                                                │
+#> │                                                                             │
+#> │   part                       rate 2014  rate 2022  share 2014  share 2022   │
+#> │   -------------------------  ---------  ---------  ----------  ----------   │
+#> │   Administration of Justice     0.9788      1.038      0.2689      0.2818   │
+#> │   Crimes Against Property       0.9851      0.969      0.2279      0.1973   │
+#> │   Crimes Against the Person     0.9180      0.858      0.2620      0.3187   │
+#> │   Criminal Code Traffic         1.0105      1.021      0.0808      0.0948   │
+#> │   Federal Statute               1.0232      1.173      0.1148      0.0534   │
+#> │   Other Criminal Code           1.0675      1.082      0.0455      0.0539   │
+#> │                                                                             │
+#> │   part                       ratio  95% CI            rateeff     mixeff    │
+#> │   -------------------------  -----  --------------  ---------  ---------    │
+#> │   Administration of Justice  1.060  [1.048, 1.072]   0.016263   0.000424    │
+#> │   Crimes Against Property    0.984  [0.971, 0.997]  -0.003375  -0.000052    │
+#> │   Crimes Against the Person  0.934  [0.923, 0.945]  -0.017526  -0.004966    │
+#> │   Criminal Code Traffic      1.011  [0.990, 1.031]   0.000939   0.000566    │
+#> │   Federal Statute            1.147  [1.123, 1.171]   0.012631  -0.007535    │
+#> │   Other Criminal Code        1.013  [0.987, 1.040]   0.000713   0.000834    │
+#> │                                                                             │
+#> │   4 of 6 parts rose, 2 fell.                                                │
+#> │   Simpson's paradox through the mix: the aggregate fell, but at a fixed     │
+#> │   mix it rose                                                               │
+#> │   Rate effect: the change at a fixed case mix; mix effect: the change       │
+#> │   from the mix of cases alone.                                              │
+#> │                                                                             │
+#> │   Rate ratio 2022/2014: crude 0.9989 (0.9929 to 1.0050); within parts       │
+#> │   (Mantel-Haenszel) 1.0085 (1.0024 to 1.0146), p 0.006                      │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(cd)
 ```
 
@@ -160,7 +196,12 @@ plot(cd)
 
 # a group's share of the cases received in a year, as a percentage
 caseshare <- function(group, yr) {
-  sprintf("%.0f%%", 100 * sum(g$received[g$offence_group == group & g$year == yr]) / sum(g$received[g$year == yr]))
+  sprintf(
+    "%.0f%%",
+    100 *
+      sum(g$received[g$offence_group == group & g$year == yr]) /
+      sum(g$received[g$year == yr])
+  )
 }
 ```
 
@@ -209,14 +250,22 @@ outlines the smallest areas holding half and nine-tenths of them.
 b <- ext("tps_break_enter_d14_2024.csv")
 kd <- crmdens(b$lon, b$lat, ngrid = 150)
 kd
-#> ── Kernel density of incidents: smallest areas holding each share  
-#>   508 incidents; bandwidth 0.337 km east-west, 0.412 km north-south
-#>   Peak density 77.92 incidents per square kilometre
-#> 
-#>  incidents areakm2 shrofmaparea densatedge
-#>        50%   5.502        11.9%      31.88
-#>        90%  14.840        32.1%      11.23
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Kernel density of incidents ───────────────────────────────────────╮
+#> │   Incidents     508                                                  │
+#> │   Coordinates   longitude and latitude, centred on -79.4114, 43.6508 │
+#> │   Grid          150 x 150 cells                                      │
+#> │   Bandwidth     0.337 km east-west, 0.412 km north-south             │
+#> │   Peak density  77.92 incidents per km2                              │
+#> │                                                                      │
+#> │   The smallest areas holding each share of incidents                 │
+#> │   incidents  areakm2  shrofmaparea  densatedge                       │
+#> │   ---------  -------  ------------  ----------                       │
+#> │   50%           5.50  11.9%              31.88                       │
+#> │   90%          14.84  32.1%              11.23                       │
+#> │                                                                      │
+#> │   508 incidents; bandwidth 0.337 km east-west, 0.412 km north-south  │
+#> │   50% of the incidents lie in 11.9% of the mapped area.              │
+#> ╰──────────────────────────────────────────────────────────────────────╯
 plot(kd)
 ```
 
@@ -235,14 +284,26 @@ b <- b[!is.na(b$lon), ]
 kn <- knoxtst(b$lon, b$lat, as.Date(b$occ_date), spcbands = c(100, 200, 400),
                 tmbands = c(7, 14, 28), nsim = 199, seed = 1)
 kn
-#> ── Knox ratios, observed / expected pairs (508 incidents, 199 permutations)  
-#>   distance  0-7 d 7-14 d 14-28 d
-#>    0-100 m 1.66**   1.16    1.09
-#>  100-200 m   1.25   0.91    1.17
-#>  200-400 m   1.07   1.03    1.01
-#> 
-#>   * p < 0.05, ** p < 0.01, one-sided per cell (not adjusted for the number of cells)
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Knox test of near-repeat incidents ───────────────────────────────────────╮
+#> │   Incidents     508                                                         │
+#> │   Permutations  199                                                         │
+#> │   Close pairs   5,585                                                       │
+#> │   Space bands   100, 200, 400                                               │
+#> │   Time bands    7, 14, 28                                                   │
+#> │                                                                             │
+#> │   Knox ratios, observed / expected pairs                                    │
+#> │   distance   0-7 d   7-14 d  14-28 d                                        │
+#> │   ---------  ------  ------  -------                                        │
+#> │   0-100 m    1.66**  1.16    1.09                                           │
+#> │   100-200 m  1.25    0.91    1.17                                           │
+#> │   200-400 m  1.07    1.03    1.01                                           │
+#> │                                                                             │
+#> │   A ratio above 1: more pairs this close in space and in time than          │
+#> │   chance alone gives, the near-repeat pattern.                              │
+#> │                                                                             │
+#> │   * p < 0.05, ** p < 0.01, one-sided per cell (not adjusted for the number  │
+#> │   of cells); - nothing expected                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(kn)
 ```
 
@@ -261,19 +322,40 @@ overlap the previous period’s:
 
 h <- hotpers(b$lon, b$lat, quarters(as.Date(b$occ_date)), cell = 0.3)
 h
-#> Hot spots: 139 active cells of side 0.3 km over 4 periods; hot = busiest 7 (5%)
-#>  period incidents actcells cellsforhalf shrforhalf hotcells tiedin tiedout
-#>      Q1       128       77           22      15.8%       11      4       0
-#>      Q2       133       74           22      15.8%        7      0       0
-#>      Q3       112       70           19      13.7%        7      0       0
-#>      Q4       135       72           23      16.5%        4      0      12
-#>  hotshr jacpre
-#>   32.8%       
-#>   22.6%   0.29
-#>   26.8%   0.17
-#>   13.3%   0.10
-#> Cells hot in at least half the periods: 7
-#> Note: cells tied with the busiest 7 were left out of the hot set (period Q4: 12 cells tied); the counts are too even (or the cells too small) to single out hot spots
+#> ╭── Hot spots ──────────────────────────────────────────────────────────────╮
+#> │   Active cells             139                                            │
+#> │   Cell side                0.3 km                                         │
+#> │   Periods                  4                                              │
+#> │   Hot cells                the busiest 7 (5%)                             │
+#> │   Hot in half the periods  7                                              │
+#> │                                                                           │
+#> │   By period                                                               │
+#> │   period  incidents  actcells  cellsforhalf  shrforhalf  hotcells  tiedin │
+#> │   ------  ---------  --------  ------------  ----------  --------  ------ │
+#> │   Q1            128        77            22  15.8%             11       4 │
+#> │   Q2            133        74            22  15.8%              7       0 │
+#> │   Q3            112        70            19  13.7%              7       0 │
+#> │   Q4            135        72            23  16.5%              4       0 │
+#> │                                                                           │
+#> │   period  tiedout  hotshr  jacpre                                         │
+#> │   ------  -------  ------  ------                                         │
+#> │   Q1            0  32.8%                                                  │
+#> │   Q2            0  22.6%   0.2857                                         │
+#> │   Q3            0  26.8%   0.1667                                         │
+#> │   Q4           12  13.3%   0.1000                                         │
+#> │                                                                           │
+#> │   The busiest 7 cells hold 13.3% to 32.8% of a period's incidents.        │
+#> │   Their overlap with the period before averages 0.184: the hot set is     │
+#> │   mostly new each period, so these spots do not persist. 7 cells are      │
+#> │   hot in at least half the periods.                                       │
+#> │                                                                           │
+#> │   shrforhalf is the share of active cells that hold half the incidents,   │
+#> │   hotshr the share of incidents in the hot cells, and jacpre the          │
+#> │   overlap of the hot cells with the period before (1 = the same cells).   │
+#> │   Cells tied with the busiest 7 were left out of the hot set: the         │
+#> │   counts are too even (or the cells too small) to single out hot spots.   │
+#> │   period Q4: 12 cells tied                                                │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 plot(h)
 ```
 

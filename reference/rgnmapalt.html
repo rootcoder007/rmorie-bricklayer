@@ -13,7 +13,7 @@ which re-running that same method can never find."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -139,7 +139,8 @@ vector without names; a <code>route</code> data frame without the two columns.</
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a name-based route that is known to mis-place one unit</span></span></span>
 <span class="r-in"><span><span class="va">route</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="st">"North Jail"</span> <span class="op">=</span> <span class="st">"3557"</span>, <span class="st">"South Jail"</span> <span class="op">=</span> <span class="st">"3520"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"North Jail"</span> <span class="op">=</span> <span class="st">"3557"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"South Jail"</span> <span class="op">=</span> <span class="st">"3520"</span>,</span></span>
 <span class="r-in"><span>  <span class="st">"Hill Jail"</span> <span class="op">=</span> <span class="st">"3519"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">rgnmapalt</span><span class="op">(</span><span class="va">cw</span>, <span class="st">"inst"</span>, <span class="st">"cd"</span>, <span class="va">route</span>, known <span class="op">=</span> <span class="st">"Hill Jail"</span><span class="op">)</span></span></span>
@@ -153,7 +154,10 @@ vector without names; a <code>route</code> data frame without the two columns.</
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the route as a data frame with the same column names</span></span></span>
-<span class="r-in"><span><span class="va">routedf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>inst <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North Jail"</span>, <span class="st">"Hill Jail"</span><span class="op">)</span>, cd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"3557"</span>, <span class="st">"3506"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">routedf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  inst <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North Jail"</span>, <span class="st">"Hill Jail"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  cd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"3557"</span>, <span class="st">"3506"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu">rgnmapalt</span><span class="op">(</span><span class="va">cw</span>, <span class="st">"inst"</span>, <span class="st">"cd"</span>, <span class="va">routedf</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
 <span class="r-in"><span></span></span>

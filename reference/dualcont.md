@@ -15,7 +15,7 @@ dualcont(x, well, distress, conflvl = 0.95)
 
 - x:
 
-  A
+  A wellness profile from
   [`welprof`](https://rootcoder007.github.io/rmorie-bricklayer/reference/welprof.md).
 
 - well, distress:
@@ -87,13 +87,60 @@ w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
 dc <- dualcont(w, "Always or often has a hopeful outlook",
                      "Life satisfaction rating between 0 and 5")
 dc
-#>           group wellness wello welup distress distrlo distrup strratio  ratiolo
-#> 1 First Nations     50.2  45.9  54.5     31.4    27.4    35.7 1.598726 1.365446
-#> 2         Métis     52.3  47.6  57.0     28.4    24.0    33.1 1.841549 1.531631
-#> 3         Inuit     54.4  45.7  62.8     25.2    19.4    31.8 2.158730 1.609182
-#>    ratioup usewithcau
-#> 1 1.871862      FALSE
-#> 2 2.214178      FALSE
-#> 3 2.895953      FALSE
+#> ╭── Dual continuum: wellness beside distress ────────────────────────────────╮
+#> │   Wellness  Always or often has a hopeful outlook                          │
+#> │   Distress  Life satisfaction rating between 0 and 5                       │
+#> │   Groups    3                                                              │
+#> │   Ratio     wellness over distress, log-normal interval                    │
+#> │                                                                            │
+#> │   group          wellness  interval        distress  interval        ratio │
+#> │   -------------  --------  --------------  --------  --------------  ----- │
+#> │   First Nations     50.20  [45.90, 54.50]     31.40  [27.40, 35.70]  1.599 │
+#> │   Métis             52.30  [47.60, 57.00]     28.40  [24.00, 33.10]  1.842 │
+#> │   Inuit             54.40  [45.70, 62.80]     25.20  [19.40, 31.80]  2.159 │
+#> │                                                                            │
+#> │   group          ratio interval                                            │
+#> │   -------------  --------------                                            │
+#> │   First Nations  [1.37, 1.87]                                              │
+#> │   Métis          [1.53, 2.21]                                              │
+#> │   Inuit          [1.61, 2.90]                                              │
+#> │                                                                            │
+#> │   A ratio above 1: more people report the wellness than the distress.      │
+#> │   3 of 3 groups have the whole interval above 1.                           │
+#> │                                                                            │
+#> │   Both estimates come from the same respondents and their covariance       │
+#> │   is not published: the interval treats them as independent.               │
+#> ╰────────────────────────────────────────────────────────────────────────────╯
 plot(dc)
+
+
+# your own table: made-up percentages for two communities, with limits
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 4),
+  item = rep(c("Hopeful", "Satisfied", "Rarely hopeful", "Low satisfaction"),
+             2),
+  pct = c(64, 71, 12, 18, 58, 66, 16, 22),
+  lo = c(59, 66, 9, 14, 52, 60, 12, 17),
+  hi = c(69, 76, 15, 22, 64, 72, 20, 27)
+)
+w <- welprof(own, "community", "item", "pct", "lo", "hi",
+             well = "Hopeful", distress = "Rarely hopeful")
+dualcont(w, "Hopeful", "Rarely hopeful")
+#> ╭── Dual continuum: wellness beside distress ─────────────────────────────────╮
+#> │   Wellness  Hopeful                                                         │
+#> │   Distress  Rarely hopeful                                                  │
+#> │   Groups    2                                                               │
+#> │   Ratio     wellness over distress, log-normal interval                     │
+#> │                                                                             │
+#> │   group      wellness  interval  distress  interval   ratio  ratio interval │
+#> │   ---------  --------  --------  --------  ---------  -----  -------------- │
+#> │   Lakeside         64  [59, 69]        12  [9, 15]    5.333  [4.08, 6.97]   │
+#> │   Riverbend        58  [52, 64]        16  [12, 20]   3.625  [2.75, 4.78]   │
+#> │                                                                             │
+#> │   A ratio above 1: more people report the wellness than the distress.       │
+#> │   2 of 2 groups have the whole interval above 1.                            │
+#> │                                                                             │
+#> │   Both estimates come from the same respondents and their covariance        │
+#> │   is not published: the interval treats them as independent.                │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```

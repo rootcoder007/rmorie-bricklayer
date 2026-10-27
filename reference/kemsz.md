@@ -75,5 +75,5 @@ nchar(ct) / 2 == kemsz(768)[["ciphertext"]]
 
 # an unknown level is an error, not a default
 try(kemsz(2048))
-#> Error : `level` must be one of 512, 768 or 1024
+#> Error : `lvl` must be one of 512, 768 or 1024
 ```

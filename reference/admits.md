@@ -31,7 +31,16 @@ admits(adp, alos, t = 365)
 ## Value
 
 A numeric scalar: the implied number of admissions over the period,
-\\\mathrm{adp} \times t / \mathrm{alos}\\. It is not rounded.
+\\\mathrm{adp} \times t / \mathrm{alos}\\. It is not rounded. It has
+class `c("rmbl_admits", "rmbl_measure", "numeric")` and an attribute
+`"lakner"` (`adp`, `alos` and `t`), so it prints as a box with its
+inputs, formula and caveats; arithmetic,
+[`round()`](https://rdrr.io/r/base/Round.html),
+[`sum()`](https://rdrr.io/r/base/sum.html),
+[`mean()`](https://rdrr.io/r/base/mean.html), `[`,
+[`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give a plain
+number.
 
 ## Details
 
@@ -62,11 +71,37 @@ round(alosimplied, 1)
 
 # and back again
 admits(25, alosimplied)
-#> [1] 1750
+#> ╭── Admissions implied by stock and stay ─────────────────────────────────────╮
+#> │   Admissions                1,750 over the period                           │
+#> │   Average daily population  25                                              │
+#> │   Average stay              5.214 days                                      │
+#> │   Period                    365 days                                        │
+#> │   Formula                   admits = adp x t / alos = 25 x 365 / 5.214      │
+#> │                                                                             │
+#> │   25 held on an average day, staying 5.214 days each, imply 1,750           │
+#> │   admissions over 365 days.                                                 │
+#> │                                                                             │
+#> │   Lakner (1976, p.18-20): adp = admissions x alos / t is exact only in      │
+#> │   a steady state; with a population growing or shrinking quickly the        │
+#> │   result is an approximation. It is not rounded.                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a 90-day quarter with 40 held on average and a 12-day average stay
 admits(40, 12, t = 90)
-#> [1] 300
+#> ╭── Admissions implied by stock and stay ─────────────────────────────────────╮
+#> │   Admissions                300 over the period                             │
+#> │   Average daily population  40                                              │
+#> │   Average stay              12 days                                         │
+#> │   Period                    90 days                                         │
+#> │   Formula                   admits = adp x t / alos = 40 x 90 / 12          │
+#> │                                                                             │
+#> │   40 held on an average day, staying 12 days each, imply 300 admissions     │
+#> │   over 90 days.                                                             │
+#> │                                                                             │
+#> │   Lakner (1976, p.18-20): adp = admissions x alos / t is exact only in      │
+#> │   a steady state; with a population growing or shrinking quickly the        │
+#> │   result is an approximation. It is not rounded.                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # an average stay of zero is refused
 try(admits(25, 0))

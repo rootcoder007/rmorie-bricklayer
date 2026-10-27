@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -186,13 +186,23 @@ association is still reported as real and the noise is not:</p>
 <span>  noiseb <span class="op">=</span> <span class="fu"><a href="../reference/cpsfals.html">cpsfals</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">b</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, trt <span class="op">=</span> <span class="st">"b"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/falsfam.html">falsfam</a></span><span class="op">(</span><span class="va">fam</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Family of 3, corrected by holm at alpha 0.05 ──────────────────</span></span>
-<span><span class="co">#&gt;   real                   p 0.005      adjusted 0.015      survives</span></span>
-<span><span class="co">#&gt;   noisea                 p 0.955      adjusted 1          </span></span>
-<span><span class="co">#&gt;   noiseb                 p 0.995      adjusted 1          </span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   at the permutation floor (more permutations would be needed to say more): real</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Family of 3, corrected by holm at alpha 0.05</span> ─────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Method       holm                                                         │</span></span>
+<span><span class="co">#&gt; │   Family size  3                                                            │</span></span>
+<span><span class="co">#&gt; │   Alpha        0.05                                                         │</span></span>
+<span><span class="co">#&gt; │   Survive      1                                                            │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   name        p  adjusted_p  survives                                       │</span></span>
+<span><span class="co">#&gt; │   ------  -----  ----------  --------                                       │</span></span>
+<span><span class="co">#&gt; │   real    0.005       0.015  survives                                       │</span></span>
+<span><span class="co">#&gt; │   noisea  0.955       1.000                                                 │</span></span>
+<span><span class="co">#&gt; │   noiseb  0.995       1.000                                                 │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   1 of 3 result(s) survive once the size of the family is counted.          │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   at the permutation floor (more permutations would be needed to say        │</span></span>
+<span><span class="co">#&gt; │   more): real                                                               │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>It also accepts bare p-values, which is what stops the smallest of
 several from being read as the finding:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -210,16 +220,16 @@ several from being read as the finding:</p>
 is the minimum strength of association an unmeasured confounder would
 need with both treatment and outcome to explain the result away:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>                       <span class="co"># needs a confounder associated by 3.41 with both</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span> <span class="co"># needs a confounder associated by 3.41 with both</span></span>
 <span><span class="co">#&gt; evlpoint </span></span>
 <span><span class="co">#&gt; 3.414214</span></span>
-<span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span>                     <span class="co"># a protective effect is inverted; same answer</span></span>
+<span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span> <span class="co"># a protective effect is inverted; same answer</span></span>
 <span><span class="co">#&gt; evlpoint </span></span>
 <span><span class="co">#&gt; 3.414214</span></span>
-<span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">2</span>, lo <span class="op">=</span> <span class="fl">0.9</span>, hi <span class="op">=</span> <span class="fl">4.4</span><span class="op">)</span>   <span class="co"># an interval that includes the null needs nothing</span></span>
+<span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">2</span>, lo <span class="op">=</span> <span class="fl">0.9</span>, hi <span class="op">=</span> <span class="fl">4.4</span><span class="op">)</span> <span class="co"># an interval that includes the null needs nothing</span></span>
 <span><span class="co">#&gt; evlpoint evllimit </span></span>
 <span><span class="co">#&gt; 3.414214 1.000000</span></span>
-<span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">3</span>, lo <span class="op">=</span> <span class="fl">2.1</span>, hi <span class="op">=</span> <span class="fl">4.3</span><span class="op">)</span>   <span class="co"># a strong result with a limit well above the null</span></span>
+<span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">3</span>, lo <span class="op">=</span> <span class="fl">2.1</span>, hi <span class="op">=</span> <span class="fl">4.3</span><span class="op">)</span> <span class="co"># a strong result with a limit well above the null</span></span>
 <span><span class="co">#&gt; evlpoint evllimit </span></span>
 <span><span class="co">#&gt; 5.449490 3.619868</span></span></code></pre></div>
 </div>

@@ -90,29 +90,42 @@ Errors: `output` not a single path to an existing file; `incgone` or
 # Offline: a results file whose only failure is a page that is gone
 # has nothing to send again, so no keys or network are used.
 f <- tempfile(fileext = ".jsonl")
-writeLines(c(
-  paste0('{"url":"https://example.org/","status":"saved",',
-         '"timestamp":"20260101120000",',
-         '"snapshot":"https://web.archive.org/web/20260101120000/https://example.org/",',
-         '"message":"","at":"2026-01-01T12:00:00Z"}'),
-  paste0('{"url":"https://example.org/old","status":"failed",',
-         '"message":"target server cannot find the page","at":"2026-01-01T12:00:00Z"}')
-), f)
+writeLines(
+  c(
+    paste0(
+      '{"url":"https://example.org/","status":"saved",',
+      '"timestamp":"20260101120000",',
+      '"snapshot":"https://web.archive.org/web/20260101120000/https://',
+      'example.org/",',
+      '"message":"","at":"2026-01-01T12:00:00Z"}'
+    ),
+    paste0(
+      '{"url":"https://example.org/old","status":"failed",',
+      '"message":"target server cannot find the ',
+      'page","at":"2026-01-01T12:00:00Z"}'
+    )
+  ),
+  f
+)
 res <- wbrtry(f, lookup = FALSE)
 res
-#> ── Wayback Machine captures ────────────────────────────────────── 
-#>   2 URLs: 1 saved, 0 existing, 1 failed
-#> 
-#>  status      timestamp                     url
-#>   saved 20260101120000    https://example.org/
-#>  failed           <NA> https://example.org/old
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Wayback Machine captures ─────────────────────────────────────────────────╮
+#> │   URLs  2 URLs: 1 saved, 0 existing, 1 failed                               │
+#> │                                                                             │
+#> │   status  timestamp       url                                               │
+#> │   ------  --------------  -----------------------                           │
+#> │   saved   20260101120000  https://example.org/                              │
+#> │   failed                  https://example.org/old                           │
+#> │                                                                             │
+#> │   Saved and existing URLs have a copy in the Wayback Machine at the         │
+#> │   timestamp shown; wbrtry() tries the failed ones again.                    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 attr(res, "retry")
 #>   failed found_by_lookup captured_again left_as_gone left_for_tomorrow
 #> 1      1               0              0            1                 0
 
 try(wbrtry(tempfile(fileext = ".jsonl")))
-#> Error : no results file at /tmp/RtmpshpHV7/file1f257d76a09c.jsonl
+#> Error : no results file at /tmp/Rtmp8mkWXN/file2197381417fb.jsonl
 
 # With failures to resend, keys and the network are needed.
 if (FALSE) { # interactive()

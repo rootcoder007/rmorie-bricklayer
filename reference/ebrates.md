@@ -86,17 +86,43 @@ mapping.
 # extreme; its shrunk one is not.
 ebrates(obs = c(30, 45, 2), expd = c(25, 50, 0.5),
          area = c("North", "South", "Tiny"))
-#>    area observed expected sir        eb shrinkage       nu    alpha
-#> 1 North       30     25.0 1.2 1.1073869 0.5141392 26.98066 26.45506
-#> 2 South       45     50.0 0.9 0.9414767 0.3460211 26.98066 26.45506
-#> 3  Tiny        2      0.5 4.0 1.0751472 0.9814506 26.98066 26.45506
+#> ╭── Empirical Bayes rates ────────────────────────────────────────────────╮
+#> │   Areas               3                                                 │
+#> │   Overall ratio       1.02                                              │
+#> │   Prior shape (nu)    26.98                                             │
+#> │   Prior rate (alpha)  26.46                                             │
+#> │   Method              gamma-Poisson, moments (Clayton and Kaldor 1987)  │
+#> │                                                                         │
+#> │   area   observed  expected    sir     eb  shrinkage                    │
+#> │   -----  --------  --------  -----  -----  ---------                    │
+#> │   North        30     25.00  1.200  1.107     0.5141                    │
+#> │   South        45     50.00  0.900  0.941     0.3460                    │
+#> │   Tiny          2      0.50  4.000  1.075     0.9815                    │
+#> │                                                                         │
+#> │   Each raw ratio (sir) is pulled toward the overall ratio; shrinkage is │
+#> │   the share of the pull (0 untouched, 1 replaced), largest for areas    │
+#> │   with small expected counts. Use eb for maps and rankings, stdinc()    │
+#> │   for each area's own evidence.                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # no variation beyond chance: every estimate is the overall ratio
 ebrates(c(10, 11, 9), c(10, 10, 10))
-#>   observed expected sir eb shrinkage nu alpha
-#> 1       10       10 1.0  1         1 NA    NA
-#> 2       11       10 1.1  1         1 NA    NA
-#> 3        9       10 0.9  1         1 NA    NA
+#> ╭── Empirical Bayes rates ────────────────────────────────────────────────╮
+#> │   Areas               3                                                 │
+#> │   Overall ratio       1                                                 │
+#> │   Prior shape (nu)    none                                              │
+#> │   Prior rate (alpha)  none                                              │
+#> │   Method              gamma-Poisson, moments (Clayton and Kaldor 1987)  │
+#> │                                                                         │
+#> │   observed  expected    sir  eb  shrinkage                              │
+#> │   --------  --------  -----  --  ---------                              │
+#> │         10        10  1.000   1          1                              │
+#> │         11        10  1.100   1          1                              │
+#> │          9        10  0.900   1          1                              │
+#> │                                                                         │
+#> │   The areas vary no more than chance would make them, so every estimate │
+#> │   is the overall ratio (shrinkage 1).                                   │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # one area has nothing to borrow from
 try(ebrates(5, 4))

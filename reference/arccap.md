@@ -157,19 +157,34 @@ archive.org/developers/ias3.html
 
 ``` r
 if (FALSE) { # interactive()
-# save from your own connection to archive.rmorie.com and the Wayback Machine at once
+# save from your own connection to archive.rmorie.com and the Wayback Machine
+# at once
 src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
-cap <- arccap(src, file.path(tempdir(), "cap"),
-              upload = c("rmorie", "wayback"),
-              reason = "Custody table cited in chapter 3")
+cap <- arccap(
+  src,
+  file.path(tempdir(), "cap"),
+  upload = c("rmorie", "wayback"),
+  reason = "Custody table cited in chapter 3"
+)
 cap$archive
 w <- wbsave(urls)
 lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
-meta <- list(title = "Statistics Canada tables (captures)",
-             creator = "Statistics Canada", licenseurl = lic)
-cap <- arccap(w, file.path(tempdir(), "capture"),
-                       item = "my-statcan-tables-2026", meta = meta)
-fetchvrf(cap$url[1], tempfile(), sha256 = cap$sha256[1],
-               mirrors = cap$mirror[1])
+meta <- list(
+  title = "Statistics Canada tables (captures)",
+  creator = "Statistics Canada",
+  licenseurl = lic
+)
+cap <- arccap(
+  w,
+  file.path(tempdir(), "capture"),
+  item = "my-statcan-tables-2026",
+  meta = meta
+)
+fetchvrf(
+  cap$url[1],
+  tempfile(),
+  sha256 = cap$sha256[1],
+  mirrors = cap$mirror[1]
+)
 }
 ```

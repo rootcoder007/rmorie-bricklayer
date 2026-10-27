@@ -71,25 +71,50 @@ Catalogue no. 98-304-X.
 ``` r
 p <- cnsprof(indiex("censuspop"))
 head(p[p$characteristic == "Foster children" & p$geo == "Canada", ])
-#>       geo          dguid  geolvl                           residence
-#> 5  Canada 2021A000011124 Country Total - Residence on or off reserve
-#> 27 Canada 2021A000011124 Country                          On reserve
-#> 49 Canada 2021A000011124 Country                         Off reserve
-#> 71 Canada 2021A000011124 Country Total - Residence on or off reserve
-#> 82 Canada 2021A000011124 Country                          On reserve
-#> 93 Canada 2021A000011124 Country                         Off reserve
-#>            gender                age chaid  characteristic level parid rootid
-#> 5  Total - Gender Total - Age groups    38 Foster children     2    37     13
-#> 27 Total - Gender Total - Age groups    38 Foster children     2    37     13
-#> 49 Total - Gender Total - Age groups    38 Foster children     2    37     13
-#> 71 Total - Gender      0 to 14 years    38 Foster children     2    37     13
-#> 82 Total - Gender      0 to 14 years    38 Foster children     2    37     13
-#> 93 Total - Gender      0 to 14 years    38 Foster children     2    37     13
-#>    sample group value quality tnrsf tnrlf
-#> 5     25% Total 43535      ok   3.1   4.3
-#> 27    25% Total  3100      ok   3.1   4.3
-#> 49    25% Total 40435      ok   3.1   4.3
-#> 71    25% Total 27535      ok   3.1   4.3
-#> 82    25% Total  2455      ok   3.1   4.3
-#> 93    25% Total 25080      ok   3.1   4.3
+#> ╭── Indigenous Population Profile, tidied ────────────────────────────────────╮
+#> │   Edition          2021 Census of Population (DGUID vintage)                │
+#> │   Rows             6                                                        │
+#> │   Geographies      Canada                                                   │
+#> │   Groups           Total                                                    │
+#> │   Characteristics  1                                                        │
+#> │   Samples          25%                                                      │
+#> │   Quality          ok 6                                                     │
+#> │   Non-response     short form 3.1%; long form 4.3%                          │
+#> │                                                                             │
+#> │   geo     dguid           geolvl   residence                                │
+#> │   ------  --------------  -------  -----------------------------------      │
+#> │   Canada  2021A000011124  Country  Total - Residence on or off reserve      │
+#> │   Canada  2021A000011124  Country  On reserve                               │
+#> │   Canada  2021A000011124  Country  Off reserve                              │
+#> │   Canada  2021A000011124  Country  Total - Residence on or off reserve      │
+#> │   Canada  2021A000011124  Country  On reserve                               │
+#> │   Canada  2021A000011124  Country  Off reserve                              │
+#> │                                                                             │
+#> │   geo     gender          age                 group  chaid  characteristic  │
+#> │   ------  --------------  ------------------  -----  -----  --------------- │
+#> │   Canada  Total - Gender  Total - Age groups  Total     38  Foster children │
+#> │   Canada  Total - Gender  Total - Age groups  Total     38  Foster children │
+#> │   Canada  Total - Gender  Total - Age groups  Total     38  Foster children │
+#> │   Canada  Total - Gender  0 to 14 years       Total     38  Foster children │
+#> │   Canada  Total - Gender  0 to 14 years       Total     38  Foster children │
+#> │   Canada  Total - Gender  0 to 14 years       Total     38  Foster children │
+#> │                                                                             │
+#> │   geo     level  parid  rootid  value   sample  quality  tnrsf  tnrlf       │
+#> │   ------  -----  -----  ------  ------  ------  -------  -----  -----       │
+#> │   Canada      2     37      13  43,535  25%     ok       3.100  4.300       │
+#> │   Canada      2     37      13   3,100  25%     ok       3.100  4.300       │
+#> │   Canada      2     37      13  40,435  25%     ok       3.100  4.300       │
+#> │   Canada      2     37      13  27,535  25%     ok       3.100  4.300       │
+#> │   Canada      2     37      13   2,455  25%     ok       3.100  4.300       │
+#> │   Canada      2     37      13  25,080  25%     ok       3.100  4.300       │
+#> │                                                                             │
+#> │   6 values of 1 characteristics in 1 geographies.                           │
+#> │   None carries a quality flag.                                              │
+#> │                                                                             │
+#> │   One row per geography, group and characteristic: the value with its       │
+#> │   level and parent in the profile's hierarchy, ready for profshr().         │
+#> │   Counts are randomly rounded to multiples of 5 (10 below 10).              │
+#> │   Statistics Canada suppresses an area whose long-form non-response         │
+#> │   is 50% or more; a high rate means a larger error than the sample.         │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```

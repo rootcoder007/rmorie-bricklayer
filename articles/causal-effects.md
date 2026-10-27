@@ -68,7 +68,18 @@ Or, without signing in, from Rajeev Dehejia’s own pages
 
 ``` r
 
-cols <- c("treat", "age", "educ", "black", "hisp", "married", "nodegree", "re74", "re75", "re78")
+cols <- c(
+  "treat",
+  "age",
+  "educ",
+  "black",
+  "hisp",
+  "married",
+  "nodegree",
+  "re74",
+  "re75",
+  "re78"
+)
 nber <- function(f) {
   dest <- file.path(tempdir(), f)
   bldl(paste0("https://users.nber.org/~rdehejia/data/", f), dest)
@@ -97,8 +108,8 @@ observational sample:
 x <- c("age", "educ", "black", "hisp", "married", "nodegree", "re74", "re75")
 exp <- rbind(tr, ct)
 obs <- rbind(tr, ps)
-mean(tr$re78) - mean(ct$re78)                 # the experiment
-mean(tr$re78) - mean(ps$re78)                 # treated against the PSID, unadjusted
+mean(tr$re78) - mean(ct$re78) # the experiment
+mean(tr$re78) - mean(ps$re78) # treated against the PSID, unadjusted
 plrcf(exp, "re78", "treat", x)
 plrcf(obs, "re78", "treat", x)
 plrcf(obs, "re78", "treat", x, kfol = 10, seed = 2)
@@ -145,10 +156,26 @@ d$t <- rbinom(n, 1, plogis(-2 + 0.04 * d$age + 0.5 * d$income))
 d$y <- 10 + 3 * d$t + 0.2 * d$age + d$income + rnorm(n)
 fit <- aipwcf(d, "y", "t", c("age", "income"), lrn = "ols")
 fit
-#> Cross-fitted AIPW, ATE: 1500 rows, 684 treated
-#>  estimate      se lower upper p_value
-#>     3.071 0.05606 2.961 3.181       0
-#> Propensities from 0.086 to 0.903; 0 clipped
+#> ╭── Cross-fitted AIPW ────────────────────────────────────────────────────╮
+#> │   Estimand          ATE                                                 │
+#> │   Rows              1,500                                               │
+#> │   Treated           684                                                 │
+#> │   Propensity range  [0.0856, 0.9030]                                    │
+#> │   Clipped at        0.01                                                │
+#> │   Clipped           0                                                   │
+#> │   Variance          influence function                                  │
+#> │   Confidence        95%                                                 │
+#> │                                                                         │
+#> │   estimand  estimate       se  95% CI          p_value                  │
+#> │   --------  --------  -------  --------------  -------                  │
+#> │   ATE          3.071  0.05606  [2.961, 3.181]  < 0.001                  │
+#> │                                                                         │
+#> │   The ATE is 3.071 (95% interval [2.961, 3.181]): the interval excludes │
+#> │   0, so the data distinguish it from no effect.                         │
+#> │                                                                         │
+#> │   Outcome and propensity models are fitted out of fold; the estimate is │
+#> │   consistent if either is right.                                        │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 plot(fit)
 ```
 

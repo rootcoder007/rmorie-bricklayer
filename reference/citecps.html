@@ -15,7 +15,7 @@ licence that were actually pinned."><meta property="og:image" content="https://r
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,25 +83,32 @@ or <code>NULL</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>text</code> and <code>bibtex</code>, each a length-1
 character string (the BibTeX entry has embedded newlines), or <code>NULL</code>
-if <code>provenance</code> is <code>NULL</code>.</p>
+if <code>provenance</code> is <code>NULL</code>.
+The list has class <code>c("rmbl_citation", "list")</code>, which only changes
+how it prints (a box); its elements, and the JSON written from it, are
+those of a plain list.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The fields used, with their fallbacks:</p><ul><li><p>author: <code>dataset$publisher</code>, else <code>"Unknown publisher"</code>;</p></li>
-<li><p>title: <code>resource$name</code>, else <code>dataset$package_slug</code>, else
-<code>"Untitled dataset"</code>;</p></li>
-<li><p>year: the first four characters of <code>captured_at_utc</code>, else the current
-year; retrieval date: its first ten characters (omitted if absent);</p></li>
-<li><p>link: <code>https://doi.org/&lt;dataset$doi&gt;</code> if a DOI is recorded, else
-<code>resource$direct_url</code>, else <code>dataset$catalogue_page</code>;</p></li>
-<li><p>licence: <code>dataset$licence_short</code>, else <code>dataset$licence_name</code>.</p></li>
-</ul><p>The text form is
-<code>Publisher (year). Title [Data set]. link Retrieved date. Licence: x.</code>
-The BibTeX key is the package slug with non-alphanumeric characters
-removed, followed by the year. In the BibTeX entry the licence is written
-in the <code>note</code> field only when a retrieval date is present. No
-character in the fields is escaped for LaTeX. Error: <code>prov</code>
-that is not a list.</p>
+    <p>The fields used, with their fallbacks:</p><ul><li><p>author:
+<code>dataset$publisher</code>, else <code>"Unknown publisher"</code>;</p></li>
+<li><p>title:
+<code>resource$name</code>, else <code>dataset$package_slug</code>, else <code>"Untitled
+dataset"</code>;</p></li>
+<li><p>year: the first four characters of <code>captured_at_utc</code>,
+else the current year; retrieval date: its first ten characters (omitted if
+absent);</p></li>
+<li><p>link: <code>https://doi.org/&lt;dataset$doi&gt;</code> if a DOI is
+recorded, else <code>resource$direct_url</code>, else
+<code>dataset$catalogue_page</code>;</p></li>
+<li><p>licence: <code>dataset$licence_short</code>,
+else <code>dataset$licence_name</code>.</p></li>
+</ul><p>The text form is <code>Publisher (year).
+Title [Data set]. link Retrieved date. Licence: x.</code> The BibTeX key is the
+package slug with non-alphanumeric characters removed, followed by the year.
+In the BibTeX entry the licence is written in the <code>note</code> field only when
+a retrieval date is present. No character in the fields is escaped for LaTeX.
+Error: <code>prov</code> that is not a list.</p>
     </div>
 
     <div class="section level2">

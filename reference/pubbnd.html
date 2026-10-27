@@ -25,7 +25,7 @@ carry the interval through a difference, a percent change or a rate.'><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -153,7 +153,8 @@ exact (lower = upper = value).</p>
 <p>Text cells are trimmed, and thousands separators (commas) are removed
 before they are read as numbers. A missing value (<code>NA</code>) that is not a
 suppression mark gets status <code>"missing"</code> and <code>NA</code> bounds.</p>
-<p>Errors: <code>rnd</code> not a positive number; an unknown
+<p>Errors: <code>rnd</code> not one positive finite number; a negative or
+infinite count in <code>x</code>; an unknown
 <code>rndkind</code>; a text cell that is neither a number nor a
 suppression mark (the message lists the cells); a suppressed cell with no
 limit (neither <code>"&lt;k"</code> nor <code>suplim</code>).</p>
@@ -167,28 +168,65 @@ limit (neither <code>"&lt;k"</code> nor <code>suplim</code>).</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">pubbnd</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">35</span>, <span class="fl">0</span><span class="op">)</span>, rnd <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   value lower upper  status</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   120 117.5 122.5 rounded</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    35  32.5  37.5 rounded</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3     0   0.0   2.5 rounded</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Publication bounds</span> ───────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cells     3: 0 exact, 3 rounded, 0 suppressed, 0 missing                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rounding  to 5 (nearest)                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   value   lower   upper  status                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  ------  ------  -------                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     120  117.50  122.50  rounded                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      35   32.50   37.50  rounded                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       0    0.00    2.50  rounded                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each published number stands for the range of true counts that could      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   have produced it; a later comparison has to hold across it.               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu">pubbnd</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"120"</span>, <span class="st">"x"</span>, <span class="st">"&lt;5"</span><span class="op">)</span>, rnd <span class="op">=</span> <span class="fl">5</span>,</span></span>
 <span class="r-in"><span>                 suplim <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   value lower upper     status</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   120 117.5 122.5    rounded</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    NA   0.0   4.0 suppressed</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    NA   0.0   4.0 suppressed</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Publication bounds</span> ───────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cells              3: 0 exact, 1 rounded, 2 suppressed, 0 missing         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rounding           to 5 (nearest)                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Suppression limit  5                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   value  lower    upper  status                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  -----  -------  ----------                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     120  117.5  122.500  rounded                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │            0.0    4.000  suppressed                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │            0.0    4.000  suppressed                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each published number stands for the range of true counts that could      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   have produced it; a later comparison has to hold across it.               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="co"># random rounding to base 5 is wider than rounding to the nearest 5</span></span></span>
 <span class="r-in"><span><span class="fu">pubbnd</span><span class="op">(</span><span class="fl">15</span>, rnd <span class="op">=</span> <span class="fl">5</span>, rndkind <span class="op">=</span> <span class="st">"random"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   value lower upper  status</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    15    11    19 rounded</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Publication bounds</span> ───────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cells     1: 0 exact, 1 rounded, 0 suppressed, 0 missing                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rounding  to 5 (random)                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   value  lower  upper  status                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  -----  -----  -------                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      15     11     19  rounded                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each published number stands for the range of true counts that could      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   have produced it; a later comparison has to hold across it.               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># thousands separators and a custom suppression mark</span></span></span>
 <span class="r-in"><span><span class="fu">pubbnd</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1,200"</span>, <span class="st">"--"</span>, <span class="st">"&lt;10"</span><span class="op">)</span>, suplim <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>                 supmar <span class="op">=</span> <span class="st">"--"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   value lower upper     status</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1200  1200  1200      exact</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    NA     0     9 suppressed</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    NA     0     9 suppressed</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Publication bounds</span> ───────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cells              3: 1 exact, 0 rounded, 2 suppressed, 0 missing         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Suppression limit  10                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   value  lower  upper  status                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  -----  -----  ----------                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   1,200  1,200  1,200  exact                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │              0      9  suppressed                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │              0      9  suppressed                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each published number stands for the range of true counts that could      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   have produced it; a later comparison has to hold across it.               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a suppressed cell needs a limit</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">pubbnd</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"120"</span>, <span class="st">"x"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

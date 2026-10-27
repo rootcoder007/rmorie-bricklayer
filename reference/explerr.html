@@ -21,7 +21,7 @@ to do."><meta property="og:image" content="https://rootcoder007.github.io/rmorie
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,18 +107,18 @@ this one sets for its own command line.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with at most <code>n</code> rows, best match first, and the
-character columns <code>package</code>, <code>raised_by</code>
-(the function whose code raises it), <code>exported</code> (the exported
-functions that reach it, separated by commas), <code>kind</code> (<code>"error"</code> or
-<code>"warning"</code>), <code>message</code> (the message as written, with
-<code>...</code> where a value goes) and <code>match</code> (<code>"exact"</code> or the share
-of its words found, such as <code>"80% of its words"</code>). No rows when the
-message is not one of these packages' own: it came from another package
-or from R, and <code><a href="llmask.html">llmask</a></code> can help with it.
-For a data frame of check rows: one row per failed check, with the
-columns <code>check</code>, <code>detail</code>, <code>explanation</code> (what the
-failure means and what to do) and <code>raised_by</code> (<code>pkg::fn</code>
-when the detail is a message of these packages, else <code>NA</code>).</p>
+character columns <code>package</code>, <code>raised_by</code> (the function whose code
+raises it), <code>exported</code> (the exported functions that reach it,
+separated by commas), <code>kind</code> (<code>"error"</code> or <code>"warning"</code>),
+<code>message</code> (the message as written, with <code>...</code> where a value goes)
+and <code>match</code> (<code>"exact"</code> or the share of its words found, such as
+<code>"80% of its words"</code>). No rows when the message is not one of these
+packages' own: it came from another package or from R, and
+<code><a href="llmask.html">llmask</a></code> can help with it. For a data frame of check rows: one
+row per failed check, with the columns <code>check</code>, <code>detail</code>,
+<code>explanation</code> (what the failure means and what to do) and
+<code>raised_by</code> (<code>pkg::fn</code> when the detail is a message of these
+packages, else <code>NA</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -134,18 +134,17 @@ watching an interactive session and the answer cache is on, also saved as
 an <code>.rds</code> file in the answer-cache directory.</p>
 <p>The answer-cache directory is the one <code><a href="https://rdrr.io/r/tools/userdir.html" class="external-link">tools::R_user_dir()</a></code> gives for
 <code>"rmoriebricklayer"</code> and <code>"cache"</code>, or the one the
-<code>rmoriebricklayer.llmcachedir</code> option names when it is set. The cache is off under
-<code>options(morie.quiet = TRUE)</code>, <code>MORIE_LLM_CACHE=off</code>, tests and
-<code>R CMD check</code>.</p>
-<p>The message is cleaned first: an “Error in f(x) :” or “Warning message:”
-prefix is dropped, curly quotes become straight ones and white space is
-collapsed. A template that matches the start of the message as a regular
-expression is an exact match and ranks first (longer templates before
-shorter ones). Otherwise a template scores
-\(0.6 h / |m| + 0.4 h / |t|\), where \(h\) is the number of shared
-words (three letters or more, common words left out, at least two
-needed), \(|m|\) the words of the message and \(|t|\) those of the
-template; scores of 0.55 and above are kept.</p>
+<code>rmoriebricklayer.llmcachedir</code> option names when it is set. The cache is
+off under <code>options(morie.quiet = TRUE)</code>, <code>MORIE_LLM_CACHE=off</code>,
+tests and <code>R CMD check</code>.</p>
+<p>The message is cleaned first: an “Error in f(x) :” or “Warning
+message:” prefix is dropped, curly quotes become straight ones and white
+space is collapsed. A template that matches the start of the message as a
+regular expression is an exact match and ranks first (longer templates before
+shorter ones). Otherwise a template scores \(0.6 h / |m| + 0.4 h / |t|\),
+where \(h\) is the number of shared words (three letters or more, common
+words left out, at least two needed), \(|m|\) the words of the message and
+\(|t|\) those of the template; scores of 0.55 and above are kept.</p>
 <p>Errors: <code>msg</code> that is not character text, a condition or a data
 frame with the columns <code>check</code>, <code>ok</code> and <code>detail</code>;
 <code>n</code> not a whole number of 1 or more; <code>pkgs</code> that are not
@@ -158,28 +157,31 @@ installed.</p>
 <span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="va">msg</span>, pkgs <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>            package         raised_by</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 rmoriebricklayer     .rmbl_string1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 rmoriebricklayer .rmbl_fips_scheme</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 rmoriebricklayer        usecpstmpl</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 rmoriebricklayer     .bl_tmpl_name</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 rmoriebricklayer .rmbl_fips_scheme</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                        exported  kind</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1            llmask, agentbndl, anltab, arccap, arcfind, arcget error</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 blcli, capsule_sign, cpsatst, cpsbndl, cpsbndlvrf, cpschkatst error</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3                                           rmblapp, usecpstmpl error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2                                    blcli, rmblapp, usecpstmpl error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 blcli, capsule_sign, cpsatst, cpsbndlvrf, cpschkatst, cpssign error</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                      message            match</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1    `...` must be a single non-empty string            exact</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 `scheme` must be a single non-empty string 80% of its words</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   `name` must be a single non-empty string 80% of its words</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   `name` must be a single non-empty string 80% of its words</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 `scheme` must be a single non-empty string 80% of its words</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a condition object</span></span></span>
 <span class="r-in"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span><span class="fu"><a href="kemsz.html">kemsz</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span>, error <span class="op">=</span> <span class="va">identity</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="va">e</span>, n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>            package       raised_by                         exported  kind</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 rmoriebricklayer .rmbl_kem_level kemdecap, kemencap, kemkg, kemsz error</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                   message match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 `level` must be one of 512, 768 or 1024 exact</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 rmoriebricklayer .rmbl_kem_level kemkg, kemsz, kemdecap, kemencap error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                 message match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 `...` must be one of 512, 768 or 1024 exact</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the failed rows of a capsule check</span></span></span>
-<span class="r-in"><span><span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>check <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"data_present"</span>, <span class="st">"data_sha256"</span><span class="op">)</span>, ok <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                   detail <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"d.csv"</span>, <span class="st">"expected 01..., got 9c..."</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  check <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"data_present"</span>, <span class="st">"data_sha256"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  ok <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  detail <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"d.csv"</span>, <span class="st">"expected 01..., got 9c..."</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="va">rows</span><span class="op">)</span><span class="op">$</span><span class="va">explanation</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "the data file's bytes differ from the pinned SHA-256: restore the file, or pin the new bytes with cpsrfrsh() (rmbl refresh)"</span>
 <span class="r-in"><span></span></span>
@@ -187,12 +189,17 @@ installed.</p>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">explerr</span><span class="op">(</span><span class="va">msg</span>, n <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `n` must be a whole number of 1 or more</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
-<span class="r-in"><span><span class="co"># an error caught with try(), and the message as R prints it, with the call in front</span></span></span>
+<span class="r-in"><span><span class="co"># an error caught with try(), and the message as R prints it, with the call</span></span></span>
+<span class="r-in"><span><span class="co"># in front</span></span></span>
 <span class="r-in"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu"><a href="llmcfg.html">llmcfg</a></span><span class="op">(</span>no.such <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="va">r</span>, pkgs <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="st">"Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks"</span>,</span></span>
-<span class="r-in"><span>  n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="st">"Error in mrkprf(x, 9) : `index` must be between 1 and the number "</span>,</span></span>
+<span class="r-in"><span>    <span class="st">"of chunks"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  n <span class="op">=</span> <span class="fl">1</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a message retyped from memory</span></span></span>
 <span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="st">"index between number chunks"</span>, n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>

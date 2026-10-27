@@ -79,7 +79,7 @@ aipwcf(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the interval (default 0.95).
 
 ## Value
 
@@ -156,10 +156,26 @@ d$belong <- rbinom(n, 1, plogis(-2 + 0.03 * d$age + 0.2 * log(d$income)))
 d$wellbeing <- 50 + 5 * d$belong + 0.2 * d$age + 2 * log(d$income) +
   rnorm(n, 0, 8)
 aipwcf(d, "wellbeing", "belong", c("age", "income"), lrn = "ols")
-#> Cross-fitted AIPW, ATE: 800 rows, 616 treated
-#>  estimate     se lower upper   p_value
-#>     6.207 0.7542 4.729 7.685 1.884e-16
-#> Propensities from 0.542 to 0.929; 0 clipped
+#> ╭── Cross-fitted AIPW ────────────────────────────────────────────────────╮
+#> │   Estimand          ATE                                                 │
+#> │   Rows              800                                                 │
+#> │   Treated           616                                                 │
+#> │   Propensity range  [0.542, 0.929]                                      │
+#> │   Clipped at        0.01                                                │
+#> │   Clipped           0                                                   │
+#> │   Variance          influence function                                  │
+#> │   Confidence        95%                                                 │
+#> │                                                                         │
+#> │   estimand  estimate      se  95% CI          p_value                   │
+#> │   --------  --------  ------  --------------  -------                   │
+#> │   ATE          6.207  0.7542  [4.729, 7.685]  < 0.001                   │
+#> │                                                                         │
+#> │   The ATE is 6.207 (95% interval [4.729, 7.685]): the interval excludes │
+#> │   0, so the data distinguish it from no effect.                         │
+#> │                                                                         │
+#> │   Outcome and propensity models are fitted out of fold; the estimate is │
+#> │   consistent if either is right.                                        │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 # with 50 bootstrap replicate weights: one fit, the replicate standard error
 d$w <- runif(n, 0.5, 2)
 reps <- sapply(1:50, function(b) d$w * rpois(n, 1))
@@ -168,9 +184,25 @@ d <- cbind(d, reps)
 des <- svydes(d, w = "w", reps = colnames(reps))
 aipwcf(d, "wellbeing", "belong", c("age", "income"), lrn = "ols",
               des = des)
-#> Cross-fitted AIPW, ATE: 800 rows, 616 treated
-#>  estimate   se lower upper   p_value
-#>     5.772 0.76 4.245 7.299 8.007e-10
-#> Propensities from 0.542 to 0.929; 0 clipped
-#> Standard error from the survey design (bootstrap), one fit
+#> ╭── Cross-fitted AIPW ────────────────────────────────────────────────────╮
+#> │   Estimand          ATE                                                 │
+#> │   Rows              800                                                 │
+#> │   Treated           616                                                 │
+#> │   Propensity range  [0.542, 0.929]                                      │
+#> │   Clipped at        0.01                                                │
+#> │   Clipped           0                                                   │
+#> │   Variance          bootstrap                                           │
+#> │   Confidence        95%                                                 │
+#> │                                                                         │
+#> │   estimand  estimate      se  95% CI          p_value                   │
+#> │   --------  --------  ------  --------------  -------                   │
+#> │   ATE          5.772  0.7600  [4.245, 7.299]  < 0.001                   │
+#> │                                                                         │
+#> │   The ATE is 5.772 (95% interval [4.245, 7.299]): the interval excludes │
+#> │   0, so the data distinguish it from no effect.                         │
+#> │                                                                         │
+#> │   Outcome and propensity models are fitted out of fold; the estimate is │
+#> │   consistent if either is right.                                        │
+#> │   Standard error from the survey design (bootstrap), one fit.           │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```

@@ -15,7 +15,8 @@ frmaud(x)
 - x:
 
   A
-  [`welprof`](https://rootcoder007.github.io/rmorie-bricklayer/reference/welprof.md).
+  [`welprof`](https://rootcoder007.github.io/rmorie-bricklayer/reference/welprof.md)
+  result, whose rows are counted by side.
 
 ## Value
 
@@ -50,12 +51,71 @@ Research Methodology. Left Coast Press.
 
 ``` r
 wb <- indiex("wellbeing")
-w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
-                      well = "Always or often has a hopeful outlook",
-                      distress = c("Rarely or never has a hopeful outlook",
-                                   "Life satisfaction rating between 0 and 5",
-                                   "Fair or poor perceived health"))
+w <- welprof(
+  wb,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  well = "Always or often has a hopeful outlook",
+  distress = c(
+    "Rarely or never has a hopeful outlook",
+    "Life satisfaction rating between 0 and 5",
+    "Fair or poor perceived health"
+  )
+)
 frmaud(w)
-#> 75% of the indicators reported are deficit-framed.
-#> Most of this report measures disparity or deficit; pair each with a strength-framed level.
+#> ╭── Framing audit ────────────────────────────────────────────────────╮
+#> │   Groups               3                                            │
+#> │   Wellness indicators  3                                            │
+#> │   Distress indicators  9                                            │
+#> │   Deficit-framed       75%                                          │
+#> │                                                                     │
+#> │   By group (shrdef: the deficit-framed share)                       │
+#> │   group          wellness  distress  shrdef                         │
+#> │   -------------  --------  --------  ------                         │
+#> │   First Nations         1         3  0.7500                         │
+#> │   Métis                 1         3  0.7500                         │
+#> │   Inuit                 1         3  0.7500                         │
+#> │                                                                     │
+#> │   75% of the indicators reported are deficit-framed.                │
+#> │   Most of this report measures disparity or deficit;                │
+#> │   pair each with a strength-framed level.                           │
+#> │                                                                     │
+#> │   Walter (2016): statistics about Indigenous peoples cluster around │
+#> │   disparity, deprivation, disadvantage, dysfunction and difference. │
+#> │   This audits the report, not the people it describes.              │
+#> ╰─────────────────────────────────────────────────────────────────────╯
+
+# your own table: made-up percentages for two communities, with limits
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 4),
+  item = rep(c("Hopeful", "Satisfied", "Rarely hopeful", "Low satisfaction"),
+             2),
+  pct = c(64, 71, 12, 18, 58, 66, 16, 22),
+  lo = c(59, 66, 9, 14, 52, 60, 12, 17),
+  hi = c(69, 76, 15, 22, 64, 72, 20, 27)
+)
+frmaud(welprof(own, "community", "item", "pct", "lo", "hi",
+               well = c("Hopeful", "Satisfied"),
+               distress = c("Rarely hopeful", "Low satisfaction")))
+#> ╭── Framing audit ────────────────────────────────────────────────────╮
+#> │   Groups               2                                            │
+#> │   Wellness indicators  4                                            │
+#> │   Distress indicators  4                                            │
+#> │   Deficit-framed       50%                                          │
+#> │                                                                     │
+#> │   By group (shrdef: the deficit-framed share)                       │
+#> │   group      wellness  distress  shrdef                             │
+#> │   ---------  --------  --------  ------                             │
+#> │   Lakeside          2         2  0.5000                             │
+#> │   Riverbend         2         2  0.5000                             │
+#> │                                                                     │
+#> │   50% of the indicators reported are deficit-framed.                │
+#> │                                                                     │
+#> │   Walter (2016): statistics about Indigenous peoples cluster around │
+#> │   disparity, deprivation, disadvantage, dysfunction and difference. │
+#> │   This audits the report, not the people it describes.              │
+#> ╰─────────────────────────────────────────────────────────────────────╯
 ```

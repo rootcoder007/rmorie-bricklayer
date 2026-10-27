@@ -69,18 +69,28 @@ yoypals()
 # use one of them when printing a change table
 d <- data.frame(year = 2019:2023, n = c(40, 46, 38, 52, 49))
 print(yoy(d, value = "n", prd = "year"), palette = "safe", color = FALSE)
-#> year  n   previous  change  change %  interval     
-#> ────  ──  ────────  ──────  ────────  ─────────────
-#> 2019  40  —         —         —       —            
-#>     ↳ note: no comparison period
-#> 2020  46  40        6       ▲ +15.0%  [-26%, +80%] 
-#> 2021  38  46        -8      ▼ -17.4%  [-48%, +30%] 
-#> 2022  52  38        14      ▲ +36.8%  [-12%, +114%]
-#> 2023  49  52        -3      ▼ -5.8%   [-38%, +42%] 
-#> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval
+#> ╭── Change in n by year ──────────────────────────────────────────────────────╮
+#> │   Rows    5                                                                 │
+#> │   Change  in percent                                                        │
+#> │   Better  not set (direction neutral): the colour shows no verdict          │
+#> │                                                                             │
+#> │   year  n   previous  change  change %  interval                            │
+#> │   ────  ──  ────────  ──────  ────────  ─────────────                       │
+#> │   2019  40  —         —         —       —                                   │
+#> │   2020  46  40        6       ▲ +15.0%  [-26%, +80%]                        │
+#> │   2021  38  46        -8      ▼ -17.4%  [-48%, +30%]                        │
+#> │   2022  52  38        14      ▲ +36.8%  [-12%, +114%]                       │
+#> │   2023  49  52        -3      ▼ -5.8%   [-38%, +42%]                        │
+#> │                                                                             │
+#> │   Note: the first period has nothing to compare with, so it shows no        │
+#> │   change.                                                                   │
+#> │                                                                             │
+#> │   lag 1 period                                                              │
+#> │   units: count                                                              │
+#> │   95% exact rate-ratio interval                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a name that is not a palette is refused
 try(print(yoy(d, value = "n", prd = "year"), palette = "rainbow"))
-#> Error : print: `palette` must be one of "diverging", "safe", "mono", not "rainbow"
+#> Error : format: `palette` must be one of "diverging", "safe", "mono", not "rainbow"
 ```

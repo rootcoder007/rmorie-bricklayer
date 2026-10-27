@@ -78,30 +78,20 @@ local corpus; cited from the published paper.)
 ``` r
 tbl <- rbind(c(120, 80), c(40, 160))
 cramerv(tbl)
-#> $v
-#> [1] 0.4056758
-#> 
-#> $chisq
-#> [1] 66.66667
-#> 
-#> $df
-#> [1] 1
-#> 
-#> $p_value
-#> [1] 3.215263e-16
-#> 
-#> $n
-#> [1] 400
-#> 
-#> $minexp
-#> [1] 80
-#> 
-#> $cellsbelow
-#> [1] 0
-#> 
-#> $method
-#> [1] "chi-square approximation"
-#> 
+#> ╭── Cramer's V ──────────────────────────────────────────────────────────╮
+#> │   Cramer's V           0.4057                                          │
+#> │   Chi-square           66.67                                           │
+#> │   df                   1                                               │
+#> │   p-value              < 0.001                                         │
+#> │   Observations         400                                             │
+#> │   Smallest expected    80                                              │
+#> │   Cells below minimum  0                                               │
+#> │   Method               chi-square approximation                        │
+#> │                                                                        │
+#> │   V = 0.4057 on a scale from 0 (the row says nothing about the column) │
+#> │   to 1 (the row fixes the column); an association this strong is       │
+#> │   unlikely to be chance (p < 0.001).                                   │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # No association gives a V near zero.
 cramerv(rbind(c(100, 100), c(100, 100)))$v

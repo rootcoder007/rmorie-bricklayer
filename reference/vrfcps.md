@@ -164,14 +164,25 @@ writeLines(tojs(prov, auto_unbox = TRUE),
 vrfcps(dir)$ok
 #> [1] TRUE
 vrfcps(dir)
-#> Capsule verification: intact (7 of 7 checks passed)
-#>   ok    provenance_readable  /tmp/RtmpshpHV7/capsule-example/data_provenance.json
-#>   ok    data_present         /tmp/RtmpshpHV7/capsule-example/d.csv
-#>   ok    data_sha256          da4aaa3a009d063f36d0515f2b50a11bcc578264aa7c45504b46fedbbae4f8f7
-#>   ok    data_readable        /tmp/RtmpshpHV7/capsule-example/d.csv
-#>   ok    data_row_count       3 rows on disk
-#>   ok    schema_valid         
-#>   ok    data_not_synthetic   no synthetic marker: sidecar, manifest and provenance all say real data
+#> ╭── Capsule verification ─────────────────────────────────────────────────────╮
+#> │ ✔ VERIFIED  · 7 of 7 checks passed                                          │
+#> │                                                                             │
+#> │   Status  intact                                                            │
+#> │   Checks  7 of 7 passed                                                     │
+#> │                                                                             │
+#> │   Every check passed: the capsule is still the one the analysis was run on. │
+#> │                                                                             │
+#> │   ✔    provenance_readable  /tmp/Rtmp8mkWXN/capsule-example/data_provenance │
+#> │                             .json                                           │
+#> │   ✔    data_present         /tmp/Rtmp8mkWXN/capsule-example/d.csv           │
+#> │   ✔    data_sha256          da4aaa3a009d063f36d0515f2b50a11bcc578264aa7c455 │
+#> │                             04b46fedbbae4f8f7                               │
+#> │   ✔    data_readable        /tmp/Rtmp8mkWXN/capsule-example/d.csv           │
+#> │   ✔    data_row_count       3 rows on disk                                  │
+#> │   ✔    schema_valid                                                         │
+#> │   ✔    data_not_synthetic   no synthetic marker: sidecar, manifest and      │
+#> │                             provenance all say real data                    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # an edited data file fails its digest and its row count
 write.csv(data.frame(id = 1:4), file.path(dir, "d.csv"), row.names = FALSE)
@@ -192,6 +203,6 @@ vrfcps(dir, provfile = "../elsewhere.json")$ok
 
 # a missing directory is an error
 try(vrfcps(file.path(tempdir(), "no-such-capsule")))
-#> Error : `cpsdir` is not an existing directory: /tmp/RtmpshpHV7/no-such-capsule
+#> Error : `cpsdir` is not an existing directory: /tmp/Rtmp8mkWXN/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

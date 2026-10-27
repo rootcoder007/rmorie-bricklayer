@@ -320,14 +320,21 @@ srchfig("5-7")
 ``` r
 
 srchpod(c(0.5, 1, 2), "mbeta", m = 0.25)
-#> ── Probability of detection ────────────────────────────────────── 
-#>   M-Beta model, M = 0.25
-#> 
-#>  coverage      pod
-#>       0.5 0.437500
-#>       1.0 0.683594
-#>       2.0 0.899887
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Probability of detection ─────────────────────────────────────────╮
+#> │   Model      M-Beta                                                 │
+#> │   M          0.25                                                   │
+#> │   Coverages  3                                                      │
+#> │                                                                     │
+#> │   coverage       pod                                                │
+#> │   --------  --------                                                │
+#> │    0.50000  0.437500                                                │
+#> │    1.00000  0.683594                                                │
+#> │    2.00000  0.899887                                                │
+#> │                                                                     │
+#> │   M-Beta model, M = 0.25                                            │
+#> │   Coverage is effort over area (sweep width x track length / area); │
+#> │   pod is the chance a search at that coverage finds the object.     │
+#> ╰─────────────────────────────────────────────────────────────────────╯
 ```
 
 **Figure 5-8.** The inverse cube parallel sweep gives
@@ -394,10 +401,24 @@ found.
 ``` r
 
 optsqr(4)
-#>   search effort releff cumeff   factor     side       poc  coverage       pod
-#> 1      1      4      4      4 1.021043 2.042086 0.5939919 0.9592059 0.7707087
-#>         pos    cumpos
-#> 1 0.4577947 0.4577947
+#> ╭── Optimal square searches ────────────────────────────────────────────────╮
+#> │   Searches                 1                                              │
+#> │   Total effort             4                                              │
+#> │   Chance found by the end  0.4578                                         │
+#> │                                                                           │
+#> │   search  effort  releff  cumeff  factor   side     poc  coverage     pod │
+#> │   ------  ------  ------  ------  ------  -----  ------  --------  ------ │
+#> │        1       4       4       4   1.021  2.042  0.5940    0.9592  0.7707 │
+#> │                                                                           │
+#> │   search     pos  cumpos                                                  │
+#> │   ------  ------  ------                                                  │
+#> │        1  0.4578  0.4578                                                  │
+#> │                                                                           │
+#> │   Each search covers the square (of side 'side') that gives it the best   │
+#> │   chance of success after the searches before it. poc is the chance the   │
+#> │   object is in that square, pod the chance of detecting it there, pos     │
+#> │   their product and cumpos the running chance it has been found.          │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 srchfig("6-3")
 ```
 
@@ -446,19 +467,30 @@ computation it pictures):
 
 ``` r
 
-# an HTML table with each line in <code>: in a Markdown table a `$` starts a formula and a `|`
-# ends the cell, so both are written as entities
+# an HTML table with each line in <code>: in a Markdown table a `$` starts a
+# formula and a `|` ends the cell, so both are written as entities
 tab <- srchfig()[, c("fig", "caption", "yours")]
 esc <- function(x) {
-  for (r in list(c("&", "&amp;"), c("<", "&lt;"), c(">", "&gt;"), c("$", "&#36;"), c("|", "&#124;"))) {
+  for (r in list(
+    c("&", "&amp;"),
+    c("<", "&lt;"),
+    c(">", "&gt;"),
+    c("$", "&#36;"),
+    c("|", "&#124;")
+  )) {
     x <- gsub(r[1], r[2], x, fixed = TRUE)
   }
   x
 }
 tab$caption <- esc(tab$caption)
 tab$yours <- sprintf("<code>%s</code>", esc(tab$yours))
-knitr::kable(tab, format = "html", escape = FALSE, row.names = FALSE,
-             col.names = c("Figure", "Caption", "From your own numbers"))
+knitr::kable(
+  tab,
+  format = "html",
+  escape = FALSE,
+  row.names = FALSE,
+  col.names = c("Figure", "Caption", "From your own numbers")
+)
 ```
 
 | Figure | Caption | From your own numbers |
@@ -558,99 +590,283 @@ is in each area is updated by what each search could have detected:
 ``` r
 
 srchscs(poc = c(0.5, 0.3, 0.2), pod = c(0.8, 0.5, 0))
-#> ── Probability of success ──────────────────────────────────────── 
-#>   POS 0.55 after 1 search
-#> 
-#>  area poc cumpod posarea pocupd
-#>     1 0.5    0.8    0.40 0.2222
-#>     2 0.3    0.5    0.15 0.3333
-#>     3 0.2    0.0    0.00 0.4444
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Probability of success ────────────────────────────────────────────╮
+#> │   Areas        3                                                     │
+#> │   Searches     1                                                     │
+#> │   Overall POS  0.55                                                  │
+#> │                                                                      │
+#> │   area     poc  cumpod  posarea  pocupd                              │
+#> │   ----  ------  ------  -------  ------                              │
+#> │      1  0.5000  0.8000   0.4000  0.2222                              │
+#> │      2  0.3000  0.5000   0.1500  0.3333                              │
+#> │      3  0.2000  0.0000   0.0000  0.4444                              │
+#> │                                                                      │
+#> │   POS 0.55 after 1 search                                            │
+#> │   poc: chance the object is in the area; cumpod: chance the searches │
+#> │   detect it there; pocupd: the poc after the searches found nothing. │
+#> ╰──────────────────────────────────────────────────────────────────────╯
 ```
 
-## Planning a search, start to finish
+## Your own search, step by step
 
-The same steps plan a real search. A hiker is overdue; the last known
-position is 2 km east and 3 km north of the base, and with the time and
-terrain since then the position could be off by about 1.5 km (one
-standard deviation). Lay a grid over the area, in kilometres, and put
-the probability of where the hiker may be on it:
+The same functions plan a real search from your own numbers, one call
+per step. Use one distance unit throughout (kilometres here; nautical
+miles at sea): the grid, the positions, the sweep width and the track
+length are all in it, and areas in its square.
+
+**1. The search area and its grid.** A hiker is overdue; the last known
+position (LKP) is 2 km east and 3 km north of the base. Lay a grid of
+cells over the area you could search: here 12 km by 12 km in
+half-kilometre cells. `xedg` and `yedg` are the cell edges, west to east
+and south to north; cells need not be equal.
 
 ``` r
 
 xe <- seq(-4, 8, by = 0.5)
 ye <- seq(-3, 9, by = 0.5)
+```
+
+**2. The probability map.**
+[`datumpmap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+puts the chance the hiker is in each cell on the grid. For a point datum
+give the LKP as `center` and the position error as `sigma`, one standard
+deviation (about 1.5 km, from the time and terrain since the LKP). A
+route between two points is `datum = "line"` or `"corridor"` with `end`,
+a region known only by its bounds `datum = "area"`, and a map of your
+own (cell shares from the planners’ scenarios, say) is
+`datum = "general"` with `wts`, one row per `y` cell and one column per
+`x` cell.
+
+``` r
+
 m <- datumpmap(xe, ye, center = c(2, 3), sigma = 1.5)
+m
+#> ╭── Datum probability map (point datum) ──────────────────────────────────╮
+#> │   Datum   point                                                         │
+#> │   Centre  2, 3                                                          │
+#> │   Sigma   1.5                                                           │
+#> │   Grid    24 x 24 cells (x by y)                                        │
+#> │                                                                         │
+#> │   The most likely cells                                                 │
+#> │       x      y      poc                                                 │
+#> │   -----  -----  -------                                                 │
+#> │   1.750  2.750  0.01705                                                 │
+#> │   1.750  3.250  0.01705                                                 │
+#> │   2.250  2.750  0.01705                                                 │
+#> │   2.250  3.250  0.01705                                                 │
+#> │   1.250  2.750  0.01527                                                 │
+#> │                                                                         │
+#> │   24 x 24 cells (x by y); 0.0% of the probability lies outside the grid │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 plot(m)
 ```
 
 ![](search-and-rescue_files/figure-html/search-and-rescue-plan-map-1.png)
 
-The ground teams’ sweep width is 0.6 km (from a published table for the
-terrain and object, or from a trial of your own as above), and they can
-walk 40 km of track today.
-[`opteffort()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
-spreads those 40 km over the cells to make the chance of finding the
-hiker as large as possible:
+Two scenarios weighted by the planners (70% on the LKP, 30% that the
+hiker took the trail to the north-east) are mixed cell by cell, and the
+mixture is a general datum (its weights are scaled to sum to 1 over the
+grid):
 
 ``` r
 
-day1 <- opteffort(m, W = 0.6, effort = 40)
-day1$pos
-#> [1] 0.5471492
-plot(day1)
+trail <- datumpmap(xe, ye, "corridor", c(2, 3), sigma = 0.5, end = c(2, 8))
+mix <- datumpmap(xe, ye, "general", wts = 0.7 * m$poc + 0.3 * trail$poc)
+plot(mix)
 ```
 
-![](search-and-rescue_files/figure-html/search-and-rescue-plan-day1-1.png)
+![](search-and-rescue_files/figure-html/search-and-rescue-plan-scenarios-1.png)
 
-`day1$effort` is the track length to walk in each cell, and `day1$pod`
-the chance of detection there. If the day ends without a find, each
-cell’s probability is updated by what was searched (cells searched hard
-become less likely, the rest more likely), and the next day is planned
-on the updated map:
+**3. The sweep width and the detection model.** The sweep width `W`
+comes from a published table for the sensor, the object and the
+conditions, or from a field trial of your own with
+[`swpwdth()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+(above). The detection model says how detection falls off with distance:
+`"invcube"` for good conditions and evenly spaced tracks, `"random"` for
+poor conditions or uneven tracks (the conservative choice), `"definite"`
+for a sensor that sees everything within `W / 2`. Here the ground teams’
+sweep width is 0.6 km.
+
+**4. Effort, and the probability of detection.** The effort is the track
+length walked in each cell. Say today’s teams walked 2 km of track in
+each of the four cells round the LKP.
+[`srchpod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+with `W`, `effort` and `area` turns that into the coverage and the POD
+of each cell; `area = m` takes the map’s cell areas, and `effort` is
+laid out like the map (one row per `y` cell):
 
 ``` r
 
-upd <- srchscs(as.vector(m$poc), as.vector(day1$pod))
-poc2 <- matrix(upd$pocupd, nrow = nrow(m$poc))
-day2 <- opteffort(poc2, area = rep(0.25, length(poc2)), W = 0.6, effort = 40)
-day2$pos
-#> [1] 0.4068465
+walked <- matrix(0, nrow(m$poc), ncol(m$poc))
+walked[12:13, 12:13] <- 2
+pd <- srchpod(W = 0.6, effort = walked, area = m, model = "random")
+range(pd)
+#> [1] 0.0000000 0.9917703
 ```
 
-## On a grid of your own
-
-The same functions take any grid and datum.
-[`opteffort()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
-spreads a total track length over the cells to make the probability of
-success as large as possible (Stone 1975), and
+**5. The probability of success, and the map after a search that found
+nothing.**
 [`srchscs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
-updates the containment after a search that finds nothing.
+takes the map and the PODs: `pos` is the chance today’s search found the
+hiker, and `map` the probability map updated by what was searched (cells
+searched hard become less likely, the rest more likely):
 
 ``` r
 
-m <- datumpmap(seq(-6, 6, by = 0.5), seq(-6, 6, by = 0.5), sigma = 2)
-a <- opteffort(m, W = 1, effort = 30)
-a$pos
-#> [1] 0.455821
-optcrcsrch(sigma = 2, W = 1, effort = 30)$pos
-#> [1] 0.4571532
-plot(a)
+day1 <- srchscs(m, pd)
+day1
+#> ╭── Probability of success ────────────────────────────────────────────╮
+#> │   Areas        576                                                   │
+#> │   Searches     1                                                     │
+#> │   Overall POS  0.06762                                               │
+#> │   Map          24 x 24 cells (x by y), updated in $map               │
+#> │                                                                      │
+#> │   area      poc  cumpod  posarea   pocupd                            │
+#> │   ----  -------  ------  -------  -------                            │
+#> │    276  0.01705  0.9918  0.01691  0.00015                            │
+#> │    277  0.01705  0.9918  0.01691  0.00015                            │
+#> │    300  0.01705  0.9918  0.01691  0.00015                            │
+#> │    301  0.01705  0.9918  0.01691  0.00015                            │
+#> │    252  0.01527  0.0000  0.00000  0.01638                            │
+#> │    253  0.01527  0.0000  0.00000  0.01638                            │
+#> │    275  0.01527  0.0000  0.00000  0.01638                            │
+#> │    278  0.01527  0.0000  0.00000  0.01638                            │
+#> │    299  0.01527  0.0000  0.00000  0.01638                            │
+#> │    302  0.01527  0.0000  0.00000  0.01638                            │
+#> │    324  0.01527  0.0000  0.00000  0.01638                            │
+#> │    325  0.01527  0.0000  0.00000  0.01638                            │
+#> │    251  0.01368  0.0000  0.00000  0.01467                            │
+#> │    254  0.01368  0.0000  0.00000  0.01467                            │
+#> │    323  0.01368  0.0000  0.00000  0.01467                            │
+#> │    326  0.01368  0.0000  0.00000  0.01467                            │
+#> │    228  0.01225  0.0000  0.00000  0.01314                            │
+#> │    229  0.01225  0.0000  0.00000  0.01314                            │
+#> │    274  0.01225  0.0000  0.00000  0.01314                            │
+#> │    298  0.01225  0.0000  0.00000  0.01314                            │
+#> │                                                                      │
+#> │   POS 0.06762 after 1 search                                         │
+#> │   poc: chance the object is in the area; cumpod: chance the searches │
+#> │   detect it there; pocupd: the poc after the searches found nothing. │
+#> │                                                                      │
+#> │   The 20 most likely of 576 cells.                                   │
+#> ╰──────────────────────────────────────────────────────────────────────╯
+plot(day1$map)
 ```
 
-![](search-and-rescue_files/figure-html/search-and-rescue-grid-1.png)
+![](search-and-rescue_files/figure-html/search-and-rescue-plan-pos-1.png)
+
+**6. Plan the next search.**
+[`opteffort()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+spreads tomorrow’s 40 km of track over the updated map to make the
+chance of finding the hiker as large as possible (Stone 1975), under
+random search detection. Its result goes straight back into
+[`srchscs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+for the day after:
 
 ``` r
 
-srchscs(c(0.5, 0.3, 0.2), c(0.8, 0.5, 0))
-#> ── Probability of success ──────────────────────────────────────── 
-#>   POS 0.55 after 1 search
-#> 
-#>  area poc cumpod posarea pocupd
-#>     1 0.5    0.8    0.40 0.2222
-#>     2 0.3    0.5    0.15 0.3333
-#>     3 0.2    0.0    0.00 0.4444
-#> ──────────────────────────────────────────────────────────────────
+day2 <- opteffort(day1$map, W = 0.6, effort = 40)
+day2
+#> ╭── Optimal allocation of effort ─────────────────────────────╮
+#> │   Total effort    40                                        │
+#> │   Sweep width W   0.6                                       │
+#> │   Cells searched  108 of 576                                │
+#> │   POS             0.5467                                    │
+#> │                                                             │
+#> │   cell      poc  effort  coverage     pod                   │
+#> │   ----  -------  ------  --------  ------                   │
+#> │    252  0.01638  0.7356     1.766  0.8289                   │
+#> │    253  0.01638  0.7356     1.766  0.8289                   │
+#> │    275  0.01638  0.7356     1.766  0.8289                   │
+#> │    278  0.01638  0.7356     1.766  0.8289                   │
+#> │    299  0.01638  0.7356     1.766  0.8289                   │
+#> │    302  0.01638  0.7356     1.766  0.8289                   │
+#> │    324  0.01638  0.7356     1.766  0.8289                   │
+#> │    325  0.01638  0.7356     1.766  0.8289                   │
+#> │    251  0.01467  0.6898     1.655  0.8090                   │
+#> │    254  0.01467  0.6898     1.655  0.8090                   │
+#> │    323  0.01467  0.6898     1.655  0.8090                   │
+#> │    326  0.01467  0.6898     1.655  0.8090                   │
+#> │    228  0.01314  0.6439     1.545  0.7868                   │
+#> │    229  0.01314  0.6439     1.545  0.7868                   │
+#> │    274  0.01314  0.6439     1.545  0.7868                   │
+#> │    298  0.01314  0.6439     1.545  0.7868                   │
+#> │    279  0.01314  0.6439     1.545  0.7868                   │
+#> │    303  0.01314  0.6439     1.545  0.7868                   │
+#> │    348  0.01314  0.6439     1.545  0.7868                   │
+#> │    349  0.01314  0.6439     1.545  0.7868                   │
+#> │                                                             │
+#> │   POS 0.5467 from effort 40 over 108 of 576 cells (W = 0.6) │
+#> │                                                             │
+#> │   ... and 88 more cells                                     │
+#> ╰─────────────────────────────────────────────────────────────╯
+day3 <- srchscs(day1$map, day2)
+day3$pos
+#> [1] 0.546653
+```
+
+**7. Plot.** Every result has a
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) method: the
+allocation as a map of the effort in each cell, the map as an image, a
+surface or its cells with their percentages.
+
+``` r
+
+plot(day2)
+```
+
+![](search-and-rescue_files/figure-html/search-and-rescue-plan-plot-1.png)
+
+``` r
+
+plot(day1$map, view = "both")
+```
+
+![](search-and-rescue_files/figure-html/search-and-rescue-plan-plot-2.png)
+
+For a single point datum with no grid,
+[`optcrcsrch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+gives Koopman’s optimal circle directly, and
+[`optsqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/optsqr.md)
+the optimal square, search after search:
+
+``` r
+
+optcrcsrch(sigma = 1.5, W = 0.6, effort = 40)
+#> ╭── Optimal search of a circular normal datum ────────────────────────╮
+#> │   sigma    1.5                                                      │
+#> │   W        0.6                                                      │
+#> │   effort   40                                                       │
+#> │   radius   2.88                                                     │
+#> │   pos      0.5497                                                   │
+#> │   cntrdns  3.071                                                    │
+#> │                                                                     │
+#> │   Spread the effort evenly over a circle of radius 2.88: the chance │
+#> │   of finding the object is then 55.0%.                              │
+#> │                                                                     │
+#> │   cntrdns: the coverage at the centre of the circle.                │
+#> ╰─────────────────────────────────────────────────────────────────────╯
+optsqr(c(40, 40) * 0.6, E = 1.1774 * 1.5)
+#> ╭── Optimal square searches ────────────────────────────────────────────────╮
+#> │   Searches                 2                                              │
+#> │   Total effort             48                                             │
+#> │   Chance found by the end  0.8047                                         │
+#> │                                                                           │
+#> │   search  effort  releff  cumeff  factor   side     poc  coverage     pod │
+#> │   ------  ------  ------  ------  ------  -----  ------  --------  ------ │
+#> │        1      24   7.695    7.69   1.270  4.485  0.7484    1.1929  0.8651 │
+#> │        2      24   7.695   15.39   1.696  5.991  0.7460    0.6686  0.5980 │
+#> │                                                                           │
+#> │   search     pos  cumpos                                                  │
+#> │   ------  ------  ------                                                  │
+#> │        1  0.6475  0.6475                                                  │
+#> │        2  0.4461  0.8047                                                  │
+#> │                                                                           │
+#> │   Each search covers the square (of side 'side') that gives it the best   │
+#> │   chance of success after the searches before it. poc is the chance the   │
+#> │   object is in that square, pod the chance of detecting it there, pos     │
+#> │   their product and cumpos the running chance it has been found.          │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## References

@@ -15,7 +15,8 @@ tse(
   mbar = c(0, 0.5, 1, 1.5, 2),
   target = "average",
   draws = 5000L,
-  seed = NULL
+  seed = NULL,
+  conflvl = 0.95
 )
 ```
 
@@ -42,7 +43,12 @@ tse(
 
 - seed:
 
-  Optional seed.
+  Optional seed for the bootstrap draws.
+
+- conflvl:
+
+  Confidence level of the robust interval, a number strictly between 0
+  and 1 (default 0.95: the 2.5\\ drawn bounds).
 
 ## Value
 
@@ -83,12 +89,70 @@ p <- polex()
 es <- evstudy(p, "district", "month", "crmrate", "refmonth",
                   leads = 3, lags = 4)
 tse(es, seed = 1)
-#> Sensitivity of the average post-period effect to departures from parallel trends (relative magnitudes)
-#>  mbar lowerbnd upbound   lower  upper
-#>   0.0   -3.166 -3.1662  -3.916 -2.400
-#>   0.5   -3.865 -2.4671  -4.980 -0.479
-#>   1.0   -4.565 -1.7679  -6.788  1.519
-#>   1.5   -5.264 -1.0687  -8.811  3.532
-#>   2.0   -5.963 -0.3696 -10.842  5.572
-#> Breakdown: the interval first includes 0 at Mbar = 0.6213523
+#> ╭── Sensitivity to parallel trends ──────────────────────────────────────╮
+#> │   Method                 relative magnitudes (Rambachan and Roth)      │
+#> │   Target                 average post-period effect                    │
+#> │   Breakdown              Mbar = 0.6214                                 │
+#> │   Robust interval level  95%                                           │
+#> │                                                                        │
+#> │    mbar  identified_set    robust_interval                             │
+#> │   -----  ----------------  ----------------                            │
+#> │   0.000  [-3.166, -3.166]  [-3.916, -2.400]                            │
+#> │   0.500  [-3.865, -2.467]  [-4.980, -0.479]                            │
+#> │   1.000  [-4.565, -1.768]  [-6.788, 1.519]                             │
+#> │   1.500  [-5.264, -1.069]  [-8.811, 3.532]                             │
+#> │   2.000  [-5.963, -0.370]  [-10.842, 5.572]                            │
+#> │                                                                        │
+#> │   The negative effect stays clear of zero while the trend after        │
+#> │   adoption departs from parallel by up to 0.621 times the largest      │
+#> │   departure before it. A departure as large as the pre-period's (Mbar  │
+#> │   1) is enough to lose it: the conclusion leans on parallel trends.    │
+#> │                                                                        │
+#> │   Mbar bounds how far the trend after adoption may depart from         │
+#> │   parallel, as a multiple of the largest departure seen before it; the │
+#> │   effect is distinguishable from zero until the robust interval first  │
+#> │   includes 0, at the breakdown value.                                  │
+#> ╰────────────────────────────────────────────────────────────────────────╯
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+es <- evstudy(own, "town", "year", "rate", "first", leads = 3, lags = 3)
+# a 90 percent robust interval
+tse(es, seed = 1, conflvl = 0.9)
+#> ╭── Sensitivity to parallel trends ──────────────────────────────────────╮
+#> │   Method                 relative magnitudes (Rambachan and Roth)      │
+#> │   Target                 average post-period effect                    │
+#> │   Breakdown              Mbar = 0.9629                                 │
+#> │   Robust interval level  90%                                           │
+#> │                                                                        │
+#> │    mbar  identified_set    robust_interval                             │
+#> │   -----  ----------------  ----------------                            │
+#> │   0.000  [-4.016, -4.016]  [-5.236, -2.802]                            │
+#> │   0.500  [-4.052, -3.979]  [-6.637, -1.345]                            │
+#> │   1.000  [-4.089, -3.943]  [-8.056, 0.108]                             │
+#> │   1.500  [-4.125, -3.907]  [-9.506, 1.600]                             │
+#> │   2.000  [-4.162, -3.870]  [-11.020, 3.300]                            │
+#> │                                                                        │
+#> │   The negative effect stays clear of zero while the trend after        │
+#> │   adoption departs from parallel by up to 0.963 times the largest      │
+#> │   departure before it. A departure as large as the pre-period's (Mbar  │
+#> │   1) is enough to lose it: the conclusion leans on parallel trends.    │
+#> │                                                                        │
+#> │   Mbar bounds how far the trend after adoption may depart from         │
+#> │   parallel, as a multiple of the largest departure seen before it; the │
+#> │   effect is distinguishable from zero until the robust interval first  │
+#> │   includes 0, at the breakdown value.                                  │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

@@ -23,7 +23,7 @@ tojs(
   complex = c("string", "list"),
   raw = c("base64", "hex", "mongo", "int", "js"),
   null = c("list", "null"),
-  na = c("null", "string"),
+  na = NULL,
   auto_unbox = FALSE,
   digits = 4,
   pretty = FALSE,
@@ -86,7 +86,8 @@ tojs(
 - na:
 
   How missing values are written: `"null"` or `"string"` (`"NA"`). When
-  not given, the per-type default of jsonlite applies (see Details).
+  `NULL` (the default), the per-type default of jsonlite applies (see
+  Details).
 
 - auto_unbox:
 

@@ -21,7 +21,7 @@ records failed. The rate cannot distinguish them."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,27 +126,46 @@ columns are missing together,
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">missruns</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Runs of consecutive missing values ──────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     column start end length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     outage     3   6      4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  scattered     7   8      2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Runs of consecutive missing values</span> ───────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Runs               2                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns with runs  2                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Longest run        4                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   column     start  end  length                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -----  ---  ------                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   outage         3    6       4                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   scattered      7    8       2                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Long runs of missing rows usually mean a source stopped reporting for │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a while, not values missing at random.                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Isolated gaps too, by lowering the threshold.</span></span></span>
 <span class="r-in"><span><span class="fu">missruns</span><span class="op">(</span><span class="va">df</span>, minrun <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Runs of consecutive missing values ──────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     column start end length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     outage     3   6      4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  scattered     7   8      2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  scattered     2   2      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  scattered     5   5      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Runs of consecutive missing values</span> ───────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Runs               4                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns with runs  2                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Longest run        4                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   column     start  end  length                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -----  ---  ------                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   outage         3    6       4                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   scattered      7    8       2                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   scattered      2    2       1                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   scattered      5    5       1                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Long runs of missing rows usually mean a source stopped reporting for │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a while, not values missing at random.                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A complete column has no runs.</span></span></span>
 <span class="r-in"><span><span class="fu">missruns</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Runs of consecutive missing values ──────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   (none)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Runs of consecutive missing values</span> ──╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Runs               0                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns with runs  0                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   (none)                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">missruns</span><span class="op">(</span><span class="va">df</span>, minrun <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `minrun` must be a single positive integer</span>

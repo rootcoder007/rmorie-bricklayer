@@ -37,7 +37,12 @@ attrfrac(rr, expoprev, rrlo = NULL, rrup = NULL)
 
 A single number, the attributable fraction: in `[0, 1)` for `rr >= 1`,
 negative for a protective exposure. When the limits were given it
-carries an attribute `ci`, a named numeric vector (`lower`, `upper`).
+carries an attribute `ci`, a named numeric vector (`lower`, `upper`). It
+has class `c("rmbl_attrfrac", "rmbl_measure", "numeric")`, so it prints
+as a box with its inputs (kept in attribute `"lakner"`); arithmetic,
+`[`, [`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give plain
+numbers.
 
 ## Details
 
@@ -72,9 +77,33 @@ for the attributable cases.
 
 ``` r
 attrfrac(1.5, 0.4)
-#> [1] 0.1666667
+#> ╭── Population attributable fraction ─────────────────────────────────────────╮
+#> │   Attributable fraction  16.67%                                             │
+#> │   Relative risk          1.5                                                │
+#> │   Exposed                40.00%                                             │
+#> │   Formula                Levin: p (RR - 1) / (1 + p (RR - 1))               │
+#> │                                                                             │
+#> │   About 16.7% of the cases in this population would not occur without the   │
+#> │   exposure, if the relative risk is causal.                                 │
+#> │                                                                             │
+#> │   It holds only if the relative risk is causal and unconfounded, and        │
+#> │   only for a population exposed as this one is (Rothman et al. 2008,        │
+#> │   chapter 5).                                                               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 attrfrac(2, 1)      # everyone exposed: 1 - 1/RR
-#> [1] 0.5
+#> ╭── Population attributable fraction ─────────────────────────────────────────╮
+#> │   Attributable fraction  50.00%                                             │
+#> │   Relative risk          2                                                  │
+#> │   Exposed                100.00%                                            │
+#> │   Formula                Levin: p (RR - 1) / (1 + p (RR - 1))               │
+#> │                                                                             │
+#> │   About 50.0% of the cases in this population would not occur without the   │
+#> │   exposure, if the relative risk is causal.                                 │
+#> │                                                                             │
+#> │   It holds only if the relative risk is causal and unconfounded, and        │
+#> │   only for a population exposed as this one is (Rothman et al. 2008,        │
+#> │   chapter 5).                                                               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # With the confidence limits of the relative risk.
 paf <- attrfrac(1.08, 1, rrlo = 1.06, rrup = 1.09)
@@ -84,7 +113,19 @@ attr(paf, "ci")
 
 # A protective exposure gives a negative fraction.
 attrfrac(0.8, 0.5)
-#> [1] -0.1111111
+#> ╭── Population attributable fraction ─────────────────────────────────────────╮
+#> │   Attributable fraction  -11.11%                                            │
+#> │   Relative risk          0.8                                                │
+#> │   Exposed                50.00%                                             │
+#> │   Formula                Levin: p (RR - 1) / (1 + p (RR - 1))               │
+#> │                                                                             │
+#> │   The exposure is protective: without it there would be about 11.1% more    │
+#> │   cases.                                                                    │
+#> │                                                                             │
+#> │   It holds only if the relative risk is causal and unconfounded, and        │
+#> │   only for a population exposed as this one is (Rothman et al. 2008,        │
+#> │   chapter 5).                                                               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # A prevalence above 1 is refused.
 try(attrfrac(1.5, 40))

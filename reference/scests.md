@@ -92,18 +92,28 @@ Table 41-10-0067-01.
 ## Examples
 
 ``` r
-# the layout of a downloaded table: percent and number of persons, with limits for the
-# percent
-d <- data.frame(REF_DATE = "2022", GEO = "Canada",
-                `Indigenous identity` = rep(c("First Nations", "Metis"), each = 4),
-                Statistics = rep(c("Number of persons", "Percent",
-                                   "Low 95% confidence interval",
-                                   "High 95% confidence interval"), 2),
-                UOM = rep(c("Persons", "Percent", "Percent", "Percent"), 2),
-                VALUE = c(415000, 47.1, 45.2, 49.0, 320000, 50.3, 48.1, 52.5),
-                STATUS = "", check.names = FALSE)
+# the layout of a downloaded table: percent and number of persons, with
+# limits for the percent
+d <- data.frame(
+  REF_DATE = "2022",
+  GEO = "Canada",
+  `Indigenous identity` = rep(c("First Nations", "Metis"), each = 4),
+  Statistics = rep(
+    c(
+      "Number of persons",
+      "Percent",
+      "Low 95% confidence interval",
+      "High 95% confidence interval"
+    ),
+    2
+  ),
+  UOM = rep(c("Persons", "Percent", "Percent", "Percent"), 2),
+  VALUE = c(415000, 47.1, 45.2, 49.0, 320000, 50.3, 48.1, 52.5),
+  STATUS = "",
+  check.names = FALSE
+)
 scests(d)
-#>   REF_DATE    GEO Indigenous identity           measure estimate lower upper
+#>   REF_DATE    GEO Indigenous.identity           measure estimate lower upper
 #> 1     2022 Canada       First Nations Number of persons 415000.0    NA    NA
 #> 2     2022 Canada       First Nations           Percent     47.1  45.2  49.0
 #> 3     2022 Canada               Metis Number of persons 320000.0    NA    NA
@@ -114,9 +124,12 @@ scests(d)
 #> 3      <NA>      ok
 #> 4 published      ok
 # a rate with its coefficient of variation instead of limits
-r <- data.frame(GEO = "Canada",
-                Characteristics = c("Rate", "Coefficient of variation for rate"),
-                VALUE = c(12.5, 8), STATUS = "")
+r <- data.frame(
+  GEO = "Canada",
+  Characteristics = c("Rate", "Coefficient of variation for rate"),
+  VALUE = c(12.5, 8),
+  STATUS = ""
+)
 scests(r)
 #>      GEO measure estimate    lower    upper cisou quality
 #> 1 Canada    Rate     12.5 10.68864 14.61832    cv      ok

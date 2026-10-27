@@ -20,7 +20,8 @@ evstudy(
   bin = TRUE,
   covs = NULL,
   cl = NULL,
-  conflvl = 0.95
+  conflvl = 0.95,
+  w = NULL
 )
 ```
 
@@ -69,7 +70,13 @@ evstudy(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the intervals reported (default 0.95).
+
+- w:
+
+  Optional column name of non-negative weights, such as population or
+  matching weights, for weighted least squares with weighted
+  within-means.
 
 ## Value
 
@@ -123,18 +130,75 @@ p <- polex()
 es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 3,
                   lags = 4)
 es
-#> Event study: 720 observations, 20 clusters
-#>  evtm estimate     se   lower   upper       t   p_value
-#>    -3  0.08562 0.3530 -0.6532  0.8245  0.2425 8.110e-01
-#>    -2  0.46611 0.4552 -0.4867  1.4189  1.0239 3.188e-01
-#>    -1  0.00000 0.0000  0.0000  0.0000      NA        NA
-#>     0 -3.15973 0.4476 -4.0966 -2.2229 -7.0592 1.020e-06
-#>     1 -3.12400 0.4189 -4.0007 -2.2473 -7.4580 4.675e-07
-#>     2 -3.39773 0.5025 -4.4496 -2.3459 -6.7611 1.853e-06
-#>     3 -3.09069 0.4993 -4.1356 -2.0457 -6.1906 6.005e-06
-#>     4 -3.05909 0.3644 -3.8218 -2.2963 -8.3941 8.145e-08
-#> Leads jointly zero: F(2, 19) = 1.016, p = 0.381
+#> ╭── Event study ──────────────────────────────────────────────────────────────╮
+#> │   Method              fixed-effects regression on the periods since         │
+#> │                       adoption                                              │
+#> │   Observations        720                                                   │
+#> │   Clusters            20                                                    │
+#> │   Periods             -3 to 4 since adoption                                │
+#> │   Reference period    -1                                                    │
+#> │   Confidence          95%                                                   │
+#> │   Leads jointly zero  F(2, 19) = 1.016, p = 0.381                           │
+#> │                                                                             │
+#> │   evtm  estimate      se  95% CI                 t  p_value                 │
+#> │   ----  --------  ------  ----------------  ------  -------                 │
+#> │     -3     0.086  0.3530  [-0.653, 0.824]    0.243    0.811                 │
+#> │     -2     0.466  0.4552  [-0.487, 1.419]    1.024    0.319                 │
+#> │     -1     0.000  0.0000  [0.000, 0.000]                                    │
+#> │      0    -3.160  0.4476  [-4.097, -2.223]  -7.059  < 0.001                 │
+#> │      1    -3.124  0.4189  [-4.001, -2.247]  -7.458  < 0.001                 │
+#> │      2    -3.398  0.5025  [-4.450, -2.346]  -6.761  < 0.001                 │
+#> │      3    -3.091  0.4993  [-4.136, -2.046]  -6.191  < 0.001                 │
+#> │      4    -3.059  0.3644  [-3.822, -2.296]  -8.394  < 0.001                 │
+#> │                                                                             │
+#> │   Each row is the effect that many periods from adoption, measured          │
+#> │   against the reference period. The leads are jointly consistent with       │
+#> │   zero, the testable part of parallel trends.                               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 attr(es, "pretrend")$p_value
 #> [1] 0.380962
 plot(es)
+
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+# three years either side of adoption, weighted by population
+evstudy(own, "town", "year", "rate", "first", leads = 3, lags = 3,
+        w = "pop")
+#> ╭── Event study ──────────────────────────────────────────────────────────────╮
+#> │   Method              fixed-effects regression on the periods since         │
+#> │                       adoption                                              │
+#> │   Observations        80                                                    │
+#> │   Clusters            8                                                     │
+#> │   Periods             -3 to 3 since adoption                                │
+#> │   Reference period    -1                                                    │
+#> │   Confidence          95%                                                   │
+#> │   Leads jointly zero  F(2, 7) = 0.044, p = 0.957                            │
+#> │                                                                             │
+#> │   evtm  estimate      se  95% CI                  t  p_value                │
+#> │   ----  --------  ------  ----------------  -------  -------                │
+#> │     -3    -0.327  1.1159  [-2.965, 2.312]    -0.293    0.778                │
+#> │     -2    -0.098  0.4011  [-1.046, 0.851]    -0.244    0.814                │
+#> │     -1     0.000  0.0000  [0.000, 0.000]                                    │
+#> │      0    -4.076  0.2689  [-4.712, -3.440]  -15.158  < 0.001                │
+#> │      1    -4.214  0.8271  [-6.170, -2.258]   -5.095    0.001                │
+#> │      2    -4.368  1.3432  [-7.544, -1.192]   -3.252    0.014                │
+#> │      3    -3.964  0.8082  [-5.875, -2.053]   -4.904    0.002                │
+#> │                                                                             │
+#> │   Each row is the effect that many periods from adoption, measured          │
+#> │   against the reference period. The leads are jointly consistent with       │
+#> │   zero, the testable part of parallel trends.                               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```

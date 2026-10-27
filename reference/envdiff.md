@@ -29,7 +29,8 @@ agree), `r_version` (a named length-2 character vector `c(a = , b = )`
 when they differ, else `NULL`), `platform` (likewise), and `packages` (a
 data frame with character columns `package`, `a`, `b` and `change`,
 where `change` is `"added"`, `"removed"` or `"changed"`; no rows when
-nothing differs).
+nothing differs), and `fields` (the names of any other fields that
+differ, `character(0)` when none).
 
 ## Details
 
@@ -41,8 +42,10 @@ dependency that moved a minor version – is exactly what gets missed.
 Versions are compared as strings. A package recorded in `b` but not in
 `a` (or recorded with an `NA` version in `a`) is `"added"`; the reverse
 is `"removed"`. The operating-system string, the capture time and the
-random number generator settings are not compared. Rows follow the order
-of `a`'s packages, then `b`'s new ones.
+random number generator settings are not compared. Any other field
+present in only one record, or different in the two, is named in
+`fields` and makes them differ. Rows follow the order of `a`'s packages,
+then `b`'s new ones.
 
 Error: `a` or `b` that is not a list.
 
@@ -74,15 +77,19 @@ d$r_version
 #>       a       b 
 #> "4.6.1" "9.9.9" 
 d
-#> ── Environment diff ──────────────────────────────────────────────
-#>   ✗ environments differ
-#> 
-#>   R version  4.6.1 -> 9.9.9
-#>   2 package difference(s):
-#> 
-#>   stats                    4.6.1        0.0.0        changed
-#>   tools                    –          4.9.0        added
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Environment diff ─────────────────────────────────────────────────╮
+#> │   Status     ✗ environments differ                                  │
+#> │   R version  4.6.1 -> 9.9.9                                         │
+#> │                                                                     │
+#> │   package  a      b      change                                     │
+#> │   -------  -----  -----  -------                                    │
+#> │   stats    4.6.1  0.0.0  changed                                    │
+#> │   tools    –      4.9.0  added                                      │
+#> │                                                                     │
+#> │   The records differ: a result may not reproduce until these agree. │
+#> │                                                                     │
+#> │   2 package difference(s)                                           │
+#> ╰─────────────────────────────────────────────────────────────────────╯
 
 # Whole manifests are accepted, not just the environment block.
 m <- mkmnf(list(run = "demo"))

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -185,10 +185,26 @@ holds:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">court</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbldemo.html">rmbldemo</a></span><span class="op">(</span><span class="st">"court"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plndid.html">plndid</a></span><span class="op">(</span><span class="va">court</span>, unit <span class="op">=</span> <span class="st">"court"</span>, time <span class="op">=</span> <span class="st">"month"</span>, y <span class="op">=</span> <span class="st">"delay"</span>, trtd <span class="op">=</span> <span class="st">"reformed"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Difference in differences: 576 observations, 16 clusters</span></span>
-<span><span class="co">#&gt;     term estimate     se  lower  upper     t   p_value</span></span>
-<span><span class="co">#&gt;  treated   -12.61 0.4724 -13.62 -11.61 -26.7 4.643e-14</span></span>
-<span><span class="co">#&gt; Effect relative to the comparison units' pre-period mean (100): -12.6%</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Difference in differences</span> ────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Method           fixed-effects least squares, cluster-robust (CR1) errors │</span></span>
+<span><span class="co">#&gt; │   Observations     576                                                      │</span></span>
+<span><span class="co">#&gt; │   Clusters         16                                                       │</span></span>
+<span><span class="co">#&gt; │   Confidence       95%                                                      │</span></span>
+<span><span class="co">#&gt; │   Comparison mean  100                                                      │</span></span>
+<span><span class="co">#&gt; │   Relative effect  -12.6% of the comparison mean                            │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Estimates                                                                 │</span></span>
+<span><span class="co">#&gt; │   term     estimate      se  95% CI                 t  p_value              │</span></span>
+<span><span class="co">#&gt; │   -------  --------  ------  ----------------  ------  -------              │</span></span>
+<span><span class="co">#&gt; │   treated    -12.61  0.4724  [-13.62, -11.61]  -26.70  &lt; 0.001              │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   The policy's effect on the outcome is -12.61 (95% interval [-13.62,       │</span></span>
+<span><span class="co">#&gt; │   -11.61]): the interval excludes 0, so the data distinguish it from no     │</span></span>
+<span><span class="co">#&gt; │   effect.                                                                   │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   The comparison mean is the pre-period mean outcome of the units not       │</span></span>
+<span><span class="co">#&gt; │   (yet) treated.                                                            │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>The <strong>Data</strong> sidebar (the arrow at the left) takes a
 demo dataset, a CSV file (plain or gzip), a capsule directory, or a
 table from data.rmorie.com, and <strong>Load all demos</strong> loads
@@ -299,10 +315,31 @@ is set), printed digits, and the seed the seeded analyses use.</li>
 <p><img src="dashboard_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="432"></p>
 <p>And what the Proof ledger tab runs on the sample ledger:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">led</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ldgrread.html">ldgrread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"ledger_sample.json"</span>, package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">led</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ldgrread.html">ldgrread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>  <span class="st">"extdata"</span>,</span>
+<span>  <span class="st">"ledger_sample.json"</span>,</span>
+<span>  package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">led</span></span>
-<span><span class="co">#&gt; Proof ledger rmoriebricklayer sample ledger: 3 theorems (1 proved, 1 sorry, 1 axiom)</span></span>
-<span><span class="co">#&gt;   https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab, Lean v4.12.0</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Proof ledger rmoriebricklayer sample ledger</span> ──────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Theorems  3 theorems (1 proved, 1 sorry, 1 axiom)                         │</span></span>
+<span><span class="co">#&gt; │   Source    https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab    │</span></span>
+<span><span class="co">#&gt; │   Lean      v4.12.0                                                         │</span></span>
+<span><span class="co">#&gt; │   File      /tmp/Rtmp8mkWXN/temp_libpath2197c49bee9/rmoriebricklayer/extdat │</span></span>
+<span><span class="co">#&gt; │             a/ledger_sample.json                                            │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   id               theorem                         status  sorry            │</span></span>
+<span><span class="co">#&gt; │   ---------------  ------------------------------  ------  -----            │</span></span>
+<span><span class="co">#&gt; │   gini-equal       Rmorie.Gini.gini_const_eq_zero  proved      0            │</span></span>
+<span><span class="co">#&gt; │   lorenz-monotone  Rmorie.Gini.lorenz_monotone     sorry       1            │</span></span>
+<span><span class="co">#&gt; │   float-round      Rmorie.Float.round_nearest      axiom       0            │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   1 of 3 theorems are proved; the others are 1 axiom and 1 sorry: not       │</span></span>
+<span><span class="co">#&gt; │   proofs yet.                                                               │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   A theorem marked proved has a machine-checked proof with no sorry;        │</span></span>
+<span><span class="co">#&gt; │   ldgrchk() checks that and that the R functions it covers exist.           │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="../reference/ldgrread.html">ldgrchk</a></span><span class="op">(</span><span class="va">led</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"check"</span>, <span class="st">"ok"</span>, <span class="st">"severity"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                                                check    ok severity</span></span>
 <span><span class="co">#&gt; 1                                 proved: gini-equal  TRUE    error</span></span>

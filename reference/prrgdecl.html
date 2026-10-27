@@ -19,7 +19,7 @@ moved off. Use the pair to make a pre-analysis plan checkable."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -159,10 +159,22 @@ correction that additions make necessary.</p></div>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the full check prints the departures</span></span></span>
 <span class="r-in"><span><span class="fu">prrgchk</span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"atebyyear"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Against the declaration of 2026-10-22T12:15:03Z: departures below </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   declared but not reported (outcome switching): nrows</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   reported but not declared (1 addition(s)): atebyyear</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Against the declaration of 2026-10-27T13:57:46Z: departures below</span> ──╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │ <span style="color: #BB0000;">✖ NOT VERIFIED</span>                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Declared  2                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Reported  1                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   statistic  reported                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  --------                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ate        TRUE                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   nrows      FALSE                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The report departs from the declaration: see below.                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #BB0000;">✖</span>    declared but not reported (outcome switching): nrows           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #BB0000;">✖</span>    reported but not declared (1 addition(s)): atebyyear           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">prrgdecl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"an unnamed claim"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `hyps` must be a named character vector: one claim per statistic</span>

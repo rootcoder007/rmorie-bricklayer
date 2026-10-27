@@ -61,8 +61,9 @@ plothwk(
 
 - ...:
 
-  Further arguments to the first
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) call.
+  Further arguments to the
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) call that
+  opens the panel.
 
 - main, col, pal:
 

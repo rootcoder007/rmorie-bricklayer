@@ -21,7 +21,7 @@ recorded summary statistics against a fresh computation."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,11 +92,9 @@ recorded summary statistics against a fresh computation.</p>
 
 <dt id="arg-ddof">ddof<a class="anchor" aria-label="anchor" href="#arg-ddof"></a></dt>
 <dd><p>Delta degrees of freedom, a single number;
-<code><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer()</a></code> truncates it to an integer.
-The divisor is <code>n - ddof</code>.
-The default <code>1</code> gives the sample standard
-deviation, matching <code><a href="https://rdrr.io/r/stats/sd.html" class="external-link">stats::sd()</a></code>; <code>0</code> gives the population
-figure.</p></dd>
+<code><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer()</a></code> truncates it to an integer. The divisor is
+<code>n - ddof</code>. The default <code>1</code> gives the sample standard deviation, matching
+<code><a href="https://rdrr.io/r/stats/sd.html" class="external-link">stats::sd()</a></code>; <code>0</code> gives the population figure.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -108,12 +106,10 @@ the distance in the units of <code>a</code> and <code>b</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>csdev()</code> computes
-$$s = \sqrt{\frac{1}{n - \mathrm{ddof}} \sum_{i=1}^n (x_i - \bar x)^2},$$
-so <code>ddof = 1</code> is the sample standard deviation of <code><a href="https://rdrr.io/r/stats/sd.html" class="external-link">stats::sd()</a></code>
-and
-<code>ddof = 0</code> the population figure. <code>cdistm()</code> computes
-\(\sqrt{\sum_i (a_i - b_i)^2}\).</p>
+    <p><code>csdev()</code> computes $$s = \sqrt{\frac{1}{n - \mathrm{ddof}}
+\sum_{i=1}^n (x_i - \bar x)^2},$$ so <code>ddof = 1</code> is the sample standard
+deviation of <code><a href="https://rdrr.io/r/stats/sd.html" class="external-link">stats::sd()</a></code> and <code>ddof = 0</code> the population
+figure. <code>cdistm()</code> computes \(\sqrt{\sum_i (a_i - b_i)^2}\).</p>
 <p>Missing values propagate: there is no <code>na.rm</code>, and one <code>NA</code> makes the
 result <code>NA</code>. Remove them first (for example with
 <code><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">stats::na.omit()</a></code>) when

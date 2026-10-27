@@ -14,8 +14,11 @@ length of stay, one panel per measure.
 
 ``` r
 
-sf <- stkflow(days = c(13500, 14600, 15100, 14200), people = c(300, 320, 310, 290),
-                 prd = 2020:2023)
+sf <- stkflow(
+  days = c(13500, 14600, 15100, 14200),
+  people = c(300, 320, 310, 290),
+  prd = 2020:2023
+)
 plot(sf)
 ```
 
@@ -25,8 +28,11 @@ Period-over-period change with its interval, coloured by verdict:
 
 ``` r
 
-y <- yoy(data.frame(year = 2018:2023, n = c(40, 44, 41, 55, 52, 61)), value = "n",
-         prd = "year")
+y <- yoy(
+  data.frame(year = 2018:2023, n = c(40, 44, 41, 55, 52, 61)),
+  value = "n",
+  prd = "year"
+)
 plot(y)
 ```
 
@@ -38,7 +44,11 @@ percentage, and its row says so.
 
 ``` r
 
-plot(yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n", prd = "year"))
+plot(yoy(
+  data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)),
+  value = "n",
+  prd = "year"
+))
 ```
 
 ![](plotting-results_files/figure-html/plotting-results-yoy-small-1.png)
@@ -47,16 +57,32 @@ Rates with their intervals, and the change in a rate:
 
 ``` r
 
-d <- data.frame(division = rep(c("north", "east", "west"), 2), year = rep(2022:2023, each = 3),
-                stops = c(120, 90, 60, 150, 85, 70), residents = c(1e4, 8e3, 5e3, 1e4, 8e3, 5e3))
-plot(rtcalc(d[d$year == 2023, ], count = "stops", pop = "residents", by = "division"))
+d <- data.frame(
+  division = rep(c("north", "east", "west"), 2),
+  year = rep(2022:2023, each = 3),
+  stops = c(120, 90, 60, 150, 85, 70),
+  residents = c(1e4, 8e3, 5e3, 1e4, 8e3, 5e3),
+  stringsAsFactors = FALSE
+)
+plot(rtcalc(
+  d[d$year == 2023, ],
+  count = "stops",
+  pop = "residents",
+  by = "division"
+))
 ```
 
 ![](plotting-results_files/figure-html/plotting-results-rates-1.png)
 
 ``` r
 
-plot(ratechg(d, count = "stops", pop = "residents", prd = "year", by = "division"))
+plot(ratechg(
+  d,
+  count = "stops",
+  pop = "residents",
+  prd = "year",
+  by = "division"
+))
 ```
 
 ![](plotting-results_files/figure-html/plotting-results-rates-2.png)
@@ -153,7 +179,9 @@ for the analysis behind each one):
 
 ``` r
 
-ext <- function(f) read.csv(system.file("extdata", f, package = "rmoriebricklayer"))
+ext <- function(f) {
+  read.csv(system.file("extdata", f, package = "rmoriebricklayer"))
+}
 f <- ext("ocj_flow_ontario.csv")
 d <- ext("ocj_time_to_disposition.csv")
 x <- ext("ocj_dispositions.csv")
@@ -219,20 +247,23 @@ plot(knoxtst(b$lon, b$lat, as.Date(b$occ_date), c(100, 200, 400), c(7, 14, 28),
 
 ![](plotting-results_files/figure-html/plotting-results-density-2.png)
 
-## First Nations, Metis and Inuit health
+## First Nations, Métis and Inuit health
 
 Published Statistics Canada estimates bundled with the package
 ([`?indiex`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indiex.md);
 see
 [`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md)
 for the methods and the governance behind them). Each group is drawn on
-its own: the plots never pool First Nations, Metis and Inuit.
+its own: the plots never pool First Nations, Métis and Inuit.
 
 ``` r
 
 h <- indiex("health")
 adults <- h[h$age == "Total, 18 years and over", ]
-mh <- adults[adults$period == "2019/2022" & adults$indicator == "Perceived mental health, very good or excellent", ]
+mh <- adults[
+  adults$period == "2019/2022" &
+    adults$indicator == "Perceived mental health, very good or excellent",
+]
 ```
 
 Each group against non-Indigenous adults, with intervals from the
@@ -265,12 +296,23 @@ table):
 ``` r
 
 wb <- indiex("wellbeing")
-w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
-                      well = c("Always or often has a hopeful outlook",
-                                   "Sense of meaning and purpose rating of 8, 9 or 10"),
-                      distress = c("Rarely or never has a hopeful outlook",
-                                   "Life satisfaction rating between 0 and 5"),
-                      qual = "quality")
+w <- welprof(
+  wb,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  well = c(
+    "Always or often has a hopeful outlook",
+    "Sense of meaning and purpose rating of 8, 9 or 10"
+  ),
+  distress = c(
+    "Rarely or never has a hopeful outlook",
+    "Life satisfaction rating between 0 and 5"
+  ),
+  qual = "quality"
+)
 plot(w)
 ```
 
@@ -278,7 +320,11 @@ plot(w)
 
 ``` r
 
-plot(dualcont(w, "Always or often has a hopeful outlook", "Life satisfaction rating between 0 and 5"))
+plot(dualcont(
+  w,
+  "Always or often has a hopeful outlook",
+  "Life satisfaction rating between 0 and 5"
+))
 ```
 
 ![](plotting-results_files/figure-html/plotting-results-indigenous-wellness-2.png)
@@ -287,11 +333,22 @@ Change between the two survey periods, wellness first:
 
 ``` r
 
-hc <- healchg(adults[adults$indicator %in% c("Perceived mental health, very good or excellent",
-                                                    "Mood disorder"), ],
-                     "group", "indicator", "period", "estimate", "lower", "upper",
-                     from = "2015/2018", to = "2019/2022", qual = "quality",
-                     well = "Perceived mental health, very good or excellent")
+hc <- healchg(
+  adults[
+    adults$indicator %in%
+      c("Perceived mental health, very good or excellent", "Mood disorder"),
+  ],
+  "group",
+  "indicator",
+  "period",
+  "estimate",
+  "lower",
+  "upper",
+  from = "2015/2018",
+  to = "2019/2022",
+  qual = "quality",
+  well = "Perceived mental health, very good or excellent"
+)
 plot(hc)
 ```
 
@@ -330,7 +387,15 @@ plot(cohtrnd(p, "district", "month", "crmrate", "refmonth", win = c(-10, 10)))
 
 ``` r
 
-es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 4, lags = 6)
+es <- evstudy(
+  p,
+  "district",
+  "month",
+  "crmrate",
+  "refmonth",
+  leads = 4,
+  lags = 6
+)
 plot(es)
 ```
 
@@ -371,7 +436,15 @@ plot(synctl(p13, "district", "month", "crmrate", "D13", adopt = 13))
 
 ``` r
 
-plot(syndid(p13, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1))
+plot(syndid(
+  p13,
+  "district",
+  "month",
+  "crmrate",
+  "refmonth",
+  reps = 50,
+  seed = 1
+))
 ```
 
 ![](plotting-results_files/figure-html/plotting-results-policy-one-3.png)
@@ -383,8 +456,17 @@ with its overlap and balance checks:
 
 ``` r
 
-plot(plnpwr(p[p$month <= 12, ], "district", "month", "crmrate", ntrt = 10, adopt = 7:10,
-            eff = c(0, 0.5, 1, 1.5), reps = 40, seed = 1))
+plot(plnpwr(
+  p[p$month <= 12, ],
+  "district",
+  "month",
+  "crmrate",
+  ntrt = 10,
+  adopt = 7:10,
+  eff = c(0, 0.5, 1, 1.5),
+  reps = 40,
+  seed = 1
+))
 ```
 
 ![](plotting-results_files/figure-html/plotting-results-policy-checks-1.png)
@@ -413,7 +495,10 @@ plot(fit, type = "estimate")
 
 e <- pmin(pmax(attr(fit, "propensity")$propensity, 0.01), 0.99)
 d$ipw <- ifelse(d$t == 1, 1 / e, 1 / (1 - e))
-plot(baltab(d, "t", c("age", "income")), after = baltab(d, "t", c("age", "income"), w = "ipw"))
+plot(
+  baltab(d, "t", c("age", "income")),
+  after = baltab(d, "t", c("age", "income"), w = "ipw")
+)
 ```
 
 ![](plotting-results_files/figure-html/plotting-results-policy-checks-4.png)
@@ -429,7 +514,13 @@ gives the colour-blind-safe sets the package uses.
 
 ``` r
 
-plot(sf, what = "alos", col = "firebrick", main = "Length of stay (days)", lwd = 3)
+plot(
+  sf,
+  what = "alos",
+  col = "firebrick",
+  main = "Length of stay (days)",
+  lwd = 3
+)
 ```
 
 ![](plotting-results_files/figure-html/plotting-results-custom-1.png)

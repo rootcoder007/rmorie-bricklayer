@@ -121,118 +121,143 @@ p <- cnsprof(indiex("censuspop"))
 h <- cnsprof(indiex("censushh"))
 cnscwb(p, h)[, c("geo", "group", "income", "education", "housing", "labour",
                      "cwb")]
-#>                          geo          group    income education  housing labour
-#> 1                     Canada  First Nations  71.03051  51.62081 91.87864  75.85
-#> 2                     Canada          Métis  78.72661  59.55861 91.87864  83.15
-#> 3                     Canada          Inuit  72.12712  38.50607 91.87864  74.75
-#> 4                     Canada Non-Indigenous  84.37515  68.01121 95.98845  86.30
-#> 5  Newfoundland and Labrador  First Nations  76.69559  58.92037 95.34860  78.75
-#> 6  Newfoundland and Labrador          Métis  80.47825  57.62144 95.34860  79.65
-#> 7  Newfoundland and Labrador          Inuit  77.97221  53.85984 95.34860  79.05
-#> 8  Newfoundland and Labrador Non-Indigenous  81.99766  60.51028 97.25758  80.75
-#> 9       Prince Edward Island  First Nations  70.83288  58.61214 92.83854  80.60
-#> 10      Prince Edward Island          Métis  77.88242  67.58410 92.83854  87.10
-#> 11      Prince Edward Island          Inuit        NA        NA       NA     NA
-#> 12      Prince Edward Island Non-Indigenous  79.56542  65.86887 96.02953  87.50
-#> 13               Nova Scotia  First Nations  69.63374  60.08069 92.74710  76.25
-#> 14               Nova Scotia          Métis  78.43462  59.96003 92.74710  81.80
-#> 15               Nova Scotia          Inuit  72.25059  62.23958 92.74710  78.40
-#> 16               Nova Scotia Non-Indigenous  81.07461  66.07309 95.58339  83.70
-#> 17             New Brunswick  First Nations  70.46816  55.34642 91.55738  76.90
-#> 18             New Brunswick          Métis  76.57387  56.66446 91.55738  79.50
-#> 19             New Brunswick          Inuit  69.28439  59.11111 91.55738  72.95
-#> 20             New Brunswick Non-Indigenous  79.92296  62.51079 95.99897  85.25
-#> 21                    Quebec  First Nations  75.79821  52.35905 92.98831  82.90
-#> 22                    Quebec          Métis  77.97239  57.35862 92.98831  84.00
-#> 23                    Quebec          Inuit  70.13841  30.67729 92.98831  78.35
-#> 24                    Quebec Non-Indigenous  82.44963  64.94822 96.30485  88.00
-#> 25                   Ontario  First Nations  75.50222  55.06378 92.91404  77.30
-#> 26                   Ontario          Métis  80.74708  61.84098 92.91404  81.80
-#> 27                   Ontario          Inuit  73.25351  56.25000 92.91404  77.10
-#> 28                   Ontario Non-Indigenous  85.17523  69.53217 95.77163  84.95
-#> 29                  Manitoba  First Nations  60.39601  43.52566 89.26761  69.25
-#> 30                  Manitoba          Métis  76.11823  58.20675 89.26761  84.15
-#> 31                  Manitoba          Inuit  74.01584  55.02008 89.26761  74.45
-#> 32                  Manitoba Non-Indigenous  82.25944  67.24349 95.54920  88.30
-#> 33              Saskatchewan  First Nations  61.61161  47.38542 89.11140  67.45
-#> 34              Saskatchewan          Métis  76.22189  58.78027 89.11140  83.35
-#> 35              Saskatchewan          Inuit  73.38165  58.69565 89.11140  78.15
-#> 36              Saskatchewan Non-Indigenous  83.92413  66.68426 95.88947  88.95
-#> 37                   Alberta  First Nations  70.34422  49.37512 92.83794  73.30
-#> 38                   Alberta          Métis  79.65743  58.46937 92.83794  82.90
-#> 39                   Alberta          Inuit  76.48720  59.03226 92.83794  79.90
-#> 40                   Alberta Non-Indigenous  86.54861  68.99823 96.20293  86.60
-#> 41          British Columbia  First Nations  71.85170  52.80625 92.69112  78.35
-#> 42          British Columbia          Métis  78.50137  61.18405 92.69112  84.85
-#> 43          British Columbia          Inuit  70.76883  57.77778 92.69112  79.55
-#> 44          British Columbia Non-Indigenous  85.34473  70.53123 95.90973  86.90
-#> 45                     Yukon  First Nations  80.03941  50.44316 88.77095  79.15
-#> 46                     Yukon          Métis  88.07050  63.72549 88.77095  86.10
-#> 47                     Yukon          Inuit  74.30427  49.46237 88.77095  74.65
-#> 48                     Yukon Non-Indigenous  90.61359  73.07803 94.11649  91.15
-#> 49     Northwest Territories  First Nations  79.63866  39.50453 83.50449  76.50
-#> 50     Northwest Territories          Métis  91.24905  55.79134 83.50449  87.00
-#> 51     Northwest Territories          Inuit  77.46422  37.79637 83.50449  75.70
-#> 52     Northwest Territories Non-Indigenous  97.48298  75.49915 92.89084  92.90
-#> 53                   Nunavut  First Nations        NA        NA       NA     NA
-#> 54                   Nunavut          Métis        NA        NA       NA     NA
-#> 55                   Nunavut          Inuit  70.22000  28.49462 70.82270  69.85
-#> 56                   Nunavut Non-Indigenous 100.00000  79.89287 93.30144  94.85
-#>         cwb
-#> 1  72.59499
-#> 2  78.32846
-#> 3  69.31546
-#> 4  83.66870
-#> 5  77.42864
-#> 6  78.27457
-#> 7  76.55766
-#> 8  80.12888
-#> 9  75.72089
-#> 10 81.35126
-#> 11       NA
-#> 12 82.24095
-#> 13 74.67788
-#> 14 78.23544
-#> 15 76.40932
-#> 16 81.60777
-#> 17 73.56799
-#> 18 76.07393
-#> 19 73.22572
-#> 20 80.92068
-#> 21 76.01139
-#> 22 78.07983
-#> 23 68.03850
-#> 24 82.92567
-#> 25 75.19501
-#> 26 79.32553
-#> 27 74.87939
-#> 28 83.85726
-#> 29 65.60982
-#> 30 76.93565
-#> 31 73.18838
-#> 32 83.33803
-#> 33 66.38961
-#> 34 76.86589
-#> 35 74.83468
-#> 36 83.86197
-#> 37 71.46432
-#> 38 78.46618
-#> 39 77.06435
-#> 40 84.58744
-#> 41 73.92477
-#> 42 79.30663
-#> 43 75.19693
-#> 44 84.67142
-#> 45 74.60088
-#> 46 81.66673
-#> 47 71.79690
-#> 48 87.23953
-#> 49 69.78692
-#> 50 79.38622
-#> 51 68.61627
-#> 52 89.69324
-#> 53       NA
-#> 54       NA
-#> 55 59.84683
-#> 56 92.01108
+#> ╭── Community Well-Being index, from the census ──────────────────────────────╮
+#> │   Rows         56                                                           │
+#> │   Geographies  14, from Canada to Nunavut                                   │
+#> │   Groups       First Nations; Métis; Inuit; Non-Indigenous                  │
+#> │   Not scored   3                                                            │
+#> │   Scale        0 to 100 for each component and the score                    │
+#> │                                                                             │
+#> │   geo                        group           income  education  housing     │
+#> │   -------------------------  --------------  ------  ---------  -------     │
+#> │   Canada                     First Nations    71.03      51.62    91.88     │
+#> │   Canada                     Métis            78.73      59.56    91.88     │
+#> │   Canada                     Inuit            72.13      38.51    91.88     │
+#> │   Canada                     Non-Indigenous   84.38      68.01    95.99     │
+#> │   Newfoundland and Labrador  First Nations    76.70      58.92    95.35     │
+#> │   Newfoundland and Labrador  Métis            80.48      57.62    95.35     │
+#> │   Newfoundland and Labrador  Inuit            77.97      53.86    95.35     │
+#> │   Newfoundland and Labrador  Non-Indigenous   82.00      60.51    97.26     │
+#> │   Prince Edward Island       First Nations    70.83      58.61    92.84     │
+#> │   Prince Edward Island       Métis            77.88      67.58    92.84     │
+#> │   Prince Edward Island       Inuit                                          │
+#> │   Prince Edward Island       Non-Indigenous   79.57      65.87    96.03     │
+#> │   Nova Scotia                First Nations    69.63      60.08    92.75     │
+#> │   Nova Scotia                Métis            78.43      59.96    92.75     │
+#> │   Nova Scotia                Inuit            72.25      62.24    92.75     │
+#> │   Nova Scotia                Non-Indigenous   81.07      66.07    95.58     │
+#> │   New Brunswick              First Nations    70.47      55.35    91.56     │
+#> │   New Brunswick              Métis            76.57      56.66    91.56     │
+#> │   New Brunswick              Inuit            69.28      59.11    91.56     │
+#> │   New Brunswick              Non-Indigenous   79.92      62.51    96.00     │
+#> │   Quebec                     First Nations    75.80      52.36    92.99     │
+#> │   Quebec                     Métis            77.97      57.36    92.99     │
+#> │   Quebec                     Inuit            70.14      30.68    92.99     │
+#> │   Quebec                     Non-Indigenous   82.45      64.95    96.30     │
+#> │   Ontario                    First Nations    75.50      55.06    92.91     │
+#> │   Ontario                    Métis            80.75      61.84    92.91     │
+#> │   Ontario                    Inuit            73.25      56.25    92.91     │
+#> │   Ontario                    Non-Indigenous   85.18      69.53    95.77     │
+#> │   Manitoba                   First Nations    60.40      43.53    89.27     │
+#> │   Manitoba                   Métis            76.12      58.21    89.27     │
+#> │   Manitoba                   Inuit            74.02      55.02    89.27     │
+#> │   Manitoba                   Non-Indigenous   82.26      67.24    95.55     │
+#> │   Saskatchewan               First Nations    61.61      47.39    89.11     │
+#> │   Saskatchewan               Métis            76.22      58.78    89.11     │
+#> │   Saskatchewan               Inuit            73.38      58.70    89.11     │
+#> │   Saskatchewan               Non-Indigenous   83.92      66.68    95.89     │
+#> │   Alberta                    First Nations    70.34      49.38    92.84     │
+#> │   Alberta                    Métis            79.66      58.47    92.84     │
+#> │   Alberta                    Inuit            76.49      59.03    92.84     │
+#> │   Alberta                    Non-Indigenous   86.55      69.00    96.20     │
+#> │   British Columbia           First Nations    71.85      52.81    92.69     │
+#> │   British Columbia           Métis            78.50      61.18    92.69     │
+#> │   British Columbia           Inuit            70.77      57.78    92.69     │
+#> │   British Columbia           Non-Indigenous   85.34      70.53    95.91     │
+#> │   Yukon                      First Nations    80.04      50.44    88.77     │
+#> │   Yukon                      Métis            88.07      63.73    88.77     │
+#> │   Yukon                      Inuit            74.30      49.46    88.77     │
+#> │   Yukon                      Non-Indigenous   90.61      73.08    94.12     │
+#> │   Northwest Territories      First Nations    79.64      39.50    83.50     │
+#> │   Northwest Territories      Métis            91.25      55.79    83.50     │
+#> │   Northwest Territories      Inuit            77.46      37.80    83.50     │
+#> │   Northwest Territories      Non-Indigenous   97.48      75.50    92.89     │
+#> │   Nunavut                    First Nations                                  │
+#> │   Nunavut                    Métis                                          │
+#> │   Nunavut                    Inuit            70.22      28.49    70.82     │
+#> │   Nunavut                    Non-Indigenous  100.00      79.89    93.30     │
+#> │                                                                             │
+#> │   geo                        labour    cwb                                  │
+#> │   -------------------------  ------  -----                                  │
+#> │   Canada                      75.85  72.59                                  │
+#> │   Canada                      83.15  78.33                                  │
+#> │   Canada                      74.75  69.32                                  │
+#> │   Canada                      86.30  83.67                                  │
+#> │   Newfoundland and Labrador   78.75  77.43                                  │
+#> │   Newfoundland and Labrador   79.65  78.27                                  │
+#> │   Newfoundland and Labrador   79.05  76.56                                  │
+#> │   Newfoundland and Labrador   80.75  80.13                                  │
+#> │   Prince Edward Island        80.60  75.72                                  │
+#> │   Prince Edward Island        87.10  81.35                                  │
+#> │   Prince Edward Island                                                      │
+#> │   Prince Edward Island        87.50  82.24                                  │
+#> │   Nova Scotia                 76.25  74.68                                  │
+#> │   Nova Scotia                 81.80  78.24                                  │
+#> │   Nova Scotia                 78.40  76.41                                  │
+#> │   Nova Scotia                 83.70  81.61                                  │
+#> │   New Brunswick               76.90  73.57                                  │
+#> │   New Brunswick               79.50  76.07                                  │
+#> │   New Brunswick               72.95  73.23                                  │
+#> │   New Brunswick               85.25  80.92                                  │
+#> │   Quebec                      82.90  76.01                                  │
+#> │   Quebec                      84.00  78.08                                  │
+#> │   Quebec                      78.35  68.04                                  │
+#> │   Quebec                      88.00  82.93                                  │
+#> │   Ontario                     77.30  75.20                                  │
+#> │   Ontario                     81.80  79.33                                  │
+#> │   Ontario                     77.10  74.88                                  │
+#> │   Ontario                     84.95  83.86                                  │
+#> │   Manitoba                    69.25  65.61                                  │
+#> │   Manitoba                    84.15  76.94                                  │
+#> │   Manitoba                    74.45  73.19                                  │
+#> │   Manitoba                    88.30  83.34                                  │
+#> │   Saskatchewan                67.45  66.39                                  │
+#> │   Saskatchewan                83.35  76.87                                  │
+#> │   Saskatchewan                78.15  74.83                                  │
+#> │   Saskatchewan                88.95  83.86                                  │
+#> │   Alberta                     73.30  71.46                                  │
+#> │   Alberta                     82.90  78.47                                  │
+#> │   Alberta                     79.90  77.06                                  │
+#> │   Alberta                     86.60  84.59                                  │
+#> │   British Columbia            78.35  73.92                                  │
+#> │   British Columbia            84.85  79.31                                  │
+#> │   British Columbia            79.55  75.20                                  │
+#> │   British Columbia            86.90  84.67                                  │
+#> │   Yukon                       79.15  74.60                                  │
+#> │   Yukon                       86.10  81.67                                  │
+#> │   Yukon                       74.65  71.80                                  │
+#> │   Yukon                       91.15  87.24                                  │
+#> │   Northwest Territories       76.50  69.79                                  │
+#> │   Northwest Territories       87.00  79.39                                  │
+#> │   Northwest Territories       75.70  68.62                                  │
+#> │   Northwest Territories       92.90  89.69                                  │
+#> │   Nunavut                                                                   │
+#> │   Nunavut                                                                   │
+#> │   Nunavut                     69.85  59.85                                  │
+#> │   Nunavut                     94.85  92.01                                  │
+#> │                                                                             │
+#> │   Highest score: Nunavut, Non-Indigenous (92.01); lowest: Nunavut, Inuit    │
+#> │   (59.85).                                                                  │
+#> │   Within a geography the groups' scores are furthest apart in Nunavut       │
+#> │   (32.2 points) and closest in Newfoundland and Labrador (3.57).            │
+#> │                                                                             │
+#> │   cwb is the mean of income, education, housing and labour force            │
+#> │   activity (Indigenous Services Canada's Community Well-Being index).       │
+#> │   CWB-style, close to but not the Department's index: the public            │
+#> │   profile's inputs differ (ages 25 and over; housing from households,       │
+#> │   pooled for First Nations, Métis and Inuit people).                        │
+#> │   Never a measure of wellness as First Nations, Métis or Inuit              │
+#> │   people define it. A group below minpop people gets no score.              │
+#> │   Housing needs the household table (dwell).                                │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```

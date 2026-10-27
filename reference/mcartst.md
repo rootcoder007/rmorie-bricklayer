@@ -126,37 +126,38 @@ y <- x + stats::rnorm(n)
 mcar <- data.frame(x = x, y = y)
 mcar$y[sample(n, 90)] <- NA
 mcartst(mcar)
-#> ── Little's MCAR test ────────────────────────────────────────────
-#>   ✓ no departure from MCAR detected
-#> 
-#>   statistic      1.094
-#>   df             1
-#>   p-value        0.296
-#>   patterns       2
-#>   variables      2
-#>   rows used      300
-#>   EM iterations  13
-#> 
-#>   Not evidence OF MCAR: a large p-value is a failure to detect a
-#>   departure, and this test has little power on small samples.
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Little's MCAR test ────────────────────────────────────────────╮
+#> │   Verdict        ✓ no departure from MCAR detected               │
+#> │   Statistic      1.094                                           │
+#> │   df             1                                               │
+#> │   p-value        0.296                                           │
+#> │   Patterns       2                                               │
+#> │   Variables      2                                               │
+#> │   Rows used      300                                             │
+#> │   EM iterations  13                                              │
+#> │                                                                  │
+#> │   Not evidence OF MCAR: a large p-value is a failure to detect a │
+#> │   departure, and this test has little power on small samples.    │
+#> ╰──────────────────────────────────────────────────────────────────╯
 
 # Missing depending on the OTHER, observed variable: not MCAR, and
 # detectable, because the pattern's mean of x is shifted.
 mar <- data.frame(x = x, y = y)
 mar$y[x > 0.4] <- NA
 mcartst(mar)
-#> ── Little's MCAR test ────────────────────────────────────────────
-#>   ✗ MCAR rejected: the missingness is related to the data
-#> 
-#>   statistic      180.118
-#>   df             1
-#>   p-value        <2e-16
-#>   patterns       2
-#>   variables      2
-#>   rows used      300
-#>   EM iterations  69
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Little's MCAR test ────────────────────────────────────────────────────╮
+#> │   Verdict        ✗ MCAR rejected: the missingness is related to the data │
+#> │   Statistic      180.118                                                 │
+#> │   df             1                                                       │
+#> │   p-value        < 0.001                                                 │
+#> │   Patterns       2                                                       │
+#> │   Variables      2                                                       │
+#> │   Rows used      300                                                     │
+#> │   EM iterations  69                                                      │
+#> │                                                                          │
+#> │   Rows with different patterns of missing values have different means:   │
+#> │   an analysis of the complete rows alone may be biased.                  │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 
 # Complete data has one pattern and nothing to test.
 mcartst(data.frame(a = x, b = y))$df

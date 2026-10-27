@@ -38,7 +38,7 @@ trcprog(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the completion rate (default 0.95).
 
 ## Value
 
@@ -72,9 +72,33 @@ completed over time can be modelled the same way: set `total` and
 ``` r
 p <- trcprog()
 p
-#>   completed remaining years     rate    ratelo   rateup   cmplby cmplbyearly
-#> 1        13        81  7.04 1.846591 0.9832319 3.157727 2066.865    2048.651
-#>   cmplbylate
-#> 1   2105.381
+#> ╭── Truth and Reconciliation Calls to Action: progress ────────────────────╮
+#> │   Completed        13 of 94                                              │
+#> │   Remaining        81                                                    │
+#> │   Years counted    7.04                                                  │
+#> │   Calls a year     1.85 [0.983, 3.160]                                   │
+#> │   All complete by  2066 (2048 to 2105)                                   │
+#> │                                                                          │
+#> │   At this pace the remaining 81 Calls are complete around 2066.          │
+#> │                                                                          │
+#> │   Completions taken as a Poisson process at a constant rate; the range   │
+#> │   comes from the rate's interval. Trackers count completion differently. │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 plot(p)
+
+
+# your own count: Calls completed by the end of each year, made up
+trcprog(done = c(2, 6, 9, 13), yearend = 2016:2019)
+#> ╭── Truth and Reconciliation Calls to Action: progress ────────────────────╮
+#> │   Completed        13 of 94                                              │
+#> │   Remaining        81                                                    │
+#> │   Years counted    4.04                                                  │
+#> │   Calls a year     3.22 [1.71, 5.50]                                     │
+#> │   All complete by  2045 (2034 to 2067)                                   │
+#> │                                                                          │
+#> │   At this pace the remaining 81 Calls are complete around 2045.          │
+#> │                                                                          │
+#> │   Completions taken as a Poisson process at a constant rate; the range   │
+#> │   comes from the rate's interval. Trackers count completion differently. │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 ```

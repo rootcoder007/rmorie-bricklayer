@@ -19,7 +19,7 @@ uploaded. It needs the shiny package, which is suggested, not required."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,23 +115,20 @@ takes the object's <code>bands</code>.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The app has the column table (verdicts under the bands), the PSI per
 column, the fingerprint, and for the chosen column its summary, the
-distributions, the ECDFs, the quantile shift, the first digits and a
-sentence on the verdict, as <code><a href="drfthtml.html">drfthtml()</a></code> has, and a history heatmap
-with <code>hist</code>; the warn and fail bands and alpha are sliders, with a reset to the
+distributions, the ECDFs, the quantile shift, the first digits and a sentence
+on the verdict, as <code><a href="drfthtml.html">drfthtml()</a></code> has, and a history heatmap with
+<code>hist</code>; the warn and fail bands and alpha are sliders, with a reset to the
 object's bands. Beyond the page it has: “what would clear this”, the
 PSI of the column with its <code>k</code> largest bins left out and the rest
 renormalized; with <code>ref</code> and <code>cur</code> (or uploaded CSV files), a rerun of
 <code><a href="cpsdrft.html">cpsdrft()</a></code> on chosen columns with another number of bins; with
-<code>hist</code>,
-the PSI of each column over the runs in that directory
-(<code>rmbl drift --json</code> outputs or JSON exports of the page); a manifest
-tab when
-<code>x$manifest</code> holds an <code><a href="mnfdiff.html">mnfdiff()</a></code>; and downloads of the
-HTML report,
-Markdown and JSON. Uploaded files are read with the package's own CSV
-reader (the one <code><a href="dmnf.html">dload()</a></code> uses). <code>rmbl drift PATH --app</code>
-opens the app on
-the first capsule whose source moved.</p>
+<code>hist</code>, the PSI of each column over the runs in that directory
+(<code>rmbl drift --json</code> outputs or JSON exports of the page); a manifest tab
+when <code>x$manifest</code> holds an <code><a href="mnfdiff.html">mnfdiff()</a></code>; and downloads of the
+HTML report, Markdown and JSON. Uploaded files are read with the package's
+own CSV reader (the one <code><a href="dmnf.html">dload()</a></code> uses).
+<code>rmbl drift PATH --app</code> opens the app on the first capsule whose source
+moved.</p>
 <p>The function builds the app and returns it; printing it, or
 <code><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">shiny::runApp()</a></code>, runs it.</p>
 <p>Errors: <code>x</code> neither <code>NULL</code> nor from <code><a href="cpsdrft.html">cpsdrft()</a></code>;

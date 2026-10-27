@@ -74,7 +74,21 @@ table(x)
 #>   1 3.5   9 
 #>  10   4   2 
 ginicoef(x)
-#> [1] 0.452381
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0.4524                                                  │
+#> │   Units             16                                                      │
+#> │   Total             42                                                      │
+#> │   Largest unit      9 (21.4% of the total)                                  │
+#> │   Most for n units  0.9375                                                  │
+#> │                                                                             │
+#> │   A Gini of 0.4524: the total is highly concentrated.                       │
+#> │   That is 48% of the way from equal shares (0) to one unit holding all of   │
+#> │   it (0.9375 for 16 units).                                                 │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # the lower-bound reading of the same table
 expbands(c("1", "2 to 5", "Greater than 5"), cnts = c(10, 4, 2),

@@ -69,12 +69,12 @@ stgatt(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the intervals reported (default 0.95).
 
 - covs:
 
   Optional column names of covariates for conditional parallel trends
-  (`method = "csa"` only).
+  (`meth = "csa"` only).
 
 - estmeth:
 
@@ -94,7 +94,7 @@ dynamic effects.
 Let the cohort \\g\\ be the units first treated in period \\g\\, and
 \\C\\ the comparison units: never treated (`control = "never"`), or not
 yet treated by period \\\max(t, g - 1)\\ (`"notyet"`, the default). For
-`method = "csa"`, \$\$ATT(g, t) = \big(\bar Y\_{g,t} - \bar
+`meth = "csa"`, \$\$ATT(g, t) = \big(\bar Y\_{g,t} - \bar
 Y\_{g,b}\big) - \big(\bar Y\_{C,t} - \bar Y\_{C,b}\big),\$\$ with base
 period \\b = g - 1\\ for \\t \ge g\\, and \\b = t - 1\\ before (the
 `"varying"` base of the `did` package), so a pre-period ATT is a placebo
@@ -117,7 +117,7 @@ outcome model is right. Comparison units with \\\hat p \ge 0.995\\ are
 trimmed, as the `DRDID` package does. These agree with `did::attgt()` to
 rounding error.
 
-For `method = "wooldridge"`, the regression of the outcome on unit and
+For `meth = "wooldridge"`, the regression of the outcome on unit and
 period effects and an indicator for every treated cohort-period cell,
 with never-treated (or last-treated) units as the comparison, gives each
 \\ATT(g, t)\\ as a coefficient; without covariates it equals the
@@ -171,4 +171,24 @@ head(s$dynamic)
 #> 5  -19 -0.4742667 0.3297593 -1.120583 0.1720498
 #> 6  -18  0.1654667 0.6897981 -1.186513 1.5174460
 plot(s)
+
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+# each adoption cohort against the towns not yet treated
+stgatt(own, "town", "year", "rate", "first", reps = 49, seed = 1)$overall
+#>   estimate        se     lower     upper
+#> 1 -3.89384 0.8365213 -5.533391 -2.254288
 ```

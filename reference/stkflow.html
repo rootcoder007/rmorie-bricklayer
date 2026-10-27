@@ -19,7 +19,7 @@ direction for the other."><meta property="og:image" content="https://rootcoder00
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -182,14 +182,27 @@ Corrections Planners</em>. University of Illinois at Urbana-Champaign.</p>
 <span class="r-in"><span>  prd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2023"</span>, <span class="st">"2025"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  expo <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15495050</span>, <span class="fl">16256538</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Stock and flow over 2 periods ───────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  period people   days      alos      adp flowrate  stkrate</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2023  12647 115674  9.146359 316.9151 81.61961 2.045267</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2025   9608 126121 13.126665 345.5370 59.10237 2.125526</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2023 to 2025: people -24.0%, stay +43.5%, days +9.0%</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   flow rate -27.6%, stock rate +3.9%  &lt;- opposite signs: quote both</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Stock and flow over 2 periods</span> ────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Periods          2023 to 2025                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Period length    365 days                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Changes against  the first period                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rates per        100,000 residents                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns          alos = days per person; adp = people held on an average  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                    day                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   period  people     days   alos    adp  flowrate  stkrate                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ------  -------  -----  -----  --------  -------                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2023    12,647  115,674   9.15  316.9     81.62    2.045                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025     9,608  126,121  13.13  345.5     59.10    2.126                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2023 to 2025: people -24.0%, stay +43.5%, days +9.0%                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   flow rate -27.6%, stock rate +3.9%                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   &lt;- opposite signs: quote both, neither alone tells the story              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakner (1976): adp = people x alos / t, exact only in a steady state.     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A period shorter than the longest stay cuts unfinished stays short,       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   so alos is biased downward (p.16-17).                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a series of three years against the previous year, with leap-year lengths</span></span></span>
 <span class="r-in"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu">stkflow</span><span class="op">(</span></span></span>

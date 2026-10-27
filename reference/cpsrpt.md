@@ -178,18 +178,18 @@ ref <- data.frame(
 cur <- ref
 cur$score <- stats::runif(200, 0, 10)
 cpsrpt(cur, ref = ref, schema = infsch(ref))
-#> ── Capsule report ────────────────────────────────────────────────
-#>   ✓ these checks found nothing
-#> 
-#>   rows           200
-#>   columns        3
-#>   missing cells  0.0%
-#>   complete rows  100.0%
-#>   digest         5d70a73bdcbc84111491db56743c94fd
-#> 
-#>   No finding is proof of correctness: each check has a
-#>   stated blind spot, and a small sample has little power.
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Capsule report ─────────────────────────────────────────╮
+#> │   Verdict        ✓ these checks found nothing             │
+#> │   Rows           200                                      │
+#> │   Columns        3                                        │
+#> │   Missing cells  0.0%                                     │
+#> │   Complete rows  100.0%                                   │
+#> │   Digest         5d70a73bdcbc84111491db56743c94fd         │
+#> │   Findings       0                                        │
+#> │                                                           │
+#> │   No finding is proof of correctness: each check has a    │
+#> │   stated blind spot, and a small sample has little power. │
+#> ╰───────────────────────────────────────────────────────────╯
 
 # One rescaled column and a new category: both surface, worst first.
 bad <- cur
@@ -197,21 +197,25 @@ bad$score <- bad$score * 5
 bad$grade[1:80] <- "z"
 r <- cpsrpt(bad, ref = ref, schema = infsch(ref))
 r
-#> ── Capsule report ────────────────────────────────────────────────
-#>   ✗ WARNINGS: something moved
-#> 
-#>   rows           200
-#>   columns        3
-#>   missing cells  0.0%
-#>   complete rows  100.0%
-#>   digest         7889e99fa5a2e10e04c767d3958f3c84
-#> 
-#> ── Findings (4) ──────────────────────────────────────────────────
-#>   ✗ warn      drift      grade                  categorical test, p = <2e-16
-#>   ✗ warn      drift      score                  numeric test, p = <2e-16
-#>   ✗ warn      schema     range_score            Column 'score' has 161 value(s) outside [-0.8488307, 10.90645]
-#>   ✗ warn      schema     unexpected_grade       Column 'grade' has unexpected values: z
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Capsule report ───────────────────────────────────────────────────────────╮
+#> │   Verdict        ✗ WARNINGS: something moved                                │
+#> │   Rows           200                                                        │
+#> │   Columns        3                                                          │
+#> │   Missing cells  0.0%                                                       │
+#> │   Complete rows  100.0%                                                     │
+#> │   Digest         7889e99fa5a2e10e04c767d3958f3c84                           │
+#> │   Findings       4                                                          │
+#> │                                                                             │
+#> │   No finding is proof of correctness: each check has a                      │
+#> │   stated blind spot, and a small sample has little power.                   │
+#> │                                                                             │
+#> │   ✖    warn  drift      grade: categorical test, p = < 0.001                │
+#> │   ✖    warn  drift      score: numeric test, p = < 0.001                    │
+#> │   ✖    warn  schema     range_score: Column 'score' has 161 value(s)        │
+#> │                         outside [-0.8488307, 10.90645]                      │
+#> │   ✖    warn  schema     unexpected_grade: Column 'grade' has unexpected     │
+#> │                         values: z                                           │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 r$verdict
 #> [1] "warn"
 r$findings[, c("severity", "check", "subject")]
@@ -222,13 +226,16 @@ r$findings[, c("severity", "check", "subject")]
 #> 4     warn schema unexpected_grade
 
 # A missing column is fatal, because nothing downstream can run.
-cpsrpt(bad[, c("id", "score")], ref = ref,
-               schema = infsch(ref))$verdict
+cpsrpt(bad[, c("id", "score")], ref = ref, schema = infsch(ref))$verdict
 #> [1] "fatal"
 
-# validation rules join the findings, and chunks are pinned with a Merkle root
-r2 <- cpsrpt(bad, rules = list(ruleinset("grade", c("a", "b", "c"))),
-                     chunks = c("part one", "part two"))
+# validation rules join the findings, and chunks are pinned with a Merkle
+# root
+r2 <- cpsrpt(
+  bad,
+  rules = list(ruleinset("grade", c("a", "b", "c"))),
+  chunks = c("part one", "part two")
+)
 summary(r2)
 #> verdict   fatal    warn    note 
 #>  "warn"     "0"     "1"     "0" 

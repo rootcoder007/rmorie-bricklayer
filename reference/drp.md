@@ -10,20 +10,27 @@ one value (a year, a jurisdiction) on every row.
 ## Usage
 
 ``` r
-drpempty(data, which = c("rows", "cols"))
+drpempty(data, which = c("rows", "cols"), quiet = FALSE)
 
-drpconst(data, naasval = FALSE)
+drpconst(data, naasval = FALSE, quiet = FALSE)
 ```
 
 ## Arguments
 
 - data:
 
-  A data frame.
+  A data frame whose empty rows or columns are dropped.
 
 - which:
 
   `"rows"`, `"cols"`, or both (the default, `c("rows", "cols")`).
+
+- quiet:
+
+  Logical: `TRUE` skips the boxed summary of what was dropped (rows and
+  columns before and after, the columns removed), which is otherwise
+  sent through [`message()`](https://rdrr.io/r/base/message.html);
+  default `FALSE`.
 
 - naasval:
 
@@ -71,23 +78,69 @@ df <- data.frame(
 )
 
 drpempty(df)
+#> ╭── Empty rows and columns dropped ─────────────────────────────╮
+#> │   Before                         3 rows, 3 columns            │
+#> │   After                          3 rows, 2 columns            │
+#> │   Columns dropped (all missing)  allna                        │
+#> │                                                               │
+#> │   1 column and 0 rows dropped.                                │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #>   keep constant
 #> 1    1        7
 #> 2    2        7
 #> 3   NA        7
 attr(drpempty(df), "dropped")
+#> ╭── Empty rows and columns dropped ─────────────────────────────╮
+#> │   Before                         3 rows, 3 columns            │
+#> │   After                          3 rows, 2 columns            │
+#> │   Columns dropped (all missing)  allna                        │
+#> │                                                               │
+#> │   1 column and 0 rows dropped.                                │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #> [1] "allna"
 
 drpconst(df)
+#> ╭── Constant columns dropped ───────────────────────────────────╮
+#> │   Before                       3 rows, 3 columns              │
+#> │   After                        3 rows, 1 column               │
+#> │   Columns dropped (one value)  allna, constant                │
+#> │                                                               │
+#> │   2 columns and 0 rows dropped.                               │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #>   keep
 #> 1    1
 #> 2    2
 #> 3   NA
 attr(drpconst(df), "dropped")
+#> ╭── Constant columns dropped ───────────────────────────────────╮
+#> │   Before                       3 rows, 3 columns              │
+#> │   After                        3 rows, 1 column               │
+#> │   Columns dropped (one value)  allna, constant                │
+#> │                                                               │
+#> │   2 columns and 0 rows dropped.                               │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #> [1] "allna"    "constant"
 
 # Rows only.
 drpempty(data.frame(a = c(1, NA), b = c(2, NA)), which = "rows")
+#> ╭── Empty rows and columns dropped ─────────────────────────────╮
+#> │   Before                         2 rows, 2 columns            │
+#> │   After                          1 row, 2 columns             │
+#> │   Columns dropped (all missing)  none                         │
+#> │   Rows dropped                   1                            │
+#> │                                                               │
+#> │   0 columns and 1 row dropped.                                │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #>   a b
 #> 1 1 2
 
@@ -95,8 +148,26 @@ drpempty(data.frame(a = c(1, NA), b = c(2, NA)), which = "rows")
 # NA is treated as a value of its own.
 x <- data.frame(v = c(NA, NA, 5))
 ncol(drpconst(x))
+#> ╭── Constant columns dropped ───────────────────────────────────╮
+#> │   Before                       3 rows, 1 column               │
+#> │   After                        3 rows, 0 columns              │
+#> │   Columns dropped (one value)  v                              │
+#> │                                                               │
+#> │   1 column and 0 rows dropped.                                │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #> [1] 0
 ncol(drpconst(x, naasval = TRUE))
+#> ╭── Constant columns dropped ───────────────────────────────────╮
+#> │   Before                       3 rows, 1 column               │
+#> │   After                        3 rows, 1 column               │
+#> │   Columns dropped (one value)  none                           │
+#> │                                                               │
+#> │   Nothing to drop: the table came back as it was.             │
+#> │                                                               │
+#> │   quiet = TRUE, or suppressMessages(), silences this summary. │
+#> ╰───────────────────────────────────────────────────────────────╯
 #> [1] 1
 
 # only data frames

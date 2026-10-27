@@ -17,7 +17,7 @@ report the whole span of a series in one line next to the detailed table."><meta
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,7 +87,7 @@ report the whole span of a series in one line next to the detailed table.</p>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Ignored.</p></dd>
+<dd><p>Further arguments for methods; not used.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -102,16 +102,20 @@ periods); <code>totalpct</code>, <code>cagrpct</code> (numeric, percent);
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Rows whose <code>value</code> is missing are dropped before the summary, and
-the remaining rows are sorted by period. With \(v_1\) the first and
-\(v_T\) the last observed value, the total change is
-$$100 (v_T / v_1 - 1)$$
-and, with \(s = (T - 1) / \mathrm{lag}\) steps of length <code>lag</code>,
-$$100 \left( (v_T / v_1)^{1/s} - 1 \right).$$
-Both are <code>NA</code> when \(v_1 \le 0\), because a growth rate out of zero
-does not exist; <code>cagrpct</code> is also <code>NA</code> for a single period.
-<code>"Annual"</code> in CAGR assumes one period is a year; for monthly or quarterly
-data read it as the compound rate per <code>lag</code> periods.</p>
+    <p>Rows whose <code>value</code> is missing are dropped before the summary,
+and the remaining rows are sorted by period, text periods in the order
+<code><a href="yoy.html">yoy()</a></code> read them (its <code>prd</code> and <code>prdord</code>). Periods with no
+order (text <code><a href="yoy.html">yoy()</a></code> could not read, an unordered factor) have no first
+or last: <code>from</code>, <code>to</code>, <code>first</code>, <code>last</code>, <code>totalpct</code>
+and <code>cagrpct</code> are then <code>NA</code>, with a warning saying why. With
+\(v_1\) the first and \(v_T\) the last observed value, the total
+change is $$100 (v_T / v_1 - 1)$$ and, with
+\(s = (T - 1) / \mathrm{lag}\) steps of length <code>lag</code>,
+$$100 \left( (v_T / v_1)^{1/s} - 1 \right).$$ Both are <code>NA</code> when
+\(v_1 \le 0\), because a growth rate out of zero does not exist;
+<code>cagrpct</code> is also <code>NA</code> for a single period. <code>"Annual"</code> in CAGR
+assumes one period is a year; for monthly or quarterly data read it as the
+compound rate per <code>lag</code> periods.</p>
 <p>The <code>up</code>, <code>down</code> and <code>flat</code> counts are taken from the
 percent-change column (<code>pctchg</code>, or <code>ppchg</code> for
 <code>units = "percent"</code>). A change out of a zero base has no percent
@@ -130,16 +134,39 @@ value gives a row of <code>NA</code> with <code>periods = 0</code>.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># one series</span></span></span>
 <span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2018</span><span class="op">:</span><span class="fl">2023</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">131</span>, <span class="fl">98</span>, <span class="fl">140</span>, <span class="fl">155</span>, <span class="fl">149</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">yoysmry</span><span class="op">(</span><span class="fu"><a href="yoy.html">yoy</a></span><span class="op">(</span><span class="va">d</span>, value <span class="op">=</span> <span class="st">"n"</span>, prd <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   from   to first last totalpct  cagrpct periods up down flat</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 2018 2023   120  149 24.16667 4.424163       6  3    2    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Year-over-year summary</span> ──────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Series  1                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   from  to    first  last  totalpct  cagrpct  periods  up  down  flat  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----  ----  -----  ----  --------  -------  -------  --  ----  ----  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2018  2023    120   149     24.17    4.424        6   3     2     0  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   totalpct is the change from the first period to the last and cagrpct │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the compound rate per step; up, down and flat count the changes from │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   one period to the next.                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># one row per group; a zero base gives no percent change</span></span></span>
 <span class="r-in"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2019</span><span class="op">:</span><span class="fl">2022</span>, <span class="fl">2</span><span class="op">)</span>, unit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">12</span>, <span class="fl">0</span>, <span class="fl">15</span>, <span class="fl">5</span>, <span class="fl">7</span>, <span class="fl">6</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">yoysmry</span><span class="op">(</span><span class="fu"><a href="yoy.html">yoy</a></span><span class="op">(</span><span class="va">g</span>, value <span class="op">=</span> <span class="st">"n"</span>, prd <span class="op">=</span> <span class="st">"year"</span>, by <span class="op">=</span> <span class="st">"unit"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   unit from   to first last totalpct  cagrpct periods up down flat</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    A 2019 2022    10   15       50 14.47142       4  1    1    0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    B 2019 2022     5    9       80 21.64404       4  2    1    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Year-over-year summary</span> ──────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Series  2                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   unit  from  to    first  last  totalpct  cagrpct  periods  up  down  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----  ----  ----  -----  ----  --------  -------  -------  --  ----  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A     2019  2022     10    15        50    14.47        4   1     1  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   B     2019  2022      5     9        80    21.64        4   2     1  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   unit  flat                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----  ----                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A        0                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   B        0                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   totalpct is the change from the first period to the last and cagrpct │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the compound rate per step; up, down and flat count the changes from │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   one period to the next.                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># anything that is not a yoy() result is refused</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">yoysmry</span><span class="op">(</span><span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>

@@ -1,6 +1,6 @@
-# First Nations, Metis and Inuit health: published tables, distinctions and governance
+# First Nations, Métis and Inuit health: published tables, distinctions and governance
 
-This vignette covers the tools for First Nations, Metis and Inuit
+This vignette covers the tools for First Nations, Métis and Inuit
 health, mental health and wellness data, as Statistics Canada publishes
 them. It also covers the rules those tools follow, because with these
 data, how you work matters as much as what you compute.
@@ -58,7 +58,7 @@ The package follows these principles in six ways.
   holds First Nations-held survey data, such as the First Nations
   Regional Health Survey. Those are reached through the FNIGC, on its
   terms.
-- **Distinctions-based.** First Nations, Metis and Inuit are reported
+- **Distinctions-based.** First Nations, Métis and Inuit are reported
   separately. A pooled “Indigenous” total is marked wherever it appears.
   [`dstntst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstntst.md)
   shows when pooling would hide a difference.
@@ -91,19 +91,31 @@ puts them side by side. It reads every layout the Indigenous tables use:
 
 ``` r
 
-d <- data.frame(REF_DATE = "2022", GEO = "Canada",
-                `Indigenous identity` = rep(c("First Nations", "Metis"), each = 4),
-                Statistics = rep(c("Number of persons", "Percent", "Low 95% confidence interval",
-                                   "High 95% confidence interval"), 2),
-                UOM = rep(c("Persons", "Percent", "Percent", "Percent"), 2),
-                VALUE = c(415000, 47.1, 45.2, 49.0, 320000, 50.3, 48.1, 52.5),
-                STATUS = "", check.names = FALSE)
+d <- data.frame(
+  REF_DATE = "2022",
+  GEO = "Canada",
+  `Indigenous identity` = rep(c("First Nations", "M\u00e9tis"), each = 4),
+  Statistics = rep(
+    c(
+      "Number of persons",
+      "Percent",
+      "Low 95% confidence interval",
+      "High 95% confidence interval"
+    ),
+    2
+  ),
+  UOM = rep(c("Persons", "Percent", "Percent", "Percent"), 2),
+  VALUE = c(415000, 47.1, 45.2, 49.0, 320000, 50.3, 48.1, 52.5),
+  STATUS = "",
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+)
 scests(d)
-#>   REF_DATE    GEO Indigenous identity           measure estimate lower upper
+#>   REF_DATE    GEO Indigenous.identity           measure estimate lower upper
 #> 1     2022 Canada       First Nations Number of persons 415000.0    NA    NA
 #> 2     2022 Canada       First Nations           Percent     47.1  45.2  49.0
-#> 3     2022 Canada               Metis Number of persons 320000.0    NA    NA
-#> 4     2022 Canada               Metis           Percent     50.3  48.1  52.5
+#> 3     2022 Canada               Métis Number of persons 320000.0    NA    NA
+#> 4     2022 Canada               Métis           Percent     50.3  48.1  52.5
 #>       cisou quality
 #> 1      <NA>      ok
 #> 2 published      ok
@@ -132,14 +144,29 @@ mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
           h$indicator == "Perceived mental health, very good or excellent", ]
 g <- indgap(mh, "group", "estimate", "lower", "upper", qual = "quality")
 g
-#>           group estimate refest     ratio   ratiolo   ratioup difference
-#> 1 First Nations     45.8   61.5 0.7447154 0.7001926 0.7920694      -15.7
-#> 2         Métis     52.8   61.5 0.8585366 0.8130217 0.9065995       -8.7
-#> 3         Inuit     47.8   61.5 0.7772358 0.6785276 0.8903034      -13.7
-#>       diflo      difup usewithcau poogrp
-#> 1 -18.53593 -12.864070      FALSE  FALSE
-#> 2 -11.58531  -5.814692      FALSE  FALSE
-#> 3 -20.16568  -7.234321      FALSE  FALSE
+#> ╭── Gap against a reference group ──────────────────────────────────────────╮
+#> │   Reference  Non-Indigenous                                               │
+#> │   Groups     3                                                            │
+#> │   Intervals  95%                                                          │
+#> │                                                                           │
+#> │   group          estimate  refest   ratio  ratio CI        difference     │
+#> │   -------------  --------  ------  ------  --------------  ----------     │
+#> │   First Nations     45.80   61.50  0.7447  [0.700, 0.792]      -15.70     │
+#> │   Métis             52.80   61.50  0.8585  [0.813, 0.907]       -8.70     │
+#> │   Inuit             47.80   61.50  0.7772  [0.679, 0.890]      -13.70     │
+#> │                                                                           │
+#> │   group          difference CI                                            │
+#> │   -------------  --------------                                           │
+#> │   First Nations  [-18.5, -12.9]                                           │
+#> │   Métis          [-11.6, -5.8]                                            │
+#> │   Inuit          [-20.2, -7.2]                                            │
+#> │                                                                           │
+#> │   Below the reference (interval below 1): First Nations, Métis and Inuit. │
+#> │                                                                           │
+#> │   ratio: the group's estimate over the reference's; difference: the       │
+#> │   group's less the reference's, in the estimate's own units.              │
+#> │   Report a gap beside each group's own level, not alone.                  │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 plot(g)
 ```
 
@@ -150,10 +177,34 @@ whether they differ:
 
 ``` r
 
-dt <- dstntst(mh[mh$group != "Non-Indigenous", ], "group", "estimate", "lower", "upper")
+dt <- dstntst(
+  mh[mh$group != "Non-Indigenous", ],
+  "group",
+  "estimate",
+  "lower",
+  "upper"
+)
 dt
-#> Distinctions test across 3 groups: Q = 11.97 on 2 df, p = 0.00252, I^2 = 83%
-#> Pooled (inverse-variance) 49.11; the groups differ: report each one, not the pooled figure
+#> ╭── Distinctions test ───────────────────────────────────────────────────╮
+#> │   Groups       3                                                       │
+#> │   Cochran's Q  11.97 on 2 df                                           │
+#> │   p-value      0.003                                                   │
+#> │   I-squared    83% of the variation is beyond chance                   │
+#> │   Pooled       49.11 (se 0.973, inverse-variance mean)                 │
+#> │                                                                        │
+#> │   group          estimate     se  95% CI                               │
+#> │   -------------  --------  -----  --------------                       │
+#> │   First Nations     45.80  1.429  [43.00, 48.60]                       │
+#> │   Métis             52.80  1.454  [49.95, 55.65]                       │
+#> │   Inuit             47.80  3.291  [41.35, 54.25]                       │
+#> │                                                                        │
+#> │   Q says the groups differ: report each one, not the pooled figure.    │
+#> │   Q = 11.97, p = 0.00252.                                              │
+#> │                                                                        │
+#> │   Distinctions-based: each group is reported on its own; a             │
+#> │   pan-Indigenous total is left out of the test, never used as a group. │
+#> │   Higgins and Thompson (2002) for Q and I-squared.                     │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 plot(dt)
 ```
 
@@ -173,16 +224,37 @@ from the 2022 Indigenous Peoples Survey, table 41-10-0067-01:
 
 r <- indiex("mentalhealth")
 r <- r[r$region == "Canada", ]
-oc <- ordcmp(r, "group", "rating", "estimate", "lower", "upper",
-                      lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
-                      ref = "M\u00e9tis", qual = "quality")
+oc <- ordcmp(
+  r,
+  "group",
+  "rating",
+  "estimate",
+  "lower",
+  "upper",
+  lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
+  ref = "M\u00e9tis",
+  qual = "quality"
+)
 oc
-#>           group reference   probbet     lower     upper      delta     neff
-#> 1 First Nations     Métis 0.4653023 0.4531475 0.4774984 -0.0693954 4021.444
-#> 2         Inuit     Métis 0.5062337 0.4928231 0.5196353  0.0124674 2791.908
-#>    neffref usewithcau poogrp
-#> 1 3884.405      FALSE  FALSE
-#> 2 3884.405      FALSE  FALSE
+#> ╭── Ordinal comparison against a reference group ────────────────────────╮
+#> │   Reference       Métis                                                │
+#> │   Reference neff  3,884                                                │
+#> │   Levels          4                                                    │
+#> │   Measure         chance a person in the group rates higher, ties half │
+#> │                                                                        │
+#> │   group          probbet  95% CI             delta   neff              │
+#> │   -------------  -------  --------------  --------  -----              │
+#> │   First Nations   0.4653  [0.453, 0.477]  -0.06940  4,021              │
+#> │   Inuit           0.5062  [0.493, 0.520]   0.01247  2,792              │
+#> │                                                                        │
+#> │   Rate lower than Métis (interval below 0.5): First Nations.           │
+#> │   Not distinguishable from 0.5 (interval includes it): Inuit.          │
+#> │                                                                        │
+#> │   probbet 0.5 is no difference; above 0.5 the group rates higher.      │
+#> │   delta (Cliff's) = share rating higher less share rating lower.       │
+#> │   neff: the effective sample size the published limits imply (it       │
+#> │   carries the survey's design effect).                                 │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 plot(oc)
 ```
 
@@ -190,7 +262,7 @@ plot(oc)
 
 ## Age standardisation
 
-First Nations, Metis and Inuit populations are younger than the
+First Nations, Métis and Inuit populations are younger than the
 non-Indigenous population, and many outcomes vary steeply with age.
 [`stdprev()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdprev.md)
 standardises survey percentages to one age structure. Here it is applied
@@ -206,10 +278,25 @@ si <- si[order(si$group, si$age), ]
 sp <- stdprev(si$estimate, si$lower, si$upper, std = c(20, 18, 17, 17, 28),
                              grp = si$group, qual = si$quality)
 sp
-#>           group estimate    lower    upper        se usewithcau
-#> 1 First Nations    5.792 5.141142 6.442858 0.3320767       TRUE
-#> 2         Inuit    5.940 5.036123 6.843877 0.4611700       TRUE
-#> 3         Métis    4.742 4.125043 5.358957 0.3147799       TRUE
+#> ╭── Age-standardised prevalence ──────────────────────────────────────────────╮
+#> │   Groups  3                                                                 │
+#> │   Method  direct standardisation to the standard population given           │
+#> │                                                                             │
+#> │   group            estimate  95% CI              se                         │
+#> │   ---------------  --------  --------------  ------                         │
+#> │   First Nations *     5.792  [5.141, 6.443]  0.3321                         │
+#> │   Inuit *             5.940  [5.036, 6.844]  0.4612                         │
+#> │   Métis *             4.742  [4.125, 5.359]  0.3148                         │
+#> │                                                                             │
+#> │   Highest prevalence: Inuit * (5.94); lowest: Métis * (4.742).              │
+#> │   Their intervals overlap: the data cannot tell the two apart.              │
+#> │                                                                             │
+#> │   Each group's prevalence as if it had the standard population's ages,      │
+#> │   so the groups compare without their age structures.                       │
+#> │   Compare only rates standardised to the same population.                   │
+#> │   * use with caution: the source flags the estimate (E, high sampling       │
+#> │   variability).                                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(sp)
 ```
 
@@ -239,13 +326,24 @@ uses the 2024 well-being table, 41-10-0082-01:
 ``` r
 
 wb <- indiex("wellbeing")
-w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
-                      well = c("Life satisfaction rating of 8, 9 or 10",
-                                   "Sense of meaning and purpose rating of 8, 9 or 10",
-                                   "Always or often has a hopeful outlook"),
-                      distress = c("Life satisfaction rating between 0 and 5",
-                                   "Rarely or never has a hopeful outlook"),
-                      qual = "quality")
+w <- welprof(
+  wb,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  well = c(
+    "Life satisfaction rating of 8, 9 or 10",
+    "Sense of meaning and purpose rating of 8, 9 or 10",
+    "Always or often has a hopeful outlook"
+  ),
+  distress = c(
+    "Life satisfaction rating between 0 and 5",
+    "Rarely or never has a hopeful outlook"
+  ),
+  qual = "quality"
+)
 plot(w)
 ```
 
@@ -254,7 +352,25 @@ plot(w)
 ``` r
 
 frmaud(w)
-#> 40% of the indicators reported are deficit-framed.
+#> ╭── Framing audit ────────────────────────────────────────────────────╮
+#> │   Groups               3                                            │
+#> │   Wellness indicators  9                                            │
+#> │   Distress indicators  6                                            │
+#> │   Deficit-framed       40%                                          │
+#> │                                                                     │
+#> │   By group (shrdef: the deficit-framed share)                       │
+#> │   group          wellness  distress  shrdef                         │
+#> │   -------------  --------  --------  ------                         │
+#> │   First Nations         3         2  0.4000                         │
+#> │   Métis                 3         2  0.4000                         │
+#> │   Inuit                 3         2  0.4000                         │
+#> │                                                                     │
+#> │   40% of the indicators reported are deficit-framed.                │
+#> │                                                                     │
+#> │   Walter (2016): statistics about Indigenous peoples cluster around │
+#> │   disparity, deprivation, disadvantage, dysfunction and difference. │
+#> │   This audits the report, not the people it describes.              │
+#> ╰─────────────────────────────────────────────────────────────────────╯
 ```
 
 [`dualcont()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dualcont.md)
@@ -263,16 +379,36 @@ but distinct (Keyes 2002, 2005):
 
 ``` r
 
-dc <- dualcont(w, "Always or often has a hopeful outlook", "Life satisfaction rating between 0 and 5")
+dc <- dualcont(
+  w,
+  "Always or often has a hopeful outlook",
+  "Life satisfaction rating between 0 and 5"
+)
 dc
-#>           group wellness wello welup distress distrlo distrup strratio  ratiolo
-#> 1 First Nations     50.2  45.9  54.5     31.4    27.4    35.7 1.598726 1.365446
-#> 2         Métis     52.3  47.6  57.0     28.4    24.0    33.1 1.841549 1.531631
-#> 3         Inuit     54.4  45.7  62.8     25.2    19.4    31.8 2.158730 1.609182
-#>    ratioup usewithcau
-#> 1 1.871862      FALSE
-#> 2 2.214178      FALSE
-#> 3 2.895953      FALSE
+#> ╭── Dual continuum: wellness beside distress ────────────────────────────────╮
+#> │   Wellness  Always or often has a hopeful outlook                          │
+#> │   Distress  Life satisfaction rating between 0 and 5                       │
+#> │   Groups    3                                                              │
+#> │   Ratio     wellness over distress, log-normal interval                    │
+#> │                                                                            │
+#> │   group          wellness  interval        distress  interval        ratio │
+#> │   -------------  --------  --------------  --------  --------------  ----- │
+#> │   First Nations     50.20  [45.90, 54.50]     31.40  [27.40, 35.70]  1.599 │
+#> │   Métis             52.30  [47.60, 57.00]     28.40  [24.00, 33.10]  1.842 │
+#> │   Inuit             54.40  [45.70, 62.80]     25.20  [19.40, 31.80]  2.159 │
+#> │                                                                            │
+#> │   group          ratio interval                                            │
+#> │   -------------  --------------                                            │
+#> │   First Nations  [1.37, 1.87]                                              │
+#> │   Métis          [1.53, 2.21]                                              │
+#> │   Inuit          [1.61, 2.90]                                              │
+#> │                                                                            │
+#> │   A ratio above 1: more people report the wellness than the distress.      │
+#> │   3 of 3 groups have the whole interval above 1.                           │
+#> │                                                                            │
+#> │   Both estimates come from the same respondents and their covariance       │
+#> │   is not published: the interval treats them as independent.               │
+#> ╰────────────────────────────────────────────────────────────────────────────╯
 plot(dc)
 ```
 
@@ -293,24 +429,62 @@ data these are to make. The choice below is one reading of it:
 
 ``` r
 
-dom <- c("Perceived health, very good or excellent" = "physical",
-         "Perceived mental health, very good or excellent" = "mental",
-         "Life satisfaction, satisfied or very satisfied" = "emotional",
-         "Sense of belonging to local community, somewhat strong or very strong" = "community")
-d <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" & h$indicator %in% names(dom), ]
+dom <- c(
+  "Perceived health, very good or excellent" = "physical",
+  "Perceived mental health, very good or excellent" = "mental",
+  "Life satisfaction, satisfied or very satisfied" = "emotional",
+  "community"
+)
+names(dom)[4] <- paste(
+  "Sense of belonging to local community,",
+  "somewhat strong or very strong"
+)
+d <- h[
+  h$period == "2019/2022" &
+    h$age == "Total, 18 years and over" &
+    h$indicator %in% names(dom),
+]
 d$domain <- dom[d$indicator]
-hb <- holbal(d, "group", "domain", "estimate", "lower", "upper", qual = "quality")
+hb <- holbal(
+  d,
+  "group",
+  "domain",
+  "estimate",
+  "lower",
+  "upper",
+  qual = "quality"
+)
 hb
-#>            group  level    lvllo    lvlup   balance     ballo     balup
-#> 1  First Nations 59.525 58.25190 60.79810 0.9641371 0.9582021 0.9696524
-#> 2          Métis 63.725 62.43592 65.01408 0.9751839 0.9707913 0.9791662
-#> 3          Inuit 63.800 60.74133 66.85867 0.9699605 0.9562503 0.9812743
-#> 4 Non-Indigenous 69.800 69.60196 69.99804 0.9846768 0.9842679 0.9850811
-#>     weadom usewithcau
-#> 1 physical      FALSE
-#> 2 physical      FALSE
-#> 3   mental      FALSE
-#> 4 physical      FALSE
+#> ╭── Holistic balance across the domains ──────────────────────────────────────╮
+#> │   Groups   4                                                                │
+#> │   Weights  equal, over 4 domains                                            │
+#> │   Balance  weighted geometric over arithmetic mean of the domain levels     │
+#> │                                                                             │
+#> │   group           level  95% level CI    balance  95% balance CI  weakest   │
+#> │   --------------  -----  --------------  -------  --------------  --------  │
+#> │   First Nations   59.52  [58.25, 60.80]   0.9641  [0.958, 0.970]  physical  │
+#> │   Métis           63.73  [62.44, 65.01]   0.9752  [0.971, 0.979]  physical  │
+#> │   Inuit           63.80  [60.74, 66.86]   0.9700  [0.956, 0.981]  mental    │
+#> │   Non-Indigenous  69.80  [69.60, 70.00]   0.9847  [0.984, 0.985]  physical  │
+#> │                                                                             │
+#> │   Domain levels (percent)                                                   │
+#> │   group           physical  mental  community  emotional                    │
+#> │   --------------  --------  ------  ---------  ---------                    │
+#> │   First Nations      43.90   45.80      63.70      84.70                    │
+#> │   Métis              49.70   52.80      65.10      87.30                    │
+#> │   Inuit              49.40   47.80      73.50      84.50                    │
+#> │   Non-Indigenous     58.90   61.50      67.40      91.40                    │
+#> │                                                                             │
+#> │   Highest balance: Non-Indigenous (0.9847); lowest: First Nations (0.9641). │
+#> │   Their intervals do not overlap: the gap is more than sampling error.      │
+#> │   The weakest domain is physical for 3 of 4 groups.                         │
+#> │                                                                             │
+#> │   balance is 1 when every domain is at the same level and falls toward      │
+#> │   0 as one falls behind; level is the weighted mean, reported beside it.    │
+#> │   Our method, inspired by Stewart (2008), not taken from it.                │
+#> │   The weights say how much each domain counts; a community may set          │
+#> │   its own (CARE: authority to control, Carroll et al. 2020).                │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(hb)
 ```
 
@@ -330,10 +504,18 @@ directions the tables do not measure, and does not fill them in:
 
 ``` r
 
-mw <- mhcont(wb, "group", "indicator", "estimate", "lower", "upper",
-        hope = "Always or often has a hopeful outlook",
-        meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
-        purp = "Sense of meaning and purpose rating of 8, 9 or 10", qual = "quality")
+mw <- mhcont(
+  wb,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  hope = "Always or often has a hopeful outlook",
+  meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
+  purp = "Sense of meaning and purpose rating of 8, 9 or 10",
+  qual = "quality"
+)
 mw[, c("group", "indicator", "domain", "estimate", "shared")]
 #>            group indicator                                            domain
 #> 1  First Nations      hope             Always or often has a hopeful outlook
@@ -375,14 +557,31 @@ periods of table 13-10-0924-01:
 
 ``` r
 
-hc <- healchg(h[h$age == "Total, 18 years and over", ], "group", "indicator", "period",
-                     "estimate", "lower", "upper", from = "2015/2018", to = "2019/2022",
-                     qual = "quality",
-                     well = c("Perceived mental health, very good or excellent",
-                                  "Sense of belonging to local community, somewhat strong or very strong"))
-hc <- hc[hc$indicator %in% c("Perceived mental health, very good or excellent",
-                             "Sense of belonging to local community, somewhat strong or very strong",
-                             "Mood disorder", "Anxiety disorder"), ]
+hc <- healchg(
+  h[h$age == "Total, 18 years and over", ],
+  "group",
+  "indicator",
+  "period",
+  "estimate",
+  "lower",
+  "upper",
+  from = "2015/2018",
+  to = "2019/2022",
+  qual = "quality",
+  well = c(
+    "Perceived mental health, very good or excellent",
+    "Sense of belonging to local community, somewhat strong or very strong"
+  )
+)
+hc <- hc[
+  hc$indicator %in%
+    c(
+      "Perceived mental health, very good or excellent",
+      "Sense of belonging to local community, somewhat strong or very strong",
+      "Mood disorder",
+      "Anxiety disorder"
+    ),
+]
 plot(hc)
 ```
 
@@ -390,7 +589,7 @@ plot(hc)
 
 Between the two periods, which span the COVID-19 pandemic, the share
 rating their mental health very good or excellent fell for First
-Nations, Metis and non-Indigenous adults. The Inuit interval includes no
+Nations, Métis and non-Indigenous adults. The Inuit interval includes no
 change. Because the reference group fell too, a group’s change is read
 against the reference group’s change, not on its own.
 
@@ -407,22 +606,48 @@ measures this with Spearman’s rho. Its p-value is exact for up to eight
 places, and a Monte Carlo estimate beyond. Its band is a sensitivity
 band, not a confidence interval: it shows how far the published sampling
 error alone moves rho for these places. Here, by region, it asks whether
-First Nations and Metis people’s mental health rise together, using
+First Nations and Métis people’s mental health rise together, using
 table 41-10-0067-01:
 
 ``` r
 
 r <- indiex("mentalhealth")
 r <- r[r$rating == "Excellent or very good" & r$region != "Canada", ]
-pair <- merge(r[r$group == "First Nations", ], r[r$group == "M\u00e9tis", ], by = "region",
-              suffixes = c("fn", "me"))
-ca <- connassoc(pair, "region", "estimatefn", "estimateme", "lowerfn", "upperfn",
-                             "lowerme", "upperme")
+pair <- merge(
+  r[r$group == "First Nations", ],
+  r[r$group == "M\u00e9tis", ],
+  by = "region",
+  suffixes = c("fn", "me")
+)
+ca <- connassoc(
+  pair,
+  "region",
+  "estimatefn",
+  "estimateme",
+  "lowerfn",
+  "upperfn",
+  "lowerme",
+  "upperme"
+)
 ca
-#> Rank correlation across 11 places: rho = 0.52, permutation p = 0.106; with the published sampling error, 95% interval -0.19 to 0.77
-#> An association across places: it does not show that one causes the other for any person.
-plot(ca, xlab = "First Nations: excellent or very good (%)",
-     ylab = "M\u00e9tis: excellent or very good (%)")
+#> ╭── Connection across places ──────────────────────────────────────────────╮
+#> │   Places            11                                                   │
+#> │   Indicators        estimatefn and estimateme                            │
+#> │   Rank correlation  rho = 0.52                                           │
+#> │   p-value           0.106 (permutation)                                  │
+#> │   Interval          95% [-0.19, 0.77], with the published sampling error │
+#> │                                                                          │
+#> │   Rank correlation across 11 places: rho = 0.52, permutation p = 0.106   │
+#> │   Across these places the two rank moderately together.                  │
+#> │                                                                          │
+#> │   An association across places only:                                     │
+#> │   it does not show that one causes the other for any person.             │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
+plot(
+  ca,
+  xlab = "First Nations: excellent or very good (%)",
+  ylab = "M\u00e9tis: excellent or very good (%)"
+)
 ```
 
 ![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-connection-1.png)
@@ -442,11 +667,21 @@ not filled in.
 ``` r
 
 h2 <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over", ]
-ci <- commidx(h2, "group", "indicator", "estimate", "lower", "upper", qual = "quality",
-        w = c("Sense of belonging to local community, somewhat strong or very strong" = 2,
-                    "Has a regular healthcare provider" = 1,
-                    "Perceived life stress, most days quite a bit or extremely stressful" = -2,
-                    "Heavy drinking" = -1))
+ci <- commidx(
+  h2,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  qual = "quality",
+  w = c(
+    "Sense of belonging to local community, somewhat strong or very strong" = 2,
+    "Has a regular healthcare provider" = 1,
+    "Perceived life stress, most days quite a bit or extremely stressful" = -2,
+    "Heavy drinking" = -1
+  )
+)
 plot(ci)
 ```
 
@@ -462,7 +697,7 @@ measure of wellness as First Nations and Inuit define it.
 
 The Indigenous Population Profile of the 2021 Census gives counts for
 every geography, by gender, age group and about two thousand
-characteristics, with First Nations, Metis, Inuit and non-Indigenous
+characteristics, with First Nations, Métis, Inuit and non-Indigenous
 people in their own columns. In the provincial table, residence on and
 off reserve is split out too.
 [`cnsprof()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnsprof.md)
@@ -477,41 +712,52 @@ Foster children among children under 15, Canada, 2021:
 
 p <- cnsprof(indiex("censuspop"))
 fc <- profshr(p, "Foster children", "Total - Children in census families")
-fc <- fc[fc$geo == "Canada" & fc$age == "0 to 14 years" &
-           fc$group %in% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"), ]
-fc[, c("residence", "group", "numerator", "denominator", "estimate", "lower", "upper")]
-#>                               residence          group numerator denominator
-#> 256 Total - Residence on or off reserve  First Nations     11735      265405
-#> 257                          On reserve  First Nations      2350       90270
-#> 258                         Off reserve  First Nations      9385      175135
-#> 340 Total - Residence on or off reserve          Métis      1975      134670
-#> 341                          On reserve          Métis        15         610
-#> 342                         Off reserve          Métis      1960      134060
-#> 424 Total - Residence on or off reserve          Inuit       770       21525
-#> 425                          On reserve          Inuit        35         100
-#> 426                         Off reserve          Inuit       735       21425
-#> 676 Total - Residence on or off reserve Non-Indigenous     12705     5502310
-#> 677                          On reserve Non-Indigenous        20        4070
-#> 678                         Off reserve Non-Indigenous     12690     5498235
-#>       estimate      lower      upper
-#> 256  4.4215444  4.2880409  4.5590064
-#> 257  2.6033012  2.5989608  2.6076487
-#> 258  5.3587233  5.1789488  5.5443733
-#> 340  1.4665479  1.3593905  1.5820167
-#> 341  2.4590164  1.8933392  3.1882099
-#> 342  1.4620319  1.3548094  1.5776046
-#> 424  3.5772358  3.1713963  4.0328470
-#> 425 35.0000000 30.9738945 39.2518422
-#> 426  3.4305718  3.0324927  3.8788168
-#> 676  0.2309030  0.2240599  0.2379546
-#> 677  0.4914005  0.4040293  0.5975523
-#> 678  0.2308013  0.2239573  0.2378541
+fc <- fc[
+  fc$geo == "Canada" &
+    fc$age == "0 to 14 years" &
+    fc$group %in% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"),
+]
+fc[, c(
+  "residence",
+  "group",
+  "numerator",
+  "denominator",
+  "estimate",
+  "lower",
+  "upper"
+)]
+#>                              residence          group numerator denominator
+#> 1  Total - Residence on or off reserve  First Nations     11735      265405
+#> 2                           On reserve  First Nations      2350       90270
+#> 3                          Off reserve  First Nations      9385      175135
+#> 4  Total - Residence on or off reserve          Métis      1975      134670
+#> 5                           On reserve          Métis        15         610
+#> 6                          Off reserve          Métis      1960      134060
+#> 7  Total - Residence on or off reserve          Inuit       770       21525
+#> 8                           On reserve          Inuit        35         100
+#> 9                          Off reserve          Inuit       735       21425
+#> 10 Total - Residence on or off reserve Non-Indigenous     12705     5502310
+#> 11                          On reserve Non-Indigenous        20        4070
+#> 12                         Off reserve Non-Indigenous     12690     5498235
+#>      estimate      lower      upper
+#> 1   4.4215444  4.2880409  4.5590064
+#> 2   2.6033012  2.5989608  2.6076487
+#> 3   5.3587233  5.1789488  5.5443733
+#> 4   1.4665479  1.3593905  1.5820167
+#> 5   2.4590164  1.8933392  3.1882099
+#> 6   1.4620319  1.3548094  1.5776046
+#> 7   3.5772358  3.1713963  4.0328470
+#> 8  35.0000000 30.9738945 39.2518422
+#> 9   3.4305718  3.0324927  3.8788168
+#> 10  0.2309030  0.2240599  0.2379546
+#> 11  0.4914005  0.4040293  0.5975523
+#> 12  0.2308013  0.2239573  0.2378541
 plot(fc[fc$residence == "Total - Residence on or off reserve", ])
 ```
 
 ![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-census-foster-1.png)
 
-The overrepresentation of First Nations, Metis and Inuit children in
+The overrepresentation of First Nations, Métis and Inuit children in
 care is the subject of the first five Calls to Action of the Truth and
 Reconciliation Commission.
 
@@ -519,18 +765,26 @@ Knowledge of an Indigenous language (all ages):
 
 ``` r
 
-know <- "Total - Knowledge of Indigenous languages for the population in private households - 25% sample data"
+know <- paste(
+  "Total - Knowledge of Indigenous languages for the population in private",
+  "households - 25% sample data"
+)
 la <- profshr(p, "Indigenous languages", know)
-la[la$geo == "Canada" & la$age == "Total - Age groups" & la$residence == "Total - Residence on or off reserve" &
-     la$group %in% c("First Nations", "M\u00e9tis", "Inuit"), c("group", "estimate", "lower", "upper")]
-#>             group  estimate    lower     upper
-#> 379 First Nations 17.530439 17.40473 17.656859
-#> 505         Métis  1.332062  1.28369  1.382232
-#> 631         Inuit 58.130139 57.49824 58.759377
+la[
+  la$geo == "Canada" &
+    la$age == "Total - Age groups" &
+    la$residence == "Total - Residence on or off reserve" &
+    la$group %in% c("First Nations", "M\u00e9tis", "Inuit"),
+  c("group", "estimate", "lower", "upper")
+]
+#>           group  estimate    lower     upper
+#> 1 First Nations 17.530439 17.40473 17.656859
+#> 2         Métis  1.332062  1.28369  1.382232
+#> 3         Inuit 58.130139 57.49824 58.759377
 ```
 
 The census age structure of the Indigenous population is the standard to
-use when age-standardising First Nations, Metis and Inuit rates (Kumar
+use when age-standardising First Nations, Métis and Inuit rates (Kumar
 and Tjepkema 2019):
 
 ``` r
@@ -552,7 +806,7 @@ cnsstd(p)
 
 A Community Well-Being score from the public profile (income, education,
 housing, labour force), by distinction. The household table splits
-Indigenous from non-Indigenous households only, so First Nations, Metis
+Indigenous from non-Indigenous households only, so First Nations, Métis
 and Inuit people share the Indigenous households’ housing component.
 [`?cnscwb`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnscwb.md)
 explains where it departs from the Department’s own index:
@@ -561,16 +815,42 @@ explains where it departs from the Department’s own index:
 
 h <- cnsprof(indiex("censushh"))
 cw <- cnscwb(p, h)
-cw[cw$geo %in% c("Canada", "Nunavut"), c("geo", "group", "income", "education", "housing", "labour", "cwb")]
-#>        geo          group    income education  housing labour      cwb
-#> 1   Canada  First Nations  71.03051  51.62081 91.87864  75.85 72.59499
-#> 2   Canada          Métis  78.72661  59.55861 91.87864  83.15 78.32846
-#> 3   Canada          Inuit  72.12712  38.50607 91.87864  74.75 69.31546
-#> 4   Canada Non-Indigenous  84.37515  68.01121 95.98845  86.30 83.66870
-#> 53 Nunavut  First Nations        NA        NA       NA     NA       NA
-#> 54 Nunavut          Métis        NA        NA       NA     NA       NA
-#> 55 Nunavut          Inuit  70.22000  28.49462 70.82270  69.85 59.84683
-#> 56 Nunavut Non-Indigenous 100.00000  79.89287 93.30144  94.85 92.01108
+cw[
+  cw$geo %in% c("Canada", "Nunavut"),
+  c("geo", "group", "income", "education", "housing", "labour", "cwb")
+]
+#> ╭── Community Well-Being index, from the census ──────────────────────────────╮
+#> │   Rows         8                                                            │
+#> │   Geographies  Canada; Nunavut                                              │
+#> │   Groups       First Nations; Métis; Inuit; Non-Indigenous                  │
+#> │   Not scored   2                                                            │
+#> │   Scale        0 to 100 for each component and the score                    │
+#> │                                                                             │
+#> │   geo      group           income  education  housing  labour    cwb        │
+#> │   -------  --------------  ------  ---------  -------  ------  -----        │
+#> │   Canada   First Nations    71.03      51.62    91.88   75.85  72.59        │
+#> │   Canada   Métis            78.73      59.56    91.88   83.15  78.33        │
+#> │   Canada   Inuit            72.13      38.51    91.88   74.75  69.32        │
+#> │   Canada   Non-Indigenous   84.38      68.01    95.99   86.30  83.67        │
+#> │   Nunavut  First Nations                                                    │
+#> │   Nunavut  Métis                                                            │
+#> │   Nunavut  Inuit            70.22      28.49    70.82   69.85  59.85        │
+#> │   Nunavut  Non-Indigenous  100.00      79.89    93.30   94.85  92.01        │
+#> │                                                                             │
+#> │   Highest score: Nunavut, Non-Indigenous (92.01); lowest: Nunavut, Inuit    │
+#> │   (59.85).                                                                  │
+#> │   Within a geography the groups' scores are furthest apart in Nunavut       │
+#> │   (32.2 points) and closest in Canada (14.4).                               │
+#> │                                                                             │
+#> │   cwb is the mean of income, education, housing and labour force            │
+#> │   activity (Indigenous Services Canada's Community Well-Being index).       │
+#> │   CWB-style, close to but not the Department's index: the public            │
+#> │   profile's inputs differ (ages 25 and over; housing from households,       │
+#> │   pooled for First Nations, Métis and Inuit people).                        │
+#> │   Never a measure of wellness as First Nations, Métis or Inuit              │
+#> │   people define it. A group below minpop people gets no score.              │
+#> │   Housing needs the household table (dwell).                                │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(cw)
 ```
 
@@ -593,7 +873,10 @@ The counts below are made up, to show the computation:
 
 ``` r
 
-genexpo(parent = c(TRUE, FALSE, TRUE, NA), gparent = c(TRUE, FALSE, FALSE, TRUE))
+genexpo(
+  parent = c(TRUE, FALSE, TRUE, NA),
+  gparent = c(TRUE, FALSE, FALSE, TRUE)
+)
 #> [1]  2  0  1 NA
 et <- exptrnd(cases = c(60, 95, 70), n = c(500, 520, 300))
 plot(et)
@@ -622,44 +905,55 @@ published estimates, not a relative risk.
 ``` r
 
 g <- trchlthgap()
-g[g$measure %in% c("Life expectancy at birth", "Infant mortality rate"),
-  c("measure", "period", "group", "estimate", "refest", "disratio", "lower", "upper")]
+g[
+  g$measure %in% c("Life expectancy at birth", "Infant mortality rate"),
+  c(
+    "measure",
+    "period",
+    "group",
+    "estimate",
+    "refest",
+    "disratio",
+    "lower",
+    "upper"
+  )
+]
 #>                     measure    period
-#> 34 Life expectancy at birth 2016/2021
-#> 35 Life expectancy at birth 2016/2021
-#> 36 Life expectancy at birth 2016/2021
-#> 37 Life expectancy at birth 2016/2021
-#> 38 Life expectancy at birth 2016/2021
-#> 39 Life expectancy at birth 2016/2021
-#> 40    Infant mortality rate 2014/2016
-#> 41    Infant mortality rate 2014/2016
-#> 42    Infant mortality rate 2014/2016
-#> 43    Infant mortality rate 2014/2016
-#> 44    Infant mortality rate 2014/2016
+#> 1  Life expectancy at birth 2016/2021
+#> 2  Life expectancy at birth 2016/2021
+#> 3  Life expectancy at birth 2016/2021
+#> 4  Life expectancy at birth 2016/2021
+#> 5  Life expectancy at birth 2016/2021
+#> 6  Life expectancy at birth 2016/2021
+#> 7     Infant mortality rate 2014/2016
+#> 8     Infant mortality rate 2014/2016
+#> 9     Infant mortality rate 2014/2016
+#> 10    Infant mortality rate 2014/2016
+#> 11    Infant mortality rate 2014/2016
 #>                                                group estimate refest disratio
-#> 34                                             Métis    80.47  84.99 1.056170
-#> 35                                             Inuit    71.91  84.99 1.181894
-#> 36              First Nations (Registered or Treaty)    73.98  84.99 1.148824
-#> 37  First Nations (Registered or Treaty), on reserve    71.42  84.99 1.190003
-#> 38 First Nations (Registered or Treaty), off reserve    76.04  84.99 1.117701
-#> 39          First Nations, without registered status    79.23  84.99 1.072700
-#> 40                                             Métis     5.20   4.20 1.238095
-#> 41                                             Inuit    13.50   4.20 3.214286
-#> 42              First Nations (Registered or Treaty)     9.60   4.20 2.285714
-#> 43  First Nations (Registered or Treaty), on reserve    10.00   4.20 2.380952
-#> 44 First Nations (Registered or Treaty), off reserve     8.10   4.20 1.928571
+#> 1                                              Métis    80.47  84.99 1.056170
+#> 2                                              Inuit    71.91  84.99 1.181894
+#> 3               First Nations (Registered or Treaty)    73.98  84.99 1.148824
+#> 4   First Nations (Registered or Treaty), on reserve    71.42  84.99 1.190003
+#> 5  First Nations (Registered or Treaty), off reserve    76.04  84.99 1.117701
+#> 6           First Nations, without registered status    79.23  84.99 1.072700
+#> 7                                              Métis     5.20   4.20 1.238095
+#> 8                                              Inuit    13.50   4.20 3.214286
+#> 9               First Nations (Registered or Treaty)     9.60   4.20 2.285714
+#> 10  First Nations (Registered or Treaty), on reserve    10.00   4.20 2.380952
+#> 11 First Nations (Registered or Treaty), off reserve     8.10   4.20 1.928571
 #>        lower    upper
-#> 34 1.0497867 1.062592
-#> 35 1.1636936 1.200379
-#> 36 1.1433513 1.154323
-#> 37 1.1833943 1.196648
-#> 38 1.1078697 1.127620
-#> 39 1.0617669 1.083745
-#> 40 0.8366176 1.832235
-#> 41 2.0315414 5.085613
-#> 42 1.7776500 2.938987
-#> 43 1.4796282 3.831323
-#> 44 1.3632810 2.728262
+#> 1  1.0497867 1.062592
+#> 2  1.1636936 1.200379
+#> 3  1.1433513 1.154323
+#> 4  1.1833943 1.196648
+#> 5  1.1078697 1.127620
+#> 6  1.0617669 1.083745
+#> 7  0.8366176 1.832235
+#> 8  2.0315414 5.085613
+#> 9  1.7776500 2.938987
+#> 10 1.4796282 3.831323
+#> 11 1.3632810 2.728262
 plot(g)
 ```
 
@@ -683,10 +977,18 @@ takes that pace as a Poisson rate:
 
 p <- trcprog()
 p
-#>   completed remaining years     rate    ratelo   rateup   cmplby cmplbyearly
-#> 1        13        81  7.04 1.846591 0.9832319 3.157727 2066.865    2048.651
-#>   cmplbylate
-#> 1   2105.381
+#> ╭── Truth and Reconciliation Calls to Action: progress ────────────────────╮
+#> │   Completed        13 of 94                                              │
+#> │   Remaining        81                                                    │
+#> │   Years counted    7.04                                                  │
+#> │   Calls a year     1.85 [0.983, 3.160]                                   │
+#> │   All complete by  2066 (2048 to 2105)                                   │
+#> │                                                                          │
+#> │   At this pace the remaining 81 Calls are complete around 2066.          │
+#> │                                                                          │
+#> │   Completions taken as a Poisson process at a constant rate; the range   │
+#> │   comes from the rate's interval. Trackers count completion differently. │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 plot(p)
 ```
 
@@ -708,19 +1010,52 @@ do more rate their mental health highly?
 
 prof <- cnsprof(indiex("censuspop"))
 la <- profshr(prof, "Indigenous languages", know)
-la <- la[la$age == "Total - Age groups" & la$group == "First Nations" & la$geo != "Canada" &
-           la$residence == "Total - Residence on or off reserve", ]
+la <- la[
+  la$age == "Total - Age groups" &
+    la$group == "First Nations" &
+    la$geo != "Canada" &
+    la$residence == "Total - Residence on or off reserve",
+]
 mh2 <- indiex("mentalhealth")
-mh2 <- mh2[mh2$rating == "Excellent or very good" & mh2$group == "First Nations", ]
-both <- merge(la[c("geo", "estimate", "lower", "upper")], mh2[c("region", "estimate", "lower", "upper")],
-              by.x = "geo", by.y = "region", suffixes = c("lang", "mh"))
-cc <- connassoc(both, "geo", "estimatelang", "estimatemh", "lowerlang", "upperlang",
-                             "lowermh", "uppermh")
+mh2 <- mh2[
+  mh2$rating == "Excellent or very good" & mh2$group == "First Nations",
+]
+both <- merge(
+  la[c("geo", "estimate", "lower", "upper")],
+  mh2[c("region", "estimate", "lower", "upper")],
+  by.x = "geo",
+  by.y = "region",
+  suffixes = c("lang", "mh")
+)
+cc <- connassoc(
+  both,
+  "geo",
+  "estimatelang",
+  "estimatemh",
+  "lowerlang",
+  "upperlang",
+  "lowermh",
+  "uppermh"
+)
 cc
-#> Rank correlation across 8 places: rho = 0.47, exact p = 0.247; with the published sampling error, 95% interval -0.31 to 0.79
-#> An association across places: it does not show that one causes the other for any person.
-plot(cc, xlab = "First Nations who know an Indigenous language (%)",
-     ylab = "First Nations: mental health excellent or very good (%)")
+#> ╭── Connection across places ──────────────────────────────────────────────╮
+#> │   Places            8                                                    │
+#> │   Indicators        estimatelang and estimatemh                          │
+#> │   Rank correlation  rho = 0.47                                           │
+#> │   p-value           0.247 (exact, every permutation)                     │
+#> │   Interval          95% [-0.31, 0.79], with the published sampling error │
+#> │                                                                          │
+#> │   Rank correlation across 8 places: rho = 0.47, exact p = 0.247          │
+#> │   Across these places the two rank moderately together.                  │
+#> │                                                                          │
+#> │   An association across places only:                                     │
+#> │   it does not show that one causes the other for any person.             │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
+plot(
+  cc,
+  xlab = "First Nations who know an Indigenous language (%)",
+  ylab = "First Nations: mental health excellent or very good (%)"
+)
 ```
 
 ![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-continuity-1.png)
@@ -734,12 +1069,15 @@ years. The community-level design needs the census profile of each First
 Nations community (98-510-X2021002 at the data service), and outcomes
 measured for the same communities.
 
-## Your own data
+## Your own data, step by step
 
 Nothing here is tied to Canada or to these tables. Each estimator takes
-a data frame with a group column, an estimate and its limits. A table
-from another agency needs two steps first: limits from whatever it
-publishes in their place
+a data frame with a group column, an estimate and its limits, and the
+arguments name those columns: `grp`, `est`, `lower`, `upper`, with `ind`
+(or `cat`, `domain`) for the indicator and `qual` for quality flags.
+
+**1. A published table.** A table from another agency needs two steps
+first: limits from whatever it publishes in their place
 ([`limfrom()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/limfrom.md)
 takes a standard error, a coefficient of variation or a margin of
 error), and its quality flags mapped onto suppressed and
@@ -750,23 +1088,187 @@ errors and that agency’s flags:
 
 ``` r
 
-own <- data.frame(group = c("Aboriginal", "Torres Strait Islander", "Non-Indigenous Australians"),
-                  pct = c(31.2, 27.5, 18.9), rse = c(4.1, 22.0, 1.2), flag = c("", "*", ""))
+own <- data.frame(
+  group = c(
+    "Aboriginal",
+    "Torres Strait Islander",
+    "Non-Indigenous Australians"
+  ),
+  pct = c(31.2, 27.5, 18.9),
+  rse = c(4.1, 22.0, 1.2),
+  flag = c("", "*", ""),
+  stringsAsFactors = FALSE
+)
 own <- cbind(own, limfrom(own$pct, cv = own$rse)[c("lower", "upper")])
 own$quality <- qltyrcd(own$flag, suppr = "**", caution = "*")
-indgap(own, "group", "pct", "lower", "upper", ref = "Non-Indigenous Australians",
-               qual = "quality")
-#>                    group estimate refest    ratio   ratiolo  ratioup difference
-#> 1             Aboriginal     31.2   18.9 1.650794 1.5179467 1.795267       12.3
-#> 2 Torres Strait Islander     27.5   18.9 1.455026 0.9167364 2.309390        8.6
-#>       diflo    difup usewithcau poogrp
-#> 1  9.753713 14.84629      FALSE  FALSE
-#> 2 -3.266111 20.46611       TRUE  FALSE
+indgap(
+  own,
+  "group",
+  "pct",
+  "lower",
+  "upper",
+  ref = "Non-Indigenous Australians",
+  qual = "quality"
+)
+#> ╭── Gap against a reference group ────────────────────────────────────────────╮
+#> │   Reference  Non-Indigenous Australians                                     │
+#> │   Groups     2                                                              │
+#> │   Intervals  95%                                                            │
+#> │                                                                             │
+#> │   group                     estimate  refest  ratio  ratio CI               │
+#> │   ------------------------  --------  ------  -----  ------------           │
+#> │   Aboriginal                   31.20   18.90  1.651  [1.52, 1.80]           │
+#> │   Torres Strait Islander *     27.50   18.90  1.455  [0.92, 2.31]           │
+#> │                                                                             │
+#> │   group                     difference  difference CI                       │
+#> │   ------------------------  ----------  -------------                       │
+#> │   Aboriginal                     12.30  [9.8, 14.8]                         │
+#> │   Torres Strait Islander *        8.60  [-3.3, 20.5]                        │
+#> │                                                                             │
+#> │   Above the reference (interval above 1): Aboriginal.                       │
+#> │   Not distinguishable from 1 (interval includes it): Torres Strait          │
+#> │   Islander *.                                                               │
+#> │                                                                             │
+#> │   ratio: the group's estimate over the reference's; difference: the         │
+#> │   group's less the reference's, in the estimate's own units.                │
+#> │   Report a gap beside each group's own level, not alone.                    │
+#> │   * use with caution: the source flags the estimate (E, high sampling       │
+#> │   variability).                                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 Name the groups as the peoples concerned name themselves, and give
 `pooled` any row that pools several of them, so it is never set beside
 its own parts.
+
+**2. Microdata.** With one row per respondent, estimate first, then
+compare.
+[`svydes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svydes.md)
+describes the design (here only a weight; strata, clusters and replicate
+weights are its other arguments), and
+[`svyest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svyest.md)
+gives each group’s estimate with its limits in the columns the
+estimators take. Made-up responses:
+
+``` r
+
+set.seed(7)
+n <- 600
+resp <- data.frame(
+  group = sample(c("First Nations", "Inuit", "Non-Indigenous"), n, TRUE),
+  wt = runif(n, 50, 150)
+)
+resp$goodmh <- rbinom(n, 1, ifelse(resp$group == "Non-Indigenous", 0.6, 0.5))
+des <- svydes(resp, w = "wt")
+tab <- as.data.frame(
+  svyest(des, resp, "goodmh", by = "group", stat = "proportion", lvls = "1")
+)
+indgap(tab, "group", "estimate", "lower", "upper")
+#> ╭── Gap against a reference group ──────────────────────────────────────╮
+#> │   Reference  Non-Indigenous                                           │
+#> │   Groups     2                                                        │
+#> │   Intervals  95%                                                      │
+#> │                                                                       │
+#> │   group          estimate  refest   ratio  ratio CI        difference │
+#> │   -------------  --------  ------  ------  --------------  ---------- │
+#> │   First Nations    0.5152  0.5710  0.9023  [0.747, 1.090]     -0.0558 │
+#> │   Inuit            0.4227  0.5710  0.7402  [0.600, 0.913]     -0.1484 │
+#> │                                                                       │
+#> │   group          difference CI                                        │
+#> │   -------------  ----------------                                     │
+#> │   First Nations  [-0.158, 0.046]                                      │
+#> │   Inuit          [-0.250, -0.047]                                     │
+#> │                                                                       │
+#> │   Below the reference (interval below 1): Inuit.                      │
+#> │   Not distinguishable from 1 (interval includes it): First Nations.   │
+#> │                                                                       │
+#> │   ratio: the group's estimate over the reference's; difference: the   │
+#> │   group's less the reference's, in the estimate's own units.          │
+#> │   Report a gap beside each group's own level, not alone.              │
+#> ╰───────────────────────────────────────────────────────────────────────╯
+```
+
+**3. The other estimators, same layout.** A table with an indicator
+column goes to
+[`welprof()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/welprof.md),
+[`mhcont()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mhcont.md),
+[`healchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/healchg.md)
+(add a period column),
+[`holbal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/holbal.md)
+(a domain column) or
+[`commidx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/commidx.md)
+(with the community’s own weights), named the same way:
+
+``` r
+
+prof <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 3),
+  item = rep(c("Hopeful", "Satisfied", "Rarely hopeful"), 2),
+  pct = c(64, 71, 12, 58, 66, 16),
+  lo = c(59, 66, 9, 52, 60, 12),
+  hi = c(69, 76, 15, 64, 72, 20),
+  stringsAsFactors = FALSE
+)
+welprof(prof, "community", "item", "pct", "lo", "hi",
+        well = c("Hopeful", "Satisfied"), distress = "Rarely hopeful")
+#> ╭── Wellness profile ─────────────────────────────────────────────────────────╮
+#> │   Groups               Lakeside; Riverbend                                  │
+#> │   Wellness indicators  2                                                    │
+#> │   Distress indicators  1                                                    │
+#> │                                                                             │
+#> │   Hopeful (wellness)                                                        │
+#> │   group      estimate  interval                                             │
+#> │   ---------  --------  --------                                             │
+#> │   Lakeside         64  [59, 69]                                             │
+#> │   Riverbend        58  [52, 64]                                             │
+#> │                                                                             │
+#> │   Satisfied (wellness)                                                      │
+#> │   group      estimate  interval                                             │
+#> │   ---------  --------  --------                                             │
+#> │   Lakeside         71  [66, 76]                                             │
+#> │   Riverbend        66  [60, 72]                                             │
+#> │                                                                             │
+#> │   Rarely hopeful (distress)                                                 │
+#> │   group      estimate  interval                                             │
+#> │   ---------  --------  --------                                             │
+#> │   Lakeside         12  [9, 15]                                              │
+#> │   Riverbend        16  [12, 20]                                             │
+#> │                                                                             │
+#> │   On none of the 3 indicators do the groups' intervals part: the data       │
+#> │   cannot rank the groups on any of them.                                    │
+#> │                                                                             │
+#> │   Wellness indicators come first, so each group's strengths are read        │
+#> │   before its distress (Stewart 2008).                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+```
+
+**4. Plain numbers.** Counts by age group go to
+[`agestd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agestd.md)
+and age-specific percentages to
+[`stdprev()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdprev.md),
+as vectors, with your own standard population:
+
+``` r
+
+agestd(events = c(4, 9, 11, 6, 3), pop = c(9000, 8000, 6000, 4000, 2000),
+       std = c(30000, 25000, 20000, 15000, 10000))
+#> ╭── Directly age-standardised rate ─────────────────────────────────╮
+#> │   Groups    1                                                     │
+#> │   Events    33                                                    │
+#> │   Rate per  100,000                                               │
+#> │   Interval  gamma (Fay and Feuer 1997)                            │
+#> │                                                                   │
+#> │   group  events   rate  95% CI                                    │
+#> │   -----  ------  -----  ---------------                           │
+#> │   all        33  115.6  [79.24, 165.00]                           │
+#> │                                                                   │
+#> │   all: rate 115.6 [79.24, 165.00].                                │
+#> │                                                                   │
+#> │   Each rate is what the group's age-specific rates give for the   │
+#> │   standard population's ages, so the groups compare without them. │
+#> │   Compare only rates standardised to the same population.         │
+#> ╰───────────────────────────────────────────────────────────────────╯
+```
 
 ## What the package does not compute
 

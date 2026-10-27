@@ -15,7 +15,7 @@ plot draws the surface as a heat map with those regions outlined."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -173,14 +173,22 @@ kind of surface, for an air pollutant).</p></div>
 <span class="r-in"><span>                          package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">kd</span> <span class="op">&lt;-</span> <span class="fu">crmdens</span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span>, <span class="va">b</span><span class="op">$</span><span class="va">lat</span>, ngrid <span class="op">=</span> <span class="fl">120</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">kd</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Kernel density of incidents: smallest areas holding each share  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   508 incidents; bandwidth 0.337 km east-west, 0.412 km north-south</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Peak density 77.9 incidents per square kilometre</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  incidents areakm2 shrofmaparea densatedge</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        50%   5.506        11.9%      31.91</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        90%  14.840        32.0%      11.26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Kernel density of incidents</span> ───────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Incidents     508                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Coordinates   longitude and latitude, centred on -79.4114, 43.6508 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Grid          120 x 120 cells                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Bandwidth     0.337 km east-west, 0.412 km north-south             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Peak density  77.9 incidents per km2                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The smallest areas holding each share of incidents                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   incidents  areakm2  shrofmaparea  densatedge                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -------  ------------  ----------                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   50%           5.51  11.9%              31.91                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   90%          14.84  32.0%              11.26                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   508 incidents; bandwidth 0.337 km east-west, 0.412 km north-south  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   50% of the incidents lie in 11.9% of the mapped area.              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰──────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">kd</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="crmdens-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>

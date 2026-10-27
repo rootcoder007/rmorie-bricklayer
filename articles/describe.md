@@ -26,18 +26,18 @@ fresh$score <- stats::runif(300, 0, 10)
 
 cpsrpt(fresh, ref = reference,
                schema = infsch(reference))
-#> ── Capsule report ────────────────────────────────────────────────
-#>   ✓ these checks found nothing
-#> 
-#>   rows           300
-#>   columns        3
-#>   missing cells  0.0%
-#>   complete rows  100.0%
-#>   digest         6037a08fc090f81243bc07b5094099e0
-#> 
-#>   No finding is proof of correctness: each check has a
-#>   stated blind spot, and a small sample has little power.
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Capsule report ─────────────────────────────────────────╮
+#> │   Verdict        ✓ these checks found nothing             │
+#> │   Rows           300                                      │
+#> │   Columns        3                                        │
+#> │   Missing cells  0.0%                                     │
+#> │   Complete rows  100.0%                                   │
+#> │   Digest         6037a08fc090f81243bc07b5094099e0         │
+#> │   Findings       0                                        │
+#> │                                                           │
+#> │   No finding is proof of correctness: each check has a    │
+#> │   stated blind spot, and a small sample has little power. │
+#> ╰───────────────────────────────────────────────────────────╯
 ```
 
 Now a fetch that went wrong in four different ways at once — a rescaled
@@ -55,25 +55,31 @@ broken$flat <- 7
 report <- cpsrpt(broken, ref = reference,
                          schema = infsch(reference))
 report
-#> ── Capsule report ────────────────────────────────────────────────
-#>   ✗ WARNINGS: something moved
-#> 
-#>   rows           300
-#>   columns        5
-#>   missing cells  20.0%
-#>   complete rows  0.0%
-#>   digest         a70671d4bd03067f631d54ce3143d9a2
-#> 
-#> ── Findings (8) ──────────────────────────────────────────────────
-#>   ✗ warn      drift      grade                  categorical test, p = <2e-16
-#>   ✗ warn      drift      score                  numeric test, p = <2e-16
-#>   ✗ warn      missing    dead                   column(s) entirely missing
-#>   ✗ warn      schema     range_score            Column 'score' has 226 value(s) outside [-0.8488307, 10.90645]
-#>   ✗ warn      schema     unexpected_grade       Column 'grade' has unexpected values: z
-#>   ! note      drift      dead, flat             column(s) not in the reference
-#>   ! note      missing    dead                   a contiguous run of 300 missing values from row 1 -- one outage rather than scattered failures
-#>   ! note      shape      flat                   constant: no information, and it breaks anything scaled by variance
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Capsule report ───────────────────────────────────────────────────────────╮
+#> │   Verdict        ✗ WARNINGS: something moved                                │
+#> │   Rows           300                                                        │
+#> │   Columns        5                                                          │
+#> │   Missing cells  20.0%                                                      │
+#> │   Complete rows  0.0%                                                       │
+#> │   Digest         a70671d4bd03067f631d54ce3143d9a2                           │
+#> │   Findings       8                                                          │
+#> │                                                                             │
+#> │   No finding is proof of correctness: each check has a                      │
+#> │   stated blind spot, and a small sample has little power.                   │
+#> │                                                                             │
+#> │   ✖    warn  drift      grade: categorical test, p = < 0.001                │
+#> │   ✖    warn  drift      score: numeric test, p = < 0.001                    │
+#> │   ✖    warn  missing    dead: column(s) entirely missing                    │
+#> │   ✖    warn  schema     range_score: Column 'score' has 226 value(s)        │
+#> │                         outside [-0.8488307, 10.90645]                      │
+#> │   ✖    warn  schema     unexpected_grade: Column 'grade' has unexpected     │
+#> │                         values: z                                           │
+#> │   !    note  drift      dead, flat: column(s) not in the reference          │
+#> │   !    note  missing    dead: a contiguous run of 300 missing values from   │
+#> │                         row 1 -- one outage rather than scattered failures  │
+#> │   !    note  shape      flat: constant: no information, and it breaks       │
+#> │                         anything scaled by variance                         │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ``` r
@@ -127,11 +133,20 @@ messy <- data.frame(
   zeros = c(rep(0, 50), stats::runif(150))
 )
 profcols(messy)[, c("column", "mean", "median", "sd", "mad")]
-#>    column         mean     median         sd       mad
-#> 1   clean -0.109165485 -0.1445507  1.0340169 1.0397160
-#> 2 bimodal -0.006117203 -0.2014852  3.2205494 4.4949028
-#> 3  skewed  3.633870943  0.7332377 35.2946592 0.8114156
-#> 4   zeros  0.342795696  0.2656884  0.3197161 0.3939096
+#> ╭── Column profile ─────────────────────────────────────────────────────╮
+#> │   Rows     4                                                          │
+#> │   Columns  5                                                          │
+#> │                                                                       │
+#> │   column      mean   median      sd     mad                           │
+#> │   -------  -------  -------  ------  ------                           │
+#> │   clean    -0.1092  -0.1446   1.034  1.0397                           │
+#> │   bimodal  -0.0061  -0.2015   3.221  4.4949                           │
+#> │   skewed    3.6339   0.7332  35.295  0.8114                           │
+#> │   zeros     0.3428   0.2657   0.320  0.3939                           │
+#> │                                                                       │
+#> │   Some of this result's columns are not here (a subset of it?), so it │
+#> │   is shown as a plain table.                                          │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 ```
 
 The `hist` column carries what no single number can:
@@ -139,11 +154,20 @@ The `hist` column carries what no single number can:
 ``` r
 
 profcols(messy)[, c("column", "hist")]
-#>    column       hist
-#> 1   clean ▁▂▃▇█▇▇▃▃▁
-#> 2 bimodal ▂▆▆▅ ▂▄█▄▁
-#> 3  skewed █        ▁
-#> 4   zeros █▃▂▂▂▂▂▃▁▂
+#> ╭── Column profile ─────────────────────────────────────────────────────╮
+#> │   Rows     4                                                          │
+#> │   Columns  2                                                          │
+#> │                                                                       │
+#> │   column   hist                                                       │
+#> │   -------  ----------                                                 │
+#> │   clean    ▁▂▃▇█▇▇▃▃▁                                                 │
+#> │   bimodal  ▂▆▆▅ ▂▄█▄▁                                                 │
+#> │   skewed   █        ▁                                                 │
+#> │   zeros    █▃▂▂▂▂▂▃▁▂                                                 │
+#> │                                                                       │
+#> │   Some of this result's columns are not here (a subset of it?), so it │
+#> │   is shown as a plain table.                                          │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 ```
 
 `bimodal` is visibly two humps. Its mean and median agree perfectly and
@@ -176,26 +200,38 @@ c(structural = sum(is.na(structural$a)), scattered = sum(is.na(scattered$a)))
 ``` r
 
 misspat(structural)
-#> ── Missingness patterns ────────────────────────────────────────── 
-#>   columns, in pattern order: id, a, b
-#> 
-#>  pattern n_rows pctrows n_missing columns
-#>      ...     14    70.0         0        
-#>      .XX      6    30.0         2    a, b
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Missingness patterns ─────────────────────────────────────────────────────╮
+#> │   Columns   in pattern order: id, a, b                                      │
+#> │   Patterns  2                                                               │
+#> │   Rows      20                                                              │
+#> │                                                                             │
+#> │   pattern  n_rows  pctrows  n_missing  columns                              │
+#> │   -------  ------  -------  ---------  -------                              │
+#> │   ...          14  70.0             0                                       │
+#> │   .XX           6  30.0             2  a, b                                 │
+#> │                                                                             │
+#> │   Each pattern marks the columns missing together; a few large patterns     │
+#> │   point to a cause worth naming before rows are dropped.                    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ``` r
 
 misspat(scattered)
-#> ── Missingness patterns ────────────────────────────────────────── 
-#>   columns, in pattern order: id, a, b
-#> 
-#>  pattern n_rows pctrows n_missing columns
-#>      ...      8    40.0         0        
-#>      ..X      6    30.0         1       b
-#>      .X.      6    30.0         1       a
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Missingness patterns ─────────────────────────────────────────────────────╮
+#> │   Columns   in pattern order: id, a, b                                      │
+#> │   Patterns  3                                                               │
+#> │   Rows      20                                                              │
+#> │                                                                             │
+#> │   pattern  n_rows  pctrows  n_missing  columns                              │
+#> │   -------  ------  -------  ---------  -------                              │
+#> │   ...           8  40.0             0                                       │
+#> │   ..X           6  30.0             1  b                                    │
+#> │   .X.           6  30.0             1  a                                    │
+#> │                                                                             │
+#> │   Each pattern marks the columns missing together; a few large patterns     │
+#> │   point to a cause worth naming before rows are dropped.                    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 Two patterns against three. In the first, one structural gap took out
@@ -213,10 +249,18 @@ missruns(data.frame(
   outage = c(1, 2, rep(NA, 8), 11:20),
   sporadic = c(1, NA, 3, NA, 5, NA, 7:20)
 ), minrun = 2)
-#> ── Runs of consecutive missing values ──────────────────────────── 
-#>  column start end length
-#>  outage     3  10      8
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Runs of consecutive missing values ───────────────────────────────────╮
+#> │   Runs               1                                                  │
+#> │   Columns with runs  1                                                  │
+#> │   Longest run        8                                                  │
+#> │                                                                         │
+#> │   column  start  end  length                                            │
+#> │   ------  -----  ---  ------                                            │
+#> │   outage      3   10       8                                            │
+#> │                                                                         │
+#> │   Long runs of missing rows usually mean a source stopped reporting for │
+#> │   a while, not values missing at random.                                │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 And
@@ -278,20 +322,19 @@ y <- x + stats::rnorm(n)
 mcar <- data.frame(x = x, y = y)
 mcar$y[sample(n, 120)] <- NA
 mcartst(mcar)
-#> ── Little's MCAR test ────────────────────────────────────────────
-#>   ✓ no departure from MCAR detected
-#> 
-#>   statistic      0.817
-#>   df             1
-#>   p-value        0.366
-#>   patterns       2
-#>   variables      2
-#>   rows used      400
-#>   EM iterations  12
-#> 
-#>   Not evidence OF MCAR: a large p-value is a failure to detect a
-#>   departure, and this test has little power on small samples.
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Little's MCAR test ────────────────────────────────────────────╮
+#> │   Verdict        ✓ no departure from MCAR detected               │
+#> │   Statistic      0.817                                           │
+#> │   df             1                                               │
+#> │   p-value        0.366                                           │
+#> │   Patterns       2                                               │
+#> │   Variables      2                                               │
+#> │   Rows used      400                                             │
+#> │   EM iterations  12                                              │
+#> │                                                                  │
+#> │   Not evidence OF MCAR: a large p-value is a failure to detect a │
+#> │   departure, and this test has little power on small samples.    │
+#> ╰──────────────────────────────────────────────────────────────────╯
 ```
 
 ``` r
@@ -301,17 +344,19 @@ mcartst(mcar)
 mar <- data.frame(x = x, y = y)
 mar$y[x > 0.4] <- NA
 mcartst(mar)
-#> ── Little's MCAR test ────────────────────────────────────────────
-#>   ✗ MCAR rejected: the missingness is related to the data
-#> 
-#>   statistic      247.984
-#>   df             1
-#>   p-value        <2e-16
-#>   patterns       2
-#>   variables      2
-#>   rows used      400
-#>   EM iterations  71
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Little's MCAR test ────────────────────────────────────────────────────╮
+#> │   Verdict        ✗ MCAR rejected: the missingness is related to the data │
+#> │   Statistic      247.984                                                 │
+#> │   df             1                                                       │
+#> │   p-value        < 0.001                                                 │
+#> │   Patterns       2                                                       │
+#> │   Variables      2                                                       │
+#> │   Rows used      400                                                     │
+#> │   EM iterations  71                                                      │
+#> │                                                                          │
+#> │   Rows with different patterns of missing values have different means:   │
+#> │   an analysis of the complete rows alone may be biased.                  │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 ```
 
 Read the caveat the second report prints. A large p-value is a failure
@@ -343,14 +388,23 @@ range(people$weightkg)
 ``` r
 
 head(mahaoutl(people), 3)
-#> ── Mahalanobis outliers (robust) ───────────────────────────────── 
-#>   ! 1 of 3 rows beyond alpha = 0.001
-#> 
-#>  row distance p_value  logpvalue outlier
-#>    1    10.80  <2e-16 -58.355041    TRUE
-#>   59     3.14 0.00725  -4.926492   FALSE
-#>  203     2.91  0.0146  -4.227502   FALSE
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Mahalanobis outliers (robust) ──────────────────────────────────────╮
+#> │   Verdict  ! 1 of 3 rows beyond alpha = 0.001                         │
+#> │                                                                       │
+#> │   Largest distances first                                             │
+#> │   row  distance  p_value  logpvalue  outlier                          │
+#> │   ---  --------  -------  ---------  -------                          │
+#> │     1    10.803  < 0.001    -58.355  TRUE                             │
+#> │    59     3.139    0.007     -4.926  FALSE                            │
+#> │   203     2.908    0.015     -4.228  FALSE                            │
+#> │                                                                       │
+#> │   1 of 3 rows lie beyond alpha = 0.001: row 1 (distance 10.8).        │
+#> │                                                                       │
+#> │   The distance measures how far a row is from the centre of the data  │
+#> │   once the columns' scales and correlations are allowed for; the      │
+#> │   p-value is from the chi-square distribution it would follow without │
+#> │   outliers, and logpvalue its natural log, for rows far in the tail.  │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 ```
 
 The default is a robust centre and scale, and that default matters more
@@ -377,49 +431,61 @@ Figures that were rounded, capped, rescaled or invented usually do not.
 ``` r
 
 benfordtst(10^stats::runif(2000, 0, 6))
-#> ── Benford first-digit screen ────────────────────────────────────
-#>   ✓ consistent with Benford's law
-#> 
-#>   values used  2,000
-#>   chi-square   3.183
-#>   df           8
-#>   p-value      0.922
-#> 
-#>   digit  observed  expected        shape
-#>       1     0.305     0.301  ####################
-#>       2     0.172     0.176  ###########         
-#>       3     0.127     0.125  ########            
-#>       4     0.088     0.097  ######              
-#>       5     0.083     0.079  #####               
-#>       6     0.065     0.067  ####                
-#>       7     0.060     0.058  ####                
-#>       8     0.056     0.051  ####                
-#>       9     0.044     0.046  ###                 
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Benford first-digit screen ───────────────────────────────────────────╮
+#> │   ✔ consistent with Benford's law                                       │
+#> │                                                                         │
+#> │   values used  2,000                                                    │
+#> │   chi-square   3.183                                                    │
+#> │   df           8                                                        │
+#> │   p-value      0.922                                                    │
+#> │                                                                         │
+#> │   digit  observed  expected        shape                                │
+#> │       1     0.305     0.301  ####################                       │
+#> │       2     0.172     0.176  ###########                                │
+#> │       3     0.127     0.125  ########                                   │
+#> │       4     0.088     0.097  ######                                     │
+#> │       5     0.083     0.079  #####                                      │
+#> │       6     0.065     0.067  ####                                       │
+#> │       7     0.060     0.058  ####                                       │
+#> │       8     0.056     0.051  ####                                       │
+#> │       9     0.044     0.046  ###                                        │
+#> │                                                                         │
+#> │   The leading digits are consistent with Benford's law (p = 0.922); the │
+#> │   largest gap is at 4, 8.8% seen against 9.7% expected. Benford's law   │
+#> │   expects a leading 1 about 30% of the time and a 9 under 5%. A         │
+#> │   departure is a reason to look closer (rounding, thresholds, made-up   │
+#> │   figures), never proof by itself.                                      │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 ``` r
 
 benfordtst(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))
-#> ── Benford first-digit screen ────────────────────────────────────
-#>   ! departs from Benford's law (screen only, not a verdict)
-#> 
-#>   values used  2,000
-#>   chi-square   859.762
-#>   df           8
-#>   p-value      <2e-16
-#> 
-#>   digit  observed  expected        shape
-#>       1     0.117     0.301  ################### 
-#>       2     0.103     0.176  #################   
-#>       3     0.098     0.125  ################    
-#>       4     0.120     0.097  ####################
-#>       5     0.113     0.079  ##################  
-#>       6     0.101     0.067  ################    
-#>       7     0.122     0.058  ####################
-#>       8     0.113     0.051  ##################  
-#>       9     0.113     0.046  ##################  
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Benford first-digit screen ───────────────────────────────────────────╮
+#> │   ! departs from Benford's law (screen only, not a verdict)             │
+#> │                                                                         │
+#> │   values used  2,000                                                    │
+#> │   chi-square   859.762                                                  │
+#> │   df           8                                                        │
+#> │   p-value      < 0.001                                                  │
+#> │                                                                         │
+#> │   digit  observed  expected        shape                                │
+#> │       1     0.117     0.301  ###################                        │
+#> │       2     0.103     0.176  #################                          │
+#> │       3     0.098     0.125  ################                           │
+#> │       4     0.120     0.097  ####################                       │
+#> │       5     0.113     0.079  ##################                         │
+#> │       6     0.101     0.067  ################                           │
+#> │       7     0.122     0.058  ####################                       │
+#> │       8     0.113     0.051  ##################                         │
+#> │       9     0.113     0.046  ##################                         │
+#> │                                                                         │
+#> │   The leading digits depart from Benford's law (p < 0.001); the largest │
+#> │   gap is at 1, 11.7% seen against 30.1% expected. Benford's law expects │
+#> │   a leading 1 about 30% of the time and a 9 under 5%. A departure is a  │
+#> │   reason to look closer (rounding, thresholds, made-up figures), never  │
+#> │   proof by itself.                                                      │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 This is a **screen**, not a verdict. Postcodes, year fields, prices
@@ -454,20 +520,34 @@ Community Health Survey indicators by Aboriginal identity:
 
 hi <- indiex("health")
 profcols(hi[, c("estimate", "lower", "upper")])
-#> ── Column profile ──────────────────────────────────────────────── 
-#>    column    type     n n_missing pct_missing n_distinct nzero  nneg  ninf
-#>  estimate numeric  1080        74       6.852        544     0     0     0
-#>     lower numeric  1080        74       6.852        514     0     0     0
-#>     upper numeric  1080        74       6.852        576     0     0     0
-#>   mean    sd median   mad   min   max skewness n_outliers top   q25   q50   q75
-#>  31.23 23.37   26.2  20.9   0.2  95.5   0.9636         36   –  13.5  26.2  42.8
-#>  27.61  22.6  22.05 18.61   0.1  95.1    1.153         59   –  10.5 22.05 36.98
-#>   35.3 24.15   30.1 23.28   0.3  97.9   0.7558          1   – 17.12  30.1 48.88
-#>        hist
-#>  ███▆▄▃▂▂▂▂
-#>  ██▇▅▃▂▂▂▂▁
-#>  ▇▇█▇▅▃▄▂▂▂
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Column profile ──────────────────────────────────────────────────────╮
+#> │   Columns              3                                               │
+#> │   Rows                 1,080                                           │
+#> │   Numeric              3                                               │
+#> │   With missing values  3                                               │
+#> │                                                                        │
+#> │   column    type         n  n_missing  pct_missing  n_distinct  nzero  │
+#> │   --------  -------  -----  ---------  -----------  ----------  -----  │
+#> │   estimate  numeric  1,080         74        6.852         544      0  │
+#> │   lower     numeric  1,080         74        6.852         514      0  │
+#> │   upper     numeric  1,080         74        6.852         576      0  │
+#> │                                                                        │
+#> │   column    nneg  ninf   mean     sd  median    mad     min    max     │
+#> │   --------  ----  ----  -----  -----  ------  -----  ------  -----     │
+#> │   estimate     0     0  31.23  23.37   26.20  20.90  0.2000  95.50     │
+#> │   lower        0     0  27.61  22.60   22.05  18.61  0.1000  95.10     │
+#> │   upper        0     0  35.30  24.15   30.10  23.28  0.3000  97.90     │
+#> │                                                                        │
+#> │   column    skewness  n_outliers  top    q25    q50    q75  hist       │
+#> │   --------  --------  ----------  ---  -----  -----  -----  ---------- │
+#> │   estimate    0.9636          36       13.50  26.20  42.80  ███▆▄▃▂▂▂▂ │
+#> │   lower       1.1526          59       10.50  22.05  36.98  ██▇▅▃▂▂▂▂▁ │
+#> │   upper       0.7558           1       17.12  30.10  48.88  ▇▇█▇▅▃▄▂▂▂ │
+#> │                                                                        │
+#> │   Where the mean and the median (or sd and mad) disagree, the column   │
+#> │   has outliers or a heavy tail and the mean does not describe it;      │
+#> │   n_outliers counts the values beyond the Tukey fences.                │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 table(hi$quality, useNA = "ifany")
 #> 
 #>  ..   E   F  ok   x 
@@ -494,7 +574,13 @@ op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
 for (nm in names(messy)) {
   x <- messy[[nm]]
   if (nm == "skewed") {
-    hist(log10(x), breaks = 30, col = blpal()[2], main = "skewed (log10 scale)", xlab = "log10(value)")
+    hist(
+      log10(x),
+      breaks = 30,
+      col = blpal()[2],
+      main = "skewed (log10 scale)",
+      xlab = "log10(value)"
+    )
   } else {
     hist(x, breaks = 30, col = blpal()[2], main = nm, xlab = "value")
   }
@@ -506,9 +592,11 @@ for (nm in names(messy)) {
 ``` r
 
 par(op)
-plotecdf(c(reference$score, fresh$score),
-         rep(c("reference", "fresh"), c(nrow(reference), nrow(fresh))),
-         main = "Fresh scores against the reference")
+plotecdf(
+  c(reference$score, fresh$score),
+  rep(c("reference", "fresh"), c(nrow(reference), nrow(fresh))),
+  main = "Fresh scores against the reference"
+)
 ```
 
 ![](describe_files/figure-html/describe-describe-plots-2.png)

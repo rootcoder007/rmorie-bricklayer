@@ -24,13 +24,22 @@ measure only in part:
 
 ``` r
 
-pyll <- data.frame(GEO = rep(c("Inuit Nunangat", "Rest of Canada"), each = 5),
-                   Characteristics = rep(c("Number of potential years of life lost",
-                                           "Crude rate of potential years of life lost",
-                                           "Age-standardized rate of potential years of life lost",
-                                           "Low 95% confidence interval, potential years of life lost",
-                                           "High 95% confidence interval, potential years of life lost"), 2),
-                   VALUE = c(5000, 900, 1100, 1000, 1200, 7000, 800, 950, 870, 1030), STATUS = "")
+pyll <- data.frame(
+  GEO = rep(c("Inuit Nunangat", "Rest of Canada"), each = 5),
+  Characteristics = rep(
+    c(
+      "Number of potential years of life lost",
+      "Crude rate of potential years of life lost",
+      "Age-standardized rate of potential years of life lost",
+      "Low 95% confidence interval, potential years of life lost",
+      "High 95% confidence interval, potential years of life lost"
+    ),
+    2
+  ),
+  VALUE = c(5000, 900, 1100, 1000, 1200, 7000, 800, 950, 870, 1030),
+  STATUS = "",
+  stringsAsFactors = FALSE
+)
 scests(pyll)[, c("GEO", "measure", "estimate", "lower", "upper")]
 #>              GEO                                               measure estimate
 #> 1 Inuit Nunangat                Number of potential years of life lost     5000
@@ -94,26 +103,32 @@ how much it matters:
 
 counts <- c(1200, 430, 110, 38)
 bandsens(bands, counts)
-#> ── Sensitivity to the open top band's assumed cap ──────────────── 
-#>        cap     value
-#>   11.55000 0.4254708
-#>   15.09841 0.4346095
-#>   19.73696 0.4461100
-#>   25.80058 0.4604302
-#>   33.72707 0.4780278
-#>   44.08875 0.4993060
-#>   57.63375 0.5245371
-#>   75.34008 0.5537719
-#>   98.48616 0.5867522
-#>  128.74322 0.6228545
-#>  168.29590 0.6610951
-#>  220.00000 0.7002144
-#> 
-#>   span over the caps tried: 0.2747 (53.7% of the typical value)
-#>   The statistic moves by more than a tenth of itself across the
-#>   caps tried, so it is a property of the assumption as much as
-#>   of the data. Report the range, not a single figure.
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Sensitivity to the open top band's assumed cap ───────────────────────╮
+#> │   Open band starts at         11                                        │
+#> │   Caps tried                  12                                        │
+#> │   Span over the caps          0.2747                                    │
+#> │   Share of the typical value  53.7%                                     │
+#> │                                                                         │
+#> │      cap   value                                                        │
+#> │   ------  ------                                                        │
+#> │    11.55  0.4255                                                        │
+#> │    15.10  0.4346                                                        │
+#> │    19.74  0.4461                                                        │
+#> │    25.80  0.4604                                                        │
+#> │    33.73  0.4780                                                        │
+#> │    44.09  0.4993                                                        │
+#> │    57.63  0.5245                                                        │
+#> │    75.34  0.5538                                                        │
+#> │    98.49  0.5868                                                        │
+#> │   128.74  0.6229                                                        │
+#> │   168.30  0.6611                                                        │
+#> │   220.00  0.7002                                                        │
+#> │                                                                         │
+#> │   span over the caps tried: 0.2747 (53.7% of the typical value). The    │
+#> │   statistic moves by more than a tenth of itself across the caps tried, │
+#> │   so it is a property of the assumption as much as of the data. Report  │
+#> │   the range, not a single figure.                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 Read the span, not the middle row. A statistic that moves by more than a
@@ -129,12 +144,34 @@ the total.
 
 placements <- expbands(bands, counts, openupcap = 25)
 ginicoef(placements)
-#> [1] 0.4585838
+#> ╭── Gini coefficient ─────────────────────────────────────────────────────────╮
+#> │   Gini coefficient  0.4586                                                  │
+#> │   Units             1,778                                                   │
+#> │   Total             4,269                                                   │
+#> │   Largest unit      18 (0.4% of the total)                                  │
+#> │   Most for n units  0.9994                                                  │
+#> │                                                                             │
+#> │   A Gini of 0.4586: the total is highly concentrated.                       │
+#> │   That is 46% of the way from equal shares (0) to one unit holding all of   │
+#> │   it (0.9994 for 1,778 units).                                              │
+#> │                                                                             │
+#> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │
+#> │   doubling every value leaves it unchanged. It says how unequal, not        │
+#> │   which units: topshr() and lorenzc() show where the total sits.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 topshr(placements, c(0.01, 0.05, 0.1))
-#>   fraction units      share
-#> 1     0.01    18 0.07589599
-#> 2     0.05    89 0.25579761
-#> 3     0.10   178 0.39095807
+#> ╭── Top shares of a total ───────────────────────────────────────────────╮
+#> │   Fractions  3                                                         │
+#> │                                                                        │
+#> │   top  units  share                                                    │
+#> │   ---  -----  ------                                                   │
+#> │   1%      18  7.59%                                                    │
+#> │   5%      89  25.58%                                                   │
+#> │   10%    178  39.1%                                                    │
+#> │                                                                        │
+#> │   The top 1% of units (18 of them) hold 7.59% of the total; with equal │
+#> │   shares they would hold 1%.                                           │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```
 
 Gini has a ceiling that depends on the number of units: for `n` units
@@ -259,10 +296,20 @@ different province.
 ``` r
 
 rgnmapintg(cw, "facility", "region", regs = pop$region)
-#>                                         check observed expected pass
-#> 1         units assigned more than one region        0        0 TRUE
-#> 2                    units assigned no region        0        0 TRUE
-#> 3 region codes not in the reference geography        0        0 TRUE
+#> ╭── Region map integrity ───────────────────────────────────────────────────╮
+#> │   Checks   3                                                              │
+#> │   Verdict  every check passed                                             │
+#> │                                                                           │
+#> │   check                                        observed  expected  result │
+#> │   -------------------------------------------  --------  --------  ------ │
+#> │   units assigned more than one region                 0         0  pass   │
+#> │   units assigned no region                            0         0  pass   │
+#> │   region codes not in the reference geography         0         0  pass   │
+#> │                                                                           │
+#> │   A sound map gives each unit exactly one region, and only regions of     │
+#> │   the reference geography; each check counts the units that break that,   │
+#> │   and 0 passes.                                                           │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 ```
 
 Every check is written so that zero is the passing value, which is what
@@ -273,10 +320,20 @@ makes the frame safe to record directly into a manifest.
 bad <- cw
 bad$region[3] <- "2406"          # a code from another province
 rgnmapintg(bad, "facility", "region", regs = pop$region)
-#>                                         check observed expected  pass
-#> 1         units assigned more than one region        0        0  TRUE
-#> 2                    units assigned no region        0        0  TRUE
-#> 3 region codes not in the reference geography        1        0 FALSE
+#> ╭── Region map integrity ───────────────────────────────────────────────────╮
+#> │   Checks   3                                                              │
+#> │   Verdict  1 of 3 checks failed                                           │
+#> │                                                                           │
+#> │   check                                        observed  expected  result │
+#> │   -------------------------------------------  --------  --------  ------ │
+#> │   units assigned more than one region                 0         0  pass   │
+#> │   units assigned no region                            0         0  pass   │
+#> │   region codes not in the reference geography         1         0  FAIL   │
+#> │                                                                           │
+#> │   A sound map gives each unit exactly one region, and only regions of     │
+#> │   the reference geography; each check counts the units that break that,   │
+#> │   and 0 passes.                                                           │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 ```
 
 ### Recomputing is not the same as checking
@@ -292,9 +349,20 @@ that survived a round trip through text is not reported as a change.
 recomputed <- cw
 recomputed$region[2] <- "3519"
 rgnmapcmp(cw, recomputed, "facility")
-#>   column cells mismatched                                       first
-#> 1   rows     4          0                                            
-#> 2 region     4          1 South Jail: published 3520, recomputed 3519
+#> ╭── Published and rebuilt region maps compared ────────────────────────────╮
+#> │   Columns compared  1                                                    │
+#> │   Mismatched cells  1                                                    │
+#> │   Verdict           the maps disagree                                    │
+#> │                                                                          │
+#> │   column  cells  mismatched  first                                       │
+#> │   ------  -----  ----------  ------------------------------------------- │
+#> │   rows        4           0                                              │
+#> │   region      4           1  South Jail: published 3520, recomputed 3519 │
+#> │                                                                          │
+#> │   The rows line counts units present on one side only; each other line   │
+#> │   compares one column over the shared units. first writes out the first  │
+#> │   disagreement, and 0 mismatched throughout is agreement.                │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 ```
 
 That is worth having, and it is worth being clear about what it
@@ -376,21 +444,22 @@ that rate.
 units <- vapply(pop$region, function(r) sum(cw$region == r), numeric(1))
 cov <- rgncov(pop$region, pop$population, units)
 cov
-#> ── 4 units in 3 of 5 regions ───────────────────────────────────── 
-#>   those regions hold 3,311,309 of 4,507,389 residents (73.5%)
-#>   2 regions hold none; 1,196,080 residents (26.5%) live there
-#> 
-#>  region population units hasunit     popshr
-#>    3520    3025647     2    TRUE 67.1263785
-#>    3553     171568     1    TRUE  3.8063722
-#>    3557     114094     1    TRUE  2.5312659
-#>    3519    1173334     0   FALSE 26.0313454
-#>    3552      22746     0   FALSE  0.5046381
-#> 
-#>   The covered share is context, not a denominator: units serve
-#>   catchments, so a rate over these regions alone would take its
-#>   numerator from the whole territory and is inflated.
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── 4 units in 3 of 5 regions ─────────────────────────────────────────────╮
+#> │   Covered    those regions hold 3,311,309 of 4,507,389 residents (73.5%) │
+#> │   Uncovered  2 regions hold none; 1,196,080 residents (26.5%) live there │
+#> │                                                                          │
+#> │   region  population  units  hasunit  popshr                             │
+#> │   ------  ----------  -----  -------  ------                             │
+#> │   3520     3,025,647      2  TRUE     67.126                             │
+#> │   3553       171,568      1  TRUE      3.806                             │
+#> │   3557       114,094      1  TRUE      2.531                             │
+#> │   3519     1,173,334      0  FALSE    26.031                             │
+#> │   3552        22,746      0  FALSE     0.505                             │
+#> │                                                                          │
+#> │   The covered share is context, not a denominator: units serve           │
+#> │   catchments, so a rate over these regions alone would take its          │
+#> │   numerator from the whole territory and is inflated.                    │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 ```
 
 Two of the five regions hold no facility at all. It is tempting to read
@@ -450,12 +519,27 @@ given its own age composition.
 
 e <- expcnts(d$n, d$pop, d$region, strata = d$age)
 e
-#>       area observed population  expected
-#> 1  Central       17       4000 48.366013
-#> 2  Eastern       36       3000 36.274510
-#> 3 Northern        9        800  9.673203
-#> 4  Toronto       86       5000 60.457516
-#> 5  Western       37       2500 30.228758
+#> ╭── Expected counts, indirect standardisation ────────────────────────────╮
+#> │   Areas       5                                                         │
+#> │   Observed    185                                                       │
+#> │   Expected    185                                                       │
+#> │   Population  15,300                                                    │
+#> │                                                                         │
+#> │   area      observed  population  expected                              │
+#> │   --------  --------  ----------  --------                              │
+#> │   Central         17       4,000     48.37                              │
+#> │   Eastern         36       3,000     36.27                              │
+#> │   Northern         9         800      9.67                              │
+#> │   Toronto         86       5,000     60.46                              │
+#> │   Western         37       2,500     30.23                              │
+#> │                                                                         │
+#> │   expected is the count an area would have at the overall rate of each  │
+#> │   stratum, given its own population in it. stdinc() puts an interval on │
+#> │   the ratio of observed to expected.                                    │
+#> │                                                                         │
+#> │   The expected counts sum to the observed ones: the reference rates     │
+#> │   come from the same data.                                              │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 The expected counts total the observed ones. That identity is what makes
@@ -475,18 +559,30 @@ interval:
 ``` r
 
 stdinc(e$observed, e$expected, e$area)
-#>       area observed  expected       sir     lower     upper excess deficit
-#> 1  Central       17 48.366013 0.3514865 0.2047538 0.5627639  FALSE    TRUE
-#> 2  Eastern       36 36.274510 0.9924324 0.6950875 1.3739448  FALSE   FALSE
-#> 3 Northern        9  9.673203 0.9304054 0.4254406 1.7661993  FALSE   FALSE
-#> 4  Toronto       86 60.457516 1.4224865 1.1378056 1.7567592   TRUE   FALSE
-#> 5  Western       37 30.228758 1.2240000 0.8618090 1.6871228  FALSE   FALSE
-#>   significant
-#> 1        TRUE
-#> 2       FALSE
-#> 3       FALSE
-#> 4        TRUE
-#> 5       FALSE
+#> ╭── Standardised incidence ratios ──────────────────────────────────────╮
+#> │   Areas          5                                                    │
+#> │   Observed       185                                                  │
+#> │   Expected       185                                                  │
+#> │   Overall ratio  1                                                    │
+#> │   Interval       exact Poisson, at the level asked for (default 95%)  │
+#> │   Above one      1                                                    │
+#> │   Below one      1                                                    │
+#> │                                                                       │
+#> │   area      observed  expected     sir  interval          finding     │
+#> │   --------  --------  --------  ------  ----------------  -------     │
+#> │   Central         17     48.37  0.3515  [0.2048, 0.5628]  deficit     │
+#> │   Eastern         36     36.27  0.9924  [0.6951, 1.3739]              │
+#> │   Northern         9      9.67  0.9304  [0.4254, 1.7662]              │
+#> │   Toronto         86     60.46  1.4225  [1.1378, 1.7568]  excess      │
+#> │   Western         37     30.23  1.2240  [0.8618, 1.6871]              │
+#> │                                                                       │
+#> │   A ratio above 1 means more cases than the area's population would   │
+#> │   give at the overall rates. An excess or a deficit is an interval    │
+#> │   wholly above or below 1 (the significant column is either).         │
+#> │                                                                       │
+#> │   Each interval is a separate test: with many areas some exclude 1 by │
+#> │   chance (scanadj() allows for that).                                 │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 ```
 
 And the third problem. A league table of rates ranks the small regions
@@ -495,12 +591,26 @@ to both ends by construction, so borrow strength across regions:
 ``` r
 
 ebrates(e$observed, e$expected, e$area)
-#>       area observed  expected       sir        eb  shrinkage       nu    alpha
-#> 1  Central       17 48.366013 0.3514865 0.4301763 0.12133873 6.679104 6.679104
-#> 2  Eastern       36 36.274510 0.9924324 0.9936092 0.15549575 6.679104 6.679104
-#> 3 Northern        9  9.673203 0.9304054 0.9588313 0.40845028 6.679104 6.679104
-#> 4  Toronto       86 60.457516 1.4224865 1.3804553 0.09948526 6.679104 6.679104
-#> 5  Western       37 30.228758 1.2240000 1.1834634 0.18096698 6.679104 6.679104
+#> ╭── Empirical Bayes rates ────────────────────────────────────────────────╮
+#> │   Areas               5                                                 │
+#> │   Overall ratio       1                                                 │
+#> │   Prior shape (nu)    6.679                                             │
+#> │   Prior rate (alpha)  6.679                                             │
+#> │   Method              gamma-Poisson, moments (Clayton and Kaldor 1987)  │
+#> │                                                                         │
+#> │   area      observed  expected     sir      eb  shrinkage               │
+#> │   --------  --------  --------  ------  ------  ---------               │
+#> │   Central         17     48.37  0.3515  0.4302     0.1213               │
+#> │   Eastern         36     36.27  0.9924  0.9936     0.1555               │
+#> │   Northern         9      9.67  0.9304  0.9588     0.4085               │
+#> │   Toronto         86     60.46  1.4225  1.3805     0.0995               │
+#> │   Western         37     30.23  1.2240  1.1835     0.1810               │
+#> │                                                                         │
+#> │   Each raw ratio (sir) is pulled toward the overall ratio; shrinkage is │
+#> │   the share of the pull (0 untouched, 1 replaced), largest for areas    │
+#> │   with small expected counts. Use eb for maps and rankings, stdinc()    │
+#> │   for each area's own evidence.                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 `shrinkage` is how far each estimate was pulled toward the overall rate.

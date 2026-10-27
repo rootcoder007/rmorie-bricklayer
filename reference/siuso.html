@@ -15,7 +15,7 @@ checked."><meta property="og:image" content="https://rootcoder007.github.io/rmor
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,21 +86,25 @@ evidence, for example <code>"plural cue 'three subject officials'"</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The standard SIU privacy paragraph and the witness-officer glossary note
-are stripped first (both mention “subject officer” without naming one).
-The rules then run most-specific first and the first that applies wins:</p><ol><li><p>the roster under the “Subject Officials”/“Subject Officers”
-heading: the larger of the highest <code>SO #N</code> ordinal and the number
-of entries;</p></li>
-<li><p>the highest <code>SO #N</code> ordinal in the whole document, trusted
-only when <code>SO #1</code> is also present;</p></li>
-<li><p>a spelled-out or numeric plural (“two subject officials”);</p></li>
+    <p>The standard SIU privacy paragraph and the witness-officer glossary
+note are stripped first (both mention “subject officer” without naming
+one). The rules then run most-specific first and the first that applies wins:</p><ol><li><p>the roster under the “Subject
+Officials”/“Subject Officers” heading: the larger of the highest
+<code>SO #N</code> ordinal and the number of entries;</p></li>
+<li><p>the highest <code>SO
+#N</code> ordinal in the whole document, trusted only when <code>SO #1</code> is also
+present;</p></li>
+<li><p>a spelled-out or numeric plural (“two subject
+officials”);</p></li>
 <li><p>a singular subject official present (1);</p></li>
-<li><p>an explicit statement that there was no subject official, or
-witness officials listed and no subject official anywhere (0, a real
-answer);</p></li>
-<li><p>otherwise unresolved (<code>NA</code>).</p></li>
-</ol><p>French reports use the same rules in their vocabulary (the subject
-official is tagged “AI no 1”, the witness official “AT no 1”).</p>
+<li><p>an explicit
+statement that there was no subject official, or witness officials listed and
+no subject official anywhere (0, a real answer);</p></li>
+<li><p>otherwise unresolved
+(<code>NA</code>).</p></li>
+</ol><p>French reports use the same rules in their vocabulary (the
+subject official is tagged “AI no 1”, the witness official “AT
+no 1”).</p>
 <p>This function is the pure rule set. For reports that already have a
 panel-reviewed count, prefer that verified value; use these rules for
 unreviewed reports.</p>

@@ -35,7 +35,7 @@ bar shows the run while a person is watching."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -187,15 +187,15 @@ shows it while a person is watching.</p></dd>
 
 
 <dt id="arg-fallback">fallback<a class="anchor" aria-label="anchor" href="#arg-fallback"></a></dt>
-<dd><p><code>"rmorie"</code> saves what the Wayback Machine refused (a server that
-refuses its crawler, Statistics Canada among them) from this connection to
-archive.rmorie.com, with <code><a href="arccap.html">arccap</a></code>; the result is attribute <code>archive</code>.
-<code>NULL</code> (default) does not.</p></dd>
+<dd><p><code>"rmorie"</code> saves what the Wayback Machine refused (a
+server that refuses its crawler, Statistics Canada among them) from this
+connection to archive.rmorie.com, with <code><a href="arccap.html">arccap</a></code>; the result is
+attribute <code>archive</code>. <code>NULL</code> (default) does not.</p></dd>
 
 
 <dt id="arg-reason">reason<a class="anchor" aria-label="anchor" href="#arg-reason"></a></dt>
-<dd><p>With <code>fallback = "rmorie"</code>: why the files are kept (20 characters or
-more).</p></dd>
+<dd><p>With <code>fallback = "rmorie"</code>: why the files are kept (20
+characters or more).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -248,11 +248,10 @@ archive.org/details/spn-2-public-api-page-docs</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="wbsnpnat.html">wbsnpnat</a></code> to look up an existing
-capture; <code><a href="wbrtry.html">wbrtry</a></code>; <code><a href="arccap.html">arccap</a></code> for URLs whose
-server refuses the Internet Archive (<code>"cannot find"</code> although the page is
-there); <code>rmbl wayback FILE</code>
-runs this from the command line.</p></div>
+    <div class="dont-index"><p><code><a href="wbsnpnat.html">wbsnpnat</a></code> to look up an existing capture;
+<code><a href="wbrtry.html">wbrtry</a></code>; <code><a href="arccap.html">arccap</a></code> for URLs whose server refuses
+the Internet Archive (<code>"cannot find"</code> although the page is there);
+<code>rmbl wayback FILE</code> runs this from the command line.</p></div>
     </div>
 
     <div class="section level2">
@@ -260,20 +259,29 @@ runs this from the command line.</p></div>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># The checks run before any request, so these need no network or keys:</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">wbsave</span><span class="op">(</span><span class="st">"ftp://example.org/report.pdf"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : not an http(s) URL: ftp://example.org/report.pdf</span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">wbsave</span><span class="op">(</span><span class="st">"https://example.org/"</span>, ak <span class="op">=</span> <span class="st">"abc"</span>, sk <span class="op">=</span> <span class="st">"def"</span>,</span></span>
-<span class="r-in"><span>                 jobs <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">wbsave</span><span class="op">(</span><span class="st">"https://example.org/"</span>, ak <span class="op">=</span> <span class="st">"abc"</span>, sk <span class="op">=</span> <span class="st">"def"</span>, jobs <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `jobs` must be a whole number from 1 to 12</span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">wbsave</span><span class="op">(</span><span class="st">"https://example.org/"</span>, ak <span class="op">=</span> <span class="st">"abc"</span>, sk <span class="op">=</span> <span class="st">"def"</span>,</span></span>
-<span class="r-in"><span>                 output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"no-such-folder"</span>, <span class="st">"runs.jsonl"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : the folder for `output` does not exist: /tmp/RtmpshpHV7/no-such-folder</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">wbsave</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"https://example.org/"</span>,</span></span>
+<span class="r-in"><span>  ak <span class="op">=</span> <span class="st">"abc"</span>,</span></span>
+<span class="r-in"><span>  sk <span class="op">=</span> <span class="st">"def"</span>,</span></span>
+<span class="r-in"><span>  output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"no-such-folder"</span>, <span class="st">"runs.jsonl"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : the folder for `output` does not exist: /tmp/Rtmp8mkWXN/no-such-folder</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A real run needs archive.org keys and the network.</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>IA_S3_ACCESS_KEY_FILE <span class="op">=</span> <span class="st">"~/.config/ia/s3_access_key.txt"</span>,</span></span>
-<span class="r-in"><span>           IA_S3_SECRET_KEY_FILE <span class="op">=</span> <span class="st">"~/.config/ia/s3_secret_key.txt"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">wbsave</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://www.ontariocourts.ca/ocj/statistics/"</span>,</span></span>
-<span class="r-in"><span>                      <span class="st">"https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                    output <span class="op">=</span> <span class="st">"snapshots.jsonl"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  IA_S3_ACCESS_KEY_FILE <span class="op">=</span> <span class="st">"~/.config/ia/s3_access_key.txt"</span>,</span></span>
+<span class="r-in"><span>  IA_S3_SECRET_KEY_FILE <span class="op">=</span> <span class="st">"~/.config/ia/s3_secret_key.txt"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">wbsave</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="st">"https://www.ontariocourts.ca/ocj/statistics/"</span>,</span></span>
+<span class="r-in"><span>    <span class="st">"https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  output <span class="op">=</span> <span class="st">"snapshots.jsonl"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">res</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>

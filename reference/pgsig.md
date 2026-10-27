@@ -335,7 +335,7 @@ c(p$mean_x, p$meany)
 
 # inputs that cannot be right are refused
 try(pgsig(100, "G"))
-#> Error : `stability` must be one of the Pasquill classes "A" to "F"
+#> Error : pgsig: `stab` must be one of the Pasquill classes "A" to "F"
 try(briggs(100, u = 4, diam = 1, exitvel = 12,
                       stktmp = 150 + 5, ambtmp = 20))
 #> Error : temperatures are in kelvin: stktmp 155 and ambtmp 20 look like degrees Celsius (ambient air is about 290 K)

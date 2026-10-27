@@ -66,19 +66,29 @@ many lines were split: a field that spans a split may be incomplete.
 ## Examples
 
 ``` r
-f <- siuprs(system.file("extdata",
-                                      "siu_synthetic_report.html",
-                                      package = "rmoriebricklayer"))
+f <- siuprs(system.file(
+  "extdata",
+  "siu_synthetic_report.html",
+  package = "rmoriebricklayer"
+))
 f[["number_of_subject_officials"]]
 #> [1] "2"
-f[c("police_service", "date_of_incident_iso", "date_of_director_decision_iso")]
+f[c(
+  "police_service",
+  "date_of_incident_iso",
+  "date_of_director_decision_iso"
+)]
 #>                police_service          date_of_incident_iso 
 #>       "Barrie Police Service"                  "2023-01-05" 
 #> date_of_director_decision_iso 
 #>                  "2023-04-28" 
 
 # several reports at once give a data frame, one row each
-path <- system.file("extdata", "siu_synthetic_report.html", package = "rmoriebricklayer")
+path <- system.file(
+  "extdata",
+  "siu_synthetic_report.html",
+  package = "rmoriebricklayer"
+)
 html <- paste(readLines(path), collapse = "\n")
 df <- siuprs(c(html, "<p>not a report</p>"))
 df[, c("_language", "police_service", "number_of_witness_officials")]

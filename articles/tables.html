@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,13 +100,22 @@ a suppressed value. <code><a href="../reference/scests.html">scests()</a></code>
 limits, whatever form the limits take. Here, a table with three measures
 per cell, and limits that name their measure only in part:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pyll</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>GEO <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Inuit Nunangat"</span>, <span class="st">"Rest of Canada"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span>
-<span>                   Characteristics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Number of potential years of life lost"</span>,</span>
-<span>                                           <span class="st">"Crude rate of potential years of life lost"</span>,</span>
-<span>                                           <span class="st">"Age-standardized rate of potential years of life lost"</span>,</span>
-<span>                                           <span class="st">"Low 95% confidence interval, potential years of life lost"</span>,</span>
-<span>                                           <span class="st">"High 95% confidence interval, potential years of life lost"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>                   VALUE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5000</span>, <span class="fl">900</span>, <span class="fl">1100</span>, <span class="fl">1000</span>, <span class="fl">1200</span>, <span class="fl">7000</span>, <span class="fl">800</span>, <span class="fl">950</span>, <span class="fl">870</span>, <span class="fl">1030</span><span class="op">)</span>, STATUS <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">pyll</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  GEO <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Inuit Nunangat"</span>, <span class="st">"Rest of Canada"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span>
+<span>  Characteristics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>      <span class="st">"Number of potential years of life lost"</span>,</span>
+<span>      <span class="st">"Crude rate of potential years of life lost"</span>,</span>
+<span>      <span class="st">"Age-standardized rate of potential years of life lost"</span>,</span>
+<span>      <span class="st">"Low 95% confidence interval, potential years of life lost"</span>,</span>
+<span>      <span class="st">"High 95% confidence interval, potential years of life lost"</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    <span class="fl">2</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  VALUE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5000</span>, <span class="fl">900</span>, <span class="fl">1100</span>, <span class="fl">1000</span>, <span class="fl">1200</span>, <span class="fl">7000</span>, <span class="fl">800</span>, <span class="fl">950</span>, <span class="fl">870</span>, <span class="fl">1030</span><span class="op">)</span>,</span>
+<span>  STATUS <span class="op">=</span> <span class="st">""</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/scests.html">scests</a></span><span class="op">(</span><span class="va">pyll</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GEO"</span>, <span class="st">"measure"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;              GEO                                               measure estimate</span></span>
 <span><span class="co">#&gt; 1 Inuit Nunangat                Number of potential years of life lost     5000</span></span>
@@ -159,26 +168,32 @@ assumption, so measure how much it matters:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1200</span>, <span class="fl">430</span>, <span class="fl">110</span>, <span class="fl">38</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/bandsens.html">bandsens</a></span><span class="op">(</span><span class="va">bands</span>, <span class="va">counts</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Sensitivity to the open top band's assumed cap ──────────────── </span></span>
-<span><span class="co">#&gt;        cap     value</span></span>
-<span><span class="co">#&gt;   11.55000 0.4254708</span></span>
-<span><span class="co">#&gt;   15.09841 0.4346095</span></span>
-<span><span class="co">#&gt;   19.73696 0.4461100</span></span>
-<span><span class="co">#&gt;   25.80058 0.4604302</span></span>
-<span><span class="co">#&gt;   33.72707 0.4780278</span></span>
-<span><span class="co">#&gt;   44.08875 0.4993060</span></span>
-<span><span class="co">#&gt;   57.63375 0.5245371</span></span>
-<span><span class="co">#&gt;   75.34008 0.5537719</span></span>
-<span><span class="co">#&gt;   98.48616 0.5867522</span></span>
-<span><span class="co">#&gt;  128.74322 0.6228545</span></span>
-<span><span class="co">#&gt;  168.29590 0.6610951</span></span>
-<span><span class="co">#&gt;  220.00000 0.7002144</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   span over the caps tried: 0.2747 (53.7% of the typical value)</span></span>
-<span><span class="co">#&gt;   The statistic moves by more than a tenth of itself across the</span></span>
-<span><span class="co">#&gt;   caps tried, so it is a property of the assumption as much as</span></span>
-<span><span class="co">#&gt;   of the data. Report the range, not a single figure.</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Sensitivity to the open top band's assumed cap</span> ───────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Open band starts at         11                                        │</span></span>
+<span><span class="co">#&gt; │   Caps tried                  12                                        │</span></span>
+<span><span class="co">#&gt; │   Span over the caps          0.2747                                    │</span></span>
+<span><span class="co">#&gt; │   Share of the typical value  53.7%                                     │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │      cap   value                                                        │</span></span>
+<span><span class="co">#&gt; │   ------  ------                                                        │</span></span>
+<span><span class="co">#&gt; │    11.55  0.4255                                                        │</span></span>
+<span><span class="co">#&gt; │    15.10  0.4346                                                        │</span></span>
+<span><span class="co">#&gt; │    19.74  0.4461                                                        │</span></span>
+<span><span class="co">#&gt; │    25.80  0.4604                                                        │</span></span>
+<span><span class="co">#&gt; │    33.73  0.4780                                                        │</span></span>
+<span><span class="co">#&gt; │    44.09  0.4993                                                        │</span></span>
+<span><span class="co">#&gt; │    57.63  0.5245                                                        │</span></span>
+<span><span class="co">#&gt; │    75.34  0.5538                                                        │</span></span>
+<span><span class="co">#&gt; │    98.49  0.5868                                                        │</span></span>
+<span><span class="co">#&gt; │   128.74  0.6229                                                        │</span></span>
+<span><span class="co">#&gt; │   168.30  0.6611                                                        │</span></span>
+<span><span class="co">#&gt; │   220.00  0.7002                                                        │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   span over the caps tried: 0.2747 (53.7% of the typical value). The    │</span></span>
+<span><span class="co">#&gt; │   statistic moves by more than a tenth of itself across the caps tried, │</span></span>
+<span><span class="co">#&gt; │   so it is a property of the assumption as much as of the data. Report  │</span></span>
+<span><span class="co">#&gt; │   the range, not a single figure.                                       │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Read the span, not the middle row. A statistic that moves by more
 than a tenth of itself across plausible caps is a property of the
 assumption as much as of the data, and the honest report is the
@@ -192,12 +207,34 @@ of the total.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">placements</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/expbands.html">expbands</a></span><span class="op">(</span><span class="va">bands</span>, <span class="va">counts</span>, openupcap <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/concentration.html">ginicoef</a></span><span class="op">(</span><span class="va">placements</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.4585838</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Gini coefficient  0.4586                                                  │</span></span>
+<span><span class="co">#&gt; │   Units             1,778                                                   │</span></span>
+<span><span class="co">#&gt; │   Total             4,269                                                   │</span></span>
+<span><span class="co">#&gt; │   Largest unit      18 (0.4% of the total)                                  │</span></span>
+<span><span class="co">#&gt; │   Most for n units  0.9994                                                  │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   A Gini of 0.4586: the total is highly concentrated.                       │</span></span>
+<span><span class="co">#&gt; │   That is 46% of the way from equal shares (0) to one unit holding all of   │</span></span>
+<span><span class="co">#&gt; │   it (0.9994 for 1,778 units).                                              │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span></span>
+<span><span class="co">#&gt; │   doubling every value leaves it unchanged. It says how unequal, not        │</span></span>
+<span><span class="co">#&gt; │   which units: topshr() and lorenzc() show where the total sits.            │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="../reference/concentration.html">topshr</a></span><span class="op">(</span><span class="va">placements</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   fraction units      share</span></span>
-<span><span class="co">#&gt; 1     0.01    18 0.07589599</span></span>
-<span><span class="co">#&gt; 2     0.05    89 0.25579761</span></span>
-<span><span class="co">#&gt; 3     0.10   178 0.39095807</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Top shares of a total</span> ───────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Fractions  3                                                         │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   top  units  share                                                    │</span></span>
+<span><span class="co">#&gt; │   ---  -----  ------                                                   │</span></span>
+<span><span class="co">#&gt; │   1%      18  7.59%                                                    │</span></span>
+<span><span class="co">#&gt; │   5%      89  25.58%                                                   │</span></span>
+<span><span class="co">#&gt; │   10%    178  39.1%                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   The top 1% of units (18 of them) hold 7.59% of the total; with equal │</span></span>
+<span><span class="co">#&gt; │   shares they would hold 1%.                                           │</span></span>
+<span><span class="co">#&gt; ╰────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Gini has a ceiling that depends on the number of units: for
 <code>n</code> units the maximum is <code>1 - 1/n</code>, not 1. A Gini
 of 0.9 means something different across ten units than across ten
@@ -294,20 +331,40 @@ sides of it: a facility assigned two regions, a facility assigned none,
 a region code that belongs to a different province.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rgnmapintg.html">rgnmapintg</a></span><span class="op">(</span><span class="va">cw</span>, <span class="st">"facility"</span>, <span class="st">"region"</span>, regs <span class="op">=</span> <span class="va">pop</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                                         check observed expected pass</span></span>
-<span><span class="co">#&gt; 1         units assigned more than one region        0        0 TRUE</span></span>
-<span><span class="co">#&gt; 2                    units assigned no region        0        0 TRUE</span></span>
-<span><span class="co">#&gt; 3 region codes not in the reference geography        0        0 TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Region map integrity</span> ───────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Checks   3                                                              │</span></span>
+<span><span class="co">#&gt; │   Verdict  every check passed                                             │</span></span>
+<span><span class="co">#&gt; │                                                                           │</span></span>
+<span><span class="co">#&gt; │   check                                        observed  expected  result │</span></span>
+<span><span class="co">#&gt; │   -------------------------------------------  --------  --------  ------ │</span></span>
+<span><span class="co">#&gt; │   units assigned more than one region                 0         0  pass   │</span></span>
+<span><span class="co">#&gt; │   units assigned no region                            0         0  pass   │</span></span>
+<span><span class="co">#&gt; │   region codes not in the reference geography         0         0  pass   │</span></span>
+<span><span class="co">#&gt; │                                                                           │</span></span>
+<span><span class="co">#&gt; │   A sound map gives each unit exactly one region, and only regions of     │</span></span>
+<span><span class="co">#&gt; │   the reference geography; each check counts the units that break that,   │</span></span>
+<span><span class="co">#&gt; │   and 0 passes.                                                           │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Every check is written so that zero is the passing value, which is
 what makes the frame safe to record directly into a manifest.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">cw</span></span>
 <span><span class="va">bad</span><span class="op">$</span><span class="va">region</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"2406"</span>          <span class="co"># a code from another province</span></span>
 <span><span class="fu"><a href="../reference/rgnmapintg.html">rgnmapintg</a></span><span class="op">(</span><span class="va">bad</span>, <span class="st">"facility"</span>, <span class="st">"region"</span>, regs <span class="op">=</span> <span class="va">pop</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                                         check observed expected  pass</span></span>
-<span><span class="co">#&gt; 1         units assigned more than one region        0        0  TRUE</span></span>
-<span><span class="co">#&gt; 2                    units assigned no region        0        0  TRUE</span></span>
-<span><span class="co">#&gt; 3 region codes not in the reference geography        1        0 FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Region map integrity</span> ───────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Checks   3                                                              │</span></span>
+<span><span class="co">#&gt; │   Verdict  1 of 3 checks failed                                           │</span></span>
+<span><span class="co">#&gt; │                                                                           │</span></span>
+<span><span class="co">#&gt; │   check                                        observed  expected  result │</span></span>
+<span><span class="co">#&gt; │   -------------------------------------------  --------  --------  ------ │</span></span>
+<span><span class="co">#&gt; │   units assigned more than one region                 0         0  pass   │</span></span>
+<span><span class="co">#&gt; │   units assigned no region                            0         0  pass   │</span></span>
+<span><span class="co">#&gt; │   region codes not in the reference geography         1         0  FAIL   │</span></span>
+<span><span class="co">#&gt; │                                                                           │</span></span>
+<span><span class="co">#&gt; │   A sound map gives each unit exactly one region, and only regions of     │</span></span>
+<span><span class="co">#&gt; │   the reference geography; each check counts the units that break that,   │</span></span>
+<span><span class="co">#&gt; │   and 0 passes.                                                           │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="recomputing-is-not-the-same-as-checking">Recomputing is not the same as checking<a class="anchor" aria-label="anchor" href="#recomputing-is-not-the-same-as-checking"></a>
 </h3>
@@ -319,9 +376,20 @@ through text is not reported as a change.</p>
 <code class="sourceCode R"><span><span class="va">recomputed</span> <span class="op">&lt;-</span> <span class="va">cw</span></span>
 <span><span class="va">recomputed</span><span class="op">$</span><span class="va">region</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"3519"</span></span>
 <span><span class="fu"><a href="../reference/rgnmapcmp.html">rgnmapcmp</a></span><span class="op">(</span><span class="va">cw</span>, <span class="va">recomputed</span>, <span class="st">"facility"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   column cells mismatched                                       first</span></span>
-<span><span class="co">#&gt; 1   rows     4          0                                            </span></span>
-<span><span class="co">#&gt; 2 region     4          1 South Jail: published 3520, recomputed 3519</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Published and rebuilt region maps compared</span> ────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Columns compared  1                                                    │</span></span>
+<span><span class="co">#&gt; │   Mismatched cells  1                                                    │</span></span>
+<span><span class="co">#&gt; │   Verdict           the maps disagree                                    │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   column  cells  mismatched  first                                       │</span></span>
+<span><span class="co">#&gt; │   ------  -----  ----------  ------------------------------------------- │</span></span>
+<span><span class="co">#&gt; │   rows        4           0                                              │</span></span>
+<span><span class="co">#&gt; │   region      4           1  South Jail: published 3520, recomputed 3519 │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   The rows line counts units present on one side only; each other line   │</span></span>
+<span><span class="co">#&gt; │   compares one column over the shared units. first writes out the first  │</span></span>
+<span><span class="co">#&gt; │   disagreement, and 0 mismatched throughout is agreement.                │</span></span>
+<span><span class="co">#&gt; ╰──────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>That is worth having, and it is worth being clear about what it
 establishes: the recomputation reproduced the published assignment. Run
 the same method against the same boundary file and a
@@ -390,21 +458,22 @@ prints, declines to supply that rate.</p>
 <code class="sourceCode R"><span><span class="va">units</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">pop</span><span class="op">$</span><span class="va">region</span>, <span class="kw">function</span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">cw</span><span class="op">$</span><span class="va">region</span> <span class="op">==</span> <span class="va">r</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">cov</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rgncov.html">rgncov</a></span><span class="op">(</span><span class="va">pop</span><span class="op">$</span><span class="va">region</span>, <span class="va">pop</span><span class="op">$</span><span class="va">population</span>, <span class="va">units</span><span class="op">)</span></span>
 <span><span class="va">cov</span></span>
-<span><span class="co">#&gt; ── 4 units in 3 of 5 regions ───────────────────────────────────── </span></span>
-<span><span class="co">#&gt;   those regions hold 3,311,309 of 4,507,389 residents (73.5%)</span></span>
-<span><span class="co">#&gt;   2 regions hold none; 1,196,080 residents (26.5%) live there</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  region population units hasunit     popshr</span></span>
-<span><span class="co">#&gt;    3520    3025647     2    TRUE 67.1263785</span></span>
-<span><span class="co">#&gt;    3553     171568     1    TRUE  3.8063722</span></span>
-<span><span class="co">#&gt;    3557     114094     1    TRUE  2.5312659</span></span>
-<span><span class="co">#&gt;    3519    1173334     0   FALSE 26.0313454</span></span>
-<span><span class="co">#&gt;    3552      22746     0   FALSE  0.5046381</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   The covered share is context, not a denominator: units serve</span></span>
-<span><span class="co">#&gt;   catchments, so a rate over these regions alone would take its</span></span>
-<span><span class="co">#&gt;   numerator from the whole territory and is inflated.</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">4 units in 3 of 5 regions</span> ─────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Covered    those regions hold 3,311,309 of 4,507,389 residents (73.5%) │</span></span>
+<span><span class="co">#&gt; │   Uncovered  2 regions hold none; 1,196,080 residents (26.5%) live there │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   region  population  units  hasunit  popshr                             │</span></span>
+<span><span class="co">#&gt; │   ------  ----------  -----  -------  ------                             │</span></span>
+<span><span class="co">#&gt; │   3520     3,025,647      2  TRUE     67.126                             │</span></span>
+<span><span class="co">#&gt; │   3553       171,568      1  TRUE      3.806                             │</span></span>
+<span><span class="co">#&gt; │   3557       114,094      1  TRUE      2.531                             │</span></span>
+<span><span class="co">#&gt; │   3519     1,173,334      0  FALSE    26.031                             │</span></span>
+<span><span class="co">#&gt; │   3552        22,746      0  FALSE     0.505                             │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   The covered share is context, not a denominator: units serve           │</span></span>
+<span><span class="co">#&gt; │   catchments, so a rate over these regions alone would take its          │</span></span>
+<span><span class="co">#&gt; │   numerator from the whole territory and is inflated.                    │</span></span>
+<span><span class="co">#&gt; ╰──────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Two of the five regions hold no facility at all. It is tempting to
 read their population as uncovered, and to build a regional rate on the
 population of the regions that do hold one. Both readings are wrong, for
@@ -453,12 +522,27 @@ band, given its own age composition.</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/expcnts.html">expcnts</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">n</span>, <span class="va">d</span><span class="op">$</span><span class="va">pop</span>, <span class="va">d</span><span class="op">$</span><span class="va">region</span>, strata <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">age</span><span class="op">)</span></span>
 <span><span class="va">e</span></span>
-<span><span class="co">#&gt;       area observed population  expected</span></span>
-<span><span class="co">#&gt; 1  Central       17       4000 48.366013</span></span>
-<span><span class="co">#&gt; 2  Eastern       36       3000 36.274510</span></span>
-<span><span class="co">#&gt; 3 Northern        9        800  9.673203</span></span>
-<span><span class="co">#&gt; 4  Toronto       86       5000 60.457516</span></span>
-<span><span class="co">#&gt; 5  Western       37       2500 30.228758</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Expected counts, indirect standardisation</span> ────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Areas       5                                                         │</span></span>
+<span><span class="co">#&gt; │   Observed    185                                                       │</span></span>
+<span><span class="co">#&gt; │   Expected    185                                                       │</span></span>
+<span><span class="co">#&gt; │   Population  15,300                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   area      observed  population  expected                              │</span></span>
+<span><span class="co">#&gt; │   --------  --------  ----------  --------                              │</span></span>
+<span><span class="co">#&gt; │   Central         17       4,000     48.37                              │</span></span>
+<span><span class="co">#&gt; │   Eastern         36       3,000     36.27                              │</span></span>
+<span><span class="co">#&gt; │   Northern         9         800      9.67                              │</span></span>
+<span><span class="co">#&gt; │   Toronto         86       5,000     60.46                              │</span></span>
+<span><span class="co">#&gt; │   Western         37       2,500     30.23                              │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   expected is the count an area would have at the overall rate of each  │</span></span>
+<span><span class="co">#&gt; │   stratum, given its own population in it. stdinc() puts an interval on │</span></span>
+<span><span class="co">#&gt; │   the ratio of observed to expected.                                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The expected counts sum to the observed ones: the reference rates     │</span></span>
+<span><span class="co">#&gt; │   come from the same data.                                              │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>The expected counts total the observed ones. That identity is what
 makes them a standardisation rather than a prediction.</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
@@ -470,29 +554,55 @@ normal approximation on a count of six is a decoration rather than an
 interval:</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/stdinc.html">stdinc</a></span><span class="op">(</span><span class="va">e</span><span class="op">$</span><span class="va">observed</span>, <span class="va">e</span><span class="op">$</span><span class="va">expected</span>, <span class="va">e</span><span class="op">$</span><span class="va">area</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       area observed  expected       sir     lower     upper excess deficit</span></span>
-<span><span class="co">#&gt; 1  Central       17 48.366013 0.3514865 0.2047538 0.5627639  FALSE    TRUE</span></span>
-<span><span class="co">#&gt; 2  Eastern       36 36.274510 0.9924324 0.6950875 1.3739448  FALSE   FALSE</span></span>
-<span><span class="co">#&gt; 3 Northern        9  9.673203 0.9304054 0.4254406 1.7661993  FALSE   FALSE</span></span>
-<span><span class="co">#&gt; 4  Toronto       86 60.457516 1.4224865 1.1378056 1.7567592   TRUE   FALSE</span></span>
-<span><span class="co">#&gt; 5  Western       37 30.228758 1.2240000 0.8618090 1.6871228  FALSE   FALSE</span></span>
-<span><span class="co">#&gt;   significant</span></span>
-<span><span class="co">#&gt; 1        TRUE</span></span>
-<span><span class="co">#&gt; 2       FALSE</span></span>
-<span><span class="co">#&gt; 3       FALSE</span></span>
-<span><span class="co">#&gt; 4        TRUE</span></span>
-<span><span class="co">#&gt; 5       FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Standardised incidence ratios</span> ──────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Areas          5                                                    │</span></span>
+<span><span class="co">#&gt; │   Observed       185                                                  │</span></span>
+<span><span class="co">#&gt; │   Expected       185                                                  │</span></span>
+<span><span class="co">#&gt; │   Overall ratio  1                                                    │</span></span>
+<span><span class="co">#&gt; │   Interval       exact Poisson, at the level asked for (default 95%)  │</span></span>
+<span><span class="co">#&gt; │   Above one      1                                                    │</span></span>
+<span><span class="co">#&gt; │   Below one      1                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   area      observed  expected     sir  interval          finding     │</span></span>
+<span><span class="co">#&gt; │   --------  --------  --------  ------  ----------------  -------     │</span></span>
+<span><span class="co">#&gt; │   Central         17     48.37  0.3515  [0.2048, 0.5628]  deficit     │</span></span>
+<span><span class="co">#&gt; │   Eastern         36     36.27  0.9924  [0.6951, 1.3739]              │</span></span>
+<span><span class="co">#&gt; │   Northern         9      9.67  0.9304  [0.4254, 1.7662]              │</span></span>
+<span><span class="co">#&gt; │   Toronto         86     60.46  1.4225  [1.1378, 1.7568]  excess      │</span></span>
+<span><span class="co">#&gt; │   Western         37     30.23  1.2240  [0.8618, 1.6871]              │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   A ratio above 1 means more cases than the area's population would   │</span></span>
+<span><span class="co">#&gt; │   give at the overall rates. An excess or a deficit is an interval    │</span></span>
+<span><span class="co">#&gt; │   wholly above or below 1 (the significant column is either).         │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   Each interval is a separate test: with many areas some exclude 1 by │</span></span>
+<span><span class="co">#&gt; │   chance (scanadj() allows for that).                                 │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>And the third problem. A league table of rates ranks the small
 regions to both ends by construction, so borrow strength across
 regions:</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ebrates.html">ebrates</a></span><span class="op">(</span><span class="va">e</span><span class="op">$</span><span class="va">observed</span>, <span class="va">e</span><span class="op">$</span><span class="va">expected</span>, <span class="va">e</span><span class="op">$</span><span class="va">area</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       area observed  expected       sir        eb  shrinkage       nu    alpha</span></span>
-<span><span class="co">#&gt; 1  Central       17 48.366013 0.3514865 0.4301763 0.12133873 6.679104 6.679104</span></span>
-<span><span class="co">#&gt; 2  Eastern       36 36.274510 0.9924324 0.9936092 0.15549575 6.679104 6.679104</span></span>
-<span><span class="co">#&gt; 3 Northern        9  9.673203 0.9304054 0.9588313 0.40845028 6.679104 6.679104</span></span>
-<span><span class="co">#&gt; 4  Toronto       86 60.457516 1.4224865 1.3804553 0.09948526 6.679104 6.679104</span></span>
-<span><span class="co">#&gt; 5  Western       37 30.228758 1.2240000 1.1834634 0.18096698 6.679104 6.679104</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Empirical Bayes rates</span> ────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Areas               5                                                 │</span></span>
+<span><span class="co">#&gt; │   Overall ratio       1                                                 │</span></span>
+<span><span class="co">#&gt; │   Prior shape (nu)    6.679                                             │</span></span>
+<span><span class="co">#&gt; │   Prior rate (alpha)  6.679                                             │</span></span>
+<span><span class="co">#&gt; │   Method              gamma-Poisson, moments (Clayton and Kaldor 1987)  │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   area      observed  expected     sir      eb  shrinkage               │</span></span>
+<span><span class="co">#&gt; │   --------  --------  --------  ------  ------  ---------               │</span></span>
+<span><span class="co">#&gt; │   Central         17     48.37  0.3515  0.4302     0.1213               │</span></span>
+<span><span class="co">#&gt; │   Eastern         36     36.27  0.9924  0.9936     0.1555               │</span></span>
+<span><span class="co">#&gt; │   Northern         9      9.67  0.9304  0.9588     0.4085               │</span></span>
+<span><span class="co">#&gt; │   Toronto         86     60.46  1.4225  1.3805     0.0995               │</span></span>
+<span><span class="co">#&gt; │   Western         37     30.23  1.2240  1.1835     0.1810               │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Each raw ratio (sir) is pulled toward the overall ratio; shrinkage is │</span></span>
+<span><span class="co">#&gt; │   the share of the pull (0 untouched, 1 replaced), largest for areas    │</span></span>
+<span><span class="co">#&gt; │   with small expected counts. Use eb for maps and rankings, stdinc()    │</span></span>
+<span><span class="co">#&gt; │   for each area's own evidence.                                         │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p><code>shrinkage</code> is how far each estimate was pulled toward the
 overall rate. It is governed by the expected count, which is to say by
 how much information the region carries – not by how extreme its ratio

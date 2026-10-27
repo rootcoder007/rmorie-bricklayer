@@ -15,7 +15,7 @@ profcols(data, qnts = c(0.25, 0.5, 0.75))
 
 - data:
 
-  A data frame.
+  A data frame whose columns are profiled.
 
 - qnts:
 
@@ -83,49 +83,90 @@ df <- data.frame(
 )
 
 profcols(df)
-#> ── Column profile ──────────────────────────────────────────────── 
-#>  column      type     n n_missing pct_missing n_distinct nzero  nneg  ninf
-#>   clean   numeric   100         0           0        100     0    54     0
-#>  skewed   numeric   100         0           0        100     0    48     0
-#>   grade character   100         0           0          3     –     –     –
-#>   gappy   numeric   100        10          10         90     0     0     0
-#>      mean     sd  median    mad      min    max skewness n_outliers top     q25
-#>  -0.05351 0.9588 -0.1708 0.8777   -2.618  2.682   0.3145          3   – -0.7457
-#>     4.874  50.02 0.04449 0.9517   -2.738    500    9.844          1   – -0.7947
-#>         –      –       –      –        –      –        –          –   c       –
-#>    0.5019 0.2917  0.5243 0.3714 0.007639 0.9953 -0.04396          0   –  0.2545
-#>      q50    q75       hist
-#>  -0.1708  0.422 ▁▁▃█▇█▃▃▂▁
-#>  0.04449 0.6215 █        ▁
-#>        –      –          –
-#>   0.5243 0.7339 █▆▆█▆▇█▆█▆
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Column profile ─────────────────────────────────────────────────────────╮
+#> │   Columns              4                                                  │
+#> │   Rows                 100                                                │
+#> │   Numeric              3                                                  │
+#> │   With missing values  1                                                  │
+#> │                                                                           │
+#> │   column  type         n  n_missing  pct_missing  n_distinct  nzero  nneg │
+#> │   ------  ---------  ---  ---------  -----------  ----------  -----  ---- │
+#> │   clean   numeric    100          0            0         100      0    54 │
+#> │   skewed  numeric    100          0            0         100      0    48 │
+#> │   grade   character  100          0            0           3              │
+#> │   gappy   numeric    100         10           10          90      0     0 │
+#> │                                                                           │
+#> │   column  ninf     mean       sd   median     mad     min      max        │
+#> │   ------  ----  -------  -------  -------  ------  ------  -------        │
+#> │   clean      0  -0.0535   0.9588  -0.1708  0.8777  -2.618    2.682        │
+#> │   skewed     0   4.8741  50.0224   0.0445  0.9517  -2.738  500.000        │
+#> │   grade                                                                   │
+#> │   gappy      0   0.5019   0.2917   0.5243  0.3714   0.008    0.995        │
+#> │                                                                           │
+#> │   column  skewness  n_outliers  top      q25      q50     q75  hist       │
+#> │   ------  --------  ----------  ---  -------  -------  ------  ---------- │
+#> │   clean     0.3145           3       -0.7457  -0.1708  0.4220  ▁▁▃█▇█▃▃▂▁ │
+#> │   skewed    9.8435           1       -0.7947   0.0445  0.6215  █        ▁ │
+#> │   grade                         c                                         │
+#> │   gappy    -0.0440           0        0.2545   0.5243  0.7339  █▆▆█▆▇█▆█▆ │
+#> │                                                                           │
+#> │   Where the mean and the median (or sd and mad) disagree, the column      │
+#> │   has outliers or a heavy tail and the mean does not describe it;         │
+#> │   n_outliers counts the values beyond the Tukey fences.                   │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 
 # The mean and the median agree on `clean` and disagree sharply on
 # `skewed`, which is the outlier announcing itself.
 p <- profcols(df)
 p[p$column %in% c("clean", "skewed"), c("column", "mean", "median")]
-#>   column        mean      median
-#> 1  clean -0.05351488 -0.17078983
-#> 2 skewed  4.87405667  0.04448896
+#> ╭── Column profile ─────────────────────────────────────────────────────╮
+#> │   Rows     2                                                          │
+#> │   Columns  3                                                          │
+#> │                                                                       │
+#> │   column    mean   median                                             │
+#> │   ------  ------  -------                                             │
+#> │   clean   -0.054  -0.1708                                             │
+#> │   skewed   4.874   0.0445                                             │
+#> │                                                                       │
+#> │   Some of this result's columns are not here (a subset of it?), so it │
+#> │   is shown as a plain table.                                          │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # The histogram column shows shape no summary number carries.
 p[, c("column", "hist")]
-#>   column       hist
-#> 1  clean ▁▁▃█▇█▃▃▂▁
-#> 2 skewed █        ▁
-#> 3  grade       <NA>
-#> 4  gappy █▆▆█▆▇█▆█▆
+#> ╭── Column profile ─────────────────────────────────────────────────────╮
+#> │   Rows     4                                                          │
+#> │   Columns  2                                                          │
+#> │                                                                       │
+#> │   column  hist                                                        │
+#> │   ------  ----------                                                  │
+#> │   clean   ▁▁▃█▇█▃▃▂▁                                                  │
+#> │   skewed  █        ▁                                                  │
+#> │   grade                                                               │
+#> │   gappy   █▆▆█▆▇█▆█▆                                                  │
+#> │                                                                       │
+#> │   Some of this result's columns are not here (a subset of it?), so it │
+#> │   is shown as a plain table.                                          │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # Zeros, negatives and infinities are counted separately, because
 # each breaks a different downstream computation (a log, a square
 # root, an average).
 p[, c("column", "nzero", "nneg", "ninf")]
-#>   column nzero nneg ninf
-#> 1  clean     0   54    0
-#> 2 skewed     0   48    0
-#> 3  grade    NA   NA   NA
-#> 4  gappy     0    0    0
+#> ╭── Column profile ─────────────────────────────────────────────────────╮
+#> │   Rows     4                                                          │
+#> │   Columns  4                                                          │
+#> │                                                                       │
+#> │   column  nzero  nneg  ninf                                           │
+#> │   ------  -----  ----  ----                                           │
+#> │   clean       0    54     0                                           │
+#> │   skewed      0    48     0                                           │
+#> │   grade                                                               │
+#> │   gappy       0     0     0                                           │
+#> │                                                                       │
+#> │   Some of this result's columns are not here (a subset of it?), so it │
+#> │   is shown as a plain table.                                          │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # deciles instead of quartiles
 names(profcols(df, qnts = c(0.1, 0.9)))

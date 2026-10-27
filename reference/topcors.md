@@ -16,7 +16,7 @@ topcors(data, n = 10L, meth = c("spearman", "pearson"), minabs = 0)
 
 - data:
 
-  A data frame; non-numeric columns are ignored.
+  A data frame; its numeric pairs are ranked by correlation.
 
 - n:
 
@@ -79,15 +79,22 @@ df$c <- df$a * 2 + stats::rnorm(n, sd = 0.1) # strongly related to a
 df$d <- exp(df$a) # monotone but curved
 
 topcors(df)
-#> ── Top correlations (spearman) ─────────────────────────────────── 
-#>  x y correlation                  plot
-#>  a d       1.000           |##########
-#>  a c       0.998           |##########
-#>  c d       0.998           |##########
-#>  a b      -0.062          #|          
-#>  b d      -0.062          #|          
-#>  b c      -0.060          #|          
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Top correlations (spearman) ──────────────────────────────────────────────╮
+#> │   Method  spearman                                                          │
+#> │   Pairs   6                                                                 │
+#> │                                                                             │
+#> │   x  y  correlation  plot                                                   │
+#> │   -  -  -----------  ---------------------                                  │
+#> │   a  d  1.000                  |##########                                  │
+#> │   a  c  0.998                  |##########                                  │
+#> │   c  d  0.998                  |##########                                  │
+#> │   a  b  -0.062                #|                                            │
+#> │   b  d  -0.062                #|                                            │
+#> │   b  c  -0.060                #|                                            │
+#> │                                                                             │
+#> │   The pairs most strongly associated, strongest first; a correlation near   │
+#> │   1 or -1 often means one column is derived from the other.                 │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # The curved pair is ranked correctly by Spearman and understated by
 # Pearson, which is why Spearman is the default.
@@ -100,11 +107,18 @@ tp[tp$x == "a" & tp$y == "d", "correlation"]
 
 # Filter to the pairs worth looking at, and keep the top two.
 topcors(df, n = 2, minabs = 0.5)
-#> ── Top correlations (spearman) ─────────────────────────────────── 
-#>  x y correlation                  plot
-#>  a d       1.000           |##########
-#>  a c       0.998           |##########
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Top correlations (spearman) ──────────────────────────────────────────────╮
+#> │   Method  spearman                                                          │
+#> │   Pairs   2                                                                 │
+#> │                                                                             │
+#> │   x  y  correlation  plot                                                   │
+#> │   -  -  -----------  ---------------------                                  │
+#> │   a  d  1.000                  |##########                                  │
+#> │   a  c  0.998                  |##########                                  │
+#> │                                                                             │
+#> │   The pairs most strongly associated, strongest first; a correlation near   │
+#> │   1 or -1 often means one column is derived from the other.                 │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a threshold above 1 is an error
 try(topcors(df, minabs = 2))

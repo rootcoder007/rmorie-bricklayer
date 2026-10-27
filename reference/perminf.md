@@ -61,7 +61,7 @@ perminf(
 
 - seed:
 
-  Optional seed.
+  Optional seed for the random assignments, or NULL for none.
 
 - ties:
 
@@ -114,7 +114,51 @@ p <- polex()
 perminf(p, "district", "month", c("crmrate", "arrrate"),
                       "refmonth",
                       cl = "region", reps = 199, seed = 3)
-#>   outcome   estimate  statistic    p_value     pstpdn assignments exact
-#> 1 crmrate -3.2316395 -19.516735 0.04166667 0.04166667          24  TRUE
-#> 2 arrrate -0.2136969  -3.638159 0.12500000 0.12500000          24  TRUE
+#> ╭── Permutation inference ───────────────────────────────────────────────╮
+#> │   Method       randomisation inference on the adoption dates           │
+#> │   Assignments  24                                                      │
+#> │   Draws        every assignment (exact)                                │
+#> │   Outcomes     2                                                       │
+#> │                                                                        │
+#> │   outcome  estimate  statistic  p_value  stepdown_p                    │
+#> │   -------  --------  ---------  -------  ----------                    │
+#> │   crmrate    -3.232     -19.52    0.042       0.042                    │
+#> │   arrrate    -0.214      -3.64    0.125       0.125                    │
+#> │                                                                        │
+#> │   The p-value is the share of reassigned adoption dates that give a    │
+#> │   statistic at least as extreme as the one observed; it needs no model │
+#> │   of the errors. The stepdown p-values (Westfall and Young) hold for   │
+#> │   all the outcomes tested together.                                    │
+#> ╰────────────────────────────────────────────────────────────────────────╯
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+# every assignment of the two adoption dates to the eight towns
+perminf(own, "town", "year", "rate", "first", reps = 99, seed = 1)
+#> ╭── Permutation inference ───────────────────────────────────────────────╮
+#> │   Method       randomisation inference on the adoption dates           │
+#> │   Assignments  99                                                      │
+#> │   Draws        random draws                                            │
+#> │   Outcomes     1                                                       │
+#> │                                                                        │
+#> │   outcome  estimate  statistic  p_value  stepdown_p                    │
+#> │   -------  --------  ---------  -------  ----------                    │
+#> │   rate       -4.039     -16.86    0.010       0.010                    │
+#> │                                                                        │
+#> │   The p-value is the share of reassigned adoption dates that give a    │
+#> │   statistic at least as extreme as the one observed; it needs no model │
+#> │   of the errors.                                                       │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

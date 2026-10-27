@@ -39,7 +39,7 @@ nothing in particular."><meta property="og:image" content="https://rootcoder007.
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -174,13 +174,23 @@ p-value outside \([0, 1]\).</p>
 <span class="r-in"><span>  noiseb <span class="op">=</span> <span class="fu"><a href="cpsfals.html">cpsfals</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">b</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                            trt <span class="op">=</span> <span class="st">"b"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">falsfam</span><span class="op">(</span><span class="va">fam</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Family of 3, corrected by holm at alpha 0.05 ──────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   real                   p 0.005      adjusted 0.015      survives</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   noisea                 p 0.955      adjusted 1          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   noiseb                 p 0.995      adjusted 1          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   at the permutation floor (more permutations would be needed to say more): real</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Family of 3, corrected by holm at alpha 0.05</span> ─────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Method       holm                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Family size  3                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Alpha        0.05                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Survive      1                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   name        p  adjusted_p  survives                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  -----  ----------  --------                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   real    0.005       0.015  survives                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   noisea  0.955       1.000                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   noiseb  0.995       1.000                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   1 of 3 result(s) survive once the size of the family is counted.          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   at the permutation floor (more permutations would be needed to say        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   more): real                                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the correction is what stops the smallest of several from being</span></span></span>
 <span class="r-in"><span><span class="co"># read as the finding</span></span></span>

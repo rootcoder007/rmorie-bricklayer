@@ -83,9 +83,10 @@ Text cells are trimmed, and thousands separators (commas) are removed
 before they are read as numbers. A missing value (`NA`) that is not a
 suppression mark gets status `"missing"` and `NA` bounds.
 
-Errors: `rnd` not a positive number; an unknown `rndkind`; a text cell
-that is neither a number nor a suppression mark (the message lists the
-cells); a suppressed cell with no limit (neither `"<k"` nor `suplim`).
+Errors: `rnd` not one positive finite number; a negative or infinite
+count in `x`; an unknown `rndkind`; a text cell that is neither a number
+nor a suppression mark (the message lists the cells); a suppressed cell
+with no limit (neither `"<k"` nor `suplim`).
 
 ## See also
 
@@ -96,28 +97,65 @@ cells); a suppressed cell with no limit (neither `"<k"` nor `suplim`).
 
 ``` r
 pubbnd(c(120, 35, 0), rnd = 5)
-#>   value lower upper  status
-#> 1   120 117.5 122.5 rounded
-#> 2    35  32.5  37.5 rounded
-#> 3     0   0.0   2.5 rounded
+#> ╭── Publication bounds ───────────────────────────────────────────────────────╮
+#> │   Cells     3: 0 exact, 3 rounded, 0 suppressed, 0 missing                  │
+#> │   Rounding  to 5 (nearest)                                                  │
+#> │                                                                             │
+#> │   value   lower   upper  status                                             │
+#> │   -----  ------  ------  -------                                            │
+#> │     120  117.50  122.50  rounded                                            │
+#> │      35   32.50   37.50  rounded                                            │
+#> │       0    0.00    2.50  rounded                                            │
+#> │                                                                             │
+#> │   Each published number stands for the range of true counts that could      │
+#> │   have produced it; a later comparison has to hold across it.               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 pubbnd(c("120", "x", "<5"), rnd = 5,
                  suplim = 5)
-#>   value lower upper     status
-#> 1   120 117.5 122.5    rounded
-#> 2    NA   0.0   4.0 suppressed
-#> 3    NA   0.0   4.0 suppressed
+#> ╭── Publication bounds ───────────────────────────────────────────────────────╮
+#> │   Cells              3: 0 exact, 1 rounded, 2 suppressed, 0 missing         │
+#> │   Rounding           to 5 (nearest)                                         │
+#> │   Suppression limit  5                                                      │
+#> │                                                                             │
+#> │   value  lower    upper  status                                             │
+#> │   -----  -----  -------  ----------                                         │
+#> │     120  117.5  122.500  rounded                                            │
+#> │            0.0    4.000  suppressed                                         │
+#> │            0.0    4.000  suppressed                                         │
+#> │                                                                             │
+#> │   Each published number stands for the range of true counts that could      │
+#> │   have produced it; a later comparison has to hold across it.               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 # random rounding to base 5 is wider than rounding to the nearest 5
 pubbnd(15, rnd = 5, rndkind = "random")
-#>   value lower upper  status
-#> 1    15    11    19 rounded
+#> ╭── Publication bounds ───────────────────────────────────────────────────────╮
+#> │   Cells     1: 0 exact, 1 rounded, 0 suppressed, 0 missing                  │
+#> │   Rounding  to 5 (random)                                                   │
+#> │                                                                             │
+#> │   value  lower  upper  status                                               │
+#> │   -----  -----  -----  -------                                              │
+#> │      15     11     19  rounded                                              │
+#> │                                                                             │
+#> │   Each published number stands for the range of true counts that could      │
+#> │   have produced it; a later comparison has to hold across it.               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # thousands separators and a custom suppression mark
 pubbnd(c("1,200", "--", "<10"), suplim = 10,
                  supmar = "--")
-#>   value lower upper     status
-#> 1  1200  1200  1200      exact
-#> 2    NA     0     9 suppressed
-#> 3    NA     0     9 suppressed
+#> ╭── Publication bounds ───────────────────────────────────────────────────────╮
+#> │   Cells              3: 1 exact, 0 rounded, 2 suppressed, 0 missing         │
+#> │   Suppression limit  10                                                     │
+#> │                                                                             │
+#> │   value  lower  upper  status                                               │
+#> │   -----  -----  -----  ----------                                           │
+#> │   1,200  1,200  1,200  exact                                                │
+#> │              0      9  suppressed                                           │
+#> │              0      9  suppressed                                           │
+#> │                                                                             │
+#> │   Each published number stands for the range of true counts that could      │
+#> │   have produced it; a later comparison has to hold across it.               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a suppressed cell needs a limit
 try(pubbnd(c("120", "x")))

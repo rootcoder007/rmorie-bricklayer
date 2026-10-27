@@ -39,8 +39,9 @@ bufasgn(x, y, sitex, sitey, comx, comy, radius, buffer = 3 * radius)
 
 ## Value
 
-A data frame with the columns `group` (`"treated"`, `"comparison"` or
-`"excluded"`), `site_distance` and `comparison_distance`.
+A data frame of class `rmbl_buffer` with the columns `group`
+(`"treated"`, `"comparison"` or `"excluded"`), `site_distance` and
+`comparison_distance`.
 
 ## Details
 

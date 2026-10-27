@@ -34,7 +34,7 @@ print(x, ...)
 
 - ...:
 
-  Not used.
+  Further arguments, ignored when printing the comparison.
 
 ## Value
 
@@ -54,21 +54,34 @@ not a list, a data frame or a file; a data frame without `path` and
 ## Examples
 
 ``` r
-a <- data.frame(path = c("a.csv", "b.csv"), sha256 = c("01", "02"),
-                size_bytes = c(10, 20))
-b <- data.frame(path = c("a.csv", "c.csv"), sha256 = c("09", "03"),
-                size_bytes = c(12, 30))
+a <- data.frame(
+  path = c("a.csv", "b.csv"),
+  sha256 = c("01", "02"),
+  size_bytes = c(10, 20)
+)
+b <- data.frame(
+  path = c("a.csv", "c.csv"),
+  sha256 = c("09", "03"),
+  size_bytes = c(12, 30)
+)
 d <- mnfdiff(a, b)
 d
-#> Manifest diff: 1 changed, 1 added, 1 removed, 0 unchanged
-#>   changed   a.csv  sha256 01 -> 09, 10 -> 12 bytes
-#>   removed   b.csv  sha256 02 -> -, 20 -> - bytes
-#>   added     c.csv  sha256 - -> 03, - -> 30 bytes
+#> ╭── Manifest diff ─────────────────────────────────────────────╮
+#> │   Resources  1 changed, 1 added, 1 removed, 0 unchanged      │
+#> │                                                              │
+#> │   Files below differ between the two manifests (old -> new). │
+#> │                                                              │
+#> │   changed   a.csv  sha256 01 -> 09, 10 -> 12 bytes           │
+#> │   removed   b.csv  sha256 02 -> -, 20 -> - bytes             │
+#> │   added     c.csv  sha256 - -> 03, - -> 30 bytes             │
+#> ╰──────────────────────────────────────────────────────────────╯
 d$change
 #> [1] "changed" "removed" "added"  
 
 # a provenance record and its re-pinned copy
-p <- list(resource = list(filename = "a.csv", sha256 = "01", size_bytes = 10))
+p <- list(
+  resource = list(filename = "a.csv", sha256 = "01", size_bytes = 10)
+)
 q <- p
 q$resource$sha256 <- "09"
 mnfdiff(p, q)$change

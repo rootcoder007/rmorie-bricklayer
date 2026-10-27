@@ -245,21 +245,53 @@ d <- data.frame(region = rep(c("north", "south"), each = 50),
 reps <- replicate(10, d$w * tabulate(sample(100, replace = TRUE), 100))
 des <- svydes(d, w = "w", reps = reps, type = "bootstrap")
 des
-#> Survey design: 100 respondents, weights summing to 10,175
-#> Variance: 10 replicate weights, bootstrap; scale 0.1, centred on the full-sample estimate
+#> ╭── Survey design ────────────────────────────────────────────────────────╮
+#> │   Respondents         100                                               │
+#> │   Sum of weights      10,175                                            │
+#> │   Variance            bootstrap replicate weights                       │
+#> │   Replicates          10                                                │
+#> │   Scale               0.1                                               │
+#> │   Centring            on the full-sample estimate                       │
+#> │   Lonely PSUs         fail                                              │
+#> │   Degrees of freedom  9                                                 │
+#> │                                                                         │
+#> │   svyest() and svycmp() use this design for every estimate: the weights │
+#> │   for the point estimate, the replicate weights for its standard error. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 # the same data as a stratified design, variance by linearization
 svydes(d, w = "w", strata = "region")
-#> Survey design: 100 respondents, weights summing to 10,175
-#> Variance: Taylor linearization, 2 strata, 100 PSUs
+#> ╭── Survey design ────────────────────────────────────────────────────────╮
+#> │   Respondents         100                                               │
+#> │   Sum of weights      10,175                                            │
+#> │   Variance            Taylor linearization                              │
+#> │   Strata              2                                                 │
+#> │   PSUs                100                                               │
+#> │   Lonely PSUs         fail                                              │
+#> │   Degrees of freedom  98                                                │
+#> │                                                                         │
+#> │   svyest() and svycmp() use this design for every estimate: the weights │
+#> │   for the point estimate, the strata and PSUs for its standard error.   │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # delete-one jackknife replicates over ten groups of respondents
 grp <- rep(1:10, length.out = 100)
 jk <- sapply(1:10, function(g) ifelse(grp == g, 0, d$w * 10 / 9))
 svydes(d, w = "w", reps = jk, type = "jk1")
-#> Survey design: 100 respondents, weights summing to 10,175
-#> Variance: 10 replicate weights, jackknife (JK1); scale 0.9, centred on the full-sample estimate
+#> ╭── Survey design ────────────────────────────────────────────────────────╮
+#> │   Respondents         100                                               │
+#> │   Sum of weights      10,175                                            │
+#> │   Variance            jackknife (JK1)                                   │
+#> │   Replicates          10                                                │
+#> │   Scale               0.9                                               │
+#> │   Centring            on the full-sample estimate                       │
+#> │   Lonely PSUs         fail                                              │
+#> │   Degrees of freedom  9                                                 │
+#> │                                                                         │
+#> │   svyest() and svycmp() use this design for every estimate: the weights │
+#> │   for the point estimate, the replicate weights for its standard error. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a weight column that does not exist
 try(svydes(d, w = "wt"))
-#> Error : `weights` names a column `data` does not have: wt
+#> Error : `w` names a column `data` does not have: wt
 ```

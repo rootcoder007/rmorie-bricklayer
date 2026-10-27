@@ -15,7 +15,7 @@ Column names are carried through to both dimensions of the result."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,20 +86,18 @@ units are the product of the two columns' units.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Entry \((j, k)\) is
-\(\frac{1}{n - 1} \sum_i (x_{ij} - \bar x_j)(x_{ik} - \bar x_k)\), the
-<code>n - 1</code> denominator of <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">stats::cov()</a></code>, with which it agrees to
-rounding.
-The diagonal holds the column variances.</p>
-<p>Missing values are not removed: an <code>NA</code> in a column makes every
-covariance involving that column <code>NA</code> (pairwise or complete-case
-deletion is not done; use <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">stats::cov()</a></code> with <code>use =</code> for
-those). A
-single row gives <code>NaN</code> throughout. Refusals: a vector that is not a
-matrix (<code>"must be a matrix or data frame"</code>) and a data frame with a
-non-numeric column (<code>"every column of x must be numeric"</code>). Logical and
-integer matrices are converted to double. The cost is
-\(O(n p^2)\) for \(n\) rows and \(p\) columns.</p>
+    <p>Entry \((j, k)\) is \(\frac{1}{n - 1} \sum_i (x_{ij} - \bar
+x_j)(x_{ik} - \bar x_k)\), the <code>n - 1</code> denominator of
+<code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">stats::cov()</a></code>, with which it agrees to rounding. The
+diagonal holds the column variances.</p>
+<p>Missing values are not removed: an <code>NA</code> in a column makes every covariance
+involving that column <code>NA</code> (pairwise or complete-case deletion is not done;
+use <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">stats::cov()</a></code> with <code>use =</code> for those). A single
+row gives <code>NaN</code> throughout. Refusals: a vector that is not a matrix
+(<code>"must be a matrix or data frame"</code>) and a data frame with a non-numeric
+column (<code>"every column of x must be numeric"</code>). Logical and integer matrices
+are converted to double. The cost is \(O(n p^2)\) for \(n\) rows and
+\(p\) columns.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

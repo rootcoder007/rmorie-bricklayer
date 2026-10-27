@@ -17,7 +17,7 @@ count sheet rather than admission and release dates."><meta property="og:image" 
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,7 +92,13 @@ positive. Default <code>365</code>.</p></dd>
     <p>A numeric scalar: the estimated person-days over the period,
 <code>mean(counts) * t</code>. Despite the function's name this is a total of
 person-days, not an average daily population; divide by <code>t</code> (or
-pass it to <code><a href="adp.html">adp()</a></code>) for the population held on an average day.</p>
+pass it to <code><a href="adp.html">adp()</a></code>) for the population held on an average day. It has
+class <code>c("rmbl_adpcnts", "rmbl_measure", "numeric")</code> and an
+attribute <code>"lakner"</code> (the number of counts, their mean and
+<code>t</code>), so it prints as a box with its inputs, formula and caveats;
+arithmetic, <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code>, <code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code>, <code><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean()</a></code>, <code>[</code>,
+<code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> and <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code> give a plain number, and
+<code><a href="adp.html">adp()</a></code> takes it as <code>days</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -113,14 +119,53 @@ where weekend admissions are released before Monday, for instance.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Lakner (p.21): counts on 255 days summing to 34,935 imply just over</span></span></span>
 <span class="r-in"><span><span class="co"># fifty thousand detention days across the year.</span></span></span>
 <span class="r-in"><span><span class="fu">adpcnts</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">34935</span> <span class="op">/</span> <span class="fl">255</span>, <span class="fl">255</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 50005</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Person-days from headcounts</span> ──────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Person-days  50,005 over the period                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Headcounts   255 days counted                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Mean count   137 people                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Period       365 days                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula      days = mean(counts) x t = 137 x 365                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Counts on 255 days average 137 people: about 50,005 person-days in 365    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   days.                                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakner (1976, p.21): the mean of the days counted stands in for the       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   days not counted, which fails if they differ systematically (weekday      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   counts where weekend admissions leave before Monday).                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A total of person-days, not a population: adp(x, t) divides by t.         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># weekly counts over a 31-day month, then the average daily population</span></span></span>
 <span class="r-in"><span><span class="va">pd</span> <span class="op">&lt;-</span> <span class="fu">adpcnts</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">130</span>, <span class="fl">125</span>, <span class="fl">128</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">31</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">pd</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3898.25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Person-days from headcounts</span> ──────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Person-days  3898 over the period                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Headcounts   4 days counted                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Mean count   125.8 people                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Period       31 days                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula      days = mean(counts) x t = 125.8 x 31                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Counts on 4 days average 125.8 people: about 3898 person-days in 31 days. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakner (1976, p.21): the mean of the days counted stands in for the       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   days not counted, which fails if they differ systematically (weekday      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   counts where weekend admissions leave before Monday).                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A total of person-days, not a population: adp(x, t) divides by t.         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="adp.html">adp</a></span><span class="op">(</span><span class="va">pd</span>, t <span class="op">=</span> <span class="fl">31</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 125.75</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Average daily population</span> ─────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Average daily population  125.8 people on an average day              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Person-days               3898                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Period                    31 days                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula                   adp = days / t = 3898 / 31                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   3898 person-days over 31 days: 125.8 people held on an average day.   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakner (1976, p.15): a stock -- people held at once, not people who   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   passed through. Count only the days served inside the period.         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   adp = n x alos / t links it to alos() and admits(), exactly only in a │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   steady state.                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a missing count must be dropped or filled first</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">adpcnts</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="cn">NA</span>, <span class="fl">125</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

@@ -50,8 +50,8 @@ string.
 raplok()
 #> [1] FALSE
 
-# a fake powercap tree with one readable package domain (Linux names the domain
-# "intel-rapl:0"; a colon is not allowed in a Windows file name)
+# a fake powercap tree with one readable package domain (Linux names the
+# domain "intel-rapl:0"; a colon is not allowed in a Windows file name)
 if (.Platform$OS.type != "windows") {
   d <- file.path(tempfile(), "intel-rapl:0")
   dir.create(d, recursive = TRUE)

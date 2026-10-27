@@ -19,7 +19,7 @@ readable message and the rows that failed."><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,19 +72,19 @@ readable message and the rows that failed.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ruleinset</span><span class="op">(</span><span class="va">col</span>, <span class="va">set</span>, napass <span class="op">=</span> <span class="cn">TRUE</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ruleinset</span><span class="op">(</span>col <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">set</span>, napass <span class="op">=</span> <span class="cn">TRUE</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">rulebtw</span><span class="op">(</span><span class="va">col</span>, <span class="va">lo</span>, <span class="va">hi</span>, napass <span class="op">=</span> <span class="cn">TRUE</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">rulebtw</span><span class="op">(</span>col <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">lo</span>, <span class="va">hi</span>, napass <span class="op">=</span> <span class="cn">TRUE</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">rulenull</span><span class="op">(</span><span class="va">col</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">rulenull</span><span class="op">(</span>col <span class="op">=</span> <span class="cn">NULL</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">ruleuniq</span><span class="op">(</span><span class="va">col</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ruleuniq</span><span class="op">(</span>col <span class="op">=</span> <span class="cn">NULL</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">rulerx</span><span class="op">(</span><span class="va">col</span>, <span class="va">pat</span>, napass <span class="op">=</span> <span class="cn">TRUE</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">rulerx</span><span class="op">(</span>col <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">pat</span>, napass <span class="op">=</span> <span class="cn">TRUE</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">ruleincr</span><span class="op">(</span><span class="va">col</span>, strict <span class="op">=</span> <span class="cn">FALSE</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ruleincr</span><span class="op">(</span>col <span class="op">=</span> <span class="cn">NULL</span>, strict <span class="op">=</span> <span class="cn">FALSE</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">rulemad</span><span class="op">(</span><span class="va">col</span>, n <span class="op">=</span> <span class="fl">3</span>, napass <span class="op">=</span> <span class="cn">TRUE</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">rulemad</span><span class="op">(</span>col <span class="op">=</span> <span class="cn">NULL</span>, n <span class="op">=</span> <span class="fl">3</span>, napass <span class="op">=</span> <span class="cn">TRUE</span>, sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">rulecmpl</span><span class="op">(</span>sev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"warning"</span>, <span class="st">"fatal"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -181,7 +181,7 @@ The column must be numeric when the rule is evaluated. Name
 <li><p><code>rulecmpl()</code>: no row has a missing value. Name
 <code>"complete_rows"</code>.</p></li>
 <li><p><code>ruledstn()</code>: no row repeats an earlier one on
-<code>columns</code> (columns not in the data are ignored; when none is
+<code>cols</code> (columns not in the data are ignored; when none is
 present the rule passes). Name <code>"distinct_rows"</code>.</p></li>
 <li><p><code>rulecolcnt()</code>: the data have exactly <code>n</code> columns.
 Name <code>"col_count"</code>.</p></li>
@@ -241,10 +241,12 @@ that need no rules at all.</p></div>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Clean data passes every one of them.</span></span></span>
 <span class="r-in"><span><span class="va">ok</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, grade <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>,</span></span>
+<span class="r-in"><span>  grade <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">50</span>, <span class="fl">7</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  email <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a@b.com"</span>, <span class="st">"c@d.org"</span>, <span class="st">"e@f.net"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  day <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>  day <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>,</span></span>
+<span class="r-in"><span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="valrules.html">valrules</a></span><span class="op">(</span><span class="va">ok</span>, <span class="va">rules</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
@@ -269,7 +271,10 @@ that need no rules at all.</p></div>
 <span class="r-in"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>grade <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="cn">NA</span>, <span class="st">"b"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="valrules.html">valrules</a></span><span class="op">(</span><span class="va">g</span>, <span class="fu">ruleinset</span><span class="op">(</span><span class="st">"grade"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
-<span class="r-in"><span><span class="fu"><a href="valrules.html">valrules</a></span><span class="op">(</span><span class="va">g</span>, <span class="fu">ruleinset</span><span class="op">(</span><span class="st">"grade"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, napass <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">grade_in_set</span><span class="op">$</span><span class="va">rows</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="valrules.html">valrules</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">g</span>,</span></span>
+<span class="r-in"><span>  <span class="fu">ruleinset</span><span class="op">(</span><span class="st">"grade"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, napass <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">$</span><span class="va">grade_in_set</span><span class="op">$</span><span class="va">rows</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># bounds are checked when the rule is made</span></span></span>

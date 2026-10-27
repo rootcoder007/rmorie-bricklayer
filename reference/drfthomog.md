@@ -35,7 +35,12 @@ the natural log of the upper tail, which keeps its information where
 `p_value` underflows to 0. On the Monte Carlo branch (sparse tables)
 `p_value` is floored at 1/(B+1) and `logpvalue` is its log, so it
 carries no extra range there. The attribute `method` names the branch,
-or says why the test was inapplicable (one category, no counts).
+or says why the test was inapplicable (one category, no counts). It has
+class `c("rmbl_drfthomog", "rmbl_measure", "numeric")`, so it prints as
+a box with its inputs (kept in attribute `"lakner"`); arithmetic, `[`,
+[`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give plain
+numbers.
 
 ## Details
 
@@ -93,18 +98,44 @@ b <- sample(c("x", "y", "z"), 300, TRUE)
 
 # Two draws from the same distribution: no evidence of a difference.
 drfthomog(a, b)
-#>  statistic         df    p_value  logpvalue 
-#>  0.5150386  2.0000000  0.7729667 -0.2575193 
-#> attr(,"method")
-#> [1] "chi-square approximation"
+#> ╭── Chi-square test of homogeneity ─────────────────────────────────────────╮
+#> │   Samples     300 and 300 values                                          │
+#> │   Categories  3                                                           │
+#> │   Method      chi-square approximation                                    │
+#> │                                                                           │
+#> │   statistic  value                                                        │
+#> │   ---------  -------                                                      │
+#> │   statistic  0.515                                                        │
+#> │   df         2                                                            │
+#> │   p_value    0.773                                                        │
+#> │   logpvalue  -0.2575                                                      │
+#> │                                                                           │
+#> │   The two samples' mixes of categories agree (p = 0.773, not below 0.05). │
+#> │                                                                           │
+#> │   Both samples carry sampling error; with an expected count below 5       │
+#> │   the p-value is a Monte Carlo one under a fixed seed.                    │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 
 # A reallocated mix is detected.
 drfthomog(a, sample(c("x", "y", "z"), 300, TRUE,
                             prob = c(0.7, 0.2, 0.1)))
-#>     statistic            df       p_value     logpvalue 
-#>  6.978222e+01  2.000000e+00  7.030469e-16 -3.489111e+01 
-#> attr(,"method")
-#> [1] "chi-square approximation"
+#> ╭── Chi-square test of homogeneity ──────────────────────────────────────╮
+#> │   Samples     300 and 300 values                                       │
+#> │   Categories  3                                                        │
+#> │   Method      chi-square approximation                                 │
+#> │                                                                        │
+#> │   statistic  value                                                     │
+#> │   ---------  -------                                                   │
+#> │   statistic  69.78                                                     │
+#> │   df         2                                                         │
+#> │   p_value    < 0.001                                                   │
+#> │   logpvalue  -34.89                                                    │
+#> │                                                                        │
+#> │   The two samples' mixes of categories differ (p < 0.001, below 0.05). │
+#> │                                                                        │
+#> │   Both samples carry sampling error; with an expected count below 5    │
+#> │   the p-value is a Monte Carlo one under a fixed seed.                 │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # Agrees with stats::chisq.test() on the 2-by-k table.
 tab <- rbind(table(a), table(b))
@@ -119,10 +150,23 @@ drfthomog(a, b)[["p_value"]] >= drftchisq(b, a)[["p_value"]]
 
 # named count vectors, and a small table that takes the Monte Carlo branch
 drfthomog(c(a = 30, b = 20), c(a = 25, b = 25))
-#>  statistic         df    p_value  logpvalue 
-#>  1.0101010  1.0000000  0.3148786 -1.1555680 
-#> attr(,"method")
-#> [1] "chi-square approximation"
+#> ╭── Chi-square test of homogeneity ─────────────────────────────────────────╮
+#> │   Samples     50 and 50 values                                            │
+#> │   Categories  2                                                           │
+#> │   Method      chi-square approximation                                    │
+#> │                                                                           │
+#> │   statistic  value                                                        │
+#> │   ---------  ------                                                       │
+#> │   statistic  1.01                                                         │
+#> │   df         1                                                            │
+#> │   p_value    0.315                                                        │
+#> │   logpvalue  -1.156                                                       │
+#> │                                                                           │
+#> │   The two samples' mixes of categories agree (p = 0.315, not below 0.05). │
+#> │                                                                           │
+#> │   Both samples carry sampling error; with an expected count below 5       │
+#> │   the p-value is a Monte Carlo one under a fixed seed.                    │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 attr(drfthomog(c(a = 3, b = 1, c = 2), c(a = 1, b = 4, c = 1)), "method")
 #> [1] "Monte Carlo permutation (small expected counts)"
 

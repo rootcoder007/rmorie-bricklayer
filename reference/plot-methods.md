@@ -53,9 +53,6 @@ plot(
   palette = NULL
 )
 
-# S3 method for class 'rmbl_prevalence'
-plot(x, ..., main = NULL, col = NULL, palette = NULL)
-
 # S3 method for class 'rmbl_dsr'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
@@ -301,12 +298,13 @@ plot(x, ..., equiv = FALSE, spacing = NULL,
   main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'rmbl_srchpod'
-plot(x, ..., models = NULL, m = NULL, cmax = NULL,
-  main = NULL, col = NULL, palette = NULL)
+plot(x, ..., models = NULL, m = NULL,
+  cmax = NULL, main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'rmbl_datummap'
-plot(x, ..., view = c("map", "persp", "both", "cells"),
-  contours = 8L, digits = 2, main = NULL, col = NULL, palette = NULL)
+plot(x, ...,
+  view = c("map", "persp", "both", "cells"), contours = 8L, digits = 2,
+  main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'rmbl_opteffort'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
@@ -325,7 +323,7 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 - x:
 
-  The result.
+  An `rmbl_stock_flow` result.
 
 - ...:
 
@@ -823,26 +821,41 @@ x position of each point drawn: an `at` column (`rmbl_yoy`,
 ## Examples
 
 ``` r
-sf <- stkflow(days = c(13500, 14600, 15100), people = c(300, 320, 310),
-                 prd = 2021:2023)
+sf <- stkflow(
+  days = c(13500, 14600, 15100),
+  people = c(300, 320, 310),
+  prd = 2021:2023
+)
 plot(sf)
 
 plot(sf, what = "alos", col = "firebrick", main = "Length of stay")
 
-y <- yoy(data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)), value = "n",
-         prd = "year")
+y <- yoy(
+  data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)),
+  value = "n",
+  prd = "year"
+)
 plot(y)
 
 # small counts: each percentage carries its exact interval
-plot(yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n",
-         prd = "year"))
+plot(yoy(
+  data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)),
+  value = "n",
+  prd = "year"
+))
 
 plot(benfordtst(c(1, 12, 123, 1234, 2, 23, 3, 31, 4, 45, 5, 6, 7, 8, 9)))
 
 plot(crfno2(25))
 
-plot(co2fp(for (i in 1:20) sum(sqrt(seq_len(2e5))), loc = "CA",
-                       cpupwrw = 45, memgb = 8))
+plot(co2fp(
+  for (i in 1:20) {
+    sum(sqrt(seq_len(2e5)))
+  },
+  loc = "CA",
+  cpupwrw = 45,
+  memgb = 8
+))
 
 # the courts and crime data shipped with the package
 ext <- function(f) {
@@ -866,46 +879,87 @@ be <- ext("tps_break_enter_d14_2024.csv")
 be <- be[!is.na(be$lon), ]
 plot(crmdens(be$lon, be$lat, ngrid = 60))
 
-plot(knoxtst(be$lon, be$lat, as.Date(be$occ_date), c(100, 200, 400), c(7, 14, 28),
-               nsim = 99, seed = 1))
+plot(knoxtst(
+  be$lon,
+  be$lat,
+  as.Date(be$occ_date),
+  c(100, 200, 400),
+  c(7, 14, 28),
+  nsim = 99,
+  seed = 1
+))
 
 plot(hotpers(be$lon, be$lat, quarters(as.Date(be$occ_date)), cell = 0.3))
 
 # rates, shares and the change in a rate
-rt <- data.frame(division = rep(c("n", "e", "w"), 2), year = rep(2022:2023, each = 3),
-                 stops = c(120, 90, 60, 150, 85, 70),
-                 residents = rep(c(1e4, 8e3, 5e3), 2))
+rt <- data.frame(
+  division = rep(c("n", "e", "w"), 2),
+  year = rep(2022:2023, each = 3),
+  stops = c(120, 90, 60, 150, 85, 70),
+  residents = rep(c(1e4, 8e3, 5e3), 2)
+)
 r23 <- rt[rt$year == 2023, ]
 plot(rtcalc(r23, count = "stops", pop = "residents", by = "division"))
 
 plot(shrs(r23, count = "stops", by = "division"))
 
-plot(ratechg(rt, count = "stops", pop = "residents", prd = "year",
-                 by = "division"))
+plot(ratechg(
+  rt,
+  count = "stops",
+  pop = "residents",
+  prd = "year",
+  by = "division"
+))
 
 # a rate over time, one panel per group
-plot(rtcalc(rt, count = "stops", pop = "residents", by = c("division", "year")),
-     period = "year")
+plot(
+  rtcalc(rt, count = "stops", pop = "residents", by = c("division", "year")),
+  period = "year"
+)
 
 # complex survey estimates by domain, and the differences between domains
 set.seed(3)
-sv <- data.frame(region = rep(c("north", "south", "east"), length.out = 300),
-                 smoker = rbinom(300, 1, 0.25), w = runif(300, 50, 150))
+sv <- data.frame(
+  region = rep(c("north", "south", "east"), length.out = 300),
+  smoker = rbinom(300, 1, 0.25),
+  w = runif(300, 50, 150)
+)
 sd <- svydes(sv, w = "w", strata = "region")
-plot(svyest(sd, sv, "smoker", by = "region", stat = "proportion", lvls = "1"))
+plot(svyest(
+  sd,
+  sv,
+  "smoker",
+  by = "region",
+  stat = "proportion",
+  lvls = "1"
+))
 
-plot(svycmp(sd, sv, "smoker", by = "region", stat = "proportion", lvls = "1"))
+plot(svycmp(
+  sd,
+  sv,
+  "smoker",
+  by = "region",
+  stat = "proportion",
+  lvls = "1"
+))
 
 # a published table in one call: change, rates and rate change
-tab <- data.frame(year = rep(2020:2023, each = 2), g = rep(c("a", "b"), 4),
-                  n = c(10, 20, 12, 22, 11, 25, 15, 24), pop = rep(c(1000, 2000), 4))
+tab <- data.frame(
+  year = rep(2020:2023, each = 2),
+  g = rep(c("a", "b"), 4),
+  n = c(10, 20, 12, 22, 11, 25, 15, 24),
+  pop = rep(c(1000, 2000), 4)
+)
 plot(anltab(tab, value = "n", prd = "year", by = "g", pop = "pop"))
 
 plot(cnttrnd(c(21000, 23000, 22000, 25000, 24000)))
 
 # banded tables
-plot(bandsens(prsbands(c("0-17", "18-24", "25-44", "45+")), c(10, 20, 30, 40),
-                      caps = c(60, 70, 80, 90)))
+plot(bandsens(
+  prsbands(c("0-17", "18-24", "25-44", "45+")),
+  c(10, 20, 30, 40),
+  caps = c(60, 70, 80, 90)
+))
 
 plot(pubbnd(c(10, 20), rnd = 5))
 
@@ -949,23 +1003,48 @@ shift <- function(z, s) {
   z$y <- z$y + s * z$x
   z
 }
-plot(cpspwr(xy, function(z) cor(z$x, z$y), inject = shift, trt = "x",
-                   sizes = c(0, 0.25, 0.5), n = 19, reps = 3, seed = 1))
+plot(cpspwr(
+  xy,
+  function(z) cor(z$x, z$y),
+  inject = shift,
+  trt = "x",
+  sizes = c(0, 0.25, 0.5),
+  n = 19,
+  reps = 3,
+  seed = 1
+))
 
 plot(cpsfals(xy, function(z) cor(z$x, z$y), trt = "x", n = 29, seed = 1))
 
 # air pollution: burden, equity, and the full report
 plot(polbrdn(25, 1, 0.008, 1e6, poll = "NO2"))
 
-plot(expconcidx(data.frame(exposure = c(4, 1, 8, 2),
-                                             income = c(2, 1, 4, 3)),
-                                  "exposure", "income"))
+plot(expconcidx(
+  data.frame(exposure = c(4, 1, 8, 2), income = c(2, 1, 4, 3)),
+  "exposure",
+  "income"
+))
 
 plot(vrfpol("no2", demo = TRUE))
 
-plot(lagrprt(200, 0, 0, 1, 0.5, 1, 1, 1, 20,
-                          grid = c(-10, 40, -15, 25, 10, 8)))
+plot(lagrprt(
+  200,
+  0,
+  0,
+  1,
+  0.5,
+  1,
+  1,
+  1,
+  20,
+  grid = c(-10, 40, -15, 25, 10, 8)
+))
 
-plot(plmfld(q = 100, u = 5, h = 50, x = seq(100, 2000, by = 100),
-                 y = seq(-300, 300, by = 50)))
+plot(plmfld(
+  q = 100,
+  u = 5,
+  h = 50,
+  x = seq(100, 2000, by = 100),
+  y = seq(-300, 300, by = 50)
+))
 ```

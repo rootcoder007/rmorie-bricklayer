@@ -142,15 +142,36 @@ h2$periods[, c("period", "hotcells", "hotshr", "jacpre")]
 set.seed(3)
 hotpers(stats::runif(200, 0, 10), stats::runif(200, 0, 10),
                     rep(2023:2024, 100), cell = 2, top = 0.2, xy = "planar")
-#> Hot spots: 25 active cells of side 2 units over 2 periods; hot = busiest 5 (20%)
-#>  period incidents actcells cellsforhalf shrforhalf hotcells tiedin tiedout
-#>    2023       100       25            9      36.0%        4      0       8
-#>    2024       100       24            9      36.0%        5      0       0
-#>  hotshr jacpre
-#>   26.0%       
-#>   33.0%   0.12
-#> Cells hot in at least half the periods: 8
-#> Note: cells tied with the busiest 5 were left out of the hot set (period 2023: 8 cells tied); the counts are too even (or the cells too small) to single out hot spots
+#> ╭── Hot spots ──────────────────────────────────────────────────────────────╮
+#> │   Active cells             25                                             │
+#> │   Cell side                2 units                                        │
+#> │   Periods                  2                                              │
+#> │   Hot cells                the busiest 5 (20%)                            │
+#> │   Hot in half the periods  8                                              │
+#> │                                                                           │
+#> │   By period                                                               │
+#> │   period  incidents  actcells  cellsforhalf  shrforhalf  hotcells  tiedin │
+#> │   ------  ---------  --------  ------------  ----------  --------  ------ │
+#> │   2023          100        25             9  36.0%              4       0 │
+#> │   2024          100        24             9  36.0%              5       0 │
+#> │                                                                           │
+#> │   period  tiedout  hotshr  jacpre                                         │
+#> │   ------  -------  ------  ------                                         │
+#> │   2023          8  26.0%                                                  │
+#> │   2024          0  33.0%   0.1250                                         │
+#> │                                                                           │
+#> │   The busiest 5 cells hold 26.0% to 33.0% of a period's incidents.        │
+#> │   Their overlap with the period before averages 0.125: the hot set is     │
+#> │   mostly new each period, so these spots do not persist. 8 cells are      │
+#> │   hot in at least half the periods.                                       │
+#> │                                                                           │
+#> │   shrforhalf is the share of active cells that hold half the incidents,   │
+#> │   hotshr the share of incidents in the hot cells, and jacpre the          │
+#> │   overlap of the hot cells with the period before (1 = the same cells).   │
+#> │   Cells tied with the busiest 5 were left out of the hot set: the         │
+#> │   counts are too even (or the cells too small) to single out hot spots.   │
+#> │   period 2023: 8 cells tied                                               │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 
 # a share of zero hot cells is refused
 try(hotpers(b$lon, b$lat, q, top = 0))

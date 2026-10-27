@@ -13,7 +13,7 @@ reproduce, to see first whether the software around it changed."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,9 @@ vector <code>c(a = , b = )</code> when they differ, else <code>NULL</code>),
 <code>platform</code> (likewise), and <code>packages</code> (a data frame with
 character columns <code>package</code>, <code>a</code>, <code>b</code> and <code>change</code>,
 where <code>change</code> is <code>"added"</code>, <code>"removed"</code> or
-<code>"changed"</code>; no rows when nothing differs).</p>
+<code>"changed"</code>; no rows when nothing differs), and <code>fields</code>
+(the names of any other fields that differ, <code>character(0)</code> when
+none).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -97,8 +99,9 @@ dependency that moved a minor version – is exactly what gets missed.</p>
 in <code>a</code> (or recorded with an <code>NA</code> version in <code>a</code>) is
 <code>"added"</code>; the reverse is <code>"removed"</code>. The operating-system
 string, the capture time and the random number generator settings are
-not compared. Rows follow the order of <code>a</code>'s packages, then
-<code>b</code>'s new ones.</p>
+not compared. Any other field present in only one record, or different
+in the two, is named in <code>fields</code> and makes them differ. Rows follow
+the order of <code>a</code>'s packages, then <code>b</code>'s new ones.</p>
 <p>Error: <code>a</code> or <code>b</code> that is not a list.</p>
     </div>
     <div class="section level2">
@@ -129,15 +132,19 @@ not compared. Rows follow the order of <code>a</code>'s packages, then
 <span class="r-out co"><span class="r-pr">#&gt;</span>       a       b </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> "4.6.1" "9.9.9" </span>
 <span class="r-in"><span><span class="va">d</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Environment diff ──────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ✗ environments differ</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   R version  4.6.1 -&gt; 9.9.9</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2 package difference(s):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   stats                    4.6.1        0.0.0        changed</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   tools                    –          4.9.0        added</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Environment diff</span> ─────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Status     ✗ environments differ                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   R version  4.6.1 -&gt; 9.9.9                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   package  a      b      change                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -------  -----  -----  -------                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   stats    4.6.1  0.0.0  changed                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   tools    –      4.9.0  added                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The records differ: a result may not reproduce until these agree. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2 package difference(s)                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Whole manifests are accepted, not just the environment block.</span></span></span>
 <span class="r-in"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="mkmnf.html">mkmnf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>run <span class="op">=</span> <span class="st">"demo"</span><span class="op">)</span><span class="op">)</span></span></span>

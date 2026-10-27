@@ -61,7 +61,7 @@ plnpois(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the intervals reported (default 0.95).
 
 ## Value
 
@@ -91,12 +91,12 @@ uses the negative binomial scores with \\\theta\\ held at its estimate
 (as
 [`sandwich::vcovCL()`](https://zeileis.codeberg.page/sandwich/reference/vcovCL.html)
 does for [`MASS::glm.nb()`](https://rdrr.io/pkg/MASS/man/glm.nb.html);
-`fixest::fenegbin()`, which treats \\\theta\\ as a parameter of the
-variance too, gives slightly larger errors). With unit dummies this is
-the unconditional fixed-effects negative binomial, which behaves well as
-the number of periods grows (Allison and Waterman 2002); with few
-periods per unit prefer the Poisson, which is consistent whatever the
-dispersion.
+[`fixest::fenegbin()`](https://lrberge.github.io/fixest/reference/femlm.html),
+which treats \\\theta\\ as a parameter of the variance too, gives
+slightly larger errors). With unit dummies this is the unconditional
+fixed-effects negative binomial, which behaves well as the number of
+periods grows (Allison and Waterman 2002); with few periods per unit
+prefer the Poisson, which is consistent whatever the dispersion.
 
 ## References
 
@@ -117,14 +117,77 @@ regression models. Sociological Methodology 32:247-265.
 ``` r
 p <- polex()
 plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop")
-#>      term  estimate         se rateratio     lower     upper      p_value
-#> 1 treated -0.092146 0.02220761  0.911972 0.8731289 0.9525431 3.334947e-05
+#> ╭── Fixed-effects count model ────────────────────────────────────────────╮
+#> │   Model          Poisson                                                │
+#> │   Fixed effects  unit and period                                        │
+#> │   Observations   720                                                    │
+#> │   Clusters       20                                                     │
+#> │                                                                         │
+#> │   term     estimate       se  rate_ratio  interval          p_value     │
+#> │   -------  --------  -------  ----------  ----------------  -------     │
+#> │   treated  -0.09215  0.02221      0.9120  [0.8731, 0.9525]  < 0.001     │
+#> │                                                                         │
+#> │   Under the policy the expected count is multiplied by 0.912 (its       │
+#> │   interval [0.8731, 0.9525]): the interval excludes 1, so the data      │
+#> │   distinguish it from no effect. A ratio of 0.912 is a 8.8% fall.       │
+#> │                                                                         │
+#> │   The estimate is on the log scale; the interval is for the rate ratio. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # these counts are not overdispersed, so the negative binomial collapses
 # to the Poisson fit and says so
 plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop",
            family = "negbin")
 #> Warning: no overdispersion: theta is at its bound, the Poisson model fits
-#>      term    estimate         se rateratio     lower    upper      p_value
-#> 1 treated -0.09214602 0.02220756  0.911972 0.8731289 0.952543 3.334804e-05
+#> ╭── Fixed-effects count model ────────────────────────────────────────────╮
+#> │   Model          negative binomial (theta 3229000)                      │
+#> │   Fixed effects  unit and period                                        │
+#> │   Observations   720                                                    │
+#> │   Clusters       20                                                     │
+#> │                                                                         │
+#> │   term     estimate       se  rate_ratio  interval          p_value     │
+#> │   -------  --------  -------  ----------  ----------------  -------     │
+#> │   treated  -0.09215  0.02221      0.9120  [0.8731, 0.9525]  < 0.001     │
+#> │                                                                         │
+#> │   Under the policy the expected count is multiplied by 0.912 (its       │
+#> │   interval [0.8731, 0.9525]): the interval excludes 1, so the data      │
+#> │   distinguish it from no effect. A ratio of 0.912 is a 8.8% fall.       │
+#> │                                                                         │
+#> │   The estimate is on the log scale; the interval is for the rate ratio. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+# counts with the population as exposure
+own$crimes <- round(own$rate * own$pop / 1e4)
+own$logpop <- log(own$pop)
+plnpois(own, "town", "year", "crimes", "bylaw", offset = "logpop")
+#> ╭── Fixed-effects count model ────────────────────────────────────────────╮
+#> │   Model          Poisson                                                │
+#> │   Fixed effects  unit and period                                        │
+#> │   Observations   80                                                     │
+#> │   Clusters       8                                                      │
+#> │                                                                         │
+#> │   term     estimate        se  rate_ratio  interval          p_value    │
+#> │   -------  --------  --------  ----------  ----------------  -------    │
+#> │   treated  -0.08385  0.005628      0.9196  [0.9095, 0.9298]  < 0.001    │
+#> │                                                                         │
+#> │   Under the policy the expected count is multiplied by 0.9196 (its      │
+#> │   interval [0.9095, 0.9298]): the interval excludes 1, so the data      │
+#> │   distinguish it from no effect. A ratio of 0.9196 is a 8.04% fall.     │
+#> │                                                                         │
+#> │   The estimate is on the log scale; the interval is for the rate ratio. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```

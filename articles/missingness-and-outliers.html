@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,22 +111,36 @@ are.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">big</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">40</span>, v <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">40</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">40</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">big</span><span class="op">$</span><span class="va">v</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span><span class="op">:</span><span class="fl">14</span>, <span class="fl">30</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
-<span><span class="va">big</span><span class="op">$</span><span class="va">w</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span><span class="op">:</span><span class="fl">14</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
+<span><span class="va">big</span><span class="op">$</span><span class="va">w</span><span class="op">[</span><span class="fl">10</span><span class="op">:</span><span class="fl">14</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
 <span><span class="fu"><a href="../reference/misspat.html">misspat</a></span><span class="op">(</span><span class="va">big</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Missingness patterns ────────────────────────────────────────── </span></span>
-<span><span class="co">#&gt;   columns, in pattern order: id, v, w</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  pattern n_rows pctrows n_missing columns</span></span>
-<span><span class="co">#&gt;      ...     34    85.0         0        </span></span>
-<span><span class="co">#&gt;      .XX      5    12.5         2    v, w</span></span>
-<span><span class="co">#&gt;      .X.      1     2.5         1       v</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Missingness patterns</span> ─────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Columns   in pattern order: id, v, w                                      │</span></span>
+<span><span class="co">#&gt; │   Patterns  3                                                               │</span></span>
+<span><span class="co">#&gt; │   Rows      40                                                              │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   pattern  n_rows  pctrows  n_missing  columns                              │</span></span>
+<span><span class="co">#&gt; │   -------  ------  -------  ---------  -------                              │</span></span>
+<span><span class="co">#&gt; │   ...          34  85.0             0                                       │</span></span>
+<span><span class="co">#&gt; │   .XX           5  12.5             2  v, w                                 │</span></span>
+<span><span class="co">#&gt; │   .X.           1  2.5              1  v                                    │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Each pattern marks the columns missing together; a few large patterns     │</span></span>
+<span><span class="co">#&gt; │   point to a cause worth naming before rows are dropped.                    │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="../reference/missruns.html">missruns</a></span><span class="op">(</span><span class="va">big</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Runs of consecutive missing values ──────────────────────────── </span></span>
-<span><span class="co">#&gt;  column start end length</span></span>
-<span><span class="co">#&gt;       v    10  14      5</span></span>
-<span><span class="co">#&gt;       w    10  14      5</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Runs of consecutive missing values</span> ───────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Runs               2                                                  │</span></span>
+<span><span class="co">#&gt; │   Columns with runs  2                                                  │</span></span>
+<span><span class="co">#&gt; │   Longest run        5                                                  │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   column  start  end  length                                            │</span></span>
+<span><span class="co">#&gt; │   ------  -----  ---  ------                                            │</span></span>
+<span><span class="co">#&gt; │   v          10   14       5                                            │</span></span>
+<span><span class="co">#&gt; │   w          10   14       5                                            │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Long runs of missing rows usually mean a source stopped reporting for │</span></span>
+<span><span class="co">#&gt; │   a while, not values missing at random.                                │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Five rows missing both <code>v</code> and <code>w</code> in a block
 is a different problem from six scattered gaps; the first points at the
 source, the second at the records.</p>
@@ -135,14 +149,42 @@ source, the second at the records.</p>
 <h2 id="duplicates">Duplicates<a class="anchor" aria-label="anchor" href="#duplicates"></a>
 </h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">3</span>, <span class="fl">3</span><span class="op">)</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"c"</span>, <span class="st">"d"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">3</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"c"</span>, <span class="st">"d"</span><span class="op">)</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/duprows.html">duprows</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Duplicate rows</span> ───────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Table           6 rows, 2 columns                                         │</span></span>
+<span><span class="co">#&gt; │   Compared on     every column                                              │</span></span>
+<span><span class="co">#&gt; │   Duplicate rows  4                                                         │</span></span>
+<span><span class="co">#&gt; │   Groups          2                                                         │</span></span>
+<span><span class="co">#&gt; │   Extra copies    2                                                         │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   4 rows fall in 2 groups of identical rows: dropping the repeats would     │</span></span>
+<span><span class="co">#&gt; │   remove 2.                                                                 │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   quiet = TRUE, or suppressMessages(), silences this summary.               │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="co">#&gt;   id x dupe_count</span></span>
 <span><span class="co">#&gt; 1  2 b          2</span></span>
 <span><span class="co">#&gt; 2  2 b          2</span></span>
 <span><span class="co">#&gt; 3  3 c          2</span></span>
 <span><span class="co">#&gt; 4  3 c          2</span></span>
 <span><span class="fu"><a href="../reference/duprows.html">duprows</a></span><span class="op">(</span><span class="va">d</span>, cols <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Duplicate rows</span> ───────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Table           6 rows, 2 columns                                         │</span></span>
+<span><span class="co">#&gt; │   Compared on     id                                                        │</span></span>
+<span><span class="co">#&gt; │   Duplicate rows  5                                                         │</span></span>
+<span><span class="co">#&gt; │   Groups          2                                                         │</span></span>
+<span><span class="co">#&gt; │   Extra copies    3                                                         │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   5 rows fall in 2 groups of identical rows: dropping the repeats would     │</span></span>
+<span><span class="co">#&gt; │   remove 3.                                                                 │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   quiet = TRUE, or suppressMessages(), silences this summary.               │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="co">#&gt;   id x dupe_count</span></span>
 <span><span class="co">#&gt; 1  2 b          2</span></span>
 <span><span class="co">#&gt; 2  2 b          2</span></span>
@@ -167,18 +209,27 @@ itself and hide:</p>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">200</span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">170</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">df</span><span class="op">$</span><span class="va">weight</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">$</span><span class="va">height</span> <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">0</span>, <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="va">df</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">155</span>, weight <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>      <span class="co"># ordinary on each, unlikely jointly</span></span>
+<span><span class="va">df</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">155</span>, weight <span class="op">=</span> <span class="fl">100</span><span class="op">)</span> <span class="co"># ordinary on each, unlikely jointly</span></span>
 <span></span>
 <span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mahaoutl.html">mahaoutl</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">out</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Mahalanobis outliers (robust) ───────────────────────────────── </span></span>
-<span><span class="co">#&gt;   ! 1 of 3 rows beyond alpha = 0.001</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  row distance  p_value logpvalue outlier</span></span>
-<span><span class="co">#&gt;    1     4.30 9.61e-05 -9.249997    TRUE</span></span>
-<span><span class="co">#&gt;   32     2.90   0.0149 -4.204956   FALSE</span></span>
-<span><span class="co">#&gt;   14     2.81   0.0194 -3.940191   FALSE</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Mahalanobis outliers (robust)</span> ──────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Verdict  ! 1 of 3 rows beyond alpha = 0.001                         │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   Largest distances first                                             │</span></span>
+<span><span class="co">#&gt; │   row  distance  p_value  logpvalue  outlier                          │</span></span>
+<span><span class="co">#&gt; │   ---  --------  -------  ---------  -------                          │</span></span>
+<span><span class="co">#&gt; │     1     4.301  &lt; 0.001     -9.250  TRUE                             │</span></span>
+<span><span class="co">#&gt; │    32     2.900    0.015     -4.205  FALSE                            │</span></span>
+<span><span class="co">#&gt; │    14     2.807    0.019     -3.940  FALSE                            │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   1 of 3 rows lie beyond alpha = 0.001: row 1 (distance 4.3).         │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   The distance measures how far a row is from the centre of the data  │</span></span>
+<span><span class="co">#&gt; │   once the columns' scales and correlations are allowed for; the      │</span></span>
+<span><span class="co">#&gt; │   p-value is from the chi-square distribution it would follow without │</span></span>
+<span><span class="co">#&gt; │   outliers, and logpvalue its natural log, for rows far in the tail.  │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="va">out</span><span class="op">$</span><span class="va">row</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">==</span> <span class="fl">1</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">height</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
@@ -302,12 +353,23 @@ further out.</p>
 <p><img src="missingness-and-outliers_files/figure-html/missingness-and-outliers-outliers-plots-1.png" class="r-plt" alt="" width="672"></p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">planted</span> <span class="op">&lt;-</span> <span class="va">dclassical</span><span class="op">$</span><span class="va">row</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fl">2</span><span class="op">:</span><span class="fl">21</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dclassical</span><span class="op">$</span><span class="va">distance</span>, <span class="va">drobust</span><span class="op">$</span><span class="va">distance</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">dclassical</span><span class="op">$</span><span class="va">row</span>, <span class="va">drobust</span><span class="op">$</span><span class="va">row</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>     pch <span class="op">=</span> <span class="fl">19</span>, col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">planted</span>, <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>,</span>
-<span>     xlab <span class="op">=</span> <span class="st">"classical distance"</span>, ylab <span class="op">=</span> <span class="st">"robust distance"</span>,</span>
-<span>     main <span class="op">=</span> <span class="st">"Planted rows: classical against robust distance"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
+<span>  <span class="va">dclassical</span><span class="op">$</span><span class="va">distance</span>,</span>
+<span>  <span class="va">drobust</span><span class="op">$</span><span class="va">distance</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">dclassical</span><span class="op">$</span><span class="va">row</span>, <span class="va">drobust</span><span class="op">$</span><span class="va">row</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  pch <span class="op">=</span> <span class="fl">19</span>,</span>
+<span>  col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">planted</span>, <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="st">"classical distance"</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"robust distance"</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"Planted rows: classical against robust distance"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, lty <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/legend.html" class="external-link">legend</a></span><span class="op">(</span><span class="st">"topleft"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"planted rows"</span>, <span class="st">"other rows"</span><span class="op">)</span>, pch <span class="op">=</span> <span class="fl">19</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">]</span>, bty <span class="op">=</span> <span class="st">"n"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/legend.html" class="external-link">legend</a></span><span class="op">(</span></span>
+<span>  <span class="st">"topleft"</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"planted rows"</span>, <span class="st">"other rows"</span><span class="op">)</span>,</span>
+<span>  pch <span class="op">=</span> <span class="fl">19</span>,</span>
+<span>  col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  bty <span class="op">=</span> <span class="st">"n"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="missingness-and-outliers_files/figure-html/missingness-and-outliers-outliers-plots-2.png" class="r-plt" alt="" width="672"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

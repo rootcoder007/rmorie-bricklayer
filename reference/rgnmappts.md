@@ -92,19 +92,28 @@ the boundary file does not have.
 ``` r
 # Two square regions as a small GeoJSON boundary file.
 gj <- tempfile(fileext = ".geojson")
-writeLines(paste0(
-  '{"type":"FeatureCollection","features":[',
-  '{"type":"Feature","properties":{"CDUID":"A","CDNAME":"West"},"geometry":',
-  '{"type":"Polygon","coordinates":[[[-80,43],[-79,43],[-79,44],[-80,44],[-80,43]]]}},',
-  '{"type":"Feature","properties":{"CDUID":"B","CDNAME":"East"},"geometry":',
-  '{"type":"Polygon","coordinates":[[[-79,43],[-78,43],[-78,44],[-79,44],[-79,43]]]}}]}'
-), gj)
+writeLines(
+  paste0(
+    '{"type":"FeatureCollection","features":[',
+    '{"type":"Feature","properties":{"CDUID":"A","CDNAME":"West"},"geo',
+    'metry":',
+    '{"type":"Polygon","coordinates":[[[-80,43],[-79,43],[-79,44],[-80',
+    ',44],[-80,43]]]}},',
+    '{"type":"Feature","properties":{"CDUID":"B","CDNAME":"East"},"geo',
+    'metry":',
+    '{"type":"Polygon","coordinates":[[[-79,43],[-78,43],[-78,44],[-79',
+    ',44],[-79,43]]]}}]}'
+  ),
+  gj
+)
 
 if (requireNamespace("sf", quietly = TRUE)) {
   obs <- rgnmappts(
-    x = c(-79.5, -78.5, -70), y = c(43.5, 43.5, 43.5),
+    x = c(-79.5, -78.5, -70),
+    y = c(43.5, 43.5, 43.5),
     unit = c("North Jail", "South Jail", "Far Jail"),
-    bounds = gj, fields = c("CDUID", "CDNAME")
+    bounds = gj,
+    fields = c("CDUID", "CDNAME")
   )
   print(obs)
   # the point outside both regions is reported, not dropped
@@ -125,8 +134,13 @@ if (requireNamespace("sf", quietly = TRUE)) {
 #> <simpleError: boundary file has no column(s): PRUID>
 
 # no boundary file: NULL, so a script can record the check as unavailable
-rgnmappts(-79.5, 43.5, "North Jail",
-                       bounds = file.path(tempdir(), "missing.shp"), fields = "CDUID")
+rgnmappts(
+  -79.5,
+  43.5,
+  "North Jail",
+  bounds = file.path(tempdir(), "missing.shp"),
+  fields = "CDUID"
+)
 #> NULL
 unlink(gj)
 ```

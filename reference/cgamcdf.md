@@ -23,7 +23,7 @@ cgamcdf(shape, x)
 
 - x:
 
-  Numeric vector of quantiles.
+  Numeric vector of quantiles at which the gamma CDF is evaluated.
 
 ## Value
 

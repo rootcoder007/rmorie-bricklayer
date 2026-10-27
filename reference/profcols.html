@@ -13,7 +13,7 @@ distinct levels plus the most common one for a categorical column."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,7 +71,7 @@ distinct levels plus the most common one for a categorical column.</p>
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>A data frame.</p></dd>
+<dd><p>A data frame whose columns are profiled.</p></dd>
 
 
 <dt id="arg-qnts">qnts<a class="anchor" aria-label="anchor" href="#arg-qnts"></a></dt>
@@ -109,19 +109,17 @@ single number.</p>
 <code>TRUE</code>; every other column (character, factor, logical, <code>Date</code>, ...) is
 treated as categorical, and <code>top</code> is its most frequent non-missing value as
 text (ties broken by the order of <code>sort(table())</code>). For a numeric column,
-over its non-missing values: <code>sd</code> is the sample standard deviation
-(\(n - 1\)), <code>mad</code> the median absolute deviation scaled by 1.4826,
-<code>skewness</code> the population moment ratio \(m_3 / m_2^{3/2}\),
-<code>n_outliers</code> the count outside the Tukey fences (1.5 interquartile ranges
-beyond the quartiles), and the quantiles are type 7. Infinite values are
-counted in <code>ninf</code> (and in <code>nneg</code>, <code>n_distinct</code>) and left
-out
-of every other numeric statistic, which are taken over the finite values
-only: a column with an infinite value keeps a finite mean and range, and
-a column with no finite value has <code>NA</code> statistics. A progress bar is shown for
-wide tables when
-<code>options(morie.progress)</code> allows it. Errors when <code>data</code> is not a data
-frame, has no columns, or has duplicate or empty column names.</p>
+over its non-missing values: <code>sd</code> is the sample standard deviation (\(n -
+1\)), <code>mad</code> the median absolute deviation scaled by 1.4826, <code>skewness</code> the
+population moment ratio \(m_3 / m_2^{3/2}\), <code>n_outliers</code> the count outside
+the Tukey fences (1.5 interquartile ranges beyond the quartiles), and the
+quantiles are type 7. Infinite values are counted in <code>ninf</code> (and in <code>nneg</code>,
+<code>n_distinct</code>) and left out of every other numeric statistic, which are taken
+over the finite values only: a column with an infinite value keeps a finite
+mean and range, and a column with no finite value has <code>NA</code> statistics. A
+progress bar is shown for wide tables when <code>options(morie.progress)</code> allows
+it. Errors when <code>data</code> is not a data frame, has no columns, or has duplicate
+or empty column names.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -140,49 +138,90 @@ frame, has no columns, or has duplicate or empty column names.</p>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">profcols</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Column profile ──────────────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  column      type     n n_missing pct_missing n_distinct nzero  nneg  ninf</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   clean   numeric   100         0           0        100     0    54     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  skewed   numeric   100         0           0        100     0    48     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   grade character   100         0           0          3     –     –     –</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   gappy   numeric   100        10          10         90     0     0     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      mean     sd  median    mad      min    max skewness n_outliers top     q25</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  -0.05351 0.9588 -0.1708 0.8777   -2.618  2.682   0.3145          3   – -0.7457</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     4.874  50.02 0.04449 0.9517   -2.738    500    9.844          1   – -0.7947</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         –      –       –      –        –      –        –          –   c       –</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    0.5019 0.2917  0.5243 0.3714 0.007639 0.9953 -0.04396          0   –  0.2545</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      q50    q75       hist</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  -0.1708  0.422 ▁▁▃█▇█▃▃▂▁</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.04449 0.6215 █        ▁</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        –      –          –</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   0.5243 0.7339 █▆▆█▆▇█▆█▆</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Column profile</span> ─────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns              4                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows                 100                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Numeric              3                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   With missing values  1                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   column  type         n  n_missing  pct_missing  n_distinct  nzero  nneg │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ---------  ---  ---------  -----------  ----------  -----  ---- │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   clean   numeric    100          0            0         100      0    54 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   skewed  numeric    100          0            0         100      0    48 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   grade   character  100          0            0           3              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   gappy   numeric    100         10           10          90      0     0 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   column  ninf     mean       sd   median     mad     min      max        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ----  -------  -------  -------  ------  ------  -------        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   clean      0  -0.0535   0.9588  -0.1708  0.8777  -2.618    2.682        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   skewed     0   4.8741  50.0224   0.0445  0.9517  -2.738  500.000        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   grade                                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   gappy      0   0.5019   0.2917   0.5243  0.3714   0.008    0.995        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   column  skewness  n_outliers  top      q25      q50     q75  hist       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  --------  ----------  ---  -------  -------  ------  ---------- │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   clean     0.3145           3       -0.7457  -0.1708  0.4220  ▁▁▃█▇█▃▃▂▁ │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   skewed    9.8435           1       -0.7947   0.0445  0.6215  █        ▁ │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   grade                         c                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   gappy    -0.0440           0        0.2545   0.5243  0.7339  █▆▆█▆▇█▆█▆ │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Where the mean and the median (or sd and mad) disagree, the column      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   has outliers or a heavy tail and the mean does not describe it;         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   n_outliers counts the values beyond the Tukey fences.                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The mean and the median agree on `clean` and disagree sharply on</span></span></span>
 <span class="r-in"><span><span class="co"># `skewed`, which is the outlier announcing itself.</span></span></span>
 <span class="r-in"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">profcols</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">p</span><span class="op">[</span><span class="va">p</span><span class="op">$</span><span class="va">column</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"clean"</span>, <span class="st">"skewed"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"column"</span>, <span class="st">"mean"</span>, <span class="st">"median"</span><span class="op">)</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   column        mean      median</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  clean -0.05351488 -0.17078983</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 skewed  4.87405667  0.04448896</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Column profile</span> ─────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows     2                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns  3                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   column    mean   median                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ------  -------                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   clean   -0.054  -0.1708                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   skewed   4.874   0.0445                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Some of this result's columns are not here (a subset of it?), so it │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   is shown as a plain table.                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The histogram column shows shape no summary number carries.</span></span></span>
 <span class="r-in"><span><span class="va">p</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"column"</span>, <span class="st">"hist"</span><span class="op">)</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   column       hist</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  clean ▁▁▃█▇█▃▃▂▁</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 skewed █        ▁</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  grade       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  gappy █▆▆█▆▇█▆█▆</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Column profile</span> ─────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows     4                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns  2                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   column  hist                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  ----------                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   clean   ▁▁▃█▇█▃▃▂▁                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   skewed  █        ▁                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   grade                                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   gappy   █▆▆█▆▇█▆█▆                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Some of this result's columns are not here (a subset of it?), so it │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   is shown as a plain table.                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Zeros, negatives and infinities are counted separately, because</span></span></span>
 <span class="r-in"><span><span class="co"># each breaks a different downstream computation (a log, a square</span></span></span>
 <span class="r-in"><span><span class="co"># root, an average).</span></span></span>
 <span class="r-in"><span><span class="va">p</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"column"</span>, <span class="st">"nzero"</span>, <span class="st">"nneg"</span>, <span class="st">"ninf"</span><span class="op">)</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   column nzero nneg ninf</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  clean     0   54    0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 skewed     0   48    0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  grade    NA   NA   NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  gappy     0    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Column profile</span> ─────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows     4                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns  4                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   column  nzero  nneg  ninf                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  -----  ----  ----                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   clean       0    54     0                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   skewed      0    48     0                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   grade                                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   gappy       0     0     0                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Some of this result's columns are not here (a subset of it?), so it │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   is shown as a plain table.                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># deciles instead of quartiles</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu">profcols</span><span class="op">(</span><span class="va">df</span>, qnts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

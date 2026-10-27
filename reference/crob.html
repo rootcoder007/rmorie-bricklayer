@@ -19,7 +19,7 @@ drawn at k IQRs beyond the quartiles."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,14 +138,12 @@ with \(c\) = <code>constant</code>; the IQR is \(Q(0.75) - Q(0.25)\); and the
 fences are \(Q(0.25) - k \cdot \mathrm{IQR}\) and
 \(Q(0.75) + k \cdot \mathrm{IQR}\) (Tukey, 1977).</p>
 <p>Missing values are not removed: an <code>NA</code> or <code>NaN</code> anywhere in <code>x</code> makes
-every result <code>NaN</code> (unlike <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">stats::quantile()</a></code>, which
-stops). An empty
-<code>x</code> gives <code>NaN</code>. <code>cqnt()</code> refuses an empty <code>probs</code>
-(<code>"probs is empty"</code>) and any probability outside \([0, 1]\) or missing
-(<code>"must lie in [0, 1]"</code>); every function refuses a character, factor or
-list <code>x</code> (<code>"must be numeric"</code>). The quantiles sort a copy of <code>x</code>, so
-the
-cost is \(O(n \log n)\).</p>
+every result <code>NaN</code> (unlike <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">stats::quantile()</a></code>,
+which stops). An empty <code>x</code> gives <code>NaN</code>. <code>cqnt()</code> refuses an empty
+<code>probs</code> (<code>"probs is empty"</code>) and any probability outside \([0, 1]\) or
+missing (<code>"must lie in [0, 1]"</code>); every function refuses a character, factor
+or list <code>x</code> (<code>"must be numeric"</code>). The quantiles sort a copy of <code>x</code>, so
+the cost is \(O(n \log n)\).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

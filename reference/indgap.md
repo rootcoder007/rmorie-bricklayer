@@ -57,6 +57,8 @@ indgap(
   Optional labels of the rows that pool other groups (for example
   `"Aboriginal and Torres Strait Islander"` beside its parts, or a
   “Total Indigenous” row); by default the labels described in Details.
+  Each label must be a group of `data`: one that matches no row (a typo)
+  is refused rather than ignored.
 
 ## Value
 
@@ -122,43 +124,102 @@ before pooling,
 ## Examples
 
 ``` r
-# Perceived mental health very good or excellent, adults, 2019/2022 (Statistics Canada,
-# table 13-10-0924-01; The Daily, 2025-02-13)
+# Perceived mental health very good or excellent, adults, 2019/2022
+# (Statistics Canada, table 13-10-0924-01; The Daily, 2025-02-13)
 h <- indiex("health")
-mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
-          h$indicator == "Perceived mental health, very good or excellent", ]
+mh <- h[
+  h$period == "2019/2022" &
+    h$age == "Total, 18 years and over" &
+    h$indicator == "Perceived mental health, very good or excellent",
+]
 g <- indgap(mh, "group", "estimate", "lower", "upper", qual = "quality")
 g
-#>           group estimate refest     ratio   ratiolo   ratioup difference
-#> 1 First Nations     45.8   61.5 0.7447154 0.7001926 0.7920694      -15.7
-#> 2         Métis     52.8   61.5 0.8585366 0.8130217 0.9065995       -8.7
-#> 3         Inuit     47.8   61.5 0.7772358 0.6785276 0.8903034      -13.7
-#>       diflo      difup usewithcau poogrp
-#> 1 -18.53593 -12.864070      FALSE  FALSE
-#> 2 -11.58531  -5.814692      FALSE  FALSE
-#> 3 -20.16568  -7.234321      FALSE  FALSE
+#> ╭── Gap against a reference group ──────────────────────────────────────────╮
+#> │   Reference  Non-Indigenous                                               │
+#> │   Groups     3                                                            │
+#> │   Intervals  95%                                                          │
+#> │                                                                           │
+#> │   group          estimate  refest   ratio  ratio CI        difference     │
+#> │   -------------  --------  ------  ------  --------------  ----------     │
+#> │   First Nations     45.80   61.50  0.7447  [0.700, 0.792]      -15.70     │
+#> │   Métis             52.80   61.50  0.8585  [0.813, 0.907]       -8.70     │
+#> │   Inuit             47.80   61.50  0.7772  [0.679, 0.890]      -13.70     │
+#> │                                                                           │
+#> │   group          difference CI                                            │
+#> │   -------------  --------------                                           │
+#> │   First Nations  [-18.5, -12.9]                                           │
+#> │   Métis          [-11.6, -5.8]                                            │
+#> │   Inuit          [-20.2, -7.2]                                            │
+#> │                                                                           │
+#> │   Below the reference (interval below 1): First Nations, Métis and Inuit. │
+#> │                                                                           │
+#> │   ratio: the group's estimate over the reference's; difference: the       │
+#> │   group's less the reference's, in the estimate's own units.              │
+#> │   Report a gap beside each group's own level, not alone.                  │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 plot(g)
 
 plot(g, what = "ratio")
 
-# your own table: made-up numbers in another country's layout, with relative standard
-# errors instead of limits and that agency's flags
-own <- data.frame(group = c("Aboriginal", "Torres Strait Islander",
-                            "Aboriginal and Torres Strait Islander",
-                            "Non-Indigenous Australians"),
-                  pct = c(31.2, 27.5, 30.8, 18.9), rse = c(4.1, 22.0, 3.9, 1.2),
-                  flag = c("", "*", "", ""))
+# your own table: made-up numbers in another country's layout, with relative
+# standard errors instead of limits and that agency's flags
+own <- data.frame(
+  group = c(
+    "Aboriginal",
+    "Torres Strait Islander",
+    "Aboriginal and Torres Strait Islander",
+    "Non-Indigenous Australians"
+  ),
+  pct = c(31.2, 27.5, 30.8, 18.9),
+  rse = c(4.1, 22.0, 3.9, 1.2),
+  flag = c("", "*", "", "")
+)
 own <- cbind(own, limfrom(own$pct, cv = own$rse)[c("lower", "upper")])
 own$q <- qltyrcd(own$flag, suppr = c("np", "**"), caution = "*")
-indgap(own, "group", "pct", "lower", "upper",
-               ref = "Non-Indigenous Australians",
-               qual = "q", pooled = "Aboriginal and Torres Strait Islander")
-#>                                   group estimate refest    ratio   ratiolo
-#> 1                            Aboriginal     31.2   18.9 1.650794 1.5179467
-#> 2                Torres Strait Islander     27.5   18.9 1.455026 0.9167364
-#> 3 Aboriginal and Torres Strait Islander     30.8   18.9 1.629630 1.5041584
-#>    ratioup difference     diflo    difup usewithcau poogrp
-#> 1 1.795267       12.3  9.753713 14.84629      FALSE  FALSE
-#> 2 2.309390        8.6 -3.266111 20.46611       TRUE  FALSE
-#> 3 1.765567       11.9  9.504094 14.29591      FALSE   TRUE
+indgap(
+  own,
+  "group",
+  "pct",
+  "lower",
+  "upper",
+  ref = "Non-Indigenous Australians",
+  qual = "q",
+  pooled = "Aboriginal and Torres Strait Islander"
+)
+#> ╭── Gap against a reference group ────────────────────────────────────────────╮
+#> │   Reference  Non-Indigenous Australians                                     │
+#> │   Groups     3                                                              │
+#> │   Intervals  95%                                                            │
+#> │                                                                             │
+#> │   group                                  estimate  refest  ratio            │
+#> │   -------------------------------------  --------  ------  -----            │
+#> │   Aboriginal                                31.20   18.90  1.651            │
+#> │   Torres Strait Islander *                  27.50   18.90  1.455            │
+#> │   Aboriginal and Torres Strait Islan...     30.80   18.90  1.630            │
+#> │                                                                             │
+#> │   group                                  ratio CI      difference           │
+#> │   -------------------------------------  ------------  ----------           │
+#> │   Aboriginal                             [1.52, 1.80]       12.30           │
+#> │   Torres Strait Islander *               [0.92, 2.31]        8.60           │
+#> │   Aboriginal and Torres Strait Islan...  [1.50, 1.77]       11.90           │
+#> │                                                                             │
+#> │   group                                  difference CI                      │
+#> │   -------------------------------------  -------------                      │
+#> │   Aboriginal                             [9.8, 14.8]                        │
+#> │   Torres Strait Islander *               [-3.3, 20.5]                       │
+#> │   Aboriginal and Torres Strait Islan...  [9.5, 14.3]                        │
+#> │                                                                             │
+#> │   Above the reference (interval above 1): Aboriginal and Aboriginal and     │
+#> │   Torres Strait Islander (pooled).                                          │
+#> │   Not distinguishable from 1 (interval includes it): Torres Strait          │
+#> │   Islander *.                                                               │
+#> │                                                                             │
+#> │   ratio: the group's estimate over the reference's; difference: the         │
+#> │   group's less the reference's, in the estimate's own units.                │
+#> │   (pooled): a pan-Indigenous total, shown beside, not a distinct group      │
+#> │   (poogrp).                                                                 │
+#> │   Report a gap beside each group's own level, not alone.                    │
+#> │   * use with caution: the source flags the estimate (E, high sampling       │
+#> │   variability).                                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```

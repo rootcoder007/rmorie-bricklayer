@@ -46,7 +46,7 @@ stdprev(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the prevalence intervals (default 0.95).
 
 - scale:
 
@@ -97,22 +97,82 @@ for counts of events,
 ## Examples
 
 ``` r
-# seriously contemplated suicide in the past 12 months, 2017 (table 41-10-0021-01),
-# standardised to the Indigenous population's age structure (2021 Census)
-ages <- c("15 to 24 years", "25 to 34 years", "35 to 44 years", "45 to 54 years",
-          "55 years and over")
+# seriously contemplated suicide in the past 12 months, 2017 (table
+# 41-10-0021-01), standardised to the Indigenous population's age structure
+# (2021 Census)
+ages <- c(
+  "15 to 24 years",
+  "25 to 34 years",
+  "35 to 44 years",
+  "45 to 54 years",
+  "55 years and over"
+)
 si <- indiex("suicide")
-si <- si[si$measure == "Seriously contemplated suicide in the past 12 months" &
-           si$age %in% ages, ]
+si <- si[
+  si$measure == "Seriously contemplated suicide in the past 12 months" &
+    si$age %in% ages,
+]
 si <- si[order(si$group, match(si$age, ages)), ]
 std <- cnsstd(cnsprof(indiex("censuspop")))
-w <- c(sum(std$population[4:5]), std$population[6:8], sum(std$population[9:11]))
-sp <- stdprev(si$estimate, si$lower, si$upper, std = w,
-                             grp = si$group, qual = si$quality)
+w <- c(
+  sum(std$population[4:5]),
+  std$population[6:8],
+  sum(std$population[9:11])
+)
+sp <- stdprev(
+  si$estimate,
+  si$lower,
+  si$upper,
+  std = w,
+  grp = si$group,
+  qual = si$quality
+)
 sp
-#>           group estimate    lower    upper        se usewithcau
-#> 1 First Nations 5.883595 5.225477 6.541713 0.3357808       TRUE
-#> 2         Inuit 6.069984 5.153220 6.986749 0.4677454       TRUE
-#> 3         Métis 4.814676 4.186377 5.442976 0.3205668       TRUE
+#> ╭── Age-standardised prevalence ──────────────────────────────────────────────╮
+#> │   Groups  3                                                                 │
+#> │   Method  direct standardisation to the standard population given           │
+#> │                                                                             │
+#> │   group            estimate  95% CI              se                         │
+#> │   ---------------  --------  --------------  ------                         │
+#> │   First Nations *     5.884  [5.225, 6.542]  0.3358                         │
+#> │   Inuit *             6.070  [5.153, 6.987]  0.4677                         │
+#> │   Métis *             4.815  [4.186, 5.443]  0.3206                         │
+#> │                                                                             │
+#> │   Highest prevalence: Inuit * (6.07); lowest: Métis * (4.815).              │
+#> │   Their intervals overlap: the data cannot tell the two apart.              │
+#> │                                                                             │
+#> │   Each group's prevalence as if it had the standard population's ages,      │
+#> │   so the groups compare without their age structures.                       │
+#> │   Compare only rates standardised to the same population.                   │
+#> │   * use with caution: the source flags the estimate (E, high sampling       │
+#> │   variability).                                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(sp)
+
+
+# your own numbers: made-up percentages in three age groups for two groups,
+# standardised to a population of 500, 300 and 200 in those age groups
+stdprev(
+  est = c(12, 9, 6, 8, 6, 4),
+  lower = c(9, 6, 3, 7, 5, 3),
+  upper = c(15, 12, 9, 9, 7, 5),
+  std = c(500, 300, 200),
+  grp = rep(c("Nation A", "Everyone else"), each = 3)
+)
+#> ╭── Age-standardised prevalence ─────────────────────────────────────────╮
+#> │   Groups  2                                                            │
+#> │   Method  direct standardisation to the standard population given      │
+#> │                                                                        │
+#> │   group          estimate  95% CI               se                     │
+#> │   -------------  --------  ---------------  ------                     │
+#> │   Nation A          9.900  [8.051, 11.749]  0.9436                     │
+#> │   Everyone else     6.600  [5.984, 7.216]   0.3145                     │
+#> │                                                                        │
+#> │   Highest prevalence: Nation A (9.9); lowest: Everyone else (6.6).     │
+#> │   Their intervals do not overlap: the gap is more than sampling error. │
+#> │                                                                        │
+#> │   Each group's prevalence as if it had the standard population's ages, │
+#> │   so the groups compare without their age structures.                  │
+#> │   Compare only rates standardised to the same population.              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

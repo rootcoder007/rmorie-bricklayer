@@ -37,7 +37,12 @@ drftpsi(x, y, bins = 10L, eps = 1e-06)
 ## Value
 
 A named length-2 numeric: `psi` (non-negative, unbounded) and `jsdiv`
-(in nats, between 0 and \\\log 2 \approx 0.693\\).
+(in nats, between 0 and \\\log 2 \approx 0.693\\). It has class
+`c("rmbl_drftpsi", "rmbl_measure", "numeric")`, so it prints as a box
+with its inputs (kept in attribute `"lakner"`); arithmetic, `[`,
+[`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give plain
+numbers.
 
 ## Details
 
@@ -97,18 +102,63 @@ ref <- stats::rnorm(500)
 
 # Same distribution: both indices near zero.
 drftpsi(ref, stats::rnorm(500))
-#>         psi       jsdiv 
-#> 0.022072326 0.002752915 
+#> ╭── Population stability index ──────────────────────────────────────────╮
+#> │   Samples  500 and 500 values                                          │
+#> │   Bins     10, on the reference's quantiles                            │
+#> │                                                                        │
+#> │   statistic  value                                                     │
+#> │   ---------  --------                                                  │
+#> │   psi        0.02207                                                   │
+#> │   jsdiv      0.002753                                                  │
+#> │                                                                        │
+#> │   PSI 0.02207: by the usual bands, stable.                             │
+#> │   The JS divergence is 0.4% of its largest possible value.             │
+#> │                                                                        │
+#> │   PSI below 0.1 is read as stable, 0.1 to 0.25 as worth a look, above  │
+#> │   0.25 as a material shift: heuristic bands with no null distribution, │
+#> │   which binning noise alone can cross on a few hundred rows. The JS    │
+#> │   divergence is bounded by log 2 (0.693).                              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # A shift both indices register.
 drftpsi(ref, stats::rnorm(500, mean = 1))
-#>       psi     jsdiv 
-#> 0.9543324 0.1053174 
+#> ╭── Population stability index ──────────────────────────────────────────╮
+#> │   Samples  500 and 500 values                                          │
+#> │   Bins     10, on the reference's quantiles                            │
+#> │                                                                        │
+#> │   statistic  value                                                     │
+#> │   ---------  ------                                                    │
+#> │   psi        0.9543                                                    │
+#> │   jsdiv      0.1053                                                    │
+#> │                                                                        │
+#> │   PSI 0.9543: by the usual bands, a material shift.                    │
+#> │   The JS divergence is 15.2% of its largest possible value.            │
+#> │                                                                        │
+#> │   PSI below 0.1 is read as stable, 0.1 to 0.25 as worth a look, above  │
+#> │   0.25 as a material shift: heuristic bands with no null distribution, │
+#> │   which binning noise alone can cross on a few hundred rows. The JS    │
+#> │   divergence is bounded by log 2 (0.693).                              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # A sample compared with itself has moved nowhere at all.
 drftpsi(ref, ref)
-#>   psi jsdiv 
-#>     0     0 
+#> ╭── Population stability index ──────────────────────────────────────────╮
+#> │   Samples  500 and 500 values                                          │
+#> │   Bins     10, on the reference's quantiles                            │
+#> │                                                                        │
+#> │   statistic  value                                                     │
+#> │   ---------  -----                                                     │
+#> │   psi        0                                                         │
+#> │   jsdiv      0                                                         │
+#> │                                                                        │
+#> │   PSI 0: by the usual bands, stable.                                   │
+#> │   The JS divergence is 0.0% of its largest possible value.             │
+#> │                                                                        │
+#> │   PSI below 0.1 is read as stable, 0.1 to 0.25 as worth a look, above  │
+#> │   0.25 as a material shift: heuristic bands with no null distribution, │
+#> │   which binning noise alone can cross on a few hundred rows. The JS    │
+#> │   divergence is bounded by log 2 (0.693).                              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # The Jensen-Shannon divergence is bounded by log(2), whatever the
 # shift, which is what makes it comparable across columns.
@@ -117,11 +167,41 @@ drftpsi(c(1, 1, 1), c(9, 9, 9))[["jsdiv"]] <= log(2)
 
 # a coarser binning, and a larger floor that damps an empty bin
 drftpsi(ref, stats::rnorm(500, mean = 1), bins = 4)
-#>        psi      jsdiv 
-#> 0.69315439 0.08234528 
+#> ╭── Population stability index ──────────────────────────────────────────╮
+#> │   Samples  500 and 500 values                                          │
+#> │   Bins     4, on the reference's quantiles                             │
+#> │                                                                        │
+#> │   statistic  value                                                     │
+#> │   ---------  -------                                                   │
+#> │   psi        0.6932                                                    │
+#> │   jsdiv      0.08235                                                   │
+#> │                                                                        │
+#> │   PSI 0.6932: by the usual bands, a material shift.                    │
+#> │   The JS divergence is 11.9% of its largest possible value.            │
+#> │                                                                        │
+#> │   PSI below 0.1 is read as stable, 0.1 to 0.25 as worth a look, above  │
+#> │   0.25 as a material shift: heuristic bands with no null distribution, │
+#> │   which binning noise alone can cross on a few hundred rows. The JS    │
+#> │   divergence is bounded by log 2 (0.693).                              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 drftpsi(ref, stats::rnorm(500, mean = 1), eps = 0.01)
-#>       psi     jsdiv 
-#> 0.9232609 0.1061611 
+#> ╭── Population stability index ──────────────────────────────────────────╮
+#> │   Samples  500 and 500 values                                          │
+#> │   Bins     10, on the reference's quantiles                            │
+#> │                                                                        │
+#> │   statistic  value                                                     │
+#> │   ---------  ------                                                    │
+#> │   psi        0.9233                                                    │
+#> │   jsdiv      0.1062                                                    │
+#> │                                                                        │
+#> │   PSI 0.9233: by the usual bands, a material shift.                    │
+#> │   The JS divergence is 15.3% of its largest possible value.            │
+#> │                                                                        │
+#> │   PSI below 0.1 is read as stable, 0.1 to 0.25 as worth a look, above  │
+#> │   0.25 as a material shift: heuristic bands with no null distribution, │
+#> │   which binning noise alone can cross on a few hundred rows. The JS    │
+#> │   divergence is bounded by log 2 (0.693).                              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 try(drftpsi(ref, ref, bins = 1))
 #> Error : `bins` must be one whole number of at least 2

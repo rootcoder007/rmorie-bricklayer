@@ -27,7 +27,7 @@ later estimate cannot silently be run on a reordered or different table."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -321,23 +321,55 @@ stratum under <code>lonely = "fail"</code> is reported then.</p>
 <span class="r-in"><span><span class="va">reps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">replicate</a></span><span class="op">(</span><span class="fl">10</span>, <span class="va">d</span><span class="op">$</span><span class="va">w</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/tabulate.html" class="external-link">tabulate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">100</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu">svydes</span><span class="op">(</span><span class="va">d</span>, w <span class="op">=</span> <span class="st">"w"</span>, reps <span class="op">=</span> <span class="va">reps</span>, type <span class="op">=</span> <span class="st">"bootstrap"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">des</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Survey design: 100 respondents, weights summing to 10,175</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Variance: 10 replicate weights, bootstrap; scale 0.1, centred on the full-sample estimate</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Survey design</span> ────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Respondents         100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Sum of weights      10,175                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Variance            bootstrap replicate weights                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Replicates          10                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Scale               0.1                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Centring            on the full-sample estimate                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lonely PSUs         fail                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Degrees of freedom  9                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   svyest() and svycmp() use this design for every estimate: the weights │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   for the point estimate, the replicate weights for its standard error. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="co"># the same data as a stratified design, variance by linearization</span></span></span>
 <span class="r-in"><span><span class="fu">svydes</span><span class="op">(</span><span class="va">d</span>, w <span class="op">=</span> <span class="st">"w"</span>, strata <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Survey design: 100 respondents, weights summing to 10,175</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Variance: Taylor linearization, 2 strata, 100 PSUs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Survey design</span> ────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Respondents         100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Sum of weights      10,175                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Variance            Taylor linearization                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Strata              2                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   PSUs                100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lonely PSUs         fail                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Degrees of freedom  98                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   svyest() and svycmp() use this design for every estimate: the weights │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   for the point estimate, the strata and PSUs for its standard error.   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># delete-one jackknife replicates over ten groups of respondents</span></span></span>
 <span class="r-in"><span><span class="va">grp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">jk</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="kw">function</span><span class="op">(</span><span class="va">g</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">grp</span> <span class="op">==</span> <span class="va">g</span>, <span class="fl">0</span>, <span class="va">d</span><span class="op">$</span><span class="va">w</span> <span class="op">*</span> <span class="fl">10</span> <span class="op">/</span> <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">svydes</span><span class="op">(</span><span class="va">d</span>, w <span class="op">=</span> <span class="st">"w"</span>, reps <span class="op">=</span> <span class="va">jk</span>, type <span class="op">=</span> <span class="st">"jk1"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Survey design: 100 respondents, weights summing to 10,175</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Variance: 10 replicate weights, jackknife (JK1); scale 0.9, centred on the full-sample estimate</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Survey design</span> ────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Respondents         100                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Sum of weights      10,175                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Variance            jackknife (JK1)                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Replicates          10                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Scale               0.9                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Centring            on the full-sample estimate                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lonely PSUs         fail                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Degrees of freedom  9                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   svyest() and svycmp() use this design for every estimate: the weights │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   for the point estimate, the replicate weights for its standard error. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a weight column that does not exist</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">svydes</span><span class="op">(</span><span class="va">d</span>, w <span class="op">=</span> <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `weights` names a column `data` does not have: wt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `w` names a column `data` does not have: wt</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -87,32 +87,22 @@ jfly.uni-koeln.de/color
 ``` r
 blpal("okabe", 3)
 #> [1] "#0072B2" "#D55E00" "#009E73"
-old <- plotopt(palette = "grey", grid = FALSE)
-plotopt()
-#> $palette
-#> [1] "grey"
-#> 
-#> $grid
-#> [1] FALSE
-#> 
-#> $cex
-#> [1] 1
-#> 
-#> $las
-#> [1] 1
-#> 
-#> $bg
-#> [1] "white"
-#> 
-#> $panel
-#> [1] "#EEF1F6"
-#> 
+# plotopt() returns the options in force, so keep them before a change
+old <- plotopt()
+plotopt(palette = "grey", grid = FALSE)
 plotopt(palette = old$palette, grid = old$grid)
 
 # an interpolated sequential scale, shown as swatches
 cols <- blpal("sequential", 7)
-barplot(rep(1, 7), col = cols, border = NA, axes = FALSE, names.arg = cols, las = 2,
-        cex.names = 0.6)
+barplot(
+  rep(1, 7),
+  col = cols,
+  border = NA,
+  axes = FALSE,
+  names.arg = cols,
+  las = 2,
+  cex.names = 0.6
+)
 
 
 # the same palette in a base plot of your own

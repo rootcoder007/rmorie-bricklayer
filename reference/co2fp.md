@@ -194,52 +194,77 @@ Quantifying the carbon emissions of machine learning. arXiv:1910.09700.
 ``` r
 fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 fp$enekwh$total
-#> [1] 1.342127e-08
+#> [1] 2.684254e-08
 fp$co2eg
-#> [1] 1.220933e-06
+#> [1] 2.441866e-06
 fp$co2int$year
 #> [1] 2024
 fp$assumptions
 #> [1] "CPU power unknown: 85 W x 50% (codecarbon fallback)"
 #> [2] "memory charged: the machine's total 15.6 GB"        
 print(fp)
-#> Computation footprint (modelled): 0.001 s wall, 0.001 s CPU, utilisation 0.25 (process) on 4 cores
-#>   energy: 1.34e-08 kWh (cpu 1.18e-08, memory 1.62e-09)
-#>   CO2e:   1.22e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
-#>   assumed: CPU power unknown: 85 W x 50% (codecarbon fallback); memory charged: the machine's total 15.6 GB 
+#> ╭── Computation footprint (modelled) ─────────────────────────────────────────╮
+#> │   Time         0.002 s wall, 0.001 s CPU                                    │
+#> │   Utilisation  utilisation 0.12 (process) on 4 cores                        │
+#> │   Memory       15.6 GB                                                      │
+#> │   Energy       2.68e-08 kWh (cpu 2.36e-08, memory 3.23e-09)                 │
+#> │   CO2e         2.44e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)        │
+#> │   Source       Electricity Maps (2025). Canada 2024 Yearly Carbon           │
+#> │                Intensity Data (Version January 27, 2025). Electricity Maps  │
+#> │                (via Green Algorithms data v3.1)                             │
+#> │                                                                             │
+#> │   An estimate of the energy this computation used and the emissions of      │
+#> │   making it on the local grid; fpeqv() puts the grams in everyday terms.    │
+#> │                                                                             │
+#> │   assumed: CPU power unknown: 85 W x 50% (codecarbon fallback); memory      │
+#> │   charged: the machine's total 15.6 GB                                      │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 # wherever you are, offline: the location is detected and recorded
 co2fp(1 + 1, cpupwrw = 45, memgb = 8)$assumptions
 #> [1] "location WORLD via fallback, no location found in environment, time zone or locale"
 # the whole machine's utilisation, on codecarbon's machine curve
-co2fp(1 + 1, loc = "FR", usage = "machine", loadcur = "codecarbon",
-                  cpupwrw = 45, memgb = 8)$usagemode
+co2fp(
+  1 + 1,
+  loc = "FR",
+  usage = "machine",
+  loadcur = "codecarbon",
+  cpupwrw = 45,
+  memgb = 8
+)$usagemode
 #> [1] "machine"
-# a fixed utilisation and a data-centre PUE, with a carbon intensity given as a number
-fp2 <- co2fp(sum(sqrt(seq_len(2e5))), loc = 30, usage = 0.5,
-                         cpupwrw = 65, memgb = 16, pue = 1.67, meth = "model")
+# a fixed utilisation and a data-centre PUE, with a carbon intensity given as
+# a number
+fp2 <- co2fp(
+  sum(sqrt(seq_len(2e5))),
+  loc = 30,
+  usage = 0.5,
+  cpupwrw = 65,
+  memgb = 16,
+  pue = 1.67,
+  meth = "model"
+)
 fp2$enekwh
 #> $cpu
-#> [1] 1.507639e-08
+#> [1] 3.015278e-08
 #> 
 #> $memory
-#> [1] 2.764778e-09
+#> [1] 5.529556e-09
 #> 
 #> $total
-#> [1] 1.784117e-08
+#> [1] 3.568233e-08
 #> 
 fpeqv(fp2$co2eg)
-#> $carkm
-#> [1] 3.058486e-09
-#> 
-#> $treemon
-#> [1] 5.836805e-10
-#> 
-#> $sources
-#>                                                                  car 
-#> "175 gCO2/km, European passenger car (Green Algorithms context.csv)" 
-#>                                                                 tree 
-#>             "917 gCO2 per tree-month (Green Algorithms context.csv)" 
-#> 
+#> ╭── Footprint in everyday terms ────────────────────────────────────────╮
+#> │   Car travel   6.117e-09 km                                           │
+#> │   Tree uptake  1.167e-09 tree-months                                  │
+#> │                                                                       │
+#> │   The same emissions as driving a European passenger car this far, or │
+#> │   what this many trees take up in a month.                            │
+#> │                                                                       │
+#> │   car: 175 gCO2/km, European passenger car (Green Algorithms          │
+#> │   context.csv). tree: 917 gCO2 per tree-month (Green Algorithms       │
+#> │   context.csv).                                                       │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 # a bad argument is refused before the expression runs
 try(co2fp(Sys.sleep(10), pue = 0.9))
 #> Error : `pue` must be a single number >= 1

@@ -29,7 +29,7 @@ exptrnd(cases, n, dose = seq_along(cases) - 1L, conflvl = 0.95)
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the odds ratios' intervals (default 0.95).
 
 ## Value
 
@@ -57,12 +57,29 @@ McQuaid RJ, et al. (2017), see
 ## Examples
 
 ``` r
-# made-up counts by 0, 1 and 2 generations of attendance, to show the computation
+# made-up counts by 0, 1 and 2 generations of attendance, to show the
+# computation
 et <- exptrnd(cases = c(60, 95, 70), n = c(500, 520, 300))
 et
-#>   dose cases   n proportion  orratio    lower   upper
-#> 1    0    60 500  0.1200000 1.000000 1.000000 1.00000
-#> 2    1    95 520  0.1826923 1.639216 1.155582 2.32526
-#> 3    2    70 300  0.2333333 2.231884 1.526430 3.26337
+#> ╭── Odds by level of exposure, with the trend ────────────────────────────────╮
+#> │   Levels  3                                                                 │
+#> │   People  1,320                                                             │
+#> │   Cases   225                                                               │
+#> │   Trend   chi-square 17.86 on 1 df, p < 0.001                               │
+#> │                                                                             │
+#> │   dose  cases    n  proportion  orratio  interval                           │
+#> │   ----  -----  ---  ----------  -------  ------------                       │
+#> │      0     60  500      0.1200    1.000  [1.00, 1.00]                       │
+#> │      1     95  520      0.1827    1.639  [1.16, 2.33]                       │
+#> │      2     70  300      0.2333    2.232  [1.53, 3.26]                       │
+#> │                                                                             │
+#> │   At the highest level (2) the odds of a case are 2.232 [1.526, 3.263]      │
+#> │   times those at the lowest (0).                                            │
+#> │   The odds rise with exposure: the trend test rejects a flat trend (p <     │
+#> │   0.001, below 0.05).                                                       │
+#> │                                                                             │
+#> │   orratio: the odds of a case at each level over the odds at the lowest     │
+#> │   (Woolf's interval); the trend test asks whether they rise with level.     │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(et)
 ```

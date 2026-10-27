@@ -15,7 +15,7 @@ a re-released extract."><meta property="og:image" content="https://rootcoder007.
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,37 +138,32 @@ untouched.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of class <code>bricklayer_drift</code> with elements:</p><dl><dt><code>columns</code></dt>
-<dd><p>a data frame, one row per shared column, with
-<code>column</code>, <code>type</code> (<code>"numeric"</code>, <code>"date"</code>, <code>"categorical"</code>
-or
+<dd><p>a data frame, one row per shared column, with <code>column</code>,
+<code>type</code> (<code>"numeric"</code>, <code>"date"</code>, <code>"categorical"</code> or
 <code>"identifier"</code>), <code>statistic</code> (KS \(D\) or chi-square), <code>p_value</code>,
-<code>psi</code>, <code>jsdiv</code>, <code>unseen_share</code> (share of current values the
-reference never had; categorical and identifier columns only),
-<code>drifted</code> (logical, <code>NA</code> when no test applies) and <code>note</code>
-(why a column was not tested, or <code>""</code>);</p></dd>
+<code>psi</code>, <code>jsdiv</code>, <code>unseen_share</code> (share of current values the reference
+never had; categorical and identifier columns only), <code>drifted</code> (logical, <code>NA</code>
+when no test applies) and <code>note</code> (why a column was not tested, or <code>""</code>);</p></dd>
 
 <dt><code>added</code>, <code>removed</code></dt>
 <dd><p>character vectors of column names;</p></dd>
 
 <dt><code>nref</code>, <code>ncur</code></dt>
 <dd><p>row counts;</p></dd>
-
-<dt><code>alpha</code>, <code>psithr</code>, <code>psiminn</code></dt>
+ <dt><code>alpha</code>, <code>psithr</code>,
+<code>psiminn</code></dt>
 <dd><p>the settings used;</p></dd>
-
-<dt><code>bands</code></dt>
-<dd><p>the PSI bands the plots and reports colour by:
-<code>warn</code> (0.1, or <code>psithr</code> when lower) and <code>fail</code> (<code>psithr</code>);</p></dd>
-
-<dt><code>summ</code></dt>
+ <dt><code>bands</code></dt>
+<dd><p>the PSI bands the plots and
+reports colour by: <code>warn</code> (0.1, or <code>psithr</code> when lower) and <code>fail</code>
+(<code>psithr</code>);</p></dd>
+ <dt><code>summ</code></dt>
 <dd><p>one binned summary per shared column, for
 <a href="plot-methods.html">plot()</a>, <code><a href="drfthtml.html">drfthtml()</a></code> and
-<code><a href="drftapp.html">drftapp()</a></code>: missing shares,
-sizes, summary statistics or the ten largest categories, the PSI bins
-with each bin's term of the index, a histogram and first-digit counts.
-Never the rows;</p></dd>
-
-<dt><code>anydrft</code></dt>
+<code><a href="drftapp.html">drftapp()</a></code>: missing shares, sizes, summary statistics or the ten
+largest categories, the PSI bins with each bin's term of the index, a
+histogram and first-digit counts. Never the rows;</p></dd>
+ <dt><code>anydrft</code></dt>
 <dd><p>logical.</p></dd>
 
 
@@ -242,22 +237,28 @@ check, which this complements rather than replaces.</p></div>
 <span class="r-in"><span><span class="va">moved</span><span class="op">$</span><span class="va">size</span> <span class="op">&lt;-</span> <span class="va">moved</span><span class="op">$</span><span class="va">size</span> <span class="op">*</span> <span class="fl">3</span></span></span>
 <span class="r-in"><span><span class="va">moved</span><span class="op">$</span><span class="va">grade</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"z"</span></span></span>
 <span class="r-in"><span><span class="fu">cpsdrft</span><span class="op">(</span><span class="va">ref</span>, <span class="va">moved</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Capsule drift report ──────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ✗ DRIFT DETECTED</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   reference rows  300</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   current rows    300</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   columns tested  3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   alpha           0.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Per-column tests ──────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      column        type  stat      p   psi</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    ✗   size     numeric 0.743 &lt;2e-16 4.299</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    ✗  grade categorical   121 &lt;2e-16 4.381</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    ✓  value     numeric  0.05  0.847 0.092</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes an interactive report</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Capsule drift report</span> ─────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Verdict          ✗ DRIFT DETECTED                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Reference rows   300                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Current rows     300                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns tested   3                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns drifted  2                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Alpha            0.01                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Per-column tests                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      column  type             stat        p    psi                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -  ------  -----------  --------  -------  -----                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #BB0000;">✖</span>  size    numeric        0.7433  &lt; 0.001  4.299                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #BB0000;">✖</span>  grade   categorical  120.9261  &lt; 0.001  4.381                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>  value   numeric        0.0500    0.847  0.092                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2 of 3 columns changed between the reference and the current table by │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   more than chance at alpha 0.01; check those columns before trusting   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   results built on the reference.                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   an interactive report.                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The PSI is always reported as an effect size, but on a sample this</span></span></span>
 <span class="r-in"><span><span class="co"># small it is not allowed to raise the flag by itself -- binning noise</span></span></span>

@@ -15,7 +15,7 @@ analyses report it next to the burden."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,8 +107,10 @@ non-negative.</p>
 calls an index below -0.01 a burden on the poor, above 0.01 a burden on
 the rich, and anything between an even distribution. Refusals: column
 names that are not single strings or not in <code>data</code>; fewer than 2
-complete rows; a non-numeric or infinite value; a negative exposure; and
-a mean exposure of zero (the index divides by it). Income only needs an
+complete rows; a non-numeric or infinite value; a negative exposure; an
+income that takes one value only (no income gradient, so the index is
+undefined); and a mean exposure of zero (the index divides by it). Income
+only needs an
 order: an amount, a quintile number or a rank all give the same index.</p>
     </div>
     <div class="section level2">

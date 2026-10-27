@@ -19,7 +19,7 @@ rndbytes() directly."><meta property="og:image" content="https://rootcoder007.gi
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,8 +141,8 @@ check does and does not cover.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number Generation
-Using Deterministic Random Bit Generators, section 10.2.1.
+    <p>NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number
+Generation Using Deterministic Random Bit Generators, section 10.2.1.
 <a href="https://doi.org/10.6028/NIST.SP.800-90Ar1" class="external-link">doi:10.6028/NIST.SP.800-90Ar1</a></p>
 <p>NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).<br><a href="https://doi.org/10.6028/NIST.FIPS.197-upd1" class="external-link">doi:10.6028/NIST.FIPS.197-upd1</a></p>
     </div>
@@ -155,13 +155,15 @@ Using Deterministic Random Bit Generators, section 10.2.1.
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># NIST's rng.c, as the post-quantum known-answer files use it: vector 0's seed</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># NIST's rng.c, as the post-quantum known-answer files use it: vector 0's</span></span></span>
+<span class="r-in"><span><span class="co"># seed</span></span></span>
 <span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">drbgnew</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">47</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="drbggen.html">drbggen</a></span><span class="op">(</span><span class="va">d</span>, <span class="fl">48</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 06 15 50 23 4d 15 8c 5e c9 55 95 fe 04 ef 7a 25 76 7f 2e 24 cc 2b c4 79 d0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [26] 9d 86 dc 9a bc fd e7 05 6a 8c 26 6f 9e f9 7e d0 85 41 db d2 e1 ff a1</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># the same inputs give the same bytes; a personalization string separates streams</span></span></span>
+<span class="r-in"><span><span class="co"># the same inputs give the same bytes; a personalization string separates</span></span></span>
+<span class="r-in"><span><span class="co"># streams</span></span></span>
 <span class="r-in"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu">drbgnew</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">48</span><span class="op">)</span>, person <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"session 1"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">drbgnew</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">48</span><span class="op">)</span>, person <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"session 2"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="drbggen.html">drbggen</a></span><span class="op">(</span><span class="va">a</span>, <span class="fl">16</span><span class="op">)</span>, <span class="fu"><a href="drbggen.html">drbggen</a></span><span class="op">(</span><span class="va">b</span>, <span class="fl">16</span><span class="op">)</span><span class="op">)</span></span></span>

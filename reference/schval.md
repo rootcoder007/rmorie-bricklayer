@@ -76,7 +76,12 @@ ok
 #> [1] FALSE
 
 # rules work the same way
-rules <- list(rul("id_positive", function(v) v > 0, col = "id", sev = "fatal"))
+rules <- list(rul(
+  "id_positive",
+  function(v) v > 0,
+  col = "id",
+  sev = "fatal"
+))
 try(schval(data.frame(id = c(1, -2)), rules))
 #> Error : Rule 'id_positive' failed (1 of 2 rows)
 

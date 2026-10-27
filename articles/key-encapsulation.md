@@ -197,9 +197,17 @@ sz <- rbind(
   "HQC-5" = hqcsz(5L)[c("public", "ciphertext")]
 )
 op <- par(mar = c(7, 5, 3, 1))
-barplot(t(sz), beside = TRUE, col = blpal()[1:2], ylab = "bytes", las = 2, cex.names = 0.8,
-        legend.text = c("public key", "ciphertext"), args.legend = list(x = "topleft", bty = "n"),
-        main = "Key and ciphertext sizes")
+barplot(
+  t(sz),
+  beside = TRUE,
+  col = blpal()[1:2],
+  ylab = "bytes",
+  las = 2,
+  cex.names = 0.8,
+  legend.text = c("public key", "ciphertext"),
+  args.legend = list(x = "topleft", bty = "n"),
+  main = "Key and ciphertext sizes"
+)
 ```
 
 ![](key-encapsulation_files/figure-html/key-encapsulation-kem-sizes-plot-1.png)

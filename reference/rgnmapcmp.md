@@ -73,30 +73,67 @@ Errors: either input not a data frame or without `unit`; a column in
 ``` r
 pub <- data.frame(
   inst = c("North Jail", "South Jail"),
-  cd = c("3557", "3520"), stringsAsFactors = FALSE
+  cd = c("3557", "3520"),
+  stringsAsFactors = FALSE
 )
 obs <- pub
 rgnmapcmp(pub, obs, "inst")
-#>   column cells mismatched first
-#> 1   rows     2          0      
-#> 2     cd     2          0      
+#> ╭── Published and rebuilt region maps compared ───────────────────────────╮
+#> │   Columns compared  1                                                   │
+#> │   Mismatched cells  0                                                   │
+#> │   Verdict           the maps agree                                      │
+#> │                                                                         │
+#> │   column  cells  mismatched  first                                      │
+#> │   ------  -----  ----------  -----                                      │
+#> │   rows        2           0                                             │
+#> │   cd          2           0                                             │
+#> │                                                                         │
+#> │   The rows line counts units present on one side only; each other line  │
+#> │   compares one column over the shared units. first writes out the first │
+#> │   disagreement, and 0 mismatched throughout is agreement.               │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a changed assignment is reported with the unit that moved
 obs$cd[2] <- "3521"
 rgnmapcmp(pub, obs, "inst")
-#>   column cells mismatched                                       first
-#> 1   rows     2          0                                            
-#> 2     cd     2          1 South Jail: published 3520, recomputed 3521
+#> ╭── Published and rebuilt region maps compared ────────────────────────────╮
+#> │   Columns compared  1                                                    │
+#> │   Mismatched cells  1                                                    │
+#> │   Verdict           the maps disagree                                    │
+#> │                                                                          │
+#> │   column  cells  mismatched  first                                       │
+#> │   ------  -----  ----------  ------------------------------------------- │
+#> │   rows        2           0                                              │
+#> │   cd          2           1  South Jail: published 3520, recomputed 3521 │
+#> │                                                                          │
+#> │   The rows line counts units present on one side only; each other line   │
+#> │   compares one column over the shared units. first writes out the first  │
+#> │   disagreement, and 0 mismatched throughout is agreement.                │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 
 # a unit on one side only, and a coordinate that only moved by rounding noise
 pub$lat <- c(44.39, 43.65)
-obs2 <- data.frame(inst = c("North Jail", "Hill Jail"), cd = c("3557", "3506"),
-                   lat = c(44.39 + 1e-12, 45.1))
+obs2 <- data.frame(
+  inst = c("North Jail", "Hill Jail"),
+  cd = c("3557", "3506"),
+  lat = c(44.39 + 1e-12, 45.1)
+)
 rgnmapcmp(pub, obs2, "inst", cols = c("cd", "lat"))
-#>   column cells mismatched                      first
-#> 1   rows     3          2 published only: South Jail
-#> 2     cd     1          0                           
-#> 3    lat     1          0                           
+#> ╭── Published and rebuilt region maps compared ───────────────────────────╮
+#> │   Columns compared  2                                                   │
+#> │   Mismatched cells  2                                                   │
+#> │   Verdict           the maps disagree                                   │
+#> │                                                                         │
+#> │   column  cells  mismatched  first                                      │
+#> │   ------  -----  ----------  --------------------------                 │
+#> │   rows        3           2  published only: South Jail                 │
+#> │   cd          1           0                                             │
+#> │   lat         1           0                                             │
+#> │                                                                         │
+#> │   The rows line counts units present on one side only; each other line  │
+#> │   compares one column over the shared units. first writes out the first │
+#> │   disagreement, and 0 mismatched throughout is agreement.               │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a compared column must be in both maps
 try(rgnmapcmp(pub, obs, "inst", cols = "lat"))

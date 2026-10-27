@@ -11,7 +11,7 @@ counterpart of janitor::get_dupes()."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ counterpart of <code>janitor::get_dupes()</code>.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">duprows</span><span class="op">(</span><span class="va">data</span>, cols <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">duprows</span><span class="op">(</span><span class="va">data</span>, cols <span class="op">=</span> <span class="cn">NULL</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -68,12 +68,18 @@ counterpart of <code>janitor::get_dupes()</code>.</p>
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>A data frame.</p></dd>
+<dd><p>A data frame whose rows are checked for duplicates.</p></dd>
 
 
 <dt id="arg-cols">cols<a class="anchor" aria-label="anchor" href="#arg-cols"></a></dt>
 <dd><p>Character vector of the columns defining a duplicate, or
 <code>NULL</code> (the default) for all of them.</p></dd>
+
+
+<dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
+<dd><p>Logical: <code>TRUE</code> skips the boxed count of duplicate rows
+and groups, which is otherwise sent through <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code>; default
+<code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -92,7 +98,7 @@ or a re-release appended rather than replaced, both of which are visible
 only once the offending rows are in front of you.</p>
 <p>Two rows are duplicates when their values, converted to text, are equal
 in every column of <code>cols</code>; two <code>NA</code>s are equal. Columns are
-taken by position when <code>columns = NULL</code>, so a table with repeated
+taken by position when <code>cols = NULL</code>, so a table with repeated
 column names can still be inspected. Errors when <code>data</code> is not a data
 frame, a named column does not exist, or a named column's name is shared
 by two columns.</p>
@@ -113,6 +119,18 @@ by two columns.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Duplicated on every column.</span></span></span>
 <span class="r-in"><span><span class="fu">duprows</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Duplicate rows</span> ───────────────────────────────────────────────────────────╮</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Table           6 rows, 2 columns                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Compared on     every column                                              │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Duplicate rows  4                                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Groups          2                                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Extra copies    2                                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   4 rows fall in 2 groups of identical rows: dropping the repeats would     │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   remove 2.                                                                 │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   quiet = TRUE, or suppressMessages(), silences this summary.               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   id value dupe_count</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1  2     b          2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2  2     b          2</span>
@@ -121,6 +139,18 @@ by two columns.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Duplicated on the identifier alone, which catches more.</span></span></span>
 <span class="r-in"><span><span class="fu">duprows</span><span class="op">(</span><span class="va">df</span>, <span class="st">"id"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Duplicate rows</span> ───────────────────────────────────────────────────────────╮</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Table           6 rows, 2 columns                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Compared on     id                                                        │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Duplicate rows  5                                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Groups          2                                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Extra copies    3                                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   5 rows fall in 2 groups of identical rows: dropping the repeats would     │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   remove 3.                                                                 │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   quiet = TRUE, or suppressMessages(), silences this summary.               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   id value dupe_count</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1  2     b          2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2  2     b          2</span>
@@ -130,6 +160,17 @@ by two columns.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># No duplicates gives zero rows, not an error.</span></span></span>
 <span class="r-in"><span><span class="fu">duprows</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Duplicate rows</span> ─────────────────────────────────────────────╮</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Table           3 rows, 1 column                            │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Compared on     every column                                │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Duplicate rows  0                                           │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Groups          0                                           │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Extra copies    0                                           │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   No two rows are the same on these columns.                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   quiet = TRUE, or suppressMessages(), silences this summary. │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────╯</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] x          dupe_count</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;0 rows&gt; (or 0-length row.names)</span>
 <span class="r-in"><span></span></span>

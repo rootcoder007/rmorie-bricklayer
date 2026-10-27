@@ -27,8 +27,12 @@ group), the reference group, and the odds ratios a report states.
 
 ``` r
 
-tab <- matrix(c(9000, 120, 2000, 220, 1500, 60, 4000, 1), ncol = 2, byrow = TRUE,
-              dimnames = list(c("White", "Black", "Other", "Unknown"), c("no", "yes")))
+tab <- matrix(
+  c(9000, 120, 2000, 220, 1500, 60, 4000, 1),
+  ncol = 2,
+  byrow = TRUE,
+  dimnames = list(c("White", "Black", "Other", "Unknown"), c("no", "yes"))
+)
 tab
 #>           no yes
 #> White   9000 120
@@ -36,8 +40,11 @@ tab
 #> Other   1500  60
 #> Unknown 4000   1
 ref <- 120 / 9000
-orchk(tab, "White", c(Black = 220 / 2000 / ref, Other = 60 / 1500 / ref,
-                                 Unknown = 1 / 4000 / ref))$verdict
+orchk(
+  tab,
+  "White",
+  c(Black = 220 / 2000 / ref, Other = 60 / 1500 / ref, Unknown = 1 / 4000 / ref)
+)$verdict
 #> [1] "the reported odds ratios follow from the table as labelled"
 ```
 
@@ -93,9 +100,21 @@ flags the columns that still look like codes.
 
 raw <- data.frame(race = c(1, 2, 2, 3, 1), stringsAsFactors = FALSE)
 audcats(data.frame(race = factor(raw$race)))
-#> Categorical audit: 1 column(s)
-#>   race             factor     3 level(s), reference ‘1’
-#>     !! HAZARD: all labels numeric-looking (1,2,3...): likely imported CODES whose value labels were lost; as.numeric() on this column returns level INDICES, not data
+#> ╭── Categorical audit ────────────────────────────────────────────────────────╮
+#> │   Columns  1 column(s)                                                      │
+#> │   Hazards  1 in 1 column(s)                                                 │
+#> │                                                                             │
+#> │   column  storage  levels  reference                                        │
+#> │   ------  -------  ------  ---------                                        │
+#> │   race    factor        3  ‘1’                                              │
+#> │                                                                             │
+#> │   Each column's reference level is the group every model contrast is        │
+#> │   measured against: check it is the one you meant.                          │
+#> │                                                                             │
+#> │   !! HAZARD (race): all labels numeric-looking (1,2,3...): likely imported  │
+#> │   CODES whose value labels were lost; as.numeric() on this column returns   │
+#> │   level INDICES, not data                                                   │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 race <- deccodes(raw$race, c("1" = "White", "2" = "Black", "3" = "Indigenous"))
 race
 #> [1] "White"      "Black"      "Black"      "Indigenous" "White"     
@@ -236,7 +255,11 @@ labels, in the order R sorts them, assigned to the codes by position.
 
 f <- factor(c(1, 2, 3, 4, 1))
 levels(f) <- sort(unname(code_book))
-data.frame(code = c(1, 2, 3, 4, 1), became = as.character(f))
+data.frame(
+  code = c(1, 2, 3, 4, 1),
+  became = as.character(f),
+  stringsAsFactors = FALSE
+)
 #>   code  became
 #> 1    1   Black
 #> 2    2   Other
@@ -294,17 +317,34 @@ tries the known ones.
 
 ``` r
 
-observed <- c(White = "Black", Black = "Other", Other = "Unknown", Unknown = "White")
+observed <- c(
+  White = "Black",
+  Black = "Other",
+  Other = "Unknown",
+  Unknown = "White"
+)
 rlblfrns(code_book, observed)
-#> Mechanism(s) reproducing the observed permutation:
-#>   * labels sorted alphabetically, assigned by code position
-#>       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White
-#>   * labels sorted case-insensitively, assigned by code position
-#>       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White
-#>   * rotation by 1 position(s)
-#>       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White
-#> 
-#> The observed permutation is reproduced EXACTLY by: labels sorted alphabetically, assigned by code position; labels sorted case-insensitively, assigned by code position; rotation by 1 position(s). No import routine (haven, foreign, pandas, pyreadstat) reorders value labels; each carries them keyed by code. A transfer fault does not select the sort order of the labels. The step that did this was a positional relabel in the analysis, and it is reproducible from the code book alone.
+#> ╭── Relabelling forensics ────────────────────────────────────────────────────╮
+#> │   Mechanisms tried  8                                                       │
+#> │   Reproducing       3                                                       │
+#> │                                                                             │
+#> │   The observed permutation is reproduced EXACTLY by: labels sorted          │
+#> │   alphabetically, assigned by code position; labels sorted                  │
+#> │   case-insensitively, assigned by code position; rotation by 1              │
+#> │   position(s). No import routine (haven, foreign, pandas, pyreadstat)       │
+#> │   reorders value labels; each carries them keyed by code. A transfer fault  │
+#> │   does not select the sort order of the labels. The step that did this was  │
+#> │   a positional relabel in the analysis, and it is reproducible from the     │
+#> │   code book alone.                                                          │
+#> │                                                                             │
+#> │   Mechanism(s) reproducing the observed permutation:                        │
+#> │   * labels sorted alphabetically, assigned by code position                 │
+#> │       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White    │
+#> │   * labels sorted case-insensitively, assigned by code position             │
+#> │       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White    │
+#> │   * rotation by 1 position(s)                                               │
+#> │       White -> Black, Black -> Other, Other -> Unknown, Unknown -> White    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 No import routine in R or Python (haven, foreign, pandas, pyreadstat)
@@ -325,11 +365,20 @@ the hundreds.
 
 ``` r
 
-odds_vs_white <- function(t) (t[, "yes"] / t[, "no"]) / (t["White", "yes"] / t["White", "no"])
+odds_vs_white <- function(t) {
+  (t[, "yes"] / t[, "no"]) / (t["White", "yes"] / t["White", "no"])
+}
 r <- rbind(correct = odds_vs_white(tab), rotated = odds_vs_white(rotated))[, -1]
-barplot(r, beside = TRUE, log = "y", col = blpal()[c(2, 1)], ylab = "odds ratio vs White (log scale)",
-        legend.text = c("correct labels", "labels rotated one place"),
-        args.legend = list(x = "topleft", bty = "n"), main = "Same counts, rotated labels")
+barplot(
+  r,
+  beside = TRUE,
+  log = "y",
+  col = blpal()[c(2, 1)],
+  ylab = "odds ratio vs White (log scale)",
+  legend.text = c("correct labels", "labels rotated one place"),
+  args.legend = list(x = "topleft", bty = "n"),
+  main = "Same counts, rotated labels"
+)
 #> Warning in yinch(0.1): y log scale: yinch() is nonsense
 abline(h = 1, lty = 2)
 ```

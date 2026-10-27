@@ -172,11 +172,11 @@ does not cover.
 ## Examples
 
 ``` r
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-# one-time index record out of your configuration directory; leave the default in use
-# Symmetric: one shared secret.
-sig <- cpssign("sha256:abc123", key = "shared-secret",
-                    scheme = "hmac")
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+# one-time index record out of your configuration directory; leave the
+# default in use Symmetric: one shared secret.
+sig <- cpssign("sha256:abc123", key = "shared-secret", scheme = "hmac")
 cpsvrf("sha256:abc123", sig, "shared-secret")
 #> [1] TRUE
 cpsvrf("sha256:TAMPERED", sig, "shared-secret")

@@ -29,7 +29,7 @@ the last column, and the settings in an italic line under the table."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,10 +111,10 @@ text instead of writing it.</p></dd>
 
 
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
-<dd><p>Integer scalar or <code>NULL</code>: decimal places for the percent
-columns. For the CSV, TSV and JSON writers <code>NULL</code>, the default, writes them
-unrounded, which is what a downstream calculation wants; give a number for
-a figure meant to be read. For <code>yoymd()</code> the default is <code>1</code>.</p></dd>
+<dd><p>A whole number from 0 to 15, or <code>NULL</code>: decimal places for the
+percent columns. For the CSV, TSV and JSON writers <code>NULL</code>, the default,
+writes them unrounded, which is what a downstream calculation wants; give a
+number for a figure meant to be read. For <code>yoymd()</code> the default is <code>1</code>.</p></dd>
 
 
 <dt id="arg-na">na<a class="anchor" aria-label="anchor" href="#arg-na"></a></dt>
@@ -137,7 +137,7 @@ lines; default <code>"#"</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Ignored.</p></dd>
+<dd><p>Ignored: what <code><a href="yoywr.html">yoywr()</a></code> passes on for its HTML and PDF writers.</p></dd>
 
 
 <dt id="arg-pretty">pretty<a class="anchor" aria-label="anchor" href="#arg-pretty"></a></dt>

@@ -15,7 +15,8 @@ trchlthgap(
   lifeexp = indiex("lifeexp"),
   infmort = indiex("infantmort"),
   suiide = indiex("suicide"),
-  ref = "Non-Indigenous"
+  ref = "Non-Indigenous",
+  agetot = NULL
 )
 ```
 
@@ -33,17 +34,26 @@ trchlthgap(
 
 - infmort:
 
-  Infant mortality (default `indiex("infmort")`, table 17-10-0161), or
-  `NULL`.
+  Infant mortality (default `indiex("infantmort")`, table 17-10-0161),
+  or `NULL`.
 
 - suiide:
 
-  Suicidal thoughts (default `indiex("suiide")`, table 41-10-0021), or
-  `NULL`.
+  Suicidal thoughts (default `indiex("suicide")`, table 41-10-0021), or
+  `NULL`. The name is kept as it was first published; it is the
+  suicidal-ideation table.
 
 - ref:
 
   The reference group's label (default `"Non-Indigenous"`).
+
+- agetot:
+
+  The label of the all-ages row in the `age` column, one string for both
+  tables or two (`health`, then `suiide`). Default `NULL`: Statistics
+  Canada's `"Total, 18 years and over"` and
+  `"Total, 15 years and over"`. A table of your own with no `age` column
+  is used whole.
 
 ## Value
 
@@ -109,46 +119,77 @@ g[g$group == "Inuit", c("indicator", "measure", "period", "disratio",
                         "lower",
                         "upper")]
 #>                                      indicator
+#> 1                                mental health
+#> 2                                mental health
 #> 3                                mental health
-#> 6                                mental health
-#> 9                                mental health
-#> 12                               mental health
-#> 15                                  addictions
-#> 18                                  addictions
-#> 21                            chronic diseases
-#> 24                            chronic diseases
-#> 27                            chronic diseases
-#> 30                            chronic diseases
-#> 33 availability of appropriate health services
-#> 35                             life expectancy
-#> 41                            infant mortality
+#> 4                                mental health
+#> 5                                   addictions
+#> 6                                   addictions
+#> 7                             chronic diseases
+#> 8                             chronic diseases
+#> 9                             chronic diseases
+#> 10                            chronic diseases
+#> 11 availability of appropriate health services
+#> 12                             life expectancy
+#> 13                            infant mortality
 #>                                                                measure
-#> 3                      Perceived mental health, very good or excellent
-#> 6                                                        Mood disorder
-#> 9                                                     Anxiety disorder
-#> 12 Perceived life stress, most days quite a bit or extremely stressful
-#> 15                                                      Heavy drinking
-#> 18                                 Current smoker, daily or occasional
-#> 21                    At least one underlying chronic health condition
-#> 24                                                            Diabetes
-#> 27                                                 High blood pressure
-#> 30                                                           Arthritis
-#> 33                                   Has a regular healthcare provider
-#> 35                                            Life expectancy at birth
-#> 41                                               Infant mortality rate
+#> 1                      Perceived mental health, very good or excellent
+#> 2                                                        Mood disorder
+#> 3                                                     Anxiety disorder
+#> 4  Perceived life stress, most days quite a bit or extremely stressful
+#> 5                                                       Heavy drinking
+#> 6                                  Current smoker, daily or occasional
+#> 7                     At least one underlying chronic health condition
+#> 8                                                             Diabetes
+#> 9                                                  High blood pressure
+#> 10                                                           Arthritis
+#> 11                                   Has a regular healthcare provider
+#> 12                                            Life expectancy at birth
+#> 13                                               Infant mortality rate
 #>       period  disratio     lower     upper
-#> 3  2019/2022 1.2866109 1.1232126 1.4737794
-#> 6  2019/2022 1.4081633 0.9896701 2.0036210
-#> 9  2019/2022 1.4403670 1.0818938 1.9176161
-#> 12 2019/2022 0.9906103 0.7669202 1.2795449
-#> 15 2019/2022 1.4293478 1.1542808 1.7699638
-#> 18 2019/2022 3.7099237 3.2557968 4.2273933
-#> 21 2019/2022 1.2389163 1.0779379 1.4239350
-#> 24 2019/2022 0.7875000 0.5142662 1.2059052
-#> 27 2019/2022 0.7329843 0.5776288 0.9301232
-#> 30 2019/2022 0.7079208 0.5406707 0.9269078
-#> 33 2019/2022 1.5782689 1.3845078 1.7991467
-#> 35 2016/2021 1.1818940 1.1636936 1.2003791
-#> 41 2014/2016 3.2142857 2.0315414 5.0856128
+#> 1  2019/2022 1.2866109 1.1232126 1.4737794
+#> 2  2019/2022 1.4081633 0.9896701 2.0036210
+#> 3  2019/2022 1.4403670 1.0818938 1.9176161
+#> 4  2019/2022 0.9906103 0.7669202 1.2795449
+#> 5  2019/2022 1.4293478 1.1542808 1.7699638
+#> 6  2019/2022 3.7099237 3.2557968 4.2273933
+#> 7  2019/2022 1.2389163 1.0779379 1.4239350
+#> 8  2019/2022 0.7875000 0.5142662 1.2059052
+#> 9  2019/2022 0.7329843 0.5776288 0.9301232
+#> 10 2019/2022 0.7079208 0.5406707 0.9269078
+#> 11 2019/2022 1.5782689 1.3845078 1.7991467
+#> 12 2016/2021 1.1818940 1.1636936 1.2003791
+#> 13 2014/2016 3.2142857 2.0315414 5.0856128
 plot(g)
+
+
+# your own table: made-up life expectancies with their limits, in the
+# layout of indiex("lifeexp"); the tables you do not have are NULL
+le <- data.frame(
+  period = "2017/2019",
+  group = c("First Nations", "Inuit", "Non-Indigenous"),
+  estimate = c(74.2, 70.9, 81.8),
+  lower = c(73.6, 69.1, 81.6),
+  upper = c(74.8, 72.7, 82.0),
+  quality = "ok"
+)
+trchlthgap(health = NULL, lifeexp = le, infmort = NULL, suiide = NULL)
+#> ╭── Truth and Reconciliation Call 19: health gaps ───────────────────────╮
+#> │   Measures       1                                                     │
+#> │   Groups         First Nations; Inuit                                  │
+#> │   Periods        2017/2019                                             │
+#> │   Clearly worse  2 of 2 gaps (interval above 1)                        │
+#> │                                                                        │
+#> │   life expectancy: Life expectancy at birth (2017/2019)                │
+#> │   group          estimate  refest  disratio  interval      worse       │
+#> │   -------------  --------  ------  --------  ------------  -----       │
+#> │   First Nations     74.20   81.80     1.102  [1.09, 1.11]  yes         │
+#> │   Inuit             70.90   81.80     1.154  [1.12, 1.18]  yes         │
+#> │                                                                        │
+#> │   disratio is the disparity ratio, turned so that above 1 is worse for │
+#> │   the group than for the reference (refest).                           │
+#> │                                                                        │
+#> │   Call 19 asks for measurable goals to close the gaps in health        │
+#> │   outcomes; Call 55 for annual reports on progress.                    │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

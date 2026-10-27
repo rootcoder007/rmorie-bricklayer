@@ -112,17 +112,20 @@ df <- data.frame(
 
 sch <- infsch(df)
 sch
-#> ── Inferred schema ───────────────────────────────────────────────
-#>   columns         4
-#>   rows            90 to 111
-#>   value sets      1
-#>   numeric ranges  2
-#> 
-#>   id                   integer    max NA  10.0%  [ -8.9, 109.9]
-#>   score                numeric    max NA  10.0%  [-0.8446,  10.9]
-#>   grade                character  max NA  10.0%  a, b, c
-#>   note                 character  max NA  10.0%  – free
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Inferred schema ──────────────────────────────────────────────────────────╮
+#> │   Columns         4                                                         │
+#> │   Rows            90 to 111                                                 │
+#> │   Value sets      1                                                         │
+#> │   Numeric ranges  2                                                         │
+#> │                                                                             │
+#> │   What later extracts must look like to pass valsch(): these columns and    │
+#> │   types, missingness at most as shown, values inside these sets.            │
+#> │                                                                             │
+#> │   id                   integer    max NA  10.0%  [ -8.9, 109.9]             │
+#> │   score                numeric    max NA  10.0%  [-0.8446,  10.9]           │
+#> │   grade                character  max NA  10.0%  a, b, c                    │
+#> │   note                 character  max NA  10.0%  – free                     │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # The categorical column has its levels pinned; the free-text one does
 # not, because it exceeds max_levels.

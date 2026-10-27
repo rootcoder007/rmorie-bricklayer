@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -146,7 +146,18 @@ lists:</p>
 <p>Or, without signing in, from Rajeev Dehejia’s own pages
 (whitespace-separated text):</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"treat"</span>, <span class="st">"age"</span>, <span class="st">"educ"</span>, <span class="st">"black"</span>, <span class="st">"hisp"</span>, <span class="st">"married"</span>, <span class="st">"nodegree"</span>, <span class="st">"re74"</span>, <span class="st">"re75"</span>, <span class="st">"re78"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"treat"</span>,</span>
+<span>  <span class="st">"age"</span>,</span>
+<span>  <span class="st">"educ"</span>,</span>
+<span>  <span class="st">"black"</span>,</span>
+<span>  <span class="st">"hisp"</span>,</span>
+<span>  <span class="st">"married"</span>,</span>
+<span>  <span class="st">"nodegree"</span>,</span>
+<span>  <span class="st">"re74"</span>,</span>
+<span>  <span class="st">"re75"</span>,</span>
+<span>  <span class="st">"re78"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">nber</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">dest</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">f</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="../reference/bldl.html">bldl</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"https://users.nber.org/~rdehejia/data/"</span>, <span class="va">f</span><span class="op">)</span>, <span class="va">dest</span><span class="op">)</span></span>
@@ -218,8 +229,8 @@ observational sample:</p>
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"educ"</span>, <span class="st">"black"</span>, <span class="st">"hisp"</span>, <span class="st">"married"</span>, <span class="st">"nodegree"</span>, <span class="st">"re74"</span>, <span class="st">"re75"</span><span class="op">)</span></span>
 <span><span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">tr</span>, <span class="va">ct</span><span class="op">)</span></span>
 <span><span class="va">obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">tr</span>, <span class="va">ps</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">tr</span><span class="op">$</span><span class="va">re78</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ct</span><span class="op">$</span><span class="va">re78</span><span class="op">)</span>                 <span class="co"># the experiment</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">tr</span><span class="op">$</span><span class="va">re78</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ps</span><span class="op">$</span><span class="va">re78</span><span class="op">)</span>                 <span class="co"># treated against the PSID, unadjusted</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">tr</span><span class="op">$</span><span class="va">re78</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ct</span><span class="op">$</span><span class="va">re78</span><span class="op">)</span> <span class="co"># the experiment</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">tr</span><span class="op">$</span><span class="va">re78</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ps</span><span class="op">$</span><span class="va">re78</span><span class="op">)</span> <span class="co"># treated against the PSID, unadjusted</span></span>
 <span><span class="fu"><a href="../reference/plrcf.html">plrcf</a></span><span class="op">(</span><span class="va">exp</span>, <span class="st">"re78"</span>, <span class="st">"treat"</span>, <span class="va">x</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plrcf.html">plrcf</a></span><span class="op">(</span><span class="va">obs</span>, <span class="st">"re78"</span>, <span class="st">"treat"</span>, <span class="va">x</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plrcf.html">plrcf</a></span><span class="op">(</span><span class="va">obs</span>, <span class="st">"re78"</span>, <span class="st">"treat"</span>, <span class="va">x</span>, kfol <span class="op">=</span> <span class="fl">10</span>, seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
@@ -302,10 +313,26 @@ true effect is 3:</p>
 <span><span class="va">d</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">10</span> <span class="op">+</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">t</span> <span class="op">+</span> <span class="fl">0.2</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">age</span> <span class="op">+</span> <span class="va">d</span><span class="op">$</span><span class="va">income</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/aipwcf.html">aipwcf</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"y"</span>, <span class="st">"t"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>, lrn <span class="op">=</span> <span class="st">"ols"</span><span class="op">)</span></span>
 <span><span class="va">fit</span></span>
-<span><span class="co">#&gt; Cross-fitted AIPW, ATE: 1500 rows, 684 treated</span></span>
-<span><span class="co">#&gt;  estimate      se lower upper p_value</span></span>
-<span><span class="co">#&gt;     3.071 0.05606 2.961 3.181       0</span></span>
-<span><span class="co">#&gt; Propensities from 0.086 to 0.903; 0 clipped</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Cross-fitted AIPW</span> ────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Estimand          ATE                                                 │</span></span>
+<span><span class="co">#&gt; │   Rows              1,500                                               │</span></span>
+<span><span class="co">#&gt; │   Treated           684                                                 │</span></span>
+<span><span class="co">#&gt; │   Propensity range  [0.0856, 0.9030]                                    │</span></span>
+<span><span class="co">#&gt; │   Clipped at        0.01                                                │</span></span>
+<span><span class="co">#&gt; │   Clipped           0                                                   │</span></span>
+<span><span class="co">#&gt; │   Variance          influence function                                  │</span></span>
+<span><span class="co">#&gt; │   Confidence        95%                                                 │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   estimand  estimate       se  95% CI          p_value                  │</span></span>
+<span><span class="co">#&gt; │   --------  --------  -------  --------------  -------                  │</span></span>
+<span><span class="co">#&gt; │   ATE          3.071  0.05606  [2.961, 3.181]  &lt; 0.001                  │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The ATE is 3.071 (95% interval [2.961, 3.181]): the interval excludes │</span></span>
+<span><span class="co">#&gt; │   0, so the data distinguish it from no effect.                         │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Outcome and propensity models are fitted out of fold; the estimate is │</span></span>
+<span><span class="co">#&gt; │   consistent if either is right.                                        │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="causal-effects_files/figure-html/causal-effects-overlap-balance-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">

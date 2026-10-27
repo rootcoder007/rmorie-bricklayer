@@ -27,7 +27,7 @@ cpspwr(
 
 - data:
 
-  A data frame.
+  A data frame, passed to `stat` and `inject`.
 
 - stat:
 
@@ -156,17 +156,24 @@ pw$curve
 #> 2  0.3        5    5    1
 #> 3  0.6        5    5    1
 pw
-#> ── Positive controls: an injected effect of known size ───────────
-#>   99 permutations, 5 repetition(s) per size, alpha 0.05
-#> ──────────────────────────────────────────────────────────────────
-#>   size 0          detected  0/5   rate 0.00
-#>   size 0.3        detected  5/5   rate 1.00
-#>   size 0.6        detected  5/5   rate 1.00
-#> ──────────────────────────────────────────────────────────────────
-#>   smallest size detected at a rate of 0.8: 0.3
-#>   a null result is informative only about effects at least this
-#>   large; smaller ones would have been missed
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Positive controls: an injected effect of known size ──────────╮
+#> │   Permutations          99                                      │
+#> │   Repetitions per size  5                                       │
+#> │   Alpha                 0.05                                    │
+#> │   Treatment             x                                       │
+#> │   False positive rate   0                                       │
+#> │   Smallest detected     0.3                                     │
+#> │                                                                 │
+#> │     size  detected  rate                                        │
+#> │   ------  --------  ----                                        │
+#> │   0.0000  0/5          0                                        │
+#> │   0.3000  5/5          1                                        │
+#> │   0.6000  5/5          1                                        │
+#> │                                                                 │
+#> │   smallest size detected at a rate of 0.8: 0.3;                 │
+#> │   a null result is informative only about effects at least this │
+#> │   large; smaller ones would have been missed.                   │
+#> ╰─────────────────────────────────────────────────────────────────╯
 
 # The rate at size 0 estimates the false-positive rate. With few
 # repetitions it is usually 0, because alpha is small -- five draws

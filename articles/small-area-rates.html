@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,23 +99,54 @@ alone:</p>
 <span>  region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North"</span>, <span class="st">"South"</span>, <span class="st">"East"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"18 to 24"</span>, <span class="st">"25 to 49"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">45</span>, <span class="fl">12</span>, <span class="fl">60</span>, <span class="fl">8</span>, <span class="fl">20</span><span class="op">)</span>,</span>
-<span>  pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">6000</span>, <span class="fl">900</span>, <span class="fl">9000</span>, <span class="fl">400</span>, <span class="fl">3500</span><span class="op">)</span></span>
+<span>  pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">6000</span>, <span class="fl">900</span>, <span class="fl">9000</span>, <span class="fl">400</span>, <span class="fl">3500</span><span class="op">)</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/expcnts.html">expcnts</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">n</span>, <span class="va">d</span><span class="op">$</span><span class="va">pop</span>, <span class="va">d</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    area observed population expected</span></span>
-<span><span class="co">#&gt; 1  East       28       3900 32.81250</span></span>
-<span><span class="co">#&gt; 2 North       75       7000 58.89423</span></span>
-<span><span class="co">#&gt; 3 South       72       9900 83.29327</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Expected counts, indirect standardisation</span> ────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Areas       3                                                         │</span></span>
+<span><span class="co">#&gt; │   Observed    175                                                       │</span></span>
+<span><span class="co">#&gt; │   Expected    175                                                       │</span></span>
+<span><span class="co">#&gt; │   Population  20,800                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   area   observed  population  expected                                 │</span></span>
+<span><span class="co">#&gt; │   -----  --------  ----------  --------                                 │</span></span>
+<span><span class="co">#&gt; │   East         28       3,900     32.81                                 │</span></span>
+<span><span class="co">#&gt; │   North        75       7,000     58.89                                 │</span></span>
+<span><span class="co">#&gt; │   South        72       9,900     83.29                                 │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   expected is the count an area would have at the overall rate of each  │</span></span>
+<span><span class="co">#&gt; │   stratum, given its own population in it. stdinc() puts an interval on │</span></span>
+<span><span class="co">#&gt; │   the ratio of observed to expected.                                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The expected counts sum to the observed ones: the reference rates     │</span></span>
+<span><span class="co">#&gt; │   come from the same data.                                              │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Adjusting for size <strong>and</strong> age composition is indirect
 standardisation: each stratum’s overall rate is applied to the unit’s
 population in that stratum, then summed. This is the comparison that
 says something about the unit rather than about who lives there:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/expcnts.html">expcnts</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">n</span>, <span class="va">d</span><span class="op">$</span><span class="va">pop</span>, <span class="va">d</span><span class="op">$</span><span class="va">region</span>, strata <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">age</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    area observed population expected</span></span>
-<span><span class="co">#&gt; 1  East       28       3900 32.34430</span></span>
-<span><span class="co">#&gt; 2 North       75       7000 62.27967</span></span>
-<span><span class="co">#&gt; 3 South       72       9900 80.37603</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Expected counts, indirect standardisation</span> ────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Areas       3                                                         │</span></span>
+<span><span class="co">#&gt; │   Observed    175                                                       │</span></span>
+<span><span class="co">#&gt; │   Expected    175                                                       │</span></span>
+<span><span class="co">#&gt; │   Population  20,800                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   area   observed  population  expected                                 │</span></span>
+<span><span class="co">#&gt; │   -----  --------  ----------  --------                                 │</span></span>
+<span><span class="co">#&gt; │   East         28       3,900     32.34                                 │</span></span>
+<span><span class="co">#&gt; │   North        75       7,000     62.28                                 │</span></span>
+<span><span class="co">#&gt; │   South        72       9,900     80.38                                 │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   expected is the count an area would have at the overall rate of each  │</span></span>
+<span><span class="co">#&gt; │   stratum, given its own population in it. stdinc() puts an interval on │</span></span>
+<span><span class="co">#&gt; │   the ratio of observed to expected.                                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The expected counts sum to the observed ones: the reference rates     │</span></span>
+<span><span class="co">#&gt; │   come from the same data.                                              │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="direct-standardisation-for-populations-of-different-ages">Direct standardisation, for populations of different ages<a class="anchor" aria-label="anchor" href="#direct-standardisation-for-populations-of-different-ages"></a>
@@ -123,24 +154,59 @@ says something about the unit rather than about who lives there:</p>
 <p>Indirect standardisation asks what each unit would expect at the
 overall rates. Direct standardisation asks what rate each population
 would have with one standard age structure. It is the comparison to use
-when the populations’ ages differ a great deal. First Nations, Metis and
+when the populations’ ages differ a great deal. First Nations, Métis and
 Inuit populations, for example, are younger than the non-Indigenous
 population. <code><a href="../reference/agestd.html">agestd()</a></code> gives the rates with the Fay-Feuer
 gamma interval, which holds for small counts. <code><a href="../reference/rategap.html">rategap()</a></code>
 compares two of them. The counts below are made up, to show the
 computation:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/agestd.html">agestd</a></span><span class="op">(</span>events <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">9</span>, <span class="fl">11</span>, <span class="fl">6</span>, <span class="fl">3</span>, <span class="fl">40</span>, <span class="fl">70</span>, <span class="fl">90</span>, <span class="fl">80</span>, <span class="fl">60</span><span class="op">)</span>,</span>
-<span>                     pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">9000</span>, <span class="fl">8000</span>, <span class="fl">6000</span>, <span class="fl">4000</span>, <span class="fl">2000</span>, <span class="fl">300000</span>, <span class="fl">320000</span>, <span class="fl">350000</span>, <span class="fl">340000</span>, <span class="fl">300000</span><span class="op">)</span>,</span>
-<span>                     std <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">25</span>, <span class="fl">20</span>, <span class="fl">15</span>, <span class="fl">10</span><span class="op">)</span>,</span>
-<span>                     grp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Inuit"</span>, <span class="st">"Non-Indigenous"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/agestd.html">agestd</a></span><span class="op">(</span></span>
+<span>  events <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">9</span>, <span class="fl">11</span>, <span class="fl">6</span>, <span class="fl">3</span>, <span class="fl">40</span>, <span class="fl">70</span>, <span class="fl">90</span>, <span class="fl">80</span>, <span class="fl">60</span><span class="op">)</span>,</span>
+<span>  pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">9000</span>, <span class="fl">8000</span>, <span class="fl">6000</span>, <span class="fl">4000</span>, <span class="fl">2000</span>, <span class="fl">300000</span>, <span class="fl">320000</span>, <span class="fl">350000</span>, <span class="fl">340000</span>, <span class="fl">300000</span><span class="op">)</span>,</span>
+<span>  std <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">25</span>, <span class="fl">20</span>, <span class="fl">15</span>, <span class="fl">10</span><span class="op">)</span>,</span>
+<span>  grp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Inuit"</span>, <span class="st">"Non-Indigenous"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">r</span></span>
-<span><span class="co">#&gt;            group events      rate    lower    upper</span></span>
-<span><span class="co">#&gt; 1          Inuit     33 115.62500 79.23967 165.0186</span></span>
-<span><span class="co">#&gt; 2 Non-Indigenous    340  20.14102 17.93306  22.5839</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Directly age-standardised rate</span> ──────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Groups    2                                                          │</span></span>
+<span><span class="co">#&gt; │   Events    373                                                        │</span></span>
+<span><span class="co">#&gt; │   Rate per  100,000                                                    │</span></span>
+<span><span class="co">#&gt; │   Interval  gamma (Fay and Feuer 1997)                                 │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   group           events    rate  95% CI                               │</span></span>
+<span><span class="co">#&gt; │   --------------  ------  ------  ---------------                      │</span></span>
+<span><span class="co">#&gt; │   Inuit               33  115.63  [79.24, 165.02]                      │</span></span>
+<span><span class="co">#&gt; │   Non-Indigenous     340   20.14  [17.93, 22.58]                       │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   Highest rate: Inuit (115.6); lowest: Non-Indigenous (20.14).         │</span></span>
+<span><span class="co">#&gt; │   Their intervals do not overlap: the gap is more than sampling error. │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   Each rate is what the group's age-specific rates give for the        │</span></span>
+<span><span class="co">#&gt; │   standard population's ages, so the groups compare without them.      │</span></span>
+<span><span class="co">#&gt; │   Compare only rates standardised to the same population.              │</span></span>
+<span><span class="co">#&gt; ╰────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="../reference/rategap.html">rategap</a></span><span class="op">(</span><span class="va">r</span>, <span class="st">"Inuit"</span>, <span class="st">"Non-Indigenous"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   group      reference    ratio  ratiolo ratioup difference    diflo    difup</span></span>
-<span><span class="co">#&gt; 1 Inuit Non-Indigenous 5.740772 3.993798 8.25191   95.48398 55.54321 135.4247</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Gap between two standardised rates</span> ──────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Group      Inuit                                                     │</span></span>
+<span><span class="co">#&gt; │   Reference  Non-Indigenous                                            │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   group  reference       ratio  ratio CI        difference             │</span></span>
+<span><span class="co">#&gt; │   -----  --------------  -----  --------------  ----------             │</span></span>
+<span><span class="co">#&gt; │   Inuit  Non-Indigenous  5.741  [3.994, 8.252]       95.48             │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   group  difference CI                                                 │</span></span>
+<span><span class="co">#&gt; │   -----  ---------------                                               │</span></span>
+<span><span class="co">#&gt; │   Inuit  [55.54, 135.40]                                               │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   The rate ratio is 5.741 (its interval [3.994, 8.252]): the interval  │</span></span>
+<span><span class="co">#&gt; │   excludes 1, so the data distinguish it from no effect. A ratio of    │</span></span>
+<span><span class="co">#&gt; │   5.741 is a 474% rise. The difference, per the rates' unit, is 95.48  │</span></span>
+<span><span class="co">#&gt; │   (its interval [55.54, 135.40]): the interval excludes 0, so the data │</span></span>
+<span><span class="co">#&gt; │   distinguish it from no effect.                                       │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   The intervals are at the level agestd() was given.                   │</span></span>
+<span><span class="co">#&gt; ╰────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>For survey percentages rather than counts, <code><a href="../reference/stdprev.html">stdprev()</a></code>
 does the same.</p>
 </div>
@@ -153,20 +219,52 @@ what makes a small count honest:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/stdinc.html">stdinc</a></span><span class="op">(</span>obs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">12</span>, <span class="fl">3</span><span class="op">)</span>, expd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">14</span>, <span class="fl">5</span><span class="op">)</span>,</span>
 <span>    area <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North"</span>, <span class="st">"South"</span>, <span class="st">"East"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    area observed expected       sir     lower    upper excess deficit</span></span>
-<span><span class="co">#&gt; 1 North       30       20 1.5000000 1.0120437 2.141343   TRUE   FALSE</span></span>
-<span><span class="co">#&gt; 2 South       12       14 0.8571429 0.4428982 1.497256  FALSE   FALSE</span></span>
-<span><span class="co">#&gt; 3  East        3        5 0.6000000 0.1237344 1.753455  FALSE   FALSE</span></span>
-<span><span class="co">#&gt;   significant</span></span>
-<span><span class="co">#&gt; 1        TRUE</span></span>
-<span><span class="co">#&gt; 2       FALSE</span></span>
-<span><span class="co">#&gt; 3       FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Standardised incidence ratios</span> ──────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Areas          3                                                    │</span></span>
+<span><span class="co">#&gt; │   Observed       45                                                   │</span></span>
+<span><span class="co">#&gt; │   Expected       39                                                   │</span></span>
+<span><span class="co">#&gt; │   Overall ratio  1.154                                                │</span></span>
+<span><span class="co">#&gt; │   Interval       exact Poisson, at the level asked for (default 95%)  │</span></span>
+<span><span class="co">#&gt; │   Above one      1                                                    │</span></span>
+<span><span class="co">#&gt; │   Below one      0                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   area   observed  expected     sir  interval        finding          │</span></span>
+<span><span class="co">#&gt; │   -----  --------  --------  ------  --------------  -------          │</span></span>
+<span><span class="co">#&gt; │   North        30        20  1.5000  [1.012, 2.141]  excess           │</span></span>
+<span><span class="co">#&gt; │   South        12        14  0.8571  [0.443, 1.497]                   │</span></span>
+<span><span class="co">#&gt; │   East          3         5  0.6000  [0.124, 1.753]                   │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   A ratio above 1 means more cases than the area's population would   │</span></span>
+<span><span class="co">#&gt; │   give at the overall rates. An excess or a deficit is an interval    │</span></span>
+<span><span class="co">#&gt; │   wholly above or below 1 (the significant column is either).         │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   Each interval is a separate test: with many areas some exclude 1 by │</span></span>
+<span><span class="co">#&gt; │   chance (scanadj() allows for that).                                 │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>An observed count of three carries almost no information, and the
 interval says so rather than hiding it:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/stdinc.html">stdinc</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   observed expected sir     lower    upper excess deficit significant</span></span>
-<span><span class="co">#&gt; 1        3        5 0.6 0.1237344 1.753455  FALSE   FALSE       FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Standardised incidence ratios</span> ──────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Areas          1                                                    │</span></span>
+<span><span class="co">#&gt; │   Observed       3                                                    │</span></span>
+<span><span class="co">#&gt; │   Expected       5                                                    │</span></span>
+<span><span class="co">#&gt; │   Overall ratio  0.6                                                  │</span></span>
+<span><span class="co">#&gt; │   Interval       exact Poisson, at the level asked for (default 95%)  │</span></span>
+<span><span class="co">#&gt; │   Above one      0                                                    │</span></span>
+<span><span class="co">#&gt; │   Below one      0                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   observed  expected     sir  interval          finding               │</span></span>
+<span><span class="co">#&gt; │   --------  --------  ------  ----------------  -------               │</span></span>
+<span><span class="co">#&gt; │          3         5  0.6000  [0.1237, 1.7530]                        │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   A ratio above 1 means more cases than the area's population would   │</span></span>
+<span><span class="co">#&gt; │   give at the overall rates. An excess or a deficit is an interval    │</span></span>
+<span><span class="co">#&gt; │   wholly above or below 1 (the significant column is either).         │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   Each interval is a separate test: with many areas some exclude 1 by │</span></span>
+<span><span class="co">#&gt; │   chance (scanadj() allows for that).                                 │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="empirical-bayes-shrinkage">Empirical Bayes shrinkage<a class="anchor" aria-label="anchor" href="#empirical-bayes-shrinkage"></a>
@@ -180,10 +278,24 @@ count (Clayton and Kaldor 1987).</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ebrates.html">ebrates</a></span><span class="op">(</span>obs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">45</span>, <span class="fl">2</span><span class="op">)</span>, expd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">50</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
 <span>         area <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North"</span>, <span class="st">"South"</span>, <span class="st">"Tiny"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    area observed expected sir        eb shrinkage       nu    alpha</span></span>
-<span><span class="co">#&gt; 1 North       30     25.0 1.2 1.1073869 0.5141392 26.98066 26.45506</span></span>
-<span><span class="co">#&gt; 2 South       45     50.0 0.9 0.9414767 0.3460211 26.98066 26.45506</span></span>
-<span><span class="co">#&gt; 3  Tiny        2      0.5 4.0 1.0751472 0.9814506 26.98066 26.45506</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Empirical Bayes rates</span> ────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Areas               3                                                 │</span></span>
+<span><span class="co">#&gt; │   Overall ratio       1.02                                              │</span></span>
+<span><span class="co">#&gt; │   Prior shape (nu)    26.98                                             │</span></span>
+<span><span class="co">#&gt; │   Prior rate (alpha)  26.46                                             │</span></span>
+<span><span class="co">#&gt; │   Method              gamma-Poisson, moments (Clayton and Kaldor 1987)  │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   area   observed  expected    sir     eb  shrinkage                    │</span></span>
+<span><span class="co">#&gt; │   -----  --------  --------  -----  -----  ---------                    │</span></span>
+<span><span class="co">#&gt; │   North        30     25.00  1.200  1.107     0.5141                    │</span></span>
+<span><span class="co">#&gt; │   South        45     50.00  0.900  0.941     0.3460                    │</span></span>
+<span><span class="co">#&gt; │   Tiny          2      0.50  4.000  1.075     0.9815                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Each raw ratio (sir) is pulled toward the overall ratio; shrinkage is │</span></span>
+<span><span class="co">#&gt; │   the share of the pull (0 untouched, 1 replaced), largest for areas    │</span></span>
+<span><span class="co">#&gt; │   with small expected counts. Use eb for maps and rankings, stdinc()    │</span></span>
+<span><span class="co">#&gt; │   for each area's own evidence.                                         │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>The tiny area’s raw ratio of 4 is pulled sharply toward 1; the large
 areas barely move.</p>
 </div>
@@ -227,10 +339,11 @@ pair.</p>
 permutation null; <code>neighbours</code> is a list giving each area’s
 adjacent areas:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">nb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">3L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">4L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">5L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4L</span>, <span class="fl">6L</span><span class="op">)</span>, <span class="fl">5L</span><span class="op">)</span>   <span class="co"># six areas in a line</span></span>
+<code class="sourceCode R"><span><span class="co"># six areas in a line</span></span>
+<span><span class="va">nb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">3L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">4L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">5L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4L</span>, <span class="fl">6L</span><span class="op">)</span>, <span class="fl">5L</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/morani.html">morani</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">6</span><span class="op">)</span>, <span class="va">nb</span>, nperm <span class="op">=</span> <span class="fl">999L</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"I"</span>, <span class="st">"p_value"</span><span class="op">)</span><span class="op">]</span>   <span class="co"># a gradient</span></span>
+<span><span class="fu"><a href="../reference/morani.html">morani</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">6</span><span class="op">)</span>, <span class="va">nb</span>, nperm <span class="op">=</span> <span class="fl">999L</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"I"</span>, <span class="st">"p_value"</span><span class="op">)</span><span class="op">]</span> <span class="co"># a gradient</span></span>
 <span><span class="co">#&gt; $I</span></span>
 <span><span class="co">#&gt; [1] 0.7142857</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -238,7 +351,7 @@ adjacent areas:</p>
 <span><span class="co">#&gt; [1] 0.011</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/morani.html">morani</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">6</span>, <span class="fl">1</span>, <span class="fl">6</span>, <span class="fl">1</span>, <span class="fl">6</span><span class="op">)</span>, <span class="va">nb</span>, nperm <span class="op">=</span> <span class="fl">999L</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"I"</span>, <span class="st">"p_value"</span><span class="op">)</span><span class="op">]</span>   <span class="co"># alternating</span></span>
+<span><span class="fu"><a href="../reference/morani.html">morani</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">6</span>, <span class="fl">1</span>, <span class="fl">6</span>, <span class="fl">1</span>, <span class="fl">6</span><span class="op">)</span>, <span class="va">nb</span>, nperm <span class="op">=</span> <span class="fl">999L</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"I"</span>, <span class="st">"p_value"</span><span class="op">)</span><span class="op">]</span> <span class="co"># alternating</span></span>
 <span><span class="co">#&gt; $I</span></span>
 <span><span class="co">#&gt; [1] -1</span></span>
 <span><span class="co">#&gt; </span></span>

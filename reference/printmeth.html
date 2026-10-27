@@ -15,7 +15,7 @@ invisibly."><meta property="og:image" content="https://rootcoder007.github.io/rm
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@ invisibly."><meta property="og:image" content="https://rootcoder007.github.io/rm
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Printed reports for bricklayer objects</h1>
-      <small class="dont-index">Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/attest.R" class="external-link"><code>R/attest.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/bundle.R" class="external-link"><code>R/bundle.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/chain.R" class="external-link"><code>R/chain.R</code></a>, and 15 more</small>
+      <small class="dont-index">Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/attest.R" class="external-link"><code>R/attest.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/bundle.R" class="external-link"><code>R/bundle.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/print_boxes.R" class="external-link"><code>R/print_boxes.R</code></a>, and 2 more</small>
       <div class="d-none name"><code>printmeth.Rd</code></div>
     </div>
 
@@ -69,13 +69,22 @@ invisibly.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'bricklayer_attestation'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'bricklayer_attestation_check'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
 <span><span class="co"># S3 method for class 'bricklayer_bundle'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># S3 method for class 'bricklayer_attestation_check'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_benford'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># S3 method for class 'bricklayer_bundle_check'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_certificate'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_certpath_check'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'bricklayer_chain'</span></span>
@@ -84,7 +93,25 @@ invisibly.</p>
 <span><span class="co"># S3 method for class 'bricklayer_drbg'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># S3 method for class 'bricklayer_drift'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_env_diff'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># S3 method for class 'bricklayer_falsification'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_falsify_family'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_fips_key'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_fips_public_key'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_hqc_capsule'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'bricklayer_hqc_key'</span></span>
@@ -93,7 +120,7 @@ invisibly.</p>
 <span><span class="co"># S3 method for class 'bricklayer_hqc_public_key'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'bricklayer_hqc_capsule'</span></span>
+<span><span class="co"># S3 method for class 'bricklayer_kem_capsule'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'bricklayer_kem_key'</span></span>
@@ -102,10 +129,13 @@ invisibly.</p>
 <span><span class="co"># S3 method for class 'bricklayer_kem_public_key'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'bricklayer_kem_capsule'</span></span>
+<span><span class="co"># S3 method for class 'bricklayer_mcar'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'bricklayer_mcar'</span></span>
+<span><span class="co"># S3 method for class 'bricklayer_oqs_key'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_oqs_public_key'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'bricklayer_power'</span></span>
@@ -117,59 +147,56 @@ invisibly.</p>
 <span><span class="co"># S3 method for class 'bricklayer_prereg_check'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'bricklayer_falsify_family'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for class 'bricklayer_drift'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for class 'bricklayer_drift'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for class 'bricklayer_benford'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for class 'bricklayer_signing_key'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
 <span><span class="co"># S3 method for class 'bricklayer_public_key'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'bricklayer_signature'</span></span>
+<span><span class="co"># S3 method for class 'bricklayer_recode_manifest'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for class 'bricklayer_benford'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for class 'bricklayer_env_diff'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for class 'bricklayer_report'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># S3 method for class 'bricklayer_report'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'bricklayer_recompute'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_report'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'bricklayer_schema'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'bricklayer_oqs_key'</span></span>
+<span><span class="co"># S3 method for class 'bricklayer_signature'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'bricklayer_oqs_public_key'</span></span>
+<span><span class="co"># S3 method for class 'bricklayer_signing_key'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'bricklayer_timestamp'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'bricklayer_certificate'</span></span>
+<span><span class="co"># S3 method for class 'rmbl_bounds'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'bricklayer_certpath_check'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># S3 method for class 'rmbl_fetch'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'rmbl_margin_check'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'rmbl_or_check'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'rmbl_recode_manifest_check'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'rmbl_transfer_check'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_drift'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_benford'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_report'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -203,80 +230,97 @@ which is what to do when capturing output into a fixed-width log.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.xmssidxfile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>  <span class="co"># keep this example's</span></span></span>
-<span class="r-in"><span><span class="co"># one-time index record out of your configuration directory; leave the default in use</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># keep this example's</span></span></span>
+<span class="r-in"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.xmssidxfile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># one-time index record out of your configuration directory; leave the</span></span></span>
+<span class="r-in"><span><span class="co"># default in use</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">7</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>v <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                  g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fl">200</span>, <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">cur</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>v <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, mean <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                  g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fl">200</span>, <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>v <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fl">200</span>, <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cur</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  v <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, mean <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fl">200</span>, <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The drift report leads with its verdict.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="cpsdrft.html">cpsdrft</a></span><span class="op">(</span><span class="va">ref</span>, <span class="va">cur</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Capsule drift report ──────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ✗ DRIFT DETECTED</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   reference rows  200</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   current rows    200</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   columns tested  2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   alpha           0.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Per-column tests ──────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      column        type stat        p   psi</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    ✗      v     numeric 0.36 1.11e-11 0.814</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    ✓      g categorical 1.44     0.23 0.014</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes an interactive report</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Capsule drift report</span> ─────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Verdict          ✗ DRIFT DETECTED                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Reference rows   200                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Current rows     200                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns tested   2                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns drifted  1                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Alpha            0.01                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Per-column tests                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      column  type           stat        p     psi                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -  ------  -----------  ------  -------  ------                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #BB0000;">✖</span>  v       numeric      0.3600  &lt; 0.001  0.8136                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>  g       categorical  1.4413    0.230  0.0144                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   1 of 2 columns changed between the reference and the current table by │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   more than chance at alpha 0.01; check those columns before trusting   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   results built on the reference.                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   an interactive report.                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># format() gives the same lines for a log file.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="cpsdrft.html">cpsdrft</a></span><span class="op">(</span><span class="va">ref</span>, <span class="va">cur</span><span class="op">)</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "── Capsule drift report ──────────────────────────────────────────"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "  ✗ DRIFT DETECTED"                                                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] ""                                                                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "  Verdict          ✗ DRIFT DETECTED"                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "  Reference rows   200"                                            </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A Benford screen.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">0</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Benford first-digit screen ────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ✓ consistent with Benford's law</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   values used  500</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   chi-square   5.919</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   df           8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   p-value      0.656</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   digit  observed  expected        shape</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       1     0.300     0.301  ####################</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       2     0.184     0.176  ############        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       3     0.124     0.125  ########            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       4     0.112     0.097  #######             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       5     0.078     0.079  #####               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       6     0.066     0.067  ####                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       7     0.062     0.058  ####                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       8     0.030     0.051  ##                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       9     0.044     0.046  ###                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Benford first-digit screen</span> ───────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span> consistent with Benford's law                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   values used  500                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   chi-square   5.919                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   df           8                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p-value      0.656                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   digit  observed  expected        shape                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       1     0.300     0.301  ####################                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       2     0.184     0.176  ############                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       3     0.124     0.125  ########                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       4     0.112     0.097  #######                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       5     0.078     0.079  #####                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       6     0.066     0.067  ####                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       7     0.062     0.058  ####                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       8     0.030     0.051  ##                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       9     0.044     0.046  ###                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The leading digits are consistent with Benford's law (p = 0.656); the │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   largest gap is at 8, 3.0% seen against 5.1% expected. Benford's law   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   expects a leading 1 about 30% of the time and a 9 under 5%. A         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   departure is a reason to look closer (rounding, thresholds, made-up   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   figures), never proof by itself.                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Keys and signatures print without ever showing the secret seed.</span></span></span>
 <span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="pqckg.html">pqckg</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">key</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Signing key (post-quantum) ────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   scheme     xmss-sha256</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   root       dae01b752035532cde298afc843615b8c37269dbc72c03c2d64b1232659cb5f3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   height     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   used       0 of 4 signatures</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   remaining  4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   secret     &lt;withheld&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ! one signature per index; never sign twice at one index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Signing key (post-quantum)</span> ───────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   scheme     xmss-sha256                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   root       7b48d13b08c4bb108da730e5ebf2bcc2d57e3dee10102d814d4bbd5f917299 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │              bc                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   height     2                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   used       0 of 4 signatures                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   remaining  4                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   secret     &lt;withheld&gt;                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ! one signature per index; never sign twice at one index                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="cpssign.html">cpssign</a></span><span class="op">(</span><span class="st">"a-manifest"</span>, <span class="va">key</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Capsule signature ─────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   scheme     xmss-sha256</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   index      0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   root       dae01b752035532cde298afc843615b8c37269dbc72c03c2d64b1232659cb5f3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   signature  d5ac14d6e4fa14589544aabf7b02cb47... (2144 bytes)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   auth path  2 nodes</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Capsule signature</span> ────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   scheme     xmss-sha256                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   index      0                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   root       7b48d13b08c4bb108da730e5ebf2bcc2d57e3dee10102d814d4bbd5f917299 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │              bc                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   signature  0afdd7fffd47850999e7ba966f6de09a... (2144 bytes)               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   auth path  2 nodes                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

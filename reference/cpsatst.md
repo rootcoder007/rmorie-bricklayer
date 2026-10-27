@@ -153,21 +153,23 @@ signature that fails to verify is a failed row, not an error.
 ## Examples
 
 ``` r
-m <- mkmnf(list(dataset = "otis", rows = 1200L),
-  env = FALSE
-)
+m <- mkmnf(list(dataset = "otis", rows = 1200L), env = FALSE)
 key <- fipskg("ML-DSA-65")
 att <- cpsatst(m, key, note = "counts as published")
 att
-#> ── Capsule attestation ───────────────────────────────────────────
-#>   scheme      ML-DSA-65
-#>   digest      efa1b7387f225380245de0b5170999e87ad4044f3e8fd2ef6a6bfbc2bd0a9c90
-#>   context     <none>
-#>   prehash     none
-#>   note        counts as published
-#>   signed      2026-10-22T12:13:27Z
-#>   public key  e0d30534107a719e756cb489246adc75... (1952 bytes)
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Capsule attestation ──────────────────────────────────────────────────────╮
+#> │   Scheme           ML-DSA-65                                                │
+#> │   Manifest digest  efa1b7387f225380245de0b5170999e87ad4044f3e8fd2ef6a6bfbc2 │
+#> │                    bd0a9c90                                                 │
+#> │   Context          <none>                                                   │
+#> │   Prehash          none                                                     │
+#> │   Note             counts as published                                      │
+#> │   Signed           2026-10-27T13:56:49Z                                     │
+#> │   Public key       932283e87d2627fa239ab6cd27654f44... (1952 bytes)         │
+#> │                                                                             │
+#> │   A signed claim that a manifest with this digest was attested by the       │
+#> │   holder of the key; check it against the manifest with cpschkatst().       │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a verifier needs the attestation and the manifest, nothing else
 res <- cpschkatst(att, m)
@@ -190,9 +192,7 @@ cpschkatst(att, m2)$ok
 #> [1] FALSE
 
 # and so does presenting a different key
-cpschkatst(att, m,
-  keyexp = fipskg("ML-DSA-65")$public
-)$ok
+cpschkatst(att, m, keyexp = fipskg("ML-DSA-65")$public)$ok
 #> [1] FALSE
 
 # the note is signed too: editing it breaks the signature row
@@ -215,7 +215,11 @@ att3$public
 #> [1] "4e289ef69cbe6f4c0d7de16c0801ad1155aba1598f2f4b25cddb46880caacd60"
 cpschkatst(att3, m, key = "shared-secret", keyexp = att3$public)$ok
 #> [1] TRUE
-cpschkatst(att3, m, key = "another-secret")$checks[, c("check", "ok", "detail")]
+cpschkatst(att3, m, key = "another-secret")$checks[, c(
+  "check",
+  "ok",
+  "detail"
+)]
 #>                  check    ok
 #> 1 attestation_complete  TRUE
 #> 2      manifest_digest  TRUE

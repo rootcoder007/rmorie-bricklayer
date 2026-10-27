@@ -56,7 +56,7 @@ swtdid(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the intervals reported (default 0.95).
 
 ## Value
 
@@ -95,7 +95,52 @@ advantage within cities. Social Forces 102(4):1310-1331.
 ``` r
 p <- polex()
 swtdid(p, "district", "month", "crmrate", "reformed", reps = 99, seed = 1)
-#>      term   estimate        se     lower      upper switchers
-#> 1  effect -3.1355000 0.4555572 -4.028376 -2.2426243        15
-#> 2 placebo -0.5169222 0.4429911 -1.385169  0.3513245        15
+#> ╭── Difference in differences, switching treatment ──────────────────────╮
+#> │   Method     de Chaisemartin and D'Haultfoeuille, switchers vs stayers │
+#> │   Switchers  15                                                        │
+#> │                                                                        │
+#> │   term     estimate      se  interval          switchers               │
+#> │   -------  --------  ------  ----------------  ---------               │
+#> │   effect     -3.135  0.4556  [-4.028, -2.243]         15               │
+#> │   placebo    -0.517  0.4430  [-1.385, 0.351]          15               │
+#> │                                                                        │
+#> │   At the moment units switch, the effect is -3.135 (its interval       │
+#> │   [-4.028, -2.243]): the interval excludes 0, so the data distinguish  │
+#> │   it from no effect. The placebo, the same comparison one period       │
+#> │   earlier, is -0.5169; near zero supports the design.                  │
+#> │                                                                        │
+#> │   Intervals are normal, from the cluster-bootstrap standard error.     │
+#> ╰────────────────────────────────────────────────────────────────────────╯
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+swtdid(own, "town", "year", "rate", "bylaw", reps = 49, seed = 1)
+#> ╭── Difference in differences, switching treatment ──────────────────────╮
+#> │   Method     de Chaisemartin and D'Haultfoeuille, switchers vs stayers │
+#> │   Switchers  4                                                         │
+#> │                                                                        │
+#> │   term     estimate      se  interval          switchers               │
+#> │   -------  --------  ------  ----------------  ---------               │
+#> │   effect     -4.022  0.3802  [-4.767, -3.277]          4               │
+#> │   placebo    -0.062  0.4099  [-0.865, 0.742]           4               │
+#> │                                                                        │
+#> │   At the moment units switch, the effect is -4.022 (its interval       │
+#> │   [-4.767, -3.277]): the interval excludes 0, so the data distinguish  │
+#> │   it from no effect. The placebo, the same comparison one period       │
+#> │   earlier, is -0.06159; near zero supports the design.                 │
+#> │                                                                        │
+#> │   Intervals are normal, from the cluster-bootstrap standard error.     │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

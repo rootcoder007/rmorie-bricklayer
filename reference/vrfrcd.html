@@ -19,7 +19,7 @@ software, to catch swapped groups before a model runs."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,12 +100,13 @@ Otherwise an error.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Factors are compared through their labels. The checks, in order:</p><ol><li><p><code>orig</code> and <code>recd</code> are atomic and the same length;</p></li>
 <li><p><code>is.na(original)</code> equals <code>is.na(recoded)</code> element by element;</p></li>
-<li><p>in the table of non-missing pairs, no original value has more than
-one recoded value (the recode is a function of the label);</p></li>
-<li><p>each original value's recoded value equals <code>declared[old]</code>;
-an original value that is not a name of <code>decl</code> must be
-unchanged (identity).</p></li>
-</ol><p>The first failed check is an error naming the offending categories.</p>
+<li><p>in the table of non-missing pairs, no original value has more than one
+recoded value (the recode is a function of the label);</p></li>
+<li><p>each original
+value's recoded value equals <code>declared[old]</code>; an original value that is
+not a name of <code>decl</code> must be unchanged (identity).</p></li>
+</ol><p>The first failed
+check is an error naming the offending categories.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -17,13 +17,29 @@ d <- data.frame(
   region = rep(c("North", "South", "East"), each = 2),
   age = rep(c("18 to 24", "25 to 49"), 3),
   n = c(30, 45, 12, 60, 8, 20),
-  pop = c(1000, 6000, 900, 9000, 400, 3500)
+  pop = c(1000, 6000, 900, 9000, 400, 3500),
+  stringsAsFactors = FALSE
 )
 expcnts(d$n, d$pop, d$region)
-#>    area observed population expected
-#> 1  East       28       3900 32.81250
-#> 2 North       75       7000 58.89423
-#> 3 South       72       9900 83.29327
+#> ╭── Expected counts, indirect standardisation ────────────────────────────╮
+#> │   Areas       3                                                         │
+#> │   Observed    175                                                       │
+#> │   Expected    175                                                       │
+#> │   Population  20,800                                                    │
+#> │                                                                         │
+#> │   area   observed  population  expected                                 │
+#> │   -----  --------  ----------  --------                                 │
+#> │   East         28       3,900     32.81                                 │
+#> │   North        75       7,000     58.89                                 │
+#> │   South        72       9,900     83.29                                 │
+#> │                                                                         │
+#> │   expected is the count an area would have at the overall rate of each  │
+#> │   stratum, given its own population in it. stdinc() puts an interval on │
+#> │   the ratio of observed to expected.                                    │
+#> │                                                                         │
+#> │   The expected counts sum to the observed ones: the reference rates     │
+#> │   come from the same data.                                              │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 Adjusting for size **and** age composition is indirect standardisation:
@@ -34,10 +50,25 @@ the unit rather than about who lives there:
 ``` r
 
 expcnts(d$n, d$pop, d$region, strata = d$age)
-#>    area observed population expected
-#> 1  East       28       3900 32.34430
-#> 2 North       75       7000 62.27967
-#> 3 South       72       9900 80.37603
+#> ╭── Expected counts, indirect standardisation ────────────────────────────╮
+#> │   Areas       3                                                         │
+#> │   Observed    175                                                       │
+#> │   Expected    175                                                       │
+#> │   Population  20,800                                                    │
+#> │                                                                         │
+#> │   area   observed  population  expected                                 │
+#> │   -----  --------  ----------  --------                                 │
+#> │   East         28       3,900     32.34                                 │
+#> │   North        75       7,000     62.28                                 │
+#> │   South        72       9,900     80.38                                 │
+#> │                                                                         │
+#> │   expected is the count an area would have at the overall rate of each  │
+#> │   stratum, given its own population in it. stdinc() puts an interval on │
+#> │   the ratio of observed to expected.                                    │
+#> │                                                                         │
+#> │   The expected counts sum to the observed ones: the reference rates     │
+#> │   come from the same data.                                              │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Direct standardisation, for populations of different ages
@@ -45,7 +76,7 @@ expcnts(d$n, d$pop, d$region, strata = d$age)
 Indirect standardisation asks what each unit would expect at the overall
 rates. Direct standardisation asks what rate each population would have
 with one standard age structure. It is the comparison to use when the
-populations’ ages differ a great deal. First Nations, Metis and Inuit
+populations’ ages differ a great deal. First Nations, Métis and Inuit
 populations, for example, are younger than the non-Indigenous
 population.
 [`agestd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agestd.md)
@@ -57,17 +88,52 @@ computation:
 
 ``` r
 
-r <- agestd(events = c(4, 9, 11, 6, 3, 40, 70, 90, 80, 60),
-                     pop = c(9000, 8000, 6000, 4000, 2000, 300000, 320000, 350000, 340000, 300000),
-                     std = c(30, 25, 20, 15, 10),
-                     grp = rep(c("Inuit", "Non-Indigenous"), each = 5))
+r <- agestd(
+  events = c(4, 9, 11, 6, 3, 40, 70, 90, 80, 60),
+  pop = c(9000, 8000, 6000, 4000, 2000, 300000, 320000, 350000, 340000, 300000),
+  std = c(30, 25, 20, 15, 10),
+  grp = rep(c("Inuit", "Non-Indigenous"), each = 5)
+)
 r
-#>            group events      rate    lower    upper
-#> 1          Inuit     33 115.62500 79.23967 165.0186
-#> 2 Non-Indigenous    340  20.14102 17.93306  22.5839
+#> ╭── Directly age-standardised rate ──────────────────────────────────────╮
+#> │   Groups    2                                                          │
+#> │   Events    373                                                        │
+#> │   Rate per  100,000                                                    │
+#> │   Interval  gamma (Fay and Feuer 1997)                                 │
+#> │                                                                        │
+#> │   group           events    rate  95% CI                               │
+#> │   --------------  ------  ------  ---------------                      │
+#> │   Inuit               33  115.63  [79.24, 165.02]                      │
+#> │   Non-Indigenous     340   20.14  [17.93, 22.58]                       │
+#> │                                                                        │
+#> │   Highest rate: Inuit (115.6); lowest: Non-Indigenous (20.14).         │
+#> │   Their intervals do not overlap: the gap is more than sampling error. │
+#> │                                                                        │
+#> │   Each rate is what the group's age-specific rates give for the        │
+#> │   standard population's ages, so the groups compare without them.      │
+#> │   Compare only rates standardised to the same population.              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 rategap(r, "Inuit", "Non-Indigenous")
-#>   group      reference    ratio  ratiolo ratioup difference    diflo    difup
-#> 1 Inuit Non-Indigenous 5.740772 3.993798 8.25191   95.48398 55.54321 135.4247
+#> ╭── Gap between two standardised rates ──────────────────────────────────╮
+#> │   Group      Inuit                                                     │
+#> │   Reference  Non-Indigenous                                            │
+#> │                                                                        │
+#> │   group  reference       ratio  ratio CI        difference             │
+#> │   -----  --------------  -----  --------------  ----------             │
+#> │   Inuit  Non-Indigenous  5.741  [3.994, 8.252]       95.48             │
+#> │                                                                        │
+#> │   group  difference CI                                                 │
+#> │   -----  ---------------                                               │
+#> │   Inuit  [55.54, 135.40]                                               │
+#> │                                                                        │
+#> │   The rate ratio is 5.741 (its interval [3.994, 8.252]): the interval  │
+#> │   excludes 1, so the data distinguish it from no effect. A ratio of    │
+#> │   5.741 is a 474% rise. The difference, per the rates' unit, is 95.48  │
+#> │   (its interval [55.54, 135.40]): the interval excludes 0, so the data │
+#> │   distinguish it from no effect.                                       │
+#> │                                                                        │
+#> │   The intervals are at the level agestd() was given.                   │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```
 
 For survey percentages rather than counts,
@@ -86,14 +152,28 @@ honest:
 
 stdinc(obs = c(30, 12, 3), expd = c(20, 14, 5),
     area = c("North", "South", "East"))
-#>    area observed expected       sir     lower    upper excess deficit
-#> 1 North       30       20 1.5000000 1.0120437 2.141343   TRUE   FALSE
-#> 2 South       12       14 0.8571429 0.4428982 1.497256  FALSE   FALSE
-#> 3  East        3        5 0.6000000 0.1237344 1.753455  FALSE   FALSE
-#>   significant
-#> 1        TRUE
-#> 2       FALSE
-#> 3       FALSE
+#> ╭── Standardised incidence ratios ──────────────────────────────────────╮
+#> │   Areas          3                                                    │
+#> │   Observed       45                                                   │
+#> │   Expected       39                                                   │
+#> │   Overall ratio  1.154                                                │
+#> │   Interval       exact Poisson, at the level asked for (default 95%)  │
+#> │   Above one      1                                                    │
+#> │   Below one      0                                                    │
+#> │                                                                       │
+#> │   area   observed  expected     sir  interval        finding          │
+#> │   -----  --------  --------  ------  --------------  -------          │
+#> │   North        30        20  1.5000  [1.012, 2.141]  excess           │
+#> │   South        12        14  0.8571  [0.443, 1.497]                   │
+#> │   East          3         5  0.6000  [0.124, 1.753]                   │
+#> │                                                                       │
+#> │   A ratio above 1 means more cases than the area's population would   │
+#> │   give at the overall rates. An excess or a deficit is an interval    │
+#> │   wholly above or below 1 (the significant column is either).         │
+#> │                                                                       │
+#> │   Each interval is a separate test: with many areas some exclude 1 by │
+#> │   chance (scanadj() allows for that).                                 │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 ```
 
 An observed count of three carries almost no information, and the
@@ -102,8 +182,26 @@ interval says so rather than hiding it:
 ``` r
 
 stdinc(3, 5)
-#>   observed expected sir     lower    upper excess deficit significant
-#> 1        3        5 0.6 0.1237344 1.753455  FALSE   FALSE       FALSE
+#> ╭── Standardised incidence ratios ──────────────────────────────────────╮
+#> │   Areas          1                                                    │
+#> │   Observed       3                                                    │
+#> │   Expected       5                                                    │
+#> │   Overall ratio  0.6                                                  │
+#> │   Interval       exact Poisson, at the level asked for (default 95%)  │
+#> │   Above one      0                                                    │
+#> │   Below one      0                                                    │
+#> │                                                                       │
+#> │   observed  expected     sir  interval          finding               │
+#> │   --------  --------  ------  ----------------  -------               │
+#> │          3         5  0.6000  [0.1237, 1.7530]                        │
+#> │                                                                       │
+#> │   A ratio above 1 means more cases than the area's population would   │
+#> │   give at the overall rates. An excess or a deficit is an interval    │
+#> │   wholly above or below 1 (the significant column is either).         │
+#> │                                                                       │
+#> │   Each interval is a separate test: with many areas some exclude 1 by │
+#> │   chance (scanadj() allows for that).                                 │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Empirical Bayes shrinkage
@@ -119,10 +217,24 @@ count (Clayton and Kaldor 1987).
 
 ebrates(obs = c(30, 45, 2), expd = c(25, 50, 0.5),
          area = c("North", "South", "Tiny"))
-#>    area observed expected sir        eb shrinkage       nu    alpha
-#> 1 North       30     25.0 1.2 1.1073869 0.5141392 26.98066 26.45506
-#> 2 South       45     50.0 0.9 0.9414767 0.3460211 26.98066 26.45506
-#> 3  Tiny        2      0.5 4.0 1.0751472 0.9814506 26.98066 26.45506
+#> ╭── Empirical Bayes rates ────────────────────────────────────────────────╮
+#> │   Areas               3                                                 │
+#> │   Overall ratio       1.02                                              │
+#> │   Prior shape (nu)    26.98                                             │
+#> │   Prior rate (alpha)  26.46                                             │
+#> │   Method              gamma-Poisson, moments (Clayton and Kaldor 1987)  │
+#> │                                                                         │
+#> │   area   observed  expected    sir     eb  shrinkage                    │
+#> │   -----  --------  --------  -----  -----  ---------                    │
+#> │   North        30     25.00  1.200  1.107     0.5141                    │
+#> │   South        45     50.00  0.900  0.941     0.3460                    │
+#> │   Tiny          2      0.50  4.000  1.075     0.9815                    │
+#> │                                                                         │
+#> │   Each raw ratio (sir) is pulled toward the overall ratio; shrinkage is │
+#> │   the share of the pull (0 untouched, 1 replaced), largest for areas    │
+#> │   with small expected counts. Use eb for maps and rankings, stdinc()    │
+#> │   for each area's own evidence.                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 The tiny area’s raw ratio of 4 is pulled sharply toward 1; the large
@@ -173,10 +285,11 @@ whether similar values cluster in space, against a permutation null;
 
 ``` r
 
-nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)   # six areas in a line
+# six areas in a line
+nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)
 
 set.seed(1)
-morani(c(1, 2, 3, 4, 5, 6), nb, nperm = 999L)[c("I", "p_value")]   # a gradient
+morani(c(1, 2, 3, 4, 5, 6), nb, nperm = 999L)[c("I", "p_value")] # a gradient
 #> $I
 #> [1] 0.7142857
 #> 
@@ -184,7 +297,7 @@ morani(c(1, 2, 3, 4, 5, 6), nb, nperm = 999L)[c("I", "p_value")]   # a gradient
 #> [1] 0.011
 
 set.seed(1)
-morani(c(1, 6, 1, 6, 1, 6), nb, nperm = 999L)[c("I", "p_value")]   # alternating
+morani(c(1, 6, 1, 6, 1, 6), nb, nperm = 999L)[c("I", "p_value")] # alternating
 #> $I
 #> [1] -1
 #> 

@@ -15,7 +15,7 @@ e-mailing to a reviewer.
 rptanl(
   x,
   path = NULL,
-  format = c("markdown", "html"),
+  format = NULL,
   title = "Analysis of a published table",
   digits = 1L
 )
@@ -35,9 +35,9 @@ rptanl(
 
 - format:
 
-  `"markdown"` (the default) or `"html"`. When `format` is not given and
-  `path` ends in `.html` or `.htm`, HTML is written; any other path
-  gives Markdown.
+  `"markdown"` or `"html"`. With `NULL` (the default), a `path` ending
+  in `.html` or `.htm` gives HTML and anything else, or no `path`, gives
+  Markdown.
 
 - title:
 
@@ -82,7 +82,7 @@ md <- rptanl(a)
 cat(substr(md, 1, 400))
 #> # Analysis of a published table
 #> 
-#> `individuals` by `year`, grouped by `table` and `group`; 15 rows; 3 period(s) from 2023 to 2025; generated 2026-10-22 12:15.
+#> `individuals` by `year`, grouped by `table` and `group`; 15 rows; 3 period(s) from 2023 to 2025; generated 2026-10-27 13:57.
 #> 
 #> ## Change between periods
 #> 

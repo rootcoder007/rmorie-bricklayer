@@ -19,7 +19,7 @@ disposition."><meta property="og:image" content="https://rootcoder007.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -161,70 +161,94 @@ beta distribution.)</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"ocj_flow_ontario.csv"</span>,</span></span>
-<span class="r-in"><span>                          package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"extdata"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"ocj_flow_ontario.csv"</span>,</span></span>
+<span class="r-in"><span>  package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">cf</span> <span class="op">&lt;-</span> <span class="fu">caseflow</span><span class="op">(</span><span class="va">f</span><span class="op">$</span><span class="va">received</span>, <span class="va">f</span><span class="op">$</span><span class="va">disposed</span>, pend <span class="op">=</span> <span class="va">f</span><span class="op">$</span><span class="va">pending</span>, prd <span class="op">=</span> <span class="va">f</span><span class="op">$</span><span class="va">month</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">cf</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Case flow, 95% exact intervals, 12-period rolling window ────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Over all 24 periods: 497,393 received, 489,448 disposed, clearance 0.984 (0.980 to 0.988)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Pending at the end: 148,473, about 7.2 periods of disposition at the last 12-period pace</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   period received disposed clearance lower upper   net rolclr pending</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2024-04    21265    22053     1.037 1.018 1.057  -788     NA  148904</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2024-05    21521    22546     1.048 1.028 1.067 -1025     NA  147957</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2024-06    19728    20599     1.044 1.024 1.065  -871     NA  145989</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2024-07    22483    19552     0.870 0.853 0.887  2931     NA  147277</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2024-08    21019    18383     0.875 0.857 0.892  2636     NA  149417</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2024-09    20720    18186     0.878 0.860 0.895  2534     NA  151588</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2024-10    22349    22104     0.989 0.971 1.008   245     NA  150716</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2024-11    19769    19711     0.997 0.978 1.017    58     NA  150270</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2024-12    19179    18492     0.964 0.945 0.984   687     NA  151092</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-01    21210    20196     0.952 0.934 0.971  1014     NA  151494</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-02    18314    19044     1.040 1.019 1.061  -730     NA  150772</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-03    20688    20996     1.015 0.996 1.035  -308  0.974  150480</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-04    20778    21159     1.018 0.999 1.038  -381  0.973  151254</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-05    21795    21596     0.991 0.972 1.010   199  0.968  151239</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-06    21064    20519     0.974 0.956 0.993   545  0.962  149703</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-07    22298    21188     0.950 0.932 0.968  1110  0.969  150980</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-08    20927    17623     0.842 0.825 0.859  3304  0.967  153629</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-09    20993    19483     0.928 0.910 0.946  1510  0.971  153998</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-10    22497    22598     1.004 0.986 1.023  -101  0.972  154255</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-11    19360    19319     0.998 0.978 1.018    41  0.972  152825</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2025-12    19688    21291     1.081 1.061 1.103 -1603  0.982  151693</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2026-01    20508    19413     0.947 0.928 0.965  1095  0.981  150987</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2026-02    18638    20261     1.087 1.066 1.109 -1623  0.985  149760</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  2026-03    20602    23136     1.123 1.102 1.144 -2534  0.994  148473</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  pertoclear</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         6.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         6.6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         6.7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         7.2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Case flow</span> ────────────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Periods         2024-04 to 2026-03 (24)                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Intervals       95% exact (clearance is a ratio of counts)                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rolling window  12 periods (rolclr)                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   period   received  disposed  clearance  95% CI             net  rolclr    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -------  --------  --------  ---------  --------------  ------  ------    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-04    21,265    22,053     1.0371  [1.018, 1.057]    -788            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-05    21,521    22,546     1.0476  [1.028, 1.067]  -1,025            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-06    19,728    20,599     1.0442  [1.024, 1.065]    -871            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-07    22,483    19,552     0.8696  [0.853, 0.887]   2,931            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-08    21,019    18,383     0.8746  [0.857, 0.892]   2,636            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-09    20,720    18,186     0.8777  [0.860, 0.895]   2,534            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-10    22,349    22,104     0.9890  [0.971, 1.008]     245            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-11    19,769    19,711     0.9971  [0.978, 1.017]      58            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-12    19,179    18,492     0.9642  [0.945, 0.984]     687            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-01    21,210    20,196     0.9522  [0.934, 0.971]   1,014            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-02    18,314    19,044     1.0399  [1.019, 1.061]    -730            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-03    20,688    20,996     1.0149  [0.996, 1.035]    -308  0.9743    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-04    20,778    21,159     1.0183  [0.999, 1.038]    -381  0.9726    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-05    21,795    21,596     0.9909  [0.972, 1.010]     199  0.9677    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-06    21,064    20,519     0.9741  [0.956, 0.993]     545  0.9622    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-07    22,298    21,188     0.9502  [0.932, 0.968]   1,110  0.9695    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-08    20,927    17,623     0.8421  [0.825, 0.859]   3,304  0.9668    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-09    20,993    19,483     0.9281  [0.910, 0.946]   1,510  0.9709    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-10    22,497    22,598     1.0045  [0.986, 1.023]    -101  0.9723    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-11    19,360    19,319     0.9979  [0.978, 1.018]      41  0.9723    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-12    19,688    21,291     1.0814  [1.061, 1.103]  -1,603  0.9816    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2026-01    20,508    19,413     0.9466  [0.928, 0.965]   1,095  0.9812    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2026-02    18,638    20,261     1.0871  [1.066, 1.109]  -1,623  0.9848    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2026-03    20,602    23,136     1.1230  [1.102, 1.144]  -2,534  0.9937    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   period   pending  pertoclear                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -------  -------  ----------                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-04  148,904       6.752                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-05  147,957       6.635                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-06  145,989       6.717                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-07  147,277       6.951                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-08  149,417       7.244                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-09  151,588       7.497                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-10  150,716       7.356                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-11  150,270       7.369                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2024-12  151,092       7.487                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-01  151,494       7.506                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-02  150,772       7.509                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-03  150,480       7.466                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-04  151,254       7.532                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-05  151,239       7.561                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-06  149,703       7.487                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-07  150,980       7.500                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-08  153,629       7.655                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-09  153,998       7.633                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-10  154,255       7.630                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-11  152,825       7.571                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2025-12  151,693       7.429                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2026-01  150,987       7.419                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2026-02  149,760       7.322                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2026-03  148,473       7.196                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Over all 24 periods: 497,393 received, 489,448 disposed, clearance 0.984  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   (0.980 to 0.988)                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Pending at the end: 148,473, about 7.2 periods of disposition at the      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   last 12-period pace                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Clearance is below 1 over the whole run (interval below 1): 7,945 more    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   cases came in than were disposed, so the caseload grew.                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Period by period: 10 below 1, 7 above 1, 7 indistinguishable from 1.      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Clearance above 1: more cases disposed than received, so the              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   caseload shrank; below 1, it grew.                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cf</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="caseflow-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># without the pending count, a quarterly rolling window and 90% intervals</span></span></span>
-<span class="r-in"><span><span class="va">cq</span> <span class="op">&lt;-</span> <span class="fu">caseflow</span><span class="op">(</span><span class="va">f</span><span class="op">$</span><span class="va">received</span>, <span class="va">f</span><span class="op">$</span><span class="va">disposed</span>, prd <span class="op">=</span> <span class="va">f</span><span class="op">$</span><span class="va">month</span>, win <span class="op">=</span> <span class="fl">3</span>, conflvl <span class="op">=</span> <span class="fl">0.90</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cq</span> <span class="op">&lt;-</span> <span class="fu">caseflow</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">f</span><span class="op">$</span><span class="va">received</span>,</span></span>
+<span class="r-in"><span>  <span class="va">f</span><span class="op">$</span><span class="va">disposed</span>,</span></span>
+<span class="r-in"><span>  prd <span class="op">=</span> <span class="va">f</span><span class="op">$</span><span class="va">month</span>,</span></span>
+<span class="r-in"><span>  win <span class="op">=</span> <span class="fl">3</span>,</span></span>
+<span class="r-in"><span>  conflvl <span class="op">=</span> <span class="fl">0.90</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">cq</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"period"</span>, <span class="st">"clearance"</span>, <span class="st">"rolclr"</span>, <span class="st">"cumnet"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    period clearance    rolclr cumnet</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 2024-04 1.0370562        NA   -788</span>

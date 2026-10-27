@@ -114,7 +114,17 @@ cwbscr(incpercap = c(18000, 31000), highsch20p = c(58, 81),
           uni25p = c(6, 19), notcro = c(71, 95),
           nomajrep = c(62, 90),
           partic = c(55, 68), empl = c(78, 92))
-#>     income education housing labour      cwb
-#> 1 57.30940  40.66667    66.5   66.5 57.74402
-#> 2 73.57105  60.33333    92.5   80.0 76.60110
+#> ╭── Community Well-Being scores ────────────────────────────────────────╮
+#> │   Communities  2                                                      │
+#> │   Mean CWB     67.17                                                  │
+#> │   CWB range    [57.74, 76.60]                                         │
+#> │                                                                       │
+#> │   community  income  education  housing  labour    cwb                │
+#> │   ---------  ------  ---------  -------  ------  -----                │
+#> │           1   57.31      40.67    66.50   66.50  57.74                │
+#> │           2   73.57      60.33    92.50   80.00  76.60                │
+#> │                                                                       │
+#> │   Each component runs from 0 to 100, and the CWB score is their mean: │
+#> │   income, education, housing and labour force activity.               │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 ```

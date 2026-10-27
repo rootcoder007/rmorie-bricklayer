@@ -15,7 +15,7 @@ against it."><meta property="og:image" content="https://rootcoder007.github.io/r
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,19 +111,21 @@ no value set is pinned.</p></dd>
 low-cardinality categorical column, the observed range of every numeric
 column widened by <code>slack</code>, and the observed missingness rate per
 column with headroom.</p>
-<p>The rules, with \(n\) rows:</p><ul><li><p>types: the first class of each column (<code>"integer"</code>,
-<code>"numeric"</code>, <code>"character"</code>, <code>"factor"</code>, <code>"Date"</code>, ...);</p></li>
-<li><p>rows: <code>min_data_rows</code> \(= \lfloor n(1 - slack) \rfloor\) (at
-least 0) and <code>max_data_rows</code> \(= \lceil n(1 + slack) \rceil\);</p></li>
-<li><p>numeric ranges: \([lo - pad, hi + pad]\) with
-\(pad = slack \times (hi - lo)\), or \(slack \times \max(|lo|, 1)\) for a
-constant column; a column with no non-missing value gets no range;</p></li>
+<p>The rules, with \(n\) rows:</p><ul><li><p>types: the first class of each
+column (<code>"integer"</code>, <code>"numeric"</code>, <code>"character"</code>,
+<code>"factor"</code>, <code>"Date"</code>, ...);</p></li>
+<li><p>rows: <code>min_data_rows</code> \(=
+\lfloor n(1 - slack) \rfloor\) (at least 0) and <code>max_data_rows</code> \(=
+\lceil n(1 + slack) \rceil\);</p></li>
+<li><p>numeric ranges: \([lo - pad, hi + pad]\)
+with \(pad = slack \times (hi - lo)\), or \(slack \times \max(|lo|, 1)\)
+for a constant column; a column with no non-missing value gets no range;</p></li>
 <li><p>value sets: for character, factor and logical columns with at most
 <code>maxlvl</code> distinct non-missing values, those values as sorted text;</p></li>
-<li><p>missingness: the observed share of <code>NA</code> plus <code>slack</code>
-(added, not multiplied), capped at 1.</p></li>
-</ul><p>Other column types (dates, lists) get a type and a missingness ceiling
-only.</p><div class="section">
+<li><p>missingness: the observed share of <code>NA</code> plus <code>slack</code> (added, not
+multiplied), capped at 1.</p></li>
+</ul><p>Other column types (dates, lists) get a type and
+a missingness ceiling only.</p><div class="section">
 <h3 id="this-is-a-starting-point-not-an-oracle">This is a starting point, not an oracle<a class="anchor" aria-label="anchor" href="#this-is-a-starting-point-not-an-oracle"></a></h3>
 
 
@@ -157,17 +159,20 @@ check the schema cannot make.</p></div>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">sch</span> <span class="op">&lt;-</span> <span class="fu">infsch</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sch</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Inferred schema ───────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   columns         4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   rows            90 to 111</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   value sets      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   numeric ranges  2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   id                   integer    max NA  10.0%  [ -8.9, 109.9]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   score                numeric    max NA  10.0%  [-0.8446,  10.9]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   grade                character  max NA  10.0%  a, b, c</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   note                 character  max NA  10.0%  – free</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Inferred schema</span> ──────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns         4                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows            90 to 111                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Value sets      1                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Numeric ranges  2                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   What later extracts must look like to pass valsch(): these columns and    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   types, missingness at most as shown, values inside these sets.            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   id                   integer    max NA  10.0%  [ -8.9, 109.9]             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   score                numeric    max NA  10.0%  [-0.8446,  10.9]           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   grade                character  max NA  10.0%  a, b, c                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   note                 character  max NA  10.0%  – free                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The categorical column has its levels pinned; the free-text one does</span></span></span>
 <span class="r-in"><span><span class="co"># not, because it exceeds max_levels.</span></span></span>

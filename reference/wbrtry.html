@@ -13,7 +13,7 @@ after a run that hit archive.org's limits, typically the next day."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,24 +105,22 @@ daily limit hit today), as a one-row data frame with integer columns
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Reads the results file a <code><a href="wbsave.html">wbsave</a></code> run wrote
-and tries again every URL whose latest result is
-<code>"failed"</code> (or <code>"submitted"</code>: a capture a stopped run
-had started, which is polled rather than submitted again), so
-nobody has to dig the failures out by hand. Each failed URL is
-first looked up in the Wayback Machine, one lookup a second: a
-capture made at any time (an earlier one of a page that has
-since gone, or one made today by another run when the daily
-limit refused this one) is recorded as <code>"existing"</code>
-without capturing again. What is left is captured again with
-<code><a href="wbsave.html">wbsave()</a></code>, appending to the same file. A page its
-source no longer has is not sent again unless
-<code>incgone = TRUE</code>: a new capture would only archive the error.
-<code>"Gone"</code> means the recorded message contains archive.org's report of the
-target server's reply (“target server cannot find”, “returned 404”,
-“returned 410”, <code>"error:not-found"</code> or <code>"error:gone"</code>); an HTTP 404 from
-archive.org's own API does not count. A failure for a daily limit
-recorded today (UTC) is not sent again until tomorrow.</p>
+    <p>Reads the results file a <code><a href="wbsave.html">wbsave</a></code> run wrote and tries
+again every URL whose latest result is <code>"failed"</code> (or
+<code>"submitted"</code>: a capture a stopped run had started, which is polled
+rather than submitted again), so nobody has to dig the failures out by hand.
+Each failed URL is first looked up in the Wayback Machine, one lookup a
+second: a capture made at any time (an earlier one of a page that has since
+gone, or one made today by another run when the daily limit refused this one)
+is recorded as <code>"existing"</code> without capturing again. What is left is
+captured again with <code><a href="wbsave.html">wbsave()</a></code>, appending to the same file. A page its
+source no longer has is not sent again unless <code>incgone = TRUE</code>: a new
+capture would only archive the error. <code>"Gone"</code> means the recorded
+message contains archive.org's report of the target server's reply
+(“target server cannot find”, “returned 404”, “returned
+410”, <code>"error:not-found"</code> or <code>"error:gone"</code>); an HTTP 404 from
+archive.org's own API does not count. A failure for a daily limit recorded
+today (UTC) is not sent again until tomorrow.</p>
 <p>Network: the lookups use the Wayback availability API and the new
 captures use <code><a href="wbsave.html">wbsave()</a></code>, which needs the archive.org keys.
 When there is nothing left to send, no keys and no network are needed.
@@ -143,29 +141,42 @@ any error from <code><a href="wbsave.html">wbsave()</a></code>.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Offline: a results file whose only failure is a page that is gone</span></span></span>
 <span class="r-in"><span><span class="co"># has nothing to send again, so no keys or network are used.</span></span></span>
 <span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".jsonl"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">'{"url":"https://example.org/","status":"saved",'</span>,</span></span>
-<span class="r-in"><span>         <span class="st">'"timestamp":"20260101120000",'</span>,</span></span>
-<span class="r-in"><span>         <span class="st">'"snapshot":"https://web.archive.org/web/20260101120000/https://example.org/",'</span>,</span></span>
-<span class="r-in"><span>         <span class="st">'"message":"","at":"2026-01-01T12:00:00Z"}'</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">'{"url":"https://example.org/old","status":"failed",'</span>,</span></span>
-<span class="r-in"><span>         <span class="st">'"message":"target server cannot find the page","at":"2026-01-01T12:00:00Z"}'</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span>, <span class="va">f</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      <span class="st">'{"url":"https://example.org/","status":"saved",'</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'"timestamp":"20260101120000",'</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'"snapshot":"https://web.archive.org/web/20260101120000/https://'</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'example.org/",'</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'"message":"","at":"2026-01-01T12:00:00Z"}'</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      <span class="st">'{"url":"https://example.org/old","status":"failed",'</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'"message":"target server cannot find the '</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'page","at":"2026-01-01T12:00:00Z"}'</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="va">f</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">wbrtry</span><span class="op">(</span><span class="va">f</span>, lookup <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">res</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Wayback Machine captures ────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2 URLs: 1 saved, 0 existing, 1 failed</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  status      timestamp                     url</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   saved 20260101120000    https://example.org/</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  failed           &lt;NA&gt; https://example.org/old</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Wayback Machine captures</span> ─────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   URLs  2 URLs: 1 saved, 0 existing, 1 failed                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   status  timestamp       url                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  --------------  -----------------------                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   saved   20260101120000  https://example.org/                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   failed                  https://example.org/old                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Saved and existing URLs have a copy in the Wayback Machine at the         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   timestamp shown; wbrtry() tries the failed ones again.                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">res</span>, <span class="st">"retry"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   failed found_by_lookup captured_again left_as_gone left_for_tomorrow</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1      1               0              0            1                 0</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">wbrtry</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".jsonl"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : no results file at /tmp/RtmpshpHV7/file1f257d76a09c.jsonl</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : no results file at /tmp/Rtmp8mkWXN/file2197381417fb.jsonl</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With failures to resend, keys and the network are needed.</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>

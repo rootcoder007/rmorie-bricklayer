@@ -66,13 +66,13 @@ plndid(
   Optional linear combination of the terms, named by them, reported with
   its delta-method standard error as the attribute `combined`. For a
   phase-in model with an exposure term \\E\_{it} = \min(t - G_i, K)\\,
-  `combine = c(treated = 1, exposure = 12)` is the effect after twelve
+  `comb = c(treated = 1, exposure = 12)` is the effect after twelve
   periods, with its error, and as a percentage of the comparison units'
   pre-period mean (that mean taken as fixed).
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the intervals reported (default 0.95).
 
 ## Value
 
@@ -80,7 +80,7 @@ A data frame of class `rmbl_did`, one row per term (the treatment first,
 then the covariates): `term`, `estimate`, `se`, `lower`, `upper`, `t`,
 `p_value`. Attributes: `n`, `clusters`, `ctlmean` (the pre-period mean
 of the comparison units), `releff` (the estimate over it), `vcov`, and
-with `combine` also `combined`.
+with `comb` also `combined`.
 
 ## Details
 
@@ -145,14 +145,85 @@ procedural reform in Colombia.
 ``` r
 p <- polex()
 plndid(p, "district", "month", "crmrate", "reformed")
-#> Difference in differences: 720 observations, 20 clusters
-#>     term estimate     se  lower  upper      t  p_value
-#>  treated   -3.232 0.1164 -3.475 -2.988 -27.76 7.66e-17
-#> Effect relative to the comparison units' pre-period mean (26.52): -12.2%
+#> ╭── Difference in differences ────────────────────────────────────────────────╮
+#> │   Method           fixed-effects least squares, cluster-robust (CR1) errors │
+#> │   Observations     720                                                      │
+#> │   Clusters         20                                                       │
+#> │   Confidence       95%                                                      │
+#> │   Comparison mean  26.52                                                    │
+#> │   Relative effect  -12.2% of the comparison mean                            │
+#> │                                                                             │
+#> │   Estimates                                                                 │
+#> │   term     estimate      se  95% CI                 t  p_value              │
+#> │   -------  --------  ------  ----------------  ------  -------              │
+#> │   treated    -3.232  0.1164  [-3.475, -2.988]  -27.76  < 0.001              │
+#> │                                                                             │
+#> │   The policy's effect on the outcome is -3.232 (95% interval [-3.475,       │
+#> │   -2.988]): the interval excludes 0, so the data distinguish it from no     │
+#> │   effect.                                                                   │
+#> │                                                                             │
+#> │   The comparison mean is the pre-period mean outcome of the units not       │
+#> │   (yet) treated.                                                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 # clustered by region instead of district
 plndid(p, "district", "month", "crmrate", "reformed", cl = "region")
-#> Difference in differences: 720 observations, 4 clusters
-#>     term estimate     se  lower  upper      t   p_value
-#>  treated   -3.232 0.1656 -3.759 -2.705 -19.52 0.0002939
-#> Effect relative to the comparison units' pre-period mean (26.52): -12.2%
+#> ╭── Difference in differences ────────────────────────────────────────────────╮
+#> │   Method           fixed-effects least squares, cluster-robust (CR1) errors │
+#> │   Observations     720                                                      │
+#> │   Clusters         4                                                        │
+#> │   Confidence       95%                                                      │
+#> │   Comparison mean  26.52                                                    │
+#> │   Relative effect  -12.2% of the comparison mean                            │
+#> │                                                                             │
+#> │   Estimates                                                                 │
+#> │   term     estimate      se  95% CI                 t  p_value              │
+#> │   -------  --------  ------  ----------------  ------  -------              │
+#> │   treated    -3.232  0.1656  [-3.759, -2.705]  -19.52  < 0.001              │
+#> │                                                                             │
+#> │   The policy's effect on the outcome is -3.232 (95% interval [-3.759,       │
+#> │   -2.705]): the interval excludes 0, so the data distinguish it from no     │
+#> │   effect.                                                                   │
+#> │                                                                             │
+#> │   The comparison mean is the pre-period mean outcome of the units not       │
+#> │   (yet) treated.                                                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+# the effect of the by-law, with income as a control, clustered by town
+# (the default), weighted by population
+plndid(own, "town", "year", "rate", "bylaw", covs = "income", w = "pop")
+#> ╭── Difference in differences ────────────────────────────────────────────────╮
+#> │   Method           fixed-effects least squares, cluster-robust (CR1) errors │
+#> │   Observations     80                                                       │
+#> │   Clusters         8                                                        │
+#> │   Confidence       95%                                                      │
+#> │   Comparison mean  47.43                                                    │
+#> │   Relative effect  -8.3% of the comparison mean                             │
+#> │                                                                             │
+#> │   Estimates                                                                 │
+#> │   term     estimate      se  95% CI                 t  p_value              │
+#> │   -------  --------  ------  ----------------  ------  -------              │
+#> │   treated    -3.914  0.1702  [-4.316, -3.511]  -22.99  < 0.001              │
+#> │   income      0.227  0.0367  [0.140, 0.313]      6.17  < 0.001              │
+#> │                                                                             │
+#> │   The policy's effect on the outcome is -3.914 (95% interval [-4.316,       │
+#> │   -3.511]): the interval excludes 0, so the data distinguish it from no     │
+#> │   effect.                                                                   │
+#> │                                                                             │
+#> │   The comparison mean is the pre-period mean outcome of the units not       │
+#> │   (yet) treated.                                                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```

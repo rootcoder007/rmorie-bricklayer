@@ -21,7 +21,7 @@ first. Keys are never printed, only whether one is set."><meta property="og:imag
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,12 +108,12 @@ visibly when called with no settings, invisibly after saving.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><strong>Where settings live.</strong> Saved settings are kept in
-<code>llm.json</code> in the folder <code>$XDG_CONFIG_HOME/morie</code> (<code>~/.config/morie</code>
-when <code>XDG_CONFIG_HOME</code> is unset), a private file (mode 0600, in a
-private directory) next to the shared <code>credentials.json</code>. The file is
-written only when you pass a setting; only the settings that change are
-rewritten in place, so the rest of the file stays exactly as it was. An
-empty set of settings removes the file.</p>
+<code>llm.json</code> in the folder <code>$XDG_CONFIG_HOME/morie</code>
+(<code>~/.config/morie</code> when <code>XDG_CONFIG_HOME</code> is unset), a private file
+(mode 0600, in a private directory) next to the shared
+<code>credentials.json</code>. The file is written only when you pass a setting;
+only the settings that change are rewritten in place, so the rest of the file
+stays exactly as it was. An empty set of settings removes the file.</p>
 <p><strong>Precedence.</strong> An environment variable that is set (the <code>env</code>
 column, for example <code>ANTHROPIC_API_KEY</code> or <code>OLLAMA_HOST</code>) wins
 over a saved value, which wins over the built-in default. Saving a
@@ -189,8 +189,7 @@ settings.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "set"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Back to the defaults: NULL removes a saved setting.</span></span></span>
-<span class="r-in"><span><span class="fu">llmcfg</span><span class="op">(</span>route <span class="op">=</span> <span class="cn">NULL</span>, ollama.model <span class="op">=</span> <span class="cn">NULL</span>, own.url <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
-<span class="r-in"><span>                      own.key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">llmcfg</span><span class="op">(</span>route <span class="op">=</span> <span class="cn">NULL</span>, ollama.model <span class="op">=</span> <span class="cn">NULL</span>, own.url <span class="op">=</span> <span class="cn">NULL</span>, own.key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Unknown settings and retired routes are refused.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">llmcfg</span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -198,7 +197,11 @@ settings.</p></div>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">llmcfg</span><span class="op">(</span>route <span class="op">=</span> <span class="st">"hosted"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : the hosted MORIE language-model tier is retired: bring your own key (a provider's variable such as ANTHROPIC_API_KEY or OPENAI_API_KEY, or `rmoriebricklayer config set &lt;provider&gt;.key`) or run a model locally (Ollama); `rmoriebricklayer config setup` walks through it</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="st">"XDG_CONFIG_HOME"</span><span class="op">)</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>XDG_CONFIG_HOME <span class="op">=</span> <span class="va">old</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="st">"XDG_CONFIG_HOME"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>XDG_CONFIG_HOME <span class="op">=</span> <span class="va">old</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
 <span class="r-in"><span><span class="co"># your Anthropic key and model, and always use them</span></span></span>
 <span class="r-in"><span><span class="fu">llmcfg</span><span class="op">(</span>anthropic.key <span class="op">=</span> <span class="st">"sk-ant-..."</span>, route <span class="op">=</span> <span class="st">"anthropic"</span><span class="op">)</span></span></span>

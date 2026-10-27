@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,7 +90,10 @@ outside the verification. The harnesses live under <code>inst/</code> in
 the installed package and run in continuous integration on every
 change.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span>, pattern <span class="op">=</span> <span class="st">"^(ctcheck|dudect|tvla|fuzz)$"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span>,</span>
+<span>  pattern <span class="op">=</span> <span class="st">"^(ctcheck|dudect|tvla|fuzz)$"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "ctcheck" "dudect"  "fuzz"    "tvla"</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="timing">1. Timing<a class="anchor" aria-label="anchor" href="#timing"></a>
@@ -236,7 +239,10 @@ sees nothing.</p>
 on a masked leak under either model. The full table is in
 <code>inst/tvla/README.md</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"tvla"</span>, <span class="st">"README.md"</span>, package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"tvla"</span>, <span class="st">"README.md"</span>, package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span>,</span>
+<span>  n <span class="op">=</span> <span class="fl">12</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "# Simulated power analysis (TVLA)"                                                         </span></span>
 <span><span class="co">#&gt;  [2] ""                                                                                          </span></span>
 <span><span class="co">#&gt;  [3] "`inst/ctcheck` shows no branch or memory address depends on a secret, and `inst/dudect`"   </span></span>
@@ -325,10 +331,13 @@ curves should lie close together; the timing harnesses are what decide
 whether they are indistinguishable.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">bad</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">bad</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">==</span> <span class="st">"0"</span><span class="op">)</span> <span class="st">"1"</span> <span class="kw">else</span> <span class="st">"0"</span>  <span class="co"># one hex digit changed</span></span>
+<span><span class="co"># one hex digit changed</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">bad</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">bad</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">==</span> <span class="st">"0"</span><span class="op">)</span> <span class="st">"1"</span> <span class="kw">else</span> <span class="st">"0"</span></span>
 <span><span class="va">tm</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">ct</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="st">"elapsed"</span><span class="op">]</span><span class="op">]</span></span>
-<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">200</span><span class="op">)</span> <span class="fu"><a href="../reference/kemdecap.html">kemdecap</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">ct</span><span class="op">)</span></span>
+<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">200</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="../reference/kemdecap.html">kemdecap</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">ct</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
 <span>  <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="st">"elapsed"</span><span class="op">]</span><span class="op">]</span> <span class="op">-</span> <span class="va">s</span><span class="op">)</span> <span class="op">/</span> <span class="fl">200</span> <span class="op">*</span> <span class="fl">1e6</span></span>
 <span><span class="op">}</span></span>
 <span><span class="va">honest</span> <span class="op">&lt;-</span> <span class="va">tampered</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">60</span><span class="op">)</span></span>
@@ -336,8 +345,11 @@ whether they are indistinguishable.</p>
 <span>  <span class="va">honest</span><span class="op">[</span><span class="va">k</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">tm</span><span class="op">(</span><span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span></span>
 <span>  <span class="va">tampered</span><span class="op">[</span><span class="va">k</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">tm</span><span class="op">(</span><span class="va">bad</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="fu"><a href="../reference/plotmore.html">plotecdf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">honest</span>, <span class="va">tampered</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"honest ciphertext"</span>, <span class="st">"one digit changed"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">60</span><span class="op">)</span>,</span>
-<span>         main <span class="op">=</span> <span class="st">"ML-KEM-512 decapsulation time (microseconds)"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/plotmore.html">plotecdf</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">honest</span>, <span class="va">tampered</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"honest ciphertext"</span>, <span class="st">"one digit changed"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">60</span><span class="op">)</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"ML-KEM-512 decapsulation time (microseconds)"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="side-channel-assurance_files/figure-html/side-channel-assurance-decap-timing-plot-1.png" class="r-plt" alt="" width="672"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

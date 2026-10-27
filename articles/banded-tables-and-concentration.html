@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -146,7 +146,21 @@ unit, ready for any statistic:</p>
 <span><span class="co">#&gt;   1 3.5   9 </span></span>
 <span><span class="co">#&gt;  10   4   2</span></span>
 <span><span class="fu"><a href="../reference/concentration.html">ginicoef</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.452381</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Gini coefficient  0.4524                                                  │</span></span>
+<span><span class="co">#&gt; │   Units             16                                                      │</span></span>
+<span><span class="co">#&gt; │   Total             42                                                      │</span></span>
+<span><span class="co">#&gt; │   Largest unit      9 (21.4% of the total)                                  │</span></span>
+<span><span class="co">#&gt; │   Most for n units  0.9375                                                  │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   A Gini of 0.4524: the total is highly concentrated.                       │</span></span>
+<span><span class="co">#&gt; │   That is 48% of the way from equal shares (0) to one unit holding all of   │</span></span>
+<span><span class="co">#&gt; │   it (0.9375 for 16 units).                                                 │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span></span>
+<span><span class="co">#&gt; │   doubling every value leaves it unchanged. It says how unequal, not        │</span></span>
+<span><span class="co">#&gt; │   which units: topshr() and lorenzc() show where the total sits.            │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="concentration">Concentration<a class="anchor" aria-label="anchor" href="#concentration"></a>
@@ -158,20 +172,70 @@ most frequent few account for, and <code><a href="../reference/concentration.htm
 curve behind the Gini.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/concentration.html">ginicoef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span>             <span class="co"># no concentration</span></span>
-<span><span class="co">#&gt; [1] 0</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Gini coefficient  0                                                       │</span></span>
+<span><span class="co">#&gt; │   Units             10                                                      │</span></span>
+<span><span class="co">#&gt; │   Total             10                                                      │</span></span>
+<span><span class="co">#&gt; │   Largest unit      1 (10.0% of the total)                                  │</span></span>
+<span><span class="co">#&gt; │   Most for n units  0.9                                                     │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   A Gini of 0: the total is close to equal shares.                          │</span></span>
+<span><span class="co">#&gt; │   That is 0% of the way from equal shares (0) to one unit holding all of    │</span></span>
+<span><span class="co">#&gt; │   it (0.9 for 10 units).                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span></span>
+<span><span class="co">#&gt; │   doubling every value leaves it unchanged. It says how unequal, not        │</span></span>
+<span><span class="co">#&gt; │   which units: topshr() and lorenzc() show where the total sits.            │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="../reference/concentration.html">ginicoef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">9</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>        <span class="co"># one unit holds everything</span></span>
-<span><span class="co">#&gt; [1] 0.9</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Gini coefficient  0.9                                                     │</span></span>
+<span><span class="co">#&gt; │   Units             10                                                      │</span></span>
+<span><span class="co">#&gt; │   Total             1                                                       │</span></span>
+<span><span class="co">#&gt; │   Largest unit      1 (100.0% of the total)                                 │</span></span>
+<span><span class="co">#&gt; │   Most for n units  0.9                                                     │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   A Gini of 0.9: the total is very highly concentrated.                     │</span></span>
+<span><span class="co">#&gt; │   That is 100% of the way from equal shares (0) to one unit holding all of  │</span></span>
+<span><span class="co">#&gt; │   it (0.9 for 10 units).                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span></span>
+<span><span class="co">#&gt; │   doubling every value leaves it unchanged. It says how unequal, not        │</span></span>
+<span><span class="co">#&gt; │   which units: topshr() and lorenzc() show where the total sits.            │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fl">1</span> <span class="op">-</span> <span class="fl">1</span> <span class="op">/</span> <span class="fl">10</span>                   <span class="co"># the maximum for ten units</span></span>
 <span><span class="co">#&gt; [1] 0.9</span></span>
 <span></span>
 <span><span class="va">placements</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">430</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">8</span>, <span class="fl">110</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">38</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/concentration.html">ginicoef</a></span><span class="op">(</span><span class="va">placements</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.461225</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Gini coefficient  0.4612                                                  │</span></span>
+<span><span class="co">#&gt; │   Units             1,778                                                   │</span></span>
+<span><span class="co">#&gt; │   Total             4,130                                                   │</span></span>
+<span><span class="co">#&gt; │   Largest unit      20 (0.5% of the total)                                  │</span></span>
+<span><span class="co">#&gt; │   Most for n units  0.9994                                                  │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   A Gini of 0.4612: the total is highly concentrated.                       │</span></span>
+<span><span class="co">#&gt; │   That is 46% of the way from equal shares (0) to one unit holding all of   │</span></span>
+<span><span class="co">#&gt; │   it (0.9994 for 1,778 units).                                              │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span></span>
+<span><span class="co">#&gt; │   doubling every value leaves it unchanged. It says how unequal, not        │</span></span>
+<span><span class="co">#&gt; │   which units: topshr() and lorenzc() show where the total sits.            │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="../reference/concentration.html">topshr</a></span><span class="op">(</span><span class="va">placements</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   fraction units      share</span></span>
-<span><span class="co">#&gt; 1     0.01    18 0.08716707</span></span>
-<span><span class="co">#&gt; 2     0.05    89 0.28280872</span></span>
-<span><span class="co">#&gt; 3     0.10   178 0.41888620</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Top shares of a total</span> ────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Fractions  3                                                          │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   top  units  share                                                     │</span></span>
+<span><span class="co">#&gt; │   ---  -----  ------                                                    │</span></span>
+<span><span class="co">#&gt; │   1%      18  8.717%                                                    │</span></span>
+<span><span class="co">#&gt; │   5%      89  28.28%                                                    │</span></span>
+<span><span class="co">#&gt; │   10%    178  41.89%                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The top 1% of units (18 of them) hold 8.717% of the total; with equal │</span></span>
+<span><span class="co">#&gt; │   shares they would hold 1%.                                            │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/concentration.html">lorenzc</a></span><span class="op">(</span><span class="va">placements</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     population        value</span></span>
 <span><span class="co">#&gt; 1 0.0000000000 0.0000000000</span></span>
@@ -194,47 +258,59 @@ caps:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1200</span>, <span class="fl">430</span>, <span class="fl">110</span>, <span class="fl">38</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/bandsens.html">bandsens</a></span><span class="op">(</span><span class="va">b</span>, <span class="va">counts</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Sensitivity to the open top band's assumed cap ──────────────── </span></span>
-<span><span class="co">#&gt;        cap     value</span></span>
-<span><span class="co">#&gt;   11.55000 0.4254708</span></span>
-<span><span class="co">#&gt;   15.09841 0.4346095</span></span>
-<span><span class="co">#&gt;   19.73696 0.4461100</span></span>
-<span><span class="co">#&gt;   25.80058 0.4604302</span></span>
-<span><span class="co">#&gt;   33.72707 0.4780278</span></span>
-<span><span class="co">#&gt;   44.08875 0.4993060</span></span>
-<span><span class="co">#&gt;   57.63375 0.5245371</span></span>
-<span><span class="co">#&gt;   75.34008 0.5537719</span></span>
-<span><span class="co">#&gt;   98.48616 0.5867522</span></span>
-<span><span class="co">#&gt;  128.74322 0.6228545</span></span>
-<span><span class="co">#&gt;  168.29590 0.6610951</span></span>
-<span><span class="co">#&gt;  220.00000 0.7002144</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   span over the caps tried: 0.2747 (53.7% of the typical value)</span></span>
-<span><span class="co">#&gt;   The statistic moves by more than a tenth of itself across the</span></span>
-<span><span class="co">#&gt;   caps tried, so it is a property of the assumption as much as</span></span>
-<span><span class="co">#&gt;   of the data. Report the range, not a single figure.</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Sensitivity to the open top band's assumed cap</span> ───────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Open band starts at         11                                        │</span></span>
+<span><span class="co">#&gt; │   Caps tried                  12                                        │</span></span>
+<span><span class="co">#&gt; │   Span over the caps          0.2747                                    │</span></span>
+<span><span class="co">#&gt; │   Share of the typical value  53.7%                                     │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │      cap   value                                                        │</span></span>
+<span><span class="co">#&gt; │   ------  ------                                                        │</span></span>
+<span><span class="co">#&gt; │    11.55  0.4255                                                        │</span></span>
+<span><span class="co">#&gt; │    15.10  0.4346                                                        │</span></span>
+<span><span class="co">#&gt; │    19.74  0.4461                                                        │</span></span>
+<span><span class="co">#&gt; │    25.80  0.4604                                                        │</span></span>
+<span><span class="co">#&gt; │    33.73  0.4780                                                        │</span></span>
+<span><span class="co">#&gt; │    44.09  0.4993                                                        │</span></span>
+<span><span class="co">#&gt; │    57.63  0.5245                                                        │</span></span>
+<span><span class="co">#&gt; │    75.34  0.5538                                                        │</span></span>
+<span><span class="co">#&gt; │    98.49  0.5868                                                        │</span></span>
+<span><span class="co">#&gt; │   128.74  0.6229                                                        │</span></span>
+<span><span class="co">#&gt; │   168.30  0.6611                                                        │</span></span>
+<span><span class="co">#&gt; │   220.00  0.7002                                                        │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   span over the caps tried: 0.2747 (53.7% of the typical value). The    │</span></span>
+<span><span class="co">#&gt; │   statistic moves by more than a tenth of itself across the caps tried, │</span></span>
+<span><span class="co">#&gt; │   so it is a property of the assumption as much as of the data. Report  │</span></span>
+<span><span class="co">#&gt; │   the range, not a single figure.                                       │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="../reference/bandsens.html">bandsens</a></span><span class="op">(</span><span class="va">b</span>, <span class="va">counts</span>, stat <span class="op">=</span> <span class="va">mean</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Sensitivity to the open top band's assumed cap ──────────────── </span></span>
-<span><span class="co">#&gt;        cap    value</span></span>
-<span><span class="co">#&gt;   11.55000 2.257283</span></span>
-<span><span class="co">#&gt;   15.09841 2.295202</span></span>
-<span><span class="co">#&gt;   19.73696 2.344771</span></span>
-<span><span class="co">#&gt;   25.80058 2.409567</span></span>
-<span><span class="co">#&gt;   33.72707 2.494271</span></span>
-<span><span class="co">#&gt;   44.08875 2.604998</span></span>
-<span><span class="co">#&gt;   57.63375 2.749742</span></span>
-<span><span class="co">#&gt;   75.34008 2.938955</span></span>
-<span><span class="co">#&gt;   98.48616 3.186298</span></span>
-<span><span class="co">#&gt;  128.74322 3.509629</span></span>
-<span><span class="co">#&gt;  168.29590 3.932296</span></span>
-<span><span class="co">#&gt;  220.00000 4.484814</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   span over the caps tried: 2.228 (83.2% of the typical value)</span></span>
-<span><span class="co">#&gt;   The statistic moves by more than a tenth of itself across the</span></span>
-<span><span class="co">#&gt;   caps tried, so it is a property of the assumption as much as</span></span>
-<span><span class="co">#&gt;   of the data. Report the range, not a single figure.</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Sensitivity to the open top band's assumed cap</span> ───────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Open band starts at         11                                        │</span></span>
+<span><span class="co">#&gt; │   Caps tried                  12                                        │</span></span>
+<span><span class="co">#&gt; │   Span over the caps          2.228                                     │</span></span>
+<span><span class="co">#&gt; │   Share of the typical value  83.2%                                     │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │      cap  value                                                         │</span></span>
+<span><span class="co">#&gt; │   ------  -----                                                         │</span></span>
+<span><span class="co">#&gt; │    11.55  2.257                                                         │</span></span>
+<span><span class="co">#&gt; │    15.10  2.295                                                         │</span></span>
+<span><span class="co">#&gt; │    19.74  2.345                                                         │</span></span>
+<span><span class="co">#&gt; │    25.80  2.410                                                         │</span></span>
+<span><span class="co">#&gt; │    33.73  2.494                                                         │</span></span>
+<span><span class="co">#&gt; │    44.09  2.605                                                         │</span></span>
+<span><span class="co">#&gt; │    57.63  2.750                                                         │</span></span>
+<span><span class="co">#&gt; │    75.34  2.939                                                         │</span></span>
+<span><span class="co">#&gt; │    98.49  3.186                                                         │</span></span>
+<span><span class="co">#&gt; │   128.74  3.510                                                         │</span></span>
+<span><span class="co">#&gt; │   168.30  3.932                                                         │</span></span>
+<span><span class="co">#&gt; │   220.00  4.485                                                         │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   span over the caps tried: 2.228 (83.2% of the typical value). The     │</span></span>
+<span><span class="co">#&gt; │   statistic moves by more than a tenth of itself across the caps tried, │</span></span>
+<span><span class="co">#&gt; │   so it is a property of the assumption as much as of the data. Report  │</span></span>
+<span><span class="co">#&gt; │   the range, not a single figure.                                       │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="heavy-tails">Heavy tails<a class="anchor" aria-label="anchor" href="#heavy-tails"></a>
@@ -289,11 +365,33 @@ concentrated the population is in a few jurisdictions:</p>
 <span>            <span class="va">cp</span><span class="op">$</span><span class="va">RESIDENCE</span> <span class="op">==</span> <span class="st">"Total - Residence on or off reserve"</span> <span class="op">&amp;</span></span>
 <span>            <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^Total - Average age"</span>, <span class="va">cp</span><span class="op">$</span><span class="va">CHARACTERISTIC_NAME</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="fu"><a href="../reference/concentration.html">ginicoef</a></span><span class="op">(</span><span class="va">tot</span><span class="op">$</span><span class="va">FIRST_NATIONS</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.5291808</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Gini coefficient  0.5292                                                  │</span></span>
+<span><span class="co">#&gt; │   Units             13                                                      │</span></span>
+<span><span class="co">#&gt; │   Total             1,048,410                                               │</span></span>
+<span><span class="co">#&gt; │   Largest unit      251,030 (23.9% of the total)                            │</span></span>
+<span><span class="co">#&gt; │   Most for n units  0.9231                                                  │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   A Gini of 0.5292: the total is highly concentrated.                       │</span></span>
+<span><span class="co">#&gt; │   That is 57% of the way from equal shares (0) to one unit holding all of   │</span></span>
+<span><span class="co">#&gt; │   it (0.9231 for 13 units).                                                 │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span></span>
+<span><span class="co">#&gt; │   doubling every value leaves it unchanged. It says how unequal, not        │</span></span>
+<span><span class="co">#&gt; │   which units: topshr() and lorenzc() show where the total sits.            │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="../reference/concentration.html">topshr</a></span><span class="op">(</span><span class="va">tot</span><span class="op">$</span><span class="va">FIRST_NATIONS</span>, fracs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   fraction units     share</span></span>
-<span><span class="co">#&gt; 1     0.25     4 0.6787850</span></span>
-<span><span class="co">#&gt; 2     0.50     7 0.9326599</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Top shares of a total</span> ────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Fractions  2                                                          │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   top  units  share                                                     │</span></span>
+<span><span class="co">#&gt; │   ---  -----  ------                                                    │</span></span>
+<span><span class="co">#&gt; │   25%      4  67.88%                                                    │</span></span>
+<span><span class="co">#&gt; │   50%      7  93.27%                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The top 25% of units (4 of them) hold 67.88% of the total; with equal │</span></span>
+<span><span class="co">#&gt; │   shares they would hold 25%.                                           │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="the-bands-and-the-curve-in-a-picture">The bands and the curve in a picture<a class="anchor" aria-label="anchor" href="#the-bands-and-the-curve-in-a-picture"></a>
@@ -304,7 +402,13 @@ the further it bows below the diagonal, the more unevenly the population
 is spread.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">counts</span>, names.arg <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">label</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, main <span class="op">=</span> <span class="st">"Counts by band"</span>, ylab <span class="op">=</span> <span class="st">"count"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span></span>
+<span>  <span class="va">counts</span>,</span>
+<span>  names.arg <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">label</span>,</span>
+<span>  col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"Counts by band"</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"count"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plotlrnz.html">plotlrnz</a></span><span class="op">(</span><span class="va">placements</span>, main <span class="op">=</span> <span class="st">"Concentration of placements"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="banded-tables-and-concentration_files/figure-html/banded-tables-and-concentration-bands-lorenz-plot-1.png" class="r-plt" alt="" width="768"></p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">

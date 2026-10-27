@@ -86,7 +86,7 @@ for (ext in c("csv", "tsv", "json", "md", "html")) {
 #> tsv 470 bytes
 #> json 1486 bytes
 #> md 675 bytes
-#> html 4827 bytes
+#> html 4867 bytes
 
 # an extension that names no format: say which one
 f <- file.path(tempdir(), "change.txt")

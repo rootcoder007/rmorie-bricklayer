@@ -15,7 +15,7 @@ from the identity that links all three."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,7 +91,12 @@ positive. Default <code>365</code>.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A numeric scalar: the implied number of admissions over the
-period, \(\mathrm{adp} \times t / \mathrm{alos}\). It is not rounded.</p>
+period, \(\mathrm{adp} \times t / \mathrm{alos}\). It is not rounded.
+It has class <code>c("rmbl_admits", "rmbl_measure", "numeric")</code> and an
+attribute <code>"lakner"</code> (<code>adp</code>, <code>alos</code> and <code>t</code>), so it
+prints as a box with its inputs, formula and caveats; arithmetic,
+<code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code>, <code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code>, <code><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean()</a></code>, <code>[</code>, <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> and
+<code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code> give a plain number.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -121,11 +126,37 @@ not positive, or has more than one value.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># and back again</span></span></span>
 <span class="r-in"><span><span class="fu">admits</span><span class="op">(</span><span class="fl">25</span>, <span class="va">alosimplied</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1750</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Admissions implied by stock and stay</span> ─────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Admissions                1,750 over the period                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Average daily population  25                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Average stay              5.214 days                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Period                    365 days                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula                   admits = adp x t / alos = 25 x 365 / 5.214      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   25 held on an average day, staying 5.214 days each, imply 1,750           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   admissions over 365 days.                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakner (1976, p.18-20): adp = admissions x alos / t is exact only in      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a steady state; with a population growing or shrinking quickly the        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   result is an approximation. It is not rounded.                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a 90-day quarter with 40 held on average and a 12-day average stay</span></span></span>
 <span class="r-in"><span><span class="fu">admits</span><span class="op">(</span><span class="fl">40</span>, <span class="fl">12</span>, t <span class="op">=</span> <span class="fl">90</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 300</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Admissions implied by stock and stay</span> ─────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Admissions                300 over the period                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Average daily population  40                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Average stay              12 days                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Period                    90 days                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula                   admits = adp x t / alos = 40 x 90 / 12          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   40 held on an average day, staying 12 days each, imply 300 admissions     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   over 90 days.                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakner (1976, p.18-20): adp = admissions x alos / t is exact only in      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a steady state; with a population growing or shrinking quickly the        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   result is an approximation. It is not rounded.                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># an average stay of zero is refused</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">admits</span><span class="op">(</span><span class="fl">25</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>

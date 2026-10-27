@@ -65,10 +65,22 @@ x <- seq(200, 5000, by = 100)
 h <- 30 + r$finalrise
 cd <- gplume(q = 100, u = 4, h = h, rcpt = cbind(x, 0, 0), stab = "D")
 cb <- gplume(q = 100, u = 4, h = h, rcpt = cbind(x, 0, 0), stab = "B")
-plot(x, cd, type = "l", xlab = "downwind distance (m)", ylab = "concentration (g/m^3)",
-     main = "Ground-level centreline concentration")
+plot(
+  x,
+  cd,
+  type = "l",
+  xlab = "downwind distance (m)",
+  ylab = "concentration (g/m^3)",
+  main = "Ground-level centreline concentration"
+)
 lines(x, cb, col = 2)
-legend("topright", c("class D (neutral)", "class B (unstable)"), col = 1:2, lty = 1, bty = "n")
+legend(
+  "topright",
+  c("class D (neutral)", "class B (unstable)"),
+  col = 1:2,
+  lty = 1,
+  bty = "n"
+)
 ```
 
 ![](air-pollution-and-health_files/figure-html/air-pollution-and-health-plume-1.png)
@@ -85,8 +97,19 @@ package’s random stream can be reproduced exactly.
 
 ``` r
 
-p <- lagrprt(n = 500, x0 = 0, y0 = 0, u = 1, v = 0, kx = 0.5, ky = 0.5,
-                          dt = 1, nsteps = 50, seed = 1, grid = c(0, 100, -30, 30, 20, 12))
+p <- lagrprt(
+  n = 500,
+  x0 = 0,
+  y0 = 0,
+  u = 1,
+  v = 0,
+  kx = 0.5,
+  ky = 0.5,
+  dt = 1,
+  nsteps = 50,
+  seed = 1,
+  grid = c(0, 100, -30, 30, 20, 12)
+)
 c(mean_x = p$mean_x, meany = p$meany)
 #>       mean_x        meany 
 #> 49.981881150  0.009562424
@@ -137,7 +160,19 @@ counterfactual reduction:
 ``` r
 
 attrfrac(crfno2(25)$rr, expoprev = 1)
-#> [1] 0.02926711
+#> ╭── Population attributable fraction ─────────────────────────────────────────╮
+#> │   Attributable fraction  2.93%                                              │
+#> │   Relative risk          1.03                                               │
+#> │   Exposed                100.00%                                            │
+#> │   Formula                Levin: p (RR - 1) / (1 + p (RR - 1))               │
+#> │                                                                             │
+#> │   About 2.9% of the cases in this population would not occur without the    │
+#> │   exposure, if the relative risk is causal.                                 │
+#> │                                                                             │
+#> │   It holds only if the relative risk is causal and unconfounded, and        │
+#> │   only for a population exposed as this one is (Rothman et al. 2008,        │
+#> │   chapter 5).                                                               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 mortdisp(expdel = 10, pop = 1e6, brate = 0.008,
                     betaperunit = log(1.02) / 10)
 #> [1] 156.8627
@@ -164,14 +199,38 @@ Per area, sorted worst first:
 
 ``` r
 
-areas <- data.frame(fsa = c("M6H", "M5V", "M4W", "M1B"), exposure = c(28, 18, 15, 24),
-                    population = c(40000, 60000, 25000, 70000), brate = 0.008)
+areas <- data.frame(
+  fsa = c("M6H", "M5V", "M4W", "M1B"),
+  exposure = c(28, 18, 15, 24),
+  population = c(40000, 60000, 25000, 70000),
+  brate = 0.008,
+  stringsAsFactors = FALSE
+)
 polbrdarea(areas)
-#>   fsa exposure population brate       rr         paf attrcases basecases
-#> 1 M1B       24      70000 0.008 1.028112 0.027342904 15.312026       560
-#> 2 M6H       28      40000 0.008 1.036288 0.035016937 11.205420       320
-#> 3 M5V       18      60000 0.008 1.015968 0.015717276  7.544292       480
-#> 4 M4W       15      25000 0.008 1.009950 0.009852457  1.970491       200
+#> ╭── Pollution burden by area ─────────────────────────────────────────────╮
+#> │   Areas               4                                                 │
+#> │   Attributable cases  36.03                                             │
+#> │   Baseline cases      1,560                                             │
+#> │   Share attributable  2.31%                                             │
+#> │                                                                         │
+#> │   fsa  exposure  population     brate     rr      paf  attrcases        │
+#> │   ---  --------  ----------  --------  -----  -------  ---------        │
+#> │   M1B        24      70,000  0.008000  1.028  0.02734     15.312        │
+#> │   M6H        28      40,000  0.008000  1.036  0.03502     11.205        │
+#> │   M5V        18      60,000  0.008000  1.016  0.01572      7.544        │
+#> │   M4W        15      25,000  0.008000  1.010  0.00985      1.970        │
+#> │                                                                         │
+#> │   fsa  basecases                                                        │
+#> │   ---  ---------                                                        │
+#> │   M1B        560                                                        │
+#> │   M6H        320                                                        │
+#> │   M5V        480                                                        │
+#> │   M4W        200                                                        │
+#> │                                                                         │
+#> │   The areas are sorted by the cases attributable to the exposure,       │
+#> │   largest first: rr is the relative risk at the area's exposure and paf │
+#> │   the share of its cases the exposure accounts for.                     │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## 3. Who bears it
@@ -315,9 +374,19 @@ raplok()
 fp <- co2fp(sum(sqrt(seq_len(3e5))), loc = "CA-ON", cpupwrw = 45,
                         memgb = 16)
 print(fp)
-#> Computation footprint (modelled): 0.003 s wall, 0.003 s CPU, utilisation 0.25 (process) on 4 cores
-#>   energy: 1.43e-08 kWh (cpu 9.38e-09, memory 4.97e-09)
-#>   CO2e:   1.3e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
+#> ╭── Computation footprint (modelled) ─────────────────────────────────────────╮
+#> │   Time         0.004 s wall, 0.003 s CPU                                    │
+#> │   Utilisation  utilisation 0.19 (process) on 4 cores                        │
+#> │   Memory       16 GB                                                        │
+#> │   Energy       1.6e-08 kWh (cpu 9.37e-09, memory 6.62e-09)                  │
+#> │   CO2e         1.46e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)        │
+#> │   Source       Electricity Maps (2025). Canada 2024 Yearly Carbon           │
+#> │                Intensity Data (Version January 27, 2025). Electricity Maps  │
+#> │                (via Green Algorithms data v3.1)                             │
+#> │                                                                             │
+#> │   An estimate of the energy this computation used and the emissions of      │
+#> │   making it on the local grid; fpeqv() puts the grams in everyday terms.    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 fp$assumptions
 #> character(0)
 ```
@@ -347,9 +416,9 @@ b <- co2fp(busy(), loc = "CA-ON", cpupwrw = 45, memgb = 16,
                        usage = "machine", loadcur = "codecarbon")
 rbind(prolin = c(usage = a$usage, cpukwh = a$enekwh$cpu),
       maccod = c(usage = b$usage, cpukwh = b$enekwh$cpu))
-#>        usage       cpukwh
-#> prolin  0.25 6.250000e-09
-#> maccod  0.25 1.568359e-08
+#>            usage       cpukwh
+#> prolin 0.2500000 9.375000e-09
+#> maccod 0.1666667 1.822917e-08
 b$usagemode
 #> [1] "machine"
 ```
@@ -433,17 +502,17 @@ the two the Green Algorithms calculator prints:
 ``` r
 
 fpeqv(fp$co2eg * 1e4)   # if this ran ten thousand times
-#> $carkm
-#> [1] 7.455208e-05
-#> 
-#> $treemon
-#> [1] 1.42275e-05
-#> 
-#> $sources
-#>                                                                  car 
-#> "175 gCO2/km, European passenger car (Green Algorithms context.csv)" 
-#>                                                                 tree 
-#>             "917 gCO2 per tree-month (Green Algorithms context.csv)"
+#> ╭── Footprint in everyday terms ────────────────────────────────────────╮
+#> │   Car travel   8.316e-05 km                                           │
+#> │   Tree uptake  1.587e-05 tree-months                                  │
+#> │                                                                       │
+#> │   The same emissions as driving a European passenger car this far, or │
+#> │   what this many trees take up in a month.                            │
+#> │                                                                       │
+#> │   car: 175 gCO2/km, European passenger car (Green Algorithms          │
+#> │   context.csv). tree: 917 gCO2 per tree-month (Green Algorithms       │
+#> │   context.csv).                                                       │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 ```
 
 **Cross-checked against codecarbon.** On the same 8-second CPU-bound
@@ -484,21 +553,25 @@ community.
 ``` r
 
 cp <- indiex("censuspop")
-tot <- cp[cp$GEO_LEVEL != "Country" & cp$AGE_GROUP == "Total - Age groups" &
-            cp$RESIDENCE == "Total - Residence on or off reserve" &
-            grepl("^Total - Average age", cp$CHARACTERISTIC_NAME), ]
+tot <- cp[
+  cp$GEO_LEVEL != "Country" &
+    cp$AGE_GROUP == "Total - Age groups" &
+    cp$RESIDENCE == "Total - Residence on or off reserve" &
+    grepl("^Total - Average age", cp$CHARACTERISTIC_NAME),
+]
 pop <- stats::setNames(tot$FIRST_NATIONS, tot$GEO_NAME)
 head(pop[order(-pop)], 5)
 #>          Ontario British Columbia          Alberta         Manitoba 
 #>           251030           180085           145640           134890 
 #>     Saskatchewan 
 #>           121175
-# relative risk of all-cause mortality from PM2.5, and the share of deaths attributable to
-# the excess above the guideline if the whole population breathes the scenario level
-sapply(c(8, 12), function(conc) {
+# relative risk of all-cause mortality from PM2.5, and the share of deaths
+# attributable to the excess above the guideline if the whole population
+# breathes the scenario level
+vapply(c(8, 12), function(conc) {
   rr <- crfpm25(conc, refconc = 5)$rr
   c(pm25 = conc, rr = rr, attributable = attrfrac(rr, 1))
-})
+}, numeric(3))
 #>                    [,1]       [,2]
 #> pm25         8.00000000 12.0000000
 #> rr           1.02335691  1.0553503

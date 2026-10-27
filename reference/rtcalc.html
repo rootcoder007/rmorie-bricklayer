@@ -19,7 +19,7 @@ its own width."><meta property="og:image" content="https://rootcoder007.github.i
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -156,8 +156,8 @@ sums), and the groups come out in sorted order. Groups with no rows are
 not created. Without <code>by</code> the whole table is one group. With a
 vector, each element is its own row.</p>
 <p><code>per</code> takes a number, or one of <code>"1k"</code>, <code>"10k"</code>,
-<code>"100k"</code>, <code>"1m"</code> (case, spaces, commas and a leading <code>"per"</code> are
-ignored), because a denominator mistyped by a factor of ten is invisible
+<code>"100k"</code>, <code>"1m"</code> (case, spaces, commas and a leading <code>"per"</code>
+are ignored), because a denominator mistyped by a factor of ten is invisible
 once it reaches a table.</p>
 <p>A rate and a share are different quantities: use <code><a href="shrs.html">shrs</a></code> when
 the denominator is the total of the same events, not a population.</p>
@@ -183,40 +183,98 @@ than a population.</p></div>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># per 1,000 residents, the default</span></span></span>
 <span class="r-in"><span><span class="fu">rtcalc</span><span class="op">(</span><span class="va">stops</span>, <span class="va">stops</span>, <span class="va">residents</span>, by <span class="op">=</span> <span class="st">"division"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Rate per 1,000, 95% exact Poisson interval ──────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  division count population      rate      lower     upper flag</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      East     3       9500 0.3157895 0.06512338 0.9228708 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North   412     120000 3.4333333 3.10977110 3.7814142 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South    77      41000 1.8780488 1.48212673 2.3472387 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Rate per 1,000</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Count       stops                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Population  residents                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Groups      division                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows        3                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Interval    95% exact Poisson                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   division  count  population   rate  95% CI                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   --------  -----  ----------  -----  --------------                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   East          3       9,500  0.316  [0.065, 0.923]                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North       412     120,000  3.433  [3.110, 3.781]                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South        77      41,000  1.878  [1.482, 2.347]                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Highest rate: North (3.433); lowest: East (0.3158). Their intervals  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   do not overlap: the gap is more than sampling error.                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each rate is the count over the population times the base; the exact │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Poisson interval stays honest for small counts, where a normal one   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   does not.                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the denominator published guidance usually asks for</span></span></span>
 <span class="r-in"><span><span class="fu">rtcalc</span><span class="op">(</span><span class="va">stops</span>, <span class="va">stops</span>, <span class="va">residents</span>, by <span class="op">=</span> <span class="st">"division"</span>, per <span class="op">=</span> <span class="st">"100k"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Rate per 100,000, 95% exact Poisson interval ────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  division count population      rate      lower     upper flag</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      East     3       9500  31.57895   6.512338  92.28708 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North   412     120000 343.33333 310.977110 378.14142 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South    77      41000 187.80488 148.212673 234.72387 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Rate per 100,000</span> ─────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Count       stops                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Population  residents                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Groups      division                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows        3                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Interval    95% exact Poisson                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   division  count  population   rate  95% CI                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   --------  -----  ----------  -----  --------------                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   East          3       9,500   31.6  [6.5, 92.3]                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North       412     120,000  343.3  [311.0, 378.1]                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South        77      41,000  187.8  [148.2, 234.7]                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Highest rate: North (343.3); lowest: East (31.58). Their intervals do │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   not overlap: the gap is more than sampling error.                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each rate is the count over the population times the base; the exact  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Poisson interval stays honest for small counts, where a normal one    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   does not.                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># East's three events: the interval is wider than the estimate, and</span></span></span>
 <span class="r-in"><span><span class="co"># flagging it is the point of mincnt</span></span></span>
 <span class="r-in"><span><span class="fu">rtcalc</span><span class="op">(</span><span class="va">stops</span>, <span class="va">stops</span>, <span class="va">residents</span>, by <span class="op">=</span> <span class="st">"division"</span>, per <span class="op">=</span> <span class="st">"100k"</span>,</span></span>
 <span class="r-in"><span>     mincnt <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Rate per 100,000, 95% exact Poisson interval ────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  division count population      rate      lower     upper                flag</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      East     3       9500  31.57895   6.512338  92.28708 count at or below 5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North   412     120000 343.33333 310.977110 378.14142                &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South    77      41000 187.80488 148.212673 234.72387                &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Rate per 100,000</span> ─────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Count             stops                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Population        residents                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Groups            division                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows              3                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Interval          95% exact Poisson                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Small-count flag  counts at or below 5                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   division  count  population   rate  95% CI          flag              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   --------  -----  ----------  -----  --------------  ----              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   East          3       9,500   31.6  [6.5, 92.3]     [1]               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North       412     120,000  343.3  [311.0, 378.1]                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South        77      41,000  187.8  [148.2, 234.7]                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Highest rate: North (343.3); lowest: East (31.58). Their intervals do │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   not overlap: the gap is more than sampling error. East rests on 5 or  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   fewer events: read their rates with their wide intervals.             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   [1] count at or below 5                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each rate is the count over the population times the base; the exact  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Poisson interval stays honest for small counts, where a normal one    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   does not.                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># vectors work too, for a single figure; a zero count has a lower limit of 0</span></span></span>
 <span class="r-in"><span><span class="fu">rtcalc</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fl">9500</span>, per <span class="op">=</span> <span class="st">"100k"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Rate per 100,000, 95% exact Poisson interval ────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  count population     rate    lower    upper flag</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      3       9500 31.57895 6.512338 92.28708 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      0       9500  0.00000 0.000000 38.83031 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Rate per 100,000</span> ────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Count       count                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Population  population                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows        2                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Interval    95% exact Poisson                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   count  population   rate  95% CI                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  ----------  -----  -------------                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       3       9,500  31.58  [6.51, 92.29]                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       0       9,500   0.00  [0.00, 38.83]                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Highest rate: row 1 (31.58); lowest: row 2 (0). Their intervals      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   overlap: the data cannot tell the two apart.                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each rate is the count over the population times the base; the exact │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Poisson interval stays honest for small counts, where a normal one   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   does not.                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a fractional count has no Poisson interval</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">rtcalc</span><span class="op">(</span><span class="fl">2.5</span>, <span class="fl">1000</span><span class="op">)</span><span class="op">)</span></span></span>

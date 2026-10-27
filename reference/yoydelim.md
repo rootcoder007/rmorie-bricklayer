@@ -39,10 +39,11 @@ yoymd(x, file, digits = 1L, align = TRUE, ...)
 
 - digits:
 
-  Integer scalar or `NULL`: decimal places for the percent columns. For
-  the CSV, TSV and JSON writers `NULL`, the default, writes them
-  unrounded, which is what a downstream calculation wants; give a number
-  for a figure meant to be read. For `yoymd()` the default is `1`.
+  A whole number from 0 to 15, or `NULL`: decimal places for the percent
+  columns. For the CSV, TSV and JSON writers `NULL`, the default, writes
+  them unrounded, which is what a downstream calculation wants; give a
+  number for a figure meant to be read. For `yoymd()` the default is
+  `1`.
 
 - na:
 
@@ -65,7 +66,9 @@ yoymd(x, file, digits = 1L, align = TRUE, ...)
 
 - ...:
 
-  Ignored.
+  Ignored: what
+  [`yoywr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoywr.md)
+  passes on for its HTML and PDF writers.
 
 - pretty:
 

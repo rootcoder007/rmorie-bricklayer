@@ -17,7 +17,7 @@ maps and rankings; use stdinc for each area's own evidence."><meta property="og:
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,17 +101,16 @@ one means replaced by the overall rate), and the fitted prior's <code>nu</code>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The area relative risks \(\theta_a\) are taken to come from a gamma
-prior with shape \(\nu\) and rate \(\alpha\). Its mean is the overall
-ratio \(m = \sum O_a / \sum E_a\), and its variance is estimated by the
-method of moments,
-$$s^2 = \frac{\sum_a E_a (\theta_a - m)^2}{\sum_a E_a} - \frac{m}{\bar E},$$
-with \(\theta_a = O_a / E_a\) and \(\bar E\) the mean expected count;
-the subtracted term is the spread that Poisson sampling alone would
-produce. Then \(\alpha = m / s^2\), \(\nu = m^2 / s^2\), and the
-posterior mean \((O_a + \nu)/(E_a + \alpha)\) is reported, with
-shrinkage \(\alpha / (E_a + \alpha)\). Where the expected count is large
-the data dominate and the estimate barely moves; where it is small the
+    <p>The area relative risks \(\theta_a\) are taken to come from a
+gamma prior with shape \(\nu\) and rate \(\alpha\). Its mean is the
+overall ratio \(m = \sum O_a / \sum E_a\), and its variance is estimated by
+the method of moments, $$s^2 = \frac{\sum_a E_a (\theta_a - m)^2}{\sum_a
+E_a} - \frac{m}{\bar E},$$ with \(\theta_a = O_a / E_a\) and \(\bar E\)
+the mean expected count; the subtracted term is the spread that Poisson
+sampling alone would produce. Then \(\alpha = m / s^2\), \(\nu = m^2 /
+s^2\), and the posterior mean \((O_a + \nu)/(E_a + \alpha)\) is reported,
+with shrinkage \(\alpha / (E_a + \alpha)\). Where the expected count is
+large the data dominate and the estimate barely moves; where it is small the
 prior does, which is the intended behaviour and not a defect.</p>
 <p>When the between-area variance estimate comes out at or below zero there
 is no evidence of any real variation between areas, and every estimate
@@ -141,17 +140,43 @@ mapping.</p>
 <span class="r-in"><span><span class="co"># extreme; its shrunk one is not.</span></span></span>
 <span class="r-in"><span><span class="fu">ebrates</span><span class="op">(</span>obs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">45</span>, <span class="fl">2</span><span class="op">)</span>, expd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">50</span>, <span class="fl">0.5</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>         area <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North"</span>, <span class="st">"South"</span>, <span class="st">"Tiny"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    area observed expected sir        eb shrinkage       nu    alpha</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 North       30     25.0 1.2 1.1073869 0.5141392 26.98066 26.45506</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 South       45     50.0 0.9 0.9414767 0.3460211 26.98066 26.45506</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  Tiny        2      0.5 4.0 1.0751472 0.9814506 26.98066 26.45506</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Empirical Bayes rates</span> ────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Areas               3                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Overall ratio       1.02                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Prior shape (nu)    26.98                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Prior rate (alpha)  26.46                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Method              gamma-Poisson, moments (Clayton and Kaldor 1987)  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   area   observed  expected    sir     eb  shrinkage                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  --------  --------  -----  -----  ---------                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North        30     25.00  1.200  1.107     0.5141                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South        45     50.00  0.900  0.941     0.3460                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Tiny          2      0.50  4.000  1.075     0.9815                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each raw ratio (sir) is pulled toward the overall ratio; shrinkage is │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the share of the pull (0 untouched, 1 replaced), largest for areas    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   with small expected counts. Use eb for maps and rankings, stdinc()    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   for each area's own evidence.                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># no variation beyond chance: every estimate is the overall ratio</span></span></span>
 <span class="r-in"><span><span class="fu">ebrates</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">11</span>, <span class="fl">9</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   observed expected sir eb shrinkage nu alpha</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1       10       10 1.0  1         1 NA    NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2       11       10 1.1  1         1 NA    NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3        9       10 0.9  1         1 NA    NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Empirical Bayes rates</span> ────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Areas               3                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Overall ratio       1                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Prior shape (nu)    none                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Prior rate (alpha)  none                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Method              gamma-Poisson, moments (Clayton and Kaldor 1987)  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   observed  expected    sir  eb  shrinkage                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   --------  --------  -----  --  ---------                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │         10        10  1.000   1          1                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │         11        10  1.100   1          1                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │          9        10  0.900   1          1                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The areas vary no more than chance would make them, so every estimate │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   is the overall ratio (shrinkage 1).                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># one area has nothing to borrow from</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">ebrates</span><span class="op">(</span><span class="fl">5</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></span>

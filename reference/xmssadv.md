@@ -114,8 +114,10 @@ with it the protection against re-signing: use it for test keys only.
 ## Examples
 
 ``` r
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-# one-time index record out of your configuration directory; leave the default in use
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+# one-time index record out of your configuration directory; leave the
+# default in use
 key <- pqckg(height = 2)
 s1 <- cpssign("manifest-1", key)
 key <- xmssadv(key, s1)

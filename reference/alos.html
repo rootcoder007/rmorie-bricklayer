@@ -17,7 +17,7 @@ stays (median, spread, interval) use staysmry()."><meta property="og:image" cont
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,15 +82,20 @@ non-negative, no <code>NA</code> or <code>Inf</code>; the vector is summed.</p><
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>Numeric scalar, the number of people; must be positive. A
-vector of several values is refused. For an unbiased average this should be the
-people both admitted AND released within the period, because anyone
-still held has an unfinished stay.</p></dd>
+<dd><p>Numeric scalar, the number of people; must be positive. A vector of
+several values is refused. For an unbiased average this should be the
+people both admitted AND released within the period, because anyone still
+held has an unfinished stay.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A numeric scalar: days per person, \(\sum X_i / n\).</p>
+    <p>A numeric scalar: days per person, \(\sum X_i / n\). It has
+class <code>c("rmbl_alos", "rmbl_measure", "numeric")</code> and an attribute
+<code>"lakner"</code> (the total days and <code>n</code>), so it prints as a box
+with its inputs, formula and caveats; arithmetic, <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code>,
+<code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code>, <code><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean()</a></code>, <code>[</code>, <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> and
+<code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code> give a plain number.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -119,12 +124,34 @@ Corrections Planners</em>. University of Illinois at Urbana-Champaign.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Lakner (p.17): 2,700 inmates admitted and released served 12,150</span></span></span>
 <span class="r-in"><span><span class="co"># detention days between them.</span></span></span>
 <span class="r-in"><span><span class="fu">alos</span><span class="op">(</span><span class="fl">12150</span>, <span class="fl">2700</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Average length of stay</span> ─────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Average stay  4.5 days per person                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Person-days   12,150                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   People        2,700                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula       alos = days / n = 12,150 / 2,700                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2,700 people served 12,150 days between them: 4.5 days each on average. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakner (1976, p.16-17): n should be the people admitted AND released    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   in the period. A period shorter than the longest stay cuts unfinished   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   stays short, so alos is biased downward. staysmry() gives the median.   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># from one value per released person</span></span></span>
 <span class="r-in"><span><span class="va">stays</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">5</span>, <span class="fl">1</span>, <span class="fl">30</span>, <span class="fl">4</span>, <span class="fl">7</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">alos</span><span class="op">(</span><span class="va">stays</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">stays</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 8.166667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Average length of stay</span> ───────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Average stay  8.167 days per person                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Person-days   49                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   People        6                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Formula       alos = days / n = 49 / 6                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   6 people served 49 days between them: 8.167 days each on average.     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakner (1976, p.16-17): n should be the people admitted AND released  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   in the period. A period shorter than the longest stay cuts unfinished │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   stays short, so alos is biased downward. staysmry() gives the median. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># zero people cannot have an average stay</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">alos</span><span class="op">(</span><span class="fl">12150</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>

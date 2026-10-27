@@ -74,9 +74,26 @@ for how the burden is spread across income.
 t <- data.frame(fsa = c("M6H", "M5V"), exposure = c(28, 18),
                 population = c(40000, 60000), brate = 0.008)
 polbrdarea(t)
-#>   fsa exposure population brate       rr        paf attrcases basecases
-#> 1 M6H       28      40000 0.008 1.036288 0.03501694 11.205420       320
-#> 2 M5V       18      60000 0.008 1.015968 0.01571728  7.544292       480
+#> ╭── Pollution burden by area ─────────────────────────────────────────────╮
+#> │   Areas               2                                                 │
+#> │   Attributable cases  18.75                                             │
+#> │   Baseline cases      800                                               │
+#> │   Share attributable  2.34%                                             │
+#> │                                                                         │
+#> │   fsa  exposure  population     brate     rr      paf  attrcases        │
+#> │   ---  --------  ----------  --------  -----  -------  ---------        │
+#> │   M6H        28      40,000  0.008000  1.036  0.03502     11.205        │
+#> │   M5V        18      60,000  0.008000  1.016  0.01572      7.544        │
+#> │                                                                         │
+#> │   fsa  basecases                                                        │
+#> │   ---  ---------                                                        │
+#> │   M6H        320                                                        │
+#> │   M5V        480                                                        │
+#> │                                                                         │
+#> │   The areas are sorted by the cases attributable to the exposure,       │
+#> │   largest first: rr is the relative risk at the area's exposure and paf │
+#> │   the share of its cases the exposure accounts for.                     │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # PM2.5 and different column names.
 u <- data.frame(tract = c("A", "B", "C"), pm = c(7, 11, 9),
@@ -84,10 +101,22 @@ u <- data.frame(tract = c("A", "B", "C"), pm = c(7, 11, 9),
 polbrdarea(u, areacol = "tract", expcol = "pm",
                          popcol = "pop", basratecol = "rate",
                          poll = "PM2.5")
-#>   tract pm  pop   rate       rr        paf attrcases basecases
-#> 1     B 11 8000 0.0075 1.040831 0.03922953 2.3537717     60.00
-#> 2     C  9 6500 0.0075 1.024933 0.02432675 1.1859290     48.75
-#> 3     A  7 5000 0.0075 1.009278 0.00919281 0.3447304     37.50
+#> ╭── Pollution burden by area ─────────────────────────────────────────────╮
+#> │   Areas               3                                                 │
+#> │   Attributable cases  3.884                                             │
+#> │   Baseline cases      146.2                                             │
+#> │   Share attributable  2.66%                                             │
+#> │                                                                         │
+#> │   tract  pm    pop      rate     rr      paf  attrcases  basecases      │
+#> │   -----  --  -----  --------  -----  -------  ---------  ---------      │
+#> │   B      11  8,000  0.007500  1.041  0.03923      2.354      60.00      │
+#> │   C       9  6,500  0.007500  1.025  0.02433      1.186      48.75      │
+#> │   A       7  5,000  0.007500  1.009  0.00919      0.345      37.50      │
+#> │                                                                         │
+#> │   The areas are sorted by the cases attributable to the exposure,       │
+#> │   largest first: rr is the relative risk at the area's exposure and paf │
+#> │   the share of its cases the exposure accounts for.                     │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # A missing column is named in the error.
 try(polbrdarea(t[, c("fsa", "exposure")]))

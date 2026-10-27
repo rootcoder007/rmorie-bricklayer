@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -162,10 +162,17 @@ With the local route off the call reaches no network:</p>
 <h2 id="asking-with-the-packages-help-at-hand">Asking, with the packages’ help at hand<a class="anchor" aria-label="anchor" href="#asking-with-the-packages-help-at-hand"></a>
 </h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/llmask.html">llmask</a></span><span class="op">(</span><span class="st">"How do I estimate a weighted proportion with bootstrap replicate weights?"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/llmask.html">llmask</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Summarise this table:"</span>, <span class="fu"><a href="https://rdrr.io/r/utils/capture.output.html" class="external-link">capture.output</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                         collapse <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span>,</span>
-<span>                   syspro <span class="op">=</span> <span class="st">"Answer in two sentences."</span>, docs <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/llmask.html">llmask</a></span><span class="op">(</span></span>
+<span>  <span class="st">"How do I estimate a weighted proportion with bootstrap replicate weights?"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/llmask.html">llmask</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Summarise this table:"</span>, <span class="fu"><a href="https://rdrr.io/r/utils/capture.output.html" class="external-link">capture.output</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    collapse <span class="op">=</span> <span class="st">"\n"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  syspro <span class="op">=</span> <span class="st">"Answer in two sentences."</span>,</span>
+<span>  docs <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>With <code>docs = TRUE</code> (the default) the model is told every
 function of the MORIE packages installed here (rmoriebricklayer, and
 rmoriedata and rmorie when present), read from their installed help, and
@@ -292,9 +299,11 @@ whether one is stored.</p>
 data; the model answers with the functions to call (this needs a model,
 so it is not run here):</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/llmask.html">llmask</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"How do I compare perceived mental health of First Nations,"</span>,</span>
-<span>                         <span class="st">"Metis and Inuit adults with non-Indigenous adults, using"</span>,</span>
-<span>                         <span class="st">"indiex('health_indicators')?"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/llmask.html">llmask</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<span>  <span class="st">"How do I compare perceived mental health of First Nations,"</span>,</span>
+<span>  <span class="st">"M\u00e9tis and Inuit adults with non-Indigenous adults, using"</span>,</span>
+<span>  <span class="st">"indiex('health_indicators')?"</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="the-providers-in-a-picture">The providers in a picture<a class="anchor" aria-label="anchor" href="#the-providers-in-a-picture"></a>
@@ -305,7 +314,12 @@ request each one takes; every OpenAI-compatible provider shares one
 request builder.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/llmprvd.html">llmprvd</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">pv</span><span class="op">$</span><span class="va">api</span><span class="op">)</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, ylab <span class="op">=</span> <span class="st">"providers"</span>, main <span class="op">=</span> <span class="st">"Providers by request shape"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">pv</span><span class="op">$</span><span class="va">api</span><span class="op">)</span>,</span>
+<span>  col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"providers"</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"Providers by request shape"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="language-model-routes_files/figure-html/language-model-routes-providers-plot-1.png" class="r-plt" alt="" width="576"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

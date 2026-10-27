@@ -14,7 +14,7 @@ stops per 1,000 residents” are different claims.
 shrs(x, ...)
 
 # S3 method for class 'data.frame'
-shrs(x, count, by = NULL, total = NULL, conflvl = 0.95, ...)
+shrs(x, count = NULL, by = NULL, total = NULL, conflvl = 0.95, ...)
 
 # Default S3 method
 shrs(x, total = NULL, conflvl = 0.95, ...)
@@ -32,7 +32,8 @@ shrs(x, total = NULL, conflvl = 0.95, ...)
 
 - count:
 
-  Column of counts, unquoted or as a string: non-negative whole numbers.
+  Column of counts (required), unquoted or as a string: non-negative
+  whole numbers.
 
 - by:
 
@@ -99,12 +100,24 @@ stops <- data.frame(
 
 # shares of the table's own total, summing to 100
 shrs(stops, stops, by = "division")
-#> ── Share of 492, 95% Wilson interval ───────────────────────────── 
-#>  division count total      share      lower     upper
-#>      East     3   492  0.6097561  0.2075843  1.777215
-#>     North   412   492 83.7398374 80.2200225 86.736863
-#>     South    77   492 15.6504065 12.7074531 19.125597
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Share ───────────────────────────────────────────────────────────────╮
+#> │   Count     stops                                                      │
+#> │   Total     492                                                        │
+#> │   Groups    division                                                   │
+#> │   Interval  95% Wilson                                                 │
+#> │                                                                        │
+#> │   division  count  total  share  95% CI                                │
+#> │   --------  -----  -----  -----  --------------                        │
+#> │   East          3    492   0.61  [0.21, 1.78]                          │
+#> │   North       412    492  83.74  [80.22, 86.74]                        │
+#> │   South        77    492  15.65  [12.71, 19.13]                        │
+#> │                                                                        │
+#> │   Highest share: North (83.74); lowest: East (0.6098). Their intervals │
+#> │   do not overlap: the gap is more than sampling error.                 │
+#> │                                                                        │
+#> │   Each share is the count as a percentage of the total, with a Wilson  │
+#> │   interval, which stays inside 0 to 100 for small counts.              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # East is 0.6% of stops, and the interval does not run below zero
 # the way a normal approximation would
@@ -113,20 +126,43 @@ shrs(stops, stops, by = "division")$lower
 
 # a denominator from outside the table
 shrs(stops, stops, by = "division", total = 10000)
-#> ── Share of 10,000, 95% Wilson interval ────────────────────────── 
-#>  division count total share      lower      upper
-#>      East     3 10000  0.03 0.01020322 0.08817358
-#>     North   412 10000  4.12 3.74774662 4.52748907
-#>     South    77 10000  0.77 0.61657440 0.96123408
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Share ───────────────────────────────────────────────────────────────╮
+#> │   Count     stops                                                      │
+#> │   Total     10,000                                                     │
+#> │   Groups    division                                                   │
+#> │   Interval  95% Wilson                                                 │
+#> │                                                                        │
+#> │   division  count   total   share  95% CI                              │
+#> │   --------  -----  ------  ------  ----------------                    │
+#> │   East          3  10,000  0.0300  [0.0102, 0.0882]                    │
+#> │   North       412  10,000  4.1200  [3.7477, 4.5275]                    │
+#> │   South        77  10,000  0.7700  [0.6166, 0.9612]                    │
+#> │                                                                        │
+#> │   Highest share: North (4.12); lowest: East (0.03). Their intervals do │
+#> │   not overlap: the gap is more than sampling error.                    │
+#> │                                                                        │
+#> │   Each share is the count as a percentage of the total, with a Wilson  │
+#> │   interval, which stays inside 0 to 100 for small counts.              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # a plain vector
 shrs(c(3, 7))
-#> ── Share of 10, 95% Wilson interval ────────────────────────────── 
-#>  count total share    lower    upper
-#>      3    10    30 10.77913 60.32219
-#>      7    10    70 39.67781 89.22087
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Share ──────────────────────────────────────────────────────────────╮
+#> │   Count     count                                                     │
+#> │   Total     10                                                        │
+#> │   Interval  95% Wilson                                                │
+#> │                                                                       │
+#> │   count  total  share  95% CI                                         │
+#> │   -----  -----  -----  --------------                                 │
+#> │       3     10     30  [10.78, 60.32]                                 │
+#> │       7     10     70  [39.68, 89.22]                                 │
+#> │                                                                       │
+#> │   Highest share: row 2 (70); lowest: row 1 (30). Their intervals      │
+#> │   overlap: the data cannot tell the two apart.                        │
+#> │                                                                       │
+#> │   Each share is the count as a percentage of the total, with a Wilson │
+#> │   interval, which stays inside 0 to 100 for small counts.             │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # a count larger than its total is not a share
 try(shrs(c(5, 2), total = 4))

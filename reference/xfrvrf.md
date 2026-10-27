@@ -49,8 +49,9 @@ xfrvrf(imported, soucnts, codebook = NULL, tol = 0, strict = TRUE)
 
 ## Value
 
-A list with `ok` (logical), `decoded` (a factor; in code order when
-decoded from codes), `marginals` (the
+A list of class `rmbl_transfer_check` (it prints as a box) with `ok`
+(logical), `decoded` (a factor; in code order when decoded from codes),
+`marginals` (the
 [`vrfmrg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfmrg.md)
 result), `code_book_ok` (logical, or `NA` when there was nothing to
 compare) and `reasons` (character messages, or `NULL` when `ok`).
@@ -84,8 +85,10 @@ label is an error in either mode (from the decoding step).
 ## Examples
 
 ``` r
-x <- structure(c(1, 1, 2, 4, 1),
-               labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
+x <- structure(
+  c(1, 1, 2, 4, 1),
+  labels = c(White = 1, Black = 2, Other = 3, Unknown = 4)
+)
 xfrvrf(x, c(White = 3, Black = 1, Unknown = 1))$ok
 #> [1] TRUE
 
@@ -98,7 +101,10 @@ r$marginals$permutation
 #>   "Black"   "White" "Unknown" 
 
 # value labels that disagree with the source code book
-try(xfrvrf(x, c(White = 3, Black = 1, Unknown = 1),
-  codebook = c("1" = "White", "2" = "Other", "3" = "Black", "4" = "Unknown")))
+try(xfrvrf(
+  x,
+  c(White = 3, Black = 1, Unknown = 1),
+  codebook = c("1" = "White", "2" = "Other", "3" = "Black", "4" = "Unknown")
+))
 #> Error : xfrvrf: the value labels that arrived disagree with the source code book at code(s) 2, 3: arrived 2=Black, 3=Other; source 2=Other, 3=Black
 ```

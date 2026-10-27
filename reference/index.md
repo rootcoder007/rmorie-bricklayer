@@ -11,6 +11,8 @@ screen against the prior capsule; then a report and a capsule template.
   : Analyse a published administrative table in one call
 - [`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
   : Write an analysis as a Markdown or HTML report
+- [`mkset()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkset.md)
+  : Combine Results into One Report
 - [`pubbnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pubbnd.md)
   : Bounds implied by rounding and suppression in a published table
 - [`chgenv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chgenv.md)
@@ -141,6 +143,15 @@ verify it later so an analysis reproduces from the same inputs.
   : Write a Manifest to JSON
 - [`wrsmrytxt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrsmrytxt.md)
   : Write a Plain-Language Run Summary
+- [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md)
+  : Build a Reproducibility Bundle
+- [`ralloc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ralloc.md)
+  [`plot(`*`<rmbl_alloc>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ralloc.md)
+  : Make a Randomisation List with a Sealed Commitment
+- [`rallocvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rallocvrf.md)
+  : Check a Randomisation List at Unblinding
+- [`mkbndlproj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlproj.md)
+  : Start a Reproducibility Bundle Project
 
 ## Language model and command line
 
@@ -197,6 +208,7 @@ ledgers.
 - [`rmbldemo()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbldemo.md)
   : Demonstration datasets
 - [`dstfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
+  [`format(`*`<rmbl_dstfit>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
   [`print(`*`<rmbl_dstfit>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
   : Fit and rank candidate distributions
 - [`plot(`*`<rmbl_dstfit>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot.rmbl_dstfit.md)
@@ -218,8 +230,11 @@ ledgers.
 - [`chwksim()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwksim.md)
   : Simulate event times from a fitted Hawkes process
 - [`ldgrread()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
-  [`print(`*`<rmbl_ledger>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  [`format(`*`<rmbl_ledger>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
   [`ldgrchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  [`format(`*`<rmbl_ledger_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  [`print(`*`<rmbl_ledger_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  [`print(`*`<rmbl_ledger>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
   : Read and check a proof ledger
 
 ## JSON (native codec)
@@ -287,40 +302,6 @@ manifest of the whole chain.
   another
 - [`rlblfrns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rlblfrns.md)
   : Name the mechanical step that reproduces a label permutation
-- [`grdbin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdbin.md)
-  : Refuse a categorical column where a numeric 0/1 treatment is
-  required
-- [`rcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rcdmnf.md)
-  : Record a recode as a manifest that can be signed and verified later
-- [`wrrcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrrcdmnf.md)
-  [`vrfrcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrrcdmnf.md)
-  : Write and verify a recode manifest
-
-## Categorical integrity
-
-Labels that cannot be swapped quietly: name-based recodes that refuse
-anything unmapped, explicit levels, an import audit, a before/after
-cross-tabulation proof, counts checked against what was published,
-reported odds ratios checked under every relabelling, and a signed
-manifest of the whole chain.
-
-- [`grdrcd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdrcd.md)
-  : Recode a categorical column by explicit name-to-name mapping
-- [`deccodes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/deccodes.md)
-  : Decode numeric category codes with an explicit code-to-label
-  dictionary
-- [`grdlvls()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdlvls.md)
-  : Build a factor with explicit, verified levels
-- [`audcats()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audcats.md)
-  : Audit the categorical columns of a data frame for coding hazards
-- [`vrfrcd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfrcd.md)
-  : Prove a recode with a before/after cross-tabulation
-- [`vrfmrg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfmrg.md)
-  : Verify recoded category counts against the counts a release
-  published
-- [`orchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/orchk.md)
-  : Check reported odds ratios against a labelled table, under every
-  relabelling
 - [`grdbin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdbin.md)
   : Refuse a categorical column where a numeric 0/1 treatment is
   required
@@ -465,6 +446,10 @@ history itself tamper-evident.
   : Parse an X.509 certificate
 - [`certchnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certchnvrf.md)
   : Verify a certificate chain
+- [`idcrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
+  [`idcrdrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
+  [`idcrdvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
+  : Make, read and verify an identity card for your signing key
 - [`rvkfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rvkfetch.md)
   : Fetch revocation data for a certificate path
 - [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
@@ -595,6 +580,7 @@ the exact conditional-binomial interval. The same object renders to
 HTML, PDF, CSV, TSV, JSON or Markdown.
 
 - [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  [`format(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
   [`print(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
   : Year-over-year (and period-over-period) change
 - [`yoysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md)
@@ -672,6 +658,7 @@ as the open band’s assumed cap varies.
 - [`expbands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expbands.md)
   : Expand a banded frequency table into per-unit values
 - [`bandsens()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bandsens.md)
+  [`format(`*`<rmbl_band_sensitivity>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bandsens.md)
   [`print(`*`<rmbl_band_sensitivity>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bandsens.md)
   : How much a result depends on the open band's assumed cap
 
@@ -870,7 +857,7 @@ sensitivity to departures from parallel trends, and design-based power.
   : Power and minimum detectable effect of a difference-in-differences
   design
 
-## First Nations, Metis and Inuit health
+## First Nations, Métis and Inuit health
 
 Statistics Canada tables read as published (suppressed cells never
 imputed), distinctions-based comparisons, age-standardised rates,
@@ -909,7 +896,7 @@ Calls to Action.
   : First Nations, Metis and Inuit health and mental health: bundled
   Statistics Canada excerpts
 
-## First Nations, Metis and Inuit mental health and wellness
+## First Nations, Métis and Inuit mental health and wellness
 
 Survey estimates taken out of a table with their limits, rated scales
 compared as whole distributions, age-standardised percentages, and
@@ -1125,40 +1112,49 @@ moments, uniform sampling of a stream, and fixed-memory distinct counts.
 Printed reports for the objects the package returns.
 
 - [`print(`*`<bricklayer_attestation>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_attestation_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_bundle>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_attestation_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_bundle_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_certificate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_certpath_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_chain>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_drbg>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_drift>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_env_diff>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_falsification>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_falsify_family>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_fips_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_fips_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_hqc_capsule>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_hqc_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_hqc_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_hqc_capsule>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_kem_capsule>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_kem_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_kem_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_kem_capsule>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_mcar>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_oqs_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_oqs_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_power>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_prereg>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_prereg_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_falsify_family>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_drift>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`summary(`*`<bricklayer_drift>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_signing_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_signature>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`summary(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_env_diff>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`summary(`*`<bricklayer_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_recode_manifest>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_recompute>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_schema>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_oqs_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_oqs_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_signature>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_signing_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   [`print(`*`<bricklayer_timestamp>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_certificate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
-  [`print(`*`<bricklayer_certpath_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<rmbl_bounds>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<rmbl_fetch>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<rmbl_margin_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<rmbl_or_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<rmbl_recode_manifest_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<rmbl_transfer_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`summary(`*`<bricklayer_drift>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`summary(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`summary(`*`<bricklayer_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   : Printed reports for bricklayer objects
 
 ## Plots
@@ -1174,8 +1170,8 @@ options; Lorenz and funnel plots for results that are plain data frames.
   [`plot(`*`<rmbl_healing_change>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_community_index>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_indigenous_gap>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
-  [`plot(`*`<rmbl_prevalence>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_dsr>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_prevalence>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_exposure_trend>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_trc_progress>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_ordinal_compare>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)

@@ -17,7 +17,7 @@ backticks."><meta property="og:image" content="https://rootcoder007.github.io/rm
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,8 @@ backticks.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">clncolnms</span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
 <span>  case <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"snake"</span>, <span class="st">"lower_camel"</span>, <span class="st">"upper_camel"</span>, <span class="st">"screaming_snake"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
-<span>  sep <span class="op">=</span> <span class="st">"_"</span></span>
+<span>  sep <span class="op">=</span> <span class="st">"_"</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -95,6 +96,12 @@ separators only and keep the letters' case.</p></dd>
 <dd><p>Separator, a string, used between words for <code>"snake"</code>,
 <code>"screaming_snake"</code> and <code>"none"</code>, and before the number that
 disambiguates a duplicate in every case (default <code>"_"</code>).</p></dd>
+
+
+<dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
+<dd><p>Logical: <code>TRUE</code> skips the boxed list of the names that
+changed, which is otherwise sent through <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> (so
+<code><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages()</a></code> also silences it); default <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -130,6 +137,21 @@ in its <code>"orignms"</code> attribute for exactly that.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">clncolnms</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Total  Population (2021)"</span>, <span class="st">"% change"</span>,</span></span>
 <span class="r-in"><span>                     <span class="st">"Ville / City"</span>, <span class="st">"dup"</span>, <span class="st">"dup"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Column names cleaned</span> ───────────────────────────────────────╮</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Names    5                                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Renamed  4                                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   from                      to                                │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   ------------------------  ---------------------             │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Total  Population (2021)  total_population_2021             │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   % change                  pct_change                        │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Ville / City              ville_city                        │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   dup                       dup_2                             │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   4 of 5 names changed.                                       │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   quiet = TRUE, or suppressMessages(), silences this summary. │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────╯</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "total_population_2021" "pct_change"            "ville_city"           </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [4] "dup"                   "dup_2"                </span>
 <span class="r-in"><span></span></span>
@@ -137,6 +159,20 @@ in its <code>"orignms"</code> attribute for exactly that.</p>
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>`Total Pop` <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, `% change` <span class="op">=</span> <span class="fl">3</span><span class="op">:</span><span class="fl">4</span>,</span></span>
 <span class="r-in"><span>                 check.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">cleaned</span> <span class="op">&lt;-</span> <span class="fu">clncolnms</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Column names cleaned</span> ─────────────────────────────────────────╮</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Table    2 rows, 2 columns                                    │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Names    2                                                    │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Renamed  2                                                    │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                                 │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   from       to                                                 │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   ---------  ----------                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Total Pop  total_pop                                          │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   % change   pct_change                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                                 │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   2 of 2 names changed; attr(x, "orignms") keeps the originals. │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                                 │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   quiet = TRUE, or suppressMessages(), silences this summary.   │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cleaned</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "total_pop"  "pct_change"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">cleaned</span>, <span class="st">"orignms"</span><span class="op">)</span></span></span>
@@ -144,14 +180,63 @@ in its <code>"orignms"</code> attribute for exactly that.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Other cases.</span></span></span>
 <span class="r-in"><span><span class="fu">clncolnms</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Total Pop"</span><span class="op">)</span>, case <span class="op">=</span> <span class="st">"lower_camel"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Column names cleaned</span> ───────────────────────────────────────╮</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Names    1                                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Renamed  1                                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   from       to                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   ---------  --------                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Total Pop  totalPop                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   1 of 1 names changed.                                       │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   quiet = TRUE, or suppressMessages(), silences this summary. │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────╯</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "totalPop"</span>
 <span class="r-in"><span><span class="fu">clncolnms</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Total Pop"</span><span class="op">)</span>, case <span class="op">=</span> <span class="st">"upper_camel"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Column names cleaned</span> ───────────────────────────────────────╮</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Names    1                                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Renamed  1                                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   from       to                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   ---------  --------                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Total Pop  TotalPop                                         │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   1 of 1 names changed.                                       │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   quiet = TRUE, or suppressMessages(), silences this summary. │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────╯</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "TotalPop"</span>
 <span class="r-in"><span><span class="fu">clncolnms</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Total Pop"</span><span class="op">)</span>, case <span class="op">=</span> <span class="st">"screaming_snake"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Column names cleaned</span> ───────────────────────────────────────╮</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Names    1                                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Renamed  1                                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   from       to                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   ---------  ---------                                        │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Total Pop  TOTAL_POP                                        │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   1 of 1 names changed.                                       │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   quiet = TRUE, or suppressMessages(), silences this summary. │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────╯</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "TOTAL_POP"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a different separator, and a name that starts with a digit</span></span></span>
 <span class="r-in"><span><span class="fu">clncolnms</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2021 count"</span>, <span class="st">"Rate per 1000"</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"."</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Column names cleaned</span> ───────────────────────────────────────╮</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Names    2                                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Renamed  2                                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   from           to                                           │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   -------------  -------------                                │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   2021 count     x2021.count                                  │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   Rate per 1000  rate.per.1000                                │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   2 of 2 names changed.                                       │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │                                                               │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> │   quiet = TRUE, or suppressMessages(), silences this summary. │</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────╯</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "x2021.count"   "rate.per.1000"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># an unknown case is an error</span></span></span>

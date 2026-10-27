@@ -92,13 +92,23 @@ fam <- list(
   noiseb = cpsfals(d, function(z) cor(z$b, z$y),
                             trt = "b", n = 199, seed = 3))
 falsfam(fam)
-#> ── Family of 3, corrected by holm at alpha 0.05 ──────────────────
-#>   real                   p 0.005      adjusted 0.015      survives
-#>   noisea                 p 0.955      adjusted 1          
-#>   noiseb                 p 0.995      adjusted 1          
-#> ──────────────────────────────────────────────────────────────────
-#>   at the permutation floor (more permutations would be needed to say more): real
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Family of 3, corrected by holm at alpha 0.05 ─────────────────────────────╮
+#> │   Method       holm                                                         │
+#> │   Family size  3                                                            │
+#> │   Alpha        0.05                                                         │
+#> │   Survive      1                                                            │
+#> │                                                                             │
+#> │   name        p  adjusted_p  survives                                       │
+#> │   ------  -----  ----------  --------                                       │
+#> │   real    0.005       0.015  survives                                       │
+#> │   noisea  0.955       1.000                                                 │
+#> │   noiseb  0.995       1.000                                                 │
+#> │                                                                             │
+#> │   1 of 3 result(s) survive once the size of the family is counted.          │
+#> │                                                                             │
+#> │   at the permutation floor (more permutations would be needed to say        │
+#> │   more): real                                                               │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # the correction is what stops the smallest of several from being
 # read as the finding

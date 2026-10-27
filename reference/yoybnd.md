@@ -82,14 +82,24 @@ gives.
 seg <- data.frame(year = 2021:2023, n = c(40, 45, 60))
 y <- yoy(seg, value = "n", prd = "year")
 yoybnd(y, rnd = 5)
-#> year  n   previous  change  change %  interval     
-#> ────  ──  ────────  ──────  ────────  ─────────────
-#> 2021  40  —         —         —       —            
-#>     ↳ note: no comparison period
-#> 2022  45  40        5       ▲ +12.5%  [-28%, +77%] 
-#> 2023  60  45        15      ▲ +33.3%  [-11%, +101%]
-#> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval
+#> ╭── Change in n by year ──────────────────────────────────────────────────────╮
+#> │   Rows    3                                                                 │
+#> │   Change  in percent                                                        │
+#> │   Better  not set (direction neutral): the colour shows no verdict          │
+#> │                                                                             │
+#> │   year  n   previous  change  change %  interval                            │
+#> │   ────  ──  ────────  ──────  ────────  ─────────────                       │
+#> │   2021  40  —         —         —       —                                   │
+#> │   2022  45  40        5       ▲ +12.5%  [-28%, +77%]                        │
+#> │   2023  60  45        15      ▲ +33.3%  [-11%, +101%]                       │
+#> │                                                                             │
+#> │   Note: the first period has nothing to compare with, so it shows no        │
+#> │   change.                                                                   │
+#> │                                                                             │
+#> │   lag 1 period                                                              │
+#> │   units: count                                                              │
+#> │   95% exact rate-ratio interval                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # random rounding to base 5 widens the envelope
 yb <- yoybnd(y, rnd = 5, rndkind = "random")

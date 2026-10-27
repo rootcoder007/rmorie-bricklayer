@@ -21,7 +21,7 @@ how to handle its missing values."><meta property="og:image" content="https://ro
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -201,37 +201,38 @@ patterns themselves,
 <span class="r-in"><span><span class="va">mcar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mcar</span><span class="op">$</span><span class="va">y</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">90</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span></span>
 <span class="r-in"><span><span class="fu">mcartst</span><span class="op">(</span><span class="va">mcar</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Little's MCAR test ────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ✓ no departure from MCAR detected</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   statistic      1.094</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   df             1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   p-value        0.296</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   patterns       2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   variables      2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   rows used      300</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   EM iterations  13</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Not evidence OF MCAR: a large p-value is a failure to detect a</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   departure, and this test has little power on small samples.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Little's MCAR test</span> ────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Verdict        ✓ no departure from MCAR detected               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Statistic      1.094                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   df             1                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p-value        0.296                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Patterns       2                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Variables      2                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows used      300                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   EM iterations  13                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Not evidence OF MCAR: a large p-value is a failure to detect a │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   departure, and this test has little power on small samples.    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰──────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Missing depending on the OTHER, observed variable: not MCAR, and</span></span></span>
 <span class="r-in"><span><span class="co"># detectable, because the pattern's mean of x is shifted.</span></span></span>
 <span class="r-in"><span><span class="va">mar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mar</span><span class="op">$</span><span class="va">y</span><span class="op">[</span><span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0.4</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span></span>
 <span class="r-in"><span><span class="fu">mcartst</span><span class="op">(</span><span class="va">mar</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Little's MCAR test ────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ✗ MCAR rejected: the missingness is related to the data</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   statistic      180.118</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   df             1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   p-value        &lt;2e-16</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   patterns       2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   variables      2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   rows used      300</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   EM iterations  69</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Little's MCAR test</span> ────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Verdict        ✗ MCAR rejected: the missingness is related to the data │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Statistic      180.118                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   df             1                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   p-value        &lt; 0.001                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Patterns       2                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Variables      2                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows used      300                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   EM iterations  69                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows with different patterns of missing values have different means:   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   an analysis of the complete rows alone may be biased.                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰──────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Complete data has one pattern and nothing to test.</span></span></span>
 <span class="r-in"><span><span class="fu">mcartst</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>a <span class="op">=</span> <span class="va">x</span>, b <span class="op">=</span> <span class="va">y</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">df</span></span></span>

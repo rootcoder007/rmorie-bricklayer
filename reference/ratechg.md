@@ -138,22 +138,40 @@ d <- data.frame(
 # North's count rose while its population rose too: the rate change
 # is smaller than the count change, which is the reason to use it
 ratechg(d, stops, residents, year, by = "division", per = "100k")
-#> ── Change in rate per 100,000, lag 1, 95% exact conditional interval  
-#>  division year count population     rate  prerate precnt prepop rateratio
-#>     North 2021   400     120000 333.3333       NA     NA     NA        NA
-#>     North 2022   430     122000 352.4590 333.3333    400 120000 1.0573770
-#>     North 2023   455     125000 364.0000 352.4590    430 122000 1.0327442
-#>     South 2021    70      41000 170.7317       NA     NA     NA        NA
-#>     South 2022    66      41500 159.0361 170.7317     70  41000 0.9314974
-#>     South 2023    61      42000 145.2381 159.0361     66  41500 0.9132395
-#>     pctchg      pctlo    pctup                 flag
-#>         NA         NA       NA no comparison period
-#>   5.737705  -7.937165 21.46533                 <NA>
-#>   3.274419  -9.679876 18.10199                 <NA>
-#>         NA         NA       NA no comparison period
-#>  -6.850258 -34.473784 32.29053                 <NA>
-#>  -8.676046 -36.596300 31.35600                 <NA>
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Change in rate per 100,000 ───────────────────────────────────────────╮
+#> │   Count       stops                                                     │
+#> │   Population  residents                                                 │
+#> │   Period      year                                                      │
+#> │   Groups      division                                                  │
+#> │   Lag         1                                                         │
+#> │   Interval    95% exact conditional, on the % change                    │
+#> │                                                                         │
+#> │   division  year  count  population   rate  precnt   prepop  prerate    │
+#> │   --------  ----  -----  ----------  -----  ------  -------  -------    │
+#> │   North     2021    400     120,000  333.3                              │
+#> │   North     2022    430     122,000  352.5     400  120,000    333.3    │
+#> │   North     2023    455     125,000  364.0     430  122,000    352.5    │
+#> │   South     2021     70      41,000  170.7                              │
+#> │   South     2022     66      41,500  159.0      70   41,000    170.7    │
+#> │   South     2023     61      42,000  145.2      66   41,500    159.0    │
+#> │                                                                         │
+#> │   division  rateratio  pctchg  pct_interval     flag                    │
+#> │   --------  ---------  ------  ---------------  ----                    │
+#> │   North                                         [1]                     │
+#> │   North        1.0574   5.738  [-7.94, 21.47]                           │
+#> │   North        1.0327   3.274  [-9.68, 18.10]                           │
+#> │   South                                         [1]                     │
+#> │   South        0.9315  -6.850  [-34.47, 32.29]                          │
+#> │   South        0.9132  -8.676  [-36.60, 31.36]                          │
+#> │                                                                         │
+#> │   Not distinguishable from 0 (interval includes it): North 2022         │
+#> │   (+5.7%), North 2023 (+3.3%), South 2022 (-6.9%) and South 2023        │
+#> │   (-8.7%).                                                              │
+#> │                                                                         │
+#> │   [1] no comparison period                                              │
+#> │   pctchg is the percentage change in the rate from the period `lag`     │
+#> │   before; an interval that includes 0 means the change could be chance. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a missing year gives no comparison rather than a wrong one
 gap <- data.frame(year = c(2019, 2020, 2022), n = c(10, 14, 12),
@@ -164,22 +182,39 @@ ratechg(gap, n, pop, year)$flag
 # two-year change, flagging small earlier counts
 ratechg(d, stops, residents, year, by = "division", lag = 2,
             mincnt = 65)
-#> ── Change in rate per 1,000, lag 2, 95% exact conditional interval  
-#>  division year count population     rate  prerate precnt prepop rateratio
-#>     North 2021   400     120000 3.333333       NA     NA     NA        NA
-#>     North 2022   430     122000 3.524590       NA     NA     NA        NA
-#>     North 2023   455     125000 3.640000 3.333333    400 120000 1.0920000
-#>     South 2021    70      41000 1.707317       NA     NA     NA        NA
-#>     South 2022    66      41500 1.590361       NA     NA     NA        NA
-#>     South 2023    61      42000 1.452381 1.707317     70  41000 0.8506803
-#>     pctchg      pctlo    pctup                 flag
-#>         NA         NA       NA no comparison period
-#>         NA         NA       NA no comparison period
-#>    9.20000  -4.737636 25.21520                 <NA>
-#>         NA         NA       NA no comparison period
-#>         NA         NA       NA no comparison period
-#>  -14.93197 -40.656914 21.65731                 <NA>
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Change in rate per 1,000 ─────────────────────────────────────────────╮
+#> │   Count       stops                                                     │
+#> │   Population  residents                                                 │
+#> │   Period      year                                                      │
+#> │   Groups      division                                                  │
+#> │   Lag         2                                                         │
+#> │   Interval    95% exact conditional, on the % change                    │
+#> │                                                                         │
+#> │   division  year  count  population   rate  precnt   prepop  prerate    │
+#> │   --------  ----  -----  ----------  -----  ------  -------  -------    │
+#> │   North     2021    400     120,000  3.333                              │
+#> │   North     2022    430     122,000  3.525                              │
+#> │   North     2023    455     125,000  3.640     400  120,000    3.333    │
+#> │   South     2021     70      41,000  1.707                              │
+#> │   South     2022     66      41,500  1.590                              │
+#> │   South     2023     61      42,000  1.452      70   41,000    1.707    │
+#> │                                                                         │
+#> │   division  rateratio  pctchg  pct_interval     flag                    │
+#> │   --------  ---------  ------  ---------------  ----                    │
+#> │   North                                         [1]                     │
+#> │   North                                         [1]                     │
+#> │   North        1.0920    9.20  [-4.74, 25.22]                           │
+#> │   South                                         [1]                     │
+#> │   South                                         [1]                     │
+#> │   South        0.8507  -14.93  [-40.66, 21.66]                          │
+#> │                                                                         │
+#> │   Not distinguishable from 0 (interval includes it): North 2023 (+9.2%) │
+#> │   and South 2023 (-14.9%).                                              │
+#> │                                                                         │
+#> │   [1] no comparison period                                              │
+#> │   pctchg is the percentage change in the rate from the period `lag`     │
+#> │   before; an interval that includes 0 means the change could be chance. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 try(ratechg(1:3))
 #> Error : `x` must be a data frame, not integer

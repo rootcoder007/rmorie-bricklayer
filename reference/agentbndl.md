@@ -65,16 +65,26 @@ if (FALSE) { # interactive()
 agentbndl("scaffold a bundle for analysis.R from the Toronto CKAN data")
 agentbndl("sign and verify my capsule", route = "ollama")
 }
-
 # With every route switched off (no key in the environment and no saved
 # settings: the settings folder is pointed at an empty one) the call returns
 # a setup hint, not an error, and reaches no network -- safe to run anywhere:
-keys <- c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", "XDG_CONFIG_HOME",
-          llmprvd()$key_env,
-          llmprvd()$alt_env[nzchar(llmprvd()$alt_env)])
+keys <- c(
+  "OLLAMA_HOST",
+  "MORIE_LLM_BASE_URL",
+  "XDG_CONFIG_HOME",
+  llmprvd()$key_env,
+  llmprvd()$alt_env[nzchar(llmprvd()$alt_env)]
+)
 old <- Sys.getenv(keys, unset = NA)
-Sys.setenv(OLLAMA_HOST = "off", MORIE_LLM_BASE_URL = "off", XDG_CONFIG_HOME = tempfile())
-Sys.unsetenv(setdiff(keys, c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", "XDG_CONFIG_HOME")))
+Sys.setenv(
+  OLLAMA_HOST = "off",
+  MORIE_LLM_BASE_URL = "off",
+  XDG_CONFIG_HOME = tempfile()
+)
+Sys.unsetenv(setdiff(
+  keys,
+  c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", "XDG_CONFIG_HOME")
+))
 cat(agentbndl("hello"))
 #> No language-model route is set up on this machine: bring your own key, or run a model locally:
 #>   a provider's key: set its variable (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, ...) or `rmoriebricklayer config set PROVIDER.key`; providers: openai, anthropic, gemini, openrouter, groq, together, fireworks, deepseek, mistral, xai, cerebras, perplexity, huggingface, opencode, cohere, nvidia
@@ -82,7 +92,11 @@ cat(agentbndl("hello"))
 #>   own endpoint: `rmoriebricklayer config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a company gateway)
 #> `rmoriebricklayer config setup` walks through it.
 for (v in keys) {
-  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+  if (is.na(old[[v]])) {
+    Sys.unsetenv(v)
+  } else {
+    do.call(Sys.setenv, as.list(old[v]))
+  }
 }
 
 # argument errors come first

@@ -23,7 +23,7 @@ auditable."><meta property="og:image" content="https://rootcoder007.github.io/rm
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -143,13 +143,12 @@ editing it breaks the link. Zeroing the writer-version bytes makes the
 payload the same on every R version, for any R object (a canonical JSON
 encoding would cover only the objects JSON can hold); the rest of a
 version-2 stream depends only on the object.</p>
-<p>Entries written by 0.5.12 and earlier carry no <code>scheme</code>. Their
-digest is the SHA-256 of the string <code>"&lt;prev&gt;:&lt;payload&gt;"</code> (the label not covered,
+<p>Entries written by 0.5.12 and earlier carry no <code>scheme</code>. Their digest is
+the SHA-256 of the string <code>"&lt;prev&gt;:&lt;payload&gt;"</code> (the label not covered,
 and the payload of a non-string entry taken over serialized bytes that
-include the writer's R version). <code>chnvrf()</code> and
-<code>chnseal()</code> still accept them under those rules, with a warning
-that they were sealed with the weaker scheme. Appending to such a chain
-adds scheme-2 entries.</p>
+include the writer's R version). <code>chnvrf()</code> and <code>chnseal()</code> still
+accept them under those rules, with a warning that they were sealed with the
+weaker scheme. Appending to such a chain adds scheme-2 entries.</p>
 <p><code>chnvrf()</code> walks the chain from the start: an entry fails when
 its <code>prev</code> is not the previous link, its <code>scheme</code> is neither 2
 nor absent, or its <code>digest</code> does not recompute (compared in constant
@@ -188,24 +187,29 @@ one capsule rather than a history.</p></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.xmssidxfile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>  <span class="co"># keep this example's</span></span></span>
-<span class="r-in"><span><span class="co"># one-time index record out of your configuration directory; leave the default in use</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># keep this example's</span></span></span>
+<span class="r-in"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.xmssidxfile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># one-time index record out of your configuration directory; leave the</span></span></span>
+<span class="r-in"><span><span class="co"># default in use</span></span></span>
 <span class="r-in"><span><span class="va">ch</span> <span class="op">&lt;-</span> <span class="fu">chnnew</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ch</span> <span class="op">&lt;-</span> <span class="fu">chnapp</span><span class="op">(</span><span class="va">ch</span>, <span class="st">"manifest for run 1"</span>, label <span class="op">=</span> <span class="st">"run-1"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ch</span> <span class="op">&lt;-</span> <span class="fu">chnapp</span><span class="op">(</span><span class="va">ch</span>, <span class="st">"manifest for run 2"</span>, label <span class="op">=</span> <span class="st">"run-2"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ch</span> <span class="op">&lt;-</span> <span class="fu">chnapp</span><span class="op">(</span><span class="va">ch</span>, <span class="st">"manifest for run 3"</span>, label <span class="op">=</span> <span class="st">"run-3"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ch</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Manifest chain ────────────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ✓ chain intact</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   entries  3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   head     b9ccb96106a68f3d4d2a0cfb8e2ae160f7996393e28e93d7f4650c2bbd81ff49</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   seal     940721e3704268b570bcbf1c9ae841bde02927f584ec44dc3cf053ef7404d8a0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     1  run-1            cb25fa776c693a106b2d08a1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     2  run-2            03a645a531c93fbb12bb2c07</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     3  run-3            b9ccb96106a68f3d4d2a0cfb</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Manifest chain</span> ───────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Status   ✓ chain intact (3 entries)                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Entries  3                                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Head     b9ccb96106a68f3d4d2a0cfb8e2ae160f7996393e28e93d7f4650c2bbd81ff49 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Seal     940721e3704268b570bcbf1c9ae841bde02927f584ec44dc3cf053ef7404d8a0 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Every entry links to the one before it, so none was edited, dropped or    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   reordered after it was added.                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     #  label            digest                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     1  run-1            cb25fa776c693a106b2d08a1                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     2  run-2            03a645a531c93fbb12bb2c07                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     3  run-3            b9ccb96106a68f3d4d2a0cfb                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># An intact chain verifies.</span></span></span>
 <span class="r-in"><span><span class="fu">chnvrf</span><span class="op">(</span><span class="va">ch</span><span class="op">)</span><span class="op">$</span><span class="va">valid</span></span></span>

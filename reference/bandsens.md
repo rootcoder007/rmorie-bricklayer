@@ -13,6 +13,9 @@ the dependence is large.
 bandsens(bands, cnts, stat = ginicoef, caps = NULL, rule = "midpoint")
 
 # S3 method for class 'rmbl_band_sensitivity'
+format(x, digits = 4L, ...)
+
+# S3 method for class 'rmbl_band_sensitivity'
 print(x, ...)
 ```
 
@@ -51,9 +54,13 @@ print(x, ...)
 
   An `rmbl_band_sensitivity` object.
 
+- digits:
+
+  Significant digits of the printed numbers.
+
 - ...:
 
-  Ignored.
+  Further arguments to print(); the band table ignores them.
 
 ## Value
 
@@ -86,43 +93,55 @@ counts <- c(1200, 430, 110, 38)
 
 s <- bandsens(b, counts)
 s
-#> ── Sensitivity to the open top band's assumed cap ──────────────── 
-#>        cap     value
-#>   11.55000 0.4254708
-#>   15.09841 0.4346095
-#>   19.73696 0.4461100
-#>   25.80058 0.4604302
-#>   33.72707 0.4780278
-#>   44.08875 0.4993060
-#>   57.63375 0.5245371
-#>   75.34008 0.5537719
-#>   98.48616 0.5867522
-#>  128.74322 0.6228545
-#>  168.29590 0.6610951
-#>  220.00000 0.7002144
-#> 
-#>   span over the caps tried: 0.2747 (53.7% of the typical value)
-#>   The statistic moves by more than a tenth of itself across the
-#>   caps tried, so it is a property of the assumption as much as
-#>   of the data. Report the range, not a single figure.
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Sensitivity to the open top band's assumed cap ───────────────────────╮
+#> │   Open band starts at         11                                        │
+#> │   Caps tried                  12                                        │
+#> │   Span over the caps          0.2747                                    │
+#> │   Share of the typical value  53.7%                                     │
+#> │                                                                         │
+#> │      cap   value                                                        │
+#> │   ------  ------                                                        │
+#> │    11.55  0.4255                                                        │
+#> │    15.10  0.4346                                                        │
+#> │    19.74  0.4461                                                        │
+#> │    25.80  0.4604                                                        │
+#> │    33.73  0.4780                                                        │
+#> │    44.09  0.4993                                                        │
+#> │    57.63  0.5245                                                        │
+#> │    75.34  0.5538                                                        │
+#> │    98.49  0.5868                                                        │
+#> │   128.74  0.6229                                                        │
+#> │   168.30  0.6611                                                        │
+#> │   220.00  0.7002                                                        │
+#> │                                                                         │
+#> │   span over the caps tried: 0.2747 (53.7% of the typical value). The    │
+#> │   statistic moves by more than a tenth of itself across the caps tried, │
+#> │   so it is a property of the assumption as much as of the data. Report  │
+#> │   the range, not a single figure.                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 attr(s, "relspan")
 #> [1] 0.5366908
 
 # A statistic that barely moves has been measured; one that swings
 # has not.
 bandsens(b, counts, stat = mean, caps = c(12, 20, 50))
-#> ── Sensitivity to the open top band's assumed cap ──────────────── 
-#>  cap    value
-#>   12 2.262092
-#>   20 2.347582
-#>   50 2.668166
-#> 
-#>   span over the caps tried: 0.4061 (17.3% of the typical value)
-#>   The statistic moves by more than a tenth of itself across the
-#>   caps tried, so it is a property of the assumption as much as
-#>   of the data. Report the range, not a single figure.
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Sensitivity to the open top band's assumed cap ───────────────────────╮
+#> │   Open band starts at         11                                        │
+#> │   Caps tried                  3                                         │
+#> │   Span over the caps          0.4061                                    │
+#> │   Share of the typical value  17.3%                                     │
+#> │                                                                         │
+#> │   cap  value                                                            │
+#> │   ---  -----                                                            │
+#> │    12  2.262                                                            │
+#> │    20  2.348                                                            │
+#> │    50  2.668                                                            │
+#> │                                                                         │
+#> │   span over the caps tried: 0.4061 (17.3% of the typical value). The    │
+#> │   statistic moves by more than a tenth of itself across the caps tried, │
+#> │   so it is a property of the assumption as much as of the data. Report  │
+#> │   the range, not a single figure.                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # nothing to vary without an open band
 try(bandsens(c("1", "2 to 5"), c(10, 4)))

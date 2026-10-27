@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,10 +109,14 @@ endpoint, a pattern identifying the right resource, the expected SHA256,
 the schema the data must satisfy, and a recipe for synthesizing a
 stand-in.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">provjson</span> <span class="op">&lt;-</span> <span class="st">'{</span></span>
+<code class="sourceCode R"><span><span class="va">ckan</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
+<span>  <span class="st">"https://data.ontario.ca/api/3/action/package_show"</span>,</span>
+<span>  <span class="st">"?id=ontario-public-library-statistics"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">provjson</span> <span class="op">&lt;-</span> <span class="st">'{</span></span>
 <span><span class="st">  "dataset": {</span></span>
 <span><span class="st">    "title": "Demo library statistics",</span></span>
-<span><span class="st">    "ckan_api_endpoint": "https://data.ontario.ca/api/3/action/package_show?id=ontario-public-library-statistics"</span></span>
+<span><span class="st">    "ckan_api_endpoint": "CKAN"</span></span>
 <span><span class="st">  },</span></span>
 <span><span class="st">  "resource": { "name_match_pattern": "2014" },</span></span>
 <span><span class="st">  "schema": {</span></span>
@@ -131,6 +135,7 @@ stand-in.</p>
 <span><span class="st">    }</span></span>
 <span><span class="st">  }</span></span>
 <span><span class="st">}'</span></span>
+<span><span class="va">provjson</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"CKAN"</span>, <span class="va">ckan</span>, <span class="va">provjson</span>, fixed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">provpath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"data_provenance.json"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="va">provjson</span>, <span class="va">provpath</span><span class="op">)</span></span>
@@ -233,7 +238,7 @@ a human-readable <code>SUMMARY.txt</code>.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">summarypath</span><span class="op">)</span><span class="op">[</span><span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Project:   demo-study</span></span>
 <span><span class="co">#&gt; Author:    A. Author</span></span>
-<span><span class="co">#&gt; When:      2026-10-22 12:15:28 UTC</span></span>
+<span><span class="co">#&gt; When:      2026-10-27 13:58:26 UTC</span></span>
 <span><span class="co">#&gt; OS:        Linux</span></span>
 <span><span class="co">#&gt; R:         R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">#&gt; Mode:      SYNTHETIC (not real data -- pipeline check only)</span></span></code></pre></div>
@@ -263,10 +268,16 @@ licence.</p>
 <span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"indigenous_wellbeing.csv"</span><span class="op">)</span></span>
 <span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">f</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sha256file.html">sha256file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
-<span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mkmnf.html">mkmnf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"indigenouswellbeing"</span>, rows <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span>, sha256 <span class="op">=</span> <span class="va">h</span>,</span>
-<span>                        source <span class="op">=</span> <span class="st">"Statistics Canada, Indigenous Peoples Survey 2022"</span>,</span>
-<span>                        licence <span class="op">=</span> <span class="st">"Statistics Canada Open Licence"</span><span class="op">)</span>,</span>
-<span>                   env <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mkmnf.html">mkmnf</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    dataset <span class="op">=</span> <span class="st">"indigenouswellbeing"</span>,</span>
+<span>    rows <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span>,</span>
+<span>    sha256 <span class="op">=</span> <span class="va">h</span>,</span>
+<span>    source <span class="op">=</span> <span class="st">"Statistics Canada, Indigenous Peoples Survey 2022"</span>,</span>
+<span>    licence <span class="op">=</span> <span class="st">"Statistics Canada Open Licence"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  env <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/vrfsha256.html">vrfsha256</a></span><span class="op">(</span><span class="va">f</span>, <span class="va">h</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $actual</span></span>
 <span><span class="co">#&gt; [1] "c4b3e61f660856d89b302f1050393f99d84363ad7540b838ebecfbac5e4e5c2a"</span></span>
@@ -290,8 +301,17 @@ each year.</p>
 <span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">t</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">10</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/on.exit.html" class="external-link">on.exit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">t</span><span class="op">$</span><span class="va">estimate</span>, <span class="va">y</span>, xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">t</span><span class="op">$</span><span class="va">lower</span>, <span class="va">t</span><span class="op">$</span><span class="va">upper</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, yaxt <span class="op">=</span> <span class="st">"n"</span>, pch <span class="op">=</span> <span class="fl">19</span>,</span>
-<span>       col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, xlab <span class="op">=</span> <span class="st">"estimate and 95% interval"</span>, ylab <span class="op">=</span> <span class="st">""</span>, main <span class="op">=</span> <span class="va">main</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
+<span>    <span class="va">t</span><span class="op">$</span><span class="va">estimate</span>,</span>
+<span>    <span class="va">y</span>,</span>
+<span>    xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">t</span><span class="op">$</span><span class="va">lower</span>, <span class="va">t</span><span class="op">$</span><span class="va">upper</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>    yaxt <span class="op">=</span> <span class="st">"n"</span>,</span>
+<span>    pch <span class="op">=</span> <span class="fl">19</span>,</span>
+<span>    col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
+<span>    xlab <span class="op">=</span> <span class="st">"estimate and 95% interval"</span>,</span>
+<span>    ylab <span class="op">=</span> <span class="st">""</span>,</span>
+<span>    main <span class="op">=</span> <span class="va">main</span></span>
+<span>  <span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/segments.html" class="external-link">segments</a></span><span class="op">(</span><span class="va">t</span><span class="op">$</span><span class="va">lower</span>, <span class="va">y</span>, <span class="va">t</span><span class="op">$</span><span class="va">upper</span>, <span class="va">y</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/axis.html" class="external-link">axis</a></span><span class="op">(</span><span class="fl">2</span>, <span class="va">y</span>, <span class="va">lab</span><span class="op">[</span><span class="va">o</span><span class="op">]</span>, las <span class="op">=</span> <span class="fl">1</span>, cex.axis <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
@@ -300,7 +320,13 @@ each year.</p>
 <p><img src="capsules_files/figure-html/capsules-capsule-plots-1.png" class="r-plt" alt="" width="672"></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tapply.html" class="external-link">tapply</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">visits</span>, <span class="va">df</span><span class="op">$</span><span class="va">year</span>, <span class="va">sum</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">v</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, main <span class="op">=</span> <span class="st">"Visits by year"</span>, xlab <span class="op">=</span> <span class="st">"year"</span>, ylab <span class="op">=</span> <span class="st">"visits"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span></span>
+<span>  <span class="va">v</span>,</span>
+<span>  col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"Visits by year"</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"visits"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="capsules_files/figure-html/capsules-capsule-plots-2.png" class="r-plt" alt="" width="672"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

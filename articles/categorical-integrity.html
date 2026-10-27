@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,8 +107,12 @@ Service report</em>, submitted to the OHRC, December 2022.</p>
 group, a Black group with a real disparity, and a very small unknown
 group), the reference group, and the odds ratios a report states.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">9000</span>, <span class="fl">120</span>, <span class="fl">2000</span>, <span class="fl">220</span>, <span class="fl">1500</span>, <span class="fl">60</span>, <span class="fl">4000</span>, <span class="fl">1</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">2</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>              dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"White"</span>, <span class="st">"Black"</span>, <span class="st">"Other"</span>, <span class="st">"Unknown"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"no"</span>, <span class="st">"yes"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">9000</span>, <span class="fl">120</span>, <span class="fl">2000</span>, <span class="fl">220</span>, <span class="fl">1500</span>, <span class="fl">60</span>, <span class="fl">4000</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  ncol <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  byrow <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"White"</span>, <span class="st">"Black"</span>, <span class="st">"Other"</span>, <span class="st">"Unknown"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"no"</span>, <span class="st">"yes"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">tab</span></span>
 <span><span class="co">#&gt;           no yes</span></span>
 <span><span class="co">#&gt; White   9000 120</span></span>
@@ -116,8 +120,11 @@ group), the reference group, and the odds ratios a report states.</p>
 <span><span class="co">#&gt; Other   1500  60</span></span>
 <span><span class="co">#&gt; Unknown 4000   1</span></span>
 <span><span class="va">ref</span> <span class="op">&lt;-</span> <span class="fl">120</span> <span class="op">/</span> <span class="fl">9000</span></span>
-<span><span class="fu"><a href="../reference/orchk.html">orchk</a></span><span class="op">(</span><span class="va">tab</span>, <span class="st">"White"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Black <span class="op">=</span> <span class="fl">220</span> <span class="op">/</span> <span class="fl">2000</span> <span class="op">/</span> <span class="va">ref</span>, Other <span class="op">=</span> <span class="fl">60</span> <span class="op">/</span> <span class="fl">1500</span> <span class="op">/</span> <span class="va">ref</span>,</span>
-<span>                                 Unknown <span class="op">=</span> <span class="fl">1</span> <span class="op">/</span> <span class="fl">4000</span> <span class="op">/</span> <span class="va">ref</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">verdict</span></span>
+<span><span class="fu"><a href="../reference/orchk.html">orchk</a></span><span class="op">(</span></span>
+<span>  <span class="va">tab</span>,</span>
+<span>  <span class="st">"White"</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Black <span class="op">=</span> <span class="fl">220</span> <span class="op">/</span> <span class="fl">2000</span> <span class="op">/</span> <span class="va">ref</span>, Other <span class="op">=</span> <span class="fl">60</span> <span class="op">/</span> <span class="fl">1500</span> <span class="op">/</span> <span class="va">ref</span>, Unknown <span class="op">=</span> <span class="fl">1</span> <span class="op">/</span> <span class="fl">4000</span> <span class="op">/</span> <span class="va">ref</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">$</span><span class="va">verdict</span></span>
 <span><span class="co">#&gt; [1] "the reported odds ratios follow from the table as labelled"</span></span></code></pre></div>
 <p>Now rotate the labels one place, as happened in the transfer, and
 read off the odds ratios a report would print:</p>
@@ -161,9 +168,21 @@ columns that still look like codes.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>race <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span>, stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/audcats.html">audcats</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>race <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">raw</span><span class="op">$</span><span class="va">race</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Categorical audit: 1 column(s)</span></span>
-<span><span class="co">#&gt;   race             factor     3 level(s), reference ‘1’</span></span>
-<span><span class="co">#&gt;     !! HAZARD: all labels numeric-looking (1,2,3...): likely imported CODES whose value labels were lost; as.numeric() on this column returns level INDICES, not data</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Categorical audit</span> ────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Columns  1 column(s)                                                      │</span></span>
+<span><span class="co">#&gt; │   Hazards  1 in 1 column(s)                                                 │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   column  storage  levels  reference                                        │</span></span>
+<span><span class="co">#&gt; │   ------  -------  ------  ---------                                        │</span></span>
+<span><span class="co">#&gt; │   race    factor        3  ‘1’                                              │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Each column's reference level is the group every model contrast is        │</span></span>
+<span><span class="co">#&gt; │   measured against: check it is the one you meant.                          │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   !! HAZARD (race): all labels numeric-looking (1,2,3...): likely imported  │</span></span>
+<span><span class="co">#&gt; │   CODES whose value labels were lost; as.numeric() on this column returns   │</span></span>
+<span><span class="co">#&gt; │   level INDICES, not data                                                   │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="va">race</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/deccodes.html">deccodes</a></span><span class="op">(</span><span class="va">raw</span><span class="op">$</span><span class="va">race</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span> <span class="op">=</span> <span class="st">"White"</span>, <span class="st">"2"</span> <span class="op">=</span> <span class="st">"Black"</span>, <span class="st">"3"</span> <span class="op">=</span> <span class="st">"Indigenous"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">race</span></span>
 <span><span class="co">#&gt; [1] "White"      "Black"      "Black"      "Indigenous" "White"     </span></span>
@@ -278,7 +297,11 @@ position.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">code_book</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>code <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">1</span><span class="op">)</span>, became <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  code <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  became <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt;   code  became</span></span>
 <span><span class="co">#&gt; 1    1   Black</span></span>
 <span><span class="co">#&gt; 2    2   Other</span></span>
@@ -321,17 +344,34 @@ that, because the frequency table no longer matches by label:</p>
 which deterministic step, applied to the code book, yields exactly the
 permutation observed. <code><a href="../reference/rlblfrns.html">rlblfrns()</a></code> tries the known ones.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">observed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>White <span class="op">=</span> <span class="st">"Black"</span>, Black <span class="op">=</span> <span class="st">"Other"</span>, Other <span class="op">=</span> <span class="st">"Unknown"</span>, Unknown <span class="op">=</span> <span class="st">"White"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">observed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  White <span class="op">=</span> <span class="st">"Black"</span>,</span>
+<span>  Black <span class="op">=</span> <span class="st">"Other"</span>,</span>
+<span>  Other <span class="op">=</span> <span class="st">"Unknown"</span>,</span>
+<span>  Unknown <span class="op">=</span> <span class="st">"White"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/rlblfrns.html">rlblfrns</a></span><span class="op">(</span><span class="va">code_book</span>, <span class="va">observed</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Mechanism(s) reproducing the observed permutation:</span></span>
-<span><span class="co">#&gt;   * labels sorted alphabetically, assigned by code position</span></span>
-<span><span class="co">#&gt;       White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White</span></span>
-<span><span class="co">#&gt;   * labels sorted case-insensitively, assigned by code position</span></span>
-<span><span class="co">#&gt;       White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White</span></span>
-<span><span class="co">#&gt;   * rotation by 1 position(s)</span></span>
-<span><span class="co">#&gt;       White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; The observed permutation is reproduced EXACTLY by: labels sorted alphabetically, assigned by code position; labels sorted case-insensitively, assigned by code position; rotation by 1 position(s). No import routine (haven, foreign, pandas, pyreadstat) reorders value labels; each carries them keyed by code. A transfer fault does not select the sort order of the labels. The step that did this was a positional relabel in the analysis, and it is reproducible from the code book alone.</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Relabelling forensics</span> ────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Mechanisms tried  8                                                       │</span></span>
+<span><span class="co">#&gt; │   Reproducing       3                                                       │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   The observed permutation is reproduced EXACTLY by: labels sorted          │</span></span>
+<span><span class="co">#&gt; │   alphabetically, assigned by code position; labels sorted                  │</span></span>
+<span><span class="co">#&gt; │   case-insensitively, assigned by code position; rotation by 1              │</span></span>
+<span><span class="co">#&gt; │   position(s). No import routine (haven, foreign, pandas, pyreadstat)       │</span></span>
+<span><span class="co">#&gt; │   reorders value labels; each carries them keyed by code. A transfer fault  │</span></span>
+<span><span class="co">#&gt; │   does not select the sort order of the labels. The step that did this was  │</span></span>
+<span><span class="co">#&gt; │   a positional relabel in the analysis, and it is reproducible from the     │</span></span>
+<span><span class="co">#&gt; │   code book alone.                                                          │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Mechanism(s) reproducing the observed permutation:                        │</span></span>
+<span><span class="co">#&gt; │   * labels sorted alphabetically, assigned by code position                 │</span></span>
+<span><span class="co">#&gt; │       White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White    │</span></span>
+<span><span class="co">#&gt; │   * labels sorted case-insensitively, assigned by code position             │</span></span>
+<span><span class="co">#&gt; │       White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White    │</span></span>
+<span><span class="co">#&gt; │   * rotation by 1 position(s)                                               │</span></span>
+<span><span class="co">#&gt; │       White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White    │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>No import routine in R or Python (haven, foreign, pandas, pyreadstat)
 sorts value labels onto codes; each keeps them keyed by code. A
 permutation that coincides with the alphabetical order of the labels was
@@ -349,11 +389,20 @@ the labels rotated one place, which is what the published ratios match.
 A rotation of four codes is enough to turn ratios near 1 into ratios in
 the hundreds.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">odds_vs_white</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="op">(</span><span class="va">t</span><span class="op">[</span>, <span class="st">"yes"</span><span class="op">]</span> <span class="op">/</span> <span class="va">t</span><span class="op">[</span>, <span class="st">"no"</span><span class="op">]</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">t</span><span class="op">[</span><span class="st">"White"</span>, <span class="st">"yes"</span><span class="op">]</span> <span class="op">/</span> <span class="va">t</span><span class="op">[</span><span class="st">"White"</span>, <span class="st">"no"</span><span class="op">]</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">odds_vs_white</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="op">(</span><span class="va">t</span><span class="op">[</span>, <span class="st">"yes"</span><span class="op">]</span> <span class="op">/</span> <span class="va">t</span><span class="op">[</span>, <span class="st">"no"</span><span class="op">]</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">t</span><span class="op">[</span><span class="st">"White"</span>, <span class="st">"yes"</span><span class="op">]</span> <span class="op">/</span> <span class="va">t</span><span class="op">[</span><span class="st">"White"</span>, <span class="st">"no"</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>correct <span class="op">=</span> <span class="fu">odds_vs_white</span><span class="op">(</span><span class="va">tab</span><span class="op">)</span>, rotated <span class="op">=</span> <span class="fu">odds_vs_white</span><span class="op">(</span><span class="va">rotated</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="op">-</span><span class="fl">1</span><span class="op">]</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">r</span>, beside <span class="op">=</span> <span class="cn">TRUE</span>, log <span class="op">=</span> <span class="st">"y"</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">]</span>, ylab <span class="op">=</span> <span class="st">"odds ratio vs White (log scale)"</span>,</span>
-<span>        legend.text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"correct labels"</span>, <span class="st">"labels rotated one place"</span><span class="op">)</span>,</span>
-<span>        args.legend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"topleft"</span>, bty <span class="op">=</span> <span class="st">"n"</span><span class="op">)</span>, main <span class="op">=</span> <span class="st">"Same counts, rotated labels"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span></span>
+<span>  <span class="va">r</span>,</span>
+<span>  beside <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  log <span class="op">=</span> <span class="st">"y"</span>,</span>
+<span>  col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"odds ratio vs White (log scale)"</span>,</span>
+<span>  legend.text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"correct labels"</span>, <span class="st">"labels rotated one place"</span><span class="op">)</span>,</span>
+<span>  args.legend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"topleft"</span>, bty <span class="op">=</span> <span class="st">"n"</span><span class="op">)</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"Same counts, rotated labels"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning in yinch(0.1): y log scale: yinch() is nonsense</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span>h <span class="op">=</span> <span class="fl">1</span>, lty <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <p><img src="categorical-integrity_files/figure-html/categorical-integrity-rotation-plot-1.png" class="r-plt" alt="" width="672"></p>

@@ -15,9 +15,18 @@ can write one.
 ldgrread(path)
 
 # S3 method for class 'rmbl_ledger'
-print(x, ...)
+format(x, ...)
 
 ldgrchk(ledger, pkgs = NULL)
+
+# S3 method for class 'rmbl_ledger_check'
+format(x, ...)
+
+# S3 method for class 'rmbl_ledger_check'
+print(x, ...)
+
+# S3 method for class 'rmbl_ledger'
+print(x, ...)
 ```
 
 ## Arguments
@@ -28,7 +37,7 @@ ldgrchk(ledger, pkgs = NULL)
 
 - x:
 
-  A `ldgrread()` result.
+  A `ldgrread()` or `ldgrchk()` result.
 
 - ...:
 
@@ -46,10 +55,10 @@ ldgrchk(ledger, pkgs = NULL)
 ## Value
 
 `ldgrread()`: the ledger, a list of class `rmbl_ledger`, with the
-normalised path as the attribute `path`. `ldgrchk()`: a data frame with
-the columns `capsule`, `part` (`ledger`, or the capsule parts), `file`,
-`check`, `ok`, `detail`, `severity` (`error`, `warn` or `note`) and
-`line`.
+normalised path as the attribute `path`. `ldgrchk()`: a data frame
+(class `rmbl_ledger_check`, which prints as a box) with the columns
+`capsule`, `part` (`ledger`, or the capsule parts), `file`, `check`,
+`ok`, `detail`, `severity` (`error`, `warn` or `note`) and `line`.
 
 ## Details
 
@@ -107,32 +116,59 @@ of
 ## Examples
 
 ``` r
-f <- system.file("extdata", "ledger_sample.json", package = "rmoriebricklayer")
+f <- system.file(
+  "extdata",
+  "ledger_sample.json",
+  package = "rmoriebricklayer"
+)
 l <- ldgrread(f)
 l
-#> Proof ledger rmoriebricklayer sample ledger: 3 theorems (1 proved, 1 sorry, 1 axiom)
-#>   https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab, Lean v4.12.0
+#> ╭── Proof ledger rmoriebricklayer sample ledger ──────────────────────────────╮
+#> │   Theorems  3 theorems (1 proved, 1 sorry, 1 axiom)                         │
+#> │   Source    https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab    │
+#> │   Lean      v4.12.0                                                         │
+#> │   File      /tmp/Rtmp8mkWXN/temp_libpath2197c49bee9/rmoriebricklayer/extdat │
+#> │             a/ledger_sample.json                                            │
+#> │                                                                             │
+#> │   id               theorem                         status  sorry            │
+#> │   ---------------  ------------------------------  ------  -----            │
+#> │   gini-equal       Rmorie.Gini.gini_const_eq_zero  proved      0            │
+#> │   lorenz-monotone  Rmorie.Gini.lorenz_monotone     sorry       1            │
+#> │   float-round      Rmorie.Float.round_nearest      axiom       0            │
+#> │                                                                             │
+#> │   1 of 3 theorems are proved; the others are 1 axiom and 1 sorry: not       │
+#> │   proofs yet.                                                               │
+#> │                                                                             │
+#> │   A theorem marked proved has a machine-checked proof with no sorry;        │
+#> │   ldgrchk() checks that and that the R functions it covers exist.           │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 r <- ldgrchk(l)
 r[, c("check", "ok", "severity", "detail")]
-#>                                                check    ok severity
-#> 1                                 proved: gini-equal  TRUE    error
-#> 2     covered: gini-equal rmoriebricklayer::ginicoef  TRUE    error
-#> 3                                  check: gini-equal  TRUE    error
-#> 4                            proved: lorenz-monotone FALSE    error
-#> 5 covered: lorenz-monotone rmoriebricklayer::lorenzc  TRUE    error
-#> 6                                proved: float-round FALSE     warn
-#>                                                 detail
-#> 1             Rmorie.Gini.gini_const_eq_zero, no sorry
-#> 2                    exported by the installed package
-#> 3 ginicoef(c(5, 5, 5, 5)) = 0, expected 0 within 1e-12
-#> 4    Rmorie.Gini.lorenz_monotone is sorry with 1 sorry
-#> 5                    exported by the installed package
-#> 6     Rmorie.Float.round_nearest is axiom with 0 sorry
+#> ╭── Proof ledger check ───────────────────────────────────────────────────────╮
+#> │ ✖ NOT VERIFIED  · 2 of 6 checks failed                                      │
+#> │                                                                             │
+#> │   Checks  4 of 6 passed (1 warnings)                                        │
+#> │                                                                             │
+#> │   At least one check failed, so a theorem is not proved, or a function it   │
+#> │   covers is missing.                                                        │
+#> │                                                                             │
+#> │   ✔    proved: gini-equal       Rmorie.Gini.gini_const_eq_zero, no sorry    │
+#> │   ✔    covered: gini-equal rmoriebricklayer::ginicoef                       │
+#> │          exported by the installed package                                  │
+#> │   ✔    check: gini-equal        ginicoef(c(5, 5, 5, 5)) = 0, expected 0     │
+#> │                                 within 1e-12                                │
+#> │   ✖    proved: lorenz-monotone  Rmorie.Gini.lorenz_monotone is sorry with   │
+#> │                                 1 sorry                                     │
+#> │   ✔    covered: lorenz-monotone rmoriebricklayer::lorenzc                   │
+#> │          exported by the installed package                                  │
+#> │   WARN proved: float-round      Rmorie.Float.round_nearest is axiom with 0  │
+#> │                                 sorry                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a file that is not a ledger
 bad <- tempfile(fileext = ".json")
 writeLines('{"name": "x"}', bad)
 try(ldgrread(bad))
-#> Error : ldgrread: file1f25981faab.json is not a ledger: $: missing required toolchain, source, theorems
+#> Error : ldgrread: file2197475588b8.json is not a ledger: $: missing required toolchain, source, theorems
 unlink(bad)
 ```

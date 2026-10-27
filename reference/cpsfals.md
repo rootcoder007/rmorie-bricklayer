@@ -14,7 +14,7 @@ cpsfals(data, stat, trt = NULL, n = 199L, subfrac = 0.8, seed = NULL)
 
 - data:
 
-  A data frame.
+  A data frame that the statistic `stat` is computed on.
 
 - stat:
 

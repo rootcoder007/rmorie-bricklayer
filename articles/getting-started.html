@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,10 +122,23 @@ tidy copy of the published figures ships with the package.</p>
 <code class="sourceCode R"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/anltab.html">anltab</a></span><span class="op">(</span><span class="va">otis</span>, value <span class="op">=</span> <span class="st">"individuals"</span>, prd <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>                   by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"table"</span>, <span class="st">"group"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">a</span></span>
-<span><span class="co">#&gt; Analysis of `individuals` by year over 3 period(s) (2023 to 2025), grouped by table x group</span></span>
-<span><span class="co">#&gt;   rows 15, columns 4; no missing values</span></span>
-<span><span class="co">#&gt;   change: 10 comparison(s), 9 significant after BH at 0.05</span></span>
-<span><span class="co">#&gt;   trend: 0 of 5 series with Mann-Kendall p &lt; 0.05</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Analysis of a published table</span> ────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Value       `individuals`                                             │</span></span>
+<span><span class="co">#&gt; │   Period      year                                                      │</span></span>
+<span><span class="co">#&gt; │   Periods     3 (2023 to 2025)                                          │</span></span>
+<span><span class="co">#&gt; │   Grouped by  table x group                                             │</span></span>
+<span><span class="co">#&gt; │   Rows        15                                                        │</span></span>
+<span><span class="co">#&gt; │   Columns     4                                                         │</span></span>
+<span><span class="co">#&gt; │   Missing     no missing values                                         │</span></span>
+<span><span class="co">#&gt; │   Changes     10 comparison(s), 9 significant after BH at 0.05          │</span></span>
+<span><span class="co">#&gt; │   Trend       0 of 5 series with Mann-Kendall p &lt; 0.05                  │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Changes are between consecutive periods with exact or interval tests, │</span></span>
+<span><span class="co">#&gt; │   adjusted for the number of comparisons; rptanl() writes the full      │</span></span>
+<span><span class="co">#&gt; │   tables as a report, and x$change, x$rates and x$trend hold them.      │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Run 2026-10-27 13:58                                                  │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>The change table carries an exact interval for every percent change
 and a p-value that is exact too. Five groups are compared twice each, so
 the p-values are adjusted over the scan (Benjamini-Hochberg) before any
@@ -230,10 +243,17 @@ one release into random halves and reports the false-alarm rate per
 column.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/drftcal.html">drftcal</a></span><span class="op">(</span><span class="va">otis</span>, n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Drift screens on 10 identical re-fetches (alpha = 0.01)</span></span>
-<span><span class="co">#&gt;   at least one column flagged: 0% of re-fetches</span></span>
-<span><span class="co">#&gt;   no column fired on identical data</span></span>
-<span><span class="co">#&gt;   per-screen alpha for a family-wise 0.01: 0.0025</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Drift screen calibration</span> ─────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Identical re-fetches         10                                       │</span></span>
+<span><span class="co">#&gt; │   Alpha                        0.01                                     │</span></span>
+<span><span class="co">#&gt; │   Columns screened             4                                        │</span></span>
+<span><span class="co">#&gt; │   At least one column flagged  0% of re-fetches                         │</span></span>
+<span><span class="co">#&gt; │   Per-screen alpha             0.0025 for a family-wise 0.01            │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Each re-fetch splits the same table in two at random and runs the     │</span></span>
+<span><span class="co">#&gt; │   drift screen on the halves, so every flag is a false alarm. No column │</span></span>
+<span><span class="co">#&gt; │   fired on identical data.                                              │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="stock-and-flow">Stock and flow<a class="anchor" aria-label="anchor" href="#stock-and-flow"></a>
@@ -249,14 +269,25 @@ in days must multiply out of a change in people and a change in stay.
 <code class="sourceCode R"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stkflow.html">stkflow</a></span><span class="op">(</span>days <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21900</span>, <span class="fl">23725</span>, <span class="fl">20440</span><span class="op">)</span>, people <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">325</span>, <span class="fl">280</span><span class="op">)</span>,</span>
 <span>                 prd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2022</span>, <span class="fl">2023</span>, <span class="fl">2024</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">365</span><span class="op">)</span></span>
 <span><span class="va">sf</span></span>
-<span><span class="co">#&gt; ── Stock and flow over 3 periods ───────────────────────────────── </span></span>
-<span><span class="co">#&gt;  period people  days alos adp</span></span>
-<span><span class="co">#&gt;    2022    300 21900   73  60</span></span>
-<span><span class="co">#&gt;    2023    325 23725   73  65</span></span>
-<span><span class="co">#&gt;    2024    280 20440   73  56</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Stock and flow over 3 periods</span> ────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Periods          2022 to 2024                                             │</span></span>
+<span><span class="co">#&gt; │   Period length    365 days                                                 │</span></span>
+<span><span class="co">#&gt; │   Changes against  the first period                                         │</span></span>
+<span><span class="co">#&gt; │   Columns          alos = days per person; adp = people held on an average  │</span></span>
+<span><span class="co">#&gt; │                    day                                                      │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   period  people    days  alos  adp                                         │</span></span>
+<span><span class="co">#&gt; │   ------  ------  ------  ----  ---                                         │</span></span>
+<span><span class="co">#&gt; │   2022       300  21,900    73   60                                         │</span></span>
+<span><span class="co">#&gt; │   2023       325  23,725    73   65                                         │</span></span>
+<span><span class="co">#&gt; │   2024       280  20,440    73   56                                         │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%                        │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Lakner (1976): adp = people x alos / t, exact only in a steady state.     │</span></span>
+<span><span class="co">#&gt; │   A period shorter than the longest stay cuts unfinished stays short,       │</span></span>
+<span><span class="co">#&gt; │   so alos is biased downward (p.16-17).                                     │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>A population that rose while stays shortened, or fell while stays
 lengthened, reads differently from one where both moved together;
 <code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code> and <code><a href="../reference/admits.html">admits()</a></code> give
@@ -276,14 +307,25 @@ in days must multiply out of a change in people and a change in stay.
 <code class="sourceCode R"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stkflow.html">stkflow</a></span><span class="op">(</span>days <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21900</span>, <span class="fl">23725</span>, <span class="fl">20440</span><span class="op">)</span>, people <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">325</span>, <span class="fl">280</span><span class="op">)</span>,</span>
 <span>                 prd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2022</span>, <span class="fl">2023</span>, <span class="fl">2024</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">365</span><span class="op">)</span></span>
 <span><span class="va">sf</span></span>
-<span><span class="co">#&gt; ── Stock and flow over 3 periods ───────────────────────────────── </span></span>
-<span><span class="co">#&gt;  period people  days alos adp</span></span>
-<span><span class="co">#&gt;    2022    300 21900   73  60</span></span>
-<span><span class="co">#&gt;    2023    325 23725   73  65</span></span>
-<span><span class="co">#&gt;    2024    280 20440   73  56</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Stock and flow over 3 periods</span> ────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Periods          2022 to 2024                                             │</span></span>
+<span><span class="co">#&gt; │   Period length    365 days                                                 │</span></span>
+<span><span class="co">#&gt; │   Changes against  the first period                                         │</span></span>
+<span><span class="co">#&gt; │   Columns          alos = days per person; adp = people held on an average  │</span></span>
+<span><span class="co">#&gt; │                    day                                                      │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   period  people    days  alos  adp                                         │</span></span>
+<span><span class="co">#&gt; │   ------  ------  ------  ----  ---                                         │</span></span>
+<span><span class="co">#&gt; │   2022       300  21,900    73   60                                         │</span></span>
+<span><span class="co">#&gt; │   2023       325  23,725    73   65                                         │</span></span>
+<span><span class="co">#&gt; │   2024       280  20,440    73   56                                         │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%                        │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Lakner (1976): adp = people x alos / t, exact only in a steady state.     │</span></span>
+<span><span class="co">#&gt; │   A period shorter than the longest stay cuts unfinished stays short,       │</span></span>
+<span><span class="co">#&gt; │   so alos is biased downward (p.16-17).                                     │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>A population that rose while stays shortened, or fell while stays
 lengthened, reads differently from one where both moved together;
 <code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code> and <code><a href="../reference/admits.html">admits()</a></code> give
@@ -294,7 +336,7 @@ the single measures.</p>
 </h2>
 <p>The same approach works on any table with an estimate and its
 interval. The package also bundles Statistics Canada estimates of First
-Nations, Metis and Inuit health and mental health
+Nations, Métis and Inuit health and mental health
 (<code><a href="../reference/indiex.html">?indiex</a></code>).
 <code><a href="../articles/first-nations-metis-inuit-health.html">vignette("first-nations-metis-inuit-health")</a></code> analyses them:
 by distinction, with suppressed cells never imputed, and with wellness

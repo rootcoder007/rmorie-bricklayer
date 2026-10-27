@@ -43,11 +43,12 @@ exprspplr(data, y, expo, confs, nboot = 100L, rstate = 42L, estr = plrcf)
 
 ## Value
 
-A list with `ate` (the full-sample estimate), `seana` (the estimator's
-standard error), `seboot` (the standard deviation of the replicates),
-`cilobs` and `ciupbs` (the 95% percentile interval), `nboot` (the number
-of successful resamples) and `method` (the estimator's method with
-`" + percentile bootstrap"`).
+A list of class `c("rmbl_plr_boot", "list")` (its print method shows it
+as a box) with `ate` (the full-sample estimate), `seana` (the
+estimator's standard error), `seboot` (the standard deviation of the
+replicates), `cilobs` and `ciupbs` (the 95% percentile interval),
+`nboot` (the number of successful resamples) and `method` (the
+estimator's method with `" + percentile bootstrap"`).
 
 ## Details
 

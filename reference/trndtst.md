@@ -57,12 +57,13 @@ trndtst(
 
 ## Value
 
-A list with `S`, `tau`, `p_value`, `slope` (Theil-Sen, in units of `y`
-per unit of `x`), `intercept`, `slopelo` and `slopeup` (the
-distribution-free interval), `slopecicla` (`TRUE` when the pairwise
-slopes do not reach the requested confidence on a side, so that bound is
-the extreme slope and the true interval is wider), `n`, `var_S` (the
-tie-corrected variance of \\S\\), `alternative`, `conflvl` and `method`.
+A list of class `rmbl_trend_test` with `S`, `tau`, `p_value`, `slope`
+(Theil-Sen, in units of `y` per unit of `x`), `intercept`, `slopelo` and
+`slopeup` (the distribution-free interval), `slopecicla` (`TRUE` when
+the pairwise slopes do not reach the requested confidence on a side, so
+that bound is the extreme slope and the true interval is wider), `n`,
+`var_S` (the tie-corrected variance of \\S\\), `alternative`, `conflvl`
+and `method`.
 
 ## Details
 
@@ -118,88 +119,44 @@ it on a series this short.
 # Five years of placements.
 y <- c(402, 377, 190, 268, 331)
 trndtst(y)
-#> $S
-#> [1] -4
-#> 
-#> $tau
-#> [1] -0.4
-#> 
-#> $p_value
-#> [1] 0.4833333
-#> 
-#> $slope
-#> [1] -21.375
-#> 
-#> $intercept
-#> [1] 419.75
-#> 
-#> $slopelo
-#> [1] -187
-#> 
-#> $slopeup
-#> [1] 78
-#> 
-#> $slopecicla
-#> [1] TRUE
-#> 
-#> $n
-#> [1] 5
-#> 
-#> $var_S
-#> [1] 16.66667
-#> 
-#> $alternative
-#> [1] "two.sided"
-#> 
-#> $conflvl
-#> [1] 0.95
-#> 
-#> $method
-#> [1] "Mann-Kendall, exact over all 120 orderings"
-#> 
+#> ╭── Trend test ───────────────────────────────────────────────────────────╮
+#> │   Method       Mann-Kendall, exact over all 120 orderings               │
+#> │   Periods      5                                                        │
+#> │   S            -4                                                       │
+#> │   Alternative  two.sided                                                │
+#> │   Confidence   95%                                                      │
+#> │                                                                         │
+#> │   term         estimate  95% CI          p                              │
+#> │   -----------  --------  ----------  -----                              │
+#> │   Kendall tau     -0.40              0.483                              │
+#> │   Sen slope      -21.38  [-187, 78]                                     │
+#> │                                                                         │
+#> │   Kendall's tau of -0.4 means a downward tendency (p = 0.483); the Sen  │
+#> │   slope says the series moves by about -21.38 per period.               │
+#> │                                                                         │
+#> │   The slope's interval was clamped to the range of the pairwise slopes. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # A monotone series is detected even at n = 5, where a regression's
 # standard error would be nearly uninformative.
 trndtst(c(1, 2, 3, 4, 5))
-#> $S
-#> [1] 10
-#> 
-#> $tau
-#> [1] 1
-#> 
-#> $p_value
-#> [1] 0.01666667
-#> 
-#> $slope
-#> [1] 1
-#> 
-#> $intercept
-#> [1] 0
-#> 
-#> $slopelo
-#> [1] 1
-#> 
-#> $slopeup
-#> [1] 1
-#> 
-#> $slopecicla
-#> [1] TRUE
-#> 
-#> $n
-#> [1] 5
-#> 
-#> $var_S
-#> [1] 16.66667
-#> 
-#> $alternative
-#> [1] "two.sided"
-#> 
-#> $conflvl
-#> [1] 0.95
-#> 
-#> $method
-#> [1] "Mann-Kendall, exact over all 120 orderings"
-#> 
+#> ╭── Trend test ───────────────────────────────────────────────────────────╮
+#> │   Method       Mann-Kendall, exact over all 120 orderings               │
+#> │   Periods      5                                                        │
+#> │   S            10                                                       │
+#> │   Alternative  two.sided                                                │
+#> │   Confidence   95%                                                      │
+#> │                                                                         │
+#> │   term         estimate  95% CI      p                                  │
+#> │   -----------  --------  ------  -----                                  │
+#> │   Kendall tau         1          0.017                                  │
+#> │   Sen slope           1  [1, 1]                                         │
+#> │                                                                         │
+#> │   Kendall's tau of 1 means an upward tendency (p = 0.017); the Sen      │
+#> │   slope says the series moves by about 1 per period.                    │
+#> │                                                                         │
+#> │   The slope's interval was clamped to the range of the pairwise slopes. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # One aberrant period does not create a trend.
 trndtst(c(100, 100, 100, 100, 900))$p_value

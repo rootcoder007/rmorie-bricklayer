@@ -15,7 +15,7 @@ janitor::tabyl()."><meta property="og:image" content="https://rootcoder007.githu
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -130,53 +130,94 @@ column at once.</p></div>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>grade <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>, <span class="cn">NA</span>, <span class="st">"b"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">freqtbl</span><span class="op">(</span><span class="va">df</span>, <span class="st">"grade"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Frequency table ─────────────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        value n  pct pctvalid                  bar</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            b 3 50.0     60.0 ####################</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            a 1 16.7     20.0              #######</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            c 1 16.7     20.0              #######</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  – (missing) 1 16.7        –              #######</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Frequency table</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Values        6                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Levels shown  3                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Missing       1                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   value        n    pct  pctvalid  bar                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----------  -  -----  --------  --------------------                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   b            3  50.00        60  ####################                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a            1  16.70        20  #######                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   c            1  16.70        20  #######                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   – (missing)  1  16.70            #######                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   pct is the share of all values, pctvalid the share of the non-missing │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ones; the bar is scaled to the commonest level.                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The two percentage columns differ exactly by the missingness.</span></span></span>
 <span class="r-in"><span><span class="fu">freqtbl</span><span class="op">(</span><span class="va">df</span>, <span class="st">"grade"</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pct"</span>, <span class="st">"pctvalid"</span><span class="op">)</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        pct pctvalid</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 50.00000       60</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 16.66667       20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 16.66667       20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 16.66667       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Frequency table</span> ────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows     4                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns  2                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     pct  pctvalid                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  --------                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   50.00        60                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   16.67        20                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   16.67        20                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   16.67                                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Some of this result's columns are not here (a subset of it?), so it │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   is shown as a plain table.                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A vector works directly.</span></span></span>
 <span class="r-in"><span><span class="fu">freqtbl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">3</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Frequency table ─────────────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  value n  pct pctvalid                  bar</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      3 3 50.0     50.0 ####################</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      1 2 33.3     33.3        #############</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      2 1 16.7     16.7              #######</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Frequency table</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Values        6                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Levels shown  3                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Missing       0                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   value  n    pct  pctvalid  bar                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  -  -----  --------  --------------------                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   3      3  50.00     50.00  ####################                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   1      2  33.30     33.30  #############                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2      1  16.70     16.70  #######                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   pct is the share of all values, pctvalid the share of the non-missing │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ones; the bar is scaled to the commonest level.                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Sorted value order rather than frequency order.</span></span></span>
 <span class="r-in"><span><span class="fu">freqtbl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"c"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"a"</span><span class="op">)</span>, sort <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Frequency table ─────────────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  value n  pct pctvalid                  bar</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      a 2 50.0     50.0 ####################</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      b 1 25.0     25.0           ##########</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      c 1 25.0     25.0           ##########</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Frequency table</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Values        4                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Levels shown  3                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Missing       0                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   value  n  pct  pctvalid  bar                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  -  ---  --------  --------------------                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a      2   50        50  ####################                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   b      1   25        25  ##########                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   c      1   25        25  ##########                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   pct is the share of all values, pctvalid the share of the non-missing │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ones; the bar is scaled to the commonest level.                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Long tails are folded so the percentages still total 100.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ft</span> <span class="op">&lt;-</span> <span class="fu">freqtbl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">letters</span>, <span class="fl">500</span>, <span class="cn">TRUE</span><span class="op">)</span>, maxlvl <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ft</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Frequency table ─────────────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    value   n  pct pctvalid                  bar</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        y  25  5.0      5.0                    #</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        e  24  4.8      4.8                    #</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        t  24  4.8      4.8                    #</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        a  23  4.6      4.6                    #</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        f  23  4.6      4.6                    #</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  (other) 381 76.2     76.2 ####################</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Frequency table</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Values        500                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Levels shown  6                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Missing       0                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   value      n     pct  pctvalid  bar                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -------  ---  ------  --------  --------------------                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   y         25   5.000     5.000  #                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   e         24   4.800     4.800  #                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   t         24   4.800     4.800  #                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   a         23   4.600     4.600  #                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   f         23   4.600     4.600  #                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   (other)  381  76.200    76.200  ####################                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   pct is the share of all values, pctvalid the share of the non-missing │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ones; the bar is scaled to the commonest level.                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">ft</span><span class="op">$</span><span class="va">pct</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 100</span>
 <span class="r-in"><span></span></span>

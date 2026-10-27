@@ -134,5 +134,5 @@ prsbands(c("3", "unknown", "24 to 18", "15 to 19 and over"))
 #> 4 15 to 19 and over    NA    NA  FALSE  FALSE
 
 try(prsbands(1:3))
-#> Error : `x` must be character band labels
+#> Error : prsbands: `x` must be character band labels
 ```

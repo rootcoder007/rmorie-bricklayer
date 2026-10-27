@@ -19,7 +19,7 @@ automatically."><meta property="og:image" content="https://rootcoder007.github.i
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,22 +93,24 @@ automatically.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A length-1 character string, the <code>https</code> snapshot URL of the
-form <code>https://web.archive.org/web/</code> followed by <code>&lt;timestamp&gt;/&lt;url&gt;</code>, or
-<code>NULL</code>.</p>
+form <code>https://web.archive.org/web/</code> followed by
+<code>&lt;timestamp&gt;/&lt;url&gt;</code>, or <code>NULL</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function sends one request to the availability API,<br><code>https://archive.org/wayback/available?url=&lt;url&gt;[&amp;timestamp=&lt;ts&gt;]</code>,<br>
 where the timestamp part is sent only when <code>ts</code> is given.</p>
-<p>The answer's <code>archived_snapshots$closest</code> is read. When the API reports an
-available snapshot its URL is returned, with <code>http://</code> rewritten to
-<code>https://</code> and passed through the same public-URL check as every
-other URL the package fetches. The timestamp is passed to the API as
-given; the API accepts any prefix of <code>YYYYMMDDhhmmss</code> and returns the
-snapshot nearest to it, before or after.</p>
+<p>The answer's <code>archived_snapshots$closest</code> is read. When the API reports
+an available snapshot its URL is returned, with <code>http://</code> rewritten to
+<code>https://</code> and passed through the same public-URL check as every other
+URL the package fetches. The timestamp is passed to the API as given; the API
+accepts any prefix of <code>YYYYMMDDhhmmss</code> and returns the snapshot nearest
+to it, before or after.</p>
 <p><code>NULL</code> is returned when the API has no snapshot, when the request
 fails (offline, an HTTP error, invalid JSON) or when the answer has no
-usable URL. Error: <code>url</code> that is not a single non-empty string.
+usable URL. Errors: <code>url</code> that is not a single non-empty string or
+is not a public web address; <code>ts</code> that is not <code>NULL</code>,
+<code>""</code> or a string of 1 to 14 digits.
 Nothing is written.</p>
     </div>
 
@@ -117,6 +119,8 @@ Nothing is written.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># argument errors come before any request</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">wbsnpurl</span><span class="op">(</span><span class="cn">NA</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : wbsnpurl: `url` must be a single non-empty string</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">wbsnpurl</span><span class="op">(</span><span class="st">"https://www.r-project.org/"</span>, ts <span class="op">=</span> <span class="st">"2020&amp;x=1"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : wbsnpurl: `ts` must be NULL, "" or a string of 1 to 14 digits (YYYYMMDDhhmmss or a prefix of it)</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">wbsnpurl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://a.org"</span>, <span class="st">"https://b.org"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : wbsnpurl: `url` must be a single non-empty string</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>

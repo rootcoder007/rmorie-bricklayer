@@ -48,9 +48,15 @@ for the one route a question would take;
 ## Examples
 
 ``` r
-old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
-                    "MORIE_LLM_BASE_URL", "MORIE_LLM_MODEL"),
-                  unset = NA)
+old <- Sys.getenv(
+  c(
+    "XDG_CONFIG_HOME",
+    "OLLAMA_HOST",
+    "MORIE_LLM_BASE_URL",
+    "MORIE_LLM_MODEL"
+  ),
+  unset = NA
+)
 # a scratch settings folder and the local route off: no network at all
 Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 st <- llmstat()
@@ -61,12 +67,19 @@ st[, c("route", "status")]
 #> 3    local Ollama disabled
 
 # your own OpenAI-compatible server shows as configured (it is not contacted)
-Sys.setenv(MORIE_LLM_BASE_URL = "http://localhost:8080", MORIE_LLM_MODEL = "llama3")
+Sys.setenv(
+  MORIE_LLM_BASE_URL = "http://localhost:8080",
+  MORIE_LLM_MODEL = "llama3"
+)
 llmstat()[1, ]
 #>          route     status                               detail
 #> 1 own endpoint configured http://localhost:8080  model: llama3
 
 for (v in names(old)) {
-  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+  if (is.na(old[[v]])) {
+    Sys.unsetenv(v)
+  } else {
+    do.call(Sys.setenv, as.list(old[v]))
+  }
 }
 ```

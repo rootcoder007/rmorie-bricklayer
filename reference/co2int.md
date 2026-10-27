@@ -69,27 +69,18 @@ Science 8(12), 2100707.
 
 ``` r
 co2int("CA-ON")
-#> $g_per_kwh
-#> [1] 90.97
-#> 
-#> $location
-#> [1] "CA-ON"
-#> 
-#> $name
-#> [1] "Canada, Ontario"
-#> 
-#> $year
-#> [1] 2024
-#> 
-#> $basis
-#> [1] "lifecycle"
-#> 
-#> $source
-#> [1] "Electricity Maps (2025). Canada 2024 Yearly Carbon Intensity Data (Version January 27, 2025). Electricity Maps (via Green Algorithms data v3.1)"
-#> 
-#> $note
-#> character(0)
-#> 
+#> ╭── Carbon intensity of electricity ──────────────────────────────────────────╮
+#> │   Intensity  90.97 gCO2e/kWh                                                │
+#> │   Location   CA-ON (Canada, Ontario)                                        │
+#> │   Year       2024                                                           │
+#> │   Basis      lifecycle                                                      │
+#> │   Source     Electricity Maps (2025). Canada 2024 Yearly Carbon Intensity   │
+#> │              Data (Version January 27, 2025). Electricity Maps (via Green   │
+#> │              Algorithms data v3.1)                                          │
+#> │                                                                             │
+#> │   The emissions of producing one kilowatt-hour of electricity on this       │
+#> │   grid; co2fp() multiplies a computation's energy by it.                    │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 co2int("Canada")$year
 #> [1] 2025
 co2int("CA-XX")$note
@@ -100,7 +91,10 @@ nrow(co2inttab())
 #> [1] 378
 # the Canadian provinces in the table, lowest intensity first
 tab <- co2inttab()
-ca <- tab[startsWith(tab$location, "CA-"), c("location", "name", "g_per_kwh", "year")]
+ca <- tab[
+  startsWith(tab$location, "CA-"),
+  c("location", "name", "g_per_kwh", "year")
+]
 head(ca[order(ca$g_per_kwh), ])
 #>     location                              name g_per_kwh year
 #> 236    CA-NL Canada, Newfoundland and Labrador     27.60 2024

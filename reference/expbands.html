@@ -19,7 +19,7 @@ only part of the data without saying so."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -130,7 +130,21 @@ unplaceable band with units (by default); any error from
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1 3.5   9 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  10   4   2 </span>
 <span class="r-in"><span><span class="fu"><a href="concentration.html">ginicoef</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.452381</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Gini coefficient</span> ─────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Gini coefficient  0.4524                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Units             16                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Total             42                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Largest unit      9 (21.4% of the total)                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Most for n units  0.9375                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A Gini of 0.4524: the total is highly concentrated.                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   That is 48% of the way from equal shares (0) to one unit holding all of   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   it (0.9375 for 16 units).                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0 when every unit holds the same, 1 - 1/n when one unit holds it all;     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   doubling every value leaves it unchanged. It says how unequal, not        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   which units: topshr() and lorenzc() show where the total sits.            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the lower-bound reading of the same table</span></span></span>
 <span class="r-in"><span><span class="fu">expbands</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span>, <span class="st">"2 to 5"</span>, <span class="st">"Greater than 5"</span><span class="op">)</span>, cnts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">4</span>, <span class="fl">2</span><span class="op">)</span>,</span></span>

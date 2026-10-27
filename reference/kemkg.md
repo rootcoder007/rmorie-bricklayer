@@ -124,15 +124,18 @@ k2 <- kemkg(512, seed = as.raw(0:63))
 identical(k1$public, k2$public)
 #> [1] TRUE
 k1
-#> ── Key encapsulation key (ML-KEM, FIPS 203) ──────────────────────
-#>   level       ML-KEM-512
-#>   public key  3995815e597d104355cf29aa5333c932... (800 bytes)
-#>   secret      <withheld>
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Key encapsulation key (ML-KEM, FIPS 203) ─────────────────────────────────╮
+#> │   Level       ML-KEM-512                                                    │
+#> │   Public key  3995815e597d104355cf29aa5333c932... (800 bytes)               │
+#> │   Secret key  <withheld>                                                    │
+#> │                                                                             │
+#> │   Keep this key private: it opens what others encapsulate to its public     │
+#> │   half (kempubkey()) with kemdecap().                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # levels other than the three FIPS 203 defines are refused
 try(kemkg(256))
-#> Error : `level` must be one of 512, 768 or 1024
+#> Error : `lvl` must be one of 512, 768 or 1024
 try(kemkg(768, seed = as.raw(1:10)))
 #> Error : `seed` must be a raw vector of 64 bytes
 ```

@@ -20,7 +20,7 @@ missgrid(data, height = 20L, width = 12L)
 
 - data:
 
-  A data frame.
+  A data frame whose missing cells are drawn as a grid.
 
 - height:
 

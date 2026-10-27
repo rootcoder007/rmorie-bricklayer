@@ -24,7 +24,12 @@ drftks(x, y)
 ## Value
 
 A named length-3 numeric: `statistic` (the KS \\D\\) , `p_value`, and
-`neff` (the harmonic-style effective size \\n_xn_y/(n_x+n_y)\\).
+`neff` (the harmonic-style effective size \\n_xn_y/(n_x+n_y)\\). It has
+class `c("rmbl_drftks", "rmbl_measure", "numeric")`, so it prints as a
+box with its inputs (kept in attribute `"lakner"`); arithmetic, `[`,
+[`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give plain
+numbers.
 
 ## Details
 
@@ -61,18 +66,63 @@ ref <- stats::rnorm(200)
 
 # The same distribution: a small D and a large p-value.
 drftks(ref, stats::rnorm(200))
-#>   statistic     p_value        neff 
-#>   0.0600000   0.8642828 100.0000000 
+#> ╭── Two-sample Kolmogorov-Smirnov test ───────────────────────────────────────╮
+#> │   Samples  200 and 200 values                                               │
+#> │                                                                             │
+#> │   statistic  value                                                          │
+#> │   ---------  -----                                                          │
+#> │   statistic  0.06                                                           │
+#> │   p_value    0.864                                                          │
+#> │   neff       100                                                            │
+#> │                                                                             │
+#> │   No difference in distribution is detected (p = 0.864, not below 0.05).    │
+#> │   At its widest the two cumulative distributions are 6.0 percentage points  │
+#> │   apart.                                                                    │
+#> │                                                                             │
+#> │   D is the largest gap between the two empirical distribution               │
+#> │   functions. The p-value is the asymptotic one: rough below a few           │
+#> │   dozen values; stats::ks.test() gives an exact one.                        │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # A shifted distribution is detected.
 drftks(ref, stats::rnorm(200, mean = 0.8))
-#>    statistic      p_value         neff 
-#> 3.250000e-01 1.338317e-09 1.000000e+02 
+#> ╭── Two-sample Kolmogorov-Smirnov test ───────────────────────────────────────╮
+#> │   Samples  200 and 200 values                                               │
+#> │                                                                             │
+#> │   statistic  value                                                          │
+#> │   ---------  -------                                                        │
+#> │   statistic  0.325                                                          │
+#> │   p_value    < 0.001                                                        │
+#> │   neff       100                                                            │
+#> │                                                                             │
+#> │   The two samples differ in distribution (p < 0.001, below 0.05).           │
+#> │   At its widest the two cumulative distributions are 32.5 percentage        │
+#> │   points apart.                                                             │
+#> │                                                                             │
+#> │   D is the largest gap between the two empirical distribution               │
+#> │   functions. The p-value is the asymptotic one: rough below a few           │
+#> │   dozen values; stats::ks.test() gives an exact one.                        │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # So is a change in spread alone, which a mean comparison would miss.
 drftks(ref, stats::rnorm(200, sd = 2.5))
-#>    statistic      p_value         neff 
-#> 3.150000e-01 4.813445e-09 1.000000e+02 
+#> ╭── Two-sample Kolmogorov-Smirnov test ───────────────────────────────────────╮
+#> │   Samples  200 and 200 values                                               │
+#> │                                                                             │
+#> │   statistic  value                                                          │
+#> │   ---------  -------                                                        │
+#> │   statistic  0.315                                                          │
+#> │   p_value    < 0.001                                                        │
+#> │   neff       100                                                            │
+#> │                                                                             │
+#> │   The two samples differ in distribution (p < 0.001, below 0.05).           │
+#> │   At its widest the two cumulative distributions are 31.5 percentage        │
+#> │   points apart.                                                             │
+#> │                                                                             │
+#> │   D is the largest gap between the two empirical distribution               │
+#> │   functions. The p-value is the asymptotic one: rough below a few           │
+#> │   dozen values; stats::ks.test() gives an exact one.                        │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # The statistic agrees with stats::ks.test().
 a <- stats::rnorm(60); b <- stats::rnorm(45, 0.6)

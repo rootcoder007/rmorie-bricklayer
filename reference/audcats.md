@@ -18,7 +18,7 @@ audcats(data, cols = NULL)
 
 - data:
 
-  A data frame.
+  A data frame whose categorical columns are audited.
 
 - cols:
 
@@ -85,11 +85,23 @@ a <- audcats(data.frame(
   city = c("Toronto", "toronto", "Ottawa")[c(1, 2, 3, 3)]
 ))
 a
-#> Categorical audit: 2 column(s)
-#>   race             factor     3 level(s), reference ‘1’
-#>     !! HAZARD: all labels numeric-looking (1,2,3...): likely imported CODES whose value labels were lost; as.numeric() on this column returns level INDICES, not data 
-#>   city             character  3 level(s), reference ‘Ottawa’
-#>     !! HAZARD: case-variant duplicate labels: ‘Toronto’, ‘toronto’ 
+#> ╭── Categorical audit ────────────────────────────────────────────────────────╮
+#> │   Columns  2 column(s)                                                      │
+#> │   Hazards  2 in 2 column(s)                                                 │
+#> │                                                                             │
+#> │   column  storage    levels  reference                                      │
+#> │   ------  ---------  ------  ---------                                      │
+#> │   race    factor          3  ‘1’                                            │
+#> │   city    character       3  ‘Ottawa’                                       │
+#> │                                                                             │
+#> │   Each column's reference level is the group every model contrast is        │
+#> │   measured against: check it is the one you meant.                          │
+#> │                                                                             │
+#> │   !! HAZARD (race): all labels numeric-looking (1,2,3...): likely imported  │
+#> │   CODES whose value labels were lost; as.numeric() on this column returns   │
+#> │   level INDICES, not data                                                   │
+#> │   !! HAZARD (city): case-variant duplicate labels: ‘Toronto’, ‘toronto’     │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 attr(a, "clean")
 #> [1] FALSE
 
@@ -97,20 +109,41 @@ attr(a, "clean")
 audcats(data.frame(
   g = factor(c(" A", "A", "NA", ""), levels = c("", " A", "A", "NA", "B"))
 ))
-#> Categorical audit: 1 column(s)
-#>   g                factor     5 level(s), reference ‘’
-#>     !! HAZARD: labels with leading/trailing whitespace (incl. non-breaking): ‘ A’: a space splits one category into two 
-#>     !! HAZARD: whitespace-variant duplicate labels: ‘ A’, ‘A’ 
-#>     !! HAZARD: empty-string label "": missingness stored as a category 
-#>     !! HAZARD: missing-value sentinel stored as a label: ‘NA’ 
-#>     !! HAZARD: the REFERENCE level ‘’ is empty, a sentinel, or differs from a real label only by invisible characters: every model on this column is baselined on it 
-#>     !! HAZARD: unused levels: ‘B’ 
+#> ╭── Categorical audit ────────────────────────────────────────────────────────╮
+#> │   Columns  1 column(s)                                                      │
+#> │   Hazards  6 in 1 column(s)                                                 │
+#> │                                                                             │
+#> │   column  storage  levels  reference                                        │
+#> │   ------  -------  ------  ---------                                        │
+#> │   g       factor        5  ‘’                                               │
+#> │                                                                             │
+#> │   Each column's reference level is the group every model contrast is        │
+#> │   measured against: check it is the one you meant.                          │
+#> │                                                                             │
+#> │   !! HAZARD (g): labels with leading/trailing whitespace (incl.             │
+#> │   non-breaking): ‘ A’: a space splits one category into two                 │
+#> │   !! HAZARD (g): whitespace-variant duplicate labels: ‘ A’, ‘A’             │
+#> │   !! HAZARD (g): empty-string label "": missingness stored as a category    │
+#> │   !! HAZARD (g): missing-value sentinel stored as a label: ‘NA’             │
+#> │   !! HAZARD (g): the REFERENCE level ‘’ is empty, a sentinel, or differs    │
+#> │   from a real label only by invisible characters: every model on this       │
+#> │   column is baselined on it                                                 │
+#> │   !! HAZARD (g): unused levels: ‘B’                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a clean frame; non-categorical columns are skipped by default
 audcats(data.frame(sex = c("F", "M", "F"), age = c(31, 45, 27)))
-#> Categorical audit: 1 column(s)
-#>   sex              character  2 level(s), reference ‘F’
-#>   no hazards detected
+#> ╭── Categorical audit ────────────────────────────────────────────────────────╮
+#> │   Columns  1 column(s)                                                      │
+#> │   Hazards  no hazards detected                                              │
+#> │                                                                             │
+#> │   column  storage    levels  reference                                      │
+#> │   ------  ---------  ------  ---------                                      │
+#> │   sex     character       2  ‘F’                                            │
+#> │                                                                             │
+#> │   Each column's reference level is the group every model contrast is        │
+#> │   measured against: check it is the one you meant.                          │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 try(audcats(1:3))
 #> Error : audcats: `data` must be a data frame

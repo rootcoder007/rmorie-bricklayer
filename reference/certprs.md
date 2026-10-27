@@ -82,50 +82,36 @@ signature.
 ## Examples
 
 ``` r
-# A small test chain shipped as hexadecimal DER: a self-signed P-256 root
-# and a leaf it issued (a throwaway test authority; trust it for nothing).
-roothex <- paste0(
-  "308201973082013ca003020102021452157dfd900c163c5027372ed4090b9d11748286300a06",
-  "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
-  "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3336303932",
-  "393038343334315a302931123010060355040a0c09726d626c20746573743113301106035504",
-  "030c0a454332353620526f6f743059301306072a8648ce3d020106082a8648ce3d0301070342",
-  "0004624ad2e98f4566cd8f003a188f822875fa4760ed894507e8a4130a08fcb59280e958aa6c",
-  "e6147989d155ce20d1a6d94fe109d3d2f2bc13d1394cea3520197fdda3423040300f0603551d",
-  "130101ff040530030101ff300e0603551d0f0101ff040403020106301d0603551d0e04160414",
-  "2ef598166f5b9e6bb65d3252cf127b2c992348ae300a06082a8648ce3d040302034900304602",
-  "21009cd3d7968f65630677b3c7437cae5187021d553c756820d34b6a8a1240e7efb7022100a3",
-  "c37f0a8e1f38a5263b14414e6f916962bbd36bcbaca40b07d371352de745c0")
-leafhex <- paste0(
-  "308201ae30820154a00302010202142fa99d48ead4c033c568837b2288f9e9bf137068300a06",
-  "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
-  "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3331313030",
-  "313038343334315a302931123010060355040a0c09726d626c20746573743113301106035504",
-  "030c0a4543323536204c6561663059301306072a8648ce3d020106082a8648ce3d0301070342",
-  "00045f0ad14e657dedf3f6cc18530f9d905823b6e9f492ecc0eb1989c9ad8a11a859ebb7681a",
-  "e5b1f579974e3c6709e824245608c448da6fe248ebf67bf727d598f4a35a305830090603551d",
-  "1304023000300b0603551d0f040403020780301d0603551d0e04160414b1d22b6dd5987f0dfa",
-  "0ff3a5d0140351d752e0fb301f0603551d230418301680142ef598166f5b9e6bb65d3252cf12",
-  "7b2c992348ae300a06082a8648ce3d0403020348003045022100bc9d6ec452554adb8f33e4ac",
-  "53d5e29620fc19528074153028ce849d98c8c15202205c841de357dbad5042daba7fb4af3724",
-  "78d684f648e6ef23c68a3d764894c8fc")
-hex2raw <- function(h) {
-  as.raw(strtoi(substring(h, seq(1, nchar(h), 2), seq(2, nchar(h), 2)), 16L))
+# Pass the certificate file you were given (.der, .crt, .cer or .pem), for
+# example the one a timestamping authority publishes, or raw DER bytes.
+# Here: a small test chain shipped with the package, a self-signed P-256
+# root and a leaf it issued (a throwaway test authority; trust it for
+# nothing).
+x509 <- function(f) {
+  system.file("extdata", "x509", f, package = "rmoriebricklayer")
 }
-root <- certprs(hex2raw(roothex))
+root <- certprs(x509("test-root.der"))
 root
-#> ── X.509 certificate ─────────────────────────────────────────────
-#>   subject     O=rmbl test, CN=EC256 Root
-#>   issuer      O=rmbl test, CN=EC256 Root
-#>   serial      52157dfd900c163c5027372ed4090b9d
-#>   valid from  2026-10-02 08:43:41
-#>   valid to    2036-09-29 08:43:41
-#>   key         EC 256 bits
-#>   signature   ECDSA-SHA256
-#>   is a CA     TRUE
-#>   key usage   
-#> ──────────────────────────────────────────────────────────────────
-leaf <- certprs(hex2raw(leafhex))
+#> ╭── X.509 certificate ────────────────────────────────────────────────────────╮
+#> │   Subject             O=rmbl test, CN=EC256 Root                            │
+#> │   Issuer              O=rmbl test, CN=EC256 Root                            │
+#> │   Serial              52157dfd900c163c5027372ed4090b9d                      │
+#> │   Valid from          2026-10-02 08:43:41                                   │
+#> │   Valid to            2036-09-29 08:43:41                                   │
+#> │   Key                 EC 256 bits                                           │
+#> │   Signature           ECDSA-SHA256                                          │
+#> │   Is a CA             TRUE                                                  │
+#> │   Self-signed         TRUE                                                  │
+#> │   Key usage           keyCertSign, cRLSign                                  │
+#> │   Extended key usage  none stated                                           │
+#> │                                                                             │
+#> │   In force now, for 3,624 more days (until 2036-09-29).                     │
+#> │   A self-signed CA certificate: a root, trusted or not, never verified.     │
+#> │                                                                             │
+#> │   What the certificate says about itself. Nothing here is checked:          │
+#> │   certchnvrf() verifies it against trust anchors you choose.                │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+leaf <- certprs(x509("test-leaf.der"))
 leaf$subject
 #> [1] "O=rmbl test, CN=EC256 Leaf"
 leaf$key$curve
@@ -133,12 +119,14 @@ leaf$key$curve
 c(leaf$not_before, leaf$not_after)
 #> [1] "2026-10-02 08:43:41 UTC" "2031-10-01 08:43:41 UTC"
 
-# the same certificate from a PEM file
-pem <- tempfile(fileext = ".pem")
-writeLines(c("-----BEGIN CERTIFICATE-----",
-             strsplit(jsb64enc(hex2raw(roothex)), "\n")[[1]],
-             "-----END CERTIFICATE-----"), pem)
-certprs(pem)$self_signed
+# the same root as PEM, the text form most authorities hand out
+certprs(x509("test-root.pem"))$self_signed
+#> [1] TRUE
+
+# raw DER bytes work too
+f <- x509("test-leaf.der")
+der <- readBin(f, "raw", file.size(f))
+identical(certprs(der)$serial, leaf$serial)
 #> [1] TRUE
 
 # bytes that are not a certificate

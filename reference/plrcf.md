@@ -42,7 +42,8 @@ plrcf(data, y, trt, covs, kfol = 5L, seed = 1L)
 
 ## Value
 
-A list with `ate` (the estimate of \\\theta\\: the change in the outcome
+A list of class `c("rmbl_plr", "list")` (its print method shows it as a
+box) with `ate` (the estimate of \\\theta\\: the change in the outcome
 per unit of the treatment), `se` (its sandwich standard error), `n`
 (complete rows used), `kfol` and `method` (a string naming the
 estimator).

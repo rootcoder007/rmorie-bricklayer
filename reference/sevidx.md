@@ -63,14 +63,43 @@ Zorro Medina (2023), see
 ## Examples
 
 ``` r
-d <- data.frame(city = rep(c("A", "B"), each = 3), year = 2024,
-                offence = rep(c("homicide", "robbery", "burglary"), 2),
-                n = c(5, 120, 300, 2, 90, 410), pop = rep(c(250000, 180000), each
-= 3))
-sevidx(d, "city", "year", "offence", "n",
-               w = c(homicide = 25, robbery = 8,
-                           burglary = 4), pop = "pop")
-#>   unit time unweighted weighted
-#> 1    A 2024   170.0000  914.000
-#> 2    B 2024   278.8889 1338.889
+d <- data.frame(
+  city = rep(c("A", "B"), each = 3),
+  year = 2024,
+  offence = rep(c("homicide", "robbery", "burglary"), 2),
+  n = c(5, 120, 300, 2, 90, 410),
+  pop = rep(c(250000, 180000), each = 3)
+)
+sevidx(
+  d,
+  "city",
+  "year",
+  "offence",
+  "n",
+  w = c(homicide = 25, robbery = 8, burglary = 4),
+  pop = "pop"
+)
+#> ╭── Severity-weighted index ──────────────────────────────────────────────╮
+#> │   Rows               2                                                  │
+#> │   Units              2                                                  │
+#> │   Periods            1                                                  │
+#> │   Offences weighted  3                                                  │
+#> │                                                                         │
+#> │   Index                                                                 │
+#> │   unit   time  unweighted  weighted                                     │
+#> │   ----  -----  ----------  --------                                     │
+#> │   A     2,024       170.0       914                                     │
+#> │   B     2,024       278.9     1,339                                     │
+#> │                                                                         │
+#> │   Weights                                                               │
+#> │   offence   weight                                                      │
+#> │   --------  ------                                                      │
+#> │   homicide      25                                                      │
+#> │   robbery        8                                                      │
+#> │   burglary       4                                                      │
+#> │                                                                         │
+#> │   The weighted index adds each offence's count (or rate) times its      │
+#> │   severity weight; beside the unweighted total it shows whether the mix │
+#> │   of offences moved, not only their number.                             │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```

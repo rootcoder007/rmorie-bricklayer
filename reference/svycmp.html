@@ -23,7 +23,7 @@ independent."><meta property="og:image" content="https://rootcoder007.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,7 @@ independent.</p>
 <span>  <span class="va">des</span>,</span>
 <span>  <span class="va">data</span>,</span>
 <span>  <span class="va">y</span>,</span>
-<span>  <span class="va">by</span>,</span>
+<span>  by <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  stat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>, <span class="st">"total"</span>, <span class="st">"proportion"</span>, <span class="st">"ratio"</span><span class="op">)</span>,</span>
 <span>  den <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lvls <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -169,18 +169,52 @@ that is not a single domain label present in the data; and every error of
 <span class="r-in"><span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu"><a href="svydes.html">svydes</a></span><span class="op">(</span><span class="va">d</span>, w <span class="op">=</span> <span class="st">"w"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">svycmp</span><span class="op">(</span><span class="va">des</span>, <span class="va">d</span>, <span class="st">"smoker"</span>, by <span class="op">=</span> <span class="st">"region"</span>, stat <span class="op">=</span> <span class="st">"proportion"</span>,</span></span>
 <span class="r-in"><span>               lvls <span class="op">=</span> <span class="st">"1"</span>, ref <span class="op">=</span> <span class="st">"north"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Survey proportion of smoker against north (95% interval)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  domain level estimate reference difference      se   lower   upper p_value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    east     1   0.2538    0.3701    -0.1164 0.09485 -0.3023 0.06954  0.2199</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   south     1   0.2352    0.3701    -0.1350 0.09464 -0.3205 0.05052  0.1538</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Survey proportion of smoker against north</span> ───────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Variable          smoker                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Reference domain  north                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Confidence        95%                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   domain  level  estimate  reference  difference       se              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  -----  --------  ---------  ----------  -------              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   east    1        0.2538     0.3701     -0.1164  0.09485              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   south   1        0.2352     0.3701     -0.1350  0.09464              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   domain  95% CI             p_value                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  -----------------  -------                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   east    [-0.3023, 0.0695]    0.220                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   south   [-0.3205, 0.0505]    0.154                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Not distinguishable from 0 (interval includes it): east (p = 0.220)  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   and south (p = 0.154).                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each difference is a domain's estimate minus the reference domain's, │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   with the design's covariance between the two taken into account.     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># means, against the default (first) domain, at 90 percent</span></span></span>
 <span class="r-in"><span><span class="va">d</span><span class="op">$</span><span class="va">drinks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">svycmp</span><span class="op">(</span><span class="va">des</span>, <span class="va">d</span>, <span class="st">"drinks"</span>, by <span class="op">=</span> <span class="st">"region"</span>, conflvl <span class="op">=</span> <span class="fl">0.90</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Survey mean of drinks against east (90% interval)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  domain estimate reference difference     se   lower  upper p_value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   north    3.066     3.361    -0.2952 0.3947 -0.9444 0.3539  0.4544</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   south    3.083     3.361    -0.2779 0.3811 -0.9048 0.3490  0.4659</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Survey mean of drinks against east</span> ──────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Variable          drinks                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Reference domain  east                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Confidence        90%                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   domain  estimate  reference  difference      se  90% CI              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  --------  ---------  ----------  ------  -----------------   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   north      3.066      3.361     -0.2952  0.3947  [-0.9444, 0.3539]   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   south      3.083      3.361     -0.2779  0.3811  [-0.9048, 0.3490]   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   domain  p_value                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  -------                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   north     0.454                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   south     0.466                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Not distinguishable from 0 (interval includes it): north (p = 0.454) │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   and south (p = 0.466).                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each difference is a domain's estimate minus the reference domain's, │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   with the design's covariance between the two taken into account.     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the reference must be one of the domains</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">svycmp</span><span class="op">(</span><span class="va">des</span>, <span class="va">d</span>, <span class="st">"drinks"</span>, by <span class="op">=</span> <span class="st">"region"</span>, ref <span class="op">=</span> <span class="st">"west"</span><span class="op">)</span><span class="op">)</span></span></span>

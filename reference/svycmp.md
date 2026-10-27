@@ -16,7 +16,7 @@ svycmp(
   des,
   data,
   y,
-  by,
+  by = NULL,
   stat = c("mean", "total", "proportion", "ratio"),
   den = NULL,
   lvls = NULL,
@@ -101,18 +101,52 @@ d <- data.frame(region = rep(c("north", "south", "east"), length.out = 150),
 des <- svydes(d, w = "w")
 svycmp(des, d, "smoker", by = "region", stat = "proportion",
                lvls = "1", ref = "north")
-#> Survey proportion of smoker against north (95% interval)
-#>  domain level estimate reference difference      se   lower   upper p_value
-#>    east     1   0.2538    0.3701    -0.1164 0.09485 -0.3023 0.06954  0.2199
-#>   south     1   0.2352    0.3701    -0.1350 0.09464 -0.3205 0.05052  0.1538
+#> ╭── Survey proportion of smoker against north ───────────────────────────╮
+#> │   Variable          smoker                                             │
+#> │   Reference domain  north                                              │
+#> │   Confidence        95%                                                │
+#> │                                                                        │
+#> │   domain  level  estimate  reference  difference       se              │
+#> │   ------  -----  --------  ---------  ----------  -------              │
+#> │   east    1        0.2538     0.3701     -0.1164  0.09485              │
+#> │   south   1        0.2352     0.3701     -0.1350  0.09464              │
+#> │                                                                        │
+#> │   domain  95% CI             p_value                                   │
+#> │   ------  -----------------  -------                                   │
+#> │   east    [-0.3023, 0.0695]    0.220                                   │
+#> │   south   [-0.3205, 0.0505]    0.154                                   │
+#> │                                                                        │
+#> │   Not distinguishable from 0 (interval includes it): east (p = 0.220)  │
+#> │   and south (p = 0.154).                                               │
+#> │                                                                        │
+#> │   Each difference is a domain's estimate minus the reference domain's, │
+#> │   with the design's covariance between the two taken into account.     │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # means, against the default (first) domain, at 90 percent
 d$drinks <- rpois(150, 3)
 svycmp(des, d, "drinks", by = "region", conflvl = 0.90)
-#> Survey mean of drinks against east (90% interval)
-#>  domain estimate reference difference     se   lower  upper p_value
-#>   north    3.066     3.361    -0.2952 0.3947 -0.9444 0.3539  0.4544
-#>   south    3.083     3.361    -0.2779 0.3811 -0.9048 0.3490  0.4659
+#> ╭── Survey mean of drinks against east ──────────────────────────────────╮
+#> │   Variable          drinks                                             │
+#> │   Reference domain  east                                               │
+#> │   Confidence        90%                                                │
+#> │                                                                        │
+#> │   domain  estimate  reference  difference      se  90% CI              │
+#> │   ------  --------  ---------  ----------  ------  -----------------   │
+#> │   north      3.066      3.361     -0.2952  0.3947  [-0.9444, 0.3539]   │
+#> │   south      3.083      3.361     -0.2779  0.3811  [-0.9048, 0.3490]   │
+#> │                                                                        │
+#> │   domain  p_value                                                      │
+#> │   ------  -------                                                      │
+#> │   north     0.454                                                      │
+#> │   south     0.466                                                      │
+#> │                                                                        │
+#> │   Not distinguishable from 0 (interval includes it): north (p = 0.454) │
+#> │   and south (p = 0.466).                                               │
+#> │                                                                        │
+#> │   Each difference is a domain's estimate minus the reference domain's, │
+#> │   with the design's covariance between the two taken into account.     │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # the reference must be one of the domains
 try(svycmp(des, d, "drinks", by = "region", ref = "west"))

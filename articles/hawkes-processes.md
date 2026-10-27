@@ -69,9 +69,9 @@ by information criterion:
 
 ``` r
 
-sapply(c("exponential", "weibull", "lomax"), function(k) {
+vapply(c("exponential", "weibull", "lomax"), function(k) {
   chwkfit(times, 300, kernel = k)$aic
-})
+}, numeric(1))
 #> exponential     weibull       lomax 
 #>    352.1139    353.6296    354.1802
 ```
@@ -104,7 +104,7 @@ stats::ks.test(U, "punif")$p.value
 
 ``` r
 
-plot(stats::qunif(stats::ppoints(length(U))), sort(U), pch = 20, cex = .6,
+plot(stats::qunif(stats::ppoints(length(U))), sort(U), pch = 20, cex = 0.6,
      xlab = "uniform quantiles", ylab = "rescaled residuals",
      main = "Time-rescaling check")
 abline(0, 1, col = 2)

@@ -19,7 +19,7 @@ age structure fixed?&amp;#8221;."><meta property="og:image" content="https://roo
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,27 +105,27 @@ reproducible.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>ate</code> (the estimate of \(\theta\): the change
+    <p>A list of class <code>c("rmbl_plr", "list")</code> (its print method shows
+it as a box) with <code>ate</code> (the estimate of \(\theta\): the change
 in the outcome per unit of the treatment), <code>se</code> (its sandwich
 standard error), <code>n</code> (complete rows used), <code>kfol</code> and
 <code>method</code> (a string naming the estimator).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The partially linear model \(Y = \theta D + g(X) + U\),
-\(D = m(X) + V\) of Chernozhukov et al. (2018, section 4.2), estimated
-by the DML2 cross-fitting recipe: the sample is split into <code>kfol</code>
-folds; for each fold the nuisances \(m\) and \(g\) are fitted on the
-other folds and predicted on it; \(\hat\theta\) is the slope of the
-out-of-fold outcome residuals on the out-of-fold treatment residuals,
-$$\hat\theta = \sum_i \hat V_i \hat U_i / \sum_i \hat V_i^2,$$
-with the sandwich standard error
-\(\sqrt{\sum_i \hat V_i^2 (\hat U_i - \hat\theta \hat V_i)^2} / \sum_i \hat V_i^2\).
-The nuisances here are ordinary least squares on the covariates, which is
-the right learner when the confounding is approximately linear and keeps
-the estimator fully deterministic given <code>seed</code>; rmorie's
-<code>morie_estimate_double_ml()</code> offers richer learners and can be passed
-to <code><a href="exprspplr.html">exprspplr</a></code> through <code>estimator</code>.</p>
+    <p>The partially linear model \(Y = \theta D + g(X) + U\), \(D =
+m(X) + V\) of Chernozhukov et al. (2018, section 4.2), estimated by the DML2
+cross-fitting recipe: the sample is split into <code>kfol</code> folds; for each
+fold the nuisances \(m\) and \(g\) are fitted on the other folds and
+predicted on it; \(\hat\theta\) is the slope of the out-of-fold outcome
+residuals on the out-of-fold treatment residuals, $$\hat\theta = \sum_i
+\hat V_i \hat U_i / \sum_i \hat V_i^2,$$ with the sandwich standard error
+\(\sqrt{\sum_i \hat V_i^2 (\hat U_i - \hat\theta \hat V_i)^2} / \sum_i
+\hat V_i^2\). The nuisances here are ordinary least squares on the covariates,
+which is the right learner when the confounding is approximately linear and
+keeps the estimator fully deterministic given <code>seed</code>; rmorie's
+<code>morie_estimate_double_ml()</code> offers richer learners and can be passed to
+<code><a href="exprspplr.html">exprspplr</a></code> through <code>estimator</code>.</p>
 <p>Each fold's two least-squares fits are computed from the normal
 equations of the covariates centred and scaled by their full-sample
 moments (the same column space, so the same fitted values as

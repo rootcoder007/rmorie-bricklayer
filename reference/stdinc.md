@@ -59,7 +59,8 @@ it is a decoration.
 Each area's interval is a separate test; with many areas some will
 exclude one by chance (see
 [`scanadj`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.md)).
-Missing values are dropped before the lengths are compared.
+A row with a missing observed or expected count is dropped whole (its
+area label with it), after the lengths are compared.
 
 Errors: negative, infinite or non-numeric counts; an expected count of
 zero or below; lengths that differ (a single `expd` is recycled). A
@@ -81,26 +82,76 @@ Modeling*. Chapman and Hall/CRC, Chapter 1.
 ``` r
 stdinc(obs = c(30, 12, 3), expd = c(20, 14, 5),
     area = c("North", "South", "East"))
-#>    area observed expected       sir     lower    upper excess deficit
-#> 1 North       30       20 1.5000000 1.0120437 2.141343   TRUE   FALSE
-#> 2 South       12       14 0.8571429 0.4428982 1.497256  FALSE   FALSE
-#> 3  East        3        5 0.6000000 0.1237344 1.753455  FALSE   FALSE
-#>   significant
-#> 1        TRUE
-#> 2       FALSE
-#> 3       FALSE
+#> ╭── Standardised incidence ratios ──────────────────────────────────────╮
+#> │   Areas          3                                                    │
+#> │   Observed       45                                                   │
+#> │   Expected       39                                                   │
+#> │   Overall ratio  1.154                                                │
+#> │   Interval       exact Poisson, at the level asked for (default 95%)  │
+#> │   Above one      1                                                    │
+#> │   Below one      0                                                    │
+#> │                                                                       │
+#> │   area   observed  expected     sir  interval        finding          │
+#> │   -----  --------  --------  ------  --------------  -------          │
+#> │   North        30        20  1.5000  [1.012, 2.141]  excess           │
+#> │   South        12        14  0.8571  [0.443, 1.497]                   │
+#> │   East          3         5  0.6000  [0.124, 1.753]                   │
+#> │                                                                       │
+#> │   A ratio above 1 means more cases than the area's population would   │
+#> │   give at the overall rates. An excess or a deficit is an interval    │
+#> │   wholly above or below 1 (the significant column is either).         │
+#> │                                                                       │
+#> │   Each interval is a separate test: with many areas some exclude 1 by │
+#> │   chance (scanadj() allows for that).                                 │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # An observed count of three carries almost no information, and the
 # interval says so rather than hiding it.
 stdinc(3, 5)
-#>   observed expected sir     lower    upper excess deficit significant
-#> 1        3        5 0.6 0.1237344 1.753455  FALSE   FALSE       FALSE
+#> ╭── Standardised incidence ratios ──────────────────────────────────────╮
+#> │   Areas          1                                                    │
+#> │   Observed       3                                                    │
+#> │   Expected       5                                                    │
+#> │   Overall ratio  0.6                                                  │
+#> │   Interval       exact Poisson, at the level asked for (default 95%)  │
+#> │   Above one      0                                                    │
+#> │   Below one      0                                                    │
+#> │                                                                       │
+#> │   observed  expected     sir  interval          finding               │
+#> │   --------  --------  ------  ----------------  -------               │
+#> │          3         5  0.6000  [0.1237, 1.7530]                        │
+#> │                                                                       │
+#> │   A ratio above 1 means more cases than the area's population would   │
+#> │   give at the overall rates. An excess or a deficit is an interval    │
+#> │   wholly above or below 1 (the significant column is either).         │
+#> │                                                                       │
+#> │   Each interval is a separate test: with many areas some exclude 1 by │
+#> │   chance (scanadj() allows for that).                                 │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # a 90 percent interval, and a zero count (lower limit exactly 0)
 stdinc(c(0, 40), c(2, 25), conflvl = 0.90)
-#>   observed expected sir   lower    upper excess deficit significant
-#> 1        0        2 0.0 0.00000 1.497866  FALSE   FALSE       FALSE
-#> 2       40       25 1.6 1.20783 2.082775   TRUE   FALSE        TRUE
+#> ╭── Standardised incidence ratios ──────────────────────────────────────╮
+#> │   Areas          2                                                    │
+#> │   Observed       40                                                   │
+#> │   Expected       27                                                   │
+#> │   Overall ratio  1.481                                                │
+#> │   Interval       exact Poisson, at the level asked for (default 95%)  │
+#> │   Above one      1                                                    │
+#> │   Below one      0                                                    │
+#> │                                                                       │
+#> │   observed  expected    sir  interval        finding                  │
+#> │   --------  --------  -----  --------------  -------                  │
+#> │          0         2  0.000  [0.000, 1.498]                           │
+#> │         40        25  1.600  [1.208, 2.083]  excess                   │
+#> │                                                                       │
+#> │   A ratio above 1 means more cases than the area's population would   │
+#> │   give at the overall rates. An excess or a deficit is an interval    │
+#> │   wholly above or below 1 (the significant column is either).         │
+#> │                                                                       │
+#> │   Each interval is a separate test: with many areas some exclude 1 by │
+#> │   chance (scanadj() allows for that).                                 │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 try(stdinc(c(3, 4), c(5, 0)))
 #> Error : stdinc: `expd` must be positive

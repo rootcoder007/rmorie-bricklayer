@@ -39,13 +39,13 @@ vrfmrg(x, pub, tol = 0, strict = TRUE)
 
 ## Value
 
-A list with elements `counts` (named numeric, observed count per
-published label), `published` (named numeric), `ok` (logical),
-`permutation` (named character, true label = label it would have to be
-read as, or `NULL`) and `message` (character, or `NULL` when `ok`). It
-is returned invisibly when the counts match and visibly when
-`strict = FALSE` and they do not. With `strict = TRUE` a mismatch is an
-error instead.
+A list of class `rmbl_margin_check` (it prints as a box) with elements
+`counts` (named numeric, observed count per published label),
+`published` (named numeric), `ok` (logical), `permutation` (named
+character, true label = label it would have to be read as, or `NULL`)
+and `message` (character, or `NULL` when `ok`). It is returned invisibly
+when the counts match and visibly when `strict = FALSE` and they do not.
+With `strict = TRUE` a mismatch is an error instead.
 
 ## Details
 

@@ -81,8 +81,10 @@ that it exposed the signer's private key.
 ## Examples
 
 ``` r
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-# one-time index record out of your configuration directory; leave the default in use
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+# one-time index record out of your configuration directory; leave the
+# default in use
 key <- pqckg(height = 2)
 sig <- cpssign("pinned-manifest", key)
 pub <- signpubkey(key)
@@ -91,17 +93,18 @@ cpsvrf("pinned-manifest", sig, pub)
 #> [1] TRUE
 
 # Every way of being wrong returns FALSE.
-cpsvrf("edited-manifest", sig, pub)              # message changed
+cpsvrf("edited-manifest", sig, pub) # message changed
 #> [1] FALSE
-bad <- sig; bad$signature <- paste0("ff", substring(bad$signature, 3))
-cpsvrf("pinned-manifest", bad, pub)              # signature edited
+bad <- sig
+bad$signature <- paste0("ff", substring(bad$signature, 3))
+cpsvrf("pinned-manifest", bad, pub) # signature edited
 #> [1] FALSE
-cpsvrf("pinned-manifest", sig,
-               signpubkey(pqckg(height = 2)))  # foreign key
+cpsvrf("pinned-manifest", sig, signpubkey(pqckg(height = 2))) # foreign key
 #> [1] FALSE
 
 # A truncated signature is not verified, and does not error.
-trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
+trunc <- sig
+trunc$signature <- substring(sig$signature, 1, 64)
 cpsvrf("pinned-manifest", trunc, pub)
 #> [1] FALSE
 

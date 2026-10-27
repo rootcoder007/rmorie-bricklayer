@@ -64,7 +64,7 @@
   learning](https://rootcoder007.github.io/rmorie-bricklayer/articles/causal-effects.md):
 - [Evaluating a policy from administrative
   panels](https://rootcoder007.github.io/rmorie-bricklayer/articles/policy-evaluation.md):
-- [First Nations, Metis and Inuit health: published tables, distinctions
+- [First Nations, Métis and Inuit health: published tables, distinctions
   and
   governance](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md):
 - [Courts and crime: flow, time, outcomes, place and case

@@ -22,7 +22,7 @@ benfordtst(x)
 
 - x:
 
-  Numeric vector.
+  Numeric vector; zero and non-finite values are dropped.
 
 ## Value
 
@@ -65,47 +65,59 @@ American Philosophical Society* 78(4), 551–572.
 # A quantity spanning several orders of magnitude follows the law.
 set.seed(3)
 benfordtst(10^stats::runif(2000, 0, 6))
-#> ── Benford first-digit screen ────────────────────────────────────
-#>   ✓ consistent with Benford's law
-#> 
-#>   values used  2,000
-#>   chi-square   10.073
-#>   df           8
-#>   p-value      0.26
-#> 
-#>   digit  observed  expected        shape
-#>       1     0.298     0.301  ####################
-#>       2     0.169     0.176  ###########         
-#>       3     0.126     0.125  ########            
-#>       4     0.092     0.097  ######              
-#>       5     0.073     0.079  #####               
-#>       6     0.072     0.067  #####               
-#>       7     0.054     0.058  ####                
-#>       8     0.060     0.051  ####                
-#>       9     0.055     0.046  ####                
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Benford first-digit screen ───────────────────────────────────────────╮
+#> │   ✔ consistent with Benford's law                                       │
+#> │                                                                         │
+#> │   values used  2,000                                                    │
+#> │   chi-square   10.073                                                   │
+#> │   df           8                                                        │
+#> │   p-value      0.260                                                    │
+#> │                                                                         │
+#> │   digit  observed  expected        shape                                │
+#> │       1     0.298     0.301  ####################                       │
+#> │       2     0.169     0.176  ###########                                │
+#> │       3     0.126     0.125  ########                                   │
+#> │       4     0.092     0.097  ######                                     │
+#> │       5     0.073     0.079  #####                                      │
+#> │       6     0.072     0.067  #####                                      │
+#> │       7     0.054     0.058  ####                                       │
+#> │       8     0.060     0.051  ####                                       │
+#> │       9     0.055     0.046  ####                                       │
+#> │                                                                         │
+#> │   The leading digits are consistent with Benford's law (p = 0.260); the │
+#> │   largest gap is at 9, 5.5% seen against 4.6% expected. Benford's law   │
+#> │   expects a leading 1 about 30% of the time and a 9 under 5%. A         │
+#> │   departure is a reason to look closer (rounding, thresholds, made-up   │
+#> │   figures), never proof by itself.                                      │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # Digits drawn uniformly do not.
 benfordtst(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))
-#> ── Benford first-digit screen ────────────────────────────────────
-#>   ! departs from Benford's law (screen only, not a verdict)
-#> 
-#>   values used  2,000
-#>   chi-square   769.038
-#>   df           8
-#>   p-value      <2e-16
-#> 
-#>   digit  observed  expected        shape
-#>       1     0.106     0.301  #################   
-#>       2     0.123     0.176  ####################
-#>       3     0.123     0.125  ####################
-#>       4     0.112     0.097  ##################  
-#>       5     0.103     0.079  #################   
-#>       6     0.102     0.067  #################   
-#>       7     0.099     0.058  ################    
-#>       8     0.119     0.051  ################### 
-#>       9     0.112     0.046  ##################  
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Benford first-digit screen ───────────────────────────────────────────╮
+#> │   ! departs from Benford's law (screen only, not a verdict)             │
+#> │                                                                         │
+#> │   values used  2,000                                                    │
+#> │   chi-square   769.038                                                  │
+#> │   df           8                                                        │
+#> │   p-value      < 0.001                                                  │
+#> │                                                                         │
+#> │   digit  observed  expected        shape                                │
+#> │       1     0.106     0.301  #################                          │
+#> │       2     0.123     0.176  ####################                       │
+#> │       3     0.123     0.125  ####################                       │
+#> │       4     0.112     0.097  ##################                         │
+#> │       5     0.103     0.079  #################                          │
+#> │       6     0.102     0.067  #################                          │
+#> │       7     0.099     0.058  ################                           │
+#> │       8     0.119     0.051  ###################                        │
+#> │       9     0.112     0.046  ##################                         │
+#> │                                                                         │
+#> │   The leading digits depart from Benford's law (p < 0.001); the largest │
+#> │   gap is at 1, 10.7% seen against 30.1% expected. Benford's law expects │
+#> │   a leading 1 about 30% of the time and a 9 under 5%. A departure is a  │
+#> │   reason to look closer (rounding, thresholds, made-up figures), never  │
+#> │   proof by itself.                                                      │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # The expected proportions are the closed form.
 b <- benfordtst(10^stats::runif(500, 0, 5))

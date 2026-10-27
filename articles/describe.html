@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -104,18 +104,18 @@ the findings in one place, worst first.</p>
 <span></span>
 <span><span class="fu"><a href="../reference/cpsrpt.html">cpsrpt</a></span><span class="op">(</span><span class="va">fresh</span>, ref <span class="op">=</span> <span class="va">reference</span>,</span>
 <span>               schema <span class="op">=</span> <span class="fu"><a href="../reference/infsch.html">infsch</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Capsule report ────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   ✓ these checks found nothing</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   rows           300</span></span>
-<span><span class="co">#&gt;   columns        3</span></span>
-<span><span class="co">#&gt;   missing cells  0.0%</span></span>
-<span><span class="co">#&gt;   complete rows  100.0%</span></span>
-<span><span class="co">#&gt;   digest         6037a08fc090f81243bc07b5094099e0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   No finding is proof of correctness: each check has a</span></span>
-<span><span class="co">#&gt;   stated blind spot, and a small sample has little power.</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Capsule report</span> ─────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Verdict        ✓ these checks found nothing             │</span></span>
+<span><span class="co">#&gt; │   Rows           300                                      │</span></span>
+<span><span class="co">#&gt; │   Columns        3                                        │</span></span>
+<span><span class="co">#&gt; │   Missing cells  0.0%                                     │</span></span>
+<span><span class="co">#&gt; │   Complete rows  100.0%                                   │</span></span>
+<span><span class="co">#&gt; │   Digest         6037a08fc090f81243bc07b5094099e0         │</span></span>
+<span><span class="co">#&gt; │   Findings       0                                        │</span></span>
+<span><span class="co">#&gt; │                                                           │</span></span>
+<span><span class="co">#&gt; │   No finding is proof of correctness: each check has a    │</span></span>
+<span><span class="co">#&gt; │   stated blind spot, and a small sample has little power. │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Now a fetch that went wrong in four different ways at once — a
 rescaled column, a category nobody expected, a column that arrived
 empty, and one that arrived constant:</p>
@@ -129,25 +129,31 @@ empty, and one that arrived constant:</p>
 <span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpsrpt.html">cpsrpt</a></span><span class="op">(</span><span class="va">broken</span>, ref <span class="op">=</span> <span class="va">reference</span>,</span>
 <span>                         schema <span class="op">=</span> <span class="fu"><a href="../reference/infsch.html">infsch</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">report</span></span>
-<span><span class="co">#&gt; ── Capsule report ────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   ✗ WARNINGS: something moved</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   rows           300</span></span>
-<span><span class="co">#&gt;   columns        5</span></span>
-<span><span class="co">#&gt;   missing cells  20.0%</span></span>
-<span><span class="co">#&gt;   complete rows  0.0%</span></span>
-<span><span class="co">#&gt;   digest         a70671d4bd03067f631d54ce3143d9a2</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Findings (8) ──────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   ✗ warn      drift      grade                  categorical test, p = &lt;2e-16</span></span>
-<span><span class="co">#&gt;   ✗ warn      drift      score                  numeric test, p = &lt;2e-16</span></span>
-<span><span class="co">#&gt;   ✗ warn      missing    dead                   column(s) entirely missing</span></span>
-<span><span class="co">#&gt;   ✗ warn      schema     range_score            Column 'score' has 226 value(s) outside [-0.8488307, 10.90645]</span></span>
-<span><span class="co">#&gt;   ✗ warn      schema     unexpected_grade       Column 'grade' has unexpected values: z</span></span>
-<span><span class="co">#&gt;   ! note      drift      dead, flat             column(s) not in the reference</span></span>
-<span><span class="co">#&gt;   ! note      missing    dead                   a contiguous run of 300 missing values from row 1 -- one outage rather than scattered failures</span></span>
-<span><span class="co">#&gt;   ! note      shape      flat                   constant: no information, and it breaks anything scaled by variance</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Capsule report</span> ───────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Verdict        ✗ WARNINGS: something moved                                │</span></span>
+<span><span class="co">#&gt; │   Rows           300                                                        │</span></span>
+<span><span class="co">#&gt; │   Columns        5                                                          │</span></span>
+<span><span class="co">#&gt; │   Missing cells  20.0%                                                      │</span></span>
+<span><span class="co">#&gt; │   Complete rows  0.0%                                                       │</span></span>
+<span><span class="co">#&gt; │   Digest         a70671d4bd03067f631d54ce3143d9a2                           │</span></span>
+<span><span class="co">#&gt; │   Findings       8                                                          │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   No finding is proof of correctness: each check has a                      │</span></span>
+<span><span class="co">#&gt; │   stated blind spot, and a small sample has little power.                   │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>    warn  drift      grade: categorical test, p = &lt; 0.001                │</span></span>
+<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>    warn  drift      score: numeric test, p = &lt; 0.001                    │</span></span>
+<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>    warn  missing    dead: column(s) entirely missing                    │</span></span>
+<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>    warn  schema     range_score: Column 'score' has 226 value(s)        │</span></span>
+<span><span class="co">#&gt; │                         outside [-0.8488307, 10.90645]                      │</span></span>
+<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>    warn  schema     unexpected_grade: Column 'grade' has unexpected     │</span></span>
+<span><span class="co">#&gt; │                         values: z                                           │</span></span>
+<span><span class="co">#&gt; │   !    note  drift      dead, flat: column(s) not in the reference          │</span></span>
+<span><span class="co">#&gt; │   !    note  missing    dead: a contiguous run of 300 missing values from   │</span></span>
+<span><span class="co">#&gt; │                         row 1 -- one outage rather than scattered failures  │</span></span>
+<span><span class="co">#&gt; │   !    note  shape      flat: constant: no information, and it breaks       │</span></span>
+<span><span class="co">#&gt; │                         anything scaled by variance                         │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report</span><span class="op">$</span><span class="va">verdict</span></span>
 <span><span class="co">#&gt; [1] "warn"</span></span>
@@ -189,19 +195,37 @@ describing the column.</p>
 <span>  zeros <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">150</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/profcols.html">profcols</a></span><span class="op">(</span><span class="va">messy</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"column"</span>, <span class="st">"mean"</span>, <span class="st">"median"</span>, <span class="st">"sd"</span>, <span class="st">"mad"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;    column         mean     median         sd       mad</span></span>
-<span><span class="co">#&gt; 1   clean -0.109165485 -0.1445507  1.0340169 1.0397160</span></span>
-<span><span class="co">#&gt; 2 bimodal -0.006117203 -0.2014852  3.2205494 4.4949028</span></span>
-<span><span class="co">#&gt; 3  skewed  3.633870943  0.7332377 35.2946592 0.8114156</span></span>
-<span><span class="co">#&gt; 4   zeros  0.342795696  0.2656884  0.3197161 0.3939096</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Column profile</span> ─────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Rows     4                                                          │</span></span>
+<span><span class="co">#&gt; │   Columns  5                                                          │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   column      mean   median      sd     mad                           │</span></span>
+<span><span class="co">#&gt; │   -------  -------  -------  ------  ------                           │</span></span>
+<span><span class="co">#&gt; │   clean    -0.1092  -0.1446   1.034  1.0397                           │</span></span>
+<span><span class="co">#&gt; │   bimodal  -0.0061  -0.2015   3.221  4.4949                           │</span></span>
+<span><span class="co">#&gt; │   skewed    3.6339   0.7332  35.295  0.8114                           │</span></span>
+<span><span class="co">#&gt; │   zeros     0.3428   0.2657   0.320  0.3939                           │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   Some of this result's columns are not here (a subset of it?), so it │</span></span>
+<span><span class="co">#&gt; │   is shown as a plain table.                                          │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>The <code>hist</code> column carries what no single number can:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/profcols.html">profcols</a></span><span class="op">(</span><span class="va">messy</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"column"</span>, <span class="st">"hist"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;    column       hist</span></span>
-<span><span class="co">#&gt; 1   clean ▁▂▃▇█▇▇▃▃▁</span></span>
-<span><span class="co">#&gt; 2 bimodal ▂▆▆▅ ▂▄█▄▁</span></span>
-<span><span class="co">#&gt; 3  skewed █        ▁</span></span>
-<span><span class="co">#&gt; 4   zeros █▃▂▂▂▂▂▃▁▂</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Column profile</span> ─────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Rows     4                                                          │</span></span>
+<span><span class="co">#&gt; │   Columns  2                                                          │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   column   hist                                                       │</span></span>
+<span><span class="co">#&gt; │   -------  ----------                                                 │</span></span>
+<span><span class="co">#&gt; │   clean    ▁▂▃▇█▇▇▃▃▁                                                 │</span></span>
+<span><span class="co">#&gt; │   bimodal  ▂▆▆▅ ▂▄█▄▁                                                 │</span></span>
+<span><span class="co">#&gt; │   skewed   █        ▁                                                 │</span></span>
+<span><span class="co">#&gt; │   zeros    █▃▂▂▂▂▂▃▁▂                                                 │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   Some of this result's columns are not here (a subset of it?), so it │</span></span>
+<span><span class="co">#&gt; │   is shown as a plain table.                                          │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p><code>bimodal</code> is visibly two humps. Its mean and median agree
 perfectly and tell you nothing about that.</p>
 </div>
@@ -228,23 +252,35 @@ different handling:</p>
 <span><span class="co">#&gt;          6          6</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/misspat.html">misspat</a></span><span class="op">(</span><span class="va">structural</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Missingness patterns ────────────────────────────────────────── </span></span>
-<span><span class="co">#&gt;   columns, in pattern order: id, a, b</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  pattern n_rows pctrows n_missing columns</span></span>
-<span><span class="co">#&gt;      ...     14    70.0         0        </span></span>
-<span><span class="co">#&gt;      .XX      6    30.0         2    a, b</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Missingness patterns</span> ─────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Columns   in pattern order: id, a, b                                      │</span></span>
+<span><span class="co">#&gt; │   Patterns  2                                                               │</span></span>
+<span><span class="co">#&gt; │   Rows      20                                                              │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   pattern  n_rows  pctrows  n_missing  columns                              │</span></span>
+<span><span class="co">#&gt; │   -------  ------  -------  ---------  -------                              │</span></span>
+<span><span class="co">#&gt; │   ...          14  70.0             0                                       │</span></span>
+<span><span class="co">#&gt; │   .XX           6  30.0             2  a, b                                 │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Each pattern marks the columns missing together; a few large patterns     │</span></span>
+<span><span class="co">#&gt; │   point to a cause worth naming before rows are dropped.                    │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/misspat.html">misspat</a></span><span class="op">(</span><span class="va">scattered</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Missingness patterns ────────────────────────────────────────── </span></span>
-<span><span class="co">#&gt;   columns, in pattern order: id, a, b</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  pattern n_rows pctrows n_missing columns</span></span>
-<span><span class="co">#&gt;      ...      8    40.0         0        </span></span>
-<span><span class="co">#&gt;      ..X      6    30.0         1       b</span></span>
-<span><span class="co">#&gt;      .X.      6    30.0         1       a</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Missingness patterns</span> ─────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Columns   in pattern order: id, a, b                                      │</span></span>
+<span><span class="co">#&gt; │   Patterns  3                                                               │</span></span>
+<span><span class="co">#&gt; │   Rows      20                                                              │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   pattern  n_rows  pctrows  n_missing  columns                              │</span></span>
+<span><span class="co">#&gt; │   -------  ------  -------  ---------  -------                              │</span></span>
+<span><span class="co">#&gt; │   ...           8  40.0             0                                       │</span></span>
+<span><span class="co">#&gt; │   ..X           6  30.0             1  b                                    │</span></span>
+<span><span class="co">#&gt; │   .X.           6  30.0             1  a                                    │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Each pattern marks the columns missing together; a few large patterns     │</span></span>
+<span><span class="co">#&gt; │   point to a cause worth naming before rows are dropped.                    │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Two patterns against three. In the first, one structural gap took out
 both columns in the same rows — those rows are a different population,
 and often belong dropped or modelled separately. In the second the
@@ -256,10 +292,18 @@ a gap is one outage or many failures:</p>
 <span>  outage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">8</span><span class="op">)</span>, <span class="fl">11</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span>,</span>
 <span>  sporadic <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">NA</span>, <span class="fl">3</span>, <span class="cn">NA</span>, <span class="fl">5</span>, <span class="cn">NA</span>, <span class="fl">7</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span></span>
 <span><span class="op">)</span>, minrun <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Runs of consecutive missing values ──────────────────────────── </span></span>
-<span><span class="co">#&gt;  column start end length</span></span>
-<span><span class="co">#&gt;  outage     3  10      8</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Runs of consecutive missing values</span> ───────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Runs               1                                                  │</span></span>
+<span><span class="co">#&gt; │   Columns with runs  1                                                  │</span></span>
+<span><span class="co">#&gt; │   Longest run        8                                                  │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   column  start  end  length                                            │</span></span>
+<span><span class="co">#&gt; │   ------  -----  ---  ------                                            │</span></span>
+<span><span class="co">#&gt; │   outage      3   10       8                                            │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Long runs of missing rows usually mean a source stopped reporting for │</span></span>
+<span><span class="co">#&gt; │   a while, not values missing at random.                                │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>And <code><a href="../reference/missgrid.html">missgrid()</a></code> shows the whole table at once, with no
 graphics device, so it works over SSH and inside a plain-text
 summary:</p>
@@ -313,37 +357,38 @@ estimator.</p>
 <span><span class="va">mcar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span></span>
 <span><span class="va">mcar</span><span class="op">$</span><span class="va">y</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">120</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
 <span><span class="fu"><a href="../reference/mcartst.html">mcartst</a></span><span class="op">(</span><span class="va">mcar</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Little's MCAR test ────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   ✓ no departure from MCAR detected</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   statistic      0.817</span></span>
-<span><span class="co">#&gt;   df             1</span></span>
-<span><span class="co">#&gt;   p-value        0.366</span></span>
-<span><span class="co">#&gt;   patterns       2</span></span>
-<span><span class="co">#&gt;   variables      2</span></span>
-<span><span class="co">#&gt;   rows used      400</span></span>
-<span><span class="co">#&gt;   EM iterations  12</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Not evidence OF MCAR: a large p-value is a failure to detect a</span></span>
-<span><span class="co">#&gt;   departure, and this test has little power on small samples.</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Little's MCAR test</span> ────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Verdict        ✓ no departure from MCAR detected               │</span></span>
+<span><span class="co">#&gt; │   Statistic      0.817                                           │</span></span>
+<span><span class="co">#&gt; │   df             1                                               │</span></span>
+<span><span class="co">#&gt; │   p-value        0.366                                           │</span></span>
+<span><span class="co">#&gt; │   Patterns       2                                               │</span></span>
+<span><span class="co">#&gt; │   Variables      2                                               │</span></span>
+<span><span class="co">#&gt; │   Rows used      400                                             │</span></span>
+<span><span class="co">#&gt; │   EM iterations  12                                              │</span></span>
+<span><span class="co">#&gt; │                                                                  │</span></span>
+<span><span class="co">#&gt; │   Not evidence OF MCAR: a large p-value is a failure to detect a │</span></span>
+<span><span class="co">#&gt; │   departure, and this test has little power on small samples.    │</span></span>
+<span><span class="co">#&gt; ╰──────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Missing whenever x is large: the complete cases are a biased sample,</span></span>
 <span><span class="co"># and that is detectable because the pattern's mean of x is shifted.</span></span>
 <span><span class="va">mar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span></span>
 <span><span class="va">mar</span><span class="op">$</span><span class="va">y</span><span class="op">[</span><span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0.4</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
 <span><span class="fu"><a href="../reference/mcartst.html">mcartst</a></span><span class="op">(</span><span class="va">mar</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Little's MCAR test ────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   ✗ MCAR rejected: the missingness is related to the data</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   statistic      247.984</span></span>
-<span><span class="co">#&gt;   df             1</span></span>
-<span><span class="co">#&gt;   p-value        &lt;2e-16</span></span>
-<span><span class="co">#&gt;   patterns       2</span></span>
-<span><span class="co">#&gt;   variables      2</span></span>
-<span><span class="co">#&gt;   rows used      400</span></span>
-<span><span class="co">#&gt;   EM iterations  71</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Little's MCAR test</span> ────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Verdict        ✗ MCAR rejected: the missingness is related to the data │</span></span>
+<span><span class="co">#&gt; │   Statistic      247.984                                                 │</span></span>
+<span><span class="co">#&gt; │   df             1                                                       │</span></span>
+<span><span class="co">#&gt; │   p-value        &lt; 0.001                                                 │</span></span>
+<span><span class="co">#&gt; │   Patterns       2                                                       │</span></span>
+<span><span class="co">#&gt; │   Variables      2                                                       │</span></span>
+<span><span class="co">#&gt; │   Rows used      400                                                     │</span></span>
+<span><span class="co">#&gt; │   EM iterations  71                                                      │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   Rows with different patterns of missing values have different means:   │</span></span>
+<span><span class="co">#&gt; │   an analysis of the complete rows alone may be biased.                  │</span></span>
+<span><span class="co">#&gt; ╰──────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Read the caveat the second report prints. A large p-value is a
 failure to detect a departure, not evidence of MCAR, and the test has
 little power on small samples. Neither this test nor any other can
@@ -369,14 +414,23 @@ jointly.</p>
 <span><span class="co">#&gt; [1]  61.95293 140.00000</span></span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/mahaoutl.html">mahaoutl</a></span><span class="op">(</span><span class="va">people</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Mahalanobis outliers (robust) ───────────────────────────────── </span></span>
-<span><span class="co">#&gt;   ! 1 of 3 rows beyond alpha = 0.001</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  row distance p_value  logpvalue outlier</span></span>
-<span><span class="co">#&gt;    1    10.80  &lt;2e-16 -58.355041    TRUE</span></span>
-<span><span class="co">#&gt;   59     3.14 0.00725  -4.926492   FALSE</span></span>
-<span><span class="co">#&gt;  203     2.91  0.0146  -4.227502   FALSE</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Mahalanobis outliers (robust)</span> ──────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Verdict  ! 1 of 3 rows beyond alpha = 0.001                         │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   Largest distances first                                             │</span></span>
+<span><span class="co">#&gt; │   row  distance  p_value  logpvalue  outlier                          │</span></span>
+<span><span class="co">#&gt; │   ---  --------  -------  ---------  -------                          │</span></span>
+<span><span class="co">#&gt; │     1    10.803  &lt; 0.001    -58.355  TRUE                             │</span></span>
+<span><span class="co">#&gt; │    59     3.139    0.007     -4.926  FALSE                            │</span></span>
+<span><span class="co">#&gt; │   203     2.908    0.015     -4.228  FALSE                            │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   1 of 3 rows lie beyond alpha = 0.001: row 1 (distance 10.8).        │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   The distance measures how far a row is from the centre of the data  │</span></span>
+<span><span class="co">#&gt; │   once the columns' scales and correlations are allowed for; the      │</span></span>
+<span><span class="co">#&gt; │   p-value is from the chi-square distribution it would follow without │</span></span>
+<span><span class="co">#&gt; │   outliers, and logpvalue its natural log, for rows far in the tail.  │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>The default is a robust centre and scale, and that default matters
 more than it sounds: outliers inflate the very covariance used to judge
 them, so with several of them the classical distance hides exactly the
@@ -398,46 +452,58 @@ Figures that were rounded, capped, rescaled or invented usually do
 not.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">0</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Benford first-digit screen ────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   ✓ consistent with Benford's law</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   values used  2,000</span></span>
-<span><span class="co">#&gt;   chi-square   3.183</span></span>
-<span><span class="co">#&gt;   df           8</span></span>
-<span><span class="co">#&gt;   p-value      0.922</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   digit  observed  expected        shape</span></span>
-<span><span class="co">#&gt;       1     0.305     0.301  ####################</span></span>
-<span><span class="co">#&gt;       2     0.172     0.176  ###########         </span></span>
-<span><span class="co">#&gt;       3     0.127     0.125  ########            </span></span>
-<span><span class="co">#&gt;       4     0.088     0.097  ######              </span></span>
-<span><span class="co">#&gt;       5     0.083     0.079  #####               </span></span>
-<span><span class="co">#&gt;       6     0.065     0.067  ####                </span></span>
-<span><span class="co">#&gt;       7     0.060     0.058  ####                </span></span>
-<span><span class="co">#&gt;       8     0.056     0.051  ####                </span></span>
-<span><span class="co">#&gt;       9     0.044     0.046  ###                 </span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Benford first-digit screen</span> ───────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span> consistent with Benford's law                                       │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   values used  2,000                                                    │</span></span>
+<span><span class="co">#&gt; │   chi-square   3.183                                                    │</span></span>
+<span><span class="co">#&gt; │   df           8                                                        │</span></span>
+<span><span class="co">#&gt; │   p-value      0.922                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   digit  observed  expected        shape                                │</span></span>
+<span><span class="co">#&gt; │       1     0.305     0.301  ####################                       │</span></span>
+<span><span class="co">#&gt; │       2     0.172     0.176  ###########                                │</span></span>
+<span><span class="co">#&gt; │       3     0.127     0.125  ########                                   │</span></span>
+<span><span class="co">#&gt; │       4     0.088     0.097  ######                                     │</span></span>
+<span><span class="co">#&gt; │       5     0.083     0.079  #####                                      │</span></span>
+<span><span class="co">#&gt; │       6     0.065     0.067  ####                                       │</span></span>
+<span><span class="co">#&gt; │       7     0.060     0.058  ####                                       │</span></span>
+<span><span class="co">#&gt; │       8     0.056     0.051  ####                                       │</span></span>
+<span><span class="co">#&gt; │       9     0.044     0.046  ###                                        │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The leading digits are consistent with Benford's law (p = 0.922); the │</span></span>
+<span><span class="co">#&gt; │   largest gap is at 4, 8.8% seen against 9.7% expected. Benford's law   │</span></span>
+<span><span class="co">#&gt; │   expects a leading 1 about 30% of the time and a 9 under 5%. A         │</span></span>
+<span><span class="co">#&gt; │   departure is a reason to look closer (rounding, thresholds, made-up   │</span></span>
+<span><span class="co">#&gt; │   figures), never proof by itself.                                      │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="fl">2000</span>, <span class="cn">TRUE</span><span class="op">)</span>, <span class="st">"000"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Benford first-digit screen ────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   ! departs from Benford's law (screen only, not a verdict)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   values used  2,000</span></span>
-<span><span class="co">#&gt;   chi-square   859.762</span></span>
-<span><span class="co">#&gt;   df           8</span></span>
-<span><span class="co">#&gt;   p-value      &lt;2e-16</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   digit  observed  expected        shape</span></span>
-<span><span class="co">#&gt;       1     0.117     0.301  ################### </span></span>
-<span><span class="co">#&gt;       2     0.103     0.176  #################   </span></span>
-<span><span class="co">#&gt;       3     0.098     0.125  ################    </span></span>
-<span><span class="co">#&gt;       4     0.120     0.097  ####################</span></span>
-<span><span class="co">#&gt;       5     0.113     0.079  ##################  </span></span>
-<span><span class="co">#&gt;       6     0.101     0.067  ################    </span></span>
-<span><span class="co">#&gt;       7     0.122     0.058  ####################</span></span>
-<span><span class="co">#&gt;       8     0.113     0.051  ##################  </span></span>
-<span><span class="co">#&gt;       9     0.113     0.046  ##################  </span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Benford first-digit screen</span> ───────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   ! departs from Benford's law (screen only, not a verdict)             │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   values used  2,000                                                    │</span></span>
+<span><span class="co">#&gt; │   chi-square   859.762                                                  │</span></span>
+<span><span class="co">#&gt; │   df           8                                                        │</span></span>
+<span><span class="co">#&gt; │   p-value      &lt; 0.001                                                  │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   digit  observed  expected        shape                                │</span></span>
+<span><span class="co">#&gt; │       1     0.117     0.301  ###################                        │</span></span>
+<span><span class="co">#&gt; │       2     0.103     0.176  #################                          │</span></span>
+<span><span class="co">#&gt; │       3     0.098     0.125  ################                           │</span></span>
+<span><span class="co">#&gt; │       4     0.120     0.097  ####################                       │</span></span>
+<span><span class="co">#&gt; │       5     0.113     0.079  ##################                         │</span></span>
+<span><span class="co">#&gt; │       6     0.101     0.067  ################                           │</span></span>
+<span><span class="co">#&gt; │       7     0.122     0.058  ####################                       │</span></span>
+<span><span class="co">#&gt; │       8     0.113     0.051  ##################                         │</span></span>
+<span><span class="co">#&gt; │       9     0.113     0.046  ##################                         │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The leading digits depart from Benford's law (p &lt; 0.001); the largest │</span></span>
+<span><span class="co">#&gt; │   gap is at 1, 11.7% seen against 30.1% expected. Benford's law expects │</span></span>
+<span><span class="co">#&gt; │   a leading 1 about 30% of the time and a 9 under 5%. A departure is a  │</span></span>
+<span><span class="co">#&gt; │   reason to look closer (rounding, thresholds, made-up figures), never  │</span></span>
+<span><span class="co">#&gt; │   proof by itself.                                                      │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>This is a <strong>screen</strong>, not a verdict. Postcodes, year
 fields, prices ending in 99 and anything with a unit floor all violate
 Benford’s law perfectly legitimately. A small p-value is a reason to
@@ -472,20 +538,34 @@ Canadian Community Health Survey indicators by Aboriginal identity:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"health"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/profcols.html">profcols</a></span><span class="op">(</span><span class="va">hi</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Column profile ──────────────────────────────────────────────── </span></span>
-<span><span class="co">#&gt;    column    type     n n_missing pct_missing n_distinct nzero  nneg  ninf</span></span>
-<span><span class="co">#&gt;  estimate numeric  1080        74       6.852        544     0     0     0</span></span>
-<span><span class="co">#&gt;     lower numeric  1080        74       6.852        514     0     0     0</span></span>
-<span><span class="co">#&gt;     upper numeric  1080        74       6.852        576     0     0     0</span></span>
-<span><span class="co">#&gt;   mean    sd median   mad   min   max skewness n_outliers top   q25   q50   q75</span></span>
-<span><span class="co">#&gt;  31.23 23.37   26.2  20.9   0.2  95.5   0.9636         36   –  13.5  26.2  42.8</span></span>
-<span><span class="co">#&gt;  27.61  22.6  22.05 18.61   0.1  95.1    1.153         59   –  10.5 22.05 36.98</span></span>
-<span><span class="co">#&gt;   35.3 24.15   30.1 23.28   0.3  97.9   0.7558          1   – 17.12  30.1 48.88</span></span>
-<span><span class="co">#&gt;        hist</span></span>
-<span><span class="co">#&gt;  ███▆▄▃▂▂▂▂</span></span>
-<span><span class="co">#&gt;  ██▇▅▃▂▂▂▂▁</span></span>
-<span><span class="co">#&gt;  ▇▇█▇▅▃▄▂▂▂</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Column profile</span> ──────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Columns              3                                               │</span></span>
+<span><span class="co">#&gt; │   Rows                 1,080                                           │</span></span>
+<span><span class="co">#&gt; │   Numeric              3                                               │</span></span>
+<span><span class="co">#&gt; │   With missing values  3                                               │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   column    type         n  n_missing  pct_missing  n_distinct  nzero  │</span></span>
+<span><span class="co">#&gt; │   --------  -------  -----  ---------  -----------  ----------  -----  │</span></span>
+<span><span class="co">#&gt; │   estimate  numeric  1,080         74        6.852         544      0  │</span></span>
+<span><span class="co">#&gt; │   lower     numeric  1,080         74        6.852         514      0  │</span></span>
+<span><span class="co">#&gt; │   upper     numeric  1,080         74        6.852         576      0  │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   column    nneg  ninf   mean     sd  median    mad     min    max     │</span></span>
+<span><span class="co">#&gt; │   --------  ----  ----  -----  -----  ------  -----  ------  -----     │</span></span>
+<span><span class="co">#&gt; │   estimate     0     0  31.23  23.37   26.20  20.90  0.2000  95.50     │</span></span>
+<span><span class="co">#&gt; │   lower        0     0  27.61  22.60   22.05  18.61  0.1000  95.10     │</span></span>
+<span><span class="co">#&gt; │   upper        0     0  35.30  24.15   30.10  23.28  0.3000  97.90     │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   column    skewness  n_outliers  top    q25    q50    q75  hist       │</span></span>
+<span><span class="co">#&gt; │   --------  --------  ----------  ---  -----  -----  -----  ---------- │</span></span>
+<span><span class="co">#&gt; │   estimate    0.9636          36       13.50  26.20  42.80  ███▆▄▃▂▂▂▂ │</span></span>
+<span><span class="co">#&gt; │   lower       1.1526          59       10.50  22.05  36.98  ██▇▅▃▂▂▂▂▁ │</span></span>
+<span><span class="co">#&gt; │   upper       0.7558           1       17.12  30.10  48.88  ▇▇█▇▅▃▄▂▂▂ │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   Where the mean and the median (or sd and mad) disagree, the column   │</span></span>
+<span><span class="co">#&gt; │   has outliers or a heavy tail and the mean does not describe it;      │</span></span>
+<span><span class="co">#&gt; │   n_outliers counts the values beyond the Tukey fences.                │</span></span>
+<span><span class="co">#&gt; ╰────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">hi</span><span class="op">$</span><span class="va">quality</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  ..   E   F  ok   x </span></span>
@@ -509,7 +589,13 @@ the curves part, the data have changed.</p>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">nm</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">messy</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="va">messy</span><span class="op">[[</span><span class="va">nm</span><span class="op">]</span><span class="op">]</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="va">nm</span> <span class="op">==</span> <span class="st">"skewed"</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log10</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, breaks <span class="op">=</span> <span class="fl">30</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, main <span class="op">=</span> <span class="st">"skewed (log10 scale)"</span>, xlab <span class="op">=</span> <span class="st">"log10(value)"</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log10</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>,</span>
+<span>      breaks <span class="op">=</span> <span class="fl">30</span>,</span>
+<span>      col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>,</span>
+<span>      main <span class="op">=</span> <span class="st">"skewed (log10 scale)"</span>,</span>
+<span>      xlab <span class="op">=</span> <span class="st">"log10(value)"</span></span>
+<span>    <span class="op">)</span></span>
 <span>  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">x</span>, breaks <span class="op">=</span> <span class="fl">30</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, main <span class="op">=</span> <span class="va">nm</span>, xlab <span class="op">=</span> <span class="st">"value"</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
@@ -517,9 +603,11 @@ the curves part, the data have changed.</p>
 <p><img src="describe_files/figure-html/describe-describe-plots-1.png" class="r-plt" alt="" width="672"></p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plotmore.html">plotecdf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">reference</span><span class="op">$</span><span class="va">score</span>, <span class="va">fresh</span><span class="op">$</span><span class="va">score</span><span class="op">)</span>,</span>
-<span>         <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"reference"</span>, <span class="st">"fresh"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">fresh</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>         main <span class="op">=</span> <span class="st">"Fresh scores against the reference"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/plotmore.html">plotecdf</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">reference</span><span class="op">$</span><span class="va">score</span>, <span class="va">fresh</span><span class="op">$</span><span class="va">score</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"reference"</span>, <span class="st">"fresh"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">fresh</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"Fresh scores against the reference"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="describe_files/figure-html/describe-describe-plots-2.png" class="r-plt" alt="" width="672"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

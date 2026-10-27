@@ -73,10 +73,25 @@ d <- data.frame(REF_DATE = "2019/2022", GEO = "Canada",
                 VALUE = c("45.8", "", "61.5"), STATUS = c("", "x", ""),
                 check.names = FALSE)
 sctidy(d)
-#>    REF_DATE    GEO Indigenous identity VALUE STATUS quality
-#> 1 2019/2022 Canada       First Nations  45.8             ok
-#> 2 2019/2022 Canada        Inuk (Inuit)    NA      x       x
-#> 3 2019/2022 Canada      Non-Indigenous  61.5             ok
+#> ╭── Statistics Canada table, tidied ──────────────────────────────────────╮
+#> │   Rows               3                                                  │
+#> │   Columns            6                                                  │
+#> │   Reference periods  2019/2022                                          │
+#> │   Geographies        Canada                                             │
+#> │   Quality            ok 2, x 1                                          │
+#> │                                                                         │
+#> │   REF_DATE   GEO     Indigenous identity  VALUE  quality                │
+#> │   ---------  ------  -------------------  -----  -------                │
+#> │   2019/2022  Canada  First Nations        45.80  ok                     │
+#> │   2019/2022  Canada  Inuk (Inuit)                x                      │
+#> │   2019/2022  Canada  Non-Indigenous       61.50  ok                     │
+#> │                                                                         │
+#> │   VALUE is numeric; a suppressed cell (F, x, .., ...) is NA, with its   │
+#> │   flag kept in quality.                                                 │
+#> │                                                                         │
+#> │   Symbols: E use with caution; F too unreliable to be published;        │
+#> │   x suppressed (confidentiality); .. not available; ... not applicable. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 if (FALSE) { # interactive()
 # needs a data service key: sign in once with dlogin()
 t924 <- sctidy("13100924")

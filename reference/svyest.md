@@ -147,33 +147,107 @@ d <- data.frame(region = rep(c("north", "south"), each = 50),
                 drinks = rpois(100, 3), w = runif(100, 50, 150))
 des <- svydes(d, w = "w", strata = "region")
 svyest(des, d, "smoker", by = "region", stat = "proportion", lvls = "1")
-#> Survey proportion of smoker by region (linearization variance, 95% wilson interval)
-#>  region level estimate      se   lower  upper    cv  n flag
-#>   north     1   0.1570 0.05295 0.08093 0.2825 33.73 50   NA
-#>   south     1   0.3752 0.07282 0.25036 0.5192 19.41 50   NA
+#> ╭── Survey proportion of smoker by region ───────────────────────────────╮
+#> │   Variable  smoker                                                     │
+#> │   Domains   region                                                     │
+#> │   Variance  linearization                                              │
+#> │   Interval  95% wilson                                                 │
+#> │                                                                        │
+#> │   region  level  estimate       se  95% CI               cv   n        │
+#> │   ------  -----  --------  -------  ----------------  -----  --        │
+#> │   north   1        0.1570  0.05295  [0.0809, 0.2825]  33.73  50        │
+#> │   south   1        0.3752  0.07282  [0.2504, 0.5192]  19.41  50        │
+#> │                                                                        │
+#> │   Highest proportion: south (0.3752); lowest: north (0.157). Their     │
+#> │   intervals overlap: the data cannot tell the two apart. Use with      │
+#> │   caution (cv 16.6 to 33.3): south. Too unstable to publish (cv above  │
+#> │   33.3): north.                                                        │
+#> │                                                                        │
+#> │   cv is the coefficient of variation (the standard error as a          │
+#> │   percentage of the estimate); from 16.6 to 33.3 use the estimate with │
+#> │   caution, above 33.3 it is too unstable to publish, by Statistics     │
+#> │   Canada's usual bands.                                                │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 svyest(des, d, "drinks", stat = "mean")
-#> Survey mean of drinks (linearization variance, 95% wald interval)
-#>  estimate     se lower upper    cv   n flag
-#>     3.088 0.1668 2.761 3.415 5.401 100   NA
+#> ╭── Survey mean of drinks ───────────────────────────────────────────────╮
+#> │   Variable  drinks                                                     │
+#> │   Variance  linearization                                              │
+#> │   Interval  95% wald                                                   │
+#> │                                                                        │
+#> │   estimate      se  95% CI             cv    n                         │
+#> │   --------  ------  --------------  -----  ---                         │
+#> │      3.088  0.1668  [2.761, 3.415]  5.401  100                         │
+#> │                                                                        │
+#> │   Every cv is below 16.6 (the largest 5.4): precise enough to publish. │
+#> │                                                                        │
+#> │   cv is the coefficient of variation (the standard error as a          │
+#> │   percentage of the estimate); from 16.6 to 33.3 use the estimate with │
+#> │   caution, above 33.3 it is too unstable to publish, by Statistics     │
+#> │   Canada's usual bands.                                                │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 svyest(des, d, "drinks", by = "region", stat = "total")
-#> Survey total of drinks by region (linearization variance, 95% wald interval)
-#>  region estimate   se lower upper    cv  n flag
-#>   north    15080 1390 12356 17805 9.218 50   NA
-#>   south    13796 1109 11621 15970 8.041 50   NA
+#> ╭── Survey total of drinks by region ────────────────────────────────────╮
+#> │   Variable  drinks                                                     │
+#> │   Domains   region                                                     │
+#> │   Variance  linearization                                              │
+#> │   Interval  95% wald                                                   │
+#> │                                                                        │
+#> │   region  estimate     se  95% CI               cv   n                 │
+#> │   ------  --------  -----  ----------------  -----  --                 │
+#> │   north     15,080  1,390  [12,356, 17,805]  9.218  50                 │
+#> │   south     13,796  1,109  [11,621, 15,970]  8.041  50                 │
+#> │                                                                        │
+#> │   Highest total: north (15,080); lowest: south (13,796). Their         │
+#> │   intervals overlap: the data cannot tell the two apart. Every cv is   │
+#> │   below 16.6 (the largest 9.22): precise enough to publish.            │
+#> │                                                                        │
+#> │   cv is the coefficient of variation (the standard error as a          │
+#> │   percentage of the estimate); from 16.6 to 33.3 use the estimate with │
+#> │   caution, above 33.3 it is too unstable to publish, by Statistics     │
+#> │   Canada's usual bands.                                                │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # a ratio of two totals, with Student's t on the design's degrees of freedom
 d$visits <- rpois(100, 6)
 svyest(des, d, "drinks", stat = "ratio", den = "visits", df = "design")
-#> Survey ratio of drinks (linearization variance, 95% wald interval)
-#>  estimate      se  lower  upper    cv   n flag
-#>     0.496 0.03564 0.4253 0.5667 7.185 100   NA
+#> ╭── Survey ratio of drinks ───────────────────────────────────────────────╮
+#> │   Variable            drinks                                            │
+#> │   Denominator         visits                                            │
+#> │   Variance            linearization                                     │
+#> │   Interval            95% wald                                          │
+#> │   Degrees of freedom  98                                                │
+#> │                                                                         │
+#> │   estimate       se  95% CI               cv    n                       │
+#> │   --------  -------  ----------------  -----  ---                       │
+#> │     0.4960  0.03564  [0.4253, 0.5667]  7.185  100                       │
+#> │                                                                         │
+#> │   Every cv is below 16.6 (the largest 7.19): precise enough to publish. │
+#> │                                                                         │
+#> │   cv is the coefficient of variation (the standard error as a           │
+#> │   percentage of the estimate); from 16.6 to 33.3 use the estimate with  │
+#> │   caution, above 33.3 it is too unstable to publish, by Statistics      │
+#> │   Canada's usual bands.                                                 │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a logit interval at 90 percent
 svyest(des, d, "smoker", stat = "proportion", lvls = "1", ci = "logit",
                 conflvl = 0.90)
-#> Survey proportion of smoker (linearization variance, 90% logit interval)
-#>  level estimate      se  lower  upper    cv   n flag
-#>      1    0.261 0.04474 0.1943 0.3409 17.14 100   NA
+#> ╭── Survey proportion of smoker ─────────────────────────────────────────╮
+#> │   Variable  smoker                                                     │
+#> │   Variance  linearization                                              │
+#> │   Interval  90% logit                                                  │
+#> │                                                                        │
+#> │   level  estimate       se  90% CI               cv    n               │
+#> │   -----  --------  -------  ----------------  -----  ---               │
+#> │   1        0.2610  0.04474  [0.1943, 0.3409]  17.14  100               │
+#> │                                                                        │
+#> │   Use with caution (cv 16.6 to 33.3): the estimate.                    │
+#> │                                                                        │
+#> │   cv is the coefficient of variation (the standard error as a          │
+#> │   percentage of the estimate); from 16.6 to 33.3 use the estimate with │
+#> │   caution, above 33.3 it is too unstable to publish, by Statistics     │
+#> │   Canada's usual bands.                                                │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # the design remembers its rows: a subset is refused
 try(svyest(des, d[-1, ], "drinks"))

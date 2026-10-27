@@ -104,10 +104,22 @@ prrgchk(plan, c("ate", "nrows", "atebyyear",
 
 # the full check prints the departures
 prrgchk(plan, c("ate", "atebyyear"))
-#> ── Against the declaration of 2026-10-22T12:15:03Z: departures below 
-#>   declared but not reported (outcome switching): nrows
-#>   reported but not declared (1 addition(s)): atebyyear
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Against the declaration of 2026-10-27T13:57:46Z: departures below ──╮
+#> │ ✖ NOT VERIFIED                                                        │
+#> │                                                                       │
+#> │   Declared  2                                                         │
+#> │   Reported  1                                                         │
+#> │                                                                       │
+#> │   statistic  reported                                                 │
+#> │   ---------  --------                                                 │
+#> │   ate        TRUE                                                     │
+#> │   nrows      FALSE                                                    │
+#> │                                                                       │
+#> │   The report departs from the declaration: see below.                 │
+#> │                                                                       │
+#> │   ✖    declared but not reported (outcome switching): nrows           │
+#> │   ✖    reported but not declared (1 addition(s)): atebyyear           │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 try(prrgdecl(c("an unnamed claim")))
 #> Error : `hyps` must be a named character vector: one claim per statistic

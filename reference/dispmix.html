@@ -15,7 +15,7 @@ a linear trend in its share."><meta property="og:image" content="https://rootcod
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,36 +141,63 @@ intervals.</p></div>
 <span class="r-in"><span>                          package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mix</span> <span class="op">&lt;-</span> <span class="fu">dispmix</span><span class="op">(</span><span class="va">d</span><span class="op">[</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span><span class="op">]</span>, prd <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">year</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mix</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Outcome shares by period (95% Goodman simultaneous intervals in $shares)  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Same mix in every period: chi-square 43792.1 on 66 df, p &lt;2e-16, Cramer's V 0.052</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        outcome   2012   2013   2014   2015   2016   2017   2018</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  withdrawn_stayed_before_trial 0.3796 0.3922 0.3980 0.4016 0.4093 0.4270 0.4411</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       guilty_plea_before_trial 0.4236 0.4146 0.4094 0.4191 0.4199 0.4107 0.3999</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             other_before_trial 0.0361 0.0349 0.0358 0.0364 0.0371 0.0377 0.0435</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             withdrawn_at_trial 0.0554 0.0549 0.0547 0.0482 0.0452 0.0421 0.0386</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           guilty_plea_at_trial 0.0536 0.0521 0.0499 0.0462 0.0426 0.0388 0.0366</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 other_at_trial 0.0012 0.0011 0.0012 0.0010 0.0009 0.0007 0.0006</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                following_trial 0.0506 0.0502 0.0510 0.0475 0.0450 0.0430 0.0397</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2019   2021   2022   2024   2025</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.4365 0.5326 0.5429 0.5180 0.5088</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.4112 0.3490 0.3338 0.3418 0.3430</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.0418 0.0368 0.0380 0.0362 0.0358</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.0378 0.0286 0.0296 0.0381 0.0426</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.0342 0.0210 0.0209 0.0277 0.0317</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.0006 0.0006 0.0005 0.0005 0.0006</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.0379 0.0315 0.0344 0.0377 0.0376</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Cochran-Armitage trend in each share (Holm-adjusted) ────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                        outcome statistic  p_value    pholm  change</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  withdrawn_stayed_before_trial  29543.56   &lt;2e-16   &lt;2e-16  0.1292</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       guilty_plea_before_trial  10090.69   &lt;2e-16   &lt;2e-16 -0.0806</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             other_before_trial     20.29 6.64e-06 6.64e-06 -0.0003</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             withdrawn_at_trial   3208.77   &lt;2e-16   &lt;2e-16 -0.0128</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           guilty_plea_at_trial   7080.55   &lt;2e-16   &lt;2e-16 -0.0219</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 other_at_trial    187.10   &lt;2e-16   &lt;2e-16 -0.0006</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                following_trial   2172.85   &lt;2e-16   &lt;2e-16 -0.0131</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Outcome shares by period</span> ─────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Periods                   12                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Outcomes                  7                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cases                     2,651,849                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Intervals                 95% Goodman simultaneous (in $shares)           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Same mix in every period  chi-square 43792.1 on 66 df, p &lt; 0.001,         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                             Cramer's V 0.052                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Share of each period's cases                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   outcome                           2012     2013     2014     2015         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----------------------------  -------  -------  -------  -------         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   withdrawn_stayed_before_trial  0.37958  0.39219  0.39803  0.40161         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   guilty_plea_before_trial       0.42359  0.41458  0.40938  0.41909         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   other_before_trial             0.03608  0.03489  0.03582  0.03635         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   withdrawn_at_trial             0.05538  0.05490  0.05471  0.04824         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   guilty_plea_at_trial           0.05356  0.05213  0.04988  0.04619         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   other_at_trial                 0.00118  0.00108  0.00120  0.00097         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   following_trial                0.05063  0.05022  0.05098  0.04755         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   outcome                           2016     2017     2018     2019         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----------------------------  -------  -------  -------  -------         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   withdrawn_stayed_before_trial  0.40928  0.42702  0.44114  0.43649         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   guilty_plea_before_trial       0.41992  0.41070  0.39989  0.41120         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   other_before_trial             0.03710  0.03769  0.04347  0.04176         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   withdrawn_at_trial             0.04520  0.04207  0.03858  0.03785         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   guilty_plea_at_trial           0.04263  0.03878  0.03660  0.03421         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   other_at_trial                 0.00085  0.00074  0.00061  0.00063         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   following_trial                0.04501  0.04301  0.03971  0.03787         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   outcome                           2021     2022     2024     2025         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----------------------------  -------  -------  -------  -------         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   withdrawn_stayed_before_trial  0.53260  0.54286  0.51803  0.50879         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   guilty_plea_before_trial       0.34898  0.33376  0.34176  0.34300         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   other_before_trial             0.03676  0.03798  0.03623  0.03581         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   withdrawn_at_trial             0.02858  0.02960  0.03809  0.04260         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   guilty_plea_at_trial           0.02103  0.02090  0.02766  0.03166         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   other_at_trial                 0.00055  0.00054  0.00052  0.00058         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   following_trial                0.03149  0.03435  0.03771  0.03756         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cochran-Armitage trend in each share (Holm-adjusted)                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   outcome                        statistic  p_value    pholm    change      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----------------------------  ---------  -------  -------  --------      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   withdrawn_stayed_before_trial  29,543.56  &lt; 0.001  &lt; 0.001   0.12920      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   guilty_plea_before_trial       10,090.69  &lt; 0.001  &lt; 0.001  -0.08060      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   other_before_trial                 20.29  &lt; 0.001  &lt; 0.001  -0.00026      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   withdrawn_at_trial              3,208.77  &lt; 0.001  &lt; 0.001  -0.01278      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   guilty_plea_at_trial            7,080.55  &lt; 0.001  &lt; 0.001  -0.02190      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   other_at_trial                    187.10  &lt; 0.001  &lt; 0.001  -0.00061      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   following_trial                 2,172.85  &lt; 0.001  &lt; 0.001  -0.01306      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   From 2012 to 2025:                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   withdrawn_stayed_before_trial rose most, +12.9 points of the share;       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   guilty_plea_before_trial fell most, -8.1 points.                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   7 of 7 shares trend at the Holm-adjusted 0.05 level: 1 up                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   (withdrawn_stayed_before_trial), 6 down (guilty_plea_before_trial,        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   other_before_trial, withdrawn_at_trial and 3 more).                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mix</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="dispmix-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>

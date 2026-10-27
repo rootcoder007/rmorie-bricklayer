@@ -102,28 +102,31 @@ msg <- "`prompt` must be a single non-empty string"
 explerr(msg, pkgs = "rmoriebricklayer")
 #>            package         raised_by
 #> 1 rmoriebricklayer     .rmbl_string1
-#> 2 rmoriebricklayer .rmbl_fips_scheme
-#> 3 rmoriebricklayer        usecpstmpl
+#> 2 rmoriebricklayer     .bl_tmpl_name
+#> 3 rmoriebricklayer .rmbl_fips_scheme
 #>                                                        exported  kind
 #> 1            llmask, agentbndl, anltab, arccap, arcfind, arcget error
-#> 2 blcli, capsule_sign, cpsatst, cpsbndl, cpsbndlvrf, cpschkatst error
-#> 3                                           rmblapp, usecpstmpl error
+#> 2                                    blcli, rmblapp, usecpstmpl error
+#> 3 blcli, capsule_sign, cpsatst, cpsbndlvrf, cpschkatst, cpssign error
 #>                                      message            match
 #> 1    `...` must be a single non-empty string            exact
-#> 2 `scheme` must be a single non-empty string 80% of its words
-#> 3   `name` must be a single non-empty string 80% of its words
+#> 2   `name` must be a single non-empty string 80% of its words
+#> 3 `scheme` must be a single non-empty string 80% of its words
 
 # a condition object
 e <- tryCatch(kemsz(3), error = identity)
 explerr(e, n = 1)
 #>            package       raised_by                         exported  kind
-#> 1 rmoriebricklayer .rmbl_kem_level kemdecap, kemencap, kemkg, kemsz error
-#>                                   message match
-#> 1 `level` must be one of 512, 768 or 1024 exact
+#> 1 rmoriebricklayer .rmbl_kem_level kemkg, kemsz, kemdecap, kemencap error
+#>                                 message match
+#> 1 `...` must be one of 512, 768 or 1024 exact
 
 # the failed rows of a capsule check
-rows <- data.frame(check = c("data_present", "data_sha256"), ok = c(TRUE, FALSE),
-                   detail = c("d.csv", "expected 01..., got 9c..."))
+rows <- data.frame(
+  check = c("data_present", "data_sha256"),
+  ok = c(TRUE, FALSE),
+  detail = c("d.csv", "expected 01..., got 9c...")
+)
 explerr(rows)$explanation
 #> [1] "the data file's bytes differ from the pinned SHA-256: restore the file, or pin the new bytes with cpsrfrsh() (rmbl refresh)"
 
@@ -131,12 +134,17 @@ explerr(rows)$explanation
 try(explerr(msg, n = 0))
 #> Error : `n` must be a whole number of 1 or more
 if (FALSE) { # interactive()
-# an error caught with try(), and the message as R prints it, with the call in front
+# an error caught with try(), and the message as R prints it, with the call
+# in front
 r <- try(llmcfg(no.such = 1), silent = TRUE)
 explerr(r, pkgs = "rmoriebricklayer")
 explerr(
-  "Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks",
-  n = 1)
+  paste0(
+    "Error in mrkprf(x, 9) : `index` must be between 1 and the number ",
+    "of chunks"
+  ),
+  n = 1
+)
 
 # a message retyped from memory
 explerr("index between number chunks", n = 1)

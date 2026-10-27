@@ -19,7 +19,7 @@ cannot be replayed at another index or under another key.'><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -124,13 +124,13 @@ the standardised schemes, <code>ctx</code> and the pre-hash). Verification
 needs only public material, except for HMAC, where the verifier holds
 the same secret as the signer and could therefore also sign. HMAC tags
 are compared in constant time.</p>
-<p>Only two inputs are errors rather than <code>FALSE</code>: a <code>sig</code> that is not
-a <code>bricklayer_signature</code> at all, and, for an XMSS signature, a key that
-is not a key object (a string, say) or a <code>msg</code> that is not one
-string or a raw vector. A key or signature whose class, scheme or fields were edited
-returns <code>FALSE</code>. An XMSS signature object written by 0.5.9 to 0.5.12
-(one that carries a <code>key_state</code> field) still verifies, with a warning
-that it exposed the signer's private key.</p>
+<p>Only two inputs are errors rather than <code>FALSE</code>: a <code>sig</code> that is not a
+<code>bricklayer_signature</code> at all, and, for an XMSS signature, a key that is not
+a key object (a string, say) or a <code>msg</code> that is not one string or a raw
+vector. A key or signature whose class, scheme or fields were edited returns
+<code>FALSE</code>. An XMSS signature object written by 0.5.9 to 0.5.12 (one that
+carries a <code>key_state</code> field) still verifies, with a warning that it exposed
+the signer's private key.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -141,8 +141,10 @@ that it exposed the signer's private key.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.xmssidxfile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>  <span class="co"># keep this example's</span></span></span>
-<span class="r-in"><span><span class="co"># one-time index record out of your configuration directory; leave the default in use</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># keep this example's</span></span></span>
+<span class="r-in"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.xmssidxfile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># one-time index record out of your configuration directory; leave the</span></span></span>
+<span class="r-in"><span><span class="co"># default in use</span></span></span>
 <span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="pqckg.html">pqckg</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="cpssign.html">cpssign</a></span><span class="op">(</span><span class="st">"pinned-manifest"</span>, <span class="va">key</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">pub</span> <span class="op">&lt;-</span> <span class="fu"><a href="signpubkey.html">signpubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span></span></span>
@@ -151,17 +153,18 @@ that it exposed the signer's private key.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Every way of being wrong returns FALSE.</span></span></span>
-<span class="r-in"><span><span class="fu">cpsvrf</span><span class="op">(</span><span class="st">"edited-manifest"</span>, <span class="va">sig</span>, <span class="va">pub</span><span class="op">)</span>              <span class="co"># message changed</span></span></span>
+<span class="r-in"><span><span class="fu">cpsvrf</span><span class="op">(</span><span class="st">"edited-manifest"</span>, <span class="va">sig</span>, <span class="va">pub</span><span class="op">)</span> <span class="co"># message changed</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
-<span class="r-in"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">sig</span>; <span class="va">bad</span><span class="op">$</span><span class="va">signature</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"ff"</span>, <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring</a></span><span class="op">(</span><span class="va">bad</span><span class="op">$</span><span class="va">signature</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">cpsvrf</span><span class="op">(</span><span class="st">"pinned-manifest"</span>, <span class="va">bad</span>, <span class="va">pub</span><span class="op">)</span>              <span class="co"># signature edited</span></span></span>
+<span class="r-in"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">sig</span></span></span>
+<span class="r-in"><span><span class="va">bad</span><span class="op">$</span><span class="va">signature</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"ff"</span>, <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring</a></span><span class="op">(</span><span class="va">bad</span><span class="op">$</span><span class="va">signature</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">cpsvrf</span><span class="op">(</span><span class="st">"pinned-manifest"</span>, <span class="va">bad</span>, <span class="va">pub</span><span class="op">)</span> <span class="co"># signature edited</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
-<span class="r-in"><span><span class="fu">cpsvrf</span><span class="op">(</span><span class="st">"pinned-manifest"</span>, <span class="va">sig</span>,</span></span>
-<span class="r-in"><span>               <span class="fu"><a href="signpubkey.html">signpubkey</a></span><span class="op">(</span><span class="fu"><a href="pqckg.html">pqckg</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>  <span class="co"># foreign key</span></span></span>
+<span class="r-in"><span><span class="fu">cpsvrf</span><span class="op">(</span><span class="st">"pinned-manifest"</span>, <span class="va">sig</span>, <span class="fu"><a href="signpubkey.html">signpubkey</a></span><span class="op">(</span><span class="fu"><a href="pqckg.html">pqckg</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="co"># foreign key</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A truncated signature is not verified, and does not error.</span></span></span>
-<span class="r-in"><span><span class="va">trunc</span> <span class="op">&lt;-</span> <span class="va">sig</span>; <span class="va">trunc</span><span class="op">$</span><span class="va">signature</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring</a></span><span class="op">(</span><span class="va">sig</span><span class="op">$</span><span class="va">signature</span>, <span class="fl">1</span>, <span class="fl">64</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">trunc</span> <span class="op">&lt;-</span> <span class="va">sig</span></span></span>
+<span class="r-in"><span><span class="va">trunc</span><span class="op">$</span><span class="va">signature</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring</a></span><span class="op">(</span><span class="va">sig</span><span class="op">$</span><span class="va">signature</span>, <span class="fl">1</span>, <span class="fl">64</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">cpsvrf</span><span class="op">(</span><span class="st">"pinned-manifest"</span>, <span class="va">trunc</span>, <span class="va">pub</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-in"><span></span></span>

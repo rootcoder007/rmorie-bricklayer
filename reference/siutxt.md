@@ -51,7 +51,11 @@ siutxt("<p>Number of SIU Investigators assigned: 3</p>")
 #> [1] " Number of SIU Investigators assigned: 3\n"
 
 # the bundled synthetic report, as text
-f <- system.file("extdata", "siu_synthetic_report.html", package = "rmoriebricklayer")
+f <- system.file(
+  "extdata",
+  "siu_synthetic_report.html",
+  package = "rmoriebricklayer"
+)
 txt <- siutxt(paste(readLines(f), collapse = "\n"))
 cat(substr(txt, 1, 200))
 #> 

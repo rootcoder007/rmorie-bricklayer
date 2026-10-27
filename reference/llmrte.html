@@ -15,7 +15,7 @@ whose key is set, or a local Ollama server) and which model it would use."><meta
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,8 +98,8 @@ trailing <code>/v1</code> for your own endpoint).</p>
     <p>The automatic order is: an OpenAI-compatible endpoint of your own
 (<code>MORIE_LLM_BASE_URL</code>, or <code>own.url</code> saved with
 <code>rmoriebricklayer config set</code>); then every provider of
-<code><a href="llmprvd.html">llmprvd</a></code> whose key is set, in the order of
-that table; then a local Ollama server, at <code>OLLAMA_HOST</code> or by default at
+<code><a href="llmprvd.html">llmprvd</a></code> whose key is set, in the order of that table; then a
+local Ollama server, at <code>OLLAMA_HOST</code> or by default at
 <code>http://localhost:11434</code>, when it answers with at least one pulled model
 or <code>OLLAMA_MODEL</code> is set. A saved route replaces the automatic order
 when <code>route = NULL</code>; it comes from <code>MORIE_LLM_ROUTE</code> or from the
@@ -124,17 +124,27 @@ that does not answer) a message says so.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># keep the examples away from your real settings and from the network</span></span></span>
-<span class="r-in"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"XDG_CONFIG_HOME"</span>, <span class="st">"OLLAMA_HOST"</span>,</span></span>
-<span class="r-in"><span>                    <span class="st">"MORIE_LLM_BASE_URL"</span>, <span class="st">"MORIE_LLM_MODEL"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                  unset <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="st">"XDG_CONFIG_HOME"</span>,</span></span>
+<span class="r-in"><span>    <span class="st">"OLLAMA_HOST"</span>,</span></span>
+<span class="r-in"><span>    <span class="st">"MORIE_LLM_BASE_URL"</span>,</span></span>
+<span class="r-in"><span>    <span class="st">"MORIE_LLM_MODEL"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  unset <span class="op">=</span> <span class="cn">NA</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>XDG_CONFIG_HOME <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span>, OLLAMA_HOST <span class="op">=</span> <span class="st">"off"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Ollama switched off: that route is not available</span></span></span>
 <span class="r-in"><span><span class="fu">llmrte</span><span class="op">(</span><span class="st">"ollama"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># an OpenAI-compatible server of your own on this machine (not contacted here)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>MORIE_LLM_BASE_URL <span class="op">=</span> <span class="st">"http://localhost:8080/v1"</span>, MORIE_LLM_MODEL <span class="op">=</span> <span class="st">"llama3"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># an OpenAI-compatible server of your own on this machine (not contacted</span></span></span>
+<span class="r-in"><span><span class="co"># here)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  MORIE_LLM_BASE_URL <span class="op">=</span> <span class="st">"http://localhost:8080/v1"</span>,</span></span>
+<span class="r-in"><span>  MORIE_LLM_MODEL <span class="op">=</span> <span class="st">"llama3"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="fu">llmrte</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ route: chr "own"</span>
@@ -149,7 +159,11 @@ that does not answer) a message says so.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : llmrte: `route` must be one of "auto", "own", "openai", "anthropic", "gemini", "openrouter", "groq", "together", "fireworks", "deepseek", "mistral", "xai", "cerebras", "perplexity", "huggingface", "opencode", "cohere", "nvidia", "ollama", not "nope"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw">for</span> <span class="op">(</span><span class="va">v</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">old</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">Sys.setenv</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list</a></span><span class="op">(</span><span class="va">old</span><span class="op">[</span><span class="va">v</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">old</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="va">v</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">Sys.setenv</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list</a></span><span class="op">(</span><span class="va">old</span><span class="op">[</span><span class="va">v</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>

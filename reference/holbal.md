@@ -45,7 +45,7 @@ holbal(
 
 - qual:
 
-  Optional column of quality flags.
+  Optional column of quality flags for the estimates.
 
 - reps:
 
@@ -57,7 +57,7 @@ holbal(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the balance intervals (default 0.95).
 
 ## Value
 
@@ -144,44 +144,144 @@ Journal of Health Promotion and Education 46(2):49-56.
 ## Examples
 
 ``` r
-# four domains from table 13-10-0924-01, 2019/2022, adults: which indicator stands for
-# each is a choice for the people whose data these are; this is one reading of it
+# four domains from table 13-10-0924-01, 2019/2022, adults: which indicator
+# stands for each is a choice for the people whose data these are; this is
+# one reading of it
 h <- indiex("health")
-dom <- c("Perceived health, very good or excellent" = "physical",
-         "Perceived mental health, very good or excellent" = "mental",
-         "Life satisfaction, satisfied or very satisfied" = "emotional",
-         "Sense of belonging to local community, somewhat strong or very strong" =
-           "community")
-d <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
-         h$indicator %in% names(dom), ]
+belong <- paste(
+  "Sense of belonging to local community,",
+  "somewhat strong or very strong"
+)
+dom <- c(
+  "Perceived health, very good or excellent" = "physical",
+  "Perceived mental health, very good or excellent" = "mental",
+  "Life satisfaction, satisfied or very satisfied" = "emotional",
+  stats::setNames("community", belong)
+)
+d <- h[
+  h$period == "2019/2022" &
+    h$age == "Total, 18 years and over" &
+    h$indicator %in% names(dom),
+]
 d$domain <- dom[d$indicator]
-hb <- holbal(d, "group", "domain", "estimate", "lower", "upper",
-                       qual = "quality")
+hb <- holbal(
+  d,
+  "group",
+  "domain",
+  "estimate",
+  "lower",
+  "upper",
+  qual = "quality"
+)
 hb
-#>            group  level    lvllo    lvlup   balance     ballo     balup
-#> 1  First Nations 59.525 58.25190 60.79810 0.9641371 0.9582021 0.9696524
-#> 2          Métis 63.725 62.43592 65.01408 0.9751839 0.9707913 0.9791662
-#> 3          Inuit 63.800 60.74133 66.85867 0.9699605 0.9562503 0.9812743
-#> 4 Non-Indigenous 69.800 69.60196 69.99804 0.9846768 0.9842679 0.9850811
-#>     weadom usewithcau
-#> 1 physical      FALSE
-#> 2 physical      FALSE
-#> 3   mental      FALSE
-#> 4 physical      FALSE
+#> ╭── Holistic balance across the domains ──────────────────────────────────────╮
+#> │   Groups   4                                                                │
+#> │   Weights  equal, over 4 domains                                            │
+#> │   Balance  weighted geometric over arithmetic mean of the domain levels     │
+#> │                                                                             │
+#> │   group           level  95% level CI    balance  95% balance CI  weakest   │
+#> │   --------------  -----  --------------  -------  --------------  --------  │
+#> │   First Nations   59.52  [58.25, 60.80]   0.9641  [0.958, 0.970]  physical  │
+#> │   Métis           63.73  [62.44, 65.01]   0.9752  [0.971, 0.979]  physical  │
+#> │   Inuit           63.80  [60.74, 66.86]   0.9700  [0.956, 0.981]  mental    │
+#> │   Non-Indigenous  69.80  [69.60, 70.00]   0.9847  [0.984, 0.985]  physical  │
+#> │                                                                             │
+#> │   Domain levels (percent)                                                   │
+#> │   group           physical  mental  community  emotional                    │
+#> │   --------------  --------  ------  ---------  ---------                    │
+#> │   First Nations      43.90   45.80      63.70      84.70                    │
+#> │   Métis              49.70   52.80      65.10      87.30                    │
+#> │   Inuit              49.40   47.80      73.50      84.50                    │
+#> │   Non-Indigenous     58.90   61.50      67.40      91.40                    │
+#> │                                                                             │
+#> │   Highest balance: Non-Indigenous (0.9847); lowest: First Nations (0.9641). │
+#> │   Their intervals do not overlap: the gap is more than sampling error.      │
+#> │   The weakest domain is physical for 3 of 4 groups.                         │
+#> │                                                                             │
+#> │   balance is 1 when every domain is at the same level and falls toward      │
+#> │   0 as one falls behind; level is the weighted mean, reported beside it.    │
+#> │   Our method, inspired by Stewart (2008), not taken from it.                │
+#> │   The weights say how much each domain counts; a community may set          │
+#> │   its own (CARE: authority to control, Carroll et al. 2020).                │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(hb)
 
 # a community that counts belonging twice
-holbal(d, "group", "domain", "estimate", "lower", "upper",
-                 qual = "quality",
-                 w = c(physical = 1, mental = 1, emotional = 1, community = 2))
-#>            group level    lvllo    lvlup   balance     ballo     balup   weadom
-#> 1  First Nations 60.36 58.96544 61.75456 0.9708435 0.9658284 0.9754471 physical
-#> 2          Métis 64.00 62.58427 65.41573 0.9800615 0.9764697 0.9833027 physical
-#> 3          Inuit 65.74 62.40297 69.07703 0.9742884 0.9622099 0.9841958   mental
-#> 4 Non-Indigenous 69.32 69.09774 69.54226 0.9876265 0.9873029 0.9879493 physical
-#>   usewithcau
-#> 1      FALSE
-#> 2      FALSE
-#> 3      FALSE
-#> 4      FALSE
+holbal(
+  d,
+  "group",
+  "domain",
+  "estimate",
+  "lower",
+  "upper",
+  qual = "quality",
+  w = c(physical = 1, mental = 1, emotional = 1, community = 2)
+)
+#> ╭── Holistic balance across the domains ──────────────────────────────────────╮
+#> │   Groups   4                                                                │
+#> │   Weights  physical 0.2, mental 0.2, community 0.4, emotional 0.2           │
+#> │   Balance  weighted geometric over arithmetic mean of the domain levels     │
+#> │                                                                             │
+#> │   group           level  95% level CI    balance  95% balance CI  weakest   │
+#> │   --------------  -----  --------------  -------  --------------  --------  │
+#> │   First Nations   60.36  [58.97, 61.75]   0.9708  [0.966, 0.975]  physical  │
+#> │   Métis           64.00  [62.58, 65.42]   0.9801  [0.976, 0.983]  physical  │
+#> │   Inuit           65.74  [62.40, 69.08]   0.9743  [0.962, 0.984]  mental    │
+#> │   Non-Indigenous  69.32  [69.10, 69.54]   0.9876  [0.987, 0.988]  physical  │
+#> │                                                                             │
+#> │   Domain levels (percent)                                                   │
+#> │   group           physical  mental  community  emotional                    │
+#> │   --------------  --------  ------  ---------  ---------                    │
+#> │   First Nations      43.90   45.80      63.70      84.70                    │
+#> │   Métis              49.70   52.80      65.10      87.30                    │
+#> │   Inuit              49.40   47.80      73.50      84.50                    │
+#> │   Non-Indigenous     58.90   61.50      67.40      91.40                    │
+#> │                                                                             │
+#> │   Highest balance: Non-Indigenous (0.9876); lowest: First Nations (0.9708). │
+#> │   Their intervals do not overlap: the gap is more than sampling error.      │
+#> │   The weakest domain is physical for 3 of 4 groups.                         │
+#> │                                                                             │
+#> │   balance is 1 when every domain is at the same level and falls toward      │
+#> │   0 as one falls behind; level is the weighted mean, reported beside it.    │
+#> │   Our method, inspired by Stewart (2008), not taken from it.                │
+#> │   The weights say how much each domain counts; a community may set          │
+#> │   its own (CARE: authority to control, Carroll et al. 2020).                │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+
+# your own table: made-up percentages of wellness in four domains a Nation
+# set for itself, for two communities
+own <- data.frame(
+  community = rep(c("Lakeside", "Riverbend"), each = 4),
+  domain = rep(c("body", "mind", "spirit", "family"), 2),
+  pct = c(62, 58, 70, 75, 55, 61, 66, 80),
+  lo = c(57, 53, 65, 70, 49, 55, 60, 75),
+  hi = c(67, 63, 75, 80, 61, 67, 72, 85)
+)
+holbal(own, "community", "domain", "pct", "lo", "hi", reps = 2000)
+#> ╭── Holistic balance across the domains ───────────────────────────────────╮
+#> │   Groups   2                                                             │
+#> │   Weights  equal, over 4 domains                                         │
+#> │   Balance  weighted geometric over arithmetic mean of the domain levels  │
+#> │                                                                          │
+#> │   group      level  95% level CI    balance  95% balance CI  weakest     │
+#> │   ---------  -----  --------------  -------  --------------  -------     │
+#> │   Lakeside   66.25  [63.75, 68.75]   0.9950  [0.990, 0.998]  mind        │
+#> │   Riverbend  65.50  [62.62, 68.38]   0.9905  [0.984, 0.996]  body        │
+#> │                                                                          │
+#> │   Domain levels (percent)                                                │
+#> │   group       body   mind  spirit  family                                │
+#> │   ---------  -----  -----  ------  ------                                │
+#> │   Lakeside   62.00  58.00      70      75                                │
+#> │   Riverbend  55.00  61.00      66      80                                │
+#> │                                                                          │
+#> │   Highest balance: Lakeside (0.995); lowest: Riverbend (0.9905).         │
+#> │   Their intervals overlap: the data cannot tell the two apart.           │
+#> │   The weakest domain is body for 1 of 2 groups.                          │
+#> │                                                                          │
+#> │   balance is 1 when every domain is at the same level and falls toward   │
+#> │   0 as one falls behind; level is the weighted mean, reported beside it. │
+#> │   Our method, inspired by Stewart (2008), not taken from it.             │
+#> │   The weights say how much each domain counts; a community may set       │
+#> │   its own (CARE: authority to control, Carroll et al. 2020).             │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 ```

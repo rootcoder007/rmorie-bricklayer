@@ -29,7 +29,10 @@ loadprov(path)
 
 The parsed provenance as a nested named list (JSON objects become named
 lists, arrays become unnamed lists, strings, numbers and booleans become
-length-1 vectors), or `NULL` if the file does not exist.
+length-1 vectors), or `NULL` if the file does not exist. The list has
+class `c("rmbl_provenance", "list")`, which only changes how it prints
+(a box); its elements, and the JSON written from it, are those of a
+plain list.
 
 ## Details
 
@@ -71,5 +74,5 @@ length(valsch(data.frame(id = 1, year = 2020), p))
 
 # a directory is not a provenance file
 try(loadprov(tempdir()))
-#> Error : `path` is a directory, not a provenance file: /tmp/RtmpshpHV7
+#> Error : `path` is a directory, not a provenance file: /tmp/Rtmp8mkWXN
 ```

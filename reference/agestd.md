@@ -32,7 +32,7 @@ agestd(events, pop, std, grp = NULL, per = 1e+05, conflvl = 0.95)
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the Fay-Feuer intervals (default 0.95).
 
 ## Value
 
@@ -78,11 +78,28 @@ Environment Cohort (CanCHEC). Statistics Canada 99-011-X2019001.
 ## Examples
 
 ``` r
-# made-up counts for one small community, by five age groups, to show the computation
-std <- c(30000, 25000, 20000, 15000, 10000)   # a younger standard population
-agestd(events = c(4, 9, 11, 6, 3), pop = c(9000, 8000, 6000, 4000,
-                                                           2000),
-                std = std)
-#>   group events    rate    lower    upper
-#> 1   all     33 115.625 79.23967 165.0186
+# made-up counts for one small community, by five age groups, to show the
+# computation
+std <- c(30000, 25000, 20000, 15000, 10000) # a younger standard population
+agestd(
+  events = c(4, 9, 11, 6, 3),
+  pop = c(9000, 8000, 6000, 4000, 2000),
+  std = std
+)
+#> ╭── Directly age-standardised rate ─────────────────────────────────╮
+#> │   Groups    1                                                     │
+#> │   Events    33                                                    │
+#> │   Rate per  100,000                                               │
+#> │   Interval  gamma (Fay and Feuer 1997)                            │
+#> │                                                                   │
+#> │   group  events   rate  95% CI                                    │
+#> │   -----  ------  -----  ---------------                           │
+#> │   all        33  115.6  [79.24, 165.00]                           │
+#> │                                                                   │
+#> │   all: rate 115.6 [79.24, 165.00].                                │
+#> │                                                                   │
+#> │   Each rate is what the group's age-specific rates give for the   │
+#> │   standard population's ages, so the groups compare without them. │
+#> │   Compare only rates standardised to the same population.         │
+#> ╰───────────────────────────────────────────────────────────────────╯
 ```

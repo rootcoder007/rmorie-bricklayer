@@ -25,7 +25,7 @@ columns before a drift verdict means anything."><meta property="og:image" conten
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -151,10 +151,17 @@ not a whole number of at least 1; any error from <code><a href="cpsdrft.html">cp
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">400</span><span class="op">)</span>, b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, <span class="fl">400</span>, <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">drftcal</span><span class="op">(</span><span class="va">d</span>, n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Drift screens on 10 identical re-fetches (alpha = 0.01)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   at least one column flagged: 0% of re-fetches</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   no column fired on identical data</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   per-screen alpha for a family-wise 0.01: 0.005</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Drift screen calibration</span> ─────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Identical re-fetches         10                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Alpha                        0.01                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns screened             2                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   At least one column flagged  0% of re-fetches                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Per-screen alpha             0.005 for a family-wise 0.01             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each re-fetch splits the same table in two at random and runs the     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   drift screen on the halves, so every flag is a false alarm. No column │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   fired on identical data.                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a stricter level, and the per-column rates</span></span></span>
 <span class="r-in"><span><span class="va">cal</span> <span class="op">&lt;-</span> <span class="fu">drftcal</span><span class="op">(</span><span class="va">d</span>, n <span class="op">=</span> <span class="fl">10</span>, alpha <span class="op">=</span> <span class="fl">0.001</span><span class="op">)</span></span></span>

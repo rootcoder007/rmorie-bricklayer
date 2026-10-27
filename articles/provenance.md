@@ -35,7 +35,12 @@ cover:
 
 ``` r
 
-edited <- sub("fetched=2026-09-12", "fetched=2026-01-01", manifest)
+edited <- sub(
+  "fetched=2026-09-12",
+  "fetched=2026-01-01",
+  manifest,
+  fixed = TRUE
+)
 cpsvrf(csha256(edited), sig, "team-secret")
 #> [1] FALSE
 ```
@@ -83,15 +88,16 @@ assumption, no elliptic curve, and no new system dependency.
 # Small for the vignette; the default height 10 gives 1024 signatures.
 signingkey <- pqckg(height = 3)
 signingkey
-#> ── Signing key (post-quantum) ────────────────────────────────────
-#>   scheme     xmss-sha256
-#>   root       309ec677b02f3b3d780f636a02432605c7edcbe15bcabd9cafe543394b2edb08
-#>   height     3
-#>   used       0 of 8 signatures
-#>   remaining  8
-#>   secret     <withheld>
-#>   ! one signature per index; never sign twice at one index
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Signing key (post-quantum) ───────────────────────────────────────────────╮
+#> │   scheme     xmss-sha256                                                    │
+#> │   root       25020de2ec84eb4b243d59d6cf43bda3676f4274d38d911d98bca9df1db8b2 │
+#> │              8e                                                             │
+#> │   height     3                                                              │
+#> │   used       0 of 8 signatures                                              │
+#> │   remaining  8                                                              │
+#> │   secret     <withheld>                                                     │
+#> │   ! one signature per index; never sign twice at one index                  │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 Publish the public half. It carries no secret:
@@ -100,11 +106,11 @@ Publish the public half. It carries no secret:
 
 pub <- signpubkey(signingkey)
 pub
-#> ── Public verification key ───────────────────────────────────────
-#>   scheme  xmss-sha256
-#>   root    309ec677b02f3b3d780f636a02432605c7edcbe15bcabd9cafe543394b2edb08
-#>   height  3
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Public verification key ─────────────────────────────────────────────────╮
+#> │   scheme  xmss-sha256                                                      │
+#> │   root    25020de2ec84eb4b243d59d6cf43bda3676f4274d38d911d98bca9df1db8b28e │
+#> │   height  3                                                                │
+#> ╰────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ``` r
@@ -200,11 +206,19 @@ m <- mkmnf(list(dataset = "otis", rows = 1200L),
 key <- fipskg("ML-DSA-65")
 att <- cpsatst(m, key, note = "counts as published")
 cpschkatst(att, m)
-#> ── Attestation check: OK ─────────────────────────────────────────
-#>   attestation_complete   ok    
-#>   manifest_digest        ok    efa1b7387f225380245de0b5170999e87ad4044f3e8f
-#>   signature              ok    
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Attestation check: OK ────────────────────────────────────────────────────╮
+#> │ ✔ VERIFIED  · 3 of 3 checks passed                                          │
+#> │                                                                             │
+#> │   Checks  3                                                                 │
+#> │                                                                             │
+#> │   Every check passed: the attestation is complete, names this manifest and  │
+#> │   is signed.                                                                │
+#> │                                                                             │
+#> │   ✔    attestation_complete                                                 │
+#> │   ✔    manifest_digest       efa1b7387f225380245de0b5170999e87ad4044f3e8fd2 │
+#> │                              ef6a6bfbc2bd0a9c90                             │
+#> │   ✔    signature                                                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 The check needs the attestation and the manifest, nothing else. Change
@@ -265,15 +279,25 @@ d <- data.frame(x = rnorm(200))
 d$y <- 0.8 * d$x + rnorm(200)
 cpsfals(d, function(z) cor(z$x, z$y), trt = "x",
                 n = 199, seed = 42)
-#> ── Falsification controls ────────────────────────────────────────
-#>   observed statistic  0.5812737
-#>   permutations        199 (seed 42)
-#> ──────────────────────────────────────────────────────────────────
-#>   permutation            ok    p = 0.005 with 199 usable permutations; 
-#>   placebo                ok    a permuted exposure gives 0.0702711, aga
-#>   random_common_cause    ok    adding a column of noise moved the stati
-#>   subset_stability       ok    the middle 95% of 199 subsets spans [0.5
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Falsification controls ───────────────────────────────────────────────────╮
+#> │   Observed statistic  0.5812737                                             │
+#> │   Permutations        199                                                   │
+#> │   Treatment           x                                                     │
+#> │   Seed                42                                                    │
+#> │   Generator           Mersenne-Twister,Inversion,Rejection                  │
+#> │                                                                             │
+#> │   The controls that ran passed: a shuffled treatment, a placebo, an added   │
+#> │   random cause and subsets of the data did not explain it away.             │
+#> │                                                                             │
+#> │   ✔    permutation         p = 0.005 with 199 usable permutations; the      │
+#> │                            smallest this de                                 │
+#> │   ✔    placebo             a permuted exposure gives 0.0702711, against an  │
+#> │                            observed 0.5                                     │
+#> │   ✔    random_common_cause adding a column of noise moved the statistic by  │
+#> │        0; it cannot                                                         │
+#> │   ✔    subset_stability    the middle 95% of 199 subsets spans [0.539306,   │
+#> │                            0.629292], a                                     │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 Four controls, each for a different way of being wrong: permuting the
@@ -320,10 +344,19 @@ man <- recrd(man, "n", obs = nrow(d), expd = 10)
 
 mnfrcmp(man, d, list(mean_x = function(z) mean(z$x),
                                 n = function(z) nrow(z)))
-#> ── Recomputation: everything checked and matched ─────────────────
-#>   mean_x                   MATCH      |recorded - recomputed| = 0
-#>   n                        MATCH      |recorded - recomputed| = 0
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Recomputation: everything checked and matched ──────────────────╮
+#> │ ✔ VERIFIED                                                        │
+#> │                                                                   │
+#> │   Recomputed  2                                                   │
+#> │   Matched     2                                                   │
+#> │                                                                   │
+#> │   name    recorded  recomputed  delta       tol  status           │
+#> │   ------  --------  ----------  -----  --------  ------           │
+#> │   mean_x     5.500       5.500      0  0.000100  MATCH            │
+#> │   n         10.000      10.000      0  0.000100  MATCH            │
+#> │                                                                   │
+#> │   Every recorded result was recomputed from the data and matched. │
+#> ╰───────────────────────────────────────────────────────────────────╯
 ```
 
 Recompute only some of them and the rest are reported as unchecked
@@ -333,11 +366,21 @@ health and a partial one:
 ``` r
 
 mnfrcmp(man, d, list(n = function(z) nrow(z)))
-#> ── Recomputation: see below ──────────────────────────────────────
-#>   n                        MATCH      |recorded - recomputed| = 0
-#> ──────────────────────────────────────────────────────────────────
-#>   1 recorded result(s) NOT recomputed: mean_x
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Recomputation: see below ────────────────────────────────────────────╮
+#> │ ✖ NOT VERIFIED                                                         │
+#> │                                                                        │
+#> │   Recomputed      1                                                    │
+#> │   Matched         1                                                    │
+#> │   Not recomputed  1                                                    │
+#> │                                                                        │
+#> │   name  recorded  recomputed  delta       tol  status                  │
+#> │   ----  --------  ----------  -----  --------  ------                  │
+#> │   n           10          10      0  0.000100  MATCH                   │
+#> │                                                                        │
+#> │   Not every recorded result was recomputed and matched: see the notes. │
+#> │                                                                        │
+#> │   1 recorded result(s) NOT recomputed: mean_x                          │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```
 
 For anything stochastic, record the generator state rather than the
@@ -370,15 +413,39 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ── Against the declaration of 2026-10-22T12:16:17Z: departures below 
-#>   declared but not reported (outcome switching): ate
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Against the declaration of 2026-10-27T13:59:39Z: departures below ──╮
+#> │ ✖ NOT VERIFIED                                                        │
+#> │                                                                       │
+#> │   Declared  2                                                         │
+#> │   Reported  1                                                         │
+#> │                                                                       │
+#> │   statistic  reported                                                 │
+#> │   ---------  --------                                                 │
+#> │   ate        FALSE                                                    │
+#> │   n_rows     TRUE                                                     │
+#> │                                                                       │
+#> │   The report departs from the declaration: see below.                 │
+#> │                                                                       │
+#> │   ✖    declared but not reported (outcome switching): ate             │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ── Against the declaration of 2026-10-22T12:16:17Z: departures below 
-#>   reported but not declared (2 addition(s)): byyear, byprecinct
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Against the declaration of 2026-10-27T13:59:39Z: departures below ──╮
+#> │ ✖ NOT VERIFIED                                                        │
+#> │                                                                       │
+#> │   Declared  2                                                         │
+#> │   Reported  2                                                         │
+#> │                                                                       │
+#> │   statistic  reported                                                 │
+#> │   ---------  --------                                                 │
+#> │   ate        TRUE                                                     │
+#> │   n_rows     TRUE                                                     │
+#> │                                                                       │
+#> │   The report departs from the declaration: see below.                 │
+#> │                                                                       │
+#> │   ✖    reported but not declared (2 addition(s)): byyear, byprecinct  │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 ```
 
 That second case is why a nominal p-value needs correcting. Run the
@@ -389,13 +456,22 @@ finding:
 
 falsfam(c(ate = 0.02, byyear = 0.3, byprecinct = 0.4,
                  byshift = 0.6, bymonth = 0.7), meth = "holm")
-#> ── Family of 5, corrected by holm at alpha 0.05 ──────────────────
-#>   ate                    p 0.02       adjusted 0.1        
-#>   byyear                 p 0.3        adjusted 1          
-#>   byprecinct             p 0.4        adjusted 1          
-#>   byshift                p 0.6        adjusted 1          
-#>   bymonth                p 0.7        adjusted 1          
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Family of 5, corrected by holm at alpha 0.05 ────────────────────╮
+#> │   Method       holm                                                │
+#> │   Family size  5                                                   │
+#> │   Alpha        0.05                                                │
+#> │   Survive      0                                                   │
+#> │                                                                    │
+#> │   name            p  adjusted_p  survives                          │
+#> │   ----------  -----  ----------  --------                          │
+#> │   ate         0.020       0.100                                    │
+#> │   byyear      0.300       1.000                                    │
+#> │   byprecinct  0.400       1.000                                    │
+#> │   byshift     0.600       1.000                                    │
+#> │   bymonth     0.700       1.000                                    │
+#> │                                                                    │
+#> │   0 of 5 result(s) survive once the size of the family is counted. │
+#> ╰────────────────────────────────────────────────────────────────────╯
 ```
 
 And for the confounder nobody measured, the E-value says how strong it
@@ -407,6 +483,87 @@ the outcome:
 evlrr(2, lo = 1.4, hi = 2.9)
 #> evlpoint evllimit 
 #> 3.414214 2.148331
+```
+
+## A trial whose allocation nobody can rewrite
+
+In a randomised trial the two records that must not move after the data
+are seen are the outcomes and the allocation. The outcomes are declared
+above; the allocation is a list made before the first participant and
+committed to.
+
+``` r
+
+alloc <- ralloc(arms = c("drug", "placebo"), ratio = c(1, 1),
+                strata = c(Toronto = 24, Ottawa = 16), codes = TRUE,
+                seed = "a vignette, not a trial")
+alloc
+#> ╭── Randomisation list ───────────────────────────────────────────────────────╮
+#> │   Method        permuted blocks of 4 or 6 within strata                     │
+#> │   Participants  40                                                          │
+#> │   Arms          drug, placebo (1:1)                                         │
+#> │   Strata        2                                                           │
+#> │   Kit codes     yes                                                         │
+#> │   Seed          concealed: attr(x, "alloc")$seed                            │
+#> │   Commitment    b59fe0d8fbf853b88022675bcd64d726c0702405a538bc23daf2757fea1 │
+#> │                 b4b30                                                       │
+#> │                                                                             │
+#> │   stratum  drug  placebo                                                    │
+#> │   -------  ----  -------                                                    │
+#> │   Toronto    12       12                                                    │
+#> │   Ottawa      8        8                                                    │
+#> │                                                                             │
+#> │   In all: drug 20, placebo 20. Every stratum is exactly in the ratio.       │
+#> │   Sign and timestamp the commitment before the first participant; keep the  │
+#> │   list and the seed with the unblinded statistician.                        │
+#> │                                                                             │
+#> │   Give sites and the pharmacy only the id and kit columns.                  │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+```
+
+The box shows how many participants each arm has, never who is in which,
+and not the seed. For a real trial leave `seed` out: the seed is then 48
+bytes from the operating system, and the list cannot be guessed before
+it is opened. Sites and the pharmacy get only the `id` and `kit`
+columns.
+
+Sign the commitment, and the declared outcomes with it, before enrolment
+(and send the signed record to a timestamp authority;
+[`tsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
+checks the token it returns):
+
+``` r
+
+trial <- fipskg("ML-DSA-44")
+record <- paste(attr(alloc, "alloc")$digest,
+                mnfdgst(mkmnf(list(outcomes = plan$statistics),
+                              env = FALSE)))
+sealed <- cpssign(record, trial, ctx = "trial commitment")
+cpsvrf(record, sealed, fipspubkey(trial), ctx = "trial commitment")
+#> [1] TRUE
+```
+
+At unblinding the statistician reveals the list and the seed, and anyone
+can check them against what was signed:
+
+``` r
+
+rallocvrf(alloc, digest = attr(alloc, "alloc")$digest)
+#> ╭── Randomisation list: verified ─────────────────────────────────────────────╮
+#> │ ✔ VERIFIED  · 3 of 3 checks passed                                          │
+#> │                                                                             │
+#> │   ✔    commitment    the list is the one committed to                       │
+#> │   ✔    seed          the seed and the settings give this list, row for row  │
+#> │   ✔    participants  40 participants, each once                             │
+#> │        commitment    b59fe0d8fbf853b88022675bcd64d726c0702405a538bc23daf275 │
+#> │                      7fea1b4b30                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+
+# one allocation changed after the commitment is caught
+moved <- alloc
+moved$arm[1] <- setdiff(c("drug", "placebo"), moved$arm[1])
+rallocvrf(moved, digest = attr(alloc, "alloc")$digest)$ok
+#> [1] FALSE
 ```
 
 ## Keeping your own copy of the source
@@ -428,9 +585,13 @@ it at archive.rmorie.com under your data key, with the reason you give.
 
 ``` r
 
-cap <- arccap("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", "captures",
-              upload = c("rmorie", "wayback"), reason = "Custody table cited in chapter 3")
-cap$archive                     # its page at archive.rmorie.com
+cap <- arccap(
+  "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip",
+  "captures",
+  upload = c("rmorie", "wayback"),
+  reason = "Custody table cited in chapter 3"
+)
+cap$archive # its page at archive.rmorie.com
 arcfind("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip")
 arcget(cap$capture_id, "table.zip", sha256 = cap$sha256)
 ```
@@ -442,8 +603,12 @@ your own folder, still checked against the pin:
 
 ``` r
 
-fetchvrf("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", "table.zip",
-         sha256 = cap$sha256, arcs = c("rmorie", "captures"))
+fetchvrf(
+  "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip",
+  "table.zip",
+  sha256 = cap$sha256,
+  arcs = c("rmorie", "captures")
+)
 ```
 
 From a terminal the same steps are
@@ -486,14 +651,24 @@ write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),
           row.names = FALSE)
 b <- cpsbndl(dir, man, key, note = "as published")
 cpsbndlvrf(attr(b, "path"), dir, man = man)
-#> ── Bundle check: OK ──────────────────────────────────────────────
-#>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
-#>   no_unlisted_files              ok    
-#>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    abcfd8f7bfc3f9e9bd34a9672e276431b50f
-#>   attestation:signature          ok    
-#>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Bundle check: OK ─────────────────────────────────────────────────────────╮
+#> │ ✔ VERIFIED  · 6 of 6 checks passed                                          │
+#> │                                                                             │
+#> │   Checks  6                                                                 │
+#> │                                                                             │
+#> │   Every check passed: every file is the one that was signed and the         │
+#> │   signature holds.                                                          │
+#> │                                                                             │
+#> │   ✔    file:data.csv                                                        │
+#> │        95aecaa7399a39092c9e716ce1e18bb1c606c82f9503d679ac55c82988f6c38e     │
+#> │   ✔    no_unlisted_files                                                    │
+#> │   ✔    attestation:attestation_complete                                     │
+#> │   ✔    attestation:manifest_digest                                          │
+#> │        b716e1d44382488be7fc4079b049f0fcf802fea215668ed72cbda43a8a9dbecb     │
+#> │   ✔    attestation:signature                                                │
+#> │   ✔    manifest_digest                                                      │
+#> │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 Files sitting in the directory that the bundle does not mention are
@@ -503,6 +678,132 @@ about what else was put beside it.
 ``` r
 
 unlink(dir, recursive = TRUE)
+```
+
+## A bundle a reviewer double-clicks
+
+The capsule above is for someone who runs R. A reproducibility bundle is
+for anyone: one zip a reviewer unzips and double-clicks
+(`START_HERE.command` on macOS, `START_HERE.bat` on Windows,
+`start_here.sh` on Linux), with nothing installed but R. The runner
+inside finds the data, checks it against the pinned SHA-256, runs your
+analysis and says, for every number you report, what it got.
+
+**Step 1: start a project.**
+[`mkbndlproj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlproj.md)
+writes three files that already build and run, so every step can be
+tried before the analysis is written.
+
+``` r
+
+proj <- file.path(tempdir(), "my-study")
+p <- mkbndlproj(proj, title = "My study", author = "A. Researcher",
+                contact = "a.researcher@example.org", overwrite = TRUE)
+p
+#> ╭── Bundle project ───────────────────────────────────────────────────────────╮
+#> │   Folder  /tmp/Rtmp9NNDoH/my-study                                          │
+#> │   Files   config.json, data_provenance.json, analysis.R                     │
+#> │                                                                             │
+#> │   Edit config.json (who and what), data_provenance.json (the data file,     │
+#> │   its URL and SHA-256) and analysis.R (the checks), then build the zip      │
+#> │   with mkbndl().                                                            │
+#> │   It runs as it is on synthetic data, so the bundle can be tried before     │
+#> │   the analysis is written.                                                  │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+```
+
+`config.json` says who and what (and `r_packages`, the packages your
+analysis needs); `data_provenance.json` names the data file, where it
+can be downloaded and its SHA-256, plus a recipe for synthetic data;
+`analysis.R` reads the data and records one check per number the paper
+reports with
+[`recrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recrd.md).
+
+**Step 2: pin your data.** Point the provenance at the real file and its
+digest. A reviewer whose copy differs is stopped, not given different
+numbers.
+
+``` r
+
+dat <- data.frame(group = rep(c("a", "b"), 50), value = rep(c(4, 6), 50))
+csv <- file.path(tempdir(), "my_data.csv")
+write.csv(dat, csv, row.names = FALSE)
+pv <- file.path(proj, "data_provenance.json")
+prov <- fromjs(pv, simplifyVector = FALSE)
+prov$resource$sha256 <- sha256file(csv)
+writeLines(tojs(prov, auto_unbox = TRUE, pretty = TRUE), pv)
+```
+
+With `resource$direct_url` set too, a bundle without the data downloads
+it and checks it; here the data travels inside.
+
+**Step 3: build the zip.** Before writing it,
+[`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md)
+checks that every function the bundled files call is in the bundle, so
+it cannot stop on the reviewer’s machine with “could not find function”.
+
+``` r
+
+b <- mkbndl(proj, dest = tempdir(), data = csv, overwrite = TRUE)
+b
+#> ╭── Reproducibility bundle ───────────────────────────────────────────────────╮
+#> │   Project    my-study                                                       │
+#> │   Zip        my-study_v1_with_data.zip                                      │
+#> │   Folder     /tmp/Rtmp9NNDoH                                                │
+#> │   Size       192.7 KB                                                       │
+#> │   Files      28                                                             │
+#> │   Data file  inside                                                         │
+#> │   SHA-256    f90adee050025425506a09e7ecd7eb129959d4d19520dd96d3624d1592a3bf │
+#> │              0a                                                             │
+#> │                                                                             │
+#> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │
+#> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │
+#> │                                                                             │
+#> │   Send the SHA-256 separately from the zip, so recipients can check the     │
+#> │   copy they received was not altered.                                       │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+```
+
+Send `b$sha256` separately from the zip: the reviewer checks it before
+opening anything.
+
+**Step 4: what the reviewer sees.** Unzipped and started (here from R; a
+reviewer double-clicks), the runner uses the data inside, checks it and
+runs the analysis:
+
+``` r
+
+out <- file.path(tempdir(), "reviewer")
+unzip(b$path, exdir = out)
+st <- file.path(out, sub("[.]zip$", "", basename(b$path)))
+res <- system2(file.path(R.home("bin"), "Rscript"),
+               c(shQuote(file.path(st, "setup_and_run.R")), "--quick"),
+               stdout = TRUE, stderr = TRUE)
+cat(grep("PASS:|DIFFER:|INFO:", res, value = TRUE), sep = "\n")
+#>   PASS:   2
+#>   DIFFER: 0
+#>   INFO:   0
+```
+
+Both checks pass on the real data. Run with `--synthetic` the same
+checks come out INFO: generated data never counts as a reproduction.
+`--data FILE` takes a copy the reviewer already has.
+
+The same from a terminal, once
+[`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
+has put `rmbl` on the path:
+
+``` sh
+rmbl pack --new my-study --title "My study"
+rmbl pack my-study --data my_data.csv       # writes my-study_v1_with_data.zip here
+```
+
+The package ships a full example, the Ontario restrictive confinement
+analysis with 55 checks: `mkbndl("otis-mrp", dest = tempdir())`.
+
+``` r
+
+unlink(c(proj, out, csv, b$path), recursive = TRUE)
 ```
 
 ## When, not just in what order
@@ -602,17 +903,20 @@ chain <- chnapp(chain, "manifest for run 1", label = "run-1")
 chain <- chnapp(chain, "manifest for run 2", label = "run-2")
 chain <- chnapp(chain, "manifest for run 3", label = "run-3")
 chain
-#> ── Manifest chain ────────────────────────────────────────────────
-#>   ✓ chain intact
-#> 
-#>   entries  3
-#>   head     b9ccb96106a68f3d4d2a0cfb8e2ae160f7996393e28e93d7f4650c2bbd81ff49
-#>   seal     940721e3704268b570bcbf1c9ae841bde02927f584ec44dc3cf053ef7404d8a0
-#> 
-#>     1  run-1            cb25fa776c693a106b2d08a1
-#>     2  run-2            03a645a531c93fbb12bb2c07
-#>     3  run-3            b9ccb96106a68f3d4d2a0cfb
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Manifest chain ───────────────────────────────────────────────────────────╮
+#> │   Status   ✓ chain intact (3 entries)                                       │
+#> │   Entries  3                                                                │
+#> │   Head     b9ccb96106a68f3d4d2a0cfb8e2ae160f7996393e28e93d7f4650c2bbd81ff49 │
+#> │   Seal     940721e3704268b570bcbf1c9ae841bde02927f584ec44dc3cf053ef7404d8a0 │
+#> │                                                                             │
+#> │   Every entry links to the one before it, so none was edited, dropped or    │
+#> │   reordered after it was added.                                             │
+#> │                                                                             │
+#> │     #  label            digest                                              │
+#> │     1  run-1            cb25fa776c693a106b2d08a1                            │
+#> │     2  run-2            03a645a531c93fbb12bb2c07                            │
+#> │     3  run-3            b9ccb96106a68f3d4d2a0cfb                            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ``` r
@@ -621,7 +925,16 @@ chain
 tampered <- chain
 tampered$entries[[2]] <- NULL
 chnvrf(tampered)
-#> ✗ chain broken at entry 2 of 2
+#> ╭── Manifest chain check ─────────────────────────────────────────────────────╮
+#> │   Status     ✗ chain BROKEN: broken at entry 2 of 2                         │
+#> │   Entries    2                                                              │
+#> │   Broken at  2                                                              │
+#> │   Head       b9ccb96106a68f3d4d2a0cfb8e2ae160f7996393e28e93d7f4650c2bbd81ff │
+#> │              49                                                             │
+#> │                                                                             │
+#> │   An entry no longer links to the one before it: the chain was edited at    │
+#> │   or before that entry, and nothing from there on can be relied on.         │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ### Sign the seal, not the head
@@ -699,7 +1012,7 @@ file:
 ``` r
 
 cr <- readLines(system.file("COPYRIGHTS", package = "rmoriebricklayer"))
-cat(cr[grep("indigenouslifeexpectancy", cr) + 0:4], sep = "\n")
+cat(cr[grep("indigenouslifeexpectancy", cr, fixed = TRUE) + 0:4], sep = "\n")
 ```
 
 With a data key
@@ -723,8 +1036,14 @@ digest is checking exactly what this chart shows.
 
 ``` r
 
-barplot(d$x, names.arg = seq_len(nrow(d)), col = blpal()[1], xlab = "row", ylab = "x",
-        main = "The values the manifest pins")
+barplot(
+  d$x,
+  names.arg = seq_len(nrow(d)),
+  col = blpal()[1],
+  xlab = "row",
+  ylab = "x",
+  main = "The values the manifest pins"
+)
 ```
 
 ![](provenance_files/figure-html/provenance-provenance-plot-1.png)

@@ -17,7 +17,7 @@ test, which is the standard way to find a change point in noise."><meta property
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,8 +81,9 @@ test, which is the standard way to find a change point in noise.</p>
 
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>Numeric or date periods, default <code>NULL</code> (the position), strictly
-increasing and not missing where <code>y</code> has a value. Used only to label the break.</p></dd>
+<dd><p>Numeric or date periods, default <code>NULL</code> (the position),
+strictly increasing and not missing where <code>y</code> has a value. Used only
+to label the break.</p></dd>
 
 
 <dt id="arg-minseg">minseg<a class="anchor" aria-label="anchor" href="#arg-minseg"></a></dt>
@@ -103,7 +104,8 @@ p-value is reproducible.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>breakafter</code> (the period the series changes
+    <p>A list of class <code>rmbl_step_change</code> with <code>breakafter</code>
+(the period the series changes
 after, from <code>x</code>), <code>index</code> (its position), <code>before</code> and
 <code>after</code> (the segment means), <code>difference</code> (after minus
 before), <code>statistic</code> (\(T_{\max}\)), <code>p_value</code>,
@@ -125,14 +127,15 @@ enumerated, the observed one among them, and the p-value is exact:
 otherwise <code>nperm</code> random permutations are drawn under <code>seed</code>,
 and the caller's random number stream is restored afterwards.</p>
 <p>The test assumes the periods are exchangeable under no change, so it ignores
-autocorrelation and smooth trends; a steady trend can produce a <code>"step"</code>. With very
-few periods even a clean step cannot reach small p-values (six periods allow only
-720 orderings). Missing values are dropped. A series with values beyond 1e150 is
-scanned in units of its largest absolute value, so the statistic does not overflow;
-<code>before</code>, <code>after</code> and <code>difference</code> are given back in the units of
-<code>y</code>, and <code>statistic</code> stays in the rescaled units. Errors: infinite
-values; fewer than <code>2 * minseg</code> periods; numeric or date <code>x</code> that is not
-strictly increasing. A progress bar is shown in an interactive session.</p>
+autocorrelation and smooth trends; a steady trend can produce a
+<code>"step"</code>. With very few periods even a clean step cannot reach small
+p-values (six periods allow only 720 orderings). Missing values are dropped.
+A series with values beyond 1e150 is scanned in units of its largest absolute
+value, so the statistic does not overflow; <code>before</code>, <code>after</code> and
+<code>difference</code> are given back in the units of <code>y</code>, and
+<code>statistic</code> stays in the rescaled units. Errors: infinite values; fewer
+than <code>2 * minseg</code> periods; numeric or date <code>x</code> that is not strictly
+increasing. A progress bar is shown in an interactive session.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -154,33 +157,21 @@ raise the same multiple-comparison issue.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># A step down after the third period. With six periods there are only</span></span></span>
 <span class="r-in"><span><span class="co"># 720 orderings, so even a clean step has p near 0.1.</span></span></span>
 <span class="r-in"><span><span class="fu">stepchg</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">104</span>, <span class="fl">98</span>, <span class="fl">60</span>, <span class="fl">63</span>, <span class="fl">58</span><span class="op">)</span>, x <span class="op">=</span> <span class="fl">2018</span><span class="op">:</span><span class="fl">2023</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $breakafter</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2020</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $before</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 100.6667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $after</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 60.33333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $difference</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -40.33333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $statistic</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2440.167</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $p_value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $nperm</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 720</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $method</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "exact over all 720 orderings"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Step change</span> ───────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Method          exact over all 720 orderings                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Permutations    720                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Break after     2020                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Break at index  3                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   before  after  difference  statistic      p                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  -----  ----------  ---------  -----                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │    100.7  60.33      -40.33      2,440  0.100                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The best single split is after 2020: the mean moves from 100.7 to  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   60.33. The p-value compares that best split with the best split of │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   shuffled series, so it allows for having searched every split (p = │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0.100).                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰──────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A longer series with the same step is clearly significant.</span></span></span>
 <span class="r-in"><span><span class="fu">stepchg</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">104</span>, <span class="fl">98</span>, <span class="fl">101</span>, <span class="fl">97</span>, <span class="fl">60</span>, <span class="fl">63</span>, <span class="fl">58</span>, <span class="fl">61</span>, <span class="fl">59</span><span class="op">)</span>, nperm <span class="op">=</span> <span class="fl">999</span><span class="op">)</span><span class="op">$</span><span class="va">p_value</span></span></span>

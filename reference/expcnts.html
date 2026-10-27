@@ -19,7 +19,7 @@ fnllim."><meta property="og:image" content="https://rootcoder007.github.io/rmori
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -154,30 +154,74 @@ and direct standardisation, which does the reverse.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Adjusting for size only.</span></span></span>
 <span class="r-in"><span><span class="fu">expcnts</span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">n</span>, <span class="va">d</span><span class="op">$</span><span class="va">pop</span>, <span class="va">d</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    area observed population expected</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  East       28       3900 32.81250</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 North       75       7000 58.89423</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 South       72       9900 83.29327</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Expected counts, indirect standardisation</span> ────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Areas       3                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Observed    175                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Expected    175                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Population  20,800                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   area   observed  population  expected                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  --------  ----------  --------                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   East         28       3,900     32.81                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North        75       7,000     58.89                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South        72       9,900     83.29                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   expected is the count an area would have at the overall rate of each  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   stratum, given its own population in it. stdinc() puts an interval on │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the ratio of observed to expected.                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The expected counts sum to the observed ones: the reference rates     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   come from the same data.                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Adjusting for size AND age composition, which is the comparison</span></span></span>
 <span class="r-in"><span><span class="co"># that says something about the region.</span></span></span>
 <span class="r-in"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu">expcnts</span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">n</span>, <span class="va">d</span><span class="op">$</span><span class="va">pop</span>, <span class="va">d</span><span class="op">$</span><span class="va">region</span>, strata <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">age</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">e</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    area observed population expected</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  East       28       3900 32.34430</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 North       75       7000 62.27967</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 South       72       9900 80.37603</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Expected counts, indirect standardisation</span> ────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Areas       3                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Observed    175                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Expected    175                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Population  20,800                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   area   observed  population  expected                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  --------  ----------  --------                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   East         28       3,900     32.34                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North        75       7,000     62.28                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South        72       9,900     80.38                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   expected is the count an area would have at the overall rate of each  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   stratum, given its own population in it. stdinc() puts an interval on │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the ratio of observed to expected.                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The expected counts sum to the observed ones: the reference rates     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   come from the same data.                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the expected counts feed the standardised ratio</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="stdinc.html">stdinc</a></span><span class="op">(</span><span class="va">e</span><span class="op">$</span><span class="va">observed</span>, <span class="va">e</span><span class="op">$</span><span class="va">expected</span>, area <span class="op">=</span> <span class="va">e</span><span class="op">$</span><span class="va">area</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    area observed expected       sir     lower    upper excess deficit</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  East       28 32.34430 0.8656857 0.5752419 1.251157  FALSE   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 North       75 62.27967 1.2042453 0.9472153 1.509532  FALSE   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 South       72 80.37603 0.8957895 0.7009001 1.128099  FALSE   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   significant</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1       FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2       FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Standardised incidence ratios</span> ──────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Areas          3                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Observed       175                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Expected       175                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Overall ratio  1                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Interval       exact Poisson, at the level asked for (default 95%)  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Above one      0                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Below one      0                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   area   observed  expected     sir  interval        finding          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  --------  --------  ------  --------------  -------          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   East         28     32.34  0.8657  [0.575, 1.251]                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   North        75     62.28  1.2042  [0.947, 1.510]                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   South        72     80.38  0.8958  [0.701, 1.128]                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A ratio above 1 means more cases than the area's population would   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   give at the overall rates. An excess or a deficit is an interval    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   wholly above or below 1 (the significant column is either).         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Each interval is a separate test: with many areas some exclude 1 by │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   chance (scanadj() allows for that).                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a population of zero has no rate</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">expcnts</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

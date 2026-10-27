@@ -53,7 +53,7 @@ effort over cells that maximises the probability of success.
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -124,7 +124,14 @@ effort over cells that maximises the probability of success.</p></li>
 <span></span>
 <span><span class="fu">swpwdth</span><span class="op">(</span><span class="va">x</span>, p <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">srchpod</span><span class="op">(</span><span class="va">coverage</span>, model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"random"</span>, <span class="st">"definite"</span>, <span class="st">"invcube"</span>, <span class="st">"mbeta"</span><span class="op">)</span>, m <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu">srchpod</span><span class="op">(</span></span>
+<span>  coverage <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"random"</span>, <span class="st">"definite"</span>, <span class="st">"invcube"</span>, <span class="st">"mbeta"</span><span class="op">)</span>,</span>
+<span>  m <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  W <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  effort <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  area <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">pswppod</span><span class="op">(</span></span>
 <span>  <span class="va">W</span>,</span>
@@ -165,7 +172,10 @@ sign. For <code>swpwdth()</code>, strictly increasing abscissae, or an
 
 
 <dt id="arg-w">W<a class="anchor" aria-label="anchor" href="#arg-w"></a></dt>
-<dd><p>Positive number: the sweep width.</p></dd>
+<dd><p>Positive number: the sweep width, in the distance unit of the
+grid and the effort (nautical miles, kilometres: one unit throughout). For
+<code>srchpod()</code>, give it with <code>effort</code> and <code>area</code> in place of
+<code>coverage</code>; default <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
@@ -190,7 +200,26 @@ cross-track navigation error, in the units of <code>x</code>. Default 0.</p></dd
 
 
 <dt id="arg-coverage">coverage<a class="anchor" aria-label="anchor" href="#arg-coverage"></a></dt>
-<dd><p>Non-negative numeric vector of coverages.</p></dd>
+<dd><p>Non-negative numeric vector of coverages (sweep width
+times track length over the area searched; 1 means the effort equals the
+area). Default <code>NULL</code>: then <code>W</code>, <code>effort</code> and <code>area</code>
+give it, <code>W * effort / area</code>. Give one or the other, not both.</p></dd>
+
+
+<dt id="arg-effort">effort<a class="anchor" aria-label="anchor" href="#arg-effort"></a></dt>
+<dd><p>Non-negative number: the total effort, as track length (the
+distance the searchers travel while searching, in the unit of <code>W</code>).
+For <code>srchpod()</code>, the track length in each area, one number or one per
+area (a matrix laid out like the map when <code>area</code> is one); default
+<code>NULL</code>.</p></dd>
+
+
+<dt id="arg-area">area<a class="anchor" aria-label="anchor" href="#arg-area"></a></dt>
+<dd><p>Positive numeric vector, one per cell: the cell areas, in the
+square of the unit of <code>W</code>. May be <code>NULL</code> when <code>poc</code> is an
+<code>rmbl_datummap</code> (its cells' areas are used). For <code>srchpod()</code>,
+the areas searched, or a map from <code>datumpmap()</code> whose cell areas are
+taken; default <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-s">S<a class="anchor" aria-label="anchor" href="#arg-s"></a></dt>
@@ -205,18 +234,26 @@ on each side (at least 1; default 60).</p></dd>
 
 <dt id="arg-poc">poc<a class="anchor" aria-label="anchor" href="#arg-poc"></a></dt>
 <dd><p>Numeric vector or matrix in [0, 1], summing to at most 1: the
-probability that each area contains the object. For <code>opteffort()</code>
-also an <code>rmbl_datummap</code> object from <code>datumpmap()</code>.</p></dd>
+probability that each area contains the object (your own areas' shares,
+for example from a consensus of the planners' scenarios). For
+<code>srchscs()</code> and <code>opteffort()</code> also a probability map from
+<code>datumpmap()</code>: its cells are the areas, in the order of
+<code>as.vector(map$poc)</code>.</p></dd>
 
 
 <dt id="arg-pod">pod<a class="anchor" aria-label="anchor" href="#arg-pod"></a></dt>
 <dd><p>Numeric vector in [0, 1], one per area, or a matrix with one
-row per search and one column per area.</p></dd>
+row per search and one column per area. When <code>poc</code> is a map, also a
+matrix laid out like the map (one search, cell by cell), a
+<code>srchpod()</code> result with one value per cell, or an
+<code>opteffort()</code> result (its cells' PODs).</p></dd>
 
 
 <dt id="arg-xedg-yedg">xedg, yedg<a class="anchor" aria-label="anchor" href="#arg-xedg-yedg"></a></dt>
 <dd><p>Strictly increasing numeric vectors: the cell edges of the
-grid.</p></dd>
+grid laid over your search area, east-west and north-south, in the
+distance unit (<code>seq(-5, 5, by = 0.5)</code>: half-unit cells over ten
+units). Cells may differ in size.</p></dd>
 
 
 <dt id="arg-datum">datum<a class="anchor" aria-label="anchor" href="#arg-datum"></a></dt>
@@ -225,13 +262,15 @@ grid.</p></dd>
 
 
 <dt id="arg-center">center<a class="anchor" aria-label="anchor" href="#arg-center"></a></dt>
-<dd><p>Two numbers: the datum point, the start of a line datum or a
-corner of an area datum. Default <code>c(0, 0)</code>.</p></dd>
+<dd><p>Two numbers, x then y in the grid's coordinates: the datum
+point (for example the last known position), the start of a line datum or
+a corner of an area datum. Default <code>c(0, 0)</code>.</p></dd>
 
 
 <dt id="arg-sigma">sigma<a class="anchor" aria-label="anchor" href="#arg-sigma"></a></dt>
 <dd><p>Positive number: the standard deviation of the circular normal
-position error.</p></dd>
+position error, in the distance unit (a total probable error <code>E</code> is
+<code>1.1774 sigma</code>). Default 1.</p></dd>
 
 
 <dt id="arg-end">end<a class="anchor" aria-label="anchor" href="#arg-end"></a></dt>
@@ -249,15 +288,6 @@ datum. Default 64.</p></dd>
 weights, one row per <code>y</code> cell and one column per <code>x</code> cell.</p></dd>
 
 
-<dt id="arg-effort">effort<a class="anchor" aria-label="anchor" href="#arg-effort"></a></dt>
-<dd><p>Non-negative number: the total effort, as track length.</p></dd>
-
-
-<dt id="arg-area">area<a class="anchor" aria-label="anchor" href="#arg-area"></a></dt>
-<dd><p>Positive numeric vector, one per cell: the cell areas. May be
-<code>NULL</code> when <code>poc</code> is an <code>rmbl_datummap</code>.</p></dd>
-
-
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
 <dd><p>Positive number: the bisection tolerance on log lambda.</p></dd>
 
@@ -271,7 +301,9 @@ class <code>rmbl_srchpod</code>. <code>swpwdth()</code> and <code>pswppod()</cod
 number. <code>srchscs()</code>: a list of class <code>rmbl_srchscs</code> with
 <code>pos</code> (the probability of success), <code>posarea</code> (per area),
 <code>pocupd</code> (the updated containment probabilities) and
-<code>cumpod</code> (the cumulative POD per area). <code>datumpmap()</code>: a list
+<code>cumpod</code> (the cumulative POD per area), and when <code>poc</code> is a
+map, <code>map</code>: the map after the unsuccessful search, ready for
+<code>opteffort()</code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>. <code>datumpmap()</code>: a list
 of class <code>rmbl_datummap</code> with <code>poc</code>, a matrix with one row
 per <code>y</code> cell and one column per <code>x</code> cell, <code>outside</code>, and
 the inputs. <code>optcrcsrch()</code>: a list of class <code>rmbl_optcrc</code> with
@@ -342,7 +374,14 @@ search of a circular normal datum covers a disc of radius
 cell <code>i</code> is <code>z_i = (A_i / W) log(r_i / lambda)</code> where
 <code>r_i = POC_i W / A_i</code> exceeds <code>lambda</code>, and 0 elsewhere; the
 Lagrange multiplier <code>lambda</code> is found by bisection on its logarithm so
-that the efforts add up to <code>effort</code> (Stone 1975, chapter 2).</p>
+that the efforts add up to <code>effort</code> (Stone 1975, chapter 2). It assumes
+random search detection in every cell (the exponential POD curve,
+<code>srchpod(model = "random")</code>), the conservative choice when the tracks
+are not laid evenly; a plan searched by parallel sweeps does at least as
+well.</p>
+<p>All distances (<code>x</code>, <code>W</code>, <code>S</code>, <code>navsd</code>, the grid
+edges, <code>center</code>, <code>end</code>, <code>sigma</code>, <code>effort</code>) are in one
+unit of your choice, and areas in its square.</p>
 <p>Every input is checked: numbers must be finite and of the right length,
 sweep widths, spacings and standard deviations positive, probabilities in
 [0, 1] and containment probabilities summing to at most 1; unknown models
@@ -368,14 +407,23 @@ Soza and Company and U.S. Coast Guard Office of Search and Rescue.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># inverse cube detection 0.5, 1 and 2 sweep widths off the track</span></span></span>
 <span class="r-in"><span><span class="fu">ltrlrng</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, W <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Lateral range curve ─────────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   inverse cube model, sweep width W = 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  range       pod</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    0.5 0.2726230</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    1.0 0.0764935</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2.0 0.0196978</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Lateral range curve</span> ─────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Model          inverse cube                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Sweep width W  1                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Ranges         3, from 0.5 to 2                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Highest pod    0.2726                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     range       pod                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -------  --------                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0.50000  0.272623                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   1.00000  0.076494                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2.00000  0.019698                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   inverse cube model, sweep width W = 1                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   pod: the chance of detecting the object at that distance from the track. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The sweep width W is the area under this curve.                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ltrlrng</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">3</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>, W <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="ltrlrng-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
@@ -386,28 +434,44 @@ Soza and Company and U.S. Coast Guard Office of Search and Rescue.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># POD at coverage 1 under the three models</span></span></span>
 <span class="r-in"><span><span class="fu">srchpod</span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Probability of detection ────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   random search model</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  coverage      pod</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 0.632121</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Probability of detection</span> ─────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Model      random search                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Coverages  1                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   coverage       pod                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   --------  --------                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │          1  0.632121                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   random search model                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Coverage is effort over area (sweep width x track length / area); │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   pod is the chance a search at that coverage finds the object.     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu">srchpod</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, model <span class="op">=</span> <span class="st">"invcube"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Probability of detection ────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   inverse cube model</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  coverage      pod</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       0.5 0.469116</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       1.0 0.789909</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       2.0 0.987811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Probability of detection</span> ─────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Model      inverse cube                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Coverages  3                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   coverage       pod                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   --------  --------                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │    0.50000  0.469116                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │    1.00000  0.789909                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │    2.00000  0.987811                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   inverse cube model                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Coverage is effort over area (sweep width x track length / area); │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   pod is the chance a search at that coverage finds the object.     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">srchpod</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="ltrlrng-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># the book's M-Beta curves against random search and the definite range</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">srchpod</span><span class="op">(</span><span class="fl">1</span>, <span class="st">"mbeta"</span>, m <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>, models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"random"</span>, <span class="st">"definite"</span>, <span class="st">"mbeta"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>     m <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.25</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu">srchpod</span><span class="op">(</span><span class="fl">1</span>, <span class="st">"mbeta"</span>, m <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"random"</span>, <span class="st">"definite"</span>, <span class="st">"mbeta"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  m <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.25</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="ltrlrng-3.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="co"># the expected curve under a navigation error as large as half the sweep width</span></span></span>
+<span class="r-in"><span><span class="co"># the expected curve under a navigation error as large as half the sweep</span></span></span>
+<span class="r-in"><span><span class="co"># width</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ltrlrng</span><span class="op">(</span><span class="fl">0</span>, W <span class="op">=</span> <span class="fl">1</span>, navsd <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>, equiv <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="ltrlrng-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
@@ -419,14 +483,21 @@ Soza and Company and U.S. Coast Guard Office of Search and Rescue.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># three areas searched once; the containment after finding nothing</span></span></span>
 <span class="r-in"><span><span class="fu">srchscs</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">0.5</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Probability of success ──────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   POS 0.55 after 1 search</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  area poc cumpod posarea pocupd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     1 0.5    0.8    0.40 0.2222</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     2 0.3    0.5    0.15 0.3333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     3 0.2    0.0    0.00 0.4444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Probability of success</span> ────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Areas        3                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Searches     1                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Overall POS  0.55                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   area     poc  cumpod  posarea  pocupd                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----  ------  ------  -------  ------                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      1  0.5000  0.8000   0.4000  0.2222                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      2  0.3000  0.5000   0.1500  0.3333                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │      3  0.2000  0.0000   0.0000  0.4444                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   POS 0.55 after 1 search                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   poc: chance the object is in the area; cumpod: chance the searches │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   detect it there; pocupd: the poc after the searches found nothing. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰──────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a point datum on a 10 x 10 grid, and the best use of 30 units of track</span></span></span>
 <span class="r-in"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu">datumpmap</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">5</span>, <span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">5</span>, <span class="fl">5</span><span class="op">)</span>, sigma <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
@@ -435,8 +506,11 @@ Soza and Company and U.S. Coast Guard Office of Search and Rescue.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">m</span>, view <span class="op">=</span> <span class="st">"both"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="ltrlrng-6.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># the book's line datum: normal across the line, uniform along it</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">datumpmap</span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">10</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">3</span>, by <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span>, <span class="st">"corridor"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, end <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>     view <span class="op">=</span> <span class="st">"cells"</span>, digits <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu">datumpmap</span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">10</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">3</span>, by <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span>, <span class="st">"corridor"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, end <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  view <span class="op">=</span> <span class="st">"cells"</span>,</span></span>
+<span class="r-in"><span>  digits <span class="op">=</span> <span class="fl">1</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="ltrlrng-7.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu">opteffort</span><span class="op">(</span><span class="va">m</span>, W <span class="op">=</span> <span class="fl">1</span>, effort <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">a</span><span class="op">$</span><span class="va">pos</span></span></span>
@@ -446,9 +520,114 @@ Soza and Company and U.S. Coast Guard Office of Search and Rescue.</p>
 <span class="r-in"><span><span class="fu">optcrcsrch</span><span class="op">(</span>sigma <span class="op">=</span> <span class="fl">2</span>, W <span class="op">=</span> <span class="fl">1</span>, effort <span class="op">=</span> <span class="fl">30</span><span class="op">)</span><span class="op">$</span><span class="va">pos</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.4571532</span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># your own search, step by step: a last known position 2 km east and 3 km</span></span></span>
+<span class="r-in"><span><span class="co"># north of the base, known to about 1.5 km, on a grid of 1 km cells</span></span></span>
+<span class="r-in"><span><span class="va">own</span> <span class="op">&lt;-</span> <span class="fu">datumpmap</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">7</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">8</span><span class="op">)</span>, center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, sigma <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">own</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Datum probability map (point datum)</span> ──────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Datum   point                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Centre  2, 3                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Sigma   1.5                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Grid    10 x 10 cells (x by y)                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The most likely cells                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │       x      y      poc                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  -----  -------                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   1.500  2.500  0.06126                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   1.500  3.500  0.06126                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2.500  2.500  0.06126                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2.500  3.500  0.06126                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0.500  2.500  0.03992                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   10 x 10 cells (x by y); 0.2% of the probability lies outside the grid │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
+<span class="r-in"><span><span class="co"># 0.6 km sweep width; 12 km of track walked in each of the four cells round</span></span></span>
+<span class="r-in"><span><span class="co"># the position, none elsewhere</span></span></span>
+<span class="r-in"><span><span class="va">walked</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">own</span><span class="op">$</span><span class="va">poc</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">own</span><span class="op">$</span><span class="va">poc</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">walked</span><span class="op">[</span><span class="fl">5</span><span class="op">:</span><span class="fl">6</span>, <span class="fl">5</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">12</span></span></span>
+<span class="r-in"><span><span class="va">pd</span> <span class="op">&lt;-</span> <span class="fu">srchpod</span><span class="op">(</span>W <span class="op">=</span> <span class="fl">0.6</span>, effort <span class="op">=</span> <span class="va">walked</span>, area <span class="op">=</span> <span class="va">own</span>, model <span class="op">=</span> <span class="st">"invcube"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># the chance that search found the hiker, and the map if it did not</span></span></span>
+<span class="r-in"><span><span class="va">day1</span> <span class="op">&lt;-</span> <span class="fu">srchscs</span><span class="op">(</span><span class="va">own</span>, <span class="va">pd</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">day1</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Probability of success</span> ────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Areas        100                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Searches     1                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Overall POS  0.245                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Map          10 x 10 cells (x by y), updated in $map               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   area      poc  cumpod  posarea   pocupd                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----  -------  ------  -------  -------                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     45  0.06126       1  0.06126  0.00000                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     46  0.06126       1  0.06126  0.00000                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     55  0.06126       1  0.06126  0.00000                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     56  0.06126       1  0.06126  0.00000                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     35  0.03992       0  0.00000  0.05287                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     36  0.03992       0  0.00000  0.05287                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     44  0.03992       0  0.00000  0.05287                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     54  0.03992       0  0.00000  0.05287                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     47  0.03992       0  0.00000  0.05287                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     57  0.03992       0  0.00000  0.05287                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     65  0.03992       0  0.00000  0.05287                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     66  0.03992       0  0.00000  0.05287                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     34  0.02601       0  0.00000  0.03445                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     37  0.02601       0  0.00000  0.03445                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     64  0.02601       0  0.00000  0.03445                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     67  0.02601       0  0.00000  0.03445                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     48  0.01694       0  0.00000  0.02244                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     58  0.01694       0  0.00000  0.02244                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     75  0.01694       0  0.00000  0.02244                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     76  0.01694       0  0.00000  0.02244                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   POS 0.245 after 1 search                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   poc: chance the object is in the area; cumpod: chance the searches │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   detect it there; pocupd: the poc after the searches found nothing. │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The 20 most likely of 100 cells.                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰──────────────────────────────────────────────────────────────────────╯</span>
+<span class="r-in"><span><span class="co"># the best use of tomorrow's 40 km on what is left</span></span></span>
+<span class="r-in"><span><span class="va">day2</span> <span class="op">&lt;-</span> <span class="fu">opteffort</span><span class="op">(</span><span class="va">day1</span><span class="op">$</span><span class="va">map</span>, W <span class="op">=</span> <span class="fl">0.6</span>, effort <span class="op">=</span> <span class="fl">40</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">day2</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Optimal allocation of effort</span> ────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Total effort    40                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Sweep width W   0.6                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cells searched  28 of 100                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   POS             0.5369                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   cell      poc  effort  coverage     pod                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----  -------  ------  --------  ------                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     35  0.05287   2.551     1.530  0.7835                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     36  0.05287   2.551     1.530  0.7835                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     44  0.05287   2.551     1.530  0.7835                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     54  0.05287   2.551     1.530  0.7835                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     47  0.05287   2.551     1.530  0.7835                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     57  0.05287   2.551     1.530  0.7835                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     65  0.05287   2.551     1.530  0.7835                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     66  0.05287   2.551     1.530  0.7835                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     34  0.03445   1.837     1.102  0.6678                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     37  0.03445   1.837     1.102  0.6678                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     64  0.03445   1.837     1.102  0.6678                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     67  0.03445   1.837     1.102  0.6678                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     48  0.02244   1.122     0.673  0.4901                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     58  0.02244   1.122     0.673  0.4901                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     75  0.02244   1.122     0.673  0.4901                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     76  0.02244   1.122     0.673  0.4901                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     25  0.02244   1.122     0.673  0.4901                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     26  0.02244   1.122     0.673  0.4901                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     43  0.02244   1.122     0.673  0.4901                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     53  0.02244   1.122     0.673  0.4901                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   POS 0.5369 from effort 40 over 28 of 100 cells (W = 0.6) │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ... and 8 more cells                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────╯</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">day1</span><span class="op">$</span><span class="va">map</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="ltrlrng-9.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># inputs that cannot be right are refused</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">ltrlrng</span><span class="op">(</span><span class="fl">1</span>, W <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : ltrlrng: `W` must be positive</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">srchpod</span><span class="op">(</span><span class="fl">1</span>, W <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : srchpod: give either `coverage` or `W`, `effort` and `area`, not both</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">srchscs</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">0.8</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : srchscs: `poc` must sum to at most 1, got 1.6</span>
 </code></pre></div>

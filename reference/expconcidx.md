@@ -48,9 +48,11 @@ Rows with a missing exposure or income are dropped. The interpretation
 calls an index below -0.01 a burden on the poor, above 0.01 a burden on
 the rich, and anything between an even distribution. Refusals: column
 names that are not single strings or not in `data`; fewer than 2
-complete rows; a non-numeric or infinite value; a negative exposure; and
-a mean exposure of zero (the index divides by it). Income only needs an
-order: an amount, a quintile number or a rank all give the same index.
+complete rows; a non-numeric or infinite value; a negative exposure; an
+income that takes one value only (no income gradient, so the index is
+undefined); and a mean exposure of zero (the index divides by it).
+Income only needs an order: an amount, a quintile number or a rank all
+give the same index.
 
 ## References
 

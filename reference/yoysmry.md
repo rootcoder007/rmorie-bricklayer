@@ -31,7 +31,7 @@ yoysmry(object, ...)
 
 - ...:
 
-  Ignored.
+  Further arguments for methods; not used.
 
 ## Value
 
@@ -47,14 +47,20 @@ changes).
 ## Details
 
 Rows whose `value` is missing are dropped before the summary, and the
-remaining rows are sorted by period. With \\v_1\\ the first and \\v_T\\
-the last observed value, the total change is \$\$100 (v_T / v_1 - 1)\$\$
-and, with \\s = (T - 1) / \mathrm{lag}\\ steps of length `lag`, \$\$100
-\left( (v_T / v_1)^{1/s} - 1 \right).\$\$ Both are `NA` when \\v_1 \le
-0\\, because a growth rate out of zero does not exist; `cagrpct` is also
-`NA` for a single period. `"Annual"` in CAGR assumes one period is a
-year; for monthly or quarterly data read it as the compound rate per
-`lag` periods.
+remaining rows are sorted by period, text periods in the order
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+read them (its `prd` and `prdord`). Periods with no order (text
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+could not read, an unordered factor) have no first or last: `from`,
+`to`, `first`, `last`, `totalpct` and `cagrpct` are then `NA`, with a
+warning saying why. With \\v_1\\ the first and \\v_T\\ the last observed
+value, the total change is \$\$100 (v_T / v_1 - 1)\$\$ and, with \\s =
+(T - 1) / \mathrm{lag}\\ steps of length `lag`, \$\$100 \left( (v_T /
+v_1)^{1/s} - 1 \right).\$\$ Both are `NA` when \\v_1 \le 0\\, because a
+growth rate out of zero does not exist; `cagrpct` is also `NA` for a
+single period. `"Annual"` in CAGR assumes one period is a year; for
+monthly or quarterly data read it as the compound rate per `lag`
+periods.
 
 The `up`, `down` and `flat` counts are taken from the percent-change
 column (`pctchg`, or `ppchg` for `units = "percent"`). A change out of a
@@ -77,16 +83,39 @@ result is refused with the error “`object` must be a yoy() result”.
 # one series
 d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
 yoysmry(yoy(d, value = "n", prd = "year"))
-#>   from   to first last totalpct  cagrpct periods up down flat
-#> 1 2018 2023   120  149 24.16667 4.424163       6  3    2    0
+#> ╭── Year-over-year summary ──────────────────────────────────────────────╮
+#> │   Series  1                                                            │
+#> │                                                                        │
+#> │   from  to    first  last  totalpct  cagrpct  periods  up  down  flat  │
+#> │   ----  ----  -----  ----  --------  -------  -------  --  ----  ----  │
+#> │   2018  2023    120   149     24.17    4.424        6   3     2     0  │
+#> │                                                                        │
+#> │   totalpct is the change from the first period to the last and cagrpct │
+#> │   the compound rate per step; up, down and flat count the changes from │
+#> │   one period to the next.                                              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # one row per group; a zero base gives no percent change
 g <- data.frame(year = rep(2019:2022, 2), unit = rep(c("A", "B"), each = 4),
                 n = c(10, 12, 0, 15, 5, 7, 6, 9))
 yoysmry(yoy(g, value = "n", prd = "year", by = "unit"))
-#>   unit from   to first last totalpct  cagrpct periods up down flat
-#> 1    A 2019 2022    10   15       50 14.47142       4  1    1    0
-#> 2    B 2019 2022     5    9       80 21.64404       4  2    1    0
+#> ╭── Year-over-year summary ──────────────────────────────────────────────╮
+#> │   Series  2                                                            │
+#> │                                                                        │
+#> │   unit  from  to    first  last  totalpct  cagrpct  periods  up  down  │
+#> │   ----  ----  ----  -----  ----  --------  -------  -------  --  ----  │
+#> │   A     2019  2022     10    15        50    14.47        4   1     1  │
+#> │   B     2019  2022      5     9        80    21.64        4   2     1  │
+#> │                                                                        │
+#> │   unit  flat                                                           │
+#> │   ----  ----                                                           │
+#> │   A        0                                                           │
+#> │   B        0                                                           │
+#> │                                                                        │
+#> │   totalpct is the change from the first period to the last and cagrpct │
+#> │   the compound rate per step; up, down and flat count the changes from │
+#> │   one period to the next.                                              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # anything that is not a yoy() result is refused
 try(yoysmry(d))

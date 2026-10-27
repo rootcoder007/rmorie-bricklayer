@@ -16,7 +16,7 @@ cnormpdf(x, mean = 0, sd = 1)
 
 - x:
 
-  Numeric vector of quantiles.
+  Numeric vector of quantiles at which the density is evaluated.
 
 - mean:
 

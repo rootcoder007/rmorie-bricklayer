@@ -13,7 +13,7 @@ chwknll(
   times,
   hor,
   kernel = c("exponential", "weibull", "lomax", "gamma"),
-  par
+  par = NULL
 )
 ```
 
@@ -37,9 +37,10 @@ chwknll(
 
 - par:
 
-  Numeric parameter vector, as described above: length 3 (`a0`, `eta`,
-  `beta`) for `"exponential"`, length 4 (`a0`, `eta` and the kernel's
-  two parameters) for the others. Rates are per unit of `times`.
+  Numeric parameter vector (required), as described above: length 3
+  (`a0`, `eta`, `beta`) for `"exponential"`, length 4 (`a0`, `eta` and
+  the kernel's two parameters) for the others. Rates are per unit of
+  `times`.
 
 ## Value
 

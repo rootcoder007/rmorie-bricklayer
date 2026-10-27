@@ -43,10 +43,23 @@ otis
 a <- anltab(otis, value = "individuals", prd = "year",
                    by = c("table", "group"))
 a
-#> Analysis of `individuals` by year over 3 period(s) (2023 to 2025), grouped by table x group
-#>   rows 15, columns 4; no missing values
-#>   change: 10 comparison(s), 9 significant after BH at 0.05
-#>   trend: 0 of 5 series with Mann-Kendall p < 0.05
+#> ╭── Analysis of a published table ────────────────────────────────────────╮
+#> │   Value       `individuals`                                             │
+#> │   Period      year                                                      │
+#> │   Periods     3 (2023 to 2025)                                          │
+#> │   Grouped by  table x group                                             │
+#> │   Rows        15                                                        │
+#> │   Columns     4                                                         │
+#> │   Missing     no missing values                                         │
+#> │   Changes     10 comparison(s), 9 significant after BH at 0.05          │
+#> │   Trend       0 of 5 series with Mann-Kendall p < 0.05                  │
+#> │                                                                         │
+#> │   Changes are between consecutive periods with exact or interval tests, │
+#> │   adjusted for the number of comparisons; rptanl() writes the full      │
+#> │   tables as a report, and x$change, x$rates and x$trend hold them.      │
+#> │                                                                         │
+#> │   Run 2026-10-27 13:58                                                  │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 The change table carries an exact interval for every percent change and
@@ -161,10 +174,17 @@ per column.
 ``` r
 
 drftcal(otis, n = 10)
-#> Drift screens on 10 identical re-fetches (alpha = 0.01)
-#>   at least one column flagged: 0% of re-fetches
-#>   no column fired on identical data
-#>   per-screen alpha for a family-wise 0.01: 0.0025
+#> ╭── Drift screen calibration ─────────────────────────────────────────────╮
+#> │   Identical re-fetches         10                                       │
+#> │   Alpha                        0.01                                     │
+#> │   Columns screened             4                                        │
+#> │   At least one column flagged  0% of re-fetches                         │
+#> │   Per-screen alpha             0.0025 for a family-wise 0.01            │
+#> │                                                                         │
+#> │   Each re-fetch splits the same table in two at random and runs the     │
+#> │   drift screen on the halves, so every flag is a false alarm. No column │
+#> │   fired on identical data.                                              │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Stock and flow
@@ -183,14 +203,25 @@ reports both sides and checks the identity.
 sf <- stkflow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
                  prd = c(2022, 2023, 2024), t = 365)
 sf
-#> ── Stock and flow over 3 periods ───────────────────────────────── 
-#>  period people  days alos adp
-#>    2022    300 21900   73  60
-#>    2023    325 23725   73  65
-#>    2024    280 20440   73  56
-#> 
-#>   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Stock and flow over 3 periods ────────────────────────────────────────────╮
+#> │   Periods          2022 to 2024                                             │
+#> │   Period length    365 days                                                 │
+#> │   Changes against  the first period                                         │
+#> │   Columns          alos = days per person; adp = people held on an average  │
+#> │                    day                                                      │
+#> │                                                                             │
+#> │   period  people    days  alos  adp                                         │
+#> │   ------  ------  ------  ----  ---                                         │
+#> │   2022       300  21,900    73   60                                         │
+#> │   2023       325  23,725    73   65                                         │
+#> │   2024       280  20,440    73   56                                         │
+#> │                                                                             │
+#> │   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%                        │
+#> │                                                                             │
+#> │   Lakner (1976): adp = people x alos / t, exact only in a steady state.     │
+#> │   A period shorter than the longest stay cuts unfinished stays short,       │
+#> │   so alos is biased downward (p.16-17).                                     │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 A population that rose while stays shortened, or fell while stays
@@ -217,14 +248,25 @@ reports both sides and checks the identity.
 sf <- stkflow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
                  prd = c(2022, 2023, 2024), t = 365)
 sf
-#> ── Stock and flow over 3 periods ───────────────────────────────── 
-#>  period people  days alos adp
-#>    2022    300 21900   73  60
-#>    2023    325 23725   73  65
-#>    2024    280 20440   73  56
-#> 
-#>   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%
-#> ──────────────────────────────────────────────────────────────────
+#> ╭── Stock and flow over 3 periods ────────────────────────────────────────────╮
+#> │   Periods          2022 to 2024                                             │
+#> │   Period length    365 days                                                 │
+#> │   Changes against  the first period                                         │
+#> │   Columns          alos = days per person; adp = people held on an average  │
+#> │                    day                                                      │
+#> │                                                                             │
+#> │   period  people    days  alos  adp                                         │
+#> │   ------  ------  ------  ----  ---                                         │
+#> │   2022       300  21,900    73   60                                         │
+#> │   2023       325  23,725    73   65                                         │
+#> │   2024       280  20,440    73   56                                         │
+#> │                                                                             │
+#> │   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%                        │
+#> │                                                                             │
+#> │   Lakner (1976): adp = people x alos / t, exact only in a steady state.     │
+#> │   A period shorter than the longest stay cuts unfinished stays short,       │
+#> │   so alos is biased downward (p.16-17).                                     │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 
 A population that rose while stays shortened, or fell while stays
@@ -239,7 +281,7 @@ give the single measures.
 
 The same approach works on any table with an estimate and its interval.
 The package also bundles Statistics Canada estimates of First Nations,
-Metis and Inuit health and mental health
+Métis and Inuit health and mental health
 ([`?indiex`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indiex.md)).
 [`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md)
 analyses them: by distinction, with suppressed cells never imputed, and

@@ -206,8 +206,17 @@ o <- order(back$estimate)
 t1 <- back[o, ]
 yy <- seq_len(nrow(t1))
 op <- par(mar = c(4, 16, 3, 1))
-plot(t1$estimate, yy, xlim = range(t1$lower, t1$upper), yaxt = "n", pch = 19, col = blpal()[1],
-     xlab = "estimate and 95% interval", ylab = "", main = t1$measure[1])
+plot(
+  t1$estimate,
+  yy,
+  xlim = range(t1$lower, t1$upper),
+  yaxt = "n",
+  pch = 19,
+  col = blpal()[1],
+  xlab = "estimate and 95% interval",
+  ylab = "",
+  main = t1$measure[1]
+)
 segments(t1$lower, yy, t1$upper, yy, col = blpal()[1])
 axis(2, yy, t1$group, las = 1, cex.axis = 0.7)
 ```

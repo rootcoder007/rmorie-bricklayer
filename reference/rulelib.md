@@ -14,19 +14,19 @@ message and the rows that failed.
 ## Usage
 
 ``` r
-ruleinset(col, set, napass = TRUE, sev = c("warning", "fatal"))
+ruleinset(col = NULL, set, napass = TRUE, sev = c("warning", "fatal"))
 
-rulebtw(col, lo, hi, napass = TRUE, sev = c("warning", "fatal"))
+rulebtw(col = NULL, lo, hi, napass = TRUE, sev = c("warning", "fatal"))
 
-rulenull(col, sev = c("warning", "fatal"))
+rulenull(col = NULL, sev = c("warning", "fatal"))
 
-ruleuniq(col, sev = c("warning", "fatal"))
+ruleuniq(col = NULL, sev = c("warning", "fatal"))
 
-rulerx(col, pat, napass = TRUE, sev = c("warning", "fatal"))
+rulerx(col = NULL, pat, napass = TRUE, sev = c("warning", "fatal"))
 
-ruleincr(col, strict = FALSE, sev = c("warning", "fatal"))
+ruleincr(col = NULL, strict = FALSE, sev = c("warning", "fatal"))
 
-rulemad(col, n = 3, napass = TRUE, sev = c("warning", "fatal"))
+rulemad(col = NULL, n = 3, napass = TRUE, sev = c("warning", "fatal"))
 
 rulecmpl(sev = c("warning", "fatal"))
 
@@ -123,8 +123,8 @@ What each rule checks:
 
 - `rulecmpl()`: no row has a missing value. Name `"complete_rows"`.
 
-- `ruledstn()`: no row repeats an earlier one on `columns` (columns not
-  in the data are ignored; when none is present the rule passes). Name
+- `ruledstn()`: no row repeats an earlier one on `cols` (columns not in
+  the data are ignored; when none is present the rule passes). Name
   `"distinct_rows"`.
 
 - `rulecolcnt()`: the data have exactly `n` columns. Name `"col_count"`.
@@ -186,10 +186,12 @@ valrules(df, rules)$grade_in_set$rows
 
 # Clean data passes every one of them.
 ok <- data.frame(
-  id = 1:3, grade = c("a", "b", "c"),
+  id = 1:3,
+  grade = c("a", "b", "c"),
   score = c(5, 50, 7),
   email = c("a@b.com", "c@d.org", "e@f.net"),
-  day = 1:3, stringsAsFactors = FALSE
+  day = 1:3,
+  stringsAsFactors = FALSE
 )
 length(valrules(ok, rules))
 #> [1] 1
@@ -214,7 +216,10 @@ valrules(df, rulecmpl())
 g <- data.frame(grade = c("a", NA, "b"))
 length(valrules(g, ruleinset("grade", c("a", "b"))))
 #> [1] 0
-valrules(g, ruleinset("grade", c("a", "b"), napass = FALSE))$grade_in_set$rows
+valrules(
+  g,
+  ruleinset("grade", c("a", "b"), napass = FALSE)
+)$grade_in_set$rows
 #> [1] 2
 
 # bounds are checked when the rule is made

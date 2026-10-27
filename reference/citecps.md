@@ -24,7 +24,9 @@ citecps(prov)
 
 A list with `text` and `bibtex`, each a length-1 character string (the
 BibTeX entry has embedded newlines), or `NULL` if `provenance` is
-`NULL`.
+`NULL`. The list has class `c("rmbl_citation", "list")`, which only
+changes how it prints (a box); its elements, and the JSON written from
+it, are those of a plain list.
 
 ## Details
 

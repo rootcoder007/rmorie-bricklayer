@@ -121,14 +121,26 @@ b <- b[!is.na(b$lon), ]
 kn <- knoxtst(b$lon, b$lat, as.Date(b$occ_date), spcbands = c(100, 200, 400),
                 tmbands = c(7, 14, 28), nsim = 199, seed = 1)
 kn
-#> ── Knox ratios, observed / expected pairs (508 incidents, 199 permutations)  
-#>   distance  0-7 d 7-14 d 14-28 d
-#>    0-100 m 1.66**   1.16    1.09
-#>  100-200 m   1.25   0.91    1.17
-#>  200-400 m   1.07   1.03    1.01
-#> 
-#>   * p < 0.05, ** p < 0.01, one-sided per cell (not adjusted for the number of cells)
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Knox test of near-repeat incidents ───────────────────────────────────────╮
+#> │   Incidents     508                                                         │
+#> │   Permutations  199                                                         │
+#> │   Close pairs   5,585                                                       │
+#> │   Space bands   100, 200, 400                                               │
+#> │   Time bands    7, 14, 28                                                   │
+#> │                                                                             │
+#> │   Knox ratios, observed / expected pairs                                    │
+#> │   distance   0-7 d   7-14 d  14-28 d                                        │
+#> │   ---------  ------  ------  -------                                        │
+#> │   0-100 m    1.66**  1.16    1.09                                           │
+#> │   100-200 m  1.25    0.91    1.17                                           │
+#> │   200-400 m  1.07    1.03    1.01                                           │
+#> │                                                                             │
+#> │   A ratio above 1: more pairs this close in space and in time than          │
+#> │   chance alone gives, the near-repeat pattern.                              │
+#> │                                                                             │
+#> │   * p < 0.05, ** p < 0.01, one-sided per cell (not adjusted for the number  │
+#> │   of cells); - nothing expected                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(kn)
 
 
@@ -139,13 +151,25 @@ kp <- knoxtst(runif(n, 0, 2000), runif(n, 0, 2000), runif(n, 0, 365),
                 spcbands = c(200, 400), tmbands = c(14, 28),
                 nsim = 99, seed = 2, xy = "planar")
 kp
-#> ── Knox ratios, observed / expected pairs (150 incidents, 99 permutations)  
-#>   distance 0-14 d 14-28 d
-#>    0-200 m   0.77    0.73
-#>  200-400 m   1.06    0.85
-#> 
-#>   * p < 0.05, ** p < 0.01, one-sided per cell (not adjusted for the number of cells)
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Knox test of near-repeat incidents ───────────────────────────────────────╮
+#> │   Incidents     150                                                         │
+#> │   Permutations  99                                                          │
+#> │   Close pairs   1,135                                                       │
+#> │   Space bands   200, 400                                                    │
+#> │   Time bands    14, 28                                                      │
+#> │                                                                             │
+#> │   Knox ratios, observed / expected pairs                                    │
+#> │   distance   0-14 d  14-28 d                                                │
+#> │   ---------  ------  -------                                                │
+#> │   0-200 m    0.77    0.73                                                   │
+#> │   200-400 m  1.06    0.85                                                   │
+#> │                                                                             │
+#> │   A ratio above 1: more pairs this close in space and in time than          │
+#> │   chance alone gives, the near-repeat pattern.                              │
+#> │                                                                             │
+#> │   * p < 0.05, ** p < 0.01, one-sided per cell (not adjusted for the number  │
+#> │   of cells); - nothing expected                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # bands must increase
 try(knoxtst(b$lon, b$lat, as.Date(b$occ_date), c(400, 100), c(7, 14)))

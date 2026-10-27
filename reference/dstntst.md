@@ -89,21 +89,62 @@ meta-analysis. Statistics in Medicine 21(11):1539-1558.
 # perceived mental health very good or excellent, 2019/2022, adults (table
 # 13-10-0924-01)
 h <- indiex("health")
-mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
-          h$group != "Non-Indigenous" &
-          h$indicator == "Perceived mental health, very good or excellent", ]
+mh <- h[
+  h$period == "2019/2022" &
+    h$age == "Total, 18 years and over" &
+    h$group != "Non-Indigenous" &
+    h$indicator == "Perceived mental health, very good or excellent",
+]
 dt <- dstntst(mh, "group", "estimate", "lower", "upper", qual = "quality")
 dt
-#> Distinctions test across 3 groups: Q = 11.97 on 2 df, p = 0.00252, I^2 = 83%
-#> Pooled (inverse-variance) 49.11; the groups differ: report each one, not the pooled figure
+#> ╭── Distinctions test ───────────────────────────────────────────────────╮
+#> │   Groups       3                                                       │
+#> │   Cochran's Q  11.97 on 2 df                                           │
+#> │   p-value      0.003                                                   │
+#> │   I-squared    83% of the variation is beyond chance                   │
+#> │   Pooled       49.11 (se 0.973, inverse-variance mean)                 │
+#> │                                                                        │
+#> │   group          estimate     se  95% CI                               │
+#> │   -------------  --------  -----  --------------                       │
+#> │   First Nations     45.80  1.429  [43.00, 48.60]                       │
+#> │   Métis             52.80  1.454  [49.95, 55.65]                       │
+#> │   Inuit             47.80  3.291  [41.35, 54.25]                       │
+#> │                                                                        │
+#> │   Q says the groups differ: report each one, not the pooled figure.    │
+#> │   Q = 11.97, p = 0.00252.                                              │
+#> │                                                                        │
+#> │   Distinctions-based: each group is reported on its own; a             │
+#> │   pan-Indigenous total is left out of the test, never used as a group. │
+#> │   Higgins and Thompson (2002) for Q and I-squared.                     │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 plot(dt)
 
 # your own table: made-up numbers, with the pooled row named
-own <- data.frame(group = c("Aboriginal", "Torres Strait Islander", "Both"),
-                  est = c(24.0, 31.0, 24.6), lo = c(22.1, 26.2, 22.8), hi = c(25.9,
-                                                                              35.8, 26.4))
+own <- data.frame(
+  group = c("Aboriginal", "Torres Strait Islander", "Both"),
+  est = c(24.0, 31.0, 24.6),
+  lo = c(22.1, 26.2, 22.8),
+  hi = c(25.9, 35.8, 26.4)
+)
 dstntst(own, "group", "est", "lo", "hi", pooled = "Both")
-#> Distinctions test across 2 groups: Q = 7.06 on 1 df, p = 0.00787, I^2 = 86%
-#> Pooled (inverse-variance) 24.95; the groups differ: report each one, not the pooled figure
-#> Left out: Both 
+#> ╭── Distinctions test ───────────────────────────────────────────────────╮
+#> │   Groups       2                                                       │
+#> │   Cochran's Q  7.06 on 1 df                                            │
+#> │   p-value      0.008                                                   │
+#> │   I-squared    86% of the variation is beyond chance                   │
+#> │   Pooled       24.95 (se 0.901, inverse-variance mean)                 │
+#> │   Left out     Both                                                    │
+#> │                                                                        │
+#> │   group                   estimate     se  95% CI                      │
+#> │   ----------------------  --------  -----  --------------              │
+#> │   Aboriginal                    24  0.969  [22.10, 25.90]              │
+#> │   Torres Strait Islander        31  2.449  [26.20, 35.80]              │
+#> │                                                                        │
+#> │   Q says the groups differ: report each one, not the pooled figure.    │
+#> │   Q = 7.06, p = 0.00787.                                               │
+#> │                                                                        │
+#> │   Distinctions-based: each group is reported on its own; a             │
+#> │   pan-Indigenous total is left out of the test, never used as a group. │
+#> │   Higgins and Thompson (2002) for Q and I-squared.                     │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

@@ -74,53 +74,94 @@ for every column at once.
 df <- data.frame(grade = c("a", "b", "b", "c", NA, "b"),
                  stringsAsFactors = FALSE)
 freqtbl(df, "grade")
-#> ── Frequency table ─────────────────────────────────────────────── 
-#>        value n  pct pctvalid                  bar
-#>            b 3 50.0     60.0 ####################
-#>            a 1 16.7     20.0              #######
-#>            c 1 16.7     20.0              #######
-#>  – (missing) 1 16.7        –              #######
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Frequency table ──────────────────────────────────────────────────────╮
+#> │   Values        6                                                       │
+#> │   Levels shown  3                                                       │
+#> │   Missing       1                                                       │
+#> │                                                                         │
+#> │   value        n    pct  pctvalid  bar                                  │
+#> │   -----------  -  -----  --------  --------------------                 │
+#> │   b            3  50.00        60  ####################                 │
+#> │   a            1  16.70        20  #######                              │
+#> │   c            1  16.70        20  #######                              │
+#> │   – (missing)  1  16.70            #######                              │
+#> │                                                                         │
+#> │   pct is the share of all values, pctvalid the share of the non-missing │
+#> │   ones; the bar is scaled to the commonest level.                       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # The two percentage columns differ exactly by the missingness.
 freqtbl(df, "grade")[, c("pct", "pctvalid")]
-#>        pct pctvalid
-#> 1 50.00000       60
-#> 2 16.66667       20
-#> 3 16.66667       20
-#> 4 16.66667       NA
+#> ╭── Frequency table ────────────────────────────────────────────────────╮
+#> │   Rows     4                                                          │
+#> │   Columns  2                                                          │
+#> │                                                                       │
+#> │     pct  pctvalid                                                     │
+#> │   -----  --------                                                     │
+#> │   50.00        60                                                     │
+#> │   16.67        20                                                     │
+#> │   16.67        20                                                     │
+#> │   16.67                                                               │
+#> │                                                                       │
+#> │   Some of this result's columns are not here (a subset of it?), so it │
+#> │   is shown as a plain table.                                          │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # A vector works directly.
 freqtbl(c(1, 1, 2, 3, 3, 3))
-#> ── Frequency table ─────────────────────────────────────────────── 
-#>  value n  pct pctvalid                  bar
-#>      3 3 50.0     50.0 ####################
-#>      1 2 33.3     33.3        #############
-#>      2 1 16.7     16.7              #######
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Frequency table ──────────────────────────────────────────────────────╮
+#> │   Values        6                                                       │
+#> │   Levels shown  3                                                       │
+#> │   Missing       0                                                       │
+#> │                                                                         │
+#> │   value  n    pct  pctvalid  bar                                        │
+#> │   -----  -  -----  --------  --------------------                       │
+#> │   3      3  50.00     50.00  ####################                       │
+#> │   1      2  33.30     33.30  #############                              │
+#> │   2      1  16.70     16.70  #######                                    │
+#> │                                                                         │
+#> │   pct is the share of all values, pctvalid the share of the non-missing │
+#> │   ones; the bar is scaled to the commonest level.                       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # Sorted value order rather than frequency order.
 freqtbl(c("c", "a", "b", "a"), sort = FALSE)
-#> ── Frequency table ─────────────────────────────────────────────── 
-#>  value n  pct pctvalid                  bar
-#>      a 2 50.0     50.0 ####################
-#>      b 1 25.0     25.0           ##########
-#>      c 1 25.0     25.0           ##########
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Frequency table ──────────────────────────────────────────────────────╮
+#> │   Values        4                                                       │
+#> │   Levels shown  3                                                       │
+#> │   Missing       0                                                       │
+#> │                                                                         │
+#> │   value  n  pct  pctvalid  bar                                          │
+#> │   -----  -  ---  --------  --------------------                         │
+#> │   a      2   50        50  ####################                         │
+#> │   b      1   25        25  ##########                                   │
+#> │   c      1   25        25  ##########                                   │
+#> │                                                                         │
+#> │   pct is the share of all values, pctvalid the share of the non-missing │
+#> │   ones; the bar is scaled to the commonest level.                       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # Long tails are folded so the percentages still total 100.
 set.seed(1)
 ft <- freqtbl(sample(letters, 500, TRUE), maxlvl = 5)
 ft
-#> ── Frequency table ─────────────────────────────────────────────── 
-#>    value   n  pct pctvalid                  bar
-#>        y  25  5.0      5.0                    #
-#>        e  24  4.8      4.8                    #
-#>        t  24  4.8      4.8                    #
-#>        a  23  4.6      4.6                    #
-#>        f  23  4.6      4.6                    #
-#>  (other) 381 76.2     76.2 ####################
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Frequency table ──────────────────────────────────────────────────────╮
+#> │   Values        500                                                     │
+#> │   Levels shown  6                                                       │
+#> │   Missing       0                                                       │
+#> │                                                                         │
+#> │   value      n     pct  pctvalid  bar                                   │
+#> │   -------  ---  ------  --------  --------------------                  │
+#> │   y         25   5.000     5.000  #                                     │
+#> │   e         24   4.800     4.800  #                                     │
+#> │   t         24   4.800     4.800  #                                     │
+#> │   a         23   4.600     4.600  #                                     │
+#> │   f         23   4.600     4.600  #                                     │
+#> │   (other)  381  76.200    76.200  ####################                  │
+#> │                                                                         │
+#> │   pct is the share of all values, pctvalid the share of the non-missing │
+#> │   ones; the bar is scaled to the commonest level.                       │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 sum(ft$pct)
 #> [1] 100
 

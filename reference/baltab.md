@@ -54,6 +54,16 @@ different population variances are involved. Biometrika 34(1-2):28-35.
 d <- data.frame(t = rep(0:1, each = 50),
                 age = c(stats::rnorm(50, 30), stats::rnorm(50, 33)))
 baltab(d, "t", "age")
-#>   covariate meantrtd  meanctl      smd      p_value
-#> 1       age 32.80419 30.09459 2.747349 1.777265e-26
+#> ╭── Covariate balance ──────────────────────────────────────────────────╮
+#> │   Covariates     1                                                    │
+#> │   Largest |SMD|  2.747                                                │
+#> │   Above 0.1      1                                                    │
+#> │                                                                       │
+#> │   covariate  mean_treated  mean_comparison    smd  p_value            │
+#> │   ---------  ------------  ---------------  -----  -------            │
+#> │   age               32.80            30.09  2.747  < 0.001            │
+#> │                                                                       │
+#> │   A standardised mean difference (SMD) below 0.1 in absolute value is │
+#> │   usually read as balanced; 1 of 1 covariates are above it.           │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 ```

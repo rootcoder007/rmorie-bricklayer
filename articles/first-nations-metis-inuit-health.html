@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>First Nations, Metis and Inuit health: published tables, distinctions and governance • rmoriebricklayer</title>
+<title>First Nations, Métis and Inuit health: published tables, distinctions and governance • rmoriebricklayer</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -15,7 +15,7 @@
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="First Nations, Metis and Inuit health: published tables, distinctions and governance">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="First Nations, Métis and Inuit health: published tables, distinctions and governance">
 <meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI">
 </head>
 <body>
@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +73,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>First Nations, Metis and Inuit health: published tables, distinctions and governance</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>First Nations, Métis and Inuit health: published tables, distinctions and governance</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/vignettes/first-nations-metis-inuit-health.Rmd" class="external-link"><code>vignettes/first-nations-metis-inuit-health.Rmd</code></a></small>
@@ -82,7 +82,7 @@
 
     
     
-<p>This vignette covers the tools for First Nations, Metis and Inuit
+<p>This vignette covers the tools for First Nations, Métis and Inuit
 health, mental health and wellness data, as Statistics Canada publishes
 them. It also covers the rules those tools follow, because with these
 data, how you work matters as much as what you compute.</p>
@@ -182,7 +182,7 @@ Licence. It never holds First Nations-held survey data, such as the
 First Nations Regional Health Survey. Those are reached through the
 FNIGC, on its terms.</li>
 <li>
-<strong>Distinctions-based.</strong> First Nations, Metis and Inuit
+<strong>Distinctions-based.</strong> First Nations, Métis and Inuit
 are reported separately. A pooled “Indigenous” total is marked wherever
 it appears. <code><a href="../reference/dstntst.html">dstntst()</a></code> shows when pooling would hide a
 difference.</li>
@@ -221,19 +221,31 @@ limits;</li>
 <li>tables with no limits at all.</li>
 </ul>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>REF_DATE <span class="op">=</span> <span class="st">"2022"</span>, GEO <span class="op">=</span> <span class="st">"Canada"</span>,</span>
-<span>                `Indigenous identity` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"Metis"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
-<span>                Statistics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Number of persons"</span>, <span class="st">"Percent"</span>, <span class="st">"Low 95% confidence interval"</span>,</span>
-<span>                                   <span class="st">"High 95% confidence interval"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>                UOM <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Persons"</span>, <span class="st">"Percent"</span>, <span class="st">"Percent"</span>, <span class="st">"Percent"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>                VALUE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">415000</span>, <span class="fl">47.1</span>, <span class="fl">45.2</span>, <span class="fl">49.0</span>, <span class="fl">320000</span>, <span class="fl">50.3</span>, <span class="fl">48.1</span>, <span class="fl">52.5</span><span class="op">)</span>,</span>
-<span>                STATUS <span class="op">=</span> <span class="st">""</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  REF_DATE <span class="op">=</span> <span class="st">"2022"</span>,</span>
+<span>  GEO <span class="op">=</span> <span class="st">"Canada"</span>,</span>
+<span>  `Indigenous identity` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"M\u00e9tis"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
+<span>  Statistics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>      <span class="st">"Number of persons"</span>,</span>
+<span>      <span class="st">"Percent"</span>,</span>
+<span>      <span class="st">"Low 95% confidence interval"</span>,</span>
+<span>      <span class="st">"High 95% confidence interval"</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    <span class="fl">2</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  UOM <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Persons"</span>, <span class="st">"Percent"</span>, <span class="st">"Percent"</span>, <span class="st">"Percent"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  VALUE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">415000</span>, <span class="fl">47.1</span>, <span class="fl">45.2</span>, <span class="fl">49.0</span>, <span class="fl">320000</span>, <span class="fl">50.3</span>, <span class="fl">48.1</span>, <span class="fl">52.5</span><span class="op">)</span>,</span>
+<span>  STATUS <span class="op">=</span> <span class="st">""</span>,</span>
+<span>  check.names <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/scests.html">scests</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   REF_DATE    GEO Indigenous identity           measure estimate lower upper</span></span>
+<span><span class="co">#&gt;   REF_DATE    GEO Indigenous.identity           measure estimate lower upper</span></span>
 <span><span class="co">#&gt; 1     2022 Canada       First Nations Number of persons 415000.0    NA    NA</span></span>
 <span><span class="co">#&gt; 2     2022 Canada       First Nations           Percent     47.1  45.2  49.0</span></span>
-<span><span class="co">#&gt; 3     2022 Canada               Metis Number of persons 320000.0    NA    NA</span></span>
-<span><span class="co">#&gt; 4     2022 Canada               Metis           Percent     50.3  48.1  52.5</span></span>
+<span><span class="co">#&gt; 3     2022 Canada               Métis Number of persons 320000.0    NA    NA</span></span>
+<span><span class="co">#&gt; 4     2022 Canada               Métis           Percent     50.3  48.1  52.5</span></span>
 <span><span class="co">#&gt;       cisou quality</span></span>
 <span><span class="co">#&gt; 1      &lt;NA&gt;      ok</span></span>
 <span><span class="co">#&gt; 2 published      ok</span></span>
@@ -256,23 +268,62 @@ excellent, 2019/2022, from table 13-10-0924-01:</p>
 <span>          <span class="va">h</span><span class="op">$</span><span class="va">indicator</span> <span class="op">==</span> <span class="st">"Perceived mental health, very good or excellent"</span>, <span class="op">]</span></span>
 <span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indgap.html">indgap</a></span><span class="op">(</span><span class="va">mh</span>, <span class="st">"group"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>, qual <span class="op">=</span> <span class="st">"quality"</span><span class="op">)</span></span>
 <span><span class="va">g</span></span>
-<span><span class="co">#&gt;           group estimate refest     ratio   ratiolo   ratioup difference</span></span>
-<span><span class="co">#&gt; 1 First Nations     45.8   61.5 0.7447154 0.7001926 0.7920694      -15.7</span></span>
-<span><span class="co">#&gt; 2         Métis     52.8   61.5 0.8585366 0.8130217 0.9065995       -8.7</span></span>
-<span><span class="co">#&gt; 3         Inuit     47.8   61.5 0.7772358 0.6785276 0.8903034      -13.7</span></span>
-<span><span class="co">#&gt;       diflo      difup usewithcau poogrp</span></span>
-<span><span class="co">#&gt; 1 -18.53593 -12.864070      FALSE  FALSE</span></span>
-<span><span class="co">#&gt; 2 -11.58531  -5.814692      FALSE  FALSE</span></span>
-<span><span class="co">#&gt; 3 -20.16568  -7.234321      FALSE  FALSE</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Gap against a reference group</span> ──────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Reference  Non-Indigenous                                               │</span></span>
+<span><span class="co">#&gt; │   Groups     3                                                            │</span></span>
+<span><span class="co">#&gt; │   Intervals  95%                                                          │</span></span>
+<span><span class="co">#&gt; │                                                                           │</span></span>
+<span><span class="co">#&gt; │   group          estimate  refest   ratio  ratio CI        difference     │</span></span>
+<span><span class="co">#&gt; │   -------------  --------  ------  ------  --------------  ----------     │</span></span>
+<span><span class="co">#&gt; │   First Nations     45.80   61.50  0.7447  [0.700, 0.792]      -15.70     │</span></span>
+<span><span class="co">#&gt; │   Métis             52.80   61.50  0.8585  [0.813, 0.907]       -8.70     │</span></span>
+<span><span class="co">#&gt; │   Inuit             47.80   61.50  0.7772  [0.679, 0.890]      -13.70     │</span></span>
+<span><span class="co">#&gt; │                                                                           │</span></span>
+<span><span class="co">#&gt; │   group          difference CI                                            │</span></span>
+<span><span class="co">#&gt; │   -------------  --------------                                           │</span></span>
+<span><span class="co">#&gt; │   First Nations  [-18.5, -12.9]                                           │</span></span>
+<span><span class="co">#&gt; │   Métis          [-11.6, -5.8]                                            │</span></span>
+<span><span class="co">#&gt; │   Inuit          [-20.2, -7.2]                                            │</span></span>
+<span><span class="co">#&gt; │                                                                           │</span></span>
+<span><span class="co">#&gt; │   Below the reference (interval below 1): First Nations, Métis and Inuit. │</span></span>
+<span><span class="co">#&gt; │                                                                           │</span></span>
+<span><span class="co">#&gt; │   ratio: the group's estimate over the reference's; difference: the       │</span></span>
+<span><span class="co">#&gt; │   group's less the reference's, in the estimate's own units.              │</span></span>
+<span><span class="co">#&gt; │   Report a gap beside each group's own level, not alone.                  │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-gap-1.png" class="r-plt" alt="" width="432"></p>
 <p>Before pooling the three groups into one “Indigenous” figure, test
 whether they differ:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dstntst.html">dstntst</a></span><span class="op">(</span><span class="va">mh</span><span class="op">[</span><span class="va">mh</span><span class="op">$</span><span class="va">group</span> <span class="op">!=</span> <span class="st">"Non-Indigenous"</span>, <span class="op">]</span>, <span class="st">"group"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dstntst.html">dstntst</a></span><span class="op">(</span></span>
+<span>  <span class="va">mh</span><span class="op">[</span><span class="va">mh</span><span class="op">$</span><span class="va">group</span> <span class="op">!=</span> <span class="st">"Non-Indigenous"</span>, <span class="op">]</span>,</span>
+<span>  <span class="st">"group"</span>,</span>
+<span>  <span class="st">"estimate"</span>,</span>
+<span>  <span class="st">"lower"</span>,</span>
+<span>  <span class="st">"upper"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">dt</span></span>
-<span><span class="co">#&gt; Distinctions test across 3 groups: Q = 11.97 on 2 df, p = 0.00252, I^2 = 83%</span></span>
-<span><span class="co">#&gt; Pooled (inverse-variance) 49.11; the groups differ: report each one, not the pooled figure</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Distinctions test</span> ───────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Groups       3                                                       │</span></span>
+<span><span class="co">#&gt; │   Cochran's Q  11.97 on 2 df                                           │</span></span>
+<span><span class="co">#&gt; │   p-value      0.003                                                   │</span></span>
+<span><span class="co">#&gt; │   I-squared    83% of the variation is beyond chance                   │</span></span>
+<span><span class="co">#&gt; │   Pooled       49.11 (se 0.973, inverse-variance mean)                 │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   group          estimate     se  95% CI                               │</span></span>
+<span><span class="co">#&gt; │   -------------  --------  -----  --------------                       │</span></span>
+<span><span class="co">#&gt; │   First Nations     45.80  1.429  [43.00, 48.60]                       │</span></span>
+<span><span class="co">#&gt; │   Métis             52.80  1.454  [49.95, 55.65]                       │</span></span>
+<span><span class="co">#&gt; │   Inuit             47.80  3.291  [41.35, 54.25]                       │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   Q says the groups differ: report each one, not the pooled figure.    │</span></span>
+<span><span class="co">#&gt; │   Q = 11.97, p = 0.00252.                                              │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   Distinctions-based: each group is reported on its own; a             │</span></span>
+<span><span class="co">#&gt; │   pan-Indigenous total is left out of the test, never used as a group. │</span></span>
+<span><span class="co">#&gt; │   Higgins and Thompson (2002) for Q and I-squared.                     │</span></span>
+<span><span class="co">#&gt; ╰────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dt</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-distinctions-1.png" class="r-plt" alt="" width="432"></p>
 </div>
@@ -289,23 +340,44 @@ than a person in the reference group, with ties counted half (Agresti
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"mentalhealth"</span><span class="op">)</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="va">r</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">region</span> <span class="op">==</span> <span class="st">"Canada"</span>, <span class="op">]</span></span>
-<span><span class="va">oc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ordcmp.html">ordcmp</a></span><span class="op">(</span><span class="va">r</span>, <span class="st">"group"</span>, <span class="st">"rating"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>,</span>
-<span>                      lvls <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Fair or poor"</span>, <span class="st">"Good"</span>, <span class="st">"Very good"</span>, <span class="st">"Excellent"</span><span class="op">)</span>,</span>
-<span>                      ref <span class="op">=</span> <span class="st">"M\u00e9tis"</span>, qual <span class="op">=</span> <span class="st">"quality"</span><span class="op">)</span></span>
+<span><span class="va">oc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ordcmp.html">ordcmp</a></span><span class="op">(</span></span>
+<span>  <span class="va">r</span>,</span>
+<span>  <span class="st">"group"</span>,</span>
+<span>  <span class="st">"rating"</span>,</span>
+<span>  <span class="st">"estimate"</span>,</span>
+<span>  <span class="st">"lower"</span>,</span>
+<span>  <span class="st">"upper"</span>,</span>
+<span>  lvls <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Fair or poor"</span>, <span class="st">"Good"</span>, <span class="st">"Very good"</span>, <span class="st">"Excellent"</span><span class="op">)</span>,</span>
+<span>  ref <span class="op">=</span> <span class="st">"M\u00e9tis"</span>,</span>
+<span>  qual <span class="op">=</span> <span class="st">"quality"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">oc</span></span>
-<span><span class="co">#&gt;           group reference   probbet     lower     upper      delta     neff</span></span>
-<span><span class="co">#&gt; 1 First Nations     Métis 0.4653023 0.4531475 0.4774984 -0.0693954 4021.444</span></span>
-<span><span class="co">#&gt; 2         Inuit     Métis 0.5062337 0.4928231 0.5196353  0.0124674 2791.908</span></span>
-<span><span class="co">#&gt;    neffref usewithcau poogrp</span></span>
-<span><span class="co">#&gt; 1 3884.405      FALSE  FALSE</span></span>
-<span><span class="co">#&gt; 2 3884.405      FALSE  FALSE</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Ordinal comparison against a reference group</span> ────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Reference       Métis                                                │</span></span>
+<span><span class="co">#&gt; │   Reference neff  3,884                                                │</span></span>
+<span><span class="co">#&gt; │   Levels          4                                                    │</span></span>
+<span><span class="co">#&gt; │   Measure         chance a person in the group rates higher, ties half │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   group          probbet  95% CI             delta   neff              │</span></span>
+<span><span class="co">#&gt; │   -------------  -------  --------------  --------  -----              │</span></span>
+<span><span class="co">#&gt; │   First Nations   0.4653  [0.453, 0.477]  -0.06940  4,021              │</span></span>
+<span><span class="co">#&gt; │   Inuit           0.5062  [0.493, 0.520]   0.01247  2,792              │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   Rate lower than Métis (interval below 0.5): First Nations.           │</span></span>
+<span><span class="co">#&gt; │   Not distinguishable from 0.5 (interval includes it): Inuit.          │</span></span>
+<span><span class="co">#&gt; │                                                                        │</span></span>
+<span><span class="co">#&gt; │   probbet 0.5 is no difference; above 0.5 the group rates higher.      │</span></span>
+<span><span class="co">#&gt; │   delta (Cliff's) = share rating higher less share rating lower.       │</span></span>
+<span><span class="co">#&gt; │   neff: the effective sample size the published limits imply (it       │</span></span>
+<span><span class="co">#&gt; │   carries the survey's design effect).                                 │</span></span>
+<span><span class="co">#&gt; ╰────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">oc</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-ordinal-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="age-standardisation">Age standardisation<a class="anchor" aria-label="anchor" href="#age-standardisation"></a>
 </h2>
-<p>First Nations, Metis and Inuit populations are younger than the
+<p>First Nations, Métis and Inuit populations are younger than the
 non-Indigenous population, and many outcomes vary steeply with age.
 <code><a href="../reference/stdprev.html">stdprev()</a></code> standardises survey percentages to one age
 structure. Here it is applied to serious thoughts of suicide in the past
@@ -318,10 +390,25 @@ year, from the 2017 Aboriginal Peoples Survey (table 41-10-0021-01):</p>
 <span><span class="va">sp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stdprev.html">stdprev</a></span><span class="op">(</span><span class="va">si</span><span class="op">$</span><span class="va">estimate</span>, <span class="va">si</span><span class="op">$</span><span class="va">lower</span>, <span class="va">si</span><span class="op">$</span><span class="va">upper</span>, std <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">18</span>, <span class="fl">17</span>, <span class="fl">17</span>, <span class="fl">28</span><span class="op">)</span>,</span>
 <span>                             grp <span class="op">=</span> <span class="va">si</span><span class="op">$</span><span class="va">group</span>, qual <span class="op">=</span> <span class="va">si</span><span class="op">$</span><span class="va">quality</span><span class="op">)</span></span>
 <span><span class="va">sp</span></span>
-<span><span class="co">#&gt;           group estimate    lower    upper        se usewithcau</span></span>
-<span><span class="co">#&gt; 1 First Nations    5.792 5.141142 6.442858 0.3320767       TRUE</span></span>
-<span><span class="co">#&gt; 2         Inuit    5.940 5.036123 6.843877 0.4611700       TRUE</span></span>
-<span><span class="co">#&gt; 3         Métis    4.742 4.125043 5.358957 0.3147799       TRUE</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Age-standardised prevalence</span> ──────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Groups  3                                                                 │</span></span>
+<span><span class="co">#&gt; │   Method  direct standardisation to the standard population given           │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   group            estimate  95% CI              se                         │</span></span>
+<span><span class="co">#&gt; │   ---------------  --------  --------------  ------                         │</span></span>
+<span><span class="co">#&gt; │   First Nations *     5.792  [5.141, 6.443]  0.3321                         │</span></span>
+<span><span class="co">#&gt; │   Inuit *             5.940  [5.036, 6.844]  0.4612                         │</span></span>
+<span><span class="co">#&gt; │   Métis *             4.742  [4.125, 5.359]  0.3148                         │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Highest prevalence: Inuit * (5.94); lowest: Métis * (4.742).              │</span></span>
+<span><span class="co">#&gt; │   Their intervals overlap: the data cannot tell the two apart.              │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Each group's prevalence as if it had the standard population's ages,      │</span></span>
+<span><span class="co">#&gt; │   so the groups compare without their age structures.                       │</span></span>
+<span><span class="co">#&gt; │   Compare only rates standardised to the same population.                   │</span></span>
+<span><span class="co">#&gt; │   * use with caution: the source flags the estimate (E, high sampling       │</span></span>
+<span><span class="co">#&gt; │   variability).                                                             │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sp</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-prevalence-1.png" class="r-plt" alt="" width="432"></p>
 <p>For counts of events (deaths, hospitalisations),
@@ -345,31 +432,80 @@ after them. This example uses the 2024 well-being table,
 41-10-0082-01:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">wb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"wellbeing"</span><span class="op">)</span></span>
-<span><span class="va">w</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/welprof.html">welprof</a></span><span class="op">(</span><span class="va">wb</span>, <span class="st">"group"</span>, <span class="st">"indicator"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>,</span>
-<span>                      well <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Life satisfaction rating of 8, 9 or 10"</span>,</span>
-<span>                                   <span class="st">"Sense of meaning and purpose rating of 8, 9 or 10"</span>,</span>
-<span>                                   <span class="st">"Always or often has a hopeful outlook"</span><span class="op">)</span>,</span>
-<span>                      distress <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Life satisfaction rating between 0 and 5"</span>,</span>
-<span>                                   <span class="st">"Rarely or never has a hopeful outlook"</span><span class="op">)</span>,</span>
-<span>                      qual <span class="op">=</span> <span class="st">"quality"</span><span class="op">)</span></span>
+<span><span class="va">w</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/welprof.html">welprof</a></span><span class="op">(</span></span>
+<span>  <span class="va">wb</span>,</span>
+<span>  <span class="st">"group"</span>,</span>
+<span>  <span class="st">"indicator"</span>,</span>
+<span>  <span class="st">"estimate"</span>,</span>
+<span>  <span class="st">"lower"</span>,</span>
+<span>  <span class="st">"upper"</span>,</span>
+<span>  well <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Life satisfaction rating of 8, 9 or 10"</span>,</span>
+<span>    <span class="st">"Sense of meaning and purpose rating of 8, 9 or 10"</span>,</span>
+<span>    <span class="st">"Always or often has a hopeful outlook"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  distress <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Life satisfaction rating between 0 and 5"</span>,</span>
+<span>    <span class="st">"Rarely or never has a hopeful outlook"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  qual <span class="op">=</span> <span class="st">"quality"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">w</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-wellness-1.png" class="r-plt" alt="" width="432"></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/frmaud.html">frmaud</a></span><span class="op">(</span><span class="va">w</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 40% of the indicators reported are deficit-framed.</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Framing audit</span> ────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Groups               3                                            │</span></span>
+<span><span class="co">#&gt; │   Wellness indicators  9                                            │</span></span>
+<span><span class="co">#&gt; │   Distress indicators  6                                            │</span></span>
+<span><span class="co">#&gt; │   Deficit-framed       40%                                          │</span></span>
+<span><span class="co">#&gt; │                                                                     │</span></span>
+<span><span class="co">#&gt; │   By group (shrdef: the deficit-framed share)                       │</span></span>
+<span><span class="co">#&gt; │   group          wellness  distress  shrdef                         │</span></span>
+<span><span class="co">#&gt; │   -------------  --------  --------  ------                         │</span></span>
+<span><span class="co">#&gt; │   First Nations         3         2  0.4000                         │</span></span>
+<span><span class="co">#&gt; │   Métis                 3         2  0.4000                         │</span></span>
+<span><span class="co">#&gt; │   Inuit                 3         2  0.4000                         │</span></span>
+<span><span class="co">#&gt; │                                                                     │</span></span>
+<span><span class="co">#&gt; │   40% of the indicators reported are deficit-framed.                │</span></span>
+<span><span class="co">#&gt; │                                                                     │</span></span>
+<span><span class="co">#&gt; │   Walter (2016): statistics about Indigenous peoples cluster around │</span></span>
+<span><span class="co">#&gt; │   disparity, deprivation, disadvantage, dysfunction and difference. │</span></span>
+<span><span class="co">#&gt; │   This audits the report, not the people it describes.              │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p><code><a href="../reference/dualcont.html">dualcont()</a></code> places each group on two axes, wellness and
 distress. They are related but distinct (Keyes 2002, 2005):</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">dc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dualcont.html">dualcont</a></span><span class="op">(</span><span class="va">w</span>, <span class="st">"Always or often has a hopeful outlook"</span>, <span class="st">"Life satisfaction rating between 0 and 5"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">dc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dualcont.html">dualcont</a></span><span class="op">(</span></span>
+<span>  <span class="va">w</span>,</span>
+<span>  <span class="st">"Always or often has a hopeful outlook"</span>,</span>
+<span>  <span class="st">"Life satisfaction rating between 0 and 5"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">dc</span></span>
-<span><span class="co">#&gt;           group wellness wello welup distress distrlo distrup strratio  ratiolo</span></span>
-<span><span class="co">#&gt; 1 First Nations     50.2  45.9  54.5     31.4    27.4    35.7 1.598726 1.365446</span></span>
-<span><span class="co">#&gt; 2         Métis     52.3  47.6  57.0     28.4    24.0    33.1 1.841549 1.531631</span></span>
-<span><span class="co">#&gt; 3         Inuit     54.4  45.7  62.8     25.2    19.4    31.8 2.158730 1.609182</span></span>
-<span><span class="co">#&gt;    ratioup usewithcau</span></span>
-<span><span class="co">#&gt; 1 1.871862      FALSE</span></span>
-<span><span class="co">#&gt; 2 2.214178      FALSE</span></span>
-<span><span class="co">#&gt; 3 2.895953      FALSE</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Dual continuum: wellness beside distress</span> ────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Wellness  Always or often has a hopeful outlook                          │</span></span>
+<span><span class="co">#&gt; │   Distress  Life satisfaction rating between 0 and 5                       │</span></span>
+<span><span class="co">#&gt; │   Groups    3                                                              │</span></span>
+<span><span class="co">#&gt; │   Ratio     wellness over distress, log-normal interval                    │</span></span>
+<span><span class="co">#&gt; │                                                                            │</span></span>
+<span><span class="co">#&gt; │   group          wellness  interval        distress  interval        ratio │</span></span>
+<span><span class="co">#&gt; │   -------------  --------  --------------  --------  --------------  ----- │</span></span>
+<span><span class="co">#&gt; │   First Nations     50.20  [45.90, 54.50]     31.40  [27.40, 35.70]  1.599 │</span></span>
+<span><span class="co">#&gt; │   Métis             52.30  [47.60, 57.00]     28.40  [24.00, 33.10]  1.842 │</span></span>
+<span><span class="co">#&gt; │   Inuit             54.40  [45.70, 62.80]     25.20  [19.40, 31.80]  2.159 │</span></span>
+<span><span class="co">#&gt; │                                                                            │</span></span>
+<span><span class="co">#&gt; │   group          ratio interval                                            │</span></span>
+<span><span class="co">#&gt; │   -------------  --------------                                            │</span></span>
+<span><span class="co">#&gt; │   First Nations  [1.37, 1.87]                                              │</span></span>
+<span><span class="co">#&gt; │   Métis          [1.53, 2.21]                                              │</span></span>
+<span><span class="co">#&gt; │   Inuit          [1.61, 2.90]                                              │</span></span>
+<span><span class="co">#&gt; │                                                                            │</span></span>
+<span><span class="co">#&gt; │   A ratio above 1: more people report the wellness than the distress.      │</span></span>
+<span><span class="co">#&gt; │   3 of 3 groups have the whole interval above 1.                           │</span></span>
+<span><span class="co">#&gt; │                                                                            │</span></span>
+<span><span class="co">#&gt; │   Both estimates come from the same respondents and their covariance       │</span></span>
+<span><span class="co">#&gt; │   is not published: the interval treats them as independent.               │</span></span>
+<span><span class="co">#&gt; ╰────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dc</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-dual-1.png" class="r-plt" alt="" width="432"></p>
 </div>
@@ -385,24 +521,62 @@ as one domain falls behind the others.</p>
 <p>Which indicator stands for each domain is a choice for the people
 whose data these are to make. The choice below is one reading of it:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">dom</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Perceived health, very good or excellent"</span> <span class="op">=</span> <span class="st">"physical"</span>,</span>
-<span>         <span class="st">"Perceived mental health, very good or excellent"</span> <span class="op">=</span> <span class="st">"mental"</span>,</span>
-<span>         <span class="st">"Life satisfaction, satisfied or very satisfied"</span> <span class="op">=</span> <span class="st">"emotional"</span>,</span>
-<span>         <span class="st">"Sense of belonging to local community, somewhat strong or very strong"</span> <span class="op">=</span> <span class="st">"community"</span><span class="op">)</span></span>
-<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="va">h</span><span class="op">[</span><span class="va">h</span><span class="op">$</span><span class="va">period</span> <span class="op">==</span> <span class="st">"2019/2022"</span> <span class="op">&amp;</span> <span class="va">h</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total, 18 years and over"</span> <span class="op">&amp;</span> <span class="va">h</span><span class="op">$</span><span class="va">indicator</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">dom</span><span class="op">)</span>, <span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="va">dom</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"Perceived health, very good or excellent"</span> <span class="op">=</span> <span class="st">"physical"</span>,</span>
+<span>  <span class="st">"Perceived mental health, very good or excellent"</span> <span class="op">=</span> <span class="st">"mental"</span>,</span>
+<span>  <span class="st">"Life satisfaction, satisfied or very satisfied"</span> <span class="op">=</span> <span class="st">"emotional"</span>,</span>
+<span>  <span class="st">"community"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">dom</span><span class="op">)</span><span class="op">[</span><span class="fl">4</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<span>  <span class="st">"Sense of belonging to local community,"</span>,</span>
+<span>  <span class="st">"somewhat strong or very strong"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="va">h</span><span class="op">[</span></span>
+<span>  <span class="va">h</span><span class="op">$</span><span class="va">period</span> <span class="op">==</span> <span class="st">"2019/2022"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">h</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total, 18 years and over"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">h</span><span class="op">$</span><span class="va">indicator</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">dom</span><span class="op">)</span>,</span>
+<span><span class="op">]</span></span>
 <span><span class="va">d</span><span class="op">$</span><span class="va">domain</span> <span class="op">&lt;-</span> <span class="va">dom</span><span class="op">[</span><span class="va">d</span><span class="op">$</span><span class="va">indicator</span><span class="op">]</span></span>
-<span><span class="va">hb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/holbal.html">holbal</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"group"</span>, <span class="st">"domain"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>, qual <span class="op">=</span> <span class="st">"quality"</span><span class="op">)</span></span>
+<span><span class="va">hb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/holbal.html">holbal</a></span><span class="op">(</span></span>
+<span>  <span class="va">d</span>,</span>
+<span>  <span class="st">"group"</span>,</span>
+<span>  <span class="st">"domain"</span>,</span>
+<span>  <span class="st">"estimate"</span>,</span>
+<span>  <span class="st">"lower"</span>,</span>
+<span>  <span class="st">"upper"</span>,</span>
+<span>  qual <span class="op">=</span> <span class="st">"quality"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">hb</span></span>
-<span><span class="co">#&gt;            group  level    lvllo    lvlup   balance     ballo     balup</span></span>
-<span><span class="co">#&gt; 1  First Nations 59.525 58.25190 60.79810 0.9641371 0.9582021 0.9696524</span></span>
-<span><span class="co">#&gt; 2          Métis 63.725 62.43592 65.01408 0.9751839 0.9707913 0.9791662</span></span>
-<span><span class="co">#&gt; 3          Inuit 63.800 60.74133 66.85867 0.9699605 0.9562503 0.9812743</span></span>
-<span><span class="co">#&gt; 4 Non-Indigenous 69.800 69.60196 69.99804 0.9846768 0.9842679 0.9850811</span></span>
-<span><span class="co">#&gt;     weadom usewithcau</span></span>
-<span><span class="co">#&gt; 1 physical      FALSE</span></span>
-<span><span class="co">#&gt; 2 physical      FALSE</span></span>
-<span><span class="co">#&gt; 3   mental      FALSE</span></span>
-<span><span class="co">#&gt; 4 physical      FALSE</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Holistic balance across the domains</span> ──────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Groups   4                                                                │</span></span>
+<span><span class="co">#&gt; │   Weights  equal, over 4 domains                                            │</span></span>
+<span><span class="co">#&gt; │   Balance  weighted geometric over arithmetic mean of the domain levels     │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   group           level  95% level CI    balance  95% balance CI  weakest   │</span></span>
+<span><span class="co">#&gt; │   --------------  -----  --------------  -------  --------------  --------  │</span></span>
+<span><span class="co">#&gt; │   First Nations   59.52  [58.25, 60.80]   0.9641  [0.958, 0.970]  physical  │</span></span>
+<span><span class="co">#&gt; │   Métis           63.73  [62.44, 65.01]   0.9752  [0.971, 0.979]  physical  │</span></span>
+<span><span class="co">#&gt; │   Inuit           63.80  [60.74, 66.86]   0.9700  [0.956, 0.981]  mental    │</span></span>
+<span><span class="co">#&gt; │   Non-Indigenous  69.80  [69.60, 70.00]   0.9847  [0.984, 0.985]  physical  │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Domain levels (percent)                                                   │</span></span>
+<span><span class="co">#&gt; │   group           physical  mental  community  emotional                    │</span></span>
+<span><span class="co">#&gt; │   --------------  --------  ------  ---------  ---------                    │</span></span>
+<span><span class="co">#&gt; │   First Nations      43.90   45.80      63.70      84.70                    │</span></span>
+<span><span class="co">#&gt; │   Métis              49.70   52.80      65.10      87.30                    │</span></span>
+<span><span class="co">#&gt; │   Inuit              49.40   47.80      73.50      84.50                    │</span></span>
+<span><span class="co">#&gt; │   Non-Indigenous     58.90   61.50      67.40      91.40                    │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Highest balance: Non-Indigenous (0.9847); lowest: First Nations (0.9641). │</span></span>
+<span><span class="co">#&gt; │   Their intervals do not overlap: the gap is more than sampling error.      │</span></span>
+<span><span class="co">#&gt; │   The weakest domain is physical for 3 of 4 groups.                         │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   balance is 1 when every domain is at the same level and falls toward      │</span></span>
+<span><span class="co">#&gt; │   0 as one falls behind; level is the weighted mean, reported beside it.    │</span></span>
+<span><span class="co">#&gt; │   Our method, inspired by Stewart (2008), not taken from it.                │</span></span>
+<span><span class="co">#&gt; │   The weights say how much each domain counts; a community may set          │</span></span>
+<span><span class="co">#&gt; │   its own (CARE: authority to control, Carroll et al. 2020).                │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">hb</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-balance-1.png" class="r-plt" alt="" width="432"></p>
 <p>A community that weighs the domains differently sets
@@ -417,10 +591,18 @@ directions: hope, belonging, meaning and purpose. <code><a href="../reference/mh
 lays out the published proxies for each direction. It says which
 directions the tables do not measure, and does not fill them in:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mhcont.html">mhcont</a></span><span class="op">(</span><span class="va">wb</span>, <span class="st">"group"</span>, <span class="st">"indicator"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>,</span>
-<span>        hope <span class="op">=</span> <span class="st">"Always or often has a hopeful outlook"</span>,</span>
-<span>        meaning <span class="op">=</span> <span class="st">"Sense of meaning and purpose rating of 8, 9 or 10"</span>,</span>
-<span>        purp <span class="op">=</span> <span class="st">"Sense of meaning and purpose rating of 8, 9 or 10"</span>, qual <span class="op">=</span> <span class="st">"quality"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">mw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mhcont.html">mhcont</a></span><span class="op">(</span></span>
+<span>  <span class="va">wb</span>,</span>
+<span>  <span class="st">"group"</span>,</span>
+<span>  <span class="st">"indicator"</span>,</span>
+<span>  <span class="st">"estimate"</span>,</span>
+<span>  <span class="st">"lower"</span>,</span>
+<span>  <span class="st">"upper"</span>,</span>
+<span>  hope <span class="op">=</span> <span class="st">"Always or often has a hopeful outlook"</span>,</span>
+<span>  meaning <span class="op">=</span> <span class="st">"Sense of meaning and purpose rating of 8, 9 or 10"</span>,</span>
+<span>  purp <span class="op">=</span> <span class="st">"Sense of meaning and purpose rating of 8, 9 or 10"</span>,</span>
+<span>  qual <span class="op">=</span> <span class="st">"quality"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">mw</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="st">"indicator"</span>, <span class="st">"domain"</span>, <span class="st">"estimate"</span>, <span class="st">"shared"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;            group indicator                                            domain</span></span>
 <span><span class="co">#&gt; 1  First Nations      hope             Always or often has a hopeful outlook</span></span>
@@ -458,19 +640,36 @@ directions the tables do not measure, and does not fill them in:</p>
 between survey periods, wellness first. It uses the two periods of table
 13-10-0924-01:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/healchg.html">healchg</a></span><span class="op">(</span><span class="va">h</span><span class="op">[</span><span class="va">h</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total, 18 years and over"</span>, <span class="op">]</span>, <span class="st">"group"</span>, <span class="st">"indicator"</span>, <span class="st">"period"</span>,</span>
-<span>                     <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>, from <span class="op">=</span> <span class="st">"2015/2018"</span>, to <span class="op">=</span> <span class="st">"2019/2022"</span>,</span>
-<span>                     qual <span class="op">=</span> <span class="st">"quality"</span>,</span>
-<span>                     well <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Perceived mental health, very good or excellent"</span>,</span>
-<span>                                  <span class="st">"Sense of belonging to local community, somewhat strong or very strong"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">hc</span> <span class="op">&lt;-</span> <span class="va">hc</span><span class="op">[</span><span class="va">hc</span><span class="op">$</span><span class="va">indicator</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Perceived mental health, very good or excellent"</span>,</span>
-<span>                             <span class="st">"Sense of belonging to local community, somewhat strong or very strong"</span>,</span>
-<span>                             <span class="st">"Mood disorder"</span>, <span class="st">"Anxiety disorder"</span><span class="op">)</span>, <span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="va">hc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/healchg.html">healchg</a></span><span class="op">(</span></span>
+<span>  <span class="va">h</span><span class="op">[</span><span class="va">h</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total, 18 years and over"</span>, <span class="op">]</span>,</span>
+<span>  <span class="st">"group"</span>,</span>
+<span>  <span class="st">"indicator"</span>,</span>
+<span>  <span class="st">"period"</span>,</span>
+<span>  <span class="st">"estimate"</span>,</span>
+<span>  <span class="st">"lower"</span>,</span>
+<span>  <span class="st">"upper"</span>,</span>
+<span>  from <span class="op">=</span> <span class="st">"2015/2018"</span>,</span>
+<span>  to <span class="op">=</span> <span class="st">"2019/2022"</span>,</span>
+<span>  qual <span class="op">=</span> <span class="st">"quality"</span>,</span>
+<span>  well <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Perceived mental health, very good or excellent"</span>,</span>
+<span>    <span class="st">"Sense of belonging to local community, somewhat strong or very strong"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">hc</span> <span class="op">&lt;-</span> <span class="va">hc</span><span class="op">[</span></span>
+<span>  <span class="va">hc</span><span class="op">$</span><span class="va">indicator</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>      <span class="st">"Perceived mental health, very good or excellent"</span>,</span>
+<span>      <span class="st">"Sense of belonging to local community, somewhat strong or very strong"</span>,</span>
+<span>      <span class="st">"Mood disorder"</span>,</span>
+<span>      <span class="st">"Anxiety disorder"</span></span>
+<span>    <span class="op">)</span>,</span>
+<span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">hc</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-healing-1.png" class="r-plt" alt="" width="432"></p>
 <p>Between the two periods, which span the COVID-19 pandemic, the share
 rating their mental health very good or excellent fell for First
-Nations, Metis and non-Indigenous adults. The Inuit interval includes no
+Nations, Métis and non-Indigenous adults. The Inuit interval includes no
 change. Because the reference group fell too, a group’s change is read
 against the reference group’s change, not on its own.</p>
 </div>
@@ -486,20 +685,46 @@ together where people live?</p>
 p-value is exact for up to eight places, and a Monte Carlo estimate
 beyond. Its band is a sensitivity band, not a confidence interval: it
 shows how far the published sampling error alone moves rho for these
-places. Here, by region, it asks whether First Nations and Metis
+places. Here, by region, it asks whether First Nations and Métis
 people’s mental health rise together, using table 41-10-0067-01:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"mentalhealth"</span><span class="op">)</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="va">r</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">rating</span> <span class="op">==</span> <span class="st">"Excellent or very good"</span> <span class="op">&amp;</span> <span class="va">r</span><span class="op">$</span><span class="va">region</span> <span class="op">!=</span> <span class="st">"Canada"</span>, <span class="op">]</span></span>
-<span><span class="va">pair</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">r</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"First Nations"</span>, <span class="op">]</span>, <span class="va">r</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"M\u00e9tis"</span>, <span class="op">]</span>, by <span class="op">=</span> <span class="st">"region"</span>,</span>
-<span>              suffixes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fn"</span>, <span class="st">"me"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">ca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/connassoc.html">connassoc</a></span><span class="op">(</span><span class="va">pair</span>, <span class="st">"region"</span>, <span class="st">"estimatefn"</span>, <span class="st">"estimateme"</span>, <span class="st">"lowerfn"</span>, <span class="st">"upperfn"</span>,</span>
-<span>                             <span class="st">"lowerme"</span>, <span class="st">"upperme"</span><span class="op">)</span></span>
+<span><span class="va">pair</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span></span>
+<span>  <span class="va">r</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"First Nations"</span>, <span class="op">]</span>,</span>
+<span>  <span class="va">r</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"M\u00e9tis"</span>, <span class="op">]</span>,</span>
+<span>  by <span class="op">=</span> <span class="st">"region"</span>,</span>
+<span>  suffixes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fn"</span>, <span class="st">"me"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">ca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/connassoc.html">connassoc</a></span><span class="op">(</span></span>
+<span>  <span class="va">pair</span>,</span>
+<span>  <span class="st">"region"</span>,</span>
+<span>  <span class="st">"estimatefn"</span>,</span>
+<span>  <span class="st">"estimateme"</span>,</span>
+<span>  <span class="st">"lowerfn"</span>,</span>
+<span>  <span class="st">"upperfn"</span>,</span>
+<span>  <span class="st">"lowerme"</span>,</span>
+<span>  <span class="st">"upperme"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">ca</span></span>
-<span><span class="co">#&gt; Rank correlation across 11 places: rho = 0.52, permutation p = 0.106; with the published sampling error, 95% interval -0.19 to 0.77</span></span>
-<span><span class="co">#&gt; An association across places: it does not show that one causes the other for any person.</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ca</span>, xlab <span class="op">=</span> <span class="st">"First Nations: excellent or very good (%)"</span>,</span>
-<span>     ylab <span class="op">=</span> <span class="st">"M\u00e9tis: excellent or very good (%)"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Connection across places</span> ──────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Places            11                                                   │</span></span>
+<span><span class="co">#&gt; │   Indicators        estimatefn and estimateme                            │</span></span>
+<span><span class="co">#&gt; │   Rank correlation  rho = 0.52                                           │</span></span>
+<span><span class="co">#&gt; │   p-value           0.106 (permutation)                                  │</span></span>
+<span><span class="co">#&gt; │   Interval          95% [-0.19, 0.77], with the published sampling error │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   Rank correlation across 11 places: rho = 0.52, permutation p = 0.106   │</span></span>
+<span><span class="co">#&gt; │   Across these places the two rank moderately together.                  │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   An association across places only:                                     │</span></span>
+<span><span class="co">#&gt; │   it does not show that one causes the other for any person.             │</span></span>
+<span><span class="co">#&gt; ╰──────────────────────────────────────────────────────────────────────────╯</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
+<span>  <span class="va">ca</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="st">"First Nations: excellent or very good (%)"</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"M\u00e9tis: excellent or very good (%)"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-connection-1.png" class="r-plt" alt="" width="432"></p>
 <p>This is an association across places. It cannot say that one thing
 makes a person well.</p>
@@ -514,11 +739,21 @@ function never chooses the weights. A factor the tables do not publish
 leaves the index <code>NA</code>; it is not filled in.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">h2</span> <span class="op">&lt;-</span> <span class="va">h</span><span class="op">[</span><span class="va">h</span><span class="op">$</span><span class="va">period</span> <span class="op">==</span> <span class="st">"2019/2022"</span> <span class="op">&amp;</span> <span class="va">h</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total, 18 years and over"</span>, <span class="op">]</span></span>
-<span><span class="va">ci</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/commidx.html">commidx</a></span><span class="op">(</span><span class="va">h2</span>, <span class="st">"group"</span>, <span class="st">"indicator"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>, qual <span class="op">=</span> <span class="st">"quality"</span>,</span>
-<span>        w <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Sense of belonging to local community, somewhat strong or very strong"</span> <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>                    <span class="st">"Has a regular healthcare provider"</span> <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>                    <span class="st">"Perceived life stress, most days quite a bit or extremely stressful"</span> <span class="op">=</span> <span class="op">-</span><span class="fl">2</span>,</span>
-<span>                    <span class="st">"Heavy drinking"</span> <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">ci</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/commidx.html">commidx</a></span><span class="op">(</span></span>
+<span>  <span class="va">h2</span>,</span>
+<span>  <span class="st">"group"</span>,</span>
+<span>  <span class="st">"indicator"</span>,</span>
+<span>  <span class="st">"estimate"</span>,</span>
+<span>  <span class="st">"lower"</span>,</span>
+<span>  <span class="st">"upper"</span>,</span>
+<span>  qual <span class="op">=</span> <span class="st">"quality"</span>,</span>
+<span>  w <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Sense of belonging to local community, somewhat strong or very strong"</span> <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>    <span class="st">"Has a regular healthcare provider"</span> <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    <span class="st">"Perceived life stress, most days quite a bit or extremely stressful"</span> <span class="op">=</span> <span class="op">-</span><span class="fl">2</span>,</span>
+<span>    <span class="st">"Heavy drinking"</span> <span class="op">=</span> <span class="op">-</span><span class="fl">1</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ci</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-community-1.png" class="r-plt" alt="" width="432"></p>
 <p><code><a href="../reference/cwbscr.html">cwbscr()</a></code> computes Indigenous Services Canada’s Community
@@ -532,7 +767,7 @@ it.</p>
 </h2>
 <p>The Indigenous Population Profile of the 2021 Census gives counts for
 every geography, by gender, age group and about two thousand
-characteristics, with First Nations, Metis, Inuit and non-Indigenous
+characteristics, with First Nations, Métis, Inuit and non-Indigenous
 people in their own columns. In the provincial table, residence on and
 off reserve is split out too. <code><a href="../reference/cnsprof.html">cnsprof()</a></code> reads it with the
 hierarchy of the characteristics. <code><a href="../reference/profshr.html">profshr()</a></code> takes a share
@@ -542,52 +777,71 @@ the counts.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cnsprof.html">cnsprof</a></span><span class="op">(</span><span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"censuspop"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/profshr.html">profshr</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"Foster children"</span>, <span class="st">"Total - Children in census families"</span><span class="op">)</span></span>
-<span><span class="va">fc</span> <span class="op">&lt;-</span> <span class="va">fc</span><span class="op">[</span><span class="va">fc</span><span class="op">$</span><span class="va">geo</span> <span class="op">==</span> <span class="st">"Canada"</span> <span class="op">&amp;</span> <span class="va">fc</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"0 to 14 years"</span> <span class="op">&amp;</span></span>
-<span>           <span class="va">fc</span><span class="op">$</span><span class="va">group</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"M\u00e9tis"</span>, <span class="st">"Inuit"</span>, <span class="st">"Non-Indigenous"</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="va">fc</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"residence"</span>, <span class="st">"group"</span>, <span class="st">"numerator"</span>, <span class="st">"denominator"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;                               residence          group numerator denominator</span></span>
-<span><span class="co">#&gt; 256 Total - Residence on or off reserve  First Nations     11735      265405</span></span>
-<span><span class="co">#&gt; 257                          On reserve  First Nations      2350       90270</span></span>
-<span><span class="co">#&gt; 258                         Off reserve  First Nations      9385      175135</span></span>
-<span><span class="co">#&gt; 340 Total - Residence on or off reserve          Métis      1975      134670</span></span>
-<span><span class="co">#&gt; 341                          On reserve          Métis        15         610</span></span>
-<span><span class="co">#&gt; 342                         Off reserve          Métis      1960      134060</span></span>
-<span><span class="co">#&gt; 424 Total - Residence on or off reserve          Inuit       770       21525</span></span>
-<span><span class="co">#&gt; 425                          On reserve          Inuit        35         100</span></span>
-<span><span class="co">#&gt; 426                         Off reserve          Inuit       735       21425</span></span>
-<span><span class="co">#&gt; 676 Total - Residence on or off reserve Non-Indigenous     12705     5502310</span></span>
-<span><span class="co">#&gt; 677                          On reserve Non-Indigenous        20        4070</span></span>
-<span><span class="co">#&gt; 678                         Off reserve Non-Indigenous     12690     5498235</span></span>
-<span><span class="co">#&gt;       estimate      lower      upper</span></span>
-<span><span class="co">#&gt; 256  4.4215444  4.2880409  4.5590064</span></span>
-<span><span class="co">#&gt; 257  2.6033012  2.5989608  2.6076487</span></span>
-<span><span class="co">#&gt; 258  5.3587233  5.1789488  5.5443733</span></span>
-<span><span class="co">#&gt; 340  1.4665479  1.3593905  1.5820167</span></span>
-<span><span class="co">#&gt; 341  2.4590164  1.8933392  3.1882099</span></span>
-<span><span class="co">#&gt; 342  1.4620319  1.3548094  1.5776046</span></span>
-<span><span class="co">#&gt; 424  3.5772358  3.1713963  4.0328470</span></span>
-<span><span class="co">#&gt; 425 35.0000000 30.9738945 39.2518422</span></span>
-<span><span class="co">#&gt; 426  3.4305718  3.0324927  3.8788168</span></span>
-<span><span class="co">#&gt; 676  0.2309030  0.2240599  0.2379546</span></span>
-<span><span class="co">#&gt; 677  0.4914005  0.4040293  0.5975523</span></span>
-<span><span class="co">#&gt; 678  0.2308013  0.2239573  0.2378541</span></span>
+<span><span class="va">fc</span> <span class="op">&lt;-</span> <span class="va">fc</span><span class="op">[</span></span>
+<span>  <span class="va">fc</span><span class="op">$</span><span class="va">geo</span> <span class="op">==</span> <span class="st">"Canada"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">fc</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"0 to 14 years"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">fc</span><span class="op">$</span><span class="va">group</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"M\u00e9tis"</span>, <span class="st">"Inuit"</span>, <span class="st">"Non-Indigenous"</span><span class="op">)</span>,</span>
+<span><span class="op">]</span></span>
+<span><span class="va">fc</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"residence"</span>,</span>
+<span>  <span class="st">"group"</span>,</span>
+<span>  <span class="st">"numerator"</span>,</span>
+<span>  <span class="st">"denominator"</span>,</span>
+<span>  <span class="st">"estimate"</span>,</span>
+<span>  <span class="st">"lower"</span>,</span>
+<span>  <span class="st">"upper"</span></span>
+<span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                              residence          group numerator denominator</span></span>
+<span><span class="co">#&gt; 1  Total - Residence on or off reserve  First Nations     11735      265405</span></span>
+<span><span class="co">#&gt; 2                           On reserve  First Nations      2350       90270</span></span>
+<span><span class="co">#&gt; 3                          Off reserve  First Nations      9385      175135</span></span>
+<span><span class="co">#&gt; 4  Total - Residence on or off reserve          Métis      1975      134670</span></span>
+<span><span class="co">#&gt; 5                           On reserve          Métis        15         610</span></span>
+<span><span class="co">#&gt; 6                          Off reserve          Métis      1960      134060</span></span>
+<span><span class="co">#&gt; 7  Total - Residence on or off reserve          Inuit       770       21525</span></span>
+<span><span class="co">#&gt; 8                           On reserve          Inuit        35         100</span></span>
+<span><span class="co">#&gt; 9                          Off reserve          Inuit       735       21425</span></span>
+<span><span class="co">#&gt; 10 Total - Residence on or off reserve Non-Indigenous     12705     5502310</span></span>
+<span><span class="co">#&gt; 11                          On reserve Non-Indigenous        20        4070</span></span>
+<span><span class="co">#&gt; 12                         Off reserve Non-Indigenous     12690     5498235</span></span>
+<span><span class="co">#&gt;      estimate      lower      upper</span></span>
+<span><span class="co">#&gt; 1   4.4215444  4.2880409  4.5590064</span></span>
+<span><span class="co">#&gt; 2   2.6033012  2.5989608  2.6076487</span></span>
+<span><span class="co">#&gt; 3   5.3587233  5.1789488  5.5443733</span></span>
+<span><span class="co">#&gt; 4   1.4665479  1.3593905  1.5820167</span></span>
+<span><span class="co">#&gt; 5   2.4590164  1.8933392  3.1882099</span></span>
+<span><span class="co">#&gt; 6   1.4620319  1.3548094  1.5776046</span></span>
+<span><span class="co">#&gt; 7   3.5772358  3.1713963  4.0328470</span></span>
+<span><span class="co">#&gt; 8  35.0000000 30.9738945 39.2518422</span></span>
+<span><span class="co">#&gt; 9   3.4305718  3.0324927  3.8788168</span></span>
+<span><span class="co">#&gt; 10  0.2309030  0.2240599  0.2379546</span></span>
+<span><span class="co">#&gt; 11  0.4914005  0.4040293  0.5975523</span></span>
+<span><span class="co">#&gt; 12  0.2308013  0.2239573  0.2378541</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fc</span><span class="op">[</span><span class="va">fc</span><span class="op">$</span><span class="va">residence</span> <span class="op">==</span> <span class="st">"Total - Residence on or off reserve"</span>, <span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-census-foster-1.png" class="r-plt" alt="" width="432"></p>
-<p>The overrepresentation of First Nations, Metis and Inuit children in
+<p>The overrepresentation of First Nations, Métis and Inuit children in
 care is the subject of the first five Calls to Action of the Truth and
 Reconciliation Commission.</p>
 <p>Knowledge of an Indigenous language (all ages):</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">know</span> <span class="op">&lt;-</span> <span class="st">"Total - Knowledge of Indigenous languages for the population in private households - 25% sample data"</span></span>
+<code class="sourceCode R"><span><span class="va">know</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<span>  <span class="st">"Total - Knowledge of Indigenous languages for the population in private"</span>,</span>
+<span>  <span class="st">"households - 25% sample data"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">la</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/profshr.html">profshr</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"Indigenous languages"</span>, <span class="va">know</span><span class="op">)</span></span>
-<span><span class="va">la</span><span class="op">[</span><span class="va">la</span><span class="op">$</span><span class="va">geo</span> <span class="op">==</span> <span class="st">"Canada"</span> <span class="op">&amp;</span> <span class="va">la</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total - Age groups"</span> <span class="op">&amp;</span> <span class="va">la</span><span class="op">$</span><span class="va">residence</span> <span class="op">==</span> <span class="st">"Total - Residence on or off reserve"</span> <span class="op">&amp;</span></span>
-<span>     <span class="va">la</span><span class="op">$</span><span class="va">group</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"M\u00e9tis"</span>, <span class="st">"Inuit"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;             group  estimate    lower     upper</span></span>
-<span><span class="co">#&gt; 379 First Nations 17.530439 17.40473 17.656859</span></span>
-<span><span class="co">#&gt; 505         Métis  1.332062  1.28369  1.382232</span></span>
-<span><span class="co">#&gt; 631         Inuit 58.130139 57.49824 58.759377</span></span></code></pre></div>
+<span><span class="va">la</span><span class="op">[</span></span>
+<span>  <span class="va">la</span><span class="op">$</span><span class="va">geo</span> <span class="op">==</span> <span class="st">"Canada"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">la</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total - Age groups"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">la</span><span class="op">$</span><span class="va">residence</span> <span class="op">==</span> <span class="st">"Total - Residence on or off reserve"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">la</span><span class="op">$</span><span class="va">group</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"M\u00e9tis"</span>, <span class="st">"Inuit"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span></span>
+<span><span class="op">]</span></span>
+<span><span class="co">#&gt;           group  estimate    lower     upper</span></span>
+<span><span class="co">#&gt; 1 First Nations 17.530439 17.40473 17.656859</span></span>
+<span><span class="co">#&gt; 2         Métis  1.332062  1.28369  1.382232</span></span>
+<span><span class="co">#&gt; 3         Inuit 58.130139 57.49824 58.759377</span></span></code></pre></div>
 <p>The census age structure of the Indigenous population is the standard
-to use when age-standardising First Nations, Metis and Inuit rates
+to use when age-standardising First Nations, Métis and Inuit rates
 (Kumar and Tjepkema 2019):</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cnsstd.html">cnsstd</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
@@ -606,22 +860,48 @@ to use when age-standardising First Nations, Metis and Inuit rates
 <p>A Community Well-Being score from the public profile (income,
 education, housing, labour force), by distinction. The household table
 splits Indigenous from non-Indigenous households only, so First Nations,
-Metis and Inuit people share the Indigenous households’ housing
+Métis and Inuit people share the Indigenous households’ housing
 component. <code><a href="../reference/cnscwb.html">?cnscwb</a></code> explains where it departs from the
 Department’s own index:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cnsprof.html">cnsprof</a></span><span class="op">(</span><span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"censushh"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">cw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cnscwb.html">cnscwb</a></span><span class="op">(</span><span class="va">p</span>, <span class="va">h</span><span class="op">)</span></span>
-<span><span class="va">cw</span><span class="op">[</span><span class="va">cw</span><span class="op">$</span><span class="va">geo</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Canada"</span>, <span class="st">"Nunavut"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"geo"</span>, <span class="st">"group"</span>, <span class="st">"income"</span>, <span class="st">"education"</span>, <span class="st">"housing"</span>, <span class="st">"labour"</span>, <span class="st">"cwb"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;        geo          group    income education  housing labour      cwb</span></span>
-<span><span class="co">#&gt; 1   Canada  First Nations  71.03051  51.62081 91.87864  75.85 72.59499</span></span>
-<span><span class="co">#&gt; 2   Canada          Métis  78.72661  59.55861 91.87864  83.15 78.32846</span></span>
-<span><span class="co">#&gt; 3   Canada          Inuit  72.12712  38.50607 91.87864  74.75 69.31546</span></span>
-<span><span class="co">#&gt; 4   Canada Non-Indigenous  84.37515  68.01121 95.98845  86.30 83.66870</span></span>
-<span><span class="co">#&gt; 53 Nunavut  First Nations        NA        NA       NA     NA       NA</span></span>
-<span><span class="co">#&gt; 54 Nunavut          Métis        NA        NA       NA     NA       NA</span></span>
-<span><span class="co">#&gt; 55 Nunavut          Inuit  70.22000  28.49462 70.82270  69.85 59.84683</span></span>
-<span><span class="co">#&gt; 56 Nunavut Non-Indigenous 100.00000  79.89287 93.30144  94.85 92.01108</span></span>
+<span><span class="va">cw</span><span class="op">[</span></span>
+<span>  <span class="va">cw</span><span class="op">$</span><span class="va">geo</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Canada"</span>, <span class="st">"Nunavut"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"geo"</span>, <span class="st">"group"</span>, <span class="st">"income"</span>, <span class="st">"education"</span>, <span class="st">"housing"</span>, <span class="st">"labour"</span>, <span class="st">"cwb"</span><span class="op">)</span></span>
+<span><span class="op">]</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Community Well-Being index, from the census</span> ──────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Rows         8                                                            │</span></span>
+<span><span class="co">#&gt; │   Geographies  Canada; Nunavut                                              │</span></span>
+<span><span class="co">#&gt; │   Groups       First Nations; Métis; Inuit; Non-Indigenous                  │</span></span>
+<span><span class="co">#&gt; │   Not scored   2                                                            │</span></span>
+<span><span class="co">#&gt; │   Scale        0 to 100 for each component and the score                    │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   geo      group           income  education  housing  labour    cwb        │</span></span>
+<span><span class="co">#&gt; │   -------  --------------  ------  ---------  -------  ------  -----        │</span></span>
+<span><span class="co">#&gt; │   Canada   First Nations    71.03      51.62    91.88   75.85  72.59        │</span></span>
+<span><span class="co">#&gt; │   Canada   Métis            78.73      59.56    91.88   83.15  78.33        │</span></span>
+<span><span class="co">#&gt; │   Canada   Inuit            72.13      38.51    91.88   74.75  69.32        │</span></span>
+<span><span class="co">#&gt; │   Canada   Non-Indigenous   84.38      68.01    95.99   86.30  83.67        │</span></span>
+<span><span class="co">#&gt; │   Nunavut  First Nations                                                    │</span></span>
+<span><span class="co">#&gt; │   Nunavut  Métis                                                            │</span></span>
+<span><span class="co">#&gt; │   Nunavut  Inuit            70.22      28.49    70.82   69.85  59.85        │</span></span>
+<span><span class="co">#&gt; │   Nunavut  Non-Indigenous  100.00      79.89    93.30   94.85  92.01        │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Highest score: Nunavut, Non-Indigenous (92.01); lowest: Nunavut, Inuit    │</span></span>
+<span><span class="co">#&gt; │   (59.85).                                                                  │</span></span>
+<span><span class="co">#&gt; │   Within a geography the groups' scores are furthest apart in Nunavut       │</span></span>
+<span><span class="co">#&gt; │   (32.2 points) and closest in Canada (14.4).                               │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   cwb is the mean of income, education, housing and labour force            │</span></span>
+<span><span class="co">#&gt; │   activity (Indigenous Services Canada's Community Well-Being index).       │</span></span>
+<span><span class="co">#&gt; │   CWB-style, close to but not the Department's index: the public            │</span></span>
+<span><span class="co">#&gt; │   profile's inputs differ (ages 25 and over; housing from households,       │</span></span>
+<span><span class="co">#&gt; │   pooled for First Nations, Métis and Inuit people).                        │</span></span>
+<span><span class="co">#&gt; │   Never a measure of wellness as First Nations, Métis or Inuit              │</span></span>
+<span><span class="co">#&gt; │   people define it. A group below minpop people gets no score.              │</span></span>
+<span><span class="co">#&gt; │   Housing needs the household table (dwell).                                │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cw</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-census-cwb-1.png" class="r-plt" alt="" width="432"></p>
 </div>
@@ -641,7 +921,10 @@ Cochran-Armitage test for a trend.</li>
 </ul>
 <p>The counts below are made up, to show the computation:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/genexpo.html">genexpo</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>, <span class="cn">NA</span><span class="op">)</span>, gparent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/genexpo.html">genexpo</a></span><span class="op">(</span></span>
+<span>  parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
+<span>  gparent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]  2  0  1 NA</span></span>
 <span><span class="va">et</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exptrnd.html">exptrnd</a></span><span class="op">(</span>cases <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">95</span>, <span class="fl">70</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">520</span>, <span class="fl">300</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">et</span><span class="op">)</span></span></code></pre></div>
@@ -664,44 +947,55 @@ estimates, turned so that above 1 means the group fares worse, with its
 interval. It is a ratio of published estimates, not a relative risk.</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/trchlthgap.html">trchlthgap</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">g</span><span class="op">[</span><span class="va">g</span><span class="op">$</span><span class="va">measure</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Life expectancy at birth"</span>, <span class="st">"Infant mortality rate"</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"measure"</span>, <span class="st">"period"</span>, <span class="st">"group"</span>, <span class="st">"estimate"</span>, <span class="st">"refest"</span>, <span class="st">"disratio"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">g</span><span class="op">[</span></span>
+<span>  <span class="va">g</span><span class="op">$</span><span class="va">measure</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Life expectancy at birth"</span>, <span class="st">"Infant mortality rate"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"measure"</span>,</span>
+<span>    <span class="st">"period"</span>,</span>
+<span>    <span class="st">"group"</span>,</span>
+<span>    <span class="st">"estimate"</span>,</span>
+<span>    <span class="st">"refest"</span>,</span>
+<span>    <span class="st">"disratio"</span>,</span>
+<span>    <span class="st">"lower"</span>,</span>
+<span>    <span class="st">"upper"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">]</span></span>
 <span><span class="co">#&gt;                     measure    period</span></span>
-<span><span class="co">#&gt; 34 Life expectancy at birth 2016/2021</span></span>
-<span><span class="co">#&gt; 35 Life expectancy at birth 2016/2021</span></span>
-<span><span class="co">#&gt; 36 Life expectancy at birth 2016/2021</span></span>
-<span><span class="co">#&gt; 37 Life expectancy at birth 2016/2021</span></span>
-<span><span class="co">#&gt; 38 Life expectancy at birth 2016/2021</span></span>
-<span><span class="co">#&gt; 39 Life expectancy at birth 2016/2021</span></span>
-<span><span class="co">#&gt; 40    Infant mortality rate 2014/2016</span></span>
-<span><span class="co">#&gt; 41    Infant mortality rate 2014/2016</span></span>
-<span><span class="co">#&gt; 42    Infant mortality rate 2014/2016</span></span>
-<span><span class="co">#&gt; 43    Infant mortality rate 2014/2016</span></span>
-<span><span class="co">#&gt; 44    Infant mortality rate 2014/2016</span></span>
+<span><span class="co">#&gt; 1  Life expectancy at birth 2016/2021</span></span>
+<span><span class="co">#&gt; 2  Life expectancy at birth 2016/2021</span></span>
+<span><span class="co">#&gt; 3  Life expectancy at birth 2016/2021</span></span>
+<span><span class="co">#&gt; 4  Life expectancy at birth 2016/2021</span></span>
+<span><span class="co">#&gt; 5  Life expectancy at birth 2016/2021</span></span>
+<span><span class="co">#&gt; 6  Life expectancy at birth 2016/2021</span></span>
+<span><span class="co">#&gt; 7     Infant mortality rate 2014/2016</span></span>
+<span><span class="co">#&gt; 8     Infant mortality rate 2014/2016</span></span>
+<span><span class="co">#&gt; 9     Infant mortality rate 2014/2016</span></span>
+<span><span class="co">#&gt; 10    Infant mortality rate 2014/2016</span></span>
+<span><span class="co">#&gt; 11    Infant mortality rate 2014/2016</span></span>
 <span><span class="co">#&gt;                                                group estimate refest disratio</span></span>
-<span><span class="co">#&gt; 34                                             Métis    80.47  84.99 1.056170</span></span>
-<span><span class="co">#&gt; 35                                             Inuit    71.91  84.99 1.181894</span></span>
-<span><span class="co">#&gt; 36              First Nations (Registered or Treaty)    73.98  84.99 1.148824</span></span>
-<span><span class="co">#&gt; 37  First Nations (Registered or Treaty), on reserve    71.42  84.99 1.190003</span></span>
-<span><span class="co">#&gt; 38 First Nations (Registered or Treaty), off reserve    76.04  84.99 1.117701</span></span>
-<span><span class="co">#&gt; 39          First Nations, without registered status    79.23  84.99 1.072700</span></span>
-<span><span class="co">#&gt; 40                                             Métis     5.20   4.20 1.238095</span></span>
-<span><span class="co">#&gt; 41                                             Inuit    13.50   4.20 3.214286</span></span>
-<span><span class="co">#&gt; 42              First Nations (Registered or Treaty)     9.60   4.20 2.285714</span></span>
-<span><span class="co">#&gt; 43  First Nations (Registered or Treaty), on reserve    10.00   4.20 2.380952</span></span>
-<span><span class="co">#&gt; 44 First Nations (Registered or Treaty), off reserve     8.10   4.20 1.928571</span></span>
+<span><span class="co">#&gt; 1                                              Métis    80.47  84.99 1.056170</span></span>
+<span><span class="co">#&gt; 2                                              Inuit    71.91  84.99 1.181894</span></span>
+<span><span class="co">#&gt; 3               First Nations (Registered or Treaty)    73.98  84.99 1.148824</span></span>
+<span><span class="co">#&gt; 4   First Nations (Registered or Treaty), on reserve    71.42  84.99 1.190003</span></span>
+<span><span class="co">#&gt; 5  First Nations (Registered or Treaty), off reserve    76.04  84.99 1.117701</span></span>
+<span><span class="co">#&gt; 6           First Nations, without registered status    79.23  84.99 1.072700</span></span>
+<span><span class="co">#&gt; 7                                              Métis     5.20   4.20 1.238095</span></span>
+<span><span class="co">#&gt; 8                                              Inuit    13.50   4.20 3.214286</span></span>
+<span><span class="co">#&gt; 9               First Nations (Registered or Treaty)     9.60   4.20 2.285714</span></span>
+<span><span class="co">#&gt; 10  First Nations (Registered or Treaty), on reserve    10.00   4.20 2.380952</span></span>
+<span><span class="co">#&gt; 11 First Nations (Registered or Treaty), off reserve     8.10   4.20 1.928571</span></span>
 <span><span class="co">#&gt;        lower    upper</span></span>
-<span><span class="co">#&gt; 34 1.0497867 1.062592</span></span>
-<span><span class="co">#&gt; 35 1.1636936 1.200379</span></span>
-<span><span class="co">#&gt; 36 1.1433513 1.154323</span></span>
-<span><span class="co">#&gt; 37 1.1833943 1.196648</span></span>
-<span><span class="co">#&gt; 38 1.1078697 1.127620</span></span>
-<span><span class="co">#&gt; 39 1.0617669 1.083745</span></span>
-<span><span class="co">#&gt; 40 0.8366176 1.832235</span></span>
-<span><span class="co">#&gt; 41 2.0315414 5.085613</span></span>
-<span><span class="co">#&gt; 42 1.7776500 2.938987</span></span>
-<span><span class="co">#&gt; 43 1.4796282 3.831323</span></span>
-<span><span class="co">#&gt; 44 1.3632810 2.728262</span></span>
+<span><span class="co">#&gt; 1  1.0497867 1.062592</span></span>
+<span><span class="co">#&gt; 2  1.1636936 1.200379</span></span>
+<span><span class="co">#&gt; 3  1.1433513 1.154323</span></span>
+<span><span class="co">#&gt; 4  1.1833943 1.196648</span></span>
+<span><span class="co">#&gt; 5  1.1078697 1.127620</span></span>
+<span><span class="co">#&gt; 6  1.0617669 1.083745</span></span>
+<span><span class="co">#&gt; 7  0.8366176 1.832235</span></span>
+<span><span class="co">#&gt; 8  2.0315414 5.085613</span></span>
+<span><span class="co">#&gt; 9  1.7776500 2.938987</span></span>
+<span><span class="co">#&gt; 10 1.4796282 3.831323</span></span>
+<span><span class="co">#&gt; 11 1.3632810 2.728262</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-trc-gaps-1.png" class="r-plt" alt="" width="432"></p>
 <p>Life expectancy at birth in 2016/2021 was 71.4 years for First
@@ -716,10 +1010,18 @@ the Yellowhead Institute counts them (Jewell and Mosby 2021, 2022).
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/trcprog.html">trcprog</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">p</span></span>
-<span><span class="co">#&gt;   completed remaining years     rate    ratelo   rateup   cmplby cmplbyearly</span></span>
-<span><span class="co">#&gt; 1        13        81  7.04 1.846591 0.9832319 3.157727 2066.865    2048.651</span></span>
-<span><span class="co">#&gt;   cmplbylate</span></span>
-<span><span class="co">#&gt; 1   2105.381</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Truth and Reconciliation Calls to Action: progress</span> ────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Completed        13 of 94                                              │</span></span>
+<span><span class="co">#&gt; │   Remaining        81                                                    │</span></span>
+<span><span class="co">#&gt; │   Years counted    7.04                                                  │</span></span>
+<span><span class="co">#&gt; │   Calls a year     1.85 [0.983, 3.160]                                   │</span></span>
+<span><span class="co">#&gt; │   All complete by  2066 (2048 to 2105)                                   │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   At this pace the remaining 81 Calls are complete around 2066.          │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   Completions taken as a Poisson process at a constant rate; the range   │</span></span>
+<span><span class="co">#&gt; │   comes from the rate's interval. Trackers count completion differently. │</span></span>
+<span><span class="co">#&gt; ╰──────────────────────────────────────────────────────────────────────────╯</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-trc-1.png" class="r-plt" alt="" width="432"></p>
 <p>The projection only extends the pace so far. It is not a
@@ -738,19 +1040,52 @@ do more rate their mental health highly?</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">prof</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cnsprof.html">cnsprof</a></span><span class="op">(</span><span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"censuspop"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">la</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/profshr.html">profshr</a></span><span class="op">(</span><span class="va">prof</span>, <span class="st">"Indigenous languages"</span>, <span class="va">know</span><span class="op">)</span></span>
-<span><span class="va">la</span> <span class="op">&lt;-</span> <span class="va">la</span><span class="op">[</span><span class="va">la</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total - Age groups"</span> <span class="op">&amp;</span> <span class="va">la</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"First Nations"</span> <span class="op">&amp;</span> <span class="va">la</span><span class="op">$</span><span class="va">geo</span> <span class="op">!=</span> <span class="st">"Canada"</span> <span class="op">&amp;</span></span>
-<span>           <span class="va">la</span><span class="op">$</span><span class="va">residence</span> <span class="op">==</span> <span class="st">"Total - Residence on or off reserve"</span>, <span class="op">]</span></span>
+<span><span class="va">la</span> <span class="op">&lt;-</span> <span class="va">la</span><span class="op">[</span></span>
+<span>  <span class="va">la</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total - Age groups"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">la</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"First Nations"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">la</span><span class="op">$</span><span class="va">geo</span> <span class="op">!=</span> <span class="st">"Canada"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">la</span><span class="op">$</span><span class="va">residence</span> <span class="op">==</span> <span class="st">"Total - Residence on or off reserve"</span>,</span>
+<span><span class="op">]</span></span>
 <span><span class="va">mh2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"mentalhealth"</span><span class="op">)</span></span>
-<span><span class="va">mh2</span> <span class="op">&lt;-</span> <span class="va">mh2</span><span class="op">[</span><span class="va">mh2</span><span class="op">$</span><span class="va">rating</span> <span class="op">==</span> <span class="st">"Excellent or very good"</span> <span class="op">&amp;</span> <span class="va">mh2</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"First Nations"</span>, <span class="op">]</span></span>
-<span><span class="va">both</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">la</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"geo"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span>, <span class="va">mh2</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"region"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>              by.x <span class="op">=</span> <span class="st">"geo"</span>, by.y <span class="op">=</span> <span class="st">"region"</span>, suffixes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lang"</span>, <span class="st">"mh"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">cc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/connassoc.html">connassoc</a></span><span class="op">(</span><span class="va">both</span>, <span class="st">"geo"</span>, <span class="st">"estimatelang"</span>, <span class="st">"estimatemh"</span>, <span class="st">"lowerlang"</span>, <span class="st">"upperlang"</span>,</span>
-<span>                             <span class="st">"lowermh"</span>, <span class="st">"uppermh"</span><span class="op">)</span></span>
+<span><span class="va">mh2</span> <span class="op">&lt;-</span> <span class="va">mh2</span><span class="op">[</span></span>
+<span>  <span class="va">mh2</span><span class="op">$</span><span class="va">rating</span> <span class="op">==</span> <span class="st">"Excellent or very good"</span> <span class="op">&amp;</span> <span class="va">mh2</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"First Nations"</span>,</span>
+<span><span class="op">]</span></span>
+<span><span class="va">both</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span></span>
+<span>  <span class="va">la</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"geo"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  <span class="va">mh2</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"region"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  by.x <span class="op">=</span> <span class="st">"geo"</span>,</span>
+<span>  by.y <span class="op">=</span> <span class="st">"region"</span>,</span>
+<span>  suffixes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lang"</span>, <span class="st">"mh"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">cc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/connassoc.html">connassoc</a></span><span class="op">(</span></span>
+<span>  <span class="va">both</span>,</span>
+<span>  <span class="st">"geo"</span>,</span>
+<span>  <span class="st">"estimatelang"</span>,</span>
+<span>  <span class="st">"estimatemh"</span>,</span>
+<span>  <span class="st">"lowerlang"</span>,</span>
+<span>  <span class="st">"upperlang"</span>,</span>
+<span>  <span class="st">"lowermh"</span>,</span>
+<span>  <span class="st">"uppermh"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">cc</span></span>
-<span><span class="co">#&gt; Rank correlation across 8 places: rho = 0.47, exact p = 0.247; with the published sampling error, 95% interval -0.31 to 0.79</span></span>
-<span><span class="co">#&gt; An association across places: it does not show that one causes the other for any person.</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cc</span>, xlab <span class="op">=</span> <span class="st">"First Nations who know an Indigenous language (%)"</span>,</span>
-<span>     ylab <span class="op">=</span> <span class="st">"First Nations: mental health excellent or very good (%)"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Connection across places</span> ──────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Places            8                                                    │</span></span>
+<span><span class="co">#&gt; │   Indicators        estimatelang and estimatemh                          │</span></span>
+<span><span class="co">#&gt; │   Rank correlation  rho = 0.47                                           │</span></span>
+<span><span class="co">#&gt; │   p-value           0.247 (exact, every permutation)                     │</span></span>
+<span><span class="co">#&gt; │   Interval          95% [-0.31, 0.79], with the published sampling error │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   Rank correlation across 8 places: rho = 0.47, exact p = 0.247          │</span></span>
+<span><span class="co">#&gt; │   Across these places the two rank moderately together.                  │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   An association across places only:                                     │</span></span>
+<span><span class="co">#&gt; │   it does not show that one causes the other for any person.             │</span></span>
+<span><span class="co">#&gt; ╰──────────────────────────────────────────────────────────────────────────╯</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
+<span>  <span class="va">cc</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="st">"First Nations who know an Indigenous language (%)"</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"First Nations: mental health excellent or very good (%)"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-continuity-1.png" class="r-plt" alt="" width="432"></p>
 <p>Across these eight provinces and territories, the rank correlation is
 positive but far from settled: its exact p-value is large and its
@@ -762,32 +1097,180 @@ Nations community (98-510-X2021002 at the data service), and outcomes
 measured for the same communities.</p>
 </div>
 <div class="section level2">
-<h2 id="your-own-data">Your own data<a class="anchor" aria-label="anchor" href="#your-own-data"></a>
+<h2 id="your-own-data-step-by-step">Your own data, step by step<a class="anchor" aria-label="anchor" href="#your-own-data-step-by-step"></a>
 </h2>
 <p>Nothing here is tied to Canada or to these tables. Each estimator
-takes a data frame with a group column, an estimate and its limits. A
-table from another agency needs two steps first: limits from whatever it
-publishes in their place (<code><a href="../reference/limfrom.html">limfrom()</a></code> takes a standard error,
-a coefficient of variation or a margin of error), and its quality flags
-mapped onto suppressed and use-with-caution (<code><a href="../reference/qltyrcd.html">qltyrcd()</a></code>).
-Here, made-up numbers in an Australian layout, with relative standard
-errors and that agency’s flags:</p>
+takes a data frame with a group column, an estimate and its limits, and
+the arguments name those columns: <code>grp</code>, <code>est</code>,
+<code>lower</code>, <code>upper</code>, with <code>ind</code> (or
+<code>cat</code>, <code>domain</code>) for the indicator and
+<code>qual</code> for quality flags.</p>
+<p><strong>1. A published table.</strong> A table from another agency
+needs two steps first: limits from whatever it publishes in their place
+(<code><a href="../reference/limfrom.html">limfrom()</a></code> takes a standard error, a coefficient of
+variation or a margin of error), and its quality flags mapped onto
+suppressed and use-with-caution (<code><a href="../reference/qltyrcd.html">qltyrcd()</a></code>). Here, made-up
+numbers in an Australian layout, with relative standard errors and that
+agency’s flags:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">own</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Aboriginal"</span>, <span class="st">"Torres Strait Islander"</span>, <span class="st">"Non-Indigenous Australians"</span><span class="op">)</span>,</span>
-<span>                  pct <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">31.2</span>, <span class="fl">27.5</span>, <span class="fl">18.9</span><span class="op">)</span>, rse <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.1</span>, <span class="fl">22.0</span>, <span class="fl">1.2</span><span class="op">)</span>, flag <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">""</span>, <span class="st">"*"</span>, <span class="st">""</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">own</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Aboriginal"</span>,</span>
+<span>    <span class="st">"Torres Strait Islander"</span>,</span>
+<span>    <span class="st">"Non-Indigenous Australians"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  pct <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">31.2</span>, <span class="fl">27.5</span>, <span class="fl">18.9</span><span class="op">)</span>,</span>
+<span>  rse <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.1</span>, <span class="fl">22.0</span>, <span class="fl">1.2</span><span class="op">)</span>,</span>
+<span>  flag <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">""</span>, <span class="st">"*"</span>, <span class="st">""</span><span class="op">)</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">own</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">own</span>, <span class="fu"><a href="../reference/limfrom.html">limfrom</a></span><span class="op">(</span><span class="va">own</span><span class="op">$</span><span class="va">pct</span>, cv <span class="op">=</span> <span class="va">own</span><span class="op">$</span><span class="va">rse</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">own</span><span class="op">$</span><span class="va">quality</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/qltyrcd.html">qltyrcd</a></span><span class="op">(</span><span class="va">own</span><span class="op">$</span><span class="va">flag</span>, suppr <span class="op">=</span> <span class="st">"**"</span>, caution <span class="op">=</span> <span class="st">"*"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/indgap.html">indgap</a></span><span class="op">(</span><span class="va">own</span>, <span class="st">"group"</span>, <span class="st">"pct"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>, ref <span class="op">=</span> <span class="st">"Non-Indigenous Australians"</span>,</span>
-<span>               qual <span class="op">=</span> <span class="st">"quality"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                    group estimate refest    ratio   ratiolo  ratioup difference</span></span>
-<span><span class="co">#&gt; 1             Aboriginal     31.2   18.9 1.650794 1.5179467 1.795267       12.3</span></span>
-<span><span class="co">#&gt; 2 Torres Strait Islander     27.5   18.9 1.455026 0.9167364 2.309390        8.6</span></span>
-<span><span class="co">#&gt;       diflo    difup usewithcau poogrp</span></span>
-<span><span class="co">#&gt; 1  9.753713 14.84629      FALSE  FALSE</span></span>
-<span><span class="co">#&gt; 2 -3.266111 20.46611       TRUE  FALSE</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/indgap.html">indgap</a></span><span class="op">(</span></span>
+<span>  <span class="va">own</span>,</span>
+<span>  <span class="st">"group"</span>,</span>
+<span>  <span class="st">"pct"</span>,</span>
+<span>  <span class="st">"lower"</span>,</span>
+<span>  <span class="st">"upper"</span>,</span>
+<span>  ref <span class="op">=</span> <span class="st">"Non-Indigenous Australians"</span>,</span>
+<span>  qual <span class="op">=</span> <span class="st">"quality"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Gap against a reference group</span> ────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Reference  Non-Indigenous Australians                                     │</span></span>
+<span><span class="co">#&gt; │   Groups     2                                                              │</span></span>
+<span><span class="co">#&gt; │   Intervals  95%                                                            │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   group                     estimate  refest  ratio  ratio CI               │</span></span>
+<span><span class="co">#&gt; │   ------------------------  --------  ------  -----  ------------           │</span></span>
+<span><span class="co">#&gt; │   Aboriginal                   31.20   18.90  1.651  [1.52, 1.80]           │</span></span>
+<span><span class="co">#&gt; │   Torres Strait Islander *     27.50   18.90  1.455  [0.92, 2.31]           │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   group                     difference  difference CI                       │</span></span>
+<span><span class="co">#&gt; │   ------------------------  ----------  -------------                       │</span></span>
+<span><span class="co">#&gt; │   Aboriginal                     12.30  [9.8, 14.8]                         │</span></span>
+<span><span class="co">#&gt; │   Torres Strait Islander *        8.60  [-3.3, 20.5]                        │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Above the reference (interval above 1): Aboriginal.                       │</span></span>
+<span><span class="co">#&gt; │   Not distinguishable from 1 (interval includes it): Torres Strait          │</span></span>
+<span><span class="co">#&gt; │   Islander *.                                                               │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   ratio: the group's estimate over the reference's; difference: the         │</span></span>
+<span><span class="co">#&gt; │   group's less the reference's, in the estimate's own units.                │</span></span>
+<span><span class="co">#&gt; │   Report a gap beside each group's own level, not alone.                    │</span></span>
+<span><span class="co">#&gt; │   * use with caution: the source flags the estimate (E, high sampling       │</span></span>
+<span><span class="co">#&gt; │   variability).                                                             │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Name the groups as the peoples concerned name themselves, and give
 <code>pooled</code> any row that pools several of them, so it is never
 set beside its own parts.</p>
+<p><strong>2. Microdata.</strong> With one row per respondent, estimate
+first, then compare. <code><a href="../reference/svydes.html">svydes()</a></code> describes the design (here
+only a weight; strata, clusters and replicate weights are its other
+arguments), and <code><a href="../reference/svyest.html">svyest()</a></code> gives each group’s estimate with
+its limits in the columns the estimators take. Made-up responses:</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">7</span><span class="op">)</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">600</span></span>
+<span><span class="va">resp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"Inuit"</span>, <span class="st">"Non-Indigenous"</span><span class="op">)</span>, <span class="va">n</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  wt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">50</span>, <span class="fl">150</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">resp</span><span class="op">$</span><span class="va">goodmh</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">resp</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"Non-Indigenous"</span>, <span class="fl">0.6</span>, <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/svydes.html">svydes</a></span><span class="op">(</span><span class="va">resp</span>, w <span class="op">=</span> <span class="st">"wt"</span><span class="op">)</span></span>
+<span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/svyest.html">svyest</a></span><span class="op">(</span><span class="va">des</span>, <span class="va">resp</span>, <span class="st">"goodmh"</span>, by <span class="op">=</span> <span class="st">"group"</span>, stat <span class="op">=</span> <span class="st">"proportion"</span>, lvls <span class="op">=</span> <span class="st">"1"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/indgap.html">indgap</a></span><span class="op">(</span><span class="va">tab</span>, <span class="st">"group"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Gap against a reference group</span> ──────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Reference  Non-Indigenous                                           │</span></span>
+<span><span class="co">#&gt; │   Groups     2                                                        │</span></span>
+<span><span class="co">#&gt; │   Intervals  95%                                                      │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   group          estimate  refest   ratio  ratio CI        difference │</span></span>
+<span><span class="co">#&gt; │   -------------  --------  ------  ------  --------------  ---------- │</span></span>
+<span><span class="co">#&gt; │   First Nations    0.5152  0.5710  0.9023  [0.747, 1.090]     -0.0558 │</span></span>
+<span><span class="co">#&gt; │   Inuit            0.4227  0.5710  0.7402  [0.600, 0.913]     -0.1484 │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   group          difference CI                                        │</span></span>
+<span><span class="co">#&gt; │   -------------  ----------------                                     │</span></span>
+<span><span class="co">#&gt; │   First Nations  [-0.158, 0.046]                                      │</span></span>
+<span><span class="co">#&gt; │   Inuit          [-0.250, -0.047]                                     │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   Below the reference (interval below 1): Inuit.                      │</span></span>
+<span><span class="co">#&gt; │   Not distinguishable from 1 (interval includes it): First Nations.   │</span></span>
+<span><span class="co">#&gt; │                                                                       │</span></span>
+<span><span class="co">#&gt; │   ratio: the group's estimate over the reference's; difference: the   │</span></span>
+<span><span class="co">#&gt; │   group's less the reference's, in the estimate's own units.          │</span></span>
+<span><span class="co">#&gt; │   Report a gap beside each group's own level, not alone.              │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
+<p><strong>3. The other estimators, same layout.</strong> A table with
+an indicator column goes to <code><a href="../reference/welprof.html">welprof()</a></code>,
+<code><a href="../reference/mhcont.html">mhcont()</a></code>, <code><a href="../reference/healchg.html">healchg()</a></code> (add a period column),
+<code><a href="../reference/holbal.html">holbal()</a></code> (a domain column) or <code><a href="../reference/commidx.html">commidx()</a></code> (with
+the community’s own weights), named the same way:</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">prof</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  community <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Lakeside"</span>, <span class="st">"Riverbend"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  item <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Hopeful"</span>, <span class="st">"Satisfied"</span>, <span class="st">"Rarely hopeful"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  pct <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">64</span>, <span class="fl">71</span>, <span class="fl">12</span>, <span class="fl">58</span>, <span class="fl">66</span>, <span class="fl">16</span><span class="op">)</span>,</span>
+<span>  lo <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">59</span>, <span class="fl">66</span>, <span class="fl">9</span>, <span class="fl">52</span>, <span class="fl">60</span>, <span class="fl">12</span><span class="op">)</span>,</span>
+<span>  hi <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">69</span>, <span class="fl">76</span>, <span class="fl">15</span>, <span class="fl">64</span>, <span class="fl">72</span>, <span class="fl">20</span><span class="op">)</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/welprof.html">welprof</a></span><span class="op">(</span><span class="va">prof</span>, <span class="st">"community"</span>, <span class="st">"item"</span>, <span class="st">"pct"</span>, <span class="st">"lo"</span>, <span class="st">"hi"</span>,</span>
+<span>        well <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Hopeful"</span>, <span class="st">"Satisfied"</span><span class="op">)</span>, distress <span class="op">=</span> <span class="st">"Rarely hopeful"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Wellness profile</span> ─────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Groups               Lakeside; Riverbend                                  │</span></span>
+<span><span class="co">#&gt; │   Wellness indicators  2                                                    │</span></span>
+<span><span class="co">#&gt; │   Distress indicators  1                                                    │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Hopeful (wellness)                                                        │</span></span>
+<span><span class="co">#&gt; │   group      estimate  interval                                             │</span></span>
+<span><span class="co">#&gt; │   ---------  --------  --------                                             │</span></span>
+<span><span class="co">#&gt; │   Lakeside         64  [59, 69]                                             │</span></span>
+<span><span class="co">#&gt; │   Riverbend        58  [52, 64]                                             │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Satisfied (wellness)                                                      │</span></span>
+<span><span class="co">#&gt; │   group      estimate  interval                                             │</span></span>
+<span><span class="co">#&gt; │   ---------  --------  --------                                             │</span></span>
+<span><span class="co">#&gt; │   Lakeside         71  [66, 76]                                             │</span></span>
+<span><span class="co">#&gt; │   Riverbend        66  [60, 72]                                             │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Rarely hopeful (distress)                                                 │</span></span>
+<span><span class="co">#&gt; │   group      estimate  interval                                             │</span></span>
+<span><span class="co">#&gt; │   ---------  --------  --------                                             │</span></span>
+<span><span class="co">#&gt; │   Lakeside         12  [9, 15]                                              │</span></span>
+<span><span class="co">#&gt; │   Riverbend        16  [12, 20]                                             │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   On none of the 3 indicators do the groups' intervals part: the data       │</span></span>
+<span><span class="co">#&gt; │   cannot rank the groups on any of them.                                    │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Wellness indicators come first, so each group's strengths are read        │</span></span>
+<span><span class="co">#&gt; │   before its distress (Stewart 2008).                                       │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
+<p><strong>4. Plain numbers.</strong> Counts by age group go to
+<code><a href="../reference/agestd.html">agestd()</a></code> and age-specific percentages to
+<code><a href="../reference/stdprev.html">stdprev()</a></code>, as vectors, with your own standard
+population:</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/agestd.html">agestd</a></span><span class="op">(</span>events <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">9</span>, <span class="fl">11</span>, <span class="fl">6</span>, <span class="fl">3</span><span class="op">)</span>, pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">9000</span>, <span class="fl">8000</span>, <span class="fl">6000</span>, <span class="fl">4000</span>, <span class="fl">2000</span><span class="op">)</span>,</span>
+<span>       std <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30000</span>, <span class="fl">25000</span>, <span class="fl">20000</span>, <span class="fl">15000</span>, <span class="fl">10000</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Directly age-standardised rate</span> ─────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Groups    1                                                     │</span></span>
+<span><span class="co">#&gt; │   Events    33                                                    │</span></span>
+<span><span class="co">#&gt; │   Rate per  100,000                                               │</span></span>
+<span><span class="co">#&gt; │   Interval  gamma (Fay and Feuer 1997)                            │</span></span>
+<span><span class="co">#&gt; │                                                                   │</span></span>
+<span><span class="co">#&gt; │   group  events   rate  95% CI                                    │</span></span>
+<span><span class="co">#&gt; │   -----  ------  -----  ---------------                           │</span></span>
+<span><span class="co">#&gt; │   all        33  115.6  [79.24, 165.00]                           │</span></span>
+<span><span class="co">#&gt; │                                                                   │</span></span>
+<span><span class="co">#&gt; │   all: rate 115.6 [79.24, 165.00].                                │</span></span>
+<span><span class="co">#&gt; │                                                                   │</span></span>
+<span><span class="co">#&gt; │   Each rate is what the group's age-specific rates give for the   │</span></span>
+<span><span class="co">#&gt; │   standard population's ages, so the groups compare without them. │</span></span>
+<span><span class="co">#&gt; │   Compare only rates standardised to the same population.         │</span></span>
+<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="what-the-package-does-not-compute">What the package does not compute<a class="anchor" aria-label="anchor" href="#what-the-package-does-not-compute"></a>

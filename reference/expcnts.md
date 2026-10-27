@@ -99,30 +99,74 @@ d <- data.frame(
 
 # Adjusting for size only.
 expcnts(d$n, d$pop, d$region)
-#>    area observed population expected
-#> 1  East       28       3900 32.81250
-#> 2 North       75       7000 58.89423
-#> 3 South       72       9900 83.29327
+#> ╭── Expected counts, indirect standardisation ────────────────────────────╮
+#> │   Areas       3                                                         │
+#> │   Observed    175                                                       │
+#> │   Expected    175                                                       │
+#> │   Population  20,800                                                    │
+#> │                                                                         │
+#> │   area   observed  population  expected                                 │
+#> │   -----  --------  ----------  --------                                 │
+#> │   East         28       3,900     32.81                                 │
+#> │   North        75       7,000     58.89                                 │
+#> │   South        72       9,900     83.29                                 │
+#> │                                                                         │
+#> │   expected is the count an area would have at the overall rate of each  │
+#> │   stratum, given its own population in it. stdinc() puts an interval on │
+#> │   the ratio of observed to expected.                                    │
+#> │                                                                         │
+#> │   The expected counts sum to the observed ones: the reference rates     │
+#> │   come from the same data.                                              │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # Adjusting for size AND age composition, which is the comparison
 # that says something about the region.
 e <- expcnts(d$n, d$pop, d$region, strata = d$age)
 e
-#>    area observed population expected
-#> 1  East       28       3900 32.34430
-#> 2 North       75       7000 62.27967
-#> 3 South       72       9900 80.37603
+#> ╭── Expected counts, indirect standardisation ────────────────────────────╮
+#> │   Areas       3                                                         │
+#> │   Observed    175                                                       │
+#> │   Expected    175                                                       │
+#> │   Population  20,800                                                    │
+#> │                                                                         │
+#> │   area   observed  population  expected                                 │
+#> │   -----  --------  ----------  --------                                 │
+#> │   East         28       3,900     32.34                                 │
+#> │   North        75       7,000     62.28                                 │
+#> │   South        72       9,900     80.38                                 │
+#> │                                                                         │
+#> │   expected is the count an area would have at the overall rate of each  │
+#> │   stratum, given its own population in it. stdinc() puts an interval on │
+#> │   the ratio of observed to expected.                                    │
+#> │                                                                         │
+#> │   The expected counts sum to the observed ones: the reference rates     │
+#> │   come from the same data.                                              │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # the expected counts feed the standardised ratio
 stdinc(e$observed, e$expected, area = e$area)
-#>    area observed expected       sir     lower    upper excess deficit
-#> 1  East       28 32.34430 0.8656857 0.5752419 1.251157  FALSE   FALSE
-#> 2 North       75 62.27967 1.2042453 0.9472153 1.509532  FALSE   FALSE
-#> 3 South       72 80.37603 0.8957895 0.7009001 1.128099  FALSE   FALSE
-#>   significant
-#> 1       FALSE
-#> 2       FALSE
-#> 3       FALSE
+#> ╭── Standardised incidence ratios ──────────────────────────────────────╮
+#> │   Areas          3                                                    │
+#> │   Observed       175                                                  │
+#> │   Expected       175                                                  │
+#> │   Overall ratio  1                                                    │
+#> │   Interval       exact Poisson, at the level asked for (default 95%)  │
+#> │   Above one      0                                                    │
+#> │   Below one      0                                                    │
+#> │                                                                       │
+#> │   area   observed  expected     sir  interval        finding          │
+#> │   -----  --------  --------  ------  --------------  -------          │
+#> │   East         28     32.34  0.8657  [0.575, 1.251]                   │
+#> │   North        75     62.28  1.2042  [0.947, 1.510]                   │
+#> │   South        72     80.38  0.8958  [0.701, 1.128]                   │
+#> │                                                                       │
+#> │   A ratio above 1 means more cases than the area's population would   │
+#> │   give at the overall rates. An excess or a deficit is an interval    │
+#> │   wholly above or below 1 (the significant column is either).         │
+#> │                                                                       │
+#> │   Each interval is a separate test: with many areas some exclude 1 by │
+#> │   chance (scanadj() allows for that).                                 │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # a population of zero has no rate
 try(expcnts(c(1, 2), c(10, 0), c("a", "b")))

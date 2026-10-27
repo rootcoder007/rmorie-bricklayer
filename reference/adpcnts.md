@@ -34,7 +34,18 @@ A numeric scalar: the estimated person-days over the period,
 person-days, not an average daily population; divide by `t` (or pass it
 to
 [`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md))
-for the population held on an average day.
+for the population held on an average day. It has class
+`c("rmbl_adpcnts", "rmbl_measure", "numeric")` and an attribute
+`"lakner"` (the number of counts, their mean and `t`), so it prints as a
+box with its inputs, formula and caveats; arithmetic,
+[`round()`](https://rdrr.io/r/base/Round.html),
+[`sum()`](https://rdrr.io/r/base/sum.html),
+[`mean()`](https://rdrr.io/r/base/mean.html), `[`,
+[`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give a plain
+number, and
+[`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md)
+takes it as `days`.
 
 ## Details
 
@@ -55,14 +66,53 @@ weekend admissions are released before Monday, for instance.
 # Lakner (p.21): counts on 255 days summing to 34,935 imply just over
 # fifty thousand detention days across the year.
 adpcnts(rep(34935 / 255, 255))
-#> [1] 50005
+#> ╭── Person-days from headcounts ──────────────────────────────────────────────╮
+#> │   Person-days  50,005 over the period                                       │
+#> │   Headcounts   255 days counted                                             │
+#> │   Mean count   137 people                                                   │
+#> │   Period       365 days                                                     │
+#> │   Formula      days = mean(counts) x t = 137 x 365                          │
+#> │                                                                             │
+#> │   Counts on 255 days average 137 people: about 50,005 person-days in 365    │
+#> │   days.                                                                     │
+#> │                                                                             │
+#> │   Lakner (1976, p.21): the mean of the days counted stands in for the       │
+#> │   days not counted, which fails if they differ systematically (weekday      │
+#> │   counts where weekend admissions leave before Monday).                     │
+#> │   A total of person-days, not a population: adp(x, t) divides by t.         │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # weekly counts over a 31-day month, then the average daily population
 pd <- adpcnts(c(120, 130, 125, 128), t = 31)
 pd
-#> [1] 3898.25
+#> ╭── Person-days from headcounts ──────────────────────────────────────────────╮
+#> │   Person-days  3898 over the period                                         │
+#> │   Headcounts   4 days counted                                               │
+#> │   Mean count   125.8 people                                                 │
+#> │   Period       31 days                                                      │
+#> │   Formula      days = mean(counts) x t = 125.8 x 31                         │
+#> │                                                                             │
+#> │   Counts on 4 days average 125.8 people: about 3898 person-days in 31 days. │
+#> │                                                                             │
+#> │   Lakner (1976, p.21): the mean of the days counted stands in for the       │
+#> │   days not counted, which fails if they differ systematically (weekday      │
+#> │   counts where weekend admissions leave before Monday).                     │
+#> │   A total of person-days, not a population: adp(x, t) divides by t.         │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 adp(pd, t = 31)
-#> [1] 125.75
+#> ╭── Average daily population ─────────────────────────────────────────────╮
+#> │   Average daily population  125.8 people on an average day              │
+#> │   Person-days               3898                                        │
+#> │   Period                    31 days                                     │
+#> │   Formula                   adp = days / t = 3898 / 31                  │
+#> │                                                                         │
+#> │   3898 person-days over 31 days: 125.8 people held on an average day.   │
+#> │                                                                         │
+#> │   Lakner (1976, p.15): a stock -- people held at once, not people who   │
+#> │   passed through. Count only the days served inside the period.         │
+#> │   adp = n x alos / t links it to alos() and admits(), exactly only in a │
+#> │   steady state.                                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a missing count must be dropped or filled first
 try(adpcnts(c(120, NA, 125)))

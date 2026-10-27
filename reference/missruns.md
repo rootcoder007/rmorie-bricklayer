@@ -64,27 +64,46 @@ sum(is.na(df$outage)) == sum(is.na(df$scattered))
 #> [1] TRUE
 
 missruns(df)
-#> ── Runs of consecutive missing values ──────────────────────────── 
-#>     column start end length
-#>     outage     3   6      4
-#>  scattered     7   8      2
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Runs of consecutive missing values ───────────────────────────────────╮
+#> │   Runs               2                                                  │
+#> │   Columns with runs  2                                                  │
+#> │   Longest run        4                                                  │
+#> │                                                                         │
+#> │   column     start  end  length                                         │
+#> │   ---------  -----  ---  ------                                         │
+#> │   outage         3    6       4                                         │
+#> │   scattered      7    8       2                                         │
+#> │                                                                         │
+#> │   Long runs of missing rows usually mean a source stopped reporting for │
+#> │   a while, not values missing at random.                                │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # Isolated gaps too, by lowering the threshold.
 missruns(df, minrun = 1)
-#> ── Runs of consecutive missing values ──────────────────────────── 
-#>     column start end length
-#>     outage     3   6      4
-#>  scattered     7   8      2
-#>  scattered     2   2      1
-#>  scattered     5   5      1
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Runs of consecutive missing values ───────────────────────────────────╮
+#> │   Runs               4                                                  │
+#> │   Columns with runs  2                                                  │
+#> │   Longest run        4                                                  │
+#> │                                                                         │
+#> │   column     start  end  length                                         │
+#> │   ---------  -----  ---  ------                                         │
+#> │   outage         3    6       4                                         │
+#> │   scattered      7    8       2                                         │
+#> │   scattered      2    2       1                                         │
+#> │   scattered      5    5       1                                         │
+#> │                                                                         │
+#> │   Long runs of missing rows usually mean a source stopped reporting for │
+#> │   a while, not values missing at random.                                │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # A complete column has no runs.
 missruns(data.frame(x = 1:5))
-#> ── Runs of consecutive missing values ──────────────────────────── 
-#>   (none)
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Runs of consecutive missing values ──╮
+#> │   Runs               0                 │
+#> │   Columns with runs  0                 │
+#> │                                        │
+#> │   (none)                               │
+#> ╰────────────────────────────────────────╯
 
 try(missruns(df, minrun = 0))
 #> Error : `minrun` must be a single positive integer

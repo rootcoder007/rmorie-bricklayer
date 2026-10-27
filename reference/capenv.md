@@ -58,6 +58,10 @@ A list of seven elements:
   is not installed). A list, not a vector, so the names survive the
   manifest's JSON: a named vector is written as a bare array.
 
+The list has class `c("rmbl_capenv", "list")`, which only changes how it
+prints (a box); its elements, and the JSON written from it, are those of
+a plain list.
+
 ## Details
 
 Package versions come from

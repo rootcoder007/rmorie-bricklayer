@@ -19,7 +19,7 @@ adjacency would make the answer a property of the guess."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -112,15 +112,14 @@ of areas), <code>nperm</code> (permutations used) and <code>style</code>.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>With weights \(w_{ij}\), total \(W = \sum_{ij} w_{ij}\) and
-\(z_i = x_i - \bar x\),
-$$I = \frac{n}{W}\,\frac{\sum_{i}\sum_{j} w_{ij} z_i z_j}{\sum_i z_i^2}.$$
-The expectation of I under the null is \(-1/(n - 1)\), not zero, so a
-small negative I is what independence looks like in a small set of
-areas. The p-value comes from permuting the values over the areas, which
-needs no distributional assumption – and with a handful of regions no
-distributional assumption is safe. It is two-sided around
-\(-1/(n - 1)\), \((1 + \mathrm{count}(|I^* - E| \ge |I - E|))/(1 + B)\) over the
-\(B\) finite permuted values, so it is never exactly zero.</p>
+\(z_i = x_i - \bar x\), $$I = \frac{n}{W}\,\frac{\sum_{i}\sum_{j}
+w_{ij} z_i z_j}{\sum_i z_i^2}.$$ The expectation of I under the null is
+\(-1/(n - 1)\), not zero, so a small negative I is what independence looks
+like in a small set of areas. The p-value comes from permuting the values
+over the areas, which needs no distributional assumption – and with a
+handful of regions no distributional assumption is safe. It is two-sided
+around \(-1/(n - 1)\), \((1 + \mathrm{count}(|I^* - E| \ge |I - E|))/(1
++ B)\) over the \(B\) finite permuted values, so it is never exactly zero.</p>
 <p>A neighbour list is binary; a weight matrix keeps its magnitudes (for
 example inverse distances). Self-neighbours and the diagonal are dropped.
 <code>style = "W"</code> divides each area's weights by their total. The

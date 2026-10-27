@@ -27,7 +27,7 @@ whether the numbers matched."><meta property="og:image" content="https://rootcod
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -112,7 +112,10 @@ every loaded package. Any other value leaves it out.</p></dd>
 <code>synthetic = TRUE</code> when flagged), <code>results</code> (an empty list,
 filled by <code><a href="recrd.html">recrd()</a></code>) and, when <code>environment = TRUE</code>,
 <code>environment</code> (the list from
-<code><a href="capenv.html">capenv()</a></code>).</p>
+<code><a href="capenv.html">capenv()</a></code>).
+The list has class <code>c("rmbl_manifest", "list")</code>, which only changes
+how it prints (a box); its elements, and the JSON written from it, are
+those of a plain list.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

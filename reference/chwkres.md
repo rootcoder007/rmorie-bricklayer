@@ -96,7 +96,12 @@ U2 <- chwkres(times, 50, "weibull", fit$theta)
 summary(U2)
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
 #> 0.008058 0.245728 0.511733 0.503234 0.778263 0.984104 
-plot(stats::ppoints(length(U2)), sort(U2), xlab = "uniform quantile", ylab = "residual")
+plot(
+  stats::ppoints(length(U2)),
+  sort(U2),
+  xlab = "uniform quantile",
+  ylab = "residual"
+)
 abline(0, 1)
 
 

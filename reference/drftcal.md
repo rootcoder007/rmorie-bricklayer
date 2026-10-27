@@ -84,10 +84,17 @@ number of at least 1; any error from
 set.seed(1)
 d <- data.frame(a = rnorm(400), b = sample(letters[1:4], 400, TRUE))
 drftcal(d, n = 10)
-#> Drift screens on 10 identical re-fetches (alpha = 0.01)
-#>   at least one column flagged: 0% of re-fetches
-#>   no column fired on identical data
-#>   per-screen alpha for a family-wise 0.01: 0.005
+#> ╭── Drift screen calibration ─────────────────────────────────────────────╮
+#> │   Identical re-fetches         10                                       │
+#> │   Alpha                        0.01                                     │
+#> │   Columns screened             2                                        │
+#> │   At least one column flagged  0% of re-fetches                         │
+#> │   Per-screen alpha             0.005 for a family-wise 0.01             │
+#> │                                                                         │
+#> │   Each re-fetch splits the same table in two at random and runs the     │
+#> │   drift screen on the halves, so every flag is a false alarm. No column │
+#> │   fired on identical data.                                              │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a stricter level, and the per-column rates
 cal <- drftcal(d, n = 10, alpha = 0.001)

@@ -11,7 +11,7 @@ method on every untreated unit."><meta property="og:image" content="https://root
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,31 +90,33 @@ year or a month index) and the outcome.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>rmbl_synth</code>: <code>weights</code> (a named vector over the
-donors), <code>path</code> (a data frame: <code>time</code>, <code>treated</code>,
+    <p>A list of class <code>rmbl_synth</code>: <code>weights</code> (a named vector
+over the donors), <code>path</code> (a data frame: <code>time</code>, <code>treated</code>,
 <code>synthetic</code>, <code>gap</code>), <code>rmspepre</code>, <code>rmsperatio</code>,
 <code>p_value</code> (<code>NA</code> without the placebo), <code>placrat</code>.
 <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws the two paths and the gap.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The weights solve
-$$\min_w \sum_{t &lt; T_0} \Big(Y_{1t} - \sum_j w_j Y_{jt}\Big)^2 \quad
-\textrm{s.t.} \quad w_j \ge 0,\ \sum_j w_j = 1,$$ over the periods before adoption \(T_0\)
-(accelerated projected gradient onto the simplex; the problem is convex, so the
-solution is the global one). The effect in each period is the gap
-\(Y_{1t} - \sum_j w_j Y_{jt}\). For inference, each untreated unit in turn is
-treated as if it had adopted the policy, with the other untreated units as donors;
-the ratio of root mean squared gap after to before adoption ranks the real unit
-among the placebos, and \(p\) is its rank over the number of units (Abadie,
-Diamond and Hainmueller 2010).</p>
-<p>This version matches on the pre-period outcomes only, not on separate predictors.</p>
+    <p>The weights solve $$\min_w \sum_{t &lt; T_0} \Big(Y_{1t} - \sum_j
+w_j Y_{jt}\Big)^2 \quad \textrm{s.t.} \quad w_j \ge 0,\ \sum_j w_j =
+1,$$
+over the periods before adoption \(T_0\) (accelerated projected gradient
+onto the simplex; the problem is convex, so the solution is the global one).
+The effect in each period is the gap \(Y_{1t} - \sum_j w_j Y_{jt}\). For
+inference, each untreated unit in turn is treated as if it had adopted the
+policy, with the other untreated units as donors; the ratio of root mean
+squared gap after to before adoption ranks the real unit among the placebos,
+and \(p\) is its rank over the number of units (Abadie, Diamond and
+Hainmueller 2010).</p>
+<p>This version matches on the pre-period outcomes only, not on separate
+predictors.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Abadie A, Diamond A, Hainmueller J (2010). Synthetic control methods
-for comparative case studies. Journal of the American Statistical Association
-105(490):493-505.<br><a href="https://doi.org/10.1198/jasa.2009.ap08746" class="external-link">doi:10.1198/jasa.2009.ap08746</a></p>
+    <p>Abadie A, Diamond A, Hainmueller J (2010). Synthetic control
+methods for comparative case studies. Journal of the American Statistical
+Association 105(490):493-505.<br><a href="https://doi.org/10.1198/jasa.2009.ap08746" class="external-link">doi:10.1198/jasa.2009.ap08746</a></p>
     </div>
 
     <div class="section level2">
@@ -130,6 +132,45 @@ for comparative case studies. Journal of the American Statistical Association
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">s</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="synctl-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># your own panel: eight towns over ten years, four adopting a by-law (two</span></span></span>
+<span class="r-in"><span><span class="co"># in 2019, two in 2021), with each town's population, county and income</span></span></span>
+<span class="r-in"><span><span class="va">own</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  town <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"D"</span>, <span class="st">"E"</span>, <span class="st">"F"</span>, <span class="st">"G"</span>, <span class="st">"H"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2015</span><span class="op">:</span><span class="fl">2024</span>, times <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">i</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">own</span><span class="op">$</span><span class="va">town</span>, <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">own</span><span class="op">$</span><span class="va">town</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">own</span><span class="op">$</span><span class="va">first</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2019</span>, <span class="fl">2019</span>, <span class="fl">2021</span>, <span class="fl">2021</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">own</span><span class="op">$</span><span class="va">bylaw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">own</span><span class="op">$</span><span class="va">first</span><span class="op">)</span> <span class="op">&amp;</span> <span class="va">own</span><span class="op">$</span><span class="va">year</span> <span class="op">&gt;=</span> <span class="va">own</span><span class="op">$</span><span class="va">first</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">own</span><span class="op">$</span><span class="va">pop</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">30</span>, <span class="fl">8</span>, <span class="fl">22</span>, <span class="fl">15</span>, <span class="fl">40</span>, <span class="fl">9</span>, <span class="fl">18</span><span class="op">)</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">*</span> <span class="fl">1000</span></span></span>
+<span class="r-in"><span><span class="va">own</span><span class="op">$</span><span class="va">county</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North"</span>, <span class="st">"South"</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">own</span><span class="op">$</span><span class="va">income</span> <span class="op">&lt;-</span> <span class="fl">50</span> <span class="op">+</span> <span class="va">own</span><span class="op">$</span><span class="va">year</span> <span class="op">-</span> <span class="fl">2015</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">own</span><span class="op">$</span><span class="va">rate</span> <span class="op">&lt;-</span> <span class="fl">30</span> <span class="op">+</span> <span class="va">i</span> <span class="op">+</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="op">(</span><span class="va">own</span><span class="op">$</span><span class="va">year</span> <span class="op">-</span> <span class="fl">2015</span><span class="op">)</span> <span class="op">-</span> <span class="fl">4</span> <span class="op">*</span> <span class="va">own</span><span class="op">$</span><span class="va">bylaw</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>  <span class="fl">0.2</span> <span class="op">*</span> <span class="va">own</span><span class="op">$</span><span class="va">income</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># one treated town, A, against the four towns never treated</span></span></span>
+<span class="r-in"><span><span class="va">own1</span> <span class="op">&lt;-</span> <span class="va">own</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">own</span><span class="op">$</span><span class="va">first</span><span class="op">)</span> <span class="op">|</span> <span class="va">own</span><span class="op">$</span><span class="va">town</span> <span class="op">==</span> <span class="st">"A"</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span><span class="fu">synctl</span><span class="op">(</span><span class="va">own1</span>, <span class="st">"town"</span>, <span class="st">"year"</span>, <span class="st">"rate"</span>, treunit <span class="op">=</span> <span class="st">"A"</span>, adopt <span class="op">=</span> <span class="fl">2019</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Synthetic control</span> ────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Treated unit          A                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Adoption              2019                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Donors                4                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Donors with weight    1                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Pre-period RMSPE      3.507                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Mean gap after        -7.923                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Post/pre RMSPE ratio  2.29                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Placebo-in-space p    0.200                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Placebos              4                                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Donor weights                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   donor  weight                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   -----  ------                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   E           1                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The synthetic A is the weighted mix of donors that best tracks it     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   before adoption. After adoption the treated unit is on average -7.923 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   away from it. Ranked against every donor run as a placebo, its        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   post/pre ratio gives p = 0.200.                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

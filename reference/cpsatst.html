@@ -17,7 +17,7 @@ together with proof that its manifest has not changed since you signed it."><met
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,12 +83,12 @@ together with proof that its manifest has not changed since you signed it.</p>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
-<dd><p>For <code>cpsatst()</code>, a signing key from
-<code><a href="fipskg.html">fipskg()</a></code> (ML-DSA, SLH-DSA and the other standardised schemes) or
-<code><a href="pqckg.html">pqckg()</a></code> (XMSS), or a shared secret
-(a string or raw vector) for <code>"hmac"</code>. For <code>cpschkatst()</code>,
-the shared secret that checks an <code>"hmac"</code> attestation; it is not
-used for the other schemes, whose public key the attestation carries.</p></dd>
+<dd><p>For <code>cpsatst()</code>, a signing key from <code><a href="fipskg.html">fipskg()</a></code>
+(ML-DSA, SLH-DSA and the other standardised schemes) or <code><a href="pqckg.html">pqckg()</a></code>
+(XMSS), or a shared secret (a string or raw vector) for <code>"hmac"</code>. For
+<code>cpschkatst()</code>, the shared secret that checks an <code>"hmac"</code>
+attestation; it is not used for the other schemes, whose public key the
+attestation carries.</p></dd>
 
 
 <dt id="arg-ctx">ctx<a class="anchor" aria-label="anchor" href="#arg-ctx"></a></dt>
@@ -99,8 +99,8 @@ signature for the standardised schemes; see
 
 
 <dt id="arg-prehash">prehash<a class="anchor" aria-label="anchor" href="#arg-prehash"></a></dt>
-<dd><p>Pre-hash, as in <code><a href="cpssign.html">cpssign()</a></code>. It is <code>"none"</code> (the
-default) or a hash name such as <code>"sha256"</code> or <code>"sha512"</code>.</p></dd>
+<dd><p>Pre-hash, as in <code><a href="cpssign.html">cpssign()</a></code>. It is <code>"none"</code>
+(the default) or a hash name such as <code>"sha256"</code> or <code>"sha512"</code>.</p></dd>
 
 
 <dt id="arg-note">note<a class="anchor" aria-label="anchor" href="#arg-note"></a></dt>
@@ -125,11 +125,10 @@ consistent, which any key's holder could arrange.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>cpsatst()</code> a list of class <code>bricklayer_attestation</code> with the
-character fields
-<code>digest</code>, <code>scheme</code>, <code>public</code> (hex), <code>context</code>,
-<code>prehash</code>, <code>note</code> and <code>signed_utc</code> (ISO 8601 UTC time), and
-<code>signature</code> (a <code>bricklayer_signature</code> from
+    <p><code>cpsatst()</code> a list of class <code>bricklayer_attestation</code> with
+the character fields <code>digest</code>, <code>scheme</code>, <code>public</code> (hex),
+<code>context</code>, <code>prehash</code>, <code>note</code> and <code>signed_utc</code> (ISO 8601
+UTC time), and <code>signature</code> (a <code>bricklayer_signature</code> from
 <code><a href="cpssign.html">cpssign()</a></code>).</p>
 <p><code>cpschkatst()</code> a list of class <code>bricklayer_attestation_check</code>
 with <code>ok</code> (logical)
@@ -201,21 +200,23 @@ verify is a failed row, not an error.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="mkmnf.html">mkmnf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"otis"</span>, rows <span class="op">=</span> <span class="fl">1200L</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  env <span class="op">=</span> <span class="cn">FALSE</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="mkmnf.html">mkmnf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"otis"</span>, rows <span class="op">=</span> <span class="fl">1200L</span><span class="op">)</span>, env <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="fipskg.html">fipskg</a></span><span class="op">(</span><span class="st">"ML-DSA-65"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">att</span> <span class="op">&lt;-</span> <span class="fu">cpsatst</span><span class="op">(</span><span class="va">m</span>, <span class="va">key</span>, note <span class="op">=</span> <span class="st">"counts as published"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">att</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Capsule attestation ───────────────────────────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   scheme      ML-DSA-65</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   digest      efa1b7387f225380245de0b5170999e87ad4044f3e8fd2ef6a6bfbc2bd0a9c90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   context     &lt;none&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   prehash     none</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   note        counts as published</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   signed      2026-10-22T12:13:27Z</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   public key  e0d30534107a719e756cb489246adc75... (1952 bytes)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Capsule attestation</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Scheme           ML-DSA-65                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Manifest digest  efa1b7387f225380245de0b5170999e87ad4044f3e8fd2ef6a6bfbc2 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                    bd0a9c90                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Context          &lt;none&gt;                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Prehash          none                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Note             counts as published                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Signed           2026-10-27T13:56:49Z                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Public key       932283e87d2627fa239ab6cd27654f44... (1952 bytes)         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A signed claim that a manifest with this digest was attested by the       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   holder of the key; check it against the manifest with cpschkatst().       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a verifier needs the attestation and the manifest, nothing else</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">cpschkatst</span><span class="op">(</span><span class="va">att</span>, <span class="va">m</span><span class="op">)</span></span></span>
@@ -238,9 +239,7 @@ verify is a failed row, not an error.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># and so does presenting a different key</span></span></span>
-<span class="r-in"><span><span class="fu">cpschkatst</span><span class="op">(</span><span class="va">att</span>, <span class="va">m</span>,</span></span>
-<span class="r-in"><span>  keyexp <span class="op">=</span> <span class="fu"><a href="fipskg.html">fipskg</a></span><span class="op">(</span><span class="st">"ML-DSA-65"</span><span class="op">)</span><span class="op">$</span><span class="va">public</span></span></span>
-<span class="r-in"><span><span class="op">)</span><span class="op">$</span><span class="va">ok</span></span></span>
+<span class="r-in"><span><span class="fu">cpschkatst</span><span class="op">(</span><span class="va">att</span>, <span class="va">m</span>, keyexp <span class="op">=</span> <span class="fu"><a href="fipskg.html">fipskg</a></span><span class="op">(</span><span class="st">"ML-DSA-65"</span><span class="op">)</span><span class="op">$</span><span class="va">public</span><span class="op">)</span><span class="op">$</span><span class="va">ok</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the note is signed too: editing it breaks the signature row</span></span></span>
@@ -263,7 +262,11 @@ verify is a failed row, not an error.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "4e289ef69cbe6f4c0d7de16c0801ad1155aba1598f2f4b25cddb46880caacd60"</span>
 <span class="r-in"><span><span class="fu">cpschkatst</span><span class="op">(</span><span class="va">att3</span>, <span class="va">m</span>, key <span class="op">=</span> <span class="st">"shared-secret"</span>, keyexp <span class="op">=</span> <span class="va">att3</span><span class="op">$</span><span class="va">public</span><span class="op">)</span><span class="op">$</span><span class="va">ok</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
-<span class="r-in"><span><span class="fu">cpschkatst</span><span class="op">(</span><span class="va">att3</span>, <span class="va">m</span>, key <span class="op">=</span> <span class="st">"another-secret"</span><span class="op">)</span><span class="op">$</span><span class="va">checks</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"check"</span>, <span class="st">"ok"</span>, <span class="st">"detail"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="fu">cpschkatst</span><span class="op">(</span><span class="va">att3</span>, <span class="va">m</span>, key <span class="op">=</span> <span class="st">"another-secret"</span><span class="op">)</span><span class="op">$</span><span class="va">checks</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"check"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"ok"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"detail"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                  check    ok</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 attestation_complete  TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2      manifest_digest  TRUE</span>

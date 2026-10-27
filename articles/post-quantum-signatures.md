@@ -219,28 +219,39 @@ root <- tempfile("capsules-")
 for (nm in c("one", "two")) {
   d <- file.path(root, nm)
   dir.create(d, recursive = TRUE)
-  utils::write.csv(data.frame(x = 1:3), file.path(d, "data.csv"), row.names = FALSE)
-  writeLines('{"resource": {"filename": "data.csv"}}', file.path(d, "data_provenance.json"))
+  utils::write.csv(
+    data.frame(x = 1:3),
+    file.path(d, "data.csv"),
+    row.names = FALSE
+  )
+  writeLines(
+    '{"resource": {"filename": "data.csv"}}',
+    file.path(d, "data_provenance.json")
+  )
 }
 kf <- tempfile(fileext = ".json")
 writeLines(tojs(unclass(pqckg(height = 4)), auto_unbox = TRUE), kf)
 copy <- tempfile(fileext = ".json")
-invisible(file.copy(kf, copy))   # an old copy of the key, kept by mistake
+invisible(file.copy(kf, copy)) # an old copy of the key, kept by mistake
 
-status <- blcli(c("sign", root, "--scheme", "xmss-sha256", "--key-file", kf, "--json"),
-                out = function(s) NULL)
+status <- blcli(
+  c("sign", root, "--scheme", "xmss-sha256", "--key-file", kf, "--json"),
+  out = function(s) NULL
+)
 status
 #> [1] 0
 state <- fromjs(paste(readLines(kf), collapse = "\n"))
-state$next_index                # two capsules signed, two indices used
+state$next_index # two capsules signed, two indices used
 #> [1] 2
 state$used$generation
 #> [1] 1
 
 # the old copy is refused: the bundles show indices it does not know are used
-blcli(c("sign", root, "--scheme", "xmss-sha256", "--key-file", copy, "--overwrite"),
-      out = function(s) cat(s[grepl("stale", s)]))
-#> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/Rtmp95MW63/capsules-39d316e813f2/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
+blcli(
+  c("sign", root, "--scheme", "xmss-sha256", "--key-file", copy, "--overwrite"),
+  out = function(s) cat(grep("stale", s, fixed = TRUE, value = TRUE))
+)
+#> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/RtmpnneHUB/capsules-3c6175c63721/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
 xmssidxseen(root)[, c("index", "reused")]
 #>   index reused
 #> 1     0  FALSE
@@ -317,12 +328,32 @@ logarithmic, because an SLH-DSA signature is several times larger.
 
 ``` r
 
-sch <- c("ML-DSA-44", "ML-DSA-65", "ML-DSA-87", "SLH-DSA-SHA2-128f", "SLH-DSA-SHAKE-128s")
-sz <- t(vapply(sch, function(s) fipssz(s)[c("public_key", "signature")], numeric(2)))
+sch <- c(
+  "ML-DSA-44",
+  "ML-DSA-65",
+  "ML-DSA-87",
+  "SLH-DSA-SHA2-128f",
+  "SLH-DSA-SHAKE-128s"
+)
+sz <- t(vapply(
+  sch,
+  function(s) fipssz(s)[c("public_key", "signature")],
+  numeric(2)
+))
 op <- par(mar = c(9, 5, 3, 1))
-barplot(t(sz), beside = TRUE, log = "y", ylim = c(10, 2 * max(sz)), col = blpal()[1:2],
-        ylab = "bytes (log scale)", las = 2, cex.names = 0.8, legend.text = c("public key", "signature"),
-        args.legend = list(x = "topleft", bty = "n"), main = "Key and signature sizes")
+barplot(
+  t(sz),
+  beside = TRUE,
+  log = "y",
+  ylim = c(10, 2 * max(sz)),
+  col = blpal()[1:2],
+  ylab = "bytes (log scale)",
+  las = 2,
+  cex.names = 0.8,
+  legend.text = c("public key", "signature"),
+  args.legend = list(x = "topleft", bty = "n"),
+  main = "Key and signature sizes"
+)
 #> Warning in yinch(0.1): y log scale: yinch() is nonsense
 ```
 

@@ -29,7 +29,7 @@ the console cannot redraw."><meta property="og:image" content="https://rootcoder
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,7 +138,8 @@ made by a calling function is still running stays silent, so nested work
 shows one bar, for the outer loop.</p>
 <p>Updates are cheap: when quiet an update only stores the value, and when
 drawing, frames are throttled, so <code>$tick()</code> can be called on every
-iteration of a loop. Call <code>$done()</code> through <code><a href="https://rdrr.io/r/base/on.exit.html" class="external-link">on.exit()</a></code> right
+iteration of a loop. Call <code>$done()</code> through
+<code>on.exit(p$done(), add = TRUE)</code> right
 after making the bar, so the line is cleared and the bar is released even
 when the work fails or is interrupted:</p><div class="sourceCode"><pre><code>
 p &lt;- blprog("bootstrap", B)

@@ -43,10 +43,11 @@ stepchg(y, x = NULL, minseg = 2L, nperm = 9999L, seed = 1L)
 
 ## Value
 
-A list with `breakafter` (the period the series changes after, from
-`x`), `index` (its position), `before` and `after` (the segment means),
-`difference` (after minus before), `statistic` (\\T\_{\max}\\),
-`p_value`, `nperm` (orderings or permutations used) and `method`.
+A list of class `rmbl_step_change` with `breakafter` (the period the
+series changes after, from `x`), `index` (its position), `before` and
+`after` (the segment means), `difference` (after minus before),
+`statistic` (\\T\_{\max}\\), `p_value`, `nperm` (orderings or
+permutations used) and `method`.
 
 ## Details
 
@@ -95,33 +96,21 @@ same multiple-comparison issue.
 # A step down after the third period. With six periods there are only
 # 720 orderings, so even a clean step has p near 0.1.
 stepchg(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
-#> $breakafter
-#> [1] 2020
-#> 
-#> $index
-#> [1] 3
-#> 
-#> $before
-#> [1] 100.6667
-#> 
-#> $after
-#> [1] 60.33333
-#> 
-#> $difference
-#> [1] -40.33333
-#> 
-#> $statistic
-#> [1] 2440.167
-#> 
-#> $p_value
-#> [1] 0.1
-#> 
-#> $nperm
-#> [1] 720
-#> 
-#> $method
-#> [1] "exact over all 720 orderings"
-#> 
+#> ╭── Step change ───────────────────────────────────────────────────────╮
+#> │   Method          exact over all 720 orderings                       │
+#> │   Permutations    720                                                │
+#> │   Break after     2020                                               │
+#> │   Break at index  3                                                  │
+#> │                                                                      │
+#> │   before  after  difference  statistic      p                        │
+#> │   ------  -----  ----------  ---------  -----                        │
+#> │    100.7  60.33      -40.33      2,440  0.100                        │
+#> │                                                                      │
+#> │   The best single split is after 2020: the mean moves from 100.7 to  │
+#> │   60.33. The p-value compares that best split with the best split of │
+#> │   shuffled series, so it allows for having searched every split (p = │
+#> │   0.100).                                                            │
+#> ╰──────────────────────────────────────────────────────────────────────╯
 
 # A longer series with the same step is clearly significant.
 stepchg(c(100, 104, 98, 101, 97, 60, 63, 58, 61, 59), nperm = 999)$p_value

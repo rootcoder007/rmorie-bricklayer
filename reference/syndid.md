@@ -37,7 +37,7 @@ syndid(data, unit, time, y, ftreat, reps = 200L, seed = NULL, conflvl = 0.95)
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the intervals reported (default 0.95).
 
 ## Value
 
@@ -80,6 +80,64 @@ Synthetic difference-in-differences. American Economic Review
 p <- polex()
 p1 <- p[is.na(p$refmonth) | p$refmonth == 13, ]
 syndid(p1, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
-#> Synthetic difference in differences: -3.126 (jackknife s.e. 0.2474; -3.611 to -2.641)
-#> Unit weights: D12 0.203, D16 0.200, D08 0.200, D20 0.199, D04 0.198 
+#> ╭── Synthetic difference in differences ─────────────────────────────────╮
+#> │   Estimate              -3.126                                         │
+#> │   Standard error        0.2474 (jackknife)                             │
+#> │   Interval              [-3.611, -2.641]                               │
+#> │   Adoption              13                                             │
+#> │   Comparison units      5                                              │
+#> │   With weight           5                                              │
+#> │   Pre-periods weighted  12                                             │
+#> │                                                                        │
+#> │   Unit weights                                                         │
+#> │   unit  weight                                                         │
+#> │   ----  ------                                                         │
+#> │   D12   0.2031                                                         │
+#> │   D16   0.1999                                                         │
+#> │   D08   0.1998                                                         │
+#> │   D20   0.1991                                                         │
+#> │   D04   0.1981                                                         │
+#> │                                                                        │
+#> │   Weighting the comparison units and the pre-periods to match the      │
+#> │   treated units, the effect is -3.126 (its interval [-3.611, -2.641]): │
+#> │   the interval excludes 0, so the data distinguish it from no effect.  │
+#> ╰────────────────────────────────────────────────────────────────────────╯
+
+# your own panel: eight towns over ten years, four adopting a by-law (two
+# in 2019, two in 2021), with each town's population, county and income
+own <- data.frame(
+  town = rep(c("A", "B", "C", "D", "E", "F", "G", "H"), each = 10),
+  year = rep(2015:2024, times = 8)
+)
+i <- match(own$town, unique(own$town))
+own$first <- c(2019, 2019, 2021, 2021, NA, NA, NA, NA)[i]
+own$bylaw <- as.integer(!is.na(own$first) & own$year >= own$first)
+own$pop <- c(12, 30, 8, 22, 15, 40, 9, 18)[i] * 1000
+own$county <- rep(c("North", "South"), 4)[i]
+own$income <- 50 + own$year - 2015 + cos(seq_len(80))
+own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
+  0.2 * own$income + sin(seq_len(80))
+own1 <- own[is.na(own$first) | own$first == 2019, ]
+syndid(own1, "town", "year", "rate", "first", reps = 50, seed = 1)
+#> ╭── Synthetic difference in differences ─────────────────────────────────╮
+#> │   Estimate              -4.028                                         │
+#> │   Standard error        0.02014 (jackknife)                            │
+#> │   Interval              [-4.067, -3.988]                               │
+#> │   Adoption              2019                                           │
+#> │   Comparison units      4                                              │
+#> │   With weight           4                                              │
+#> │   Pre-periods weighted  4                                              │
+#> │                                                                        │
+#> │   Unit weights                                                         │
+#> │   unit  weight                                                         │
+#> │   ----  ------                                                         │
+#> │   G     0.2881                                                         │
+#> │   F     0.2662                                                         │
+#> │   E     0.2303                                                         │
+#> │   H     0.2154                                                         │
+#> │                                                                        │
+#> │   Weighting the comparison units and the pre-periods to match the      │
+#> │   treated units, the effect is -4.028 (its interval [-4.067, -3.988]): │
+#> │   the interval excludes 0, so the data distinguish it from no effect.  │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 ```

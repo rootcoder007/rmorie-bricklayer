@@ -21,7 +21,7 @@ package, with no system dependency."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -190,15 +190,18 @@ Module-Lattice-Based Key-Encapsulation Mechanism Standard. FIPS 203.
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">k1</span><span class="op">$</span><span class="va">public</span>, <span class="va">k2</span><span class="op">$</span><span class="va">public</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span><span class="va">k1</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Key encapsulation key (ML-KEM, FIPS 203) ──────────────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   level       ML-KEM-512</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   public key  3995815e597d104355cf29aa5333c932... (800 bytes)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   secret      &lt;withheld&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Key encapsulation key (ML-KEM, FIPS 203)</span> ─────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Level       ML-KEM-512                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Public key  3995815e597d104355cf29aa5333c932... (800 bytes)               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Secret key  &lt;withheld&gt;                                                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Keep this key private: it opens what others encapsulate to its public     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   half (kempubkey()) with kemdecap().                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># levels other than the three FIPS 203 defines are refused</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">kemkg</span><span class="op">(</span><span class="fl">256</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `level` must be one of 512, 768 or 1024</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `lvl` must be one of 512, 768 or 1024</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">kemkg</span><span class="op">(</span><span class="fl">768</span>, seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `seed` must be a raw vector of 64 bytes</span>
 </code></pre></div>

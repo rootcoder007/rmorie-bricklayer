@@ -130,11 +130,17 @@ so it is not run here):
 
 ``` r
 
-fnservices <- c("Nishnawbe-Aski Police Service", "Anishinabek Police Service",
-                 "Treaty Three Police Service", "UCCM Anishnaabe Police Service")
+fnservices <- c(
+  "Nishnawbe-Aski Police Service",
+  "Anishinabek Police Service",
+  "Treaty Three Police Service",
+  "UCCM Anishnaabe Police Service"
+)
 reports <- lapply(reporturls, siufprs)
-mine <- Filter(function(r) any(grepl(paste(fnservices, collapse = "|"), r$police_service)),
-               reports)
+mine <- Filter(
+  function(r) any(grepl(paste(fnservices, collapse = "|"), r$police_service)),
+  reports
+)
 length(mine)
 ```
 
@@ -146,21 +152,44 @@ give the investigation’s timeline at a glance.
 
 ``` r
 
-rpt <- siuprs(siutxt(paste(readLines(system.file("extdata", "siu_synthetic_report.html",
-                                                    package = "rmoriebricklayer"), warn = FALSE),
-                           collapse = "\n")))
+rpt <- siuprs(siutxt(paste(
+  readLines(
+    system.file(
+      "extdata",
+      "siu_synthetic_report.html",
+      package = "rmoriebricklayer"
+    ),
+    warn = FALSE
+  ),
+  collapse = "\n"
+)))
 iso <- rpt[grepl("_iso$", names(rpt)) & grepl("^\\d{4}-\\d{2}-\\d{2}$", rpt)]
 when <- as.Date(iso)
 o <- order(when)
-lab <- gsub("_", " ", sub("_iso$", "", names(iso)[o]))
+lab <- gsub("_", " ", sub("_iso$", "", names(iso)[o]), fixed = TRUE)
 span <- diff(range(when))
 op <- par(mar = c(4, 1, 3, 1))
-plot(when[o], seq_along(o), pch = 19, col = blpal()[1], yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-     xlim = range(when) + c(-0.1, 0.1) * as.numeric(span), ylim = c(0.5, length(o) + 0.5),
-     main = "Dates in the synthetic report")
+plot(
+  when[o],
+  seq_along(o),
+  pch = 19,
+  col = blpal()[1],
+  yaxt = "n",
+  xaxt = "n",
+  xlab = "",
+  ylab = "",
+  xlim = range(when) + c(-0.1, 0.1) * as.numeric(span),
+  ylim = c(0.5, length(o) + 0.5),
+  main = "Dates in the synthetic report"
+)
 axis.Date(1, when, format = "%Y-%m-%d")
-text(when[o], seq_along(o), paste0(lab, "  ", format(when[o])), cex = 0.75,
-     pos = ifelse(seq_along(o) < length(o), 4, 2))
+text(
+  when[o],
+  seq_along(o),
+  paste0(lab, "  ", format(when[o])),
+  cex = 0.75,
+  pos = ifelse(seq_along(o) < length(o), 4, 2)
+)
 ```
 
 ![](siu-reports_files/figure-html/siu-reports-siu-timeline-plot-1.png)

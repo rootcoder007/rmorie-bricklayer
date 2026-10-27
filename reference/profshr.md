@@ -46,7 +46,7 @@ profshr(
 
 - conflvl:
 
-  Confidence level (default 0.95).
+  Confidence level of the share's limits (default 0.95).
 
 - roubase:
 
@@ -114,32 +114,75 @@ statistical inference. Journal of the American Statistical Association
 
 ``` r
 p <- cnsprof(indiex("censuspop"))
-# children who are foster children, by province, First Nations, Metis, Inuit and
-# non-Indigenous
+# children who are foster children, by province, First Nations, Metis, Inuit
+# and non-Indigenous
 fc <- profshr(p, "Foster children", "Total - Children in census families")
-fc <- fc[fc$age == "0 to 14 years" &
-           fc$group %in% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"), ]
+fc <- fc[
+  fc$age == "0 to 14 years" &
+    fc$group %in%
+      c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"),
+]
 head(fc)
-#>                           geo          dguid
-#> 256                    Canada 2021A000011124
-#> 257                    Canada 2021A000011124
-#> 258                    Canada 2021A000011124
-#> 262 Newfoundland and Labrador    2021A000210
-#> 263 Newfoundland and Labrador    2021A000210
-#> 264 Newfoundland and Labrador    2021A000210
-#>                               residence         gender           age
-#> 256 Total - Residence on or off reserve Total - Gender 0 to 14 years
-#> 257                          On reserve Total - Gender 0 to 14 years
-#> 258                         Off reserve Total - Gender 0 to 14 years
-#> 262 Total - Residence on or off reserve Total - Gender 0 to 14 years
-#> 263                          On reserve Total - Gender 0 to 14 years
-#> 264                         Off reserve Total - Gender 0 to 14 years
-#>             group numerator denominator estimate     lower    upper quality
-#> 256 First Nations     11735      265405 4.421544 4.2880409 4.559006      ok
-#> 257 First Nations      2350       90270 2.603301 2.5989608 2.607649      ok
-#> 258 First Nations      9385      175135 5.358723 5.1789488 5.544373      ok
-#> 262 First Nations        95        5125 1.853659 1.3105276 2.615917      ok
-#> 263 First Nations        35         705 4.964539 4.4367974 5.551407      ok
-#> 264 First Nations        60        4425 1.355932 0.8752591 2.095001      ok
+#> ╭── Share of a population with a characteristic ──────────────────────────────╮
+#> │   Edition      2021 Census of Population (DGUID vintage)                    │
+#> │   Numerator    Foster children                                              │
+#> │   Denominator  Total - Children in census families                          │
+#> │   Rows         6                                                            │
+#> │   Geographies  Canada; Newfoundland and Labrador                            │
+#> │   Ages         0 to 14 years                                                │
+#> │   Estimate     percent                                                      │
+#> │                                                                             │
+#> │   geo                        dguid                                          │
+#> │   -------------------------  --------------                                 │
+#> │   Canada                     2021A000011124                                 │
+#> │   Canada                     2021A000011124                                 │
+#> │   Canada                     2021A000011124                                 │
+#> │   Newfoundland and Labrador  2021A000210                                    │
+#> │   Newfoundland and Labrador  2021A000210                                    │
+#> │   Newfoundland and Labrador  2021A000210                                    │
+#> │                                                                             │
+#> │   geo                        residence                                      │
+#> │   -------------------------  -----------------------------------            │
+#> │   Canada                     Total - Residence on or off reserve            │
+#> │   Canada                     On reserve                                     │
+#> │   Canada                     Off reserve                                    │
+#> │   Newfoundland and Labrador  Total - Residence on or off reserve            │
+#> │   Newfoundland and Labrador  On reserve                                     │
+#> │   Newfoundland and Labrador  Off reserve                                    │
+#> │                                                                             │
+#> │   geo                        gender          age            group           │
+#> │   -------------------------  --------------  -------------  -------------   │
+#> │   Canada                     Total - Gender  0 to 14 years  First Nations   │
+#> │   Canada                     Total - Gender  0 to 14 years  First Nations   │
+#> │   Canada                     Total - Gender  0 to 14 years  First Nations   │
+#> │   Newfoundland and Labrador  Total - Gender  0 to 14 years  First Nations   │
+#> │   Newfoundland and Labrador  Total - Gender  0 to 14 years  First Nations   │
+#> │   Newfoundland and Labrador  Total - Gender  0 to 14 years  First Nations   │
+#> │                                                                             │
+#> │   geo                        numerator  denominator  estimate               │
+#> │   -------------------------  ---------  -----------  --------               │
+#> │   Canada                        11,735      265,405     4.422               │
+#> │   Canada                         2,350       90,270     2.603               │
+#> │   Canada                         9,385      175,135     5.359               │
+#> │   Newfoundland and Labrador         95        5,125     1.854               │
+#> │   Newfoundland and Labrador         35          705     4.965               │
+#> │   Newfoundland and Labrador         60        4,425     1.356               │
+#> │                                                                             │
+#> │   geo                        95% CI          quality                        │
+#> │   -------------------------  --------------  -------                        │
+#> │   Canada                     [4.288, 4.559]  ok                             │
+#> │   Canada                     [2.599, 2.608]  ok                             │
+#> │   Canada                     [5.179, 5.544]  ok                             │
+#> │   Newfoundland and Labrador  [1.311, 2.616]  ok                             │
+#> │   Newfoundland and Labrador  [4.437, 5.551]  ok                             │
+#> │   Newfoundland and Labrador  [0.875, 2.095]  ok                             │
+#> │                                                                             │
+#> │   Highest share: Canada, Off reserve (5.359); lowest: Newfoundland and      │
+#> │   Labrador, Off reserve (1.356).                                            │
+#> │   Their intervals do not overlap: the gap is more than sampling error.      │
+#> │                                                                             │
+#> │   The interval carries the long-form sample and the random rounding,        │
+#> │   not non-response: read it as a lower bound on the uncertainty.            │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 plot(fc[fc$geo == "Canada", ])
 ```

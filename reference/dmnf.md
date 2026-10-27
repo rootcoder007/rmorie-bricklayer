@@ -82,8 +82,12 @@ column into row names) and a quote mark inside an unquoted field
 ([`read.csv()`](https://rdrr.io/r/utils/read.table.html) takes the rest
 of the file as one quoted run). Tables that inflate past 512 MiB are
 read by [`read.csv()`](https://rdrr.io/r/utils/read.table.html) itself,
-a piece at a time. A table that decompresses to more than the option
-`rmoriebricklayer.maxcsvbytes` (1 GiB by default) is refused.
+a piece at a time. A table whose SHA-256 matches the manifest is the
+file the service holds, so it is read whatever its size; one the
+manifest lists without a digest may decompress to at most the option
+`rmoriebricklayer.maxcsvbytes` (1 GiB by default). A large table needs
+memory for all of it: a 1 GB decompressed CSV takes a few GB of RAM as a
+data frame.
 
 The key is sent only to the address of the signed services document.
 With `MORIE_DATA_URL` set to another address the key is not sent and the
@@ -116,19 +120,32 @@ dir.create(cache)
 old <- options(rmoriebricklayer.dcache = cache)
 f <- file.path(cache, "demo__counts.csv.gz")
 con <- gzfile(f, "w")
-write.csv(data.frame(region = c("a", "b"), n = c(3L, 5L)), con, row.names = FALSE)
+write.csv(
+  data.frame(region = c("a", "b"), n = c(3L, 5L)),
+  con,
+  row.names = FALSE
+)
 close(con)
-m <- list(datasets = list(list(key = "demo/counts", rows = 2, source = "an example",
-                               meta = list(description = "Counts by region"),
-                               sha256_gz = csha256(readBin(f, "raw", file.size(f))))))
-writeLines(tojs(m, auto_unbox = TRUE),
-           file.path(cache, "manifest.json"))
+m <- list(
+  datasets = list(list(
+    key = "demo/counts",
+    rows = 2,
+    source = "an example",
+    meta = list(description = "Counts by region"),
+    sha256_gz = csha256(readBin(f, "raw", file.size(f)))
+  ))
+)
+writeLines(tojs(m, auto_unbox = TRUE), file.path(cache, "manifest.json"))
 
 dtabs()
-#> key          rows  name
-#> demo/counts     2  Counts by region
-#> 
-#> 1 tables; dload("KEY") loads one
+#> ╭── Curated tables at data.rmorie.com ──╮
+#> │   Tables  1                           │
+#> │                                       │
+#> │   key          rows  name             │
+#> │   demo/counts     2  Counts by region │
+#> │                                       │
+#> │   1 tables; dload("KEY") loads one    │
+#> ╰───────────────────────────────────────╯
 dload("demo/counts")
 #>   region n
 #> 1      a 3
@@ -150,7 +167,11 @@ file.exists(f)
 options(old)
 unlink(cache, recursive = TRUE)
 for (v in names(oldenv)) {
-  if (is.na(oldenv[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(oldenv[v]))
+  if (is.na(oldenv[[v]])) {
+    Sys.unsetenv(v)
+  } else {
+    do.call(Sys.setenv, as.list(oldenv[v]))
+  }
 }
 if (FALSE) { # interactive()
 # the real service: needs a key and the network

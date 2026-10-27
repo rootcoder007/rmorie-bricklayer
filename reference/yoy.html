@@ -19,7 +19,7 @@ off a small count comes with an interval as wide as the count is small."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,6 +90,7 @@ off a small count comes with an interval as wide as the count is small.</p>
 <span>  conflvl <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"neutral"</span>, <span class="st">"higher"</span>, <span class="st">"lower"</span><span class="op">)</span>,</span>
 <span>  complete <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  prdord <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -101,6 +102,10 @@ off a small count comes with an interval as wide as the count is small.</p>
 <span></span>
 <span><span class="co"># S3 method for class 'ts'</span></span>
 <span><span class="fu">yoy</span><span class="op">(</span><span class="va">x</span>, lag <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'rmbl_yoy'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">x</span>, digits <span class="op">=</span> <span class="fl">1L</span>, palette <span class="op">=</span> <span class="st">"diverging"</span>,</span>
+<span>  color <span class="op">=</span> <span class="cn">FALSE</span>, n <span class="op">=</span> <span class="fl">30</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_yoy'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, digits <span class="op">=</span> <span class="fl">1L</span>, palette <span class="op">=</span> <span class="st">"diverging"</span>, color <span class="op">=</span> <span class="cn">NULL</span>, n <span class="op">=</span> <span class="fl">30</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
@@ -115,7 +120,7 @@ off a small count comes with an interval as wide as the count is small.</p>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Ignored.</p></dd>
+<dd><p>Further arguments from <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>; the table ignores them.</p></dd>
 
 
 <dt id="arg-value">value<a class="anchor" aria-label="anchor" href="#arg-value"></a></dt>
@@ -124,11 +129,29 @@ measure, as a string or a bare name.</p></dd>
 
 
 <dt id="arg-prd">prd<a class="anchor" aria-label="anchor" href="#arg-prd"></a></dt>
-<dd><p>For a data frame, the column holding the
-period (a year, a <code>Date</code>, a fiscal-year integer, an ordered
-factor). An ordered factor is compared by level order, one level being one
-period; an unordered factor or a character column has no order, so every row
-is flagged “no comparison period”. For a numeric vector, the periods themselves.</p></dd>
+<dd><p>For a data frame, the column holding the period (a year, a <code>Date</code>,
+a fiscal-year integer, an ordered factor, or text). An ordered factor is
+compared by level order, one level being one period; an unordered factor has
+no order, so every row is flagged “no comparison period”. For a
+numeric vector, the periods themselves.</p>
+<p>Text periods are read when every label has the same one of these forms
+(one step is the period itself, so a missing period is a gap):</p><ul><li><p>a year: <code>"1987"</code>, <code>"2031"</code>;</p></li>
+<li><p>a fiscal year by the two years it spans, ordered by the first:
+<code>"2019/20"</code>, <code>"2019/2020"</code>, <code>"2019-20"</code>,
+<code>"2019-2020"</code>, <code>"FY 2019-20"</code>,
+<code>"FY2019/20"</code>; or by one year: <code>"FY2020"</code>, <code>"FY 2020"</code> (the two kinds do
+not mix);</p></li>
+<li><p>a quarter: <code>"2021 Q3"</code>, <code>"2021Q3"</code>, <code>"2021-Q3"</code>, <code>"Q3 2021"</code>;</p></li>
+<li><p>a month: <code>"2021-03"</code>, <code>"2021/03"</code>, <code>"2021-3"</code>, or an English month
+name or its three-letter abbreviation: <code>"Mar 2021"</code>, <code>"March 2021"</code>,
+<code>"2021 Mar"</code>;</p></li>
+<li><p>a date: <code>"2021-03-15"</code>, <code>"2021/03/15"</code>, compared as a <code>Date</code>.</p></li>
+</ul><p>The result keeps the labels as text, with any period the grid inserts
+spelled like the first one. Labels of mixed forms, or of a form not listed
+(<code>"Q3"</code>, <code>"FY19/20"</code>), or that read as two forms alike (<code>"2010-11"</code>,
+<code>"2011-12"</code>: fiscal years or months), have no order: yoy() warns once,
+naming them, and no row has a comparison period. Give their order with
+<code>prdord</code>.</p></dd>
 
 
 <dt id="arg-by">by<a class="anchor" aria-label="anchor" href="#arg-by"></a></dt>
@@ -163,8 +186,8 @@ quantity.</p></dd>
 
 <dt id="arg-minbase">minbase<a class="anchor" aria-label="anchor" href="#arg-minbase"></a></dt>
 <dd><p>Optional: previous-period values below this get a
-“small base” note. Nothing is withheld either way: every non-zero base gets
-its percent change and exact interval, which is as wide as the base is
+“small base” note. Nothing is withheld either way: every non-zero base
+gets its percent change and exact interval, which is as wide as the base is
 small. Defaults to 0 (no note); only a zero base has no percent change.</p></dd>
 
 
@@ -186,6 +209,13 @@ in the observed range so that a gap is visible as a gap instead of closing
 up.</p></dd>
 
 
+<dt id="arg-prdord">prdord<a class="anchor" aria-label="anchor" href="#arg-prdord"></a></dt>
+<dd><p>Optional character vector: the period labels in order, one
+label being one step, for text (or factor) periods the reader above does not
+know. Every label in the data must be in it; one it lists that the data lacks
+is a gap. <code>NULL</code> (the default) reads the labels as above.</p></dd>
+
+
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
 <dd><p>Integer, default <code>1</code>. Decimal places shown in the
 percent (or percentage-point) change column. The interval column is
@@ -203,7 +233,8 @@ always shown to whole percent.</p></dd>
 row in 24-bit ANSI colour codes chosen from its verdict; <code>FALSE</code>
 prints plain text. <code>NULL</code> means colour only in an interactive
 session with the <code>NO_COLOR</code> environment variable unset, so output
-that is redirected or captured stays plain text.</p></dd>
+that is redirected or captured stays plain text. <code><a href="https://rdrr.io/r/base/format.html" class="external-link">format()</a></code> takes
+<code>TRUE</code> or <code>FALSE</code> (default <code>FALSE</code>).</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
@@ -233,9 +264,10 @@ the writers (<code><a href="yoywr.html">yoywr()</a></code>) and
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Rows are first combined to one per period (and group) with <code>fun</code>. With
 <code>complete = TRUE</code> the periods missing from a regular grid (numbers, <code>Date</code>
-or <code>POSIXct</code> with a common step) are inserted with <code>NA</code> values and flagged
-“no data”. Each period is then compared with the period <code>lag</code> steps
-earlier in that grid: <code>change</code> is the difference, <code>pctchg</code>
+or <code>POSIXct</code> with a common step, the levels of an ordered factor, text
+periods read as described under <code>prd</code>) are inserted with <code>NA</code> values and
+flagged “no data”. Each period is then compared with the period
+<code>lag</code> steps earlier in that grid: <code>change</code> is the difference, <code>pctchg</code>
 \(100 (v_t / v_{t-lag} - 1)\) (<code>NA</code> off a zero base), and for percentages
 <code>ppchg</code> is the difference in percentage points.</p>
 <p>For counts, conditional on their sum \(n = a + b\) the current count
@@ -254,7 +286,8 @@ the sign of the change only and makes no claim of significance.</p>
 <code>period</code> or <code>by</code> naming a column that does not exist; a non-numeric or
 infinite <code>value</code>; for <code>units = "count"</code>, negative or fractional values;
 <code>lag</code> not a positive whole number; <code>conflvl</code> outside (0, 1); an unknown
-<code>units</code> or <code>direction</code>.</p>
+<code>units</code> or <code>direction</code>; a <code>prdord</code> that is not distinct labels, lacks a
+label of the data, or is given for periods that are not text.</p>
     </div>
     <div class="section level2">
     <h2 id="-x-argument-names">0.5.x argument names<a class="anchor" aria-label="anchor" href="#-x-argument-names"></a></h2>
@@ -290,27 +323,53 @@ administrative extract, and is the shape this function is built for.</p>
 <span class="r-in"><span>  NumberOfPlacements <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">31</span>, <span class="fl">402</span>, <span class="fl">28</span>, <span class="fl">377</span>, <span class="fl">12</span>, <span class="fl">190</span>, <span class="fl">19</span>, <span class="fl">268</span>, <span class="fl">24</span>, <span class="fl">331</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">yoy</span><span class="op">(</span><span class="va">seg</span>,</span></span>
-<span class="r-in"><span>  value <span class="op">=</span> <span class="st">"NumberOfPlacements"</span>, prd <span class="op">=</span> <span class="st">"EndFiscalYear"</span>,</span></span>
-<span class="r-in"><span>  by <span class="op">=</span> <span class="st">"Gender"</span>, dir <span class="op">=</span> <span class="st">"lower"</span></span></span>
+<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">yoy</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">seg</span>,</span></span>
+<span class="r-in"><span>  value <span class="op">=</span> <span class="st">"NumberOfPlacements"</span>,</span></span>
+<span class="r-in"><span>  prd <span class="op">=</span> <span class="st">"EndFiscalYear"</span>,</span></span>
+<span class="r-in"><span>  by <span class="op">=</span> <span class="st">"Gender"</span>,</span></span>
+<span class="r-in"><span>  dir <span class="op">=</span> <span class="st">"lower"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">y</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Gender  EndFiscalYear  NumberOfPlacements  previous  change  change %  interval     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────  ─────────────  ──────────────────  ────────  ──────  ────────  ─────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2019           31                  —         —         —       —            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2020           28                  31        -3      ▼ -9.7%   [-48%, +56%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2021           12                  28        -16     ▼ -57.1%  [-80%, -13%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2022           19                  12        7       ▲ +58.3%  [-27%, +258%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2023           24                  19        5       ▲ +26.3%  [-34%, +144%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2019           402                 —         —         —       —            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2020           377                 402       -25     ▼ -6.2%   [-19%, +8%]  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2021           190                 377       -187    ▼ -49.6%  [-58%, -40%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2022           268                 190       78      ▲ +41.1%  [+17%, +71%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2023           331                 268       63      ▲ +23.5%  [+5%, +46%]  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: count · 95% exact rate-ratio interval · lower is better</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change in NumberOfPlacements by EndFiscalYear</span> ────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows    10                                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Change  in percent                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Better  lower values                                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Groups  2 (by Gender)                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Gender  EndFiscalYear  NumberOfPlacements previous change change %        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                          interval                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ──────  ─────────────  ────────────────── ──────── ────── ────────        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                          ─────────────                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Female  2019           31 — — — —                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Female  2020           28 31 -3 ▼ -9.7% [-48%, +56%]                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Female  2021           12 28 -16 ▼ -57.1% [-80%, -13%]                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Female  2022           19 12 7 ▲ +58.3% [-27%, +258%]                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Female  2023           24 19 5 ▲ +26.3% [-34%, +144%]                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Male    2019           402 — — — —                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Male    2020           377 402 -25 ▼ -6.2% [-19%, +8%]                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Male    2021           190 377 -187 ▼ -49.6% [-58%, -40%]                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Male    2022           268 190 78 ▲ +41.1% [+17%, +71%]                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Male    2023           331 268 63 ▲ +23.5% [+5%, +46%]                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Note: the first period of each group has nothing to compare with, so it   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   shows no change.                                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   lag 1 period                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units: count                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   95% exact rate-ratio interval                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   lower is better                                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The interval is exact, so a small group does not get a confident</span></span></span>
 <span class="r-in"><span><span class="co"># percent it has not earned.</span></span></span>
@@ -332,32 +391,56 @@ administrative extract, and is the shape this function is built for.</p>
 <span class="r-in"><span><span class="co"># percent.</span></span></span>
 <span class="r-in"><span><span class="va">rate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, share <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.1</span>, <span class="fl">4.6</span>, <span class="fl">5.2</span>, <span class="fl">5.0</span>, <span class="fl">5.4</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">yoy</span><span class="op">(</span><span class="va">rate</span>, value <span class="op">=</span> <span class="st">"share"</span>, prd <span class="op">=</span> <span class="st">"year"</span>, units <span class="op">=</span> <span class="st">"percent"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> year  share  previous  change  points  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────  ─────  ────────  ──────  ────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2019  4.1    —         —         —     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2020  4.6    4.1       0.5     ▲ +0.5pp</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2021  5.2    4.6       0.6     ▲ +0.6pp</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2022  5.0    5.2       -0.2    ▼ -0.2pp</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2023  5.4    5.0       0.4     ▲ +0.4pp</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: percent · percentage-point change, not percent of a percent</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change in share by year</span> ──────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows    5                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Change  in percentage points                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Better  not set (direction neutral): the colour shows no verdict          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   year  share  previous  change  points                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ────  ─────  ────────  ──────  ────────                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2019  4.1    —         —         —                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2020  4.6    4.1       0.5     ▲ +0.5pp                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2021  5.2    4.6       0.6     ▲ +0.6pp                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2022  5.0    5.2       -0.2    ▼ -0.2pp                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2023  5.4    5.0       0.4     ▲ +0.4pp                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Note: the first period has nothing to compare with, so it shows no        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   change.                                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   lag 1 period                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units: percent                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   percentage-point change, not percent of a percent                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a missing year stays a gap; a bare column name works too</span></span></span>
-<span class="r-in"><span><span class="fu">yoy</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2019</span>, <span class="fl">2021</span>, <span class="fl">2022</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">12</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span>, value <span class="op">=</span> <span class="va">n</span>, prd <span class="op">=</span> <span class="va">year</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> year  n   previous  change  change %  interval     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────  ──  ────────  ──────  ────────  ─────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2019  10  —         —         —       —            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2020  —   10        —         —       —            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no data</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2021  12  —         —         —       —            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2022  15  12        3       ▲ +25.0%  [-45%, +192%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: count · 95% exact rate-ratio interval</span>
+<span class="r-in"><span><span class="fu">yoy</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2019</span>, <span class="fl">2021</span>, <span class="fl">2022</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">12</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  value <span class="op">=</span> <span class="va">n</span>,</span></span>
+<span class="r-in"><span>  prd <span class="op">=</span> <span class="va">year</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change in n by year</span> ──────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows    4                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Change  in percent                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Better  not set (direction neutral): the colour shows no verdict          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   year  n   previous  change  change %  interval                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ────  ──  ────────  ──────  ────────  ─────────────                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2019  10  —         —         —       —                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2020  —   10        —         —       —                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     ↳ note: no data                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2021  12  —         —         —       —                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   2022  15  12        3       ▲ +25.0%  [-45%, +192%]                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Note: the first period has nothing to compare with, so it shows no        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   change.                                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   lag 1 period                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units: count                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   95% exact rate-ratio interval                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># a quarterly series compares each quarter with the same quarter a year earlier</span></span></span>
+<span class="r-in"><span><span class="co"># a quarterly series compares each quarter with the same quarter a year</span></span></span>
+<span class="r-in"><span><span class="co"># earlier</span></span></span>
 <span class="r-in"><span><span class="va">q</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ts.html" class="external-link">ts</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">6</span>, <span class="fl">7</span>, <span class="fl">8</span>, <span class="fl">6</span>, <span class="fl">7</span>, <span class="fl">9</span>, <span class="fl">9</span><span class="op">)</span>, frequency <span class="op">=</span> <span class="fl">4</span>, start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2020</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu">yoy</span><span class="op">(</span><span class="va">q</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">5</span><span class="op">:</span><span class="fl">8</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"period"</span>, <span class="st">"value"</span>, <span class="st">"previous"</span>, <span class="st">"pctchg"</span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    period value previous   pctchg</span>
@@ -365,6 +448,43 @@ administrative extract, and is the shape this function is built for.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 2021.25     7        6 16.66667</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 7 2021.50     9        7 28.57143</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 8 2021.75     9        8 12.50000</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># text periods are read: fiscal years, quarters, months</span></span></span>
+<span class="r-in"><span><span class="va">fy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>fy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2019/20"</span>, <span class="st">"2020/21"</span>, <span class="st">"2022/23"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">7</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu">yoy</span><span class="op">(</span><span class="va">fy</span>, <span class="st">"n"</span>, <span class="st">"fy"</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fy"</span>, <span class="st">"previous"</span>, <span class="st">"flag"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        fy previous                 flag</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 2019/20       NA no comparison period</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 2020/21        5                 &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 2021/22        7              no data</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 2022/23       NA no comparison period</span>
+<span class="r-in"><span><span class="va">qt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>q <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2021 Q4"</span>, <span class="st">"2022 Q1"</span>, <span class="st">"2022 Q2"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu">yoy</span><span class="op">(</span><span class="va">qt</span>, <span class="st">"n"</span>, <span class="st">"q"</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"q"</span>, <span class="st">"previous"</span>, <span class="st">"pctchg"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         q previous   pctchg</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 2021 Q4       NA       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 2022 Q1        3 33.33333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 2022 Q2        4 50.00000</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># labels the reader does not know take their order from `prdord`</span></span></span>
+<span class="r-in"><span><span class="va">ws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>s <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"spring"</span>, <span class="st">"summer"</span>, <span class="st">"fall"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">6</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">yoy</span><span class="op">(</span><span class="va">ws</span>, <span class="st">"n"</span>, <span class="st">"s"</span>, prdord <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"spring"</span>, <span class="st">"summer"</span>, <span class="st">"fall"</span>, <span class="st">"winter"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Change in n by s</span> ─────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Rows    3                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Change  in percent                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Better  not set (direction neutral): the colour shows no verdict          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   s       n  previous  change  change %  interval                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ──────  ─  ────────  ──────  ────────  ─────────────                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   spring  4  —         —         —       —                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   summer  6  4         2       ▲ +50.0%  [-64%, +623%]                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   fall    5  6         -1      ▼ -16.7%  [-80%, +228%]                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Note: the first period has nothing to compare with, so it shows no        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   change.                                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   lag 1 period                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units: count                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   95% exact rate-ratio interval                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># counts must be whole numbers</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">yoy</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, <span class="st">"n"</span>, <span class="st">"year"</span><span class="op">)</span><span class="op">)</span></span></span>

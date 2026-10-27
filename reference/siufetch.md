@@ -49,8 +49,11 @@ came from.
 
 ## Details
 
-The URL fetched is  
-`https://www.siu.on.ca/<lang>/directors_report_details.php?drid=<drid>`  
+The URL fetched is
+
+
+    https://www.siu.on.ca/<lang>/directors_report_details.php?drid=<drid>
+
 through
 [`blfetch`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blfetch.md),
 which tries the live page first and falls back to a Wayback Machine

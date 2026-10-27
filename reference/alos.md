@@ -31,7 +31,15 @@ alos(days, n)
 
 ## Value
 
-A numeric scalar: days per person, \\\sum X_i / n\\.
+A numeric scalar: days per person, \\\sum X_i / n\\. It has class
+`c("rmbl_alos", "rmbl_measure", "numeric")` and an attribute `"lakner"`
+(the total days and `n`), so it prints as a box with its inputs, formula
+and caveats; arithmetic, [`round()`](https://rdrr.io/r/base/Round.html),
+[`sum()`](https://rdrr.io/r/base/sum.html),
+[`mean()`](https://rdrr.io/r/base/mean.html), `[`,
+[`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give a plain
+number.
 
 ## Details
 
@@ -61,12 +69,34 @@ Corrections Planners*. University of Illinois at Urbana-Champaign.
 # Lakner (p.17): 2,700 inmates admitted and released served 12,150
 # detention days between them.
 alos(12150, 2700)
-#> [1] 4.5
+#> ╭── Average length of stay ─────────────────────────────────────────────────╮
+#> │   Average stay  4.5 days per person                                       │
+#> │   Person-days   12,150                                                    │
+#> │   People        2,700                                                     │
+#> │   Formula       alos = days / n = 12,150 / 2,700                          │
+#> │                                                                           │
+#> │   2,700 people served 12,150 days between them: 4.5 days each on average. │
+#> │                                                                           │
+#> │   Lakner (1976, p.16-17): n should be the people admitted AND released    │
+#> │   in the period. A period shorter than the longest stay cuts unfinished   │
+#> │   stays short, so alos is biased downward. staysmry() gives the median.   │
+#> ╰───────────────────────────────────────────────────────────────────────────╯
 
 # from one value per released person
 stays <- c(2, 5, 1, 30, 4, 7)
 alos(stays, length(stays))
-#> [1] 8.166667
+#> ╭── Average length of stay ───────────────────────────────────────────────╮
+#> │   Average stay  8.167 days per person                                   │
+#> │   Person-days   49                                                      │
+#> │   People        6                                                       │
+#> │   Formula       alos = days / n = 49 / 6                                │
+#> │                                                                         │
+#> │   6 people served 49 days between them: 8.167 days each on average.     │
+#> │                                                                         │
+#> │   Lakner (1976, p.16-17): n should be the people admitted AND released  │
+#> │   in the period. A period shorter than the longest stay cuts unfinished │
+#> │   stays short, so alos is biased downward. staysmry() gives the median. │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # zero people cannot have an average stay
 try(alos(12150, 0))

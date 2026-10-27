@@ -136,8 +136,7 @@ cfg$value[cfg$key == "own.key"]
 #> [1] "set"
 
 # Back to the defaults: NULL removes a saved setting.
-llmcfg(route = NULL, ollama.model = NULL, own.url = NULL,
-                      own.key = NULL)
+llmcfg(route = NULL, ollama.model = NULL, own.url = NULL, own.key = NULL)
 
 # Unknown settings and retired routes are refused.
 try(llmcfg(colour = "blue"))
@@ -145,7 +144,11 @@ try(llmcfg(colour = "blue"))
 try(llmcfg(route = "hosted"))
 #> Error : the hosted MORIE language-model tier is retired: bring your own key (a provider's variable such as ANTHROPIC_API_KEY or OPENAI_API_KEY, or `rmoriebricklayer config set <provider>.key`) or run a model locally (Ollama); `rmoriebricklayer config setup` walks through it
 
-if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
+if (is.na(old)) {
+  Sys.unsetenv("XDG_CONFIG_HOME")
+} else {
+  Sys.setenv(XDG_CONFIG_HOME = old)
+}
 if (FALSE) { # interactive()
 # your Anthropic key and model, and always use them
 llmcfg(anthropic.key = "sk-ant-...", route = "anthropic")

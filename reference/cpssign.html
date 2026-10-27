@@ -17,7 +17,7 @@ cpsvrf()."><meta property="og:image" content="https://rootcoder007.github.io/rmo
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -119,17 +119,16 @@ context, which is what the standards' test vectors rely on.</p></dd>
 
 
 <dt id="arg-prehash">prehash<a class="anchor" aria-label="anchor" href="#arg-prehash"></a></dt>
-<dd><p>For the standardised schemes, sign a
-digest of the message rather than the message itself – HashML-DSA (FIPS
-204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
-<code>"none"</code> (the default, the pure variants) or any hash function the two
-standards approve. The SHA-2 hashes are <code>"sha224"</code>, <code>"sha256"</code>, <code>"sha384"</code>,
-<code>"sha512"</code>, <code>"sha512_224"</code> and <code>"sha512_256"</code>; the SHA-3 hashes are
-<code>"sha3_224"</code>, <code>"sha3_256"</code>, <code>"sha3_384"</code> and <code>"sha3_512"</code>;
-the SHAKE ones are
-<code>"shake128"</code> (256-bit output) and <code>"shake256"</code> (512-bit output). The identifier
-of the pre-hash is bound into the signature, so a pre-hashed signature
-is never interchangeable with a pure one over the same digest.</p></dd>
+<dd><p>For the standardised schemes, sign a digest of the message
+rather than the message itself – HashML-DSA (FIPS 204 section 5.4) or
+HashSLH-DSA (FIPS 205 section 10.2.2). One of <code>"none"</code> (the default, the pure
+variants) or any hash function the two standards approve. The SHA-2 hashes
+are <code>"sha224"</code>, <code>"sha256"</code>, <code>"sha384"</code>, <code>"sha512"</code>,
+<code>"sha512_224"</code> and <code>"sha512_256"</code>; the SHA-3 hashes are <code>"sha3_224"</code>,
+<code>"sha3_256"</code>, <code>"sha3_384"</code> and <code>"sha3_512"</code>; the SHAKE ones are
+<code>"shake128"</code> (256-bit output) and <code>"shake256"</code> (512-bit output). The
+identifier of the pre-hash is bound into the signature, so a pre-hashed
+signature is never interchangeable with a pure one over the same digest.</p></dd>
 
 
 <dt id="arg-masked">masked<a class="anchor" aria-label="anchor" href="#arg-masked"></a></dt>
@@ -228,11 +227,11 @@ does not cover.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.xmssidxfile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>  <span class="co"># keep this example's</span></span></span>
-<span class="r-in"><span><span class="co"># one-time index record out of your configuration directory; leave the default in use</span></span></span>
-<span class="r-in"><span><span class="co"># Symmetric: one shared secret.</span></span></span>
-<span class="r-in"><span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu">cpssign</span><span class="op">(</span><span class="st">"sha256:abc123"</span>, key <span class="op">=</span> <span class="st">"shared-secret"</span>,</span></span>
-<span class="r-in"><span>                    scheme <span class="op">=</span> <span class="st">"hmac"</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># keep this example's</span></span></span>
+<span class="r-in"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.xmssidxfile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># one-time index record out of your configuration directory; leave the</span></span></span>
+<span class="r-in"><span><span class="co"># default in use Symmetric: one shared secret.</span></span></span>
+<span class="r-in"><span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu">cpssign</span><span class="op">(</span><span class="st">"sha256:abc123"</span>, key <span class="op">=</span> <span class="st">"shared-secret"</span>, scheme <span class="op">=</span> <span class="st">"hmac"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="cpsvrf.html">cpsvrf</a></span><span class="op">(</span><span class="st">"sha256:abc123"</span>, <span class="va">sig</span>, <span class="st">"shared-secret"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span><span class="fu"><a href="cpsvrf.html">cpsvrf</a></span><span class="op">(</span><span class="st">"sha256:TAMPERED"</span>, <span class="va">sig</span>, <span class="st">"shared-secret"</span><span class="op">)</span></span></span>

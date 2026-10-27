@@ -31,7 +31,14 @@ perdays(from, to)
 ## Value
 
 A numeric scalar: the number of days in the period, `to - from + 1`, for
-use as `t`.
+use as `t`. It has class `c("rmbl_perdays", "rmbl_measure", "numeric")`
+and an attribute `"lakner"` (`from` and `to` as dates), so it prints as
+a box; arithmetic, [`round()`](https://rdrr.io/r/base/Round.html),
+[`sum()`](https://rdrr.io/r/base/sum.html),
+[`mean()`](https://rdrr.io/r/base/mean.html), `[`,
+[`c()`](https://rdrr.io/r/base/c.html) and
+[`as.numeric()`](https://rdrr.io/r/base/numeric.html) give a plain
+number, and every `t` argument takes it as it is.
 
 ## Details
 
@@ -53,15 +60,60 @@ message.
 
 ``` r
 perdays("2024-01-01", "2024-12-31") # a leap year
-#> [1] 366
+#> ╭── Period length ──────────────────────────────────────────────────────╮
+#> │   Length   366 days                                                   │
+#> │   From     2024-01-01                                                 │
+#> │   To       2024-12-31                                                 │
+#> │   Formula  t = to - from + 1 (both ends counted)                      │
+#> │                                                                       │
+#> │   From 2024-01-01 to 2024-12-31 is 366 days.                          │
+#> │   Pass it as t to adp(), admits(), adpcnts() or stkflow().            │
+#> │                                                                       │
+#> │   Both ends count: the 1st to the 31st is 31 days of exposure. A leap │
+#> │   year comes out at 366 from the dates, without anyone choosing.      │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 perdays("2023-01-01", "2023-12-31")
-#> [1] 365
+#> ╭── Period length ──────────────────────────────────────────────────────╮
+#> │   Length   365 days                                                   │
+#> │   From     2023-01-01                                                 │
+#> │   To       2023-12-31                                                 │
+#> │   Formula  t = to - from + 1 (both ends counted)                      │
+#> │                                                                       │
+#> │   From 2023-01-01 to 2023-12-31 is 365 days.                          │
+#> │   Pass it as t to adp(), admits(), adpcnts() or stkflow().            │
+#> │                                                                       │
+#> │   Both ends count: the 1st to the 31st is 31 days of exposure. A leap │
+#> │   year comes out at 366 from the dates, without anyone choosing.      │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 perdays("2025-04-01", "2026-03-31") # a fiscal year
-#> [1] 365
+#> ╭── Period length ──────────────────────────────────────────────────────╮
+#> │   Length   365 days                                                   │
+#> │   From     2025-04-01                                                 │
+#> │   To       2026-03-31                                                 │
+#> │   Formula  t = to - from + 1 (both ends counted)                      │
+#> │                                                                       │
+#> │   From 2025-04-01 to 2026-03-31 is 365 days.                          │
+#> │   Pass it as t to adp(), admits(), adpcnts() or stkflow().            │
+#> │                                                                       │
+#> │   Both ends count: the 1st to the 31st is 31 days of exposure. A leap │
+#> │   year comes out at 366 from the dates, without anyone choosing.      │
+#> ╰───────────────────────────────────────────────────────────────────────╯
 
 # a quarter as the period of an average daily population
 adp(4200, t = perdays(as.Date("2025-01-01"), as.Date("2025-03-31")))
-#> [1] 46.66667
+#> ╭── Average daily population ─────────────────────────────────────────────╮
+#> │   Average daily population  46.67 people on an average day              │
+#> │   Person-days               4,200                                       │
+#> │   Period                    90 days                                     │
+#> │   Formula                   adp = days / t = 4,200 / 90                 │
+#> │                                                                         │
+#> │   4,200 person-days over 90 days: 46.67 people held on an average day.  │
+#> │                                                                         │
+#> │   Lakner (1976, p.15): a stock -- people held at once, not people who   │
+#> │   passed through. Count only the days served inside the period.         │
+#> │   adp = n x alos / t links it to alos() and admits(), exactly only in a │
+#> │   steady state.                                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # numbers are not dates, and the end cannot come first
 try(perdays(1, 31))

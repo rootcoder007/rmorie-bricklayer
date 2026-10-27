@@ -213,8 +213,17 @@ ci_plot <- function(t, lab, main) {
   y <- seq_len(nrow(t))
   op <- par(mar = c(4, 10, 3, 1))
   on.exit(par(op))
-  plot(t$estimate, y, xlim = range(t$lower, t$upper, na.rm = TRUE), yaxt = "n", pch = 19,
-       col = blpal()[1], xlab = "estimate and 95% interval", ylab = "", main = main)
+  plot(
+    t$estimate,
+    y,
+    xlim = range(t$lower, t$upper, na.rm = TRUE),
+    yaxt = "n",
+    pch = 19,
+    col = blpal()[1],
+    xlab = "estimate and 95% interval",
+    ylab = "",
+    main = main
+  )
   segments(t$lower, y, t$upper, y, col = blpal()[1])
   axis(2, y, lab[o], las = 1, cex.axis = 0.7)
 }

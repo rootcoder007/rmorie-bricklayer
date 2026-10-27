@@ -205,9 +205,13 @@ and a known group:
 d <- indiex("health")
 rules <- list(
   ruleinset("quality", c("ok", "E", "F", "x", "..")),
-  ruleinset("group", c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous")),
-  rul("estimate inside its interval",
-       function(x) is.na(x$estimate) | (x$lower <= x$estimate & x$estimate <= x$upper))
+  ruleinset(
+    "group",
+    c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous")
+  ),
+  rul("estimate inside its interval", function(x) {
+    is.na(x$estimate) | (x$lower <= x$estimate & x$estimate <= x$upper)
+  })
 )
 valrules(d, rules)
 #> list()
@@ -225,11 +229,22 @@ and the share of rows with an alert in each year (the recipe asks for
 ``` r
 
 op <- par(mfrow = c(1, 2))
-barplot(table(df$visits), col = blpal()[1], xlab = "visits", ylab = "rows",
-        main = "Synthetic visits")
+barplot(
+  table(df$visits),
+  col = blpal()[1],
+  xlab = "visits",
+  ylab = "rows",
+  main = "Synthetic visits"
+)
 al <- tapply(df$alert == "Yes", df$year, mean)
-barplot(100 * al, col = blpal()[2], ylim = c(0, 100), xlab = "year", ylab = "rows with an alert (%)",
-        main = "Synthetic alert flag")
+barplot(
+  100 * al,
+  col = blpal()[2],
+  ylim = c(0, 100),
+  xlab = "year",
+  ylab = "rows with an alert (%)",
+  main = "Synthetic alert flag"
+)
 abline(h = 20, lty = 2)
 ```
 

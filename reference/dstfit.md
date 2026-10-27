@@ -12,6 +12,9 @@ the tail index is added for positive data. Everything is base R.
 dstfit(x, fams = NULL, nboot = 200L, conflvl = 0.95, seed = 1L, k = NULL)
 
 # S3 method for class 'rmbl_dstfit'
+format(x, digits = 4L, ...)
+
+# S3 method for class 'rmbl_dstfit'
 print(x, ...)
 ```
 
@@ -42,6 +45,10 @@ print(x, ...)
 
   Whole number or `NULL`: the upper order statistics of the Hill
   estimate.
+
+- digits:
+
+  Significant digits of the fit table's numbers.
 
 - ...:
 
@@ -142,26 +149,44 @@ set.seed(1)
 x <- stats::rgamma(300, shape = 2, rate = 0.5)
 f <- dstfit(x, nboot = 20)
 f
-#> Distributions fitted to 300 values, ranked by AIC
-#> 
-#>  rank      family npar loglik  aic  bic      ks      ad
-#>     1     weibull    2 -673.5 1351 1359 0.02543  0.1965
-#>     2       gamma    2 -674.3 1353 1360 0.03906  0.5088
-#>     3   lognormal    2 -691.7 1387 1395 0.07364  3.4610
-#>     4 exponential    1 -709.4 1421 1424 0.14763 13.0561
-#>     5           t    3 -711.2 1428 1440 0.08261  3.4834
-#>     6      normal    2 -717.2 1438 1446 0.09560  4.6589
-#>     7      pareto    2 -945.7 1895 1903 0.36066 73.1955
-#> 
-#>   weibull      shape = 1.523, scale = 4.349
-#>   gamma        shape = 2.0060, rate = 0.5125
-#>   lognormal    meanlog = 1.095, sdlog = 0.812
-#>   exponential  rate = 0.2555
-#>   t            location = 3.686, scale = 2.283, df = 8.140
-#>   normal       mean = 3.914, sd = 2.642
-#>   pareto       xmin = 0.1680, alpha = 0.3474
-#> 
-#> Hill tail index 5.66 (2.97 to 8.35), from the 17 largest values
+#> ╭── Distribution fit ─────────────────────────────────────────────────────╮
+#> │   Values           300                                                  │
+#> │   Data             continuous                                           │
+#> │   Families tried   7                                                    │
+#> │   Best by AIC      weibull                                              │
+#> │   Confidence       95%                                                  │
+#> │   Hill tail index  5.66 [2.97, 8.35], from the 17 largest values        │
+#> │                                                                         │
+#> │   Families ranked by AIC                                                │
+#> │   rank  family       npar  loglik    aic    bic       ks      ad        │
+#> │   ----  -----------  ----  ------  -----  -----  -------  ------        │
+#> │      1  weibull         2  -673.5  1,351  1,359  0.02543   0.197        │
+#> │      2  gamma           2  -674.3  1,353  1,360  0.03906   0.509        │
+#> │      3  lognormal       2  -691.7  1,387  1,395  0.07364   3.461        │
+#> │      4  exponential     1  -709.4  1,421  1,424  0.14763  13.056        │
+#> │      5  t               3  -711.2  1,428  1,440  0.08261   3.483        │
+#> │      6  normal          2  -717.2  1,438  1,446  0.09560   4.659        │
+#> │      7  pareto          2  -945.7  1,895  1,903  0.36066  73.195        │
+#> │                                                                         │
+#> │   Parameters                                                            │
+#> │   family       params                                                   │
+#> │   -----------  -------------------------------------------              │
+#> │   weibull      shape = 1.523, scale = 4.349                             │
+#> │   gamma        shape = 2.0060, rate = 0.5125                            │
+#> │   lognormal    meanlog = 1.095, sdlog = 0.812                           │
+#> │   exponential  rate = 0.2555                                            │
+#> │   t            location = 3.686, scale = 2.283, df = 8.140              │
+#> │   normal       mean = 3.914, sd = 2.642                                 │
+#> │   pareto       xmin = 0.1680, alpha = 0.3474                            │
+#> │                                                                         │
+#> │   weibull fits best (AIC 1351); gamma, next, is 1.56 AIC worse: the     │
+#> │   data do not choose between the two.                                   │
+#> │                                                                         │
+#> │   The lower the AIC, the better the family fits for its number of       │
+#> │   parameters; ks and ad are the Kolmogorov-Smirnov and Anderson-Darling │
+#> │   distances, smaller is closer. A best fit is only the best of those    │
+#> │   tried.                                                                │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 f$fits$gamma
 #>     shape      rate 
 #> 2.0061187 0.5125441 

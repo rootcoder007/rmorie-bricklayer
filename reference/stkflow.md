@@ -113,14 +113,27 @@ stkflow(
   prd = c("2023", "2025"),
   expo = c(15495050, 16256538)
 )
-#> ── Stock and flow over 2 periods ───────────────────────────────── 
-#>  period people   days      alos      adp flowrate  stkrate
-#>    2023  12647 115674  9.146359 316.9151 81.61961 2.045267
-#>    2025   9608 126121 13.126665 345.5370 59.10237 2.125526
-#> 
-#>   2023 to 2025: people -24.0%, stay +43.5%, days +9.0%
-#>   flow rate -27.6%, stock rate +3.9%  <- opposite signs: quote both
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Stock and flow over 2 periods ────────────────────────────────────────────╮
+#> │   Periods          2023 to 2025                                             │
+#> │   Period length    365 days                                                 │
+#> │   Changes against  the first period                                         │
+#> │   Rates per        100,000 residents                                        │
+#> │   Columns          alos = days per person; adp = people held on an average  │
+#> │                    day                                                      │
+#> │                                                                             │
+#> │   period  people     days   alos    adp  flowrate  stkrate                  │
+#> │   ------  ------  -------  -----  -----  --------  -------                  │
+#> │   2023    12,647  115,674   9.15  316.9     81.62    2.045                  │
+#> │   2025     9,608  126,121  13.13  345.5     59.10    2.126                  │
+#> │                                                                             │
+#> │   2023 to 2025: people -24.0%, stay +43.5%, days +9.0%                      │
+#> │   flow rate -27.6%, stock rate +3.9%                                        │
+#> │   <- opposite signs: quote both, neither alone tells the story              │
+#> │                                                                             │
+#> │   Lakner (1976): adp = people x alos / t, exact only in a steady state.     │
+#> │   A period shorter than the longest stay cuts unfinished stays short,       │
+#> │   so alos is biased downward (p.16-17).                                     │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a series of three years against the previous year, with leap-year lengths
 sf <- stkflow(

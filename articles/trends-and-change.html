@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,85 +98,43 @@ slope is the median of all pairwise slopes, a robust rate of change.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">402</span>, <span class="fl">377</span>, <span class="fl">190</span>, <span class="fl">268</span>, <span class="fl">331</span><span class="op">)</span>        <span class="co"># five years of placements</span></span>
 <span><span class="fu"><a href="../reference/trndtst.html">trndtst</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $S</span></span>
-<span><span class="co">#&gt; [1] -4</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $tau</span></span>
-<span><span class="co">#&gt; [1] -0.4</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $p_value</span></span>
-<span><span class="co">#&gt; [1] 0.4833333</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slope</span></span>
-<span><span class="co">#&gt; [1] -21.375</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $intercept</span></span>
-<span><span class="co">#&gt; [1] 419.75</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slopelo</span></span>
-<span><span class="co">#&gt; [1] -187</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slopeup</span></span>
-<span><span class="co">#&gt; [1] 78</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slopecicla</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $n</span></span>
-<span><span class="co">#&gt; [1] 5</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $var_S</span></span>
-<span><span class="co">#&gt; [1] 16.66667</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $alternative</span></span>
-<span><span class="co">#&gt; [1] "two.sided"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $conflvl</span></span>
-<span><span class="co">#&gt; [1] 0.95</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $method</span></span>
-<span><span class="co">#&gt; [1] "Mann-Kendall, exact over all 120 orderings"</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Trend test</span> ───────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Method       Mann-Kendall, exact over all 120 orderings               │</span></span>
+<span><span class="co">#&gt; │   Periods      5                                                        │</span></span>
+<span><span class="co">#&gt; │   S            -4                                                       │</span></span>
+<span><span class="co">#&gt; │   Alternative  two.sided                                                │</span></span>
+<span><span class="co">#&gt; │   Confidence   95%                                                      │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   term         estimate  95% CI          p                              │</span></span>
+<span><span class="co">#&gt; │   -----------  --------  ----------  -----                              │</span></span>
+<span><span class="co">#&gt; │   Kendall tau     -0.40              0.483                              │</span></span>
+<span><span class="co">#&gt; │   Sen slope      -21.38  [-187, 78]                                     │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Kendall's tau of -0.4 means a downward tendency (p = 0.483); the Sen  │</span></span>
+<span><span class="co">#&gt; │   slope says the series moves by about -21.38 per period.               │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The slope's interval was clamped to the range of the pairwise slopes. │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>A monotone series is detected even at <em>n</em> = 5:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/trndtst.html">trndtst</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $S</span></span>
-<span><span class="co">#&gt; [1] 10</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $tau</span></span>
-<span><span class="co">#&gt; [1] 1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $p_value</span></span>
-<span><span class="co">#&gt; [1] 0.01666667</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slope</span></span>
-<span><span class="co">#&gt; [1] 1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $intercept</span></span>
-<span><span class="co">#&gt; [1] 0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slopelo</span></span>
-<span><span class="co">#&gt; [1] 1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slopeup</span></span>
-<span><span class="co">#&gt; [1] 1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slopecicla</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $n</span></span>
-<span><span class="co">#&gt; [1] 5</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $var_S</span></span>
-<span><span class="co">#&gt; [1] 16.66667</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $alternative</span></span>
-<span><span class="co">#&gt; [1] "two.sided"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $conflvl</span></span>
-<span><span class="co">#&gt; [1] 0.95</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $method</span></span>
-<span><span class="co">#&gt; [1] "Mann-Kendall, exact over all 120 orderings"</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Trend test</span> ───────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Method       Mann-Kendall, exact over all 120 orderings               │</span></span>
+<span><span class="co">#&gt; │   Periods      5                                                        │</span></span>
+<span><span class="co">#&gt; │   S            10                                                       │</span></span>
+<span><span class="co">#&gt; │   Alternative  two.sided                                                │</span></span>
+<span><span class="co">#&gt; │   Confidence   95%                                                      │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   term         estimate  95% CI      p                                  │</span></span>
+<span><span class="co">#&gt; │   -----------  --------  ------  -----                                  │</span></span>
+<span><span class="co">#&gt; │   Kendall tau         1          0.017                                  │</span></span>
+<span><span class="co">#&gt; │   Sen slope           1  [1, 1]                                         │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   Kendall's tau of 1 means an upward tendency (p = 0.017); the Sen      │</span></span>
+<span><span class="co">#&gt; │   slope says the series moves by about 1 per period.                    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The slope's interval was clamped to the range of the pairwise slopes. │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>One aberrant period does not create a trend:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/trndtst.html">trndtst</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">900</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">p_value</span></span>
@@ -222,32 +180,20 @@ permutation, which accounts for having searched over every possible
 split:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/stepchg.html">stepchg</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">104</span>, <span class="fl">98</span>, <span class="fl">60</span>, <span class="fl">63</span>, <span class="fl">58</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $breakafter</span></span>
-<span><span class="co">#&gt; [1] 3</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $index</span></span>
-<span><span class="co">#&gt; [1] 3</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $before</span></span>
-<span><span class="co">#&gt; [1] 100.6667</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $after</span></span>
-<span><span class="co">#&gt; [1] 60.33333</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $difference</span></span>
-<span><span class="co">#&gt; [1] -40.33333</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $statistic</span></span>
-<span><span class="co">#&gt; [1] 2440.167</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $p_value</span></span>
-<span><span class="co">#&gt; [1] 0.1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $nperm</span></span>
-<span><span class="co">#&gt; [1] 720</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $method</span></span>
-<span><span class="co">#&gt; [1] "exact over all 720 orderings"</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Step change</span> ──────────────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Method          exact over all 720 orderings                          │</span></span>
+<span><span class="co">#&gt; │   Permutations    720                                                   │</span></span>
+<span><span class="co">#&gt; │   Break after     3                                                     │</span></span>
+<span><span class="co">#&gt; │   Break at index  3                                                     │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   before  after  difference  statistic      p                           │</span></span>
+<span><span class="co">#&gt; │   ------  -----  ----------  ---------  -----                           │</span></span>
+<span><span class="co">#&gt; │    100.7  60.33      -40.33      2,440  0.100                           │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The best single split is after 3: the mean moves from 100.7 to 60.33. │</span></span>
+<span><span class="co">#&gt; │   The p-value compares that best split with the best split of shuffled  │</span></span>
+<span><span class="co">#&gt; │   series, so it allows for having searched every split (p = 0.100).     │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Pure noise still yields a best split, and it is not significant:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
@@ -270,16 +216,29 @@ Statistics Canada (table 13-10-0924-01):</p>
 <span>         <span class="va">h</span><span class="op">$</span><span class="va">indicator</span> <span class="op">==</span> <span class="st">"Perceived mental health, very good or excellent"</span>, <span class="op">]</span></span>
 <span><span class="fu"><a href="../reference/healchg.html">healchg</a></span><span class="op">(</span><span class="va">h</span>, <span class="st">"group"</span>, <span class="st">"indicator"</span>, <span class="st">"period"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>,</span>
 <span>               from <span class="op">=</span> <span class="st">"2015/2018"</span>, to <span class="op">=</span> <span class="st">"2019/2022"</span>, qual <span class="op">=</span> <span class="st">"quality"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            group                                       indicator side from   to</span></span>
-<span><span class="co">#&gt; 1  First Nations Perceived mental health, very good or excellent &lt;NA&gt; 59.8 45.8</span></span>
-<span><span class="co">#&gt; 2          Métis Perceived mental health, very good or excellent &lt;NA&gt; 61.0 52.8</span></span>
-<span><span class="co">#&gt; 3          Inuit Perceived mental health, very good or excellent &lt;NA&gt; 49.1 47.8</span></span>
-<span><span class="co">#&gt; 4 Non-Indigenous Perceived mental health, very good or excellent &lt;NA&gt; 70.6 61.5</span></span>
-<span><span class="co">#&gt;   change      lower      upper usewithcau</span></span>
-<span><span class="co">#&gt; 1  -14.0 -17.687818 -10.312182      FALSE</span></span>
-<span><span class="co">#&gt; 2   -8.2 -11.925923  -4.474077      FALSE</span></span>
-<span><span class="co">#&gt; 3   -1.3  -9.974243   7.374243      FALSE</span></span>
-<span><span class="co">#&gt; 4   -9.1  -9.702080  -8.497920      FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Healing as change between two periods</span> ────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Periods     2015/2018 to 2019/2022                                        │</span></span>
+<span><span class="co">#&gt; │   Groups      First Nations; Métis; Inuit; Non-Indigenous                   │</span></span>
+<span><span class="co">#&gt; │   Indicators  1                                                             │</span></span>
+<span><span class="co">#&gt; │   Units       the estimate's own (percentage points for percentages)        │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Perceived mental health, very good or excellent                           │</span></span>
+<span><span class="co">#&gt; │   group            from     to   change  interval                           │</span></span>
+<span><span class="co">#&gt; │   --------------  -----  -----  -------  ------------------                 │</span></span>
+<span><span class="co">#&gt; │   First Nations   59.80  45.80  -14.000  [-17.688, -10.312]                 │</span></span>
+<span><span class="co">#&gt; │   Métis           61.00  52.80   -8.200  [-11.926, -4.474]                  │</span></span>
+<span><span class="co">#&gt; │   Inuit           49.10  47.80   -1.300  [-9.974, 7.374]                    │</span></span>
+<span><span class="co">#&gt; │   Non-Indigenous  70.60  61.50   -9.100  [-9.702, -8.498]                   │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   3 of 4 changes have an interval clear of zero.                            │</span></span>
+<span><span class="co">#&gt; │   Wellness: 0 rose and 0 fell by more than chance; distress: 0 rose and 0   │</span></span>
+<span><span class="co">#&gt; │   fell.                                                                     │</span></span>
+<span><span class="co">#&gt; │   No change is larger than its interval, on either side.                    │</span></span>
+<span><span class="co">#&gt; │                                                                             │</span></span>
+<span><span class="co">#&gt; │   Wellness indicators come first: a change is read as part of healing.      │</span></span>
+<span><span class="co">#&gt; │   A change is only as comparable as the two periods' questions and          │</span></span>
+<span><span class="co">#&gt; │   designs: across a break in the series it is not a change in people.       │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="a-pace-projected">A pace, projected<a class="anchor" aria-label="anchor" href="#a-pace-projected"></a>
@@ -291,10 +250,18 @@ exact interval, and gives the year all would be complete at that pace.
 That is a description of the pace, not a forecast.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/trcprog.html">trcprog</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   completed remaining years     rate    ratelo   rateup   cmplby cmplbyearly</span></span>
-<span><span class="co">#&gt; 1        13        81  7.04 1.846591 0.9832319 3.157727 2066.865    2048.651</span></span>
-<span><span class="co">#&gt;   cmplbylate</span></span>
-<span><span class="co">#&gt; 1   2105.381</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Truth and Reconciliation Calls to Action: progress</span> ────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Completed        13 of 94                                              │</span></span>
+<span><span class="co">#&gt; │   Remaining        81                                                    │</span></span>
+<span><span class="co">#&gt; │   Years counted    7.04                                                  │</span></span>
+<span><span class="co">#&gt; │   Calls a year     1.85 [0.983, 3.160]                                   │</span></span>
+<span><span class="co">#&gt; │   All complete by  2066 (2048 to 2105)                                   │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   At this pace the remaining 81 Calls are complete around 2066.          │</span></span>
+<span><span class="co">#&gt; │                                                                          │</span></span>
+<span><span class="co">#&gt; │   Completions taken as a Poisson process at a constant rate; the range   │</span></span>
+<span><span class="co">#&gt; │   comes from the rate's interval. Trackers count completion differently. │</span></span>
+<span><span class="co">#&gt; ╰──────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="choosing-between-them">Choosing between them<a class="anchor" aria-label="anchor" href="#choosing-between-them"></a>

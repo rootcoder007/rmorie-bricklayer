@@ -115,20 +115,32 @@ last <- nrow(d)
 shares <- unlist(d[last, c("under_10", "m10_15", "m15_18", "over_18")])
 lt <- lifetbl(c(0, 10, 15, 18, Inf), events = shares * f$disposed[last])
 lt
-#> ── Life table (actuarial), 95% log-log Greenwood interval ──────── 
-#>   Median time: 6.36 (linear within its band)
-#> 
-#>  lower upper  entering    events censored    atrisk      q survival     se
-#>      0    10 23136.000 18184.896        0 23136.000 0.7860    0.214 0.0027
-#>     10    15  4951.104  2868.864        0  4951.104 0.5794    0.090 0.0019
-#>     15    18  2082.240   879.168        0  2082.240 0.4222    0.052 0.0015
-#>     18   Inf  1203.072  1203.072        0  1203.072 1.0000    0.000     NA
-#>  conflo confup hazard
-#>  0.2087 0.2193 0.1295
-#>  0.0864 0.0937 0.1632
-#>  0.0492 0.0549 0.1784
-#>      NA     NA     NA
-#> ────────────────────────────────────────────────────────────────── 
+#> ╭── Life table (actuarial) ────────────────────────────────────────────────╮
+#> │   Bands     4                                                            │
+#> │   Cases     23,136                                                       │
+#> │   Events    23,136                                                       │
+#> │   Censored  0                                                            │
+#> │   Interval  95% log-log Greenwood                                        │
+#> │                                                                          │
+#> │   lower  upper  entering  events  censored  atrisk      q  survival      │
+#> │   -----  -----  --------  ------  --------  ------  -----  --------      │
+#> │       0     10    23,136  18,185         0  23,136  0.786   0.21400      │
+#> │      10     15     4,951   2,869         0   4,951  0.579   0.09000      │
+#> │      15     18     2,082     879         0   2,082  0.422   0.05200      │
+#> │      18    Inf     1,203   1,203         0   1,203  1.000   0.00000      │
+#> │                                                                          │
+#> │   lower  95% CI              hazard                                      │
+#> │   -----  ------------------  ------                                      │
+#> │       0  [0.20874, 0.21931]  0.1295                                      │
+#> │      10  [0.08636, 0.09373]  0.1632                                      │
+#> │      15  [0.04919, 0.05491]  0.1784                                      │
+#> │      18                                                                  │
+#> │                                                                          │
+#> │   Median time: 6.36 (linear within its band)                             │
+#> │   survival is the share still without the event at the end of each band. │
+#> │                                                                          │
+#> │   A censored case counts as half a case at risk in its band.             │
+#> ╰──────────────────────────────────────────────────────────────────────────╯
 plot(lt)
 
 
