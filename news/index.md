@@ -318,9 +318,9 @@
   issues, then a GitHub advisory and CVE), good-faith research
   protection, the incident plan, who has access and what each CI secret
   can do.
-- Every GitHub Action is pinned to a commit hash, CodeQL scans the C and
-  C++ code and the workflows, and OpenSSF Scorecard rates the
-  repository’s practices; secret scanning with push protection is on.
+- Every GitHub Action is pinned to a commit hash and CodeQL scans the C
+  and C++ code and the workflows; secret scanning with push protection
+  is on.
 - A capsule bundle whose note (or any signed text) is not ASCII now
   verifies in a C locale: the JSON reader and writer treat text as UTF-8
   whatever the session locale (JSON is UTF-8 by RFC 8259), where before
@@ -333,10 +333,10 @@
   cross-products in extended precision, as intended; a loop bound in the
   HQC decoder’s subset sums is no longer narrower than its limit.
   Results are unchanged.
-- The OpenSSF Best Practices badge (passing) and the Scorecard badge are
-  on the README; workflows ask for write access only in the job that
-  needs it; the Docker base image is pinned by digest; Dependabot pull
-  requests merge themselves once every check passes.
+- The OpenSSF Best Practices badge (passing) is on the README; workflows
+  ask for write access only in the job that needs it; the Docker base
+  image is pinned by digest; Dependabot pull requests merge themselves
+  once every check passes.
 
 ### Signing keys
 

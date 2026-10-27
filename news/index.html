@@ -97,10 +97,10 @@
 <h3 id="security-process-1-0-3">Security process<a class="anchor" aria-label="anchor" href="#security-process-1-0-3"></a></h3>
 <ul><li>
 <code>SECURITY.md</code> follows the OSTIF best-practices guide: private reporting through GitHub (now switched on) or email, scope, what a report should contain, the response timeline (acknowledgement in 72 hours, triage in 7 days, a fix in 30 days for high and critical issues, then a GitHub advisory and CVE), good-faith research protection, the incident plan, who has access and what each CI secret can do.</li>
-<li>Every GitHub Action is pinned to a commit hash, CodeQL scans the C and C++ code and the workflows, and OpenSSF Scorecard rates the repository’s practices; secret scanning with push protection is on.</li>
+<li>Every GitHub Action is pinned to a commit hash and CodeQL scans the C and C++ code and the workflows; secret scanning with push protection is on.</li>
 <li>A capsule bundle whose note (or any signed text) is not ASCII now verifies in a C locale: the JSON reader and writer treat text as UTF-8 whatever the session locale (JSON is UTF-8 by RFC 8259), where before a C-locale session computed a different digest and reported the signature as not verified. The Docker image sets <code>LANG=C.UTF-8</code>; the Wolfi base sets no locale, so R in the image ran in C.</li>
 <li>Fixes for CodeQL’s first scan: downloads are created with explicit 0644 permissions on Linux and macOS, so a permissive umask cannot leave them writable by others; Moran’s I sums its squares and weighted cross-products in extended precision, as intended; a loop bound in the HQC decoder’s subset sums is no longer narrower than its limit. Results are unchanged.</li>
-<li>The OpenSSF Best Practices badge (passing) and the Scorecard badge are on the README; workflows ask for write access only in the job that needs it; the Docker base image is pinned by digest; Dependabot pull requests merge themselves once every check passes.</li>
+<li>The OpenSSF Best Practices badge (passing) is on the README; workflows ask for write access only in the job that needs it; the Docker base image is pinned by digest; Dependabot pull requests merge themselves once every check passes.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="signing-keys-1-0-3">Signing keys<a class="anchor" aria-label="anchor" href="#signing-keys-1-0-3"></a></h3>
