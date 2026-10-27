@@ -94,6 +94,12 @@
 <code><a href="../reference/yoy.html">yoy()</a></code> reads text periods in time order whatever the years: fiscal years (<code>"2019/20"</code>, <code>"2019-2020"</code>, <code>"FY 2019-20"</code>; <code>"2020/21"</code> no longer comes before <code>"2019/20"</code>), one-year fiscal labels (<code>"FY2020"</code>), quarters (<code>"2021 Q3"</code>, <code>"Q3 2021"</code>), months (<code>"2021-03"</code>, <code>"Mar 2021"</code>) and dates. A period missing from the data is a gap. The new argument <code>prdord</code> gives the order of any other labels; labels whose order cannot be read keep the old behaviour, with one warning that names them. <code><a href="../reference/yoysmry.html">yoysmry()</a></code> and <code><a href="../reference/anltab.html">anltab()</a></code> follow the same order, and <code><a href="../reference/ratechg.html">ratechg()</a></code> orders text periods the same way.</li>
 </ul></div>
 <div class="section level3">
+<h3 id="security-process-1-0-3">Security process<a class="anchor" aria-label="anchor" href="#security-process-1-0-3"></a></h3>
+<ul><li>
+<code>SECURITY.md</code> follows the OSTIF best-practices guide: private reporting through GitHub (now switched on) or email, scope, what a report should contain, the response timeline (acknowledgement in 72 hours, triage in 7 days, a fix in 30 days for high and critical issues, then a GitHub advisory and CVE), good-faith research protection, the incident plan, who has access and what each CI secret can do.</li>
+<li>Every GitHub Action is pinned to a commit hash, CodeQL scans the C and C++ code and the workflows, and OpenSSF Scorecard rates the repository’s practices; secret scanning with push protection is on.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="signing-keys-1-0-3">Signing keys<a class="anchor" aria-label="anchor" href="#signing-keys-1-0-3"></a></h3>
 <ul><li>
 <code><a href="../reference/cpsplant.html">cpsplant()</a></code> checks that a statistic recovers effects of known size planted into the real data (the outcome shuffled to remove its real association, then <code>effect * treatment</code> added), so a capsule can show the analysis measures what it claims, not only that it re-runs. A planted 0 catches a statistic that finds effects that are not there.</li>

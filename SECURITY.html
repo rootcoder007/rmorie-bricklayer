@@ -50,8 +50,44 @@
 <div id="security" class="section level1">
 
 <div class="section level2">
-<h2 id="reporting">Reporting<a class="anchor" aria-label="anchor" href="#reporting"></a></h2>
-<p>Report a vulnerability privately through GitHub’s “Report a vulnerability” button on this repository (Security tab), or by email to the maintainer address in <code>DESCRIPTION</code>. Please include the version, the platform and a reproducer. You will get an acknowledgement within 72 hours and a fix or a documented decision within 30 days; credit is given in <code>NEWS.md</code> unless you ask otherwise.</p>
+<h2 id="reporting-a-vulnerability">Reporting a vulnerability<a class="anchor" aria-label="anchor" href="#reporting-a-vulnerability"></a></h2>
+<p>Report privately, never in a public issue:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>GitHub private reporting (preferred):</strong> the “Report a vulnerability” button on this repository’s Security tab.</li>
+<li>
+<strong>Email</strong> the maintainer address in <code>DESCRIPTION</code>.</li>
+</ol><p>A useful report says which version and platform, what an attacker gains (impact), how to reproduce it (a script or input file), and, if you can, the cause. Please give us time to fix it before telling anyone else.</p>
+<div class="section level3">
+<h3 id="scope">Scope<a class="anchor" aria-label="anchor" href="#scope"></a></h3>
+<p>In scope: the code in this repository, the package as released on CRAN and r-universe, the Docker image <code>ghcr.io/rootcoder007/rmorie-bricklayer</code>, and the signed service document in <code>inst/services</code>. Most valuable: a signature, capsule, attestation or timestamp that verifies when it should not; a secret that leaks through timing, memory or files; a crash or memory error on hostile input; and anything that writes outside the folder it was given.</p>
+<p>Out of scope: the statistical estimators’ modelling choices (report those as ordinary issues), denial of service by inputs that are merely large, and vulnerabilities in R, libcurl or zlib themselves (report those upstream).</p>
+</div>
+<div class="section level3">
+<h3 id="what-happens-next">What happens next<a class="anchor" aria-label="anchor" href="#what-happens-next"></a></h3>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Step</th>
+<th>When</th>
+</tr></thead><tbody><tr><td>Acknowledgement, and a named person handling it</td>
+<td>within 72 hours</td>
+</tr><tr><td>Triage: reproduce, judge impact and severity (CVSS), confirm with you</td>
+<td>within 7 days</td>
+</tr><tr><td>Fix, a test that reproduces the issue, and a release</td>
+<td>within 30 days for high and critical; a documented decision otherwise</td>
+</tr><tr><td>GitHub security advisory, with a CVE requested through GitHub</td>
+<td>when the fix is released</td>
+</tr><tr><td>Credit in the advisory and <code>NEWS.md</code>
+</td>
+<td>unless you ask otherwise</td>
+</tr></tbody></table><p>We keep you informed at each step and ask you to check the fix.</p>
+</div>
+<div class="section level3">
+<h3 id="good-faith-research">Good-faith research<a class="anchor" aria-label="anchor" href="#good-faith-research"></a></h3>
+<p>Testing this package on your own machines, with your own keys and data, to find and report vulnerabilities is welcome. We will not pursue or support legal action against research done in good faith under this policy. Do not test against other people’s systems or data, or the data service at data.rmorie.com beyond normal use.</p>
+<p>There is no bug bounty; reports are credited.</p>
+</div>
+<div class="section level3">
+<h3 id="incidents">Incidents<a class="anchor" aria-label="anchor" href="#incidents"></a></h3>
+<p>A security incident (a leaked CI secret or signing key, a tampered release, a compromised account or machine) is handled as follows: contain it (revoke the secret or key, disable the affected workflow), find the cause and the releases affected, fix and re-release, then publish an advisory saying what happened and what users should do. A compromised key for the signed service document is replaced in a package release, and the old key is listed as revoked. Incidents that the law requires to be reported (for example under Canadian privacy law) are reported.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="threat-model">Threat model<a class="anchor" aria-label="anchor" href="#threat-model"></a></h2>
@@ -88,6 +124,45 @@
 <div class="section level2">
 <h2 id="supported-versions">Supported versions<a class="anchor" aria-label="anchor" href="#supported-versions"></a></h2>
 <p>The current release on CRAN and on r-universe receives fixes. Older versions do not.</p>
+</div>
+<div class="section level2">
+<h2 id="who-has-access">Who has access<a class="anchor" aria-label="anchor" href="#who-has-access"></a></h2>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Access</th>
+<th>Held by</th>
+</tr></thead><tbody><tr><td>Repository admin, release tags, CRAN maintainer</td>
+<td>the maintainer only</td>
+</tr><tr><td>Commit signing</td>
+<td>the maintainer’s SSH and GPG keys; every commit and tag on <code>main</code> is signed</td>
+</tr></tbody></table><p>CI secrets, each limited to what one workflow needs:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Secret</th>
+<th>Used for</th>
+<th>If it leaked</th>
+</tr></thead><tbody><tr><td><code>GITHUB_TOKEN</code></td>
+<td>per-workflow, read-only by default</td>
+<td>expires with the run</td>
+</tr><tr><td>
+<code>DOCKERHUB_USERNAME</code>, <code>DOCKERHUB_TOKEN</code>
+</td>
+<td>pushing the image to Docker Hub</td>
+<td>rotate; images are rebuilt and re-scanned weekly</td>
+</tr><tr><td><code>HOMEBREW_TAP_TOKEN</code></td>
+<td>telling the Homebrew tap a release exists</td>
+<td>rotate; it can only dispatch to the tap</td>
+</tr><tr><td><code>CODECOV_TOKEN</code></td>
+<td>uploading coverage</td>
+<td>rotate; no access to code</td>
+</tr><tr><td><code>MORIE_SMOKE_KEY</code></td>
+<td>the smoke test’s data-service sign-in</td>
+<td>revoke the key in the key registry</td>
+</tr></tbody></table><p>Secret scanning with push protection is on for this repository.</p>
+</div>
+<div class="section level2">
+<h2 id="third-party-components">Third-party components<a class="anchor" aria-label="anchor" href="#third-party-components"></a></h2>
+<p>At run time the package imports only base R (<code>graphics</code>, <code>grDevices</code>, <code>methods</code>, <code>parallel</code>, <code>stats</code>, <code>tools</code>, <code>utils</code>) and links the system’s libcurl and zlib; every cryptographic primitive is its own code. GitHub’s dependency graph exports a software bill of materials (SPDX) for each release under Insights &gt; Dependency graph &gt; Export SBOM.</p>
+</div>
+<div class="section level2">
+<h2 id="staying-current">Staying current<a class="anchor" aria-label="anchor" href="#staying-current"></a></h2>
+<p>Dependabot updates the GitHub Actions (all pinned to commit hashes) and the Docker base image weekly. CodeQL scans the C and C++ code and the workflows; OpenSSF Scorecard rates the repository’s practices; Trivy refuses to publish an image with a vulnerability that has a fix. The maintainer follows the R, OpenSSL, curl and zlib security announcements.</p>
 </div>
 </div>
 

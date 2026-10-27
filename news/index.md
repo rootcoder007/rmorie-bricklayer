@@ -309,6 +309,19 @@
   [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
   orders text periods the same way.
 
+### Security process
+
+- `SECURITY.md` follows the OSTIF best-practices guide: private
+  reporting through GitHub (now switched on) or email, scope, what a
+  report should contain, the response timeline (acknowledgement in 72
+  hours, triage in 7 days, a fix in 30 days for high and critical
+  issues, then a GitHub advisory and CVE), good-faith research
+  protection, the incident plan, who has access and what each CI secret
+  can do.
+- Every GitHub Action is pinned to a commit hash, CodeQL scans the C and
+  C++ code and the workflows, and OpenSSF Scorecard rates the
+  repository’s practices; secret scanning with push protection is on.
+
 ### Signing keys
 
 - [`cpsplant()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsplant.md)

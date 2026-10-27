@@ -112,7 +112,7 @@ for the manifest the analysis writes.
 proj <- file.path(tempdir(), "demo-project")
 mkbndlproj(proj, title = "Demo analysis", author = "A. Researcher")
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/Rtmp45t706/demo-project                                      │
+#> │   Folder  /tmp/RtmpQfpDHD/demo-project                                      │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -126,12 +126,12 @@ b
 #> ╭── Reproducibility bundle ───────────────────────────────────────────────────╮
 #> │   Project    demo-project                                                   │
 #> │   Zip        demo-project_v1.zip                                            │
-#> │   Folder     /tmp/Rtmp45t706                                                │
+#> │   Folder     /tmp/RtmpQfpDHD                                                │
 #> │   Size       191.7 KB                                                       │
 #> │   Files      26                                                             │
 #> │   Data file  not inside                                                     │
-#> │   SHA-256    7198cd4b07bfb569e334726a79e9a4cf185484dda656c721f9ac7b220bc33d │
-#> │              37                                                             │
+#> │   SHA-256    c2570112b7a1b5fca6c11706d8304c7c90e0de285db4f38b3afe3db709d0e8 │
+#> │              bd                                                             │
 #> │                                                                             │
 #> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │
 #> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │
@@ -149,9 +149,9 @@ head(b$files)
 # the example shipped with the package
 otis <- mkbndl("otis-mrp", dest = tempdir(), overwrite = TRUE)
 otis$sha256
-#> [1] "13a5239452639bde7e05c594e7793f0ffca03b1c2826a6670e19876c372544b9"
+#> [1] "218b500db2bd56d919494c4efc4bc0e951dc019493d5d85abe2a797800b24a9e"
 
 # an existing zip is kept unless overwrite = TRUE
 try(mkbndl(proj, dest = tempdir()))
-#> Error : /tmp/Rtmp45t706/demo-project_v1.zip exists: pass overwrite = TRUE to replace it
+#> Error : /tmp/RtmpQfpDHD/demo-project_v1.zip exists: pass overwrite = TRUE to replace it
 ```
