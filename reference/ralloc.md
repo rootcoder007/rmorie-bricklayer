@@ -134,8 +134,10 @@ at unblinding;
 and
 [`idcrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
 to sign the commitment;
+[`tsstmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsstmp.md)
+to timestamp it and
 [`tsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
-to check its timestamp;
+to check the timestamp;
 [`prrgdecl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prrgdecl.md)
 to declare the outcomes in the same signed record.
 

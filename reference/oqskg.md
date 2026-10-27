@@ -9,7 +9,7 @@ instead. New code should not call these functions.
 ## Usage
 
 ``` r
-oqskg(scheme = "ML-DSA-65")
+oqskg(scheme = "SLH-DSA-SHA2-128s")
 
 oqspubkey(key)
 ```

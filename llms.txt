@@ -173,7 +173,9 @@ walks through it.
   [`ralloc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ralloc.md)
   makes a simple, permuted-block or stratified allocation list (any
   ratio, kit codes for blinded dispensing), reproducible from a seed and
-  committed to by one SHA-256 to sign and timestamp before enrolment;
+  committed to by one SHA-256 to sign and timestamp
+  ([`tsstmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsstmp.md))
+  before enrolment;
   [`rallocvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rallocvrf.md)
   shows at unblinding that the list used is the one committed to.
 
@@ -1165,15 +1167,22 @@ cpsdrft(ref, moved)                 # both are caught
 
 # Authenticate the manifest so a verifier knows who produced it.
 digest <- sha256file(file.path(tempdir(), "manifest.json"))
-key <- pqckg()                       # post-quantum, hash-based
+key <- fipskg()                      # SLH-DSA: rests on the hash alone
 sig <- cpssign(digest, key)
-cpsvrf(digest, sig, signpubkey(key))
-key <- xmssadv(key, sig)            # the next signature must use this
+cpsvrf(digest, sig, fipspubkey(key))
+cpsxvrf(digest, sig, fipspubkey(key)) # and again with OpenSSL 3.5
 ```
 
-An XMSS index must never sign twice, so the package keeps a record of
-the highest index each key has used (`xmss_used_indices.txt` in
-`tools::R_user_dir("rmoriebricklayer", "config")`, locked by the
+[`cpsxvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsxvrf.md)
+asks the `openssl` program (3.5 or later), which implements FIPS 204 and
+205 with no code in common with this package, for a second verdict;
+without it the result says the signature was checked here only.
+
+XMSS keys
+([`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md))
+are opt-in. An XMSS index must never sign twice, so the package keeps a
+record of the highest index each key has used (`xmss_used_indices.txt`
+in `tools::R_user_dir("rmoriebricklayer", "config")`, locked by the
 operating system while a signature reserves its index). A key generated
 by
 [`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
@@ -1885,6 +1894,8 @@ history itself tamper-evident.
 - [`tsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
   [`tsinfo()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
   : Verify an RFC 3161 timestamp token
+- [`tsstmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsstmp.md)
+  : Get a Public Timestamp for a Commitment
 - [`certprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certprs.md)
   : Parse an X.509 certificate
 - [`certchnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certchnvrf.md)
@@ -1905,6 +1916,8 @@ history itself tamper-evident.
   : Find XMSS signature indices used twice
 - [`cpsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.md)
   : Verify a capsule manifest signature
+- [`cpsxvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsxvrf.md)
+  : Verify a Signature Here and Again With OpenSSL
 - [`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
   : Generate a post-quantum signing key for capsule provenance
 - [`signpubkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/signpubkey.md)

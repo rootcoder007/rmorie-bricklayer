@@ -14,7 +14,7 @@ should be able to check those signatures with
 ## Usage
 
 ``` r
-fipskg(scheme = "ML-DSA-65", seed = NULL)
+fipskg(scheme = "SLH-DSA-SHA2-128s", seed = NULL)
 
 fipspubkey(key)
 ```
@@ -25,8 +25,9 @@ fipspubkey(key)
 
   Scheme name, one of
   [`pqcbknd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqcbknd.md)
-  other than `"xmss-sha256"`. The default, `"ML-DSA-65"`, is the FIPS
-  204 middle security level.
+  other than `"xmss-sha256"`. The default, `"SLH-DSA-SHA2-128s"`, is the
+  FIPS 205 small-signature set at the first security level, which rests
+  on SHA-256 alone.
 
 - seed:
 
@@ -62,8 +63,12 @@ assumption. SLH-DSA rests on nothing but the hash function, at the cost
 of a signature one to two orders of magnitude larger; its `s` parameter
 sets have small signatures and slow signing, its `f` sets the reverse,
 and its SHAKE and SHA-2 families are equally strong: pick SHA-2 where a
-validated SHA-2 implementation is what an auditor will ask about.
-`"ML-DSA-65"` is the sensible default.
+validated SHA-2 implementation is what an auditor will ask about. The
+default, `"SLH-DSA-SHA2-128s"`, is the conservative choice for a record
+meant to be checked decades from now: its security rests on the hash
+function alone, and its signature (7,856 bytes) is the smallest SLH-DSA
+has. Signing takes about a second; verifying, milliseconds. Pick
+`"ML-DSA-65"` for many signatures a second or small signatures.
 
 Key generation expands a random seed (the length
 [`fipssz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipssz.md)

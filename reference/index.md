@@ -442,6 +442,8 @@ history itself tamper-evident.
 - [`tsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
   [`tsinfo()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
   : Verify an RFC 3161 timestamp token
+- [`tsstmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsstmp.md)
+  : Get a Public Timestamp for a Commitment
 - [`certprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certprs.md)
   : Parse an X.509 certificate
 - [`certchnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certchnvrf.md)
@@ -462,6 +464,8 @@ history itself tamper-evident.
   : Find XMSS signature indices used twice
 - [`cpsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.md)
   : Verify a capsule manifest signature
+- [`cpsxvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsxvrf.md)
+  : Verify a Signature Here and Again With OpenSSL
 - [`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
   : Generate a post-quantum signing key for capsule provenance
 - [`signpubkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/signpubkey.md)

@@ -309,7 +309,41 @@
   [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
   orders text periods the same way.
 
+### Signing keys
+
+- [`tsstmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsstmp.md)
+  gets a public RFC 3161 timestamp for anything a study fixes before it
+  sees its data: a
+  [`ralloc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ralloc.md)
+  allocation list (its commitment is stamped), a file of declared
+  outcomes, a manifest or a capsule. Only the SHA-256 leaves the
+  machine. The token is checked at once with
+  [`tsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
+  and can be saved; with the authority’s root certificate as `trust`,
+  anyone can later prove the commitment existed on that date. The
+  default authority is freetsa.org, which is free and needs no account.
+- [`cpsxvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsxvrf.md)
+  checks an ML-DSA or SLH-DSA signature twice: with this package and
+  with the `openssl` program (3.5 or later), which implements FIPS 204
+  and 205 independently. It counts as cross-verified only when both
+  accept it; without OpenSSL, or for a scheme OpenSSL cannot check, the
+  result says the signature was verified here only, and why. OpenSSL is
+  never required.
+- [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
+  makes an SLH-DSA-SHA2-128s key by default (it was ML-DSA-65): its
+  security rests on the hash function alone, the most conservative
+  assumption for a capsule meant to be checked decades from now. Signing
+  takes about a second and the signature is 7,856 bytes; pass
+  `scheme = "ML-DSA-65"` for the old default. XMSS stays opt-in through
+  [`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md).
+
 ### Fixes
+
+- A bundle run on synthetic data works on Windows: the runner passed
+  `BRICKLAYER_SYNTHETIC=1` to `analysis.R` through `system2(env = )`,
+  which on Windows puts it in front of the command, so `analysis.R`
+  never started and the run stopped with exit code 5. It now sets the
+  variable for the child and restores it afterwards.
 
 - On a console that is not UTF-8 (R in a C locale), the result boxes
   fold accented text to plain ASCII, so “Métis” prints as “Metis”;

@@ -124,12 +124,11 @@ m$counts_after
 
 # signed with an ML-DSA key
 k <- fipskg(seed = as.raw(1:32))
+#> Error: `seed` must be a raw vector of 48 bytes for SLH-DSA-SHA2-128s
 ms <- rcdmnf(x, y, map, key = k)
+#> Error: object 'k' not found
 names(ms)
-#>  [1] "context"        "created"        "mapping"        "mapping_sha256"
-#>  [5] "n"              "n_missing"      "counts_before"  "counts_after"  
-#>  [9] "checks"         "published"      "body_sha256"    "signature"     
-#> [13] "public_key"    
+#> Error: object 'ms' not found
 
 # a recode that does not match the published counts is refused
 try(rcdmnf(x, y, map, pub = c(White = 1, Black = 2, Indigenous = 1)))
