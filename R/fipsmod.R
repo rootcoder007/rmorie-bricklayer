@@ -13,16 +13,19 @@
 #' Finds the OpenSSL FIPS provider (a FIPS 140-3 cryptographic module),
 #' loads it on its own, and reports which module it is and whether that
 #' module is on the package's list of validated ones. Keys from
-#' [fipsmkg()] are then made, and [cpssign()] signs with them, inside that
-#' module rather than in this package's own code.
+#' [fipsmkg()]
+#' are then made, and
+#' [cpssign()]
+#' signs with them, inside that module rather than in this package's own
+#' code.
 #'
 #' The package's own ML-DSA and SLH-DSA are not a validated module, and
 #' FIPS mode does not change that. What it gives is a way to sign with a
 #' module that is: a module listed as validated, run as this function runs
 #' it, is used in its approved mode. Whether a given module is validated
 #' is NIST's to say; the package only recognises the exact module names and
-#' builds that a certificate names (see `system.file("fips", "modules.csv",
-#' package = "rmoriebricklayer")`), and says "not on the list" for every
+#' builds that a certificate names (the file `modules.csv` in the
+#' package's `fips` folder), and says "not on the list" for every
 #' other one, including a FIPS provider that may well be validated under a
 #' certificate the list does not have yet.
 #'
@@ -52,7 +55,10 @@
 #'   such as `"#5523"`, or `NA`), `pqc` (whether that certificate covers
 #'   ML-DSA and SLH-DSA), `openssl`, `openssl_version` and `conf`. It prints
 #'   as a box. The result is remembered for the session.
-#' @seealso [fipsmkg()], [cpssign()], [cpsxvrf()].
+#' @seealso
+#' [fipsmkg()],
+#' [cpssign()],
+#' [cpsxvrf()].
 #' @export
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Only where an OpenSSL 3.5 FIPS provider is installed:
@@ -104,7 +110,8 @@ fipsmod <- function(openssl = Sys.which("openssl"),
 
 #' Make a Signing Key Inside a FIPS 140-3 Module
 #'
-#' Generates an ML-DSA or SLH-DSA key pair inside the module [fipsmod()]
+#' Generates an ML-DSA or SLH-DSA key pair inside the module that
+#' [fipsmod()]
 #' found. The private key stays in the module's own format (PEM) and never
 #' passes through this package's code; [cpssign()] hands it back to the
 #' module to sign. The public key is the standard one, so the signatures
@@ -126,8 +133,10 @@ fipsmod <- function(openssl = Sys.which("openssl"),
 #'   `bricklayer_fips_public_key`, so every verifier accepts it): `public`
 #'   (hex), `scheme`, `module` (name, build, status and certificate) and
 #'   the private key in `pem`.
-#' @seealso [fipsmod()], [cpssign()], [fipskg()] for keys made by this
-#'   package's own code.
+#' @seealso
+#' [fipsmod()],
+#' [cpssign()],
+#' [fipskg()] for keys made by this package's own code.
 #' @export
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' mod <- try(fipsmod(), silent = TRUE)
@@ -136,10 +145,9 @@ fipsmod <- function(openssl = Sys.which("openssl"),
 #'   key
 #' }
 fipsmkg <- function(scheme = "ML-DSA-65", mod = fipsmod()) {
+  # only ML-DSA and SLH-DSA names pass; XMSS is refused there, with
+  # where to make such a key instead
   scheme <- .rmbl_fips_scheme(scheme)
-  if (!grepl("^(ML|SLH)-DSA-", scheme)) {
-    stop(scheme, " has no FIPS 140-3 module; use fipskg()", call. = FALSE)
-  }
   if (!inherits(mod, "rmbl_fipsmod")) {
     stop("`mod` must come from fipsmod()", call. = FALSE)
   }
@@ -187,10 +195,7 @@ format.rmbl_fipsmod_key <- function(x, ...) {
 }
 
 #' @export
-print.rmbl_fipsmod_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_fipsmod_key <- .rmbl_print_box
 
 #' @export
 format.rmbl_fipsmod <- function(x, ...) {
@@ -217,10 +222,7 @@ format.rmbl_fipsmod <- function(x, ...) {
 }
 
 #' @export
-print.rmbl_fipsmod <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_fipsmod <- .rmbl_print_box
 
 #' What a module's status means, in a sentence or two.
 #' @param x A result of fipsmod().
@@ -463,7 +465,7 @@ print.rmbl_fipsmod <- function(x, ...) {
       if (length(hit)) sub(paste0("^    ", k, ": "), "", hit[[1L]]) else NA
     }
     name <- val("name")
-    if (!is.na(name) && grepl("FIPS", name) &&
+    if (!is.na(name) && grepl("FIPS", name, fixed = TRUE) &&
         identical(val("status"), "active")) {
       ver <- val("version")
       build <- val("build info")

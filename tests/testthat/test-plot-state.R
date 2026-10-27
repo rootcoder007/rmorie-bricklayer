@@ -77,7 +77,7 @@ ps_run_topic <- function(rd, topic) {
   devs <- grDevices::dev.list()
   env <- new.env(parent = globalenv())
   for (e in ps_calls(f)) {
-    what <- substr(paste(deparse(e), collapse = " "), 1L, 70L)
+    what <- substr(deparse1(e, collapse = " "), 1L, 70L)
     p0 <- graphics::par(no.readonly = TRUE)
     err <- tryCatch(
       {

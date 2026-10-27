@@ -223,10 +223,7 @@ format.rmbl_alloc <- function(x, ...) {
 }
 
 #' @export
-print.rmbl_alloc <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_alloc <- .rmbl_print_box
 
 #' @export
 format.rmbl_alloc_check <- function(x, ...) {
@@ -247,10 +244,7 @@ format.rmbl_alloc_check <- function(x, ...) {
 }
 
 #' @export
-print.rmbl_alloc_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_alloc_check <- .rmbl_print_box
 
 #' @rdname ralloc
 #' @param x A list from ralloc(), for `plot()`.

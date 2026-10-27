@@ -494,8 +494,6 @@ fipsvrfmu <- function(key, mu, sig) {
 #' unknown
 #' scheme, or anything but one string, is refused.
 #'
-#' @param scheme Scheme name, as in
-#' [fipskg()].
 #' @return A named integer vector of five byte counts: `public_key`,
 #'   `secret_key`, `signature`, `seed` and `rnd` (the
 #'   per-signature
@@ -519,6 +517,7 @@ fipsvrfmu <- function(key, mu, sig) {
 #' # XMSS has no fixed sizes here.
 #' try(fipssz("xmss-sha256"))
 #' @export
+#' @inheritParams fipskey
 fipssz <- function(scheme) {
   scheme <- .rmbl_fips_scheme(scheme)
   mode <- .rmbl_fips_mldsa_mode(scheme)
@@ -933,17 +932,6 @@ signpubkey <- function(key) {
 #' others. FIPS 204 and FIPS 205 both bind it into the message encoding, so
 #' a signature made under one context does not verify under another --
 #' which is how the same key is safely used for two purposes.
-#' @param masked \code{TRUE} (the default) for the first-order masked ML-DSA
-#'   signer, \code{FALSE} for the plain constant-time one; both give the same
-#'   signature for the same randomness. The option
-#'   \code{rmoriebricklayer.masked} sets the default for a session, so
-#'   chain- and bundle-heavy code that has no physical attacker in its threat
-#'   model can take the plain path everywhere with
-#'   \code{options(rmoriebricklayer.masked = FALSE)}. SLH-DSA and XMSS
-#'   signing are not masked and ignore it. Masking costs about 2.3 to 3.4 times
-#'   the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
-#'   package's test machine) and 7 to 10 times on ML-DSA signing (26 ms for
-#'   ML-DSA-65), depending on the CPU.
 #' @param determ For the standardised schemes,
 #' use the deterministic variant rather than drawing fresh randomness per
 #' signature. The signature then depends only on the key, message and
@@ -1017,6 +1005,7 @@ signpubkey <- function(key) {
 #' models; the README's security section lists what each check does and
 #' does not cover.
 #' @export
+#' @inheritParams fipsmu
 cpssign <- function(
   msg,
   key,

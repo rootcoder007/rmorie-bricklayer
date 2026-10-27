@@ -227,8 +227,6 @@ admits <- function(adp, alos, t = 365) {
 #' @param cnts Numeric vector of headcounts, one per day on which a count
 #'   was taken; non-negative, no \code{NA} or \code{Inf}. The days need not
 #'   be consecutive.
-#' @param t Numeric scalar, the length of the period in days; must be
-#'   positive. Default \code{365}.
 #'
 #' @return A numeric scalar: the estimated person-days over the period,
 #'   \code{mean(counts) * t}. Despite the function's name this is a total of
@@ -264,6 +262,7 @@ admits <- function(adp, alos, t = 365) {
 #' # a missing count must be dropped or filled first
 #' try(adpcnts(c(120, NA, 125)))
 #' @export
+#' @inheritParams admits
 adpcnts <- function(cnts, t = 365) {
   cnts <- .rmbl_pos_num(cnts, "cnts", allow_zero = TRUE)
   t <- .rmbl_pos_num(t, "t", scalar = TRUE)
@@ -1451,7 +1450,7 @@ format.rmbl_perdays <- function(x, ...) {
   )
 }
 
-#' An interval as [lower, upper], blank when both bounds are missing.
+#' An interval as \verb{[lower, upper]}, blank when both bounds are missing.
 #' @param lo,hi The lower and upper bounds.
 #' @param digits Significant digits of each bound.
 #' @return Strings.

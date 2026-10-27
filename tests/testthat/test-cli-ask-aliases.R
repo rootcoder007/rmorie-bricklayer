@@ -135,7 +135,7 @@ test_that(
     expect_false(have("no-such-program-rmbl"))
     # .bl_readline asks it, never Sys.which(), which runs a child that a Ctrl-C
     # kills alone
-    body_txt <- paste(deparse(.bl_readline), collapse = "\n")
+    body_txt <- deparse1(.bl_readline, collapse = "\n")
     expect_false(grepl("Sys.which", body_txt, fixed = TRUE))
   }
 )

@@ -1170,7 +1170,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 }
 
 #' p-values as read in a paper: 0.017, 0.0004 shown as < 0.001, NA as blank.
-#' @param p Numbers in [0, 1].
+#' @param p Numbers in \[0, 1\].
 #' @return Strings.
 #' @noRd
 .rmbl_fmt_p <- function(p) {
@@ -1237,7 +1237,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   out
 }
 
-#' An interval as [lower, upper].
+#' An interval as \[lower, upper\].
 #' @param lo,hi The bounds.
 #' @param digits Significant digits.
 #' @return Strings.
@@ -1255,7 +1255,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 }
 
 #' Pads a plain decimal with zeros to the decimals of its partner, so an
-#' interval reads [47.0, 56.2], not [47, 56.2]; numbers in e-notation, blank
+#' interval reads \[47.0, 56.2\], not \[47, 56.2\]; numbers in e-notation, blank
 #' and Inf are left as they are.
 #' @param s,other Formatted numbers, element by element.
 #' @return Strings.
@@ -1518,7 +1518,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   list(df = df, notes = paste(code, u))
 }
 
-#' A table's lower and upper columns as one interval column, "[a, b]".
+#' A table's lower and upper columns as one interval column, "\[a, b\]".
 #' @param df The table.
 #' @param lvl The confidence level, or NULL, for the column's name.
 #' @param lo,hi The names of the bound columns.

@@ -512,7 +512,6 @@ chnkfile <- function(path, chnkbytes = 1048576L) {
 #' Errors: \code{path} that does not name an existing file (or names a
 #' directory); \code{blkbytes} that is not a positive whole number.
 #'
-#' @param path Path to an existing file, a single string.
 #' @param blkbytes Read size in bytes, a positive whole number (default
 #'   1048576). Affects speed only, never the result.
 #' @return \code{sha512file()}: a length-1 character vector, 128 lowercase hex
@@ -536,6 +535,7 @@ chnkfile <- function(path, chnkbytes = 1048576L) {
 #' unlink(p)
 #' @name filedgst
 #' @export
+#' @inheritParams chnkfile
 sha512file <- function(path, blkbytes = 1048576L) {
   # read here, not as csha512()'s argument: a promise forced inside csha512()
   # gave its errors csha512()'s name

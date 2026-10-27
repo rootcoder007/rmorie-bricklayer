@@ -53,7 +53,7 @@ default the numerator's parent in the profile's hierarchy), for each
 geography, gender, age group and group. Statistics Canada does not publish
 standard errors for the profile, so the interval is an approximation built
 from what is known about how the counts were made: \itemize{ \item a
-long-form (\dQuote{25\% sample}) count is estimated from a sample of about one
+long-form ("25\% sample") count is estimated from a sample of about one
 household in four, so the share has variance \eqn{d (1 - f) p (1 - p) / (f
 N)} for a sampling fraction \eqn{f} (\code{smpfrac}, 0.25) of a population of
 \eqn{N} (the denominator) and a design effect \eqn{d} (\code{deff}, 1 by

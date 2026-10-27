@@ -97,7 +97,7 @@ test_that("specifications that agree are robust; one that flips is not", {
                           other = function(df) -0.1,
                           third = function(df) 0.2))
   expect_false(flip$ok)
-  expect_equal(flip$share, 2 / 3)
+  expect_identical(flip$share, 2 / 3)
   expect_box2(flip, "Specification check: FRAGILE",
               c("DIFFERENT", "depends on the analytic choices"))
   expect_error(cpsspec(d, list(a = function(df) 1)), "two or more")

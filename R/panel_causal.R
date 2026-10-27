@@ -1306,14 +1306,12 @@ plot.rmbl_aipw <- function(
 #'   indicators).
 #' @param estd \code{"ATE"} (default) or \code{"ATT"}.
 #' @param lrn The outcome learner (as in \code{\link{plndml}}).
-#' @param basis \code{"linear"} (default) or \code{"poly2"}.
 #' @param w Optional column name of survey or sampling weights.
 #' @param des Optional survey design from \code{\link{svydes}}, built on
 #'   \code{data}, in place of \code{w}: the standard error then comes from its
 #'   replicate weights or its strata and primary sampling units.
 #' @param folds Cross-fitting folds (default 5).
 #' @param trim Propensity clipping (default 0.01).
-#' @param seed Seed for the folds (default 1).
 #' @param conflvl Confidence level of the interval (default 0.95).
 #' @return A data frame of class \code{rmbl_aipw}: \code{estimand},
 #'   \code{estimate}, \code{se}, \code{lower}, \code{upper}, \code{p_value};
@@ -1347,6 +1345,7 @@ plot.rmbl_aipw <- function(
 #' aipwcf(d, "wellbeing", "belong", c("age", "income"), lrn = "ols",
 #'               des = des)
 #' @export
+#' @inheritParams plndml
 aipwcf <- function(
   data,
   y,
@@ -2651,7 +2650,7 @@ format.rmbl_aipw <- function(x, digits = 4L, ...) {
 #' The bandwidth comes from the unweighted values (density() picks it so
 #' anyway, with a warning).
 #' @param p The propensity table of an aipwcf() result.
-#' @return A list of two `density` objects on 256 points of [0, 1].
+#' @return A list of two `density` objects on 256 points of \[0, 1\].
 #' @noRd
 .rmbl_aipw_dens <- function(p) {
   lapply(c(1, 0), function(arm) {

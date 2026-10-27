@@ -603,7 +603,7 @@ rvkfetch <- function(path, tmout = 10) {
 
 #' The BasicOCSPResponse of an OCSP answer.
 #'
-#' responseBytes ::= [0] EXPLICIT SEQUENCE { responseType OID, response OCTET
+#' responseBytes ::= \[0\] EXPLICIT SEQUENCE { responseType OID, response OCTET
 #' STRING }. The BasicOCSPResponse is the CONTENTS of that octet string, which
 #' is a DER document of its own -- the outer parse stops at the string, so it
 #' has to be parsed again. Walking the outer tree looking for it finds nothing,
@@ -634,7 +634,7 @@ rvkfetch <- function(path, tmout = 10) {
   list(basic = basic, src = inner_src)
 }
 
-#' The single response's certStatus: [0] good, [1] revoked, [2] unknown.
+#' The single response's certStatus: \[0\] good, \[1\] revoked, \[2\] unknown.
 #' @param tbs The parsed tbsResponseData.
 #' @return "good", "revoked" or "unknown", or NULL when there is no
 #'   SingleResponse.
@@ -726,8 +726,8 @@ rvkfetch <- function(path, tmout = 10) {
 #'
 #' A responder may sign with a certificate the path issued, carried in the
 #' answer; otherwise it must be one already in the path. The certificates are
-#' the fourth element of BasicOCSPResponse ([0] EXPLICIT SEQUENCE OF
-#' Certificate), read by position: a tree search for a [0] lands on nextUpdate
+#' the fourth element of BasicOCSPResponse (\[0\] EXPLICIT SEQUENCE OF
+#' Certificate), read by position: a tree search for a \[0\] lands on nextUpdate
 #' inside the SingleResponse first.
 #' @param basic The parsed BasicOCSPResponse.
 #' @param path The certificate path, the first candidates.

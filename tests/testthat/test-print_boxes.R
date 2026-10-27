@@ -8,7 +8,7 @@ test_that("every boxed print method is the one registered for its class", {
   # every body to count hits, so an exact comparison finds nothing there
   nm <- grep("^print[.]", ls(ns, all.names = TRUE), value = TRUE)
   is_box <- vapply(nm, function(n) {
-    b <- paste(deparse(body(get(n, envir = ns))), collapse = " ")
+    b <- deparse1(body(get(n, envir = ns)), collapse = " ")
     grepl(".rmbl_cat(format(x, ...), x)", b, fixed = TRUE) &&
       grepl("invisible(x)", b, fixed = TRUE)
   }, NA)

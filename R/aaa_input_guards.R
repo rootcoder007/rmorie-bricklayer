@@ -241,7 +241,7 @@
 #' @return The matched choice or choices.
 #' @noRd
 .rmbl_arg <- function(arg, choices = NULL, several = FALSE) {
-  what <- paste(deparse(substitute(arg)), collapse = "")
+  what <- deparse1(substitute(arg), collapse = "")
   if (is.null(choices)) {
     sysp <- sys.parent()
     fn <- sys.function(sysp)

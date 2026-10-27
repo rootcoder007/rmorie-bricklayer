@@ -9,19 +9,20 @@ fips_mod_or_skip <- function() {
 }
 
 fake_openssl <- function(dir, version, providers = character(),
-                         modulesdir = NULL) {
+                         modulesdir = NULL, list_ok = TRUE) {
   f <- file.path(dir, "openssl")
   writeLines(c(
     "#!/bin/sh",
     sprintf("if [ \"$1\" = version ]; then echo '%s'; exit 0; fi", version),
     "if [ \"$1\" = list ]; then",
     paste0("  printf '%s\\n' ", paste(shQuote(providers), collapse = " ")),
-    "  exit 0",
+    sprintf("  exit %d", if (list_ok) 0L else 1L),
     "fi",
     if (is.null(modulesdir)) "if [ \"$1\" = info ]; then exit 1; fi" else
       sprintf("if [ \"$1\" = info ]; then echo '%s'; exit 0; fi",
               modulesdir),
     "if [ \"$1\" = fipsinstall ]; then exit 1; fi",
+    "echo 'refused by the fake module'",
     "exit 1"
   ), f)
   Sys.chmod(f, "0755")
@@ -55,7 +56,8 @@ test_that("keys made in the module sign, and both implementations agree", {
   expect_error(cpssign("m", k, prehash = "sha256"), "pure")
   # the boxes, and the private key never printed
   expect_box2(k, "FIPS module key", c("ML-DSA-44", "not shown"))
-  expect_false(any(grepl("PRIVATE", capture.output(print(k)))))
+  expect_false(any(grepl("PRIVATE", capture.output(print(k)),
+                         fixed = TRUE)))
   expect_box2(mod, "FIPS module", mod$name)
   # an attestation signed by a module key verifies
   man <- mkmnf(list(project = "fips mode"), env = FALSE)
@@ -102,7 +104,8 @@ test_that("the provider listing and the list of validated modules read", {
   expect_identical(p, list(name = "Chainguard FIPS Provider for OpenSSL",
                            version = "3.6.0", build = "3.6.0-r4"))
   # an inactive provider, or one without a FIPS name, is not the module
-  expect_null(.rmbl_fipsmod_parse(sub("active", "inactive", lines)))
+  off <- sub("active", "inactive", lines, fixed = TRUE)
+  expect_null(.rmbl_fipsmod_parse(off))
   expect_null(.rmbl_fipsmod_parse(lines[1:5]))
   # without a build line the version stands in
   p2 <- .rmbl_fipsmod_parse(lines[c(1, 6:9)])
@@ -142,4 +145,42 @@ test_that("fipsmkg refuses what has no FIPS module", {
                    "validated, CMVP #1")
   expect_identical(.rmbl_fipsmod_status_text("not listed", NA),
                    "not listed")
+})
+
+test_that("each way the module can fail to load or refuse is reported", {
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  v <- "OpenSSL 3.5.9 29 Sep 2026"
+  dflt <- c("Providers:", "  default", "    name: OpenSSL Default Provider",
+            "    status: active")
+  # no modules folder: nothing to install, so the provider does not load
+  expect_error(fipsmod(fake_openssl(d, v, dflt), conf = NULL),
+               "did not load")
+  # a modules folder without the FIPS module
+  e1 <- file.path(d, "e1")
+  dir.create(e1)
+  expect_error(fipsmod(fake_openssl(e1, v, dflt, modulesdir = e1)),
+               "did not load")
+  # the module is there but fipsinstall fails
+  e2 <- file.path(d, "e2")
+  dir.create(e2)
+  file.create(file.path(e2, "fips.so"))
+  expect_error(fipsmod(fake_openssl(e2, v, dflt, modulesdir = e2)),
+               "did not load")
+  # listing the providers fails
+  e3 <- file.path(d, "e3")
+  dir.create(e3)
+  expect_error(fipsmod(fake_openssl(e3, v, dflt, list_ok = FALSE)),
+               "did not load")
+  # the module loads but refuses an operation
+  e4 <- file.path(d, "e4")
+  dir.create(e4)
+  fips <- c("Providers:", "  fips", "    name: Some FIPS Provider",
+            "    version: 1.0", "    status: active")
+  mod <- fipsmod(fake_openssl(e4, v, fips))
+  expect_identical(mod$status, "not listed")
+  expect_error(fipsmkg("ML-DSA-44", mod),
+               "refused the key generation: refused by the fake module")
+  # XMSS has no FIPS module: refused by the scheme check
+  expect_error(fipsmkg("xmss-sha256", mod), "pqckg")
 })

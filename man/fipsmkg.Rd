@@ -19,7 +19,8 @@ A key of class \code{rmbl_fipsmod_key} (also a
 the private key in \code{pem}.
 }
 \description{
-Generates an ML-DSA or SLH-DSA key pair inside the module \code{\link[=fipsmod]{fipsmod()}}
+Generates an ML-DSA or SLH-DSA key pair inside the module that
+\code{\link[=fipsmod]{fipsmod()}}
 found. The private key stays in the module's own format (PEM) and never
 passes through this package's code; \code{\link[=cpssign]{cpssign()}} hands it back to the
 module to sign. The public key is the standard one, so the signatures
@@ -44,6 +45,7 @@ if (inherits(mod, "rmbl_fipsmod")) {
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=fipsmod]{fipsmod()}}, \code{\link[=cpssign]{cpssign()}}, \code{\link[=fipskg]{fipskg()}} for keys made by this
-package's own code.
+\code{\link[=fipsmod]{fipsmod()}},
+\code{\link[=cpssign]{cpssign()}},
+\code{\link[=fipskg]{fipskg()}} for keys made by this package's own code.
 }

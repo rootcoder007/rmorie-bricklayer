@@ -32,7 +32,7 @@
 #'
 #' The relative effect is \eqn{\hat\beta} over the mean outcome of the units
 #' never treated (or not yet treated) in the periods before the first treatment,
-#' the way an effect on a rate is usually reported (\dQuote{a 12% fall}).
+#' the way an effect on a rate is usually reported ("a 12% fall").
 #'
 #' With \code{fe = "time"} the unit effects are left out, and the model is the
 #' cross-section with period effects of a comparison between kinds of units (for

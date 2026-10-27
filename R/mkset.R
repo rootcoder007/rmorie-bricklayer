@@ -86,12 +86,7 @@ mkset <- function(..., title = "Analysis results", file = NULL,
   }
   file <- .rmbl_string1(file, "file")
   ext <- tolower(tools::file_ext(file))
-  txt <- switch(
-    ext,
-    html = ,
-    htm = .mkset_html(out, plots),
-    md = .mkset_md(out),
-    txt = paste(.mkset_lines(out), collapse = "\n"),
+  if (!ext %in% c("html", "htm", "md", "txt")) {
     stop(
       sprintf(
         "mkset: `file` must end in .html, .md or .txt, not .%s",
@@ -99,6 +94,13 @@ mkset <- function(..., title = "Analysis results", file = NULL,
       ),
       call. = FALSE
     )
+  }
+  txt <- switch(
+    ext,
+    html = ,
+    htm = .mkset_html(out, plots),
+    md = .mkset_md(out),
+    txt = paste(.mkset_lines(out), collapse = "\n")
   )
   .bndl_write_text(sub("\n$", "", txt), file)
   attr(out, "path") <- normalizePath(file, winslash = "/")

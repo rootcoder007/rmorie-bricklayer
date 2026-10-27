@@ -46,6 +46,41 @@ jobs:
           extra-packages: any::goodpractice, any::rcmdcheck, any::covr, any::srr
           needs: check
 
+      # the PDF manual check needs LaTeX, which the runner does not have
+      - uses: r-lib/actions/setup-tinytex@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+      - name: LaTeX packages the R manual uses
+        run: tlmgr install inconsolata
+
+      # OpenSSL 3.5 with its FIPS provider, as in r-coverage.yml (same cache),
+      # so the coverage check runs cpsxvrf()'s and fipsmod()'s real tests
+      - name: Cache OpenSSL 3.5
+        id: ossl
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/openssl-3.5
+          key: openssl-3.5.9-fips-${{ runner.os }}-${{ runner.arch }}
+      - name: Build OpenSSL 3.5
+        if: steps.ossl.outputs.cache-hit != 'true'
+        env:
+          V: "3.5.9"
+          SHA: >-
+            603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          u=https://github.com/openssl/openssl/releases/download
+          curl -fsSLo o.tgz "$u/openssl-$V/openssl-$V.tar.gz"
+          echo "$SHA  o.tgz" | sha256sum -c -
+          tar xzf o.tgz && cd "openssl-$V"
+          ./Configure --prefix="$HOME/openssl-3.5" --libdir=lib \
+            enable-fips no-shared no-docs no-tests > /dev/null
+          make -j"$(nproc)" > /dev/null
+          make install_sw install_fips > /dev/null
+      - name: Put OpenSSL 3.5 first on the PATH
+        run: |
+          echo "$HOME/openssl-3.5/bin" >> "$GITHUB_PATH"
+          "$HOME/openssl-3.5/bin/openssl" version
+
       - name: goodpractice (all checks)
         shell: Rscript {0}
         run: |

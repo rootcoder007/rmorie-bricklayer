@@ -188,8 +188,6 @@ toascii <- function(x) {
 #' `NA`
 #' unless `force = TRUE`, when it becomes `""`.
 #'
-#' @param x A character vector (other types are converted with
-#'   [as.character()]).
 #' @param force A single logical: `TRUE` always transliterates every
 #'   element to ASCII; `FALSE` (the default) only the elements that are not
 #'   valid UTF-8. Anything other than `TRUE` counts as `FALSE`.
@@ -216,6 +214,7 @@ toascii <- function(x) {
 #' bad <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xe9)))
 #' validUTF8(bad)
 #' asciifb(bad)
+#' @inheritParams toascii
 asciifb <- function(x, force = FALSE) {
   .rmbl_no_fn(x = x)
   x <- as.character(x)

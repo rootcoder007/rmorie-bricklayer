@@ -415,8 +415,6 @@ format.rmbl_band_sensitivity <- function(x, digits = 4L, ...) {
 #' unplaceable band with units (by default); any error from
 #' \code{\link{bandvals}}.
 #'
-#' @param bands A data frame from \code{\link{prsbands}}, or labels to
-#'   parse.
 #' @param cnts Numeric vector, one non-negative count per band.
 #' @param ... Further arguments to \code{\link{bandvals}}: \code{rule},
 #'   \code{openupcap}, \code{openupfac} and
@@ -440,6 +438,7 @@ format.rmbl_band_sensitivity <- function(x, digits = 4L, ...) {
 #' # an unparseable band with units in it stops the call
 #' try(expbands(c("1", "not stated"), cnts = c(3, 2)))
 #' @export
+#' @inheritParams bandsens
 expbands <- function(bands, cnts, ..., drpunp = FALSE) {
   if (!is.data.frame(bands)) {
     # checked here: inside prsbands() the refusal took prsbands()'s name

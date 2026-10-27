@@ -28,8 +28,11 @@ as a box. The result is remembered for the session.
 Finds the OpenSSL FIPS provider (a FIPS 140-3 cryptographic module),
 loads it on its own, and reports which module it is and whether that
 module is on the package's list of validated ones. Keys from
-\code{\link[=fipsmkg]{fipsmkg()}} are then made, and \code{\link[=cpssign]{cpssign()}} signs with them, inside that
-module rather than in this package's own code.
+\code{\link[=fipsmkg]{fipsmkg()}}
+are then made, and
+\code{\link[=cpssign]{cpssign()}}
+signs with them, inside that module rather than in this package's own
+code.
 }
 \details{
 The package's own ML-DSA and SLH-DSA are not a validated module, and
@@ -37,7 +40,8 @@ FIPS mode does not change that. What it gives is a way to sign with a
 module that is: a module listed as validated, run as this function runs
 it, is used in its approved mode. Whether a given module is validated
 is NIST's to say; the package only recognises the exact module names and
-builds that a certificate names (see \code{system.file("fips", "modules.csv", package = "rmoriebricklayer")}), and says "not on the list" for every
+builds that a certificate names (the file \code{modules.csv} in the
+package's \code{fips} folder), and says "not on the list" for every
 other one, including a FIPS provider that may well be validated under a
 certificate the list does not have yet.
 
@@ -69,5 +73,7 @@ if (inherits(mod, "rmbl_fipsmod")) {
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=fipsmkg]{fipsmkg()}}, \code{\link[=cpssign]{cpssign()}}, \code{\link[=cpsxvrf]{cpsxvrf()}}.
+\code{\link[=fipsmkg]{fipsmkg()}},
+\code{\link[=cpssign]{cpssign()}},
+\code{\link[=cpsxvrf]{cpsxvrf()}}.
 }

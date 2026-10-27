@@ -533,12 +533,14 @@ format.bricklayer_timestamp <- function(x, ...) {
 #' @return The digest as a raw vector.
 #' @noRd
 .rmbl_ts_digest <- function(alg, bytes) {
+  if (!alg %in% c("sha256", "sha384", "sha512")) {
+    stop(sprintf("digest %s is not available here", alg), call. = FALSE)
+  }
   switch(
     alg,
     sha256 = .rmbl_hex_to_raw(csha256(bytes)),
     sha384 = .Call(C_rmbl_sha384, bytes),
-    sha512 = .rmbl_hex_to_raw(csha512(bytes)),
-    stop(sprintf("digest %s is not available here", alg), call. = FALSE)
+    sha512 = .rmbl_hex_to_raw(csha512(bytes))
   )
 }
 

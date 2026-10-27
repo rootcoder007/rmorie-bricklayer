@@ -276,8 +276,6 @@ format.rmbl_rate <- function(x, digits = 4L, ...) {
 #' a total of zero or below; a count larger than the total;
 #' \code{conflvl} outside (0, 1).
 #'
-#' @param x A data frame, or a numeric vector of counts.
-#' @param ... Passed to methods.
 #' @param count Column of counts (required), unquoted or as a string:
 #'   non-negative whole numbers.
 #' @param by Character vector of grouping columns. Shares are computed
@@ -286,8 +284,6 @@ format.rmbl_rate <- function(x, digits = 4L, ...) {
 #'   which makes the shares sum to 100. A number uses that number; a column
 #'   name (data-frame method) uses the sum of that column -- for the case
 #'   where some of the total is not in the table.
-#' @param conflvl Number in (0, 1), default 0.95: the confidence level
-#'   of the interval.
 #'
 #' @return A data frame of class \code{c("rmbl_share", "data.frame")} with
 #'   the grouping columns (or \code{label}, for a named vector), \code{count},
@@ -319,6 +315,7 @@ format.rmbl_rate <- function(x, digits = 4L, ...) {
 #' # a count larger than its total is not a share
 #' try(shrs(c(5, 2), total = 4))
 #' @export
+#' @inheritParams rtcalc
 shrs <- function(x, ...) UseMethod("shrs")
 
 #' @rdname shrs
@@ -417,7 +414,6 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
 #' zero or below.
 #'
 #' @param x A data frame.
-#' @param ... Passed to methods.
 #' @param count Column of counts (unquoted or a string): non-negative whole
 #'   numbers.
 #' @param pop Column of exposure (unquoted or a string): positive.
@@ -426,10 +422,6 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
 #' @param by Character vector of grouping columns, default \code{NULL}.
 #' @param lag Whole number, default 1: how many periods back to compare
 #'   against.
-#' @param per The rate denominator: a positive number, or \code{"1k"},
-#'   \code{"10k"}, \code{"100k"}, \code{"1m"}. Default 1000.
-#' @param conflvl Number in (0, 1), default 0.95: the confidence level of
-#'   the interval.
 #' @param mincnt Number, default 0. Comparisons where the earlier count
 #'   is at or below this are flagged as resting on a small count; the percent
 #'   change and its exact interval are still reported, as \code{\link{yoy}}
@@ -470,6 +462,7 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
 #'
 #' try(ratechg(1:3))
 #' @export
+#' @inheritParams rtcalc
 ratechg <- function(x, ...) UseMethod("ratechg")
 
 #' @rdname ratechg

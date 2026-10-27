@@ -1356,7 +1356,7 @@ chwkjit <- function(times, res = 1, seed = 42, hor = Inf) {
   stats::optim(x0, fk, method = "Nelder-Mead")$par
 }
 
-#' cunif()'s `n`, checked: one whole number in [0, 2147483647].
+#' cunif()'s `n`, checked: one whole number in \[0, 2147483647\].
 #' @param n The number of uniforms.
 #' @return `n`.
 #' @noRd

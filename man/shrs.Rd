@@ -28,8 +28,8 @@ which makes the shares sum to 100. A number uses that number; a column
 name (data-frame method) uses the sum of that column -- for the case
 where some of the total is not in the table.}
 
-\item{conflvl}{Number in (0, 1), default 0.95: the confidence level
-of the interval.}
+\item{conflvl}{Number in (0, 1), default 0.95: the confidence level of
+the interval.}
 }
 \value{
 A data frame of class \code{c("rmbl_share", "data.frame")} with

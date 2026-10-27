@@ -821,7 +821,6 @@ valsch <- function(dfraw, prov) {
 #' message names the elements it has, so a typo such as \code{scheme}
 #' shows); an empty schema (\code{list(schema = list())}).
 #'
-#' @param dfraw The data frame to validate.
 #' @param prov A provenance list as returned by
 #'   [loadprov()] (with a \code{schema} element), or
 #'   one rule or a list
@@ -860,6 +859,7 @@ valsch <- function(dfraw, prov) {
 #' # a provenance without a schema is refused, not passed
 #' try(schval(data.frame(id = 1), list(scheme = list())))
 #' @export
+#' @inheritParams valsch
 schval <- function(dfraw, prov) {
   if (!is.data.frame(dfraw)) {
     stop("schval: `dfraw` must be a data frame", call. = FALSE)

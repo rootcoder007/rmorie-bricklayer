@@ -267,8 +267,6 @@ cmom <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' or list `x` (`"must be numeric"`). The quantiles sort a copy of `x`, so
 #' the cost is \eqn{O(n \log n)}.
 #'
-#' @param x Numeric (or logical) vector; coerced with
-#'   [as.numeric()].
 #' @param probs Numeric vector of probabilities, each in \eqn{[0, 1]}
 #'   (default the minimum, quartiles and maximum).
 #' @param const Scale factor for `cmad()`. The
@@ -325,6 +323,7 @@ cmom <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' try(cqnt(x, 1.5))
 #' @name crob
 #' @export
+#' @inheritParams cmom
 cqnt <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
   x <- .rmbl_num_input(x, "x")
   probs <- .rmbl_num(probs, "probs")
@@ -390,8 +389,6 @@ ctkyfnc <- function(x, k = 1.5) {
 #' (`"must be numeric"`). Both sort a copy of `x`, so the cost is
 #' \eqn{O(n \log n)}.
 #'
-#' @param x Numeric (or logical) vector; coerced with
-#'   [as.numeric()].
 #' @param trim Proportion trimmed (or winsorized) at *each* end, a single
 #'   number in \eqn{[0, 0.5]} (default 0.1, i.e. 10% at each end). At
 #'   `0.5` both reduce to the median.
@@ -418,6 +415,7 @@ ctkyfnc <- function(x, k = 1.5) {
 #' try(ctrmmean(letters))
 #' @name ctrm
 #' @export
+#' @inheritParams cmom
 ctrmmean <- function(x, trim = 0.1) {
   .Call(C_rmbl_trimmed_mean, .rmbl_num_input(x, "x"), .rmbl_trim(trim))
 }
@@ -1081,7 +1079,7 @@ chwknll <- function(
     any(psi > hi))
 }
 
-#' cbootmean()'s `B`, checked: one whole number in [1, 2147483647].
+#' cbootmean()'s `B`, checked: one whole number in \[1, 2147483647\].
 #' @param B The bootstrap replicate count, checked to be a whole number >= 1.
 #' @return `B`.
 #' @noRd

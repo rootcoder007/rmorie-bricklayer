@@ -455,7 +455,6 @@ format.rmbl_map_compare <- function(x, digits = 4L, ...) {
 #' and explained. Use it to catch errors in the method that built the map,
 #' which re-running that same method can never find.
 #'
-#' @param map Data frame, one row per unit.
 #' @param unit Name of the unit identifier column (a string).
 #' @param reg Name of the assigned region column (a string).
 #' @param route Named character vector (names are units, values regions),
@@ -526,6 +525,7 @@ format.rmbl_map_compare <- function(x, digits = 4L, ...) {
 #' # an unnamed vector cannot be matched to units
 #' try(rgnmapalt(cw, "inst", "cd", c("3557", "3520")))
 #' @export
+#' @inheritParams rgnmapintg
 rgnmapalt <- function(map, unit, reg, route, known = character()) {
   .rmbl_no_fn(unit = unit, reg = reg, route = route, known = known)
   u <- trimws(as.character(.rmbl_rm_col(map, unit, "map")))

@@ -111,7 +111,7 @@ SCRIPT_DIR <- tryCatch(.otis_script_dir(), error = function(e) getwd())
 ## (aaa_input_guards.R) and their message helper (lib_helpers.R): those come first, from beside
 ## the script (a bundle) or from ../../../R (a checkout).
 if (!exists(".rmbl_arg", mode = "function")) {
-  for (.f in c("aaa_input_guards.R", "lib_helpers.R")) {
+  for (.f in c("aaa_input_guards.R", "aaa_print_box.R", "lib_helpers.R")) {
     for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "..", "R"))) {
       .fp <- file.path(.dir, .f)
       if (file.exists(.fp)) {

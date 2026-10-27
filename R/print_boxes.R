@@ -3,91 +3,55 @@
 # repeated beside every format() method; format() stays with its result.
 
 #' @export
-print.bricklayer_analysis <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_analysis <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_attestation_check
-print.bricklayer_attestation_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_attestation_check <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_benford
-print.bricklayer_benford <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_benford <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_bundle_check
-print.bricklayer_bundle_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_bundle_check <- .rmbl_print_box
 
 #' @export
 #' @method print bricklayer_capsule_check
-print.bricklayer_capsule_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_capsule_check <- .rmbl_print_box
 
 #' @export
-print.bricklayer_category_audit <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_category_audit <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_certificate
-print.bricklayer_certificate <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_certificate <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_certpath_check
-print.bricklayer_certpath_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_certpath_check <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_chain
-print.bricklayer_chain <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_chain <- .rmbl_print_box
 
 #' @export
-print.bricklayer_chain_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_chain_check <- .rmbl_print_box
 
 #' @export
-print.bricklayer_cortable <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_cortable <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_drbg
-print.bricklayer_drbg <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_drbg <- .rmbl_print_box
 
 #' Printed reports for bricklayer objects
 #'
@@ -135,1004 +99,533 @@ print.bricklayer_drbg <- function(x, ...) {
 #' @name printmeth
 #' @export
 #' @method print bricklayer_drift
-print.bricklayer_drift <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_drift <- .rmbl_print_box
 
 #' @export
-print.bricklayer_drift_summary <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_drift_summary <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_env_diff
-print.bricklayer_env_diff <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_env_diff <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_falsification
-print.bricklayer_falsification <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_falsification <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_falsify_family
-print.bricklayer_falsify_family <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_falsify_family <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_fips_key
-print.bricklayer_fips_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_fips_key <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_fips_public_key
-print.bricklayer_fips_public_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_fips_public_key <- .rmbl_print_box
 
 #' @export
-print.bricklayer_freq <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_freq <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_hqc_capsule
-print.bricklayer_hqc_capsule <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_hqc_capsule <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_hqc_key
-print.bricklayer_hqc_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_hqc_key <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_hqc_public_key
-print.bricklayer_hqc_public_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_hqc_public_key <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_kem_capsule
-print.bricklayer_kem_capsule <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_kem_capsule <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_kem_key
-print.bricklayer_kem_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_kem_key <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_kem_public_key
-print.bricklayer_kem_public_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_kem_public_key <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_mcar
-print.bricklayer_mcar <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_mcar <- .rmbl_print_box
 
 #' @export
-print.bricklayer_online <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_online <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_oqs_key
-print.bricklayer_oqs_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_oqs_key <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_oqs_public_key
-print.bricklayer_oqs_public_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_oqs_public_key <- .rmbl_print_box
 
 #' @export
-print.bricklayer_outliers <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_outliers <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_power
-print.bricklayer_power <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_power <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_prereg
-print.bricklayer_prereg <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_prereg <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_prereg_check
-print.bricklayer_prereg_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_prereg_check <- .rmbl_print_box
 
 #' @export
-print.bricklayer_profile <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_profile <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_public_key
-print.bricklayer_public_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_public_key <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_recode_manifest <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_recode_manifest <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_recompute
-print.bricklayer_recompute <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_recompute <- .rmbl_print_box
 
 #' @export
-print.bricklayer_relabel_forensics <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_relabel_forensics <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_report
-print.bricklayer_report <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_report <- .rmbl_print_box
 
 #' @export
-print.bricklayer_rule <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_rule <- .rmbl_print_box
 
 #' @export
-print.bricklayer_runs <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_runs <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_schema
-print.bricklayer_schema <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_schema <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_signature
-print.bricklayer_signature <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_signature <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_signing_key
-print.bricklayer_signing_key <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_signing_key <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
 #' @method print bricklayer_timestamp
-print.bricklayer_timestamp <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.bricklayer_timestamp <- .rmbl_print_box
 
 #' @export
-print.rmbl_admits <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_admits <- .rmbl_print_box
 
 #' @export
-print.rmbl_adp <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_adp <- .rmbl_print_box
 
 #' @export
-print.rmbl_adpcnts <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_adpcnts <- .rmbl_print_box
 
 #' @export
-print.rmbl_aipw <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_aipw <- .rmbl_print_box
 
 #' @export
-print.rmbl_alos <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_alos <- .rmbl_print_box
 
 #' @export
-print.rmbl_archive_capture <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_archive_capture <- .rmbl_print_box
 
 #' @export
-print.rmbl_archive_find <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_archive_find <- .rmbl_print_box
 
 #' @export
-print.rmbl_attrfrac <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_attrfrac <- .rmbl_print_box
 
 #' @export
-print.rmbl_bacon <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_bacon <- .rmbl_print_box
 
 #' @export
-print.rmbl_balance <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_balance <- .rmbl_print_box
 
 #' @rdname bandsens
 #' @export
-print.rmbl_band_sensitivity <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_band_sensitivity <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
-print.rmbl_bounds <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_bounds <- .rmbl_print_box
 
 #' @export
-print.rmbl_buffer <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_buffer <- .rmbl_print_box
 
 #' @export
-print.rmbl_burden <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_burden <- .rmbl_print_box
 
 #' @export
-print.rmbl_burden_area <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_burden_area <- .rmbl_print_box
 
 #' @export
-print.rmbl_capenv <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_capenv <- .rmbl_print_box
 
 #' @export
-print.rmbl_case_flow <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_case_flow <- .rmbl_print_box
 
 #' @export
-print.rmbl_census_cwb <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_census_cwb <- .rmbl_print_box
 
 #' @export
-print.rmbl_census_profile <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_census_profile <- .rmbl_print_box
 
 #' @export
-print.rmbl_change_bounds <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_change_bounds <- .rmbl_print_box
 
 #' @export
-print.rmbl_citation <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_citation <- .rmbl_print_box
 
 #' @export
-print.rmbl_clearance_decomposition <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_clearance_decomposition <- .rmbl_print_box
 
 #' @export
-print.rmbl_co2eqv <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_co2eqv <- .rmbl_print_box
 
 #' @export
-print.rmbl_co2int <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_co2int <- .rmbl_print_box
 
 #' @export
-print.rmbl_cohort_trends <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_cohort_trends <- .rmbl_print_box
 
 #' @export
-print.rmbl_community_index <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_community_index <- .rmbl_print_box
 
 #' @export
-print.rmbl_connection <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_connection <- .rmbl_print_box
 
 #' @export
-print.rmbl_count_trend <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_count_trend <- .rmbl_print_box
 
 #' @export
-print.rmbl_cramerv <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_cramerv <- .rmbl_print_box
 
 #' @export
-print.rmbl_crf <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_crf <- .rmbl_print_box
 
 #' @export
-print.rmbl_cumrisk <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_cumrisk <- .rmbl_print_box
 
 #' @export
-print.rmbl_cwb_scores <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_cwb_scores <- .rmbl_print_box
 
 #' @export
-print.rmbl_datummap <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_datummap <- .rmbl_print_box
 
 #' @export
-print.rmbl_density <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_density <- .rmbl_print_box
 
 #' @export
-print.rmbl_did <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_did <- .rmbl_print_box
 
 #' @export
-print.rmbl_disposition_mix <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_disposition_mix <- .rmbl_print_box
 
 #' @export
-print.rmbl_distinctions <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_distinctions <- .rmbl_print_box
 
 #' @export
-print.rmbl_dml <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_dml <- .rmbl_print_box
 
 #' @export
-print.rmbl_drftchisq <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_drftchisq <- .rmbl_print_box
 
 #' @export
-print.rmbl_drfthomog <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_drfthomog <- .rmbl_print_box
 
 #' @export
-print.rmbl_drftks <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_drftks <- .rmbl_print_box
 
 #' @export
-print.rmbl_drftpsi <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_drftpsi <- .rmbl_print_box
 
 #' @export
-print.rmbl_drift_calibration <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_drift_calibration <- .rmbl_print_box
 
 #' @export
-print.rmbl_dsr <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_dsr <- .rmbl_print_box
 
 #' @rdname dstfit
 #' @export
-print.rmbl_dstfit <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_dstfit <- .rmbl_print_box
 
 #' @export
-print.rmbl_dual_continuum <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_dual_continuum <- .rmbl_print_box
 
 #' @export
-print.rmbl_ebrates <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_ebrates <- .rmbl_print_box
 
 #' @export
-print.rmbl_equity <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_equity <- .rmbl_print_box
 
 #' @export
-print.rmbl_event_study <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_event_study <- .rmbl_print_box
 
 #' @export
-print.rmbl_expected <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_expected <- .rmbl_print_box
 
 #' @export
-print.rmbl_exposure_trend <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_exposure_trend <- .rmbl_print_box
 
 #' @export
-print.rmbl_fe_poisson <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_fe_poisson <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
-print.rmbl_fetch <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_fetch <- .rmbl_print_box
 
 #' @export
-print.rmbl_field <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_field <- .rmbl_print_box
 
 #' @export
-print.rmbl_footprint <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_footprint <- .rmbl_print_box
 
 #' @export
-print.rmbl_framing <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_framing <- .rmbl_print_box
 
 #' @export
-print.rmbl_gini <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_gini <- .rmbl_print_box
 
 #' @export
-print.rmbl_hawkes_fit <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_hawkes_fit <- .rmbl_print_box
 
 #' @export
-print.rmbl_healing_change <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_healing_change <- .rmbl_print_box
 
 #' @export
-print.rmbl_holistic_balance <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_holistic_balance <- .rmbl_print_box
 
 #' @export
-print.rmbl_hotspot <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_hotspot <- .rmbl_print_box
 
 #' @export
-print.rmbl_indigenous_gap <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_indigenous_gap <- .rmbl_print_box
 
 #' @export
-print.rmbl_knox <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_knox <- .rmbl_print_box
 
 #' @rdname ldgrread
 #' @export
-print.rmbl_ledger <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_ledger <- .rmbl_print_box
 
 #' @export
-print.rmbl_life_table <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_life_table <- .rmbl_print_box
 
 #' @export
-print.rmbl_limits <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_limits <- .rmbl_print_box
 
 #' @export
-print.rmbl_loo <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_loo <- .rmbl_print_box
 
 #' @export
-print.rmbl_ltrlrng <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_ltrlrng <- .rmbl_print_box
 
 #' @export
-print.rmbl_manifest <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_manifest <- .rmbl_print_box
 
 #' @export
-print.rmbl_map_compare <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_map_compare <- .rmbl_print_box
 
 #' @export
-print.rmbl_map_integrity <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_map_integrity <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
-print.rmbl_margin_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_margin_check <- .rmbl_print_box
 
 #' @export
-print.rmbl_matched_did <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_matched_did <- .rmbl_print_box
 
 #' @rdname mnfdiff
 #' @export
 #' @method print rmbl_mnfdiff
-print.rmbl_mnfdiff <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_mnfdiff <- .rmbl_print_box
 
 #' @export
-print.rmbl_moran <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_moran <- .rmbl_print_box
 
 #' @export
-print.rmbl_optcrc <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_optcrc <- .rmbl_print_box
 
 #' @export
-print.rmbl_opteffort <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_opteffort <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
-print.rmbl_or_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_or_check <- .rmbl_print_box
 
 #' @export
-print.rmbl_ordinal_compare <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_ordinal_compare <- .rmbl_print_box
 
 #' @export
-print.rmbl_particles <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_particles <- .rmbl_print_box
 
 #' @export
-print.rmbl_perdays <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_perdays <- .rmbl_print_box
 
 #' @export
-print.rmbl_permutation <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_permutation <- .rmbl_print_box
 
 #' @export
-print.rmbl_pipeline_rate <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_pipeline_rate <- .rmbl_print_box
 
 #' @export
-print.rmbl_plr <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_plr <- .rmbl_print_box
 
 #' @export
-print.rmbl_plr_boot <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_plr_boot <- .rmbl_print_box
 
 #' @export
-print.rmbl_pollution_report <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_pollution_report <- .rmbl_print_box
 
 #' @export
-print.rmbl_power <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_power <- .rmbl_print_box
 
 #' @export
-print.rmbl_prevalence <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_prevalence <- .rmbl_print_box
 
 #' @export
-print.rmbl_profile_share <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_profile_share <- .rmbl_print_box
 
 #' @export
-print.rmbl_provenance <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_provenance <- .rmbl_print_box
 
 #' @export
-print.rmbl_rate <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_rate <- .rmbl_print_box
 
 #' @export
-print.rmbl_rate_change <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_rate_change <- .rmbl_print_box
 
 #' @export
-print.rmbl_rate_gap <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_rate_gap <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
-print.rmbl_recode_manifest_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_recode_manifest_check <- .rmbl_print_box
 
 #' @export
-print.rmbl_search_plan <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_search_plan <- .rmbl_print_box
 
 #' @export
-print.rmbl_sensitivity <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_sensitivity <- .rmbl_print_box
 
 #' @export
-print.rmbl_severity <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_severity <- .rmbl_print_box
 
 #' @export
-print.rmbl_share <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_share <- .rmbl_print_box
 
 #' @export
-print.rmbl_sir <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_sir <- .rmbl_print_box
 
 #' @export
-print.rmbl_spread <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_spread <- .rmbl_print_box
 
 #' @export
-print.rmbl_srchpod <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_srchpod <- .rmbl_print_box
 
 #' @export
-print.rmbl_srchscs <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_srchscs <- .rmbl_print_box
 
 #' @export
-print.rmbl_staggered_att <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_staggered_att <- .rmbl_print_box
 
 #' @export
-print.rmbl_statcan <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_statcan <- .rmbl_print_box
 
 #' @export
-print.rmbl_stay_summary <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_stay_summary <- .rmbl_print_box
 
 #' @export
-print.rmbl_step_change <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_step_change <- .rmbl_print_box
 
 #' @export
-print.rmbl_stock_flow <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_stock_flow <- .rmbl_print_box
 
 #' @noRd
 #' @export
-print.rmbl_svy_colspec <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_svy_colspec <- .rmbl_print_box
 
 #' @export
-print.rmbl_svy_design <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_svy_design <- .rmbl_print_box
 
 #' @export
-print.rmbl_switching_did <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_switching_did <- .rmbl_print_box
 
 #' @export
-print.rmbl_synth <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_synth <- .rmbl_print_box
 
 #' @export
-print.rmbl_synthdid <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_synthdid <- .rmbl_print_box
 
 #' @export
-print.rmbl_tail_index <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_tail_index <- .rmbl_print_box
 
 #' @export
-print.rmbl_top_share <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_top_share <- .rmbl_print_box
 
 #' @rdname printmeth
 #' @export
-print.rmbl_transfer_check <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_transfer_check <- .rmbl_print_box
 
 #' @export
-print.rmbl_trc_gaps <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_trc_gaps <- .rmbl_print_box
 
 #' @export
-print.rmbl_trc_progress <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_trc_progress <- .rmbl_print_box
 
 #' @export
-print.rmbl_trend_test <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_trend_test <- .rmbl_print_box
 
 #' @export
-print.rmbl_wayback_save <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_wayback_save <- .rmbl_print_box
 
 #' @export
-print.rmbl_wellness_continuum <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_wellness_continuum <- .rmbl_print_box
 
 #' @export
-print.rmbl_wellness_profile <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_wellness_profile <- .rmbl_print_box
 
 #' @export
-print.rmbl_wild <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_wild <- .rmbl_print_box
 
 #' @export
-print.rmbl_yoy_summary <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_yoy_summary <- .rmbl_print_box

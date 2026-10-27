@@ -246,7 +246,7 @@ test_that(
         port,
         paste0(
           "for (x in ",
-          paste(deparse(unname(vapply(bodies, gap_reply, ""))), collapse = ""),
+          deparse1(unname(vapply(bodies, gap_reply, "")), collapse = ""),
           ") { con <- acc(); req(con); say(con, x); close(con) }"
         )
       ),
@@ -292,7 +292,7 @@ test_that(
         port,
         paste0(
           "for (x in ",
-          paste(deparse(answers), collapse = ""),
+          deparse1(answers, collapse = ""),
           ") { con <- acc(); req(con); say(con, x); close(con) }"
         )
       ),

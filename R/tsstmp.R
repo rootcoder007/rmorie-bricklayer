@@ -64,15 +64,50 @@
 #' tsvrf(ts$file, charToRaw(attr(a, "alloc")$digest))
 tsstmp <- function(data, tsa = "https://freetsa.org/tsr", file = NULL,
                    timeout = 60, trust = NULL) {
-  bytes <- if (inherits(data, "rmbl_alloc")) {
-    d <- attr(data, "alloc")$digest
-    if (!is.character(d) || length(d) != 1L || !nzchar(d)) {
-      stop("this allocation list has no commitment to stamp", call. = FALSE)
-    }
-    charToRaw(d)
-  } else {
-    .rmbl_as_bytes(data, "data")
+  bytes <- .rmbl_tsstmp_bytes(data)
+  a <- .rmbl_tsstmp_args(tsa, timeout, file)
+  digest <- .bl_hex_raw(csha256(bytes))
+  nonce <- c(as.raw(0x01), rndbytes(7L))
+  res <- .bl_tsa_post(a$tsa, .bl_tsq(digest, nonce), as.integer(a$timeout))
+  if (!identical(res$status, 200L) || !length(res$body)) {
+    stop(
+      "the time-stamping authority did not answer (",
+      if (nzchar(res$error %||% "")) res$error else paste("HTTP", res$status),
+      "): nothing was stamped",
+      call. = FALSE
+    )
   }
+  token <- res$body
+  if (!is.null(a$file)) {
+    writeBin(token, a$file)
+  }
+  out <- tsvrf(token, bytes, trust = trust)
+  out$token <- token
+  out$tsa <- a$tsa
+  out$file <- if (is.null(a$file)) NA_character_ else a$file
+  out
+}
+
+#' The bytes tsstmp() stamps: an allocation list's commitment, or the data.
+#' @param data As for tsstmp().
+#' @return A raw vector.
+#' @noRd
+.rmbl_tsstmp_bytes <- function(data) {
+  if (!inherits(data, "rmbl_alloc")) {
+    return(.rmbl_as_bytes(data, "data"))
+  }
+  d <- attr(data, "alloc")$digest
+  if (!is.character(d) || length(d) != 1L || !nzchar(d)) {
+    stop("this allocation list has no commitment to stamp", call. = FALSE)
+  }
+  charToRaw(d)
+}
+
+#' Checks tsstmp()'s authority, timeout and output file.
+#' @param tsa,timeout,file As for tsstmp().
+#' @return A list: `tsa`, `timeout` and `file`.
+#' @noRd
+.rmbl_tsstmp_args <- function(tsa, timeout, file) {
   tsa <- .rmbl_string1(tsa, "tsa")
   if (!grepl("^https?://", tsa)) {
     stop("`tsa` must be an http(s) URL", call. = FALSE)
@@ -88,24 +123,5 @@ tsstmp <- function(data, tsa = "https://freetsa.org/tsr", file = NULL,
            call. = FALSE)
     }
   }
-  digest <- .bl_hex_raw(csha256(bytes))
-  nonce <- c(as.raw(0x01), rndbytes(7L))
-  res <- .bl_tsa_post(tsa, .bl_tsq(digest, nonce), as.integer(timeout))
-  if (!identical(res$status, 200L) || !length(res$body)) {
-    stop(
-      "the time-stamping authority did not answer (",
-      if (nzchar(res$error %||% "")) res$error else paste("HTTP", res$status),
-      "): nothing was stamped",
-      call. = FALSE
-    )
-  }
-  token <- res$body
-  if (!is.null(file)) {
-    writeBin(token, file)
-  }
-  out <- tsvrf(token, bytes, trust = trust)
-  out$token <- token
-  out$tsa <- tsa
-  out$file <- if (is.null(file)) NA_character_ else file
-  out
+  list(tsa = tsa, timeout = timeout, file = file)
 }

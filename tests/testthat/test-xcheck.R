@@ -159,5 +159,5 @@ test_that("both verdicts of an OpenSSL 3.5 are read and explained", {
   n <- length(readLines(log))
   other <- cpsxvrf("m", sg, fipskg("ML-DSA-65"), openssl = fake)
   expect_false(other$openssl)
-  expect_identical(length(readLines(log)), n)
+  expect_length(readLines(log), n)
 })

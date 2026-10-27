@@ -77,7 +77,6 @@ chwksim <- function(fit, hor = NULL, seed = 1L) {
 #' drawn at its time and generation, linked to the earlier event (or the
 #' baseline) most likely to have triggered it, the probabilities \eqn{\eta g(t_i
 #' - t_j)} and \eqn{\nu(t_i)} in proportion. At most 5,000 events.} }
-#' @param fit A [chwkfit()] result.
 #' @param times The event times the fit was made on.
 #' @param what One of `"intensity"`, `"qq"` or `"tree"`.
 #' @param ngrid Whole number, default 600: points of the intensity curve.
@@ -96,6 +95,7 @@ chwksim <- function(fit, hor = NULL, seed = 1L) {
 #' tr <- plothwk(fit, times, "tree")
 #' table(tr$generation)
 #' @export
+#' @inheritParams chwksim
 plothwk <- function(
   fit,
   times,

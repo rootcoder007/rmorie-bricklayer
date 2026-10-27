@@ -301,16 +301,10 @@ format.rmbl_bundle_project <- function(x, ...) {
 }
 
 #' @export
-print.rmbl_bundle <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_bundle <- .rmbl_print_box
 
 #' @export
-print.rmbl_bundle_project <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_bundle_project <- .rmbl_print_box
 
 #' mkbndl()'s arguments, checked.
 #' @param dest,data,version,overwrite As for mkbndl().

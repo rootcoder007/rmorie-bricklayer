@@ -276,6 +276,9 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
     "User-Agent: rmoriebricklayer (+https://archive.rmorie.com)",
     if (!is.null(key)) paste("Authorization: Bearer", key)
   )
+  if (!method %in% c("GET", "POST", "PUT")) {
+    stop("unknown method", call. = FALSE)
+  }
   res <- switch(
     method,
     GET = .bl_net(
@@ -297,8 +300,7 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
     PUT = .bl_net(
       url,
       .Call(C_rmbl_http_put, url, file, ctype, as.integer(timeout), hdr, local)
-    ),
-    stop("unknown method", call. = FALSE)
+    )
   )
   json <- if (length(res$body)) {
     tryCatch(

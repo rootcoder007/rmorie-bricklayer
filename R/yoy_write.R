@@ -75,6 +75,25 @@ yoywr <- function(x, file, format = "auto", ...) {
   format <- tolower(as.character(format)[1L])
   if (identical(format, "auto")) {
     ext <- tolower(sub(".*\\.", "", basename(file)))
+    if (!ext %in% c(
+      "html",
+      "htm",
+      "pdf",
+      "csv",
+      "tsv",
+      "tab",
+      "json",
+      "md",
+      "markdown"
+    )) {
+      stop(
+        sprintf(
+          "cannot tell the format from \"%s\"; pass format = explicitly",
+          basename(file)
+        ),
+        call. = FALSE
+      )
+    }
     format <- switch(
       ext,
       html = ,
@@ -85,15 +104,11 @@ yoywr <- function(x, file, format = "auto", ...) {
       tab = "tsv",
       json = "json",
       md = ,
-      markdown = "markdown",
-      stop(
-        sprintf(
-          "cannot tell the format from \"%s\"; pass format = explicitly",
-          basename(file)
-        ),
-        call. = FALSE
-      )
+      markdown = "markdown"
     )
+  }
+  if (!format %in% c("html", "pdf", "csv", "tsv", "json", "markdown")) {
+    stop(sprintf("unknown format: %s", format), call. = FALSE)
   }
   switch(
     format,
@@ -102,8 +117,7 @@ yoywr <- function(x, file, format = "auto", ...) {
     csv = yoycsv(x, file, ...),
     tsv = yoytsv(x, file, ...),
     json = yoyjs(x, file, ...),
-    markdown = yoymd(x, file, ...),
-    stop(sprintf("unknown format: %s", format), call. = FALSE)
+    markdown = yoymd(x, file, ...)
   )
 }
 

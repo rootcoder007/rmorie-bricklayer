@@ -295,11 +295,8 @@ print.rmbl_cpschk <- function(x, ...) {
 #' the step outputs of the rmbl action as a named list (print each as
 #' \code{name=value} to \code{$GITHUB_OUTPUT}).
 #'
-#' @param x An \code{rmbl_cpschk} result.
 #' @param runurl Character scalar or \code{NULL}: the run's address, linked
 #'   at the end of the comment.
-#' @param failon Character scalar or \code{NULL}: the fail-on level, named
-#'   in the report's last line.
 #' @param marker Character scalar, the comment's first line (an HTML
 #'   comment, invisible on GitHub).
 #' @param limit Integer: the longest body; a longer one is cut and says so.
@@ -333,6 +330,7 @@ print.rmbl_cpschk <- function(x, ...) {
 #'
 #' try(ghann(list()))
 #' @export
+#' @inheritParams cpschk
 ghann <- function(x) {
   .bl_is_cpschk(x)
   bad <- x$rows[!x$rows$ok & x$rows$severity != "note", , drop = FALSE]

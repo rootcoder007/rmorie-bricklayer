@@ -204,7 +204,7 @@
         "library(rmoriebricklayer)",
         vapply(
           ok()$calls,
-          function(cl) paste(deparse(cl, width.cutoff = 80L), collapse = "\n"),
+          function(cl) deparse1(cl, collapse = "\n", width.cutoff = 80L),
           ""
         )
       )

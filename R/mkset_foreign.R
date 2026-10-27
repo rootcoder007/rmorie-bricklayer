@@ -236,7 +236,7 @@
 #' @noRd
 .fb_model_facts <- function(v) {
   f <- tryCatch(
-    paste(deparse(stats::formula(v), width.cutoff = 500L), collapse = " "),
+    deparse1(stats::formula(v), collapse = " ", width.cutoff = 500L),
     error = function(e) NULL
   )
   n <- tryCatch(stats::nobs(v), error = function(e) NULL)

@@ -280,8 +280,6 @@ stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
 #'   \code{NA}).
 #' @param expd Numeric vector of expected counts (positive), the same
 #'   length, for example from \code{\link{expcnts}}.
-#' @param area Optional vector of area labels, added as the first column.
-#'   Default \code{NULL}.
 #' @return A data frame with one row per area: \code{area} (when given),
 #' \code{observed}, \code{expected}, the raw ratio \code{sir}, the shrunk
 #' estimate \code{eb}, the \code{shrinkage} applied (zero means untouched,
@@ -310,6 +308,7 @@ stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
 #' # one area has nothing to borrow from
 #' try(ebrates(5, 4))
 #' @export
+#' @inheritParams stdinc
 ebrates <- function(obs, expd, area = NULL) {
   obs <- .rmbl_num(obs, "obs")
   expd <- .rmbl_num(expd, "expd")

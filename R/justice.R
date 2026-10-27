@@ -498,7 +498,6 @@ plot.rmbl_life_table <- function(
 #'   \code{1:nrow(counts)}).
 #' @param scores Numeric scores for the periods in the trend tests.
 #'   Default: \code{1:nrow(counts)}, i.e. equally spaced.
-#' @param conflvl Confidence level. Default 0.95.
 #'
 #' @return A list of class \code{rmbl_disposition_mix}: \code{shares}, a long
 #'   data frame (\code{period}, \code{outcome}, \code{count}, \code{total},
@@ -555,6 +554,7 @@ plot.rmbl_life_table <- function(
 #' # outcome columns only: a text column is refused
 #' try(dispmix(data.frame(year = c("a", "b"), x = 1:2, y = 3:4)))
 #' @export
+#' @inheritParams lifetbl
 dispmix <- function(cnts, prd = NULL, scores = NULL, conflvl = 0.95) {
   cnts <- .jx_dm_matrix(cnts)
   .jx_counts(as.vector(cnts), "cnts")
@@ -1199,7 +1199,6 @@ plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #'   such as two years or two jurisdictions.
 #' @param base Which value of \code{cmp} is the baseline. Default: the
 #'   first in sorted order.
-#' @param conflvl Confidence level. Default 0.95.
 #'
 #' @return A list of class \code{rmbl_clearance_decomposition}:
 #'   \describe{
@@ -1296,6 +1295,7 @@ plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' # every part must appear in both comparisons
 #' try(clrdcmp(c(5, 6, 7), c(10, 10, 10), c("x", "y", "x"), c(1, 1, 2)))
 #' @export
+#' @inheritParams lifetbl
 clrdcmp <- function(num, den, grp, cmp, base = NULL, conflvl = 0.95) {
   ck <- .clr_check_inputs(num, den, grp, cmp)
   .num <- ck$num

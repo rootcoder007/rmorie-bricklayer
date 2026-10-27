@@ -513,7 +513,8 @@ digest. A reviewer whose copy differs is stopped, not given different
 numbers.
 
 ```{r}
-dat <- data.frame(group = rep(c("a", "b"), 50), value = rep(c(4, 6), 50))
+dat <- data.frame(group = rep(c("a", "b"), 50), value = rep(c(4, 6), 50),
+                  stringsAsFactors = FALSE)
 csv <- file.path(tempdir(), "my_data.csv")
 write.csv(dat, csv, row.names = FALSE)
 pv <- file.path(proj, "data_provenance.json")

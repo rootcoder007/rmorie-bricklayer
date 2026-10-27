@@ -64,7 +64,7 @@
 
 #' Pads a message for SHA-256: a one bit, zeros, and the bit length.
 #' @param bytes The message bytes.
-#' @return The padded message as integers in [0, 255], a multiple of 64 long.
+#' @return The padded message as integers in \[0, 255\], a multiple of 64 long.
 #' @noRd
 .rmbl_sha256_pad <- function(bytes) {
   bs <- as.integer(as.raw(bytes))

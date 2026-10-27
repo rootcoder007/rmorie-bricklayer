@@ -35,8 +35,6 @@
 #'   [fipspubkey()]; only its
 #'   public half is used.
 #' @param ctx The context string the signature was made with, or `NULL`.
-#' @param openssl Path to the `openssl` program. The default looks it up
-#'   on the `PATH`.
 #' @return A list of class `rmbl_xvrf`: `ok` (`TRUE` only when both
 #'   implementations accept the signature), `ours` and `openssl` (each
 #'   verdict; `openssl` is `NA` when it could not be asked), `agree`,
@@ -56,6 +54,7 @@
 #'
 #' # A changed message fails in both.
 #' cpsxvrf("a manifest digest!", sig, key, ctx = "release")$ok
+#' @inheritParams fipsmod
 cpsxvrf <- function(msg, sig, key, ctx = NULL,
                     openssl = Sys.which("openssl")) {
   if (!inherits(sig, "bricklayer_signature")) {
@@ -106,10 +105,7 @@ format.rmbl_xvrf <- function(x, ...) {
 }
 
 #' @export
-print.rmbl_xvrf <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_xvrf <- .rmbl_print_box
 
 #' What a cross-verification result means, in one or two sentences.
 #' @param x A result of cpsxvrf().
@@ -143,34 +139,12 @@ print.rmbl_xvrf <- function(x, ...) {
 #' @return A list: `ok` (TRUE, FALSE or NA), `version`, `reason`.
 #' @noRd
 .rmbl_xvrf_openssl <- function(msg, sig, key, ctx, openssl) {
-  none <- function(reason, version = NA_character_) {
-    list(ok = NA, version = version, reason = reason)
+  pre <- .rmbl_xvrf_ready(sig, openssl)
+  if (!is.null(pre$none)) {
+    return(pre$none)
   }
-  oid <- .rmbl_xvrf_oid(sig$scheme)
-  if (is.na(oid)) {
-    return(none(paste(
-      "OpenSSL has no check for", sig$scheme, "signatures."
-    )))
-  }
-  ph <- sig[["prehash"]]
-  if (!is.null(ph) && !identical(ph, "none")) {
-    return(none("OpenSSL 3.5 checks only pure (not pre-hashed) signatures."))
-  }
-  if (!is.character(openssl) || length(openssl) != 1L || is.na(openssl) ||
-      !nzchar(openssl)) {
-    return(none("The openssl program was not found on the PATH."))
-  }
-  ver <- .rmbl_xvrf_version(openssl)
-  if (is.na(ver$number)) {
-    return(none("The openssl program did not report its version."))
-  }
-  if (utils::compareVersion(ver$number, "3.5.0") < 0) {
-    return(none(
-      paste0(ver$label, " is older than 3.5, which first added ML-DSA ",
-             "and SLH-DSA."),
-      ver$label
-    ))
-  }
+  ver <- pre$ver
+  oid <- pre$oid
   pk <- .rmbl_hex_or_null(key$public)
   sg <- .rmbl_hex_or_null(sig$signature)
   if (is.null(pk) || is.null(sg) || !identical(key$scheme, sig$scheme)) {
@@ -206,8 +180,8 @@ print.rmbl_xvrf <- function(x, ...) {
   if (grepl("signature failure|Verification failure", txt)) {
     return(list(ok = FALSE, version = ver$label, reason = NA_character_))
   }
-  none(paste0(ver$label, " could not check it: ", substr(txt, 1L, 200L)),
-       ver$label)
+  .rmbl_xvrf_none(paste0(ver$label, " could not check it: ",
+                         substr(txt, 1L, 200L)), ver$label)
 }
 
 #' The last arc of the NIST object identifier of a FIPS 204 or 205
@@ -259,4 +233,47 @@ print.rmbl_xvrf <- function(x, ...) {
     return(list(number = NA_character_, label = NA_character_))
   }
   list(number = num, label = paste("OpenSSL", num))
+}
+
+#' OpenSSL's answer when it was not asked: no verdict, and why.
+#' @param reason Why OpenSSL gave no verdict.
+#' @param version Its version label, when known.
+#' @return A list: `ok` (NA), `version`, `reason`.
+#' @noRd
+.rmbl_xvrf_none <- function(reason, version = NA_character_) {
+  list(ok = NA, version = version, reason = reason)
+}
+
+#' Whether OpenSSL can be asked about a signature at all.
+#' @param sig The signature.
+#' @param openssl Path to the openssl program, or "".
+#' @return A list: `none` (the no-verdict answer, or NULL when OpenSSL can
+#'   be asked), `ver` (its version) and `oid` (the scheme's arc).
+#' @noRd
+.rmbl_xvrf_ready <- function(sig, openssl) {
+  no <- function(...) list(none = .rmbl_xvrf_none(...))
+  oid <- .rmbl_xvrf_oid(sig$scheme)
+  if (is.na(oid)) {
+    return(no(paste("OpenSSL has no check for", sig$scheme, "signatures.")))
+  }
+  ph <- sig[["prehash"]]
+  if (!is.null(ph) && !identical(ph, "none")) {
+    return(no("OpenSSL 3.5 checks only pure (not pre-hashed) signatures."))
+  }
+  if (!is.character(openssl) || length(openssl) != 1L || is.na(openssl) ||
+      !nzchar(openssl)) {
+    return(no("The openssl program was not found on the PATH."))
+  }
+  ver <- .rmbl_xvrf_version(openssl)
+  if (is.na(ver$number)) {
+    return(no("The openssl program did not report its version."))
+  }
+  if (utils::compareVersion(ver$number, "3.5.0") < 0) {
+    return(no(
+      paste0(ver$label, " is older than 3.5, which first added ML-DSA ",
+             "and SLH-DSA."),
+      ver$label
+    ))
+  }
+  list(none = NULL, ver = ver, oid = oid)
 }

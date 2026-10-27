@@ -903,7 +903,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 #' @param x The call.
 #' @return One string.
 #' @noRd
-.bl_code <- function(x) paste(deparse(x, width.cutoff = 500L), collapse = " ")
+.bl_code <- function(x) deparse1(x, collapse = " ", width.cutoff = 500L)
 
 #' Runs one analysis: the filter, each step, then the plot (to a null device)
 #' and the diagnostic plots' calls.

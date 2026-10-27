@@ -19,8 +19,8 @@
 #' indentation (\dQuote{Total - Highest certificate, diploma or degree},
 #' \dQuote{High (secondary) school diploma or equivalency certificate}, ...):
 #' the level, the parent and the topic's total (\code{rootid}) are worked out
-#' from it, so a share can be taken of its parent. A topic marked \dQuote{25%
-#' sample data} comes from the long-form sample (\code{sample = "25\%"}); the
+#' from it, so a share can be taken of its parent. A topic marked "25%
+#' sample data" comes from the long-form sample (\code{sample = "25\%"}); the
 #' others from the full count (\code{"100\%"}). Counts are randomly rounded to
 #' multiples of 5 (of 10 below 10) by Statistics Canada, and a cell suppressed
 #' to protect confidentiality (\code{x}), too unreliable (\code{F}), not
@@ -89,7 +89,7 @@ cnsprof <- function(x) {
 #' geography, gender, age group and group. Statistics Canada does not publish
 #' standard errors for the profile, so the interval is an approximation built
 #' from what is known about how the counts were made: \itemize{ \item a
-#' long-form (\dQuote{25% sample}) count is estimated from a sample of about one
+#' long-form ("25% sample") count is estimated from a sample of about one
 #' household in four, so the share has variance \eqn{d (1 - f) p (1 - p) / (f
 #' N)} for a sampling fraction \eqn{f} (\code{smpfrac}, 0.25) of a population of
 #' \eqn{N} (the denominator) and a design effect \eqn{d} (\code{deff}, 1 by
@@ -201,7 +201,6 @@ profshr <- function(
 #' to 54, 55 to 64, 65 to 74, 75 and over); collapse them to the age groups of
 #' the rates being standardised.
 #'
-#' @param x A \code{\link{cnsprof}}.
 #' @param grp The group (default \code{"Indigenous identity"}).
 #' @param geo The geography: its name (default \code{"Canada"}) or, where names
 #'   repeat, its DGUID.
@@ -219,6 +218,7 @@ profshr <- function(
 #' p <- cnsprof(indiex("censuspop"))
 #' cnsstd(p)
 #' @export
+#' @inheritParams profshr
 cnsstd <- function(
   x,
   grp = "Indigenous identity",
@@ -303,8 +303,6 @@ cnsstd <- function(
 #' @param groups The groups to score (default First Nations, Metis, Inuit and
 #'   non-Indigenous people).
 #' @param bounds Income bounds of \code{\link{cwbscr}}.
-#' @param resid On or off reserve, in the tables that split it (default the
-#'   total).
 #' @param minpop The smallest population scored (default 250; the Department
 #'   uses 65).
 #' @return A data frame of class \code{rmbl_census_cwb}: \code{geo},
@@ -323,6 +321,7 @@ cnsstd <- function(
 #' cnscwb(p, h)[, c("geo", "group", "income", "education", "housing", "labour",
 #'                      "cwb")]
 #' @export
+#' @inheritParams cnsstd
 cnscwb <- function(
   x,
   dwell = NULL,

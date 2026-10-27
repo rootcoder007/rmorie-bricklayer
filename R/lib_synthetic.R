@@ -154,6 +154,16 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
   if (!is.null(basep)) {
     basep <- .rmbl_num(basep, "basep")
   }
+  if (!type %in% c(
+    "sample",
+    "bernoulli",
+    "poisson",
+    "id_pattern",
+    "fitted",
+    "sequence"
+  )) {
+    stop("Unknown synthetic column type: ", type)
+  }
   switch(
     type,
     sample = {
@@ -173,8 +183,7 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
     sequence = {
       from <- spec$from %||% 1L
       seq.int(from, length.out = n)
-    },
-    stop("Unknown synthetic column type: ", type)
+    }
   )
 }
 

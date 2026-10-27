@@ -31,7 +31,7 @@
   paste(toString(lab[-n]), "and", lab[n])
 }
 
-#' A number with its interval, "4.42 [4.29, 4.56]", for a sentence.
+#' A number with its interval, "4.42 \[4.29, 4.56\]", for a sentence.
 #' @param v The number shown.
 #' @param lo,hi Its bounds, or NULL.
 #' @return One string.

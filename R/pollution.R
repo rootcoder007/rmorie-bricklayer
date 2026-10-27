@@ -663,7 +663,6 @@ plrcf <- function(data, y, trt, covs, kfol = 5L, seed = 1L) {
 #' is not a single non-negative whole number, an estimator that is not a
 #' function, and the estimator's own errors on the full sample.
 #'
-#' @param data A data frame with one row per unit.
 #' @param y,expo,confs Column names: the outcome and the
 #'   exposure (single strings) and the confounders (one or more strings).
 #' @param nboot Number of resamples, a non-negative whole number
@@ -706,6 +705,7 @@ plrcf <- function(data, y, trt, covs, kfol = 5L, seed = 1L) {
 #' # Fewer than 10 resamples cannot give an interval.
 #' try(exprspplr(d, "asthma", "exposure", c("x1", "x2"), nboot = 5))
 #' @export
+#' @inheritParams plrcf
 exprspplr <- function(
   data,
   y,

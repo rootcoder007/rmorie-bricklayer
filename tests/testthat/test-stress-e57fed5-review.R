@@ -838,7 +838,7 @@ test_that("E12: the lock is released however its holder ends", {
   expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(2))
   # the lock is taken and f() run in one C frame whose cleanup is the release:
   # no R-level handler for an interrupt to cut short (review of 29a55d8, G6)
-  src <- paste(deparse(with_lock), collapse = "\n")
+  src <- deparse1(with_lock, collapse = "\n")
   expect_match(src, "C_rmbl_flock_with", fixed = TRUE)
   expect_false(grepl("on.exit", src, fixed = TRUE))
 })

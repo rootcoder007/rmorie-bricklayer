@@ -73,11 +73,10 @@ cpsplant <- function(data, stat, y, trt, effects = c(0, 0.5, 1),
   x <- a$x
   pg <- blprog("planted effects", length(a$effects) * a$n)
   on.exit(pg$done(), add = TRUE)
-  k <- 0L
-  rows <- lapply(a$effects, function(e) {
+  rows <- lapply(seq_along(a$effects), function(j) {
+    e <- a$effects[[j]]
     est <- vapply(seq_len(a$n), function(i) {
-      k <<- k + 1L
-      pg$update(k, sprintf("effect %g", e))
+      pg$update((j - 1L) * a$n + i, sprintf("effect %g", e))
       d <- data
       d[[a$y]] <- sample(d[[a$y]]) + e * x
       .rmbl_falsify_eval(stat, d, sprintf("a data set planted with %g", e))
@@ -97,71 +96,6 @@ cpsplant <- function(data, stat, y, trt, effects = c(0, 0.5, 1),
   )
   class(out) <- c("rmbl_plant", "list")
   out
-}
-
-#' Checks cpsplant()'s arguments and codes the treatment as numbers.
-#' @param data,stat,y,trt,effects,n,tol As for cpsplant().
-#' @return A list: `y`, `trt`, `x` (the coded treatment), `effects`, `n`,
-#'   `tol`.
-#' @noRd
-.rmbl_plant_args <- function(data, stat, y, trt, effects, n, tol) {
-  if (!is.data.frame(data) || nrow(data) < 4L) {
-    stop("`data` must be a data frame with at least 4 rows", call. = FALSE)
-  }
-  if (!is.function(stat)) {
-    stop("`stat` must be a function of one data frame", call. = FALSE)
-  }
-  y <- .rmbl_string1(y, "y")
-  trt <- .rmbl_string1(trt, "trt")
-  for (v in c(y, trt)) {
-    if (!v %in% names(data)) {
-      stop("`", v, "` is not a column of `data`", call. = FALSE)
-    }
-  }
-  if (!is.numeric(data[[y]])) {
-    stop("the outcome `", y, "` must be numeric", call. = FALSE)
-  }
-  effects <- .rmbl_num(effects, "effects")
-  if (!length(effects) || anyNA(effects) || any(!is.finite(effects))) {
-    stop("`effects` must be finite numbers", call. = FALSE)
-  }
-  n <- .rmbl_num(n, "n", integer = TRUE)[1L]
-  if (is.na(n) || n < 5L) {
-    stop("`n` must be at least 5", call. = FALSE)
-  }
-  if (is.null(tol)) {
-    tol <- 0.1 * max(abs(effects))
-  }
-  tol <- .rmbl_num(tol, "tol")[1L]
-  if (is.na(tol) || tol < 0) {
-    stop("`tol` must be a number of at least 0", call. = FALSE)
-  }
-  list(y = y, trt = trt, x = .rmbl_plant_code(data[[trt]], trt),
-       effects = effects, n = n, tol = tol)
-}
-
-#' A treatment column as 0/1 or numbers.
-#' @param v The column.
-#' @param nm Its name, for the message.
-#' @return A numeric vector.
-#' @noRd
-.rmbl_plant_code <- function(v, nm) {
-  if (is.logical(v)) {
-    return(as.numeric(v))
-  }
-  if (is.factor(v) || is.character(v)) {
-    lv <- if (is.factor(v)) levels(droplevels(v)) else sort(unique(v))
-    if (length(lv) != 2L) {
-      stop("the treatment `", nm, "` must have two levels to code it 0/1",
-           call. = FALSE)
-    }
-    return(as.numeric(as.character(v) == lv[2L]))
-  }
-  if (!is.numeric(v)) {
-    stop("the treatment `", nm, "` must be numeric, logical or two levels",
-         call. = FALSE)
-  }
-  as.numeric(v)
 }
 
 #' @export
@@ -201,10 +135,7 @@ format.rmbl_plant <- function(x, ...) {
 }
 
 #' @export
-print.rmbl_plant <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_plant <- .rmbl_print_box
 
 #' Do Reasonable Alternative Analyses Agree?
 #'
@@ -239,16 +170,7 @@ print.rmbl_plant <- function(x, ...) {
 #'   }
 #' ))
 cpsspec <- function(data, specs) {
-  if (!is.data.frame(data) || !nrow(data)) {
-    stop("`data` must be a data frame with rows", call. = FALSE)
-  }
-  nm <- names(specs)
-  if (!is.list(specs) || length(specs) < 2L || is.null(nm) ||
-      anyNA(nm) || !all(nzchar(nm)) || anyDuplicated(nm) ||
-      !all(vapply(specs, is.function, NA))) {
-    stop("`specs` must be a list of two or more named functions, each ",
-         "with its own name", call. = FALSE)
-  }
+  nm <- .rmbl_spec_args(data, specs)
   est <- vapply(nm, function(k) {
     .rmbl_falsify_eval(specs[[k]], data, sprintf("specification '%s'", k))
   }, numeric(1), USE.NAMES = FALSE)
@@ -295,10 +217,7 @@ format.rmbl_spec <- function(x, ...) {
 }
 
 #' @export
-print.rmbl_spec <- function(x, ...) {
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
+print.rmbl_spec <- .rmbl_print_box
 
 #' Record Correctness Evidence in a Manifest
 #'
@@ -358,4 +277,92 @@ recevid <- function(man, x, grp = "evidence") {
   }
   stop("`x` must come from cpsplant(), cpsspec() or cpsfals()",
        call. = FALSE)
+}
+
+#' Checks cpsplant()'s arguments and codes the treatment as numbers.
+#' @param data,stat,y,trt,effects,n,tol As for cpsplant().
+#' @return A list: `y`, `trt`, `x` (the coded treatment), `effects`, `n`,
+#'   `tol`.
+#' @noRd
+.rmbl_plant_args <- function(data, stat, y, trt, effects, n, tol) {
+  if (!is.data.frame(data) || nrow(data) < 4L) {
+    stop("`data` must be a data frame with at least 4 rows", call. = FALSE)
+  }
+  if (!is.function(stat)) {
+    stop("`stat` must be a function of one data frame", call. = FALSE)
+  }
+  y <- .rmbl_string1(y, "y")
+  trt <- .rmbl_string1(trt, "trt")
+  for (v in c(y, trt)) {
+    if (!v %in% names(data)) {
+      stop("`", v, "` is not a column of `data`", call. = FALSE)
+    }
+  }
+  if (!is.numeric(data[[y]])) {
+    stop("the outcome `", y, "` must be numeric", call. = FALSE)
+  }
+  effects <- .rmbl_num(effects, "effects")
+  if (!length(effects) || anyNA(effects) || !all(is.finite(effects))) {
+    stop("`effects` must be finite numbers", call. = FALSE)
+  }
+  n <- .rmbl_num(n, "n", integer = TRUE)[1L]
+  if (is.na(n) || n < 5L) {
+    stop("`n` must be at least 5", call. = FALSE)
+  }
+  if (is.null(tol)) {
+    tol <- 0.1 * max(abs(effects))
+  }
+  tol <- .rmbl_num(tol, "tol")[1L]
+  if (is.na(tol) || tol < 0) {
+    stop("`tol` must be a number of at least 0", call. = FALSE)
+  }
+  list(y = y, trt = trt, x = .rmbl_plant_code(data[[trt]], trt),
+       effects = effects, n = n, tol = tol)
+}
+
+#' A treatment column as 0/1 or numbers.
+#' @param v The column.
+#' @param nm Its name, for the message.
+#' @return A numeric vector.
+#' @noRd
+.rmbl_plant_code <- function(v, nm) {
+  if (is.logical(v)) {
+    return(as.numeric(v))
+  }
+  if (is.factor(v) || is.character(v)) {
+    lv <- if (is.factor(v)) levels(droplevels(v)) else sort(unique(v))
+    if (length(lv) != 2L) {
+      stop("the treatment `", nm, "` must have two levels to code it 0/1",
+           call. = FALSE)
+    }
+    return(as.numeric(as.character(v) == lv[2L]))
+  }
+  if (!is.numeric(v)) {
+    stop("the treatment `", nm, "` must be numeric, logical or two levels",
+         call. = FALSE)
+  }
+  as.numeric(v)
+}
+
+#' Checks cpsspec()'s arguments.
+#' @param data,specs As for cpsspec().
+#' @return The specifications' names.
+#' @noRd
+.rmbl_spec_args <- function(data, specs) {
+  if (!is.data.frame(data) || !nrow(data)) {
+    stop("`data` must be a data frame with rows", call. = FALSE)
+  }
+  bad <- paste("`specs` must be a list of two or more named functions,",
+               "each with its own name")
+  if (!is.list(specs) || length(specs) < 2L) {
+    stop(bad, call. = FALSE)
+  }
+  nm <- names(specs)
+  if (is.null(nm) || anyNA(nm) || !all(nzchar(nm)) || anyDuplicated(nm)) {
+    stop(bad, call. = FALSE)
+  }
+  if (!all(vapply(specs, is.function, NA))) {
+    stop(bad, call. = FALSE)
+  }
+  nm
 }

@@ -907,8 +907,6 @@ plot.rmbl_wellness_profile <- function(
 #' wellness, and a domain with no fitting indicator should be left out rather
 #' than filled with another.
 #'
-#' @param data A data frame, one row per group and indicator (as
-#'   \code{\link{scests}} gives).
 #' @param grp,domain,est,lower,upper Column names: the group, the domain of the
 #'   indicator (any set of domains: Medicine Wheel, Te Whare Tapa Wha, a
 #'   Nation's own), the percentage of wellness (0 to 100, strictly inside;
@@ -1002,6 +1000,7 @@ plot.rmbl_wellness_profile <- function(
 #' )
 #' holbal(own, "community", "domain", "pct", "lo", "hi", reps = 2000)
 #' @export
+#' @inheritParams welprof
 holbal <- function(
   data,
   grp,
