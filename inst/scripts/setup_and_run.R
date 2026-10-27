@@ -90,7 +90,11 @@ if (HELP_MODE) {
 LIB_DIR <- script_dir  # libs may be next to setup_and_run.R after bundle build
 for (lib in c("aaa_input_guards.R", "aaa_local_seed.R",
               "json_native.R", "sha256_native.R",
-              "lib_interactive.R", "lib_helpers.R", "lib_data_loader.R",
+              "lib_interactive.R", "lib_helpers.R",
+              # the boxed print-out every result carries: its frame, the
+              # readings and the block layout (custody.R) the boxes draw with
+              "print_methods.R", "box_readings.R", "custody.R",
+              "lib_data_loader.R",
               "lib_synthetic.R", "lib_manifest.R",
               "yoy.R", "rate.R")) {
   lib_path <- file.path(LIB_DIR, lib)

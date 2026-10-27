@@ -117,6 +117,8 @@ cp "${BRICKLAYER_ROOT}/R/print_methods.R"  "${STAGE}/"
 # print_boxes.R carries the print() methods of the rate, stock and flow
 # and stay results, which draw the box format() builds
 cp "${BRICKLAYER_ROOT}/R/print_boxes.R"    "${STAGE}/"
+# box_readings.R carries the sentences the boxes print under each result
+cp "${BRICKLAYER_ROOT}/R/box_readings.R"   "${STAGE}/"
 # yoy.R carries .yoy_col, which rate.R uses, so the two travel together
 cp "${BRICKLAYER_ROOT}/R/yoy.R"            "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/rate.R"           "${STAGE}/"
