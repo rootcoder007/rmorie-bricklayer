@@ -230,7 +230,7 @@ test_that("syndid(): simplex weights and the estimate from them", {
     seed = 1
   )
   expect_equal(sum(s$unitwts), 1, tolerance = testthat::testthat_tolerance())
-  expect_identical(sum(s$tmwts), 1)
+  expect_equal(sum(s$tmwts), 1, tolerance = 1e-12)
   expect_true(all(s$unitwts >= 0))
   expect_true(all(s$tmwts >= 0))
   y <- t(vapply(

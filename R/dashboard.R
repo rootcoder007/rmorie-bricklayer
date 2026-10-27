@@ -629,7 +629,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   bslib::layout_sidebar(
     fillable = FALSE,
     sidebar = .bl_tab_sidebar(ns, s),
-    shiny::tags$div(class = "bl-lead", s$about),
+    shiny::tags$div(class = "bl-lead", .bl_about(s$about)),
     shiny::tags$div(`aria-live` = "polite", shiny::uiOutput(ns("err"))),
     shiny::uiOutput(ns("vbox")),
     bslib::layout_columns(
@@ -1362,7 +1362,9 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
     )
   })
   shiny::tagList(
-    if (!is.null(f$about)) shiny::tags$p(class = "bl-about", f$about),
+    if (!is.null(f$about)) {
+      shiny::tags$p(class = "bl-about", .bl_about(f$about))
+    },
     flt,
     lapply(names(args), function(nm) {
       .bl_arg_ui(session$ns, nm, args[[nm]], cols)
@@ -1887,3 +1889,9 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
     shiny::actionButton(ns("hubload"), "Load the table", class = "btn-sm")
   )
 }
+
+#' An `about` as the app shows it: text, or tags from a function.
+#' @param a A string, tags, or a function returning them.
+#' @return `a`, or what `a()` returns.
+#' @noRd
+.bl_about <- function(a) if (is.function(a)) a() else a

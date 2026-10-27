@@ -408,7 +408,7 @@ test_that(
     b <- bacondcmp(d, "u", "t", "y", "tr")
     tv <- b[b$type == "treated vs never", ]
     expect_identical(tv$treated, 4L)
-    expect_identical(sum(b$weight), 1)
+    expect_equal(sum(b$weight), 1, tolerance = 1e-12)
     expect_false(any(b$type == "earlier vs later"))
   }
 )

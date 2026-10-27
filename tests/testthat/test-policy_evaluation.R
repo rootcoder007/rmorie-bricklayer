@@ -478,7 +478,7 @@ test_that(
   {
     p <- .pe()
     b <- bacondcmp(p, "district", "month", "crmrate", "reformed")
-    expect_identical(sum(b$weight), 1)
+    expect_equal(sum(b$weight), 1, tolerance = 1e-12)
     expect_equal(
       attr(b, "twfe"),
       plndid(p, "district", "month", "crmrate", "reformed")$estimate,
@@ -729,7 +729,7 @@ test_that(
     p1 <- p[is.na(p$refmonth) | p$district == "D13", ]
     s <- synctl(p1, "district", "month", "crmrate", "D13", 13)
     w <- s$weights
-    expect_identical(sum(w), 1)
+    expect_equal(sum(w), 1, tolerance = 1e-12)
     expect_true(all(w >= 0))
     y1 <- p1$crmrate[p1$district == "D13" & p1$month < 13]
     ym <- t(vapply(

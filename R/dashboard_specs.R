@@ -1207,39 +1207,42 @@
 
 #' The `about` of the dashboard's "fnmi" tab.
 #' @param k The shared controls, from .bl_app_kit().
-#' @return As the tab's `about`.
+#' @return A function giving the tab's `about` (shiny tags).
 #' @noRd
 .bl_app_about_fnmi <- function(k) {
-  with(
-    k,
-    shiny::tagList(
-      shiny::tags$p(paste(
-        "Statistics Canada's published tables, read as published:",
-        "each distinction (First Nations, M\u00e9tis,",
-        "Inuit) is reported on its own and never pooled, suppressed",
-        "cells (quality F, x, ..) stay suppressed",
-        "and are never imputed, and the quality flags are shown",
-        "beside each estimate.",
-        "The First Nations figures are for people living off reserve.",
-        "The demo table is made up, in the same",
-        "layout."
-      )),
-      shiny::tags$p(
-        shiny::tags$strong("Whose data these are. "),
-        paste(
-          "OCAP\u00ae (First Nations Information Governance Centre):",
-          "Ownership, Control, Access and Possession;",
-          "First Nations own their information and decide how it is",
-          "collected, used and shared. The CARE",
-          "Principles (Carroll et al. 2020): Collective benefit,",
-          "Authority to control, Responsibility and Ethics.",
-          "The package mirrors only openly licensed aggregate tables,",
-          "never First Nations-held survey data."
-        )
-      ),
-      .bl_app_fnmi_links()
+  # built when the app draws the tab, so the specs need no shiny
+  function() {
+    with(
+      k,
+      shiny::tagList(
+        shiny::tags$p(paste(
+          "Statistics Canada's published tables, read as published:",
+          "each distinction (First Nations, M\u00e9tis,",
+          "Inuit) is reported on its own and never pooled, suppressed",
+          "cells (quality F, x, ..) stay suppressed",
+          "and are never imputed, and the quality flags are shown",
+          "beside each estimate.",
+          "The First Nations figures are for people living off reserve.",
+          "The demo table is made up, in the same",
+          "layout."
+        )),
+        shiny::tags$p(
+          shiny::tags$strong("Whose data these are. "),
+          paste(
+            "OCAP\u00ae (First Nations Information Governance Centre):",
+            "Ownership, Control, Access and Possession;",
+            "First Nations own their information and decide how it is",
+            "collected, used and shared. The CARE",
+            "Principles (Carroll et al. 2020): Collective benefit,",
+            "Authority to control, Responsibility and Ethics.",
+            "The package mirrors only openly licensed aggregate tables,",
+            "never First Nations-held survey data."
+          )
+        ),
+        .bl_app_fnmi_links()
+      )
     )
-  )
+  }
 }
 
 #' The analyses of the "fnmi" tab, part 1.

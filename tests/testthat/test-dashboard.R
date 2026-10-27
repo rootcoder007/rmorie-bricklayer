@@ -1411,7 +1411,7 @@ test_that("tabs made in a loop each keep their own spec", {
 test_that("the source tables are a comma-separated list of links", {
   skip_if_not_installed("shiny")
   about <- as.character(
-    Filter(function(s) s$id == "fnmi", ns$.bl_app_specs())[[1L]]$about
+    Filter(function(s) s$id == "fnmi", ns$.bl_app_specs())[[1L]]$about()
   )
   expect_match(about, "13-10-0924-01</a>, <a", fixed = TRUE)
 })
