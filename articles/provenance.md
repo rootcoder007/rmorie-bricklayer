@@ -90,8 +90,8 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ╭── Signing key (post-quantum) ───────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
-#> │   root       50ada11dfb9a908fe1acd569179c813a613059c352de52484b0a7f427791a9 │
-#> │              af                                                             │
+#> │   root       df8a83f80417c3d71ee90e4a3f44d39c1ad5ea513c293ad706cdf482d04c02 │
+#> │              f7                                                             │
 #> │   height     3                                                              │
 #> │   used       0 of 8 signatures                                              │
 #> │   remaining  8                                                              │
@@ -108,7 +108,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ╭── Public verification key ─────────────────────────────────────────────────╮
 #> │   scheme  xmss-sha256                                                      │
-#> │   root    50ada11dfb9a908fe1acd569179c813a613059c352de52484b0a7f427791a9af │
+#> │   root    df8a83f80417c3d71ee90e4a3f44d39c1ad5ea513c293ad706cdf482d04c02f7 │
 #> │   height  3                                                                │
 #> ╰────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -415,7 +415,7 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ╭── Against the declaration of 2026-10-27T18:00:30Z: departures below ──╮
+#> ╭── Against the declaration of 2026-10-27T18:49:02Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -433,7 +433,7 @@ prrgchk(plan, "n_rows")
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ╭── Against the declaration of 2026-10-27T18:00:30Z: departures below ──╮
+#> ╭── Against the declaration of 2026-10-27T18:49:02Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -666,7 +666,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #> │   ✔    no_unlisted_files                                                    │
 #> │   ✔    attestation:attestation_complete                                     │
 #> │   ✔    attestation:manifest_digest                                          │
-#> │        05f5f158b7e8d8e679e2c69ba8870444e6fe05a51b200d7eb40a261dc7034fd1     │
+#> │        3119d4a3845aeb9b5aa111f93d6ccda3256555551a611367ef70d757634ece59     │
 #> │   ✔    attestation:signature                                                │
 #> │   ✔    manifest_digest                                                      │
 #> │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │
@@ -703,7 +703,7 @@ p <- mkbndlproj(proj, title = "My study", author = "A. Researcher",
                 contact = "a.researcher@example.org", overwrite = TRUE)
 p
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpjC4xVF/my-study                                          │
+#> │   Folder  /tmp/RtmpfE4zC2/my-study                                          │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -751,12 +751,12 @@ b
 #> ╭── Reproducibility bundle ───────────────────────────────────────────────────╮
 #> │   Project    my-study                                                       │
 #> │   Zip        my-study_v1_with_data.zip                                      │
-#> │   Folder     /tmp/RtmpjC4xVF                                                │
-#> │   Size       193.1 KB                                                       │
+#> │   Folder     /tmp/RtmpfE4zC2                                                │
+#> │   Size       193.4 KB                                                       │
 #> │   Files      28                                                             │
 #> │   Data file  inside                                                         │
-#> │   SHA-256    43c7cf8a32fb9afcb17fc5012d6e1b50748cf9eb47245a1706aab8d1670fe1 │
-#> │              88                                                             │
+#> │   SHA-256    4a707364a7f60d202cd4dec7e1c75b6527687b4eefb02a2c906412263fb53c │
+#> │              7c                                                             │
 #> │                                                                             │
 #> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │
 #> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │
