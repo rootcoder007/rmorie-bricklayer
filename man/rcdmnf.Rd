@@ -72,7 +72,7 @@ m$checks
 m$counts_after
 
 # signed with an ML-DSA key
-k <- fipskg(seed = as.raw(1:32))
+k <- fipskg("ML-DSA-44", seed = as.raw(1:32))
 ms <- rcdmnf(x, y, map, key = k)
 names(ms)
 
