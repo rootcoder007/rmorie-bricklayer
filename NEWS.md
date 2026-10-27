@@ -36,6 +36,10 @@
 
 * `yoy()` reads text periods in time order whatever the years: fiscal years (`"2019/20"`, `"2019-2020"`, `"FY 2019-20"`; `"2020/21"` no longer comes before `"2019/20"`), one-year fiscal labels (`"FY2020"`), quarters (`"2021 Q3"`, `"Q3 2021"`), months (`"2021-03"`, `"Mar 2021"`) and dates. A period missing from the data is a gap. The new argument `prdord` gives the order of any other labels; labels whose order cannot be read keep the old behaviour, with one warning that names them. `yoysmry()` and `anltab()` follow the same order, and `ratechg()` orders text periods the same way.
 
+## Signing keys
+
+* `fipskg()` makes an SLH-DSA-SHA2-128s key by default (it was ML-DSA-65): its security rests on the hash function alone, the most conservative assumption for a capsule meant to be checked decades from now. Signing takes about a second and the signature is 7,856 bytes; pass `scheme = "ML-DSA-65"` for the old default. XMSS stays opt-in through `pqckg()`.
+
 ## Fixes
 
 * A bundle run on synthetic data works on Windows: the runner passed `BRICKLAYER_SYNTHETIC=1` to `analysis.R` through `system2(env = )`, which on Windows puts it in front of the command, so `analysis.R` never started and the run stopped with exit code 5. It now sets the variable for the child and restores it afterwards.

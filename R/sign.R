@@ -82,7 +82,11 @@ pqcbknd <- function() .Call(C_rmbl_pqc_backends)
 #' parameter sets have small signatures and slow signing, its `f` sets
 #' the reverse, and its SHAKE and SHA-2 families are equally strong: pick
 #' SHA-2 where a validated SHA-2 implementation is what an auditor will ask
-#' about. `"ML-DSA-65"` is the sensible default.
+#' about. The default, `"SLH-DSA-SHA2-128s"`, is the conservative choice for
+#' a record meant to be checked decades from now: its security rests on the
+#' hash function alone, and its signature (7,856 bytes) is the smallest
+#' SLH-DSA has. Signing takes about a second; verifying, milliseconds. Pick
+#' `"ML-DSA-65"` for many signatures a second or small signatures.
 #'
 #' @details
 #' Key generation expands a random seed (the length
@@ -107,7 +111,8 @@ pqcbknd <- function() .Call(C_rmbl_pqc_backends)
 #'
 #' @param scheme Scheme name, one of [pqcbknd()] other than
 #' `"xmss-sha256"`.
-#' The default, `"ML-DSA-65"`, is the FIPS 204 middle security level.
+#' The default, `"SLH-DSA-SHA2-128s"`, is the FIPS 205 small-signature set
+#' at the first security level, which rests on SHA-256 alone.
 #' @param seed Optional raw vector of key-generation seed
 #' bytes, of the length [fipssz()] reports for
 #' the scheme. Supplying it makes the key reproducible, which is what the
@@ -169,7 +174,7 @@ pqcbknd <- function() .Call(C_rmbl_pqc_backends)
 #' models; the README's security section lists what each check does and
 #' does not cover.
 #' @export
-fipskg <- function(scheme = "ML-DSA-65", seed = NULL) {
+fipskg <- function(scheme = "SLH-DSA-SHA2-128s", seed = NULL) {
   scheme <- .rmbl_fips_scheme(scheme)
   sz <- fipssz(scheme)
   if (is.null(seed)) {
@@ -578,7 +583,7 @@ fipssz <- function(scheme) {
 #' models; the README's security section lists what each check does and
 #' does not cover.
 #' @export
-oqskg <- function(scheme = "ML-DSA-65") {
+oqskg <- function(scheme = "SLH-DSA-SHA2-128s") {
   .Deprecated("fipskg")
   fipskg(scheme)
 }

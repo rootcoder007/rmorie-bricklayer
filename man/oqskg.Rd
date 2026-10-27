@@ -5,7 +5,7 @@
 \alias{oqspubkey}
 \title{Generate a standardised post-quantum signing key (deprecated name)}
 \usage{
-oqskg(scheme = "ML-DSA-65")
+oqskg(scheme = "SLH-DSA-SHA2-128s")
 
 oqspubkey(key)
 }

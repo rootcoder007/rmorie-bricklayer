@@ -154,7 +154,8 @@ are implemented here too, at every parameter set both standards define
 the list `pqcbknd()` reports is the same on every machine.
 `fipskg()` takes any of them, `fipskey()` wraps key material that
 came from elsewhere, and both are stateless: one key signs any number of
-messages.
+messages. The default, SLH-DSA-SHA2-128s, rests on the hash function alone,
+the most conservative assumption for a record meant to outlive its author.
 
 What makes that defensible is the cross-check rather than care. In
 deterministic mode this package and OpenSSL 3.5 produce the same bytes
