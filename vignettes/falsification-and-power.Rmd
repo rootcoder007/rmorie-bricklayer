@@ -132,6 +132,28 @@ evlrr(2, lo = 0.9, hi = 4.4) # an interval that includes the null needs nothing
 evlrr(3, lo = 2.1, hi = 4.3) # a strong result with a limit well above the null
 ```
 
+## Does it recover a known effect?
+
+Falsification asks whether a result survives attempts to explain it away.
+`cpsplant()` asks the complementary question: does the statistic measure what
+it is meant to? It shuffles the outcome, which removes its real association
+with the treatment, plants effects of known size, and checks the statistic
+gets each one back. A planted 0 catches a statistic that finds effects that
+are not there; 0.5 and 1 catch one that gets their size wrong.
+
+```{r falsification-and-power-plant}
+set.seed(4)
+tr <- data.frame(x = rbinom(150, 1, 0.5))
+tr$y <- 1.5 * tr$x + rnorm(150)
+diffmeans <- function(z) mean(z$y[z$x == 1]) - mean(z$y[z$x == 0])
+cpsplant(tr, diffmeans, y = "y", trt = "x", n = 25, seed = 4)
+```
+
+`cpsspec()` runs the reasonable alternative analyses side by side and says
+whether they agree in sign with the one reported, and `recevid()` writes
+either check, and the falsification controls, into the manifest, so the
+capsule carries the evidence with the numbers.
+
 ## Where this fits in a capsule
 
 `cpsrpt()` runs the falsification controls alongside the schema, rule and drift

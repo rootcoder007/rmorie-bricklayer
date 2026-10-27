@@ -296,6 +296,9 @@ reference:
       - cpsatst
       - cpsbndl
       - cpsfals
+      - cpsplant
+      - cpsspec
+      - recevid
       - cpspwr
       - prrgdecl
       - falsfam
