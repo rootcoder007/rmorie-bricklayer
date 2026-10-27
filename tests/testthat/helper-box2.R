@@ -9,7 +9,7 @@ expect_box2 <- function(x, title, has = character()) {
   testthat::expect_true(grepl(title, txt[1L], fixed = TRUE), info = txt[1L])
   flat <- gsub("\\s+", " ", paste(txt, collapse = " "))
   for (h in has) {
-    testthat::expect_true(grepl(h, flat, fixed = TRUE), info = h)
+    testthat::expect_true(grepl(.rmbl_txt(h), flat, fixed = TRUE), info = h)
   }
   out <- utils::capture.output({
     res <- withVisible(print(x))

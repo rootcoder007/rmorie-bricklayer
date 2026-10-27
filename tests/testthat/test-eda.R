@@ -67,7 +67,7 @@ test_that("freqtbl counts and percentages add up", {
     ft$pctvalid[ft$value == "b" & !is.na(ft$value)],
     100 * 3 / 5
   )
-  expect_identical(sum(ft$pct), 100)
+  expect_equal(sum(ft$pct), 100, tolerance = 1e-12)
   expect_identical(sum(ft$pctvalid, na.rm = TRUE), 100)
   # the missing row has no share of the valid values
   expect_true(is.na(ft$pctvalid[is.na(ft$value)]))

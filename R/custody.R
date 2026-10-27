@@ -1193,10 +1193,10 @@ format.rmbl_perdays <- function(x, ...) {
     out <- c(out, .an_table_lines(tables[[i]], caps[i], digits))
   }
   if (length(reading)) {
-    out <- c(out, "", paste0("  ", reading))
+    out <- c(out, "", paste0("  ", .rmbl_txt(reading)))
   }
   if (length(notes)) {
-    out <- c(out, "", paste0("  ", notes))
+    out <- c(out, "", paste0("  ", .rmbl_txt(notes)))
   }
   c(out, .rmbl_rule())
 }
@@ -1213,7 +1213,7 @@ format.rmbl_perdays <- function(x, ...) {
   }
   c(
     "",
-    if (!is.na(caption) && nzchar(caption)) paste0("  ", caption),
+    if (!is.na(caption) && nzchar(caption)) paste0("  ", .rmbl_txt(caption)),
     .an_fit_table(df, digits)
   )
 }

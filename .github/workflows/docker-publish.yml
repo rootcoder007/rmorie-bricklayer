@@ -4,7 +4,7 @@
 #   ghcr.io/rootcoder007/rmorie-bricklayer:sha-<7>   (every build)
 # Pushes only on a v*.*.* tag, a manual dispatch or the weekly rebuild; plain pushes build-only.
 # The weekly rebuild takes the latest release again with a fresh base image and no cache, so the
-# Ubuntu and R packages in `latest` and `<version>` pick up their security fixes without a
+# Wolfi and R packages in `latest` and `<version>` pick up their security fixes without a
 # release. Every build is scanned with Trivy and fails on a vulnerability of
 # any severity that has a fix, before anything is pushed; the pushed image is
 # scanned again by its digest.

@@ -11,16 +11,14 @@ test_that(
     x <- stats::rgamma(400, shape = 2, rate = 0.5)
     f <- dstfit(x, nboot = 0)
     expect_s3_class(f, "rmbl_dstfit")
-    expect_identical(
+    expect_equal(
       unname(f$fits$normal),
-      c(mean(x), sqrt(mean((x - mean(x))^2)))
-    )
-    expect_identical(unname(f$fits$exponential), 1 / mean(x))
-    expect_identical(unname(f$fits$lognormal[1L]), mean(log(x)))
-    expect_identical(
+      c(mean(x), sqrt(mean((x - mean(x))^2))), tolerance = 1e-12)
+    expect_equal(unname(f$fits$exponential), 1 / mean(x), tolerance = 1e-12)
+    expect_equal(unname(f$fits$lognormal[1L]), mean(log(x)), tolerance = 1e-12)
+    expect_equal(
       unname(f$fits$pareto),
-      c(min(x), length(x) / sum(log(x / min(x))))
-    )
+      c(min(x), length(x) / sum(log(x / min(x)))), tolerance = 1e-12)
     skip_if_not_installed("MASS")
     expect_equal(
       unname(f$fits$gamma),

@@ -94,7 +94,7 @@ expect_box <- function(x, title, has = character()) {
   expect_true(grepl(title, txt[1L], fixed = TRUE), info = txt[1L])
   flat <- paste(txt, collapse = "\n")
   for (h in has) {
-    expect_true(grepl(h, flat, fixed = TRUE), info = h)
+    expect_true(grepl(.rmbl_txt(h), flat, fixed = TRUE), info = h)
   }
   out <- utils::capture.output(print(x))
   expect_output(expect_invisible(print(x)), "+-- ", fixed = TRUE)

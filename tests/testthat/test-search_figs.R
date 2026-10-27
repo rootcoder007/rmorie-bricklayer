@@ -54,7 +54,7 @@ test_that("chapter 3: the containment values of the text", {
   expect_identical(srchfig("3-12")$poc, matrix(0.05, 4, 5))
   m14 <- srchfig("3-14")
   expect_identical(100 * m14$poc[4, ], c(3, 4, 5, 6, 2))
-  expect_identical(m14$outside, 0)
+  expect_equal(m14$outside, 0, tolerance = 1e-12)
   d <- srchfig("3-13")
   expect_named(d, c("x", "y", "poc"))
 })

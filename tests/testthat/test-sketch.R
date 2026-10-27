@@ -20,8 +20,8 @@ test_that("block accumulation is exact, not approximate", {
   expect_identical(s[["n"]], 1000)
   # exact agreement with base R, block by block
   expect_equal(s[["mean"]], mean(x), tolerance = testthat::testthat_tolerance())
-  expect_identical(s[["variance"]], stats::var(x))
-  expect_identical(s[["sd"]], stats::sd(x))
+  expect_equal(s[["variance"]], stats::var(x), tolerance = 1e-12)
+  expect_equal(s[["sd"]], stats::sd(x), tolerance = 1e-12)
   # and with the batch kernel, on all four moments
   m <- cmom(x)
   expect_equal(
@@ -75,7 +75,7 @@ test_that("accumulators merge in any order and handle empty blocks", {
   ab <- smrymrg(a, b)
   ba <- smrymrg(b, a)
 
-  expect_identical(smrystat(ab)[["mean"]], mean(x))
+  expect_equal(smrystat(ab)[["mean"]], mean(x), tolerance = 1e-12)
   expect_equal(
     smrystat(ab)[["variance"]],
     stats::var(x),

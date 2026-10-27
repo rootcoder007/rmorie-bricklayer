@@ -181,7 +181,8 @@ test_that("staysmry describes the distribution, not just its mean", {
   expect_identical(ss$max, 120)
   expect_gt(ss$mean, ss$median)
   # the mean agrees with alos() on the same data
-  expect_identical(ss$mean, as.numeric(alos(sum(stays), length(stays))))
+  expect_equal(ss$mean, as.numeric(alos(sum(stays), length(stays))),
+    tolerance = 1e-12)
   # the interval is the ordinary t interval on a mean
   se <- stats::sd(stays) / sqrt(length(stays))
   tq <- stats::qt(0.975, df = length(stays) - 1L)
@@ -275,7 +276,7 @@ expect_box <- function(x, title, has = character()) {
   expect_true(grepl(title, txt[1L], fixed = TRUE), info = txt[1L])
   flat <- paste(txt, collapse = "\n")
   for (h in has) {
-    expect_true(grepl(h, flat, fixed = TRUE), info = h)
+    expect_true(grepl(.rmbl_txt(h), flat, fixed = TRUE), info = h)
   }
   out <- utils::capture.output(print(x))
   expect_output(expect_invisible(print(x)), "+-- ", fixed = TRUE)

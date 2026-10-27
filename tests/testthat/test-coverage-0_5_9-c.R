@@ -37,7 +37,7 @@ test_that(
 
 test_that("cmn survives a sum that overflows when every value is finite", {
   expect_identical(cmn(c(1e308, 1e308)), 1e308)
-  expect_identical(cmn(c(1e308, 1e308, -1e308)), 1e308 / 3)
+  expect_equal(cmn(c(1e308, 1e308, -1e308)), 1e308 / 3, tolerance = 1e-12)
 })
 
 test_that(

@@ -80,7 +80,7 @@ test_that("cmom computes all four moments in one pass", {
   m <- cmom(x)
   expect_named(m, c("mean", "variance", "skewness", "kurtosis"))
   expect_identical(m[["mean"]], mean(x))
-  expect_identical(m[["variance"]], stats::var(x))
+  expect_equal(m[["variance"]], stats::var(x), tolerance = 1e-12)
   # the shape statistics are the sample-moment definitions
   cm <- function(k) mean((x - mean(x))^k)
   expect_equal(
@@ -122,10 +122,9 @@ test_that("cqnt is the type-7 quantile", {
   set.seed(3)
   x <- stats::rnorm(97)
   pr <- c(0, 0.01, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99, 1)
-  expect_identical(
+  expect_equal(
     unname(cqnt(x, pr)),
-    unname(stats::quantile(x, pr, type = 7))
-  )
+    unname(stats::quantile(x, pr, type = 7)), tolerance = 1e-12)
   expect_named(cqnt(x, c(0.25, 0.5)), c("25%", "50%"))
   # the extremes are the sample extremes
   expect_identical(unname(cqnt(x, 0)), min(x))

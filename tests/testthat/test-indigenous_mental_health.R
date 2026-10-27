@@ -516,7 +516,7 @@ test_that(
     )
     r <- holbal(d, "g", "dom", "pct", "lo", "hi", reps = 2000)
     expect_identical(r$balance[1], 1)
-    expect_identical(r$balance[2], sqrt(0.8 * 0.2) / 0.5)
+    expect_equal(r$balance[2], sqrt(0.8 * 0.2) / 0.5, tolerance = 1e-12)
     expect_identical(r$level, c(50, 50))
     expect_lte(r$balup[1], 1)
     expect_lt(r$balup[2], 1)
@@ -798,7 +798,7 @@ expect_box <- function(x, title, has = character()) {
   expect_true(grepl(title, txt[1L], fixed = TRUE), info = txt[1L])
   flat <- paste(txt, collapse = "\n")
   for (h in has) {
-    expect_true(grepl(h, flat, fixed = TRUE), info = h)
+    expect_true(grepl(.rmbl_txt(h), flat, fixed = TRUE), info = h)
   }
   out <- utils::capture.output(print(x))
   expect_output(expect_invisible(print(x)), "+-- ", fixed = TRUE)
@@ -1011,8 +1011,11 @@ test_that("ordcmp()'s box marks a pooled row and reads each group", {
     lvls = lv, ref = "Métis", qual = "quality", pooled = "Inuit")
   txt <- ls_flat(oc)
   expect_match(txt, "Inuit (pooled)", fixed = TRUE)
-  expect_match(txt, "Rate lower than Métis (interval below 0.5): First",
-    fixed = TRUE)
+  expect_match(
+    txt,
+    .rmbl_txt("Rate lower than M\u00e9tis (interval below 0.5): First"),
+    fixed = TRUE
+  )
   expect_match(txt, "Not distinguishable from 0.5", fixed = TRUE)
   up <- .rd_null("g", 0.6, 0.7, 0.5, "Rate higher than R", "Rate lower")
   expect_match(up, "^Rate higher than R \\(interval above 0.5\\): g\\.$")

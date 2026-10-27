@@ -456,7 +456,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
   expect_identical(nums[6L], 64)
   expect_identical(nums[7L], stats::sd(x))
   expect_identical(nums[8L], sqrt(sum((x - y)^2)))
-  expect_identical(nums[9L], stats::dnorm(0.5, log = TRUE))
+  expect_equal(nums[9L], stats::dnorm(0.5, log = TRUE), tolerance = 1e-12)
   expect_equal(
     nums[12L],
     stats::pgamma(1.5, 2),

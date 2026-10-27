@@ -52,7 +52,7 @@ test_that("cmom survives the extremes and keeps its definitions", {
   m <- cmom(y)
   cy <- function(k) mean((y - mean(y))^k)
   expect_identical(m[["mean"]], mean(y))
-  expect_identical(m[["variance"]], stats::var(y))
+  expect_equal(m[["variance"]], stats::var(y), tolerance = 1e-12)
   expect_equal(
     m[["skewness"]],
     cy(3) / cy(2)^1.5,

@@ -205,7 +205,7 @@ test_that("Benford, power, falsification", {
   bf <- benfordtst(c(1, 12, 123, 1234, 2, 23, 3, 31, 4, 45, 5, 6, 7, 8, 9))
   d <- with_dev(plot(bf))
   expect_identical(d$expected, log10(1 + 1 / (1:9)))
-  expect_identical(sum(d$observed), 1)
+  expect_equal(sum(d$observed), 1, tolerance = 1e-12)
   set.seed(2)
   dd <- data.frame(x = rnorm(60), y = rnorm(60))
   shift <- function(z, s) {

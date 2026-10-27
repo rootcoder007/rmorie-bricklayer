@@ -38,6 +38,8 @@
 
 ## Fixes
 
+* On a console that is not UTF-8 (R in a C locale), the result boxes fold accented text to plain ASCII, so "Métis" prints as "Metis"; before, R printed the escape `<U+00E9>`, which broke the box's alignment and its 80-column width.
+* Tests that compared a computed mean, variance, quantile or sum bit for bit with R's own allow a difference of 1e-12: platforms without extended precision (macOS on Apple silicon) round the last digit differently.
 * A gzipped table too large to decompress in memory was read a piece at a time without checking the gzip stream, so a truncated file came back as a shorter table with no error. The stream is now checked whole first (trailer, CRC and size), and a truncated or damaged file is refused, as smaller files already were.
 * The C function `rmbl_wayback_snapshot()`, which other packages call through `LinkingTo`, answers 0 for a NULL address or buffer, or a buffer of no size, where it crashed the calling session, and for an address that is not http(s) without asking archive.org.
 * The file readers refuse a directory by name ("`path` is a directory, not a file") instead of opening it.
@@ -62,7 +64,7 @@
 
 ## Docker image and Homebrew
 
-* The Docker image installs every system and R package at its latest version, then removes the compilers and header packages it needed only to build; it is rebuilt every week from the latest release, and Trivy refuses an image with a fixable high or critical vulnerability. Known vulnerabilities went from 3,089 to 65, none of them high or critical.
+* The Docker image is built on Wolfi (Chainguard) instead of Ubuntu: R from Wolfi, the R packages built from CRAN source, every package at its latest version, and the compilers and headers removed once the build is done. It is rebuilt every week from the latest release, and Trivy refuses to push an image, and checks the image as pushed, with a vulnerability of any severity that has a fix. Known vulnerabilities went from 3,089 to 0.
 * A release updates the rmoriebricklayer formula in the homebrew-morie tap and checks that it installs and passes its test on macOS.
 
 # rmoriebricklayer 1.0.2

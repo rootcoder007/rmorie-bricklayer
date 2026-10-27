@@ -212,10 +212,9 @@ test_that("cnscwb(): the four components worked from the published figures", {
     fn$housing,
     (100 * hv("38") / hv("37") + 100 * (1 - hv("54") / hv("52"))) / 2
   )
-  expect_identical(
+  expect_equal(
     fn$cwb,
-    mean(c(fn$income, fn$education, fn$housing, fn$labour))
-  )
+    mean(c(fn$income, fn$education, fn$housing, fn$labour)), tolerance = 1e-12)
   # fewer than 250 people: no score
   small <- cw[is.finite(cw$population) & cw$population < 250, ]
   expect_gt(nrow(small), 0)
@@ -303,7 +302,7 @@ expect_box <- function(x, title, has = character()) {
   expect_true(grepl(title, txt[1L], fixed = TRUE), info = txt[1L])
   flat <- paste(txt, collapse = "\n")
   for (h in has) {
-    expect_true(grepl(h, flat, fixed = TRUE), info = h)
+    expect_true(grepl(.rmbl_txt(h), flat, fixed = TRUE), info = h)
   }
   out <- utils::capture.output(print(x))
   expect_output(expect_invisible(print(x)), "+-- ", fixed = TRUE)

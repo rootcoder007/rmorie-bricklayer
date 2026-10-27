@@ -204,7 +204,8 @@ test_that("profcols describes each column by its own type", {
   expect_identical(p$mean[p$column == "clean"], mean(df$clean))
   expect_identical(p$median[p$column == "clean"], cmed(df$clean))
   expect_identical(p$mad[p$column == "clean"], cmad(df$clean))
-  expect_identical(p$sd[p$column == "clean"], stats::sd(df$clean))
+  expect_equal(p$sd[p$column == "clean"], stats::sd(df$clean),
+    tolerance = 1e-12)
   expect_identical(p$min[p$column == "clean"], min(df$clean))
   # and the NA-bearing column is summarised on its complete cases
   expect_identical(p$mean[p$column == "gappy"], mean(df$gappy, na.rm = TRUE))

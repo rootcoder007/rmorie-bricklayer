@@ -146,7 +146,7 @@ test_that("the Benford screen is the log10 law", {
   expect_gt(ok$p_value, 0.01)
   # the expected proportions ARE the closed form
   expect_equal(ok$expected / ok$n, log10(1 + 1 / (1:9)), ignore_attr = TRUE)
-  expect_identical(sum(ok$expected), ok$n)
+  expect_equal(sum(ok$expected), ok$n, tolerance = 1e-12)
   expect_named(ok$counts, as.character(1:9))
   expect_identical(sum(ok$counts), ok$n)
   expect_identical(ok$df, 8L)

@@ -363,6 +363,23 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   isTRUE(l10n[["UTF-8"]])
 }
 
+#' Text as the console can show it: unchanged on a UTF-8 console, folded to
+#' ASCII ("M\u00e9tis" to "Metis") on any other, before it is padded. A C
+#' locale otherwise prints the escape "<U+00E9>", which also breaks the
+#' column widths.
+#' @param s Strings, or any other value (returned unchanged).
+#' @return `s`, folded to ASCII when the console needs it; NA kept.
+#' @noRd
+.rmbl_txt <- function(s) {
+  if (!is.character(s) || .rmbl_unicode_ok()) {
+    return(s)
+  }
+  out <- toascii(s)
+  out[is.na(s)] <- NA_character_
+  attributes(out) <- attributes(s)
+  out
+}
+
 #' Returns the box-drawing and status glyphs for the console, Unicode or ASCII.
 #' @return A named list of strings.
 #' @noRd
@@ -406,7 +423,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   if (is.null(title)) {
     return(strrep(g$h, width))
   }
-  left <- paste0(strrep(g$h, 2L), " ", title, " ")
+  left <- paste0(strrep(g$h, 2L), " ", .rmbl_txt(title), " ")
   pad <- max(0L, width - nchar(left))
   paste0(left, strrep(g$h, pad))
 }
@@ -417,13 +434,13 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' @return A character vector of lines.
 #' @noRd
 .rmbl_kv <- function(pairs, indent = 2L) {
-  keys <- names(pairs)
+  keys <- .rmbl_txt(names(pairs))
   w <- if (length(keys)) max(nchar(keys)) else 0L
   paste0(
     strrep(" ", indent),
     formatC(keys, width = w, flag = "-"),
     "  ",
-    vapply(pairs, function(v) toString(format(v)), character(1))
+    vapply(pairs, function(v) toString(format(.rmbl_txt(v))), character(1))
   )
 }
 
@@ -1058,10 +1075,10 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
     out <- c(out, "", .rmbl_stat_table(table, digits))
   }
   if (length(reading)) {
-    out <- c(out, "", paste0("  ", reading))
+    out <- c(out, "", paste0("  ", .rmbl_txt(reading)))
   }
   if (length(notes)) {
-    out <- c(out, "", paste0("  ", notes))
+    out <- c(out, "", paste0("  ", .rmbl_txt(notes)))
   }
   c(out, .rmbl_rule())
 }
@@ -1092,10 +1109,10 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
     } else if (is.numeric(v)) {
       .rmbl_fmt_col(v, digits)
     } else {
-      ifelse(is.na(v), "", as.character(v))
+      ifelse(is.na(v), "", .rmbl_txt(as.character(v)))
     }
   })
-  names(cols) <- names(df)
+  names(cols) <- .rmbl_txt(names(df))
   num <- vapply(df, is.numeric, NA)
   w <- pmax(
     nchar(names(cols), type = "width"),
@@ -1317,7 +1334,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 .rmbl_res_table <- function(df, caption = NULL, digits = 4L, maxrows = 20L) {
   out <- ""
   if (length(caption) && !is.na(caption) && nzchar(caption)) {
-    out <- c(out, paste0("  ", caption))
+    out <- c(out, paste0("  ", .rmbl_txt(caption)))
   }
   if (!is.data.frame(df) || !nrow(df) || !ncol(df)) {
     return(c(out, "  (no rows)"))
@@ -1379,7 +1396,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   if (!length(txt)) {
     return(NULL)
   }
-  strwrap(paste(txt, collapse = " "), width = 70L)
+  strwrap(paste(.rmbl_txt(txt), collapse = " "), width = 70L)
 }
 
 #' A classed data frame as a plain one: its columns, no other attributes.
