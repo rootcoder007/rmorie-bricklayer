@@ -36,6 +36,11 @@
 
 * `yoy()` reads text periods in time order whatever the years: fiscal years (`"2019/20"`, `"2019-2020"`, `"FY 2019-20"`; `"2020/21"` no longer comes before `"2019/20"`), one-year fiscal labels (`"FY2020"`), quarters (`"2021 Q3"`, `"Q3 2021"`), months (`"2021-03"`, `"Mar 2021"`) and dates. A period missing from the data is a gap. The new argument `prdord` gives the order of any other labels; labels whose order cannot be read keep the old behaviour, with one warning that names them. `yoysmry()` and `anltab()` follow the same order, and `ratechg()` orders text periods the same way.
 
+## Security process
+
+* `SECURITY.md` follows the OSTIF best-practices guide: private reporting through GitHub (now switched on) or email, scope, what a report should contain, the response timeline (acknowledgement in 72 hours, triage in 7 days, a fix in 30 days for high and critical issues, then a GitHub advisory and CVE), good-faith research protection, the incident plan, who has access and what each CI secret can do.
+* Every GitHub Action is pinned to a commit hash, CodeQL scans the C and C++ code and the workflows, and OpenSSF Scorecard rates the repository's practices; secret scanning with push protection is on.
+
 ## Signing keys
 
 * `cpsplant()` checks that a statistic recovers effects of known size planted into the real data (the outcome shuffled to remove its real association, then `effect * treatment` added), so a capsule can show the analysis measures what it claims, not only that it re-runs. A planted 0 catches a statistic that finds effects that are not there.

@@ -1,0 +1,67 @@
+# Static analysis with CodeQL: the C and C++ in src/ (built with R CMD
+# INSTALL so CodeQL sees the real compile), and the workflow files
+# themselves. Findings appear under Security > Code scanning.
+name: codeql
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', '.github/workflows/**']
+  pull_request:
+    branches: [main]
+    paths: ['src/**', '.github/workflows/**']
+  schedule:
+    - cron: "41 7 * * 2"   # Tuesdays 07:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: c-cpp
+            build-mode: manual
+          - language: actions
+            build-mode: none
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up R
+        if: matrix.language == 'c-cpp'
+        uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - name: Install libcurl
+        if: matrix.language == 'c-cpp'
+        run: sudo apt-get update -qq && sudo apt-get install -y libcurl4-openssl-dev
+
+      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-extended
+
+      - name: Build the compiled code
+        if: matrix.language == 'c-cpp'
+        run: R CMD INSTALL --no-test-load --library="$RUNNER_TEMP" .
+
+      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          category: "/language:${{ matrix.language }}"
