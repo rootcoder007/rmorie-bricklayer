@@ -118,10 +118,16 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
 - **CKAN resolution** — `rslvckan()` / `rslvckns()`
   locate resources through a portal's `package_show` / `package_search`
   endpoints.
+- **Randomisation for trials** — `ralloc()` makes a simple, permuted-block or
+  stratified allocation list (any ratio, kit codes for blinded dispensing),
+  reproducible from a seed and committed to by one SHA-256 to sign and
+  timestamp before enrolment; `rallocvrf()` shows at unblinding that the list
+  used is the one committed to.
 - **Several results, one report** — `mkset()` gathers any results into one
   report: printed as a box of contents and each result's box, or written as
   one HTML page with every box and its plot (`file = "report.html"`),
-  Markdown (`.md`) or text (`.txt`).
+  Markdown (`.md`) or text (`.txt`). Results of base R and other packages
+  (`lm`, `glm`, survival, lme4, mgcv, fixest and more) get boxes too.
 - **Reproducibility bundles** — `mkbndl()` packs an analysis into one
   zip a reviewer with only R unzips and double-clicks (macOS, Windows,
   Linux); it finds, downloads or carries the data, checks it against the

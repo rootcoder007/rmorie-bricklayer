@@ -156,6 +156,8 @@ reference:
       - wrmnfjs
       - wrsmrytxt
       - mkbndl
+      - ralloc
+      - rallocvrf
       - mkbndlproj
   - title: Language model and command line
     desc: >

@@ -328,6 +328,50 @@ and the outcome:
 evlrr(2, lo = 1.4, hi = 2.9)
 ```
 
+## A trial whose allocation nobody can rewrite
+
+In a randomised trial the two records that must not move after the data
+are seen are the outcomes and the allocation. The outcomes are declared
+above; the allocation is a list made before the first participant and
+committed to.
+
+```{r}
+alloc <- ralloc(arms = c("drug", "placebo"), ratio = c(1, 1),
+                strata = c(Toronto = 24, Ottawa = 16), codes = TRUE,
+                seed = "a vignette, not a trial")
+alloc
+```
+
+The box shows how many participants each arm has, never who is in which,
+and not the seed. For a real trial leave `seed` out: the seed is then 48
+bytes from the operating system, and the list cannot be guessed before it
+is opened. Sites and the pharmacy get only the `id` and `kit` columns.
+
+Sign the commitment, and the declared outcomes with it, before enrolment
+(and send the signed record to a timestamp authority; `tsvrf()` checks the
+token it returns):
+
+```{r}
+trial <- fipskg("ML-DSA-44")
+record <- paste(attr(alloc, "alloc")$digest,
+                mnfdgst(mkmnf(list(outcomes = plan$statistics),
+                              env = FALSE)))
+sealed <- cpssign(record, trial, ctx = "trial commitment")
+cpsvrf(record, sealed, fipspubkey(trial), ctx = "trial commitment")
+```
+
+At unblinding the statistician reveals the list and the seed, and anyone
+can check them against what was signed:
+
+```{r}
+rallocvrf(alloc, digest = attr(alloc, "alloc")$digest)
+
+# one allocation changed after the commitment is caught
+moved <- alloc
+moved$arm[1] <- setdiff(c("drug", "placebo"), moved$arm[1])
+rallocvrf(moved, digest = attr(alloc, "alloc")$digest)$ok
+```
+
 ## Keeping your own copy of the source
 
 A capsule pins a source by its SHA-256, and `fetchvrf()` fetches it from wherever a copy with that SHA-256 still

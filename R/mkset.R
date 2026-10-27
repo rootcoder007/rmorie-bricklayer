@@ -131,7 +131,7 @@ print.rmbl_set <- function(x, ...) {
   it <- x$items
   for (k in seq_along(it)) {
     cat("\n", k, ". ", names(it)[k], "\n\n", sep = "")
-    print(it[[k]])
+    .mkset_show(it[[k]])
   }
   invisible(x)
 }
@@ -142,10 +142,17 @@ print.rmbl_set <- function(x, ...) {
 #' @return One string.
 #' @noRd
 .mkset_head <- function(v, k) {
-  l1 <- tryCatch(as.character(format(v))[1L], error = function(e) NA)
-  pat <- "^(──|--) (.*?) (─|-)*$"
-  if (length(l1) && !is.na(l1) && grepl(pat, l1, perl = TRUE)) {
-    return(trimws(sub(pat, "\\2", l1, perl = TRUE)))
+  l1 <- tryCatch(
+    as.character(if (.mkset_own(v)) format(v) else .mkset_box(v))[1L],
+    error = function(e) NA
+  )
+  pat <- "^(\u2500\u2500|--) (.*?) (\u2500|-)*$"
+  head <- if (length(l1) && !is.na(l1) && grepl(pat, l1, perl = TRUE)) {
+    trimws(sub(pat, "\\2", l1, perl = TRUE))
+  }
+  # a box titled only by its class says less than its place in the set
+  if (length(head) && !identical(head, class(v)[1L])) {
+    return(head)
   }
   sprintf("Result %d (%s)", k, class(v)[1L])
 }
@@ -157,7 +164,12 @@ print.rmbl_set <- function(x, ...) {
 .mkset_lines <- function(v) {
   op <- options(rmoriebricklayer.width = 80L, rmoriebricklayer.numcol = 1L)
   on.exit(options(op), add = TRUE)
-  gsub("\033\\[[0-9;]*m", "", utils::capture.output(print(v)))
+  shown <- if (inherits(v, "rmbl_set")) {
+    utils::capture.output(print(v))
+  } else {
+    utils::capture.output(.mkset_show(v))
+  }
+  gsub("\033\\[[0-9;]*m", "", shown)
 }
 
 #' The results as report entries (heading, text, plot, yoy table).
