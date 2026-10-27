@@ -34,8 +34,8 @@ cryptography written from the standards) serves one of these three.
 
 ## Why it exists
 
-I analyze Canadian justice and health statistics from published tables. Noticed that three
-things kept on going wrong in many cases, and a checksum alone catches none of them.
+I analyze Canadian justice and health statistics from published tables. Three things kept
+going wrong, and a checksum alone catches none of them.
 
 - **Sources go down or move.** The federal open-data portal, `open.canada.ca`, was unreachable in
   October 2026 while analyses depended on it. A capsule keeps the address of an archived copy of
@@ -118,6 +118,12 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
 - **CKAN resolution** — `rslvckan()` / `rslvckns()`
   locate resources through a portal's `package_show` / `package_search`
   endpoints.
+- **Reproducibility bundles** — `mkbndl()` packs an analysis into one
+  zip a reviewer with only R unzips and double-clicks (macOS, Windows,
+  Linux); it finds, downloads or carries the data, checks it against the
+  pinned SHA-256 and reports expected against observed for every number.
+  `mkbndlproj()` starts a project of your own; see
+  [Reproducibility bundles](#reproducibility-bundles).
 - **Provenance** — `loadprov()`, `mkmnf()`, `recrd()`,
   `wrmnfjs()`, and `wrsmrytxt()` capture every run as a
   manifest plus a plain-language summary.
@@ -223,7 +229,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   2017); `"auto"` chooses by kernel. The reported likelihood is exact
   whatever the route, so AIC compares across routes and kernels. The
   optimiser restarts its curvature whenever a parameter reaches or leaves
-  its bound, as L-BFGS-B does: a Lomax fit to 19,651 events takes 12 s (it took 344 s).
+  its bound, as L-BFGS-B does: a Lomax fit to 19,651 events takes 12 s.
   `converged` reports the optimiser's stop and `at_bound` the parameters
   left on the parameter box (a shape driven to its wall by day-dated times,
   or a Lomax at its exponential limit).
@@ -329,7 +335,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
 
   Each has a plot. Data governance follows OCAP® and CARE. Eight published
   excerpts ship in `inst/extdata` (`?indiex`), and
-  `indtabs()` lists the 233 mirrored tables;
+  `indtabs()` lists the mirrored tables;
   `vignette("first-nations-metis-inuit-health")`.
   For a table or microdata of your own, see its section "Your own data, step
   by step".
@@ -423,9 +429,8 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   and attributes (exactly, doubles included, with `digits = I(17)`), with
   base64 and base64url codecs beside it.
 - **Curated tables** — `dtabs()` lists the tables served
-  at data.rmorie.com (175 databases and 716 tables on 2026-10-13: Google
-  BigQuery public datasets and the survey, court and justice data the MORIE
-  ledger uses), and `dload("db/table")` opens one with your
+  at data.rmorie.com (Google BigQuery public datasets and the survey, court
+  and justice data the MORIE ledger uses), and `dload("db/table")` opens one with your
   MORIE key (`rmoriebricklayer login` signs in with GitHub or an emailed
   code; or ask at `www.rmorie.com/access/`), under the terms at
   `www.rmorie.com/data-license/`, cached locally. The ICPSR, NCVS
@@ -448,7 +453,7 @@ by a check you can run yourself; none is a claim about the design.
 | Constant time | ctgrind: every operation that touches a secret runs under valgrind memcheck with the secret marked undefined, so a branch or a memory address depending on it is an error. 22 cases -- ML-KEM 512/768/1024 (keygen, encaps, decaps and implicit rejection), ML-DSA 44/65/87 (keygen, sign), SLH-DSA (SHAKE and SHA-2 families), HQC 1/3/5 and round 4, XMSS, CTR_DRBG on the portable and the AES-NI path, HMAC, PBKDF2, keyed BLAKE2b, SHA-2, SHA-3, digest comparison -- all clean with GCC and with Clang. The only values the schemes branch on are the ones their specifications publish (a rejected sample, the challenge, the hints, R), each declassified at one named line | `inst/ctcheck/`, workflow `constant-time` |
 | Secrets are wiped | After each of those operations the harness scans the dead stack below it for copies of the seed, the signing key, the password: none remain | same harness, `ZEROISATION` lines |
 | Memory safe | The whole test suite under AddressSanitizer and UndefinedBehaviorSanitizer (R-devel built with both) | workflow `sanitizers` |
-| Survives hostile arguments | Every one of the 123 C++ entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`), and the 15 written in plain C (the file lock, its release and the locked call, the path probe, the CSV splitter, the checked writer, the checked gzip reader, the progress bar and spinner, the survey replicate totals, the survey row keys, their digest and set digest, the survey replicate column pass, and the interrupt check before a key prompt) report errors through R itself; argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R`, `tests/testthat/test-review3.R` |
+| Survives hostile arguments | Every one of the 125 C++ entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`), and the 17 written in plain C (the file lock, its release and the locked call, the path probe, the environment wipe, the CSV splitter, the checked writer, the checked gzip reader and its size count, the progress bar and spinner, the survey replicate totals, the survey row keys, their digest and set digest, the survey replicate column pass, and the interrupt check before a key prompt) report errors through R itself; argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R`, `tests/testthat/test-review3.R` |
 | No request to a private address | One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (`127.1`, `0x7f000001`, `::ffff:7f00:1`), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, `https` never downgraded | `src/rmbl_fetch.cpp`, `tests/testthat/test-review2.R` |
 | Robust against hostile input | libFuzzer with ASan + UBSan over the DER parser and RSA arithmetic, the decimal-to-double conversion (checked against the C library bit for bit on every input both accept), and the SIU report parsers; weekly long runs | `inst/fuzz/`, workflow `fuzz` |
 | Standards vectors | The C2SP Wycheproof post-quantum sets and the NIST ACVP sets for ML-KEM, ML-DSA, SLH-DSA, SHA-3, SHAKE and HMAC: 6,848 checks, 0 failures, each not-applicable vector named with its reason (the published ACVP PBKDF set is SHA2-224 only, so none of its vectors apply to this package's PBKDF2-HMAC-SHA256, which the test suite checks against the RFC 7914 vectors instead); the masked and the plain paths are compared on every ML-KEM decapsulation and ML-DSA signing vector | `tools/vectors/`, workflow `vectors` |
@@ -489,25 +494,6 @@ grain rule would move both sides of a cell comparison together and pass,
 while `a01` distinct individuals against `c01` and `c04` totals fails.
 The datasets are not shipped — point `OTIS_DATASETS_DIR` at a copy you
 have, or set `OTIS_YOY_DOWNLOAD=1` to fetch them from the province.
-
-**Any analysis can travel the same way.** `mkbndl()` packs a project
-folder into one zip that a reviewer with nothing but R unzips and
-double-clicks; it checks the data against its pinned SHA-256 and writes
-expected against observed for every reported number. `mkbndlproj()`
-starts a project of your own:
-
-```r
-p <- mkbndlproj(file.path(tempdir(), "my-study"), title = "My study")
-# the reviewer's copy finds or downloads the data, or runs on synthetic data
-mkbndl(p$dir, dest = tempdir(), overwrite = TRUE)
-# or carry the data inside, to run offline
-dat <- data.frame(group = rep(c("a", "b"), 50), value = rep(c(4, 6), 50))
-csv <- file.path(tempdir(), "my_data.csv")
-utils::write.csv(dat, csv, row.names = FALSE)
-mkbndl(p$dir, dest = tempdir(), data = csv, overwrite = TRUE)
-# the OTIS example above
-mkbndl("otis-mrp", dest = tempdir(), overwrite = TRUE)
-```
 
 The compiled kernels are published for `LinkingTo`, and a consumer
 package is built **and run** against `inst/include/rmoriebricklayer.h` as
@@ -599,6 +585,34 @@ It is also verified against its security properties: a valid signature
 verifies, and every tampering of the message, signature, authentication
 path, index or key fails.
 
+## Reproducibility bundles
+
+`mkbndl()` packs a project
+folder into one zip that a reviewer with nothing but R unzips and
+double-clicks; it checks the data against its pinned SHA-256 and writes
+expected against observed for every reported number. `mkbndlproj()`
+starts a project of your own:
+
+```r
+p <- mkbndlproj(file.path(tempdir(), "my-study"), title = "My study")
+# the reviewer's copy finds or downloads the data, or runs on synthetic data
+mkbndl(p$dir, dest = tempdir(), overwrite = TRUE)
+# or carry the data inside, to run offline
+dat <- data.frame(group = rep(c("a", "b"), 50), value = rep(c(4, 6), 50))
+csv <- file.path(tempdir(), "my_data.csv")
+utils::write.csv(dat, csv, row.names = FALSE)
+mkbndl(p$dir, dest = tempdir(), data = csv, overwrite = TRUE)
+# the OTIS example above
+mkbndl("otis-mrp", dest = tempdir(), overwrite = TRUE)
+```
+
+The runner inside the zip takes the data from `--data FILE`, from a copy
+inside the bundle, from the bundle's folder or the usual download folders,
+or downloads it from the pinned address and refuses a file whose digest
+differs; `--synthetic` runs on generated data from the project's recipe,
+and every check is then marked INFO, never PASS. See `?mkbndl` for the
+project format.
+
 ## Algorithms
 
 Several methods re-implement established ones and are tested against them:
@@ -643,8 +657,8 @@ With [pak](https://pak.r-lib.org) (progress bars, parallel downloads, compiler
 output hidden unless a build fails, and the named packages always upgraded to
 the current release). Keep the `repos` arguments as written: under `Rscript`
 there is no mirror chooser, so a bare `install.packages()` stops with "trying to
-use CRAN without setting a mirror", and if CRAN carries older versions than
-r-universe.
+use CRAN without setting a mirror", and listing r-universe first gets the newest
+release while CRAN still carries an older one.
 
 ```r
 if (!requireNamespace("pak", quietly = TRUE)) {
@@ -690,7 +704,7 @@ otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
 a <- anltab(otis, value = "individuals", prd = "year",
             by = c("table", "group"), rnd = 5)
 a                                   # what changed, how sure, what was withheld
-rptanl(a, "otis.html")     # one self-contained file
+rptanl(a, file.path(tempdir(), "otis.html"))   # one self-contained file
 ```
 
 The full capsule, step by step. It runs as written, offline: the
@@ -881,6 +895,8 @@ rmoriebricklayer config set anthropic.key       # asks for the key; saved privat
 rmoriebricklayer config set ollama.url http://192.168.1.20:11434
 rmoriebricklayer config set own.url http://localhost:1234/v1
 rmoriebricklayer config unset route             # back to the automatic order
+rmoriebricklayer config reset --force           # move an unreadable settings file aside
+rmoriebricklayer explain-error "the error text" # where an error comes from, no model needed
 rmoriebricklayer models --route ollama          # the models a route offers, the one in use marked
 rmoriebricklayer login --token                  # the data key: paste the key you were issued
 rmoriebricklayer login --email you@example.com  # or: a code is emailed, type it at the prompt
@@ -890,6 +906,11 @@ rmoriebricklayer login --no-browser             # server / SSH: prints a link + 
 rmoriebricklayer logout                         # forget the data key
 rmoriebricklayer data list                      # the curated tables at data.rmorie.com
 rmoriebricklayer data pull db/table --out t.csv # download one (your MORIE key)
+rmoriebricklayer app [PATH]                     # the analysis dashboard (needs shiny)
+rmoriebricklayer wayback urls.txt --out w.jsonl # archive every URL in a file (archive.org keys)
+rmoriebricklayer wayback --retry w.jsonl        # retry the ones that failed
+rmoriebricklayer archive save URL --reason TEXT # save from this connection to archive.rmorie.com
+rmoriebricklayer archive find URL               # its captures; archive get ID -o FILE fetches one
 rmoriebricklayer bundle "your request"          # agentbndl() from the shell
 rmoriebricklayer verify capsules --fail-on warn # every capsule under a folder, as the rmbl GitHub Action checks it
 rmoriebricklayer verify capsules --json         # the check rows as JSON (hmac secret: RMBL_KEY)
