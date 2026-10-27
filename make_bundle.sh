@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
-# make_bundle.sh — Build a shippable reproducibility bundle from a project config.
+# make_bundle.sh — build dist/<project>_v<N>.zip from this checkout.
 #
-# Reads examples/<project>/config.json and emits dist/<project>_v<N>.zip with all
-# scripts, R libraries, OS launchers, rendered templates, and (optionally) a
-# vendored data file.
+# A thin wrapper over the package function mkbndl(): it installs this
+# checkout into a temporary library (a bundle carries the installed copies
+# of the package R files) and builds the zip with it, so the bundle is
+# exactly what this checkout's package builds. With the package installed,
+# call rmoriebricklayer::mkbndl() from R instead; it needs no shell.
 #
 # USAGE:
-#   ./make_bundle.sh <project>            # build small bundle
-#   ./make_bundle.sh <project> --with-data PATH  # also include data file
+#   ./make_bundle.sh <project>                   # a shipped example or a folder
+#   ./make_bundle.sh <project> --with-data PATH  # also include the data file
 #   ./make_bundle.sh <project> --version 2       # version suffix (default: 1)
 #
 # Licence: AGPL-3.0-or-later.
 
 set -euo pipefail
 
-BRICKLAYER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BRICKLAYER_VERSION="0.1"
-
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT=""
 DATA_PATH=""
 VERSION="1"
@@ -30,213 +30,25 @@ while [[ $# -gt 0 ]]; do
     *) PROJECT="$1"; shift ;;
   esac
 done
+[[ -z "${PROJECT}" ]] && { echo "ERROR: project required (e.g. ./make_bundle.sh otis-mrp)"; exit 1; }
 
-[[ -z "${PROJECT}" ]] && { echo "ERROR: project name required (e.g. ./make_bundle.sh otis-mrp)"; exit 1; }
-
-PROJECT_DIR="${BRICKLAYER_ROOT}/examples/${PROJECT}"
-[[ ! -d "${PROJECT_DIR}" ]] && { echo "ERROR: ${PROJECT_DIR} not found"; exit 2; }
-
-CONFIG="${PROJECT_DIR}/config.json"
-[[ ! -f "${CONFIG}" ]] && { echo "ERROR: ${CONFIG} not found"; exit 3; }
-
-# --- Read JSON via python (jq optional) ---
-read_json() {
-  python3 -c "import json,sys; d=json.load(open('${CONFIG}'));
-keys = '${1}'.split('.')
-v=d
-for k in keys:
-    v = v.get(k) if isinstance(v, dict) else None
-    if v is None: break
-print(v if v is not None else '')"
-}
-
-PROJECT_TITLE="$(read_json project.title)"
-PROJECT_NAME="$(read_json project.name)"
-AUTHOR="$(read_json project.author)"
-CONTACT="$(read_json project.contact)"
-ORCID="$(read_json project.orcid)"
-AFFILIATION="$(read_json project.affiliation)"
-PAPER_TITLE="$(read_json project.paper_title)"
-LICENCE="$(read_json project.licence)"
-
-# --- Read provenance for data fields ---
-PROV="${PROJECT_DIR}/data_provenance.json"
-read_prov() {
-  if [[ -f "${PROV}" ]]; then
-    python3 -c "import json,sys; d=json.load(open('${PROV}'));
-keys = '${1}'.split('.')
-v=d
-for k in keys:
-    v = v.get(k) if isinstance(v, dict) else None
-    if v is None: break
-print(v if v is not None else '')"
-  fi
-}
-
-RESOURCE_NAME="$(read_prov resource.name)"
-CATALOGUE_URL="$(read_prov dataset.catalogue_page)"
-DIRECT_URL="$(read_prov resource.direct_url)"
-SHA256_PIN="$(read_prov resource.sha256)"
-SIZE_BYTES="$(read_prov resource.size_bytes)"
-FILENAME="$(read_prov resource.filename)"
-PUBLISHER="$(read_prov dataset.publisher)"
-LICENCE_NAME="$(read_prov dataset.licence_name)"
-LICENCE_URL="$(read_prov dataset.licence_url)"
-RETRIEVED_AT="$(read_prov captured_at_utc)"
-
-# --- Project metadata: work type + supervisor (non-ASCII names OK) ---
-WORK_TYPE="$(read_json project.work_type)"; [[ -z "${WORK_TYPE}" ]] && WORK_TYPE="research paper"
-SUPERVISOR="$(read_json project.supervisor)"
-if [[ -n "${SUPERVISOR}" ]]; then SUPERVISOR_LINE="**Supervisor:** ${SUPERVISOR}"; else SUPERVISOR_LINE=""; fi
-
-# --- Staging area ---
-BUILD_DATE="$(date -u +%Y-%m-%d)"
-BASENAME="${PROJECT}_v${VERSION}"
-[[ -n "${DATA_PATH}" ]] && BASENAME="${BASENAME}_with_data"
-STAGE="$(mktemp -d)/${BASENAME}"
-mkdir -p "${STAGE}"
-
-echo "Building ${BASENAME}..."
-echo "  Project:   ${PROJECT_NAME}"
-echo "  Author:    ${AUTHOR}"
-echo "  Stage:     ${STAGE}"
-echo
-
-# --- Copy R libs + setup_and_run.R ---
-cp "${BRICKLAYER_ROOT}/R/aaa_input_guards.R" "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/R/aaa_local_seed.R"   "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/R/json_native.R"    "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/R/sha256_native.R"  "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/R/lib_helpers.R"     "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/R/lib_data_loader.R" "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/R/lib_synthetic.R"   "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/R/lib_manifest.R"    "${STAGE}/"
-# print_methods.R carries the frame every table printer draws with, so
-# it goes first: rate.R, custody.R and region_map.R print through it
-cp "${BRICKLAYER_ROOT}/R/print_methods.R"  "${STAGE}/"
-# print_boxes.R carries the print() methods of the rate, stock and flow
-# and stay results, which draw the box format() builds
-cp "${BRICKLAYER_ROOT}/R/print_boxes.R"    "${STAGE}/"
-# box_readings.R carries the sentences the boxes print under each result
-cp "${BRICKLAYER_ROOT}/R/box_readings.R"   "${STAGE}/"
-# yoy.R carries .yoy_col, which rate.R uses, so the two travel together
-cp "${BRICKLAYER_ROOT}/R/yoy.R"            "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/R/rate.R"           "${STAGE}/"
-# custody.R carries the stock and flow measures section 3e uses
-cp "${BRICKLAYER_ROOT}/R/custody.R"        "${STAGE}/"
-# region_map.R carries the point-to-region checks section 3g uses
-cp "${BRICKLAYER_ROOT}/R/region_map.R"      "${STAGE}/"
-# the published year-over-year tables, their column signatures, and
-# the verifier that recomputes them from the province's own CSVs
-cp "${PROJECT_DIR}/otis_yoy_verify.R"        "${STAGE}/" 2>/dev/null || true
-cp "${PROJECT_DIR}/otis_yoy_published.csv.gz" "${STAGE}/" 2>/dev/null || true
-cp "${PROJECT_DIR}/otis_rates_published.csv.gz" "${STAGE}/" 2>/dev/null || true
-cp "${PROJECT_DIR}/otis_dataset_signatures.csv" "${STAGE}/" 2>/dev/null || true
-cp "${PROJECT_DIR}/institutional_locations_en.csv" "${STAGE}/" 2>/dev/null || true
-# the institution-to-census-division region map, the division populations
-# it rests on, and the verifier that re-derives both
-cp "${PROJECT_DIR}/otis_region_map_verify.R" "${STAGE}/" 2>/dev/null || true
-cp "${PROJECT_DIR}/institution_cd_region_map.csv" "${STAGE}/" 2>/dev/null || true
-cp "${PROJECT_DIR}/cd_population_2022.csv" "${STAGE}/" 2>/dev/null || true
-cp "${BRICKLAYER_ROOT}/inst/scripts/lib_interactive.R" "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/inst/scripts/setup_and_run.R"   "${STAGE}/"
-# Every internal name the staged files call must be staged too: the
-# bundle runs on a machine with none of the family packages installed.
-Rscript "${BRICKLAYER_ROOT}/dev/bundle_symbol_scan.R" "${STAGE}" || exit 1
-
-# --- Copy OS launchers ---
-cp "${BRICKLAYER_ROOT}/launchers/"START_HERE.command "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/launchers/"START_HERE.bat     "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/launchers/"start_here.sh      "${STAGE}/"
-
-# --- Copy project-specific files ---
-cp "${PROJECT_DIR}/config.json"            "${STAGE}/"
-cp "${PROJECT_DIR}/data_provenance.json"   "${STAGE}/"
-cp "${PROJECT_DIR}"/analysis.R             "${STAGE}/"
-[[ -f "${PROJECT_DIR}/schema.json" ]] && cp "${PROJECT_DIR}/schema.json" "${STAGE}/" || true
-
-# --- Render templates ---
-render_template() {
-  local tmpl="$1" out="$2"
-  python3 <<PYEOF
-import json
-tmpl = open("${tmpl}").read()
-_exp = json.load(open("${CONFIG}")).get("expected", {})
-subs = {
-  "project_title":  "${PROJECT_TITLE}",
-  "project_name":   "${PROJECT_NAME}",
-  "author":         "${AUTHOR}",
-  "contact":        "${CONTACT}",
-  "orcid":          "${ORCID}",
-  "affiliation":    "${AFFILIATION}",
-  "paper_title":    "${PAPER_TITLE}",
-  "work_type":      "${WORK_TYPE}",
-  "supervisor":     "${SUPERVISOR}",
-  "supervisor_line": "${SUPERVISOR_LINE}",
-  "licence":        "${LICENCE}",
-  "data_licence":   "${LICENCE_NAME}",
-  "licence_name":   "${LICENCE_NAME}",
-  "licence_url":    "${LICENCE_URL}",
-  "resource_name":  "${RESOURCE_NAME}",
-  "publisher":      "${PUBLISHER}",
-  "catalogue_url":  "${CATALOGUE_URL}",
-  "direct_url":     "${DIRECT_URL}",
-  "sha256":         "${SHA256_PIN}",
-  "size_bytes":     "${SIZE_BYTES}",
-  "filename":       "${FILENAME}",
-  "retrieved_at":   "${RETRIEVED_AT}",
-  "build_date":     "${BUILD_DATE}",
-  "bricklayer_version": "${BRICKLAYER_VERSION}",
-  "bundle_filename": "${BASENAME}.zip",
-  "bundle_sha256":  "(computed after build — see make_bundle.sh output)",
-  "expected_pass_real": str(_exp.get("pass_real", "")),
-  "expected_total":     str(_exp.get("total_checks", "")),
-  "licence_attribution": "Refer to the OGL-Ontario terms",
-  "network_endpoints_table": "See data_provenance.json for endpoints",
-}
-for k, v in subs.items():
-    tmpl = tmpl.replace("{{" + k + "}}", str(v))
-# Write UTF-8 (preserves accented names); fall back to ASCII transliteration
-# if the destination/locale cannot represent the characters.
-try:
-    with open("${out}", "w", encoding="utf-8") as fh:
-        fh.write(tmpl)
-except UnicodeEncodeError:
-    import unicodedata
-    ascii_tmpl = unicodedata.normalize("NFKD", tmpl).encode("ascii", "ignore").decode("ascii")
-    with open("${out}", "w", encoding="ascii") as fh:
-        fh.write(ascii_tmpl)
-PYEOF
-}
-
-render_template "${BRICKLAYER_ROOT}/templates/README.md.tmpl"       "${STAGE}/README.md"
-render_template "${BRICKLAYER_ROOT}/templates/SECURITY.md.tmpl"     "${STAGE}/SECURITY.md"
-render_template "${BRICKLAYER_ROOT}/templates/INSTRUCTIONS.txt.tmpl" "${STAGE}/INSTRUCTIONS.txt"
-
-# --- Optionally vendor the data file ---
-if [[ -n "${DATA_PATH}" ]]; then
-  [[ ! -f "${DATA_PATH}" ]] && { echo "ERROR: --with-data file not found: ${DATA_PATH}"; exit 4; }
-  TARGET_NAME="${FILENAME:-$(basename "${DATA_PATH}")}"
-  cp "${DATA_PATH}" "${STAGE}/${TARGET_NAME}"
-  render_template "${BRICKLAYER_ROOT}/templates/DATA_NOTICE.md.tmpl" "${STAGE}/DATA_NOTICE.md"
+# a shipped example is read from this checkout, not from the installed copy
+if [[ -d "${ROOT}/inst/bundle/${PROJECT}" ]]; then
+  PROJECT="${ROOT}/inst/bundle/${PROJECT}"
 fi
 
-# --- Make scripts executable ---
-chmod +x "${STAGE}"/*.sh "${STAGE}"/*.command 2>/dev/null || true
-
-# --- Zip up ---
-DIST="${BRICKLAYER_ROOT}/dist"
-mkdir -p "${DIST}"
-ZIP_PATH="${DIST}/${BASENAME}.zip"
-( cd "$(dirname "${STAGE}")" && zip -rq "${ZIP_PATH}" "$(basename "${STAGE}")" )
-SHA="$(shasum -a 256 "${ZIP_PATH}" | awk '{print $1}')"
-
-echo
-echo "=========================================================="
-echo "  ✓ BUILT  ${ZIP_PATH}  ($(wc -c < "${ZIP_PATH}" | tr -d ' ') bytes)"
-echo "  SHA256:  ${SHA}"
-echo "=========================================================="
-echo "  Send this SHA256 to recipients out-of-band so they"
-echo "  can verify the bundle wasn't tampered with in transit."
-
-rm -rf "$(dirname "${STAGE}")"
+LIB="$(mktemp -d)"
+trap 'rm -rf "${LIB}"' EXIT
+echo "Installing this checkout into a temporary library..."
+if ! R CMD INSTALL --no-test-load --no-docs --clean -l "${LIB}" "${ROOT}" > "${LIB}/install.log" 2>&1; then
+  tail -30 "${LIB}/install.log"
+  exit 1
+fi
+mkdir -p "${ROOT}/dist"
+Rscript -e '
+a <- commandArgs(TRUE)
+library(rmoriebricklayer, lib.loc = a[[1L]])
+b <- mkbndl(a[[2L]], a[[3L]], data = if (nzchar(a[[4L]])) a[[4L]],
+            version = a[[5L]], overwrite = TRUE)
+print(b)
+' "${LIB}" "${PROJECT}" "${ROOT}/dist" "${DATA_PATH}" "${VERSION}"

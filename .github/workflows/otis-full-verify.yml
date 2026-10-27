@@ -36,7 +36,7 @@ jobs:
         run: |
           {
             echo 'list<<EOF'
-            jq -r '.r_packages[] | "any::" + .' examples/otis-mrp/config.json
+            jq -r '.r_packages[] | "any::" + .' inst/bundle/otis-mrp/config.json
             echo 'any::sf'
             echo 'local::.'
             echo 'EOF'
@@ -52,12 +52,12 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .otis-cache
-          key: otis-full-v1-${{ hashFiles('examples/otis-mrp/otis_dataset_signatures.csv') }}
+          key: otis-full-v1-${{ hashFiles('inst/bundle/otis-mrp/otis_dataset_signatures.csv') }}
 
       - name: Fetch the OTIS datasets
         run: |
           mkdir -p "$CACHE/otis"
-          cd examples/otis-mrp
+          cd inst/bundle/otis-mrp
           Rscript -e '
             library(rmoriebricklayer)
             source("otis_yoy_verify.R")
@@ -96,7 +96,7 @@ jobs:
           OTIS_RATES_VERIFY: "1"
           OTIS_REGION_MAP_POP: "1"
           OTIS_REGION_MAP_SHP: ${{ github.workspace }}/.otis-cache/shp/lcd_000b21a_e.shp
-          OTIS_LOCATIONS: ${{ github.workspace }}/examples/otis-mrp/institutional_locations_en.csv
+          OTIS_LOCATIONS: ${{ github.workspace }}/inst/bundle/otis-mrp/institutional_locations_en.csv
         run: |
           set -o pipefail
           out="$PWD/full-verify-out"
@@ -104,7 +104,7 @@ jobs:
           # analysis.R writes the Statistics Canada download beside its
           # outputs; point that directory into the cache so it persists.
           ln -sfn "$CACHE/statcan" "$out/statcan"
-          cd examples/otis-mrp
+          cd inst/bundle/otis-mrp
           Rscript analysis.R "$CACHE/otis/a01_restrictive_confinement_detailed_dataset.csv" "$out" \
             2>&1 | tee "$out/run.log"
 

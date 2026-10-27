@@ -1,0 +1,17 @@
+# Package R files every bundle carries, in the order setup_and_run.R
+# sources them. configure copies them from R/ into the installed bundle/lib.
+aaa_input_guards.R
+aaa_local_seed.R
+json_native.R
+sha256_native.R
+lib_helpers.R
+print_methods.R
+box_readings.R
+custody.R
+lib_data_loader.R
+lib_synthetic.R
+lib_manifest.R
+print_boxes.R
+yoy.R
+rate.R
+region_map.R

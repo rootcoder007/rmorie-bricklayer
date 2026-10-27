@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "captured_at_utc": "",
+  "dataset": {
+    "catalogue_page": "",
+    "publisher": "",
+    "licence_name": "",
+    "licence_url": ""
+  },
+  "resource": {
+    "name": "{{title}} data",
+    "filename": "data.csv",
+    "direct_url": "",
+    "sha256": ""
+  },
+  "schema": {
+    "expected_columns": ["group", "value"],
+    "synthetic_recipe": {
+      "n_rows": 100,
+      "seed": 20261027,
+      "columns": {
+        "group": {"type": "sample", "values": ["a", "b"]},
+        "value": {"type": "poisson", "lambda": 5}
+      }
+    }
+  }
+}

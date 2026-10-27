@@ -44,10 +44,11 @@ script_dir <- (function() {
 args <- commandArgs(trailingOnly = TRUE)
 QUICK_MODE <- any(args %in% c("-q", "--quick"))
 HELP_MODE  <- any(args %in% c("-h", "--help"))
-## --synthetic (or OTIS_MRP_SYNTHETIC=1): take the synthetic-data route
-## without a prompt, so an offline or unattended run can exercise it.
-SYNTH_ARG  <- any(args %in% "--synthetic") ||
-  nzchar(Sys.getenv("OTIS_MRP_SYNTHETIC", ""))
+## --synthetic (or BRICKLAYER_SYNTHETIC=1, or the variable config.json
+## names in synthetic_env): take the synthetic-data route without a prompt,
+## so an offline or unattended run can exercise it. Set once config.json
+## is read, below.
+SYNTH_ARG  <- any(args %in% "--synthetic")
 ## The pinned digest is the capsule's guarantee. A mismatch stops the run
 ## (exit 7) unless this flag is given, and then the override is recorded
 ## in the manifest rather than printed once and forgotten.
@@ -119,13 +120,23 @@ PROJECT_LICENCE <- cfg$project$licence      %||% "AGPL-3.0-or-later"
 ANALYSIS_R      <- file.path(script_dir,
                              cfg$analysis$r_script %||% "analysis.R")
 REQ_PKGS        <- unlist(cfg$r_packages) %||% c()
+## one variable at a time: Sys.getenv() of no names returns the whole
+## environment, which would turn every run synthetic
+SYNTH_VARS <- c("BRICKLAYER_SYNTHETIC", unlist(cfg$synthetic_env))
+SYNTH_ARG <- SYNTH_ARG ||
+  any(vapply(SYNTH_VARS, function(v) nzchar(Sys.getenv(v, "")), logical(1)))
+## Packages a project needs only when an environment variable is set
+## (config.json env_packages: {"VARIABLE": ["pkg", ...]}).
+for (ev in names(cfg$env_packages)) {
+  if (nzchar(Sys.getenv(ev, "")))
+    REQ_PKGS <- unique(c(REQ_PKGS, unlist(cfg$env_packages[[ev]])))
+}
 ## Opt-in stages have their own dependencies; probe them up front when the
 ## stage is switched on, so a missing package is reported here and not
 ## thirty seconds into the run.
-dml_on <- tolower(Sys.getenv("OTIS_DML_RECOMPUTE", "")) %in%
-  c("1", "yes", "true", "y")
-if (nzchar(Sys.getenv("OTIS_REGION_MAP_SHP", "")))
-  REQ_PKGS <- unique(c(REQ_PKGS, "sf"))
+env_on <- function(ev) {
+  tolower(Sys.getenv(ev, "")) %in% c("1", "yes", "true", "y")
+}
 
 ## ---------- Banner + OS detection ----------
 OS_KIND <- detect_os()
@@ -169,7 +180,8 @@ cat("\n  Internet endpoints the script may contact:\n")
 for (url in unlist(cfg$network$endpoints %||% c())) {
   cat("    - ", url, "\n", sep = "")
 }
-cat("    - https://web.archive.org/web/...       (Wayback fallback, if needed)\n")
+if (length(prov$wayback))
+  cat("    - https://web.archive.org/web/...       (Wayback fallback, if needed)\n")
 cat("  No telemetry. No third-party services. No personal data leaves your machine.\n")
 cat("----------------------------------------------------------\n\n")
 
@@ -203,32 +215,31 @@ if (length(REQ_PKGS) > 0L) {
 } else {
   say("  (No packages declared in config$r_packages.)")
 }
-## The published DML estimates were produced with DoubleML + mlr3, so that
-## is the route the recompute reproduces; rmorie's morie_otis_irm_dml() is
-## the same estimator in ~10 s and is used only when DoubleML is absent.
-if (dml_on) {
-  fb <- c("DoubleML", "mlr3", "mlr3learners")
-  fb_missing <- fb[!vapply(fb, requireNamespace, logical(1),
-                           quietly = TRUE)]
-  if (length(fb_missing) == 0L) {
-    say("  \u2713 OTIS_DML_RECOMPUTE: DoubleML, mlr3 and mlr3learners present",
-        " (the published route; ~24 min, ~6 GB RAM).")
-  } else if (requireNamespace("rmorie", quietly = TRUE)) {
-    say("  OTIS_DML_RECOMPUTE: DoubleML route missing ",
-        paste(fb_missing, collapse = ", "),
-        "; rmorie is installed and its ~10 s implementation of the same")
-    say("  estimator will be used instead. For the published route:")
-    say("    install.packages(c(", paste0('"', fb, '"', collapse = ", "), "))")
+## Opt-in stages (config.json optional_stages): each names the variable
+## that switches it on, the packages it needs, and optionally an
+## alternative package that does the same work.
+for (st in cfg$optional_stages) {
+  if (!env_on(st$env)) next
+  need <- unlist(st$packages)
+  gone <- need[!vapply(need, requireNamespace, logical(1), quietly = TRUE)]
+  alt <- st$alternative %||% ""
+  if (length(gone) == 0L) {
+    say("  \u2713 ", st$env, ": ", paste(need, collapse = ", "), " present",
+        if (!is.null(st$note)) paste0(" (", st$note, ")"), ".")
+  } else if (nzchar(alt) && requireNamespace(alt, quietly = TRUE)) {
+    say("  ", st$env, ": missing ", paste(gone, collapse = ", "),
+        "; ", alt, " is installed and does the same work instead.")
+    say("  For the reference route:")
+    say("    install.packages(c(", paste0(', need, ', collapse = ", "), "))")
   } else {
-    say("  Missing for OTIS_DML_RECOMPUTE=1: ",
-        paste(fb_missing, collapse = ", "))
+    say("  Missing for ", st$env, "=1: ", paste(gone, collapse = ", "))
     say("  This script does not install packages itself. Install them in R,")
     say("  then re-run this script:")
-    say("    install.packages(c(", paste0('"', fb, '"', collapse = ", "), "))")
-    say("  Alternative: rmorie gives the same estimator in ~10 s (it is on r-universe, not CRAN):")
-    say("    install.packages(\"rmorie\", repos = c(\"https://rootcoder007.r-universe.dev\",",
-        " \"https://cloud.r-project.org\"))")
-    say("  Or unset OTIS_DML_RECOMPUTE: the 8 DML checks then record as INFO.")
+    say("    install.packages(c(", paste0(', need, ', collapse = ", "), "))")
+    if (!is.null(st$alternative_install))
+      say("  Alternative: ", st$alternative_install)
+    say("  Or unset ", st$env, if (!is.null(st$skip_note))
+      paste0(": ", st$skip_note) else ".")
     quit(status = 3)
   }
 }
@@ -266,7 +277,9 @@ if (!is.null(DATA_ARG)) {
   input_path <- DATA_ARG
   say("  Using --data: ", input_path)
 } else {
-  cands <- default_candidates()
+  ## --synthetic asks for generated data: a real file lying beside the
+  ## script is not picked up in its place
+  cands <- if (SYNTH_ARG) character() else default_candidates()
   hits  <- cands[file.exists(cands)]
   if (length(hits) > 0L) {
     say("  Found a candidate file at:")
@@ -336,7 +349,7 @@ if (!is.null(DATA_ARG)) {
         say("ERROR: file does not exist: ", candidate); quit(status = 4)
       }
       input_path <- normalizePath(candidate)
-      if (!is.null(prov$resource$sha256)) {
+      if (nzchar(prov$resource$sha256 %||% "")) {
         v <- vrfsha256(input_path, prov$resource$sha256)
         if (v$match) say("  ✓ SHA256 matches pinned provenance.")
         else digest_mismatch(v)
@@ -372,7 +385,7 @@ if (!is.null(DATA_ARG)) {
         quit(status = 5)
       }
       input_path <- target
-      if (!is.null(prov$resource$sha256)) {
+      if (nzchar(prov$resource$sha256 %||% "")) {
         v <- vrfsha256(target, prov$resource$sha256)
         if (v$match) say("  ✓ SHA256 byte-for-byte match.")
         else digest_mismatch(v)

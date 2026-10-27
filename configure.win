@@ -1,0 +1,17 @@
+#!/bin/sh
+# Windows build configuration for rmoriebricklayer. Makevars.win does the
+# compiler setup; this only copies the bundle runner library (see configure).
+
+# The bundle runner's library: mkbndl() ships these package R files
+# beside setup_and_run.R, so an installed package carries copies of them
+# (an installed package has no R/ sources). cleanup removes them.
+rm -rf inst/bundle/lib
+mkdir -p inst/bundle/lib
+while IFS= read -r f; do
+  case "$f" in ""|"#"*) continue ;; esac
+  cp "R/$f" "inst/bundle/lib/$f" || {
+    echo "configure: cannot copy R/$f for the bundle library" >&2
+    exit 1
+  }
+done < inst/bundle/lib.txt
+exit 0

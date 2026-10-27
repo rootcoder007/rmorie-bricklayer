@@ -109,10 +109,10 @@ SCRIPT_DIR <- tryCatch(.otis_script_dir(), error = function(e) getwd())
 ## The package files this script sources on their own when the package is not installed
 ## (json_native.R, yoy.R, custody.R, region_map.R, ...) call the shared argument checks
 ## (aaa_input_guards.R) and their message helper (lib_helpers.R): those come first, from beside
-## the script (a bundle) or from ../../R (a checkout).
+## the script (a bundle) or from ../../../R (a checkout).
 if (!exists(".rmbl_arg", mode = "function")) {
   for (.f in c("aaa_input_guards.R", "lib_helpers.R")) {
-    for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
+    for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "..", "R"))) {
       .fp <- file.path(.dir, .f)
       if (file.exists(.fp)) {
         source(.fp)
@@ -497,11 +497,11 @@ if (!is.null(.rate_fns)) {
 if (!is.null(.sf_pkg)) {
   adp <- .sf_pkg$adp; alos <- .sf_pkg$alos; stkflow <- .sf_pkg$stkflow
 } else {
-  ## Beside the script is where a bundle puts them; ../../R is the
+  ## Beside the script is where a bundle puts them; ../../../R is the
   ## repository layout, for running this file straight from a checkout.
   for (.f in c("print_methods.R", "print_boxes.R", "box_readings.R",
                "yoy.R", "rate.R", "custody.R")) {
-    for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
+    for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "..", "R"))) {
       .fp <- file.path(.dir, .f)
       if (file.exists(.fp)) {
         source(.fp)
@@ -526,7 +526,7 @@ if (!is.null(.rm_pkg)) {
 } else {
   for (.f in c("print_methods.R", "box_readings.R", "custody.R",
                "region_map.R"))
-  for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
+  for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "..", "R"))) {
     .fp <- file.path(.dir, .f)
     if (file.exists(.fp)) {
       source(.fp)

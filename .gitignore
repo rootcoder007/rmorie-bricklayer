@@ -67,3 +67,6 @@ tests/testthat/testthat-problems.rds
 inst/ctcheck/build*/
 inst/fuzz/build*/
 Rplots.pdf
+
+# copied from R/ by configure for mkbndl()
+inst/bundle/lib/

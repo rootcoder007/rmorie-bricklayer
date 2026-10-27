@@ -1,0 +1,4 @@
+#!/bin/sh
+# remove what ./configure.win wrote
+rm -rf inst/bundle/lib
+exit 0

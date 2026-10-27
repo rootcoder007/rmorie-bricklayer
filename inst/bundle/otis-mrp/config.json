@@ -23,6 +23,23 @@
     "data.table", "MatchIt", "glmmTMB", "lme4",
     "DHARMa", "Hmisc", "jsonlite", "digest"
   ],
+  "synthetic_env": ["OTIS_MRP_SYNTHETIC"],
+
+  "env_packages": {
+    "OTIS_REGION_MAP_SHP": ["sf"]
+  },
+
+  "optional_stages": [
+    {
+      "env": "OTIS_DML_RECOMPUTE",
+      "packages": ["DoubleML", "mlr3", "mlr3learners"],
+      "note": "the published route; ~24 min, ~6 GB RAM",
+      "alternative": "rmorie",
+      "alternative_install": "rmorie gives the same estimator in ~10 s (it is on r-universe, not CRAN): install.packages(\"rmorie\", repos = c(\"https://rootcoder007.r-universe.dev\", \"https://cloud.r-project.org\"))",
+      "skip_note": "the 8 DML checks then record as INFO."
+    }
+  ],
+
   "r_packages_optional": {
     "_comment": "Only for the opt-in DML recompute (OTIS_DML_RECOMPUTE=1); NOT needed for the 28 deterministic checks. PREFERRED: install 'rmorie' -> canonical morie_otis_irm_dml runs the recompute in ~10s and reproduces the published effects to <=0.001. FALLBACK (no rmorie): the self-contained DoubleML port uses the packages below and takes ~24 min.",
     "preferred": ["rmorie"],

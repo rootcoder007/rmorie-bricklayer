@@ -479,7 +479,7 @@ CRC-32 (ITU V.42). The statistics are anchored on base R
 (`stats::poisson.test`, `stats::glm`, `stats::cor.test`, `stats::qpois`)
 or on closed forms recomputed by hand.
 
-The worked example in `examples/otis-mrp/` goes further than checking the
+The worked example in `inst/bundle/otis-mrp/` goes further than checking the
 package: it recomputes **147 published year-over-year tables across 29
 datasets — 8,214 cells** — from the source data and compares every one,
 alongside the descriptives, the matched sample and the causal estimates.
@@ -489,6 +489,25 @@ grain rule would move both sides of a cell comparison together and pass,
 while `a01` distinct individuals against `c01` and `c04` totals fails.
 The datasets are not shipped — point `OTIS_DATASETS_DIR` at a copy you
 have, or set `OTIS_YOY_DOWNLOAD=1` to fetch them from the province.
+
+**Any analysis can travel the same way.** `mkbndl()` packs a project
+folder into one zip that a reviewer with nothing but R unzips and
+double-clicks; it checks the data against its pinned SHA-256 and writes
+expected against observed for every reported number. `mkbndlproj()`
+starts a project of your own:
+
+```r
+p <- mkbndlproj(file.path(tempdir(), "my-study"), title = "My study")
+# the reviewer's copy finds or downloads the data, or runs on synthetic data
+mkbndl(p$dir, dest = tempdir(), overwrite = TRUE)
+# or carry the data inside, to run offline
+dat <- data.frame(group = rep(c("a", "b"), 50), value = rep(c(4, 6), 50))
+csv <- file.path(tempdir(), "my_data.csv")
+utils::write.csv(dat, csv, row.names = FALSE)
+mkbndl(p$dir, dest = tempdir(), data = csv, overwrite = TRUE)
+# the OTIS example above
+mkbndl("otis-mrp", dest = tempdir(), overwrite = TRUE)
+```
 
 The compiled kernels are published for `LinkingTo`, and a consumer
 package is built **and run** against `inst/include/rmoriebricklayer.h` as

@@ -137,7 +137,7 @@ PYEOF
   if (( EXP_TOTAL >= 0 && EXP_PASS >= 0 )); then
     if (( TOTAL != EXP_TOTAL || PASS_N != EXP_PASS )); then
       echo "FAIL: config.json expects ${EXP_PASS}/${EXP_TOTAL} PASS (${EXP_KEY}); this ${INPUT_MODE} run gave ${PASS_N}/${TOTAL}."
-      echo "      Re-measure and update examples/<project>/config.json if the change is intended."
+      echo "      Re-measure and update the project config.json if the change is intended."
       exit 7
     fi
     echo "      matches config.json ${EXP_KEY}: ${EXP_PASS}/${EXP_TOTAL} PASS"

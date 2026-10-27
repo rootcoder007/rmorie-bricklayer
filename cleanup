@@ -1,4 +1,5 @@
 #!/bin/sh
 # remove what ./configure wrote
 rm -f src/Makevars conftest.c conftest
+rm -rf inst/bundle/lib
 exit 0

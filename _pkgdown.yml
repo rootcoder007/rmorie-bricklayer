@@ -154,6 +154,8 @@ reference:
       - capdeps
       - wrmnfjs
       - wrsmrytxt
+      - mkbndl
+      - mkbndlproj
   - title: Language model and command line
     desc: >
       Language models you bring (a provider's key, an OpenAI-compatible

@@ -72,8 +72,8 @@ NULL
 #' Standards that do not apply to this package, with the reason for each.
 #'
 #' @srrstatsNA {G1.5} No associated publication is cited in inst/CITATION.
-#'   README's OTIS recomputation (examples/otis-mrp/) is in the repo, not the
-#' tarball. @srrstatsNA {G2.14c} Imputation
+#'   README's OTIS recomputation ships as the bundle example
+#' (inst/bundle/otis-mrp/). @srrstatsNA {G2.14c} Imputation
 #' is deliberately excluded: published tables'
 #'   suppressed cells are never imputed (comment at top of R/indigenous.R).
 #' @srrstatsNA {EA2.0} The package does no extensive table filtering or joining;

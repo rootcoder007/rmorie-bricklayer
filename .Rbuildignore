@@ -9,10 +9,10 @@
 ^docs$
 ^\.DS_Store$
 ^examples$
+^inst/bundle/lib$
 ^\.git$
 ^\.github$
 ^\.gitignore$
-^launchers$
 ^LICENSE$
 ^\.lintr$
 ^make_bundle\.sh$
@@ -28,7 +28,6 @@
 ^scripts$
 ^\.serena$
 ^src/.*\\.gc(da|no|ov)$
-^templates$
 ^tools$
 ^vignettes/\.gitignore$
 ^inst/ctcheck/build.*$

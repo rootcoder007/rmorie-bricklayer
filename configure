@@ -9,6 +9,19 @@
 #
 #   CURL_CFLAGS=... CURL_LIBS=... R CMD INSTALL .   # override everything
 
+# The bundle runner's library: mkbndl() ships these package R files
+# beside setup_and_run.R, so an installed package carries copies of them
+# (an installed package has no R/ sources). cleanup removes them.
+rm -rf inst/bundle/lib
+mkdir -p inst/bundle/lib
+while IFS= read -r f; do
+  case "$f" in ""|"#"*) continue ;; esac
+  cp "R/$f" "inst/bundle/lib/$f" || {
+    echo "configure: cannot copy R/$f for the bundle library" >&2
+    exit 1
+  }
+done < inst/bundle/lib.txt
+
 : "${PKG_CONFIG:=pkg-config}"
 if [ -n "$CURL_LIBS" ]; then
   : # caller knows best

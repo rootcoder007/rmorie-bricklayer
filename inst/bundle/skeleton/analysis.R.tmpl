@@ -1,0 +1,39 @@
+## analysis.R -- the analysis of this bundle. The runner (setup_and_run.R)
+## calls it as:  Rscript analysis.R <data file> <results folder>
+## with BRICKLAYER_SYNTHETIC=1 set when the data are synthetic. It writes
+## manifest.json into the results folder: one record per check, with the
+## value the paper reports and the value this run computed.
+
+args <- commandArgs(trailingOnly = TRUE)
+INPUT <- args[[1L]]
+OUTPUT_DIR <- args[[2L]]
+
+## The manifest helpers travel with the bundle, beside this script; run
+## from anywhere else, the installed package provides them.
+here <- dirname(normalizePath(sub(
+  "^--file=", "",
+  grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]
+)))
+libs <- c(
+  "aaa_input_guards.R", "aaa_local_seed.R", "json_native.R",
+  "sha256_native.R", "lib_helpers.R", "print_methods.R",
+  "box_readings.R", "custody.R", "lib_manifest.R"
+)
+if (all(file.exists(file.path(here, libs)))) {
+  for (f in libs) source(file.path(here, f))
+} else {
+  library(rmoriebricklayer)
+}
+
+dat <- utils::read.csv(INPUT)
+man <- mkmnf(list(project = {{name}}, title = {{title}}), env = FALSE)
+
+## One record per number the paper reports: replace these with the
+## project's own checks. On synthetic data every record is INFO.
+man <- recrd(man, "rows", nrow(dat), 100, tol = 0, grp = "data")
+man <- recrd(
+  man, "mean_value", mean(dat$value), 5, tol = 1, grp = "data"
+)
+
+wrmnfjs(man, file.path(OUTPUT_DIR, "manifest.json"))
+cat("Wrote", file.path(OUTPUT_DIR, "manifest.json"), "\n")
