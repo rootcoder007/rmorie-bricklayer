@@ -24,8 +24,12 @@
 #' levels (the second is coded 1). Effects are on the outcome's own scale
 #' per unit of treatment, so the statistic must estimate an additive
 #' effect: a difference in means, a regression slope, an average treatment
-#' effect. An estimate passes when it is within `tol` of the planted
-#' effect, after allowing three Monte Carlo standard errors.
+#' effect. An effect is recovered when the average estimate is within
+#' `tol` of it, after allowing three Monte Carlo standard errors, and that
+#' standard error is itself no larger than `tol`: a statistic too noisy for
+#' the check to mean anything is not recovered (raise `n`). Without the
+#' second condition the allowance grew with the noise, and a statistic that
+#' returned pure noise passed.
 #'
 #' @param data A data frame with at least 4 rows.
 #' @param stat A function of one data frame returning one number: the
@@ -85,7 +89,7 @@ cpsplant <- function(data, stat, y, trt, effects = c(0, 0.5, 1),
     rec <- mean(est)
     data.frame(
       effect = e, recovered = rec, bias = rec - e, se = se,
-      passed = abs(rec - e) <= a$tol + 3 * se
+      passed = abs(rec - e) <= a$tol + 3 * se && se <= a$tol
     )
   })
   tab <- do.call(rbind, rows)
@@ -113,7 +117,10 @@ format.rmbl_plant <- function(x, ...) {
     ),
     table = data.frame(
       planted = t$effect, recovered = t$recovered, bias = t$bias,
-      se = t$se, result = ifelse(t$passed, "ok", "FAIL")
+      se = t$se,
+      result = ifelse(t$passed, "ok", ifelse(
+        t$se > x$tol, "too noisy", "FAIL"
+      ))
     ),
     reading = if (x$ok) {
       paste(
@@ -127,9 +134,17 @@ format.rmbl_plant <- function(x, ...) {
         "reporting its estimate."
       )
     },
-    notes = paste(
-      "Each planted data set shuffles the outcome, removing its real",
-      "association, then adds effect x treatment."
+    notes = c(
+      paste(
+        "Each planted data set shuffles the outcome, removing its real",
+        "association, then adds effect x treatment."
+      ),
+      if (any(t$se > x$tol)) {
+        paste(
+          "Too noisy: the standard error exceeds the tolerance, so the",
+          "check cannot tell the effect from noise. Raise n."
+        )
+      }
     )
   )
 }
@@ -251,7 +266,8 @@ recevid <- function(man, x, grp = "evidence") {
     t <- x$table
     for (i in seq_len(nrow(t))) {
       man <- recrd(man, sprintf("planted effect %g recovered", t$effect[i]),
-                   t$recovered[i], t$effect[i], tol = x$tol + 3 * t$se[i],
+                   t$recovered[i], t$effect[i],
+                   tol = x$tol + 3 * min(t$se[i], x$tol),
                    grp = grp)
     }
     return(man)
