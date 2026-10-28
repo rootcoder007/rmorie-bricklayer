@@ -110,7 +110,13 @@
   if (top_lo > bottom_hi) {
     "Their intervals do not overlap: the gap is more than sampling error."
   } else {
-    "Their intervals overlap: the data cannot tell the two apart."
+    # overlapping intervals can still hide a clear difference: the
+    # interval of the difference is narrower than the two put together
+    paste(
+      "Their intervals overlap, which alone does not mean they are the",
+      "same: the difference has its own, narrower interval (svycmp() for",
+      "survey domains)."
+    )
   }
 }
 

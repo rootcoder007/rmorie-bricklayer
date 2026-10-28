@@ -999,7 +999,7 @@ test_that("holbal()'s reading names the most and least balanced group", {
   d$balup <- d$balance + 0.05
   d$weadom <- c("mental", "mental", "mental")
   r2 <- .an_hb_reading(d)
-  expect_match(r2[2L], "overlap: the data cannot tell", fixed = TRUE)
+  expect_match(r2[2L], "overlap, which alone does not mean", fixed = TRUE)
   expect_match(r2[3L], "mental for 3 of 3", fixed = TRUE)
 })
 

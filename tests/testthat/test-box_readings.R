@@ -13,7 +13,7 @@ test_that(".rd_groups() names the highest and lowest and their overlap", {
   expect_identical(r[1L], "Highest rate: y (5); lowest: x (1).")
   expect_match(r[2L], "do not overlap", fixed = TRUE)
   r2 <- .rd_groups(c("x", "y"), c(1, 1.2), c(0.5, 0.6), c(1.5, 1.8), "rate")
-  expect_match(r2[2L], "overlap: the data cannot", fixed = TRUE)
+  expect_match(r2[2L], "overlap, which alone does not mean", fixed = TRUE)
   expect_identical(.rd_groups("x", 3, 2, 4, "rate"), "x: rate 3 [2, 4].")
   expect_match(.rd_groups(c("x", "y"), c(2, 2)), "same estimate", fixed = TRUE)
   expect_match(.rd_groups("x", NA_real_), "No group", fixed = TRUE)

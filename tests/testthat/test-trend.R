@@ -130,3 +130,17 @@ test_that("a short series notes its clamped slope interval", {
   expect_match(.rmbl_trend_reading(flat)[1L], "means no direction",
     fixed = TRUE)
 })
+
+test_that("a trend is read as one only when the test supports it", {
+  r <- function(tau, p) {
+    .rmbl_trend_reading(list(tau = tau, p_value = p, slope = -1))[1L]
+  }
+  expect_match(r(-0.05, 0.483), "leans downward, but p")
+  expect_false(grepl("tendency|downward trend", r(-0.05, 0.483)))
+  expect_match(r(-0.6, 0.001), "means a downward trend")
+  expect_match(r(0.6, 0.001), "means an upward trend")
+  expect_match(r(0, 1), "means no direction")
+  # overlapping intervals are not read as no difference
+  expect_match(.rd_apart(1, 2), "alone does not mean they are the same")
+  expect_match(.rd_apart(3, 2), "do not overlap")
+})

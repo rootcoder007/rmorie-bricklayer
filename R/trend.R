@@ -1166,20 +1166,31 @@ format.rmbl_count_trend <- function(x, digits = 4L, ...) {
 #' @return Sentences.
 #' @noRd
 .rmbl_trend_reading <- function(x) {
-  dir <- if (!is.finite(x$tau) || x$tau == 0) {
-    "no direction"
+  # a direction is claimed only when the test supports one; at p = 0.48 a
+  # "downward tendency" was a reading the data did not make
+  sig <- is.finite(x$p_value) && x$p_value < 0.05
+  lean <- if (!is.finite(x$tau) || x$tau == 0) {
+    NA_character_
   } else if (x$tau > 0) {
-    "an upward tendency"
+    "upward"
   } else {
-    "a downward tendency"
+    "downward"
+  }
+  first <- if (is.na(lean)) {
+    sprintf("Kendall's tau of %s means no direction (p %s);",
+            .rmbl_fmt_num(x$tau), .rmbl_p_txt(x$p_value))
+  } else if (sig) {
+    sprintf("Kendall's tau of %s means %s trend (p %s);",
+            .rmbl_fmt_num(x$tau),
+            if (lean == "upward") "an upward" else "a downward",
+            .rmbl_p_txt(x$p_value))
+  } else {
+    sprintf(paste0("Kendall's tau of %s leans %s, but p %s: no trend ",
+                   "the data can tell from chance;"),
+            .rmbl_fmt_num(x$tau), lean, .rmbl_p_txt(x$p_value))
   }
   c(
-    sprintf(
-      "Kendall's tau of %s means %s (p %s);",
-      .rmbl_fmt_num(x$tau),
-      dir,
-      .rmbl_p_txt(x$p_value)
-    ),
+    first,
     sprintf(
       "the Sen slope says the series moves by about %s per period.",
       .rmbl_fmt_num(x$slope)
