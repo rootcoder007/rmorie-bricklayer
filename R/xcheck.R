@@ -154,18 +154,7 @@ format.rmbl_xvrf <- function(x, ...) {
   writeBin(.rmbl_xvrf_spki(oid, pk), f[1L])
   writeBin(.rmbl_sign_message(msg), f[2L])
   writeBin(sg, f[3L])
-  q <- function(p) {
-    shQuote(p, type = if (.Platform$OS.type == "windows") "cmd" else "sh")
-  }
-  args <- c(
-    "pkeyutl", "-verify", "-pubin", "-keyform", "DER",
-    "-inkey", q(f[1L]), "-rawin", "-in", q(f[2L]), "-sigfile", q(f[3L])
-  )
-  cx <- .rmbl_fips_context(ctx)
-  if (length(cx)) {
-    args <- c(args, "-pkeyopt",
-              paste0("hexcontext-string:", .rmbl_hexlify(cx)))
-  }
+  args <- .rmbl_xvrf_args(f, ctx)
   res <- suppressWarnings(
     system2(openssl, args, stdout = TRUE, stderr = TRUE,
             timeout = .rmbl_fipsmod_timeout())
@@ -191,6 +180,27 @@ format.rmbl_xvrf <- function(x, ...) {
   }
   .rmbl_xvrf_none(paste0(ver$label, " could not check it: ",
                          substr(txt, 1L, 200L)), ver$label)
+}
+
+#' The openssl arguments that verify one signature.
+#' @param f The key, message and signature files.
+#' @param ctx The signature's context string, or NULL.
+#' @return A character vector.
+#' @noRd
+.rmbl_xvrf_args <- function(f, ctx) {
+  q <- function(p) {
+    shQuote(p, type = if (.Platform$OS.type == "windows") "cmd" else "sh")
+  }
+  args <- c(
+    "pkeyutl", "-verify", "-pubin", "-keyform", "DER",
+    "-inkey", q(f[1L]), "-rawin", "-in", q(f[2L]), "-sigfile", q(f[3L])
+  )
+  cx <- .rmbl_fips_context(ctx)
+  if (length(cx)) {
+    args <- c(args, "-pkeyopt",
+              paste0("hexcontext-string:", .rmbl_hexlify(cx)))
+  }
+  args
 }
 
 #' The last arc of the NIST object identifier of a FIPS 204 or 205

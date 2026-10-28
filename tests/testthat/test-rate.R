@@ -450,7 +450,7 @@ test_that("ratechg() and anltab() take prdord, and refuse what they lack", {
   r <- ratechg(d, "n", "pop", "p", by = "g", prdord = ord)
   a <- r[r$g == "a", ]
   expect_identical(as.character(a$p), ord)
-  expect_equal(a$prerate[3], 12)
+  expect_equal(a$prerate[3], 12, tolerance = 1e-12)
   # for b, summer is missing: autumn is not compared with spring as one step
   b <- r[r$g == "b", ]
   expect_true(is.na(b$prerate[b$p == "autumn"]))

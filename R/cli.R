@@ -1535,7 +1535,7 @@ instcli <- function(
     if (!length(g)) {
       return(FALSE)
     }
-    .bl_wordlike(paste0(g[-1L], collapse = ""))
+    .bl_wordlike(paste(g[-1L], collapse = ""))
   }, NA)
 }
 

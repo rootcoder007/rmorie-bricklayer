@@ -143,9 +143,9 @@ fipsmod <- function(openssl = getOption("rmbl.fips.openssl",
 #' that the module loaded now is the one that made the key and refuses
 #' otherwise. XMSS and HQC have no FIPS module and are refused.
 #'
-#' @param scheme An ML-DSA or SLH-DSA parameter set, default
-#'   `"SLH-DSA-SHA2-128s"` (as for [fipskg()]), or such as `"ML-DSA-65"`
-#'   or `"SLH-DSA-SHA2-128s"` (see [fipssz()]).
+#' @param scheme An ML-DSA or SLH-DSA parameter set (see [fipssz()]),
+#'   such as `"ML-DSA-65"`; the default, `"SLH-DSA-SHA2-128s"`, is
+#'   [fipskg()]'s.
 #' @param mod The module, from [fipsmod()].
 #' @return A key of class `rmbl_fipsmod_key` (also a
 #'   `bricklayer_fips_public_key`, so every verifier accepts it): `public`

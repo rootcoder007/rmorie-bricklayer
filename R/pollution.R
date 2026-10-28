@@ -270,38 +270,6 @@ attrfrac <- function(rr, expoprev, rrlo = NULL, rrup = NULL) {
   )
 }
 
-#' The box of an rmbl_attrfrac measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_attrfrac <- function(x, ...) {
-  if (!.lk_ok(x, c("rr", "expoprev")) || length(x) != 1L) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  ci <- attr(x, "ci")
-  pct <- function(v) sprintf("%.2f%%", 100 * v)
-  .an_block(
-    "Population attributable fraction",
-    facts = list(
-      `Attributable fraction` = pct(.rmbl_measure_plain(x)),
-      Interval = if (length(ci) == 2L) {
-        sprintf("[%s, %s]", pct(ci[["lower"]]), pct(ci[["upper"]]))
-      },
-      `Relative risk` = .rd_num_ci(m$rr, m$rrlo, m$rrup),
-      Exposed = pct(m$expoprev),
-      Formula = "Levin: p (RR - 1) / (1 + p (RR - 1))"
-    ),
-    reading = .rmbl_paf_reading(.rmbl_measure_plain(x), ci),
-    notes = c(
-      "It holds only if the relative risk is causal and unconfounded, and",
-      "only for a population exposed as this one is (Rothman et al. 2008,",
-      "chapter 5)."
-    )
-  )
-}
-
 #' Deaths avoided under a counterfactual exposure reduction
 #'
 #' The expected number of deaths (or cases) a year that a given drop in

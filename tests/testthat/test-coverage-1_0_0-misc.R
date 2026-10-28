@@ -94,27 +94,29 @@ test_that("hurwzeta() keeps a trivial zero of the Fourier route exact", {
 })
 
 test_that("fetchvrf() says so when the download cannot be put in place", {
-  # reaches fetchvrf's "cannot write" refusal: the rename and the copy both fail
-  # when the destination is a folder that cannot be written
+  # reaches fetchvrf's "cannot write" refusal: the rename refuses and the copy
+  # cannot overwrite a destination that is read-only
   local_mocked_bindings(
     blfetch = function(url, dest, wb = "", tmout = 120L) {
       writeBin(charToRaw("abc"), dest)
       invisible("live")
     },
+    .rmbl_rename = function(from, to) FALSE,
     .package = "rmoriebricklayer"
   )
-  dd <- withr::local_tempdir()
-  Sys.chmod(dd, "0555")
-  withr::defer(Sys.chmod(dd, "0755"))
+  dest <- file.path(withr::local_tempdir(), "a.csv")
+  writeLines("old", dest)
+  Sys.chmod(dest, "0444")
+  withr::defer(Sys.chmod(dest, "0644"))
   skip_if(
-    file.access(dd, 2L) == 0L,
-    "the folder stays writable (running as root)"
+    file.access(dest, 2L) == 0L,
+    "the file stays writable (running as root)"
   )
   expect_error(
-    suppressWarnings(fetchvrf("https://example.org/a.csv", dd)),
+    suppressWarnings(fetchvrf("https://example.org/a.csv", dest)),
     "cannot write"
   )
-  expect_false(file.exists(paste0(dd, ".part")))
+  expect_identical(readLines(dest), "old")
 })
 
 test_that(

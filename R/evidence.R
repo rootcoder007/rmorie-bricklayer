@@ -118,9 +118,9 @@ format.rmbl_plant <- function(x, ...) {
     table = data.frame(
       planted = t$effect, recovered = t$recovered, bias = t$bias,
       se = t$se,
-      result = ifelse(t$passed, "ok", ifelse(
-        t$se > x$tol, "too noisy", "FAIL"
-      ))
+      result = c("FAIL", "too noisy", "ok")[
+        ifelse(t$passed, 3L, 1L + (t$se > x$tol))
+      ]
     ),
     reading = if (x$ok) {
       paste(

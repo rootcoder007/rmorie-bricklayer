@@ -183,7 +183,7 @@ format.rmbl_fetch <- function(x, ...) {
   # rename() warns in its own words when it refuses (a folder, another file
   # system); the copy below is the answer to that, so the warning is not
   # passed on
-  if (!suppressWarnings(file.rename(tmp, dest))) {
+  if (!suppressWarnings(.rmbl_rename(tmp, dest))) {
     if (!file.copy(tmp, dest, overwrite = TRUE)) {
       stop(sprintf("cannot write %s", dest), call. = FALSE)
     }
@@ -237,3 +237,10 @@ format.rmbl_fetch <- function(x, ...) {
     tried = acc$tried
   )
 }
+
+#' file.rename(), as a seam: the copy fallback is reached in the tests by
+#' making it refuse.
+#' @param from,to As for file.rename().
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_rename <- function(from, to) file.rename(from, to)

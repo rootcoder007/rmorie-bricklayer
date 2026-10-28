@@ -533,6 +533,11 @@ rvkfetch <- function(path, tmout = 10) {
   paste(out, collapse = "")
 }
 
+#' The time OCSP answers are judged at (a seam for the tests).
+#' @return The current time.
+#' @noRd
+.rmbl_ocsp_now <- function() Sys.time()
+
 #' Reads an OCSP answer and checks its signature.
 #'
 #' OCSPResponse ::= SEQUENCE { responseStatus ENUMERATED,
@@ -547,37 +552,12 @@ rvkfetch <- function(path, tmout = 10) {
 #' @return A list with `ok` (TRUE only for a signed \code{"good"}) and a
 #'   `detail` sentence.
 #' @noRd
-#' The time OCSP answers are judged at (a seam for the tests).
-#' @return The current time.
-#' @noRd
-.rmbl_ocsp_now <- function() Sys.time()
-
 .rmbl_ocsp_parse <- function(body, cert, path, when = .rmbl_ocsp_now()) {
-  d <- tryCatch(.Call(C_rmbl_der_parse, body), error = function(e) NULL)
-  if (is.null(d) || !length(d$children)) {
-    return(list(ok = FALSE, detail = "the OCSP answer is not DER"))
-  }
-  status <- .rmbl_int_of(d$children[[1]]$value)
-  if (!identical(status, 0L)) {
-    return(list(
-      ok = FALSE,
-      detail = sprintf(
-        "the responder answered '%s'",
-        .rmbl_ocsp_status_name(status)
-      )
-    ))
-  }
-  b <- .rmbl_ocsp_basic(d)
+  b <- .rmbl_ocsp_answer(body)
   if (is.character(b)) {
     return(list(ok = FALSE, detail = b))
   }
-  # Only the CA that issued the certificate, or a responder it delegated
-  # to, speaks for it (RFC 6960 4.2.2.2). The certificate itself does not:
-  # its key is the one revocation is about.
-  issuers <- Filter(function(p) {
-    identical(p$subject, cert$issuer) &&
-      (isTRUE(cert$self_signed) || !identical(p$der, cert$der))
-  }, path)
+  issuers <- .rmbl_ocsp_issuers(cert, path)
   if (!length(issuers)) {
     return(list(
       ok = FALSE,
@@ -608,6 +588,39 @@ rvkfetch <- function(path, tmout = 10) {
     return(list(ok = TRUE, detail = "the responder says good, signed"))
   }
   list(ok = FALSE, detail = sprintf("the responder says %s, signed", state))
+}
+
+#' An OCSP answer's BasicOCSPResponse, once its status is successful.
+#' @param body The answer as raw DER.
+#' @return A list (basic, src), or a sentence saying why there is none.
+#' @noRd
+.rmbl_ocsp_answer <- function(body) {
+  d <- tryCatch(.Call(C_rmbl_der_parse, body), error = function(e) NULL)
+  if (is.null(d) || !length(d$children)) {
+    return("the OCSP answer is not DER")
+  }
+  status <- .rmbl_int_of(d$children[[1]]$value)
+  if (!identical(status, 0L)) {
+    return(sprintf("the responder answered '%s'",
+                   .rmbl_ocsp_status_name(status)))
+  }
+  .rmbl_ocsp_basic(d)
+}
+
+#' The certificates in a path that may speak for one: its issuer.
+#'
+#' Only the CA that issued the certificate, or a responder it delegated to,
+#' speaks for it (RFC 6960 4.2.2.2). The certificate itself does not: its key
+#' is the one revocation is about.
+#' @param cert The parsed certificate an answer is about.
+#' @param path The certificate path.
+#' @return The issuers.
+#' @noRd
+.rmbl_ocsp_issuers <- function(cert, path) {
+  Filter(function(p) {
+    identical(p$subject, cert$issuer) &&
+      (isTRUE(cert$self_signed) || !identical(p$der, cert$der))
+  }, path)
 }
 
 #' The name of an OCSPResponseStatus that is not "successful".

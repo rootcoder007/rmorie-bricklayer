@@ -39,7 +39,8 @@ cpschk(
 \code{""}.}
 
 \item{pubkey}{Character scalar: the public key (hex) every bundle must be
-signed with (for an HMAC bundle, its key id), or \code{""}.}
+signed with (for an HMAC bundle, its key id), or \code{""}. Given, a
+capsule with no signed bundle fails: there is nothing the key checks.}
 
 \item{psiwarn, psifail}{Non-negative numbers, \code{psiwarn} at most
 \code{psifail}: the PSI bands, by default 0.1 and 0.25, the bands

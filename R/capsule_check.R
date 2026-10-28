@@ -772,7 +772,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' verify's row on a local source: refresh and drift refuse a path outside
 #' the capsule (or a file:// URL without `allowfile`), and verify reported the
 #' same capsule as ok (network review of 1.0.3).
-#' @param d The capsule directory.
+#' @param d The capsule's folder.
 #' @param src The source the provenance names.
 #' @param o The options of cpschk().
 #' @return A check row, or NULL for a web source or none.

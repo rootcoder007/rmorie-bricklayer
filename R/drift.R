@@ -84,32 +84,6 @@ drftks <- function(x, y) {
   .rmbl_measure(out, "drftks", list(nx = length(x), ny = length(y)))
 }
 
-#' The box of an rmbl_drftks measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_drftks <- function(x, ...) {
-  if (!.lk_ok(x, c("nx", "ny")) || length(x) != 3L) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  .an_block(
-    "Two-sample Kolmogorov-Smirnov test",
-    facts = list(
-      Samples = sprintf("%s and %s values", .rmbl_fmt_num(m$nx),
-        .rmbl_fmt_num(m$ny))
-    ),
-    tables = list(.rmbl_msr_table(x)),
-    reading = .rmbl_ks_reading(x),
-    notes = c(
-      "D is the largest gap between the two empirical distribution",
-      "functions. The p-value is the asymptotic one: rough below a few",
-      "dozen values; stats::ks.test() gives an exact one."
-    )
-  )
-}
-
 #' Population stability index and Jensen-Shannon divergence (C backend)
 #'
 #' @description
@@ -220,34 +194,6 @@ drftpsi <- function(x, y, bins = 10L, eps = 1e-6) {
   )
 }
 
-#' The box of an rmbl_drftpsi measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_drftpsi <- function(x, ...) {
-  if (!.lk_ok(x, c("nx", "ny", "bins")) || length(x) != 2L) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  .an_block(
-    "Population stability index",
-    facts = list(
-      Samples = sprintf("%s and %s values", .rmbl_fmt_num(m$nx),
-        .rmbl_fmt_num(m$ny)),
-      Bins = sprintf("%d, on the reference's quantiles", as.integer(m$bins))
-    ),
-    tables = list(.rmbl_msr_table(x)),
-    reading = .rmbl_psi_reading(x),
-    notes = c(
-      "PSI below 0.1 is read as stable, 0.1 to 0.25 as worth a look, above",
-      "0.25 as a material shift: heuristic bands with no null distribution,",
-      "which binning noise alone can cross on a few hundred rows. The JS",
-      "divergence is bounded by log 2 (0.693)."
-    )
-  )
-}
-
 #' Chi-square test for a categorical column
 #'
 #' @description
@@ -338,35 +284,6 @@ drftchisq <- function(obs, expd) {
     out,
     "drftchisq",
     list(n = sum(n), k = length(union(names(n), .rmbl_drft_lv(expd))))
-  )
-}
-
-#' The box of an rmbl_drftchisq measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_drftchisq <- function(x, ...) {
-  if (!.lk_ok(x, c("n", "k")) || length(x) != 4L) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  .an_block(
-    "Chi-square test against a reference distribution",
-    facts = list(
-      Counts = .rmbl_fmt_num(m$n),
-      Categories = .rmbl_fmt_num(m$k)
-    ),
-    tables = list(.rmbl_msr_table(x)),
-    reading = .rmbl_chisq_reading(
-      x,
-      "The counts depart from the reference distribution",
-      "The counts agree with the reference distribution"
-    ),
-    notes = c(
-      "The reference is taken as known; when it is itself a sample,",
-      "drfthomog() allows for its own sampling error."
-    )
   )
 }
 
@@ -471,37 +388,6 @@ drfthomog <- function(x, y, seed = 1L) {
       nx = sum(cnt(x)),
       ny = sum(cnt(y)),
       k = length(union(names(cnt(x)), names(cnt(y))))
-    )
-  )
-}
-
-#' The box of an rmbl_drfthomog measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_drfthomog <- function(x, ...) {
-  if (!.lk_ok(x, c("nx", "ny", "k")) || length(x) != 4L) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  .an_block(
-    "Chi-square test of homogeneity",
-    facts = list(
-      Samples = sprintf("%s and %s values", .rmbl_fmt_num(m$nx),
-        .rmbl_fmt_num(m$ny)),
-      Categories = .rmbl_fmt_num(m$k),
-      Method = attr(x, "method")
-    ),
-    tables = list(.rmbl_msr_table(x)),
-    reading = .rmbl_chisq_reading(
-      x,
-      "The two samples' mixes of categories differ",
-      "The two samples' mixes of categories agree"
-    ),
-    notes = c(
-      "Both samples carry sampling error; with an expected count below 5",
-      "the p-value is a Monte Carlo one under a fixed seed."
     )
   )
 }

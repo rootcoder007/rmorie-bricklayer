@@ -1220,3 +1220,10 @@ Unblinding
 unblinding
 unvalidated
 Wolfi
+CMS
+messageDigest
+nextUpdate
+OCSPSigning
+PKIStatus
+SignerInfo
+thisUpdate

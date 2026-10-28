@@ -120,39 +120,6 @@ ginicoef <- function(x, na.rm = TRUE) {
   )
 }
 
-#' The box of an rmbl_gini measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_gini <- function(x, ...) {
-  if (!.lk_ok(x, c("n", "total", "top")) || length(x) != 1L) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  g <- .rmbl_measure_plain(x)
-  .an_block(
-    "Gini coefficient",
-    facts = list(
-      `Gini coefficient` = .rmbl_fmt_num(g),
-      Units = .rmbl_fmt_num(m$n),
-      Total = .rmbl_fmt_num(m$total),
-      `Largest unit` = sprintf(
-        "%s (%.1f%% of the total)",
-        .rmbl_fmt_num(m$top),
-        100 * m$top / m$total
-      ),
-      `Most for n units` = .rmbl_fmt_num(1 - 1 / m$n)
-    ),
-    reading = .rmbl_gini_reading(g, m$n),
-    notes = c(
-      "0 when every unit holds the same, 1 - 1/n when one unit holds it all;",
-      "doubling every value leaves it unchanged. It says how unequal, not",
-      "which units: topshr() and lorenzc() show where the total sits."
-    )
-  )
-}
-
 #' @rdname concentration
 #' @export
 lorenzc <- function(x, na.rm = TRUE) {

@@ -1283,23 +1283,9 @@ tbs_alg_oid <- function(alg) {
   # the time checked. Unsigned, unreadable or stale ones were skipped and
   # the rest pooled, so an empty CRL served over plain http passed every
   # certificate.
-  covered <- vector("list", length(path))
-  listed <- 0L
-  for (j in seq_along(crls)) {
-    cr <- .rmbl_crl_read(crls[[j]])
-    why <- .rmbl_crl_trusted(cr, path, at_time)
-    if (!is.null(why)) {
-      add(sprintf("crl [%d]", j), FALSE, why)
-      next
-    }
-    listed <- listed + length(cr$serials)
-    for (i in seq_along(path)) {
-      if (identical(path[[i]]$issuer, cr$issuer)) {
-        covered[[i]] <- c(covered[[i]], "", cr$serials)
-      }
-    }
-  }
-  if (!length(crls) || (!length(acc$rows) && !listed)) {
+  cv <- .rmbl_crl_cover(path, crls, at_time, add)
+  covered <- cv$covered
+  if (!length(crls) || (!length(acc$rows) && !cv$listed)) {
     add("revocation", TRUE, "the CRLs supplied list nothing revoked")
     return(do.call(rbind, acc$rows))
   }
@@ -1323,6 +1309,34 @@ tbs_alg_oid <- function(alg) {
     add("revocation", FALSE, "no CRL supplied covers a certificate in the path")
   }
   do.call(rbind, acc$rows)
+}
+
+#' The serials each certificate's CRLs list, from the CRLs that count.
+#' @param path The parsed certificates of the path.
+#' @param crls The CRLs.
+#' @param at_time The time of the check.
+#' @param add The function that records a refused CRL's row.
+#' @return A list: `covered` (per certificate, NULL when no CRL covers it)
+#'   and `listed` (how many serials the counted CRLs list).
+#' @noRd
+.rmbl_crl_cover <- function(path, crls, at_time, add) {
+  covered <- vector("list", length(path))
+  listed <- 0L
+  for (j in seq_along(crls)) {
+    cr <- .rmbl_crl_read(crls[[j]])
+    why <- .rmbl_crl_trusted(cr, path, at_time)
+    if (!is.null(why)) {
+      add(sprintf("crl [%d]", j), FALSE, why)
+      next
+    }
+    listed <- listed + length(cr$serials)
+    for (i in seq_along(path)) {
+      if (identical(path[[i]]$issuer, cr$issuer)) {
+        covered[[i]] <- c(covered[[i]], "", cr$serials)
+      }
+    }
+  }
+  list(covered = covered, listed = listed)
 }
 
 #' Why a CRL cannot be used for a path at a time, or NULL when it can.
@@ -1410,4 +1424,3 @@ tbs_alg_oid <- function(alg) {
     signature = if (length(sig) > 1L) sig[-1L] else raw(0)
   )
 }
-

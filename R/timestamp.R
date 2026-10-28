@@ -145,11 +145,7 @@ tsvrf <- function(
 ) {
   token <- .rmbl_as_bytes(token, "token")
   data <- .rmbl_as_bytes(data, "data")
-  if (!is.null(nonce) && (!is.raw(nonce) || !length(nonce) ||
-                            length(nonce) > 64L)) {
-    stop("`nonce` must be the raw bytes the request sent, or NULL",
-         call. = FALSE)
-  }
+  .rmbl_ts_nonce_arg(nonce)
   acc <- new.env(parent = emptyenv())
   acc$checks <- list()
   note_row <- .rmbl_ts_recorder(acc)
@@ -173,28 +169,7 @@ tsvrf <- function(
   .rmbl_ts_nonce_row(info, nonce, note_row)
 
   .rmbl_ts_imprint_row(info, data, note_row)
-  # 2. the signature over the signed attributes, under a key we are given
-  .cert <- if (is.null(cert)) info$cert_der else .rmbl_as_bytes(cert, "cert")
-  if (is.null(.cert)) {
-    note_row(
-      "signature",
-      FALSE,
-      "no certificate supplied and none embedded in the token"
-    )
-  } else {
-    note_row(
-      "certificate_source",
-      TRUE,
-      if (is.null(cert)) {
-        "the token's embedded certificate"
-      } else {
-        "the certificate supplied by the caller"
-      }
-    )
-    .rmbl_ts_sid_row(info, .cert, note_row)
-    .rmbl_ts_sig_rows(info, .cert, note_row)
-    .rmbl_ts_trust_rows(info, .cert, trust, attm, crls, note_row)
-  }
+  .rmbl_ts_cert_rows(info, cert, trust, attm, crls, note_row)
   .rmbl_ts_result(acc$checks, info)
 }
 
@@ -630,26 +605,9 @@ format.bricklayer_timestamp <- function(x, ...) {
   }
   .rmbl_ts_want(k[[1L]], 0L, 2, "SignedData version")
   .rmbl_ts_digest_algs(k[[2L]])
-  e0 <- if (length(k[[3L]]$children) >= 2L) k[[3L]]$children[[2L]]
-  oct <- if (length(e0$children)) e0$children[[1L]]
-  if (is.null(oct)) {
-    stop("the TSTInfo content is empty", call. = FALSE)
-  }
-  .rmbl_ts_want(e0, 2L, 0, "eContent [0]")
-  .rmbl_ts_want(oct, 0L, 4, "eContent OCTET STRING")
-  tst_der <- oct$value
+  tst_der <- .rmbl_ts_econtent(k[[3L]])
   ti <- .rmbl_ts_tstinfo(.Call(C_rmbl_der_parse, tst_der))
-  si <- if (length(k) >= 4L) k[[length(k)]]
-  if (is.null(si) || !.rmbl_ts_is_signer_infos(si)) {
-    stop("no SignerInfo in the token", call. = FALSE)
-  }
-  for (nd in k[-c(1:3, length(k))]) {
-    if (!identical(nd$class, 2L) || !nd$tag %in% c(0, 1)) {
-      stop("the SignedData has a field RFC 5652 does not define",
-           call. = FALSE)
-    }
-  }
-  signer <- si$children[[1]]
+  signer <- .rmbl_ts_signer(k)
   .rmbl_ts_signer_algs(signer)
   list(
     tst_der = tst_der,
@@ -664,6 +622,39 @@ format.bricklayer_timestamp <- function(x, ...) {
     sig_oid = .rmbl_ts_signer_sig_oid(signer),
     token = token
   )
+}
+
+#' The TSTInfo's bytes inside encapContentInfo's \\[0\\] OCTET STRING.
+#' @param eci The encapContentInfo node.
+#' @return The DER of the TSTInfo.
+#' @noRd
+.rmbl_ts_econtent <- function(eci) {
+  e0 <- if (length(eci$children) >= 2L) eci$children[[2L]]
+  oct <- if (length(e0$children)) e0$children[[1L]]
+  if (is.null(oct)) {
+    stop("the TSTInfo content is empty", call. = FALSE)
+  }
+  .rmbl_ts_want(e0, 2L, 0, "eContent [0]")
+  .rmbl_ts_want(oct, 0L, 4, "eContent OCTET STRING")
+  oct$value
+}
+
+#' The SignedData's one SignerInfo, the fields between checked.
+#' @param k The SignedData's children.
+#' @return The SignerInfo node.
+#' @noRd
+.rmbl_ts_signer <- function(k) {
+  si <- if (length(k) >= 4L) k[[length(k)]]
+  if (is.null(si) || !.rmbl_ts_is_signer_infos(si)) {
+    stop("no SignerInfo in the token", call. = FALSE)
+  }
+  for (nd in k[-c(1:3, length(k))]) {
+    if (!identical(nd$class, 2L) || !nd$tag %in% c(0, 1)) {
+      stop("the SignedData has a field RFC 5652 does not define",
+           call. = FALSE)
+    }
+  }
+  si$children[[1]]
 }
 
 #' A DER node of the class and tag expected, or an error naming it.
@@ -1262,4 +1253,49 @@ format.bricklayer_timestamp <- function(x, ...) {
     NULL
   )
   if (is.null(hex)) NULL else .rmbl_hex_to_raw(hex)
+}
+
+#' tsvrf()'s `nonce`: NULL or the raw bytes a request sent.
+#' @param nonce The argument.
+#' @return NULL, invisibly; an error otherwise.
+#' @noRd
+.rmbl_ts_nonce_arg <- function(nonce) {
+  if (!is.null(nonce) && (!is.raw(nonce) || !length(nonce) ||
+                            length(nonce) > 64L)) {
+    stop("`nonce` must be the raw bytes the request sent, or NULL",
+         call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' tsvrf()'s rows on the signature, under the certificate given or the
+#' token's own.
+#' @param info The token's contents.
+#' @param cert,trust,attm,crls As for tsvrf().
+#' @param note_row The function that records the checks.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_ts_cert_rows <- function(info, cert, trust, attm, crls, note_row) {
+  .cert <- if (is.null(cert)) info$cert_der else .rmbl_as_bytes(cert, "cert")
+  if (is.null(.cert)) {
+    note_row(
+      "signature",
+      FALSE,
+      "no certificate supplied and none embedded in the token"
+    )
+    return(invisible(NULL))
+  }
+  note_row(
+    "certificate_source",
+    TRUE,
+    if (is.null(cert)) {
+      "the token's embedded certificate"
+    } else {
+      "the certificate supplied by the caller"
+    }
+  )
+  .rmbl_ts_sid_row(info, .cert, note_row)
+  .rmbl_ts_sig_rows(info, .cert, note_row)
+  .rmbl_ts_trust_rows(info, .cert, trust, attm, crls, note_row)
+  invisible(NULL)
 }

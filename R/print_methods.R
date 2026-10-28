@@ -868,7 +868,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 }
 
 #' One string escaped, its colour codes kept (see .rmbl_ctl_escape()).
-#' @param x One string.
+#' @param x The string to escape.
 #' @return The string.
 #' @noRd
 .rmbl_ctl_escape1 <- function(x) {
@@ -1009,7 +1009,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 }
 
 #' Text cut to a display width, with an ellipsis where it was cut.
-#' @param s One string.
+#' @param s The text to fit.
 #' @param w The width it must fit.
 #' @param unicode Whether the console takes Unicode (an ellipsis, or "...").
 #' @return One string.

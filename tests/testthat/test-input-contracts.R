@@ -192,7 +192,8 @@ test_that("writers given a folder, or a folder that is not there, say so", {
     expect_error(calls[[nm]](miss), "does not exist|directory does not",
                  info = nm)
     e <- tryCatch(calls[[nm]](dd), error = conditionMessage)
-    expect_false(grepl("cannot open the connection", e), info = nm)
+    expect_false(grepl("cannot open the connection", e, fixed = TRUE),
+                 info = nm)
   }
   expect_error(mkset(rtcalc(data.frame(n = 1, pop = 10), "n", "pop"),
                      file = dd), "is a folder")

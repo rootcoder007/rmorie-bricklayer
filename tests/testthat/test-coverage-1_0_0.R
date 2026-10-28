@@ -427,16 +427,18 @@ test_that(
     "into place"
   ),
   {
-    # a folder as the destination: rename refuses it, copy puts the file inside
-    # it
+    # rename refuses (another file system, say): the copy puts the file in
+    # place (a folder as the destination is refused before any of this)
     dest <- file.path(withr::local_tempdir(), "into")
-    dir.create(dest)
-    local_mocked_bindings(blfetch = function(url, dest, wb = "", tmout = 120L) {
-      writeBin(charToRaw("hello"), dest)
-      invisible("live")
-    })
+    local_mocked_bindings(
+      blfetch = function(url, dest, wb = "", tmout = 120L) {
+        writeBin(charToRaw("hello"), dest)
+        invisible("live")
+      },
+      .rmbl_rename = function(from, to) FALSE
+    )
     r <- fetchvrf("https://s.org/a.bin", dest)
-    expect_true(file.exists(file.path(dest, "into.part")))
+    expect_identical(readBin(dest, "raw", 5L), charToRaw("hello"))
     expect_identical(r$tried$outcome, "kept")
   }
 )

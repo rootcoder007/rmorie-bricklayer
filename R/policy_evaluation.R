@@ -2247,7 +2247,7 @@ polex <- function(seed = 20240101) {
 
 #' Evaluates an expression that refits plndid() many times, without the
 #' caller's warning about its clusters repeated at every refit.
-#' @param expr The expression.
+#' @param expr The refits, unevaluated.
 #' @return Its value.
 #' @noRd
 .rmbl_quiet_cl <- function(expr) {
@@ -2332,7 +2332,7 @@ polex <- function(seed = 20240101) {
     )
   }
   w <- .rmbl_num(data[[v]], arg)
-  if (anyNA(w) || any(!is.finite(w)) || any(w < 0) || !any(w > 0)) {
+  if (anyNA(w) || !all(is.finite(w)) || any(w < 0) || !any(w > 0)) {
     stop(
       .rmbl_fn(),
       sprintf("`%s` must be 0 or more and finite, not all 0, with no NA",

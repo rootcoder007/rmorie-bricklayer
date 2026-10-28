@@ -1181,28 +1181,40 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       rows[[length(rows) + 1L]] <- .bl_ldgr_capsule_rows(d, prov, pkgs)
     }
   }
-  if (nzchar(pubkey) && !file.exists(bundle_file)) {
+  rows[[length(rows) + 1L]] <- .bl_bundle_rows(d, bundle_file, key, pubkey,
+                                                seen)
+  do.call(rbind, rows)
+}
+
+#' verify's rows on a capsule's signed bundle.
+#' @param d The capsule's folder, named in the rows.
+#' @param bundle_file Its capsule_bundle.json.
+#' @param key,pubkey,seen As for .bl_verify_capsule().
+#' @return Check rows, or NULL without a bundle or a pinned key.
+#' @noRd
+.bl_bundle_rows <- function(d, bundle_file, key, pubkey, seen) {
+  if (!file.exists(bundle_file)) {
+    if (!nzchar(pubkey)) {
+      return(NULL)
+    }
     # a key was pinned: a capsule without a signature does not satisfy it
-    rows[[length(rows) + 1L]] <- .bl_check_row(
+    return(.bl_check_row(
       basename(d), "bundle", bundle_file, "bundle: signature", FALSE,
       "a public key was pinned, but the capsule has no signed bundle"
-    )
+    ))
   }
-  if (file.exists(bundle_file)) {
-    bnd <- cpsbndlrd(bundle_file)
-    # the secret goes to an hmac bundle only; the key id or public key is
-    # checked for any scheme
-    hmac <- identical(as.character(unlist(bnd$attestation$scheme))[1L], "hmac")
-    chk <- cpsbndlvrf(
-      bnd,
-      d,
-      keyexp = if (nzchar(pubkey)) pubkey,
-      key = if (hmac && nzchar(key)) key,
-      seen = seen
-    )
-    rows[[length(rows) + 1L]] <- .bl_result_rows(chk, d, "bundle", bundle_file)
-  }
-  do.call(rbind, rows)
+  bnd <- cpsbndlrd(bundle_file)
+  # the secret goes to an hmac bundle only; the key id or public key is
+  # checked for any scheme
+  hmac <- identical(as.character(unlist(bnd$attestation$scheme))[1L], "hmac")
+  chk <- cpsbndlvrf(
+    bnd,
+    d,
+    keyexp = if (nzchar(pubkey)) pubkey,
+    key = if (hmac && nzchar(key)) key,
+    seen = seen
+  )
+  .bl_result_rows(chk, d, "bundle", bundle_file)
 }
 
 #' The worst severity among failed rows.

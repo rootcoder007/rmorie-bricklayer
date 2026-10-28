@@ -690,12 +690,21 @@ all.equal.rmbl_measure <- function(target, current, ...) {
   )
 }
 
-#' @export
-`[<-.rmbl_measure` <- function(x, ..., value) {
+#' Assignment into a measure gives a plain number: the box no longer
+#' describes it.
+#' @param x The measure.
+#' @param ... The indices.
+#' @param value The values.
+#' @return A plain vector.
+#' @noRd
+.rmbl_measure_assign <- function(x, ..., value) {
   x <- .rmbl_measure_plain(x)
   x[...] <- value
   x
 }
+
+#' @export
+`[<-.rmbl_measure` <- .rmbl_measure_assign
 
 #' The box of a measure: its own while it holds the value and names it was
 #' made with. Changed since (pmax(), unname(), names<-), its record no
@@ -708,10 +717,21 @@ all.equal.rmbl_measure <- function(target, current, ...) {
   v0 <- attr(x, "rmbl_value")
   same <- identical(as.vector(p), as.vector(v0)) &&
     identical(names(p), names(v0))
-  f <- get0(
-    paste0(".rmbl_mbox_", sub("^rmbl_", "", class(x)[1L])),
-    envir = topenv(environment()),
-    mode = "function"
+  # by name, so each box is a call the code shows (get0() hid them all)
+  f <- switch(
+    class(x)[1L],
+    rmbl_adp = .rmbl_mbox_adp,
+    rmbl_alos = .rmbl_mbox_alos,
+    rmbl_admits = .rmbl_mbox_admits,
+    rmbl_adpcnts = .rmbl_mbox_adpcnts,
+    rmbl_perdays = .rmbl_mbox_perdays,
+    rmbl_drftks = .rmbl_mbox_drftks,
+    rmbl_drftpsi = .rmbl_mbox_drftpsi,
+    rmbl_drftchisq = .rmbl_mbox_drftchisq,
+    rmbl_drfthomog = .rmbl_mbox_drfthomog,
+    rmbl_gini = .rmbl_mbox_gini,
+    rmbl_attrfrac = .rmbl_mbox_attrfrac,
+    NULL
   )
   if (same && !is.null(f)) f(x)
 }
@@ -735,190 +755,6 @@ all.equal.rmbl_measure <- function(target, current, ...) {
 #' @return TRUE.
 #' @noRd
 .rmbl_measure_choose <- function(x, y, mx, my, cl, reverse) TRUE
-
-#' The box of an rmbl_adp measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_adp <- function(x, ...) {
-  if (!.lk_ok(x, c("days", "t"))) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  d <- .rmbl_fmt_num(m$days)
-  t <- .rmbl_fmt_num(m$t)
-  .an_block(
-    "Average daily population",
-    facts = list(
-      `Average daily population` = .lk_value(x, "people on an average day"),
-      `Person-days` = d,
-      Period = paste(t, "days"),
-      Formula = sprintf("adp = days / t = %s / %s", d, t)
-    ),
-    tables = .lk_table(x, "adp"),
-    reading = .lk_read(x, sprintf(
-      "%s person-days over %s days: %s people held on an average day.",
-      d,
-      t,
-      .rmbl_fmt_num(.rmbl_measure_plain(x))
-    )),
-    notes = c(
-      "Lakner (1976, p.15): a stock -- people held at once, not people who",
-      "passed through. Count only the days served inside the period.",
-      "adp = n x alos / t links it to alos() and admits(), exactly only in a",
-      "steady state."
-    )
-  )
-}
-
-#' The box of an rmbl_alos measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_alos <- function(x, ...) {
-  if (!.lk_ok(x, c("days", "n"))) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  d <- .rmbl_fmt_num(m$days)
-  n <- .rmbl_fmt_num(m$n)
-  .an_block(
-    "Average length of stay",
-    facts = list(
-      `Average stay` = .lk_value(x, "days per person"),
-      `Person-days` = d,
-      People = n,
-      Formula = sprintf("alos = days / n = %s / %s", d, n)
-    ),
-    tables = .lk_table(x, "alos"),
-    reading = .lk_read(x, sprintf(
-      "%s people served %s days between them: %s days each on average.",
-      n,
-      d,
-      .rmbl_fmt_num(.rmbl_measure_plain(x))
-    )),
-    notes = c(
-      "Lakner (1976, p.16-17): n should be the people admitted AND released",
-      "in the period. A period shorter than the longest stay cuts unfinished",
-      "stays short, so alos is biased downward. staysmry() gives the median."
-    )
-  )
-}
-
-#' The box of an rmbl_admits measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_admits <- function(x, ...) {
-  if (!.lk_ok(x, c("adp", "alos", "t"))) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  a <- .rmbl_fmt_num(m$adp)
-  l <- .rmbl_fmt_num(m$alos)
-  t <- .rmbl_fmt_num(m$t)
-  .an_block(
-    "Admissions implied by stock and stay",
-    facts = list(
-      Admissions = .lk_value(x, "over the period"),
-      `Average daily population` = a,
-      `Average stay` = paste(l, "days"),
-      Period = paste(t, "days"),
-      Formula = sprintf("admits = adp x t / alos = %s x %s / %s", a, t, l)
-    ),
-    tables = .lk_table(x, "admits"),
-    reading = .lk_read(x, sprintf(
-      "%s held on an average day, staying %s days each, imply %s %s %s days.",
-      a,
-      l,
-      .rmbl_fmt_num(.rmbl_measure_plain(x)),
-      "admissions over",
-      t
-    )),
-    notes = c(
-      "Lakner (1976, p.18-20): adp = admissions x alos / t is exact only in",
-      "a steady state; with a population growing or shrinking quickly the",
-      "result is an approximation. It is not rounded."
-    )
-  )
-}
-
-#' The box of an rmbl_adpcnts measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_adpcnts <- function(x, ...) {
-  if (!.lk_ok(x, c("counts", "mean", "t"))) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  k <- .rmbl_fmt_num(m$counts)
-  mc <- .rmbl_fmt_num(m$mean)
-  t <- .rmbl_fmt_num(m$t)
-  .an_block(
-    "Person-days from headcounts",
-    facts = list(
-      `Person-days` = .lk_value(x, "over the period"),
-      Headcounts = paste(k, "days counted"),
-      `Mean count` = paste(mc, "people"),
-      Period = paste(t, "days"),
-      Formula = sprintf("days = mean(counts) x t = %s x %s", mc, t)
-    ),
-    tables = .lk_table(x, "days"),
-    reading = .lk_read(x, sprintf(
-      "Counts on %s days average %s people: about %s person-days in %s days.",
-      k,
-      mc,
-      .rmbl_fmt_num(.rmbl_measure_plain(x)),
-      t
-    )),
-    notes = c(
-      "Lakner (1976, p.21): the mean of the days counted stands in for the",
-      "days not counted, which fails if they differ systematically (weekday",
-      "counts where weekend admissions leave before Monday).",
-      "A total of person-days, not a population: adp(x, t) divides by t."
-    )
-  )
-}
-
-#' The box of an rmbl_perdays measure, as print() shows it.
-#' @param x The measure.
-#' @param ... Passed to format() for the plain number.
-#' @return Lines.
-#' @noRd
-.rmbl_mbox_perdays <- function(x, ...) {
-  if (!.lk_ok(x, c("from", "to"))) {
-    return(.lk_plain(x, ...))
-  }
-  m <- attr(x, "lakner")
-  .an_block(
-    "Period length",
-    facts = list(
-      Length = .lk_value(x, "days"),
-      From = format(m$from),
-      To = format(m$to),
-      Formula = "t = to - from + 1 (both ends counted)"
-    ),
-    tables = .lk_table(x, "days"),
-    reading = .lk_read(x, c(
-      sprintf(
-        "From %s to %s is %s days.",
-        format(m$from),
-        format(m$to),
-        .rmbl_fmt_num(.rmbl_measure_plain(x))
-      ),
-      "Pass it as t to adp(), admits(), adpcnts() or stkflow()."
-    )),
-    notes = c(
-      "Both ends count: the 1st to the 31st is 31 days of exposure. A leap",
-      "year comes out at 366 from the dates, without anyone choosing."
-    )
-  )
-}
 
 #' A Lakner measure: the number with its class and the inputs it came from.
 #' @param v The number(s).
@@ -1597,4 +1433,362 @@ all.equal.rmbl_measure <- function(target, current, ...) {
 #' @noRd
 .an_true <- function(x) {
   vapply(x, isTRUE, NA, USE.NAMES = FALSE)
+}
+
+# ---- the boxes of the measures (rmbl_measure) ----------------------------
+# .rmbl_measure_box() picks one by the measure's class: adp(), alos(),
+# admits(), adpcnts(), perdays(), ginicoef(), attrfrac() and the drift
+# statistics.
+
+#' The box of an rmbl_adp measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_adp <- function(x, ...) {
+  if (!.lk_ok(x, c("days", "t"))) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  d <- .rmbl_fmt_num(m$days)
+  t <- .rmbl_fmt_num(m$t)
+  .an_block(
+    "Average daily population",
+    facts = list(
+      `Average daily population` = .lk_value(x, "people on an average day"),
+      `Person-days` = d,
+      Period = paste(t, "days"),
+      Formula = sprintf("adp = days / t = %s / %s", d, t)
+    ),
+    tables = .lk_table(x, "adp"),
+    reading = .lk_read(x, sprintf(
+      "%s person-days over %s days: %s people held on an average day.",
+      d,
+      t,
+      .rmbl_fmt_num(.rmbl_measure_plain(x))
+    )),
+    notes = c(
+      "Lakner (1976, p.15): a stock -- people held at once, not people who",
+      "passed through. Count only the days served inside the period.",
+      "adp = n x alos / t links it to alos() and admits(), exactly only in a",
+      "steady state."
+    )
+  )
+}
+
+#' The box of an rmbl_alos measure, as print() shows it.
+#' @inheritParams .rmbl_mbox_adp
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_alos <- function(x, ...) {
+  if (!.lk_ok(x, c("days", "n"))) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  d <- .rmbl_fmt_num(m$days)
+  n <- .rmbl_fmt_num(m$n)
+  .an_block(
+    "Average length of stay",
+    facts = list(
+      `Average stay` = .lk_value(x, "days per person"),
+      `Person-days` = d,
+      People = n,
+      Formula = sprintf("alos = days / n = %s / %s", d, n)
+    ),
+    tables = .lk_table(x, "alos"),
+    reading = .lk_read(x, sprintf(
+      "%s people served %s days between them: %s days each on average.",
+      n,
+      d,
+      .rmbl_fmt_num(.rmbl_measure_plain(x))
+    )),
+    notes = c(
+      "Lakner (1976, p.16-17): n should be the people admitted AND released",
+      "in the period. A period shorter than the longest stay cuts unfinished",
+      "stays short, so alos is biased downward. staysmry() gives the median."
+    )
+  )
+}
+
+#' The box of an rmbl_admits measure, as print() shows it.
+#' @inheritParams .rmbl_mbox_adp
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_admits <- function(x, ...) {
+  if (!.lk_ok(x, c("adp", "alos", "t"))) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  a <- .rmbl_fmt_num(m$adp)
+  l <- .rmbl_fmt_num(m$alos)
+  t <- .rmbl_fmt_num(m$t)
+  .an_block(
+    "Admissions implied by stock and stay",
+    facts = list(
+      Admissions = .lk_value(x, "over the period"),
+      `Average daily population` = a,
+      `Average stay` = paste(l, "days"),
+      Period = paste(t, "days"),
+      Formula = sprintf("admits = adp x t / alos = %s x %s / %s", a, t, l)
+    ),
+    tables = .lk_table(x, "admits"),
+    reading = .lk_read(x, sprintf(
+      "%s held on an average day, staying %s days each, imply %s %s %s days.",
+      a,
+      l,
+      .rmbl_fmt_num(.rmbl_measure_plain(x)),
+      "admissions over",
+      t
+    )),
+    notes = c(
+      "Lakner (1976, p.18-20): adp = admissions x alos / t is exact only in",
+      "a steady state; with a population growing or shrinking quickly the",
+      "result is an approximation. It is not rounded."
+    )
+  )
+}
+
+#' The box of an rmbl_adpcnts measure, as print() shows it.
+#' @inheritParams .rmbl_mbox_adp
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_adpcnts <- function(x, ...) {
+  if (!.lk_ok(x, c("counts", "mean", "t"))) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  k <- .rmbl_fmt_num(m$counts)
+  mc <- .rmbl_fmt_num(m$mean)
+  t <- .rmbl_fmt_num(m$t)
+  .an_block(
+    "Person-days from headcounts",
+    facts = list(
+      `Person-days` = .lk_value(x, "over the period"),
+      Headcounts = paste(k, "days counted"),
+      `Mean count` = paste(mc, "people"),
+      Period = paste(t, "days"),
+      Formula = sprintf("days = mean(counts) x t = %s x %s", mc, t)
+    ),
+    tables = .lk_table(x, "days"),
+    reading = .lk_read(x, sprintf(
+      "Counts on %s days average %s people: about %s person-days in %s days.",
+      k,
+      mc,
+      .rmbl_fmt_num(.rmbl_measure_plain(x)),
+      t
+    )),
+    notes = c(
+      "Lakner (1976, p.21): the mean of the days counted stands in for the",
+      "days not counted, which fails if they differ systematically (weekday",
+      "counts where weekend admissions leave before Monday).",
+      "A total of person-days, not a population: adp(x, t) divides by t."
+    )
+  )
+}
+
+#' The box of an rmbl_perdays measure, as print() shows it.
+#' @inheritParams .rmbl_mbox_adp
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_perdays <- function(x, ...) {
+  if (!.lk_ok(x, c("from", "to"))) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  .an_block(
+    "Period length",
+    facts = list(
+      Length = .lk_value(x, "days"),
+      From = format(m$from),
+      To = format(m$to),
+      Formula = "t = to - from + 1 (both ends counted)"
+    ),
+    tables = .lk_table(x, "days"),
+    reading = .lk_read(x, c(
+      sprintf(
+        "From %s to %s is %s days.",
+        format(m$from),
+        format(m$to),
+        .rmbl_fmt_num(.rmbl_measure_plain(x))
+      ),
+      "Pass it as t to adp(), admits(), adpcnts() or stkflow()."
+    )),
+    notes = c(
+      "Both ends count: the 1st to the 31st is 31 days of exposure. A leap",
+      "year comes out at 366 from the dates, without anyone choosing."
+    )
+  )
+}
+
+#' The box of an rmbl_drftks measure, as print() shows it.
+#' @inheritParams .rmbl_mbox_adp
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_drftks <- function(x, ...) {
+  if (!.lk_ok(x, c("nx", "ny")) || length(x) != 3L) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  .an_block(
+    "Two-sample Kolmogorov-Smirnov test",
+    facts = list(
+      Samples = sprintf("%s and %s values", .rmbl_fmt_num(m$nx),
+        .rmbl_fmt_num(m$ny))
+    ),
+    tables = list(.rmbl_msr_table(x)),
+    reading = .rmbl_ks_reading(x),
+    notes = c(
+      "D is the largest gap between the two empirical distribution",
+      "functions. The p-value is the asymptotic one: rough below a few",
+      "dozen values; stats::ks.test() gives an exact one."
+    )
+  )
+}
+
+#' The box of an rmbl_drftpsi measure, as print() shows it.
+#' @inheritParams .rmbl_mbox_adp
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_drftpsi <- function(x, ...) {
+  if (!.lk_ok(x, c("nx", "ny", "bins")) || length(x) != 2L) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  .an_block(
+    "Population stability index",
+    facts = list(
+      Samples = sprintf("%s and %s values", .rmbl_fmt_num(m$nx),
+        .rmbl_fmt_num(m$ny)),
+      Bins = sprintf("%d, on the reference's quantiles", as.integer(m$bins))
+    ),
+    tables = list(.rmbl_msr_table(x)),
+    reading = .rmbl_psi_reading(x),
+    notes = c(
+      "PSI below 0.1 is read as stable, 0.1 to 0.25 as worth a look, above",
+      "0.25 as a material shift: heuristic bands with no null distribution,",
+      "which binning noise alone can cross on a few hundred rows. The JS",
+      "divergence is bounded by log 2 (0.693)."
+    )
+  )
+}
+
+#' The box of an rmbl_drftchisq measure, as print() shows it.
+#' @inheritParams .rmbl_mbox_adp
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_drftchisq <- function(x, ...) {
+  if (!.lk_ok(x, c("n", "k")) || length(x) != 4L) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  .an_block(
+    "Chi-square test against a reference distribution",
+    facts = list(
+      Counts = .rmbl_fmt_num(m$n),
+      Categories = .rmbl_fmt_num(m$k)
+    ),
+    tables = list(.rmbl_msr_table(x)),
+    reading = .rmbl_chisq_reading(
+      x,
+      "The counts depart from the reference distribution",
+      "The counts agree with the reference distribution"
+    ),
+    notes = c(
+      "The reference is taken as known; when it is itself a sample,",
+      "drfthomog() allows for its own sampling error."
+    )
+  )
+}
+
+#' The box of an rmbl_drfthomog measure, as print() shows it.
+#' @inheritParams .rmbl_mbox_adp
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_drfthomog <- function(x, ...) {
+  if (!.lk_ok(x, c("nx", "ny", "k")) || length(x) != 4L) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  .an_block(
+    "Chi-square test of homogeneity",
+    facts = list(
+      Samples = sprintf("%s and %s values", .rmbl_fmt_num(m$nx),
+        .rmbl_fmt_num(m$ny)),
+      Categories = .rmbl_fmt_num(m$k),
+      Method = attr(x, "method")
+    ),
+    tables = list(.rmbl_msr_table(x)),
+    reading = .rmbl_chisq_reading(
+      x,
+      "The two samples' mixes of categories differ",
+      "The two samples' mixes of categories agree"
+    ),
+    notes = c(
+      "Both samples carry sampling error; with an expected count below 5",
+      "the p-value is a Monte Carlo one under a fixed seed."
+    )
+  )
+}
+
+#' The box of an rmbl_gini measure, as print() shows it.
+#' @inheritParams .rmbl_mbox_adp
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_gini <- function(x, ...) {
+  if (!.lk_ok(x, c("n", "total", "top")) || length(x) != 1L) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  g <- .rmbl_measure_plain(x)
+  .an_block(
+    "Gini coefficient",
+    facts = list(
+      `Gini coefficient` = .rmbl_fmt_num(g),
+      Units = .rmbl_fmt_num(m$n),
+      Total = .rmbl_fmt_num(m$total),
+      `Largest unit` = sprintf(
+        "%s (%.1f%% of the total)",
+        .rmbl_fmt_num(m$top),
+        100 * m$top / m$total
+      ),
+      `Most for n units` = .rmbl_fmt_num(1 - 1 / m$n)
+    ),
+    reading = .rmbl_gini_reading(g, m$n),
+    notes = c(
+      "0 when every unit holds the same, 1 - 1/n when one unit holds it all;",
+      "doubling every value leaves it unchanged. It says how unequal, not",
+      "which units: topshr() and lorenzc() show where the total sits."
+    )
+  )
+}
+
+#' The box of an rmbl_attrfrac measure, as print() shows it.
+#' @inheritParams .rmbl_mbox_adp
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_attrfrac <- function(x, ...) {
+  if (!.lk_ok(x, c("rr", "expoprev")) || length(x) != 1L) {
+    return(.lk_plain(x, ...))
+  }
+  m <- attr(x, "lakner")
+  ci <- attr(x, "ci")
+  pct <- function(v) sprintf("%.2f%%", 100 * v)
+  .an_block(
+    "Population attributable fraction",
+    facts = list(
+      `Attributable fraction` = pct(.rmbl_measure_plain(x)),
+      Interval = if (length(ci) == 2L) {
+        sprintf("[%s, %s]", pct(ci[["lower"]]), pct(ci[["upper"]]))
+      },
+      `Relative risk` = .rd_num_ci(m$rr, m$rrlo, m$rrup),
+      Exposed = pct(m$expoprev),
+      Formula = "Levin: p (RR - 1) / (1 + p (RR - 1))"
+    ),
+    reading = .rmbl_paf_reading(.rmbl_measure_plain(x), ci),
+    notes = c(
+      "It holds only if the relative risk is causal and unconfounded, and",
+      "only for a population exposed as this one is (Rothman et al. 2008,",
+      "chapter 5)."
+    )
+  )
 }

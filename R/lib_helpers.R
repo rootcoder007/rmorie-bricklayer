@@ -930,6 +930,6 @@ wrtxtfb <- function(text, path) {
 #' @noRd
 .rmbl_fields <- function(x) {
   x <- enc2utf8(as.character(x))
-  paste0(ifelse(is.na(x), "~", paste0(nchar(x, type = "bytes"), ":", x)),
-         collapse = "")
+  paste(ifelse(is.na(x), "~", paste0(nchar(x, type = "bytes"), ":", x)),
+        collapse = "")
 }

@@ -7,9 +7,9 @@
 fipsmkg(scheme = "SLH-DSA-SHA2-128s", mod = fipsmod())
 }
 \arguments{
-\item{scheme}{An ML-DSA or SLH-DSA parameter set, default
-\code{"SLH-DSA-SHA2-128s"} (as for \code{\link[=fipskg]{fipskg()}}), or such as \code{"ML-DSA-65"}
-or \code{"SLH-DSA-SHA2-128s"} (see \code{\link[=fipssz]{fipssz()}}).}
+\item{scheme}{An ML-DSA or SLH-DSA parameter set (see \code{\link[=fipssz]{fipssz()}}),
+such as \code{"ML-DSA-65"}; the default, \code{"SLH-DSA-SHA2-128s"}, is
+\code{\link[=fipskg]{fipskg()}}'s.}
 
 \item{mod}{The module, from \code{\link[=fipsmod]{fipsmod()}}.}
 }

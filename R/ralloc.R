@@ -371,7 +371,7 @@ plot.rmbl_alloc <- function(x, ...) {
   if (!is.null(block)) {
     # as.integer() turned 3e9 into NA and Inf into an error of R's own
     if (!is.numeric(block) || !length(block) || anyNA(block) ||
-          any(!is.finite(block)) || any(block < 1) || any(block > 1e6) ||
+          !all(is.finite(block)) || any(block < 1) || any(block > 1e6) ||
           any(block %% sum(ratio) != 0)) {
       stop(
         sprintf(
@@ -447,8 +447,8 @@ plot.rmbl_alloc <- function(x, ...) {
     (is.character(seed) || (is.numeric(seed) && is.finite(seed)))
   if (!is.raw(seed) && !one) {
     stop(
-      paste0("ralloc: `seed` must be NULL, 48 raw bytes, their 96 ",
-             "hexadecimal digits, or one word or number"),
+      "ralloc: `seed` must be NULL, 48 raw bytes, their 96 ",
+      "hexadecimal digits, or one word or number",
       call. = FALSE
     )
   }
