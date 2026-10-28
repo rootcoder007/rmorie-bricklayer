@@ -419,8 +419,15 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
     )
   }
   cols[["note"]] <- ifelse(is.na(d$flag), "", d$flag)
-  # a pipe inside a cell would end the cell
-  cols <- lapply(cols, function(v) gsub("|", "\\|", v, fixed = TRUE))
+  # a pipe would end the cell, a line break the row, and HTML in a label
+  # would run in a renderer that allows it
+  cols <- lapply(cols, function(v) {
+    v <- gsub("[\r\n]+", " ", v)
+    v <- gsub("&", "&amp;", v, fixed = TRUE)
+    v <- gsub("<", "&lt;", v, fixed = TRUE)
+    v <- gsub(">", "&gt;", v, fixed = TRUE)
+    gsub("|", "\\|", v, fixed = TRUE)
+  })
   cols
 }
 

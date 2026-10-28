@@ -209,17 +209,48 @@
         yoymd(e$yoy, f)
         readLines(f, warn = FALSE)
       } else {
-        c("```", e$text, "```")
+        .bl_md_fenced(e$text)
       }
-      call <- if (length(e$code)) c("```r", e$code, "```", "")
-      paste(c(paste("##", e$title), "", call, body), collapse = "\n")
+      call <- if (length(e$code)) .bl_md_fenced(e$code, "r")
+      paste(
+        c(paste("##", .bl_md_line(e$title)), "", call, if (length(call)) "",
+          body),
+        collapse = "\n"
+      )
     },
     ""
   )
   paste(
-    c(paste("#", title), "", paste(parts, collapse = "\n\n")),
+    c(paste("#", .bl_md_line(title)), "", paste(parts, collapse = "\n\n")),
     collapse = "\n"
   )
+}
+
+#' Text as a fenced code block whose fence no line of it can close: one
+#' backtick longer than the longest run of backticks inside.
+#' @param text Lines.
+#' @param lang The fence's language, or "".
+#' @return Lines.
+#' @noRd
+.bl_md_fenced <- function(text, lang = "") {
+  text <- unlist(strsplit(as.character(text), "\n", fixed = TRUE))
+  runs <- unlist(regmatches(text, gregexpr("`+", text)))
+  fence <- strrep("`", max(3L, nchar(runs) + 1L))
+  c(paste0(fence, lang), text, fence)
+}
+
+#' Text for one Markdown line (a heading): one line, HTML characters as
+#' entities, and the characters that would make a link, an image or emphasis
+#' escaped, so a result's name is shown as written and never runs.
+#' @param s The text.
+#' @return One string.
+#' @noRd
+.bl_md_line <- function(s) {
+  s <- gsub("[\r\n]+", " ", paste(as.character(s), collapse = " "))
+  s <- gsub("&", "&amp;", s, fixed = TRUE)
+  s <- gsub("<", "&lt;", s, fixed = TRUE)
+  s <- gsub(">", "&gt;", s, fixed = TRUE)
+  gsub("([\\\\`*_\\[\\]()#!|~])", "\\\\\\1", s, perl = TRUE)
 }
 
 #' The report panel.

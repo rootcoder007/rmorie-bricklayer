@@ -371,7 +371,13 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' @return `s`, folded to ASCII when the console needs it; NA kept.
 #' @noRd
 .rmbl_txt <- function(s) {
-  if (!is.character(s) || .rmbl_unicode_ok()) {
+  if (!is.character(s)) {
+    return(s)
+  }
+  # control characters are escaped here, where a cell is still text, so the
+  # width a table measures is the width printed
+  s <- .rmbl_ctl_escape(s)
+  if (.rmbl_unicode_ok()) {
     return(s)
   }
   out <- toascii(s)
