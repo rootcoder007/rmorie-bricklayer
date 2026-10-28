@@ -5,8 +5,8 @@
 #' Send a capture kept on this computer to the archives later
 #'
 #' @description
-#' [arccap()] keeps every capture on this computer first: the files, their
-#' SHA-256, a manifest and, by default, a WARC copy. When the Wayback
+#' [arccap()] keeps every capture on this computer first: the files,
+#' their SHA-256, a manifest and, by default, a WARC copy. When the Wayback
 #' Machine, archive.rmorie.com or archive.org is down, or there is no
 #' network but the source's, the capture is still complete there.
 #' \code{arcpush()} sends that same capture on later: the very files that
@@ -31,7 +31,8 @@
 #' \code{meta}, \code{upload}, \code{reason}, \code{tmout} and the keys.
 #'
 #' @param dir The folder of an [arccap()] capture.
-#' @param item,meta,ak,sk,upload,reason,visibility,tmout As for [arccap()].
+#' @param item,meta,ak,sk,upload,reason,visibility,tmout As for
+#'   [arccap()].
 #' @param tsa A time-stamping authority, asked only when the manifest has
 #'   no timestamp yet (default as for [arccap()]); \code{NULL} asks none.
 #' @return An object of class \code{rmbl_archive_capture}, as [arccap()]
@@ -40,8 +41,10 @@
 #'   bytes no longer match the manifest, is \code{"failed: ..."} and is not
 #'   sent. What each archive took is also kept in \file{push.json} in
 #'   \code{dir}, which the next run reads.
-#' @seealso [arccap()] makes the capture; [wbsave()] and [wbrtry()] for the
-#'   Wayback Machine alone; [fetchvrf()] falls back to the copies.
+#' @seealso [arccap()] makes the capture;
+#'   [wbsave()] and
+#'   [wbrtry()] for the Wayback Machine alone;
+#'   [fetchvrf()] falls back to the copies.
 #' @examplesIf interactive()
 #' # capture now, on this computer only
 #' src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
@@ -107,7 +110,7 @@ arcpush <- function(
 
 #' The capture table of an arccap() folder, each file checked against the
 #' SHA-256 its manifest recorded.
-#' @param dir The capture folder.
+#' @param dir The arccap() folder being sent.
 #' @param mpath Its manifest.
 #' @return The capture table, as arccap() builds it.
 #' @noRd
@@ -149,12 +152,12 @@ arcpush <- function(
   vapply(recs, function(e) {
     # a JSON null comes back as NULL, alone or inside a list
     v <- unlist(e[[k]], use.names = FALSE)
-    if (!length(v)) NA_character_ else as.character(v[[1L]])
+    if (length(v)) as.character(v[[1L]]) else NA_character_
   }, "")
 }
 
 #' Text with NA as "".
-#' @param x A character vector.
+#' @param x Text, with NA where a field was empty.
 #' @return `x` with NA replaced by "".
 #' @noRd
 .bl_push_na <- function(x) {
@@ -163,8 +166,8 @@ arcpush <- function(
 }
 
 #' What the archives took in earlier runs (push.json), added to the table.
-#' @param out The capture table.
-#' @param dir The capture folder.
+#' @param out The capture table of arcpush().
+#' @param dir The arccap() folder being sent.
 #' @return The table, with each archive's earlier answer.
 #' @noRd
 .bl_push_merge <- function(out, dir) {
@@ -182,8 +185,8 @@ arcpush <- function(
 }
 
 #' Keeps what each archive took, for the next run.
-#' @param out The capture table.
-#' @param dir The capture folder.
+#' @param out The capture table of arcpush().
+#' @param dir The arccap() folder being sent.
 #' @return The path of push.json, invisibly.
 #' @noRd
 .bl_push_save <- function(out, dir) {
@@ -197,8 +200,8 @@ arcpush <- function(
 
 #' The manifest's timestamp: the one kept, or a new one when there is none.
 #' @param tsa The authority, or NULL.
-#' @param mpath The manifest.
-#' @param dir The capture folder.
+#' @param mpath The capture's manifest.json.
+#' @param dir The arccap() folder being sent.
 #' @return A tsvrf() result, or NULL.
 #' @noRd
 .bl_push_stamp <- function(tsa, mpath, dir) {
@@ -214,7 +217,7 @@ arcpush <- function(
 
 #' Uploads to the archive.org item the files it does not have yet; a
 #' refusal is recorded on those files, so the next run tries again.
-#' @param out The capture table.
+#' @param out The capture table of arcpush().
 #' @param ok The files that may be sent.
 #' @param item,meta,dir,tmout As for arcpush().
 #' @param keys The archive.org keys.
@@ -237,7 +240,7 @@ arcpush <- function(
 
 #' Each file's status from what the archives hold: archived, uploaded,
 #' captured, or the failure.
-#' @param out The capture table.
+#' @param out The capture table of arcpush().
 #' @return The table.
 #' @noRd
 .bl_push_status <- function(out) {

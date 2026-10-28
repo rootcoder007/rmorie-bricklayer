@@ -68,7 +68,7 @@ manifest and WARC copies in D (default \file{captures}); \code{archive
 push DIR [--reason TEXT] [--private] [--also wayback]} sends a capture
 kept in DIR on later, the same bytes, with \code{\link{arcpush}} (run it
 again to retry what failed); \code{archive find URL} and \code{archive
-get ID|URL -o FILE} list a URL's captures and fetch one's exact bytes
+get ID|URL -o FILE} list the captures of a URL and fetch one's exact bytes
 (\code{\link{arcfind}}, \code{\link{arcget}})}
 \item{\code{verify PATH [--json] [--fail-on LEVEL]
 [--public-key HEX]}}{check every capsule under PATH as the rmbl GitHub Action

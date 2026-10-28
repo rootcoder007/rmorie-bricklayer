@@ -20,7 +20,8 @@ arcpush(
 \arguments{
 \item{dir}{The folder of an \code{\link[=arccap]{arccap()}} capture.}
 
-\item{item, meta, ak, sk, upload, reason, visibility, tmout}{As for \code{\link[=arccap]{arccap()}}.}
+\item{item, meta, ak, sk, upload, reason, visibility, tmout}{As for
+\code{\link[=arccap]{arccap()}}.}
 
 \item{tsa}{A time-stamping authority, asked only when the manifest has
 no timestamp yet (default as for \code{\link[=arccap]{arccap()}}); \code{NULL} asks none.}
@@ -34,8 +35,8 @@ sent. What each archive took is also kept in \file{push.json} in
 \code{dir}, which the next run reads.
 }
 \description{
-\code{\link[=arccap]{arccap()}} keeps every capture on this computer first: the files, their
-SHA-256, a manifest and, by default, a WARC copy. When the Wayback
+\code{\link[=arccap]{arccap()}} keeps every capture on this computer first: the files,
+their SHA-256, a manifest and, by default, a WARC copy. When the Wayback
 Machine, archive.rmorie.com or archive.org is down, or there is no
 network but the source's, the capture is still complete there.
 \code{arcpush()} sends that same capture on later: the very files that
@@ -74,6 +75,8 @@ arcpush(
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=arccap]{arccap()}} makes the capture; \code{\link[=wbsave]{wbsave()}} and \code{\link[=wbrtry]{wbrtry()}} for the
-Wayback Machine alone; \code{\link[=fetchvrf]{fetchvrf()}} falls back to the copies.
+\code{\link[=arccap]{arccap()}} makes the capture;
+\code{\link[=wbsave]{wbsave()}} and
+\code{\link[=wbrtry]{wbrtry()}} for the Wayback Machine alone;
+\code{\link[=fetchvrf]{fetchvrf()}} falls back to the copies.
 }

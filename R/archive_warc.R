@@ -312,7 +312,7 @@
 #' the folder's archive/, and an offset and length inside that file. An index
 #' copied from elsewhere could name any file, or claim a record of terabytes,
 #' which would be read (and allocated) whole.
-#' @param dir The capture folder.
+#' @param dir The capture folder holding archive/ and indexes/.
 #' @param r The index line, parsed.
 #' @return The WARC file's path.
 #' @noRd

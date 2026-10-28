@@ -9,7 +9,8 @@ pkg=$(sed -n 's/^Package: //p' "$src/DESCRIPTION")
 out=${1:-/tmp/cran}
 rm -rf "$out/$pkg"
 mkdir -p "$out"
-rsync -a --exclude .git --exclude '.Rd2pdf*' --exclude 'src/*.o' --exclude 'src/*.so' "$src/" "$out/$pkg/"
+rsync -a --exclude .git --exclude '.Rd2pdf*' --exclude 'src/*.o' --exclude 'src/*.so' \
+  --exclude '*.gcno' --exclude '*.gcda' --exclude '*.gcov' "$src/" "$out/$pkg/"
 cd "$out/$pkg"
 for p in rmoriebricklayer rmoriedata rmorie; do
   for f in README.md inst/CITATION CITATION.cff; do
@@ -33,5 +34,10 @@ if [ "$pkg" = rmoriebricklayer ]; then
 fi
 cd "$out"
 NOT_CRAN=true R CMD build "$pkg" > "$out/build_$pkg.log" 2>&1
+# a build artifact (an object file, a covr gcov file) is never submitted
+if tar tzf "$out"/${pkg}_*.tar.gz | grep -E '[.](o|so|dll|gcno|gcda|gcov)$'; then
+  echo "cran_build.sh: build artifacts in the tarball (above)" >&2
+  exit 1
+fi
 ls -la "$out"/${pkg}_*.tar.gz | awk '{printf "%s %.2f MiB\n", $9, $5/1048576}'
 grep -c "r-universe.dev/$pkg" "$out/$pkg/README.md" || true

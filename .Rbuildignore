@@ -43,3 +43,4 @@
 ^tests/testthat/testthat-problems\.rds$
 ^air\.toml$
 ^\.dockerignore$
+\.gc(no|da|ov)$

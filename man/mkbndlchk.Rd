@@ -33,8 +33,9 @@ printed), \code{bundle} and \code{dir} (the unzipped bundle, or
 \code{NA} once removed). It prints as a box.
 }
 \description{
-Unzips a bundle built by \code{\link[=mkbndl]{mkbndl()}} into a new folder, runs it the way a
-recipient would (\code{Rscript setup_and_run.R --quick}) and reads the
+Unzips a bundle built by \code{\link[=mkbndl]{mkbndl()}} into a new
+folder, runs it the way a recipient would
+(\code{Rscript setup_and_run.R --quick}) and reads the
 \file{manifest.json} the run writes. The bundle passes when the run
 finishes, writes its manifest, no cross-check is DIFFER and, on real
 data, the number of checks and of passes is the one the \code{expected}
@@ -61,5 +62,6 @@ a$counts
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=mkbndl]{mkbndl()}} builds the bundle; \code{\link[=mkbndlproj]{mkbndlproj()}} starts a project.
+\code{\link[=mkbndl]{mkbndl()}} builds the bundle;
+\code{\link[=mkbndlproj]{mkbndlproj()}} starts a project.
 }

@@ -24,9 +24,8 @@ fake_bundle <- function(d, run, config = NULL, top = "fake_v1") {
 # with these statuses, in this input mode.
 man_run <- function(status, mode = "csv") {
   meta <- if (is.null(mode)) "" else sprintf('"input_mode": "%s"', mode)
-  res <- paste(
-    sprintf('"c%d": {"status": "%s"}', seq_along(status), status),
-    collapse = ", "
+  res <- toString(
+    sprintf('"c%d": {"status": "%s"}', seq_along(status), status)
   )
   c(
     "cat('running the checks\\n')",

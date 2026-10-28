@@ -56,7 +56,7 @@
 #' push DIR [--reason TEXT] [--private] [--also wayback]} sends a capture
 #' kept in DIR on later, the same bytes, with \code{\link{arcpush}} (run it
 #' again to retry what failed); \code{archive find URL} and \code{archive
-#' get ID|URL -o FILE} list a URL's captures and fetch one's exact bytes
+#' get ID|URL -o FILE} list the captures of a URL and fetch one's exact bytes
 #' (\code{\link{arcfind}}, \code{\link{arcget}})}
 #' \item{\code{verify PATH [--json] [--fail-on LEVEL]
 #' [--public-key HEX]}}{check every capsule under PATH as the rmbl GitHub Action
@@ -2596,6 +2596,23 @@ instcli <- function(
   if (nrow(f)) 0L else 1L
 }
 
+#' The words of an archive subcommand that are not options or their values.
+#' @param args The arguments after the subcommand.
+#' @return The positional arguments.
+#' @noRd
+.bl_cli_archive_pos <- function(args) {
+  pos <- args
+  valued <- c(
+    "--reason", "--dir", "--also", "-o", "--out", "--sha256", "--at",
+    "--from", "--to"
+  )
+  for (f in valued) {
+    i <- match(f, pos)
+    if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
+  }
+  setdiff(pos, c("--private", "--json"))
+}
+
 #' The archive verb: archive.rmorie.com from a terminal (arccap(upload =
 #' "rmorie"), arcfind(), arcget()).
 #' @param rest The arguments after `archive`: the subcommand and its arguments.
@@ -2606,22 +2623,7 @@ instcli <- function(
 .bl_cli_archive <- function(rest, flag, out) {
   sub <- if (length(rest)) rest[[1L]] else ""
   args <- rest[-1L]
-  pos <- args
-  for (f in c(
-    "--reason",
-    "--dir",
-    "--also",
-    "-o",
-    "--out",
-    "--sha256",
-    "--at",
-    "--from",
-    "--to"
-  )) {
-    i <- match(f, pos)
-    if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
-  }
-  pos <- setdiff(pos, c("--private", "--json"))
+  pos <- .bl_cli_archive_pos(args)
   usage <- function(code) {
     out(.bl_verb_usage("archive", .bl_prog()))
     code

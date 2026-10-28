@@ -4,8 +4,9 @@
 
 #' Check a reproducibility bundle before shipping it
 #'
-#' Unzips a bundle built by [mkbndl()] into a new folder, runs it the way a
-#' recipient would (\code{Rscript setup_and_run.R --quick}) and reads the
+#' Unzips a bundle built by [mkbndl()] into a new
+#' folder, runs it the way a recipient would
+#' (\code{Rscript setup_and_run.R --quick}) and reads the
 #' \file{manifest.json} the run writes. The bundle passes when the run
 #' finishes, writes its manifest, no cross-check is DIFFER and, on real
 #' data, the number of checks and of passes is the one the \code{expected}
@@ -38,7 +39,8 @@
 #'   \code{differ}, \code{info}), \code{log} (the last 30 lines the run
 #'   printed), \code{bundle} and \code{dir} (the unzipped bundle, or
 #'   \code{NA} once removed). It prints as a box.
-#' @seealso [mkbndl()] builds the bundle; [mkbndlproj()] starts a project.
+#' @seealso [mkbndl()] builds the bundle;
+#'   [mkbndlproj()] starts a project.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' proj <- file.path(tempdir(), "audit-demo")
 #' mkbndlproj(proj, title = "Demo analysis")
@@ -155,7 +157,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
 
 #' Runs the bundle as a recipient would, in a child R.
 #' @param root The unzipped bundle.
-#' @param data The data file, or NULL.
+#' @param data The data file to pass as --data, or NULL.
 #' @param synthetic Whether to run on synthetic data.
 #' @return A list: the exit status and the lines the run printed.
 #' @noRd
@@ -168,13 +170,8 @@ format.rmbl_bundle_audit <- function(x, ...) {
   log <- tempfile("bndlchk", fileext = ".log")
   on.exit(unlink(log), add = TRUE)
   # a check run inside R CMD check would hand the child its test startup
-  old_tests <- Sys.getenv("R_TESTS", unset = NA)
-  Sys.unsetenv("R_TESTS")
-  owd <- setwd(root)
-  on.exit({
-    setwd(owd)
-    if (!is.na(old_tests)) Sys.setenv(R_TESTS = old_tests)
-  }, add = TRUE)
+  withr::local_envvar(R_TESTS = NA)
+  withr::local_dir(root)
   exe <- if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript"
   rscript <- file.path(R.home("bin"), exe)
   status <- suppressWarnings(
@@ -217,8 +214,8 @@ format.rmbl_bundle_audit <- function(x, ...) {
 
 #' One row of the checks table.
 #' @param check Its name.
-#' @param ok Whether it passed.
-#' @param detail What was found.
+#' @param ok Whether the check passed.
+#' @param detail What the check found.
 #' @param severity "error" (fails the audit) or "warn".
 #' @return A one-row data frame.
 #' @noRd
@@ -289,7 +286,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
 }
 
 #' The Unix modes the zip's central directory records.
-#' @param zip The zip file.
+#' @param zip The bundle zip.
 #' @return A numeric vector named by path (empty when none is found).
 #' @noRd
 .bndlchk_modes <- function(zip) {

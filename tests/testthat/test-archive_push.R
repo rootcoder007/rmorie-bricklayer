@@ -70,10 +70,11 @@ test_that("a file that changed or went missing is not sent", {
   push_capture(dir)
   writeBin(charToRaw("BBB"), file.path(dir, "a.zip"))
   unlink(file.path(dir, "b.csv"))
-  sent <- 0L
+  n <- new.env()
+  n$sent <- 0L
   local_mocked_bindings(
     .bl_ia_put = function(url, path, content_type, headers, timeout) {
-      sent <<- sent + 1L
+      n$sent <- n$sent + 1L
       list(status = 200L, body = raw(), error = "")
     }
   )
@@ -86,19 +87,20 @@ test_that("a file that changed or went missing is not sent", {
       "failed: the file is missing"
     )
   )
-  expect_identical(sent, 0L)
+  expect_identical(n$sent, 0L)
 })
 
 test_that("archive.rmorie.com takes the capture when it is back", {
   dir <- withr::local_tempdir()
   push_capture(dir)
-  calls <- 0L
+  n <- new.env()
+  n$calls <- 0L
   up <- FALSE
   local_mocked_bindings(
     .bl_arc_base = function() "https://archive.rmorie.com",
     .bl_arc_key = function(base) "key",
     .bl_arc_upload = function(path, url, ...) {
-      calls <<- calls + 1L
+      n$calls <- n$calls + 1L
       if (!up) {
         stop("archive.rmorie.com answered 503", call. = FALSE)
       }
@@ -113,21 +115,22 @@ test_that("archive.rmorie.com takes the capture when it is back", {
   r <- arcpush(dir, upload = "rmorie", reason = why, tsa = NULL)
   expect_identical(r$status, c("archived", "archived"))
   expect_identical(r$capture_id, c("a.zip", "b.csv"))
-  expect_identical(calls, 4L)
+  expect_identical(n$calls, 4L)
   # a later run keeps what was archived and sends nothing
   r <- arcpush(dir, upload = "rmorie", reason = why, tsa = NULL)
-  expect_identical(calls, 4L)
+  expect_identical(n$calls, 4L)
   expect_identical(r$archive[1L], "https://archive.rmorie.com/c/a.zip")
 })
 
 test_that("the Wayback Machine is asked again until it answers", {
   dir <- withr::local_tempdir()
   push_capture(dir)
-  asked <- 0L
+  n <- new.env()
+  n$asked <- 0L
   down <- TRUE
   local_mocked_bindings(
     wbsave = function(urls, ...) {
-      asked <<- asked + 1L
+      n$asked <- n$asked + 1L
       if (down) {
         stop("web.archive.org did not answer", call. = FALSE)
       }
@@ -144,7 +147,7 @@ test_that("the Wayback Machine is asked again until it answers", {
   r <- arcpush(dir, upload = "wayback", tsa = NULL)
   expect_identical(r$wayback, rep("saved 20261028120000", 2L))
   r <- arcpush(dir, upload = "wayback", tsa = NULL)
-  expect_identical(asked, 2L)
+  expect_identical(n$asked, 2L)
   # the files themselves stay captured: the Wayback Machine takes no uploads
   expect_identical(r$status, c("captured", "captured"))
 })
@@ -152,13 +155,14 @@ test_that("the Wayback Machine is asked again until it answers", {
 test_that("a manifest without a timestamp is stamped when it is sent", {
   dir <- withr::local_tempdir()
   push_capture(dir)
-  checked <- 0L
+  n <- new.env()
+  n$checked <- 0L
   local_mocked_bindings(
     .bl_tsa_post = function(url, body, timeout) {
       list(status = 200L, body = charToRaw("tsr"), error = "")
     },
     tsvrf = function(token, data, ...) {
-      checked <<- checked + 1L
+      n$checked <- n$checked + 1L
       list(ok = TRUE, time = as.POSIXct("2026-10-28", tz = "UTC"),
            checks = data.frame(check = "signature", ok = TRUE))
     },
@@ -169,7 +173,7 @@ test_that("a manifest without a timestamp is stamped when it is sent", {
   expect_true(attr(r, "timestamp")$ok)
   # the timestamp kept is checked, not replaced
   r <- arcpush(dir, upload = "wayback")
-  expect_identical(checked, 2L)
+  expect_identical(n$checked, 2L)
   expect_true(attr(r, "timestamp")$ok)
 })
 

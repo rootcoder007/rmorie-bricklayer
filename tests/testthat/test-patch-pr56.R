@@ -191,6 +191,9 @@ test_that(
       "wbsave",
       ".bl_cli_archive",
       ".bl_cli_archive_save",
+      # arcpush() sends a kept capture to the same archive
+      "arcpush",
+      ".bl_cli_archive_push",
       ".bl_wb_fallback",
       ".bl_refresh_capsule",
       # pieces of arccap(), .bl_refresh_capsule() and wbsave()
