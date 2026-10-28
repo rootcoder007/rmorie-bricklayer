@@ -366,7 +366,10 @@ test_that(
     file.copy(cp$dir, root, recursive = TRUE)
     withr::local_envvar(RMBL_KEY = fx_secret)
     r <- run_cli(c("verify", root, "--public-key", fx_key_id))
-    expect_identical(r$status, 0L)
+    # the key is pinned: the unsigned capsule beside the signed one fails, or
+    # deleting a capsule's bundle would pass the check
+    expect_identical(r$status, 1L)
+    expect_match(r$out, "no signed bundle", fixed = TRUE)
     expect_identical(Sys.getenv("RMBL_KEY"), "")
     expect_match(
       r$out,
@@ -905,7 +908,7 @@ test_that(
       kf,
       "--overwrite",
       "--public-key",
-      "00ff"
+      strrep("00ff", 8)
     ))
     expect_identical(r$status, 1L)
     expect_match(
@@ -961,4 +964,25 @@ test_that("a manifest diff prints as a box", {
     format(d[, "change", drop = FALSE]),
     fixed = TRUE
   )))
+})
+
+test_that("a pinned public key is checked, never dropped in silence", {
+  no_stdin()
+  cp <- hmac_capsule()
+  unlink(file.path(cp, "capsule_bundle.json"))
+  # blank, not hex, or too short: a usage error
+  for (k in c(" ", "x", "abcd", "zz00zz00zz00zz00")) {
+    expect_identical(run_cli(c("verify", cp, "--public-key", k))$status, 2L,
+                     info = k)
+  }
+  # a key pinned against a capsule with no signature fails it
+  base <- run_cli(c("verify", cp))$status
+  r <- run_cli(c("verify", cp, "--public-key", fx_key_id))
+  expect_identical(r$status, 1L)
+  expect_match(r$out, "no signed bundle", fixed = TRUE)
+  expect_identical(cpschk(cp, "verify", pubkey = fx_key_id, fp = FALSE)$status,
+                   "error")
+  expect_identical(cpschk(cp, "verify", fp = FALSE)$status == "error",
+                   base != 0L)
+  expect_error(cpschk(cp, "verify", pubkey = "x", fp = FALSE), "hexadecimal")
 })

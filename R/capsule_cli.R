@@ -1181,6 +1181,13 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       rows[[length(rows) + 1L]] <- .bl_ldgr_capsule_rows(d, prov, pkgs)
     }
   }
+  if (nzchar(pubkey) && !file.exists(bundle_file)) {
+    # a key was pinned: a capsule without a signature does not satisfy it
+    rows[[length(rows) + 1L]] <- .bl_check_row(
+      basename(d), "bundle", bundle_file, "bundle: signature", FALSE,
+      "a public key was pinned, but the capsule has no signed bundle"
+    )
+  }
   if (file.exists(bundle_file)) {
     bnd <- cpsbndlrd(bundle_file)
     # the secret goes to an hmac bundle only; the key id or public key is
@@ -1326,6 +1333,11 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     if (identical(flag(f), "")) {
       usage_error(sprintf("%s was given an empty value", f))
     }
+  }
+  pk <- flag("--public-key")
+  if (!is.null(pk) && !grepl("^[0-9a-fA-F]{16,}$", pk)) {
+    usage_error(paste0("--public-key must be the public key or key id in ",
+                       "hexadecimal (16 digits at least)"))
   }
   root
 }

@@ -71,7 +71,8 @@
 #' @param key Character scalar: the shared secret of HMAC bundles, or
 #'   \code{""}.
 #' @param pubkey Character scalar: the public key (hex) every bundle must be
-#'   signed with (for an HMAC bundle, its key id), or \code{""}.
+#'   signed with (for an HMAC bundle, its key id), or \code{""}. Given, a
+#'   capsule with no signed bundle fails: there is nothing the key checks.
 #' @param psiwarn,psifail Non-negative numbers, \code{psiwarn} at most
 #'   \code{psifail}: the PSI bands, by default 0.1 and 0.25, the bands
 #'   \code{\link{drftpsi}} documents.
@@ -674,6 +675,24 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     drift = "A source has moved since it was pinned: see the rows below.",
     "At least one capsule fails: its data or records changed since pinning."
   )
+}
+
+#' cpschk()'s `pubkey`: hexadecimal, or "" for none.
+#' @param x The string, already checked to be one.
+#' @return `x`.
+#' @noRd
+.bl_pubkey_arg <- function(x) {
+  # " " or "x" pinned nothing and the capsule passed as if a key had been
+  # checked (network review of 1.0.3)
+  if (nzchar(x) && !grepl("^[0-9a-fA-F]{16,}$", x)) {
+    stop(
+      .rmbl_fn(),
+      "`pubkey` must be the expected public key or key id in hexadecimal ",
+      "(16 digits at least), or \"\" for none",
+      call. = FALSE
+    )
+  }
+  x
 }
 
 #' A single string argument that may be empty.
@@ -1332,7 +1351,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     o,
     list(
       key = .bl_str0(key, "key"),
-      pubkey = .bl_str0(pubkey, "pubkey"),
+      pubkey = .bl_pubkey_arg(.bl_str0(pubkey, "pubkey")),
       psiwarn = .rmbl_scalar(psiwarn, "psiwarn", 0),
       psifail = .rmbl_scalar(psifail, "psifail", 0),
       base = .bl_base_arg(base),
