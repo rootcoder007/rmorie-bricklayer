@@ -74,7 +74,7 @@ starts a project.
 proj <- file.path(tempdir(), "audit-demo")
 mkbndlproj(proj, title = "Demo analysis")
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpGCZrUJ/audit-demo                                        │
+#> │   Folder  /tmp/Rtmp1U0s11/audit-demo                                        │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -100,8 +100,8 @@ a
 #> │   safe to ship.                                                             │
 #> │                                                                             │
 #> │   ✔    run finished              exit status 0                              │
-#> │   ✔    manifest written          /tmp/RtmpGCZrUJ/bndlchk20ab3e0f8916/audit- │
-#> │                                  demo_v1/results_20261028-054509/manifest.j │
+#> │   ✔    manifest written          /tmp/Rtmp1U0s11/bndlchk1ffe57380390/audit- │
+#> │                                  demo_v1/results_20261028-062832/manifest.j │
 #> │                                  son                                        │
 #> │   ✔    no cross-check differs    0 DIFFER                                   │
 #> │   ✔    counts match config.json  not compared: a synthetic run              │
