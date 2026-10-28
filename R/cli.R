@@ -1786,23 +1786,31 @@ instcli <- function(
       "archive push DIR [--reason TEXT] [--private] [--also wayback]",
       "  send a capture kept in DIR on later, the same bytes"
     ),
-    pack = paste(
-      "pack DIR [--dest D] [--data FILE] [--version V] [--overwrite]",
-      "[--secrets]  a reproducibility bundle of the project in DIR (or a",
-      "shipped example: otis-mrp), written to D (default: here); files",
-      "that look like credentials are left out unless --secrets;",
-      "pack --new DIR [--title T] [--author A] [--contact C]   start a",
-      "project that builds and runs as it is;",
-      "pack --check ZIP [--data FILE] [--synthetic] [--keep]",
-      "[--container[=podman|docker]]   run a built bundle as a recipient",
-      "would and check its results.",
-      "WARNING: --check RUNS THE BUNDLE'S CODE on this machine (with a",
-      "minimal environment and a temporary HOME): check only bundles you",
-      "built or trust. --container runs it in a container (no network",
-      "unless it downloads the real data); otherwise on Linux a PID",
-      "namespace, on Windows a job object, and on macOS only a process",
-      "group contain it, which a process can deliberately escape"
-    )
+    pack = .bl_usage_p()
+  )
+}
+
+#' The usage line of the verb pack.
+#' @return A character string.
+#' @noRd
+.bl_usage_p <- function() {
+  paste(
+    "pack DIR [--dest D] [--data FILE] [--version V] [--overwrite]",
+    "[--secrets]  a reproducibility bundle of the project in DIR (or a",
+    "shipped example: otis-mrp), written to D (default: here); files",
+    "that look like credentials are left out unless --secrets;",
+    "pack --new DIR [--title T] [--author A] [--contact C]   start a",
+    "project that builds and runs as it is;",
+    "pack --check ZIP [--data FILE] [--synthetic] [--keep]",
+    "[--container[=podman|docker]]   run a built bundle as a recipient",
+    "would and check its results.",
+    "WARNING: --check RUNS THE BUNDLE'S CODE on this machine (with a",
+    "minimal environment and a temporary HOME): check only bundles you",
+    "built or trust. --container runs it in a container (no network",
+    "unless it downloads the real data); otherwise on Linux a PID",
+    "namespace, on Windows a job object, and on macOS only a process",
+    "group contain it, which a process can deliberately escape (one seen",
+    "outliving the run is killed and fails the check)"
   )
 }
 

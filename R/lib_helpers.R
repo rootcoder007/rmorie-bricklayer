@@ -87,23 +87,6 @@ sha256file <- function(path) {
   .rmbl_sha256_bndl(path)
 }
 
-#' A file's SHA-256 in a bundle: base R's own when it has one, else the
-#' pure-R implementation read in chunks.
-#' @param path The file.
-#' @param base Whether tools::sha256sum() is used when R has it.
-#' @return 64 lower-case hex digits.
-#' @noRd
-.rmbl_sha256_bndl <- function(
-  path,
-  base = exists("sha256sum", envir = asNamespace("tools"), inherits = FALSE)
-) {
-  if (isTRUE(base)) {
-    f <- get("sha256sum", envir = asNamespace("tools"))
-    return(unname(tolower(f(path))))
-  }
-  .rmbl_sha256_file(path)
-}
-
 #' Transliterate Text to Plain ASCII
 #'
 #' Converts a character vector to plain 7-bit ASCII, transliterating
@@ -326,6 +309,139 @@ wrtxtfb <- function(text, path) {
 # variable was set.
 #' @noRd
 .rmbl_synth_state <- new.env(parent = emptyenv())
+
+#' A file's SHA-256 in a bundle, by the fastest way at hand.
+#'
+#' In order: an installed rmoriebricklayer (1.0.3 or later), whose
+#' sha256file() is compiled; base R's tools::sha256sum() (R 4.5.0 or
+#' later); the system's own tool (sha256sum on Linux, shasum on macOS,
+#' certutil on Windows); else the pure-R implementation, which runs at
+#' about 15 KB a second, so only for a file of at most `cap` bytes (a
+#' 300 MB file took five and a half hours).
+#' @inheritParams .bndl_write_text
+#' @param base Whether tools::sha256sum() is used when R has it.
+#' @param pkg The installed package's sha256file(), from .rmbl_bsha(), or
+#'   NULL.
+#' @param os The system tool's digest, a function of the path that returns
+#'   NULL when there is none, or NULL.
+#' @param cap The largest file the pure-R implementation is used for.
+#' @return 64 lower-case hex digits.
+#' @noRd
+.rmbl_sha256_bndl <- function(
+  path,
+  base = exists("sha256sum", envir = asNamespace("tools"), inherits = FALSE),
+  pkg = .rmbl_bsha(),
+  os = function(p) .rmbl_ossha(p),
+  cap = 52428800
+) {
+  if (is.function(pkg)) {
+    return(pkg(path))
+  }
+  if (isTRUE(base)) {
+    f <- get("sha256sum", envir = asNamespace("tools"))
+    return(unname(tolower(f(path))))
+  }
+  h <- if (is.function(os)) os(path)
+  if (!is.null(h)) {
+    return(h)
+  }
+  if (isTRUE(file.size(path) > cap)) {
+    stop(sprintf(
+      paste0(
+        "%s is %.0f MB: this R has no fast SHA-256 (R 4.5.0 or later has ",
+        "one, and so has the rmoriebricklayer package: ",
+        "install.packages(\"rmoriebricklayer\")), and the pure-R one takes ",
+        "hours on a file this size"
+      ),
+      basename(path), file.size(path) / 1048576
+    ), call. = FALSE)
+  }
+  .rmbl_sha256_file(path)
+}
+
+#' The sha256file() of an installed rmoriebricklayer 1.0.3 or later, for a
+#' bundle (as .rmbl_bdl() lends its bldl()).
+#' @param pkg The package to look for.
+#' @param own Whether this code is the package itself (then there is no
+#'   other to ask, and asking it would call this again).
+#' @return A function, or NULL.
+#' @noRd
+.rmbl_bsha <- function(
+  pkg = "rmoriebricklayer",
+  own = exists("csha256", mode = "function") ||
+    identical(environmentName(topenv(environment())), pkg)
+) {
+  if (isTRUE(own)) {
+    return(NULL)
+  }
+  ok <- requireNamespace(pkg, quietly = TRUE) &&
+    utils::packageVersion(pkg) >= "1.0.3"
+  if (isTRUE(ok)) getExportedValue(pkg, "sha256file") else NULL
+}
+
+#' A file's SHA-256 by the system's own tool: sha256sum (Linux), shasum
+#' -a 256 (macOS, and where there is no sha256sum) or certutil (Windows).
+#' @inheritParams .bndl_write_text
+#' @param sys The system's name, as Sys.info() gives it.
+#' @return 64 lower-case hex digits, or NULL when there is no tool or its
+#'   answer is not a digest.
+#' @noRd
+.rmbl_ossha <- function(path, sys = Sys.info()[["sysname"]]) {
+  tool <- .rmbl_shatool(sys)
+  if (is.null(tool)) {
+    return(NULL)
+  }
+  out <- tryCatch(
+    suppressWarnings(system2(
+      tool$cmd, c(tool$args, shQuote(path), tool$post),
+      stdout = TRUE, stderr = FALSE
+    )),
+    error = function(e) character()
+  )
+  if (!is.null(attr(out, "status"))) {
+    return(NULL)
+  }
+  .rmbl_shaout(out, sys)
+}
+
+#' The system tool .rmbl_ossha() runs.
+#' @inheritParams .rmbl_ossha
+#' @return A list (cmd, args before the path, post after it), or NULL
+#'   when there is none.
+#' @noRd
+.rmbl_shatool <- function(sys) {
+  w <- function(x) unname(Sys.which(x))
+  if (identical(sys, "Windows")) {
+    p <- w("certutil")
+    return(if (nzchar(p)) {
+      list(cmd = p, args = "-hashfile", post = "SHA256")
+    })
+  }
+  p <- w("sha256sum")
+  if (nzchar(p) && !identical(sys, "Darwin")) {
+    return(list(cmd = p, args = character()))
+  }
+  p <- w("shasum")
+  if (nzchar(p)) list(cmd = p, args = c("-a", "256")) else NULL
+}
+
+#' The digest in a system tool's answer, checked.
+#' @param out The lines it printed.
+#' @inheritParams .rmbl_ossha
+#' @return 64 lower-case hex digits, or NULL.
+#' @noRd
+.rmbl_shaout <- function(out, sys) {
+  if (identical(sys, "Windows")) {
+    # certutil: a heading line, the digest (older ones space it), a status
+    h <- gsub(" ", "", out[-1L], fixed = TRUE)
+  } else {
+    # "<digest>  <name>"; a name holding a backslash or newline starts the
+    # line with a backslash
+    h <- sub("^\\\\", "", sub("[ \t].*$", "", out))
+  }
+  h <- tolower(grep("^[0-9A-Fa-f]{64}$", h, value = TRUE))
+  if (length(h)) h[[1L]] else NULL
+}
 
 #' Refuses a path that is not one existing file.
 #' @param path The path given to sha256file().
@@ -1008,4 +1124,16 @@ wrtxtfb <- function(text, path) {
   x <- enc2utf8(as.character(x))
   paste(ifelse(is.na(x), "~", paste0(nchar(x, type = "bytes"), ":", x)),
         collapse = "")
+}
+
+#' Text percent-encoded as one URL part: every reserved character, and a
+#' "%" too. utils::URLencode() leaves a string that already holds a "%XX"
+#' as it is (repeated = FALSE), so "x%41?y=1#z" kept its "?" and "#" and
+#' "%2E%2E" reached the server as "..".
+#' @param x Strings.
+#' @return `x`, encoded.
+#' @noRd
+.rmbl_pct <- function(x) {
+  vapply(x, utils::URLencode, "", reserved = TRUE, repeated = TRUE,
+         USE.NAMES = FALSE)
 }

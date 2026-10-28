@@ -180,3 +180,19 @@ test_that("in a C locale yoy folds UTF-8 labels read as unknown bytes", {
   expect_true(any(grepl("Metis", out, fixed = TRUE)))
   expect_false(any(grepl("[^ -~]", out, useBytes = TRUE)))
 })
+
+test_that("in a C locale yoy() itself does not warn about UTF-8 labels", {
+  withr::local_locale(c(LC_CTYPE = "C"))
+  skip_if(isTRUE(l10n_info()[["UTF-8"]]), "the C locale cannot be set here")
+  # marked UTF-8, as intToUtf8() and a UTF-8 file read with its encoding give
+  g <- rep(c(intToUtf8(c(77, 233, 116, 105, 115)), intToUtf8(c(0x4e2d, 0x6587)),
+             "Plain"), each = 3)
+  d <- data.frame(g = g, yr = rep(2020:2022, 3), n = c(10, 12, 15, 20, 22, 19,
+                                                       5, 6, 7))
+  expect_silent(yoy(d, "n", "yr", by = "g"))
+  d$pop <- 1000
+  tr <- "unable to translate"
+  expect_no_warning(ratechg(d, count = "n", pop = "pop", prd = "yr", by = "g"),
+                    message = tr)
+  expect_no_warning(anltab(d, value = "n", prd = "yr", by = "g"), message = tr)
+})

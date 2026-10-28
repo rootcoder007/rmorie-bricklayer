@@ -69,7 +69,9 @@
 }
 
 #' Converts raw bytes to text, \code{""} when they are empty or cannot be
-#' converted.
+#' converted. Bytes that are not UTF-8 are shown as \code{<xx>}: a string
+#' holding them made nchar(), substring(), tolower() and trimws() fail with
+#' "invalid multibyte string".
 #' @param v A raw vector.
 #' @return One string.
 #' @noRd
@@ -77,7 +79,8 @@
   if (!length(v)) {
     return("")
   }
-  tryCatch(rawToChar(v), error = function(e) "")
+  s <- tryCatch(rawToChar(v), error = function(e) "")
+  if (validUTF8(s)) s else iconv(s, "UTF-8", "UTF-8", sub = "byte")
 }
 
 #' Reads a distinguished name as a list of RDNs.

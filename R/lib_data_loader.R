@@ -299,7 +299,7 @@ rslvckns <- function(prov) {
     sprintf(
       "%s/api/3/action/package_search?q=%s",
       base,
-      utils::URLencode(q, reserved = TRUE)
+      .rmbl_pct(q)
     ),
     "the CKAN package_search URL"
   )
@@ -450,7 +450,7 @@ wbsnpurl <- function(url, ts = NULL) {
   # https: over cleartext a MITM chose the fallback snapshot
   api <- paste0(
     "https://archive.org/wayback/available?url=",
-    utils::URLencode(url, reserved = TRUE)
+    .rmbl_pct(url)
   )
   if (nzchar(ts)) {
     api <- paste0(api, "&timestamp=", ts)

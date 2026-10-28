@@ -834,7 +834,8 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' @return NULL, invisibly.
 #' @noRd
 .rmbl_cat <- function(lines, x = NULL) {
-  lines <- .rmbl_ctl_escape(as.character(lines))
+  # the lines the package drew: its own colour codes are kept
+  lines <- .rmbl_ctl_escape(as.character(lines), keep = TRUE)
   cap <- .rmbl_print_caps()
   if (.rmbl_is_block(lines, cap)) {
     lines <- .rmbl_box(lines, .rmbl_verdict(x), cap)
@@ -847,12 +848,15 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' are shown escaped, as print() shows them, instead of reaching the terminal.
 #' An escape sequence could clear the screen or set the window title, a
 #' carriage return overwrite the line, a newline split a box, a bidi control
-#' reorder what follows. The colour codes this package draws (ESC [ ... m)
-#' are kept.
+#' reorder what follows. Colour codes (ESC [ ... m) are escaped too: a label
+#' could hide what follows it (ESC [8m) or paint it to look like a pass.
+#' Only the lines this package has already drawn keep their colours
+#' (`keep = TRUE`, .rmbl_cat()), and only the codes it draws.
 #' @param s Strings.
+#' @param keep Whether the package's own colour codes are kept.
 #' @return `s`, escaped where needed.
 #' @noRd
-.rmbl_ctl_escape <- function(s) {
+.rmbl_ctl_escape <- function(s, keep = FALSE) {
   # text read in a C locale is UTF-8 bytes marked "unknown": marked as UTF-8,
   # as .rmbl_printable() does, it is matched and folded, not warned about
   # (recheck of a8cdaf9: yoy() labels in a C locale)
@@ -868,7 +872,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   )
   hit <- which(!is.na(s) & grepl(re, s, perl = TRUE))
   for (i in hit) {
-    s[i] <- .rmbl_ctl_escape1(s[i])
+    s[i] <- .rmbl_ctl_escape1(s[i], keep)
   }
   s
 }
@@ -888,14 +892,25 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   s
 }
 
-#' One string escaped, its colour codes kept (see .rmbl_ctl_escape()).
+#' One string escaped (see .rmbl_ctl_escape()).
 #' @param x The string to escape.
+#' @param keep Whether the colour codes the package draws are kept: reset,
+#'   bold, dim, normal, the eight colours, default colour, 256 colours and
+#'   true colour (ESC [0m, 1m, 2m, 22m, 30m-37m, 39m, 38;5;Nm, 38;2;R;G;Bm);
+#'   any other code (hidden, blink, a background) is escaped.
 #' @return The string.
 #' @noRd
-.rmbl_ctl_escape1 <- function(x) {
-  sgr <- gregexpr("\033\\[[0-9;]*m", x)
-  keep <- regmatches(x, sgr)[[1L]]
-  part <- regmatches(x, sgr, invert = TRUE)[[1L]]
+.rmbl_ctl_escape1 <- function(x, keep = FALSE) {
+  codes <- character()
+  part <- x
+  if (keep) {
+    sgr <- gregexpr(paste0(
+      "\033\\[(0|1|2|22|3[0-79]|38;5;[0-9]{1,3}|",
+      "38;2;[0-9]{1,3};[0-9]{1,3};[0-9]{1,3})m"
+    ), x)
+    codes <- regmatches(x, sgr)[[1L]]
+    part <- regmatches(x, sgr, invert = TRUE)[[1L]]
+  }
   part <- vapply(part, function(p) {
     cp <- utf8ToInt(enc2utf8(p))
     if (anyNA(cp)) {
@@ -903,7 +918,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
     }
     paste(vapply(cp, .rmbl_ctl_char, ""), collapse = "")
   }, "", USE.NAMES = FALSE)
-  paste0(part, c(keep, ""), collapse = "")
+  paste0(part, c(codes, ""), collapse = "")
 }
 
 #' One character as print() shows it: a control character escaped.

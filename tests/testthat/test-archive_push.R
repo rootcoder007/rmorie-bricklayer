@@ -284,7 +284,8 @@ test_that(
                  upload = "rmorie", reason = why, tsa = NULL)
     expect_identical(r$status[1:2], c("archived", "archived"))
     expect_true(all(grepl(
-      "not a plain relative path inside the capture folder", r$status[-1:-2]
+      "not a plain relative path inside the capture folder", r$status[-1:-2],
+      fixed = TRUE
     )))
     # nothing outside the folder was read, and every key is in the one item
     expect_false(any(grepl("outside|secret|link", rec$paths)))
@@ -378,7 +379,8 @@ test_that("the timestamp reply is checked against the request's nonce", {
     wbsave = function(urls, ...) stop("offline", call. = FALSE)
   )
   expect_warning(arcpush(dir, upload = "wayback"), "failed: nonce")
-  expect_true(is.raw(seen$nonce) && length(seen$nonce) == 8L)
+  expect_true(is.raw(seen$nonce))
+  expect_length(seen$nonce, 8L)
   expect_false(file.exists(file.path(dir, "manifest.tsr")))
 })
 
@@ -412,9 +414,10 @@ test_that("one private address does not stop the Wayback for the others", {
     wbsave = function(urls, ...) {
       asked$urls[[length(asked$urls) + 1L]] <- urls
       # as wbsave() refuses a name that resolves to your own network
-      if (any(grepl("intranet", urls))) {
+      if (any(grepl("intranet", urls, fixed = TRUE))) {
         stop("wbsave: not a public address, so it is not sent to ",
-             "archive.org: ", urls[grepl("intranet", urls)][1L],
+             "archive.org: ", grep("intranet", urls, fixed = TRUE,
+                                   value = TRUE)[1L],
              call. = FALSE)
       }
       structure(
@@ -442,5 +445,30 @@ test_that("a bad `visibility` is refused in words", {
       arccap("https://s.org/a", dir, visibility = v),
       "`visibility` must be one of"
     )
+  }
+})
+
+test_that("a key or a URL part holding %XX is encoded whole", {
+  # utils::URLencode() left a string holding "%41" as it was
+  expect_identical(.bl_ia_key_path("x%41?y=1#z.txt"), "x%2541%3Fy%3D1%23z.txt")
+  expect_identical(.bl_ia_key_path("%2E%2E/other-item/x"),
+                   "%252E%252E/other-item/x")
+  expect_identical(.rmbl_pct(c("a b", "50%", "%7e&")),
+                   c("a%20b", "50%25", "%257e%26"))
+  # the Wayback form: a URL holding %20 keeps its & inside the url field
+  w <- list(within = "0", capall = FALSE)
+  f <- .bl_wb_form(w, "https://s.org/a%20b?x=1&y=2")
+  expect_identical(
+    f, "url=https%3A%2F%2Fs.org%2Fa%2520b%3Fx%3D1%26y%3D2&skip_first_archive=1"
+  )
+})
+
+test_that("`visibility` is matched whole, not abbreviated", {
+  dir <- withr::local_tempdir()
+  for (v in c("pub", "priv", "p", "Public")) {
+    expect_error(arcpush(dir, upload = "wayback", visibility = v),
+                 "`visibility` must be one of", info = v)
+    expect_error(arccap("https://s.org/a", dir, visibility = v),
+                 "`visibility` must be one of", info = v)
   }
 })

@@ -247,3 +247,14 @@ test_that("kit codes for a large trial come in linear time, the same codes", {
   }
   expect_identical(.ralloc_kits(gen(), 200L), old)
 })
+
+test_that("arm and stratum names blank but for Unicode spaces are refused", {
+  for (sp in c(" ", "​", " ", "　", "﻿")) {
+    expect_error(ralloc(10, arms = c("A", sp)), "different names", info = sp)
+    expect_error(ralloc(10, arms = c("A", paste0("A", sp))),
+                 "different names", info = sp)
+    expect_error(ralloc(strata = stats::setNames(c(4, 4), c("a", sp))),
+                 "`strata`", info = sp)
+  }
+  expect_s3_class(ralloc(4, arms = c("A", "Bé")), "rmbl_alloc")
+})

@@ -64,11 +64,13 @@ test_that("a bundle hashes a file in chunks, never whole", {
     want <- sha256file(f)
     expect_identical(e$.rmbl_sha256_file(f, chunk = 100L), want)
     expect_identical(e$.rmbl_sha256_file(f, chunk = 64L), want)
-    expect_identical(e$.rmbl_sha256_bndl(f, base = FALSE), want)
+    expect_identical(e$.rmbl_sha256_bndl(f, base = FALSE, pkg = NULL,
+                                         os = NULL), want)
     expect_identical(e$sha256file(f), want)
   }
   if (exists("sha256sum", envir = asNamespace("tools"))) {
-    expect_identical(e$.rmbl_sha256_bndl(f, base = TRUE), sha256file(f))
+    expect_identical(e$.rmbl_sha256_bndl(f, base = TRUE, pkg = NULL),
+                     sha256file(f))
   }
 })
 
@@ -152,7 +154,7 @@ test_that("without the compiled code the namespace uses the bundle paths", {
   writeBin(as.raw(0:200), f)
   want <- sha256file(f)
   expect_identical(.rmbl_sha256_file(f, chunk = 7L), want)
-  expect_identical(.rmbl_sha256_bndl(f, base = FALSE), want)
+  expect_identical(.rmbl_sha256_bndl(f, base = FALSE, os = NULL), want)
   if (exists("sha256sum", envir = asNamespace("tools"))) {
     expect_identical(.rmbl_sha256_bndl(f, base = TRUE), want)
   }
@@ -170,4 +172,72 @@ test_that("without the compiled code the namespace uses the bundle paths", {
   expect_identical(unname(tools::md5sum(dest)), unname(tools::md5sum(f)))
   expect_error(.bl_fetch_file(paste0("file://", f, "-no"), dest,
                               allow_file = TRUE), "cannot open the file")
+})
+
+test_that("a bundle hashes by the fastest way at hand, in order", {
+  f <- withr::local_tempfile()
+  writeBin(as.raw(0:255), f)
+  want <- sha256file(f)
+  used <- new.env()
+  tier <- function(name, val = want) {
+    function(path) {
+      used$tier <- c(used$tier, name)
+      val
+    }
+  }
+  # 1: an installed rmoriebricklayer's own sha256file()
+  used$tier <- NULL
+  expect_identical(.rmbl_sha256_bndl(f, base = TRUE, pkg = tier("pkg"),
+                                     os = tier("os")), want)
+  expect_identical(used$tier, "pkg")
+  # 2: tools::sha256sum() when R has it
+  if (exists("sha256sum", envir = asNamespace("tools"))) {
+    used$tier <- NULL
+    expect_identical(.rmbl_sha256_bndl(f, base = TRUE, pkg = NULL,
+                                       os = tier("os")), want)
+    expect_null(used$tier)
+  }
+  # 3: the system's tool; 4: pure R when it has no answer
+  used$tier <- NULL
+  expect_identical(.rmbl_sha256_bndl(f, base = FALSE, pkg = NULL,
+                                     os = tier("os")), want)
+  expect_identical(used$tier, "os")
+  expect_identical(.rmbl_sha256_bndl(f, base = FALSE, pkg = NULL,
+                                     os = tier("os", NULL)), want)
+  expect_identical(.rmbl_sha256_bndl(f, base = FALSE, pkg = NULL,
+                                     os = NULL), want)
+  # the real system tool, where there is one
+  if (!is.null(.rmbl_shatool(Sys.info()[["sysname"]]))) {
+    expect_identical(.rmbl_ossha(f), want)
+  }
+  # the package lends its own only to a bundle
+  expect_null(.rmbl_bsha(own = TRUE))
+  expect_null(.rmbl_bsha(pkg = "rmblnosuchpkg", own = FALSE))
+  expect_identical(.rmbl_bsha(own = FALSE)(f), want)
+})
+
+test_that("pure R refuses a big file instead of hashing it for hours", {
+  f <- withr::local_tempfile()
+  writeBin(as.raw(1:10), f)
+  expect_error(
+    .rmbl_sha256_bndl(f, base = FALSE, pkg = NULL, os = NULL, cap = 5),
+    "no fast SHA-256"
+  )
+  local_mocked_bindings(file.size = function(...) 6e7, .package = "base")
+  expect_error(.rmbl_sha256_bndl(f, base = FALSE, pkg = NULL, os = NULL),
+               "is 57 MB: this R has no fast SHA-256")
+})
+
+test_that("a system tool's answer is read and checked", {
+  h <- strrep("ab", 32L)
+  expect_identical(.rmbl_shaout(paste0(h, "  f.csv"), "Linux"), h)
+  expect_identical(.rmbl_shaout(paste0("\\", h, "  a\\\\b"), "Linux"), h)
+  expect_identical(.rmbl_shaout(paste(toupper(h), "-"), "Darwin"), h)
+  win <- c("SHA256 hash of f.csv:", gsub("(..)", "\\1 ", h),
+           "CertUtil: -hashfile command completed successfully.")
+  expect_identical(.rmbl_shaout(win, "Windows"), h)
+  expect_null(.rmbl_shaout("sha256sum: f.csv: No such file", "Linux"))
+  expect_null(.rmbl_shaout(character(), "Windows"))
+  # a tool that answers with an error gives no digest
+  expect_null(.rmbl_ossha(file.path(tempdir(), "rmbl-no-such-file")))
 })

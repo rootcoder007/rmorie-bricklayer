@@ -65,11 +65,18 @@ user's rights: its \file{setup_and_run.R}, its analysis script and
 anything they start. Check only bundles you built or whose author you
 trust. To limit what a hostile bundle can reach, the run gets a minimal
 environment: \env{PATH}, the locale variables (\env{LANG},
-\env{LC_*}, \env{TZ}), the library paths of this session
-(\env{R_LIBS}), a fresh temporary \env{HOME} and \env{TMPDIR}, and no
-other variable, so API keys, tokens and passwords in the environment
-(or in \file{~/.Renviron}) do not reach it. On Windows the variables
-whose names look like credentials are removed instead (a best effort).
+\env{LANGUAGE}, \env{LC_ALL} and the \env{LC_} categories such as
+\env{LC_CTYPE}, no other \env{LC_} name; \env{TZ}), the library paths
+of this session (\env{R_LIBS}), a fresh temporary \env{HOME} and
+\env{TMPDIR}, and no other variable, so API keys, tokens and passwords
+in the environment (or in \file{~/.Renviron}) do not reach it. On
+Windows the variables that look like credentials are removed instead (a
+best effort): names holding \code{KEY}, \code{TOKEN}, \code{SECRET},
+\code{PASS}, \code{CREDENTIAL}, \code{AUTH}, \code{COOKIE} or
+\code{SESSION}, a service's prefix (\env{GITHUB_}, \env{AWS_}, ...),
+connection strings (\env{DATABASE_URL}, \env{*_DATABASE_URL},
+\env{*_WEBHOOK_URL}, \env{SENTRY_DSN}, \env{*_DSN}), \env{*_PWD}, other
+\env{LC_} names, and any value that is a URL with a password in it.
 This is not a sandbox: the files your user can read stay readable.
 
 The run is stopped after \code{getOption("rmbl.bundle.timeout")}
@@ -97,7 +104,10 @@ kills every process in it when the run ends or times out.}
 \item{process group}{macOS, and Linux without user namespaces: the run
 leads a process group, killed when it ends, times out or is
 interrupted. A process that deliberately leaves the group (setsid, a
-double fork) can outlive it; the checks warn of it.}
+double fork) can outlive it: every process still carrying the run's
+mark in its environment afterwards is killed and fails the check (the
+isolation row is an error). A process that also clears its
+environment is not seen.}
 }
 
 Only a \file{results_*} folder the run itself created counts: one the

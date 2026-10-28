@@ -69,6 +69,7 @@ arcpush <- function(
   tsa = "https://freetsa.org/tsr",
   tmout = 600L
 ) {
+  .rmbl_whole(visibility, c("public", "private"), "visibility")
   visibility <- .rmbl_arg(visibility)
   up <- .bl_cap_upload_arg(upload, reason)
   dir <- .rmbl_string1(dir, "dir")
@@ -156,7 +157,7 @@ arcpush <- function(
 #' prefix, a backslash, a control character, a symlink out
 #' (.rmbl_safe_rel()), or a folder.
 #' @param f The file name from the manifest.
-#' @param dir The capture folder.
+#' @inheritParams .bl_warc_get
 #' @return The path, or NULL.
 #' @noRd
 .bl_push_path <- function(f, dir) {

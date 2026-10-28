@@ -131,6 +131,7 @@ arccap <- function(
   visibility = c("public", "private"),
   warc = TRUE
 ) {
+  .rmbl_whole(visibility, c("public", "private"), "visibility")
   visibility <- .rmbl_arg(visibility)
   up <- .bl_cap_upload_arg(upload, reason)
   upload <- up$upload
@@ -918,10 +919,7 @@ format.rmbl_archive_capture <- function(x, ...) {
       call. = FALSE
     )
   }
-  paste(
-    vapply(parts, utils::URLencode, "", reserved = TRUE, USE.NAMES = FALSE),
-    collapse = "/"
-  )
+  paste(.rmbl_pct(parts), collapse = "/")
 }
 
 #' Records one Internet Archive upload in the capture table; a refused

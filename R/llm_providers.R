@@ -732,7 +732,7 @@
       url = sprintf(
         "%s/v1beta/models/%s:generateContent",
         rt$base,
-        utils::URLencode(sub("^models/", "", model), reserved = TRUE)
+        .rmbl_pct(sub("^models/", "", model))
       ),
       body = .bl_gemini_body(messages, tools, max_tokens)
     ),

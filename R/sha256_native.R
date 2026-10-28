@@ -65,7 +65,7 @@
 
 #' The SHA-256 digest of a file in pure R, read `chunk` bytes at a time,
 #' so memory stays at one chunk whatever the file's size.
-#' @param path The file.
+#' @inheritParams .bndl_write_text
 #' @param chunk Bytes read at a time.
 #' @return 64 lower-case hex digits.
 #' @noRd

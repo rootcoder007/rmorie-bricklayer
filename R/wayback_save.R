@@ -1290,7 +1290,7 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
 .bl_wb_form <- function(w, u) {
   paste0(
     "url=",
-    utils::URLencode(u, reserved = TRUE),
+    .rmbl_pct(u),
     "&skip_first_archive=1",
     if (w$within != "0") paste0("&if_not_archived_within=", w$within) else "",
     if (w$capall) "&capture_all=1" else ""
@@ -1510,7 +1510,7 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
 .bl_wb_check_job <- function(w, u, now) {
   job <- w$inflight[[u]]
   res <- .bl_wb_get(
-    sprintf("/save/status/%s", utils::URLencode(job$id, reserved = TRUE)),
+    sprintf("/save/status/%s", .rmbl_pct(job$id)),
     w$hdr
   )
   .bl_wb_refused(res)

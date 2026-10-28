@@ -770,7 +770,9 @@ yoy.ts <- function(x, lag = NULL, ...) {
     conf_level = conf_level,
     direction = direction
   )
-  out <- do.call(rbind, res)
+  # unnamed: rbind() makes row names of the group labels, and in a C locale
+  # translating one that is not ASCII warned "unable to translate"
+  out <- do.call(rbind, unname(res))
   rownames(out) <- NULL
   out
 }

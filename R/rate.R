@@ -516,7 +516,8 @@ ratechg.data.frame <- function(
     mincnt,
     prdord
   )
-  out <- do.call(rbind, .res)
+  # unnamed: group labels as row names warned in a C locale (as yoy())
+  out <- do.call(rbind, unname(.res))
   rownames(out) <- NULL
   structure(
     out,
@@ -534,19 +535,6 @@ ratechg.data.frame <- function(
       prdord = prdord
     )
   )
-}
-
-#' A period column as its labels: whole numbers (years) as text, so a
-#' table does not print them with the decimals of the numbers beside them.
-#' @param p The period column.
-#' @return `p`, or its text.
-#' @noRd
-.rmbl_prdtxt <- function(p) {
-  if (is.numeric(p) && all(is.na(p) | p == round(p))) {
-    return(ifelse(is.na(p), NA_character_, format(p, scientific = FALSE,
-                                                  trim = TRUE)))
-  }
-  p
 }
 
 #' @export
@@ -646,6 +634,19 @@ format.rmbl_share <- function(x, digits = 4L, ...) {
   "100000" = 1e5,
   "1000000" = 1e6
 )
+
+#' A period column as its labels: whole numbers (years) as text, so a
+#' table does not print them with the decimals of the numbers beside them.
+#' @inheritParams .yoy_period_grid
+#' @return `p`, or its text.
+#' @noRd
+.rmbl_prdtxt <- function(p) {
+  if (is.numeric(p) && all(is.na(p) | p == round(p))) {
+    return(ifelse(is.na(p), NA_character_, format(p, scientific = FALSE,
+                                                  trim = TRUE)))
+  }
+  p
+}
 
 #' Reads the `per` argument as a positive number.
 #'

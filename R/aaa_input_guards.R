@@ -43,7 +43,7 @@
 #' S3 method, else the export itself, else "".
 #' @param nm The name, or NA.
 #' @param s3 The namespace's S3 methods table.
-#' @param ex Its exports.
+#' @inheritParams .bl_ldgr_walk
 #' @return \dQuote{fn: } or "".
 #' @noRd
 .rmbl_fnlab <- function(nm, s3, ex) {
@@ -79,7 +79,7 @@
 #' @param h The head of the frame's call.
 #' @param f The frame's function.
 #' @param ns The namespace.
-#' @param ex Its exports.
+#' @inheritParams .bl_ldgr_walk
 #' @return One string, or NA.
 #' @noRd
 .rmbl_fnname <- function(h, f, ns, ex) {
@@ -325,6 +325,26 @@
     )
   }
   unique(choices[i])
+}
+
+#' Refuses an abbreviated choice, in .rmbl_arg()'s words, where a guess
+#' must not be made (`visibility = "pub"`): one string that is not a whole
+#' choice. Anything else is left to .rmbl_arg().
+#' @param x The value given.
+#' @param choices The accepted values.
+#' @inheritParams .bl_str0
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_whole <- function(x, choices, what) {
+  if (is.character(x) && length(x) == 1L && !is.na(x) && !x %in% choices) {
+    stop(
+      .rmbl_fn(),
+      sprintf("`%s` must be one of %s, not %s", what,
+              toString(dQuote(choices, FALSE)), .rmbl_printable(deparse(x))),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }
 
 #' Checks that a data frame has unique, non-empty column names.
@@ -1139,11 +1159,20 @@ if (!exists("%||%", envir = baseenv(), inherits = FALSE)) {
 }
 
 #' Whether labels fail as names: NA, blank once spaces are trimmed, or two
-#' that differ only in spaces ("A", "A ").
+#' that differ only in spaces ("A", "A "). Unicode spaces count: no-break
+#' (U+00A0), the U+2000-U+200A spaces, ideographic (U+3000), zero width
+#' (U+200B) and the byte order mark (U+FEFF).
 #' @param x The labels.
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_badnames <- function(x) {
-  t <- trimws(x)
-  anyNA(x) || !all(nzchar(t)) || anyDuplicated(t) > 0L
+  if (anyNA(x)) {
+    return(TRUE)
+  }
+  # the class holds the characters themselves, so the pattern is UTF-8 and
+  # matched as such whatever the locale (\\h covers U+00A0, U+2000-U+200A
+  # and U+3000)
+  sp <- paste0("[\\h\\v", intToUtf8(c(0x200b, 0xfeff)), "]")
+  t <- trimws(enc2utf8(as.character(x)), whitespace = sp)
+  !all(nzchar(t)) || anyDuplicated(t) > 0L
 }

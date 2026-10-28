@@ -528,3 +528,18 @@ test_that("a progress label or stage cannot write escapes to the console", {
   expect_false(grepl("\u009b", a$label, fixed = TRUE))
   expect_match(a$label, "<U+009B>", fixed = TRUE)
 })
+
+test_that("colour codes in a label are escaped; the package's own are kept", {
+  # a label could hide what follows (ESC [8m) or paint it
+  expect_identical(.rmbl_ctl_escape("a\033[31mb\033[8mc"),
+                   "a\\033[31mb\\033[8mc")
+  expect_identical(.rmbl_ctl_escape("\033[38;2;1;2;3mx\033[0m", keep = TRUE),
+                   "\033[38;2;1;2;3mx\033[0m")
+  expect_identical(.rmbl_ctl_escape("\033[1mt\033[8mh\033[41mb", keep = TRUE),
+                   "\033[1mt\\033[8mh\\033[41mb")
+  # a box's own colours survive printing; a label's do not
+  st <- .rmbl_box_styles(256L)
+  out <- capture.output(.rmbl_cat(c(st$good("ok"), "x\033[8my")))
+  expect_true(any(grepl("\033[32mok\033[39m", out, fixed = TRUE)))
+  expect_false(any(grepl("\033[8m", out, fixed = TRUE)))
+})

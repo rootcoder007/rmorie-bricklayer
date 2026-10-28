@@ -1227,3 +1227,8 @@ OCSPSigning
 PKIStatus
 SignerInfo
 thisUpdate
+PID
+podman
+setsid
+SignedData
+TMPDIR

@@ -117,61 +117,6 @@ certprs <- function(cert) {
   })
 }
 
-#' certprs() on DER bytes.
-#' @param der The certificate's bytes.
-#' @return The parsed certificate.
-#' @noRd
-.rmbl_certprs <- function(der) {
-  top <- .Call(C_rmbl_der_parse, der)
-  if (length(top$children) < 3L) {
-    stop("not an X.509 certificate", call. = FALSE)
-  }
-  .rmbl_x509_shape(top, der)
-  tbs <- top$children[[1]]
-  sig_alg <- .rmbl_oid_string(tbs_alg_oid(top$children[[2]]))
-  sig <- .rmbl_x509_sig_bits(top$children[[3]]$value)
-  k <- tbs$children
-  vo <- .rmbl_x509_version(k)
-  off <- vo$off
-  version <- vo$version
-  serial <- .rmbl_hexlify(k[[off + 1L]]$value)
-  issuer <- .rmbl_x509_name(k[[off + 3L]])
-  validity <- k[[off + 4L]]$children
-  subject <- .rmbl_x509_name(k[[off + 5L]])
-  spki <- k[[off + 6L]]
-  exts <- .rmbl_x509_extensions(k)
-  out <- list(
-    version = version,
-    serial = serial,
-    issuer = issuer,
-    subject = subject,
-    not_before = .rmbl_x509_time(validity[[1]]),
-    not_after = .rmbl_x509_time(validity[[2]]),
-    signature_algorithm = .rmbl_x509_sigalg_name(sig_alg),
-    signature_oid = sig_alg,
-    signature = sig,
-    tbs = der[(tbs$start + 1L):(tbs$offset + tbs$length)],
-    key = .rmbl_x509_key(spki),
-    is_ca = exts$is_ca,
-    path_len = exts$path_len,
-    key_usage = exts$key_usage,
-    extended_key_usage = exts$eku,
-    subject_rdns = .rmbl_x509_rdns(k[[off + 5L]]),
-    issuer_rdns = .rmbl_x509_rdns(k[[off + 3L]]),
-    san = exts$san,
-    name_constraints = exts$name_constraints,
-    policies = exts$policies,
-    policy_mappings = exts$policy_mappings,
-    require_explicit_policy = exts$require_explicit_policy,
-    inhibit_policy_mapping = exts$inhibit_policy_mapping,
-    inhibit_any_policy = exts$inhibit_any_policy,
-    self_signed = identical(issuer, subject),
-    der = der
-  )
-  class(out) <- c("bricklayer_certificate", "list")
-  out
-}
-
 #' @export
 format.bricklayer_certificate <- function(x, ...) {
   .rmbl_stat_block(
@@ -388,6 +333,61 @@ format.bricklayer_certpath_check <- function(x, ...) {
   )
 }
 
+#' certprs() on DER bytes.
+#' @param der The certificate's bytes.
+#' @return The parsed certificate.
+#' @noRd
+.rmbl_certprs <- function(der) {
+  top <- .Call(C_rmbl_der_parse, der)
+  if (length(top$children) < 3L) {
+    stop("not an X.509 certificate", call. = FALSE)
+  }
+  .rmbl_x509_shape(top, der)
+  tbs <- top$children[[1]]
+  sig_alg <- .rmbl_oid_string(tbs_alg_oid(top$children[[2]]))
+  sig <- .rmbl_x509_sig_bits(top$children[[3]]$value)
+  k <- tbs$children
+  vo <- .rmbl_x509_version(k)
+  off <- vo$off
+  version <- vo$version
+  serial <- .rmbl_hexlify(k[[off + 1L]]$value)
+  issuer <- .rmbl_x509_name(k[[off + 3L]])
+  validity <- k[[off + 4L]]$children
+  subject <- .rmbl_x509_name(k[[off + 5L]])
+  spki <- k[[off + 6L]]
+  exts <- .rmbl_x509_extensions(k)
+  out <- list(
+    version = version,
+    serial = serial,
+    issuer = issuer,
+    subject = subject,
+    not_before = .rmbl_x509_time(validity[[1]]),
+    not_after = .rmbl_x509_time(validity[[2]]),
+    signature_algorithm = .rmbl_x509_sigalg_name(sig_alg),
+    signature_oid = sig_alg,
+    signature = sig,
+    tbs = der[(tbs$start + 1L):(tbs$offset + tbs$length)],
+    key = .rmbl_x509_key(spki),
+    is_ca = exts$is_ca,
+    path_len = exts$path_len,
+    key_usage = exts$key_usage,
+    extended_key_usage = exts$eku,
+    subject_rdns = .rmbl_x509_rdns(k[[off + 5L]]),
+    issuer_rdns = .rmbl_x509_rdns(k[[off + 3L]]),
+    san = exts$san,
+    name_constraints = exts$name_constraints,
+    policies = exts$policies,
+    policy_mappings = exts$policy_mappings,
+    require_explicit_policy = exts$require_explicit_policy,
+    inhibit_policy_mapping = exts$inhibit_policy_mapping,
+    inhibit_any_policy = exts$inhibit_any_policy,
+    self_signed = identical(issuer, subject),
+    der = der
+  )
+  class(out) <- c("bricklayer_certificate", "list")
+  out
+}
+
 #' A small non-negative INTEGER's value.
 #' @param v The INTEGER's content bytes.
 #' @return The value as an integer, NA for no bytes.
@@ -404,7 +404,7 @@ format.bricklayer_certpath_check <- function(x, ...) {
 }
 
 #' Whether a DER node has the class, tag and form given.
-#' @param nd The node, or NULL.
+#' @inheritParams .rmbl_ts_want
 #' @param class,tag The class (0 universal, 2 context) and the tag.
 #' @param cons TRUE for a constructed node, FALSE for a primitive one.
 #' @return TRUE or FALSE.
@@ -525,7 +525,7 @@ format.bricklayer_certpath_check <- function(x, ...) {
   tags <- vapply(rest, function(nd) {
     if (identical(nd$class, 2L)) as.numeric(nd$tag) else -1
   }, 0)
-  if (any(!tags %in% 1:3) || is.unsorted(tags, strictly = TRUE)) {
+  if (!all(tags %in% 1:3) || is.unsorted(tags, strictly = TRUE)) {
     bad("a field after the key that RFC 5280 does not define")
   }
   for (nd in rest) {
@@ -552,7 +552,7 @@ format.bricklayer_certpath_check <- function(x, ...) {
 }
 
 #' Whether a node is a universal OBJECT IDENTIFIER with contents.
-#' @param nd The node, or NULL.
+#' @inheritParams .rmbl_ts_want
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_x509_oid <- function(nd) {
@@ -561,7 +561,7 @@ format.bricklayer_certpath_check <- function(x, ...) {
 
 #' An AlgorithmIdentifier: an OID, then no parameters, a NULL, an OID (a
 #' curve) or a SEQUENCE (RSASSA-PSS).
-#' @param nd The node.
+#' @inheritParams .rmbl_ts_digest_algs
 #' @param what Its name, for the refusal.
 #' @param bad The function that refuses.
 #' @return NULL, invisibly.
@@ -599,7 +599,7 @@ format.bricklayer_certpath_check <- function(x, ...) {
 }
 
 #' A Name: a SEQUENCE of non-empty SETs of (OID, string) pairs.
-#' @param nd The node.
+#' @inheritParams .rmbl_ts_digest_algs
 #' @param what "issuer" or "subject".
 #' @param bad The function that refuses.
 #' @return NULL, invisibly.
@@ -1004,9 +1004,8 @@ tbs_alg_oid <- function(alg) {
       }
       oid <- .rmbl_oid_string(atv$children[[1]]$value)
       nm <- if (oid %in% names(short)) short[[oid]] else oid
-      val <- tryCatch(rawToChar(atv$children[[2]]$value), error = function(e) {
-        ""
-      })
+      # byte-safe: a name that is not UTF-8 shows its bytes as <xx>
+      val <- .rmbl_raw_text(atv$children[[2]]$value)
       parts <- c(parts, sprintf("%s=%s", nm, val))
     }
   }

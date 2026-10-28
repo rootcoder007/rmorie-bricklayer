@@ -64,10 +64,20 @@ project, is left out with a warning that names it. Files whose names
 look like credentials are left out too, with a warning that lists them,
 unless \code{secrets = TRUE}: \file{llm.json}, \file{credentials.json},
 \file{secrets.yaml}, \file{token.txt}, \file{api_key*},
-\file{id_rsa} and the other SSH private keys, \file{.env},
-\file{.netrc}, \file{.Renviron}, \file{.pgpass}, key stores
-(\file{.p12}, \file{.pfx}, \file{.jks}, \file{.ppk}) and \file{.pem}
-or \file{.key} files holding a private key.
+\file{id_rsa} and the other SSH private keys, \file{.env} and
+\file{*.env}, \file{.netrc}, \file{.Renviron}, \file{.pgpass},
+\file{kubeconfig} and \file{kube.config}, key stores (\file{.p12},
+\file{.pfx}, \file{.jks}, \file{.ppk}), \file{.pem} or \file{.key}
+files holding a private key, and any other file (not a data table such
+as \file{.csv} or \file{.rds}) whose name, split into words at
+\samp{-}, \samp{_}, \samp{.} and spaces, has the word \code{key},
+\code{keys}, \code{apikey}, \code{token}, \code{tokens}, \code{secret},
+\code{secrets}, \code{credential}, \code{credentials}, \code{creds},
+\code{password}, \code{passwords}, \code{passwd}, \code{pat} or
+\code{adc} (\file{openai_key.txt},
+\file{github_pat.txt}, \file{access_token}, \file{aws_credentials},
+\file{gcloud_adc.json}, \file{keys.R}; not \file{keyboard.csv}).
+Public keys (\file{.pub}) are packed.
 
 The runner calls the analysis script as
 \code{Rscript analysis.R <data file> <results folder>}, with

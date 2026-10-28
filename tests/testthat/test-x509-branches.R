@@ -648,3 +648,22 @@ test_that("an OCSP answer short of fields is not verified, not an error", {
   expect_false(r$ok)
   expect_match(r$detail, "not a BasicOCSPResponse")
 })
+
+test_that("a name that is not UTF-8 is shown by its bytes, never an error", {
+  f <- x509_fx()
+  m <- f$chain_leaf
+  i <- grepRaw(charToRaw("Chain Leaf"), m, all = TRUE)
+  # "L" with its top bit set: the byte 0xcc then "eaf", not UTF-8
+  m[i[length(i)] + 6L] <- xor(m[i[length(i)] + 6L], as.raw(0x80))
+  leaf <- certprs(m)
+  expect_true(validUTF8(leaf$subject))
+  expect_match(leaf$subject, "Chain <cc>eaf", fixed = TRUE)
+  r <- certchnvrf(m, trust = f$chain_root, inter = list(f$chain_inter),
+                  attm = as.POSIXct("2027-01-01", tz = "UTC"))
+  expect_false(r$ok)
+  expect_match(paste(unlist(r$checks), collapse = " "), "CN=Chain <c",
+               fixed = TRUE)
+  # the same bytes in a name constraint or a CRL field
+  expect_identical(.rmbl_raw_text(as.raw(c(0x41, 0xc3, 0x28))), "A<c3>(")
+  expect_identical(tolower(.rmbl_raw_text(as.raw(c(0x41, 0xc3)))), "a<c3>")
+})

@@ -61,7 +61,12 @@ test_that("a bundle that runs and gives the expected counts is verified", {
   expect_identical(
     a$counts, c(total = 3L, pass = 2L, differ = 0L, info = 1L)
   )
-  expect_true(all(a$checks$ok))
+  # the isolation row depends on the machine (a process group on macOS
+  # and on Linux without user namespaces): ok there too, or a warning
+  iso <- a$checks$check == "isolation"
+  expect_true(all(a$checks$ok[!iso]))
+  expect_true(isTRUE(a$checks$ok[iso]) ||
+                identical(a$checks$severity[iso], "warn"))
   expect_true(dir.exists(a$dir))
   expect_identical(readLines(file.path(a$dir, "args.txt")), "--quick")
   expect_match(a$checks$detail[4L], "pass_csv expects 2/3 PASS", fixed = TRUE)
@@ -180,7 +185,7 @@ test_that("launchers the zip does not mark executable are a warning", {
   expect_match(bad$detail, "a/START_HERE.command", fixed = TRUE)
   # a zip mkbndl() wrote marks .sh and .command files 0755
   d <- withr::local_tempdir()
-  m <- .bndlchk_modes(fake_bundle(d, man_run("PASS")))
+  m <- .bndlchk_cd(fake_bundle(d, man_run("PASS")))$modes
   expect_identical(unname(m[["fake_v1/start_here.sh"]]), 33261)
   expect_identical(unname(m[["fake_v1/setup_and_run.R"]]), 33188)
   # a directory claimed beyond the file's end is not read (readBin() would
@@ -190,11 +195,11 @@ test_that("launchers the zip does not mark executable are a warning", {
   at <- grepRaw(as.raw(c(0x50, 0x4b, 0x05, 0x06)), b, all = TRUE)
   b[at[length(at)] + 12:15] <- as.raw(0xff)
   writeBin(b, z)
-  expect_length(.bndlchk_modes(z), 0L)
+  expect_length(.bndlchk_cd_raw(z)$cd, 0L)
   # a file with no end-of-central-directory record has no modes
   junk <- file.path(d, "junk.zip")
   writeBin(as.raw(1:200), junk)
-  expect_length(.bndlchk_modes(junk), 0L)
+  expect_length(.bndlchk_cd_raw(junk)$cd, 0L)
 })
 
 test_that("rmbl pack --check runs mkbndlchk from a terminal", {
@@ -322,9 +327,13 @@ test_that("the run's environment keeps only what R needs", {
   withr::local_envvar(
     PATH = "/usr/bin:/bin", LANG = "C.UTF-8", LC_TIME = "C",
     OPENAI_API_KEY = "sk-fake", https_proxy = "http://u:p@proxy:3128",
-    http_proxy = "http://proxy:3128"
+    http_proxy = "http://proxy:3128", LC_FAKE_SECRET = "fake",
+    LC_IDENTIFICATION = "C"
   )
   e <- .rmbl_envmin("/tmp/h")
+  # only the locale's own LC_ variables
+  expect_false("LC_FAKE_SECRET" %in% names(e))
+  expect_identical(e[["LC_IDENTIFICATION"]], "C")
   expect_identical(e[["HOME"]], "/tmp/h")
   expect_identical(e[["TMPDIR"]], file.path("/tmp/h", "tmp"))
   expect_identical(e[["PATH"]], "/usr/bin:/bin")
@@ -340,6 +349,15 @@ test_that("the run's environment keeps only what R needs", {
     c("RMBL_KEY", "GH_TOKEN", "my_secret", "IA_X", "AWS_PROFILE",
       "DB_PASSWD")
   )
+  # the Windows list: connection strings, *_PWD, other LC_ names, and a
+  # value that is a URL with a password
+  n <- c("DATABASE_URL", "APP_DATABASE_URL", "SLACK_WEBHOOK_URL",
+         "SENTRY_DSN", "PG_DSN", "DB_PWD", "SMTP_PASS", "X_SECRET",
+         "X_TOKEN", "X_API_KEY", "LC_FAKEVAR", "MIRROR", "LC_ALL",
+         "LC_CTYPE", "PWD", "LANG", "HOME")
+  v <- c(rep("fake", 11L), "https://u:fake@host/x", "C", "C", "/x", "C",
+         "/h")
+  expect_identical(.rmbl_envdrop(n, v), n[1:12])
 })
 
 test_that("the default time limit is 30 minutes", {
@@ -366,17 +384,25 @@ test_that("zips that cannot be unzipped safely are refused in words", {
   f <- file.path(d, "f.R")
   writeLines("cat('second runner\\n')", f)
   dup <- raw_zip(file.path(d, "dup.zip"),
-                 c("b/setup_and_run.R" = f, "b/setup_and_run.R" = f))
+                 stats::setNames(c(f, f), rep("b/setup_and_run.R", 2L)))
   expect_error(mkbndlchk(dup), "holds the same entry twice")
   case <- raw_zip(file.path(d, "case.zip"),
                   c("b/setup_and_run.R" = f, "b/SETUP_and_run.R" = f))
   expect_error(mkbndlchk(case), "holds the same entry twice")
+  # an empty or "." part names the same file: unzip writes b/setup_and_run.R
+  for (nm in c("b//setup_and_run.R", "b/./setup_and_run.R")) {
+    z <- raw_zip(file.path(d, "dd.zip"),
+                 stats::setNames(c(f, f), c("b/setup_and_run.R", nm)))
+    expect_error(mkbndlchk(z), "holds the same entry twice", info = nm)
+  }
+  up2 <- raw_zip(file.path(d, "up2.zip"), c("b/./../x.R" = f))
+  expect_error(mkbndlchk(up2), "leave its folder")
   up <- raw_zip(file.path(d, "up.zip"), c("b/../../x.R" = f))
   expect_error(mkbndlchk(up), "leave its folder")
   ab <- raw_zip(file.path(d, "ab.zip"), c("/tmp/x.R" = f))
   expect_error(mkbndlchk(ab), "leave its folder")
   long <- raw_zip(file.path(d, "long.zip"),
-                  stats::setNames(f, paste0("b/", strrep("n", 300L))))
+                  stats::setNames(f, file.path("b", strrep("n", 300L))))
   expect_error(mkbndlchk(long), "too long")
   nul <- raw_zip(file.path(d, "nul.zip"), c("b/abQcd.R" = f))
   b <- readBin(nul, "raw", file.size(nul))
@@ -384,7 +410,7 @@ test_that("zips that cannot be unzipped safely are refused in words", {
   b[q + 2L] <- as.raw(0L)
   writeBin(b, nul)
   expect_error(mkbndlchk(nul), "NUL byte")
-  expect_length(.bndlchk_modes(nul), 1L)
+  expect_length(.bndlchk_cd_walk(.bndlchk_cd_raw(nul)$cd)$modes, 1L)
   # an end record counting 65535 entries is a zip64 archive
   z64 <- raw_zip(file.path(d, "z64.zip"), c("b/setup_and_run.R" = f))
   b <- readBin(z64, "raw", file.size(z64))
@@ -402,7 +428,7 @@ test_that("zips that cannot be unzipped safely are refused in words", {
   writeBin(as.raw(1:200), junk)
   expect_error(mkbndlchk(junk), "not a readable zip")
   # nothing was run or unzipped
-  expect_identical(length(list.files(tempdir(), "^bndlchk")), n0)
+  expect_length(list.files(tempdir(), "^bndlchk"), n0)
 })
 
 test_that("a large central directory is read in linear time", {
@@ -414,9 +440,10 @@ test_that("a large central directory is read in linear time", {
       as.raw(rep(0L, 8L)), .bndl_u32(33188 * 65536), .bndl_u32(0), nm)
   }
   cd <- unlist(lapply(seq_len(n), one), use.names = FALSE)
-  t <- system.time(m <- .bndlchk_cd_modes(cd))[["elapsed"]]
+  t <- system.time(w <- .bndlchk_cd_walk(cd))[["elapsed"]]
+  m <- w$modes
   expect_length(m, n)
-  expect_identical(names(m)[n], sprintf("b/f%05d.txt", n))
+  expect_identical(rawToChar(w$names[[n]]), sprintf("b/f%05d.txt", n))
   expect_true(all(m == 33188))
   expect_lt(t, 10)
 })
@@ -446,7 +473,8 @@ test_that("the Windows way, and no bash or env on the PATH", {
   expect_identical(Sys.getenv("RMBL_KEY"), "fake")
 
   local_mocked_bindings(Sys.which = function(names) "", .package = "base")
-  expect_true(file.exists("/usr/bin/env") && file.exists("/bin/sh"))
+  expect_true(file.exists("/usr/bin/env"))
+  expect_true(file.exists("/bin/sh"))
   expect_identical(.bndlchk_run(root, NULL, FALSE, win = FALSE)$status, 0L)
 })
 
@@ -510,10 +538,46 @@ test_that("without unshare the run falls back to its process group", {
   a <- mkbndlchk(fake_bundle(d, man_run("PASS"), top = "pg_v1"))
   expect_true(a$ok)
   expect_identical(a$isolation, "process group")
+  # every row ok, the isolation row too: no process outlived the run
+  expect_true(all(a$checks$ok))
+  row <- a$checks[a$checks$check == "isolation", ]
+  expect_match(row$detail, "no process outlived the run", fixed = TRUE)
+})
+
+test_that("a process that outlives a process-group run fails the check", {
+  skip_on_os(c("windows", "solaris"))
+  skip_if(!nzchar(Sys.which("setsid")) && !identical(
+    Sys.info()[["sysname"]], "Darwin"
+  ), "no setsid")
+  local_mocked_bindings(.bndlchk_unshare = function(...) NULL)
+  d <- withr::local_tempdir()
+  tok <- file.path(d, paste0("rmbl_sleep_", basename(tempfile(""))))
+  file.symlink(Sys.which("sleep"), tok)
+  # setsid leaves the run's process group; on macOS a perl setsid() does
+  daemon <- if (nzchar(Sys.which("setsid"))) {
+    sprintf("system('setsid %s 300 > /dev/null 2>&1 < /dev/null &')", tok)
+  } else {
+    sprintf(paste0("system('perl -e \"use POSIX; fork and exit; ",
+                   "POSIX::setsid(); exec q{%s}, 300\" > /dev/null 2>&1')"),
+            tok)
+  }
+  run <- c(daemon, "Sys.sleep(0.5)", man_run("PASS"))
+  a <- mkbndlchk(fake_bundle(d, run, top = "escape_v1"))
+  expect_false(a$ok)
   row <- a$checks[a$checks$check == "isolation", ]
   expect_false(row$ok)
-  expect_identical(row$severity, "warn")
-  expect_match(row$detail, "can outlive the run", fixed = TRUE)
+  expect_identical(row$severity, "error")
+  expect_match(row$detail, "outlived the run and were killed", fixed = TRUE)
+  # and it was killed
+  Sys.sleep(0.3)
+  if (dir.exists("/proc")) {
+    left <- procs_named(tok)
+    for (p in left) tools::pskill(p)
+    expect_length(left, 0L)
+  }
+  # a survivor seen by the scan, without running anything
+  expect_identical(.bndlchk_iso("process group", 12L)$severity, "error")
+  expect_true(.bndlchk_iso("job object")$ok)
 })
 
 test_that("unshare that is missing or refuses gives no namespace", {
@@ -526,7 +590,8 @@ test_that("unshare that is missing or refuses gives no namespace", {
 test_that("a container check: the run's arguments and its clean-up", {
   d <- withr::local_tempdir()
   zip <- fake_bundle(d, man_run("PASS"), top = "ctr_v1")
-  calls <- list()
+  got <- new.env()
+  got$calls <- list()
   local_mocked_bindings(.bndlchk_which = function(x) {
     if (x == "podman") "/usr/bin/podman" else ""
   })
@@ -534,10 +599,10 @@ test_that("a container check: the run's arguments and its clean-up", {
     system2 = function(command, args = character(), stdout = "",
                        stderr = "", timeout = 0, ...) {
       a <- gsub("^'|'$", "", args)
-      calls[[length(calls) + 1L]] <<- list(cmd = command, args = a,
-                                           timeout = timeout)
+      got$calls[[length(got$calls) + 1L]] <- list(cmd = command, args = a,
+                                                  timeout = timeout)
       if (identical(a[1L], "run")) {
-        out <- sub(":/out:z$", "", a[grep(":/out:z$", a)])
+        out <- sub(":/out:z$", "", grep(":/out:z$", a, value = TRUE))
         dir.create(file.path(out, "results_1"))
         writeLines('{"results": {"c1": {"status": "PASS"}}}',
                    file.path(out, "results_1", "manifest.json"))
@@ -554,7 +619,7 @@ test_that("a container check: the run's arguments and its clean-up", {
   expect_true(a$ok)
   expect_identical(a$isolation, "container (podman)")
   expect_true(file.exists(file.path(a$dir, "results_1", "manifest.json")))
-  run <- Filter(function(x) identical(x$args[1L], "run"), calls)[[1L]]
+  run <- Filter(function(x) identical(x$args[1L], "run"), got$calls)[[1L]]
   r <- run$args
   for (f in c("--rm", "--read-only", "--userns=keep-id", "no-new-privileges",
               "ALL", "1234:1234", "4g", "512", "/out")) {
@@ -566,13 +631,13 @@ test_that("a container check: the run's arguments and its clean-up", {
   expect_true("/data/in.csv" %in% r)
   expect_true(.bndlchk_image() %in% r)
   expect_identical(run$timeout, 1800L)
-  rm <- Filter(function(x) identical(x$args[1L], "rm"), calls)
+  rm <- Filter(function(x) identical(x$args[1L], "rm"), got$calls)
   expect_length(rm, 1L)
   expect_identical(rm[[1L]]$args[3L], r[match("--name", r) + 1L])
   # the real data to be downloaded: the network is on
-  calls <- list()
+  got$calls <- list()
   b <- mkbndlchk(zip, container = "podman")
-  run <- Filter(function(x) identical(x$args[1L], "run"), calls)[[1L]]
+  run <- Filter(function(x) identical(x$args[1L], "run"), got$calls)[[1L]]
   expect_false("--network" %in% run$args)
   expect_true(b$ok)
 })

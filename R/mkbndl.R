@@ -33,10 +33,20 @@
 #' look like credentials are left out too, with a warning that lists them,
 #' unless \code{secrets = TRUE}: \file{llm.json}, \file{credentials.json},
 #' \file{secrets.yaml}, \file{token.txt}, \file{api_key*},
-#' \file{id_rsa} and the other SSH private keys, \file{.env},
-#' \file{.netrc}, \file{.Renviron}, \file{.pgpass}, key stores
-#' (\file{.p12}, \file{.pfx}, \file{.jks}, \file{.ppk}) and \file{.pem}
-#' or \file{.key} files holding a private key.
+#' \file{id_rsa} and the other SSH private keys, \file{.env} and
+#' \file{*.env}, \file{.netrc}, \file{.Renviron}, \file{.pgpass},
+#' \file{kubeconfig} and \file{kube.config}, key stores (\file{.p12},
+#' \file{.pfx}, \file{.jks}, \file{.ppk}), \file{.pem} or \file{.key}
+#' files holding a private key, and any other file (not a data table such
+#' as \file{.csv} or \file{.rds}) whose name, split into words at
+#' \samp{-}, \samp{_}, \samp{.} and spaces, has the word \code{key},
+#' \code{keys}, \code{apikey}, \code{token}, \code{tokens}, \code{secret},
+#' \code{secrets}, \code{credential}, \code{credentials}, \code{creds},
+#' \code{password}, \code{passwords}, \code{passwd}, \code{pat} or
+#' \code{adc} (\file{openai_key.txt},
+#' \file{github_pat.txt}, \file{access_token}, \file{aws_credentials},
+#' \file{gcloud_adc.json}, \file{keys.R}; not \file{keyboard.csv}).
+#' Public keys (\file{.pub}) are packed.
 #'
 #' The runner calls the analysis script as
 #' \code{Rscript analysis.R <data file> <results folder>}, with
@@ -138,14 +148,7 @@ mkbndl <- function(
   secrets <- .rmbl_flag1(secrets, "secrets")
   cfg <- .bndl_read(file.path(pdir, "config.json"))
   prov <- .bndl_read(file.path(pdir, "data_provenance.json"))
-  # the zip's name and the folder inside it: a plain name, never a path
-  name <- .bndl_get(cfg, c("project", "name"), "")
-  name <- if (nzchar(name)) {
-    .bndl_name(name, "project$name in config.json")
-  } else {
-    .bndl_name(gsub("[^A-Za-z0-9._-]", "_", sub("^[.]+", "", basename(pdir))),
-               "the project folder's name")
-  }
+  name <- .bndl_zipname(cfg, pdir)
   base <- paste0(name, "_v", version, if (!is.null(data)) "_with_data")
   zip <- file.path(normalizePath(dest, winslash = "/"), paste0(base, ".zip"))
   if (file.exists(zip) && !overwrite) {
@@ -156,30 +159,8 @@ mkbndl <- function(
   }
   tmp <- tempfile("bndl")
   on.exit(unlink(tmp, recursive = TRUE, force = TRUE), add = TRUE)
-  stage <- file.path(tmp, base)
-  dir.create(stage, recursive = TRUE)
-  .bndl_stage(stage, pdir, root, cfg, secrets)
-  subs <- .bndl_subs(cfg, prov, paste0(base, ".zip"))
-  .bndl_pages(stage, root, subs, data, prov)
-  bad <- .bndl_scan(stage)
-  if (length(bad)) {
-    stop(
-      "the bundle would fail on the reviewer's machine:\n  ",
-      paste(bad, collapse = "\n  "),
-      call. = FALSE
-    )
-  }
-  # written under a temporary name and renamed once complete: an
-  # interrupted build (Ctrl-C) leaves no partial zip, and keeps the old one
-  part <- tempfile(paste0(base, "_"), tmpdir = dirname(zip), fileext = ".part")
-  on.exit(unlink(part, force = TRUE), add = TRUE)
-  files <- .bndl_zip(tmp, base, part)
-  if (!file.rename(part, zip)) {
-    unlink(zip)
-    if (!file.rename(part, zip)) {
-      stop(sprintf("could not write %s", zip), call. = FALSE)
-    }
-  }
+  .bndl_build(file.path(tmp, base), pdir, root, cfg, prov, secrets, data)
+  files <- .bndl_commit(tmp, base, zip)
   out <- list(
     path = zip,
     sha256 = sha256file(zip),
@@ -330,6 +311,67 @@ format.rmbl_bundle_project <- function(x, ...) {
       )
     )
   )
+}
+
+#' The zip's name and the folder inside it: a plain name, never a path.
+#' @param cfg The parsed config.json.
+#' @param pdir The project folder.
+#' @return A character string.
+#' @noRd
+.bndl_zipname <- function(cfg, pdir) {
+  name <- .bndl_get(cfg, c("project", "name"), "")
+  if (nzchar(name)) {
+    .bndl_name(name, "project$name in config.json")
+  } else {
+    .bndl_name(gsub("[^A-Za-z0-9._-]", "_", sub("^[.]+", "", basename(pdir))),
+               "the project folder's name")
+  }
+}
+
+#' Stage a bundle's files and pages, and refuse one that would fail.
+#' @param stage The folder to fill (created here).
+#' @param pdir The project folder.
+#' @param root The package's bundle template folder.
+#' @param cfg The parsed config.json.
+#' @param prov The parsed data_provenance.json.
+#' @param secrets Whether files that look like credentials go in.
+#' @param data The data file, or NULL.
+#' @return NULL, invisibly.
+#' @noRd
+.bndl_build <- function(stage, pdir, root, cfg, prov, secrets, data) {
+  dir.create(stage, recursive = TRUE)
+  .bndl_stage(stage, pdir, root, cfg, secrets)
+  subs <- .bndl_subs(cfg, prov, paste0(basename(stage), ".zip"))
+  .bndl_pages(stage, root, subs, data, prov)
+  bad <- .bndl_scan(stage)
+  if (length(bad)) {
+    stop(
+      "the bundle would fail on the reviewer's machine:\n  ",
+      paste(bad, collapse = "\n  "),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' Write the zip under a temporary name and rename it once complete: an
+#' interrupted build (Ctrl-C) leaves no partial zip, and keeps the old one.
+#' @param tmp The staging folder.
+#' @param base The folder inside the zip.
+#' @param zip The zip's final path.
+#' @return The paths inside the zip.
+#' @noRd
+.bndl_commit <- function(tmp, base, zip) {
+  part <- tempfile(paste0(base, "_"), tmpdir = dirname(zip), fileext = ".part")
+  on.exit(unlink(part, force = TRUE), add = TRUE)
+  files <- .bndl_zip(tmp, base, part)
+  if (!file.rename(part, zip)) {
+    unlink(zip)
+    if (!file.rename(part, zip)) {
+      stop(sprintf("could not write %s", zip), call. = FALSE)
+    }
+  }
+  files
 }
 
 #' mkbndl()'s arguments, checked.
@@ -528,6 +570,9 @@ format.rmbl_bundle_project <- function(x, ...) {
       call. = FALSE
     )
   }
+  # counted before anything is copied (at least these many entries: the
+  # folder, the runner's files, the project's files and their folders)
+  .bndl_toomany(1L + length(parts) + length(proj) + length(.bndl_dirs(proj)))
   file.copy(parts, stage, copy.date = TRUE)
   for (f in proj) {
     to <- file.path(stage, f)
@@ -626,6 +671,9 @@ format.rmbl_bundle_project <- function(x, ...) {
 #' @noRd
 .bndl_secret <- function(path) {
   b <- tolower(basename(path))
+  if (endsWith(b, ".pub")) {
+    return(FALSE)
+  }
   pats <- c(
     paste0(
       "^(llm|credentials?|secrets?|tokens?|passwords?|auth)([-_.][^.]*)?",
@@ -638,9 +686,11 @@ format.rmbl_bundle_project <- function(x, ...) {
     "^id_(rsa|dsa|ecdsa|ed25519)([-_.].*)?$",
     "^[._]?(env|netrc|pgpass|npmrc|pypirc|renviron|git-credentials)$",
     "^[._]?env[.].*$",
+    "[.]env$",
+    "^kube[-_.]?config([-_.].*)?$",
     "[.](p12|pfx|jks|keystore|ppk|kdbx)$"
   )
-  if (any(vapply(pats, grepl, NA, b)) && !endsWith(b, ".pub")) {
+  if (any(vapply(pats, grepl, NA, b)) || .bndl_secword(b)) {
     return(TRUE)
   }
   if (grepl("[.](pem|key)$", b)) {
@@ -651,6 +701,27 @@ format.rmbl_bundle_project <- function(x, ...) {
     return(grepl("PRIVATE KEY", txt, fixed = TRUE, useBytes = TRUE))
   }
   FALSE
+}
+
+#' Whether a file name holds a word that names a credential: split at
+#' "-", "_", "." and spaces, a word such as key, token, secret, credential,
+#' password, pat or adc (openai_key.txt, github_pat.txt, aws_credentials,
+#' gcloud_adc.json, keys.R). A data table (.csv, .rds, ...) is not judged
+#' by its words: tokens_per_doc.csv is data.
+#' @param b The file's base name, in lower case.
+#' @return TRUE or FALSE.
+#' @noRd
+.bndl_secword <- function(b) {
+  data <- "[.](csv|tsv|rds|rda|rdata|parquet|feather|xlsx?|sav|dta)$"
+  if (grepl(data, b)) {
+    return(FALSE)
+  }
+  w <- strsplit(b, "[-_. ]+")[[1L]]
+  any(w %in% c(
+    "key", "keys", "apikey", "apikeys", "token", "tokens", "secret",
+    "secrets", "credential", "credentials", "creds", "password",
+    "passwords", "passwd", "pat", "adc"
+  ))
 }
 
 #' The pages a bundle renders.
@@ -969,25 +1040,7 @@ format.rmbl_bundle_project <- function(x, ...) {
 #' @return The paths inside the zip.
 #' @noRd
 .bndl_zip <- function(base, top, zip, limit = 4294967295, nmax = 65535L) {
-  rel <- sort(list.files(
-    file.path(base, top),
-    recursive = TRUE,
-    all.files = TRUE,
-    include.dirs = TRUE,
-    no.. = TRUE
-  ))
-  ents <- c(top, file.path(top, rel))
-  # the end record counts entries in 16 bits: 66,000 files were written
-  # with a count of 492, and unzip tools saw 492
-  if (length(ents) > nmax) {
-    stop(
-      sprintf(
-        "the bundle has %d files and folders, more than a plain zip holds (%d)",
-        length(ents), as.integer(nmax)
-      ),
-      call. = FALSE
-    )
-  }
+  ents <- .bndl_ents(base, top, nmax)
   stamp <- .bndl_dos_time(Sys.time())
   con <- file(zip, open = "wb")
   on.exit(close(con), add = TRUE)
@@ -1008,21 +1061,80 @@ format.rmbl_bundle_project <- function(x, ...) {
   }
   cd <- unlist(cdir, use.names = FALSE)
   writeBin(cd, con)
-  n <- length(ents)
-  writeBin(
-    c(
-      .bndl_u32(0x06054b50),
-      .bndl_u16(0),
-      .bndl_u16(0),
-      .bndl_u16(n),
-      .bndl_u16(n),
-      .bndl_u32(length(cd)),
-      .bndl_u32(off),
-      .bndl_u16(0)
-    ),
-    con
-  )
+  writeBin(.bndl_eocd(length(ents), length(cd), off), con)
   ifelse(dir.exists(file.path(base, ents)), paste0(ents, "/"), ents)
+}
+
+#' The paths a zip of `top` holds, refusing more than a plain zip counts.
+#' @param base The folder holding `top`.
+#' @param top The folder to pack; paths in the zip start with it.
+#' @param nmax The most entries a plain zip counts (16 bits).
+#' @return The paths, `top` first.
+#' @noRd
+.bndl_ents <- function(base, top, nmax) {
+  rel <- sort(list.files(
+    file.path(base, top),
+    recursive = TRUE,
+    all.files = TRUE,
+    include.dirs = TRUE,
+    no.. = TRUE
+  ))
+  ents <- c(top, file.path(top, rel))
+  .bndl_toomany(length(ents), nmax)
+  ents
+}
+
+#' Refuses more entries than a plain zip counts: the end record counts
+#' entries in 16 bits (66,000 files were written with a count of 492, and
+#' unzip tools saw 492).
+#' @param n The number of files and folders.
+#' @param nmax The most a plain zip counts.
+#' @return NULL, invisibly.
+#' @noRd
+.bndl_toomany <- function(n, nmax = 65535L) {
+  if (n > nmax) {
+    stop(
+      sprintf(
+        "the bundle has %d files and folders, more than a plain zip holds (%d)",
+        n, as.integer(nmax)
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' The folders that hold some files, every level of them.
+#' @param f Relative file paths.
+#' @return Relative folder paths, each once.
+#' @noRd
+.bndl_dirs <- function(f) {
+  d <- unique(dirname(f))
+  out <- character()
+  while (length(d <- setdiff(d, c(".", out)))) {
+    out <- c(out, d)
+    d <- unique(dirname(d))
+  }
+  out
+}
+
+#' The end of central directory record of a plain zip.
+#' @param n The number of entries.
+#' @param cdlen The central directory's length in bytes.
+#' @param off The central directory's offset.
+#' @return A raw vector.
+#' @noRd
+.bndl_eocd <- function(n, cdlen, off) {
+  c(
+    .bndl_u32(0x06054b50),
+    .bndl_u16(0),
+    .bndl_u16(0),
+    .bndl_u16(n),
+    .bndl_u16(n),
+    .bndl_u32(cdlen),
+    .bndl_u32(off),
+    .bndl_u16(0)
+  )
 }
 
 #' One zip entry: its local header, data and the start of its central
@@ -1041,24 +1153,10 @@ format.rmbl_bundle_project <- function(x, ...) {
   }
   bytes <- if (isdir) raw() else readBin(full, "raw", file.size(full))
   crc <- if (length(bytes)) .Call(C_rmbl_crc32, bytes) else 0
-  data <- bytes
-  method <- 0L
-  if (length(bytes)) {
-    z <- memCompress(bytes, type = "gzip")
-    d <- z[3L:(length(z) - 4L)]
-    if (length(d) < length(bytes)) {
-      data <- d
-      method <- 8L
-    }
-  }
-  mode <- if (isdir) {
-    16877
-  } else if (grepl("[.](sh|command)$", p)) {
-    33261
-  } else {
-    33188
-  }
-  attr <- mode * 65536 + if (isdir) 16 else 0
+  z <- .bndl_deflate(bytes)
+  data <- z$data
+  method <- z$method
+  attr <- .bndl_attr(isdir, p)
   common <- c(
     .bndl_u16(0x0800),
     .bndl_u16(method),
@@ -1085,6 +1183,41 @@ format.rmbl_bundle_project <- function(x, ...) {
     ),
     name = name
   )
+}
+
+#' A file's bytes deflated when that makes them smaller, else stored.
+#' @param bytes A raw vector.
+#' @return A list: `data` (raw) and `method` (8 deflate, 0 stored).
+#' @noRd
+.bndl_deflate <- function(bytes) {
+  data <- bytes
+  method <- 0L
+  if (length(bytes)) {
+    z <- memCompress(bytes, type = "gzip")
+    d <- z[3L:(length(z) - 4L)]
+    if (length(d) < length(bytes)) {
+      data <- d
+      method <- 8L
+    }
+  }
+  list(data = data, method = method)
+}
+
+#' The external attributes of a zip entry: Unix mode 0755 for folders
+#' and launchers, 0644 for other files.
+#' @param isdir Whether the entry is a folder.
+#' @param p Its path inside the zip.
+#' @return A number.
+#' @noRd
+.bndl_attr <- function(isdir, p) {
+  mode <- if (isdir) {
+    16877
+  } else if (grepl("[.](sh|command)$", p)) {
+    33261
+  } else {
+    33188
+  }
+  mode * 65536 + if (isdir) 16 else 0
 }
 
 #' A time as the DOS time and date a zip stores.

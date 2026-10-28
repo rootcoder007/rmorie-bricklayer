@@ -421,7 +421,8 @@ rptanl <- function(
     }
     out
   })
-  out <- do.call(rbind, rows)
+  # unnamed: group labels as row names warned in a C locale (as yoy())
+  out <- do.call(rbind, unname(rows))
   rownames(out) <- NULL
   out
 }

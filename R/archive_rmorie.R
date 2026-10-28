@@ -42,7 +42,7 @@ arcfind <- function(url, from = NULL, to = NULL, limit = 1000L) {
     "/cdx/search/cdx?output=json&limit=",
     limit,
     "&url=",
-    utils::URLencode(url, reserved = TRUE),
+    .rmbl_pct(url),
     if (!is.null(from)) paste0("&from=", .bl_arc_stamp(from, "from")),
     if (!is.null(to)) paste0("&to=", .bl_arc_stamp(to, "to"))
   )
@@ -216,7 +216,7 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
     u,
     if (grepl("?", u, fixed = TRUE)) "&" else "?",
     "audience=",
-    utils::URLencode(audience, reserved = TRUE)
+    .rmbl_pct(audience)
   )
   res <- tryCatch(
     .bl_net(

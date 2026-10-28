@@ -22,11 +22,18 @@
 #' anything they start. Check only bundles you built or whose author you
 #' trust. To limit what a hostile bundle can reach, the run gets a minimal
 #' environment: \env{PATH}, the locale variables (\env{LANG},
-#' \env{LC_*}, \env{TZ}), the library paths of this session
-#' (\env{R_LIBS}), a fresh temporary \env{HOME} and \env{TMPDIR}, and no
-#' other variable, so API keys, tokens and passwords in the environment
-#' (or in \file{~/.Renviron}) do not reach it. On Windows the variables
-#' whose names look like credentials are removed instead (a best effort).
+#' \env{LANGUAGE}, \env{LC_ALL} and the \env{LC_} categories such as
+#' \env{LC_CTYPE}, no other \env{LC_} name; \env{TZ}), the library paths
+#' of this session (\env{R_LIBS}), a fresh temporary \env{HOME} and
+#' \env{TMPDIR}, and no other variable, so API keys, tokens and passwords
+#' in the environment (or in \file{~/.Renviron}) do not reach it. On
+#' Windows the variables that look like credentials are removed instead (a
+#' best effort): names holding \code{KEY}, \code{TOKEN}, \code{SECRET},
+#' \code{PASS}, \code{CREDENTIAL}, \code{AUTH}, \code{COOKIE} or
+#' \code{SESSION}, a service's prefix (\env{GITHUB_}, \env{AWS_}, ...),
+#' connection strings (\env{DATABASE_URL}, \env{*_DATABASE_URL},
+#' \env{*_WEBHOOK_URL}, \env{SENTRY_DSN}, \env{*_DSN}), \env{*_PWD}, other
+#' \env{LC_} names, and any value that is a URL with a password in it.
 #' This is not a sandbox: the files your user can read stay readable.
 #'
 #' The run is stopped after \code{getOption("rmbl.bundle.timeout")}
@@ -54,7 +61,10 @@
 #' \item{process group}{macOS, and Linux without user namespaces: the run
 #'   leads a process group, killed when it ends, times out or is
 #'   interrupted. A process that deliberately leaves the group (setsid, a
-#'   double fork) can outlive it; the checks warn of it.}
+#'   double fork) can outlive it: every process still carrying the run's
+#'   mark in its environment afterwards is killed and fails the check (the
+#'   isolation row is an error). A process that also clears its
+#'   environment is not seen.}
 #' }
 #'
 #' Only a \file{results_*} folder the run itself created counts: one the
@@ -121,34 +131,7 @@ mkbndlchk <- function(bundle, data = NULL, synthetic = FALSE, dir = NULL,
   }
   run <- .bndlchk_run(root, a$data, a$synthetic, ctr = ctr, out = out)
   man <- .bndlchk_manifest(run$root, before, run$log)
-  nc <- any(grepl("NOT completed", run$log, fixed = TRUE))
-  checks <- rbind(
-    .bndlchk_row(
-      "run finished", run$status == 0L && !nc,
-      paste0(sprintf("exit status %d", run$status),
-             if (nc) "; the runner says NOT completed")
-    ),
-    .bndlchk_row(
-      "manifest written", !is.null(man),
-      if (is.null(man)) {
-        "no manifest.json in a results_* folder this run created"
-      } else {
-        man$path
-      }
-    ),
-    .bndlchk_differ(man),
-    .bndlchk_expected(root, man),
-    .bndlchk_launchers(cd$modes),
-    .bndlchk_row(
-      "no results packed in the zip", !length(before),
-      if (length(before)) {
-        paste("the zip carries", toString(basename(before)))
-      } else {
-        "none"
-      }
-    ),
-    .bndlchk_iso(run$isolation)
-  )
+  checks <- .bndlchk_checks(run, man, before, root, cd)
   hard <- checks$severity == "error"
   .rmbl_cls(list(
     ok = all(checks$ok[hard]),
@@ -164,42 +147,6 @@ mkbndlchk <- function(bundle, data = NULL, synthetic = FALSE, dir = NULL,
       NA_character_
     }
   ), "rmbl_bundle_audit")
-}
-
-#' mkbndlchk()'s `container`, checked.
-#' @param x NULL, TRUE, FALSE, "podman" or "docker".
-#' @return NULL, TRUE or the runtime's name.
-#' @noRd
-.bndlchk_ctrarg <- function(x) {
-  if (is.null(x) || isFALSE(x)) {
-    return(NULL)
-  }
-  if (isTRUE(x) || (is.character(x) && length(x) == 1L &&
-                      x %in% c("podman", "docker"))) {
-    return(x)
-  }
-  stop("`container` must be NULL, TRUE, FALSE, \"podman\" or \"docker\"",
-       call. = FALSE)
-}
-
-#' The row that says how the run was isolated: a warning when only its
-#' process group was (a process that starts its own session can outlive
-#' the run).
-#' @param iso The isolation, from .bndlchk_run().
-#' @return A one-row data frame.
-#' @noRd
-.bndlchk_iso <- function(iso) {
-  weak <- startsWith(iso, "process group")
-  .bndlchk_row(
-    "isolation", !weak,
-    if (weak) {
-      paste0(iso, ": a process that starts its own session can outlive ",
-             "the run")
-    } else {
-      iso
-    },
-    severity = "warn"
-  )
 }
 
 #' @export
@@ -229,6 +176,86 @@ format.rmbl_bundle_audit <- function(x, ...) {
         c("", "The run's last lines:", x$log)
       }
     )
+  )
+}
+
+#' The checks of a bundle's run, one row each.
+#' @param run The run, from .bndlchk_run().
+#' @param man The manifest the run wrote, or NULL.
+#' @param before The results folders the zip carried.
+#' @param root The unzipped bundle's folder.
+#' @param cd The zip's central directory, from .bndlchk_cd().
+#' @return A data frame.
+#' @noRd
+.bndlchk_checks <- function(run, man, before, root, cd) {
+  nc <- any(grepl("NOT completed", run$log, fixed = TRUE))
+  rbind(
+    .bndlchk_row(
+      "run finished", run$status == 0L && !nc,
+      paste0(sprintf("exit status %d", run$status),
+             if (nc) "; the runner says NOT completed")
+    ),
+    .bndlchk_row(
+      "manifest written", !is.null(man),
+      if (is.null(man)) {
+        "no manifest.json in a results_* folder this run created"
+      } else {
+        man$path
+      }
+    ),
+    .bndlchk_differ(man),
+    .bndlchk_expected(root, man),
+    .bndlchk_launchers(cd$modes),
+    .bndlchk_row(
+      "no results packed in the zip", !length(before),
+      if (length(before)) {
+        paste("the zip carries", toString(basename(before)))
+      } else {
+        "none"
+      }
+    ),
+    .bndlchk_iso(run$isolation, run$left)
+  )
+}
+
+#' mkbndlchk()'s `container`, checked.
+#' @param x NULL, TRUE, FALSE, "podman" or "docker".
+#' @return NULL, TRUE or the runtime's name.
+#' @noRd
+.bndlchk_ctrarg <- function(x) {
+  if (is.null(x) || isFALSE(x)) {
+    return(NULL)
+  }
+  if (isTRUE(x) || (is.character(x) && length(x) == 1L &&
+                      x %in% c("podman", "docker"))) {
+    return(x)
+  }
+  stop("`container` must be NULL, TRUE, FALSE, \"podman\" or \"docker\"",
+       call. = FALSE)
+}
+
+#' The row that says how the run was isolated: an error when a process
+#' outlived the run (only a process group held it, and a process left it).
+#' @param iso The isolation, from .bndlchk_run().
+#' @param left The processes that outlived the run (killed since).
+#' @return A one-row data frame.
+#' @noRd
+.bndlchk_iso <- function(iso, left = integer()) {
+  if (length(left)) {
+    return(.bndlchk_row(
+      "isolation", FALSE,
+      sprintf("%s: %d process(es) outlived the run and were killed (%s)",
+              iso, length(left), toString(utils::head(left, 5L)))
+    ))
+  }
+  .bndlchk_row(
+    "isolation", TRUE,
+    if (startsWith(iso, "process group")) {
+      paste0(iso, ": no process outlived the run")
+    } else {
+      iso
+    },
+    severity = "warn"
   )
 }
 
@@ -339,7 +366,8 @@ format.rmbl_bundle_audit <- function(x, ...) {
     isolation = paste0(r$mode, if (length(rt) && !length(rt$path)) {
       sprintf(" (no %s found for a container)", rt$kind)
     }),
-    root = r$root %||% root
+    root = r$root %||% root,
+    left = r$left %||% integer()
   )
 }
 
@@ -358,7 +386,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' one, so a process that left the group (setsid, a double fork) dies with
 #' the run as well.
 #' @param rscript The Rscript program.
-#' @param args Its arguments.
+#' @inheritParams .rmbl_fipsmod_run
 #' @param home The run's HOME.
 #' @param tmout Seconds before the run is stopped.
 #' @param log The file the output goes to.
@@ -374,7 +402,9 @@ format.rmbl_bundle_audit <- function(x, ...) {
   if (!nzchar(envp)) envp <- "/usr/bin/env"
   wrap <- file.path(home, "run.sh")
   writeLines(.bndlchk_wrap(), wrap)
-  env <- .rmbl_envmin(home)
+  # the run's mark: what still carries it afterwards outlived the run
+  tag <- basename(tempfile("rmblchk"))
+  env <- c(.rmbl_envmin(home), RMBL_CHKRUN = tag)
   pidns <- .bndlchk_unshare()
   cmd <- c(
     "-i", paste0(names(env), "=", env), pidns, sh, wrap, tmout,
@@ -384,10 +414,43 @@ format.rmbl_bundle_audit <- function(x, ...) {
   st <- suppressWarnings(system2(
     envp, shQuote(cmd), stdout = log, stderr = log, timeout = tmout + 60L
   ))
+  left <- .bndlchk_left(tag)
+  if (length(left)) {
+    tools::pskill(left, tools::SIGKILL)
+  }
   list(
     status = st,
-    mode = if (length(pidns)) "pid namespace" else "process group"
+    mode = if (length(pidns)) "pid namespace" else "process group",
+    left = left
   )
+}
+
+#' The processes that still carry a run's mark (RMBL_CHKRUN) in their
+#' environment: on Linux read from /proc, on macOS from ps -E; elsewhere
+#' none are seen.
+#' @param tag The run's mark.
+#' @inheritParams .rmbl_ossha
+#' @return Process ids.
+#' @noRd
+.bndlchk_left <- function(tag, sys = Sys.info()[["sysname"]]) {
+  mark <- paste0("RMBL_CHKRUN=", tag)
+  pids <- if (identical(sys, "Linux") && dir.exists("/proc")) {
+    p <- list.files("/proc", pattern = "^[0-9]+$")
+    p[vapply(p, function(k) {
+      b <- tryCatch(
+        readBin(file.path("/proc", k, "environ"), "raw", 1048576L),
+        error = function(e) raw(), warning = function(w) raw()
+      )
+      length(grepRaw(mark, b, fixed = TRUE)) > 0L
+    }, NA)]
+  } else if (identical(sys, "Darwin")) {
+    out <- tryCatch(suppressWarnings(system2(
+      "ps", c("-E", "-ww", "-ax", "-o", "pid=,command="),
+      stdout = TRUE, stderr = FALSE
+    )), error = function(e) character())
+    sub("^ *([0-9]+).*$", "\\1", grep(mark, out, fixed = TRUE, value = TRUE))
+  }
+  setdiff(as.integer(pids), Sys.getpid())
 }
 
 #' The unshare command that runs a bundle in a PID namespace of its own,
@@ -462,7 +525,8 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #'   isolation used.
 #' @noRd
 .bndlchk_win <- function(rscript, args, home, tmout, log) {
-  drop <- .rmbl_envdrop(names(Sys.getenv()))
+  e <- unclass(Sys.getenv())
+  drop <- .rmbl_envdrop(names(e), unname(e))
   tmp <- file.path(home, "tmp")
   withr::local_envvar(c(
     stats::setNames(rep(NA_character_, length(drop)), drop),
@@ -523,7 +587,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' @param rt The runtime, from .bndlchk_rt().
 #' @param root The unzipped bundle.
 #' @param args The runner's arguments.
-#' @param data The data file, or NULL.
+#' @inheritParams .bndl_pages
 #' @param net Whether the run may use the network.
 #' @param tmout Seconds before the run is stopped.
 #' @param log The file the output goes to.
@@ -539,7 +603,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
     dir.create(dd)
     on.exit(unlink(dd, recursive = TRUE, force = TRUE), add = TRUE)
     file.copy(data, file.path(dd, basename(data)))
-    args[args == data] <- paste0("/data/", basename(data))
+    args[args == data] <- file.path("/data", basename(data))
   }
   name <- paste0("rmblchk-", sub("^file", "", basename(tempfile())))
   on.exit(suppressWarnings(system2(rt$path, c("rm", "-f", name),
@@ -610,11 +674,13 @@ format.rmbl_bundle_audit <- function(x, ...) {
   # what R itself needs to start (a module system's library path), the
   # certificate bundle a download checks against, and a proxy only when it
   # carries no user name or password
+  # the locale: the variables POSIX and glibc define, no other LC_* name
+  # (LC_FAKE_SECRET reached the run)
   keep <- n %in% c(
-    "PATH", "LANG", "LANGUAGE", "TZ", "LD_LIBRARY_PATH",
-    "DYLD_LIBRARY_PATH", "DYLD_FALLBACK_LIBRARY_PATH", "SSL_CERT_FILE",
-    "SSL_CERT_DIR", "CURL_CA_BUNDLE"
-  ) | startsWith(n, "LC_") |
+    "PATH", "TZ", "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH",
+    "DYLD_FALLBACK_LIBRARY_PATH", "SSL_CERT_FILE", "SSL_CERT_DIR",
+    "CURL_CA_BUNDLE", .rmbl_lcvars()
+  ) |
     (tolower(n) %in% c("http_proxy", "https_proxy", "no_proxy") &
        !grepl("@", e, fixed = TRUE))
   keep <- keep & !grepl("[^A-Za-z0-9_]", n)
@@ -626,11 +692,30 @@ format.rmbl_bundle_audit <- function(x, ...) {
   )
 }
 
-#' The names of environment variables that look like credentials.
+#' The locale variables a run keeps: LANG, LANGUAGE, LC_ALL and the
+#' categories POSIX and glibc define.
+#' @return Variable names.
+#' @noRd
+.rmbl_lcvars <- function() {
+  c("LANG", "LANGUAGE", "LC_ALL", paste0("LC_", c(
+    "CTYPE", "COLLATE", "TIME", "NUMERIC", "MONETARY", "MESSAGES", "PAPER",
+    "NAME", "ADDRESS", "TELEPHONE", "MEASUREMENT", "IDENTIFICATION"
+  )))
+}
+
+#' The names of environment variables that look like credentials (the
+#' Windows run removes them; elsewhere only an allowed few are passed).
+#'
+#' Removed: a service's prefix (GITHUB_, AWS_, ...); a name holding KEY,
+#' TOKEN, SECRET, PASS (PASSWORD), CREDENTIAL, AUTH, COOKIE or SESSION; a
+#' connection string (DATABASE_URL, *_DATABASE_URL, *_WEBHOOK_URL,
+#' SENTRY_DSN, *_DSN), a *_PWD; an LC_* name that is not a locale
+#' category; and a value that is a URL with a user name and password.
 #' @param n Variable names.
+#' @param v Their values, or NULL.
 #' @return The ones to remove.
 #' @noRd
-.rmbl_envdrop <- function(n) {
+.rmbl_envdrop <- function(n, v = NULL) {
   pre <- paste0(
     "^(RMBL|RMORIE|MORIE|IA|GITHUB|GH|OPENAI|ANTHROPIC|AWS|AZURE|GOOGLE|",
     "GCP|GEMINI|MISTRAL|COHERE|GROQ|HF|HUGGINGFACE|CODECOV|CLOUDFLARE|CF|",
@@ -638,7 +723,13 @@ format.rmbl_bundle_audit <- function(x, ...) {
   )
   bad <- grepl(pre, n, ignore.case = TRUE) |
     grepl("KEY|TOKEN|SECRET|PASS|CREDENTIAL|AUTH|COOKIE|SESSION", n,
-          ignore.case = TRUE)
+          ignore.case = TRUE) |
+    grepl("(^|_)(DATABASE_URL|WEBHOOK_URL|DSN)$|_PWD$", n,
+          ignore.case = TRUE) |
+    (startsWith(toupper(n), "LC_") & !toupper(n) %in% .rmbl_lcvars())
+  if (!is.null(v)) {
+    bad <- bad | grepl("://[^/@[:space:]]+:[^/@[:space:]]*@", v)
+  }
   n[bad]
 }
 
@@ -775,14 +866,6 @@ format.rmbl_bundle_audit <- function(x, ...) {
   )
 }
 
-#' The Unix modes the zip's central directory records.
-#' @param zip The bundle zip.
-#' @return A numeric vector named by path (empty when none is found).
-#' @noRd
-.bndlchk_modes <- function(zip) {
-  .bndlchk_cd_modes(.bndlchk_cd_raw(zip)$cd)
-}
-
 #' The central directory of a zip and the entry count its end record gives.
 #' @param zip The bundle zip.
 #' @return A list: cd (raw, empty when none is found) and n (the count, NA
@@ -811,18 +894,6 @@ format.rmbl_bundle_audit <- function(x, ...) {
   }
   seek(con, off)
   list(cd = readBin(con, "raw", len), n = .bndlchk_u16(e, 11L))
-}
-
-#' Walks a central directory, reading each entry's name and Unix mode.
-#' @param cd The central directory's bytes.
-#' @return A numeric vector named by path.
-#' @noRd
-.bndlchk_cd_modes <- function(cd) {
-  w <- .bndlchk_cd_walk(cd)
-  nm <- vapply(w$names, function(b) {
-    rawToChar(b[b != as.raw(0L)])
-  }, "", USE.NAMES = FALSE)
-  stats::setNames(w$modes, nm)
 }
 
 #' Walks a central directory: each entry's name (raw) and Unix mode.
@@ -906,7 +977,10 @@ format.rmbl_bundle_audit <- function(x, ...) {
   if (any(out)) {
     bad(sprintf("has entries that leave its folder: %s", shown(nm[out])))
   }
-  key <- tolower(sub("[/\\\\]+$", "", gsub("\\\\", "/", nm)))
+  # empty and "." parts name the same file: a//b and a/./b are a/b
+  key <- tolower(vapply(parts, function(p) {
+    paste(p[!p %in% c("", ".")], collapse = "/")
+  }, ""))
   dup <- duplicated(key)
   if (any(dup)) {
     bad(sprintf("holds the same entry twice: %s", shown(nm[dup])))

@@ -398,23 +398,28 @@ test_that("files that look like credentials are left out unless asked", {
   p <- bndl_proj()
   sec <- c("llm.json", "credentials.json", "id_rsa", "secrets.yaml",
            "api_key.txt", "token.txt", "client_secret_123.json", "key.pem",
-           "store.p12")
+           "store.p12", "openai_key.txt", "github_pat.txt", "access_token",
+           "aws_credentials", "gcloud_adc.json", "my.env", "kube.config",
+           "kubeconfig", "keys.R")
   for (f in sec) writeLines("fake", file.path(p$dir, f))
   writeLines(c("-----BEGIN PRIVATE KEY-----", "fake",
                "-----END PRIVATE KEY-----"), file.path(p$dir, "key.pem"))
-  ok <- c("cert.pem", "id_rsa.pub", "tokens_per_doc.csv", "authors.txt")
+  ok <- c("cert.pem", "id_rsa.pub", "tokens_per_doc.csv", "authors.txt",
+          "keyboard.csv", "monkey.R", "patients.R", "environment.R")
   writeLines(c("-----BEGIN CERTIFICATE-----", "fake"),
              file.path(p$dir, "cert.pem"))
   for (f in ok[-1L]) writeLines("x", file.path(p$dir, f))
   dest <- withr::local_tempdir()
-  w <- character()
+  got <- new.env()
+  got$w <- character()
   b <- withCallingHandlers(
     mkbndl(p$dir, dest),
     warning = function(cnd) {
-      w <<- c(w, conditionMessage(cnd))
+      got$w <- c(got$w, conditionMessage(cnd))
       invokeRestart("muffleWarning")
     }
   )
+  w <- got$w
   expect_length(w, 1L)
   expect_match(w, "look like credentials (pass secrets = TRUE", fixed = TRUE)
   for (f in sec) expect_match(w, f, fixed = TRUE)
@@ -572,4 +577,23 @@ test_that("the runner downloads only with the package; files are checked", {
   expect_identical(r$status, 0L)
   expect_match(r$text, "SHA256 matches the pinned provenance", fixed = TRUE)
   expect_match(r$text, file.path("data", "data.csv"), fixed = TRUE)
+})
+
+test_that("too many files are refused before anything is copied", {
+  p <- bndl_proj()
+  many <- c("analysis.R", sprintf("f/%05d.txt", seq_len(70000L)))
+  copied <- new.env()
+  copied$n <- 0L
+  local_mocked_bindings(.bndl_project_files = function(...) many)
+  local_mocked_bindings(
+    file.copy = function(...) {
+      copied$n <- copied$n + 1L
+      TRUE
+    },
+    .package = "base"
+  )
+  expect_error(mkbndl(p$dir, withr::local_tempdir()),
+               "70\\d+ files and folders, more than a plain zip holds")
+  expect_identical(copied$n, 0L)
+  expect_identical(.bndl_dirs(c("a/b/c.R", "a/d.R", "e.R")), c("a/b", "a"))
 })

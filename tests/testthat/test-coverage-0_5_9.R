@@ -279,7 +279,7 @@ test_that(
     env$.rmbl_sha256_path <- .rmbl_sha256_path
     # the pure-R path, even where R has tools::sha256sum()
     env$.rmbl_sha256_bndl <- function(path) {
-      .rmbl_sha256_bndl(path, base = FALSE)
+      .rmbl_sha256_bndl(path, base = FALSE, pkg = NULL, os = NULL)
     }
     environment(standalone) <- env
     expect_identical(standalone(f), want)
