@@ -32,12 +32,16 @@ year or a month index) and the outcome.}
 for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
 V_{ab}}, each term with the small-sample factor of the dimension with fewer
 clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
-(district by month, say) is one column made with \code{interaction()}.}
+(district by month, say) is one column made with \code{interaction()}.
+Fewer than ten clusters give a warning (CR1 errors are unreliable with
+so few; \code{\link{wcb}} is made for that case), and so does a
+cluster that changes within a unit.}
 
 \item{fe}{\code{c("unit", "time")} (default) or \code{"time"}.}
 
 \item{w}{Optional column name of non-negative weights, such as population or
-matching weights, for weighted least squares with weighted within-means.}
+matching weights, for weighted least squares with weighted within-means.
+Rows of weight 0 take no part in the fit.}
 
 \item{comb}{Optional linear combination of the terms, named by them, reported
 with its delta-method standard error as the attribute \code{combined}. For
@@ -92,7 +96,8 @@ effect changes over time: see \code{\link{bacondcmp}} for the weights and
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- polex()
 plndid(p, "district", "month", "crmrate", "reformed")
-# clustered by region instead of district
+# clustered by region instead of district: only four regions, so the
+# package warns, and wcb() is the tool for so few clusters
 plndid(p, "district", "month", "crmrate", "reformed", cl = "region")
 
 # your own panel: eight towns over ten years, four adopting a by-law (two

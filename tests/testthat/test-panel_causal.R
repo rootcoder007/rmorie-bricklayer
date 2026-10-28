@@ -714,7 +714,12 @@ test_that("mtchdid() clusters its standard errors as asked", {
   a <- mtchdid(own, "town", "year", "rate", "first")
   expect_identical(mtchdid(own, "town", "year", "rate", "first", cl = NULL),
                    a)
-  b <- mtchdid(own, "town", "year", "rate", "first", cl = "county")
+  # two counties: the errors are clustered, and the warning says so few
+  # clusters cannot be trusted
+  expect_warning(
+    b <- mtchdid(own, "town", "year", "rate", "first", cl = "county"),
+    "only 2 clusters"
+  )
   expect_equal(b$estimate$estimate, a$estimate$estimate, tolerance = 1e-12)
   expect_equal(attr(b$estimate, "clusters"), 2, tolerance = 1e-12)
   expect_false(isTRUE(all.equal(b$estimate$se, a$estimate$se)))

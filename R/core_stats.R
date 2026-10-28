@@ -485,8 +485,10 @@ cwtd <- function(x, w) {
   if (length(x) != length(w)) {
     stop("`x` and `w` must have the same length", call. = FALSE)
   }
-  if (any(w < 0, na.rm = TRUE)) {
-    stop("`w` must be non-negative", call. = FALSE)
+  # Inf or all-zero weights gave NaN without a word
+  if (any(w < 0, na.rm = TRUE) || any(is.infinite(w)) ||
+        !any(w > 0, na.rm = TRUE)) {
+    stop("`w` must be non-negative and finite, not all zero", call. = FALSE)
   }
   out <- .Call(C_rmbl_weighted, x, w)
   names(out) <- c("mean", "variance")

@@ -128,10 +128,10 @@ plndml <- function(
   p <- .rmbl_panel(data, unit, time, y)
   dx <- .rmbl_dml_inputs(data, p, trt, covs, folds)
   m <- .rmbl_dml_design(p, dx$d, dx$x, fe, basis)
-  .cl <- .rmbl_cluster(data, cl, p)
-  if (is.list(.cl)) {
+  if (length(cl) > 1L) {
     stop(.rmbl_fn(), "`cl` names one column for plndml()", call. = FALSE)
   }
+  .cl <- .rmbl_cluster(data, cl, p)
   runs <- lapply(
     seq_len(nrep),
     .rmbl_dml_rep,
@@ -392,6 +392,9 @@ mtchdid <- function(
   ratio <- .rmbl_scalar(ratio, "ratio", 1, 100, integer = TRUE)
   covm <- .rmbl_arg(covm)
   p <- .rmbl_panel(data, unit, time, y)
+  # the clusters checked here, under this function's name; plndid() below
+  # would say the same of the matched units
+  .rmbl_cluster(data, cl, p)
   g <- .rmbl_first_treated(data, ftreat, p)
   nu <- length(p$ul)
   nt <- length(p$tl)
@@ -412,7 +415,7 @@ mtchdid <- function(
   d2 <- data[keep, , drop = FALSE]
   d2$.rmbl_w <- wu[keep]
   d2$.rmbl_d <- as.numeric(p$t[keep] >= g[keep])
-  est <- plndid(
+  est <- .rmbl_quiet_cl(plndid(
     d2,
     unit,
     time,
@@ -421,7 +424,7 @@ mtchdid <- function(
     cl = cl,
     w = ".rmbl_w",
     conflvl = conflvl
-  )
+  ))
   out <- list(
     estimate = est,
     matches = mw$mt,
@@ -749,7 +752,7 @@ wcb <- function(
   reps <- .rmbl_scalar(reps, "reps", 9, 1e6, integer = TRUE)
   p <- .rmbl_panel(data, unit, time, y)
   d <- .rmbl_wcb_trt(data, trtd)
-  .cl <- .rmbl_cluster(data, cl, p)
+  .cl <- .rmbl_cluster(data, cl, p, few = FALSE)
   if (is.list(.cl)) {
     stop("wcb: `cl` names one column here", call. = FALSE)
   }
@@ -1057,7 +1060,7 @@ plnpwr <- function(
   alpha <- .rmbl_scalar(alpha, "alpha", 1e-6, 0.5)
   power <- .rmbl_scalar(power, "power", 0.01, 0.999)
   adopt <- .rmbl_pw_adopt(adopt, p$tl)
-  .cl <- .rmbl_cluster(data, cl, p)
+  .cl <- .rmbl_cluster(data, cl, p, few = FALSE)
   if (is.list(.cl)) {
     stop("plnpwr: `cl` names one column here", call. = FALSE)
   }
@@ -2452,7 +2455,9 @@ format.rmbl_aipw <- function(x, digits = 4L, ...) {
       dd$.rmbl_d <- as.numeric(!is.na(a) & p$t >= a)
       dd[[cx$y]] <- p$y + .eff * dd$.rmbl_d
       r1 <- tryCatch(
-        plndid(dd, cx$unit, cx$time, cx$y, ".rmbl_d", cl = cx$cl),
+        .rmbl_quiet_cl(
+          plndid(dd, cx$unit, cx$time, cx$y, ".rmbl_d", cl = cx$cl)
+        ),
         error = function(e) NULL
       )
       !is.null(r1) && is.finite(r1$p_value[1L]) && r1$p_value[1L] < cx$alpha

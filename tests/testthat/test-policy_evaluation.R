@@ -1107,3 +1107,42 @@ test_that("the event-study and decomposition readings follow the numbers", {
     "No weight is on comparisons that use already-treated units as controls."
   )
 })
+
+test_that("few clusters, and clusters that cut across units, are said", {
+  p <- polex()
+  expect_warning(
+    r <- plndid(p, "district", "month", "crmrate", "reformed", cl = "region"),
+    "only 4 clusters"
+  )
+  expect_identical(attr(r, "clusters"), 4L)
+  # the default (the units) and the tools made for few clusters stay quiet
+  expect_no_warning(plndid(p, "district", "month", "crmrate", "reformed"))
+  expect_no_warning(wcb(p, "district", "month", "crmrate", "reformed",
+                        cl = "region", reps = 9, seed = 1))
+  # months: plenty of clusters, but every unit in all of them
+  expect_warning(
+    plndid(p, "district", "month", "crmrate", "reformed", cl = "month"),
+    "changes within 20 unit\\(s\\)"
+  )
+  # the estimators that read one cluster per unit refuse it
+  expect_error(.rmbl_cluster(p, "month", .rmbl_panel(p, "district", "month",
+                                                      "crmrate"),
+                             few = FALSE, nested = TRUE),
+               "each unit must sit in one cluster")
+})
+
+test_that("weights of 0 drop rows; infinite weights are refused", {
+  p <- polex()
+  p$w <- 1
+  p$w[p$district == p$district[1L]] <- 0
+  a <- plndid(p, "district", "month", "crmrate", "reformed", w = "w")
+  b <- plndid(p[p$district != p$district[1L], ], "district", "month",
+              "crmrate", "reformed")
+  expect_equal(a$estimate, b$estimate, tolerance = 1e-10)
+  expect_equal(a$se, b$se, tolerance = 1e-10)
+  expect_identical(attr(a, "clusters"), attr(b, "clusters"))
+  p$w[5] <- Inf
+  expect_error(plndid(p, "district", "month", "crmrate", "reformed", w = "w"),
+               "must be 0 or more and finite")
+  expect_error(sprd(1:5, w = c(1, 1, Inf, 1, 1)), "finite")
+})

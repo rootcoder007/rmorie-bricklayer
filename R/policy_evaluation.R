@@ -53,9 +53,13 @@
 #'   V_{ab}}, each term with the small-sample factor of the dimension with fewer
 #'   clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
 #'   (district by month, say) is one column made with \code{interaction()}.
+#'   Fewer than ten clusters give a warning (CR1 errors are unreliable with
+#'   so few; \code{\link{wcb}} is made for that case), and so does a
+#'   cluster that changes within a unit.
 #' @param fe \code{c("unit", "time")} (default) or \code{"time"}.
 #' @param w Optional column name of non-negative weights, such as population or
 #'   matching weights, for weighted least squares with weighted within-means.
+#'   Rows of weight 0 take no part in the fit.
 #' @param comb Optional linear combination of the terms, named by them, reported
 #'   with its delta-method standard error as the attribute \code{combined}. For
 #'   a phase-in model with an exposure term \eqn{E_{it} = \min(t - G_i, K)},
@@ -90,7 +94,8 @@
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' p <- polex()
 #' plndid(p, "district", "month", "crmrate", "reformed")
-#' # clustered by region instead of district
+#' # clustered by region instead of district: only four regions, so the
+#' # package warns, and wcb() is the tool for so few clusters
 #' plndid(p, "district", "month", "crmrate", "reformed", cl = "region")
 #'
 #' # your own panel: eight towns over ten years, four adopting a by-law (two
@@ -133,9 +138,13 @@ plndid <- function(
   if (!"time" %in% fe) {
     stop(.rmbl_fn(), "`fe` must include \"time\"", call. = FALSE)
   }
+  .w <- .rmbl_weights(data, w)
+  if (!all(.w > 0)) {
+    data <- data[.w > 0, , drop = FALSE]
+    .w <- .w[.w > 0]
+  }
   p <- .rmbl_panel(data, unit, time, y)
   d <- .rmbl_did_trtd(data, trtd)
-  .w <- .rmbl_weights(data, w)
   .cl <- .rmbl_cluster(data, cl, p)
   x <- cbind(treated = d, .rmbl_covariates(data, covs))
   fes <- list(time = as.integer(factor(p$t)))
@@ -305,7 +314,8 @@ evstudy <- function(
   }
   kk <- .rmbl_es_k(p$t - g, leads, lags, bin)
   k <- kk$k
-  keep <- kk$keep
+  # rows of weight 0 take no part, as in plndid()
+  keep <- kk$keep & .rmbl_weights(data, w) > 0
   ks <- setdiff(seq(-leads, lags), ref)
   x <- .rmbl_es_design(k, ks)
   cv <- .rmbl_covariates(data, covs)
@@ -963,7 +973,7 @@ perminf <- function(
   y <- .rmbl_colnames(y, "y", several = TRUE)
   p <- .rmbl_panel(data, unit, time, y[1L])
   g <- .rmbl_first_treated(data, ftreat, p)
-  .cl <- .rmbl_cluster(data, cl, p)
+  .cl <- .rmbl_cluster(data, cl, p, few = FALSE, nested = NA)
   gc <- tapply(g, .cl, function(z) z[1L])
   if (any(tapply(g, .cl, function(z) length(unique(z))) > 1L)) {
     stop(
@@ -2101,7 +2111,10 @@ polex <- function(seed = 20240101) {
   for (it in seq_len(maxit)) {
     old <- x
     for (k in seq_along(fes)) {
-      m <- rowsum(x * w, idx[[k]], reorder = TRUE) / sw[[k]]
+      # a group whose weights are all 0 has no mean to take out (0/0)
+      s <- sw[[k]]
+      s[s == 0] <- 1
+      m <- rowsum(x * w, idx[[k]], reorder = TRUE) / s
       x <- x - m[idx[[k]], , drop = FALSE]
     }
     if (length(fes) == 1L || max(abs(x - old)) < tol * (1 + max(abs(x)))) break
@@ -2187,7 +2200,7 @@ polex <- function(seed = 20240101) {
 #' @param p The coded panel from `.rmbl_panel()`.
 #' @return An integer cluster vector, or a list of two.
 #' @noRd
-.rmbl_cluster <- function(data, cluster, p) {
+.rmbl_cluster <- function(data, cluster, p, few = TRUE, nested = FALSE) {
   if (is.null(cluster)) {
     return(p$u)
   }
@@ -2212,7 +2225,66 @@ polex <- function(seed = 20240101) {
     }
     as.integer(factor(data[[cc]]))
   })
+  if (length(out) == 1L && !is.na(nested)) {
+    .rmbl_cluster_nesting(out[[1L]], p, v, nested)
+  }
+  g <- min(vapply(out, function(z) length(unique(z)), 1L))
+  # one cluster is refused by the fit itself
+  if (few && g >= 2L && g < 10L) {
+    warning(
+      .rmbl_fn(),
+      sprintf(
+        paste0("`cl` (%s) gives only %d clusters: cluster-robust (CR1) ",
+               "standard errors are unreliable with so few; wcb() is made ",
+               "for this case"),
+        toString(v), g
+      ),
+      call. = FALSE
+    )
+  }
   if (length(out) == 1L) out[[1L]] else out
+}
+
+#' Evaluates an expression that refits plndid() many times, without the
+#' caller's warning about its clusters repeated at every refit.
+#' @param expr The expression.
+#' @return Its value.
+#' @noRd
+.rmbl_quiet_cl <- function(expr) {
+  withCallingHandlers(expr, warning = function(w) {
+    if (startsWith(conditionMessage(w), "plndid: `cl`")) {
+      invokeRestart("muffleWarning")
+    }
+  })
+}
+
+#' Whether every unit sits in one cluster.
+#'
+#' A cluster that changes within a unit leaves that unit's errors, which
+#' are correlated, in more than one cluster. One-way clustering then
+#' understates them (a warning); the estimators that read one cluster per
+#' unit would take whichever came first (an error).
+#' @param cl The cluster codes, one per row.
+#' @param p The panel.
+#' @param v The column's name.
+#' @param nested TRUE to refuse rather than warn.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_cluster_nesting <- function(cl, p, v, nested) {
+  k <- tapply(cl, p$u, function(z) length(unique(z)))
+  bad <- sum(k > 1L)
+  if (!bad) {
+    return(invisible(NULL))
+  }
+  msg <- sprintf(
+    "`cl` (%s) changes within %d unit(s): each unit must sit in one cluster",
+    v, bad
+  )
+  if (nested) {
+    stop(.rmbl_fn(), msg, call. = FALSE)
+  }
+  warning(.rmbl_fn(), msg, ", or its errors are understated", call. = FALSE)
+  invisible(NULL)
 }
 
 #' Reads the covariate columns as a numeric matrix.
@@ -2260,10 +2332,11 @@ polex <- function(seed = 20240101) {
     )
   }
   w <- .rmbl_num(data[[v]], arg)
-  if (anyNA(w) || any(w < 0) || !any(w > 0)) {
+  if (anyNA(w) || any(!is.finite(w)) || any(w < 0) || !any(w > 0)) {
     stop(
       .rmbl_fn(),
-      sprintf("`%s` must be 0 or more, with no NA", arg),
+      sprintf("`%s` must be 0 or more and finite, not all 0, with no NA",
+              arg),
       call. = FALSE
     )
   }
@@ -2822,7 +2895,9 @@ polex <- function(seed = 20240101) {
   clu <- if (is.null(cl)) {
     seq_len(nu)
   } else {
-    .rmbl_cluster(data, cl, p)[o][seq(1L, by = nt, length.out = nu)]
+    .rmbl_cluster(data, cl, p, few = FALSE, nested = TRUE)[o][
+      seq(1L, by = nt, length.out = nu)
+    ]
   }
   xm <- NULL
   if (!is.null(covs)) {
@@ -3165,7 +3240,9 @@ polex <- function(seed = 20240101) {
   clu <- if (is.null(cl)) {
     seq_len(nu)
   } else {
-    .rmbl_cluster(data, cl, p)[o][seq(1L, by = nt, length.out = nu)]
+    .rmbl_cluster(data, cl, p, few = FALSE, nested = TRUE)[o][
+      seq(1L, by = nt, length.out = nu)
+    ]
   }
   list(ym = ym, dm = dm, clu = clu, nu = nu, nt = nt)
 }
@@ -3284,7 +3361,8 @@ polex <- function(seed = 20240101) {
     return(NA_real_)
   }
   r <- tryCatch(
-    plndid(dd, ctx$unit, ctx$time, oc, ".rmbl_d", cl = ctx$cl),
+    .rmbl_quiet_cl(plndid(dd, ctx$unit, ctx$time, oc, ".rmbl_d",
+                          cl = ctx$cl)),
     error = function(e) NULL
   )
   if (is.null(r)) {
@@ -3305,7 +3383,9 @@ polex <- function(seed = 20240101) {
 .rmbl_perm_est <- function(oc, ctx, g) {
   dd <- ctx$data
   dd$.rmbl_d <- as.numeric(dd[[ctx$time]] >= g)
-  plndid(dd, ctx$unit, ctx$time, oc, ".rmbl_d", cl = ctx$cl)$estimate[1L]
+  .rmbl_quiet_cl(
+    plndid(dd, ctx$unit, ctx$time, oc, ".rmbl_d", cl = ctx$cl)
+  )$estimate[1L]
 }
 
 #' The assignments perminf() compares with: every one when they are few, else

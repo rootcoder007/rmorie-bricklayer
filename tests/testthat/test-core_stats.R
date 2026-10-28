@@ -249,7 +249,9 @@ test_that("cwtd matches base R and reduces correctly", {
 
   expect_error(cwtd(1:3, 1:4), "same length")
   expect_error(cwtd(x, c(-1, 1, 1, 1)), "non-negative")
-  expect_true(is.nan(cwtd(x, rep(0, 4))[["mean"]]))
+  # all-zero or infinite weights have no mean: refused, not NaN
+  expect_error(cwtd(x, rep(0, 4)), "not all zero")
+  expect_error(cwtd(x, c(1, Inf, 1, 1)), "finite")
 })
 
 test_that("Spearman's rho and the midranks match stats::cor and rank", {

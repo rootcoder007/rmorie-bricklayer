@@ -153,8 +153,8 @@ format.rmbl_spread <- function(x, digits = 6L, ...) {
   if (length(x) < 1L) {
     stop("`x` has no values", call. = FALSE)
   }
-  if (any(.w < 0) || !any(.w > 0)) {
-    stop("`w` must be 0 or more, not all 0", call. = FALSE)
+  if (any(.w < 0) || any(!is.finite(.w)) || !any(.w > 0)) {
+    stop("`w` must be finite, 0 or more, not all 0", call. = FALSE)
   }
   list(x = x, w = .w)
 }

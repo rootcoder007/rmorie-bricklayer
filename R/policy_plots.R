@@ -239,8 +239,9 @@ loounit <- function(
     stop(.rmbl_fn(), "`units` must be units of `data`", call. = FALSE)
   }
   rows <- lapply(units, function(u) {
+    # the full fit above has already said what it thinks of the clusters
     r <- tryCatch(
-      plndid(
+      .rmbl_quiet_cl(plndid(
         data[as.character(data[[unit]]) != u, , drop = FALSE],
         unit,
         time,
@@ -249,7 +250,7 @@ loounit <- function(
         covs = covs,
         cl = cl,
         w = w
-      ),
+      )),
       error = function(e) NULL
     )
     data.frame(

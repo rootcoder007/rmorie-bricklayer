@@ -30,12 +30,16 @@ year or a month index) and the outcome.}
 for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
 V_{ab}}, each term with the small-sample factor of the dimension with fewer
 clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
-(district by month, say) is one column made with \code{interaction()}.}
+(district by month, say) is one column made with \code{interaction()}.
+Fewer than ten clusters give a warning (CR1 errors are unreliable with
+so few; \code{\link{wcb}} is made for that case), and so does a
+cluster that changes within a unit.}
 
 \item{units}{Which units to leave out (default every treated unit).}
 
 \item{w}{Optional column name of non-negative weights, such as population or
-matching weights, for weighted least squares with weighted within-means.}
+matching weights, for weighted least squares with weighted within-means.
+Rows of weight 0 take no part in the fit.}
 }
 \value{
 A data frame of class \code{rmbl_loo}: \code{dropped},

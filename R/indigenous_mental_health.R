@@ -2635,6 +2635,7 @@ indiex <- function(
         is.null(names(w)) ||
         !setequal(names(w), doms) ||
         anyNA(w) ||
+        any(!is.finite(w)) ||
         any(w < 0) ||
         sum(w) <= 0
     ) {

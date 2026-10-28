@@ -48,7 +48,10 @@ function.}
 for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
 V_{ab}}, each term with the small-sample factor of the dimension with fewer
 clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
-(district by month, say) is one column made with \code{interaction()}.}
+(district by month, say) is one column made with \code{interaction()}.
+Fewer than ten clusters give a warning (CR1 errors are unreliable with
+so few; \code{\link{wcb}} is made for that case), and so does a
+cluster that changes within a unit.}
 
 \item{conflvl}{Confidence level of the intervals reported (default 0.95).}
 }
