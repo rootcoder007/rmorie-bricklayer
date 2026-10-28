@@ -651,3 +651,36 @@ test_that("#17: RMBL_KEY leaves the process at once, its startup copy wiped", {
   )
   expect_identical(utils::tail(out, 1L), "FALSE")
 })
+
+test_that("the shapes the routing fuzz still sent are refused", {
+  ns <- asNamespace("rmoriebricklayer")
+  keys <- c(
+    "is abcd1234efgh;ijkl5678mnop ok?",
+    "abcd1234efgh ijkl5678mnop",
+    "kqzxwvbtrmnp1234 is my key?",
+    "a1b2c3d4e5f6g7h works?",
+    "is qzxv_kjhw_mnbp_trwq_lkjh right?",
+    "use qzxv.kjhw.mnbp.trwq.lkjh please?"
+  )
+  for (k in keys) {
+    expect_true(ns$.bl_key_shaped(k), info = k)
+    expect_false(ns$.bl_bare_question(k), info = k)
+  }
+  expect_false(ns$.bl_bare_question("login set openai.model gpt-4o?"))
+  expect_false(ns$.bl_bare_question("config set openai.model gpt-4o?"))
+  expect_false(ns$.bl_bare_question("verify the capsule --json?"))
+  # questions stay questions
+  for (q in c(
+    "what does the drift test compare, column by column?",
+    "describe the drift test?",
+    "is claude35sonnet better than gpt4o for this?",
+    "how do census2016 and census2021 differ?",
+    "how did covid19 wave2 change the rate?",
+    "what is survey_design_replicates for?",
+    "why is population2021 slow?",
+    "compare 2019;2020;2021 rates?"
+  )) {
+    expect_false(ns$.bl_key_shaped(q), info = q)
+    expect_true(ns$.bl_bare_question(q), info = q)
+  }
+})

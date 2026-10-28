@@ -352,7 +352,6 @@ shrs.data.frame <- function(
 #' @rdname shrs
 #' @export
 shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
-  .rmbl_no_dots("shrs", ...)
   if (is.null(x) || !is.atomic(x) || all(is.na(x)) || any(is.infinite(x))) {
     stop(
       "`x` must be finite counts (a numeric vector) or a data frame of them",
@@ -362,6 +361,7 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
   lab <- names(x)
   x <- .rmbl_num(x, "x")
   denom <- if (is.null(total)) sum(x, na.rm = TRUE) else .share_total(total, "")
+  .rmbl_no_dots("shrs", ...)
   agg <- data.frame(count = x, stringsAsFactors = FALSE)
   # a named vector keeps its names as the first column (.rmbl_num drops them)
   if (!is.null(lab)) {

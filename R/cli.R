@@ -1332,6 +1332,15 @@ instcli <- function(
   ) {
     return(TRUE)
   }
+  # a verb followed by a setting's dotted name or a flag is a command, a
+  # question mark or not: "login set openai.model gpt-4o?" went to a model
+  # (network review of 1.0.3); "describe the drift test?" names neither
+  if (
+    .bl_verb_near(words[[1L]]) &&
+      any(grepl("^[a-z]+\\.[a-z_]+[?!.,]*$|^--[a-z]", words[-1L]))
+  ) {
+    return(TRUE)
+  }
   # a short line naming a file is a command's argument, not a question:
   # `urls.txt?` and `my urls.txt` were sent (18 of 64 bare file names; CRAN
   # stress test of 0.5.14). A question that names a file in a sentence is still
@@ -1432,7 +1441,11 @@ instcli <- function(
   named <- vapply(
     segs,
     function(seg) {
-      all(grepl("^[a-z]+[0-9]*$", seg)) && sum(grepl("[0-9]", seg)) < 2L
+      # each segment's letters must read as a word: qzxv_kjhw_mnbp_trwq_lkjh
+      # passed as a function name (network review of 1.0.3)
+      lt <- gsub("[0-9]+$", "", seg)
+      all(grepl("^[a-z]+[0-9]*$", seg)) && sum(grepl("[0-9]", seg)) < 2L &&
+        all(nchar(lt) < 4L | .bl_wordlike(lt))
     },
     NA
   )
@@ -1500,7 +1513,43 @@ instcli <- function(
     grepl("[0-9]", w) &
     grepl("[A-Za-z]", w)
   r <- rle(grp)
-  any(r$values & r$lengths >= 3L)
+  if (any(r$values & r$lengths >= 3L)) {
+    return(TRUE)
+  }
+  # two groups are a key too when both are long and neither is a word and a
+  # number: abcd1234efgh;ijkl5678mnop went to a provider (network review of
+  # 1.0.3); "covid19 wave2" and "census2016 census2021" are not keys
+  two <- grp & nchar(w) >= 10L & !.bl_word_number(w)
+  any(two[-1L] & two[-length(two)])
+}
+
+#' Whether each token reads as a word and a number (population2021), the
+#' word's letters having the vowels and the short consonant runs a word has.
+#' @param w Tokens of letters and digits.
+#' @return A logical vector.
+#' @noRd
+.bl_word_number <- function(w) {
+  m <- regmatches(w, regexec("^([A-Za-z]+)[0-9]{1,4}$|^[0-9]{1,4}([A-Za-z]+)$",
+                             w))
+  vapply(m, function(g) {
+    if (!length(g)) {
+      return(FALSE)
+    }
+    .bl_wordlike(paste0(g[-1L], collapse = ""))
+  }, NA)
+}
+
+#' Whether letters read as a word rather than as a key's random letters: a
+#' vowel in four letters or more, and no run of six consonants. Random letters
+#' rarely pass both (kqzxwvbtrmnp); words nearly always do
+#' (internationalisation, strengths).
+#' @param s Letters.
+#' @return TRUE or FALSE for each.
+#' @noRd
+.bl_wordlike <- function(s) {
+  s <- tolower(s)
+  v <- nchar(gsub("[^aeiouy]", "", s))
+  v / pmax(nchar(s), 1L) >= 0.25 & !grepl("[b-df-hj-np-tv-xz]{6,}", s)
 }
 
 #' Tells whether a text holds a dense mixed run of letters and digits.
@@ -1514,12 +1563,25 @@ instcli <- function(
 #' @noRd
 .bl_key_dense <- function(x) {
   r <- regmatches(x, gregexpr("[A-Za-z0-9]{16,}", x))[[1L]]
+  # a word and a number only when the letters read as a word: sixteen random
+  # letters and four digits passed as one (network review of 1.0.3)
   dense <- r[
     grepl("[0-9]", r) &
       grepl("[A-Za-z]", r) &
-      !grepl("^([A-Za-z][a-z]+[0-9]{1,4}|[0-9]{1,4}[A-Za-z][a-z]+)$", r)
+      !(grepl("^([A-Za-z][a-z]+[0-9]{1,4}|[0-9]{1,4}[A-Za-z][a-z]+)$", r) &
+          .bl_word_number(r))
   ]
   if (length(dense)) {
+    return(TRUE)
+  }
+  # twelve to fifteen characters that change between letters and digits four
+  # times or more, three of each at least (a1b2c3d4e5f6g7h): a key's, not a
+  # name's (claude35sonnet changes twice)
+  short <- regmatches(x, gregexpr("[A-Za-z0-9]{12,15}", x))[[1L]]
+  if (any(vapply(short, function(t) {
+    d <- grepl("[0-9]", strsplit(t, "", fixed = TRUE)[[1L]])
+    sum(d) >= 3L && sum(!d) >= 3L && sum(d[-1L] != d[-length(d)]) >= 4L
+  }, NA))) {
     return(TRUE)
   }
   # sixteen letters or more with no digit, in both cases and changing case four
