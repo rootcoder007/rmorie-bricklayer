@@ -2,8 +2,8 @@
 
 Computes the change from one period to the period `lag` places before
 it, matched on the period's own value rather than on row order, and
-carries an exact interval for count data. Use it for the “up 12% on last
-year” figures of an annual report or an open-data release: a missing
+carries an exact interval for count data. Use it for the "up 12% on last
+year" figures of an annual report or an open-data release: a missing
 year shows as a gap instead of shifting every comparison, a percentage
 is compared in percentage points, and a change off a small count comes
 with an interval as wide as the count is small.

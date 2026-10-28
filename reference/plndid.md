@@ -97,8 +97,8 @@ the conventions of Stata's `reghdfe` and R's `fixest`.
 
 The relative effect is \\\hat\beta\\ over the mean outcome of the units
 never treated (or not yet treated) in the periods before the first
-treatment, the way an effect on a rate is usually reported (“a 12%
-fall”).
+treatment, the way an effect on a rate is usually reported ("a 12%
+fall").
 
 With `fe = "time"` the unit effects are left out, and the model is the
 cross-section with period effects of a comparison between kinds of units

@@ -71,7 +71,7 @@ gender, age group and group. Statistics Canada does not publish standard
 errors for the profile, so the interval is an approximation built from
 what is known about how the counts were made:
 
-- a long-form (“25% sample”) count is estimated from a sample of about
+- a long-form ("25% sample") count is estimated from a sample of about
   one household in four, so the share has variance \\d (1 - f) p (1 - p)
   / (f N)\\ for a sampling fraction \\f\\ (`smpfrac`, 0.25) of a
   population of \\N\\ (the denominator) and a design effect \\d\\

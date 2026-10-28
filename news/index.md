@@ -690,9 +690,10 @@ CRAN release: 2026-10-21
   [`return()`](https://rdrr.io/r/base/function.html) or
   [`break`](https://rdrr.io/r/base/Control.html) were rewritten so that
   no code is unreachable.
-- The 33 print methods that print an object’s
+- The 178 print methods that print an object’s
   [`format()`](https://rdrr.io/r/base/format.html) lines share one
-  function instead of 33 copies of the same body;
+  function, defined with them in one file, instead of 178 copies of the
+  same body;
   [`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
   has one method where two were identical.
 - Checks that {`goodpractice`} runs: `%||%` is defined once (it is base

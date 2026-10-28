@@ -1,6 +1,6 @@
 # Make a Signing Key Inside a FIPS 140-3 Module
 
-Generates an ML-DSA or SLH-DSA key pair inside the module
+Generates an ML-DSA or SLH-DSA key pair inside the module that
 [`fipsmod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmod.md)
 found. The private key stays in the module's own format (PEM) and never
 passes through this package's code;

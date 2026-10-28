@@ -45,11 +45,10 @@ FIPS mode does not change that. What it gives is a way to sign with a
 module that is: a module listed as validated, run as this function runs
 it, is used in its approved mode. Whether a given module is validated is
 NIST's to say; the package only recognises the exact module names and
-builds that a certificate names (see
-`system.file("fips", "modules.csv", package = "rmoriebricklayer")`), and
-says "not on the list" for every other one, including a FIPS provider
-that may well be validated under a certificate the list does not have
-yet.
+builds that a certificate names (the file `modules.csv` in the package's
+`fips` folder), and says "not on the list" for every other one,
+including a FIPS provider that may well be validated under a certificate
+the list does not have yet.
 
 The `openssl` program must be 3.5 or later (the first with ML-DSA and
 SLH-DSA). Unless `conf` names a configuration, the package writes its

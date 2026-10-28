@@ -35,7 +35,7 @@ The profile gives each characteristic in a hierarchy shown only by
 indentation (“Total - Highest certificate, diploma or degree”, “High
 (secondary) school diploma or equivalency certificate”, ...): the level,
 the parent and the topic's total (`rootid`) are worked out from it, so a
-share can be taken of its parent. A topic marked “25% sample data” comes
+share can be taken of its parent. A topic marked "25% sample data" comes
 from the long-form sample (`sample = "25%"`); the others from the full
 count (`"100%"`). Counts are randomly rounded to multiples of 5 (of 10
 below 10) by Statistics Canada, and a cell suppressed to protect
