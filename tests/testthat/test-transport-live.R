@@ -173,15 +173,19 @@ test_that(
     )
     expect_identical(res$status, -1L)
     expect_identical(res$error, "the progress callback failed")
-    # a destination that cannot be replaced (a non-empty directory) is reported,
-    # and the body written beside it is removed
+    # a destination that cannot be replaced (a non-empty directory) is reported
+    # by the transport, and the body written beside it is removed; bldl()
+    # refuses a folder before it downloads anything
     d <- tempfile()
     dir.create(d)
     writeLines("x", file.path(d, "inner"))
-    expect_error(
-      bldl(url, d, quiet = TRUE),
-      "cannot move the download into place"
+    expect_error(bldl(url, d, quiet = TRUE), "`dest` is a folder")
+    res <- .Call(
+      C("C_rmbl_http_download"), url, d, 30L, NULL, NULL, NULL, FALSE
     )
+    expect_identical(res$status, -1L)
+    expect_match(res$error, "cannot move the download into place",
+                 fixed = TRUE)
     expect_true(file.exists(file.path(d, "inner")))
     expect_length(
       list.files(
