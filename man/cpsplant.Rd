@@ -10,7 +10,7 @@ cpsplant(
   y,
   trt,
   effects = c(0, 0.5, 1),
-  n = 50L,
+  n = 100L,
   tol = NULL,
   seed = NULL
 )

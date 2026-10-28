@@ -69,7 +69,7 @@
 #' bad <- function(df) 2 * dm(df)
 #' cpsplant(d, bad, y = "y", trt = "x", n = 30, seed = 1)$ok
 cpsplant <- function(data, stat, y, trt, effects = c(0, 0.5, 1),
-                     n = 50L, tol = NULL, seed = NULL) {
+                     n = 100L, tol = NULL, seed = NULL) {
   a <- .rmbl_plant_args(data, stat, y, trt, effects, n, tol)
   if (!is.null(seed)) {
     seed <- .rmbl_r_seed(seed)

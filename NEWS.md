@@ -106,7 +106,7 @@
 * `plndid()`, `evstudy()` and `loounit()` refuse a `data` that is not a data frame, in words; weights large enough to overflow (`w = 1e308`) give the same estimate as equal weights.
 * `yoy()` folds labels a C-locale console cannot show, as `rtcalc()` does.
 * `mkset()` no longer embeds a data frame's pairs plot. `ralloc()` refuses blank arm and stratum names and names that differ only in spaces. `vrfmrg()` refuses an empty or NA `pub`.
-* `cpsplant()` allows at most 1.5 times `tol` (one Monte Carlo standard error, which must be at most `tol`/2): an estimator attenuated to 0.7 with moderate noise now fails. A noisy statistic may need a larger `n`.
+* `cpsplant()` allows at most 1.5 times `tol` (one Monte Carlo standard error, which must be at most `tol`/2): an estimator attenuated to 0.7 with moderate noise now fails. The default `n` is now 100 (was 50), so a difference in means on about 120 rows is no longer reported as too noisy; a noisier statistic may need a larger `n`.
 
 ## Fixed after the 1.0.3 reviews
 
