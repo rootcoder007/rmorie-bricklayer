@@ -400,7 +400,10 @@ test_that("a timestamp token with a broken structure is reported, not thrown", {
     .rmbl_ts_extract(der_parse(der_seq(sd_oid, der_ctx0(der_seq()))), raw(0)),
     "no TSTInfo"
   )
-  empty <- der_seq(sd_oid, der_ctx0(der_seq(der_seq(tst_oid, der_ctx0()))))
+  sd_head <- c(der_tlv(0x02, as.raw(3)), der_tlv(0x31, raw(0)))
+  empty <- der_seq(
+    sd_oid, der_ctx0(der_seq(sd_head, der_seq(tst_oid, der_ctx0())))
+  )
   expect_error(
     .rmbl_ts_extract(der_parse(empty), raw(0)),
     "TSTInfo content is empty"
@@ -414,7 +417,9 @@ test_that("a timestamp token with a broken structure is reported, not thrown", {
   )
   no_signer <- der_seq(
     sd_oid,
-    der_ctx0(der_seq(der_seq(tst_oid, der_ctx0(der_tlv(0x04, tst)))))
+    der_ctx0(der_seq(
+      sd_head, der_seq(tst_oid, der_ctx0(der_tlv(0x04, tst)))
+    ))
   )
   expect_error(
     .rmbl_ts_extract(der_parse(no_signer), no_signer),

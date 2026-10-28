@@ -81,7 +81,7 @@ tsstmp <- function(data, tsa = "https://freetsa.org/tsr", file = NULL,
   if (!is.null(a$file)) {
     writeBin(token, a$file)
   }
-  out <- tsvrf(token, bytes, trust = trust)
+  out <- tsvrf(token, bytes, trust = trust, nonce = nonce)
   out$token <- token
   out$tsa <- a$tsa
   out$file <- if (is.null(a$file)) NA_character_ else a$file

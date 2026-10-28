@@ -527,7 +527,7 @@ format.rmbl_archive_capture <- function(x, ...) {
 #' @return The verified timestamp, or NULL (with a warning) when there is none.
 #' @noRd
 .bl_cap_timestamp <- function(tsa, mpath, dir) {
-  nonce <- as.raw(c(0x01, sample.int(256L, 7L, replace = TRUE) - 1L))
+  nonce <- c(as.raw(0x01), rndbytes(7L))
   res <- .bl_tsa_post(
     tsa,
     .bl_tsq(.bl_hex_raw(sha256file(mpath)), nonce),
@@ -535,7 +535,7 @@ format.rmbl_archive_capture <- function(x, ...) {
   )
   if (identical(res$status, 200L) && length(res$body)) {
     writeBin(res$body, file.path(dir, "manifest.tsr"))
-    return(tsvrf(res$body, mpath))
+    return(tsvrf(res$body, mpath, nonce = nonce))
   }
   warning(
     sprintf(

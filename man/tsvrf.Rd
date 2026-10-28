@@ -5,7 +5,15 @@
 \alias{tsinfo}
 \title{Verify an RFC 3161 timestamp token}
 \usage{
-tsvrf(token, data, cert = NULL, trust = NULL, crls = list(), attm = NULL)
+tsvrf(
+  token,
+  data,
+  cert = NULL,
+  trust = NULL,
+  crls = list(),
+  attm = NULL,
+  nonce = NULL
+)
 
 tsinfo(token)
 }
@@ -31,6 +39,10 @@ vectors or paths.}
 
 \item{attm}{The time to check certificate validity at.
 Defaults to the time the token asserts, which is usually what is wanted.}
+
+\item{nonce}{The raw nonce the request sent, or \code{NULL} (the default)
+when it is not known. Given, the token must carry it: a token answering
+another request is refused.}
 }
 \value{
 \code{tsvrf()} returns a list of class

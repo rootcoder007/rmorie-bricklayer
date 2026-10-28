@@ -119,7 +119,7 @@ s <- ralloc(arms = c("drug", "placebo"), ratio = c(2, 1),
 s
 head(as.data.frame(s)[c("id", "kit")])  # what the sites are given
 
-# simple randomisation, and the balance as participants are enrolled
+# simple randomisation: how many each arm has, against the ratio
 plot(ralloc(60, block = NULL, seed = 1))
 
 # at unblinding: the list is the one committed to

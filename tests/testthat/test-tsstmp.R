@@ -131,3 +131,148 @@ test_that("tsstmp refuses what it cannot stamp", {
                                                   "data.frame"))
   expect_error(tsstmp(bare), "no commitment")
 })
+
+# A token from the local authority, for a request this test sends itself.
+tsa_token <- function(tsa, bytes, nonce = c(as.raw(0x01), rndbytes(7L))) {
+  q <- if (is.null(nonce)) {
+    alg <- .bl_der(0x30, c(.rmbl_hex_to_raw("0609608648016503040201"),
+                           as.raw(c(0x05, 0x00))))
+    .bl_der(0x30, c(.bl_der(0x02, as.raw(1L)),
+                    .bl_der(0x30, c(alg, .bl_der(0x04, .bl_hex_raw(
+                      csha256(bytes)
+                    ))))))
+  } else {
+    .bl_tsq(.bl_hex_raw(csha256(bytes)), nonce)
+  }
+  tsa$post("https://tsa.example/tsr", q, 10L)$body
+}
+
+ts_row <- function(r, check) r$checks[r$checks$check == check, ]
+
+test_that("a token answering another request is refused by its nonce", {
+  skip_on_cran()
+  tsa <- local_tsa()
+  n1 <- c(as.raw(0x01), rndbytes(7L))
+  tok <- tsa_token(tsa, charToRaw("commitment"), n1)
+  ok <- tsvrf(tok, charToRaw("commitment"), trust = tsa$ca, nonce = n1)
+  expect_true(ok$ok)
+  expect_true(ts_row(ok, "nonce")$ok)
+  # a replayed token: the nonce sent this time is another one
+  n2 <- c(as.raw(0x01), rndbytes(7L))
+  bad <- tsvrf(tok, charToRaw("commitment"), trust = tsa$ca, nonce = n2)
+  expect_false(bad$ok)
+  expect_identical(ts_row(bad, "nonce")$detail,
+                   "the token's nonce is another request's")
+  # a token for a request that sent none
+  bare <- tsa_token(tsa, charToRaw("commitment"), NULL)
+  none <- tsvrf(bare, charToRaw("commitment"), trust = tsa$ca, nonce = n1)
+  expect_false(none$ok)
+  expect_match(ts_row(none, "nonce")$detail, "carries no nonce")
+  # tsstmp() and the archive capture check the nonce they sent
+  local_mocked_bindings(.bl_tsa_post = tsa$post)
+  st <- tsstmp(charToRaw("commitment"), tsa = "https://tsa.example/tsr")
+  expect_true(ts_row(st, "nonce")$ok)
+  d <- withr::local_tempdir()
+  writeLines("{}", file.path(d, "manifest.json"))
+  cap <- .bl_cap_timestamp("https://tsa.example/tsr",
+                           file.path(d, "manifest.json"), d)
+  expect_true(ts_row(cap, "nonce")$ok)
+  expect_error(tsvrf(tok, as.raw(1), nonce = "01"), "`nonce` must be")
+})
+
+test_that("a response the authority did not grant carries no timestamp", {
+  skip_on_cran()
+  tsa <- local_tsa()
+  tok <- tsa_token(tsa, charToRaw("commitment"))
+  d <- .Call(C_rmbl_der_parse, tok)
+  ci <- tok[(d$children[[2]]$start + 1L):length(tok)]
+  for (st in 2:5) {
+    # rejection, waiting, revocationWarning, revocationNotification, with
+    # and without a token after them
+    for (body in list(raw(0), ci)) {
+      resp <- .bl_der(0x30, c(.bl_der(0x30, .bl_der(0x02, as.raw(st))), body))
+      r <- tsvrf(resp, charToRaw("commitment"), trust = tsa$ca)
+      expect_false(r$ok)
+      expect_identical(
+        ts_row(r, "token_structure")$detail,
+        sprintf("the authority did not grant the timestamp (PKIStatus %d)", st)
+      )
+    }
+  }
+  # granted: the response and the bare token both verify
+  expect_true(tsvrf(tok, charToRaw("commitment"), trust = tsa$ca)$ok)
+  expect_true(tsvrf(ci, charToRaw("commitment"), trust = tsa$ca)$ok)
+})
+
+test_that("a token wrapped in another structure or altered is refused", {
+  skip_on_cran()
+  tsa <- local_tsa()
+  tok <- tsa_token(tsa, charToRaw("commitment"))
+  d <- .Call(C_rmbl_der_parse, tok)
+  ci <- tok[(d$children[[2]]$start + 1L):length(tok)]
+  wraps <- list(
+    .bl_der(0x30, c(.bl_der(0x02, as.raw(1L)),
+                    .bl_der(0x0c, charToRaw("note")), ci)),
+    .bl_der(0xa5, ci),
+    .bl_der(0x30, c(.bl_der(0x30, .bl_der(0x02, as.raw(0L))), ci,
+                    .bl_der(0x05, raw(0))))
+  )
+  for (w in wraps) {
+    r <- tsvrf(w, charToRaw("commitment"), trust = tsa$ca)
+    expect_false(r$ok)
+    expect_false(ts_row(r, "token_structure")$ok)
+  }
+  # the digestAlgorithms sit outside the signed bytes: an altered OID tag,
+  # or parameters that are not a NULL, are refused rather than ignored
+  cd <- .Call(C_rmbl_der_parse, ci)
+  alg <- cd$children[[2]]$children[[1]]$children[[2]]$children[[1]]
+  oid_at <- alg$children[[1]]$start + 1L
+  bad <- ci
+  bad[oid_at] <- as.raw(0x04)
+  r <- tsvrf(bad, charToRaw("commitment"), trust = tsa$ca)
+  expect_identical(ts_row(r, "token_structure")$detail,
+                   "the token's digest algorithm has no algorithm OID")
+  if (length(alg$children) == 2L) {
+    bad <- ci
+    bad[alg$children[[2]]$start + 1L] <- as.raw(0x04)
+    r <- tsvrf(bad, charToRaw("commitment"), trust = tsa$ca)
+    expect_match(ts_row(r, "token_structure")$detail,
+                 "parameters RFC 5754 does not allow")
+  }
+})
+
+test_that("the SignerInfo must name the certificate it is checked under", {
+  skip_on_cran()
+  tsa <- local_tsa()
+  tok <- tsa_token(tsa, charToRaw("commitment"))
+  r <- tsvrf(tok, charToRaw("commitment"), cert = tsa$crt)
+  expect_true(ts_row(r, "signer_id")$ok)
+  other <- tsvrf(tok, charToRaw("commitment"), cert = tsa$ca)
+  expect_false(other$ok)
+  expect_identical(
+    ts_row(other, "signer_id")$detail,
+    "the SignerInfo names another certificate (issuer and serial)"
+  )
+})
+
+test_that("signed attributes are read among themselves, not searched", {
+  der <- function(tag, ...) .bl_der(tag, c(...))
+  oid <- function(h) .rmbl_hex_to_raw(h)
+  md_oid <- oid("06092a864886f70d010904")
+  ct_oid <- oid("06092a864886f70d010903")
+  md <- der(0x30, md_oid, der(0x31, der(0x04, as.raw(1:4))))
+  # a messageDigest hidden in another attribute's value is not one
+  nested <- der(0xa0, der(0x30, ct_oid, der(0x31, md)))
+  sa <- .Call(C_rmbl_der_parse, nested)
+  expect_null(.rmbl_ts_attr(sa, "1.2.840.113549.1.9.4"))
+  # twice, or with two values, is no attribute either
+  twice <- .Call(C_rmbl_der_parse, der(0xa0, md, md))
+  expect_null(.rmbl_ts_attr(twice, "1.2.840.113549.1.9.4"))
+  two <- der(0x30, md_oid,
+             der(0x31, der(0x04, as.raw(1)), der(0x04, as.raw(2))))
+  expect_null(.rmbl_ts_attr(.Call(C_rmbl_der_parse, der(0xa0, two)),
+                            "1.2.840.113549.1.9.4"))
+  one <- .rmbl_ts_attr(.Call(C_rmbl_der_parse, der(0xa0, md)),
+                       "1.2.840.113549.1.9.4")
+  expect_identical(one$value, as.raw(1:4))
+})

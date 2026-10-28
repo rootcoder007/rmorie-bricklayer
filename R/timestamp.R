@@ -94,6 +94,9 @@
 #' vectors or paths.
 #' @param attm The time to check certificate validity at.
 #' Defaults to the time the token asserts, which is usually what is wanted.
+#' @param nonce The raw nonce the request sent, or `NULL` (the default)
+#'   when it is not known. Given, the token must carry it: a token answering
+#'   another request is refused.
 #' @return `tsvrf()` returns a list of class
 #' `bricklayer_timestamp`: `ok` (logical), `time` (a `POSIXct` in
 #' UTC, or
@@ -137,10 +140,16 @@ tsvrf <- function(
   cert = NULL,
   trust = NULL,
   crls = list(),
-  attm = NULL
+  attm = NULL,
+  nonce = NULL
 ) {
   token <- .rmbl_as_bytes(token, "token")
   data <- .rmbl_as_bytes(data, "data")
+  if (!is.null(nonce) && (!is.raw(nonce) || !length(nonce) ||
+                            length(nonce) > 64L)) {
+    stop("`nonce` must be the raw bytes the request sent, or NULL",
+         call. = FALSE)
+  }
   acc <- new.env(parent = emptyenv())
   acc$checks <- list()
   note_row <- .rmbl_ts_recorder(acc)
@@ -161,6 +170,7 @@ tsvrf <- function(
     TRUE,
     sprintf("TSTInfo of %d bytes", length(info$tst_der))
   )
+  .rmbl_ts_nonce_row(info, nonce, note_row)
 
   .rmbl_ts_imprint_row(info, data, note_row)
   # 2. the signature over the signed attributes, under a key we are given
@@ -181,6 +191,7 @@ tsvrf <- function(
         "the certificate supplied by the caller"
       }
     )
+    .rmbl_ts_sid_row(info, .cert, note_row)
     .rmbl_ts_sig_rows(info, .cert, note_row)
     .rmbl_ts_trust_rows(info, .cert, trust, attm, crls, note_row)
   }
@@ -604,39 +615,42 @@ format.bricklayer_timestamp <- function(x, ...) {
 #'   serial, time, signer, certificate (or NULL), signature OID and the token.
 #' @noRd
 .rmbl_ts_extract <- function(der, token) {
-  # The token is a CMS ContentInfo whose contentType is id-signedData.
-  ci <- .rmbl_der_find(der, function(nd) {
-    .rmbl_ts_seq_with_oid(nd, 2L, "1.2.840.113549.1.7.2")
-  })
-  if (is.null(ci)) {
-    stop("no CMS SignedData in the token", call. = FALSE)
-  }
+  # Read by position, as RFC 3161 and RFC 5652 lay the token out. A search
+  # for the first SignedData anywhere let a token wrapped in any outer
+  # structure verify, and never read the authority's PKIStatus.
+  ci <- .rmbl_ts_content_info(der)
   sd <- ci$children[[2]]$children[[1]] # [0] EXPLICIT SignedData
-  # encapContentInfo: eContentType id-ct-TSTInfo, eContent [0] OCTET STRING
-  eci <- .rmbl_der_find(sd, function(nd) {
-    .rmbl_ts_seq_with_oid(nd, 1L, "1.2.840.113549.1.9.16.1.4")
-  })
-  if (is.null(eci)) {
+  k <- sd$children
+  # SignedData: version, digestAlgorithms, encapContentInfo,
+  # [0] certificates?, [1] crls?, signerInfos
+  if (length(k) < 3L || !.rmbl_ts_seq_with_oid(
+    k[[3L]], 1L, "1.2.840.113549.1.9.16.1.4"
+  )) {
     stop("no TSTInfo content in the token", call. = FALSE)
   }
-  oct <- .rmbl_der_find(eci$children[[2]], function(nd) {
-    identical(nd$class, 0L) && identical(nd$tag, 4)
-  })
+  .rmbl_ts_want(k[[1L]], 0L, 2, "SignedData version")
+  .rmbl_ts_digest_algs(k[[2L]])
+  e0 <- if (length(k[[3L]]$children) >= 2L) k[[3L]]$children[[2L]]
+  oct <- if (length(e0$children)) e0$children[[1L]]
   if (is.null(oct)) {
     stop("the TSTInfo content is empty", call. = FALSE)
   }
+  .rmbl_ts_want(e0, 2L, 0, "eContent [0]")
+  .rmbl_ts_want(oct, 0L, 4, "eContent OCTET STRING")
   tst_der <- oct$value
-  tst <- .Call(C_rmbl_der_parse, tst_der)
-
-  ti <- .rmbl_ts_tstinfo(tst)
-
-  # the signer's information, and the certificate if one travelled
-  si <- .rmbl_der_find(sd, .rmbl_ts_is_signer_infos)
-  if (is.null(si)) {
+  ti <- .rmbl_ts_tstinfo(.Call(C_rmbl_der_parse, tst_der))
+  si <- if (length(k) >= 4L) k[[length(k)]]
+  if (is.null(si) || !.rmbl_ts_is_signer_infos(si)) {
     stop("no SignerInfo in the token", call. = FALSE)
   }
+  for (nd in k[-c(1:3, length(k))]) {
+    if (!identical(nd$class, 2L) || !nd$tag %in% c(0, 1)) {
+      stop("the SignedData has a field RFC 5652 does not define",
+           call. = FALSE)
+    }
+  }
   signer <- si$children[[1]]
-  cert_der <- .rmbl_ts_cert_der(sd, token)
+  .rmbl_ts_signer_algs(signer)
   list(
     tst_der = tst_der,
     policy = ti$policy,
@@ -644,11 +658,242 @@ format.bricklayer_timestamp <- function(x, ...) {
     imprint = ti$imprint,
     serial = ti$serial,
     time = ti$time,
+    nonce = ti$nonce,
     signer = signer,
-    cert_der = cert_der,
+    cert_der = .rmbl_ts_cert_der(sd, token),
     sig_oid = .rmbl_ts_signer_sig_oid(signer),
     token = token
   )
+}
+
+#' A DER node of the class and tag expected, or an error naming it.
+#' @param nd The node, or NULL.
+#' @param class,tag The class (0 universal, 2 context-specific) and tag.
+#' @param what What it is, for the error.
+#' @return `nd`.
+#' @noRd
+.rmbl_ts_want <- function(nd, class, tag, what) {
+  if (is.null(nd) || !identical(nd$class, class) ||
+        !identical(nd$tag, tag)) {
+    stop(sprintf("the token's %s is not where RFC 3161 puts it", what),
+         call. = FALSE)
+  }
+  nd
+}
+
+#' The token's ContentInfo: the input itself, or the token inside a
+#' TimeStampResp once its PKIStatus says the authority granted it.
+#' @param der The parsed input.
+#' @return The ContentInfo node.
+#' @noRd
+.rmbl_ts_content_info <- function(der) {
+  k <- der$children
+  # a TimeStampResp opens with PKIStatusInfo, a SEQUENCE; a ContentInfo
+  # opens with its contentType OID
+  if (identical(der$tag, 16) && length(k) &&
+        identical(k[[1L]]$class, 0L) && identical(k[[1L]]$tag, 16)) {
+    st <- k[[1L]]$children
+    st <- if (length(st)) st[[1L]]
+    if (is.null(st) || !identical(st$class, 0L) || !identical(st$tag, 2) ||
+          !length(st$value) || length(st$value) > 3L) {
+      stop("the authority's response has no PKIStatus", call. = FALSE)
+    }
+    status <- .rmbl_int_of(st$value)
+    # granted (0) and grantedWithMods (1) carry a token; rejection (2),
+    # waiting (3) and the revocation notices (4, 5) do not
+    if (!status %in% c(0L, 1L)) {
+      stop(sprintf("the authority did not grant the timestamp (PKIStatus %d)",
+                   status), call. = FALSE)
+    }
+    if (length(k) != 2L) {
+      stop("the authority's response carries no token", call. = FALSE)
+    }
+    der <- k[[2L]]
+  }
+  if (!.rmbl_ts_seq_with_oid(der, 2L, "1.2.840.113549.1.7.2") ||
+        length(der$children) != 2L) {
+    stop("no CMS SignedData at the top of the token", call. = FALSE)
+  }
+  sd <- der$children[[2L]]
+  if (!identical(sd$class, 2L) || !identical(sd$tag, 0) ||
+        length(sd$children) != 1L ||
+        !identical(sd$children[[1L]]$tag, 16)) {
+    stop("no CMS SignedData at the top of the token", call. = FALSE)
+  }
+  der
+}
+
+#' The SignedData's digestAlgorithms: a SET of AlgorithmIdentifiers.
+#' @param nd The node.
+#' @return NULL, invisibly; an error when malformed.
+#' @noRd
+.rmbl_ts_digest_algs <- function(nd) {
+  .rmbl_ts_want(nd, 0L, 17, "digestAlgorithms")
+  for (a in nd$children) {
+    .rmbl_ts_alg(a, "digest algorithm")
+  }
+  invisible(NULL)
+}
+
+#' An AlgorithmIdentifier: an OID, then no parameters or a DER NULL (or,
+#' for a signature, a parameter SEQUENCE such as RSASSA-PSS's).
+#' @param nd The node.
+#' @param what What it is, for the error.
+#' @param params TRUE when a parameter SEQUENCE is allowed.
+#' @return NULL, invisibly; an error when malformed.
+#' @noRd
+.rmbl_ts_alg <- function(nd, what, params = FALSE) {
+  .rmbl_ts_want(nd, 0L, 16, what)
+  k <- nd$children
+  if (!length(k) || !identical(k[[1L]]$class, 0L) ||
+        !identical(k[[1L]]$tag, 6)) {
+    stop(sprintf("the token's %s has no algorithm OID", what), call. = FALSE)
+  }
+  p <- if (length(k) == 2L) k[[2L]]
+  null <- !is.null(p) && identical(p$class, 0L) && identical(p$tag, 5) &&
+    !length(p$value)
+  pseq <- params && !is.null(p) && identical(p$class, 0L) &&
+    identical(p$tag, 16)
+  # the parameters sit outside the signed bytes: anything else there made
+  # the token malleable
+  if (length(k) > 2L || (!is.null(p) && !null && !pseq)) {
+    stop(sprintf("the token's %s has parameters RFC 5754 does not allow",
+                 what), call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' The SignerInfo's fields, checked by position.
+#'
+#' SignerInfo: version, sid, digestAlgorithm, \[0\] signedAttrs?,
+#' signatureAlgorithm, signature, \[1\] unsignedAttrs?.
+#' @param signer The SignerInfo.
+#' @return NULL, invisibly; an error when malformed.
+#' @noRd
+.rmbl_ts_signer_algs <- function(signer) {
+  k <- signer$children
+  .rmbl_ts_want(k[[1L]], 0L, 2, "SignerInfo version")
+  .rmbl_ts_alg(k[[3L]], "SignerInfo digest algorithm")
+  i <- 4L
+  if (identical(k[[i]]$class, 2L) && identical(k[[i]]$tag, 0)) {
+    i <- 5L
+  }
+  if (length(k) < i + 1L) {
+    stop("the SignerInfo is incomplete", call. = FALSE)
+  }
+  .rmbl_ts_alg(k[[i]], "SignerInfo signature algorithm", params = TRUE)
+  .rmbl_ts_want(k[[i + 1L]], 0L, 4, "signature")
+  rest <- k[-seq_len(i + 1L)]
+  if (length(rest) > 1L || (length(rest) == 1L &&
+                              !(identical(rest[[1L]]$class, 2L) &&
+                                  identical(rest[[1L]]$tag, 1)))) {
+    stop("the SignerInfo has a field RFC 5652 does not define",
+         call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' Whether the SignerInfo's sid names the certificate checked against it.
+#'
+#' issuerAndSerialNumber must be the certificate's issuer (byte for byte)
+#' and serial; a subjectKeyIdentifier must be its key identifier (the
+#' extension, or the SHA-1 of the key when it has none, RFC 5280 4.2.1.2).
+#' @param signer The SignerInfo.
+#' @param cert The certificate's DER.
+#' @param token The token's bytes.
+#' @return NULL when it does; an error saying why not.
+#' @noRd
+.rmbl_ts_sid_check <- function(signer, cert, token) {
+  sid <- signer$children[[2L]]
+  tk <- .Call(C_rmbl_der_parse, cert)$children[[1L]]$children
+  i <- if (identical(tk[[1L]]$class, 2L)) 2L else 1L
+  span <- function(nd, raw) raw[(nd$start + 1L):(nd$offset + nd$length)]
+  if (identical(sid$class, 0L) && identical(sid$tag, 16) &&
+        length(sid$children) == 2L) {
+    same <- identical(span(sid$children[[1L]], token),
+                      span(tk[[i + 2L]], cert)) &&
+      identical(sid$children[[2L]]$value, tk[[i]]$value)
+    if (same) {
+      return(NULL)
+    }
+    stop("the SignerInfo names another certificate (issuer and serial)",
+         call. = FALSE)
+  }
+  if (identical(sid$class, 2L) && identical(sid$tag, 0) &&
+        !isTRUE(sid$constructed)) {
+    if (identical(sid$value, .rmbl_ts_cert_ski(tk, i))) {
+      return(NULL)
+    }
+    stop("the SignerInfo names another certificate (key identifier)",
+         call. = FALSE)
+  }
+  stop("the SignerInfo names its signer in a form RFC 5652 does not define",
+       call. = FALSE)
+}
+
+#' A certificate's subject key identifier.
+#' @param tk The tbsCertificate's children.
+#' @param i The serial number's position among them.
+#' @return The identifier's bytes.
+#' @noRd
+.rmbl_ts_cert_ski <- function(tk, i) {
+  for (nd in tk) {
+    if (!identical(nd$class, 2L) || !identical(nd$tag, 3) ||
+          !length(nd$children)) {
+      next
+    }
+    for (ext in nd$children[[1L]]$children) {
+      e <- ext$children
+      if (length(e) >= 2L && .rmbl_der_oid_eq(e[[1L]], "2.5.29.14")) {
+        return(.Call(C_rmbl_der_parse, e[[length(e)]]$value)$value)
+      }
+    }
+  }
+  bits <- tk[[i + 5L]]$children[[2L]]$value
+  .Call(C_rmbl_sha1, if (length(bits) > 1L) bits[-1L] else raw(0))
+}
+
+#' tsvrf()'s row on whether the SignerInfo names the certificate used.
+#' @param info The token's contents.
+#' @param .cert The certificate's DER bytes.
+#' @param note_row The function that records the check.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_ts_sid_row <- function(info, .cert, note_row) {
+  # the certificate may come as PEM; certprs() reads either form
+  why <- tryCatch(
+    .rmbl_ts_sid_check(info$signer, certprs(.cert)$der, info$token),
+    error = function(e) conditionMessage(e)
+  )
+  note_row("signer_id", is.null(why),
+           why %||% "the SignerInfo names this certificate")
+  invisible(NULL)
+}
+
+#' tsvrf()'s row on the nonce, when the request's nonce is known.
+#' @param info The token's contents.
+#' @param nonce The nonce sent, or NULL.
+#' @param note_row The function that records the check.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_ts_nonce_row <- function(info, nonce, note_row) {
+  if (is.null(nonce)) {
+    return(invisible(NULL))
+  }
+  strip <- function(b) {
+    nz <- which(b != as.raw(0L))
+    if (length(nz)) b[nz[1L]:length(b)] else raw(0)
+  }
+  got <- info$nonce
+  same <- !is.null(got) && identical(strip(got), strip(nonce))
+  note_row("nonce", same, if (same) {
+    "the token answers this request's nonce"
+  } else if (is.null(got)) {
+    "the token carries no nonce, so it may answer another request"
+  } else {
+    "the token's nonce is another request's"
+  })
+  invisible(NULL)
 }
 
 #' The fields of a TSTInfo that tsvrf() reports.
@@ -659,7 +904,14 @@ format.bricklayer_timestamp <- function(x, ...) {
   # TSTInfo: version, policy, messageImprint, serialNumber, genTime, ...
   k <- tst$children
   imprint_seq <- k[[3]]
+  # accuracy?, ordering?, nonce?, tsa?, extensions? follow genTime; the
+  # nonce is the only universal INTEGER among them
+  ints <- Filter(
+    function(nd) identical(nd$class, 0L) && identical(nd$tag, 2),
+    k[-seq_len(min(5L, length(k)))]
+  )
   list(
+    nonce = if (length(ints)) ints[[1L]]$value,
     policy = .rmbl_oid_string(k[[2]]$value),
     imprint_oid = .rmbl_oid_string(
       imprint_seq$children[[1]]$children[[1]]$value
@@ -784,17 +1036,19 @@ format.bricklayer_timestamp <- function(x, ...) {
 #' @noRd
 .rmbl_ts_content <- function(sa, signer, info) {
   # messageDigest attribute: must equal the digest of the TSTInfo
-  md_attr <- .rmbl_der_find(sa, function(nd) {
-    isTRUE(nd$constructed) &&
-      identical(nd$tag, 16) &&
-      length(nd$children) >= 2L &&
-      .rmbl_der_oid_eq(nd$children[[1]], "1.2.840.113549.1.9.4")
-  })
+  # read among the attributes themselves: a search inside them found a
+  # messageDigest nested in another attribute's value
+  md <- .rmbl_ts_attr(sa, "1.2.840.113549.1.9.4")
+  ctype <- .rmbl_ts_attr(sa, "1.2.840.113549.1.9.3")
   content_ok <- FALSE
   content_detail <- "no messageDigest attribute"
   dalg <- .rmbl_ts_signer_digest(signer)
-  if (!is.null(md_attr) && !is.na(dalg)) {
-    want <- md_attr$children[[2]]$children[[1]]$value
+  if (!is.null(md) && (is.null(ctype) || !.rmbl_der_oid_eq(
+    ctype, "1.2.840.113549.1.9.16.1.4"
+  ))) {
+    content_detail <- "the signed contentType attribute is not TSTInfo"
+  } else if (!is.null(md) && identical(md$tag, 4) && !is.na(dalg)) {
+    want <- md$value
     got <- .rmbl_ts_digest(dalg, info$tst_der)
     content_ok <- identical(want, got)
     content_detail <- if (content_ok) {
@@ -808,6 +1062,25 @@ format.bricklayer_timestamp <- function(x, ...) {
     }
   }
   list(ok = content_ok, detail = content_detail, dalg = dalg)
+}
+
+#' The one value of a signed attribute, or NULL when it is absent, appears
+#' twice, or holds other than one value.
+#' @param sa The signed attributes' node.
+#' @param oid The attribute's OID.
+#' @return The value's node, or NULL.
+#' @noRd
+.rmbl_ts_attr <- function(sa, oid) {
+  hits <- Filter(function(nd) .rmbl_ts_seq_with_oid(nd, 2L, oid),
+                 sa$children)
+  if (length(hits) != 1L || length(hits[[1L]]$children) != 2L) {
+    return(NULL)
+  }
+  v <- hits[[1L]]$children[[2L]]
+  if (!identical(v$tag, 17) || length(v$children) != 1L) {
+    return(NULL)
+  }
+  v$children[[1L]]
 }
 
 #' Verifies an RSA (PKCS #1 v1.5) signature over the signed attributes.
