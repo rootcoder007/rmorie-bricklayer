@@ -668,3 +668,6 @@ print.rmbl_fipsmod_key <- .rmbl_print_box
 
 #' @export
 print.rmbl_fipsmod <- .rmbl_print_box
+
+#' @export
+print.rmbl_bundle_audit <- .rmbl_print_box

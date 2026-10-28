@@ -75,6 +75,11 @@ cases <- list(
     r <- run("archive", "save", "https://example.org/", "--reason", "x", "--also", "dropbox")
     check(r$status == 2L && grepl("--also takes one value", r$text, fixed = TRUE), r$text)
     r <- run("archive", "get", "https://example.org/"); check(r$status == 2L && grepl("-o FILE", r$text, fixed = TRUE), r$text)
+    # push: a capture kept here, sent on later; checked offline, nothing sent
+    r <- run("archive", "help"); check(grepl("archive push DIR", r$text, fixed = TRUE), r$text)
+    r <- run("archive", "push", home); check(r$status == 2L && grepl("--reason", r$text, fixed = TRUE), r$text)
+    r <- run("archive", "push", home, "--reason", "Tables cited in the smoke study")
+    check(r$status == 1L && grepl("manifest.json is missing", r$text, fixed = TRUE), r$text)
     a <- Sys.getenv("MORIE_SMOKE_ARCHIVE")
     if (!nzchar(a)) return(message("  archive find: SKIP (no MORIE_SMOKE_ARCHIVE)"))
     Sys.setenv(MORIE_ARCHIVE_URL = a)
@@ -86,6 +91,10 @@ cases <- list(
     d <- file.path(home, "packproj")
     r <- run("pack", "--new", d, "--title", "Smoke study"); check(r$status == 0L && file.exists(file.path(d, "analysis.R")), r$text)
     r <- run("pack", d, "--dest", home); check(r$status == 0L && file.exists(file.path(home, "packproj_v1.zip")), r$text)
+    # the zip run as a recipient's copy, offline on synthetic data, and checked
+    r <- run("pack", "--check", file.path(home, "packproj_v1.zip"), "--synthetic")
+    check(r$status == 0L && grepl("Bundle audit: VERIFIED", r$text, fixed = TRUE), r$text)
+    r <- run("pack", "--check", file.path(home, "none.zip")); check(r$status == 1L && grepl("not an existing .zip", r$text, fixed = TRUE), r$text)
     r <- run("pack"); check(r$status == 2L && grepl("pack DIR", r$text, fixed = TRUE), r$text)
   },
   config = function() {

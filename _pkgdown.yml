@@ -102,6 +102,7 @@ reference:
       - blfetch
       - fetchvrf
       - arccap
+      - arcpush
       - arcfind
       - arcget
       - siufetch
@@ -159,6 +160,7 @@ reference:
       - ralloc
       - rallocvrf
       - mkbndlproj
+      - mkbndlchk
   - title: Language model and command line
     desc: >
       Language models you bring (a provider's key, an OpenAI-compatible

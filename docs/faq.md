@@ -31,11 +31,11 @@ See `docs/data_sources.md`. Short version: `lib_data_loader.R` currently has CKA
 
 ### My analysis takes 20 minutes. Will the script time out?
 
-No. `setup_and_run.R` invokes your analysis via `system2()` with no timeout; it just waits. The audit script (`verify_bundle.sh`) also has no timeout. There's no maximum runtime.
+No. `setup_and_run.R` invokes your analysis via `system2()` with no timeout; it just waits. The author's check (`mkbndlchk()`) has no timeout either. There's no maximum runtime.
 
-### Why is the work folder on the Desktop, not /tmp?
+### Where does the check unzip the bundle?
 
-Because `/tmp` on macOS resolves to `/private/var/folders/<opaque-hash>/T/` which is full of system-cache files like `BlobRegistryFiles-*` and is impossible for a non-technical user to navigate to. The Desktop is universal, visible, and obvious. Pass `--clean` to `verify_bundle.sh` if you want auto-delete.
+`mkbndlchk()` unzips it into a new folder under `tempdir()` and removes it afterwards. `keep = TRUE` keeps the folder, to look at the results, and `dir =` chooses where it goes (for example `dir = "~/Desktop/my-project_check"`).
 
 ### The download is failing with `429` or `SSL handshake` errors — what's going on?
 

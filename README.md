@@ -11,7 +11,7 @@
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16000/badge)](https://www.bestpractices.dev/projects/16000)
 <!-- badges: end -->
 
-> Analyze a published table, and be able to show later exactly which data the result came from.
+> Every number traced to the exact bytes it came from, and signed to outlast quantum computers.
 
 ## What it is
 
@@ -133,7 +133,8 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   zip a reviewer with only R unzips and double-clicks (macOS, Windows,
   Linux); it finds, downloads or carries the data, checks it against the
   pinned SHA-256 and reports expected against observed for every number.
-  `mkbndlproj()` starts a project of your own; see
+  `mkbndlproj()` starts a project of your own and `mkbndlchk()` checks
+  a built bundle before you ship it; see
   [Reproducibility bundles](#reproducibility-bundles).
 - **Provenance** — `loadprov()`, `mkmnf()`, `recrd()`,
   `wrmnfjs()`, and `wrsmrytxt()` capture every run as a
@@ -289,7 +290,10 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   lists the captures of an address and `arcget()` fetches the exact bytes;
   `fetchvrf()` falls back to the archive and to your WARC files on its own,
   and `wbsave(fallback = "rmorie")` saves what the Wayback Machine refused.
-  From a terminal: `rmbl archive save | find | get`. In CI, `cpschk(archive = TRUE)`
+  When an archive is down, the capture is still whole on your computer:
+  `arcpush()` sends those same files on later (checked against their
+  SHA-256, never downloaded again), and running it again retries only what
+  failed. From a terminal: `rmbl archive save | push | find | get`. In CI, `cpschk(archive = TRUE)`
   (the rmbl action's `archive: true`) takes the archived copy when a source and
   its Wayback snapshot are down. Reading a public copy needs no key; saving needs
   one, except in a GitHub Actions job allowed `id-token: write`, where the
@@ -619,7 +623,9 @@ starts a project of your own:
 ```r
 p <- mkbndlproj(file.path(tempdir(), "my-study"), title = "My study")
 # the reviewer's copy finds or downloads the data, or runs on synthetic data
-mkbndl(p$dir, dest = tempdir(), overwrite = TRUE)
+b <- mkbndl(p$dir, dest = tempdir(), overwrite = TRUE)
+# before shipping, run it as a reviewer will and check its counts
+mkbndlchk(b$path, synthetic = TRUE)
 # or carry the data inside, to run offline
 dat <- data.frame(group = rep(c("a", "b"), 50), value = rep(c(4, 6), 50))
 csv <- file.path(tempdir(), "my_data.csv")
@@ -1037,14 +1043,14 @@ estimators. Any error in that translation is ours.
 
 If you use rmoriebricklayer in your research, please cite the software:
 
-> Ruhela, V. S. (2026). *rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback.* R package version 1.0.3. doi:10.32614/CRAN.package.rmoriebricklayer. https://CRAN.R-project.org/package=rmoriebricklayer
+> Ruhela, V. S. (2026). *rmoriebricklayer: Post-Quantum Signing and Reproducibility Capsules for R.* R package version 1.0.3. doi:10.32614/CRAN.package.rmoriebricklayer. https://CRAN.R-project.org/package=rmoriebricklayer
 
 BibTeX (or run `citation("rmoriebricklayer")` after installation for the entry
 stamped with the exact installed version, sourced from `inst/CITATION`):
 
 ```bibtex
 @Manual{ruhela_rmoriebricklayer_2026,
-  title  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},
+  title  = {rmoriebricklayer: Post-Quantum Signing and Reproducibility Capsules for R},
   author = {Ruhela, Vansh Singh},
   year   = {2026},
   doi    = {10.32614/CRAN.package.rmoriebricklayer},

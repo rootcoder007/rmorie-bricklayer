@@ -165,3 +165,32 @@ test_that(
     )
   }
 )
+
+test_that("a WARC read back takes only what the file holds", {
+  d <- withr::local_tempdir()
+  local_mocked_bindings(
+    blfetch = function(url, dest, wb = "", tmout = 120L) {
+      writeBin(charToRaw("payload"), dest)
+      invisible("live")
+    }
+  )
+  arccap("https://s.org/a.csv", d, tsa = NULL)
+  out <- file.path(d, "back.csv")
+  .bl_warc_get(d, "https://s.org/a.csv", out)
+  expect_identical(readLines(out, warn = FALSE), "payload")
+  idx <- file.path(d, "indexes", "index.cdxj")
+  good <- readLines(idx)
+  # an index claiming a record of terabytes is refused before any read
+  writeLines(sub('"length": ?"?[0-9]+"?', '"length": 3000000000000', good),
+             idx)
+  expect_error(.bl_warc_get(d, "https://s.org/a.csv", out),
+               "does not match")
+  # and one naming a file outside archive/
+  writeLines(sub('"filename": ?"[^"]+"', '"filename": "../manifest.json"',
+                 good), idx)
+  expect_error(.bl_warc_get(d, "https://s.org/a.csv", out),
+               "outside archive/")
+  writeLines(sub('"filename": ?"[^"]+"', '"filename": ""', good), idx)
+  expect_error(.bl_warc_get(d, "https://s.org/a.csv", out),
+               "outside archive/")
+})

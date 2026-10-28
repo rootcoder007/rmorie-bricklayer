@@ -39,14 +39,26 @@
 #' shipped example such as \code{otis-mrp}, with \code{\link{mkbndl}}: one
 #' zip a reviewer unzips and double-clicks (default \code{--dest}: the
 #' working directory); \code{pack --new DIR [--title T] [--author A]
-#' [--contact C]} writes a starter project with \code{\link{mkbndlproj}}}
+#' [--contact C]} writes a starter project with \code{\link{mkbndlproj}};
+#' \code{pack --check ZIP [--data FILE] [--synthetic] [--keep]} runs a
+#' built bundle as a recipient would and checks its results with
+#' \code{\link{mkbndlchk}} (exit status 1 when it fails)}
 #' \item{\code{wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max
 #' N]}}{save every URL listed in FILE (one per line; blank lines and \code{#}
 #' comments skipped) in the Internet Archive's Wayback Machine with
 #' \code{\link{wbsave}}, results in \code{--out} (default
 #' \code{FILE.wayback.jsonl}), so a stopped run carries on; \code{wayback
 #' --retry FILE.jsonl [--include-gone]} retries the failures of an earlier run
-#' (\code{\link{wbrtry}})} \item{\code{verify PATH [--json] [--fail-on LEVEL]
+#' (\code{\link{wbrtry}})} \item{\code{archive save URL... --reason TEXT
+#' [--dir D] [--private] [--also wayback]}}{save from this connection to
+#' archive.rmorie.com with \code{\link{arccap}}, keeping the files, their
+#' manifest and WARC copies in D (default \file{captures}); \code{archive
+#' push DIR [--reason TEXT] [--private] [--also wayback]} sends a capture
+#' kept in DIR on later, the same bytes, with \code{\link{arcpush}} (run it
+#' again to retry what failed); \code{archive find URL} and \code{archive
+#' get ID|URL -o FILE} list a URL's captures and fetch one's exact bytes
+#' (\code{\link{arcfind}}, \code{\link{arcget}})}
+#' \item{\code{verify PATH [--json] [--fail-on LEVEL]
 #' [--public-key HEX]}}{check every capsule under PATH as the rmbl GitHub Action
 #' does (\code{\link{cpschk}}): each file against its JSON Schema
 #' (\code{\link{schemapath}}), \code{\link{vrfcps}} and
@@ -783,7 +795,7 @@ instcli <- function(
       "--seen-log"
     ),
     migrate = "--write",
-    pack = c(.bl_pack_valued, "--overwrite"),
+    pack = c(.bl_pack_valued, "--overwrite", "--synthetic", "--keep"),
     config = if (length(rest) && identical(rest[[1L]], "reset")) "--force"
   )
 }
@@ -1699,14 +1711,18 @@ instcli <- function(
       "archive find URL [--from YYYY] [--to YYYY] [--json]   list its",
       "captures (URL* for a prefix);",
       "archive get ID|URL -o FILE [--sha256 HEX] [--at YYYYMMDD]   the",
-      "exact bytes, checked"
+      "exact bytes, checked;",
+      "archive push DIR [--reason TEXT] [--private] [--also wayback]",
+      "  send a capture kept in DIR on later, the same bytes"
     ),
     pack = paste(
       "pack DIR [--dest D] [--data FILE] [--version V] [--overwrite]",
       "  a reproducibility bundle of the project in DIR (or a shipped",
       "example: otis-mrp), written to D (default: here);",
       "pack --new DIR [--title T] [--author A] [--contact C]   start a",
-      "project that builds and runs as it is"
+      "project that builds and runs as it is;",
+      "pack --check ZIP [--data FILE] [--synthetic] [--keep]   run a",
+      "built bundle as a recipient would and check its results"
     )
   )
 }
@@ -2258,6 +2274,8 @@ instcli <- function(
     "connection to archive.rmorie.com\n",
     "  archive find URL | get ID -o FILE         list its captures; ",
     "fetch the exact bytes, checked\n",
+    "  archive push DIR --reason TEXT            send a capture kept ",
+    "here on later\n",
     "  pack DIR [--dest D] [--data FILE]         a reproducibility ",
     "bundle a reviewer double-clicks\n",
     "  pack --new DIR [--title T]                start a bundle project ",
@@ -2532,6 +2550,34 @@ instcli <- function(
   if (all(d$status == "archived")) 0L else 1L
 }
 
+#' `archive push`: a capture kept here, sent on to archive.rmorie.com (and
+#' the Wayback Machine) later.
+#' @param pos The capture folder.
+#' @param args The verb's arguments.
+#' @param flag,out As for .bl_cli_archive().
+#' @return The exit status: 0 when every file is archived, else 1.
+#' @noRd
+.bl_cli_archive_push <- function(pos, args, flag, out) {
+  also <- flag("--also")
+  if (!is.null(also) && !identical(also, "wayback")) {
+    out("--also takes one value: wayback\n")
+    return(2L)
+  }
+  if (is.null(flag("--reason"))) {
+    out("push needs --reason \"why you keep it\" (20 characters or more)\n")
+    return(2L)
+  }
+  cap <- arcpush(
+    pos[[1L]],
+    upload = c("rmorie", if (!is.null(also)) "wayback"),
+    reason = flag("--reason"),
+    visibility = if ("--private" %in% args) "private" else "public",
+    tsa = NULL
+  )
+  out(paste0(paste(utils::capture.output(print(cap)), collapse = "\n"), "\n"))
+  if (all(cap$status == "archived")) 0L else 1L
+}
+
 #' `archive find`: a URL's captures, as a table or JSON.
 #' @param pos The URL.
 #' @param args The verb's arguments.
@@ -2583,8 +2629,11 @@ instcli <- function(
   if (sub %in% c("help", "--help", "-h")) {
     return(usage(0L))
   }
-  if (!sub %in% c("save", "find", "get") || !length(pos)) {
+  if (!sub %in% c("save", "find", "get", "push") || !length(pos)) {
     return(usage(2L))
+  }
+  if (sub == "push") {
+    return(.bl_cli_archive_push(pos, args, flag, out))
   }
   if (sub == "save") {
     return(.bl_cli_archive_save(pos, args, flag, out))
@@ -2719,6 +2768,7 @@ instcli <- function(
 #' The options of pack that take a value.
 #' @noRd
 .bl_pack_valued <- c(
+  "--check",
   "--dest",
   "--data",
   "--version",
@@ -2728,7 +2778,25 @@ instcli <- function(
   "--contact"
 )
 
-#' The pack verb: mkbndl() and mkbndlproj() from a terminal.
+#' `pack --check`: mkbndlchk() from a terminal.
+#' @param zip The bundle.
+#' @param rest The arguments after `pack`.
+#' @param flag Looks up an option's value.
+#' @param out Writes text.
+#' @return The exit status: 0 when the bundle passes, else 1.
+#' @noRd
+.bl_cli_pack_check <- function(zip, rest, flag, out) {
+  x <- mkbndlchk(
+    zip,
+    data = flag("--data"),
+    synthetic = "--synthetic" %in% rest,
+    keep = "--keep" %in% rest
+  )
+  out(paste0(paste(utils::capture.output(print(x)), collapse = "\n"), "\n"))
+  if (isTRUE(x$ok)) 0L else 1L
+}
+
+#' The pack verb: mkbndl(), mkbndlproj() and mkbndlchk() from a terminal.
 #' @param rest The arguments after `pack`.
 #' @param flag Looks up an option's value.
 #' @param out Writes text.
@@ -2745,6 +2813,10 @@ instcli <- function(
   show <- function(x) {
     out(paste0(paste(utils::capture.output(print(x)), collapse = "\n"), "\n"))
     0L
+  }
+  chk <- flag("--check")
+  if (!is.null(chk)) {
+    return(.bl_cli_pack_check(chk, rest, flag, out))
   }
   new <- flag("--new")
   if (!is.null(new)) {

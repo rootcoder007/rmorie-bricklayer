@@ -100,13 +100,11 @@ The output prints the bundle's SHA256 — send that out-of-band to recipients.
 
 ## 7. Verify before shipping
 
-Unzip the bundle into an empty folder and run it the way a recipient will:
-
-```bash
-Rscript setup_and_run.R --quick
+```r
+mkbndlchk("dist/my-project_v1.zip")
 ```
 
-from inside the unzipped folder. It prints how many checks pass; compare that with `expected` in `config.json`.
+It unzips the bundle into a new folder, runs it the way a recipient will (`setup_and_run.R --quick`) and prints `VERIFIED` only when the run finishes, no check is DIFFER and the counts are the ones `expected` in `config.json` gives. `synthetic = TRUE` tries the offline synthetic route. From a shell: `rmbl pack --check dist/my-project_v1.zip`.
 
 ## 8. Ship
 

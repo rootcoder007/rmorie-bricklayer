@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# tests/test_build_otis.sh
+# dev/test_build_otis.sh
 #
-# Smoke test: build the otis-mrp example bundle and verify it.
-# Used as the canonical "does the framework actually work?" check.
+# Smoke test: build the otis-mrp example bundle with mkbndl() and check it
+# with mkbndlchk(), from a temporary install of this checkout, so the bundle
+# carries this checkout's package files.
 #
 # USAGE:
-#   ./tests/test_build_otis.sh
-#   ./tests/test_build_otis.sh --with-data /path/to/a01_RC.csv
+#   ./dev/test_build_otis.sh
+#   ./dev/test_build_otis.sh --with-data /path/to/a01_RC.csv
 #
 
 set -euo pipefail
@@ -19,61 +20,35 @@ fi
 
 cd "${REPO_ROOT}"
 
-echo "[1/4] Building otis-mrp bundle..."
-# mkbndl() from a temporary install of this checkout, so the bundle carries
-# this checkout's package files
 LIB="$(mktemp -d)"
+trap 'rm -rf "${LIB}"' EXIT
+echo "[1/3] Installing this checkout..."
 if ! R CMD INSTALL --no-test-load --no-docs --clean -l "${LIB}" . > "${LIB}/install.log" 2>&1; then
   tail -30 "${LIB}/install.log"
   exit 1
 fi
 mkdir -p dist
+
+# [2/3] the bundle, checked as a recipient's copy runs it: the counts must
+# be the ones its config.json pins.
+# [3/3] the offline synthetic route, the one path a stranger with no
+# internet is told to take; it never runs on a normal pass because the
+# download succeeds first.
 Rscript -e '
 a <- commandArgs(TRUE)
 library(rmoriebricklayer, lib.loc = a[[1L]])
-print(mkbndl("otis-mrp", "dist", data = if (nzchar(a[[2L]])) a[[2L]],
-             version = "test", overwrite = TRUE))
+cat("[2/3] Building and checking the otis-mrp bundle...\n")
+b <- mkbndl("otis-mrp", "dist", data = if (nzchar(a[[2L]])) a[[2L]],
+            version = "test", overwrite = TRUE)
+print(b)
+real <- mkbndlchk(b$path)
+print(real)
+cat("[3/3] Checking its offline synthetic route...\n")
+syn <- mkbndlchk(b$path, synthetic = TRUE)
+print(syn)
+if (!real$ok || !syn$ok) {
+  cat("FAIL: the bundle check failed\n")
+  quit(status = 1L)
+}
+cat("test_build_otis PASSED\n")
 ' "${LIB}" "${DATA_PATH}"
-rm -rf "${LIB}"
-
-echo
-echo "[2/4] Locating built bundle..."
-BUNDLE="$(ls -1t dist/otis-mrp_vtest*.zip 2>/dev/null | head -1)"
-if [[ -z "${BUNDLE}" ]]; then
-  echo "FAIL: no bundle built"
-  exit 1
-fi
-echo "  Found: ${BUNDLE}"
-
-echo
-echo "[3/4] Auditing via verify_bundle.sh..."
-./scripts/verify_bundle.sh "${BUNDLE}" --clean
-RC=$?
-
-echo
-echo "[4/4] Running the bundle's offline synthetic route (--synthetic --quick)..."
-# The one path a stranger with no internet is told to take; it never runs
-# on a normal CI pass because the download succeeds first.
-SYN_DIR="$(mktemp -d)"
-unzip -q "${BUNDLE}" -d "${SYN_DIR}"
-SYN_ROOT="$(find "${SYN_DIR}" -maxdepth 2 -name setup_and_run.R -exec dirname {} \; | head -1)"
-if ( cd "${SYN_ROOT}" && Rscript setup_and_run.R --synthetic --quick > synthetic_run.log 2>&1 ) \
-   && [[ -n "$(find "${SYN_ROOT}" -path "*/results_*/manifest.json" | head -1)" ]]; then
-  echo "  synthetic route: OK (manifest.json written)"
-else
-  echo "FAIL: synthetic route did not complete"
-  tail -30 "${SYN_ROOT}/synthetic_run.log" 2>/dev/null
-  RC=1
-fi
-rm -rf "${SYN_DIR}"
-
-if [[ ${RC} -eq 0 ]]; then
-  echo
-  echo "=========================================================="
-  echo "  ✓ test_build_otis PASSED"
-  echo "=========================================================="
-  exit 0
-else
-  echo "FAIL: verify_bundle exited ${RC}"
-  exit ${RC}
-fi

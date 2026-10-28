@@ -718,7 +718,7 @@ test_that(
       sub(
         '"offset":"[0-9]+"',
         '"offset":"0"',
-        sub('"length":"[0-9]+"', '"length":"24"', l)
+        sub('"length":"[0-9]+"', '"length":"23"', l)
       ),
       idx
     )

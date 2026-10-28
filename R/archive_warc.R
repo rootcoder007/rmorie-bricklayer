@@ -308,6 +308,33 @@
   invisible(index)
 }
 
+#' The WARC file an index line points to, checked: a plain file name in
+#' the folder's archive/, and an offset and length inside that file. An index
+#' copied from elsewhere could name any file, or claim a record of terabytes,
+#' which would be read (and allocated) whole.
+#' @param dir The capture folder.
+#' @param r The index line, parsed.
+#' @return The WARC file's path.
+#' @noRd
+.bl_warc_record_file <- function(dir, r) {
+  fn <- as.character(r$filename %||% "")
+  if (!nzchar(fn) || !identical(basename(fn), fn) || fn %in% c(".", "..")) {
+    stop(sprintf("the index of %s names a WARC file outside archive/: %s",
+                 dir, fn), call. = FALSE)
+  }
+  wf <- file.path(dir, "archive", fn)
+  off <- suppressWarnings(as.numeric(r$offset %||% NA))
+  len <- suppressWarnings(as.numeric(r$length %||% NA))
+  sz <- file.size(wf)
+  if (is.na(sz) || !isTRUE(off >= 0 && len >= 0 && off + len <= sz)) {
+    stop(sprintf(paste0("the index of %s does not match %s (offset %s, ",
+                        "length %s, file of %s bytes)"),
+                 dir, fn, format(off), format(len), format(sz)),
+         call. = FALSE)
+  }
+  wf
+}
+
 #' Reads a capture's payload back from a folder written by arccap() (its CDXJ
 #' index and WARC files).
 #' @param dir The capture folder.
@@ -336,7 +363,8 @@
     stop(sprintf("no capture of %s in %s", url, dir), call. = FALSE)
   }
   r <- recs[[utils::tail(hit, 1L)]]
-  con <- file(file.path(dir, "archive", r$filename), "rb")
+  wf <- .bl_warc_record_file(dir, r)
+  con <- file(wf, "rb")
   on.exit(close(con), add = TRUE)
   seek(con, as.numeric(r$offset))
   rec <- readBin(con, "raw", as.numeric(r$length))

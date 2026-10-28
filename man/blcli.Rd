@@ -51,14 +51,26 @@ from (\code{\link{explerr}}), without a model or the network}
 shipped example such as \code{otis-mrp}, with \code{\link{mkbndl}}: one
 zip a reviewer unzips and double-clicks (default \code{--dest}: the
 working directory); \code{pack --new DIR [--title T] [--author A]
-[--contact C]} writes a starter project with \code{\link{mkbndlproj}}}
+[--contact C]} writes a starter project with \code{\link{mkbndlproj}};
+\code{pack --check ZIP [--data FILE] [--synthetic] [--keep]} runs a
+built bundle as a recipient would and checks its results with
+\code{\link{mkbndlchk}} (exit status 1 when it fails)}
 \item{\code{wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max
 N]}}{save every URL listed in FILE (one per line; blank lines and \code{#}
 comments skipped) in the Internet Archive's Wayback Machine with
 \code{\link{wbsave}}, results in \code{--out} (default
 \code{FILE.wayback.jsonl}), so a stopped run carries on; \code{wayback
 --retry FILE.jsonl [--include-gone]} retries the failures of an earlier run
-(\code{\link{wbrtry}})} \item{\code{verify PATH [--json] [--fail-on LEVEL]
+(\code{\link{wbrtry}})} \item{\code{archive save URL... --reason TEXT
+[--dir D] [--private] [--also wayback]}}{save from this connection to
+archive.rmorie.com with \code{\link{arccap}}, keeping the files, their
+manifest and WARC copies in D (default \file{captures}); \code{archive
+push DIR [--reason TEXT] [--private] [--also wayback]} sends a capture
+kept in DIR on later, the same bytes, with \code{\link{arcpush}} (run it
+again to retry what failed); \code{archive find URL} and \code{archive
+get ID|URL -o FILE} list a URL's captures and fetch one's exact bytes
+(\code{\link{arcfind}}, \code{\link{arcget}})}
+\item{\code{verify PATH [--json] [--fail-on LEVEL]
 [--public-key HEX]}}{check every capsule under PATH as the rmbl GitHub Action
 does (\code{\link{cpschk}}): each file against its JSON Schema
 (\code{\link{schemapath}}), \code{\link{vrfcps}} and

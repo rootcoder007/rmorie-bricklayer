@@ -14,7 +14,7 @@ Academic reproducibility usually fails at one of three places: (a) the data is g
 - **Future-proof data fetching** — CKAN API resolution by package slug + name pattern, with pinned URL + SHA256 fallback and Wayback Machine hooks
 - **Schema validation** — every CSV load is validated against a pinned `schema.json`; structural drift produces clear errors not silent failures
 - **Synthetic fallback** — if the reviewer has no internet and no data, the pipeline runs on schema-compliant random data with `SYNTHETIC` watermarks everywhere
-- **Author-side audit** — `verify_bundle.sh` extracts the zip, runs the analysis, parses the manifest, exits non-zero on regression
+- **Author-side audit** — `mkbndlchk()` (or `rmbl pack --check`) unzips the bundle, runs it as a recipient would, reads the manifest and fails on any regression
 - **Compiled provenance core** — the package itself ships a registered C/C++ core (`.Call` via `useDynLib`) for SHA-256 hashing and summary statistics (mean, variance, correlation, normal PDF), so integrity checks stay fast on large capsules. (The *generated capsule* stays pure-R for the reviewer; the compiled core lives in the authoring package.)
 - **Trust transparency** — every capsule ships with a `SECURITY.md` explaining what it does, what it touches, what it never touches, and how to verify its integrity
 
@@ -106,7 +106,7 @@ the long title at the terminal width, which is only cosmetic):
 
 ```bibtex
 @Manual{ruhela_rmoriebricklayer_2026,
-  title  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},
+  title  = {rmoriebricklayer: Post-Quantum Signing and Reproducibility Capsules for R},
   author = {Vansh Singh Ruhela},
   year   = {2026},
   url    = {https://github.com/rootcoder007/rmorie-bricklayer},

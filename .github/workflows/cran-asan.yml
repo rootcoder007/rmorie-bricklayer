@@ -1,0 +1,110 @@
+# The CRAN tarball checked under AddressSanitizer + UndefinedBehaviorSanitizer,
+# as CRAN's gcc-ASAN additional check runs it.
+#
+# sanitizers.yml runs the full test suite under the sanitizers. CRAN's
+# machine does something else: R CMD check of the submitted tarball, so the
+# examples, the five CRAN vignettes and the tests in CRAN mode. Code only
+# those reach (an example, a CRAN-mode branch) is never seen by the other
+# job; rmoriedata 0.4.0 passed its own sanitizer runs and was stopped on
+# CRAN's when a hostile header asked for a 3 TB vector. This job builds the
+# tarball with dev/cran_build.sh, exactly as it is submitted, and checks it.
+name: cran-asan
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'inst/**', 'tests/**', 'R/**', 'vignettes/**', 'man/**', 'configure', 'DESCRIPTION', 'dev/cran_*', '.github/workflows/cran-asan.yml']
+  workflow_dispatch:
+  schedule:
+    # weekly, against that week's R-devel
+    - cron: '17 6 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cran-asan-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tarball:
+    name: CRAN tarball
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: r-lib/actions/setup-pandoc@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+      - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          use-public-rspm: true
+      - name: Install libcurl (C++ SystemRequirement)
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+      - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          needs: build
+      - name: Build the CRAN tarball
+        run: bash dev/cran_build.sh "$RUNNER_TEMP/cran"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: cran-tarball
+          path: ${{ runner.temp }}/cran/*.tar.gz
+          retention-days: 7
+
+  check:
+    name: R CMD check under ASAN + UBSAN (rocker/r-devel-san)
+    needs: tarball
+    runs-on: ubuntu-24.04
+    # unpinned on purpose: the job exists to check against today's R-devel
+    container: rocker/r-devel-san  # zizmor: ignore[unpinned-images]
+    timeout-minutes: 240
+    env:
+      # as CRAN's machine: a huge allocation aborts (allocator_may_return_null
+      # is left off); R leaks by design at exit, so leaks are not reported
+      ASAN_OPTIONS: detect_leaks=0:abort_on_error=0:print_summary=1
+      UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=0
+      _R_CHECK_FORCE_SUGGESTS_: "false"
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: cran-tarball
+      - name: System libraries
+        run: apt-get update && apt-get install -y --no-install-recommends libcurl4-openssl-dev libuv1-dev libssl-dev pkg-config pandoc
+      - name: Dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar xzf rmoriebricklayer_*.tar.gz rmoriebricklayer/DESCRIPTION
+          RDscript -e '
+            d <- read.dcf("rmoriebricklayer/DESCRIPTION", c("Imports", "Suggests"))
+            p <- trimws(sub("[ (].*$", "", unlist(strsplit(d[!is.na(d)], ","))))
+            p <- setdiff(p[nzchar(p)], rownames(installed.packages()))
+            install.packages(p, repos = "https://cloud.r-project.org")
+            for (x in c("knitr", "rmarkdown", "testthat")) {
+              if (!requireNamespace(x, quietly = TRUE)) stop("could not install ", x)
+            }'
+      - name: R CMD check of the CRAN tarball
+        shell: bash
+        run: |
+          set -o pipefail
+          RD CMD check --no-manual rmoriebricklayer_*.tar.gz 2>&1 | tee check.log || true
+          # the sanitizers write to the logs of the install, the examples, the
+          # tests and the vignettes, and keep going: any report fails the job
+          logs=$(find rmoriebricklayer.Rcheck -name '*.Rout*' -o -name '00install.out' -o -name '*.log' | tr '\n' ' ')
+          if grep -E "runtime error:|ERROR: AddressSanitizer|SUMMARY: (Address|UndefinedBehavior)Sanitizer" check.log $logs; then
+            echo "::error::sanitizer report above"
+            exit 1
+          fi
+          if grep -qE "^Status: .*ERROR" check.log; then
+            echo "::error::R CMD check reported an ERROR"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: failure()
+        with:
+          name: cran-asan-check
+          path: rmoriebricklayer.Rcheck
+          retention-days: 7
