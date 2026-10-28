@@ -20,6 +20,7 @@ ratechg(x, ...)
   per = 1000,
   conflvl = 0.95,
   mincnt = 0,
+  prdord = NULL,
   ...
 )
 }
@@ -51,6 +52,10 @@ the interval.}
 is at or below this are flagged as resting on a small count; the percent
 change and its exact interval are still reported, as \code{\link{yoy}}
 does.}
+
+\item{prdord}{Optional character vector: the period labels in order, as
+for \code{\link[=yoy]{yoy()}}. A label it lists that the data lacks is a gap, so the
+change across it is not reported as one step.}
 }
 \value{
 A data frame of class \code{c("rmbl_rate_change", "data.frame")}

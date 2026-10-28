@@ -372,7 +372,8 @@ format.rmbl_balance <- function(x, digits = 4L, ...) {
 #' own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
 #'   0.2 * own$income + sin(seq_len(80))
 #' # each adopting town matched to one never treated on its path before 2019,
-#' # the standard errors clustered by county
+#' # the standard errors clustered by county: with two counties the package
+#' # warns that so few clusters cannot be trusted
 #' mtchdid(own, "town", "year", "rate", "first", cl = "county")$estimate
 #' @export
 mtchdid <- function(

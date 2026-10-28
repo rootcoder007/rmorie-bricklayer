@@ -42,7 +42,8 @@
 #' @param prd Name of the column with the period (fiscal year, quarter,
 #'   ...); numeric periods are used as the time axis of the trend tests. Text
 #'   periods (\code{"2019/20"}, \code{"2021 Q3"}, \code{"Mar 2021"}) are
-#'   ordered as [yoy()] reads them (see its \code{prd}).
+#'   ordered as [yoy()] reads them (see its \code{prd}), or as
+#'   \code{prdord} gives.
 #' @param by Optional character vector of grouping column names
 #'   (institution, region, ...). \code{NULL} (the default) treats the table as
 #'   one series.
@@ -71,6 +72,9 @@
 #'   screens, default 0.05.
 #' @param adjust Multiple-comparison method for
 #'   [scanadj()]. The default is \code{"BH"} (Benjamini-Hochberg).
+#' @param prdord Optional character vector: the period labels in order,
+#'   for text periods the reader does not know (see [yoy()]); passed to
+#'   [yoy()], [ratechg()] and the trend tests.
 #' @return A list of class \code{bricklayer_analysis} (with a print method that
 #'   summarises it in a few lines): \describe{
 #'   \item{\code{profile}}{[profcols()] of \code{data}.}
@@ -139,7 +143,8 @@ anltab <- function(
   per = 1000,
   conflvl = 0.95,
   alpha = 0.05,
-  adjust = "BH"
+  adjust = "BH",
+  prdord = NULL
 ) {
   a <- .anl_inputs(data, value, prd, by, pop, conflvl, alpha)
   adjust <- .rmbl_arg(adjust, stats::p.adjust.methods)
@@ -162,7 +167,8 @@ anltab <- function(
     per = per,
     conflvl = a$conflvl,
     alpha = a$alpha,
-    adjust = adjust
+    adjust = adjust,
+    prdord = prdord
   )
   .anl_warn_bounds(opts)
   .anl_run(data, prior, opts)
@@ -328,10 +334,12 @@ rptanl <- function(
 }
 
 #' anltab()'s rates and their changes, when there is an exposure.
-#' @param data,value,prd,by,pop,per,conflvl,adjust,alpha As for anltab().
+#' @param data,value,prd,by,pop,per,conflvl,adjust,alpha,prdord As for
+#'   anltab().
 #' @return A list: rates and rc (NULL without `pop`).
 #' @noRd
-.anl_rates <- function(data, value, prd, by, pop, per, conflvl, adjust, alpha) {
+.anl_rates <- function(data, value, prd, by, pop, per, conflvl, adjust, alpha,
+                       prdord = NULL) {
   rates <- NULL
   rc <- NULL
   if (!is.null(pop)) {
@@ -350,7 +358,8 @@ rptanl <- function(
       prd = prd,
       by = by,
       per = per,
-      conflvl = conflvl
+      conflvl = conflvl,
+      prdord = prdord
     )
     rc <- scanadj(rc, meth = adjust, alpha = alpha)
   }
@@ -365,14 +374,16 @@ rptanl <- function(
 #' @param by The names of the grouping columns, or NULL for one group.
 #' @param units The kind of value; `"count"` adds the rate ratio from cnttrnd().
 #' @param conf_level The confidence level for the intervals.
+#' @param prdord The period labels in order, or NULL.
 #' @return A data frame with one row per group: periods, first and last totals,
 #'   Kendall tau, its p-value, the slope, and the rate ratio with its interval.
 #' @noRd
-.analysis_trends <- function(data, value, period, by, units, conf_level) {
+.analysis_trends <- function(data, value, period, by, units, conf_level,
+                             prdord = NULL) {
   conf_level <- .rmbl_conf_level(conf_level)
   # text periods in the order yoy() reads them ("Mar 2021" after "Feb 2021"),
   # not alphabetically; yoy() has already warned about any it cannot order
-  data[[period]] <- .yoy_prd_read(data[[period]], quiet = TRUE)$p
+  data[[period]] <- .yoy_prd_read(data[[period]], prdord, quiet = TRUE)$p
   groups <- if (is.null(by)) {
     list(data)
   } else {
@@ -570,7 +581,8 @@ rptanl <- function(
     o$per,
     o$conflvl,
     o$adjust,
-    o$alpha
+    o$alpha,
+    o$prdord
   )
 
   ## ---- trend over the periods, per group ----
@@ -580,7 +592,8 @@ rptanl <- function(
     o$period,
     o$by,
     o$units,
-    o$conflvl
+    o$conflvl,
+    o$prdord
   )
 
   ## ---- drift against the prior capsule ----
@@ -618,7 +631,8 @@ rptanl <- function(
     by = o$by,
     units = o$units,
     conflvl = o$conflvl,
-    dir = o$direction
+    dir = o$direction,
+    prdord = o$prdord
   )
   if (o$units == "count") {
     change <- scanadj(change, meth = o$adjust, alpha = o$alpha)
@@ -1101,7 +1115,7 @@ rptanl <- function(
     o,
     list(
       n_rows = nrow(data),
-      periods = .yoy_prd_sort(data[[o$period]]),
+      periods = .yoy_prd_sort(data[[o$period]], o$prdord),
       prior = !is.null(prior),
       when = format(Sys.time(), "%Y-%m-%d %H:%M")
     )

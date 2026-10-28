@@ -300,6 +300,7 @@ yoy.data.frame <- function(
     # called the 0.5.x way: the result comes back under its 0.5.x names
     return(.rmbl_alias_out("yoy", withVisible(eval(old$call, old$env))))
   }
+  .rmbl_no_dots("yoy", ...)
   .yoy_by_type(by)
   units <- .rmbl_arg(units)
   dir <- .rmbl_alias_val(
@@ -1467,8 +1468,8 @@ yoy.ts <- function(x, lag = NULL, ...) {
 #' @param p The periods.
 #' @return The distinct non-missing periods.
 #' @noRd
-.yoy_prd_sort <- function(p) {
+.yoy_prd_sort <- function(p, prdord = NULL) {
   u <- unique(p[!is.na(p)])
-  r <- .yoy_prd_rank(u)
+  r <- .yoy_prd_rank(u, prdord)
   if (is.null(r)) sort(u) else u[order(r)]
 }

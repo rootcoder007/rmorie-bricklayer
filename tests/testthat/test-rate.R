@@ -441,3 +441,36 @@ test_that("a subset of a rate change or share prints as a plain table", {
   expect_df_fallback("rmbl_rate_change", "Change in rate")
   expect_df_fallback("rmbl_share", "Share")
 })
+
+test_that("ratechg() and anltab() take prdord, and refuse what they lack", {
+  d <- data.frame(p = c("spring", "summer", "autumn", "spring", "autumn"),
+                  g = c("a", "a", "a", "b", "b"),
+                  n = c(10, 12, 15, 4, 6), pop = 1000)
+  ord <- c("spring", "summer", "autumn")
+  r <- ratechg(d, "n", "pop", "p", by = "g", prdord = ord)
+  a <- r[r$g == "a", ]
+  expect_identical(as.character(a$p), ord)
+  expect_equal(a$prerate[3], 12)
+  # for b, summer is missing: autumn is not compared with spring as one step
+  b <- r[r$g == "b", ]
+  expect_true(is.na(b$prerate[b$p == "autumn"]))
+  expect_identical(attr(r, "ratechg")$prdord, ord)
+  # alphabetical order would have put autumn first
+  expect_false(identical(as.character(ratechg(d, "n", "pop", "p",
+                                              by = "g")$p[1:3]), ord))
+  t <- anltab(d, value = "n", prd = "p", by = "g", pop = "pop",
+              prdord = ord)
+  expect_identical(t$meta$periods, ord)
+  expect_identical(t$meta$prdord, ord)
+  # an argument the method does not take is named, not swallowed
+  expect_error(ratechg(d, "n", "pop", "p", prdrd = ord),
+               "ratechg: unused argument: prdrd")
+  expect_error(rtcalc(d, "n", "pop", by = "g", conflevel = 0.9),
+               "rtcalc: unused argument: conflevel")
+  expect_error(rtcalc(c(1, 2), c(10, 20), 5, 6, 7, 8), "unused argument")
+  expect_error(shrs(d, "n", by = "g", denom = 5),
+               "shrs: unused argument: denom")
+  expect_error(shrs(c(1, 2), denom = 5), "shrs: unused argument: denom")
+  expect_error(yoy(d, "n", "p", by = "g", prdrd = ord),
+               "yoy: unused argument: prdrd")
+})

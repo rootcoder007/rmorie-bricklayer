@@ -1046,3 +1046,27 @@
 if (!exists("%||%", envir = baseenv(), inherits = FALSE)) {
   `%||%` <- function(a, b) if (is.null(a)) b else a
 }
+
+#' Refuses the arguments an S3 method's `...` would otherwise swallow.
+#'
+#' A misspelt or unsupported argument (`prdrd =`, or `prdord =` before it
+#' was one) vanished into `...` and the call went on without it. The
+#' arguments are not evaluated, so a bare column name is reported, not run.
+#' @param fn The function's name, for the message.
+#' @param ... The method's `...`.
+#' @return NULL, invisibly; an error naming them otherwise.
+#' @noRd
+.rmbl_no_dots <- function(fn, ...) {
+  n <- ...length()
+  if (!n) {
+    return(invisible(NULL))
+  }
+  nm <- ...names() %||% rep("", n)
+  nm[is.na(nm)] <- ""
+  stop(
+    sprintf("%s: unused argument%s: %s", fn, if (n > 1L) "s" else "",
+            toString(ifelse(nzchar(nm), nm, "(unnamed)"))),
+    call. = FALSE
+  )
+}
+

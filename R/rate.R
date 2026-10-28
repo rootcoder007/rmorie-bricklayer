@@ -138,6 +138,7 @@ rtcalc.data.frame <- function(
   mincnt = 0,
   ...
 ) {
+  .rmbl_no_dots("rtcalc", ...)
   count <- .yoy_col(substitute(count), count, x, "count")
   pop <- .yoy_col(substitute(pop), pop, x, "population")
   by <- .rate_by_check(x, by, "rtcalc")
@@ -170,6 +171,7 @@ rtcalc.default <- function(
   mincnt = 0,
   ...
 ) {
+  .rmbl_no_dots("rtcalc", ...)
   lab <- names(x)
   x <- .rmbl_num(x, "x")
   pop <- .rmbl_num(pop, "pop")
@@ -328,6 +330,7 @@ shrs.data.frame <- function(
   conflvl = 0.95,
   ...
 ) {
+  .rmbl_no_dots("shrs", ...)
   # a bare column name is not evaluated here: substitute() is NULL only when
   # `count` was not given
   if (is.null(substitute(count))) {
@@ -349,6 +352,7 @@ shrs.data.frame <- function(
 #' @rdname shrs
 #' @export
 shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
+  .rmbl_no_dots("shrs", ...)
   if (is.null(x) || !is.atomic(x) || all(is.na(x)) || any(is.infinite(x))) {
     stop(
       "`x` must be finite counts (a numeric vector) or a data frame of them",
@@ -419,6 +423,9 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
 #' @param pop Column of exposure (unquoted or a string): positive.
 #' @param prd Column of periods (unquoted or a string). Sorted within
 #'   each group; see Details for how the earlier period is found.
+#' @param prdord Optional character vector: the period labels in order, as
+#'   for [yoy()]. A label it lists that the data lacks is a gap, so the
+#'   change across it is not reported as one step.
 #' @param by Character vector of grouping columns, default \code{NULL}.
 #' @param lag Whole number, default 1: how many periods back to compare
 #'   against.
@@ -483,8 +490,10 @@ ratechg.data.frame <- function(
   per = 1000,
   conflvl = 0.95,
   mincnt = 0,
+  prdord = NULL,
   ...
 ) {
+  .rmbl_no_dots("ratechg", ...)
   count <- .yoy_col(substitute(count), count, x, "count")
   pop <- .yoy_col(substitute(pop), pop, x, "population")
   prd <- .yoy_col(substitute(prd), prd, x, "period")
@@ -504,7 +513,8 @@ ratechg.data.frame <- function(
     lag,
     per,
     conflvl,
-    mincnt
+    mincnt,
+    prdord
   )
   out <- do.call(rbind, .res)
   rownames(out) <- NULL
@@ -520,7 +530,8 @@ ratechg.data.frame <- function(
       per = per,
       perlbl = .rate_per_label(per),
       conflvl = conflvl,
-      mincnt = mincnt
+      mincnt = mincnt,
+      prdord = prdord
     )
   )
 }
@@ -813,7 +824,17 @@ format.rmbl_share <- function(x, digits = 4L, ...) {
 #' @param lag The number of steps back.
 #' @return An integer index vector, NA where that period is absent.
 #' @noRd
-.rate_previous_index <- function(p, lag) {
+.rate_previous_index <- function(p, lag, prdord = NULL) {
+  if (!is.null(prdord)) {
+    # the order given is the grid: a label it lists that the data lacks
+    # is a gap, not skipped
+    key <- as.character(p)
+    want <- match(key, prdord) - lag
+    idx <- rep(NA_integer_, length(key))
+    ok <- !is.na(want) & want >= 1L
+    idx[ok] <- match(prdord[want[ok]], key)
+    return(idx)
+  }
   key <- if (is.numeric(p)) p else as.character(p)
   want <- if (is.numeric(p)) p - lag else NA
   if (!is.numeric(p)) {
@@ -987,7 +1008,10 @@ format.rmbl_share <- function(x, digits = 4L, ...) {
 #' @param p The periods to order.
 #' @return An integer order.
 #' @noRd
-.rate_prd_order <- function(p) {
+.rate_prd_order <- function(p, prdord = NULL) {
+  if (!is.null(prdord)) {
+    return(order(.yoy_prd_read(p, prdord)$p))
+  }
   if (is.character(p)) {
     p <- .yoy_prd_read(p, quiet = TRUE)$p
   }
@@ -996,11 +1020,12 @@ format.rmbl_share <- function(x, digits = 4L, ...) {
 
 #' The changes of one group of ratechg(), period by period.
 #' @param g The group's summed rows.
-#' @param prd,by,lag,per,conflvl,mincnt As for ratechg(), checked.
+#' @param prd,by,lag,per,conflvl,mincnt,prdord As for ratechg(), checked.
 #' @return A data frame.
 #' @noRd
-.rate_change_group <- function(g, prd, by, lag, per, conflvl, mincnt) {
-  g <- g[.rate_prd_order(g[[prd]]), , drop = FALSE]
+.rate_change_group <- function(g, prd, by, lag, per, conflvl, mincnt,
+                               prdord = NULL) {
+  g <- g[.rate_prd_order(g[[prd]], prdord), , drop = FALSE]
   cnt <- as.numeric(g$count)
   .pop <- as.numeric(g$population)
   if (any(.pop <= 0, na.rm = TRUE)) {
@@ -1011,7 +1036,7 @@ format.rmbl_share <- function(x, digits = 4L, ...) {
     )
   }
   p <- g[[prd]]
-  prev_i <- .rate_previous_index(p, lag)
+  prev_i <- .rate_previous_index(p, lag, prdord)
   prev_cnt <- ifelse(is.na(prev_i), NA_real_, cnt[prev_i])
   prev_pop <- ifelse(is.na(prev_i), NA_real_, .pop[prev_i])
   rate_now <- per * cnt / .pop

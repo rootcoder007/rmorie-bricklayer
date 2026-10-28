@@ -19,7 +19,8 @@ anltab(
   per = 1000,
   conflvl = 0.95,
   alpha = 0.05,
-  adjust = "BH"
+  adjust = "BH",
+  prdord = NULL
 )
 }
 \arguments{
@@ -31,7 +32,8 @@ measure).}
 \item{prd}{Name of the column with the period (fiscal year, quarter,
 ...); numeric periods are used as the time axis of the trend tests. Text
 periods (\code{"2019/20"}, \code{"2021 Q3"}, \code{"Mar 2021"}) are
-ordered as \code{\link[=yoy]{yoy()}} reads them (see its \code{prd}).}
+ordered as \code{\link[=yoy]{yoy()}} reads them (see its \code{prd}), or as
+\code{prdord} gives.}
 
 \item{by}{Optional character vector of grouping column names
 (institution, region, ...). \code{NULL} (the default) treats the table as
@@ -70,6 +72,10 @@ screens, default 0.05.}
 
 \item{adjust}{Multiple-comparison method for
 \code{\link[=scanadj]{scanadj()}}. The default is \code{"BH"} (Benjamini-Hochberg).}
+
+\item{prdord}{Optional character vector: the period labels in order,
+for text periods the reader does not know (see \code{\link[=yoy]{yoy()}}); passed to
+\code{\link[=yoy]{yoy()}}, \code{\link[=ratechg]{ratechg()}} and the trend tests.}
 }
 \value{
 A list of class \code{bricklayer_analysis} (with a print method that
