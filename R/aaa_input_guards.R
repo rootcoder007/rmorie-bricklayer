@@ -11,49 +11,86 @@
 #' every message unique; \dQuote{`data` must be a data frame} came from 21). It
 #' is the nearest frame on the stack running an exported function or an S3
 #' method of the package, the method named by its generic; \code{""} when there
-#' is none (an internal helper called on its own).
+#' is none (an internal helper called on its own, or this file sourced
+#' outside the package, as a bundle does).
 #' @return A string, \dQuote{fn: } or \code{""}.
 #' @noRd
 .rmbl_fn <- function() {
   ns <- environment(.rmbl_fn)
+  # sourced into a bundle (or any other environment) there is no namespace
+  # to search: every refusal there crashed with "not a namespace" instead
+  if (!isNamespace(ns)) {
+    return("")
+  }
   s3 <- getNamespaceInfo(ns, "S3methods")
   ex <- getNamespaceExports(ns)
   n <- sys.nframe() - 1L
   par <- sys.parents()
   for (i in rev(seq_len(n))) {
     f <- sys.function(i)
-    if (!identical(environment(f), ns)) {
+    if (!identical(environment(f), ns) || .rmbl_fnskip(f, i, n, par, ns)) {
       next
     }
-    # co2fp() evaluates the caller's expression: an error raised while that
-    # expression runs (a frame further in whose parent lies outside co2fp)
-    # belongs to the function that asked for the footprint, so the search goes
-    # on past it; co2fp()'s own argument errors (every frame further in descends
-    # from it) keep its name
-    if (
-      identical(f, get0("co2fp", ns)) &&
-        i < n &&
-        any(par[(i + 1L):n] < i)
-    ) {
-      next
+    lab <- .rmbl_fnlab(.rmbl_fnname(sys.call(i)[[1L]], f, ns, ex), s3, ex)
+    if (nzchar(lab)) {
+      return(lab)
     }
-    h <- sys.call(i)[[1L]]
-    if (is.call(h) && as.character(h[[1L]]) %in% c("::", ":::")) {
-      h <- h[[3L]]
-    }
-    # do.call(fromjs, ...) calls the function itself, not its name
-    nm <- if (is.name(h)) {
-      as.character(h)
-    } else {
-      ex[vapply(ex, function(n) identical(get0(n, ns), f), NA)][1L]
-    }
-    g <- if (!is.na(nm)) s3[which(s3[, 3L] == nm), 1L]
-    if (length(g)) {
-      return(paste0(g[[1L]], ": "))
-    }
-    if (!is.na(nm) && nm %in% ex) return(paste0(nm, ": "))
   }
   ""
+}
+
+#' The label .rmbl_fn() gives a frame's function name: the generic of an
+#' S3 method, else the export itself, else "".
+#' @param nm The name, or NA.
+#' @param s3 The namespace's S3 methods table.
+#' @param ex Its exports.
+#' @return \dQuote{fn: } or "".
+#' @noRd
+.rmbl_fnlab <- function(nm, s3, ex) {
+  if (is.na(nm)) {
+    return("")
+  }
+  g <- s3[which(s3[, 3L] == nm), 1L]
+  if (length(g)) {
+    return(paste0(g[[1L]], ": "))
+  }
+  if (nm %in% ex) paste0(nm, ": ") else ""
+}
+
+#' Whether .rmbl_fn() passes over a co2fp() frame.
+#'
+#' co2fp() evaluates the caller's expression: an error raised while that
+#' expression runs (a frame further in whose parent lies outside co2fp)
+#' belongs to the function that asked for the footprint, so the search goes
+#' on past it; co2fp()'s own argument errors (every frame further in descends
+#' from it) keep its name.
+#' @param f The frame's function.
+#' @param i The frame's number.
+#' @param n The innermost frame searched.
+#' @param par sys.parents().
+#' @param ns The namespace.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_fnskip <- function(f, i, n, par, ns) {
+  identical(f, get0("co2fp", ns)) && i < n && any(par[(i + 1L):n] < i)
+}
+
+#' The name a frame's function was called by, for .rmbl_fn().
+#' @param h The head of the frame's call.
+#' @param f The frame's function.
+#' @param ns The namespace.
+#' @param ex Its exports.
+#' @return One string, or NA.
+#' @noRd
+.rmbl_fnname <- function(h, f, ns, ex) {
+  if (is.call(h) && as.character(h[[1L]]) %in% c("::", ":::")) {
+    h <- h[[3L]]
+  }
+  # do.call(fromjs, ...) calls the function itself, not its name
+  if (is.name(h)) {
+    return(as.character(h))
+  }
+  ex[vapply(ex, function(n) identical(get0(n, ns), f), NA)][1L]
 }
 
 #' Checks that an argument is numeric (or logical) and returns it as a double

@@ -338,3 +338,238 @@ test_that("rmbl pack starts a project and builds its bundle", {
   expect_identical(run("pack", "--help")$status, 0L)
   expect_identical(run("pack", p, "--bogus")$status, 2L)
 })
+
+# the project's config.json with project$name set to `name`
+set_name <- function(p, name) {
+  f <- file.path(p$dir, "config.json")
+  cfg <- fromjs(f, simplifyVector = FALSE)
+  cfg$project$name <- name
+  writeLines(tojs(cfg, auto_unbox = TRUE), f)
+}
+
+test_that("project$name is a plain name, never a path", {
+  p <- bndl_proj()
+  top <- withr::local_tempdir()
+  dest <- file.path(top, "a", "b")
+  dir.create(dest, recursive = TRUE)
+  for (bad in c("../../ESC_NAME", "a/b", "..", ".hidden", "a..b",
+                strrep("n", 65L), "a\\b", "x y")) {
+    set_name(p, bad)
+    expect_error(mkbndl(p$dir, dest), "project\\$name in config.json")
+  }
+  expect_length(list.files(top, recursive = TRUE, all.files = TRUE), 0L)
+  expect_length(list.files(tempdir(), "^ESC_NAME"), 0L)
+  set_name(p, "fine.name-1_x")
+  expect_identical(basename(mkbndl(p$dir, dest)$path),
+                   "fine.name-1_x_v1.zip")
+  # without a name in config.json the folder's name is made plain
+  set_name(p, "")
+  q <- file.path(withr::local_tempdir(), "my study (draft)")
+  file.copy(p$dir, dirname(q), recursive = TRUE)
+  file.rename(file.path(dirname(q), "demo"), q)
+  expect_identical(basename(mkbndl(q, dest)$path), "my_study__draft__v1.zip")
+  expect_error(mkbndl(p$dir, dest, version = "../1"), "`version` may hold")
+  expect_error(mkbndlproj(withr::local_tempdir(), name = ".."),
+               "`name` may hold")
+})
+
+test_that("mkbndl does not follow symbolic links out of the project", {
+  skip_on_os("windows")
+  p <- bndl_proj()
+  out <- withr::local_tempdir()
+  writeLines("outside secret", file.path(out, "secret.txt"))
+  dir.create(file.path(out, "dir"))
+  writeLines("x", file.path(out, "dir", "inner.txt"))
+  file.symlink(file.path(out, "secret.txt"), file.path(p$dir, "file_out"))
+  file.symlink(file.path(out, "dir"), file.path(p$dir, "dir_out"))
+  file.symlink(p$dir, file.path(p$dir, "loop"))
+  writeLines("a,b", file.path(p$dir, "real.csv"))
+  file.symlink(file.path(p$dir, "real.csv"), file.path(p$dir, "link_in.csv"))
+  expect_warning(
+    b <- mkbndl(p$dir, withr::local_tempdir()),
+    "symbolic links to a folder or out of the project: dir_out, file_out, loop"
+  )
+  inside <- sub("^demo_v1/", "", b$files)
+  expect_true(all(c("real.csv", "link_in.csv") %in% inside))
+  expect_false(any(grepl("file_out|dir_out|loop|inner|secret", inside)))
+})
+
+test_that("files that look like credentials are left out unless asked", {
+  p <- bndl_proj()
+  sec <- c("llm.json", "credentials.json", "id_rsa", "secrets.yaml",
+           "api_key.txt", "token.txt", "client_secret_123.json", "key.pem",
+           "store.p12")
+  for (f in sec) writeLines("fake", file.path(p$dir, f))
+  writeLines(c("-----BEGIN PRIVATE KEY-----", "fake",
+               "-----END PRIVATE KEY-----"), file.path(p$dir, "key.pem"))
+  ok <- c("cert.pem", "id_rsa.pub", "tokens_per_doc.csv", "authors.txt")
+  writeLines(c("-----BEGIN CERTIFICATE-----", "fake"),
+             file.path(p$dir, "cert.pem"))
+  for (f in ok[-1L]) writeLines("x", file.path(p$dir, f))
+  dest <- withr::local_tempdir()
+  w <- character()
+  b <- withCallingHandlers(
+    mkbndl(p$dir, dest),
+    warning = function(cnd) {
+      w <<- c(w, conditionMessage(cnd))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_length(w, 1L)
+  expect_match(w, "look like credentials (pass secrets = TRUE", fixed = TRUE)
+  for (f in sec) expect_match(w, f, fixed = TRUE)
+  inside <- sub("^demo_v1/", "", b$files)
+  expect_false(any(sec %in% inside))
+  expect_true(all(ok %in% inside))
+  expect_silent(b2 <- mkbndl(p$dir, dest, overwrite = TRUE, secrets = TRUE))
+  expect_true(all(sec %in% sub("^demo_v1/", "", b2$files)))
+  expect_error(mkbndl(p$dir, dest, overwrite = TRUE, secrets = NA),
+               "secrets")
+})
+
+test_that("an interrupted build leaves no zip and keeps the old one", {
+  p <- bndl_proj()
+  dest <- withr::local_tempdir()
+  old <- mkbndl(p$dir, dest)
+  sha <- sha256file(old$path)
+  local_mocked_bindings(.bndl_zip = function(base, top, zip, ...) {
+    writeBin(as.raw(1:10), zip)
+    stop("interrupted")
+  })
+  expect_error(mkbndl(p$dir, dest, overwrite = TRUE), "interrupted")
+  expect_identical(sha256file(old$path), sha)
+  expect_error(mkbndl(p$dir, dest, version = "2"), "interrupted")
+  expect_identical(list.files(dest), "demo_v1.zip")
+})
+
+test_that("more entries than a plain zip counts are refused", {
+  base <- withr::local_tempdir()
+  dir.create(file.path(base, "t"))
+  for (i in 1:3) file.create(file.path(base, "t", i))
+  zip <- file.path(base, "t.zip")
+  expect_error(ns$.bndl_zip(base, "t", zip, nmax = 3L),
+               "4 files and folders, more than a plain zip holds \\(3\\)")
+  expect_length(ns$.bndl_zip(base, "t", zip, nmax = 4L), 4L)
+})
+
+test_that("rmbl pack --secrets packs what looks like credentials", {
+  p <- bndl_proj()
+  writeLines("fake", file.path(p$dir, "llm.json"))
+  d <- withr::local_tempdir()
+  run <- function(...) {
+    rec <- new.env()
+    rec$buf <- character()
+    st <- suppressWarnings(
+      blcli(c(...), out = function(s) rec$buf <- c(rec$buf, s))
+    )
+    list(status = st, text = paste(rec$buf, collapse = ""))
+  }
+  expect_identical(run("pack", p$dir, "--dest", d)$status, 0L)
+  expect_false("demo_v1/llm.json" %in% utils::unzip(
+    file.path(d, "demo_v1.zip"), list = TRUE)$Name)
+  r <- run("pack", p$dir, "--dest", d, "--overwrite", "--secrets")
+  expect_identical(r$status, 0L)
+  expect_true("demo_v1/llm.json" %in% utils::unzip(
+    file.path(d, "demo_v1.zip"), list = TRUE)$Name)
+  expect_match(.bl_verb_usage("pack", "rmbl"), "--secrets", fixed = TRUE)
+})
+
+test_that("the runner stops in words on a bad config.json or no manifest", {
+  skip_on_cran()
+  withr::local_envvar(R_TESTS = NA, BRICKLAYER_SYNTHETIC = NA)
+  rs <- file.path(R.home("bin"), "Rscript")
+  unpack <- function(p) {
+    b <- mkbndl(p$dir, withr::local_tempdir(.local_envir = parent.frame()))
+    out <- withr::local_tempdir(.local_envir = parent.frame())
+    utils::unzip(b$path, exdir = out)
+    file.path(out, sub("[.]zip$", "", basename(b$path)))
+  }
+  run <- function(st) {
+    r <- suppressWarnings(system2(
+      rs, c(shQuote(file.path(st, "setup_and_run.R")), "--quick",
+            "--synthetic"),
+      stdout = TRUE, stderr = TRUE
+    ))
+    list(status = attr(r, "status") %||% 0L, text = paste(r, collapse = "\n"))
+  }
+  st <- unpack(bndl_proj())
+  for (cfg in c('{"project": {"name": "a", "name": "b"}}', '{"project": ')) {
+    writeLines(cfg, file.path(st, "config.json"))
+    r <- run(st)
+    expect_identical(r$status, 2L)
+    expect_match(r$text, "ERROR: config.json could not be read", fixed = TRUE)
+    expect_false(grepl("namespace", r$text, fixed = TRUE))
+  }
+  # an analysis that writes no manifest: exit 8, not 0
+  p <- bndl_proj()
+  writeLines("cat('no manifest here\\n')", file.path(p$dir, "analysis.R"))
+  st <- unpack(p)
+  r <- run(st)
+  expect_identical(r$status, 8L)
+  expect_match(r$text, "NOT completed", fixed = TRUE)
+})
+
+test_that("a rename that fails, a bad name and an over-long path", {
+  p <- bndl_proj()
+  dest <- withr::local_tempdir()
+  local_mocked_bindings(file.rename = function(from, to) FALSE,
+                        .package = "base")
+  expect_error(mkbndl(p$dir, dest), "could not write")
+  expect_length(list.files(dest), 0L)
+  expect_false(ns$.bndl_plain(NA_character_))
+  expect_false(ns$.bndl_plain(c("a", "b")))
+  f <- withr::local_tempfile(lines = "x")
+  expect_error(ns$.bndl_zip_entry(f, strrep("a", 70000L), c(0, 33)),
+               "too long for a zip")
+})
+
+test_that("the runner downloads only with the package; files are checked", {
+  skip_on_cran()
+  withr::local_envvar(R_TESTS = NA, BRICKLAYER_SYNTHETIC = NA)
+  rs <- file.path(R.home("bin"), "Rscript")
+  b <- mkbndl(bndl_proj()$dir, withr::local_tempdir())
+  out <- withr::local_tempdir()
+  utils::unzip(b$path, exdir = out)
+  st <- file.path(out, sub("[.]zip$", "", basename(b$path)))
+  run <- function(...) {
+    r <- suppressWarnings(system2(
+      rs, c(shQuote(file.path(st, "setup_and_run.R")), "--quick", ...),
+      stdout = TRUE, stderr = TRUE
+    ))
+    list(status = attr(r, "status") %||% 0L, text = paste(r, collapse = "\n"))
+  }
+  # no data and no rmoriebricklayer to download with: refused, exit 5
+  empty <- withr::local_tempdir()
+  base <- normalizePath(.Library)
+  skip_if(nzchar(system.file(package = "rmoriebricklayer", lib.loc = base)),
+          "rmoriebricklayer is in R's own library")
+  withr::with_envvar(
+    c(R_LIBS = empty, R_LIBS_USER = empty, R_LIBS_SITE = empty), {
+      r <- run()
+    }
+  )
+  expect_identical(r$status, 5L)
+  expect_match(r$text, "downloads only through the rmoriebricklayer package",
+               fixed = TRUE)
+  # a file in data/ is found; a pinned digest it does not match stops it
+  csv <- c("group,value", "a,4", "b,6")
+  dir.create(file.path(st, "data"))
+  writeLines(csv, file.path(st, "data", "data.csv"))
+  pf <- file.path(st, "data_provenance.json")
+  prov <- fromjs(pf, simplifyVector = FALSE)
+  prov$resource$sha256 <- strrep("0", 64L)
+  writeLines(tojs(prov, auto_unbox = TRUE), pf)
+  r <- run()
+  expect_identical(r$status, 7L)
+  expect_match(r$text, "SHA256 differs from the pinned provenance",
+               fixed = TRUE)
+  ext <- file.path(withr::local_tempdir(), "given.csv")
+  writeLines(csv, ext)
+  expect_identical(run("--data", shQuote(ext))$status, 7L)
+  prov$resource$sha256 <- sha256file(ext)
+  writeLines(tojs(prov, auto_unbox = TRUE), pf)
+  r <- run()
+  expect_identical(r$status, 0L)
+  expect_match(r$text, "SHA256 matches the pinned provenance", fixed = TRUE)
+  expect_match(r$text, file.path("data", "data.csv"), fixed = TRUE)
+})

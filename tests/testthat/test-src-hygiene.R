@@ -386,19 +386,10 @@ test_that("R code opens no network connection outside the compiled transport", {
     i <- grep(pat, code, perl = TRUE)
     if (length(i)) paste0(basename(f), ": ", trimws(code[i])) else character(0)
   })))
-  # the two base-R fallbacks exist for a capsule bundle that copies one file
-  # out of the package; inside the package `exists()` routes past them
-  allowed <- c(
-    paste0(
-      "lib_data_loader.R: utils::download.file(url, dest, mode = \"wb\", ",
-      "quiet = FALSE)"
-    ),
-    paste0(
-      "lib_helpers.R: utils::download.file(url, dest, mode = \"wb\", quiet ",
-      "= TRUE)"
-    )
-  )
-  expect_setequal(hits, allowed)
+  # none at all: a capsule bundle downloads only through an installed
+  # rmoriebricklayer's bldl() and otherwise refuses (1.0.3 recheck #13; the
+  # two base-R download.file() fallbacks are gone)
+  expect_identical(hits, character(0))
 })
 
 test_that("every SIU entry point reads its text through the same cap", {

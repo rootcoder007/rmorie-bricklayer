@@ -36,8 +36,10 @@ when a person is watching (an interactive session, or
 it. Hashing runs at roughly 100 MB a second or faster.
 
 When this file is sourced on its own inside a capsule bundle (outside
-the package), the same digest comes from the bundle's pure-R SHA-256
-implementation, which reads the whole file at once.
+the package), the same digest comes from base R's
+\code{tools::sha256sum()} (R 4.5.0 and later) or else from the bundle's
+pure-R SHA-256 implementation, which reads the file 1 MB at a time (slow
+on a large file, but in constant memory).
 
 Refusals: anything other than a single string naming an existing
 regular file -- a missing path, a directory, \code{NA}, a number or a vector

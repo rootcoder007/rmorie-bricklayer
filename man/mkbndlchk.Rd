@@ -4,7 +4,14 @@
 \alias{mkbndlchk}
 \title{Check a reproducibility bundle before shipping it}
 \usage{
-mkbndlchk(bundle, data = NULL, synthetic = FALSE, dir = NULL, keep = FALSE)
+mkbndlchk(
+  bundle,
+  data = NULL,
+  synthetic = FALSE,
+  dir = NULL,
+  keep = FALSE,
+  container = NULL
+)
 }
 \arguments{
 \item{bundle}{Path to the bundle zip.}
@@ -20,6 +27,10 @@ downloads it or, with \code{synthetic = TRUE}, generates data.}
 new folder under \code{tempdir()}.}
 
 \item{keep}{Keep that folder after the check, default \code{FALSE}.}
+
+\item{container}{Run the bundle in a container: \code{NULL} or
+\code{FALSE} (default) do not, \code{TRUE} uses podman, else docker,
+and \code{"podman"} or \code{"docker"} names the runtime. See Details.}
 }
 \value{
 An object of class \code{rmbl_bundle_audit}: a list with
@@ -29,8 +40,10 @@ used, from its manifest: \code{synthetic} when it is marked
 synthetic, else its \code{meta$input_mode} when it records one, such
 as \code{csv}, else \code{real}), \code{counts} (\code{total}, \code{pass},
 \code{differ}, \code{info}), \code{log} (the last 30 lines the run
-printed), \code{bundle} and \code{dir} (the unzipped bundle, or
-\code{NA} once removed). It prints as a box.
+printed), \code{isolation} (how the run was contained: see Details),
+\code{bundle} and \code{dir} (the unzipped bundle, or for a container
+run the folder it wrote into; \code{NA} once removed). It prints as a
+box.
 }
 \description{
 Unzips a bundle built by \code{\link[=mkbndl]{mkbndl()}} into a new
@@ -47,9 +60,56 @@ executable is reported as a warning: it still runs as
 \code{bash start_here.sh}.
 }
 \details{
-Errors: \code{bundle} that is not an existing \file{.zip} file; a zip
-without \file{setup_and_run.R}; \code{data} that is not an existing
-file; \code{dir} that already exists.
+\strong{Warning: this runs the bundle's code on your machine}, with your
+user's rights: its \file{setup_and_run.R}, its analysis script and
+anything they start. Check only bundles you built or whose author you
+trust. To limit what a hostile bundle can reach, the run gets a minimal
+environment: \env{PATH}, the locale variables (\env{LANG},
+\env{LC_*}, \env{TZ}), the library paths of this session
+(\env{R_LIBS}), a fresh temporary \env{HOME} and \env{TMPDIR}, and no
+other variable, so API keys, tokens and passwords in the environment
+(or in \file{~/.Renviron}) do not reach it. On Windows the variables
+whose names look like credentials are removed instead (a best effort).
+This is not a sandbox: the files your user can read stay readable.
+
+The run is stopped after \code{getOption("rmbl.bundle.timeout")}
+seconds (default 1800, 30 minutes; the exit status is then 124). How
+the processes it starts are contained (the \code{isolation} of the
+result, and a row of the checks):
+\describe{
+\item{container}{with \code{container = TRUE} (podman, else docker) or
+a runtime named: the run in a container, removed afterwards, with the
+unzipped bundle mounted read-only and copied into a writable folder,
+no network unless the real data is to be downloaded (no \code{data},
+not synthetic), 4 GB of memory, 2 CPUs, 512 processes, a read-only
+root file system, no capabilities and your user id. The image is
+\code{getOption("rmbl.bundle.image")}, default R 4.6.1 from the
+Rocker project pinned by digest; it holds base R only, so a bundle
+that lists packages in \code{r_packages} (or downloads its data, which
+needs rmoriebricklayer) needs an image that has them. Without the
+runtime the check falls back to the next mode and says so.}
+\item{pid namespace}{Linux, when \command{unshare} can make an
+unprivileged user and PID namespace: every process the run started,
+also one that started its own session or forked twice, is killed when
+the run ends or times out.}
+\item{job object}{Windows: the run is started inside a job object that
+kills every process in it when the run ends or times out.}
+\item{process group}{macOS, and Linux without user namespaces: the run
+leads a process group, killed when it ends, times out or is
+interrupted. A process that deliberately leaves the group (setsid, a
+double fork) can outlive it; the checks warn of it.}
+}
+
+Only a \file{results_*} folder the run itself created counts: one the
+zip already carries (which \code{\link[=mkbndl]{mkbndl()}} never packs) is not read, and
+fails the check. A run that writes no manifest, or whose runner reports
+\dQuote{NOT completed}, fails.
+
+Errors: \code{bundle} that is not an existing \file{.zip} file, or not
+a zip this function reads (more than 65535 entries, an entry name with a
+NUL byte, one too long, absolute or leaving the folder, or an entry
+given twice); a zip without \file{setup_and_run.R}; \code{data} that is
+not an existing file; \code{dir} that already exists.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

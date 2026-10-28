@@ -26,8 +26,10 @@
 #' it. Hashing runs at roughly 100 MB a second or faster.
 #'
 #' When this file is sourced on its own inside a capsule bundle (outside
-#' the package), the same digest comes from the bundle's pure-R SHA-256
-#' implementation, which reads the whole file at once.
+#' the package), the same digest comes from base R's
+#' \code{tools::sha256sum()} (R 4.5.0 and later) or else from the bundle's
+#' pure-R SHA-256 implementation, which reads the file 1 MB at a time (slow
+#' on a large file, but in constant memory).
 #'
 #' Refusals: anything other than a single string naming an existing
 #' regular file -- a missing path, a directory, `NA`, a number or a vector
@@ -76,12 +78,30 @@ sha256file <- function(path) {
   .rmbl_sha256_path(path)
   # inside the package: the compiled SHA-256 core over the file read in chunks
   # (identical output to digest::digest(file = path, algo = "sha256")); sourced
-  # standalone in a capsule bundle: the pure-R FIPS 180-4 implementation from
-  # sha256_native.R, over the whole file at once
+  # standalone in a capsule bundle: base R's tools::sha256sum() (R >= 4.5.0),
+  # else the pure-R FIPS 180-4 implementation from sha256_native.R, streamed
+  # (a 300 MB file read whole took 2.9 GB and more than five minutes)
   if (exists("csha256", mode = "function")) {
     return(.rmbl_sha256_stream(path))
   }
-  .rmbl_sha256_hex(readBin(path, "raw", n = file.info(path)$size))
+  .rmbl_sha256_bndl(path)
+}
+
+#' A file's SHA-256 in a bundle: base R's own when it has one, else the
+#' pure-R implementation read in chunks.
+#' @param path The file.
+#' @param base Whether tools::sha256sum() is used when R has it.
+#' @return 64 lower-case hex digits.
+#' @noRd
+.rmbl_sha256_bndl <- function(
+  path,
+  base = exists("sha256sum", envir = asNamespace("tools"), inherits = FALSE)
+) {
+  if (isTRUE(base)) {
+    f <- get("sha256sum", envir = asNamespace("tools"))
+    return(unname(tolower(f(path))))
+  }
+  .rmbl_sha256_file(path)
 }
 
 #' Transliterate Text to Plain ASCII
@@ -496,8 +516,9 @@ wrtxtfb <- function(text, path) {
 
 #' Downloads a URL to a file.
 #'
-#' The compiled fetcher inside the package; plain download.file when this
-#' file is sourced standalone in a capsule bundle.
+#' The compiled fetcher inside the package; the bundle fetcher
+#' (.rmbl_bfetch()) when this file is sourced standalone in a capsule
+#' bundle.
 #' @param url The source file's URL, fetched to `dest`.
 #' @param dest The destination file.
 #' @param native Whether the compiled fetcher is there to use.
@@ -511,8 +532,63 @@ wrtxtfb <- function(text, path) {
   if (native) {
     return(blfetch(url, dest))
   }
-  utils::download.file(url, dest, mode = "wb", quiet = TRUE)
+  .rmbl_bfetch(url, dest, cap = 16777216)
+}
+
+#' Downloads a URL in a bundle: only through the package's own downloader.
+#'
+#' A bundle sources the package's R files without its compiled transport.
+#' Base R cannot pin the addresses it connects to, re-check a redirect the
+#' server gives only to the body request, or resolve names on Windows and
+#' over IPv6, so a bundle never downloads with it: when rmoriebricklayer
+#' (1.0.3 or later) is installed on the reviewer's machine, its bldl()
+#' downloads (addresses resolved, checked and pinned, every hop re-checked,
+#' size capped); otherwise the download is refused with what to do instead.
+#' @param url The URL, checked against the URL policy first.
+#' @param dest The destination file.
+#' @param cap The most bytes the body may have.
+#' @param dl The downloader, from .rmbl_bdl(); NULL when there is none.
+#' @return `dest`, invisibly.
+#' @noRd
+.rmbl_bfetch <- function(url, dest, cap = 2147483648, dl = .rmbl_bdl()) {
+  url <- .rmbl_check_public_url(url, "url")
+  if (is.null(dl)) {
+    stop(.rmbl_nodl(), call. = FALSE)
+  }
+  dl(url, dest, quiet = TRUE, maxbytes = cap)
   invisible(dest)
+}
+
+#' The package's downloader, when a bundle can use it.
+#'
+#' Inside the package: bldl() itself. Sourced in a bundle: the bldl() of an
+#' installed rmoriebricklayer 1.0.3 or later (older ones did not re-check
+#' redirects), else NULL.
+#' @param pkg The package to look for.
+#' @param own Whether this code already has bldl() (inside the package).
+#' @return A function, or NULL.
+#' @noRd
+.rmbl_bdl <- function(pkg = "rmoriebricklayer",
+                      own = exists("bldl", mode = "function")) {
+  if (isTRUE(own)) {
+    return(get("bldl", mode = "function"))
+  }
+  ok <- requireNamespace(pkg, quietly = TRUE) &&
+    utils::packageVersion(pkg) >= "1.0.3"
+  if (isTRUE(ok)) getExportedValue(pkg, "bldl") else NULL
+}
+
+#' Why a bundle does not download, and what to do instead.
+#' @return One string.
+#' @noRd
+.rmbl_nodl <- function() {
+  paste0(
+    "this bundle downloads only through the rmoriebricklayer package ",
+    "(1.0.3 or later), which checks every address and redirect: install ",
+    "it with install.packages(\"rmoriebricklayer\") and run this again, ",
+    "or put the data file in the bundle's data/ folder (its pinned ",
+    "SHA-256 is still checked)"
+  )
 }
 
 #' Joins a manifest's relative file name under a directory, or refuses it.

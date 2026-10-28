@@ -29,7 +29,8 @@ OBJECTS = init.o \
   rmbl_gunzip.o \
   rmbl_progress.o \
   rmbl_survey.o \
-  rmbl_unity.o
+  rmbl_unity.o \
+  rmbl_winjob.o
 
 all: $(SHLIB)
 rmbl_unity.o: rmbl_asn1.cpp rmbl_barrier.cpp rmbl_core.cpp rmbl_digest.cpp rmbl_drbg.cpp rmbl_ecdsa.cpp rmbl_fetch.cpp rmbl_hqc.cpp rmbl_json.cpp rmbl_kdf.cpp rmbl_keccak.cpp rmbl_mgf1.cpp rmbl_mldsa_ntt.cpp rmbl_mlkem.cpp rmbl_pqc.cpp rmbl_series.cpp rmbl_siu.cpp rmbl_sketch.cpp rmbl_slhdsa.cpp rmbl_stats.cpp rmbl_strtod.cpp siu_parse.cpp siu_resolve.cpp morie_core.h rmbl_ascii.h rmbl_bignum.h rmbl_ct.h rmbl_drbg_core.h rmbl_entry.h rmbl_hqc_core.h rmbl_keccak.h rmbl_mask_rng.h rmbl_masked.h rmbl_mldsa_body.h rmbl_mldsa_core.h rmbl_mlkem_arith.h rmbl_mlkem_body.h rmbl_mlkem_core.h rmbl_prehash.h rmbl_slhdsa_body.h rmbl_slhdsa_core.h siu_parse.h siu_resolve.h siu_schema.h

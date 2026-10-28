@@ -3346,6 +3346,12 @@ bricklayer_json_unbox <- function(x) {
   txt <- .rmbl_check_public_url(txt, "txt")
   tmp <- tempfile(fileext = ".json")
   on.exit(unlink(tmp), add = TRUE)
+  # sourced in a bundle there is no compiled transport: the bundle fetcher
+  # keeps the URL policy, hop by hop, and the same 16 MiB cap
+  if (!exists(".bl_net", mode = "function")) {
+    .rmbl_bfetch(txt, tmp, cap = 16777216)
+    return(.rmbl_json_read_con(file(tmp)))
+  }
   res <- .bl_net(
     txt,
     .bl_http_download(

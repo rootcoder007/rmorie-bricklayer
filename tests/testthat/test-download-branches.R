@@ -129,20 +129,21 @@ test_that(".bl_data_get passes the manifest's compressed size for a table", {
   expect_identical(seen$auth, "Bearer sk-test")
 })
 
-test_that("a staged bundle without bldl falls back to base R", {
+test_that("a staged bundle without bldl falls back to the bundle fetcher", {
   called <- NULL
   te <- environment()
   testthat::local_mocked_bindings(
     exists = function(x, ...) FALSE,
     .package = "base"
   )
+  # the fallback keeps the URL policy (download.file() did not; 1.0.3
+  # recheck #13)
   testthat::local_mocked_bindings(
-    download.file = function(url, destfile, ...) {
+    .rmbl_bfetch = function(url, dest, ...) {
       assign("called", url, envir = te)
-      writeLines("ok", destfile)
-      0L
-    },
-    .package = "utils"
+      writeLines("ok", dest)
+      invisible(dest)
+    }
   )
   dest <- withr::local_tempfile()
   .bl_fetch_file("https://example.org/x.csv", dest)

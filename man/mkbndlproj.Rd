@@ -51,7 +51,8 @@ downloads and checks the real file.
 
 Errors: \code{dir} holding any of the three files when
 \code{overwrite} is \code{FALSE}; a \code{name} with characters other
-than letters, digits, dot, dash and underscore.
+than letters, digits, dot, dash and underscore, one that starts with a
+dot or holds \code{..}, or one longer than 64 characters.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

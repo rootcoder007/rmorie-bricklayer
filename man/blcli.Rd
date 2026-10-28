@@ -47,14 +47,21 @@ question with no verb (\code{rmbl "how do I weight a survey?"}) is asked too}
 from (\code{\link{explerr}}), without a model or the network}
 \item{\code{bundle REQUEST...}}{\code{\link{agentbndl}} from the shell}
 \item{\code{pack DIR [--dest D] [--data FILE] [--version V]
-[--overwrite]}}{a reproducibility bundle of the project in DIR, or of a
-shipped example such as \code{otis-mrp}, with \code{\link{mkbndl}}: one
-zip a reviewer unzips and double-clicks (default \code{--dest}: the
-working directory); \code{pack --new DIR [--title T] [--author A]
+[--overwrite] [--secrets]}}{a reproducibility bundle of the project in
+DIR, or of a shipped example such as \code{otis-mrp}, with
+\code{\link{mkbndl}}: one zip a reviewer unzips and double-clicks
+(default \code{--dest}: the working directory; \code{--secrets} packs
+files that look like credentials, left out otherwise);
+\code{pack --new DIR [--title T] [--author A]
 [--contact C]} writes a starter project with \code{\link{mkbndlproj}};
-\code{pack --check ZIP [--data FILE] [--synthetic] [--keep]} runs a
+\code{pack --check ZIP [--data FILE] [--synthetic] [--keep]
+[--container[=podman|docker]]} runs a
 built bundle as a recipient would and checks its results with
-\code{\link{mkbndlchk}} (exit status 1 when it fails)}
+\code{\link{mkbndlchk}} (exit status 1 when it fails). It RUNS THE
+BUNDLE'S CODE on this machine, with a minimal environment and a
+temporary HOME: check only bundles you trust. \code{--container} runs it
+in a podman or docker container; otherwise a PID namespace (Linux), a
+job object (Windows) or only a process group (macOS) contains it}
 \item{\code{wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max
 N]}}{save every URL listed in FILE (one per line; blank lines and \code{#}
 comments skipped) in the Internet Archive's Wayback Machine with

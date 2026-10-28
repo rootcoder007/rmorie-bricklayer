@@ -109,9 +109,25 @@ CONFIG_PATH     <- file.path(script_dir, "config.json")
 PROVENANCE_PATH <- file.path(script_dir, "data_provenance.json")
 if (!file.exists(CONFIG_PATH))
   stop("config.json not found at ", CONFIG_PATH)
-# the bundled native codec (json_native.R): no jsonlite needed
-cfg <- fromjs(CONFIG_PATH, simplifyVector = FALSE)
-prov <- loadprov(PROVENANCE_PATH)
+# the bundled native codec (json_native.R): no jsonlite needed. A file
+# that is not valid JSON (or repeats a key) stops the run in words, with
+# exit status 2, not with an R traceback
+read_or_stop <- function(what, expr) {
+  tryCatch(expr, error = function(e) {
+    cat("ERROR: ", what, " could not be read: ", conditionMessage(e), "\n",
+        sep = "")
+    cat("  Fix the file (or ask the bundle's author for a fixed copy)",
+        " and run this again.\n", sep = "")
+    quit(status = 2)
+  })
+}
+cfg <- read_or_stop("config.json",
+                    fromjs(CONFIG_PATH, simplifyVector = FALSE))
+if (!is.list(cfg)) {
+  cat("ERROR: config.json could not be read: it is not a JSON object\n")
+  quit(status = 2)
+}
+prov <- read_or_stop("data_provenance.json", loadprov(PROVENANCE_PATH))
 
 PROJECT_NAME    <- cfg$project$name         %||% "bricklayer-project"
 PROJECT_AUTHOR  <- cfg$project$author       %||% "(unknown author)"
@@ -260,6 +276,7 @@ default_candidates <- function() {
   fn   <- prov$resource$filename %||% "input.csv"
   cands <- c(
     file.path(script_dir, fn),
+    file.path(script_dir, "data", fn),
     file.path(home, "Desktop", fn),
     file.path(home, "Downloads", fn),
     file.path(home, "Documents", fn),
@@ -269,6 +286,18 @@ default_candidates <- function() {
   unlist(c(cands, cfg$data$default_candidates %||% c()))
 }
 
+## A file the reviewer supplies (--data, one found beside the bundle or in
+## its data/ folder, one named at the prompt) is checked against the pinned
+## SHA-256 like a downloaded one: the digest is the capsule's guarantee
+check_pinned <- function(path) {
+  if (nzchar(unlist(prov$resource$sha256 %||% "")[1L])) {
+    v <- vrfsha256(path, prov$resource$sha256)
+    if (v$match) say("  SHA256 matches the pinned provenance.")
+    else digest_mismatch(v)
+  }
+  invisible(path)
+}
+
 if (!is.null(DATA_ARG)) {
   if (!file.exists(DATA_ARG)) {
     say("ERROR: --data path does not exist: ", DATA_ARG)
@@ -276,6 +305,7 @@ if (!is.null(DATA_ARG)) {
   }
   input_path <- DATA_ARG
   say("  Using --data: ", input_path)
+  check_pinned(input_path)
 } else {
   ## --synthetic asks for generated data: a real file lying beside the
   ## script is not picked up in its place
@@ -284,7 +314,10 @@ if (!is.null(DATA_ARG)) {
   if (length(hits) > 0L) {
     say("  Found a candidate file at:")
     say("    ", hits[1])
-    if (ask_yn("  Use this file?", "Y", QUICK_MODE)) input_path <- hits[1]
+    if (ask_yn("  Use this file?", "Y", QUICK_MODE)) {
+      input_path <- hits[1]
+      check_pinned(input_path)
+    }
   }
 
   if (is.null(input_path)) {
@@ -323,6 +356,7 @@ if (!is.null(DATA_ARG)) {
         say("ERROR: file does not exist: ", candidate); quit(status = 4)
       }
       input_path <- normalizePath(candidate)
+      check_pinned(input_path)
     }
 
     else if (choice == 2L) {
@@ -357,6 +391,13 @@ if (!is.null(DATA_ARG)) {
     }
 
     else if (choice == 3L) {
+      ## no download without the package's own downloader: base R cannot
+      ## pin addresses or re-check every redirect (fail closed)
+      if (is.null(.rmbl_bdl())) {
+        say("ERROR: ", .rmbl_nodl(), ".")
+        say("  Or run on synthetic data: --synthetic.")
+        quit(status = 5)
+      }
       save_dir <- ask_save_location(
         "  Where should I save the downloaded file?",
         default_key  = "bundle",
@@ -546,6 +587,10 @@ if (exit_code != 0L || !file.exists(manifest_path)) {
 }
 say("  Results folder: ", output_dir)
 say("  Plain-language summary: SUMMARY.txt in that folder.")
+
+## A run that wrote no manifest did not complete, whatever the analysis
+## script's own exit status: exit 8, so a harness (mkbndlchk) sees it
+if (exit_code == 0L && !file.exists(manifest_path)) exit_code <- 8L
 
 ## Never in quick mode: unattended runs have no desktop to open, and a
 ## headless xdg-open blocks forever, keeping this process alive.

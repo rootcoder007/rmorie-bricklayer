@@ -1066,18 +1066,26 @@ rslvarc <- function(prov) {
 #'
 #' The one transport fdl() uses, live and Wayback alike (tests
 #' mock it). Inside the package it is bldl() with its live
-#' progress bar; a staged bundle (which copies this file alone) uses base R.
+#' progress bar; a staged bundle (which copies this file alone) uses
+#' .rmbl_bfetch(), which keeps the URL policy and a size cap.
 #' @param url The URL to download, checked to be public first.
 #' @param dest The file the download is written to.
 #' @param allow_file Whether a `file://` URL is accepted.
-#' @return What `bldl()` or `utils::download.file()` returns.
+#' @return What `bldl()` or `.rmbl_bfetch()` returns.
 #' @noRd
 .bl_fetch_file <- function(url, dest, allow_file = FALSE) {
   url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
   if (exists("bldl", mode = "function")) {
     bldl(url, dest, quiet = FALSE, allowfile = allow_file)
+  } else if (grepl("^file://", url, ignore.case = TRUE)) {
+    # allowed only when asked for (offline tests): a local copy
+    src <- sub("^file://", "", url, ignore.case = TRUE)
+    if (!file.exists(src) || !file.copy(src, dest, overwrite = TRUE)) {
+      stop(sprintf("cannot open the file %s", src), call. = FALSE)
+    }
+    invisible(dest)
   } else {
-    utils::download.file(url, dest, mode = "wb", quiet = FALSE)
+    .rmbl_bfetch(url, dest)
   }
 }
 

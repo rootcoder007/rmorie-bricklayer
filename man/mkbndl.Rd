@@ -4,7 +4,14 @@
 \alias{mkbndl}
 \title{Build a Reproducibility Bundle}
 \usage{
-mkbndl(project, dest, data = NULL, version = "1", overwrite = FALSE)
+mkbndl(
+  project,
+  dest,
+  data = NULL,
+  version = "1",
+  overwrite = FALSE,
+  secrets = FALSE
+)
 }
 \arguments{
 \item{project}{A project folder, or the name of an example shipped
@@ -21,6 +28,9 @@ to download it, or uses synthetic data.}
 \item{version}{Version label in the zip's name, default \code{"1"}.}
 
 \item{overwrite}{Replace a zip of the same name, default \code{FALSE}.}
+
+\item{secrets}{Pack files whose names look like credentials (see
+Details), default \code{FALSE}: they are left out with a warning.}
 }
 \value{
 An object of class \code{rmbl_bundle}: a list with \code{path}
@@ -47,6 +57,17 @@ file (name, URL, SHA-256, licence) and may carry a
 \code{schema$synthetic_recipe} for the offline synthetic route. Every
 other file in the folder is copied into the bundle too, except hidden
 files, \file{results_*} folders and zip files.
+
+Symbolic links are not followed: a link to a file inside the project is
+packed as that file, and a link to a folder, or to anything outside the
+project, is left out with a warning that names it. Files whose names
+look like credentials are left out too, with a warning that lists them,
+unless \code{secrets = TRUE}: \file{llm.json}, \file{credentials.json},
+\file{secrets.yaml}, \file{token.txt}, \file{api_key*},
+\file{id_rsa} and the other SSH private keys, \file{.env},
+\file{.netrc}, \file{.Renviron}, \file{.pgpass}, key stores
+(\file{.p12}, \file{.pfx}, \file{.jks}, \file{.ppk}) and \file{.pem}
+or \file{.key} files holding a private key.
 
 The runner calls the analysis script as
 \code{Rscript analysis.R <data file> <results folder>}, with
@@ -78,16 +99,22 @@ when the runner calls it: a bundle that would stop with
 here instead.
 
 Nothing is written except the zip in \code{dest}; the staging folder is
-a temporary directory removed on exit. Send the SHA-256 that is printed
-to recipients separately, so they can check the zip was not altered.
+a temporary directory removed on exit. The zip is written under a
+temporary name in \code{dest} and renamed when it is complete, so an
+interrupted build leaves no partial zip (and keeps the one it was to
+replace). Send the SHA-256 that is printed to recipients separately, so
+they can check the zip was not altered.
 
 Errors: \code{project} that is neither a folder nor a bundled example;
 a project without \file{config.json} or without its analysis script; a
 project file whose name a bundle file already uses; \code{dest} that is
 not an existing folder; a zip that exists when \code{overwrite} is
 \code{FALSE}; \code{data} that is not an existing file; a
-\code{version} with characters other than letters, digits, dot, dash
-and underscore.
+\code{version}, or a \code{project$name} in \file{config.json}, that is
+not a plain name (letters, digits, dot, dash and underscore, not
+starting with a dot, no \code{..}, at most 64 characters); a bundle of
+more than 65535 files and folders or over 4 GB (more than a plain zip
+holds).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

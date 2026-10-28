@@ -35,14 +35,21 @@
 #' from (\code{\link{explerr}}), without a model or the network}
 #' \item{\code{bundle REQUEST...}}{\code{\link{agentbndl}} from the shell}
 #' \item{\code{pack DIR [--dest D] [--data FILE] [--version V]
-#' [--overwrite]}}{a reproducibility bundle of the project in DIR, or of a
-#' shipped example such as \code{otis-mrp}, with \code{\link{mkbndl}}: one
-#' zip a reviewer unzips and double-clicks (default \code{--dest}: the
-#' working directory); \code{pack --new DIR [--title T] [--author A]
+#' [--overwrite] [--secrets]}}{a reproducibility bundle of the project in
+#' DIR, or of a shipped example such as \code{otis-mrp}, with
+#' \code{\link{mkbndl}}: one zip a reviewer unzips and double-clicks
+#' (default \code{--dest}: the working directory; \code{--secrets} packs
+#' files that look like credentials, left out otherwise);
+#' \code{pack --new DIR [--title T] [--author A]
 #' [--contact C]} writes a starter project with \code{\link{mkbndlproj}};
-#' \code{pack --check ZIP [--data FILE] [--synthetic] [--keep]} runs a
+#' \code{pack --check ZIP [--data FILE] [--synthetic] [--keep]
+#' [--container[=podman|docker]]} runs a
 #' built bundle as a recipient would and checks its results with
-#' \code{\link{mkbndlchk}} (exit status 1 when it fails)}
+#' \code{\link{mkbndlchk}} (exit status 1 when it fails). It RUNS THE
+#' BUNDLE'S CODE on this machine, with a minimal environment and a
+#' temporary HOME: check only bundles you trust. \code{--container} runs it
+#' in a podman or docker container; otherwise a PID namespace (Linux), a
+#' job object (Windows) or only a process group (macOS) contains it}
 #' \item{\code{wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max
 #' N]}}{save every URL listed in FILE (one per line; blank lines and \code{#}
 #' comments skipped) in the Internet Archive's Wayback Machine with
@@ -795,7 +802,9 @@ instcli <- function(
       "--seen-log"
     ),
     migrate = "--write",
-    pack = c(.bl_pack_valued, "--overwrite", "--synthetic", "--keep"),
+    pack = c(.bl_pack_valued, "--overwrite", "--synthetic", "--keep",
+             "--secrets", "--container", "--container=podman",
+             "--container=docker"),
     config = if (length(rest) && identical(rest[[1L]], "reset")) "--force"
   )
 }
@@ -1779,12 +1788,20 @@ instcli <- function(
     ),
     pack = paste(
       "pack DIR [--dest D] [--data FILE] [--version V] [--overwrite]",
-      "  a reproducibility bundle of the project in DIR (or a shipped",
-      "example: otis-mrp), written to D (default: here);",
+      "[--secrets]  a reproducibility bundle of the project in DIR (or a",
+      "shipped example: otis-mrp), written to D (default: here); files",
+      "that look like credentials are left out unless --secrets;",
       "pack --new DIR [--title T] [--author A] [--contact C]   start a",
       "project that builds and runs as it is;",
-      "pack --check ZIP [--data FILE] [--synthetic] [--keep]   run a",
-      "built bundle as a recipient would and check its results"
+      "pack --check ZIP [--data FILE] [--synthetic] [--keep]",
+      "[--container[=podman|docker]]   run a built bundle as a recipient",
+      "would and check its results.",
+      "WARNING: --check RUNS THE BUNDLE'S CODE on this machine (with a",
+      "minimal environment and a temporary HOME): check only bundles you",
+      "built or trust. --container runs it in a container (no network",
+      "unless it downloads the real data); otherwise on Linux a PID",
+      "namespace, on Windows a job object, and on macOS only a process",
+      "group contain it, which a process can deliberately escape"
     )
   )
 }
@@ -2850,14 +2867,37 @@ instcli <- function(
 #' @return The exit status: 0 when the bundle passes, else 1.
 #' @noRd
 .bl_cli_pack_check <- function(zip, rest, flag, out) {
+  out(paste0(
+    "WARNING: pack --check runs the bundle's code on this machine (with a ",
+    "minimal environment and a temporary HOME). Check only bundles you ",
+    "built or trust.\n"
+  ))
+  ctr <- sub("^--container=?", "", grep("^--container", rest, value = TRUE))
   x <- mkbndlchk(
     zip,
     data = flag("--data"),
     synthetic = "--synthetic" %in% rest,
-    keep = "--keep" %in% rest
+    keep = "--keep" %in% rest,
+    container = if (length(ctr)) {
+      if (nzchar(ctr[[1L]])) ctr[[1L]] else TRUE
+    }
   )
   out(paste0(paste(utils::capture.output(print(x)), collapse = "\n"), "\n"))
   if (isTRUE(x$ok)) 0L else 1L
+}
+
+#' The arguments of pack that are neither an option nor an option's value.
+#' @param rest The arguments after `pack`.
+#' @return The positional arguments.
+#' @noRd
+.bl_cli_packpos <- function(rest) {
+  pos <- rest
+  for (f in .bl_pack_valued) {
+    i <- match(f, pos)
+    if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
+  }
+  setdiff(pos, c("--overwrite", "--secrets", grep("^--container", pos,
+                                                   value = TRUE)))
 }
 
 #' The pack verb: mkbndl(), mkbndlproj() and mkbndlchk() from a terminal.
@@ -2867,12 +2907,7 @@ instcli <- function(
 #' @return The exit status.
 #' @noRd
 .bl_cli_pack <- function(rest, flag, out) {
-  pos <- rest
-  for (f in .bl_pack_valued) {
-    i <- match(f, pos)
-    if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
-  }
-  pos <- setdiff(pos, "--overwrite")
+  pos <- .bl_cli_packpos(rest)
   ow <- "--overwrite" %in% rest
   show <- function(x) {
     out(paste0(paste(utils::capture.output(print(x)), collapse = "\n"), "\n"))
@@ -2901,6 +2936,7 @@ instcli <- function(
     flag("--dest") %||% getwd(),
     data = flag("--data"),
     version = flag("--version") %||% "1",
-    overwrite = ow
+    overwrite = ow,
+    secrets = "--secrets" %in% rest
   ))
 }

@@ -15,7 +15,15 @@
   # packed NaN bit patterns as the digest. XOR/AND run on 16-bit
   # halves; rotation and addition are exact double arithmetic mod 2^32.
   bs <- .rmbl_sha256_pad(bytes)
-  H <- c(
+  H <- .rmbl_sha256_blocks(.rmbl_sha256_h0(), bs, .rmbl_sha256_k())
+  .rmbl_sha256_out(H)
+}
+
+#' The SHA-256 initial hash state.
+#' @return Eight words, as doubles.
+#' @noRd
+.rmbl_sha256_h0 <- function() {
+  c(
     0x6a09e667,
     0xbb67ae85,
     0x3c6ef372,
@@ -25,11 +33,27 @@
     0x1f83d9ab,
     0x5be0cd19
   )
-  K <- .rmbl_sha256_k()
+}
+
+#' Runs whole 64-byte blocks through the compression.
+#' @param H The state words.
+#' @param bs Bytes as integers, a multiple of 64 long.
+#' @param K The round constants.
+#' @return The new state words.
+#' @noRd
+.rmbl_sha256_blocks <- function(H, bs, K) {
   for (block in seq(1L, length(bs), by = 64L)) {
     W <- .rmbl_sha256_schedule(bs, block)
     H <- .rmbl_sha256_compress(H, W, K)
   }
+  H
+}
+
+#' The digest bytes of a final state.
+#' @param H The state words.
+#' @return 32 raw bytes.
+#' @noRd
+.rmbl_sha256_out <- function(H) {
   as.raw(as.vector(vapply(
     H,
     function(w) {
@@ -37,6 +61,36 @@
     },
     numeric(4)
   )))
+}
+
+#' The SHA-256 digest of a file in pure R, read `chunk` bytes at a time,
+#' so memory stays at one chunk whatever the file's size.
+#' @param path The file.
+#' @param chunk Bytes read at a time.
+#' @return 64 lower-case hex digits.
+#' @noRd
+.rmbl_sha256_file <- function(path, chunk = 1048576L) {
+  con <- file(path, open = "rb")
+  on.exit(close(con), add = TRUE)
+  H <- .rmbl_sha256_h0()
+  K <- .rmbl_sha256_k()
+  carry <- integer()
+  total <- 0
+  repeat {
+    b <- readBin(con, "raw", n = chunk)
+    if (!length(b)) break
+    total <- total + length(b)
+    bs <- c(carry, as.integer(b))
+    full <- length(bs) %/% 64L * 64L
+    if (full > 0L) {
+      H <- .rmbl_sha256_blocks(H, bs[seq_len(full)], K)
+    }
+    carry <- bs[seq_len(length(bs) - full) + full]
+  }
+  blen <- total * 8
+  pad <- c(carry, 0x80L, integer((55L - length(carry)) %% 64L))
+  tail <- c(pad, (blen %/% 2^c(56, 48, 40, 32, 24, 16, 8, 0)) %% 256)
+  .rmbl_hexlify(.rmbl_sha256_out(.rmbl_sha256_blocks(H, tail, K)))
 }
 
 #' XOR of two 32-bit words held as doubles, on 16-bit halves.

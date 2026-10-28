@@ -33,12 +33,21 @@ test_that(".rmbl_sha256_bytes pure-R branch matches csha256", {
   )
 })
 
-test_that(".rmbl_fetch_url download.file branch fetches a file URL", {
-  src <- tempfile(fileext = ".json")
-  writeLines("{\"k\": 1}", src)
-  dest <- tempfile(fileext = ".json")
-  on.exit(unlink(c(src, dest)), add = TRUE)
-  url <- paste0("file://", normalizePath(src, winslash = "/"))
-  expect_invisible(.rmbl_fetch_url(url, dest, native = FALSE))
+test_that(".rmbl_fetch_url's bundle branch uses the bundle fetcher", {
+  # the base-R branch is the bundle fetcher, with the URL policy and a
+  # 16 MiB cap (download.file() fetched any address, 1.0.3 recheck #13)
+  got <- new.env()
+  local_mocked_bindings(.rmbl_bfetch = function(url, dest, cap, ...) {
+    got$url <- url
+    got$cap <- cap
+    writeLines("{\"k\": 1}", dest)
+    invisible(dest)
+  })
+  dest <- withr::local_tempfile(fileext = ".json")
+  expect_invisible(
+    .rmbl_fetch_url("https://example.org/m.json", dest, native = FALSE)
+  )
   expect_identical(readLines(dest), "{\"k\": 1}")
+  expect_identical(got$url, "https://example.org/m.json")
+  expect_identical(got$cap, 16777216)
 })

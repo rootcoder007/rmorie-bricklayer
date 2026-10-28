@@ -87,6 +87,27 @@
 * The Docker image is built on Wolfi (Chainguard) instead of Ubuntu: R from Wolfi, the R packages built from CRAN source, every package at its latest version, and the compilers and headers removed once the build is done. It is rebuilt every week from the latest release, and Trivy refuses to push an image, and checks the image as pushed, with a vulnerability of any severity that has a fix. Known vulnerabilities went from 3,089 to 0.
 * A release updates the rmoriebricklayer formula in the homebrew-morie tap and checks that it installs and passes its test on macOS.
 
+## Fixed after the 1.0.3 recheck
+
+* Tests no longer use the network when CRAN runs them: the `fetchvrf()` archive lookup is mocked and the morie cross-check skips on CRAN. A sweep of all 238 test files with every outside connection blocked and logged found nothing else.
+* `mkbndlchk()` reads only the results folder its own run created. A `results_*` folder packed in the zip, a run that writes no manifest, and a runner that says "NOT completed" all fail the check.
+* `mkbndlchk()` and `rmbl pack --check` run the bundle with a minimal environment and a temporary HOME and TMPDIR, so no API keys, tokens or passwords reach it. The run is contained and every process it started is killed when it ends, times out or is interrupted: in a PID namespace on Linux (even `setsid` daemons die), in a job object on Windows, otherwise in its own process group. The mode used is shown as `isolation`. The default time limit is 30 minutes (`rmbl.bundle.timeout`), and both warn that they run the bundle's code.
+* `mkbndlchk(container = TRUE | "podman" | "docker")` and `rmbl pack --check --container` run the bundle in a locked-down container: read-only bundle, no network unless the real data must be downloaded, memory, CPU and process limits, a non-root user, removed afterwards. The image is a pinned Rocker R 4.6.1, overridable with `options(rmbl.bundle.image)`.
+* `mkbndlchk()` refuses zips with duplicate entries, NUL, over-long, absolute or `..` entry names, or zip64 counts, and reads a large zip's directory in linear time (70,000 entries in under 2 seconds).
+* A bundle downloads its data only through an installed rmoriebricklayer (1.0.3 or later), which pins addresses and checks every redirect; without it the runner explains how to supply the file, for example in the bundle's `data/` folder. Every file a reviewer supplies is checked against the pinned SHA-256 (exit 7 unless `--allow-digest-drift`).
+* A bundle's `setup_and_run.R` stops with a clear message (exit 2) on a malformed or duplicate-key `config.json`, exits 8 when the analysis writes no manifest, and a refusal raised inside a bundle no longer fails with "not a namespace".
+* `mkbndl()` refuses a `project$name` or `version` that is not a plain name, does not follow symbolic links out of the project, and leaves out files that look like credentials unless `secrets = TRUE` (`rmbl pack --secrets`). It writes the zip under a temporary name, so an interrupted build leaves no partial zip, and refuses more than 65,535 entries.
+* `arcpush()` refuses manifest file names that leave the capture folder (`..`, absolute paths, backslashes, control characters, symbolic links out), and percent-encodes S3 keys and mirror URLs within the one archive.org item.
+* `arccap()` and `arcpush()` check the time-stamping authority's reply with `tsvrf()` and the request's nonce before keeping it; a junk reply is not saved, and a junk `manifest.tsr` kept by an earlier version is set aside as `manifest.tsr.rejected` and stamped again. The capture summary no longer prints "imprint and signature verified" for a token that did not verify, and one private address no longer stops the Wayback Machine request for the other files.
+* `tsvrf()` reads the unsigned parts of a token strictly (SignedData and SignerInfo versions, digestAlgorithms against the SignerInfo digest, the signature algorithm against the certificate key, the class and form of every field, every certificate the token carries): of 26,054 byte mutations of the test tokens, none verifies except ones shown harmless.
+* `certprs()` checks the whole certificate layout (RFC 5280 4.1), refuses an outer signatureAlgorithm that differs from the signed one and a malformed time, and refuses every malformed certificate in words, not with an R error.
+* Printed labels escape C1 control characters (such as U+009B), and so do `mkset()` headings and progress labels.
+* `plot(ratechg(..., prdord = ))` follows `prdord`, and the ratechg box prints whole-number periods as labels (2020, not 2020.000).
+* `plndid()`, `evstudy()` and `loounit()` refuse a `data` that is not a data frame, in words; weights large enough to overflow (`w = 1e308`) give the same estimate as equal weights.
+* `yoy()` folds labels a C-locale console cannot show, as `rtcalc()` does.
+* `mkset()` no longer embeds a data frame's pairs plot. `ralloc()` refuses blank arm and stratum names and names that differ only in spaces. `vrfmrg()` refuses an empty or NA `pub`.
+* `cpsplant()` allows at most 1.5 times `tol` (one Monte Carlo standard error, which must be at most `tol`/2): an estimator attenuated to 0.7 with moderate noise now fails. A noisy statistic may need a larger `n`.
+
 ## Fixed after the 1.0.3 reviews
 
 ### Timestamps, certificates and revocation

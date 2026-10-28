@@ -262,6 +262,9 @@ extern SEXP C_rmbl_svy_reptotals(SEXP, SEXP, SEXP);
 extern int rmbl_progress_bar(double, double, int, int, int, int, int, int, int, char *, int);
 extern const char *rmbl_progress_spinner(double, int);
 
+/* a bundle check's run inside a Windows job object (rmbl_winjob.c) */
+extern SEXP C_rmbl_winjob(SEXP, SEXP, SEXP);
+
 static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_flock_acquire",  (DL_FUNC) &C_rmbl_flock_acquire,  2},
     {"C_rmbl_flock_release",  (DL_FUNC) &C_rmbl_flock_release,  1},
@@ -405,6 +408,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_blake2b",           (DL_FUNC) &C_rmbl_blake2b,           3},
     {"C_rmbl_pbkdf2",            (DL_FUNC) &C_rmbl_pbkdf2,            4},
     {"C_rmbl_os_random",         (DL_FUNC) &C_rmbl_os_random,         1},
+    {"C_rmbl_winjob",            (DL_FUNC) &C_rmbl_winjob,            3},
     {NULL, NULL, 0}
 };
 
