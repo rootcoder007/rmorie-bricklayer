@@ -60,5 +60,5 @@ RUN apk del --no-cache build-base gfortran cmake pkgconf \
     && rmbl version
 
 # Default to an interactive shell with the kit and R ready.
-# Build a bundle with:  ./make_bundle.sh otis-mrp --version <v>
+# Build a bundle with:  rmbl pack otis-mrp --version <v>
 CMD ["bash"]

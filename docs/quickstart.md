@@ -5,24 +5,26 @@ This walks you through creating a shippable reproducibility bundle for **your ow
 ## Prerequisites
 
 - R 4.0+ installed
-- bash, Python 3 (for `make_bundle.sh`), zip
+- rmoriebricklayer: `install.packages("rmoriebricklayer")`
 - A public dataset URL (CKAN-hosted is easiest — e.g. data.ontario.ca, data.gov.uk, data.gov)
 - An R analysis script that reads a CSV (or `.RData`), produces some numbers, and writes them to a folder
 
-## 1. Clone the kit
+## 1. Install the package
 
-```bash
-git clone https://github.com/morie-oss/rmorie-bricklayer.git
-cd rmorie-bricklayer
+```r
+install.packages("rmoriebricklayer")
 ```
 
-## 2. Copy the OTIS MRP example to your own project
+## 2. Start your project
 
-```bash
-cp -r examples/otis-mrp examples/my-project
+```r
+library(rmoriebricklayer)
+mkbndlproj("my-project")
 ```
 
-## 3. Edit `examples/my-project/config.json`
+This writes a starter project that builds and runs as it is.
+
+## 3. Edit `my-project/config.json`
 
 Fill in your metadata:
 
@@ -45,7 +47,7 @@ Fill in your metadata:
 }
 ```
 
-## 4. Edit `examples/my-project/data_provenance.json`
+## 4. Edit `my-project/data_provenance.json`
 
 This is the source-of-truth for your dataset. Fill in:
 
@@ -63,7 +65,7 @@ This is the source-of-truth for your dataset. Fill in:
 - `schema.structural_invariants` — row count bounds, etc.
 - `schema.synthetic_recipe` — per-column synthesis specs (see [customization.md](customization.md))
 
-## 5. Replace `examples/my-project/analysis.R` with your script
+## 5. Replace `my-project/analysis.R` with your script
 
 Your analysis script will be invoked as:
 
@@ -78,18 +80,18 @@ It must:
 - Write a `manifest.json` to the output folder containing `{ "meta": {...}, "results": { "<check_name>": { "observed": X, "expected": Y, "status": "PASS|DIFFER|INFO", ... } } }`
 - Optionally check `Sys.getenv("BRICKLAYER_SYNTHETIC")` — if `"1"`, mark all cross-checks as `INFO`
 
-See `examples/otis-mrp/analysis.R` for a complete working reference.
+See `system.file("bundle", "otis-mrp", "analysis.R", package = "rmoriebricklayer")` for a complete working reference.
 
 ## 6. Build the bundle
 
-```bash
-./make_bundle.sh my-project
+```r
+mkbndl("my-project", "dist")
 ```
 
 Produces `dist/my-project_v1.zip`. To include the dataset CSV:
 
-```bash
-./make_bundle.sh my-project --with-data /path/to/your_dataset.csv
+```r
+mkbndl("my-project", "dist", data = "/path/to/your_dataset.csv")
 ```
 
 Produces `dist/my-project_v1_with_data.zip`.
@@ -98,11 +100,13 @@ The output prints the bundle's SHA256 — send that out-of-band to recipients.
 
 ## 7. Verify before shipping
 
+Unzip the bundle into an empty folder and run it the way a recipient will:
+
 ```bash
-./bricklayer/scripts/verify_bundle.sh dist/my-project_v1.zip
+Rscript setup_and_run.R --quick
 ```
 
-Extracts to `~/Desktop/my-project_v1_audit_<timestamp>/`, runs `--quick`, exits non-zero on regression.
+from inside the unzipped folder. It prints how many checks pass; compare that with `expected` in `config.json`.
 
 ## 8. Ship
 

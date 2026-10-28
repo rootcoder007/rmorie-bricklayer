@@ -206,10 +206,10 @@ All four templates use `{{variable}}` substitution at bundle build time. Variabl
 | `{{licence_name}}`, `{{licence_url}}`, `{{data_licence}}` | `data_provenance.json` → `dataset.*` |
 | `{{retrieved_at}}` | `data_provenance.json` → `captured_at_utc` |
 | `{{build_date}}` | Today (`date -u +%Y-%m-%d`) |
-| `{{bricklayer_version}}` | Set in `make_bundle.sh` |
+| `{{bricklayer_version}}` | The installed rmoriebricklayer version |
 | `{{bundle_filename}}`, `{{bundle_sha256}}` | Computed at build time |
 
-To add new placeholders, edit the substitution map in `make_bundle.sh`.
+To add new placeholders, edit the substitution map in `mkbndl()` (`R/mkbndl.R`).
 
 ---
 

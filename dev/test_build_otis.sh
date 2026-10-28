@@ -20,11 +20,21 @@ fi
 cd "${REPO_ROOT}"
 
 echo "[1/4] Building otis-mrp bundle..."
-if [[ -n "${DATA_PATH}" ]]; then
-  ./make_bundle.sh otis-mrp --with-data "${DATA_PATH}" --version test
-else
-  ./make_bundle.sh otis-mrp --version test
+# mkbndl() from a temporary install of this checkout, so the bundle carries
+# this checkout's package files
+LIB="$(mktemp -d)"
+if ! R CMD INSTALL --no-test-load --no-docs --clean -l "${LIB}" . > "${LIB}/install.log" 2>&1; then
+  tail -30 "${LIB}/install.log"
+  exit 1
 fi
+mkdir -p dist
+Rscript -e '
+a <- commandArgs(TRUE)
+library(rmoriebricklayer, lib.loc = a[[1L]])
+print(mkbndl("otis-mrp", "dist", data = if (nzchar(a[[2L]])) a[[2L]],
+             version = "test", overwrite = TRUE))
+' "${LIB}" "${DATA_PATH}"
+rm -rf "${LIB}"
 
 echo
 echo "[2/4] Locating built bundle..."

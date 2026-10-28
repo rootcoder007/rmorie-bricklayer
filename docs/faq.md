@@ -23,7 +23,7 @@ Three reasons:
 2. **Replication permanence** — when Ontario eventually replaces the dataset (new fiscal year, schema change), the bundled copy preserves *exactly* what produced the published numbers.
 3. **Licence permits it** — most open-government licences (OGL-Ontario, OGL-UK, CC-BY) explicitly allow redistribution with attribution. The framework auto-generates a `DATA_NOTICE.md` with the required attribution.
 
-If your dataset's licence does NOT permit redistribution, build the small bundle (`./make_bundle.sh project` without `--with-data`) and rely on the CKAN/manual download paths.
+If your dataset's licence does NOT permit redistribution, build the small bundle (`mkbndl("project", "dist")` without `data =`) and rely on the CKAN/manual download paths.
 
 ### What about non-CKAN data sources?
 

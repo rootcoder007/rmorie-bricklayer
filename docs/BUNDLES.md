@@ -22,7 +22,7 @@ Academic reproducibility usually fails at one of three places: (a) the data is g
 
 ## Status
 
-**v0.5.0.** Production-quality reference implementation (Vansh Singh Ruhela's OTIS MRP) lives in `examples/otis-mrp/` and runs to **37/37 PASS** in audit on macOS. End-to-end tested on macOS and on Linux (Fedora, R 4.6.1: fresh library, unattended `./start_here.sh`, live data download — 36 checks, 27 PASS / 0 DIFFER / 9 INFO). Windows runs welcome as test reports. Those two figures are dated: they were taken before sections 3e, 3f and 3g existed. The current CSV-mode run, measured 2026-09-16 on Linux with no `OTIS_DATASETS_DIR` and no optional downloads, is **55 records, 41 PASS, 0 DIFFER, 14 INFO**.
+**v0.5.0.** Production-quality reference implementation (Vansh Singh Ruhela's OTIS MRP) lives in `inst/bundle/otis-mrp/` (`mkbndl("otis-mrp", ...)`) and runs to **37/37 PASS** in audit on macOS. End-to-end tested on macOS and on Linux (Fedora, R 4.6.1: fresh library, unattended `./start_here.sh`, live data download — 36 checks, 27 PASS / 0 DIFFER / 9 INFO). Windows runs welcome as test reports. Those two figures are dated: they were taken before sections 3e, 3f and 3g existed. The current CSV-mode run, measured 2026-09-16 on Linux with no `OTIS_DATASETS_DIR` and no optional downloads, is **55 records, 41 PASS, 0 DIFFER, 14 INFO**.
 
 ## What you get
 
@@ -53,15 +53,16 @@ results_YYYYMMDD-HHMMSS/
 
 ## Quickstart for a new project
 
-```bash
-git clone https://github.com/<you>/rmorie-bricklayer.git
-cd rmorie-bricklayer
-cp -r examples/otis-mrp examples/my-project
-# Edit examples/my-project/config.json (data URL, schema, author, etc.)
-# Replace examples/my-project/analysis.R with your own R script
-./make_bundle.sh my-project
+```r
+library(rmoriebricklayer)
+mkbndlproj("my-project")
+# Edit my-project/config.json (data URL, schema, author, etc.)
+# Replace my-project/analysis.R with your own R script
+mkbndl("my-project", "dist")
 # → produces dist/my-project_v1.zip ready to ship
 ```
+
+From a shell, `rmbl pack my-project --dest dist` does the same.
 
 See `docs/quickstart.md` for a 5-minute walkthrough.
 
@@ -76,7 +77,7 @@ See `docs/quickstart.md` for a 5-minute walkthrough.
 
 ## Reference example
 
-`examples/otis-mrp/` is a complete, ship-quality capsule for the paper "Alert Complexity and Placement Volatility in Ontario Restrictive Confinement Data" by Vansh Singh Ruhela (U of T MA, Centre for Criminology and Sociolegal Studies, Aug 2026 submission). It uses Ontario's open OTIS A01RCDD dataset (CC OGL-Ontario) and reproduces all 36 numerical claims in the paper from the public CSV alone.
+`inst/bundle/otis-mrp/` is a complete, ship-quality capsule for the paper "Alert Complexity and Placement Volatility in Ontario Restrictive Confinement Data" by Vansh Singh Ruhela (U of T MA, Centre for Criminology and Sociolegal Studies, Aug 2026 submission). It uses Ontario's open OTIS A01RCDD dataset (CC OGL-Ontario) and reproduces all 36 numerical claims in the paper from the public CSV alone.
 
 ## Author & licence
 

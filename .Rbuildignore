@@ -15,7 +15,6 @@
 ^\.gitignore$
 ^LICENSE$
 ^\.lintr$
-^make_bundle\.sh$
 ^NEWS\.md\.bak$
 ^\.otis-input$
 ^pkgdown$
