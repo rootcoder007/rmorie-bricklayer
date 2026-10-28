@@ -272,6 +272,29 @@
   the title, so `rmbl functions bundle` finds
   [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md).
 - New
+  [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
+  (and `rmbl archive push DIR`) sends a capture kept on this computer by
+  [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  to an archive.org item, archive.rmorie.com or both later, when they
+  answer again: the same files, each checked first against the SHA-256
+  in the capture’s manifest and never downloaded again, so the archive
+  keeps what was captured. It records what each archive took in
+  `push.json`, so running it again retries only what failed. With
+  `upload = "wayback"` it asks the Wayback Machine to capture the
+  addresses (the Wayback Machine takes no uploads, so its copy is of the
+  page as it is then), and it timestamps a manifest that has no
+  timestamp yet.
+- New
+  [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  (and `rmbl pack --check ZIP`) checks a built bundle before it is
+  shipped: it unzips it into a new folder, runs it as a recipient would
+  (`setup_and_run.R --quick`, or `--synthetic`), reads the manifest the
+  run writes and fails when the run stops, a cross-check is DIFFER or,
+  on real data, the counts differ from `expected` in `config.json`; a
+  launcher the zip does not mark executable is a warning. It replaces
+  the repository’s `scripts/verify_bundle.sh`, which was not in the
+  package and needed Python.
+- New
   [`mkbndlproj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlproj.md)
   writes a starter project (`config.json`, `data_provenance.json`,
   `analysis.R`) that builds and runs as it is, on synthetic or real

@@ -190,10 +190,10 @@ b2
 #> │   Files            1                                                        │
 #> │   Manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e416796 │
 #> │                    0781a579                                                 │
-#> │   Bundled          2026-10-28T04:57:51Z                                     │
+#> │   Bundled          2026-10-28T05:44:25Z                                     │
 #> │   Scheme           ML-DSA-44                                                │
 #> │   Note             as published                                             │
-#> │   Path             /tmp/Rtmpx4g3IR/file1e94c153c6a/capsule_bundle.json      │
+#> │   Path             /tmp/RtmpGCZrUJ/file20ab7596f8f3/capsule_bundle.json     │
 #> │                                                                             │
 #> │   A signed list of the capsule's files and their digests; check the files   │
 #> │   against it with cpsbndlvrf().                                             │
@@ -228,6 +228,6 @@ unlink(dir2, recursive = TRUE)
 
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/Rtmpx4g3IR/no-such-capsule
+#> Error : `dir` does not exist: /tmp/RtmpGCZrUJ/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

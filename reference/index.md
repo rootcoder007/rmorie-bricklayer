@@ -41,6 +41,8 @@ datasets over flaky endpoints.
 - [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
   : Capture files the Internet Archive cannot reach, and publish them as
   an archive.org item
+- [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
+  : Send a capture kept on this computer to the archives later
 - [`arcfind()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcfind.md)
   : Find saved copies of an address in archive.rmorie.com
 - [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
@@ -152,6 +154,8 @@ verify it later so an analysis reproduces from the same inputs.
   : Check a Randomisation List at Unblinding
 - [`mkbndlproj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlproj.md)
   : Start a Reproducibility Bundle Project
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  : Check a reproducibility bundle before shipping it
 
 ## Language model and command line
 

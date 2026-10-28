@@ -10,14 +10,14 @@
 Source:
 [`inst/CITATION`](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/inst/CITATION)
 
-Ruhela VS (2026). *rmoriebricklayer: Reproducible Data Capsules with
-Provenance and Fallback*.
+Ruhela VS (2026). *rmoriebricklayer: Post-Quantum Signing and
+Reproducibility Capsules for R*.
 [doi:10.32614/CRAN.package.rmoriebricklayer](https://doi.org/10.32614/CRAN.package.rmoriebricklayer).
 R package version 1.0.3,
 <https://CRAN.R-project.org/package=rmoriebricklayer>.
 
     @Manual{ruhela_rmoriebricklayer_2026,
-      title = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},
+      title = {rmoriebricklayer: Post-Quantum Signing and Reproducibility Capsules for R},
       author = {Vansh Singh Ruhela},
       year = {2026},
       note = {R package version 1.0.3},
