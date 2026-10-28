@@ -155,8 +155,8 @@ system dependency.</p>
 <span><span class="va">signingkey</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Signing key (post-quantum)</span> ───────────────────────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   scheme     xmss-sha256                                                    │</span></span>
-<span><span class="co">#&gt; │   root       26dd9214c35c327e6fadb6ef35905ca94a82019164e5be1ea217b9ad5f92c2 │</span></span>
-<span><span class="co">#&gt; │              12                                                             │</span></span>
+<span><span class="co">#&gt; │   root       422696a821643fd111660bc82799c5669a025f290636830ea1494e64a87a56 │</span></span>
+<span><span class="co">#&gt; │              32                                                             │</span></span>
 <span><span class="co">#&gt; │   height     3                                                              │</span></span>
 <span><span class="co">#&gt; │   used       0 of 8 signatures                                              │</span></span>
 <span><span class="co">#&gt; │   remaining  8                                                              │</span></span>
@@ -169,7 +169,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Public verification key</span> ─────────────────────────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   scheme  xmss-sha256                                                      │</span></span>
-<span><span class="co">#&gt; │   root    26dd9214c35c327e6fadb6ef35905ca94a82019164e5be1ea217b9ad5f92c212 │</span></span>
+<span><span class="co">#&gt; │   root    422696a821643fd111660bc82799c5669a025f290636830ea1494e64a87a5632 │</span></span>
 <span><span class="co">#&gt; │   height  3                                                                │</span></span>
 <span><span class="co">#&gt; ╰────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -453,7 +453,7 @@ failures:</p>
 <span></span>
 <span><span class="co"># a declared outcome that was not reported</span></span>
 <span><span class="fu"><a href="../reference/prrgdecl.html">prrgchk</a></span><span class="op">(</span><span class="va">plan</span>, <span class="st">"n_rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-10-28T13:15:31Z: departures below</span> ──╮</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-10-28T13:50:37Z: departures below</span> ──╮</span></span>
 <span><span class="co">#&gt; │ <span style="color: #BB0000;">✖ NOT VERIFIED</span>                                                        │</span></span>
 <span><span class="co">#&gt; │                                                                       │</span></span>
 <span><span class="co">#&gt; │   Declared  2                                                         │</span></span>
@@ -471,7 +471,7 @@ failures:</p>
 <span></span>
 <span><span class="co"># statistics reported that were never declared</span></span>
 <span><span class="fu"><a href="../reference/prrgdecl.html">prrgchk</a></span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"n_rows"</span>, <span class="st">"byyear"</span>, <span class="st">"byprecinct"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-10-28T13:15:31Z: departures below</span> ──╮</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-10-28T13:50:37Z: departures below</span> ──╮</span></span>
 <span><span class="co">#&gt; │ <span style="color: #BB0000;">✖ NOT VERIFIED</span>                                                        │</span></span>
 <span><span class="co">#&gt; │                                                                       │</span></span>
 <span><span class="co">#&gt; │   Declared  2                                                         │</span></span>
@@ -672,7 +672,7 @@ rewritten to match whatever the files now say.</p>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    no_unlisted_files                                                    │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    attestation:attestation_complete                                     │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    attestation:manifest_digest                                          │</span></span>
-<span><span class="co">#&gt; │        1cc6fb0a6e31661d724000adc034e40d9981ba30c6e01d303a4300cdf56fda06     │</span></span>
+<span><span class="co">#&gt; │        5712b2024156e512e1e8f9d26019840fc98b24958d2556b992023aaa6ff01694     │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    attestation:signature                                                │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    manifest_digest                                                      │</span></span>
 <span><span class="co">#&gt; │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │</span></span>
@@ -702,7 +702,7 @@ tried before the analysis is written.</p>
 <span>                contact <span class="op">=</span> <span class="st">"a.researcher@example.org"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">p</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Bundle project</span> ───────────────────────────────────────────────────────────╮</span></span>
-<span><span class="co">#&gt; │   Folder  /tmp/RtmpukfIt0/my-study                                          │</span></span>
+<span><span class="co">#&gt; │   Folder  /tmp/RtmpCmylKR/my-study                                          │</span></span>
 <span><span class="co">#&gt; │   Files   config.json, data_provenance.json, analysis.R                     │</span></span>
 <span><span class="co">#&gt; │                                                                             │</span></span>
 <span><span class="co">#&gt; │   Edit config.json (who and what), data_provenance.json (the data file,     │</span></span>
@@ -741,12 +741,12 @@ is in the bundle, so it cannot stop on the reviewer’s machine with
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Reproducibility bundle</span> ───────────────────────────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   Project    my-study                                                       │</span></span>
 <span><span class="co">#&gt; │   Zip        my-study_v1_with_data.zip                                      │</span></span>
-<span><span class="co">#&gt; │   Folder     /tmp/RtmpukfIt0                                                │</span></span>
+<span><span class="co">#&gt; │   Folder     /tmp/RtmpCmylKR                                                │</span></span>
 <span><span class="co">#&gt; │   Size       198.6 KB                                                       │</span></span>
 <span><span class="co">#&gt; │   Files      28                                                             │</span></span>
 <span><span class="co">#&gt; │   Data file  inside                                                         │</span></span>
-<span><span class="co">#&gt; │   SHA-256    961adff6e63c7622824c7dd3c4dca9e47aa881140e325407a3ac4c7df396d5 │</span></span>
-<span><span class="co">#&gt; │              33                                                             │</span></span>
+<span><span class="co">#&gt; │   SHA-256    92f9a0ef6a717a445696c886ad19de15a536e858272466f2d48f97d5882ab2 │</span></span>
+<span><span class="co">#&gt; │              a0                                                             │</span></span>
 <span><span class="co">#&gt; │                                                                             │</span></span>
 <span><span class="co">#&gt; │   Recipients unzip it and double-click START_HERE.command (macOS) or        │</span></span>
 <span><span class="co">#&gt; │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │</span></span>
