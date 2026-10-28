@@ -203,9 +203,8 @@
       c(
         "library(rmoriebricklayer)",
         vapply(
-          ok()$calls,
-          function(cl) deparse1(cl, collapse = "\n", width.cutoff = 80L),
-          ""
+          ok()$calls, deparse1, "",
+          collapse = "\n", width.cutoff = 80L
         )
       )
     })

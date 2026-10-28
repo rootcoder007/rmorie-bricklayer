@@ -195,9 +195,6 @@ format.rmbl_fipsmod_key <- function(x, ...) {
 }
 
 #' @export
-print.rmbl_fipsmod_key <- .rmbl_print_box
-
-#' @export
 format.rmbl_fipsmod <- function(x, ...) {
   head <- switch(
     x$status,
@@ -220,9 +217,6 @@ format.rmbl_fipsmod <- function(x, ...) {
     .rmbl_rule()
   )
 }
-
-#' @export
-print.rmbl_fipsmod <- .rmbl_print_box
 
 #' What a module's status means, in a sentence or two.
 #' @param x A result of fipsmod().
@@ -262,7 +256,7 @@ print.rmbl_fipsmod <- .rmbl_print_box
 }
 
 #' The first and last bytes of a long hex string.
-#' @param h Hex text.
+#' @param h A digest in hex.
 #' @return A shortened string.
 #' @noRd
 .rmbl_fipsmod_short <- function(h) {

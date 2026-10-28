@@ -134,9 +134,6 @@ format.rmbl_plant <- function(x, ...) {
   )
 }
 
-#' @export
-print.rmbl_plant <- .rmbl_print_box
-
 #' Do Reasonable Alternative Analyses Agree?
 #'
 #' Runs several specifications of the same estimate (other covariates,
@@ -215,9 +212,6 @@ format.rmbl_spec <- function(x, ...) {
     }
   )
 }
-
-#' @export
-print.rmbl_spec <- .rmbl_print_box
 
 #' Record Correctness Evidence in a Manifest
 #'

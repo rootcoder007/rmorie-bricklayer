@@ -515,7 +515,7 @@ rvkfetch <- function(path, tmout = 10) {
 }
 
 #' Percent-encodes every character outside the unreserved set of RFC 3986.
-#' @param x One string.
+#' @param x The string to percent-encode.
 #' @return The encoded string.
 #' @noRd
 .rmbl_url_encode <- function(x) {

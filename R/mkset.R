@@ -84,27 +84,7 @@ mkset <- function(..., title = "Analysis results", file = NULL,
   if (is.null(file)) {
     return(out)
   }
-  file <- .rmbl_string1(file, "file")
-  ext <- tolower(tools::file_ext(file))
-  if (!ext %in% c("html", "htm", "md", "txt")) {
-    stop(
-      sprintf(
-        "mkset: `file` must end in .html, .md or .txt, not .%s",
-        ext
-      ),
-      call. = FALSE
-    )
-  }
-  txt <- switch(
-    ext,
-    html = ,
-    htm = .mkset_html(out, plots),
-    md = .mkset_md(out),
-    txt = paste(.mkset_lines(out), collapse = "\n")
-  )
-  .bndl_write_text(sub("\n$", "", txt), file)
-  attr(out, "path") <- normalizePath(file, winslash = "/")
-  invisible(out)
+  .mkset_write(out, file, plots)
 }
 
 #' @export
@@ -139,7 +119,7 @@ print.rmbl_set <- function(x, ...) {
 }
 
 #' A result's heading when it was given no name: its box's title.
-#' @param v The result.
+#' @param v One result of the set.
 #' @param k Its position.
 #' @return One string.
 #' @noRd
@@ -160,7 +140,7 @@ print.rmbl_set <- function(x, ...) {
 }
 
 #' What a result prints, 80 characters wide and without colour.
-#' @param v The result.
+#' @param v One result of the set.
 #' @return Lines.
 #' @noRd
 .mkset_lines <- function(v) {
@@ -193,7 +173,7 @@ print.rmbl_set <- function(x, ...) {
 }
 
 #' A result's plot as markup, or NULL when it has none or it fails.
-#' @param v The result.
+#' @param v One result of the set.
 #' @param big The largest SVG kept as vectors, in bytes.
 #' @return One string or NULL.
 #' @noRd
@@ -218,8 +198,8 @@ print.rmbl_set <- function(x, ...) {
 }
 
 #' A plot call as a PNG data URI image.
-#' @param expr The plot call.
-#' @param env Where to evaluate it.
+#' @param expr The call that draws the plot.
+#' @param env The environment to evaluate it in.
 #' @return One string of markup.
 #' @noRd
 .mkset_png <- function(expr, env) {
@@ -257,4 +237,34 @@ print.rmbl_set <- function(x, ...) {
 #' @noRd
 .mkset_md <- function(x) {
   .bl_rpt_md(.mkset_entries(x), x$title)
+}
+
+#' Writes a set to an .html, .md or .txt file.
+#' @param out The rmbl_set.
+#' @param file The path.
+#' @param plots Whether the HTML page embeds plots.
+#' @return `out` with its "path" attribute, invisibly.
+#' @noRd
+.mkset_write <- function(out, file, plots) {
+  file <- .rmbl_string1(file, "file")
+  ext <- tolower(tools::file_ext(file))
+  if (!ext %in% c("html", "htm", "md", "txt")) {
+    stop(
+      sprintf(
+        "mkset: `file` must end in .html, .md or .txt, not .%s",
+        ext
+      ),
+      call. = FALSE
+    )
+  }
+  txt <- switch(
+    ext,
+    html = ,
+    htm = .mkset_html(out, plots),
+    md = .mkset_md(out),
+    txt = paste(.mkset_lines(out), collapse = "\n")
+  )
+  .bndl_write_text(sub("\n$", "", txt), file)
+  attr(out, "path") <- normalizePath(file, winslash = "/")
+  invisible(out)
 }

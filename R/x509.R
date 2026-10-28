@@ -903,7 +903,8 @@ tbs_alg_oid <- function(alg) {
   out
 }
 
-#' policyConstraints: requireExplicitPolicy \[0\] and inhibitPolicyMapping \[1\].
+#' policyConstraints: requireExplicitPolicy (tag 0) and
+#'   inhibitPolicyMapping (tag 1).
 #' @param out,inner,val As for .rmbl_ext_policies().
 #' @return The fields.
 #' @noRd

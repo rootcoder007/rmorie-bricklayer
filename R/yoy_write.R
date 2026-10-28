@@ -73,40 +73,7 @@ yoywr <- function(x, file, format = "auto", ...) {
   }
   file <- as.character(file)[1L]
   format <- tolower(as.character(format)[1L])
-  if (identical(format, "auto")) {
-    ext <- tolower(sub(".*\\.", "", basename(file)))
-    if (!ext %in% c(
-      "html",
-      "htm",
-      "pdf",
-      "csv",
-      "tsv",
-      "tab",
-      "json",
-      "md",
-      "markdown"
-    )) {
-      stop(
-        sprintf(
-          "cannot tell the format from \"%s\"; pass format = explicitly",
-          basename(file)
-        ),
-        call. = FALSE
-      )
-    }
-    format <- switch(
-      ext,
-      html = ,
-      htm = "html",
-      pdf = "pdf",
-      csv = "csv",
-      tsv = ,
-      tab = "tsv",
-      json = "json",
-      md = ,
-      markdown = "markdown"
-    )
-  }
+  format <- .rmbl_yoy_format(file, format)
   if (!format %in% c("html", "pdf", "csv", "tsv", "json", "markdown")) {
     stop(sprintf("unknown format: %s", format), call. = FALSE)
   }
@@ -560,4 +527,30 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
     },
     0L
   )
+}
+
+#' The output format of yoywr(): as given, or read from the file suffix.
+#' @param file The output path.
+#' @param format The lower-cased format argument.
+#' @return The format name.
+#' @noRd
+.rmbl_yoy_format <- function(file, format) {
+  if (!identical(format, "auto")) {
+    return(format)
+  }
+  ext <- tolower(sub(".*\\.", "", basename(file)))
+  map <- c(
+    html = "html", htm = "html", pdf = "pdf", csv = "csv", tsv = "tsv",
+    tab = "tsv", json = "json", md = "markdown", markdown = "markdown"
+  )
+  if (!ext %in% names(map)) {
+    stop(
+      sprintf(
+        "cannot tell the format from \"%s\"; pass format = explicitly",
+        basename(file)
+      ),
+      call. = FALSE
+    )
+  }
+  map[[ext]]
 }

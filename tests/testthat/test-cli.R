@@ -46,6 +46,11 @@ test_that("unknown verbs, options and topics are usage errors", {
   r <- cli_run("functions", "--", "x")
   expect_identical(r$status, 2L)
   expect_match(r$text, "takes no arguments after --", fixed = TRUE)
+  # with no pattern, every exported function is listed
+  r <- cli_run("functions")
+  expect_identical(r$status, 0L)
+  expect_match(r$text, "yoywr", fixed = TRUE)
+  expect_match(r$text, "mkset", fixed = TRUE)
   expect_error(blcli("version", out = "x"), "must be a function")
   expect_error(blcli(c("version", NA)), "no NA")
 })

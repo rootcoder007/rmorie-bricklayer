@@ -1,6 +1,18 @@
 # The print() methods whose box comes wholly from their format() method.
 # Each is the same two lines, so they live together here rather than
 # repeated beside every format() method; format() stays with its result.
+# The shared method is defined first, in this file, so that the file
+# stands on its own wherever it is sourced.
+
+#' Prints a result's box, as its format() method builds it.
+#' @param x The result.
+#' @param ... Passed on to the result's format() method.
+#' @return `x`, invisibly.
+#' @noRd
+.rmbl_print_box <- function(x, ...) {
+  .rmbl_cat(format(x, ...), x)
+  invisible(x)
+}
 
 #' @export
 print.bricklayer_analysis <- .rmbl_print_box
@@ -629,3 +641,30 @@ print.rmbl_wild <- .rmbl_print_box
 
 #' @export
 print.rmbl_yoy_summary <- .rmbl_print_box
+
+#' @export
+print.rmbl_bundle <- .rmbl_print_box
+
+#' @export
+print.rmbl_bundle_project <- .rmbl_print_box
+
+#' @export
+print.rmbl_alloc <- .rmbl_print_box
+
+#' @export
+print.rmbl_alloc_check <- .rmbl_print_box
+
+#' @export
+print.rmbl_xvrf <- .rmbl_print_box
+
+#' @export
+print.rmbl_plant <- .rmbl_print_box
+
+#' @export
+print.rmbl_spec <- .rmbl_print_box
+
+#' @export
+print.rmbl_fipsmod_key <- .rmbl_print_box
+
+#' @export
+print.rmbl_fipsmod <- .rmbl_print_box

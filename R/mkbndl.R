@@ -300,12 +300,6 @@ format.rmbl_bundle_project <- function(x, ...) {
   )
 }
 
-#' @export
-print.rmbl_bundle <- .rmbl_print_box
-
-#' @export
-print.rmbl_bundle_project <- .rmbl_print_box
-
 #' mkbndl()'s arguments, checked.
 #' @param dest,data,version,overwrite As for mkbndl().
 #' @return A list of the four.
@@ -612,7 +606,7 @@ print.rmbl_bundle_project <- .rmbl_print_box
 #' @param root The bundle folder.
 #' @param subs The template values.
 #' @param data The data file, or NULL.
-#' @param prov The provenance.
+#' @param prov The bundle's provenance record.
 #' @return Nothing useful.
 #' @noRd
 .bndl_pages <- function(stage, root, subs, data, prov) {
@@ -639,7 +633,7 @@ print.rmbl_bundle_project <- .rmbl_print_box
 }
 
 #' Writes one string as a UTF-8 text file ending in a newline.
-#' @param txt The text.
+#' @param txt The text to write.
 #' @param path The file.
 #' @return Nothing useful.
 #' @noRd
@@ -670,7 +664,7 @@ print.rmbl_bundle_project <- .rmbl_print_box
 
 #' One string, or empty, for a free-text argument.
 #' @param x The argument.
-#' @param what Its name.
+#' @param what Its name, for the error message.
 #' @return One string.
 #' @noRd
 .bndl_text <- function(x, what) {
@@ -907,7 +901,7 @@ print.rmbl_bundle_project <- .rmbl_print_box
 }
 
 #' A time as the DOS time and date a zip stores.
-#' @param t A POSIXct.
+#' @param t The file time, a POSIXct.
 #' @return Two integers: time, date.
 #' @noRd
 .bndl_dos_time <- function(t) {

@@ -104,9 +104,6 @@ format.rmbl_xvrf <- function(x, ...) {
   )
 }
 
-#' @export
-print.rmbl_xvrf <- .rmbl_print_box
-
 #' What a cross-verification result means, in one or two sentences.
 #' @param x A result of cpsxvrf().
 #' @return A string.
@@ -186,7 +183,7 @@ print.rmbl_xvrf <- .rmbl_print_box
 
 #' The last arc of the NIST object identifier of a FIPS 204 or 205
 #' parameter set (2.16.840.1.101.3.4.3.<arc>), or NA.
-#' @param scheme The parameter-set name.
+#' @param scheme The parameter-set name to look up.
 #' @return An integer, or NA.
 #' @noRd
 .rmbl_xvrf_oid <- function(scheme) {
@@ -208,7 +205,7 @@ print.rmbl_xvrf <- .rmbl_print_box
 
 #' A public key as DER SubjectPublicKeyInfo.
 #' @param arc The last arc of its algorithm's object identifier.
-#' @param pk The public key bytes.
+#' @param pk The public key bytes to wrap.
 #' @return Raw DER.
 #' @noRd
 .rmbl_xvrf_spki <- function(arc, pk) {
@@ -245,7 +242,7 @@ print.rmbl_xvrf <- .rmbl_print_box
 }
 
 #' Whether OpenSSL can be asked about a signature at all.
-#' @param sig The signature.
+#' @param sig The signature to cross-check.
 #' @param openssl Path to the openssl program, or "".
 #' @return A list: `none` (the no-verdict answer, or NULL when OpenSSL can
 #'   be asked), `ver` (its version) and `oid` (the scheme's arc).

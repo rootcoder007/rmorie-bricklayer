@@ -223,9 +223,6 @@ format.rmbl_alloc <- function(x, ...) {
 }
 
 #' @export
-print.rmbl_alloc <- .rmbl_print_box
-
-#' @export
 format.rmbl_alloc_check <- function(x, ...) {
   c(
     .rmbl_rule(sprintf(
@@ -242,9 +239,6 @@ format.rmbl_alloc_check <- function(x, ...) {
     .rmbl_rule()
   )
 }
-
-#' @export
-print.rmbl_alloc_check <- .rmbl_print_box
 
 #' @rdname ralloc
 #' @param x A list from ralloc(), for `plot()`.
@@ -318,7 +312,7 @@ plot.rmbl_alloc <- function(x, ...) {
 #' The first sentence of the list's reading: totals, and how far off.
 #' @param tot The total per arm.
 #' @param gap The largest departure from the ratio, in ratio units.
-#' @param set The settings.
+#' @param set The allocation settings.
 #' @return One string.
 #' @noRd
 .ralloc_reading <- function(tot, gap, set) {
@@ -340,7 +334,7 @@ plot.rmbl_alloc <- function(x, ...) {
 
 #' The participants of each arm in each stratum.
 #' @param d The list, as a data frame.
-#' @param set The settings.
+#' @param set The allocation settings.
 #' @return A data frame: `stratum`, then one count column per arm.
 #' @noRd
 .ralloc_counts <- function(d, set) {
@@ -459,7 +453,7 @@ plot.rmbl_alloc <- function(x, ...) {
 }
 
 #' Builds the list from checked settings and a seed.
-#' @param set The settings.
+#' @param set The allocation settings.
 #' @param sd The seed, from .ralloc_seed().
 #' @return An rmbl_alloc.
 #' @noRd
@@ -492,7 +486,7 @@ plot.rmbl_alloc <- function(x, ...) {
 
 #' One stratum's allocation, `m` places long.
 #' @param g The generator.
-#' @param set The settings.
+#' @param set The allocation settings.
 #' @param m The number of places.
 #' @return A data frame of `block` and `arm`.
 #' @noRd
@@ -539,7 +533,7 @@ plot.rmbl_alloc <- function(x, ...) {
 
 #' A Fisher-Yates shuffle.
 #' @param g The generator.
-#' @param v The values.
+#' @param v The values to shuffle.
 #' @return `v`, shuffled.
 #' @noRd
 .ralloc_shuffle <- function(g, v) {
@@ -569,7 +563,7 @@ plot.rmbl_alloc <- function(x, ...) {
 
 #' The commitment: SHA-256 of the settings, the rows and the seed's SHA-256.
 #' @param d The list, as a data frame.
-#' @param set The settings.
+#' @param set The allocation settings.
 #' @param hex The seed, hexadecimal.
 #' @return 64 hexadecimal characters.
 #' @noRd
@@ -593,7 +587,7 @@ plot.rmbl_alloc <- function(x, ...) {
 }
 
 #' The method, in words.
-#' @param set The settings.
+#' @param set The allocation settings.
 #' @return One string.
 #' @noRd
 .ralloc_method <- function(set) {

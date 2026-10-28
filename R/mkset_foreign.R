@@ -7,7 +7,7 @@
 
 #' Shows one result of a set: this package's results print themselves;
 #' another package's are drawn as a box.
-#' @param v The result.
+#' @param v A result from another package.
 #' @return NULL, invisibly.
 #' @noRd
 .mkset_show <- function(v) {
@@ -20,7 +20,7 @@
 }
 
 #' Whether a result is one of this package's (it has a print method here).
-#' @param v The result.
+#' @param v A result from another package.
 #' @return TRUE or FALSE.
 #' @noRd
 .mkset_own <- function(v) {
@@ -33,7 +33,7 @@
 }
 
 #' The box of a result from another package: titled rule, lines, rule.
-#' @param v The result.
+#' @param v A result from another package.
 #' @return Lines.
 #' @noRd
 .mkset_box <- function(v) {
@@ -67,7 +67,7 @@
 }
 
 #' Any result as its own printout inside a box.
-#' @param v The result.
+#' @param v A result from another package.
 #' @return Lines.
 #' @noRd
 .fb_text <- function(v) {
@@ -219,7 +219,7 @@
 }
 
 #' Intervals as text.
-#' @param lo,hi The bounds.
+#' @param lo,hi The interval's lower and upper bounds.
 #' @return A character vector.
 #' @noRd
 .fb_ci <- function(lo, hi) {

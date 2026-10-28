@@ -2,7 +2,6 @@
 # sources them. configure copies them from R/ into the installed bundle/lib.
 aaa_input_guards.R
 aaa_local_seed.R
-aaa_print_box.R
 json_native.R
 sha256_native.R
 lib_helpers.R
