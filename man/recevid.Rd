@@ -38,7 +38,7 @@ d <- data.frame(x = rbinom(100, 1, 0.5))
 d$y <- d$x + rnorm(100)
 dm <- function(df) mean(df$y[df$x == 1]) - mean(df$y[df$x == 0])
 man <- mkmnf(list(project = "demo"), env = FALSE)
-man <- recevid(man, cpsplant(d, dm, "y", "x", n = 20, seed = 1))
+man <- recevid(man, cpsplant(d, dm, "y", "x", n = 50, seed = 1))
 man
 \dontshow{\}) # examplesIf}
 }

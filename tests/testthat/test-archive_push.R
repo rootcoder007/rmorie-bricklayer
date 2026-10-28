@@ -25,6 +25,18 @@ push_capture <- function(dir) {
   arccap(c("https://s.org/a.zip", "https://s.org/b.csv"), dir, tsa = NULL)
 }
 
+# The rows of a tsvrf() result whose token is for these bytes, signed.
+push_ts_rows <- function(ok = TRUE) {
+  data.frame(
+    check = c(
+      "token_parses", "token_structure", "message_imprint", "signature",
+      "attribute_digest"
+    ),
+    ok = ok,
+    stringsAsFactors = FALSE
+  )
+}
+
 test_that("a capture kept here goes to an archive.org item later", {
   dir <- withr::local_tempdir()
   cap <- push_capture(dir)
@@ -164,7 +176,7 @@ test_that("a manifest without a timestamp is stamped when it is sent", {
     tsvrf = function(token, data, ...) {
       n$checked <- n$checked + 1L
       list(ok = TRUE, time = as.POSIXct("2026-10-28", tz = "UTC"),
-           checks = data.frame(check = "signature", ok = TRUE))
+           checks = push_ts_rows())
     },
     wbsave = function(urls, ...) stop("offline", call. = FALSE)
   )
@@ -218,4 +230,217 @@ test_that("rmbl archive push sends a capture kept here", {
   up <- TRUE
   r <- run("archive", "push", dir, "--reason", why, "--private")
   expect_identical(r$status, 0L)
+})
+
+# A capture whose manifest names `files` (written by hand, as an attacker
+# could), with a good file "a.zip" first.
+push_hostile <- function(dir, files) {
+  push_capture(dir)
+  m <- fromjs(file.path(dir, "manifest.json"), simplifyVector = FALSE)
+  one <- m$files[[1L]]
+  for (k in seq_along(files)) {
+    one$file <- files[[k]]
+    one$url <- sprintf("https://s.org/h%d", k)
+    m$files[[length(m$files) + 1L]] <- one
+  }
+  writeLines(tojs(m), file.path(dir, "manifest.json"))
+  invisible(dir)
+}
+
+test_that(
+  "a manifest file name outside the capture folder is never read or sent",
+  {
+    top <- withr::local_tempdir()
+    dir <- file.path(top, "cap")
+    dir.create(dir)
+    dir.create(file.path(top, "outside"))
+    secret <- file.path(top, "outside", "secret.txt")
+    writeBin(charToRaw("AAA"), secret)
+    file.symlink(secret, file.path(dir, "link.zip"))
+    dir.create(file.path(dir, "sub"))
+    bad <- c(
+      "../outside/secret.txt", secret, "..", ".", "sub", "a\\b.zip",
+      "sub/../../outside/secret.txt", "link.zip", "~/x", "a\u009bb"
+    )
+    push_hostile(dir, bad)
+    rec <- new.env()
+    rec$puts <- character()
+    rec$paths <- character()
+    local_mocked_bindings(
+      .bl_ia_put = function(url, path, content_type, headers, timeout) {
+        rec$puts <- c(rec$puts, url)
+        rec$paths <- c(rec$paths, path)
+        list(status = 200L, body = raw(), error = "")
+      },
+      .bl_arc_base = function() "https://archive.rmorie.com",
+      .bl_arc_key = function(base) "key",
+      .bl_arc_upload = function(path, url, ...) {
+        rec$paths <- c(rec$paths, path)
+        list(capture_id = "c1", capture = "https://archive.rmorie.com/c/c1")
+      }
+    )
+    why <- "Tables cited in chapter 3 of the thesis"
+    r <- arcpush(dir, item = "test-item-2026", ak = "AK1", sk = "SK1",
+                 upload = "rmorie", reason = why, tsa = NULL)
+    expect_identical(r$status[1:2], c("archived", "archived"))
+    expect_true(all(grepl(
+      "not a plain relative path inside the capture folder", r$status[-1:-2]
+    )))
+    # nothing outside the folder was read, and every key is in the one item
+    expect_false(any(grepl("outside|secret|link", rec$paths)))
+    expect_true(all(startsWith(
+      rec$puts, "https://s3.us.archive.org/test-item-2026/"
+    )))
+    expect_false(any(grepl("/\\.\\./|/outside/", rec$puts)))
+  }
+)
+
+test_that("a file name is percent-encoded in its S3 key and mirror", {
+  dir <- withr::local_tempdir()
+  push_capture(dir)
+  file.rename(file.path(dir, "a.zip"), file.path(dir, "a b#?.zip"))
+  m <- fromjs(file.path(dir, "manifest.json"), simplifyVector = FALSE)
+  m$files[[1L]]$file <- "a b#?.zip"
+  writeLines(tojs(m), file.path(dir, "manifest.json"))
+  rec <- new.env()
+  rec$puts <- character()
+  local_mocked_bindings(
+    .bl_ia_put = function(url, path, content_type, headers, timeout) {
+      rec$puts <- c(rec$puts, url)
+      list(status = 200L, body = raw(), error = "")
+    }
+  )
+  r <- arcpush(dir, item = "test-item-2026", ak = "AK1", sk = "SK1",
+               tsa = NULL)
+  expect_true(
+    "https://s3.us.archive.org/test-item-2026/a%20b%23%3F.zip" %in% rec$puts
+  )
+  expect_identical(
+    r$mirror[1L], "https://archive.org/download/test-item-2026/a%20b%23%3F.zip"
+  )
+  expect_error(.bl_ia_key_path("../x"), "not a file name inside")
+})
+
+test_that("a junk timestamp reply is neither kept nor sent nor reused", {
+  dir <- withr::local_tempdir()
+  push_capture(dir)
+  rec <- new.env()
+  rec$puts <- character()
+  local_mocked_bindings(
+    .bl_tsa_post = function(url, body, timeout) {
+      list(status = 200L, body = charToRaw("<html>portal</html>"), error = "")
+    },
+    .bl_ia_put = function(url, path, content_type, headers, timeout) {
+      rec$puts <- c(rec$puts, url)
+      list(status = 200L, body = raw(), error = "")
+    }
+  )
+  expect_warning(
+    r <- arcpush(dir, item = "test-item-2026", ak = "AK1", sk = "SK1"),
+    "not a valid timestamp of the manifest .*not kept"
+  )
+  expect_false(file.exists(file.path(dir, "manifest.tsr")))
+  expect_null(attr(r, "timestamp"))
+  expect_false(any(grepl("manifest.tsr", rec$puts, fixed = TRUE)))
+  # a junk manifest.tsr an earlier version kept is set aside, not sent
+  writeBin(charToRaw("junk"), file.path(dir, "manifest.tsr"))
+  unlink(file.path(dir, "push.json"))
+  rec$puts <- character()
+  expect_warning(
+    expect_warning(
+      r <- arcpush(dir, item = "test-item-2026", ak = "AK1", sk = "SK1"),
+      "the kept manifest.tsr is not a valid timestamp"
+    ),
+    "authority's reply is not a valid timestamp"
+  )
+  expect_false(file.exists(file.path(dir, "manifest.tsr")))
+  expect_true(file.exists(file.path(dir, "manifest.tsr.rejected")))
+  expect_false(any(grepl("manifest.tsr", rec$puts, fixed = TRUE)))
+})
+
+test_that("the timestamp reply is checked against the request's nonce", {
+  dir <- withr::local_tempdir()
+  push_capture(dir)
+  seen <- new.env()
+  local_mocked_bindings(
+    .bl_tsa_post = function(url, body, timeout) {
+      list(status = 200L, body = charToRaw("tsr"), error = "")
+    },
+    tsvrf = function(token, data, cert = NULL, trust = NULL, crls = list(),
+                     attm = NULL, nonce = NULL) {
+      seen$nonce <- nonce
+      ck <- rbind(
+        push_ts_rows(),
+        data.frame(check = "nonce", ok = FALSE, stringsAsFactors = FALSE)
+      )
+      list(ok = FALSE, time = Sys.time(), checks = ck)
+    },
+    wbsave = function(urls, ...) stop("offline", call. = FALSE)
+  )
+  expect_warning(arcpush(dir, upload = "wayback"), "failed: nonce")
+  expect_true(is.raw(seen$nonce) && length(seen$nonce) == 8L)
+  expect_false(file.exists(file.path(dir, "manifest.tsr")))
+})
+
+test_that("a junk token is not printed as imprint and signature verified", {
+  m <- charToRaw("manifest")
+  ts <- tsvrf(charToRaw("junk"), m)
+  expect_match(.bl_cap_ts_text(ts), "NOT verified", fixed = TRUE)
+  ts <- tsvrf(as.raw(c(0x30, 0x03, 0x02, 0x01, 0x05)), m)
+  expect_match(.bl_cap_ts_text(ts), "NOT verified", fixed = TRUE)
+  ok <- list(time = Sys.time(), ok = FALSE, checks = push_ts_rows())
+  expect_match(.bl_cap_ts_text(ok), "imprint and signature verified")
+  ok$checks$ok[3L] <- FALSE
+  expect_match(.bl_cap_ts_text(ok), "NOT verified", fixed = TRUE)
+})
+
+test_that("one private address does not stop the Wayback for the others", {
+  dir <- withr::local_tempdir()
+  urls <- c(
+    "https://s.org/a.zip", "http://10.0.0.7/b.csv",
+    "https://intranet.s.org/c.csv"
+  )
+  local_mocked_bindings(
+    blfetch = .push_stub(stats::setNames(
+      list(charToRaw("A"), charToRaw("B"), charToRaw("C")), urls
+    ))
+  )
+  arccap(urls, dir, tsa = NULL)
+  asked <- new.env()
+  asked$urls <- list()
+  local_mocked_bindings(
+    wbsave = function(urls, ...) {
+      asked$urls[[length(asked$urls) + 1L]] <- urls
+      # as wbsave() refuses a name that resolves to your own network
+      if (any(grepl("intranet", urls))) {
+        stop("wbsave: not a public address, so it is not sent to ",
+             "archive.org: ", urls[grepl("intranet", urls)][1L],
+             call. = FALSE)
+      }
+      structure(
+        data.frame(url = urls, status = "saved",
+                   timestamp = "20261028120000", stringsAsFactors = FALSE),
+        class = c("rmbl_wayback_save", "data.frame")
+      )
+    }
+  )
+  r <- arcpush(dir, upload = "wayback", tsa = NULL)
+  expect_identical(r$wayback[1L], "saved 20261028120000")
+  expect_match(r$wayback[2L], "^not asked: not a public address")
+  expect_match(r$wayback[3L], "^not asked: wbsave: not a public address")
+  expect_false(any(grepl("10.0.0.7", unlist(asked$urls), fixed = TRUE)))
+})
+
+test_that("a bad `visibility` is refused in words", {
+  dir <- withr::local_tempdir()
+  for (v in list(NA, 1, c("a", "b"), "secret", character(), NA_character_)) {
+    expect_error(
+      arcpush(dir, upload = "wayback", visibility = v),
+      "`visibility` must be one of"
+    )
+    expect_error(
+      arccap("https://s.org/a", dir, visibility = v),
+      "`visibility` must be one of"
+    )
+  }
 })

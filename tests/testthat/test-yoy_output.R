@@ -152,3 +152,31 @@ test_that("yoysmry() results print as a box", {
   expect_box2(s, "Year-over-year summary", "have no order")
   expect_box2(s["up"], "Year-over-year summary", "plain table")
 })
+
+test_that("yoy folds labels the console cannot show, as rtcalc does", {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  d <- data.frame(
+    g = rep(c("M\u00e9tis", "\u4e2d\u6587"), each = 2),
+    p = rep(2020:2021, 2), n = c(10, 12, 5, 6), stringsAsFactors = FALSE
+  )
+  out <- format(yoy(d, "n", "p", by = "g"))
+  expect_true(any(grepl("Metis", out, fixed = TRUE)))
+  # nothing outside ASCII, so no "unable to translate" and no misalignment
+  expect_false(any(grepl("[^ -~]", out, useBytes = TRUE)))
+  rows <- out[grepl("^ +(Metis|zhong wen) ", out)]
+  expect_length(rows, 4L)
+  expect_length(unique(regexpr("202[01]", rows)), 1L)
+})
+
+test_that("in a C locale yoy folds UTF-8 labels read as unknown bytes", {
+  withr::local_locale(c(LC_CTYPE = "C"))
+  skip_if(isTRUE(l10n_info()[["UTF-8"]]), "the C locale cannot be set here")
+  g <- rep(c("Métis", "中文"), each = 2)
+  # as a C session reads a UTF-8 file: the bytes, of no declared encoding
+  Encoding(g) <- "unknown"
+  d <- data.frame(g = g, p = rep(2020:2021, 2), n = c(10, 12, 5, 6),
+                  stringsAsFactors = FALSE)
+  expect_silent(out <- format(yoy(d, "n", "p", by = "g")))
+  expect_true(any(grepl("Metis", out, fixed = TRUE)))
+  expect_false(any(grepl("[^ -~]", out, useBytes = TRUE)))
+})

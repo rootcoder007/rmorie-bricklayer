@@ -442,6 +442,21 @@ test_that("a subset of a rate change or share prints as a plain table", {
   expect_df_fallback("rmbl_share", "Share")
 })
 
+test_that("plot(ratechg(..., prdord = )) draws the periods in that order", {
+  d <- data.frame(p = c("spring", "summer", "autumn", "spring", "autumn"),
+                  g = c("a", "a", "a", "b", "b"),
+                  n = c(10, 12, 15, 4, 6), pop = 1000)
+  ord <- c("spring", "summer", "autumn")
+  r <- ratechg(d, "n", "pop", "p", by = "g", prdord = ord)
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  pl <- plot(r)
+  a <- pl[r$g == "a", ]
+  # the x positions follow prdord, not the alphabet (autumn first)
+  expect_true(all(diff(a$at) > 0))
+  expect_identical(a$label, paste("a:", ord))
+})
+
 test_that("ratechg() and anltab() take prdord, and refuse what they lack", {
   d <- data.frame(p = c("spring", "summer", "autumn", "spring", "autumn"),
                   g = c("a", "a", "a", "b", "b"),
@@ -473,4 +488,14 @@ test_that("ratechg() and anltab() take prdord, and refuse what they lack", {
   expect_error(shrs(c(1, 2), denom = 5), "shrs: unused argument: denom")
   expect_error(yoy(d, "n", "p", by = "g", prdrd = ord),
                "yoy: unused argument: prdrd")
+})
+
+test_that("a ratechg box prints whole-number periods as labels", {
+  d <- data.frame(p = rep(2019:2022, 2), g = rep(c("a", "b"), each = 4),
+                  n = c(5, 7, 9, 11, 4, 6, 8, 7), pop = 1000)
+  out <- format(ratechg(d, "n", "pop", "p", by = "g"))
+  expect_false(any(grepl("2020.000", out, fixed = TRUE)))
+  expect_true(any(grepl("\\b2020\\b", out, perl = TRUE)))
+  expect_identical(.rmbl_prdtxt(c(2019, NA)), c("2019", NA))
+  expect_identical(.rmbl_prdtxt(c(1.5, 2)), c(1.5, 2))
 })

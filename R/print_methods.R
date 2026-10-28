@@ -853,16 +853,37 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' @return `s`, escaped where needed.
 #' @noRd
 .rmbl_ctl_escape <- function(s) {
+  # text read in a C locale is UTF-8 bytes marked "unknown": marked as UTF-8,
+  # as .rmbl_printable() does, it is matched and folded, not warned about
+  # (recheck of a8cdaf9: yoy() labels in a C locale)
+  s <- .rmbl_mark8(s)
   # the class is built from the characters themselves: a pattern marked
   # UTF-8 matches the bidi controls whatever the session's locale
   u <- function(k) intToUtf8(k)
+  # C1 too (U+0080-U+009F): U+009B is CSI, which an 8-bit terminal reads
+  # as ESC [ (recheck of a8cdaf9)
   re <- paste0(
-    "[\001-\037\177", u(0x200e), u(0x200f), u(0x202a), "-", u(0x202e),
-    u(0x2066), "-", u(0x2069), "]"
+    "[\001-\037\177", u(0x80), "-", u(0x9f), u(0x200e), u(0x200f),
+    u(0x202a), "-", u(0x202e), u(0x2066), "-", u(0x2069), "]"
   )
   hit <- which(!is.na(s) & grepl(re, s, perl = TRUE))
   for (i in hit) {
     s[i] <- .rmbl_ctl_escape1(s[i])
+  }
+  s
+}
+
+#' Strings of unknown encoding that are valid UTF-8, marked as UTF-8.
+#' @param s Strings.
+#' @return `s`, its attributes kept.
+#' @noRd
+.rmbl_mark8 <- function(s) {
+  # (ASCII is never marked, so it is left as it is)
+  u <- !is.na(s) & Encoding(s) == "unknown" & validUTF8(s)
+  if (any(u)) {
+    v <- s[u]
+    Encoding(v) <- "UTF-8"
+    s[u] <- v
   }
   s
 }
@@ -898,7 +919,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   if (k < 32L || k == 127L) {
     return(sprintf("\\%03o", k))
   }
-  if (k %in% c(0x200e, 0x200f, 0x202a:0x202e, 0x2066:0x2069)) {
+  if (k %in% c(0x80:0x9f, 0x200e, 0x200f, 0x202a:0x202e, 0x2066:0x2069)) {
     return(sprintf("<U+%04X>", k))
   }
   intToUtf8(k)

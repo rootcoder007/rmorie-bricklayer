@@ -211,6 +211,10 @@ test_that("ralloc refuses settings it would read wrongly", {
     expect_error(ralloc(10, block = b), "at most 1000000")
   }
   expect_error(ralloc(10, arms = c("A", "")), "different names")
+  # blank, or the same but for spaces: alike on the printed list
+  expect_error(ralloc(10, arms = c("A", "  ")), "different names")
+  expect_error(ralloc(10, arms = c("A", "A ")), "different names")
+  expect_error(ralloc(strata = c(a = 4, " " = 4)), "`strata`")
   expect_error(ralloc(1e8), "`n`")
   expect_error(ralloc(strata = c(a = 9e6, b = 9e6)), "`strata`")
   # numbers and single words stay valid seeds

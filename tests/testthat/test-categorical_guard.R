@@ -328,6 +328,10 @@ test_that("vrfmrg honours a tolerance, reports mismatches", {
   expect_true(vrfmrg(x, c(White = 3, Black = 1), tol = 1)$ok)
   expect_error(vrfmrg(x, c(White = 5, Black = 9)), "do not match")
   expect_error(vrfmrg(x, c(3, 1)), "named numeric")
+  # nothing published compares nothing: all() of no categories is not a pass
+  empty <- stats::setNames(numeric(), character())
+  expect_error(vrfmrg(rep(NA, 3), empty, strict = FALSE), "named numeric")
+  expect_error(vrfmrg(x, c(White = NA, Black = 1)), "named numeric")
 })
 
 test_that("orchk finds swapped outcome columns, checks input", {

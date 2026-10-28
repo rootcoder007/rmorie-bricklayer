@@ -69,7 +69,7 @@ arcpush <- function(
   tsa = "https://freetsa.org/tsr",
   tmout = 600L
 ) {
-  visibility <- match.arg(visibility)
+  visibility <- .rmbl_arg(visibility)
   up <- .bl_cap_upload_arg(upload, reason)
   dir <- .rmbl_string1(dir, "dir")
   .bl_cap_item_meta(item, meta)
@@ -131,16 +131,42 @@ arcpush <- function(
     capture_id = NA_character_, archive = NA_character_,
     wayback = NA_character_, stringsAsFactors = FALSE
   )
-  path <- file.path(dir, out$file)
+  # the manifest is input: a name that leaves the folder ("../x", "/etc/x",
+  # a symlink out) is never read, hashed or sent (recheck of a8cdaf9)
+  path <- lapply(out$file, .bl_push_path, dir = dir)
   now <- vapply(path, function(p) {
-    if (file.exists(p)) sha256file(p) else ""
+    if (!is.null(p) && file.exists(p)) sha256file(p) else ""
   }, "", USE.NAMES = FALSE)
   out$status[now == ""] <- "failed: the file is missing"
   changed <- nzchar(now) & now != out$sha256
   out$status[changed] <- paste(
     "failed: the file no longer matches its SHA-256 in the manifest"
   )
+  out$status[vapply(path, is.null, NA)] <- paste(
+    "failed: the manifest's file name is not a plain relative path inside",
+    "the capture folder, so it is not sent"
+  )
   out
+}
+
+#' A manifest's file name joined under the capture folder, or NULL when it
+#' is not a plain relative path inside it.
+#'
+#' Refused: no name, "..", ".", an absolute path, a drive letter, a home
+#' prefix, a backslash, a control character, a symlink out
+#' (.rmbl_safe_rel()), or a folder.
+#' @param f The file name from the manifest.
+#' @param dir The capture folder.
+#' @return The path, or NULL.
+#' @noRd
+.bl_push_path <- function(f, dir) {
+  cp <- if (is.na(f)) NA else utf8ToInt(enc2utf8(f))
+  if (anyNA(cp) || any(cp < 32L | (cp >= 127L & cp <= 159L)) ||
+        grepl("\\", f, fixed = TRUE)) {
+    return(NULL)
+  }
+  p <- .rmbl_safe_rel(f, dir)
+  if (is.null(p) || dir.exists(p)) NULL else p
 }
 
 #' One field of each record of a JSON array, as text.
@@ -207,7 +233,25 @@ arcpush <- function(
 .bl_push_stamp <- function(tsa, mpath, dir) {
   tsr <- file.path(dir, "manifest.tsr")
   if (file.exists(tsr)) {
-    return(tsvrf(readBin(tsr, "raw", file.size(tsr)), mpath))
+    ts <- tsvrf(readBin(tsr, "raw", file.size(tsr)), mpath)
+    if (.bl_ts_core(ts)) {
+      return(ts)
+    }
+    # a token that does not verify for this manifest (a junk reply an
+    # earlier version kept) is set aside, not sent or reused
+    bad <- paste0(tsr, ".rejected")
+    file.rename(tsr, bad)
+    warning(
+      sprintf(
+        paste0(
+          "the kept manifest.tsr is not a valid timestamp of the ",
+          "manifest (%s): it is set aside as %s and not sent"
+        ),
+        .bl_ts_failed(ts),
+        basename(bad)
+      ),
+      call. = FALSE
+    )
   }
   if (is.null(tsa)) {
     return(NULL)

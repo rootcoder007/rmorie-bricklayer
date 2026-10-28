@@ -88,8 +88,11 @@ test_that(
           ok = FALSE,
           time = as.POSIXct("2026-10-18", tz = "UTC"),
           checks = data.frame(
-            check = c("message_imprint", "signature"),
-            ok = TRUE,
+            check = c(
+              "token_structure", "message_imprint", "signature",
+              "attribute_digest", "certificate_trust"
+            ),
+            ok = c(TRUE, TRUE, TRUE, TRUE, FALSE),
             stringsAsFactors = FALSE
           )
         )

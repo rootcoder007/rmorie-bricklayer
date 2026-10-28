@@ -25,11 +25,13 @@
 #' per unit of treatment, so the statistic must estimate an additive
 #' effect: a difference in means, a regression slope, an average treatment
 #' effect. An effect is recovered when the average estimate is within
-#' `tol` of it, after allowing three Monte Carlo standard errors, and that
-#' standard error is itself no larger than `tol`: a statistic too noisy for
-#' the check to mean anything is not recovered (raise `n`). Without the
-#' second condition the allowance grew with the noise, and a statistic that
-#' returned pure noise passed.
+#' `tol` of it, after allowing one Monte Carlo standard error, and that
+#' standard error is itself no larger than half of `tol`: a statistic too
+#' noisy for the check to mean anything is not recovered (raise `n`). The
+#' allowance is so at most 1.5 times `tol`. Without the second condition the
+#' allowance grew with the noise, and a statistic that returned pure noise
+#' passed; with up to four times `tol` allowed, an estimator that
+#' returned 0.7 of the effect with some noise passed.
 #'
 #' @param data A data frame with at least 4 rows.
 #' @param stat A function of one data frame returning one number: the
@@ -89,7 +91,9 @@ cpsplant <- function(data, stat, y, trt, effects = c(0, 0.5, 1),
     rec <- mean(est)
     data.frame(
       effect = e, recovered = rec, bias = rec - e, se = se,
-      passed = abs(rec - e) <= a$tol + 3 * se && se <= a$tol
+      # at most 1.5 * tol in all: up to 4 * tol let a 0.7x estimator with
+      # moderate noise pass (recheck of a8cdaf9)
+      passed = abs(rec - e) <= a$tol + se && se <= a$tol / 2
     )
   })
   tab <- do.call(rbind, rows)
@@ -119,7 +123,7 @@ format.rmbl_plant <- function(x, ...) {
       planted = t$effect, recovered = t$recovered, bias = t$bias,
       se = t$se,
       result = c("FAIL", "too noisy", "ok")[
-        ifelse(t$passed, 3L, 1L + (t$se > x$tol))
+        ifelse(t$passed, 3L, 1L + (t$se > x$tol / 2))
       ]
     ),
     reading = if (x$ok) {
@@ -258,7 +262,7 @@ format.rmbl_spec <- function(x, ...) {
 #' d$y <- d$x + rnorm(100)
 #' dm <- function(df) mean(df$y[df$x == 1]) - mean(df$y[df$x == 0])
 #' man <- mkmnf(list(project = "demo"), env = FALSE)
-#' man <- recevid(man, cpsplant(d, dm, "y", "x", n = 20, seed = 1))
+#' man <- recevid(man, cpsplant(d, dm, "y", "x", n = 50, seed = 1))
 #' man
 recevid <- function(man, x, grp = "evidence") {
   grp <- .rmbl_string1(grp, "grp")
@@ -267,7 +271,7 @@ recevid <- function(man, x, grp = "evidence") {
     for (i in seq_len(nrow(t))) {
       man <- recrd(man, sprintf("planted effect %g recovered", t$effect[i]),
                    t$recovered[i], t$effect[i],
-                   tol = x$tol + 3 * min(t$se[i], x$tol),
+                   tol = x$tol + min(t$se[i], x$tol / 2),
                    grp = grp)
     }
     return(man)

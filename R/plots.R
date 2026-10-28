@@ -790,7 +790,8 @@ plot.rmbl_rate_change <- function(
   if (length(meta$by)) {
     label <- paste(grp, label, sep = ": ")
   }
-  ax <- .bl_period_axis(d[[meta$period]])
+  # the period order ratechg() was given, as plot.rmbl_yoy() uses its own
+  ax <- .bl_period_axis(d[[meta$period]], prdord = meta$prdord)
   pal <- .bl_cols(
     3,
     col,

@@ -2202,7 +2202,10 @@ format.rmbl_transfer_check <- function(x, ...) {
 #' @return NULL, invisibly.
 #' @noRd
 .vrfmrg_pub <- function(pub) {
-  if (!is.numeric(pub) || is.null(names(pub)) || !all(nzchar(names(pub)))) {
+  # an empty `pub` compared nothing, and all() of nothing passed it
+  if (.rmbl_anyof(!is.numeric(pub), !length(pub), anyNA(pub),
+                  is.null(names(pub)), anyNA(names(pub)),
+                  !all(nzchar(names(pub))))) {
     stop("vrfmrg: `pub` must be a named numeric vector", call. = FALSE)
   }
   invisible(NULL)

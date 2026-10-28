@@ -209,8 +209,9 @@ test_that(
         0x03,
         0x00
       ))),
-      "no signature"
+      "not an X.509 certificate: the tbsCertificate is not a SEQUENCE"
     )
+    expect_error(.rmbl_x509_sig_bits(raw(0)), "no signature")
     expect_true(is.na(.rmbl_oid_string(raw(0))))
     expect_identical(.rmbl_key_usage_bits(as.raw(0x00)), character(0))
     expect_identical(
@@ -400,7 +401,11 @@ test_that("a timestamp token with a broken structure is reported, not thrown", {
     .rmbl_ts_extract(der_parse(der_seq(sd_oid, der_ctx0(der_seq()))), raw(0)),
     "no TSTInfo"
   )
-  sd_head <- c(der_tlv(0x02, as.raw(3)), der_tlv(0x31, raw(0)))
+  # digestAlgorithms: SHA-256 (an empty SET is refused before the content)
+  sd_head <- c(
+    der_tlv(0x02, as.raw(3)),
+    der_tlv(0x31, der_seq(der_oid("608648016503040201")))
+  )
   empty <- der_seq(
     sd_oid, der_ctx0(der_seq(sd_head, der_seq(tst_oid, der_ctx0())))
   )
@@ -557,3 +562,89 @@ test_that(
     expect_true(v$content_ok)
   }
 )
+
+test_that("a fuzzed certificate is refused in words, never a raw error", {
+  f <- x509_branch_fx("x509-fixtures.txt")
+  for (nm in c("chain_leaf", "chain_ecleaf256")) {
+    der <- f[[nm]]
+    raw_err <- character()
+    for (i in seq_along(der)) {
+      for (b in c(0x01, 0x80)) {
+        m <- der
+        m[i] <- xor(m[i], as.raw(b))
+        e <- tryCatch({
+          certprs(m)
+          NULL
+        }, error = function(e) e)
+        # the package's refusals carry no call; R's own errors do
+        if (!is.null(e) && !is.null(conditionCall(e))) {
+          raw_err <- c(raw_err, sprintf("%d %s", i, conditionMessage(e)))
+        }
+      }
+    }
+    expect_identical(raw_err, character(), info = nm)
+  }
+})
+
+test_that("a certificate time with letters, or no date, is refused", {
+  t <- function(tag, s) list(tag = tag, value = charToRaw(s))
+  expect_error(.rmbl_x509_time(t(23, "26A101000000Z")), "not the UTCTime")
+  expect_error(.rmbl_x509_time(t(23, "2601010000Z")), "not the UTCTime")
+  expect_error(.rmbl_x509_time(t(24, "20261301000000Z")), "not a date")
+  expect_error(.rmbl_x509_time(t(4, "260101000000Z")), "not the UTCTime")
+  expect_identical(
+    .rmbl_x509_time(t(23, "490101000000Z")),
+    as.POSIXct("2049-01-01", tz = "UTC")
+  )
+})
+
+test_that("the outer signatureAlgorithm must be the one signed", {
+  f <- x509_branch_fx("x509-fixtures.txt")
+  der <- f$chain_leaf
+  top <- .Call(C_rmbl_der_parse, der)
+  alg <- top$children[[2L]]
+  end <- alg$offset + alg$length
+  # an RSA AlgorithmIdentifier ends in its NULL parameters, 05 00
+  expect_identical(der[(end - 1L):end], as.raw(c(0x05, 0x00)))
+  m <- der
+  m[end - 1L] <- as.raw(0x04)
+  expect_error(certprs(m), "not an X.509 certificate")
+  # same form, other bytes: sha384WithRSA in place of the signed algorithm
+  oid <- alg$children[[1L]]
+  m <- der
+  last <- oid$offset + oid$length
+  m[last] <- xor(m[last], as.raw(0x03))
+  expect_error(certprs(m), "is not the one signed")
+  # the parts it is made of, each refused alone
+  bad <- function(w) stop(w, call. = FALSE)
+  nd <- function(cl, tag, cons, kids = list(), v = raw(0)) {
+    list(class = cl, tag = tag, constructed = cons, children = kids, value = v)
+  }
+  oidn <- nd(0L, 6, FALSE, v = as.raw(1))
+  expect_error(
+    .rmbl_x509_alg_shape(nd(0L, 16, TRUE, list(oidn, nd(0L, 4, FALSE))),
+                         "x", bad),
+    "parameters of no form"
+  )
+  expect_error(.rmbl_x509_name_shape(nd(0L, 17, TRUE), "issuer", bad),
+               "issuer is not a Name")
+  ext <- nd(0L, 16, TRUE, list(oidn, nd(0L, 4, FALSE)))
+  expect_error(.rmbl_x509_ext_shape(nd(0L, 16, TRUE, list(ext, ext)), bad),
+               "appears twice")
+  flag0 <- nd(0L, 16, TRUE, list(oidn, nd(0L, 1, FALSE, v = as.raw(0)),
+                                 nd(0L, 4, FALSE)))
+  expect_error(.rmbl_x509_ext_shape(nd(0L, 16, TRUE, list(flag0)), bad),
+               "an extension is not")
+  expect_error(.rmbl_x509_tail_shape(list(nd(2L, 3, TRUE), nd(2L, 1, FALSE)),
+                                     bad), "does not define")
+  expect_error(.rmbl_x509_tail_shape(list(nd(2L, 1, TRUE)), bad),
+               "unique identifier")
+  expect_error(.rmbl_x509_tail_shape(list(nd(2L, 3, FALSE)), bad),
+               "not one SEQUENCE")
+})
+
+test_that("an OCSP answer short of fields is not verified, not an error", {
+  r <- .rmbl_ocsp_verify_sig(list(children = list(list())), list(), raw(0))
+  expect_false(r$ok)
+  expect_match(r$detail, "not a BasicOCSPResponse")
+})

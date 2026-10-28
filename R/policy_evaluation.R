@@ -2100,9 +2100,7 @@ polex <- function(seed = 20240101) {
   if (!length(fes)) {
     return(x)
   }
-  if (is.null(w)) {
-    w <- rep(1, nrow(x))
-  }
+  w <- if (is.null(w)) rep(1, nrow(x)) else .rmbl_wscale(w)
   lv <- lapply(fes, function(f) sort(unique(f)))
   idx <- lapply(seq_along(fes), function(k) match(fes[[k]], lv[[k]]))
   sw <- lapply(seq_along(fes), function(k) {
@@ -2122,6 +2120,17 @@ polex <- function(seed = 20240101) {
   x
 }
 
+#' Weights divided by their largest when their squares overflow (w =
+#' 1e308 gave "missing value where TRUE/FALSE needed" in evstudy(); recheck
+#' of a8cdaf9). The demeaning, the coefficients and the CR1 variance
+#' depend only on the weights' ratios, so nothing else changes.
+#' @param w Observation weights, finite and 0 or more.
+#' @return The weights, rescaled only when needed.
+#' @noRd
+.rmbl_wscale <- function(w) {
+  if (length(w) && !is.finite(sum(w * w))) w / max(w) else w
+}
+
 #' Fits weighted least squares on demeaned data with cluster-robust variance.
 #'
 #' OLS on demeaned data with one-way cluster-robust (CR1) variance. `k_fe` is
@@ -2136,9 +2145,7 @@ polex <- function(seed = 20240101) {
 #'   number of `clusters`.
 #' @noRd
 .rmbl_ols_cr1 <- function(y, x, cl, k_fe, w = NULL) {
-  if (is.null(w)) {
-    w <- rep(1, length(y))
-  }
+  w <- if (is.null(w)) rep(1, length(y)) else .rmbl_wscale(w)
   sw <- sqrt(w)
   q <- qr(x * sw)
   if (q$rank < ncol(x)) {
@@ -2296,6 +2303,7 @@ polex <- function(seed = 20240101) {
   if (is.null(covariates)) {
     return(NULL)
   }
+  .rmbl_df_names(data)
   covariates <- .rmbl_colnames(covariates, "covariates", several = TRUE)
   miss <- setdiff(covariates, names(data))
   if (length(miss)) {
@@ -2320,6 +2328,9 @@ polex <- function(seed = 20240101) {
 #' @return A numeric vector of weights.
 #' @noRd
 .rmbl_weights <- function(data, weights, arg = "w") {
+  # `data` first: plndid() asks for the weights before the panel, and
+  # rep(1, nrow(NULL)) gave "invalid 'times' argument" (recheck of a8cdaf9)
+  .rmbl_df_names(data)
   if (is.null(weights)) {
     return(rep(1, nrow(data)))
   }

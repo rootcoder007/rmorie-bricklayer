@@ -33,7 +33,10 @@ test_that("a statistic with a bug, or one that invents an effect, fails", {
   doubled <- cpsplant(d, function(df) 2 * dm(df), y = "y", trt = "x",
                       n = 40, seed = 3)
   expect_false(doubled$ok)
-  expect_identical(doubled$table$passed, c(TRUE, FALSE, FALSE))
+  # at 0 the doubled statistic is twice as noisy: its standard error is
+  # over half of tol, so it is "too noisy" there, and wrong at 0.5 and 1
+  expect_identical(doubled$table$passed, c(FALSE, FALSE, FALSE))
+  expect_gt(doubled$table$se[1L], doubled$tol / 2)
   expect_box2(doubled, "Planted-effect recovery: FAILED",
               c("missed at least one planted effect", "FAIL"))
   # always finds an effect of 1: caught by the planted 0
@@ -53,7 +56,9 @@ test_that("logical, factor and two-level text treatments are coded 0/1", {
       t <- .rmbl_plant_code(df[[v]], v)
       mean(df$y[t == 1]) - mean(df$y[t == 0])
     }
-    expect_true(cpsplant(d, s, y = "y", trt = v, n = 20, seed = 1)$ok,
+    # 80 data sets: with 20 the standard error of a difference in means on
+    # 120 rows is over half of tol, which is now "too noisy"
+    expect_true(cpsplant(d, s, y = "y", trt = v, n = 80, seed = 1)$ok,
                 info = v)
   }
   # a continuous treatment and a slope
@@ -119,4 +124,19 @@ test_that("recevid writes each kind of evidence into the manifest", {
   expect_match(txt, "specifications agreeing in sign", fixed = TRUE)
   expect_match(txt, "falsification control", fixed = TRUE)
   expect_error(recevid(man, list()), "cpsplant")
+})
+
+test_that("a 0.7x estimator with moderate noise fails; lm still passes", {
+  set.seed(11)
+  d <- data.frame(x = stats::rbinom(200, 1, 0.5), z = stats::rnorm(200))
+  d$y <- 2 * d$x + d$z + stats::rnorm(200)
+  sl <- function(df) stats::coef(stats::lm(y ~ x + z, df))[["x"]]
+  expect_true(cpsplant(d, sl, "y", "x", n = 50, seed = 2)$ok)
+  for (s in c(0.3, 0.45, 0.6)) {
+    att <- function(df) 0.7 * sl(df) + stats::rnorm(1, sd = s)
+    a <- cpsplant(d, att, "y", "x", n = 50, seed = 2)
+    # the allowance was up to 4 * tol, and all three passed
+    expect_false(a$ok, info = format(s))
+    expect_false(a$table$passed[a$table$effect == 1], info = format(s))
+  }
 })

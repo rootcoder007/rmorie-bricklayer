@@ -787,6 +787,11 @@ rvkfetch <- function(path, tmout = 10) {
 #' @noRd
 .rmbl_ocsp_verify_sig <- function(basic, path, src,
                                   when = .rmbl_ocsp_now()) {
+  # a BasicOCSPResponse is tbsResponseData, signatureAlgorithm, signature:
+  # fewer fields gave "subscript out of bounds" (recheck of a8cdaf9)
+  if (length(basic$children) < 3L) {
+    return(list(ok = FALSE, detail = "it is not a BasicOCSPResponse"))
+  }
   tbs_nd <- basic$children[[1]]
   alg <- basic$children[[2]]
   sig_bits <- basic$children[[3]]$value
@@ -794,11 +799,8 @@ rvkfetch <- function(path, tmout = 10) {
     return(list(ok = FALSE, detail = "it carries no signature"))
   }
   sig <- sig_bits[-1]
-  oid <- if (length(alg$children)) {
-    .rmbl_oid_string(alg$children[[1]]$value)
-  } else {
-    NA_character_
-  }
+  # no children: no OID bytes, NA
+  oid <- .rmbl_oid_string(tbs_alg_oid(alg))
   name <- .rmbl_x509_sigalg_name(oid)
   dalg <- .rmbl_ocsp_digest(name)
   if (is.na(dalg)) {

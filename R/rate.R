@@ -536,6 +536,19 @@ ratechg.data.frame <- function(
   )
 }
 
+#' A period column as its labels: whole numbers (years) as text, so a
+#' table does not print them with the decimals of the numbers beside them.
+#' @param p The period column.
+#' @return `p`, or its text.
+#' @noRd
+.rmbl_prdtxt <- function(p) {
+  if (is.numeric(p) && all(is.na(p) | p == round(p))) {
+    return(ifelse(is.na(p), NA_character_, format(p, scientific = FALSE,
+                                                  trim = TRUE)))
+  }
+  p
+}
+
 #' @export
 format.rmbl_rate_change <- function(x, digits = 4L, ...) {
   title <- "Change in rate"
@@ -552,6 +565,8 @@ format.rmbl_rate_change <- function(x, digits = 4L, ...) {
     "padj"
   )
   d <- .rmbl_plain(x, c(keep, "significant"))
+  # a whole-number period is a label: 2020, not 2020.000 (recheck of a8cdaf9)
+  d[[m$period]] <- .rmbl_prdtxt(d[[m$period]])
   d <- .rmbl_ci_cols(d, NULL, "pctlo", "pctup")
   names(d)[names(d) == "interval"] <- "pct_interval"
   names(d)[names(d) == "padj"] <- "adj_p"

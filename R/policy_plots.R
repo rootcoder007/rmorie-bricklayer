@@ -226,6 +226,7 @@ loounit <- function(
   units = NULL,
   w = NULL
 ) {
+  .rmbl_df_names(data)
   full <- plndid(data, unit, time, y, trtd, covs = covs, cl = cl, w = w)
   ever <- tapply(data[[trtd]], data[[unit]], max) > 0
   if (is.null(units)) {

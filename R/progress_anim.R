@@ -574,7 +574,8 @@ print.rmbl_progress <- function(x, ...) {
   unit = ""
 ) {
   a <- new.env(parent = emptyenv())
-  a$label <- label
+  # the label and each stage's text are the caller's: escaped (C0, C1, bidi)
+  a$label <- .rmbl_ctl_escape(as.character(label))
   a$total <- total
   a$unit <- unit
   a$rgb <- .bl_anim_colors[[color]] %||% .bl_anim_colors$blue
@@ -1029,7 +1030,7 @@ print.rmbl_progress <- function(x, ...) {
   advance <- function(done, info) {
     a$done <- done
     if (!is.null(info)) {
-      a$info <- as.character(info)[1L]
+      a$info <- .rmbl_ctl_escape(as.character(info)[1L])
     }
     if (a$quiet || st$closed) {
       return(invisible(self))

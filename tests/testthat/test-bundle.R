@@ -52,6 +52,9 @@ test_that(
         key = fx_secret
       )$ok
     )
+    # uv resolves the morie project's packages over the network (pypi.org)
+    # and writes its .venv outside tempdir(): never on CRAN
+    skip_on_cran()
     uv <- Sys.which("uv")
     morie <- Sys.getenv("MORIE_SRC", path.expand("~/work/morie"))
     skip_if(

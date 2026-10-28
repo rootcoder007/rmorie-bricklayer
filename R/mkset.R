@@ -112,7 +112,8 @@ print.rmbl_set <- function(x, ...) {
   .rmbl_cat(format(x, ...), x)
   it <- x$items
   for (k in seq_along(it)) {
-    cat("\n", k, ". ", names(it)[k], "\n\n", sep = "")
+    # a result's name is the caller's text: escaped like every label
+    cat("\n", k, ". ", .rmbl_ctl_escape(names(it)[k]), "\n\n", sep = "")
     .mkset_show(it[[k]])
   }
   invisible(x)
@@ -178,8 +179,10 @@ print.rmbl_set <- function(x, ...) {
 #' @return One string or NULL.
 #' @noRd
 .mkset_plot <- function(v, big = 300000) {
+  # a data frame's own plot (a pairs plot of every column) is no result's
+  # picture, and warned for text columns: only a class's own method is drawn
   has <- any(vapply(
-    class(v),
+    setdiff(class(v), c("data.frame", "function")),
     function(cl) !is.null(utils::getS3method("plot", cl, optional = TRUE)),
     NA
   ))

@@ -105,10 +105,28 @@
 #' @export
 certprs <- function(cert) {
   der <- .rmbl_as_bytes(cert, "cert")
+  # a malformed certificate is refused in words: a fuzzed one gave
+  # "subscript out of bounds" and "missing value where TRUE/FALSE needed"
+  # (recheck of a8cdaf9). The package's own refusals pass through.
+  tryCatch(.rmbl_certprs(der), error = function(e) {
+    if (is.null(conditionCall(e))) {
+      stop(e)
+    }
+    stop(sprintf("not a valid X.509 certificate (%s)", conditionMessage(e)),
+         call. = FALSE)
+  })
+}
+
+#' certprs() on DER bytes.
+#' @param der The certificate's bytes.
+#' @return The parsed certificate.
+#' @noRd
+.rmbl_certprs <- function(der) {
   top <- .Call(C_rmbl_der_parse, der)
   if (length(top$children) < 3L) {
     stop("not an X.509 certificate", call. = FALSE)
   }
+  .rmbl_x509_shape(top, der)
   tbs <- top$children[[1]]
   sig_alg <- .rmbl_oid_string(tbs_alg_oid(top$children[[2]]))
   sig <- .rmbl_x509_sig_bits(top$children[[3]]$value)
@@ -383,6 +401,254 @@ format.bricklayer_certpath_check <- function(x, ...) {
     r <- r * 256L + b
   }
   r
+}
+
+#' Whether a DER node has the class, tag and form given.
+#' @param nd The node, or NULL.
+#' @param class,tag The class (0 universal, 2 context) and the tag.
+#' @param cons TRUE for a constructed node, FALSE for a primitive one.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_x509_is <- function(nd, class, tag, cons) {
+  !is.null(nd) && identical(nd$class, class) && identical(nd$tag, tag) &&
+    identical(isTRUE(nd$constructed), cons)
+}
+
+#' A certificate's layout checked field by field (RFC 5280 4.1): every tag,
+#' form and count where the profile puts it, and the outer
+#' signatureAlgorithm the same bytes as the one signed (4.1.1.2).
+#' @param top The parsed certificate.
+#' @param der Its bytes.
+#' @return NULL, invisibly; an error naming the first field out of place.
+#' @noRd
+.rmbl_x509_shape <- function(top, der) {
+  bad <- function(what) {
+    stop(sprintf("not an X.509 certificate: %s", what), call. = FALSE)
+  }
+  is <- .rmbl_x509_is
+  o <- top$children
+  if (!is(top, 0L, 16, TRUE) || length(o) != 3L) {
+    bad("it is not a SEQUENCE of three fields")
+  }
+  if (!is(o[[1L]], 0L, 16, TRUE)) {
+    bad("the tbsCertificate is not a SEQUENCE")
+  }
+  .rmbl_x509_alg_shape(o[[2L]], "signatureAlgorithm", bad)
+  sv <- o[[3L]]
+  if (.rmbl_anyof(!is(sv, 0L, 3, FALSE), !length(sv$value),
+                  sv$value[1L] != as.raw(0L))) {
+    bad("the signatureValue is not a BIT STRING of whole bytes")
+  }
+  k <- o[[1L]]$children
+  i <- .rmbl_x509_ver_shape(k, bad)
+  if (length(k) < i + 5L) {
+    bad("the tbsCertificate is incomplete")
+  }
+  if (!is(k[[i]], 0L, 2, FALSE) || !length(k[[i]]$value)) {
+    bad("the serialNumber is not an INTEGER")
+  }
+  .rmbl_x509_alg_shape(k[[i + 1L]], "signature", bad)
+  span <- function(nd) der[(nd$start + 1L):(nd$offset + nd$length)]
+  if (!identical(span(o[[2L]]), span(k[[i + 1L]]))) {
+    bad(paste(
+      "the outer signatureAlgorithm is not the one signed",
+      "(RFC 5280 4.1.1.2)"
+    ))
+  }
+  .rmbl_x509_name_shape(k[[i + 2L]], "issuer", bad)
+  .rmbl_x509_val_shape(k[[i + 3L]], bad)
+  .rmbl_x509_name_shape(k[[i + 4L]], "subject", bad)
+  .rmbl_x509_spki_shape(k[[i + 5L]], bad)
+  .rmbl_x509_tail_shape(k[-seq_len(i + 5L)], bad)
+  invisible(NULL)
+}
+
+#' The optional [0] version: v1, v2 or v3.
+#' @param k The tbsCertificate's children.
+#' @param bad The function that refuses.
+#' @return The serialNumber's position: 2 after a version, else 1.
+#' @noRd
+.rmbl_x509_ver_shape <- function(k, bad) {
+  if (!length(k) || !identical(k[[1L]]$class, 2L)) {
+    return(1L)
+  }
+  v <- k[[1L]]
+  vv <- if (length(v$children) == 1L) v$children[[1L]]
+  if (.rmbl_anyof(!.rmbl_x509_is(v, 2L, 0, TRUE),
+                  !.rmbl_x509_is(vv, 0L, 2, FALSE), length(vv$value) != 1L,
+                  !as.integer(vv$value) %in% 0:2)) {
+    bad("the version is not v1, v2 or v3")
+  }
+  2L
+}
+
+#' The validity: a SEQUENCE of two times, each a UTCTime or GeneralizedTime.
+#' @param val The node.
+#' @param bad The function that refuses.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_x509_val_shape <- function(val, bad) {
+  tm <- function(t) {
+    identical(t$class, 0L) && t$tag %in% c(23, 24) && !isTRUE(t$constructed)
+  }
+  if (!.rmbl_x509_is(val, 0L, 16, TRUE) || length(val$children) != 2L ||
+        !all(vapply(val$children, tm, NA))) {
+    bad("the validity is not two times")
+  }
+  invisible(NULL)
+}
+
+#' The subjectPublicKeyInfo: an AlgorithmIdentifier and a BIT STRING.
+#' @param sp The node.
+#' @param bad The function that refuses.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_x509_spki_shape <- function(sp, bad) {
+  k <- sp$children
+  if (.rmbl_anyof(!.rmbl_x509_is(sp, 0L, 16, TRUE), length(k) != 2L,
+                  !.rmbl_x509_is(k[[2L]], 0L, 3, FALSE),
+                  !length(k[[2L]]$value))) {
+    bad("the subjectPublicKeyInfo is not an algorithm and a BIT STRING")
+  }
+  .rmbl_x509_alg_shape(k[[1L]], "key algorithm", bad)
+}
+
+#' The optional fields after a certificate's key: [1] and [2] unique
+#' identifiers, [3] extensions, in that order, once each. (A certificate
+#' without the version field that still carries extensions is read: the
+#' version sits inside the signed bytes.)
+#' @param rest The nodes after subjectPublicKeyInfo.
+#' @param bad The function that refuses.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_x509_tail_shape <- function(rest, bad) {
+  tags <- vapply(rest, function(nd) {
+    if (identical(nd$class, 2L)) as.numeric(nd$tag) else -1
+  }, 0)
+  if (any(!tags %in% 1:3) || is.unsorted(tags, strictly = TRUE)) {
+    bad("a field after the key that RFC 5280 does not define")
+  }
+  for (nd in rest) {
+    if (nd$tag %in% c(1, 2) && isTRUE(nd$constructed)) {
+      bad("a unique identifier is not a BIT STRING")
+    }
+    if (nd$tag == 3) {
+      .rmbl_x509_exts(nd, bad)
+    }
+  }
+  invisible(NULL)
+}
+
+#' The [3] extensions field: one SEQUENCE of extensions.
+#' @param nd The [3] node.
+#' @param bad The function that refuses.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_x509_exts <- function(nd, bad) {
+  if (!isTRUE(nd$constructed) || length(nd$children) != 1L) {
+    bad("the extensions are not one SEQUENCE")
+  }
+  .rmbl_x509_ext_shape(nd$children[[1L]], bad)
+}
+
+#' Whether a node is a universal OBJECT IDENTIFIER with contents.
+#' @param nd The node, or NULL.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_x509_oid <- function(nd) {
+  .rmbl_x509_is(nd, 0L, 6, FALSE) && length(nd$value) > 0L
+}
+
+#' An AlgorithmIdentifier: an OID, then no parameters, a NULL, an OID (a
+#' curve) or a SEQUENCE (RSASSA-PSS).
+#' @param nd The node.
+#' @param what Its name, for the refusal.
+#' @param bad The function that refuses.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_x509_alg_shape <- function(nd, what, bad) {
+  k <- nd$children
+  if (.rmbl_anyof(!.rmbl_x509_is(nd, 0L, 16, TRUE), !length(k),
+                  length(k) > 2L, !.rmbl_x509_oid(k[[1L]]))) {
+    bad(sprintf("the %s is not an AlgorithmIdentifier", what))
+  }
+  p <- if (length(k) == 2L) k[[2L]]
+  if (!is.null(p) && !.rmbl_anyof(
+    .rmbl_x509_is(p, 0L, 5, FALSE) && !length(p$value),
+    .rmbl_x509_oid(p),
+    .rmbl_x509_is(p, 0L, 16, TRUE)
+  )) {
+    bad(sprintf("the %s has parameters of no form RFC 5280 uses", what))
+  }
+  invisible(NULL)
+}
+
+#' Whether a node is one AttributeTypeAndValue: an OID and a string (the
+#' types a DirectoryString, an IA5String and a PrintableString take).
+#' @param a The node.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_x509_atv <- function(a) {
+  v <- if (length(a$children) == 2L) a$children[[2L]]
+  str <- function(v) {
+    v$tag %in% c(12, 18, 19, 20, 22, 26, 28, 30) &&
+      .rmbl_x509_is(v, 0L, v$tag, FALSE)
+  }
+  !.rmbl_anyof(!.rmbl_x509_is(a, 0L, 16, TRUE), is.null(v),
+               !.rmbl_x509_oid(a$children[[1L]]), !str(v))
+}
+
+#' A Name: a SEQUENCE of non-empty SETs of (OID, string) pairs.
+#' @param nd The node.
+#' @param what "issuer" or "subject".
+#' @param bad The function that refuses.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_x509_name_shape <- function(nd, what, bad) {
+  rdn <- function(r) {
+    .rmbl_x509_is(r, 0L, 17, TRUE) && length(r$children) > 0L &&
+      all(vapply(r$children, .rmbl_x509_atv, NA))
+  }
+  if (!.rmbl_x509_is(nd, 0L, 16, TRUE) ||
+        !all(vapply(nd$children, rdn, NA))) {
+    bad(sprintf("the %s is not a Name", what))
+  }
+  invisible(NULL)
+}
+
+#' Whether a node is one Extension: an OID, a critical flag (present only
+#' when TRUE, as DER has it) and an OCTET STRING.
+#' @param e The node.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_x509_ext1 <- function(e) {
+  k <- e$children
+  n <- length(k)
+  if (!.rmbl_x509_is(e, 0L, 16, TRUE) || !n %in% 2:3) {
+    return(FALSE)
+  }
+  flag <- n == 2L || (.rmbl_x509_is(k[[2L]], 0L, 1, FALSE) &&
+                        identical(k[[2L]]$value, as.raw(0xff)))
+  .rmbl_x509_oid(k[[1L]]) && .rmbl_x509_is(k[[n]], 0L, 4, FALSE) && flag
+}
+
+#' The extensions: one or more, no OID twice (RFC 5280 4.2).
+#' @param nd The Extensions SEQUENCE.
+#' @param bad The function that refuses.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_x509_ext_shape <- function(nd, bad) {
+  if (!.rmbl_x509_is(nd, 0L, 16, TRUE) || !length(nd$children) ||
+        !all(vapply(nd$children, .rmbl_x509_ext1, NA))) {
+    bad("an extension is not an OID, a flag and an OCTET STRING")
+  }
+  oids <- vapply(nd$children, function(e) {
+    .rmbl_hexlify(e$children[[1L]]$value)
+  }, "")
+  if (anyDuplicated(oids)) {
+    bad("an extension appears twice")
+  }
+  invisible(NULL)
 }
 
 #' Returns the OID bytes of an AlgorithmIdentifier.
@@ -757,16 +1023,30 @@ tbs_alg_oid <- function(alg) {
 #' @noRd
 .rmbl_x509_time <- function(nd) {
   s <- tryCatch(rawToChar(nd$value), error = function(e) "")
+  # RFC 5280 4.1.2.5: YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ, nothing else; a
+  # UTCTime with letters in it gave "missing value where TRUE/FALSE needed"
+  utc <- identical(nd$tag, 23)
+  if (!utc && !identical(nd$tag, 24) ||
+        !grepl(if (utc) "^[0-9]{12}Z$" else "^[0-9]{14}Z$", s,
+               useBytes = TRUE)) {
+    stop("a certificate or CRL time is not the UTCTime or GeneralizedTime ",
+         "RFC 5280 allows", call. = FALSE)
+  }
   s <- sub("Z$", "", s)
   if (identical(nd$tag, 23)) {
     yy <- as.integer(substring(s, 1L, 2L))
     century <- if (yy >= 50L) "19" else "20"
     s <- paste0(century, s)
   }
-  as.POSIXct(
+  t <- as.POSIXct(
     strptime(substring(s, 1L, 14L), "%Y%m%d%H%M%S", tz = "UTC"),
     tz = "UTC"
   )
+  if (is.na(t)) {
+    stop("a certificate or CRL time is not a date (month 13, day 32, ...)",
+         call. = FALSE)
+  }
+  t
 }
 
 #' Reads the certificate extensions that path validation uses.

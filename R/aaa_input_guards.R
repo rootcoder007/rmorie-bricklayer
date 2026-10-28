@@ -1084,3 +1084,29 @@ if (!exists("%||%", envir = baseenv(), inherits = FALSE)) {
     call. = FALSE
   )
 }
+
+#' Whether any of the conditions holds, each evaluated only when those before
+#' it did not: `a || b || c` for long checks, where a later condition may
+#' need an earlier one to be FALSE (a type, then a range). A condition that
+#' is not TRUE (FALSE, NA, length 0) counts as not holding.
+#' @param ... The conditions.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_anyof <- function(...) {
+  for (i in seq_len(...length())) {
+    if (isTRUE(...elt(i))) {
+      return(TRUE)
+    }
+  }
+  FALSE
+}
+
+#' Whether labels fail as names: NA, blank once spaces are trimmed, or two
+#' that differ only in spaces ("A", "A ").
+#' @param x The labels.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_badnames <- function(x) {
+  t <- trimws(x)
+  anyNA(x) || !all(nzchar(t)) || anyDuplicated(t) > 0L
+}

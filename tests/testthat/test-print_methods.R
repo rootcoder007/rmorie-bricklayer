@@ -511,3 +511,20 @@ test_that("the box helpers handle a missing estimate, interval or column", {
   expect_identical(.rmbl_ci_cols(df), df)
   expect_null(.rmbl_rr_reading("The ratio is", NA_real_, 1, 2))
 })
+
+test_that("C1 controls (U+009B is CSI) are escaped like C0 ones", {
+  expect_identical(.rmbl_ctl_escape("a\u009b2Jb"), "a<U+009B>2Jb")
+  expect_identical(.rmbl_ctl_escape("\u0080x\u009f"), "<U+0080>x<U+009F>")
+  # letters above them are kept
+  expect_identical(.rmbl_ctl_escape("M\u00e9tis"), "M\u00e9tis")
+  out <- utils::capture.output(.rmbl_cat(c("-- T --", "lab\u009b31m", "--")))
+  expect_false(any(grepl("\u009b", out, fixed = TRUE)))
+  expect_true(any(grepl("lab<U+009B>31m", out, fixed = TRUE)))
+})
+
+test_that("a progress label or stage cannot write escapes to the console", {
+  a <- .bl_anim_new(paste0("x\u009b2J", "\033]0;t\007"), 3, quiet = TRUE)
+  expect_false(grepl("[\033\007]", a$label))
+  expect_false(grepl("\u009b", a$label, fixed = TRUE))
+  expect_match(a$label, "<U+009B>", fixed = TRUE)
+})

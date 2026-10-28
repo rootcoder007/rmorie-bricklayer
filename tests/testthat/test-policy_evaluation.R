@@ -1146,3 +1146,30 @@ test_that("weights of 0 drop rows; infinite weights are refused", {
                "must be 0 or more and finite")
   expect_error(sprd(1:5, w = c(1, 1, Inf, 1, 1)), "finite")
 })
+
+test_that("plndid(), evstudy() and loounit() refuse a non-frame `data`", {
+  for (d in list(NULL, NA, 1:3, "x")) {
+    expect_error(plndid(d, "u", "t", "y", "d"),
+                 "plndid: `data` must be a data frame")
+    expect_error(evstudy(d, "u", "t", "y", "g", w = "w"),
+                 "evstudy: `data` must be a data frame")
+    expect_error(loounit(d, "u", "t", "y", "d"),
+                 "loounit: `data` must be a data frame")
+  }
+  expect_error(.rmbl_covariates(NULL, "x"), "`data` must be a data frame")
+})
+
+test_that("weights too large to square give the estimate of weights 1", {
+  set.seed(1)
+  p <- expand.grid(u = 1:20, t = 1:6)
+  p$g <- ifelse(p$u <= 10, 4, Inf)
+  p$y <- 2 * (p$t >= p$g) + stats::rnorm(nrow(p))
+  p$w <- 1
+  a <- evstudy(p, "u", "t", "y", "g", leads = 2, lags = 2, w = "w")
+  p$w <- 1e308
+  b <- evstudy(p, "u", "t", "y", "g", leads = 2, lags = 2, w = "w")
+  expect_equal(b$estimate, a$estimate, tolerance = 1e-10)
+  expect_equal(b$se, a$se, tolerance = 1e-10)
+  expect_identical(.rmbl_wscale(c(1, 2)), c(1, 2))
+  expect_identical(.rmbl_wscale(c(1e308, 5e307)), c(1, 0.5))
+})

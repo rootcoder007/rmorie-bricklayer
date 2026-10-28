@@ -357,33 +357,20 @@ plot.rmbl_alloc <- function(x, ...) {
 #' @return A list.
 #' @noRd
 .ralloc_settings <- function(n, arms, ratio, block, strata, codes, prefix) {
-  if (!is.character(arms) || length(arms) < 2L || anyNA(arms) ||
-        anyDuplicated(arms) || !all(nzchar(arms))) {
+  # a blank name (" ") or two that differ only in spaces ("A", "A ") print
+  # alike on the allocation list (recheck of a8cdaf9)
+  if (.rmbl_anyof(!is.character(arms), length(arms) < 2L,
+                  .rmbl_badnames(arms))) {
     stop("ralloc: `arms` must be two or more different names",
          call. = FALSE)
   }
-  if (!is.numeric(ratio) || length(ratio) != length(arms) ||
-        anyNA(ratio) || any(ratio < 1) || any(ratio != round(ratio))) {
+  if (.rmbl_anyof(!is.numeric(ratio), length(ratio) != length(arms),
+                  anyNA(ratio), any(ratio < 1), any(ratio != round(ratio)))) {
     stop("ralloc: `ratio` must be one positive whole number per arm",
          call. = FALSE)
   }
   ratio <- as.integer(ratio)
-  if (!is.null(block)) {
-    # as.integer() turned 3e9 into NA and Inf into an error of R's own
-    if (!is.numeric(block) || !length(block) || anyNA(block) ||
-          !all(is.finite(block)) || any(block < 1) || any(block > 1e6) ||
-          any(block %% sum(ratio) != 0)) {
-      stop(
-        sprintf(
-          paste0("ralloc: every block size must be a positive multiple ",
-                 "of %d, at most 1000000"),
-          sum(ratio)
-        ),
-        call. = FALSE
-      )
-    }
-    block <- sort(unique(as.integer(block)))
-  }
+  block <- .ralloc_block(block, ratio)
   st <- .ralloc_strata(strata)
   if (is.null(st)) {
     n <- .rmbl_scalar(n, "n", min = 1, max = 1e7, integer = TRUE)
@@ -405,6 +392,31 @@ plot.rmbl_alloc <- function(x, ...) {
   )
 }
 
+#' ralloc()'s block sizes, checked: positive multiples of the ratio's sum.
+#' @param block As for ralloc().
+#' @param ratio The checked ratio.
+#' @return The sizes, sorted and unique, or NULL.
+#' @noRd
+.ralloc_block <- function(block, ratio) {
+  if (is.null(block)) {
+    return(NULL)
+  }
+  # as.integer() turned 3e9 into NA and Inf into an error of R's own
+  if (.rmbl_anyof(!is.numeric(block), !length(block), anyNA(block),
+                  !all(is.finite(block)), any(block < 1), any(block > 1e6),
+                  any(block %% sum(ratio) != 0))) {
+    stop(
+      sprintf(
+        paste0("ralloc: every block size must be a positive multiple ",
+               "of %d, at most 1000000"),
+        sum(ratio)
+      ),
+      call. = FALSE
+    )
+  }
+  sort(unique(as.integer(block)))
+}
+
 #' The strata as a named integer vector of places, or NULL.
 #' @param strata As for ralloc().
 #' @return A named integer vector, or NULL.
@@ -421,10 +433,10 @@ plot.rmbl_alloc <- function(x, ...) {
     lab <- do.call(paste, c(strata[setdiff(names(strata), "n")], sep = " / "))
     strata <- stats::setNames(strata$n, lab)
   }
-  if (!is.numeric(strata) || is.null(names(strata)) ||
-        anyNA(strata) || any(strata < 1) || any(strata != round(strata)) ||
-        sum(strata) > 1e7 ||
-        anyDuplicated(names(strata)) || !all(nzchar(names(strata)))) {
+  if (.rmbl_anyof(!is.numeric(strata), is.null(names(strata)),
+                  anyNA(strata), any(strata < 1),
+                  any(strata != round(strata)), sum(strata) > 1e7,
+                  .rmbl_badnames(names(strata)))) {
     stop(
       "ralloc: `strata` must name each stratum and its number of places",
       call. = FALSE

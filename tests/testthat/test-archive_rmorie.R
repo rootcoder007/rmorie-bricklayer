@@ -537,7 +537,7 @@ test_that(
     )
     expect_error(
       arccap("https://s.org/a", d, visibility = "secret"),
-      "should be one of"
+      "`visibility` must be one of"
     )
     expect_error(
       arccap("https://s.org/a", d, warc = NA),

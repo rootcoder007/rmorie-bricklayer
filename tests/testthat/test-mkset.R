@@ -78,6 +78,13 @@ test_that("a plot that fails is left out, the box kept", {
   bad <- structure(list(), class = "rmbl_rate")
   expect_null(asNamespace("rmoriebricklayer")$.mkset_plot(bad))
   expect_null(asNamespace("rmoriebricklayer")$.mkset_plot(1:3))
+  # a data frame, or a result with no plot method of its own, gets no
+  # pairs plot (which warned on text columns)
+  df <- data.frame(a = c("x", "y"), b = 1:2)
+  expect_silent(n1 <- asNamespace("rmoriebricklayer")$.mkset_plot(df))
+  expect_null(n1)
+  cls <- structure(df, class = c("rmbl_noplot", "data.frame"))
+  expect_null(asNamespace("rmoriebricklayer")$.mkset_plot(cls))
   # past the size limit the plot is a picture, not vectors
   y <- yoy(c(10, 12, 15, 11))
   big <- asNamespace("rmoriebricklayer")$.mkset_plot(y, big = 10)
@@ -92,4 +99,18 @@ test_that("mkset refuses what it cannot do", {
                "must end in .html, .md or .txt, not .pdf")
   expect_error(mkset(p$g, title = 1), "title")
   expect_error(mkset(p$g, plots = NA), "plots")
+})
+
+test_that("a result's name cannot write escapes to the terminal", {
+  p <- set_parts()
+  nm <- c("a\033]0;owned\007b", "c\u009b2Jd", "e\rf")
+  s <- mkset(stats::setNames(list(p$g, p$y, 1:3), nm))
+  out <- utils::capture.output(print(s))
+  txt <- paste(out, collapse = "\n")
+  # no raw ESC, BEL, CSI or CR reaches the console: they print escaped
+  expect_false(grepl("[\007\r]", txt))
+  expect_false(grepl("\033]", txt, fixed = TRUE))
+  expect_false(grepl("\u009b", txt, fixed = TRUE))
+  expect_true(any(grepl("1. a\\033]0;owned\\ab", out, fixed = TRUE)))
+  expect_true(any(grepl("2. c<U+009B>2Jd", out, fixed = TRUE)))
 })

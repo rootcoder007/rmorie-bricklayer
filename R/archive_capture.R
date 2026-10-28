@@ -131,7 +131,7 @@ arccap <- function(
   visibility = c("public", "private"),
   warc = TRUE
 ) {
-  visibility <- match.arg(visibility)
+  visibility <- .rmbl_arg(visibility)
   up <- .bl_cap_upload_arg(upload, reason)
   upload <- up$upload
   reason <- up$reason
@@ -227,8 +227,9 @@ format.rmbl_archive_capture <- function(x, ...) {
   if (is.null(ts)) {
     return(NULL)
   }
-  ck <- ts$checks
-  core <- all(ck$ok[ck$check %in% c("message_imprint", "signature")])
+  # the rows must be there and pass: all() of none is TRUE, which printed a
+  # junk token as verified (recheck of a8cdaf9)
+  core <- .bl_ts_core(ts)
   sprintf(
     "%s (%s)",
     format(ts$time, tz = "UTC"),
@@ -243,6 +244,36 @@ format.rmbl_archive_capture <- function(x, ...) {
       "NOT verified"
     }
   )
+}
+
+#' Whether a tsvrf() result shows a token for these bytes, signed: its
+#' structure, imprint, signature and attribute digest rows present and
+#' passing, and the nonce row, when there is one.
+#' @param ts A tsvrf() result.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_ts_core <- function(ts) {
+  ck <- ts$checks
+  need <- c(
+    "token_structure", "message_imprint", "signature", "attribute_digest"
+  )
+  got <- ck$ok[match(need, ck$check)]
+  nonce <- ck$ok[ck$check == "nonce"]
+  !anyNA(got) && all(got) && (!length(nonce) || all(nonce))
+}
+
+#' The checks a tsvrf() result failed, or did not reach, in words.
+#' @param ts A tsvrf() result.
+#' @return One string.
+#' @noRd
+.bl_ts_failed <- function(ts) {
+  ck <- ts$checks
+  need <- c(
+    "token_structure", "message_imprint", "signature", "attribute_digest"
+  )
+  bad <- c(ck$check[!ck$ok], setdiff(need, ck$check))
+  bad <- intersect(c("token_parses", need, "signer_id", "nonce"), bad)
+  if (length(bad)) paste("failed:", toString(bad)) else "not verified"
 }
 
 # The transport seams, one place for tests to stand in a server.
@@ -373,6 +404,10 @@ format.rmbl_archive_capture <- function(x, ...) {
     base <- "index"
   }
   base <- gsub("[^A-Za-z0-9._-]", "_", base)
+  # "." and ".." would name the folder or its parent
+  if (base %in% c(".", "..")) {
+    base <- "index"
+  }
   if (grepl("?", u, fixed = TRUE)) {
     h <- substr(csha256(charToRaw(u)), 1L, 10L)
     base <- if (grepl(".", base, fixed = TRUE)) {
@@ -474,6 +509,12 @@ format.rmbl_archive_capture <- function(x, ...) {
   list(ak = .ak, sk = .sk)
 }
 
+# The names arccap() writes in a capture folder itself.
+.bl_cap_own <- c(
+  "manifest.json", "manifest.tsr", "manifest.tsr.rejected", "push.json",
+  "archive", "indexes"
+)
+
 #' Fetches every URL into `dir`.
 #' @param urls The URLs to capture, one row of the result each.
 #' @param dir The folder.
@@ -498,7 +539,8 @@ format.rmbl_archive_capture <- function(x, ...) {
   used <- character()
   for (i in seq_along(urls)) {
     f <- .bl_capture_name(urls[[i]])
-    if (f %in% used) {
+    # a URL ending in /manifest.json must not be overwritten by the manifest
+    if (f %in% c(used, .bl_cap_own)) {
       f <- sprintf("%03d_%s", i, f)
     }
     path <- file.path(dir, f)
@@ -534,8 +576,25 @@ format.rmbl_archive_capture <- function(x, ...) {
     60L
   )
   if (identical(res$status, 200L) && length(res$body)) {
-    writeBin(res$body, file.path(dir, "manifest.tsr"))
-    return(tsvrf(res$body, mpath, nonce = nonce))
+    # checked before it is kept: a 200 with a junk body (a captive portal,
+    # an error page) or another request's token is never saved or sent
+    ts <- tsvrf(res$body, mpath, nonce = nonce)
+    if (.bl_ts_core(ts)) {
+      writeBin(res$body, file.path(dir, "manifest.tsr"))
+      return(ts)
+    }
+    warning(
+      sprintf(
+        paste0(
+          "the time-stamping authority's reply is not a valid timestamp ",
+          "of the manifest (%s): it is not kept, and the manifest has no ",
+          "timestamp"
+        ),
+        .bl_ts_failed(ts)
+      ),
+      call. = FALSE
+    )
+    return(NULL)
   }
   warning(
     sprintf(
@@ -659,14 +718,44 @@ format.rmbl_archive_capture <- function(x, ...) {
 }
 
 #' Asks the Wayback Machine to save the captured addresses too.
+#'
+#' One address wbsave() refuses (on your own network, or resolving to it)
+#' is "not asked" alone: the others are still asked (recheck of a8cdaf9).
 #' @param out The capture table.
 #' @param ok The rows kept.
 #' @param ak,sk As for arccap().
 #' @return The capture table, with each row's Wayback status.
 #' @noRd
 .bl_cap_wayback <- function(out, ok, ak, sk) {
-  w <- tryCatch(
-    wbsave(out$url[ok], ak = ak, sk = sk, quiet = TRUE),
+  # what can be refused without the network, refused row by row
+  why <- rep("", nrow(out))
+  why[ok] <- vapply(out$url[ok], .bl_cap_wb_why, "", USE.NAMES = FALSE)
+  bad <- ok & nzchar(why)
+  out$wayback[bad] <- paste("not asked:", why[bad])
+  ok <- ok & !bad
+  if (!any(ok)) {
+    return(out)
+  }
+  w <- .bl_cap_wb_ask(out$url[ok], ak, sk)
+  if (inherits(w, "rmbl_fail") && sum(ok) > 1L &&
+        grepl("not a public address", w, fixed = TRUE)) {
+    # an address that resolves to a private one: each asked alone
+    for (i in which(ok)) {
+      out <- .bl_cap_wb_fill(out, i, .bl_cap_wb_ask(out$url[i], ak, sk))
+    }
+    return(out)
+  }
+  .bl_cap_wb_fill(out, which(ok), w)
+}
+
+#' wbsave() for some addresses, its error kept as a value.
+#' @param urls The addresses.
+#' @param ak,sk As for arccap().
+#' @return The wbsave() result, or an `rmbl_fail` string.
+#' @noRd
+.bl_cap_wb_ask <- function(urls, ak, sk) {
+  tryCatch(
+    wbsave(urls, ak = ak, sk = sk, quiet = TRUE),
     error = function(e) {
       .bl_unless_interrupted(
         e,
@@ -674,20 +763,45 @@ format.rmbl_archive_capture <- function(x, ...) {
       )
     }
   )
+}
+
+#' The Wayback Machine's answer, written into the rows asked.
+#' @param out The capture table.
+#' @param i The rows asked (indices).
+#' @param w The wbsave() result, or an `rmbl_fail` string.
+#' @return The capture table.
+#' @noRd
+.bl_cap_wb_fill <- function(out, i, w) {
   if (inherits(w, "rmbl_fail")) {
-    out$wayback[ok] <- paste("not asked:", w)
+    out$wayback[i] <- paste("not asked:", w)
     return(out)
   }
   wd <- as.data.frame(unclass(w))
-  j <- match(out$url[ok], wd$url)
+  j <- match(out$url[i], wd$url)
   said <- ifelse(
     is.na(wd$timestamp[j]),
     wd$status[j],
     paste(wd$status[j], wd$timestamp[j])
   )
   said[is.na(j)] <- NA_character_
-  out$wayback[ok] <- said
+  out$wayback[i] <- said
   out
+}
+
+#' Why wbsave() would refuse one address without looking it up, or "".
+#' @param u The URL.
+#' @return One string.
+#' @noRd
+.bl_cap_wb_why <- function(u) {
+  tryCatch(
+    {
+      .bl_wb_check_urls(u)
+      ""
+    },
+    error = function(e) {
+      .bl_unless_interrupted(e, sub("^[^ :]+: ", "", conditionMessage(e)))
+    }
+  )
 }
 
 #' arccap()'s WARC flag, URLs, folder, item, timestamp authority and
@@ -780,11 +894,33 @@ format.rmbl_archive_capture <- function(x, ...) {
     "application/octet-stream"
   }
   .bl_ia_put(
-    sprintf("%s/%s/%s", .bl_ia_s3(), item, file),
+    sprintf("%s/%s/%s", .bl_ia_s3(), item, .bl_ia_key_path(file)),
     file.path(dir, file),
     ctype,
     h,
     tmout
+  )
+}
+
+#' A file's name as the path of its key in the item: each part
+#' percent-encoded, so no name reaches another item or a query.
+#' @param file The file name, relative to the capture folder (checked).
+#' @return One string.
+#' @noRd
+.bl_ia_key_path <- function(file) {
+  parts <- strsplit(file, "/", fixed = TRUE)[[1L]]
+  if (!length(parts) || any(parts %in% c("", ".", ".."))) {
+    stop(
+      sprintf(
+        "not a file name inside the capture: %s",
+        .rmbl_printable(file)
+      ),
+      call. = FALSE
+    )
+  }
+  paste(
+    vapply(parts, utils::URLencode, "", reserved = TRUE, USE.NAMES = FALSE),
+    collapse = "/"
   )
 }
 
@@ -809,7 +945,7 @@ format.rmbl_archive_capture <- function(x, ...) {
       out$mirror[j] <- sprintf(
         "https://archive.org/download/%s/%s",
         item,
-        file
+        .bl_ia_key_path(file)
       )
     }
   } else if (!good) {

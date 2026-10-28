@@ -326,3 +326,55 @@ test_that("a certificate with no key usage says none is stated", {
   root$key_usage <- character()
   expect_match(box_text(root), "Key usage none stated", fixed = TRUE)
 })
+
+test_that("no byte mutation of a token verifies but the ones proven harmless", {
+  f <- ts_fixtures()
+  for (nm in c("rsa_token", "ecdsa_token")) {
+    tok <- f[[nm]]
+    top <- .Call(C_rmbl_der_parse, tok)
+    # Harmless, and the only ones allowed: (1) PKIStatus 0 -> 1
+    # (grantedWithMods), which carries the same token; (2) a byte of the CA
+    # certificate the token carries a second time whose mutation leaves it a
+    # certificate certprs() reads (strictly): nothing verified depends on
+    # that copy, as the chain is built to `trust`.
+    sd <- top$children[[2L]]$children[[2L]]$children[[1L]]
+    certs <- Filter(function(n) {
+      identical(n$class, 2L) && identical(n$tag, 0) && isTRUE(n$constructed)
+    }, sd$children)[[1L]]$children
+    expect_length(certs, 2L)
+    ca <- (certs[[2L]]$start + 1):(certs[[2L]]$offset + certs[[2L]]$length)
+    st <- top$children[[1L]]$children[[1L]]$offset + 1
+    harmless <- function(m, i, b) {
+      if (i == st && b == 1) {
+        return(TRUE)
+      }
+      i %in% ca && !inherits(
+        tryCatch(certprs(m[ca]), error = function(e) e), "error"
+      )
+    }
+    survive <- character()
+    for (i in seq_along(tok)) {
+      # one flip a byte, the low bit or the high one in turn (about 5
+      # minutes for both tokens); RMBL_MUTATE_ALL=1 tries both on every byte
+      flips <- if (nzchar(Sys.getenv("RMBL_MUTATE_ALL"))) {
+        c(0x01, 0x80)
+      } else if (i %% 2L) {
+        0x80
+      } else {
+        0x01
+      }
+      for (b in flips) {
+        m <- tok
+        m[i] <- xor(m[i], as.raw(b))
+        r <- tryCatch(tsvrf(m, f$payload, trust = f$ca)$ok,
+                      error = function(e) conditionMessage(e))
+        if (is.character(r)) {
+          survive <- c(survive, sprintf("%d^%02x error: %s", i, b, r))
+        } else if (isTRUE(r) && !harmless(m, i, b)) {
+          survive <- c(survive, sprintf("%d^%02x verifies", i, b))
+        }
+      }
+    }
+    expect_identical(survive, character(), info = nm)
+  }
+})

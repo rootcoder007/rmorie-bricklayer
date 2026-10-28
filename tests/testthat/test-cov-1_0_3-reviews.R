@@ -112,16 +112,18 @@ test_that("OCSP: the clock, a CertID that is not one, dates that are not", {
 })
 
 test_that("timestamp tokens with fields out of place are refused", {
-  si <- list(constructed = TRUE, tag = 17, children = list(list(
-    constructed = TRUE,
-    children = list(list(tag = 2), list(), list(), list(), list())
+  # universal SET and SEQUENCE, as DER gives them
+  si <- list(class = 0L, constructed = TRUE, tag = 17, children = list(list(
+    class = 0L, constructed = TRUE, tag = 16,
+    children = list(list(class = 0L, tag = 2), list(), list(), list(),
+                    list())
   )))
   k <- list(list(), list(), list(), list(class = 0L, tag = 16), si)
   expect_error(.rmbl_ts_signer(k), "RFC 5652 does not define")
   expect_error(.rmbl_ts_want(NULL, 0L, 2, "version"),
                "version is not where RFC 3161 puts it")
-  resp <- list(tag = 16, children = list(
-    list(class = 0L, tag = 16, children = list())
+  resp <- list(class = 0L, constructed = TRUE, tag = 16, children = list(
+    list(class = 0L, constructed = TRUE, tag = 16, children = list())
   ))
   expect_error(.rmbl_ts_content_info(resp), "has no PKIStatus")
   expect_error(.rmbl_ts_content_info(list(tag = 4, children = list())),
@@ -135,13 +137,22 @@ test_that("timestamp tokens with fields out of place are refused", {
 test_that("a SignerInfo short of fields or with extra ones is refused", {
   sha256 <- as.raw(c(0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01))
   alg <- parse_der(der(0x30, der(0x06, sha256)))
-  ver <- list(class = 0L, tag = 2)
-  short <- list(children = list(ver, list(), alg, list(class = 2L, tag = 0)))
-  expect_error(.rmbl_ts_signer_algs(short), "SignerInfo is incomplete")
-  extra <- list(children = list(ver, list(), alg, alg,
+  # version 1 with an issuerAndSerialNumber, the digest among the token's
+  ver <- list(class = 0L, tag = 2, value = as.raw(1L))
+  sid <- list(class = 0L, tag = 16, constructed = TRUE)
+  dig <- "2.16.840.1.101.3.4.2.1"
+  short <- list(children = list(ver, sid, alg, list(class = 2L, tag = 0)))
+  expect_error(.rmbl_ts_signer_algs(short, dig), "SignerInfo is incomplete")
+  extra <- list(children = list(ver, sid, alg, alg,
                                 list(class = 0L, tag = 4),
                                 list(class = 0L, tag = 16)))
-  expect_error(.rmbl_ts_signer_algs(extra), "RFC 5652 does not define")
+  expect_error(.rmbl_ts_signer_algs(extra, dig), "RFC 5652 does not define")
+  # the version must fit the signer identifier, the digest the token's list
+  v3 <- list(children = list(utils::modifyList(ver, list(value = as.raw(3L))),
+                             sid, alg))
+  expect_error(.rmbl_ts_signer_algs(v3, dig), "SignerInfo version")
+  expect_error(.rmbl_ts_signer_algs(extra, "1.3.14.3.2.26"),
+               "not among the token's digestAlgorithms")
 })
 
 test_that("a SignerInfo naming its signer by key identifier is checked", {

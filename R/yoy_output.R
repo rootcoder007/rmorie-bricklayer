@@ -131,6 +131,7 @@ format.rmbl_yoy <- function(
   hdr[hdr == "pct"] <- if (pp) "points" else "change %"
   hdr[hdr == "period"] <- m$period
   hdr[hdr == "value"] <- m$value
+  hdr <- .rmbl_txt(hdr)
   rows <- .yoy_print_rows(shown, cols, hdr, isTRUE(color), pal, palette)
   fn <- .yoy_first_note(shown, m)
   c(
@@ -537,7 +538,10 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
       cols <- c(stats::setNames(list(as.character(d[[b]])), b), cols)
     }
   }
-  cols
+  # labels as the console shows them, as rtcalc() prints them: folded to
+  # ASCII in a C locale ("Metis"), control characters escaped; unfolded, the
+  # columns misaligned with "unable to translate" warnings (recheck of a8cdaf9)
+  lapply(cols, .rmbl_txt)
 }
 
 #' The header, the rule and the rows of a year-over-year table, as lines.
@@ -550,14 +554,16 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
 #' @return A character vector of lines.
 #' @noRd
 .yoy_print_rows <- function(d, cols, hdr, color, pal, palette) {
+  # display widths: a CJK label takes two columns
+  wd <- function(s) nchar(ifelse(is.na(s), "NA", s), type = "width")
   widths <- vapply(
     seq_along(cols),
-    function(i) {
-      max(nchar(c(hdr[i], cols[[i]])), na.rm = TRUE)
-    },
+    function(i) max(wd(c(hdr[i], cols[[i]]))),
     0L
   )
-  pad <- function(s, w) formatC(s, width = w, flag = "-")
+  pad <- function(s, w) {
+    paste0(ifelse(is.na(s), "NA", s), strrep(" ", max(0L, w - wd(s))))
+  }
   out <- c(
     paste(
       vapply(seq_along(cols), function(i) pad(hdr[i], widths[i]), ""),

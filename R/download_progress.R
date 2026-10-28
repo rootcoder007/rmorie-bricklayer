@@ -154,7 +154,8 @@ bldl <- function(
   st$quiet <- quiet
   st$tty <- tty
   st$auto_tty <- auto_tty
-  st$label <- label
+  # the label and the URL are the caller's text: escaped before printing
+  st$label <- .rmbl_ctl_escape(as.character(label))
   st$t0 <- t0
   st
 }
@@ -167,7 +168,7 @@ bldl <- function(
   cat(
     sprintf(
       "%s: downloading%s\n",
-      label,
+      .rmbl_ctl_escape(as.character(label)),
       if (is.finite(size)) paste0(" ", .bl_fmt_bytes(size)) else ""
     ),
     file = stderr()
@@ -405,8 +406,8 @@ bldl <- function(
       cat(
         sprintf(
           "%s: %s answered HTTP %d; trying again in %.0f s\n",
-          label,
-          url,
+          .rmbl_ctl_escape(as.character(label)),
+          .rmbl_ctl_escape(url),
           res$status,
           wait
         ),

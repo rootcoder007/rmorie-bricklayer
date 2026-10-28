@@ -82,8 +82,10 @@ test_that(
 )
 
 test_that("fetchvrf() says what every source did when none serves the file", {
+  # the default arcs = "rmorie" asks archive.rmorie.com last: offline here
   local_mocked_bindings(
-    blfetch = .fv_stub(list("https://m.org/x" = charToRaw("y")))
+    blfetch = .fv_stub(list("https://m.org/x" = charToRaw("y"))),
+    arcget = function(...) stop("arcget: offline in the tests", call. = FALSE)
   )
   expect_error(
     fetchvrf(
@@ -94,7 +96,8 @@ test_that("fetchvrf() says what every source did when none serves the file", {
     ),
     paste0(
       "with the pinned SHA-256:\n  https://example.org/x: failed.*\n  ",
-      "https://m.org/x: refused"
+      "https://m.org/x: refused.*\n  ",
+      "archive.rmorie.com: failed: arcget: offline in the tests"
     )
   )
   expect_error(
