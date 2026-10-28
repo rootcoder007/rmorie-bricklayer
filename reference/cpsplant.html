@@ -140,8 +140,12 @@ correctly is very unlikely to be computing the wrong thing.</p>
 levels (the second is coded 1). Effects are on the outcome's own scale
 per unit of treatment, so the statistic must estimate an additive
 effect: a difference in means, a regression slope, an average treatment
-effect. An estimate passes when it is within <code>tol</code> of the planted
-effect, after allowing three Monte Carlo standard errors.</p>
+effect. An effect is recovered when the average estimate is within
+<code>tol</code> of it, after allowing three Monte Carlo standard errors, and that
+standard error is itself no larger than <code>tol</code>: a statistic too noisy for
+the check to mean anything is not recovered (raise <code>n</code>). Without the
+second condition the allowance grew with the noise, and a statistic that
+returned pure noise passed.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

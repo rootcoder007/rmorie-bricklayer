@@ -141,12 +141,12 @@ empty, and one that arrived constant:</p>
 <span><span class="co">#&gt; │   No finding is proof of correctness: each check has a                      │</span></span>
 <span><span class="co">#&gt; │   stated blind spot, and a small sample has little power.                   │</span></span>
 <span><span class="co">#&gt; │                                                                             │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>    warn  drift      grade: categorical test, p = &lt; 0.001                │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>    warn  drift      score: numeric test, p = &lt; 0.001                    │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>    warn  missing    dead: column(s) entirely missing                    │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>    warn  schema     range_score: Column 'score' has 226 value(s)        │</span></span>
+<span><span class="co">#&gt; │   FAIL warn  drift      grade: categorical test, p = &lt; 0.001                │</span></span>
+<span><span class="co">#&gt; │   FAIL warn  drift      score: numeric test, p = &lt; 0.001                    │</span></span>
+<span><span class="co">#&gt; │   FAIL warn  missing    dead: column(s) entirely missing                    │</span></span>
+<span><span class="co">#&gt; │   FAIL warn  schema     range_score: Column 'score' has 226 value(s)        │</span></span>
 <span><span class="co">#&gt; │                         outside [-0.8488307, 10.90645]                      │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>    warn  schema     unexpected_grade: Column 'grade' has unexpected     │</span></span>
+<span><span class="co">#&gt; │   FAIL warn  schema     unexpected_grade: Column 'grade' has unexpected     │</span></span>
 <span><span class="co">#&gt; │                         values: z                                           │</span></span>
 <span><span class="co">#&gt; │   !    note  drift      dead, flat: column(s) not in the reference          │</span></span>
 <span><span class="co">#&gt; │   !    note  missing    dead: a contiguous run of 300 missing values from   │</span></span>
@@ -453,7 +453,7 @@ not.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">0</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Benford first-digit screen</span> ───────────────────────────────────────────╮</span></span>
-<span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span> consistent with Benford's law                                       │</span></span>
+<span><span class="co">#&gt; │   ✓ consistent with Benford's law                                       │</span></span>
 <span><span class="co">#&gt; │                                                                         │</span></span>
 <span><span class="co">#&gt; │   values used  2,000                                                    │</span></span>
 <span><span class="co">#&gt; │   chi-square   3.183                                                    │</span></span>

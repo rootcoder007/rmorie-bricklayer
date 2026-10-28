@@ -90,8 +90,8 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ╭── Signing key (post-quantum) ───────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
-#> │   root       6117b06578d6749be121ee56e590b262565d64b813df639f13353ee8131170 │
-#> │              ca                                                             │
+#> │   root       993ec261967a5068ecc32c56b1646db5bf81d9773417f71900501661cfc212 │
+#> │              d5                                                             │
 #> │   height     3                                                              │
 #> │   used       0 of 8 signatures                                              │
 #> │   remaining  8                                                              │
@@ -108,7 +108,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ╭── Public verification key ─────────────────────────────────────────────────╮
 #> │   scheme  xmss-sha256                                                      │
-#> │   root    6117b06578d6749be121ee56e590b262565d64b813df639f13353ee8131170ca │
+#> │   root    993ec261967a5068ecc32c56b1646db5bf81d9773417f71900501661cfc212d5 │
 #> │   height  3                                                                │
 #> ╰────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -327,13 +327,13 @@ cpsfals(d, function(z) cor(z$x, z$y), trt = "x",
 #> │   The controls that ran passed: a shuffled treatment, a placebo, an added   │
 #> │   random cause and subsets of the data did not explain it away.             │
 #> │                                                                             │
-#> │   ✔    permutation         p = 0.005 with 199 usable permutations; the      │
+#> │   ok   permutation         p = 0.005 with 199 usable permutations; the      │
 #> │                            smallest this de                                 │
-#> │   ✔    placebo             a permuted exposure gives 0.0702711, against an  │
+#> │   ok   placebo             a permuted exposure gives 0.0702711, against an  │
 #> │                            observed 0.5                                     │
-#> │   ✔    random_common_cause adding a column of noise moved the statistic by  │
+#> │   ok   random_common_cause adding a column of noise moved the statistic by  │
 #> │        0; it cannot                                                         │
-#> │   ✔    subset_stability    the middle 95% of 199 subsets spans [0.539306,   │
+#> │   ok   subset_stability    the middle 95% of 199 subsets spans [0.539306,   │
 #> │                            0.629292], a                                     │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -451,7 +451,7 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ╭── Against the declaration of 2026-10-28T06:52:18Z: departures below ──╮
+#> ╭── Against the declaration of 2026-10-28T11:02:22Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -469,7 +469,7 @@ prrgchk(plan, "n_rows")
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ╭── Against the declaration of 2026-10-28T06:52:18Z: departures below ──╮
+#> ╭── Against the declaration of 2026-10-28T11:02:22Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -543,8 +543,8 @@ alloc
 #> │   Strata        2                                                           │
 #> │   Kit codes     yes                                                         │
 #> │   Seed          concealed: attr(x, "alloc")$seed                            │
-#> │   Commitment    b59fe0d8fbf853b88022675bcd64d726c0702405a538bc23daf2757fea1 │
-#> │                 b4b30                                                       │
+#> │   Commitment    82b25ddbf887734a5f36bb449330e632394171b171deb8f5f67f8aeaaa6 │
+#> │                 e823d                                                       │
 #> │                                                                             │
 #> │   stratum  drug  placebo                                                    │
 #> │   -------  ----  -------                                                    │
@@ -593,8 +593,8 @@ rallocvrf(alloc, digest = attr(alloc, "alloc")$digest)
 #> │   ✔    commitment    the list is the one committed to                       │
 #> │   ✔    seed          the seed and the settings give this list, row for row  │
 #> │   ✔    participants  40 participants, each once                             │
-#> │        commitment    b59fe0d8fbf853b88022675bcd64d726c0702405a538bc23daf275 │
-#> │                      7fea1b4b30                                             │
+#> │        commitment    82b25ddbf887734a5f36bb449330e632394171b171deb8f5f67f8a │
+#> │                      eaaa6e823d                                             │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # one allocation changed after the commitment is caught
@@ -702,7 +702,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #> │   ✔    no_unlisted_files                                                    │
 #> │   ✔    attestation:attestation_complete                                     │
 #> │   ✔    attestation:manifest_digest                                          │
-#> │        ca3a48ad34682f7b0ba27bbb11d1642a4abcd6505fcd283b49461c449765ceeb     │
+#> │        859e5f1dd2ea3b4304ee6b611d2fc247153802fee40940b54d6ef2a883f33ea6     │
 #> │   ✔    attestation:signature                                                │
 #> │   ✔    manifest_digest                                                      │
 #> │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │
@@ -739,7 +739,7 @@ p <- mkbndlproj(proj, title = "My study", author = "A. Researcher",
                 contact = "a.researcher@example.org", overwrite = TRUE)
 p
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpuuWczc/my-study                                          │
+#> │   Folder  /tmp/RtmpKGD8Kz/my-study                                          │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -788,12 +788,12 @@ b
 #> ╭── Reproducibility bundle ───────────────────────────────────────────────────╮
 #> │   Project    my-study                                                       │
 #> │   Zip        my-study_v1_with_data.zip                                      │
-#> │   Folder     /tmp/RtmpuuWczc                                                │
-#> │   Size       193.4 KB                                                       │
+#> │   Folder     /tmp/RtmpKGD8Kz                                                │
+#> │   Size       198.6 KB                                                       │
 #> │   Files      28                                                             │
 #> │   Data file  inside                                                         │
-#> │   SHA-256    b5ff16d7ff69f0ad602041ef25aff92babb7267307dbdfd8ed0de38a0cf1dd │
-#> │              2f                                                             │
+#> │   SHA-256    f09610bc4b4702c3ecbfddffcf4b744c5b243143efbd3c5e8e6da721ccc52f │
+#> │              98                                                             │
 #> │                                                                             │
 #> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │
 #> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │

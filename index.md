@@ -840,7 +840,9 @@ about the design.
 | Secrets are wiped | After each of those operations the harness scans the dead stack below it for copies of the seed, the signing key, the password: none remain | same harness, `ZEROISATION` lines |
 | Memory safe | The whole test suite under AddressSanitizer and UndefinedBehaviorSanitizer (R-devel built with both) | workflow `sanitizers` |
 | Survives hostile arguments | Every one of the 125 C++ entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`), and the 17 written in plain C (the file lock, its release and the locked call, the path probe, the environment wipe, the CSV splitter, the checked writer, the checked gzip reader and its size count, the progress bar and spinner, the survey replicate totals, the survey row keys, their digest and set digest, the survey replicate column pass, and the interrupt check before a key prompt) report errors through R itself; argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R`, `tests/testthat/test-review3.R` |
-| No request to a private address | One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (`127.1`, `0x7f000001`, `::ffff:7f00:1`), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, `https` never downgraded | `src/rmbl_fetch.cpp`, `tests/testthat/test-review2.R` |
+| No request to a private address | One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (`127.1`, `0x7f000001`, `::ffff:7f00:1`), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, `https` never downgraded, and an API call that carries a key never sends it again on a redirect, not even to its own host | `src/rmbl_fetch.cpp`, `tests/testthat/test-review2.R`, `tests/testthat/test-review4.R` |
+| Verifies what it is given, not what it finds | An RFC 3161 token is read by position: a token wrapped in another structure, a response the authority did not grant, algorithm parameters that are not a DER NULL and a SignerInfo naming another certificate are refused, and the nonce a request sent must come back. An OCSP answer counts only when it names the certificate asked about, is current, and is signed by its issuer or a responder that issuer delegated to; a CRL only when its CA signed it and it has not expired | `R/timestamp.R`, `R/revocation.R`, `R/x509.R`, `tests/testthat/test-tsstmp.R`, `tests/testthat/test-revocation.R` |
+| Bounded decompression | A gzip that inflates past `rmoriebricklayer.maxcsvbytes` (1 GiB), or more than `rmoriebricklayer.maxgzratio` (200) times its size past 64 MiB, is refused while it is read, before it is parsed | `R/pollution.R`, `R/data_hub.R`, `tests/testthat/test-data_hub.R` |
 | Robust against hostile input | libFuzzer with ASan + UBSan over the DER parser and RSA arithmetic, the decimal-to-double conversion (checked against the C library bit for bit on every input both accept), and the SIU report parsers; weekly long runs | `inst/fuzz/`, workflow `fuzz` |
 | Static analysis | CodeQL with its security-extended queries over the C and C++ (built as R builds them) and over the workflows, on every change to either and weekly; every GitHub Action pinned to a commit hash; secret scanning with push protection | workflow `codeql` |
 | Standards vectors | The C2SP Wycheproof post-quantum sets and the NIST ACVP sets for ML-KEM, ML-DSA, SLH-DSA, SHA-3, SHAKE and HMAC: 6,848 checks, 0 failures, each not-applicable vector named with its reason (the published ACVP PBKDF set is SHA2-224 only, so none of its vectors apply to this package’s PBKDF2-HMAC-SHA256, which the test suite checks against the RFC 7914 vectors instead); the masked and the plain paths are compared on every ML-KEM decapsulation and ML-DSA signing vector | `tools/vectors/`, workflow `vectors` |
@@ -1231,9 +1233,15 @@ build it is and whether the package knows its certificate (today the
 Chainguard FIPS Provider for OpenSSL 3.6.0-r4, CMVP \#5523, which covers
 ML-DSA and SLH-DSA).
 [`fipsmkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmkg.md)
-makes the key inside the module and
+makes the key inside the module (SLH-DSA-SHA2-128s unless you name
+another) and
 [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
-signs there; verification is unchanged.
+signs there; verification is unchanged. The status is the module’s own
+report, so the program it comes from is yours to choose: a key never
+names it. Signing loads the module set up now
+(`options(rmbl.fips.openssl =, rmbl.fips.conf =)`) and refuses a key
+made in another; every run of the program stops after
+`rmbl.fips.timeout` seconds (300).
 
 ``` r
 
@@ -1458,7 +1466,9 @@ from R, and
 and
 [`ghout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ghann.md)
 give the annotations, the sticky pull-request comment and the step
-outputs the rmbl GitHub Action prints.
+outputs the rmbl GitHub Action prints. `rmbl verify --public-key HEX`
+(or `cpschk(pubkey =)`) pins a key: a capsule must then carry a bundle
+signed with it, and one without a signature fails.
 
 ## Part of the MORIE family
 

@@ -85,6 +85,7 @@ interval here accounts for the randomness in the counts.</p>
 <span>  per <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  conflvl <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  mincnt <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  prdord <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -139,6 +140,12 @@ the interval.</p></dd>
 is at or below this are flagged as resting on a small count; the percent
 change and its exact interval are still reported, as <code><a href="yoy.html">yoy</a></code>
 does.</p></dd>
+
+
+<dt id="arg-prdord">prdord<a class="anchor" aria-label="anchor" href="#arg-prdord"></a></dt>
+<dd><p>Optional character vector: the period labels in order, as
+for <code><a href="yoy.html">yoy()</a></code>. A label it lists that the data lacks is a gap, so the
+change across it is not reported as one step.</p></dd>
 
 </dl></div>
     <div class="section level2">

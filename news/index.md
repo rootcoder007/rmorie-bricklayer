@@ -570,6 +570,172 @@
 - A release updates the rmoriebricklayer formula in the homebrew-morie
   tap and checks that it installs and passes its test on macOS.
 
+### Fixed after the 1.0.3 reviews
+
+#### Timestamps, certificates and revocation
+
+- [`tsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
+  reads an RFC 3161 token by position, as RFC 3161 and CMS lay it out. A
+  token wrapped in another structure, a response whose PKIStatus is not
+  granted, digest algorithms with parameters other than a DER NULL
+  (outside the signed bytes, so they made a token malleable), and a
+  SignerInfo naming a certificate other than the one checked are
+  refused. The signed attributes are read among themselves; a
+  messageDigest nested inside another attribute was taken before. New
+  argument `nonce`: given, the token must answer that request.
+  [`tsstmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsstmp.md)
+  and
+  [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  check the nonce they sent
+  ([`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  drew it from R’s random numbers; it now comes from the operating
+  system).
+- OCSP: an answer counts only when its SingleResponse names the
+  certificate asked about (a signed “good” for another certificate of
+  the same CA was taken), when the time checked falls between its
+  thisUpdate and nextUpdate, and when it is signed by the certificate’s
+  issuer or by a responder that issuer delegated to (OCSPSigning, valid,
+  signed by the issuer). Any certificate carried in the answer was
+  accepted as a signer, so anyone could sign “good”; the certificate
+  itself is no longer one either.
+- CRLs: a CRL counts only when a CA in the path signed it and its
+  nextUpdate has not passed, and it covers only the certificates that CA
+  issued. Unreadable, unsigned or stale CRLs were skipped and the rest
+  pooled, so an empty CRL served over http passed every certificate;
+  each now fails a row of its own.
+
+#### Signing keys and FIPS mode
+
+- A FIPS module key no longer chooses the program the package runs:
+  [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+  loads the module set up now (options `rmbl.fips.openssl` and
+  `rmbl.fips.conf`) and refuses a key from another. The module’s status
+  is described as its own report. Every `openssl` run, the cross-check’s
+  too, stops after `rmbl.fips.timeout` seconds (300); a program replaced
+  during the session is read again.
+  [`fipsmkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmkg.md)
+  makes `"SLH-DSA-SHA2-128s"` by default, as
+  [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
+  does.
+- `rmbl verify --public-key` and `cpschk(pubkey =)` take hexadecimal
+  only (16 digits at least); `" "` and `"x"` were accepted and checked
+  nothing. A key pinned against a capsule with no signed bundle fails
+  it, so deleting a bundle no longer passes a pinned-key check.
+- An API call carrying a key does not send it again on a redirect, even
+  to its own host. Calls without credentials follow same-host redirects
+  as before.
+
+#### Randomisation lists
+
+- [`ralloc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ralloc.md)’s
+  commitment enters each field with its length, so settings joined alike
+  by a comma (a stratum `"x,y"` against `"x"` and `"y"`) no longer share
+  a commitment; lists made earlier keep theirs and still verify.
+  [`rallocvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rallocvrf.md)’s
+  seed check compares the whole list (ids, strata, blocks, kit codes),
+  not the arms alone. Refused with a message: a seed that is not one
+  value, block sizes that are not finite or past 1,000,000, empty arm
+  names, `n` past 10,000,000. Kit codes for large trials are drawn in
+  linear time, the same codes as before.
+
+#### Statistics
+
+- [`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md),
+  [`evstudy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evstudy.md),
+  [`mtchdid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mtchdid.md),
+  [`plndml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndml.md)
+  and
+  [`plnpois()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpois.md)
+  warn when an explicit `cl` gives fewer than ten clusters (CR1 errors
+  are unreliable;
+  [`wcb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wcb.md)
+  is made for that case) and when a cluster changes within a unit; the
+  estimators that read one cluster per unit refuse it.
+  [`wcb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wcb.md),
+  [`perminf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/perminf.md)
+  and
+  [`plnpwr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpwr.md)
+  do not warn.
+- Weights: rows of weight 0 take no part in
+  [`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md)
+  and
+  [`evstudy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evstudy.md)
+  (a unit of them failed with “missing value where TRUE/FALSE needed”);
+  infinite weights are refused there and in
+  [`cwtd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cwtd.md),
+  [`sprd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sprd.md)
+  and the Indigenous mental-health domain weights
+  ([`cwtd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cwtd.md)
+  returned NaN for them, and for all-zero weights).
+- [`svydes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svydes.md)
+  takes negative replicate weights, as calibration (GREG, raking)
+  produces and survey’s `svrepdesign()` accepts; the full-sample weight
+  stays non-negative.
+- [`trndtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trndtst.md)’s
+  reading claims a direction only when the test supports one (“leans
+  downward, but p 0.483” where it said “a downward tendency”).
+  Overlapping intervals are no longer read as “the data cannot tell the
+  two apart”: the difference has its own, narrower interval.
+- [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+  and
+  [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
+  take `prdord`; in
+  [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+  a label the order lists that the data lacks is a gap.
+  [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md),
+  [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md),
+  [`shrs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md)
+  and
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  refuse an argument they do not take, by name, where it vanished into
+  `...`.
+- [`staysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/staysmry.md)
+  and the other Lakner measures name the function and the argument in
+  every refusal.
+
+#### Files, archives and text
+
+- A gzip that inflates more than 200 times its size, past 64 MiB, is
+  refused (option `rmoriebricklayer.maxgzratio`), in drift, the data hub
+  and the pollution readers: a 1 MB reply that inflated to just under
+  the 1 GiB cap took 2.7 GB to read. Files verified against the data
+  service’s manifest are not capped.
+- Every writer given a folder, or a file in a folder that does not
+  exist, says so, where R said “cannot open the connection”: the
+  `yoy*()` writers,
+  [`wrmnfjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrmnfjs.md),
+  [`wrtxtfb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrtxtfb.md),
+  [`mksyncsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncsv.md),
+  `mkset(file =)`,
+  [`idcrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md),
+  [`drfthtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthtml.md),
+  [`tsstmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsstmp.md),
+  [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md),
+  [`blfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blfetch.md),
+  [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md),
+  [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md),
+  [`siufetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siufetch.md),
+  [`dldata()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dldata.md),
+  [`fdl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fdl.md)
+  and
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md).
+  [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  stops a run after `rmbl.bundle.timeout` seconds (7200).
+- `rmbl verify` (and
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  in verify and report mode) refuses a provenance whose source is a
+  local path outside the capsule, or a `file://` URL without
+  `allowfile`, as refresh and drift do.
+- In a console that cannot show Unicode,
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)‘s
+  Markdown and text reports and the categorical guards’ messages use
+  ASCII words and quotes where they printed `<U+2714>` and `<U+2018>`.
+- The CLI keeps more key-shaped text from a provider: a key in two
+  groups, sixteen random letters and digits, fifteen alternating ones,
+  snake or dotted runs of random letters, and a command typed with a
+  question mark (`login set openai.model gpt-4o?`). The cache key of
+  saved answers uses the same length-prefixed fields as the commitment.
+
 ## rmoriebricklayer 1.0.2
 
 CRAN release: 2026-10-22

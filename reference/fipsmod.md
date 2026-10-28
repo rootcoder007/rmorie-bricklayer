@@ -13,7 +13,7 @@ code.
 
 ``` r
 fipsmod(
-  openssl = Sys.which("openssl"),
+  openssl = getOption("rmbl.fips.openssl", Sys.which("openssl")),
   conf = getOption("rmbl.fips.conf", Sys.getenv("RMBL_FIPS_CONF"))
 )
 ```
@@ -22,7 +22,8 @@ fipsmod(
 
 - openssl:
 
-  Path to the `openssl` program. The default looks it up on the `PATH`.
+  Path to the `openssl` program. The default is the option
+  `rmbl.fips.openssl`, else the `openssl` on the `PATH`.
 
 - conf:
 
@@ -61,6 +62,17 @@ Chainguard) loads as it is; an upstream build is first installed with
 (or set the option `rmbl.fips.conf` or the environment variable
 `RMBL_FIPS_CONF`) to use the configuration your organisation's FIPS
 deployment prescribes instead.
+
+The status is the module's own report, matched against the list: it is
+as true as the `openssl` program run, which is why a key never chooses
+that program.
+[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+loads the module set up now (the options `rmbl.fips.openssl` and
+`rmbl.fips.conf`) and refuses a key made in another. Every run of the
+program is stopped after `rmbl.fips.timeout` seconds (default 300). The
+private key reaches the program through a file in a folder only you can
+read, removed when the operation ends; a process killed meanwhile leaves
+it in R's session folder.
 
 Refusals: no `openssl` program, one older than 3.5, a FIPS provider that
 is missing or does not load, or a `conf` file that does not exist.

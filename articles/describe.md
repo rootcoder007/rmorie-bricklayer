@@ -67,12 +67,12 @@ report
 #> │   No finding is proof of correctness: each check has a                      │
 #> │   stated blind spot, and a small sample has little power.                   │
 #> │                                                                             │
-#> │   ✖    warn  drift      grade: categorical test, p = < 0.001                │
-#> │   ✖    warn  drift      score: numeric test, p = < 0.001                    │
-#> │   ✖    warn  missing    dead: column(s) entirely missing                    │
-#> │   ✖    warn  schema     range_score: Column 'score' has 226 value(s)        │
+#> │   FAIL warn  drift      grade: categorical test, p = < 0.001                │
+#> │   FAIL warn  drift      score: numeric test, p = < 0.001                    │
+#> │   FAIL warn  missing    dead: column(s) entirely missing                    │
+#> │   FAIL warn  schema     range_score: Column 'score' has 226 value(s)        │
 #> │                         outside [-0.8488307, 10.90645]                      │
-#> │   ✖    warn  schema     unexpected_grade: Column 'grade' has unexpected     │
+#> │   FAIL warn  schema     unexpected_grade: Column 'grade' has unexpected     │
 #> │                         values: z                                           │
 #> │   !    note  drift      dead, flat: column(s) not in the reference          │
 #> │   !    note  missing    dead: a contiguous run of 300 missing values from   │
@@ -432,7 +432,7 @@ Figures that were rounded, capped, rescaled or invented usually do not.
 
 benfordtst(10^stats::runif(2000, 0, 6))
 #> ╭── Benford first-digit screen ───────────────────────────────────────────╮
-#> │   ✔ consistent with Benford's law                                       │
+#> │   ✓ consistent with Benford's law                                       │
 #> │                                                                         │
 #> │   values used  2,000                                                    │
 #> │   chi-square   3.183                                                    │

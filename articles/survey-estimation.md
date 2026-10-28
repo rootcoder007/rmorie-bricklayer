@@ -128,8 +128,9 @@ svyest(lin, d, "drinks", by = "region")
 #> │   south      3.046  0.1282  [2.794, 3.297]  4.210  194                 │
 #> │                                                                        │
 #> │   Highest mean: south (3.046); lowest: north (2.822). Their intervals  │
-#> │   overlap: the data cannot tell the two apart. Every cv is below 16.6  │
-#> │   (the largest 4.44): precise enough to publish.                       │
+#> │   overlap, which alone does not mean they are the same: the difference │
+#> │   has its own, narrower interval (svycmp() for survey domains). Every  │
+#> │   cv is below 16.6 (the largest 4.44): precise enough to publish.      │
 #> │                                                                        │
 #> │   cv is the coefficient of variation (the standard error as a          │
 #> │   percentage of the estimate); from 16.6 to 33.3 use the estimate with │

@@ -247,22 +247,23 @@ rate_change(
 #> │   before; an interval that includes 0 means the change could be chance. │
 #> ╰─────────────────────────────────────────────────────────────────────────╯
 share(c(a = 3, b = 7))
-#> ╭── Share ──────────────────────────────────────────────────────────────╮
-#> │   Count     count                                                     │
-#> │   Total     10                                                        │
-#> │   Interval  95% Wilson                                                │
-#> │                                                                       │
-#> │   label  count  total  share  95% CI                                  │
-#> │   -----  -----  -----  -----  --------------                          │
-#> │   a          3     10     30  [10.78, 60.32]                          │
-#> │   b          7     10     70  [39.68, 89.22]                          │
-#> │                                                                       │
-#> │   Highest share: row 2 (70); lowest: row 1 (30). Their intervals      │
-#> │   overlap: the data cannot tell the two apart.                        │
-#> │                                                                       │
-#> │   Each share is the count as a percentage of the total, with a Wilson │
-#> │   interval, which stays inside 0 to 100 for small counts.             │
-#> ╰───────────────────────────────────────────────────────────────────────╯
+#> ╭── Share ───────────────────────────────────────────────────────────────╮
+#> │   Count     count                                                      │
+#> │   Total     10                                                         │
+#> │   Interval  95% Wilson                                                 │
+#> │                                                                        │
+#> │   label  count  total  share  95% CI                                   │
+#> │   -----  -----  -----  -----  --------------                           │
+#> │   a          3     10     30  [10.78, 60.32]                           │
+#> │   b          7     10     70  [39.68, 89.22]                           │
+#> │                                                                        │
+#> │   Highest share: row 2 (70); lowest: row 1 (30). Their intervals       │
+#> │   overlap, which alone does not mean they are the same: the difference │
+#> │   has its own, narrower interval (svycmp() for survey domains).        │
+#> │                                                                        │
+#> │   Each share is the count as a percentage of the total, with a Wilson  │
+#> │   interval, which stays inside 0 to 100 for small counts.              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 y <- yoy(
   data.frame(year = 2021:2024, n = c(10, 12, 9, 15)),
   value = "n",

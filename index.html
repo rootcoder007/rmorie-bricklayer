@@ -261,9 +261,23 @@
 </tr>
 <tr>
 <td>No request to a private address</td>
-<td>One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (<code>127.1</code>, <code>0x7f000001</code>, <code>::ffff:7f00:1</code>), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, <code>https</code> never downgraded</td>
+<td>One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (<code>127.1</code>, <code>0x7f000001</code>, <code>::ffff:7f00:1</code>), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, <code>https</code> never downgraded, and an API call that carries a key never sends it again on a redirect, not even to its own host</td>
 <td>
-<code>src/rmbl_fetch.cpp</code>, <code>tests/testthat/test-review2.R</code>
+<code>src/rmbl_fetch.cpp</code>, <code>tests/testthat/test-review2.R</code>, <code>tests/testthat/test-review4.R</code>
+</td>
+</tr>
+<tr>
+<td>Verifies what it is given, not what it finds</td>
+<td>An RFC 3161 token is read by position: a token wrapped in another structure, a response the authority did not grant, algorithm parameters that are not a DER NULL and a SignerInfo naming another certificate are refused, and the nonce a request sent must come back. An OCSP answer counts only when it names the certificate asked about, is current, and is signed by its issuer or a responder that issuer delegated to; a CRL only when its CA signed it and it has not expired</td>
+<td>
+<code>R/timestamp.R</code>, <code>R/revocation.R</code>, <code>R/x509.R</code>, <code>tests/testthat/test-tsstmp.R</code>, <code>tests/testthat/test-revocation.R</code>
+</td>
+</tr>
+<tr>
+<td>Bounded decompression</td>
+<td>A gzip that inflates past <code>rmoriebricklayer.maxcsvbytes</code> (1 GiB), or more than <code>rmoriebricklayer.maxgzratio</code> (200) times its size past 64 MiB, is refused while it is read, before it is parsed</td>
+<td>
+<code>R/pollution.R</code>, <code>R/data_hub.R</code>, <code>tests/testthat/test-data_hub.R</code>
 </td>
 </tr>
 <tr>
@@ -479,7 +493,7 @@
 <span><span class="fu"><a href="reference/cpsvrf.html">cpsvrf</a></span><span class="op">(</span><span class="va">digest</span>, <span class="va">sig</span>, <span class="fu"><a href="reference/fipskg.html">fipspubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/cpsxvrf.html">cpsxvrf</a></span><span class="op">(</span><span class="va">digest</span>, <span class="va">sig</span>, <span class="fu"><a href="reference/fipskg.html">fipspubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span><span class="op">)</span> <span class="co"># and again with OpenSSL 3.5</span></span></code></pre></div>
 <p><code><a href="reference/cpsxvrf.html">cpsxvrf()</a></code> asks the <code>openssl</code> program (3.5 or later), which implements FIPS 204 and 205 with no code in common with this package, for a second verdict; without it the result says the signature was checked here only.</p>
-<p>Where a record must be signed by a FIPS 140-3 validated module, hand the signing to one. <code><a href="reference/fipsmod.html">fipsmod()</a></code> loads the OpenSSL FIPS provider on its own and says which module and build it is and whether the package knows its certificate (today the Chainguard FIPS Provider for OpenSSL 3.6.0-r4, CMVP #5523, which covers ML-DSA and SLH-DSA). <code><a href="reference/fipsmkg.html">fipsmkg()</a></code> makes the key inside the module and <code><a href="reference/cpssign.html">cpssign()</a></code> signs there; verification is unchanged.</p>
+<p>Where a record must be signed by a FIPS 140-3 validated module, hand the signing to one. <code><a href="reference/fipsmod.html">fipsmod()</a></code> loads the OpenSSL FIPS provider on its own and says which module and build it is and whether the package knows its certificate (today the Chainguard FIPS Provider for OpenSSL 3.6.0-r4, CMVP #5523, which covers ML-DSA and SLH-DSA). <code><a href="reference/fipsmkg.html">fipsmkg()</a></code> makes the key inside the module (SLH-DSA-SHA2-128s unless you name another) and <code><a href="reference/cpssign.html">cpssign()</a></code> signs there; verification is unchanged. The status is the module’s own report, so the program it comes from is yours to choose: a key never names it. Signing loads the module set up now (<code>options(rmbl.fips.openssl =, rmbl.fips.conf =)</code>) and refuses a key made in another; every run of the program stops after <code>rmbl.fips.timeout</code> seconds (300).</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fipsmod.html">fipsmod</a></span><span class="op">(</span><span class="op">)</span>                     <span class="co"># the module and its certificate</span></span>
 <span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fipsmkg.html">fipsmkg</a></span><span class="op">(</span><span class="st">"ML-DSA-65"</span>, <span class="va">mod</span><span class="op">)</span>     <span class="co"># the private key never leaves it</span></span>
@@ -639,7 +653,7 @@
 <span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="ex">rmbl</span> <span class="st">"how do I weight a survey?"</span>               <span class="co"># a quoted question with no verb is asked too</span></span>
 <span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--token</span></span>
 <span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="ex">rmbl</span> models</span></code></pre></div>
-<p>The capsule verbs are <code><a href="reference/cpschk.html">cpschk()</a></code> and <code><a href="reference/cpsseal.html">cpsseal()</a></code> from R, and <code><a href="reference/ghann.html">ghann()</a></code>, <code><a href="reference/ghann.html">ghcmt()</a></code> and <code><a href="reference/ghann.html">ghout()</a></code> give the annotations, the sticky pull-request comment and the step outputs the rmbl GitHub Action prints.</p>
+<p>The capsule verbs are <code><a href="reference/cpschk.html">cpschk()</a></code> and <code><a href="reference/cpsseal.html">cpsseal()</a></code> from R, and <code><a href="reference/ghann.html">ghann()</a></code>, <code><a href="reference/ghann.html">ghcmt()</a></code> and <code><a href="reference/ghann.html">ghout()</a></code> give the annotations, the sticky pull-request comment and the step outputs the rmbl GitHub Action prints. <code>rmbl verify --public-key HEX</code> (or <code>cpschk(pubkey =)</code>) pins a key: a capsule must then carry a bundle signed with it, and one without a signature fails.</p>
 </div>
 </div>
 <div class="section level2">

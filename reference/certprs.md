@@ -105,7 +105,7 @@ root
 #> │   Key usage           keyCertSign, cRLSign                                  │
 #> │   Extended key usage  none stated                                           │
 #> │                                                                             │
-#> │   In force now, for 3,624 more days (until 2036-09-29).                     │
+#> │   In force now, for 3,623 more days (until 2036-09-29).                     │
 #> │   A self-signed CA certificate: a root, trusted or not, never verified.     │
 #> │                                                                             │
 #> │   What the certificate says about itself. Nothing here is checked:          │

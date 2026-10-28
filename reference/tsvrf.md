@@ -12,7 +12,15 @@ a certain date.
 ## Usage
 
 ``` r
-tsvrf(token, data, cert = NULL, trust = NULL, crls = list(), attm = NULL)
+tsvrf(
+  token,
+  data,
+  cert = NULL,
+  trust = NULL,
+  crls = list(),
+  attm = NULL,
+  nonce = NULL
+)
 
 tsinfo(token)
 ```
@@ -49,6 +57,12 @@ tsinfo(token)
 
   The time to check certificate validity at. Defaults to the time the
   token asserts, which is usually what is wanted.
+
+- nonce:
+
+  The raw nonce the request sent, or `NULL` (the default) when it is not
+  known. Given, the token must carry it: a token answering another
+  request is refused.
 
 ## Value
 
@@ -135,9 +149,9 @@ bad <- tsvrf(as.raw(c(0x30, 0x03, 0x02, 0x01, 0x05)),
 bad$ok
 #> [1] FALSE
 bad$checks
-#>             check    ok                         detail
-#> 1    token_parses  TRUE                 5 bytes of DER
-#> 2 token_structure FALSE no CMS SignedData in the token
+#>             check    ok                                    detail
+#> 1    token_parses  TRUE                            5 bytes of DER
+#> 2 token_structure FALSE no CMS SignedData at the top of the token
 
 # tsinfo() does refuse an unreadable token
 try(tsinfo(as.raw(1:10)))

@@ -75,7 +75,15 @@ existed by a certain date.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">tsvrf</span><span class="op">(</span><span class="va">token</span>, <span class="va">data</span>, cert <span class="op">=</span> <span class="cn">NULL</span>, trust <span class="op">=</span> <span class="cn">NULL</span>, crls <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, attm <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">tsvrf</span><span class="op">(</span></span>
+<span>  <span class="va">token</span>,</span>
+<span>  <span class="va">data</span>,</span>
+<span>  cert <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  trust <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  crls <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  attm <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  nonce <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">tsinfo</span><span class="op">(</span><span class="va">token</span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -116,6 +124,12 @@ vectors or paths.</p></dd>
 <dt id="arg-attm">attm<a class="anchor" aria-label="anchor" href="#arg-attm"></a></dt>
 <dd><p>The time to check certificate validity at.
 Defaults to the time the token asserts, which is usually what is wanted.</p></dd>
+
+
+<dt id="arg-nonce">nonce<a class="anchor" aria-label="anchor" href="#arg-nonce"></a></dt>
+<dd><p>The raw nonce the request sent, or <code>NULL</code> (the default)
+when it is not known. Given, the token must carry it: a token answering
+another request is refused.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -193,9 +207,9 @@ authorship.</p></div>
 <span class="r-in"><span><span class="va">bad</span><span class="op">$</span><span class="va">ok</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-in"><span><span class="va">bad</span><span class="op">$</span><span class="va">checks</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             check    ok                         detail</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    token_parses  TRUE                 5 bytes of DER</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 token_structure FALSE no CMS SignedData in the token</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             check    ok                                    detail</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    token_parses  TRUE                            5 bytes of DER</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 token_structure FALSE no CMS SignedData at the top of the token</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># tsinfo() does refuse an unreadable token</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">tsinfo</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

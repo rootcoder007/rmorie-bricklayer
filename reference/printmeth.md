@@ -197,8 +197,8 @@ cpsdrft(ref, cur)
 #> │   Per-column tests                                                      │
 #> │      column  type           stat        p     psi                       │
 #> │   -  ------  -----------  ------  -------  ------                       │
-#> │   ✖  v       numeric      0.3600  < 0.001  0.8136                       │
-#> │   ✔  g       categorical  1.4413    0.230  0.0144                       │
+#> │   ✗  v       numeric      0.3600  < 0.001  0.8136                       │
+#> │   ✓  g       categorical  1.4413    0.230  0.0144                       │
 #> │                                                                         │
 #> │   1 of 2 columns changed between the reference and the current table by │
 #> │   more than chance at alpha 0.01; check those columns before trusting   │
@@ -217,7 +217,7 @@ head(format(cpsdrft(ref, cur)), 3)
 # A Benford screen.
 benfordtst(10^stats::runif(500, 0, 5))
 #> ╭── Benford first-digit screen ───────────────────────────────────────────╮
-#> │   ✔ consistent with Benford's law                                       │
+#> │   ✓ consistent with Benford's law                                       │
 #> │                                                                         │
 #> │   values used  500                                                      │
 #> │   chi-square   5.919                                                    │
@@ -247,8 +247,8 @@ key <- pqckg(height = 2)
 key
 #> ╭── Signing key (post-quantum) ───────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
-#> │   root       0c2dc2431f2c117eaae9d97e71804ea9492df4127c19412dbcbcda4e50aff6 │
-#> │              88                                                             │
+#> │   root       98251c7c93eceea3d2103f24db62cca8ebc89089e52a3dad52c51d1a6efb1d │
+#> │              23                                                             │
 #> │   height     2                                                              │
 #> │   used       0 of 4 signatures                                              │
 #> │   remaining  4                                                              │
@@ -259,9 +259,9 @@ cpssign("a-manifest", key)
 #> ╭── Capsule signature ────────────────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
 #> │   index      0                                                              │
-#> │   root       0c2dc2431f2c117eaae9d97e71804ea9492df4127c19412dbcbcda4e50aff6 │
-#> │              88                                                             │
-#> │   signature  b338c72e100cf9bdf3635c2ac6a605bd... (2144 bytes)               │
+#> │   root       98251c7c93eceea3d2103f24db62cca8ebc89089e52a3dad52c51d1a6efb1d │
+#> │              23                                                             │
+#> │   signature  406d7864ed45cbb9212e22447309114b... (2144 bytes)               │
 #> │   auth path  2 nodes                                                        │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 options(op)

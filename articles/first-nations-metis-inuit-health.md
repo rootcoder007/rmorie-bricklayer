@@ -289,7 +289,9 @@ sp
 #> │   Métis *             4.742  [4.125, 5.359]  0.3148                         │
 #> │                                                                             │
 #> │   Highest prevalence: Inuit * (5.94); lowest: Métis * (4.742).              │
-#> │   Their intervals overlap: the data cannot tell the two apart.              │
+#> │   Their intervals overlap, which alone does not mean they are the same:     │
+#> │   the difference has its own, narrower interval (svycmp() for survey        │
+#> │   domains).                                                                 │
 #> │                                                                             │
 #> │   Each group's prevalence as if it had the standard population's ages,      │
 #> │   so the groups compare without their age structures.                       │

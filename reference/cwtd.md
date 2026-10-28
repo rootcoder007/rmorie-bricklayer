@@ -76,5 +76,5 @@ cwtd(x, c(1, 1, 1, 1000))[["mean"]]
 
 # A negative weight is refused.
 try(cwtd(x, c(1, -1, 1, 1)))
-#> Error : `w` must be non-negative
+#> Error : `w` must be non-negative and finite, not all zero
 ```

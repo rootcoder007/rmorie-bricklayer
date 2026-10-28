@@ -15,16 +15,17 @@ so the signatures verify with
 ## Usage
 
 ``` r
-fipsmkg(scheme = "ML-DSA-65", mod = fipsmod())
+fipsmkg(scheme = "SLH-DSA-SHA2-128s", mod = fipsmod())
 ```
 
 ## Arguments
 
 - scheme:
 
-  An ML-DSA or SLH-DSA parameter set, such as `"ML-DSA-65"` or
-  `"SLH-DSA-SHA2-128s"` (see
-  [`fipssz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipssz.md)).
+  An ML-DSA or SLH-DSA parameter set (see
+  [`fipssz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipssz.md)),
+  such as `"ML-DSA-65"`; the default, `"SLH-DSA-SHA2-128s"`, is
+  [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)'s.
 
 - mod:
 

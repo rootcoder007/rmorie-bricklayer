@@ -230,9 +230,10 @@ of freedom under <code>df = "design"</code>; a single-PSU stratum under
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   south   1        0.3752  0.07282  [0.2504, 0.5192]  19.41  50        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Highest proportion: south (0.3752); lowest: north (0.157). Their     │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   intervals overlap: the data cannot tell the two apart. Use with      │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   caution (cv 16.6 to 33.3): south. Too unstable to publish (cv above  │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   33.3): north.                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   intervals overlap, which alone does not mean they are the same: the  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   difference has its own, narrower interval (svycmp() for survey       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   domains). Use with caution (cv 16.6 to 33.3): south. Too unstable to │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   publish (cv above 33.3): north.                                      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   cv is the coefficient of variation (the standard error as a          │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   percentage of the estimate); from 16.6 to 33.3 use the estimate with │</span>
@@ -269,8 +270,10 @@ of freedom under <code>df = "design"</code>; a single-PSU stratum under
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   south     13,796  1,109  [11,621, 15,970]  8.041  50                 │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Highest total: north (15,080); lowest: south (13,796). Their         │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   intervals overlap: the data cannot tell the two apart. Every cv is   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   below 16.6 (the largest 9.22): precise enough to publish.            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   intervals overlap, which alone does not mean they are the same: the  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   difference has its own, narrower interval (svycmp() for survey       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   domains). Every cv is below 16.6 (the largest 9.22): precise enough  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   to publish.                                                          │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   cv is the coefficient of variation (the standard error as a          │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   percentage of the estimate); from 16.6 to 33.3 use the estimate with │</span>

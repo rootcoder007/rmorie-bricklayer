@@ -74,6 +74,11 @@ mtchdid(
   dimension with fewer clusters, and t on its \\G - 1\\ degrees of
   freedom. A composite cluster (district by month, say) is one column
   made with [`interaction()`](https://rdrr.io/r/base/interaction.html).
+  Fewer than ten clusters give a warning (CR1 errors are unreliable with
+  so few;
+  [`wcb`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wcb.md)
+  is made for that case), and so does a cluster that changes within a
+  unit.
 
 ## Value
 
@@ -172,8 +177,10 @@ own$income <- 50 + own$year - 2015 + cos(seq_len(80))
 own$rate <- 30 + i + 0.5 * (own$year - 2015) - 4 * own$bylaw +
   0.2 * own$income + sin(seq_len(80))
 # each adopting town matched to one never treated on its path before 2019,
-# the standard errors clustered by county
+# the standard errors clustered by county: with two counties the package
+# warns that so few clusters cannot be trusted
 mtchdid(own, "town", "year", "rate", "first", cl = "county")$estimate
+#> Warning: mtchdid: `cl` (county) gives only 2 clusters: cluster-robust (CR1) standard errors are unreliable with so few; wcb() is made for this case
 #> ╭── Difference in differences ────────────────────────────────────────────────╮
 #> │   Method           fixed-effects least squares, cluster-robust (CR1) errors │
 #> │   Observations     60                                                       │

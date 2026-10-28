@@ -53,6 +53,11 @@ plnpois(
   dimension with fewer clusters, and t on its \\G - 1\\ degrees of
   freedom. A composite cluster (district by month, say) is one column
   made with [`interaction()`](https://rdrr.io/r/base/interaction.html).
+  Fewer than ten clusters give a warning (CR1 errors are unreliable with
+  so few;
+  [`wcb`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wcb.md)
+  is made for that case), and so does a cluster that changes within a
+  unit.
 
 - family:
 
@@ -140,7 +145,7 @@ plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop",
            family = "negbin")
 #> Warning: no overdispersion: theta is at its bound, the Poisson model fits
 #> ╭── Fixed-effects count model ────────────────────────────────────────────╮
-#> │   Model          negative binomial (theta 3187000)                      │
+#> │   Model          negative binomial (theta 3229000)                      │
 #> │   Fixed effects  unit and period                                        │
 #> │   Observations   720                                                    │
 #> │   Clusters       20                                                     │

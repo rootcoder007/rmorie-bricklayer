@@ -259,11 +259,11 @@ a departure is a screen rather than a verdict.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   No finding is proof of correctness: each check has a                      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   stated blind spot, and a small sample has little power.                   │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #BB0000;">✖</span>    warn  drift      grade: categorical test, p = &lt; 0.001                │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #BB0000;">✖</span>    warn  drift      score: numeric test, p = &lt; 0.001                    │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #BB0000;">✖</span>    warn  schema     range_score: Column 'score' has 161 value(s)        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   FAIL warn  drift      grade: categorical test, p = &lt; 0.001                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   FAIL warn  drift      score: numeric test, p = &lt; 0.001                    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   FAIL warn  schema     range_score: Column 'score' has 161 value(s)        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                         outside [-0.8488307, 10.90645]                      │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #BB0000;">✖</span>    warn  schema     unexpected_grade: Column 'grade' has unexpected     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   FAIL warn  schema     unexpected_grade: Column 'grade' has unexpected     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                         values: z                                           │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="va">r</span><span class="op">$</span><span class="va">verdict</span></span></span>

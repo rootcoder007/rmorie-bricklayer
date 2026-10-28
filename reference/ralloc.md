@@ -106,8 +106,11 @@ and a column `n` (one row per combination, such as site by sex).
 The commitment is the SHA-256 of the settings, every row of the list and
 the SHA-256 of the seed, so it binds both the list and the seed: a list
 edited afterwards, or a seed chosen afterwards to give a wanted list,
-does not match it. The print-out shows how many participants each arm
-has, never who is in which arm, and not the seed.
+does not match it. Each field enters it with its length, so settings
+that differ (a stratum named `"x,y"` against strata `"x"` and `"y"`)
+never share a commitment; lists made by 1.0.3's first release keep their
+commitment and still verify. The print-out shows how many participants
+each arm has, never who is in which arm, and not the seed.
 
 Keep `seed = NULL` for a trial: the seed is then 48 bytes from the
 operating system's generator
@@ -120,11 +123,11 @@ With `codes = TRUE` every participant also gets a kit code (six
 characters, no look-alike letters or digits): sites and pharmacies are
 given `id` and `kit` only, and the arm stays with the statistician.
 
-Errors: fewer than two arms or repeated arm names; a `ratio` that is not
-one positive whole number per arm; a block size that is not a positive
-multiple of `sum(ratio)`; `n` that is not a positive whole number, or
-that disagrees with the strata's total; a raw `seed` that is not 48
-bytes.
+Errors: fewer than two arms, repeated or empty arm names; a `ratio` that
+is not one positive whole number per arm; a block size that is not a
+positive multiple of `sum(ratio)` up to 1000000; `n` that is not a whole
+number from 1 to 10000000, or that disagrees with the strata's total; a
+`seed` that is not one value, or a raw `seed` that is not 48 bytes.
 
 ## See also
 
@@ -154,8 +157,8 @@ a
 #> │   Strata        none                                                        │
 #> │   Kit codes     no                                                          │
 #> │   Seed          concealed: attr(x, "alloc")$seed                            │
-#> │   Commitment    3be077b05335764175e8086e42707488e4abe069f3531f348d4b21f36ac │
-#> │                 888b7                                                       │
+#> │   Commitment    200141beeb0d67c982e744cd58d544edc6fb54d061a7f522d93194d9f00 │
+#> │                 493bf                                                       │
 #> │                                                                             │
 #> │   stratum   A   B                                                           │
 #> │   -------  --  --                                                           │
@@ -167,7 +170,7 @@ a
 #> │   list and the seed with the unblinded statistician.                        │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 attr(a, "alloc")$digest            # sign and timestamp this first
-#> [1] "3be077b05335764175e8086e42707488e4abe069f3531f348d4b21f36ac888b7"
+#> [1] "200141beeb0d67c982e744cd58d544edc6fb54d061a7f522d93194d9f00493bf"
 head(as.data.frame(a))
 #>       id block arm
 #> 1 P-0001     1   A
@@ -189,8 +192,8 @@ s
 #> │   Strata        2                                                           │
 #> │   Kit codes     yes                                                         │
 #> │   Seed          concealed: attr(x, "alloc")$seed                            │
-#> │   Commitment    3c56964e8a6e5ed41fbe40479ed3056713a1e95713cffda805e4c44628f │
-#> │                 5bdd1                                                       │
+#> │   Commitment    36334e5fcde099ae6247061796e3f97aa50820fdcf45c90a3449dc8db5a │
+#> │                 63e8c                                                       │
 #> │                                                                             │
 #> │   stratum  drug  placebo                                                    │
 #> │   -------  ----  -------                                                    │
@@ -213,7 +216,7 @@ head(as.data.frame(s)[c("id", "kit")])  # what the sites are given
 #> 5 P-0005 KZTFQZ
 #> 6 P-0006 T5G8AM
 
-# simple randomisation, and the balance as participants are enrolled
+# simple randomisation: how many each arm has, against the ratio
 plot(ralloc(60, block = NULL, seed = 1))
 
 
@@ -225,11 +228,11 @@ rallocvrf(a, digest = attr(a, "alloc")$digest)
 #> │   ✔    commitment    the list is the one committed to                       │
 #> │   ✔    seed          the seed and the settings give this list, row for row  │
 #> │   ✔    participants  40 participants, each once                             │
-#> │        commitment    3be077b05335764175e8086e42707488e4abe069f3531f348d4b21 │
-#> │                      f36ac888b7                                             │
+#> │        commitment    200141beeb0d67c982e744cd58d544edc6fb54d061a7f522d93194 │
+#> │                      d9f00493bf                                             │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a block size the ratio does not divide
 try(ralloc(30, block = 5))
-#> Error : ralloc: every block size must be a positive multiple of 2
+#> Error : ralloc: every block size must be a positive multiple of 2, at most 1000000
 ```

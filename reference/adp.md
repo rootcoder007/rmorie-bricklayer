@@ -127,5 +127,5 @@ adp(13500, t = perdays("2024-01-01", "2024-12-31"))
 
 # negative days are refused
 try(adp(c(10, -2)))
-#> Error : `days` must be non-negative
+#> Error : adp: `days` must be non-negative
 ```

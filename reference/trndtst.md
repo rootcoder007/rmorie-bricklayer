@@ -131,8 +131,9 @@ trndtst(y)
 #> │   Kendall tau     -0.40              0.483                              │
 #> │   Sen slope      -21.38  [-187, 78]                                     │
 #> │                                                                         │
-#> │   Kendall's tau of -0.4 means a downward tendency (p = 0.483); the Sen  │
-#> │   slope says the series moves by about -21.38 per period.               │
+#> │   Kendall's tau of -0.4 leans downward, but p = 0.483: no trend the     │
+#> │   data can tell from chance; the Sen slope says the series moves by     │
+#> │   about -21.38 per period.                                              │
 #> │                                                                         │
 #> │   The slope's interval was clamped to the range of the pairwise slopes. │
 #> ╰─────────────────────────────────────────────────────────────────────────╯
@@ -152,8 +153,8 @@ trndtst(c(1, 2, 3, 4, 5))
 #> │   Kendall tau         1          0.017                                  │
 #> │   Sen slope           1  [1, 1]                                         │
 #> │                                                                         │
-#> │   Kendall's tau of 1 means an upward tendency (p = 0.017); the Sen      │
-#> │   slope says the series moves by about 1 per period.                    │
+#> │   Kendall's tau of 1 means an upward trend (p = 0.017); the Sen slope   │
+#> │   says the series moves by about 1 per period.                          │
 #> │                                                                         │
 #> │   The slope's interval was clamped to the range of the pairwise slopes. │
 #> ╰─────────────────────────────────────────────────────────────────────────╯

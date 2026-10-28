@@ -210,9 +210,9 @@ cpsdrft(ref, moved)
 #> │   Per-column tests                                                      │
 #> │      column  type             stat        p    psi                      │
 #> │   -  ------  -----------  --------  -------  -----                      │
-#> │   ✖  size    numeric        0.7433  < 0.001  4.299                      │
-#> │   ✖  grade   categorical  120.9261  < 0.001  4.381                      │
-#> │   ✔  value   numeric        0.0500    0.847  0.092                      │
+#> │   ✗  size    numeric        0.7433  < 0.001  4.299                      │
+#> │   ✗  grade   categorical  120.9261  < 0.001  4.381                      │
+#> │   ✓  value   numeric        0.0500    0.847  0.092                      │
 #> │                                                                         │
 #> │   2 of 3 columns changed between the reference and the current table by │
 #> │   more than chance at alpha 0.01; check those columns before trusting   │

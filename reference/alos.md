@@ -100,5 +100,5 @@ alos(stays, length(stays))
 
 # zero people cannot have an average stay
 try(alos(12150, 0))
-#> Error : `n` must be positive
+#> Error : alos: `n` must be positive
 ```

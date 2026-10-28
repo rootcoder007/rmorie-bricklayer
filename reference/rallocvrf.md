@@ -63,8 +63,8 @@ rallocvrf(a, digest = commitment)
 #> │   ✔    commitment    the list is the one committed to                       │
 #> │   ✔    seed          the seed and the settings give this list, row for row  │
 #> │   ✔    participants  20 participants, each once                             │
-#> │        commitment    b14ff4ab9155237921eb3d864d48e589c0ce4ffc250dda692efba5 │
-#> │                      d809c8c11b                                             │
+#> │        commitment    97deda0c79a09567bd30d89449cd182c382304150cc976fc1de12f │
+#> │                      0f183c3cc3                                             │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # one allocation changed after the commitment
@@ -78,8 +78,8 @@ rallocvrf(b, digest = commitment)
 #> │                      commitment                                             │
 #> │   ✖    seed          the seed and the settings give a different list        │
 #> │   ✔    participants  20 participants, each once                             │
-#> │        commitment    5c92aee846760720d34b05844ce66b622148da12ed810894dd1350 │
-#> │                      72d7e523c0                                             │
+#> │        commitment    a95ccc06c95d7701d2391bc5746e9dad7286181a58ab25b06d8c01 │
+#> │                      f5230d2c03                                             │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a different seed revealed at unblinding
@@ -91,7 +91,7 @@ rallocvrf(a, digest = commitment, seed = "another seed")
 #> │                      commitment                                             │
 #> │   ✖    seed          the seed and the settings give a different list        │
 #> │   ✔    participants  20 participants, each once                             │
-#> │        commitment    827cae9be10ed4b75afad883bf8e4440b1a766d4f53f4977482dc4 │
-#> │                      a638f71f4f                                             │
+#> │        commitment    6a8c779fdf6e44d8e52ce53cba102c74cd00af2d70620be49d19ef │
+#> │                      a8c1c9f3a1                                             │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```

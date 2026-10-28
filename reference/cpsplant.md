@@ -80,8 +80,12 @@ The treatment column must be numeric, logical or a factor with two
 levels (the second is coded 1). Effects are on the outcome's own scale
 per unit of treatment, so the statistic must estimate an additive
 effect: a difference in means, a regression slope, an average treatment
-effect. An estimate passes when it is within `tol` of the planted
-effect, after allowing three Monte Carlo standard errors.
+effect. An effect is recovered when the average estimate is within `tol`
+of it, after allowing three Monte Carlo standard errors, and that
+standard error is itself no larger than `tol`: a statistic too noisy for
+the check to mean anything is not recovered (raise `n`). Without the
+second condition the allowance grew with the noise, and a statistic that
+returned pure noise passed.
 
 ## See also
 

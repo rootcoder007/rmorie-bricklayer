@@ -104,7 +104,10 @@ year or a month index) and the outcome.</p></dd>
 for two-way clustering (Cameron, Gelbach and Miller 2011): \(V_a + V_b -
 V_{ab}\), each term with the small-sample factor of the dimension with fewer
 clusters, and t on its \(G - 1\) degrees of freedom. A composite cluster
-(district by month, say) is one column made with <code><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction()</a></code>.</p></dd>
+(district by month, say) is one column made with <code><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction()</a></code>.
+Fewer than ten clusters give a warning (CR1 errors are unreliable with
+so few; <code><a href="wcb.html">wcb</a></code> is made for that case), and so does a
+cluster that changes within a unit.</p></dd>
 
 
 <dt id="arg-fe">fe<a class="anchor" aria-label="anchor" href="#arg-fe"></a></dt>
@@ -113,7 +116,8 @@ clusters, and t on its \(G - 1\) degrees of freedom. A composite cluster
 
 <dt id="arg-w">w<a class="anchor" aria-label="anchor" href="#arg-w"></a></dt>
 <dd><p>Optional column name of non-negative weights, such as population or
-matching weights, for weighted least squares with weighted within-means.</p></dd>
+matching weights, for weighted least squares with weighted within-means.
+Rows of weight 0 take no part in the fit.</p></dd>
 
 
 <dt id="arg-comb">comb<a class="anchor" aria-label="anchor" href="#arg-comb"></a></dt>
@@ -207,8 +211,10 @@ Colombia. <a href="https://doi.org/10.2139/ssrn.4585682" class="external-link">d
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   The comparison mean is the pre-period mean outcome of the units not       │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   (yet) treated.                                                            │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
-<span class="r-in"><span><span class="co"># clustered by region instead of district</span></span></span>
+<span class="r-in"><span><span class="co"># clustered by region instead of district: only four regions, so the</span></span></span>
+<span class="r-in"><span><span class="co"># package warns, and wcb() is the tool for so few clusters</span></span></span>
 <span class="r-in"><span><span class="fu">plndid</span><span class="op">(</span><span class="va">p</span>, <span class="st">"district"</span>, <span class="st">"month"</span>, <span class="st">"crmrate"</span>, <span class="st">"reformed"</span>, cl <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>plndid: `cl` (region) gives only 4 clusters: cluster-robust (CR1) standard errors are unreliable with so few; wcb() is made for this case</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Difference in differences</span> ────────────────────────────────────────────────╮</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Method           fixed-effects least squares, cluster-robust (CR1) errors │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Observations     720                                                      │</span>

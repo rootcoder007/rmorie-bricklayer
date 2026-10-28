@@ -209,11 +209,11 @@ r
 #> │   No finding is proof of correctness: each check has a                      │
 #> │   stated blind spot, and a small sample has little power.                   │
 #> │                                                                             │
-#> │   ✖    warn  drift      grade: categorical test, p = < 0.001                │
-#> │   ✖    warn  drift      score: numeric test, p = < 0.001                    │
-#> │   ✖    warn  schema     range_score: Column 'score' has 161 value(s)        │
+#> │   FAIL warn  drift      grade: categorical test, p = < 0.001                │
+#> │   FAIL warn  drift      score: numeric test, p = < 0.001                    │
+#> │   FAIL warn  schema     range_score: Column 'score' has 161 value(s)        │
 #> │                         outside [-0.8488307, 10.90645]                      │
-#> │   ✖    warn  schema     unexpected_grade: Column 'grade' has unexpected     │
+#> │   FAIL warn  schema     unexpected_grade: Column 'grade' has unexpected     │
 #> │                         values: z                                           │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 r$verdict

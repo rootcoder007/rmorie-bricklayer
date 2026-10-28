@@ -305,32 +305,34 @@ Promotion and Education 46(2):49-56. <a href="https://doi.org/10.1080/14635240.2
 <span class="r-in"><span>  hi <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">67</span>, <span class="fl">63</span>, <span class="fl">75</span>, <span class="fl">80</span>, <span class="fl">61</span>, <span class="fl">67</span>, <span class="fl">72</span>, <span class="fl">85</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">holbal</span><span class="op">(</span><span class="va">own</span>, <span class="st">"community"</span>, <span class="st">"domain"</span>, <span class="st">"pct"</span>, <span class="st">"lo"</span>, <span class="st">"hi"</span>, reps <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Holistic balance across the domains</span> ───────────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Groups   2                                                             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Weights  equal, over 4 domains                                         │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Balance  weighted geometric over arithmetic mean of the domain levels  │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   group      level  95% level CI    balance  95% balance CI  weakest     │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -----  --------------  -------  --------------  -------     │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakeside   66.25  [63.75, 68.75]   0.9950  [0.990, 0.998]  mind        │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Riverbend  65.50  [62.62, 68.38]   0.9905  [0.984, 0.996]  body        │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Domain levels (percent)                                                │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   group       body   mind  spirit  family                                │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -----  -----  ------  ------                                │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakeside   62.00  58.00      70      75                                │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Riverbend  55.00  61.00      66      80                                │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Highest balance: Lakeside (0.995); lowest: Riverbend (0.9905).         │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Their intervals overlap: the data cannot tell the two apart.           │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   The weakest domain is body for 1 of 2 groups.                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   balance is 1 when every domain is at the same level and falls toward   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   0 as one falls behind; level is the weighted mean, reported beside it. │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Our method, inspired by Stewart (2008), not taken from it.             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   The weights say how much each domain counts; a community may set       │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   its own (CARE: authority to control, Carroll et al. 2020).             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ╰──────────────────────────────────────────────────────────────────────────╯</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Holistic balance across the domains</span> ──────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Groups   2                                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Weights  equal, over 4 domains                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Balance  weighted geometric over arithmetic mean of the domain levels     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   group      level  95% level CI    balance  95% balance CI  weakest        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -----  --------------  -------  --------------  -------        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakeside   66.25  [63.75, 68.75]   0.9950  [0.990, 0.998]  mind           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Riverbend  65.50  [62.62, 68.38]   0.9905  [0.984, 0.996]  body           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Domain levels (percent)                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   group       body   mind  spirit  family                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ---------  -----  -----  ------  ------                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Lakeside   62.00  58.00      70      75                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Riverbend  55.00  61.00      66      80                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Highest balance: Lakeside (0.995); lowest: Riverbend (0.9905).            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Their intervals overlap, which alone does not mean they are the same:     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the difference has its own, narrower interval (svycmp() for survey        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   domains).                                                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The weakest domain is body for 1 of 2 groups.                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   balance is 1 when every domain is at the same level and falls toward      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   0 as one falls behind; level is the weighted mean, reported beside it.    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Our method, inspired by Stewart (2008), not taken from it.                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The weights say how much each domain counts; a community may set          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   its own (CARE: authority to control, Carroll et al. 2020).                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

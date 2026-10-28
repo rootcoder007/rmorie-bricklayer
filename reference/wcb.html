@@ -105,7 +105,10 @@ year or a month index) and the outcome.</p></dd>
 for two-way clustering (Cameron, Gelbach and Miller 2011): \(V_a + V_b -
 V_{ab}\), each term with the small-sample factor of the dimension with fewer
 clusters, and t on its \(G - 1\) degrees of freedom. A composite cluster
-(district by month, say) is one column made with <code><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction()</a></code>.</p></dd>
+(district by month, say) is one column made with <code><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction()</a></code>.
+Fewer than ten clusters give a warning (CR1 errors are unreliable with
+so few; <code>wcb</code> is made for that case), and so does a
+cluster that changes within a unit.</p></dd>
 
 
 <dt id="arg-reps">reps<a class="anchor" aria-label="anchor" href="#arg-reps"></a></dt>

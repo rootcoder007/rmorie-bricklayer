@@ -116,5 +116,5 @@ adp(pd, t = 31)
 
 # a missing count must be dropped or filled first
 try(adpcnts(c(120, NA, 125)))
-#> Error : `cnts` must not contain NA
+#> Error : adpcnts: `cnts` must not contain NA
 ```

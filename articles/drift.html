@@ -137,9 +137,9 @@ another draw from the same process.</p>
 <span><span class="co">#&gt; │   Per-column tests                                                      │</span></span>
 <span><span class="co">#&gt; │      column  type            stat      p      psi                       │</span></span>
 <span><span class="co">#&gt; │   -  ------  -----------  -------  -----  -------                       │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>  size    numeric      0.07800  0.095  0.05893                       │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>  grade   categorical  3.07609  0.215  0.01232                       │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>  value   numeric      0.03400  0.935  0.03250                       │</span></span>
+<span><span class="co">#&gt; │   ✓  size    numeric      0.07800  0.095  0.05893                       │</span></span>
+<span><span class="co">#&gt; │   ✓  grade   categorical  3.07609  0.215  0.01232                       │</span></span>
+<span><span class="co">#&gt; │   ✓  value   numeric      0.03400  0.935  0.03250                       │</span></span>
 <span><span class="co">#&gt; │                                                                         │</span></span>
 <span><span class="co">#&gt; │   None of the 3 columns changed by more than chance at alpha 0.01; psi  │</span></span>
 <span><span class="co">#&gt; │   above 0.25 is the usual sign of a material shift.                     │</span></span>
@@ -170,9 +170,9 @@ scale and a category appears that the capsule never saw.</p>
 <span><span class="co">#&gt; │   Per-column tests                                                      │</span></span>
 <span><span class="co">#&gt; │      column  type             stat        p    psi                      │</span></span>
 <span><span class="co">#&gt; │   -  ------  -----------  --------  -------  -----                      │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>  size    numeric        0.7380  &lt; 0.001  4.205                      │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #BB0000;">✖</span>  grade   categorical  252.5695  &lt; 0.001  5.376                      │</span></span>
-<span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>  value   numeric        0.0340    0.935  0.033                      │</span></span>
+<span><span class="co">#&gt; │   ✗  size    numeric        0.7380  &lt; 0.001  4.205                      │</span></span>
+<span><span class="co">#&gt; │   ✗  grade   categorical  252.5695  &lt; 0.001  5.376                      │</span></span>
+<span><span class="co">#&gt; │   ✓  value   numeric        0.0340    0.935  0.033                      │</span></span>
 <span><span class="co">#&gt; │                                                                         │</span></span>
 <span><span class="co">#&gt; │   2 of 3 columns changed between the reference and the current table by │</span></span>
 <span><span class="co">#&gt; │   more than chance at alpha 0.01; check those columns before trusting   │</span></span>
@@ -285,7 +285,7 @@ re-scaled or invented typically do not follow it.</p>
 <code class="sourceCode R"><span><span class="co"># A quantity spanning several orders of magnitude.</span></span>
 <span><span class="fu"><a href="../reference/benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">0</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Benford first-digit screen</span> ───────────────────────────────────────────╮</span></span>
-<span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span> consistent with Benford's law                                       │</span></span>
+<span><span class="co">#&gt; │   ✓ consistent with Benford's law                                       │</span></span>
 <span><span class="co">#&gt; │                                                                         │</span></span>
 <span><span class="co">#&gt; │   values used  2,000                                                    │</span></span>
 <span><span class="co">#&gt; │   chi-square   2.067                                                    │</span></span>

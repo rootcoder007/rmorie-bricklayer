@@ -65,9 +65,9 @@ cpsdrft(reference, current)
 #> │   Per-column tests                                                      │
 #> │      column  type            stat      p      psi                       │
 #> │   -  ------  -----------  -------  -----  -------                       │
-#> │   ✔  size    numeric      0.07800  0.095  0.05893                       │
-#> │   ✔  grade   categorical  3.07609  0.215  0.01232                       │
-#> │   ✔  value   numeric      0.03400  0.935  0.03250                       │
+#> │   ✓  size    numeric      0.07800  0.095  0.05893                       │
+#> │   ✓  grade   categorical  3.07609  0.215  0.01232                       │
+#> │   ✓  value   numeric      0.03400  0.935  0.03250                       │
 #> │                                                                         │
 #> │   None of the 3 columns changed by more than chance at alpha 0.01; psi  │
 #> │   above 0.25 is the usual sign of a material shift.                     │
@@ -100,9 +100,9 @@ cpsdrft(reference, moved)
 #> │   Per-column tests                                                      │
 #> │      column  type             stat        p    psi                      │
 #> │   -  ------  -----------  --------  -------  -----                      │
-#> │   ✖  size    numeric        0.7380  < 0.001  4.205                      │
-#> │   ✖  grade   categorical  252.5695  < 0.001  5.376                      │
-#> │   ✔  value   numeric        0.0340    0.935  0.033                      │
+#> │   ✗  size    numeric        0.7380  < 0.001  4.205                      │
+#> │   ✗  grade   categorical  252.5695  < 0.001  5.376                      │
+#> │   ✓  value   numeric        0.0340    0.935  0.033                      │
 #> │                                                                         │
 #> │   2 of 3 columns changed between the reference and the current table by │
 #> │   more than chance at alpha 0.01; check those columns before trusting   │
@@ -246,7 +246,7 @@ re-scaled or invented typically do not follow it.
 # A quantity spanning several orders of magnitude.
 benfordtst(10^runif(2000, 0, 6))
 #> ╭── Benford first-digit screen ───────────────────────────────────────────╮
-#> │   ✔ consistent with Benford's law                                       │
+#> │   ✓ consistent with Benford's law                                       │
 #> │                                                                         │
 #> │   values used  2,000                                                    │
 #> │   chi-square   2.067                                                    │

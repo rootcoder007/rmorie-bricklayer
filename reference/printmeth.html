@@ -254,8 +254,8 @@ which is what to do when capturing output into a fixed-width log.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Per-column tests                                                      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │      column  type           stat        p     psi                       │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   -  ------  -----------  ------  -------  ------                       │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #BB0000;">✖</span>  v       numeric      0.3600  &lt; 0.001  0.8136                       │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>  g       categorical  1.4413    0.230  0.0144                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ✗  v       numeric      0.3600  &lt; 0.001  0.8136                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ✓  g       categorical  1.4413    0.230  0.0144                       │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   1 of 2 columns changed between the reference and the current table by │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   more than chance at alpha 0.01; check those columns before trusting   │</span>
@@ -274,7 +274,7 @@ which is what to do when capturing output into a fixed-width log.</p>
 <span class="r-in"><span><span class="co"># A Benford screen.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">0</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Benford first-digit screen</span> ───────────────────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span> consistent with Benford's law                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ✓ consistent with Benford's law                                       │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   values used  500                                                      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   chi-square   5.919                                                    │</span>
@@ -304,8 +304,8 @@ which is what to do when capturing output into a fixed-width log.</p>
 <span class="r-in"><span><span class="va">key</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Signing key (post-quantum)</span> ───────────────────────────────────────────────╮</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   scheme     xmss-sha256                                                    │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   root       0c2dc2431f2c117eaae9d97e71804ea9492df4127c19412dbcbcda4e50aff6 │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │              88                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   root       98251c7c93eceea3d2103f24db62cca8ebc89089e52a3dad52c51d1a6efb1d │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │              23                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   height     2                                                              │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   used       0 of 4 signatures                                              │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   remaining  4                                                              │</span>
@@ -316,9 +316,9 @@ which is what to do when capturing output into a fixed-width log.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Capsule signature</span> ────────────────────────────────────────────────────────╮</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   scheme     xmss-sha256                                                    │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   index      0                                                              │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   root       0c2dc2431f2c117eaae9d97e71804ea9492df4127c19412dbcbcda4e50aff6 │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │              88                                                             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   signature  b338c72e100cf9bdf3635c2ac6a605bd... (2144 bytes)               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   root       98251c7c93eceea3d2103f24db62cca8ebc89089e52a3dad52c51d1a6efb1d │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │              23                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   signature  406d7864ed45cbb9212e22447309114b... (2144 bytes)               │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   auth path  2 nodes                                                        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></span>

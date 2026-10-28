@@ -39,7 +39,8 @@ cpsxvrf(msg, sig, key, ctx = NULL, openssl = Sys.which("openssl"))
 
 - openssl:
 
-  Path to the `openssl` program. The default looks it up on the `PATH`.
+  Path to the `openssl` program. The default is the option
+  `rmbl.fips.openssl`, else the `openssl` on the `PATH`.
 
 ## Value
 

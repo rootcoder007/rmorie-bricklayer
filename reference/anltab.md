@@ -28,7 +28,8 @@ anltab(
   per = 1000,
   conflvl = 0.95,
   alpha = 0.05,
-  adjust = "BH"
+  adjust = "BH",
+  prdord = NULL
 )
 ```
 
@@ -48,7 +49,7 @@ anltab(
   numeric periods are used as the time axis of the trend tests. Text
   periods (`"2019/20"`, `"2021 Q3"`, `"Mar 2021"`) are ordered as
   [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  reads them (see its `prd`).
+  reads them (see its `prd`), or as `prdord` gives.
 
 - by:
 
@@ -105,6 +106,16 @@ anltab(
   Multiple-comparison method for
   [`scanadj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.md).
   The default is `"BH"` (Benjamini-Hochberg).
+
+- prdord:
+
+  Optional character vector: the period labels in order, for text
+  periods the reader does not know (see
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md));
+  passed to
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+  [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+  and the trend tests.
 
 ## Value
 
@@ -230,7 +241,7 @@ a
 #> │   adjusted for the number of comparisons; rptanl() writes the full      │
 #> │   tables as a report, and x$change, x$rates and x$trend hold them.      │
 #> │                                                                         │
-#> │   Run 2026-10-28 06:48                                                  │
+#> │   Run 2026-10-28 10:59                                                  │
 #> ╰─────────────────────────────────────────────────────────────────────────╯
 a$change[, c("table", "group", "year", "pctchg", "padj")]
 #>           table    group year     pctchg          padj

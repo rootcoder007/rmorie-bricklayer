@@ -48,6 +48,11 @@ loounit(
   dimension with fewer clusters, and t on its \\G - 1\\ degrees of
   freedom. A composite cluster (district by month, say) is one column
   made with [`interaction()`](https://rdrr.io/r/base/interaction.html).
+  Fewer than ten clusters give a warning (CR1 errors are unreliable with
+  so few;
+  [`wcb`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wcb.md)
+  is made for that case), and so does a cluster that changes within a
+  unit.
 
 - units:
 
@@ -57,7 +62,7 @@ loounit(
 
   Optional column name of non-negative weights, such as population or
   matching weights, for weighted least squares with weighted
-  within-means.
+  within-means. Rows of weight 0 take no part in the fit.
 
 ## Value
 

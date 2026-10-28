@@ -147,22 +147,23 @@ shrs(stops, stops, by = "division", total = 10000)
 
 # a plain vector
 shrs(c(3, 7))
-#> ╭── Share ──────────────────────────────────────────────────────────────╮
-#> │   Count     count                                                     │
-#> │   Total     10                                                        │
-#> │   Interval  95% Wilson                                                │
-#> │                                                                       │
-#> │   count  total  share  95% CI                                         │
-#> │   -----  -----  -----  --------------                                 │
-#> │       3     10     30  [10.78, 60.32]                                 │
-#> │       7     10     70  [39.68, 89.22]                                 │
-#> │                                                                       │
-#> │   Highest share: row 2 (70); lowest: row 1 (30). Their intervals      │
-#> │   overlap: the data cannot tell the two apart.                        │
-#> │                                                                       │
-#> │   Each share is the count as a percentage of the total, with a Wilson │
-#> │   interval, which stays inside 0 to 100 for small counts.             │
-#> ╰───────────────────────────────────────────────────────────────────────╯
+#> ╭── Share ───────────────────────────────────────────────────────────────╮
+#> │   Count     count                                                      │
+#> │   Total     10                                                         │
+#> │   Interval  95% Wilson                                                 │
+#> │                                                                        │
+#> │   count  total  share  95% CI                                          │
+#> │   -----  -----  -----  --------------                                  │
+#> │       3     10     30  [10.78, 60.32]                                  │
+#> │       7     10     70  [39.68, 89.22]                                  │
+#> │                                                                        │
+#> │   Highest share: row 2 (70); lowest: row 1 (30). Their intervals       │
+#> │   overlap, which alone does not mean they are the same: the difference │
+#> │   has its own, narrower interval (svycmp() for survey domains).        │
+#> │                                                                        │
+#> │   Each share is the count as a percentage of the total, with a Wilson  │
+#> │   interval, which stays inside 0 to 100 for small counts.              │
+#> ╰────────────────────────────────────────────────────────────────────────╯
 
 # a count larger than its total is not a share
 try(shrs(c(5, 2), total = 4))

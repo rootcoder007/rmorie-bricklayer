@@ -93,7 +93,8 @@ release imply, and a drift screen against the prior capsule.</p>
 <span>  per <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  conflvl <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  adjust <span class="op">=</span> <span class="st">"BH"</span></span>
+<span>  adjust <span class="op">=</span> <span class="st">"BH"</span>,</span>
+<span>  prdord <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -114,7 +115,8 @@ measure).</p></dd>
 <dd><p>Name of the column with the period (fiscal year, quarter,
 ...); numeric periods are used as the time axis of the trend tests. Text
 periods (<code>"2019/20"</code>, <code>"2021 Q3"</code>, <code>"Mar 2021"</code>) are
-ordered as <code><a href="yoy.html">yoy()</a></code> reads them (see its <code>prd</code>).</p></dd>
+ordered as <code><a href="yoy.html">yoy()</a></code> reads them (see its <code>prd</code>), or as
+<code>prdord</code> gives.</p></dd>
 
 
 <dt id="arg-by">by<a class="anchor" aria-label="anchor" href="#arg-by"></a></dt>
@@ -173,6 +175,12 @@ screens, default 0.05.</p></dd>
 <dt id="arg-adjust">adjust<a class="anchor" aria-label="anchor" href="#arg-adjust"></a></dt>
 <dd><p>Multiple-comparison method for
 <code><a href="scanadj.html">scanadj()</a></code>. The default is <code>"BH"</code> (Benjamini-Hochberg).</p></dd>
+
+
+<dt id="arg-prdord">prdord<a class="anchor" aria-label="anchor" href="#arg-prdord"></a></dt>
+<dd><p>Optional character vector: the period labels in order,
+for text periods the reader does not know (see <code><a href="yoy.html">yoy()</a></code>); passed to
+<code><a href="yoy.html">yoy()</a></code>, <code><a href="ratechg.html">ratechg()</a></code> and the trend tests.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -268,7 +276,7 @@ report.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   adjusted for the number of comparisons; rptanl() writes the full      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   tables as a report, and x$change, x$rates and x$trend hold them.      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Run 2026-10-28 06:48                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Run 2026-10-28 10:59                                                  │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="va">a</span><span class="op">$</span><span class="va">change</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"table"</span>, <span class="st">"group"</span>, <span class="st">"year"</span>, <span class="st">"pctchg"</span>, <span class="st">"padj"</span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           table    group year     pctchg          padj</span>

@@ -66,7 +66,7 @@ American Philosophical Society* 78(4), 551–572.
 set.seed(3)
 benfordtst(10^stats::runif(2000, 0, 6))
 #> ╭── Benford first-digit screen ───────────────────────────────────────────╮
-#> │   ✔ consistent with Benford's law                                       │
+#> │   ✓ consistent with Benford's law                                       │
 #> │                                                                         │
 #> │   values used  2,000                                                    │
 #> │   chi-square   10.073                                                   │

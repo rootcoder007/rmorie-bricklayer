@@ -27,6 +27,7 @@ ratechg(
   per = 1000,
   conflvl = 0.95,
   mincnt = 0,
+  prdord = NULL,
   ...
 )
 ```
@@ -78,6 +79,13 @@ ratechg(
   its exact interval are still reported, as
   [`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
   does.
+
+- prdord:
+
+  Optional character vector: the period labels in order, as for
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
+  A label it lists that the data lacks is a gap, so the change across it
+  is not reported as one step.
 
 ## Value
 

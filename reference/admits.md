@@ -105,5 +105,5 @@ admits(40, 12, t = 90)
 
 # an average stay of zero is refused
 try(admits(25, 0))
-#> Error : `alos` must be positive
+#> Error : admits: `alos` must be positive
 ```

@@ -258,30 +258,32 @@ own <- data.frame(
   hi = c(67, 63, 75, 80, 61, 67, 72, 85)
 )
 holbal(own, "community", "domain", "pct", "lo", "hi", reps = 2000)
-#> ╭── Holistic balance across the domains ───────────────────────────────────╮
-#> │   Groups   2                                                             │
-#> │   Weights  equal, over 4 domains                                         │
-#> │   Balance  weighted geometric over arithmetic mean of the domain levels  │
-#> │                                                                          │
-#> │   group      level  95% level CI    balance  95% balance CI  weakest     │
-#> │   ---------  -----  --------------  -------  --------------  -------     │
-#> │   Lakeside   66.25  [63.75, 68.75]   0.9950  [0.990, 0.998]  mind        │
-#> │   Riverbend  65.50  [62.62, 68.38]   0.9905  [0.984, 0.996]  body        │
-#> │                                                                          │
-#> │   Domain levels (percent)                                                │
-#> │   group       body   mind  spirit  family                                │
-#> │   ---------  -----  -----  ------  ------                                │
-#> │   Lakeside   62.00  58.00      70      75                                │
-#> │   Riverbend  55.00  61.00      66      80                                │
-#> │                                                                          │
-#> │   Highest balance: Lakeside (0.995); lowest: Riverbend (0.9905).         │
-#> │   Their intervals overlap: the data cannot tell the two apart.           │
-#> │   The weakest domain is body for 1 of 2 groups.                          │
-#> │                                                                          │
-#> │   balance is 1 when every domain is at the same level and falls toward   │
-#> │   0 as one falls behind; level is the weighted mean, reported beside it. │
-#> │   Our method, inspired by Stewart (2008), not taken from it.             │
-#> │   The weights say how much each domain counts; a community may set       │
-#> │   its own (CARE: authority to control, Carroll et al. 2020).             │
-#> ╰──────────────────────────────────────────────────────────────────────────╯
+#> ╭── Holistic balance across the domains ──────────────────────────────────────╮
+#> │   Groups   2                                                                │
+#> │   Weights  equal, over 4 domains                                            │
+#> │   Balance  weighted geometric over arithmetic mean of the domain levels     │
+#> │                                                                             │
+#> │   group      level  95% level CI    balance  95% balance CI  weakest        │
+#> │   ---------  -----  --------------  -------  --------------  -------        │
+#> │   Lakeside   66.25  [63.75, 68.75]   0.9950  [0.990, 0.998]  mind           │
+#> │   Riverbend  65.50  [62.62, 68.38]   0.9905  [0.984, 0.996]  body           │
+#> │                                                                             │
+#> │   Domain levels (percent)                                                   │
+#> │   group       body   mind  spirit  family                                   │
+#> │   ---------  -----  -----  ------  ------                                   │
+#> │   Lakeside   62.00  58.00      70      75                                   │
+#> │   Riverbend  55.00  61.00      66      80                                   │
+#> │                                                                             │
+#> │   Highest balance: Lakeside (0.995); lowest: Riverbend (0.9905).            │
+#> │   Their intervals overlap, which alone does not mean they are the same:     │
+#> │   the difference has its own, narrower interval (svycmp() for survey        │
+#> │   domains).                                                                 │
+#> │   The weakest domain is body for 1 of 2 groups.                             │
+#> │                                                                             │
+#> │   balance is 1 when every domain is at the same level and falls toward      │
+#> │   0 as one falls behind; level is the weighted mean, reported beside it.    │
+#> │   Our method, inspired by Stewart (2008), not taken from it.                │
+#> │   The weights say how much each domain counts; a community may set          │
+#> │   its own (CARE: authority to control, Carroll et al. 2020).                │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
 ```

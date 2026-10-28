@@ -129,7 +129,10 @@ distances.</p></dd>
 for two-way clustering (Cameron, Gelbach and Miller 2011): \(V_a + V_b -
 V_{ab}\), each term with the small-sample factor of the dimension with fewer
 clusters, and t on its \(G - 1\) degrees of freedom. A composite cluster
-(district by month, say) is one column made with <code><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction()</a></code>.</p></dd>
+(district by month, say) is one column made with <code><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction()</a></code>.
+Fewer than ten clusters give a warning (CR1 errors are unreliable with
+so few; <code><a href="wcb.html">wcb</a></code> is made for that case), and so does a
+cluster that changes within a unit.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -222,8 +225,10 @@ quasi-experimental reform. <a href="https://doi.org/10.2139/ssrn.3686855" class=
 <span class="r-in"><span><span class="va">own</span><span class="op">$</span><span class="va">rate</span> <span class="op">&lt;-</span> <span class="fl">30</span> <span class="op">+</span> <span class="va">i</span> <span class="op">+</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="op">(</span><span class="va">own</span><span class="op">$</span><span class="va">year</span> <span class="op">-</span> <span class="fl">2015</span><span class="op">)</span> <span class="op">-</span> <span class="fl">4</span> <span class="op">*</span> <span class="va">own</span><span class="op">$</span><span class="va">bylaw</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fl">0.2</span> <span class="op">*</span> <span class="va">own</span><span class="op">$</span><span class="va">income</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># each adopting town matched to one never treated on its path before 2019,</span></span></span>
-<span class="r-in"><span><span class="co"># the standard errors clustered by county</span></span></span>
+<span class="r-in"><span><span class="co"># the standard errors clustered by county: with two counties the package</span></span></span>
+<span class="r-in"><span><span class="co"># warns that so few clusters cannot be trusted</span></span></span>
 <span class="r-in"><span><span class="fu">mtchdid</span><span class="op">(</span><span class="va">own</span>, <span class="st">"town"</span>, <span class="st">"year"</span>, <span class="st">"rate"</span>, <span class="st">"first"</span>, cl <span class="op">=</span> <span class="st">"county"</span><span class="op">)</span><span class="op">$</span><span class="va">estimate</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>mtchdid: `cl` (county) gives only 2 clusters: cluster-robust (CR1) standard errors are unreliable with so few; wcb() is made for this case</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Difference in differences</span> ────────────────────────────────────────────────╮</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Method           fixed-effects least squares, cluster-robust (CR1) errors │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Observations     60                                                       │</span>

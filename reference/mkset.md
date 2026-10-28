@@ -113,25 +113,26 @@ s
 #> 
 #> 2. Rates by group
 #> 
-#> ╭── Rate per 1,000 ──────────────────────────────────────────────────────╮
-#> │   Count       n                                                        │
-#> │   Population  pop                                                      │
-#> │   Groups      grp                                                      │
-#> │   Rows        2                                                        │
-#> │   Interval    95% exact Poisson                                        │
-#> │                                                                        │
-#> │   grp  count  population   rate  95% CI                                │
-#> │   ---  -----  ----------  -----  ---------------                       │
-#> │   a       32       4,000  8.000  [5.472, 11.294]                       │
-#> │   b       25       4,000  6.250  [4.045, 9.226]                        │
-#> │                                                                        │
-#> │   Highest rate: a (8); lowest: b (6.25). Their intervals overlap: the  │
-#> │   data cannot tell the two apart.                                      │
-#> │                                                                        │
-#> │   Each rate is the count over the population times the base; the exact │
-#> │   Poisson interval stays honest for small counts, where a normal one   │
-#> │   does not.                                                            │
-#> ╰────────────────────────────────────────────────────────────────────────╯
+#> ╭── Rate per 1,000 ───────────────────────────────────────────────────────╮
+#> │   Count       n                                                         │
+#> │   Population  pop                                                       │
+#> │   Groups      grp                                                       │
+#> │   Rows        2                                                         │
+#> │   Interval    95% exact Poisson                                         │
+#> │                                                                         │
+#> │   grp  count  population   rate  95% CI                                 │
+#> │   ---  -----  ----------  -----  ---------------                        │
+#> │   a       32       4,000  8.000  [5.472, 11.294]                        │
+#> │   b       25       4,000  6.250  [4.045, 9.226]                         │
+#> │                                                                         │
+#> │   Highest rate: a (8); lowest: b (6.25). Their intervals overlap, which │
+#> │   alone does not mean they are the same: the difference has its own,    │
+#> │   narrower interval (svycmp() for survey domains).                      │
+#> │                                                                         │
+#> │   Each rate is the count over the population times the base; the exact  │
+#> │   Poisson interval stays honest for small counts, where a normal one    │
+#> │   does not.                                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # one page, one Markdown file, one text file
 mkset(s$items, title = "My study", file = file.path(tempdir(), "r.html"))

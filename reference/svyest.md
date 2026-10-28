@@ -159,9 +159,10 @@ svyest(des, d, "smoker", by = "region", stat = "proportion", lvls = "1")
 #> │   south   1        0.3752  0.07282  [0.2504, 0.5192]  19.41  50        │
 #> │                                                                        │
 #> │   Highest proportion: south (0.3752); lowest: north (0.157). Their     │
-#> │   intervals overlap: the data cannot tell the two apart. Use with      │
-#> │   caution (cv 16.6 to 33.3): south. Too unstable to publish (cv above  │
-#> │   33.3): north.                                                        │
+#> │   intervals overlap, which alone does not mean they are the same: the  │
+#> │   difference has its own, narrower interval (svycmp() for survey       │
+#> │   domains). Use with caution (cv 16.6 to 33.3): south. Too unstable to │
+#> │   publish (cv above 33.3): north.                                      │
 #> │                                                                        │
 #> │   cv is the coefficient of variation (the standard error as a          │
 #> │   percentage of the estimate); from 16.6 to 33.3 use the estimate with │
@@ -198,8 +199,10 @@ svyest(des, d, "drinks", by = "region", stat = "total")
 #> │   south     13,796  1,109  [11,621, 15,970]  8.041  50                 │
 #> │                                                                        │
 #> │   Highest total: north (15,080); lowest: south (13,796). Their         │
-#> │   intervals overlap: the data cannot tell the two apart. Every cv is   │
-#> │   below 16.6 (the largest 9.22): precise enough to publish.            │
+#> │   intervals overlap, which alone does not mean they are the same: the  │
+#> │   difference has its own, narrower interval (svycmp() for survey       │
+#> │   domains). Every cv is below 16.6 (the largest 9.22): precise enough  │
+#> │   to publish.                                                          │
 #> │                                                                        │
 #> │   cv is the coefficient of variation (the standard error as a          │
 #> │   percentage of the estimate); from 16.6 to 33.3 use the estimate with │

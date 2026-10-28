@@ -207,7 +207,8 @@ rtcalc(c(3, 0), 9500, per = "100k")
 #> │       0       9,500   0.00  [0.00, 38.83]                              │
 #> │                                                                        │
 #> │   Highest rate: row 1 (31.58); lowest: row 2 (0). Their intervals      │
-#> │   overlap: the data cannot tell the two apart.                         │
+#> │   overlap, which alone does not mean they are the same: the difference │
+#> │   has its own, narrower interval (svycmp() for survey domains).        │
 #> │                                                                        │
 #> │   Each rate is the count over the population times the base; the exact │
 #> │   Poisson interval stays honest for small counts, where a normal one   │

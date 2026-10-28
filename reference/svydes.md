@@ -217,7 +217,8 @@ stratum; no PSUs means every respondent is its own PSU.
 
 Errors: `data` not a data frame or with fewer than two rows; a named
 column that `data` does not have, or a vector of the wrong length;
-weights or replicate weights that are negative, missing or not finite;
+weights that are negative, missing or not finite, or replicate weights
+that are missing or not finite (calibrated replicates may be negative);
 both replicates and strata or PSUs; fewer than two replicates, or
 replicate columns refused for the reasons above; BRR or Fay replicates
 not in a Hadamard order; `type = "jkn"` without `rscales`, or `rscales`
