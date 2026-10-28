@@ -229,7 +229,7 @@ test_that("audit coverage: the survey design's replicate matrix edges", {
   Rna[1, 1] <- NA
   expect_error(
     svydes(d, "w", reps = Rna, type = "bootstrap"),
-    "finite, non-negative and not missing"
+    "finite and not missing"
   )
   # replicates of zeros: scaled by one for the degrees of freedom
   z <- suppressWarnings(svydes(

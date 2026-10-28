@@ -115,7 +115,8 @@
 #'
 #' Errors: \code{data} not a data frame or with fewer than two rows; a named
 #' column that \code{data} does not have, or a vector of the wrong length;
-#' weights or replicate weights that are negative, missing or not finite;
+#' weights that are negative, missing or not finite, or replicate weights
+#' that are missing or not finite (calibrated replicates may be negative);
 #' both replicates and strata or PSUs; fewer than two replicates, or
 #' replicate columns refused for the reasons above; BRR or Fay replicates not
 #' in a Hadamard order; \code{type = "jkn"} without \code{rscales}, or
@@ -998,10 +999,11 @@ plot.rmbl_svy_compare <- function(
   # (762.9 MB at 5e6 x 20)
   for (j in seq_len(ncol(reps))) {
     r <- reps[, j]
-    if (anyNA(r) || !all(is.finite(r)) || any(r < 0)) {
+    # calibrated replicates (GREG, raking) can be negative; survey's
+    # svrepdesign() takes them, and refusing them refused real files
+    if (anyNA(r) || !all(is.finite(r))) {
       stop(
-        "svydes: replicate weights must be finite, non-negative ",
-        "and not missing",
+        "svydes: replicate weights must be finite and not missing",
         call. = FALSE
       )
     }
@@ -1101,8 +1103,9 @@ plot.rmbl_svy_compare <- function(
   m
 }
 
-#' Replicate columns given as a list, checked to be numbers that are finite,
-#' non-negative and not missing; a matrix is returned as it is (its columns
+#' Replicate columns given as a list, checked to be numbers that are finite
+#' and not missing (calibrated replicates may be negative); a matrix is
+#' returned as it is (its columns
 #' were checked when it was read).
 #' @param .reps The list of columns, or a double matrix.
 #' @return The columns as doubles, or the matrix.
@@ -1125,10 +1128,9 @@ plot.rmbl_svy_compare <- function(
     )
   }
   lapply(.reps, function(r) {
-    if (anyNA(r) || !all(is.finite(r)) || any(r < 0)) {
+    if (anyNA(r) || !all(is.finite(r))) {
       stop(
-        "svydes: replicate weights must be finite, non-negative and ",
-        "not missing",
+        "svydes: replicate weights must be finite and not missing",
         call. = FALSE
       )
     }

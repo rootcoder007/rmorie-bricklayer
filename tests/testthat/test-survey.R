@@ -339,7 +339,11 @@ test_that(
     expect_error(svydes(toy, "w", reps = list(1)), "data frame, a matrix")
     expect_error(svydes(toy, "w", reps = R[1:5, ]), "one row per row")
     expect_error(svydes(toy, "w", reps = R[, 1, drop = FALSE]), "at least two")
-    expect_error(svydes(toy, "w", reps = -R), "non-negative")
+    # negative replicates are allowed (calibration makes them); infinite
+    # ones are not
+    Ri <- R
+    Ri[1, 1] <- Inf
+    expect_error(svydes(toy, "w", reps = Ri), "finite and not missing")
     expect_error(
       svydes(toy, "w", reps = R, type = "meanboot", msize = 0),
       "msize"
@@ -681,4 +685,34 @@ test_that("the variance label names a stratified jackknife or the type", {
   expect_identical(.svy_var_label(list(type = "jkn")),
     "stratified jackknife (JKn)")
   expect_identical(.svy_var_label(list(type = "other")), "other")
+})
+
+test_that("calibrated replicate weights below zero are taken, as survey does", {
+  skip_if_not_installed("survey")
+  data(api, package = "survey", envir = environment())
+  set.seed(4)
+  W <- replicate(
+    40,
+    apistrat$pw *
+      tabulate(sample(nrow(apistrat), replace = TRUE), nrow(apistrat))
+  )
+  # what calibration (GREG) leaves: a few replicate weights below zero
+  W[cbind(c(3, 9, 17), c(1, 2, 5))] <- -c(4.5, 12, 0.7)
+  # Statistics Canada's Rao-Wu scale, 1/B, as svydes() documents
+  dr <- survey::svrepdesign(data = apistrat, weights = ~pw, repweights = W,
+                            type = "other", scale = 1 / ncol(W),
+                            rscales = rep(1, ncol(W)),
+                            combined.weights = TRUE, mse = TRUE)
+  bs <- svydes(apistrat, w = "pw", reps = W, type = "bootstrap")
+  m <- survey::svymean(~api00, dr)
+  e <- svyest(bs, apistrat, "api00")
+  expect_equal(c(e$estimate, e$se), unname(c(coef(m), survey::SE(m))),
+               tolerance = 1e-8)
+  # the same replicates as a data frame
+  bd <- svydes(apistrat, w = "pw", reps = as.data.frame(W),
+               type = "bootstrap")
+  expect_equal(svyest(bd, apistrat, "api00")$se, e$se, tolerance = 1e-12)
+  W[1, 1] <- NA
+  expect_error(svydes(apistrat, w = "pw", reps = W, type = "bootstrap"),
+               "finite and not missing")
 })

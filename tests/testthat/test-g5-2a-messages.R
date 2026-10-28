@@ -190,8 +190,8 @@ test_that("literal copies in function bodies start with the function name", {
     "svydes: `reps` must have one row per row of `data` (3)"
   )
   err(
-    svydes(sd, "w", reps = matrix(c(1, -1, 1), 3, 1)),
-    "svydes: replicate weights must be finite, non-negative and not missing"
+    svydes(sd, "w", reps = matrix(c(1, NA, 1), 3, 1)),
+    "svydes: replicate weights must be finite and not missing"
   )
   out <- withr::local_tempfile()
   writeLines("x", out)
