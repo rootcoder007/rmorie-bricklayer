@@ -270,8 +270,12 @@ attrfrac <- function(rr, expoprev, rrlo = NULL, rrup = NULL) {
   )
 }
 
-#' @export
-format.rmbl_attrfrac <- function(x, ...) {
+#' The box of an rmbl_attrfrac measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_attrfrac <- function(x, ...) {
   if (!.lk_ok(x, c("rr", "expoprev")) || length(x) != 1L) {
     return(.lk_plain(x, ...))
   }

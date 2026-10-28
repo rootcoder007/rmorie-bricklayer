@@ -661,8 +661,87 @@ as.data.frame.rmbl_measure <- function(x, ..., nm = deparse1(substitute(x))) {
   as.data.frame(.rmbl_measure_plain(x), ..., nm = nm)
 }
 
+# format() is the number, as for any number, so a measure in a data frame
+# column, paste(), knitr::kable() and as.matrix() see a number; the box is
+# what print() shows.
+
 #' @export
-format.rmbl_adp <- function(x, ...) {
+format.rmbl_measure <- function(x, ...) {
+  format(.rmbl_measure_plain(x), ...)
+}
+
+#' @export
+print.rmbl_measure <- function(x, ...) {
+  b <- .rmbl_measure_box(x)
+  if (is.null(b)) {
+    print(.rmbl_measure_plain(x), ...)
+  } else {
+    .rmbl_cat(b, x)
+  }
+  invisible(x)
+}
+
+#' @export
+all.equal.rmbl_measure <- function(target, current, ...) {
+  all.equal(
+    .rmbl_measure_plain(target),
+    .rmbl_measure_plain(current),
+    ...
+  )
+}
+
+#' @export
+`[<-.rmbl_measure` <- function(x, ..., value) {
+  x <- .rmbl_measure_plain(x)
+  x[...] <- value
+  x
+}
+
+#' The box of a measure: its own while it holds the value and names it was
+#' made with. Changed since (pmax(), unname(), names<-), its record no
+#' longer describes it, and it has no box.
+#' @param x The measure.
+#' @return Lines, or NULL.
+#' @noRd
+.rmbl_measure_box <- function(x) {
+  p <- .rmbl_measure_plain(x)
+  v0 <- attr(x, "rmbl_value")
+  same <- identical(as.vector(p), as.vector(v0)) &&
+    identical(names(p), names(v0))
+  f <- get0(
+    paste0(".rmbl_mbox_", sub("^rmbl_", "", class(x)[1L])),
+    envir = topenv(environment()),
+    mode = "function"
+  )
+  if (same && !is.null(f)) f(x)
+}
+
+#' What a result's box is: a measure's box, or format() of anything else.
+#' @param v A result.
+#' @return Lines.
+#' @noRd
+.rmbl_box_lines <- function(v) {
+  if (inherits(v, "rmbl_measure")) {
+    .rmbl_measure_box(v) %||% format(v)
+  } else {
+    format(v)
+  }
+}
+
+#' Ops dispatch between a measure and a classed object (a Date, a POSIXct, a
+#' difftime): the measure's method is used, which drops its class, so the
+#' other object's method then runs on a plain number (R 4.3.0 and later).
+#' @param x,y,mx,my,cl,reverse As for chooseOpsMethod().
+#' @return TRUE.
+#' @noRd
+.rmbl_measure_choose <- function(x, y, mx, my, cl, reverse) TRUE
+
+#' The box of an rmbl_adp measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_adp <- function(x, ...) {
   if (!.lk_ok(x, c("days", "t"))) {
     return(.lk_plain(x, ...))
   }
@@ -693,8 +772,12 @@ format.rmbl_adp <- function(x, ...) {
   )
 }
 
-#' @export
-format.rmbl_alos <- function(x, ...) {
+#' The box of an rmbl_alos measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_alos <- function(x, ...) {
   if (!.lk_ok(x, c("days", "n"))) {
     return(.lk_plain(x, ...))
   }
@@ -724,8 +807,12 @@ format.rmbl_alos <- function(x, ...) {
   )
 }
 
-#' @export
-format.rmbl_admits <- function(x, ...) {
+#' The box of an rmbl_admits measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_admits <- function(x, ...) {
   if (!.lk_ok(x, c("adp", "alos", "t"))) {
     return(.lk_plain(x, ...))
   }
@@ -759,8 +846,12 @@ format.rmbl_admits <- function(x, ...) {
   )
 }
 
-#' @export
-format.rmbl_adpcnts <- function(x, ...) {
+#' The box of an rmbl_adpcnts measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_adpcnts <- function(x, ...) {
   if (!.lk_ok(x, c("counts", "mean", "t"))) {
     return(.lk_plain(x, ...))
   }
@@ -794,8 +885,12 @@ format.rmbl_adpcnts <- function(x, ...) {
   )
 }
 
-#' @export
-format.rmbl_perdays <- function(x, ...) {
+#' The box of an rmbl_perdays measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_perdays <- function(x, ...) {
   if (!.lk_ok(x, c("from", "to"))) {
     return(.lk_plain(x, ...))
   }
@@ -835,6 +930,7 @@ format.rmbl_perdays <- function(x, ...) {
   structure(
     v,
     lakner = inputs,
+    rmbl_value = .rmbl_measure_plain(v),
     class = c(paste0("rmbl_", name), "rmbl_measure", "numeric")
   )
 }

@@ -262,28 +262,13 @@ print.bricklayer_signing_key <- .rmbl_print_box
 print.bricklayer_timestamp <- .rmbl_print_box
 
 #' @export
-print.rmbl_admits <- .rmbl_print_box
-
-#' @export
-print.rmbl_adp <- .rmbl_print_box
-
-#' @export
-print.rmbl_adpcnts <- .rmbl_print_box
-
-#' @export
 print.rmbl_aipw <- .rmbl_print_box
-
-#' @export
-print.rmbl_alos <- .rmbl_print_box
 
 #' @export
 print.rmbl_archive_capture <- .rmbl_print_box
 
 #' @export
 print.rmbl_archive_find <- .rmbl_print_box
-
-#' @export
-print.rmbl_attrfrac <- .rmbl_print_box
 
 #' @export
 print.rmbl_bacon <- .rmbl_print_box
@@ -378,18 +363,6 @@ print.rmbl_distinctions <- .rmbl_print_box
 print.rmbl_dml <- .rmbl_print_box
 
 #' @export
-print.rmbl_drftchisq <- .rmbl_print_box
-
-#' @export
-print.rmbl_drfthomog <- .rmbl_print_box
-
-#' @export
-print.rmbl_drftks <- .rmbl_print_box
-
-#' @export
-print.rmbl_drftpsi <- .rmbl_print_box
-
-#' @export
 print.rmbl_drift_calibration <- .rmbl_print_box
 
 #' @export
@@ -432,9 +405,6 @@ print.rmbl_footprint <- .rmbl_print_box
 
 #' @export
 print.rmbl_framing <- .rmbl_print_box
-
-#' @export
-print.rmbl_gini <- .rmbl_print_box
 
 #' @export
 print.rmbl_hawkes_fit <- .rmbl_print_box
@@ -509,9 +479,6 @@ print.rmbl_ordinal_compare <- .rmbl_print_box
 
 #' @export
 print.rmbl_particles <- .rmbl_print_box
-
-#' @export
-print.rmbl_perdays <- .rmbl_print_box
 
 #' @export
 print.rmbl_permutation <- .rmbl_print_box

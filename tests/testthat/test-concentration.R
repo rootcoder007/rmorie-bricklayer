@@ -135,9 +135,9 @@ test_that("ginicoef() returns a boxed measure that computes as a number", {
   expect_identical(as.numeric(g), .rmbl_measure_plain(g))
   out <- expect_box2(g, "Gini coefficient", c("Units 1,668", "concentrated"))
   expect_gt(length(out), 3L)
-  even <- paste(format(ginicoef(rep(2, 10))), collapse = " ")
+  even <- paste(.rmbl_box_lines(ginicoef(rep(2, 10))), collapse = " ")
   expect_match(even, "close to equal shares", fixed = TRUE)
-  top <- paste(format(ginicoef(c(rep(0, 9), 1))), collapse = " ")
+  top <- paste(.rmbl_box_lines(ginicoef(c(rep(0, 9), 1))), collapse = " ")
   expect_match(top, "very highly concentrated", fixed = TRUE)
 })
 

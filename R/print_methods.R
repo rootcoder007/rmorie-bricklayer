@@ -786,13 +786,74 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' @return NULL, invisibly.
 #' @noRd
 .rmbl_cat <- function(lines, x = NULL) {
-  lines <- as.character(lines)
+  lines <- .rmbl_ctl_escape(as.character(lines))
   cap <- .rmbl_print_caps()
   if (.rmbl_is_block(lines, cap)) {
     lines <- .rmbl_box(lines, .rmbl_verdict(x), cap)
   }
   cat(lines, sep = "\n")
   invisible(NULL)
+}
+
+#' Text made safe to print: control characters a label or a file can carry
+#' are shown escaped, as print() shows them, instead of reaching the terminal.
+#' An escape sequence could clear the screen or set the window title, a
+#' carriage return overwrite the line, a newline split a box, a bidi control
+#' reorder what follows. The colour codes this package draws (ESC [ ... m)
+#' are kept.
+#' @param s Strings.
+#' @return `s`, escaped where needed.
+#' @noRd
+.rmbl_ctl_escape <- function(s) {
+  # the class is built from the characters themselves: a pattern marked
+  # UTF-8 matches the bidi controls whatever the session's locale
+  u <- function(k) intToUtf8(k)
+  re <- paste0(
+    "[\001-\037\177", u(0x200e), u(0x200f), u(0x202a), "-", u(0x202e),
+    u(0x2066), "-", u(0x2069), "]"
+  )
+  hit <- which(!is.na(s) & grepl(re, s, perl = TRUE))
+  for (i in hit) {
+    s[i] <- .rmbl_ctl_escape1(s[i])
+  }
+  s
+}
+
+#' One string escaped, its colour codes kept (see .rmbl_ctl_escape()).
+#' @param x One string.
+#' @return The string.
+#' @noRd
+.rmbl_ctl_escape1 <- function(x) {
+  sgr <- gregexpr("\033\\[[0-9;]*m", x)
+  keep <- regmatches(x, sgr)[[1L]]
+  part <- regmatches(x, sgr, invert = TRUE)[[1L]]
+  part <- vapply(part, function(p) {
+    cp <- utf8ToInt(enc2utf8(p))
+    if (anyNA(cp)) {
+      return(p)
+    }
+    paste(vapply(cp, .rmbl_ctl_char, ""), collapse = "")
+  }, "", USE.NAMES = FALSE)
+  paste0(part, c(keep, ""), collapse = "")
+}
+
+#' One character as print() shows it: a control character escaped.
+#' @param k Its code point.
+#' @return One string.
+#' @noRd
+.rmbl_ctl_char <- function(k) {
+  named <- c(`7` = "\\a", `8` = "\\b", `9` = "\\t", `10` = "\\n",
+             `12` = "\\f", `13` = "\\r", `27` = "\\033")
+  if (as.character(k) %in% names(named)) {
+    return(named[[as.character(k)]])
+  }
+  if (k < 32L || k == 127L) {
+    return(sprintf("\\%03o", k))
+  }
+  if (k %in% c(0x200e, 0x200f, 0x202a:0x202e, 0x2066:0x2069)) {
+    return(sprintf("<U+%04X>", k))
+  }
+  intToUtf8(k)
 }
 
 #' What the console takes: colours, Unicode and width.
@@ -870,10 +931,14 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   need <- max(c(.rmbl_vis_w(body), .rmbl_vis_w(title) + 4L, 30L)) + 4L
   width <- max(40L, min(need, cap$width - 1L, 100L))
   inner <- width - 4L
-  # wrap the plain lines first, then mark the first line of each check row
+  # wrap the plain lines first, then mark the first line of each check row;
+  # only a result with checks (a verdict) has check rows: in any other box a
+  # line that starts with "ok", "FAIL" or "X" is data (a group label, the
+  # census sex category X) and is shown as it is
+  marks <- !is.null(verdict)
   rows <- unlist(lapply(body, function(s) {
     w <- .rmbl_box_wrap(s, inner)
-    c(.rmbl_box_mark(w[1L], g, st), w[-1L])
+    c(if (marks) .rmbl_box_mark(w[1L], g, st) else w[1L], w[-1L])
   }))
   if (!is.null(verdict)) {
     rows <- c(.rmbl_box_status(verdict, g, st), "", rows)

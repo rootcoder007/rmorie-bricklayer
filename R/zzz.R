@@ -12,4 +12,13 @@
   }
 }
 
-.onLoad <- .rmbl_examples_default
+.onLoad <- function(libname, pkgname) {
+  .rmbl_examples_default(libname, pkgname)
+  # Date + perdays(): without this R warns of incompatible methods
+  if (exists("chooseOpsMethod", envir = baseenv())) {
+    registerS3method(
+      "chooseOpsMethod", "rmbl_measure", .rmbl_measure_choose,
+      envir = baseenv()
+    )
+  }
+}

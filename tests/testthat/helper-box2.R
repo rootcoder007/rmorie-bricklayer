@@ -4,7 +4,7 @@
 expect_box2 <- function(x, title, has = character()) {
   withr::local_envvar(RMBL_ASCII_ONLY = "1")
   withr::local_options(rmoriebricklayer.width = 80, rmoriebricklayer.numcol = 1)
-  txt <- format(x)
+  txt <- .rmbl_box_lines(x)
   testthat::expect_type(txt, "character")
   testthat::expect_true(grepl(title, txt[1L], fixed = TRUE), info = txt[1L])
   flat <- gsub("\\s+", " ", paste(txt, collapse = " "))
@@ -50,5 +50,6 @@ expect_plain_measure <- function(cls, v = c(a = 1.5)) {
 
 # A result's format() lines as one string, runs of space made one.
 box_text <- function(x, ...) {
-  gsub("\\s+", " ", paste(format(x, ...), collapse = " "))
+  txt <- if (inherits(x, "rmbl_measure")) .rmbl_box_lines(x) else format(x, ...)
+  gsub("\\s+", " ", paste(txt, collapse = " "))
 }

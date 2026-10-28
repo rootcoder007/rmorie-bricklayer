@@ -537,7 +537,7 @@ test_that("the pollution CSV reader refuses a directory by name", {
 expect_box <- function(x, title, has = character()) {
   withr::local_envvar(RMBL_ASCII_ONLY = "1")
   withr::local_options(rmoriebricklayer.width = 80, rmoriebricklayer.numcol = 1)
-  txt <- format(x)
+  txt <- .rmbl_box_lines(x)
   expect_type(txt, "character")
   expect_true(grepl(title, txt[1L], fixed = TRUE), info = txt[1L])
   flat <- paste(txt, collapse = "\n")
@@ -627,7 +627,7 @@ test_that("attrfrac() returns a boxed measure that reads its sign", {
   expect_false(inherits(paf + 0, "rmbl_measure"))
   expect_box2(paf, "Population attributable fraction",
     c("7.41%", "Its interval stays above 0"))
-  prot <- paste(format(attrfrac(0.8, 0.5)), collapse = " ")
+  prot <- paste(.rmbl_box_lines(attrfrac(0.8, 0.5)), collapse = " ")
   expect_match(prot, "The exposure is protective", fixed = TRUE)
   expect_match(.rmbl_paf_reading(0.01, c(lower = -0.01, upper = 0.03))[2L],
     "includes 0", fixed = TRUE)

@@ -271,7 +271,7 @@ test_that("perdays refuses a missing date", {
 expect_box <- function(x, title, has = character()) {
   withr::local_envvar(RMBL_ASCII_ONLY = "1")
   withr::local_options(rmoriebricklayer.width = 80, rmoriebricklayer.numcol = 1)
-  txt <- format(x)
+  txt <- .rmbl_box_lines(x)
   expect_type(txt, "character")
   expect_true(grepl(title, txt[1L], fixed = TRUE), info = txt[1L])
   flat <- paste(txt, collapse = "\n")
@@ -488,12 +488,12 @@ test_that("a measure prints invisibly, ASCII where asked", {
   expect_identical(res, a)
   expect_match(out[1L], "^\\+-- Average daily population")
   expect_match(out[length(out)], "^\\+-+\\+$")
-  expect_identical(format(a)[1L], .rmbl_rule("Average daily population"))
+  expect_identical(.rmbl_box_lines(a)[1L], .rmbl_rule("Average daily population"))
 })
 
 test_that("a measure with several values shows a small table", {
   x <- .rmbl_measure(c(a = 1.5, b = 2.5), "adp", list(days = 4, t = 2))
-  txt <- format(x)
+  txt <- .rmbl_box_lines(x)
   expect_true(any(grepl("^  value +adp", txt)))
   expect_true(any(grepl("One value per row", txt, fixed = TRUE)))
   expect_identical(as.numeric(x), c(1.5, 2.5))

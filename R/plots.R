@@ -3771,7 +3771,7 @@ plotbump <- function(
 # 1..n labelled with its text; `labels` (yoylbl()'s perlbl) relabels the ticks.
 # Gives the positions, the ticks with their labels, and the axis title the
 # period implies.
-.bl_period_axis <- function(p, labels = NULL) {
+.bl_period_axis <- function(p, labels = NULL, prdord = NULL) {
   txt <- as.character(if (is.null(labels)) p else labels)
   if (is.character(p)) {
     q <- p[!is.na(p)]
@@ -3790,7 +3790,7 @@ plotbump <- function(
   lev <- if (is.factor(p)) {
     levels(p)
   } else {
-    .bl_period_order(unique(key[!is.na(key)]))
+    .bl_period_order(unique(key[!is.na(key)]), prdord)
   }
   at <- if (cont) as.numeric(p) else match(key, lev[lev %in% key])
   first <- !duplicated(at)
@@ -3820,16 +3820,27 @@ plotbump <- function(
   )
 }
 
-# Text periods in time order: fiscal years ("2019/20"), years, year-months
-# ("2019-03") and quarters ("2019Q1") by year, then the number after it;
-# anything else sorted.
-.bl_period_order <- function(u) {
-  if (!length(u) || !all(grepl("^[0-9]{4}([/ -]?[Qq]?[0-9]{1,4})?$", u))) {
-    return(sort(u))
+# Text periods in time order, read as the tables read them (yoy()'s period
+# reader: fiscal years "2019/20", "Q1 2022", "2022 Q1", "Mar 2021", "March
+# 2021" and dates), or in the order `prdord` gives; anything the reader does
+# not know is sorted. Before, only year-first labels were ordered, so a plot
+# drew "Q1 2022" before "Q3 2021" while its table had them in time order.
+.bl_period_order <- function(u, prdord = NULL) {
+  if (!length(u)) {
+    return(u)
   }
-  r <- suppressWarnings(as.numeric(sub("^[0-9]{4}[/ -]?[Qq]?", "", u)))
-  r[is.na(r)] <- 0
-  u[order(as.numeric(substr(u, 1L, 4L)), r)]
+  if (!is.null(prdord)) {
+    k <- match(u, prdord)
+    return(u[order(is.na(k), k, u)])
+  }
+  p <- tryCatch(
+    .yoy_prd_read(u, quiet = TRUE)$p,
+    error = function(e) NULL
+  )
+  if (is.ordered(p) || inherits(p, "Date")) {
+    return(u[order(p)])
+  }
+  sort(u)
 }
 
 # The period axis itself: a tick at every period when there are few (a year
@@ -4045,7 +4056,8 @@ plotbump <- function(
   }
   ax <- .bl_period_axis(
     d[[period]],
-    if (isTRUE(meta$perlbl) && "perlbl" %in% names(d)) d$perlbl
+    if (isTRUE(meta$perlbl) && "perlbl" %in% names(d)) d$perlbl,
+    meta$prdord
   )
   list(grp = grp, label = label, ax = ax)
 }

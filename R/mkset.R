@@ -125,7 +125,7 @@ print.rmbl_set <- function(x, ...) {
 #' @noRd
 .mkset_head <- function(v, k) {
   l1 <- tryCatch(
-    as.character(if (.mkset_own(v)) format(v) else .mkset_box(v))[1L],
+    as.character(if (.mkset_own(v)) .rmbl_box_lines(v) else .mkset_box(v))[1L],
     error = function(e) NA
   )
   pat <- "^(\u2500\u2500|--) (.*?) (\u2500|-)*$"

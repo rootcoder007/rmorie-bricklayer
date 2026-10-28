@@ -84,8 +84,12 @@ drftks <- function(x, y) {
   .rmbl_measure(out, "drftks", list(nx = length(x), ny = length(y)))
 }
 
-#' @export
-format.rmbl_drftks <- function(x, ...) {
+#' The box of an rmbl_drftks measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_drftks <- function(x, ...) {
   if (!.lk_ok(x, c("nx", "ny")) || length(x) != 3L) {
     return(.lk_plain(x, ...))
   }
@@ -216,8 +220,12 @@ drftpsi <- function(x, y, bins = 10L, eps = 1e-6) {
   )
 }
 
-#' @export
-format.rmbl_drftpsi <- function(x, ...) {
+#' The box of an rmbl_drftpsi measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_drftpsi <- function(x, ...) {
   if (!.lk_ok(x, c("nx", "ny", "bins")) || length(x) != 2L) {
     return(.lk_plain(x, ...))
   }
@@ -333,8 +341,12 @@ drftchisq <- function(obs, expd) {
   )
 }
 
-#' @export
-format.rmbl_drftchisq <- function(x, ...) {
+#' The box of an rmbl_drftchisq measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_drftchisq <- function(x, ...) {
   if (!.lk_ok(x, c("n", "k")) || length(x) != 4L) {
     return(.lk_plain(x, ...))
   }
@@ -463,8 +475,12 @@ drfthomog <- function(x, y, seed = 1L) {
   )
 }
 
-#' @export
-format.rmbl_drfthomog <- function(x, ...) {
+#' The box of an rmbl_drfthomog measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_drfthomog <- function(x, ...) {
   if (!.lk_ok(x, c("nx", "ny", "k")) || length(x) != 4L) {
     return(.lk_plain(x, ...))
   }

@@ -120,8 +120,12 @@ ginicoef <- function(x, na.rm = TRUE) {
   )
 }
 
-#' @export
-format.rmbl_gini <- function(x, ...) {
+#' The box of an rmbl_gini measure, as print() shows it.
+#' @param x The measure.
+#' @param ... Passed to format() for the plain number.
+#' @return Lines.
+#' @noRd
+.rmbl_mbox_gini <- function(x, ...) {
   if (!.lk_ok(x, c("n", "total", "top")) || length(x) != 1L) {
     return(.lk_plain(x, ...))
   }

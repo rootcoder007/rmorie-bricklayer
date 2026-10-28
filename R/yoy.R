@@ -317,6 +317,7 @@ yoy.data.frame <- function(
   # text periods are read into an order (C18): "2019/20", "2021 Q3", "Mar 2021"
   pk <- .yoy_prd_read(x[[prd]], prdord)
   x[[prd]] <- pk$p
+  .yoy_na_warn(x[[prd]])
   if (!is.null(by)) {
     by <- .yoy_check_by(by, x)
   }
@@ -514,6 +515,23 @@ yoy.ts <- function(x, lag = NULL, ...) {
   }
   out[[value]] <- unname(vals)
   out[order(.yoy_order(out, keys)), , drop = FALSE]
+}
+
+#' Warns of rows with no period: they are kept, with no change.
+#' @param p The periods.
+#' @return NULL, invisibly.
+#' @noRd
+.yoy_na_warn <- function(p) {
+  if (anyNA(p)) {
+    warning(
+      sprintf(
+        "yoy: %d row(s) have no period (NA): they are kept, with no change",
+        sum(is.na(p))
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }
 
 #' Orders rows by the keys taken last first, so rows sort by group and then by
@@ -987,6 +1005,8 @@ yoy.ts <- function(x, lag = NULL, ...) {
   # period is absent. Taking v[i - lag] instead would compare 2023
   # with 2020 whenever 2021 were missing, and say nothing about it.
   prev <- .yoy_previous(p, v, lag)
+  # a row with no period has no period before it (its NA key matched itself)
+  prev[is.na(p)] <- NA_real_
   out <- data.frame(
     period = p,
     value = v,
@@ -1062,6 +1082,11 @@ yoy.ts <- function(x, lag = NULL, ...) {
 .yoy_prd_read <- function(p, prdord = NULL, quiet = FALSE) {
   if (!is.null(prdord)) {
     return(.yoy_prd_given(p, prdord))
+  }
+  # an unordered factor's levels are only sorted labels, not an order: its
+  # labels are read as text is ("2019/20" before "2020/21")
+  if (is.factor(p) && !is.ordered(p)) {
+    p <- as.character(p)
   }
   if (!is.character(p)) {
     return(list(p = p))
