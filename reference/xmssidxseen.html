@@ -123,9 +123,9 @@ places, or a bundle and its log line) is not a reuse.</p>
 <span class="r-in"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="cpsbndl.html">cpsbndl</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="mkmnf.html">mkmnf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, env <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="va">key</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">xmssidxseen</span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                key index              sig</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 90bf66721746c04e     0 cc20dcd4ef92da28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 d3927e7c2baf05a4     0 56e91e06c5758bcb</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                           where reused</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/RtmpWHwEsH/capsules-1e685b24b28d/one/capsule_bundle.json  FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/RtmpRoHQ4e/capsules-21b34b7346d4/one/capsule_bundle.json  FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the same index signed again from a stale copy of the key: reused</span></span></span>
 <span class="r-in"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"two"</span><span class="op">)</span></span></span>
@@ -140,7 +140,7 @@ places, or a bundle and its log line) is not a reuse.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2     0   TRUE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">xmssidxseen</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : xmssidxseen: `path` is not an existing directory or bundle file: /tmp/RtmpWHwEsH/file1e681ae861a2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : xmssidxseen: `path` is not an existing directory or bundle file: /tmp/RtmpRoHQ4e/file21b36c558f87</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
