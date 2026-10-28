@@ -462,30 +462,6 @@ format.bricklayer_timestamp <- function(x, ...) {
   paste(out, collapse = ".")
 }
 
-#' Returns the children of a parsed DER node.
-#' @param nd A node from the DER parser.
-#' @return A list of nodes.
-#' @noRd
-.rmbl_der_kids <- function(nd) nd$children
-
-#' Depth-first search for the first node satisfying `pred`.
-#' @param nd A node from the DER parser.
-#' @param pred A function of a node that returns `TRUE` for a match.
-#' @return The first matching node, or NULL.
-#' @noRd
-.rmbl_der_find <- function(nd, pred) {
-  if (isTRUE(pred(nd))) {
-    return(nd)
-  }
-  for (k in .rmbl_der_kids(nd)) {
-    r <- .rmbl_der_find(k, pred)
-    if (!is.null(r)) {
-      return(r)
-    }
-  }
-  NULL
-}
-
 #' Tells whether a DER node is an OBJECT IDENTIFIER with the given dotted value.
 #' @param nd A node from the DER parser.
 #' @param oid The dotted OID.
