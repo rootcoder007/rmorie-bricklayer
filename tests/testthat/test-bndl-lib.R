@@ -86,9 +86,9 @@ test_that("a bundle without the package's downloader does not download", {
   expect_false(file.exists(dest) && file.size(dest) > 0)
   # a package that is missing, or older than 1.0.3, is no downloader
   expect_null(e$.rmbl_bdl("no.such.package.here"))
-  if (requireNamespace("praise", quietly = TRUE) &&
-        utils::packageVersion("praise") < "1.0.3") {
-    expect_null(e$.rmbl_bdl("praise"))
+  if (requireNamespace("digest", quietly = TRUE) &&
+        utils::packageVersion("digest") < "1.0.3") {
+    expect_null(e$.rmbl_bdl("digest"))
   }
   # an installed rmoriebricklayer 1.0.3 or later lends its bldl()
   expect_identical(e$.rmbl_bdl(),
