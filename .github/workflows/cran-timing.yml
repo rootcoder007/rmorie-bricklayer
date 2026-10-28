@@ -57,7 +57,9 @@ jobs:
       - uses: r-lib/actions/setup-tinytex@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
       # the PDF manual needs makeindex and the inconsolata font, which the minimal TinyTeX lacks
       - name: LaTeX packages for the PDF manual
-        run: tlmgr install makeindex inconsolata
+        run: |
+          tlmgr update --self
+          tlmgr install makeindex inconsolata
       - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
         with:
           cache: 'always'

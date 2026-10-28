@@ -49,7 +49,9 @@ jobs:
       # the PDF manual check needs LaTeX, which the runner does not have
       - uses: r-lib/actions/setup-tinytex@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
       - name: LaTeX packages the R manual uses
-        run: tlmgr install inconsolata
+        run: |
+          tlmgr update --self
+          tlmgr install inconsolata
 
       # OpenSSL 3.5 with its FIPS provider, as in r-coverage.yml (same cache),
       # so the coverage check runs cpsxvrf()'s and fipsmod()'s real tests
