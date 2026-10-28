@@ -386,6 +386,48 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   out
 }
 
+#' Text with its symbols spelt in ASCII where the console cannot show them.
+#'
+#' Unchanged on a UTF-8 console. Otherwise the status marks, quotes and
+#' dashes become ASCII words and signs, and anything else not ASCII is folded
+#' line by line (toascii() alone would drop a mark and the line breaks). In a
+#' C locale the report and the messages printed "<U+2714>" and "<U+2018>".
+#' @param s Strings, or any other value (returned unchanged).
+#' @return `s`.
+#' @noRd
+.rmbl_sym <- function(s) {
+  if (!is.character(s) || .rmbl_unicode_ok()) {
+    return(s)
+  }
+  # two vectors, not names: a C locale turns non-ASCII names into "<U+...>"
+  from <- c(
+    "\u03c7\u00b2", "\u2714", "\u2713", "\u2716", "\u2717", "\u26a0",
+    "\u00b7", "\u2018", "\u2019", "\u201c", "\u201d", "\u2026", "\u2013",
+    "\u2014", "\u2192", "\u2190", "\u2265", "\u2264", "\u00b1", "\u2022",
+    "\u00d7", "\u00b2"
+  )
+  to <- c(
+    "chi2", "OK", "OK", "X", "X", "!", "-", "'", "'", "\"", "\"", "...", "-",
+    "--", "->", "<-", ">=", "<=", "+/-", "*", "x", "2"
+  )
+  # by bytes: in a C locale a UTF-8 pattern matched nothing, with a warning
+  for (i in seq_along(from)) {
+    s <- gsub(from[i], to[i], s, fixed = TRUE, useBytes = TRUE)
+  }
+  # useBytes leaves the result unmarked; marked again, "M\u00e9tis" folds to
+  # "Metis" and not "Mtis"
+  ok <- !is.na(s) & validUTF8(s)
+  Encoding(s[ok]) <- "UTF-8"
+  vapply(s, function(x) {
+    if (is.na(x) || !grepl("[^ -~\n\t]", x, useBytes = TRUE)) {
+      return(x)
+    }
+    end <- if (endsWith(x, "\n")) "\n" else ""
+    paste0(paste(toascii(strsplit(x, "\n", fixed = TRUE)[[1L]]),
+                 collapse = "\n"), end)
+  }, "", USE.NAMES = FALSE)
+}
+
 #' Returns the box-drawing and status glyphs for the console, Unicode or ASCII.
 #' @return A named list of strings.
 #' @noRd

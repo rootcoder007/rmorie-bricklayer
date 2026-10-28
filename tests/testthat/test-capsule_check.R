@@ -79,17 +79,19 @@ test_that(
       x$capsules[[1]]$checks_total
     )
     md <- format(x, failon = "warn")
-    expect_match(md, "**\u2714 ok**: 1 capsule under", fixed = TRUE)
+    expect_match(md, .rmbl_sym("**\u2714 ok**: 1 capsule under"), fixed = TRUE)
     expect_match(
       md,
       paste0(
-        "| \u2714 pass | schema: data_provenance.json | valid against ",
+        .rmbl_sym(paste0("| \u2714 pass | schema: data_provenance.json | ",
+                         "valid against ")),
         "capsule.schema.json |"
       ),
       fixed = TRUE
     )
     expect_match(md, "\nFootprint of these checks (co2fp(), ", fixed = TRUE)
-    expect_match(md, "fail-on `warn` \u00b7 rmoriebricklayer", fixed = TRUE)
+    expect_match(md, .rmbl_sym("fail-on `warn` \u00b7 rmoriebricklayer"),
+                 fixed = TRUE)
     expect_output(print(x), "Capsule check (verify)", fixed = TRUE)
     txt <- format(x, fmt = "text")
     expect_true(any(grepl("Capsule check (verify)", txt, fixed = TRUE)))
@@ -196,7 +198,8 @@ test_that(
     expect_match(
       md,
       paste0(
-        "**Drift: \u2714 no column crossed a band.** 0 of 4 columns flagged ",
+        .rmbl_sym(paste0("**Drift: \u2714 no column crossed a band.** 0 of 4 ",
+                         "columns flagged ")),
         "by ",
         "the package (none)"
       ),
@@ -204,7 +207,7 @@ test_that(
     )
     expect_match(
       md,
-      "| \u2714 ok | grade | categorical | \u03c7\u00b2 ",
+      .rmbl_sym("| \u2714 ok | grade | categorical | \u03c7\u00b2 "),
       fixed = TRUE
     )
     expect_match(md, "| - note | drift: source_digest | changed +data.csv")
@@ -221,7 +224,7 @@ test_that(
     expect_identical(x$status, "drift")
     expect_match(
       format(x),
-      "| \u26a0 drift | value | numeric | KS D",
+      .rmbl_sym("| \u26a0 drift | value | numeric | KS D"),
       fixed = TRUE
     )
     expect_match(
@@ -577,12 +580,13 @@ test_that(
     )
     expect_match(
       md,
-      "| \u2714 match | mean_x | 5.5 | 5.505 | 0.005 (within tol) | 0.01 |",
+      .rmbl_sym(paste0("| \u2714 match | mean_x | 5.5 | 5.505 | ",
+                       "0.005 (within tol) | 0.01 |")),
       fixed = TRUE
     )
     expect_match(
       md,
-      "| \u2716 mismatch | n | 10 | 11 | 1 (outside tol) | 0 |",
+      .rmbl_sym("| \u2716 mismatch | n | 10 | 11 | 1 (outside tol) | 0 |"),
       fixed = TRUE
     )
     expect_match(md, "| new | sd_x |", fixed = TRUE)
@@ -688,7 +692,7 @@ test_that(
     ))
     expect_match(
       format(x),
-      "| \u2716 fail | bundle: attestation:signature |",
+      .rmbl_sym("| \u2716 fail | bundle: attestation:signature |"),
       fixed = TRUE
     )
     # an empty detail and a check with no meaning add no explanation; explerr()

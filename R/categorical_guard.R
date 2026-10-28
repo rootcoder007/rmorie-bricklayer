@@ -1511,7 +1511,11 @@ format.rmbl_transfer_check <- function(x, ...) {
 #' @param v A character vector.
 #' @return `v` with each element in curly single quotes.
 #' @noRd
-.rmbl_squote <- function(v) paste0("\u2018", v, "\u2019")
+.rmbl_squote <- function(v) {
+  # straight quotes where the console cannot show curly ones ("<U+2018>")
+  if (.rmbl_unicode_ok()) paste0("\u2018", v, "\u2019") else
+    paste0("'", v, "'")
+}
 
 #' Lists every ordering of a set of labels.
 #' @param v The labels.

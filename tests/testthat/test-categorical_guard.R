@@ -646,3 +646,21 @@ test_that("the categorical check boxes say what agrees and what does not", {
     fixed = TRUE)
   expect_match(box_text(tr(FALSE)), "Code book disagrees", fixed = TRUE)
 })
+
+test_that("reports and messages stay readable where Unicode is not shown", {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  d <- withr::local_tempdir()
+  md <- format(cpschk(d, "drift", fp = FALSE), fmt = "md")
+  expect_true(all(charToRaw(md) < as.raw(128)))
+  expect_match(md, "OK No manifests found", fixed = TRUE)
+  expect_true(endsWith(md, "\n"))
+  e <- tryCatch(grdrcd(c("W", "X"), c(W = "White")), error = conditionMessage)
+  expect_false(grepl("‘|<U\\+", e))
+  expect_identical(.rmbl_squote("a"), "'a'")
+  expect_identical(.rmbl_sym("✔ pass · χ² ≥ 1\nMétis"),
+                   "OK pass - chi2 >= 1\nMetis")
+  withr::local_envvar(RMBL_ASCII_ONLY = "")
+  if (isTRUE(l10n_info()[["UTF-8"]])) {
+    expect_identical(.rmbl_squote("a"), "‘a’")
+  }
+})

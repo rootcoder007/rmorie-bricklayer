@@ -379,7 +379,7 @@ test_that(
       "| Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |",
       fixed = TRUE
     )
-    expect_match(r$out, "round 5 \u00b7 supp 10", fixed = TRUE)
+    expect_match(r$out, .rmbl_sym("round 5 \u00b7 supp 10"), fixed = TRUE)
     expect_match(r$out, "| example.org |", fixed = TRUE)
     expect_match(r$out, "bundle: attestation:signature", fixed = TRUE)
     expect_match(r$out, "schema: capsule_bundle.json", fixed = TRUE)
@@ -804,7 +804,7 @@ test_that(
     expect_false(grepl("the shared secret", r$out, fixed = TRUE))
     expect_match(
       r$out,
-      "| \u2714 pass | bundle: attestation:signature | - |",
+      .rmbl_sym("| \u2714 pass | bundle: attestation:signature | - |"),
       fixed = TRUE
     )
     # a bundle is there: refused without --overwrite

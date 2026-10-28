@@ -228,10 +228,10 @@ format.rmbl_cpschk <- function(
 ) {
   fmt <- .rmbl_arg(fmt)
   if (fmt == "md") {
-    return(.bl_cpschk_md(x, failon))
+    return(.rmbl_sym(.bl_cpschk_md(x, failon)))
   }
   if (fmt == "text") {
-    return(.bl_cpschk_text(x))
+    return(.rmbl_sym(.bl_cpschk_text(x)))
   }
   caps <- lapply(x$capsules, function(cp) {
     if (is.null(cp$manifests)) {
