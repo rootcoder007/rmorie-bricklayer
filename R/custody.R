@@ -1034,6 +1034,7 @@ all.equal.rmbl_measure <- function(target, current, ...) {
   # rest dropped in silence
   if (scalar && length(x) > 1L) {
     stop(
+      .rmbl_fn(),
       sprintf("`%s` must be a single number, got %d values", arg, length(x)),
       call. = FALSE
     )
@@ -1045,16 +1046,19 @@ all.equal.rmbl_measure <- function(target, current, ...) {
       call. = FALSE
     )
   }
-  x <- .rmbl_num(x, "x")
+  # the caller's argument named in every refusal, with the function's name
+  # (`x` was named, and two refusals had no function at all)
+  x <- .rmbl_num(x, arg)
   if (!length(x)) {
     stop(.rmbl_fn(), sprintf("`%s` must not be empty", arg), call. = FALSE)
   }
   if (anyNA(x)) {
-    stop(sprintf("`%s` must not contain NA", arg), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must not contain NA", arg), call. = FALSE)
   }
   bad <- if (allow_zero) any(x < 0) else any(x <= 0)
   if (bad) {
     stop(
+      .rmbl_fn(),
       sprintf(
         "`%s` must be %s",
         arg,

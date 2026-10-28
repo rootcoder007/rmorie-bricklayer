@@ -521,3 +521,11 @@ test_that("a stock and flow table of mixed period lengths lists them", {
   expect_null(.an_counts(NULL))
   expect_null(.an_counts(character()))
 })
+
+test_that("staysmry() and its siblings name the function and the argument", {
+  expect_error(staysmry(c(1, NA, 3)), "^staysmry: `daysperper` must not")
+  expect_error(staysmry(-1), "^staysmry: `daysperper` must be non-negative")
+  expect_error(staysmry(numeric(0)), "^staysmry: `daysperper` must not be")
+  expect_error(staysmry("a"), "^staysmry: `daysperper` must be numeric")
+  expect_error(adp(-5, 10), "^adp: ")
+})
