@@ -272,7 +272,7 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
 #' try(mksyncsv("not a recipe", tempfile()))
 #' @export
 mksyncsv <- function(schema, outpath, nrows = NULL, seed = NULL) {
-  outpath <- .rmbl_string1(outpath, "outpath")
+  outpath <- .rmbl_out_file(outpath, "outpath", connection = FALSE)
   if (!is.list(schema)) {
     stop("`schema` must be a schema list (columns = ..., ...)", call. = FALSE)
   }

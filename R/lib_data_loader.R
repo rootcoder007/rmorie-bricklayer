@@ -384,7 +384,7 @@ rslvckns <- function(prov) {
 dldata <- function(url, tpath, mode = "wb", quiet = FALSE, allowfile = FALSE) {
   url <- .rmbl_string1(url, "url")
   url <- .rmbl_check_public_url(url, "url", allow_file = allowfile)
-  tpath <- .rmbl_string1(tpath, "tpath")
+  tpath <- .rmbl_out_file(tpath, "tpath", connection = FALSE)
   if (!identical(mode, "wb") && !identical(mode, "w")) {
     stop("`mode` must be \"wb\" (every transfer is binary)", call. = FALSE)
   }
@@ -548,7 +548,7 @@ wbsnpurl <- function(url, ts = NULL) {
 fdl <- function(url, tpath, attwb = NULL, allowfile = FALSE) {
   url <- .rmbl_string1(url, "url")
   url <- .rmbl_check_public_url(url, "url", allow_file = allowfile)
-  tpath <- .rmbl_string1(tpath, "tpath")
+  tpath <- .rmbl_out_file(tpath, "tpath", connection = FALSE)
   # base R's url() reports the HTTP status in a warning and then errors with a
   # bare "cannot open the connection": keep the warning's words as the cause,
   # and do not let it leak

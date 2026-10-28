@@ -65,7 +65,7 @@ fetchvrf <- function(
   arcs = "rmorie"
 ) {
   url <- .rmbl_string1(url, "url")
-  dest <- .rmbl_string1(dest, "dest")
+  dest <- .rmbl_out_file(dest, "dest", connection = FALSE)
   sha256 <- .fv_check(sha256, mirrors, arcs)
   tmp <- paste0(dest, ".part")
   on.exit(unlink(tmp), add = TRUE)

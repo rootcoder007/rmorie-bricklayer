@@ -158,3 +158,42 @@ test_that("midranks keep NA in place and registers must be finite", {
   expect_error(skchmrg(Inf, Inf), "non-negative integer registers")
   expect_error(dstncnt(c(1, NaN)), "non-negative integer registers")
 })
+
+test_that("writers given a folder, or a folder that is not there, say so", {
+  dd <- withr::local_tempdir()
+  miss <- file.path(dd, "no-such-folder", "out.csv")
+  y <- yoy(data.frame(p = 2020:2022, n = c(1, 2, 4)), "n", "p")
+  man <- mkmnf(list(project = "x"), env = FALSE)
+  calls <- list(
+    yoycsv = function(t) yoycsv(y, t),
+    yoytsv = function(t) yoytsv(y, t),
+    yoymd = function(t) yoymd(y, t),
+    yoyjs = function(t) yoyjs(y, t),
+    yoyhtml = function(t) yoyhtml(y, t),
+    yoywr = function(t) yoywr(y, t, format = "csv"),
+    wrmnfjs = function(t) wrmnfjs(man, t),
+    wrtxtfb = function(t) wrtxtfb("hello", t),
+    mksyncsv = function(t) {
+      mksyncsv(list(columns = list(a = list(type = "integer", min = 1,
+                                             max = 2))), t, nrows = 2)
+    },
+    bldl = function(t) bldl("https://example.org/a.csv", t),
+    blfetch = function(t) blfetch("https://example.org/a.csv", t),
+    fetchvrf = function(t) {
+      fetchvrf("https://example.org/a.csv", t, sha256 = strrep("0", 64))
+    },
+    dldata = function(t) dldata("https://example.org/a.csv", t),
+    tsstmp = function(t) {
+      tsstmp(charToRaw("x"), tsa = "https://example.org/tsr", file = t)
+    }
+  )
+  for (nm in names(calls)) {
+    expect_error(calls[[nm]](dd), "folder", info = nm)
+    expect_error(calls[[nm]](miss), "does not exist|directory does not",
+                 info = nm)
+    e <- tryCatch(calls[[nm]](dd), error = conditionMessage)
+    expect_false(grepl("cannot open the connection", e), info = nm)
+  }
+  expect_error(mkset(rtcalc(data.frame(n = 1, pop = 10), "n", "pop"),
+                     file = dd), "is a folder")
+})

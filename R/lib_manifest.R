@@ -325,7 +325,7 @@ recrd <- function(
 #' try(wrmnfjs(man, c("a.json", "b.json")))
 #' @export
 wrmnfjs <- function(man, path, canon = FALSE) {
-  path <- .rmbl_string1(path, "path")
+  path <- .rmbl_out_file(path, "path", connection = FALSE)
   if (!is.list(man)) {
     stop("wrmnfjs: `man` must be a manifest from mkmnf()", call. = FALSE)
   }

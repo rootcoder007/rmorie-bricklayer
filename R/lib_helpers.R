@@ -276,7 +276,7 @@ asciifb <- function(x, force = FALSE) {
 #' @export
 wrtxtfb <- function(text, path) {
   .rmbl_no_fn(text = text)
-  path <- .rmbl_string1(path, "path")
+  path <- .rmbl_out_file(path, "path", connection = FALSE)
   ok <- tryCatch(
     {
       # the UTF-8 bytes go to a binary connection: a text connection with

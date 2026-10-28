@@ -117,7 +117,7 @@ tsstmp <- function(data, tsa = "https://freetsa.org/tsr", file = NULL,
     stop("`timeout` must be a positive number of seconds", call. = FALSE)
   }
   if (!is.null(file)) {
-    file <- .rmbl_string1(file, "file")
+    file <- .rmbl_out_file(file, "file", connection = FALSE)
     if (file.exists(file)) {
       stop("`file` already exists; it is not overwritten: ", file,
            call. = FALSE)

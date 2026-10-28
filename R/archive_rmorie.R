@@ -125,7 +125,7 @@ format.rmbl_archive_find <- function(x, ...) {
 #' @export
 arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
   x <- .rmbl_string1(x, "x")
-  dest <- .rmbl_string1(dest, "dest")
+  dest <- .rmbl_out_file(dest, "dest", connection = FALSE)
   tmout <- .rmbl_scalar(tmout, "tmout", 1, 86400, integer = TRUE)
   if (!is.null(sha256)) {
     sha256 <- tolower(.rmbl_string1(sha256, "sha256"))

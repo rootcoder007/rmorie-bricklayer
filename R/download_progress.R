@@ -107,7 +107,7 @@ bldl <- function(
   if (is.null(quiet)) {
     quiet <- .bl_dl_quiet()
   }
-  dest <- .rmbl_string1(dest, "dest")
+  dest <- .rmbl_out_file(dest, "dest", connection = FALSE)
   quiet <- .rmbl_flag1(quiet, "quiet")
   size <- .bl_dl_size(size)
   # a console that redraws a line in place: a terminal, or the RStudio, Positron

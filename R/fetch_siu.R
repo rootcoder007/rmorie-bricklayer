@@ -60,7 +60,7 @@
 siufetch <- function(drid, dest, lang = c("en", "fr"), wb = "", tmout = 120L) {
   lang <- .rmbl_arg(lang)
   did <- .rmbl_drid(drid)
-  dest <- .rmbl_string1(dest, "dest")
+  dest <- .rmbl_out_file(dest, "dest", connection = FALSE)
   url <- sprintf(
     "https://www.siu.on.ca/%s/directors_report_details.php?drid=%d",
     lang,

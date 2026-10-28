@@ -175,6 +175,10 @@ wbsnpnat <- function(url, tmout = 30L) {
 #' @param dest As for blfetch().
 #' @noRd
 .bl_fetch_check_dest <- function(dest) {
+  if (dir.exists(dest)) {
+    stop("blfetch: `dest` is a folder; give a file in it: ", dest,
+         call. = FALSE)
+  }
   d <- dirname(path.expand(dest))
   if (!dir.exists(d) || file.access(d, 2L) != 0L) {
     stop(

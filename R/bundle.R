@@ -175,7 +175,7 @@ cpsbndl <- function(
     stop("`dir` does not exist: ", dir, call. = FALSE)
   }
   if (!is.null(path)) {
-    path <- .rmbl_string1(path, "path")
+    path <- .rmbl_out_file(path, "path", connection = FALSE)
   }
   if (!is.null(files) && (!is.character(files) || anyNA(files))) {
     stop(

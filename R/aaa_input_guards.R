@@ -512,9 +512,10 @@
 
 #' Checks where a function writes its output.
 #'
-#' Where a function writes: a connection, or one non-empty path (a number or NA
-#' reached file() and writeLines() and failed in their words: \dQuote{'con' is
-#' not a connection}, \dQuote{invalid 'description' argument})
+#' Where a function writes: a connection, or one non-empty path to a file in a
+#' folder that exists (a number or NA reached file() and writeLines() and
+#' failed in their words: \dQuote{'con' is not a connection}, \dQuote{invalid
+#' 'description' argument}; a folder, \dQuote{cannot open the connection})
 #' @param file The connection or path passed by the user.
 #' @param what The argument's name (default `file`), quoted in the path error.
 #' @param connection Whether a connection or NULL is accepted.
@@ -525,7 +526,21 @@
   if (connection && (is.null(file) || inherits(file, "connection"))) {
     return(file)
   }
-  .rmbl_string1(file, what)
+  file <- .rmbl_string1(file, what)
+  # a folder, or a file in a folder that is not there, reached file() and
+  # failed as "cannot open the connection"
+  if (dir.exists(file)) {
+    stop(.rmbl_fn(),
+         sprintf("`%s` is a folder; give a file in it: %s", what, file),
+         call. = FALSE)
+  }
+  if (!dir.exists(dirname(path.expand(file)))) {
+    stop(.rmbl_fn(),
+         sprintf("the folder for `%s` does not exist: %s", what,
+                 dirname(file)),
+         call. = FALSE)
+  }
+  file
 }
 
 #' TRUE or FALSE, said in words when it is neither (`if (quiet)` failed on NA, a

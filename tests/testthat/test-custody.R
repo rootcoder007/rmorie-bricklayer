@@ -488,7 +488,8 @@ test_that("a measure prints invisibly, ASCII where asked", {
   expect_identical(res, a)
   expect_match(out[1L], "^\\+-- Average daily population")
   expect_match(out[length(out)], "^\\+-+\\+$")
-  expect_identical(.rmbl_box_lines(a)[1L], .rmbl_rule("Average daily population"))
+  expect_identical(.rmbl_box_lines(a)[1L],
+                   .rmbl_rule("Average daily population"))
 })
 
 test_that("a measure with several values shows a small table", {
