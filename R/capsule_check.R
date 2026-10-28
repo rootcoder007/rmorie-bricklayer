@@ -769,6 +769,40 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   cache
 }
 
+#' verify's row on a local source: refresh and drift refuse a path outside
+#' the capsule (or a file:// URL without `allowfile`), and verify reported the
+#' same capsule as ok (network review of 1.0.3).
+#' @param d The capsule directory.
+#' @param src The source the provenance names.
+#' @param o The options of cpschk().
+#' @return A check row, or NULL for a web source or none.
+#' @noRd
+.bl_source_row <- function(d, src, o) {
+  # drift and refresh refuse it themselves, as they fetch
+  if (!o$mode %in% c("verify", "report") || !nzchar(src) ||
+        grepl("^https?://", src, ignore.case = TRUE)) {
+    return(NULL)
+  }
+  is_file <- grepl("^file://", src, ignore.case = TRUE)
+  # the folder resolved, which exists, so a ../ is taken out even when the
+  # file is not there
+  raw <- .bl_local_path(src, is_file, d)
+  p <- file.path(normalizePath(dirname(raw), winslash = "/", mustWork = FALSE),
+                 basename(raw))
+  roots <- .bl_local_roots(d, o$allowfile, o$path)
+  why <- if (is_file && isFALSE(o$allowfile)) {
+    "the source is a file:// URL and `allowfile` is FALSE"
+  } else if (!any(startsWith(p, paste0(roots, "/")))) {
+    "a local source must be a file inside the capsule"
+  }
+  if (is.null(why)) {
+    return(NULL)
+  }
+  why <- paste0(why, ": ", .rmbl_printable(src))
+  .bl_check_row(basename(d), "provenance", file.path(d, "data_provenance.json"),
+                "source: local path", FALSE, why)
+}
+
 #' The checks of one capsule: verify rows, the snapshot, drift and refresh, the
 #' manifests.
 #' @param d The capsule directory, checked for verify, drift and refresh.
@@ -787,7 +821,10 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     pinned_sha256 = .bl_s1(prov[["resource"]][["sha256"]]) %||% "",
     fetched_sha256 = "",
     changed = FALSE,
-    rows = .bl_verify_capsule(d, o$key, o$pubkey, seen = o$seen)
+    rows = rbind(
+      .bl_verify_capsule(d, o$key, o$pubkey, seen = o$seen),
+      .bl_source_row(d, src, o)
+    )
   )
   if (o$snapshot && !is.null(prov)) {
     s <- .bl_snapshot(src)

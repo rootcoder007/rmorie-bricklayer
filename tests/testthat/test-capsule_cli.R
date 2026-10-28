@@ -986,3 +986,25 @@ test_that("a pinned public key is checked, never dropped in silence", {
                    base != 0L)
   expect_error(cpschk(cp, "verify", pubkey = "x", fp = FALSE), "hexadecimal")
 })
+
+test_that("verify refuses a local source that refresh and drift refuse", {
+  no_stdin()
+  outside <- withr::local_tempfile(fileext = ".csv")
+  writeLines("a,b\n1,2", outside)
+  for (src in c(outside, paste0("file://", outside), "../elsewhere.csv")) {
+    cp <- src_capsule()
+    pf <- file.path(cp$dir, "data_provenance.json")
+    prov <- fromjs(paste(readLines(pf), collapse = "\n"))
+    prov$source$url <- src
+    writeLines(tojs(prov, auto_unbox = TRUE), pf)
+    r <- run_cli(c("verify", cp$dir))
+    expect_identical(r$status, 1L, info = src)
+    x <- cpschk(cp$dir, "verify", fp = FALSE)
+    expect_true("source: local path" %in% x$rows$check[!x$rows$ok],
+                info = src)
+  }
+  # a source inside the capsule stays fine
+  cp <- src_capsule()
+  x <- cpschk(cp$dir, "verify", fp = FALSE)
+  expect_false("source: local path" %in% x$rows$check)
+})
