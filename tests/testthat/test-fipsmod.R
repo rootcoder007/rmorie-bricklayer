@@ -184,3 +184,75 @@ test_that("each way the module can fail to load or refuse is reported", {
   # XMSS has no FIPS module: refused by the scheme check
   expect_error(fipsmkg("xmss-sha256", mod), "pqckg")
 })
+
+test_that("a key never chooses the program the package runs", {
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  v <- "OpenSSL 3.5.9 29 Sep 2026"
+  fips <- c("Providers:", "  fips", "    name: Some FIPS Provider",
+            "    version: 1.0", "    status: active")
+  good <- fake_openssl(d, v, fips)
+  # a program a key names: it would leave a mark if it ran
+  mark <- file.path(d, "ran")
+  evil <- file.path(d, "evil")
+  writeLines(c("#!/bin/sh", sprintf("touch %s", shQuote(mark)),
+               sprintf("exec %s \"$@\"", shQuote(good))), evil)
+  Sys.chmod(evil, "0755")
+  withr::local_options(rmbl.fips.openssl = good, rmbl.fips.conf = "")
+  key <- structure(
+    list(public = strrep("00", fipssz("ML-DSA-44")[["public_key"]]),
+         scheme = "ML-DSA-44", pem = "-----BEGIN PRIVATE KEY-----",
+         module = list(name = "Some FIPS Provider", build = "1.0",
+                       status = "not listed", cmvp = NA_character_,
+                       openssl = evil, conf = file.path(d, "evil.cnf"))),
+    class = c("rmbl_fipsmod_key", "bricklayer_fips_public_key", "list")
+  )
+  expect_error(cpssign("m", key), "refused the signature")
+  expect_false(file.exists(mark))
+  # a key from a module other than the one set up is refused by name
+  key$module$build <- "2.0"
+  expect_error(cpssign("m", key), "rmbl.fips.openssl")
+  expect_false(file.exists(mark))
+})
+
+test_that("a program replaced in the session is read again", {
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  v <- "OpenSSL 3.5.9 29 Sep 2026"
+  p <- function(name) {
+    c("Providers:", "  fips", paste0("    name: ", name),
+      "    version: 1.0", "    status: active")
+  }
+  f <- fake_openssl(d, v, p("First FIPS Provider"))
+  expect_identical(fipsmod(f)$name, "First FIPS Provider")
+  fake_openssl(d, v, p("Second FIPS Provider, longer"))
+  Sys.setFileTime(f, Sys.time() + 60)
+  expect_identical(fipsmod(f)$name, "Second FIPS Provider, longer")
+})
+
+test_that("an openssl that never answers is stopped", {
+  skip_on_os("windows")
+  skip_on_cran()
+  d <- withr::local_tempdir()
+  f <- file.path(d, "openssl")
+  writeLines(c(
+    "#!/bin/sh",
+    "if [ \"$1\" = version ]; then echo 'OpenSSL 3.5.9'; exit 0; fi",
+    "sleep 30"
+  ), f)
+  Sys.chmod(f, "0755")
+  withr::local_options(rmbl.fips.timeout = 1L)
+  k <- fipskg("ML-DSA-44")
+  sg <- cpssign("m", k)
+  t <- system.time(x <- cpsxvrf("m", sg, k, openssl = f))
+  expect_lt(t[["elapsed"]], 20)
+  expect_true(x$ours)
+  expect_true(is.na(x$openssl))
+  expect_match(x$reason, "did not answer within 1 seconds")
+  expect_lt(system.time(try(fipsmod(f), silent = TRUE))[["elapsed"]], 20)
+})
+
+test_that("fipsmkg() makes the package's default signer by default", {
+  expect_identical(formals(fipsmkg)$scheme, formals(fipskg)$scheme)
+  expect_identical(formals(fipsmkg)$scheme, "SLH-DSA-SHA2-128s")
+})

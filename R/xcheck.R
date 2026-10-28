@@ -167,9 +167,16 @@ format.rmbl_xvrf <- function(x, ...) {
               paste0("hexcontext-string:", .rmbl_hexlify(cx)))
   }
   res <- suppressWarnings(
-    system2(openssl, args, stdout = TRUE, stderr = TRUE)
+    system2(openssl, args, stdout = TRUE, stderr = TRUE,
+            timeout = .rmbl_fipsmod_timeout())
   )
   st <- attr(res, "status") %||% 0L
+  if (identical(as.integer(st), 124L)) {
+    return(.rmbl_xvrf_none(sprintf(
+      "%s did not answer within %d seconds", ver$label,
+      .rmbl_fipsmod_timeout()
+    ), ver$label))
+  }
   txt <- paste(res, collapse = " ")
   if (st == 0L && grepl("Verified Successfully", txt, fixed = TRUE)) {
     return(list(ok = TRUE, version = ver$label, reason = NA_character_))
@@ -225,7 +232,7 @@ format.rmbl_xvrf <- function(x, ...) {
 #' @noRd
 .rmbl_xvrf_version <- function(openssl) {
   v <- tryCatch(
-    suppressWarnings(system2(openssl, "version", stdout = TRUE,
+    suppressWarnings(system2(openssl, "version", stdout = TRUE, timeout = 30,
                              stderr = TRUE)),
     error = function(e) character()
   )

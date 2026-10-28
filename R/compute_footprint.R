@@ -929,7 +929,8 @@ format.rmbl_co2eqv <- function(x, digits = 4L, ...) {
       suppressWarnings(as.numeric(system2(
         sysctl,
         c("-n", "hw.memsize"),
-        stdout = TRUE
+        stdout = TRUE,
+        timeout = 10
       ))),
       error = function(e) NA_real_
     )

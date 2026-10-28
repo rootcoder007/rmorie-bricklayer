@@ -42,11 +42,20 @@
 #' `RMBL_FIPS_CONF`) to use the configuration your organisation's FIPS
 #' deployment prescribes instead.
 #'
+#' The status is the module's own report, matched against the list: it is
+#' as true as the `openssl` program run, which is why a key never chooses
+#' that program. [cpssign()] loads the module set up now (the options
+#' `rmbl.fips.openssl` and `rmbl.fips.conf`) and refuses a key made in
+#' another. Every run of the program is stopped after `rmbl.fips.timeout`
+#' seconds (default 300). The private key reaches the program through a
+#' file in a folder only you can read, removed when the operation ends; a
+#' process killed meanwhile leaves it in R's session folder.
+#'
 #' Refusals: no `openssl` program, one older than 3.5, a FIPS provider that
 #' is missing or does not load, or a `conf` file that does not exist.
 #'
-#' @param openssl Path to the `openssl` program. The default looks it up on
-#'   the `PATH`.
+#' @param openssl Path to the `openssl` program. The default is the option
+#'   `rmbl.fips.openssl`, else the `openssl` on the `PATH`.
 #' @param conf Path to an OpenSSL configuration that loads the FIPS
 #'   provider, or `""` to let the package write one.
 #' @return A list of class `rmbl_fipsmod`: `name`, `version` and `build`
@@ -69,7 +78,8 @@
 #'   sig <- cpssign("a manifest digest", key)
 #'   cpsvrf("a manifest digest", sig, key)
 #' }
-fipsmod <- function(openssl = Sys.which("openssl"),
+fipsmod <- function(openssl = getOption("rmbl.fips.openssl",
+                                         Sys.which("openssl")),
                     conf = getOption("rmbl.fips.conf",
                                      Sys.getenv("RMBL_FIPS_CONF"))) {
   openssl <- .rmbl_fipsmod_program(openssl)
@@ -79,7 +89,14 @@ fipsmod <- function(openssl = Sys.which("openssl"),
   if (!is.character(conf) || length(conf) != 1L || is.na(conf)) {
     stop("`conf` must be one path, or \"\"", call. = FALSE)
   }
-  id <- paste(openssl$path, conf, sep = "\n")
+  # keyed on the files as they are now, so a program or configuration
+  # replaced during the session is not answered from the cache
+  stamp <- function(f) {
+    i <- suppressWarnings(file.info(f, extra_cols = FALSE))
+    paste(f, i$size, as.numeric(i$mtime))
+  }
+  id <- paste(stamp(openssl$path), if (nzchar(conf)) stamp(conf) else "",
+              sep = "\n")
   hit <- .rmbl_fipsmod_cache[[id]]
   if (!is.null(hit)) {
     return(hit)
@@ -126,7 +143,8 @@ fipsmod <- function(openssl = Sys.which("openssl"),
 #' that the module loaded now is the one that made the key and refuses
 #' otherwise. XMSS and HQC have no FIPS module and are refused.
 #'
-#' @param scheme An ML-DSA or SLH-DSA parameter set, such as `"ML-DSA-65"`
+#' @param scheme An ML-DSA or SLH-DSA parameter set, default
+#'   `"SLH-DSA-SHA2-128s"` (as for [fipskg()]), or such as `"ML-DSA-65"`
 #'   or `"SLH-DSA-SHA2-128s"` (see [fipssz()]).
 #' @param mod The module, from [fipsmod()].
 #' @return A key of class `rmbl_fipsmod_key` (also a
@@ -144,7 +162,7 @@ fipsmod <- function(openssl = Sys.which("openssl"),
 #'   key <- fipsmkg("SLH-DSA-SHA2-128s", mod)
 #'   key
 #' }
-fipsmkg <- function(scheme = "ML-DSA-65", mod = fipsmod()) {
+fipsmkg <- function(scheme = "SLH-DSA-SHA2-128s", mod = fipsmod()) {
   # only ML-DSA and SLH-DSA names pass; XMSS is refused there, with
   # where to make such a key instead
   scheme <- .rmbl_fips_scheme(scheme)
@@ -226,9 +244,11 @@ format.rmbl_fipsmod <- function(x, ...) {
   switch(
     x$status,
     "validated" = paste(
-      "Signatures made with fipsmkg() keys are computed inside a FIPS",
-      "140-3 validated module (CMVP", paste0(x$cmvp, "),"),
-      "in its approved mode."
+      "The module reports itself as one that a FIPS 140-3 certificate",
+      "(CMVP", paste0(x$cmvp, ")"), "names; signatures made with",
+      "fipsmkg() keys are computed inside it, in its approved mode. The",
+      "report comes from the openssl program you chose, so it is as",
+      "true as that program."
     ),
     "validated without PQC" = paste(
       "This module's certificate does not cover ML-DSA or SLH-DSA, so",
@@ -406,10 +426,25 @@ format.rmbl_fipsmod <- function(x, ...) {
     add = TRUE
   )
   out <- tryCatch(
-    suppressWarnings(system2(openssl, args, stdout = TRUE, stderr = TRUE)),
+    suppressWarnings(system2(openssl, args, stdout = TRUE, stderr = TRUE,
+                             timeout = .rmbl_fipsmod_timeout())),
     error = function(e) structure(conditionMessage(e), status = 127L)
   )
-  list(status = attr(out, "status") %||% 0L, out = as.character(out))
+  st <- attr(out, "status") %||% 0L
+  if (identical(as.integer(st), 124L)) {
+    out <- sprintf("the openssl program did not finish within %d seconds",
+                   .rmbl_fipsmod_timeout())
+  }
+  list(status = st, out = as.character(out))
+}
+
+#' Seconds an openssl run may take (option `rmbl.fips.timeout`, default
+#' 300: SLH-DSA's small variants sign slowly).
+#' @return A whole number of seconds.
+#' @noRd
+.rmbl_fipsmod_timeout <- function() {
+  t <- suppressWarnings(as.integer(getOption("rmbl.fips.timeout", 300L)))
+  if (length(t) != 1L || is.na(t) || t < 1L) 300L else t
 }
 
 #' Runs a module operation and stops when it fails.
@@ -576,11 +611,14 @@ format.rmbl_fipsmod <- function(x, ...) {
     stop("this FIPS module key is damaged: make a new one with fipsmkg()",
          call. = FALSE)
   }
-  mod <- fipsmod(openssl = k$openssl, conf = k$conf %||% "")
+  # the program and configuration recorded in a key are never run: a key
+  # read from a file would otherwise choose what this package executes
+  mod <- fipsmod()
   if (!identical(mod$name, k$name) || !identical(mod$build, k$build)) {
     stop("the FIPS module loaded now (", mod$name, " ", mod$build,
          ") is not the one that made this key (", k$name, " ", k$build,
-         ")", call. = FALSE)
+         "): point options(rmbl.fips.openssl =, rmbl.fips.conf =) at it",
+         call. = FALSE)
   }
   mod
 }

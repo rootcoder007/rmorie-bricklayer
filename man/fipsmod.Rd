@@ -5,13 +5,13 @@
 \title{Sign Inside a FIPS 140-3 Module}
 \usage{
 fipsmod(
-  openssl = Sys.which("openssl"),
+  openssl = getOption("rmbl.fips.openssl", Sys.which("openssl")),
   conf = getOption("rmbl.fips.conf", Sys.getenv("RMBL_FIPS_CONF"))
 )
 }
 \arguments{
-\item{openssl}{Path to the \code{openssl} program. The default looks it up on
-the \code{PATH}.}
+\item{openssl}{Path to the \code{openssl} program. The default is the option
+\code{rmbl.fips.openssl}, else the \code{openssl} on the \code{PATH}.}
 
 \item{conf}{Path to an OpenSSL configuration that loads the FIPS
 provider, or \code{""} to let the package write one.}
@@ -56,6 +56,15 @@ Chainguard) loads as it is; an upstream build is first installed with
 (or set the option \code{rmbl.fips.conf} or the environment variable
 \code{RMBL_FIPS_CONF}) to use the configuration your organisation's FIPS
 deployment prescribes instead.
+
+The status is the module's own report, matched against the list: it is
+as true as the \code{openssl} program run, which is why a key never chooses
+that program. \code{\link[=cpssign]{cpssign()}} loads the module set up now (the options
+\code{rmbl.fips.openssl} and \code{rmbl.fips.conf}) and refuses a key made in
+another. Every run of the program is stopped after \code{rmbl.fips.timeout}
+seconds (default 300). The private key reaches the program through a
+file in a folder only you can read, removed when the operation ends; a
+process killed meanwhile leaves it in R's session folder.
 
 Refusals: no \code{openssl} program, one older than 3.5, a FIPS provider that
 is missing or does not load, or a \code{conf} file that does not exist.

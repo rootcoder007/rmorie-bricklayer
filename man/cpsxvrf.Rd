@@ -19,8 +19,8 @@ public half is used.}
 
 \item{ctx}{The context string the signature was made with, or \code{NULL}.}
 
-\item{openssl}{Path to the \code{openssl} program. The default looks it up on
-the \code{PATH}.}
+\item{openssl}{Path to the \code{openssl} program. The default is the option
+\code{rmbl.fips.openssl}, else the \code{openssl} on the \code{PATH}.}
 }
 \value{
 A list of class \code{rmbl_xvrf}: \code{ok} (\code{TRUE} only when both

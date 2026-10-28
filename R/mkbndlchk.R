@@ -174,9 +174,17 @@ format.rmbl_bundle_audit <- function(x, ...) {
   withr::local_dir(root)
   exe <- if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript"
   rscript <- file.path(R.home("bin"), exe)
+  # a run that never ends is stopped (option rmbl.bundle.timeout, seconds)
+  tmout <- suppressWarnings(as.integer(getOption("rmbl.bundle.timeout",
+                                                 7200L)))
+  if (length(tmout) != 1L || is.na(tmout) || tmout < 1L) tmout <- 7200L
   status <- suppressWarnings(
-    system2(rscript, args, stdout = log, stderr = log)
+    system2(rscript, args, stdout = log, stderr = log, timeout = tmout)
   )
+  if (identical(as.integer(status), 124L)) {
+    cat(sprintf("\nstopped: the run took longer than %d seconds\n", tmout),
+        file = log, append = TRUE)
+  }
   list(
     status = as.integer(status),
     log = if (file.exists(log)) readLines(log, warn = FALSE) else character()

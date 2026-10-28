@@ -4,10 +4,11 @@
 \alias{fipsmkg}
 \title{Make a Signing Key Inside a FIPS 140-3 Module}
 \usage{
-fipsmkg(scheme = "ML-DSA-65", mod = fipsmod())
+fipsmkg(scheme = "SLH-DSA-SHA2-128s", mod = fipsmod())
 }
 \arguments{
-\item{scheme}{An ML-DSA or SLH-DSA parameter set, such as \code{"ML-DSA-65"}
+\item{scheme}{An ML-DSA or SLH-DSA parameter set, default
+\code{"SLH-DSA-SHA2-128s"} (as for \code{\link[=fipskg]{fipskg()}}), or such as \code{"ML-DSA-65"}
 or \code{"SLH-DSA-SHA2-128s"} (see \code{\link[=fipssz]{fipssz()}}).}
 
 \item{mod}{The module, from \code{\link[=fipsmod]{fipsmod()}}.}
