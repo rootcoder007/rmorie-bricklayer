@@ -289,11 +289,14 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   path <- .rmbl_file1(path, "path")
   in_memory <- min(in_memory, lim)
   head <- readBin(path, "raw", 2L)
-  if (
-    length(head) < 2L ||
-      head[[1L]] != as.raw(0x1f) ||
-      head[[2L]] != as.raw(0x8b)
-  ) {
+  gz <- length(head) == 2L && head[[1L]] == as.raw(0x1f) &&
+    head[[2L]] == as.raw(0x8b)
+  if (gz && is.finite(lim)) {
+    # a gzip that inflates a thousandfold is a bomb, under the byte cap or not
+    lim <- min(lim, .rmbl_max_csv_bytes(file.size(path)))
+    in_memory <- min(in_memory, lim)
+  }
+  if (!gz) {
     if (file.size(path) > lim) {
       .bl_csv_too_big(path, lim)
     }
@@ -974,9 +977,9 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   stop(
     sprintf(
       paste(
-        "%s decompresses to more than %s bytes (option",
-        "rmoriebricklayer.maxcsvbytes);",
-        "raise the option to read it"
+        "%s decompresses to more than %s bytes (options",
+        "rmoriebricklayer.maxcsvbytes and rmoriebricklayer.maxgzratio);",
+        "raise them to read it"
       ),
       basename(path),
       format(lim, big.mark = ",", scientific = FALSE)

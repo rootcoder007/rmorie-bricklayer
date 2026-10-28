@@ -2551,7 +2551,7 @@ format.rmbl_plr_boot <- function(x, ...) {
 #' @noRd
 .rmbl_decompress_checked <- function(path, head = readBin(path, "raw", 6L)) {
   # rawToChar() takes at most 2^31 - 1 bytes
-  lim <- min(.rmbl_max_csv_bytes(), 2^31 - 2)
+  lim <- min(.rmbl_max_csv_bytes(file.size(path)), 2^31 - 2)
   if (length(head) >= 2L && identical(head[1:2], as.raw(c(0x1f, 0x8b)))) {
     return(.Call(
       C_rmbl_gunzip_checked,
@@ -2600,10 +2600,16 @@ format.rmbl_plr_boot <- function(x, ...) {
 #' Returns the most a CSV may decompress to.
 #'
 #' The option rmoriebricklayer.maxcsvbytes (1 GiB by default): the most a CSV
-#' may decompress to, for the pollution readers and dload() alike.
+#' may decompress to, for the pollution readers and dload() alike. Given the
+#' compressed size, also at most rmoriebricklayer.maxgzratio (200) times it,
+#' once past 64 MiB: a 1 MB reply that inflated to just under 1 GiB was within
+#' the byte cap and took 2.7 GB to read (network review of 1.0.3). Real tables
+#' compress 5 to 50 times; a decompression bomb, a thousand.
+#' @param compressed The compressed size in bytes, or NULL for the byte cap
+#'   alone.
 #' @return A number of bytes.
 #' @noRd
-.rmbl_max_csv_bytes <- function() {
+.rmbl_max_csv_bytes <- function(compressed = NULL) {
   lim <- .rmbl_getopt("maxcsvbytes", 2^30)
   if (!is.numeric(lim) || length(lim) != 1L || is.na(lim) || lim < 0) {
     stop(
@@ -2612,7 +2618,17 @@ format.rmbl_plr_boot <- function(x, ...) {
       call. = FALSE
     )
   }
-  as.numeric(lim)
+  lim <- as.numeric(lim)
+  if (is.null(compressed) || !is.finite(compressed)) {
+    return(lim)
+  }
+  ratio <- .rmbl_getopt("maxgzratio", 200)
+  if (!is.numeric(ratio) || length(ratio) != 1L || is.na(ratio) ||
+        ratio < 1) {
+    stop("option rmoriebricklayer.maxgzratio must be a single number of ",
+         "at least 1", call. = FALSE)
+  }
+  min(lim, max(64 * 2^20, as.numeric(ratio) * compressed))
 }
 
 #' Says whether a bzip2 file ends with its end-of-stream marker.

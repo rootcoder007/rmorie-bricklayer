@@ -750,8 +750,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   ) {
     return(p)
   }
-  lim <- .rmbl_max_csv_bytes()
   n <- file.size(p)
+  lim <- .rmbl_max_csv_bytes(n)
   if (n >= 18) {
     con <- file(p, "rb")
     seek(con, n - 4)
@@ -777,8 +777,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     .rmbl_fn(),
     sprintf(
       paste0(
-        "%s inflates to more than %s bytes (option ",
-        "rmoriebricklayer.maxcsvbytes)"
+        "%s inflates to more than %s bytes (options ",
+        "rmoriebricklayer.maxcsvbytes and rmoriebricklayer.maxgzratio)"
       ),
       basename(p),
       format(lim, big.mark = ",", scientific = FALSE)
