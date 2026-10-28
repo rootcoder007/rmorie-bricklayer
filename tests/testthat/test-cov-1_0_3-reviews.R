@@ -36,9 +36,10 @@ test_that(".onLoad registers the Ops method for measures", {
   .onLoad("lib", "rmoriebricklayer")
   expect_true(getOption("rmbl.examples"))
   skip_if_not(exists("chooseOpsMethod", envir = baseenv()))
-  expect_true(is.function(
-    getS3method("chooseOpsMethod", "rmbl_measure", envir = baseenv())
-  ))
+  expect_type(
+    getS3method("chooseOpsMethod", "rmbl_measure", envir = baseenv()),
+    "closure"
+  )
 })
 
 test_that("a planted-effect check with a tiny tolerance says too noisy", {
@@ -68,12 +69,12 @@ test_that("a bundle run longer than its timeout is stopped and logged", {
   withr::local_options(rmbl.bundle.timeout = "never")
   r <- .bndlchk_run(root, NULL, TRUE)
   expect_identical(r$status, 0L)
-  expect_true(any(grepl("ran", r$log)))
+  expect_true(any(grepl("ran", r$log, fixed = TRUE)))
   writeLines("Sys.sleep(30)", file.path(root, "setup_and_run.R"))
   withr::local_options(rmbl.bundle.timeout = 1L)
   r <- .bndlchk_run(root, NULL, FALSE)
   expect_identical(r$status, 124L)
-  expect_true(any(grepl("longer than 1 seconds", r$log)))
+  expect_true(any(grepl("longer than 1 seconds", r$log, fixed = TRUE)))
 })
 
 test_that("plot periods follow prdord, the rest after it", {
@@ -168,10 +169,12 @@ test_that("a SignerInfo naming its signer by key identifier is checked", {
 })
 
 test_that("a nonce of zero bytes matches zero bytes", {
-  got <- NULL
-  note <- function(check, ok, detail) got <<- list(check, ok)
+  acc <- new.env()
+  note <- function(check, ok, detail) {
+    assign("got", list(check, ok), envir = acc)
+  }
   .rmbl_ts_nonce_row(list(nonce = as.raw(c(0, 0))), as.raw(0), note)
-  expect_identical(got, list("nonce", TRUE))
+  expect_identical(acc$got, list("nonce", TRUE))
 })
 
 test_that("a messageDigest without the TSTInfo content type fails", {
