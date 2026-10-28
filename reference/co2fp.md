@@ -194,9 +194,9 @@ Quantifying the carbon emissions of machine learning. arXiv:1910.09700.
 ``` r
 fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 fp$enekwh$total
-#> [1] 2.684254e-08
+#> [1] 2.684234e-08
 fp$co2eg
-#> [1] 2.441866e-06
+#> [1] 2.441847e-06
 fp$co2int$year
 #> [1] 2024
 fp$assumptions
@@ -245,18 +245,18 @@ fp2 <- co2fp(
 )
 fp2$enekwh
 #> $cpu
-#> [1] 4.522917e-08
+#> [1] 3.015278e-08
 #> 
 #> $memory
-#> [1] 8.294333e-09
+#> [1] 5.529556e-09
 #> 
 #> $total
-#> [1] 5.35235e-08
+#> [1] 3.568233e-08
 #> 
 fpeqv(fp2$co2eg)
 #> ╭── Footprint in everyday terms ────────────────────────────────────────╮
-#> │   Car travel   9.175e-09 km                                           │
-#> │   Tree uptake  1.751e-09 tree-months                                  │
+#> │   Car travel   6.117e-09 km                                           │
+#> │   Tree uptake  1.167e-09 tree-months                                  │
 #> │                                                                       │
 #> │   The same emissions as driving a European passenger car this far, or │
 #> │   what this many trees take up in a month.                            │
