@@ -116,15 +116,29 @@
     return(NULL)
   }
   cn <- colnames(m)
-  se <- grep("^se|std", cn, ignore.case = TRUE)[1L]
+  # a robust (sandwich) SE, when the model has one, is the one its z and p
+  # use: coxph(... + cluster(id)) lists se(coef) first, then robust se
+  se <- c(
+    grep("robust", cn, ignore.case = TRUE),
+    grep("^se|std", cn, ignore.case = TRUE)
+  )[1L]
   pc <- grep("^pr|^p$|p-value", cn, ignore.case = TRUE)[1L]
-  data.frame(
+  out <- data.frame(
     term = rownames(m),
     est = unname(m[, 1L]),
     se = if (is.na(se)) NA_real_ else unname(m[, se]),
     p = if (is.na(pc)) NA_real_ else unname(m[, pc]),
     stringsAsFactors = FALSE
   )
+  # MASS::polr() reports a large-sample "t value" and no p: its tests are
+  # normal ones, as summary.polr() describes them
+  tc <- grep("^t( value)?$", cn)[1L]
+  if (inherits(v, "polr") && is.na(pc) && !is.na(tc)) {
+    out$p <- 2 * stats::pnorm(-abs(unname(m[, tc])))
+  }
+  # the interval follows the model's own test: t only where it reports one
+  attr(out, "t") <- !is.na(tc) && !inherits(v, "polr")
+  out
 }
 
 #' What kind of model it is, in words.
@@ -174,6 +188,9 @@
   if (inherits(v, "coxph")) {
     return("HR")
   }
+  if (inherits(v, "polr")) {
+    return(if (identical(v$method, "logistic")) "OR")
+  }
   fam <- tryCatch(stats::family(v), error = function(e) NULL)
   link <- if (is.list(fam)) fam$link else ""
   switch(link, logit = "OR", log = "RR", NULL)
@@ -189,8 +206,10 @@
     return(NULL)
   }
   dfr <- tryCatch(stats::df.residual(v), error = function(e) NULL)
-  q <- if (is.numeric(dfr) && length(dfr) == 1L && is.finite(dfr) &&
-             dfr > 0) {
+  # a binomial or Poisson glm reports z, and its interval is a normal one
+  # (confint.default()); t intervals made odds ratios too wide
+  q <- if (isTRUE(attr(ct, "t")) && is.numeric(dfr) && length(dfr) == 1L &&
+             is.finite(dfr) && dfr > 0) {
     stats::qt(0.975, dfr)
   } else {
     stats::qnorm(0.975)
@@ -206,15 +225,19 @@
     stringsAsFactors = FALSE
   )
   rt <- .fb_ratio(v)
+  # a polr()'s cutpoints (1|2, 2|3) are thresholds on the latent scale: they
+  # have no odds ratio and do not "differ from zero" in any useful sense
+  cut <- if (inherits(v, "polr")) ct$term %in% names(v$zeta) else
+    rep(FALSE, nrow(ct))
   if (!is.null(rt)) {
-    tab[[rt]] <- signif(exp(ct$est), 4)
-    tab[[paste(rt, "95% CI")]] <- .fb_ci(exp(lo), exp(hi))
+    tab[[rt]] <- ifelse(cut, NA, signif(exp(ct$est), 4))
+    tab[[paste(rt, "95% CI")]] <- ifelse(cut, "", .fb_ci(exp(lo), exp(hi)))
   }
   .an_block(
     .fb_kind(v),
     facts = .fb_model_facts(v),
     tables = list(tab),
-    reading = .fb_model_reading(ct, lo, hi, rt)
+    reading = .fb_model_reading(ct[!cut, ], lo[!cut], hi[!cut], rt)
   )
 }
 
@@ -245,6 +268,8 @@
     tryCatch(if (inherits(v, "summary.lm")) v else summary(v),
              error = function(e) NULL)
   }
+  # nobs() of a Cox model is its number of events; its subjects are v$n
+  if (inherits(v, "coxph")) n <- v[["n"]]
   out <- list(Formula = f, Observations = n)
   if (inherits(v, "coxph")) out$Events <- v[["nevent"]]
   if (is.list(s) && is.numeric(s$r.squared)) {
@@ -373,16 +398,20 @@
 #' @return Lines.
 #' @noRd
 .fb_tukey <- function(v) {
+  # the level TukeyHSD() was asked for (conf.level), not always 95%
+  ci <- sprintf("%g%% CI", 100 * (attr(v, "conf.level") %||% 0.95))
   tabs <- lapply(names(v), function(nm) {
     m <- v[[nm]]
-    data.frame(
+    out <- data.frame(
       comparison = rownames(m),
       difference = signif(m[, "diff"], 4),
-      `95% CI` = .fb_ci(m[, "lwr"], m[, "upr"]),
+      ci = .fb_ci(m[, "lwr"], m[, "upr"]),
       p = vapply(m[, "p adj"], .fb_p, ""),
       check.names = FALSE,
       stringsAsFactors = FALSE
     )
+    names(out)[3L] <- ci
+    out
   })
   all <- do.call(rbind, tabs)
   nsig <- sum(vapply(names(v), function(nm) {
@@ -407,11 +436,14 @@
 .fb_prcomp <- function(v) {
   imp <- summary(v)$importance
   k <- min(ncol(imp), 6L)
+  # from the standard deviations themselves: summary()'s importance is
+  # already rounded, and rounding it again showed 61.00 for 60.97
+  vars <- v$sdev^2 / sum(v$sdev^2)
   tab <- data.frame(
     component = colnames(imp)[seq_len(k)],
     sd = signif(imp[1L, seq_len(k)], 4),
-    `share %` = round(100 * imp[2L, seq_len(k)], 1),
-    `cumulative %` = round(100 * imp[3L, seq_len(k)], 1),
+    `share %` = round(100 * vars[seq_len(k)], 2),
+    `cumulative %` = round(100 * cumsum(vars)[seq_len(k)], 2),
     check.names = FALSE
   )
   .an_block(
@@ -457,15 +489,21 @@
     t <- matrix(t, nrow = 1L, dimnames = list("all", names(t)))
   }
   pick <- function(nm) if (nm %in% colnames(t)) t[, nm] else NA
+  # the interval columns are named by the level survfit() used (conf.int):
+  # 0.9LCL at 90%, not 0.95LCL
+  lvl <- if (is.numeric(v$conf.int)) v$conf.int else 0.95
+  lcl <- grep("LCL$", colnames(t), value = TRUE)[1L]
+  ucl <- grep("UCL$", colnames(t), value = TRUE)[1L]
   tab <- data.frame(
     group = rownames(t),
     n = pick("records"),
     events = pick("events"),
     median = signif(pick("median"), 4),
-    `95% CI` = .fb_ci(pick("0.95LCL"), pick("0.95UCL")),
+    ci = .fb_ci(pick(lcl %|NA|% ""), pick(ucl %|NA|% "")),
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
+  names(tab)[5L] <- sprintf("%g%% CI", 100 * lvl)
   .an_block(
     "Survival curves (survival::survfit)",
     facts = list(Groups = nrow(t), Events = sum(tab$events, na.rm = TRUE)),
