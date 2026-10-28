@@ -89,9 +89,11 @@
   # the key in use is part of it (only ever as this digest): an answer bought
   # with one account's key is not handed back under another's (CRAN stress test
   # of b617a3f)
-  csha256(paste(
+  # length-prefixed fields: joined with a separator, a question or a
+  # system prompt holding it could file under another's key
+  csha256(.rmbl_fields(
     c(
-      "v1",
+      "v2",
       rt$name %||% "",
       rt$base %||% "",
       csha256(rt$key %||% ""),
@@ -99,8 +101,7 @@
       paste(pkgs, vers),
       system_prompt %||% "",
       q
-    ),
-    collapse = "\x1f"
+    )
   ))
 }
 

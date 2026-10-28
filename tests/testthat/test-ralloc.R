@@ -159,3 +159,87 @@ test_that("ralloc refuses settings it cannot honour", {
   expect_error(ralloc(10, codes = NA), "codes")
   expect_error(ralloc(10, prefix = ""), "prefix")
 })
+
+test_that("the commitment tells settings apart that a comma joined alike", {
+  a <- ralloc(strata = c("x,y" = 4), seed = 1, block = NULL)
+  b <- ralloc(strata = c(x = 2, y = 2), seed = 1, block = NULL)
+  expect_false(identical(.ralloc_digest(as.data.frame(a)[0, ],
+                                        attr(a, "alloc"), "00"),
+                         .ralloc_digest(as.data.frame(b)[0, ],
+                                        attr(b, "alloc"), "00")))
+  # arms holding the separator
+  s1 <- attr(ralloc(4, arms = c("a,b", "c"), seed = 1), "alloc")
+  s2 <- attr(ralloc(4, arms = c("a", "b,c"), seed = 1), "alloc")
+  s2$arms <- s1$arms
+  expect_false(identical(
+    .ralloc_digest(data.frame(), s1, "00"),
+    .ralloc_digest(data.frame(), utils::modifyList(s1, list(
+      arms = c("a", "b,c")
+    )), "00")
+  ))
+  # a list made under the first commitment (version 1) still verifies
+  old <- ralloc(12, seed = "teaching example")
+  set <- attr(old, "alloc")
+  set$version <- 1L
+  set$digest <- .ralloc_digest(as.data.frame(old), set, set$seed)
+  attr(old, "alloc") <- set
+  expect_true(rallocvrf(old, digest = set$digest)$ok)
+})
+
+test_that("the seed check compares the whole list, not the arms alone", {
+  a <- ralloc(12, seed = "teaching example", codes = TRUE)
+  com <- attr(a, "alloc")$digest
+  # ids and kits swapped between two participants of the same arm: the
+  # arms still line up, the list does not
+  b <- a
+  same <- which(b$arm == b$arm[1L])[1:2]
+  b$kit[same] <- b$kit[rev(same)]
+  r <- rallocvrf(b, seed = attr(a, "alloc")$seed)
+  expect_false(r$checks$ok[r$checks$check == "seed"])
+  expect_false(r$ok)
+  expect_true(rallocvrf(a, digest = com)$ok)
+})
+
+test_that("ralloc refuses settings it would read wrongly", {
+  expect_error(ralloc(10, seed = c("a", "b")), "`seed` must be NULL")
+  expect_error(ralloc(10, seed = list(1)), "`seed` must be NULL")
+  expect_error(ralloc(10, seed = NA), "`seed` must be NULL")
+  expect_error(ralloc(10, seed = Inf), "`seed` must be NULL")
+  a <- ralloc(10, seed = "w")
+  expect_error(rallocvrf(a, seed = function() 1), "`seed` must be NULL")
+  for (b in list(c(4, 3e9), 3e9, Inf, -Inf, 4e6)) {
+    expect_error(ralloc(10, block = b), "at most 1000000")
+  }
+  expect_error(ralloc(10, arms = c("A", "")), "different names")
+  expect_error(ralloc(1e8), "`n`")
+  expect_error(ralloc(strata = c(a = 9e6, b = 9e6)), "`strata`")
+  # numbers and single words stay valid seeds
+  expect_identical(attr(ralloc(4, seed = 7), "alloc")$seed,
+                   attr(ralloc(4, seed = "7"), "alloc")$seed)
+})
+
+test_that("kit codes for a large trial come in linear time, the same codes", {
+  a <- ralloc(30, seed = "kits", codes = TRUE)
+  expect_identical(anyDuplicated(a$kit), 0L)
+  expect_true(all(grepl("^[2-9A-HJKMNP-Z]{6}$", a$kit)))
+  t <- system.time(big <- ralloc(20000, seed = "kits", codes = TRUE))
+  expect_lt(t[["elapsed"]], 60)
+  expect_identical(anyDuplicated(big$kit), 0L)
+  # the same codes as the quadratic loop gave, from the same generator
+  gen <- function() {
+    g <- new.env(parent = emptyenv())
+    g$d <- drbgnew(as.raw(1:48), person = charToRaw("kits test"))
+    g$buf <- raw()
+    g
+  }
+  abc <- strsplit("23456789ABCDEFGHJKMNPQRSTUVWXYZ", "", fixed = TRUE)[[1L]]
+  g <- gen()
+  old <- character()
+  while (length(old) < 200L) {
+    k <- paste(abc[vapply(1:6, function(i) {
+      .ralloc_unif(g, length(abc)) + 1
+    }, 0)], collapse = "")
+    if (!k %in% old) old <- c(old, k)
+  }
+  expect_identical(.ralloc_kits(gen(), 200L), old)
+})

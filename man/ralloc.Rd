@@ -85,8 +85,11 @@ sex).
 The commitment is the SHA-256 of the settings, every row of the list and
 the SHA-256 of the seed, so it binds both the list and the seed: a list
 edited afterwards, or a seed chosen afterwards to give a wanted list,
-does not match it. The print-out shows how many participants each arm
-has, never who is in which arm, and not the seed.
+does not match it. Each field enters it with its length, so settings
+that differ (a stratum named \code{"x,y"} against strata \code{"x"} and \code{"y"})
+never share a commitment; lists made by 1.0.3's first release keep
+their commitment and still verify. The print-out shows how many
+participants each arm has, never who is in which arm, and not the seed.
 
 Keep \code{seed = NULL} for a trial: the seed is then 48 bytes from the
 operating system's generator (\code{\link[=rndbytes]{rndbytes()}}), which nobody can guess
@@ -98,10 +101,11 @@ With \code{codes = TRUE} every participant also gets a kit code (six
 characters, no look-alike letters or digits): sites and pharmacies are
 given \code{id} and \code{kit} only, and the arm stays with the statistician.
 
-Errors: fewer than two arms or repeated arm names; a \code{ratio} that is not
-one positive whole number per arm; a block size that is not a positive
-multiple of \code{sum(ratio)}; \code{n} that is not a positive whole number, or
-that disagrees with the strata's total; a raw \code{seed} that is not 48
+Errors: fewer than two arms, repeated or empty arm names; a \code{ratio}
+that is not one positive whole number per arm; a block size that is
+not a positive multiple of \code{sum(ratio)} up to 1000000; \code{n} that is not
+a whole number from 1 to 10000000, or that disagrees with the strata's
+total; a \code{seed} that is not one value, or a raw \code{seed} that is not 48
 bytes.
 }
 \examples{

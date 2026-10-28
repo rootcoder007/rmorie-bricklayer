@@ -36,8 +36,11 @@
 #' The commitment is the SHA-256 of the settings, every row of the list and
 #' the SHA-256 of the seed, so it binds both the list and the seed: a list
 #' edited afterwards, or a seed chosen afterwards to give a wanted list,
-#' does not match it. The print-out shows how many participants each arm
-#' has, never who is in which arm, and not the seed.
+#' does not match it. Each field enters it with its length, so settings
+#' that differ (a stratum named `"x,y"` against strata `"x"` and `"y"`)
+#' never share a commitment; lists made by 1.0.3's first release keep
+#' their commitment and still verify. The print-out shows how many
+#' participants each arm has, never who is in which arm, and not the seed.
 #'
 #' Keep `seed = NULL` for a trial: the seed is then 48 bytes from the
 #' operating system's generator ([rndbytes()]), which nobody can guess
@@ -49,10 +52,11 @@
 #' characters, no look-alike letters or digits): sites and pharmacies are
 #' given `id` and `kit` only, and the arm stays with the statistician.
 #'
-#' Errors: fewer than two arms or repeated arm names; a `ratio` that is not
-#' one positive whole number per arm; a block size that is not a positive
-#' multiple of `sum(ratio)`; `n` that is not a positive whole number, or
-#' that disagrees with the strata's total; a raw `seed` that is not 48
+#' Errors: fewer than two arms, repeated or empty arm names; a `ratio`
+#' that is not one positive whole number per arm; a block size that is
+#' not a positive multiple of `sum(ratio)` up to 1000000; `n` that is not
+#' a whole number from 1 to 10000000, or that disagrees with the strata's
+#' total; a `seed` that is not one value, or a raw `seed` that is not 48
 #' bytes.
 #'
 #' @param n How many participants, a positive whole number. With `strata`,
@@ -169,10 +173,13 @@ rallocvrf <- function(x, digest = NULL, seed = NULL) {
   want <- if (is.null(digest)) set$digest else .rmbl_string1(digest, "digest")
   got <- .ralloc_digest(as.data.frame(x), set, sd$hex)
   again <- .ralloc_make(set, sd)
-  same <- identical(
-    as.data.frame(again)$arm,
-    as.character(x$arm)
-  ) && identical(nrow(again), nrow(x))
+  cols <- intersect(c("id", "stratum", "block", "arm", "kit"),
+                    union(names(again), names(x)))
+  as_chr <- function(d) {
+    lapply(as.data.frame(d)[intersect(cols, names(d))], as.character)
+  }
+  same <- identical(as_chr(again), as_chr(x)) &&
+    identical(nrow(again), nrow(x))
   ids <- !anyDuplicated(x$id) && identical(nrow(x), as.integer(set$n))
   checks <- .ralloc_checks(identical(got, tolower(want)), same, ids, nrow(x))
   .rmbl_cls(
@@ -351,7 +358,7 @@ plot.rmbl_alloc <- function(x, ...) {
 #' @noRd
 .ralloc_settings <- function(n, arms, ratio, block, strata, codes, prefix) {
   if (!is.character(arms) || length(arms) < 2L || anyNA(arms) ||
-        anyDuplicated(arms)) {
+        anyDuplicated(arms) || !all(nzchar(arms))) {
     stop("ralloc: `arms` must be two or more different names",
          call. = FALSE)
   }
@@ -362,11 +369,14 @@ plot.rmbl_alloc <- function(x, ...) {
   }
   ratio <- as.integer(ratio)
   if (!is.null(block)) {
+    # as.integer() turned 3e9 into NA and Inf into an error of R's own
     if (!is.numeric(block) || !length(block) || anyNA(block) ||
-          any(block < 1) || any(block %% sum(ratio) != 0)) {
+          any(!is.finite(block)) || any(block < 1) || any(block > 1e6) ||
+          any(block %% sum(ratio) != 0)) {
       stop(
         sprintf(
-          "ralloc: every block size must be a positive multiple of %d",
+          paste0("ralloc: every block size must be a positive multiple ",
+                 "of %d, at most 1000000"),
           sum(ratio)
         ),
         call. = FALSE
@@ -376,7 +386,7 @@ plot.rmbl_alloc <- function(x, ...) {
   }
   st <- .ralloc_strata(strata)
   if (is.null(st)) {
-    n <- .rmbl_scalar(n, "n", min = 1, integer = TRUE)
+    n <- .rmbl_scalar(n, "n", min = 1, max = 1e7, integer = TRUE)
   } else if (!is.null(n) && !identical(as.integer(n), sum(st))) {
     stop(
       sprintf("ralloc: `n` (%s) is not the strata's total (%d)", n, sum(st)),
@@ -384,7 +394,7 @@ plot.rmbl_alloc <- function(x, ...) {
     )
   }
   list(
-    version = 1L,
+    version = 2L,
     arms = arms,
     ratio = ratio,
     block = block,
@@ -413,6 +423,7 @@ plot.rmbl_alloc <- function(x, ...) {
   }
   if (!is.numeric(strata) || is.null(names(strata)) ||
         anyNA(strata) || any(strata < 1) || any(strata != round(strata)) ||
+        sum(strata) > 1e7 ||
         anyDuplicated(names(strata)) || !all(nzchar(names(strata)))) {
     stop(
       "ralloc: `strata` must name each stratum and its number of places",
@@ -430,6 +441,17 @@ plot.rmbl_alloc <- function(x, ...) {
   if (is.null(seed)) {
     seed <- rndbytes(48L)
   }
+  # a vector or list was read by its first element, and a function was an
+  # error of R's own
+  one <- length(seed) == 1L && !is.list(seed) && !is.na(seed) &&
+    (is.character(seed) || (is.numeric(seed) && is.finite(seed)))
+  if (!is.raw(seed) && !one) {
+    stop(
+      paste0("ralloc: `seed` must be NULL, 48 raw bytes, their 96 ",
+             "hexadecimal digits, or one word or number"),
+      call. = FALSE
+    )
+  }
   if (is.character(seed) && length(seed) == 1L &&
         grepl("^[0-9a-fA-F]{96}$", seed)) {
     seed <- as.raw(strtoi(substring(seed, seq(1, 95, 2), seq(2, 96, 2)), 16L))
@@ -439,7 +461,7 @@ plot.rmbl_alloc <- function(x, ...) {
       stop("ralloc: a raw `seed` must be 48 bytes", call. = FALSE)
     }
   } else {
-    s <- .rmbl_string1(as.character(seed)[1L], "seed")
+    s <- .rmbl_string1(as.character(seed), "seed")
     seed <- c(
       .rmbl_sha256_raw(charToRaw(paste0("ralloc seed 1:", s))),
       .rmbl_sha256_raw(charToRaw(paste0("ralloc seed 2:", s)))
@@ -548,12 +570,19 @@ plot.rmbl_alloc <- function(x, ...) {
 #' @noRd
 .ralloc_kits <- function(g, m) {
   abc <- strsplit("23456789ABCDEFGHJKMNPQRSTUVWXYZ", "", fixed = TRUE)[[1L]]
-  out <- character()
-  while (length(out) < m) {
+  # a hashed set: `k %in% out` made 10^5 codes take minutes
+  seen <- new.env(hash = TRUE, parent = emptyenv(), size = max(29L, m))
+  out <- character(m)
+  i <- 0L
+  while (i < m) {
     k <- paste(abc[vapply(1:6, function(i) {
       .ralloc_unif(g, length(abc)) + 1
     }, 0)], collapse = "")
-    if (!k %in% out) out <- c(out, k)
+    if (is.null(seen[[k]])) {
+      assign(k, TRUE, envir = seen)
+      i <- i + 1L
+      out[i] <- k
+    }
   }
   out
 }
@@ -566,6 +595,22 @@ plot.rmbl_alloc <- function(x, ...) {
 #' @noRd
 .ralloc_digest <- function(d, set, hex) {
   cols <- intersect(c("id", "stratum", "block", "arm", "kit"), names(d))
+  if (!identical(set$version, 1L)) {
+    # every field length-prefixed: with "," between them, strata "x,y"
+    # and "x" + "y" (or arms holding a comma) shared one commitment
+    f <- .rmbl_fields
+    rows <- if (nrow(d)) {
+      vapply(seq_len(nrow(d)), function(i) {
+        f(vapply(d[i, cols, drop = FALSE], as.character, ""))
+      }, "")
+    }
+    return(csha256(f(c(
+      "rmoriebricklayer ralloc 2",
+      f(set$arms), f(set$ratio), f(set$block),
+      f(names(set$strata)), f(set$strata), f(cols), rows,
+      paste0("seed-sha256=", csha256(hex))
+    ))))
+  }
   rows <- do.call(paste, c(lapply(d[cols], as.character), sep = ","))
   txt <- c(
     "rmoriebricklayer ralloc 1",

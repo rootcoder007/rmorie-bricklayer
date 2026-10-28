@@ -918,3 +918,18 @@ wrtxtfb <- function(text, path) {
     perl = TRUE
   )
 }
+
+#' Fields joined so that no two lists of them join alike.
+#'
+#' Each field is written as its length in bytes, a colon and the field
+#' (NA as "~"). Joining with a separator let a field that held the
+#' separator stand for two fields, so different settings or questions
+#' could share one digest.
+#' @param x The fields (coerced to character).
+#' @return One string.
+#' @noRd
+.rmbl_fields <- function(x) {
+  x <- enc2utf8(as.character(x))
+  paste0(ifelse(is.na(x), "~", paste0(nchar(x, type = "bytes"), ":", x)),
+         collapse = "")
+}
