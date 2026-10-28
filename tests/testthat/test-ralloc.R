@@ -90,15 +90,24 @@ test_that("ralloc prints counts, never assignments or the seed", {
   expect_false(any(grepl("Commitment", format(bare), fixed = TRUE)))
 })
 
-test_that("ralloc draws the allocation as participants are enrolled", {
+test_that("ralloc draws each arm's count, never the order", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
   s <- ralloc(arms = c("drug", "placebo"), ratio = c(2, 1), n = 30, seed = 4)
   got <- plot(s)
-  expect_named(got, c("enrolled", "drug", "placebo"))
-  expect_identical(nrow(got), 30L)
-  expect_identical(as.integer(round(got$drug[30L] * 2)),
-                   sum(s$arm == "drug"))
+  expect_named(got, c("arm", "allocated", "target"))
+  expect_identical(nrow(got), 2L)
+  expect_identical(got$allocated[1L], sum(s$arm == "drug"))
+  expect_identical(got$target, c(20, 10))
+  # the plot is the counts and nothing else: no order, no participant
+  expect_identical(
+    got$allocated,
+    as.vector(table(factor(s$arm, levels = c("drug", "placebo"))))
+  )
+  # a reordered list (the same people, other arms' order) plots the same
+  s2 <- s
+  s2$arm <- rev(s$arm)
+  expect_identical(plot(s2)$allocated, got$allocated)
   expect_error(plot.rmbl_alloc(1), "`x` must be a rmbl_alloc object")
 })
 

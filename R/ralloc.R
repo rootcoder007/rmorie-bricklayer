@@ -96,7 +96,7 @@
 #' s
 #' head(as.data.frame(s)[c("id", "kit")])  # what the sites are given
 #'
-#' # simple randomisation, and the balance as participants are enrolled
+#' # simple randomisation: how many each arm has, against the ratio
 #' plot(ralloc(60, block = NULL, seed = 1))
 #'
 #' # at unblinding: the list is the one committed to
@@ -248,35 +248,32 @@ plot.rmbl_alloc <- function(x, ...) {
   .rmbl_plot_check(x, "rmbl_alloc")
   set <- attr(x, "alloc")
   d <- as.data.frame(x)
-  k <- seq_len(nrow(d))
-  cum <- vapply(
-    set$arms,
-    function(a) cumsum(d$arm == a) / set$ratio[match(a, set$arms)],
-    numeric(nrow(d))
-  )
-  cum <- matrix(cum, nrow = nrow(d), dimnames = list(NULL, set$arms))
+  # how many each arm has, never in what order: a plot of the allocation as
+  # participants enrol has one step per participant, and recovers who is in
+  # which arm from a report or a shared page
+  n <- table(factor(d$arm, levels = set$arms))
+  target <- nrow(d) * set$ratio / sum(set$ratio)
   cols <- .bl_cols(length(set$arms), NULL, NULL)
-  graphics::matplot(
-    k,
-    cum,
-    type = "s",
-    lty = 1,
-    lwd = 2,
+  mid <- graphics::barplot(
+    as.vector(n),
+    names.arg = set$arms,
     col = cols,
-    xlab = "Participants enrolled",
-    ylab = "Allocated, per ratio unit",
-    main = "Allocation as participants are enrolled",
+    ylim = c(0, max(c(n, target)) * 1.15),
+    xlab = "Arm",
+    ylab = "Participants allocated",
+    main = "Allocation by arm",
     ...
   )
+  graphics::points(mid, target, pch = 4, lwd = 2)
   graphics::legend(
-    "topleft",
-    legend = set$arms,
-    col = cols,
-    lwd = 2,
-    bty = "n",
-    cex = 0.8
+    "topright", legend = "ratio's share", pch = 4, bty = "n", cex = 0.8
   )
-  invisible(data.frame(enrolled = k, cum, check.names = FALSE))
+  invisible(data.frame(
+    arm = set$arms,
+    allocated = as.vector(n),
+    target = target,
+    stringsAsFactors = FALSE
+  ))
 }
 
 #' The three checks of rallocvrf(), with what each found.
