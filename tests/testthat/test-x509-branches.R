@@ -88,16 +88,16 @@ test_that("a three-link chain honours pathLenConstraint and names its anchor", {
   expect_true(fe$checks$ok[fe$checks$check == "ocsp"])
   expect_match(fe$checks$detail[fe$checks$check == "ocsp"], "responder")
 
-  # CRLs that are not files, not DER, or empty are skipped, and nothing is
-  # revoked
+  # CRLs that are not files, not DER, or empty are refused, one row each:
+  # skipping them passed the path as if a CRL had been checked
   rv <- .rmbl_crl_check(
     list(leaf),
     list("no-such-file.crl", as.raw(c(0x30, 0x00)), as.raw(c(0x30, 0x05))),
     at
   )
-  expect_identical(rv$check, "revocation")
-  expect_true(rv$ok)
-  expect_match(rv$detail, "nothing revoked")
+  expect_identical(rv$check, c("crl [1]", "crl [2]", "crl [3]"))
+  expect_false(any(rv$ok))
+  expect_identical(unique(rv$detail), "not a CRL that can be read")
 })
 
 test_that(

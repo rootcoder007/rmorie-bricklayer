@@ -543,10 +543,16 @@ rvkfetch <- function(path, tmout = 10) {
 #' @param body The answer as raw DER.
 #' @param cert The parsed certificate asked about.
 #' @param path The certificate path, whose certificates may sign the answer.
+#' @param when The time the answer must be current at.
 #' @return A list with `ok` (TRUE only for a signed \code{"good"}) and a
 #'   `detail` sentence.
 #' @noRd
-.rmbl_ocsp_parse <- function(body, cert, path) {
+#' The time OCSP answers are judged at (a seam for the tests).
+#' @return The current time.
+#' @noRd
+.rmbl_ocsp_now <- function() Sys.time()
+
+.rmbl_ocsp_parse <- function(body, cert, path, when = .rmbl_ocsp_now()) {
   d <- tryCatch(.Call(C_rmbl_der_parse, body), error = function(e) NULL)
   if (is.null(d) || !length(d$children)) {
     return(list(ok = FALSE, detail = "the OCSP answer is not DER"))
@@ -565,14 +571,33 @@ rvkfetch <- function(path, tmout = 10) {
   if (is.character(b)) {
     return(list(ok = FALSE, detail = b))
   }
-  state <- .rmbl_ocsp_state(b$basic$children[[1]])
-  if (is.null(state)) {
-    return(list(ok = FALSE, detail = "no SingleResponse in the answer"))
+  # Only the CA that issued the certificate, or a responder it delegated
+  # to, speaks for it (RFC 6960 4.2.2.2). The certificate itself does not:
+  # its key is the one revocation is about.
+  issuers <- Filter(function(p) {
+    identical(p$subject, cert$issuer) &&
+      (isTRUE(cert$self_signed) || !identical(p$der, cert$der))
+  }, path)
+  if (!length(issuers)) {
+    return(list(
+      ok = FALSE,
+      detail = paste0(
+        "no certificate in the path issued it, so none vouches for ",
+        "the answer"
+      )
+    ))
+  }
+  certids <- lapply(issuers, function(i) {
+    tryCatch(.rmbl_ocsp_certid(cert, i), error = function(e) NULL)
+  })
+  state <- .rmbl_ocsp_single(b$basic$children[[1]], certids, when)
+  if (!state %in% c("good", "revoked", "unknown")) {
+    return(list(ok = FALSE, detail = state))
   }
   # The answer is only worth anything if it is signed by someone the
   # path vouches for. An unverified "good" is worse than no check: it
   # looks like one happened.
-  sig_ok <- .rmbl_ocsp_verify_sig(b$basic, path, b$src)
+  sig_ok <- .rmbl_ocsp_verify_sig(b$basic, issuers, b$src, when)
   if (!sig_ok$ok) {
     return(list(
       ok = FALSE,
@@ -613,13 +638,20 @@ rvkfetch <- function(path, tmout = 10) {
 #'   wrong.
 #' @noRd
 .rmbl_ocsp_basic <- function(d) {
-  oct <- .rmbl_der_find(d, function(nd) {
-    identical(nd$class, 0L) && identical(nd$tag, 4) && length(nd$value) > 8L
-  })
-  if (is.null(oct)) {
+  # by position: a search for the first long OCTET STRING took whatever
+  # the answer put first, not its responseBytes
+  rb <- if (length(d$children) == 2L) d$children[[2L]]
+  if (is.null(rb) || !identical(rb$class, 2L) || !identical(rb$tag, 0) ||
+        length(rb$children) != 1L) {
     return("the answer carries no response bytes")
   }
-  inner_src <- oct$value
+  k <- rb$children[[1L]]$children
+  if (length(k) != 2L ||
+        !.rmbl_der_oid_eq(k[[1L]], "1.3.6.1.5.5.7.48.1.1") ||
+        !identical(k[[2L]]$class, 0L) || !identical(k[[2L]]$tag, 4)) {
+    return("no BasicOCSPResponse in the answer")
+  }
+  inner_src <- k[[2L]]$value
   basic <- tryCatch(.Call(C_rmbl_der_parse, inner_src), error = function(e) {
     NULL
   })
@@ -634,24 +666,95 @@ rvkfetch <- function(path, tmout = 10) {
   list(basic = basic, src = inner_src)
 }
 
-#' The single response's certStatus: \[0\] good, \[1\] revoked, \[2\] unknown.
+#' The certStatus of the SingleResponse about this certificate, if the
+#' answer is current.
+#'
+#' tbsResponseData: \[0\] version?, responderID, producedAt, responses,
+#' \[1\] extensions?. Each SingleResponse: certID, certStatus (\[0\] good,
+#' \[1\] revoked, \[2\] unknown), thisUpdate, \[0\] nextUpdate?. The answer
+#' must name the certificate asked about: a signed "good" for another one
+#' from the same CA said nothing about this one, and nor does one whose
+#' nextUpdate has passed.
 #' @param tbs The parsed tbsResponseData.
-#' @return "good", "revoked" or "unknown", or NULL when there is no
-#'   SingleResponse.
+#' @param certids The CertIDs (DER) this certificate goes by.
+#' @param when The time the answer must be current at.
+#' @return "good", "revoked" or "unknown", or a sentence saying what is
+#'   wrong.
 #' @noRd
-.rmbl_ocsp_state <- function(tbs) {
-  single <- .rmbl_der_find(tbs, function(nd) {
-    isTRUE(nd$constructed) &&
-      identical(nd$tag, 16) &&
-      length(nd$children) >= 2L &&
-      isTRUE(nd$children[[1]]$constructed) &&
-      length(nd$children[[1]]$children) >= 4L &&
-      identical(nd$children[[1]]$children[[1]]$tag, 16)
+.rmbl_ocsp_single <- function(tbs, certids, when) {
+  k <- tbs$children
+  j <- if (length(k) && identical(k[[1L]]$class, 2L) &&
+             identical(k[[1L]]$tag, 0)) 2L else 1L
+  resp <- if (length(k) >= j + 2L) k[[j + 2L]]
+  singles <- if (identical(resp$tag, 16)) resp$children else list()
+  singles <- Filter(function(nd) {
+    identical(nd$tag, 16) && length(nd$children) >= 3L
+  }, singles)
+  if (!length(singles)) {
+    return("no SingleResponse in the answer")
+  }
+  want <- lapply(Filter(Negate(is.null), certids), function(c) {
+    .rmbl_ocsp_cid_key(.Call(C_rmbl_der_parse, c))
   })
-  if (is.null(single)) {
+  hit <- NULL
+  for (nd in singles) {
+    key <- .rmbl_ocsp_cid_key(nd$children[[1L]])
+    if (!is.null(key) && any(vapply(want, identical, logical(1), key))) {
+      hit <- nd
+      break
+    }
+  }
+  if (is.null(hit)) {
+    return("the answer is about another certificate")
+  }
+  .rmbl_ocsp_current(hit, when)
+}
+
+#' A CertID's parts, to compare: hash algorithm, name and key hashes, serial.
+#' @param nd The parsed CertID.
+#' @return A list, or NULL when it is not a CertID.
+#' @noRd
+.rmbl_ocsp_cid_key <- function(nd) {
+  k <- nd$children
+  if (!identical(nd$tag, 16) || length(k) != 4L ||
+        !length(k[[1L]]$children)) {
     return(NULL)
   }
-  st <- single$children[[2]]
+  list(.rmbl_oid_string(k[[1L]]$children[[1L]]$value), k[[2L]]$value,
+       k[[3L]]$value, k[[4L]]$value)
+}
+
+#' A SingleResponse's status, when `when` falls within thisUpdate and
+#' nextUpdate (five minutes' clock skew either way).
+#' @param nd The SingleResponse.
+#' @param when The time.
+#' @return "good", "revoked" or "unknown", or what is wrong.
+#' @noRd
+.rmbl_ocsp_current <- function(nd, when) {
+  k <- nd$children
+  gtime <- function(x) {
+    if (!identical(x$class, 0L) || !identical(x$tag, 24)) {
+      return(NA)
+    }
+    .rmbl_ts_gentime(rawToChar(x$value))
+  }
+  this <- gtime(k[[3L]])
+  nxt <- if (length(k) >= 4L && identical(k[[4L]]$class, 2L) &&
+               identical(k[[4L]]$tag, 0) && length(k[[4L]]$children)) {
+    gtime(k[[4L]]$children[[1L]])
+  }
+  stamp <- function(t) format(t, "%Y-%m-%d %H:%M UTC", tz = "UTC")
+  if (is.na(this) || (!is.null(nxt) && is.na(nxt))) {
+    return("the answer's dates are not GeneralizedTime")
+  }
+  if (this > when + 300) {
+    return(sprintf("the answer is dated %s, after the time checked",
+                   stamp(this)))
+  }
+  if (!is.null(nxt) && nxt < when - 300) {
+    return(sprintf("the answer is stale: it held until %s", stamp(nxt)))
+  }
+  st <- k[[2L]]
   if (identical(st$class, 2L) && identical(st$tag, 0)) {
     return("good")
   }
@@ -661,13 +764,16 @@ rvkfetch <- function(path, tmout = 10) {
   "unknown"
 }
 
-#' Verifies a BasicOCSPResponse's signature under a certificate in the path.
+#' Verifies a BasicOCSPResponse's signature under the certificate's issuer
+#' or a responder it delegated to.
 #' @param basic The parsed BasicOCSPResponse.
-#' @param path The certificate path whose keys may have signed the answer.
+#' @param path The issuers whose keys may have signed the answer.
 #' @param src The raw bytes `basic` was parsed from.
+#' @param when The time a delegated responder's certificate must be valid at.
 #' @return A list with `ok` and a `detail` sentence.
 #' @noRd
-.rmbl_ocsp_verify_sig <- function(basic, path, src) {
+.rmbl_ocsp_verify_sig <- function(basic, path, src,
+                                  when = .rmbl_ocsp_now()) {
   tbs_nd <- basic$children[[1]]
   alg <- basic$children[[2]]
   sig_bits <- basic$children[[3]]$value
@@ -694,7 +800,7 @@ rvkfetch <- function(path, tmout = 10) {
   if (is.null(tbs)) {
     return(list(ok = FALSE, detail = "the signed bytes could not be isolated"))
   }
-  for (cand in .rmbl_ocsp_candidates(basic, path, src)) {
+  for (cand in .rmbl_ocsp_candidates(basic, path, src, when)) {
     if (.rmbl_ocsp_key_verifies(cand$key, sig, dalg, tbs)) {
       return(list(ok = TRUE, detail = "signed"))
     }
@@ -724,17 +830,20 @@ rvkfetch <- function(path, tmout = 10) {
 
 #' The certificates that may have signed an OCSP answer.
 #'
-#' A responder may sign with a certificate the path issued, carried in the
-#' answer; otherwise it must be one already in the path. The certificates are
+#' A responder may sign with a certificate the issuer gave it for OCSP
+#' signing (RFC 6960 4.2.2.2), carried in the answer; otherwise it must be
+#' the issuer itself. An embedded certificate the issuer did not sign, or
+#' without id-kp-OCSPSigning, let anyone sign "good". The certificates are
 #' the fourth element of BasicOCSPResponse (\[0\] EXPLICIT SEQUENCE OF
 #' Certificate), read by position: a tree search for a \[0\] lands on nextUpdate
 #' inside the SingleResponse first.
 #' @param basic The parsed BasicOCSPResponse.
-#' @param path The certificate path, the first candidates.
+#' @param path The issuers, the first candidates.
 #' @param src The response's bytes.
+#' @param when The time the delegated certificate must be valid at.
 #' @return A list of certificates, the embedded ones first.
 #' @noRd
-.rmbl_ocsp_candidates <- function(basic, path, src) {
+.rmbl_ocsp_candidates <- function(basic, path, src, when) {
   candidates <- path
   embedded <- if (length(basic$children) >= 4L) basic$children[[4]] else NULL
   if (
@@ -752,10 +861,33 @@ rvkfetch <- function(path, tmout = 10) {
         next
       }
       pc <- tryCatch(certprs(b), error = function(e) NULL)
-      if (!is.null(pc)) candidates <- c(list(pc), candidates)
+      if (!is.null(pc) && .rmbl_ocsp_delegated(pc, path, when)) {
+        candidates <- c(list(pc), candidates)
+      }
     }
   }
   candidates
+}
+
+#' Whether an issuer delegated OCSP signing to a certificate: it carries
+#' id-kp-OCSPSigning, is valid at `when`, and an issuer's key signed it.
+#' @param pc The parsed certificate.
+#' @param issuers The issuers.
+#' @param when The time.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_ocsp_delegated <- function(pc, issuers, when) {
+  if (!"1.3.6.1.5.5.7.3.9" %in% pc$extended_key_usage ||
+        !isTRUE(when >= pc$not_before && when <= pc$not_after)) {
+    return(FALSE)
+  }
+  for (i in issuers) {
+    if (identical(pc$issuer, i$subject) &&
+          isTRUE(.rmbl_cert_verify_sig(pc, i)$ok)) {
+      return(TRUE)
+    }
+  }
+  FALSE
 }
 
 #' Whether a certificate's key verifies the signature over the signed bytes.

@@ -1279,17 +1279,36 @@ tbs_alg_oid <- function(alg) {
       stringsAsFactors = FALSE
     )
   }
-  revoked <- unlist(lapply(crls, .rmbl_crl_serials))
-  if (is.null(revoked)) {
-    revoked <- character(0)
+  # A CRL counts only when a CA in the path signed it and it is current at
+  # the time checked. Unsigned, unreadable or stale ones were skipped and
+  # the rest pooled, so an empty CRL served over plain http passed every
+  # certificate.
+  covered <- vector("list", length(path))
+  listed <- 0L
+  for (j in seq_along(crls)) {
+    cr <- .rmbl_crl_read(crls[[j]])
+    why <- .rmbl_crl_trusted(cr, path, at_time)
+    if (!is.null(why)) {
+      add(sprintf("crl [%d]", j), FALSE, why)
+      next
+    }
+    listed <- listed + length(cr$serials)
+    for (i in seq_along(path)) {
+      if (identical(path[[i]]$issuer, cr$issuer)) {
+        covered[[i]] <- c(covered[[i]], "", cr$serials)
+      }
+    }
   }
-  if (!length(revoked)) {
+  if (!length(crls) || (!length(acc$rows) && !listed)) {
     add("revocation", TRUE, "the CRLs supplied list nothing revoked")
     return(do.call(rbind, acc$rows))
   }
   for (i in seq_along(path)) {
+    if (is.null(covered[[i]])) {
+      next
+    }
     cert <- path[[i]]
-    hit <- tolower(cert$serial) %in% tolower(revoked)
+    hit <- tolower(cert$serial) %in% tolower(covered[[i]])
     add(
       sprintf("revocation [%d]", i),
       !hit,
@@ -1300,42 +1319,95 @@ tbs_alg_oid <- function(alg) {
       }
     )
   }
+  if (!length(acc$rows)) {
+    add("revocation", FALSE, "no CRL supplied covers a certificate in the path")
+  }
   do.call(rbind, acc$rows)
 }
 
-#' The serial numbers one CRL lists as revoked.
-#'
-#' TBSCertList: version?, signature, issuer, thisUpdate, nextUpdate?,
-#' revokedCertificates?  The revoked list is the first SEQUENCE OF whose members
-#' open with an INTEGER serial and a time.
-#' @param cr The CRL (bytes or PEM text).
-#' @return The serials in hex (none when the CRL does not parse).
+#' Why a CRL cannot be used for a path at a time, or NULL when it can.
+#' @param cr The CRL read by .rmbl_crl_read(), or NULL.
+#' @param path The parsed certificates of the path.
+#' @param at_time The time of the check.
+#' @return A sentence, or NULL.
 #' @noRd
-.rmbl_crl_serials <- function(cr) {
-  der <- tryCatch(.rmbl_as_bytes(cr, "crl"), error = function(e) NULL)
-  if (is.null(der)) {
-    return(character(0))
+.rmbl_crl_trusted <- function(cr, path, at_time) {
+  if (is.null(cr)) {
+    return("not a CRL that can be read")
   }
-  d <- tryCatch(.Call(C_rmbl_der_parse, der), error = function(e) NULL)
-  if (is.null(d) || !length(d$children)) {
-    return(character(0))
+  signers <- Filter(function(p) {
+    identical(p$subject, cr$issuer) && isTRUE(p$is_ca)
+  }, path)
+  if (!length(signers)) {
+    return(sprintf("no CA in the path issued this CRL (%s)", cr$issuer))
   }
-  revoked <- character(0)
-  for (nd in d$children[[1]]$children) {
-    if (!isTRUE(nd$constructed) || !identical(nd$tag, 16)) {
-      next
-    }
-    kids <- nd$children
-    looks <- length(kids) > 0L &&
-      isTRUE(kids[[1]]$constructed) &&
-      length(kids[[1]]$children) >= 2L &&
-      identical(kids[[1]]$children[[1]]$tag, 2)
-    if (!looks) {
-      next
-    }
-    for (entry in kids) {
-      revoked <- c(revoked, .rmbl_hexlify(entry$children[[1]]$value))
-    }
+  ok <- vapply(signers, function(s) {
+    isTRUE(tryCatch(.rmbl_cert_verify_sig(cr, s)$ok, error = function(e) {
+      FALSE
+    }))
+  }, logical(1))
+  if (!any(ok)) {
+    return("its signature does not verify under the CA that issued it")
   }
-  revoked
+  if (!is.null(cr$nxt) && (is.na(cr$nxt) || cr$nxt < at_time - 300)) {
+    return(sprintf(
+      "it is stale: it held until %s",
+      format(cr$nxt, "%Y-%m-%d %H:%M UTC", tz = "UTC")
+    ))
+  }
+  NULL
 }
+
+#' One CRL, read by position.
+#'
+#' CertificateList: tbsCertList, signatureAlgorithm, signatureValue.
+#' TBSCertList: version?, signature, issuer, thisUpdate, nextUpdate?,
+#' revokedCertificates?, \[0\] crlExtensions?.
+#' @param cr The CRL (bytes, PEM text or a path).
+#' @return A list: issuer, this, nxt (NULL when absent), serials (hex),
+#'   and tbs, signature_algorithm and signature for
+#'   .rmbl_cert_verify_sig(); NULL when it is not a CRL.
+#' @noRd
+.rmbl_crl_read <- function(cr) {
+  der <- tryCatch(.rmbl_as_bytes(cr, "crl"), error = function(e) NULL)
+  d <- if (!is.null(der)) {
+    tryCatch(.Call(C_rmbl_der_parse, der), error = function(e) NULL)
+  }
+  if (is.null(d) || length(d$children) != 3L ||
+        !identical(d$children[[3L]]$tag, 3) ||
+        !length(d$children[[2L]]$children)) {
+    return(NULL)
+  }
+  tbs <- d$children[[1L]]
+  k <- tbs$children
+  off <- if (length(k) && identical(k[[1L]]$class, 0L) &&
+               identical(k[[1L]]$tag, 2)) 1L else 0L
+  is_time <- function(nd) {
+    identical(nd$class, 0L) && isTRUE(nd$tag %in% c(23, 24))
+  }
+  if (length(k) < off + 3L || !is_time(k[[off + 3L]])) {
+    return(NULL)
+  }
+  nxt <- if (length(k) >= off + 4L && is_time(k[[off + 4L]])) k[[off + 4L]]
+  rest <- k[-seq_len(off + 3L + !is.null(nxt))]
+  rl <- Filter(function(nd) {
+    identical(nd$class, 0L) && identical(nd$tag, 16)
+  }, rest)
+  entries <- if (length(rl)) rl[[1L]]$children else list()
+  serials <- vapply(entries, function(e) {
+    if (length(e$children)) .rmbl_hexlify(e$children[[1L]]$value) else ""
+  }, character(1))
+  sig <- d$children[[3L]]$value
+  list(
+    issuer = .rmbl_x509_name(k[[off + 2L]]),
+    this = .rmbl_x509_time(k[[off + 3L]]),
+    nxt = if (!is.null(nxt)) .rmbl_x509_time(nxt),
+    serials = serials,
+    tbs = der[(tbs$start + 1L):(tbs$offset + tbs$length)],
+    signature_algorithm = .rmbl_x509_sigalg_name(
+      .rmbl_oid_string(d$children[[2L]]$children[[1L]]$value)
+    ),
+    signature = if (length(sig) > 1L) sig[-1L] else raw(0)
+  )
+}
+

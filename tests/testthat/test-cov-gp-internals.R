@@ -170,7 +170,13 @@ test_that("an OCSP key that cannot verify says FALSE", {
 test_that("an OCSP answer whose response bytes are not DER", {
   d <- .Call(
     C_rmbl_der_parse,
-    .rmbl_der_seq(.rmbl_der_tlv(0x04, as.raw(rep(0xff, 12))))
+    .rmbl_der_seq(
+      .rmbl_der_tlv(0x0a, as.raw(0)),
+      .rmbl_der_tlv(0xa0, .rmbl_der_seq(
+        .rmbl_der_oid_bytes("1.3.6.1.5.5.7.48.1.1"),
+        .rmbl_der_tlv(0x04, as.raw(rep(0xff, 12)))
+      ))
+    )
   )
   expect_identical(.rmbl_ocsp_basic(d), "no BasicOCSPResponse in the answer")
 })

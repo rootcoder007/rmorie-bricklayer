@@ -98,6 +98,10 @@ test_that(
     leaf <- certprs(f$ocsp_good)
     ca <- certprs(f$ocsp_ca)
     path <- list(leaf, ca)
+    # the fixtures' answers hold from 2026-10-06 to 2026-11-05
+    testthat::local_mocked_bindings(
+      .rmbl_ocsp_now = function() as.POSIXct("2026-10-10", tz = "UTC")
+    )
 
     good <- .rmbl_ocsp_parse(f$ocsp_resp_good, leaf, path)
     expect_true(good$ok)
@@ -120,8 +124,8 @@ test_that(
     expect_identical(
       nope$detail,
       paste0(
-        "the responder said 'good' but its signature ",
-        "does not verify under any certificate in the path"
+        "no certificate in the path issued it, so none vouches for ",
+        "the answer"
       )
     )
     # a delegated responder: its certificate travels in the answer and the
@@ -178,7 +182,15 @@ test_that(
       0x05,
       0x00
     ))
-    notbasic <- c(as.raw(c(0x30, 0x0f, 0x0a, 0x01, 0x00, 0x04, 0x0a)), inner)
+    rbytes <- function(b) {
+      .rmbl_der_seq(
+        .rmbl_der_tlv(0x0a, as.raw(0)),
+        .rmbl_der_tlv(0xa0, .rmbl_der_seq(
+          .rmbl_der_oid_bytes("1.3.6.1.5.5.7.48.1.1"), .rmbl_der_tlv(0x04, b)
+        ))
+      )
+    }
+    notbasic <- rbytes(inner)
     expect_identical(
       .rmbl_ocsp_parse(notbasic, leaf, path)$detail,
       "no BasicOCSPResponse in the answer"
@@ -204,7 +216,7 @@ test_that(
       0x00,
       0x01
     ))
-    nosingle <- c(as.raw(c(0x30, 0x17, 0x0a, 0x01, 0x00, 0x04, 0x12)), basic)
+    nosingle <- rbytes(basic)
     expect_identical(
       .rmbl_ocsp_parse(nosingle, leaf, path)$detail,
       "no SingleResponse in the answer"
@@ -237,6 +249,10 @@ test_that(
     ca <- certprs(f$ocsp_ca)
     path <- list(leaf, ca)
     url <- "http://ocsp.example.org/"
+    # the fixtures' answers hold from 2026-10-06 to 2026-11-05
+    testthat::local_mocked_bindings(
+      .rmbl_ocsp_now = function() as.POSIXct("2026-10-10", tz = "UTC")
+    )
     rec <- new.env()
     rec$posted <- NULL
     testthat::local_mocked_bindings(.rmbl_net_post = function(
@@ -289,6 +305,9 @@ test_that(
 
 test_that("rvkfetch walks the path with one note per URL", {
   f <- x509_fx()
+  testthat::local_mocked_bindings(
+    .rmbl_ocsp_now = function() as.POSIXct("2026-10-10", tz = "UTC")
+  )
   leaf <- certprs(f$ocsp_good)
   ca <- certprs(f$ocsp_ca)
   testthat::local_mocked_bindings(
