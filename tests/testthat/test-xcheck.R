@@ -132,7 +132,8 @@ test_that("both verdicts of an OpenSSL 3.5 are read and explained", {
     "if [ \"$RMBL_FAKE_VERDICT\" = pass ]; then",
     "  echo 'Signature Verified Successfully'; exit 0",
     "fi",
-    "echo 'Signature Verification failure'; exit 1"
+    # what OpenSSL 3.0 to 3.5 print on a rejection, capital F included
+    "echo 'Signature Verification Failure'; exit 1"
   ), fake)
   Sys.chmod(fake, "0755")
   withr::local_envvar(RMBL_FAKE_LOG = log, RMBL_FAKE_VERDICT = "pass")

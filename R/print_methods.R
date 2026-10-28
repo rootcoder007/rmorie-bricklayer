@@ -935,8 +935,14 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   title <- sub(top, "\\2", lines[1L], perl = TRUE)
   body <- lines[-c(1L, length(lines))]
   need <- max(c(.rmbl_vis_w(body), .rmbl_vis_w(title) + 4L, 30L)) + 4L
-  width <- max(40L, min(need, cap$width - 1L, 100L))
+  # at least 40 columns, but never wider than the console (a 40-column floor
+  # overflowed a 20- or 30-column one); 16 at the very least
+  floor <- max(16L, min(40L, cap$width - 1L))
+  width <- max(floor, min(need, cap$width - 1L, 100L))
   inner <- width - 4L
+  # a title too long for the top border is cut, so the border is the body's
+  # width: corner, two rules, a space, the title, a space, a rule, corner
+  title <- .rmbl_box_fit(title, width - 7L, cap$unicode)
   # wrap the plain lines first, then mark the first line of each check row;
   # only a result with checks (a verdict) has check rows: in any other box a
   # line that starts with "ok", "FAIL" or "X" is data (a group label, the
@@ -958,6 +964,24 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
     vapply(rows, pad, "", USE.NAMES = FALSE),
     paste0(g$bl, strrep(g$h, width - 2L), g$br)
   )
+}
+
+#' Text cut to a display width, with an ellipsis where it was cut.
+#' @param s One string.
+#' @param w The width it must fit.
+#' @param unicode Whether the console takes Unicode (an ellipsis, or "...").
+#' @return One string.
+#' @noRd
+.rmbl_box_fit <- function(s, w, unicode) {
+  if (.rmbl_vis_w(s) <= w) {
+    return(s)
+  }
+  dots <- if (isTRUE(unicode)) "\u2026" else "..."
+  keep <- max(0L, w - .rmbl_vis_w(dots))
+  while (nchar(s) > 0L && .rmbl_vis_w(s) > keep) {
+    s <- substr(s, 1L, nchar(s) - 1L)
+  }
+  paste0(s, dots)
 }
 
 #' The box's characters: rounded Unicode, or ASCII.
