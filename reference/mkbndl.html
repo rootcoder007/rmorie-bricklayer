@@ -175,7 +175,7 @@ for the manifest the analysis writes.</p></div>
 <span class="r-in"><span><span class="va">proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"demo-project"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="mkbndlproj.html">mkbndlproj</a></span><span class="op">(</span><span class="va">proj</span>, title <span class="op">=</span> <span class="st">"Demo analysis"</span>, author <span class="op">=</span> <span class="st">"A. Researcher"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Bundle project</span> ───────────────────────────────────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Folder  /tmp/RtmpgH3KrT/demo-project                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Folder  /tmp/RtmpSWjWlx/demo-project                                      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Files   config.json, data_provenance.json, analysis.R                     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Edit config.json (who and what), data_provenance.json (the data file,     │</span>
@@ -189,12 +189,12 @@ for the manifest the analysis writes.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Reproducibility bundle</span> ───────────────────────────────────────────────────╮</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Project    demo-project                                                   │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Zip        demo-project_v1.zip                                            │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Folder     /tmp/RtmpgH3KrT                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Folder     /tmp/RtmpSWjWlx                                                │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Size       197.2 KB                                                       │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Files      26                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Data file  not inside                                                     │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   SHA-256    c1f1c029ca60fca12b615adc2d6b8269305fd3b1030df34c5b35e8f1f35d8c │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │              d7                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   SHA-256    12b3423787f17d7c0bcb121e295f72828042793b3f6237306892708f6392e6 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │              51                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │</span>
@@ -212,11 +212,11 @@ for the manifest the analysis writes.</p></div>
 <span class="r-in"><span><span class="co"># the example shipped with the package</span></span></span>
 <span class="r-in"><span><span class="va">otis</span> <span class="op">&lt;-</span> <span class="fu">mkbndl</span><span class="op">(</span><span class="st">"otis-mrp"</span>, dest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">otis</span><span class="op">$</span><span class="va">sha256</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "5d9eff8e4da07ac93bc7176cae7d67962c067c0282f91c18c3407c012102e866"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "868c5f9340b6a46ab996c63a6109dbfca4a26ea3aab62da1de5da5fdbb528429"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># an existing zip is kept unless overwrite = TRUE</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">mkbndl</span><span class="op">(</span><span class="va">proj</span>, dest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : /tmp/RtmpgH3KrT/demo-project_v1.zip exists: pass overwrite = TRUE to replace it</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : /tmp/RtmpSWjWlx/demo-project_v1.zip exists: pass overwrite = TRUE to replace it</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
