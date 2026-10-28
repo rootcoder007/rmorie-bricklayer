@@ -74,7 +74,7 @@ to build the bundle.
 p <- mkbndlproj(file.path(tempdir(), "my-study"), title = "My study")
 p
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpPCuyEb/my-study                                          │
+#> │   Folder  /tmp/Rtmpx4g3IR/my-study                                          │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -92,5 +92,5 @@ readLines(file.path(p$dir, "analysis.R"), n = 5)
 
 # files are kept unless overwrite = TRUE
 try(mkbndlproj(p$dir))
-#> Error : /tmp/RtmpPCuyEb/my-study already holds config.json, data_provenance.json, analysis.R: pass overwrite = TRUE to replace
+#> Error : /tmp/Rtmpx4g3IR/my-study already holds config.json, data_provenance.json, analysis.R: pass overwrite = TRUE to replace
 ```

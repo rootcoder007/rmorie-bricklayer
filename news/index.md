@@ -280,12 +280,13 @@
   (`mkbndl("otis-mrp", ...)`), the launchers and the page templates now
   ship with the package (`inst/bundle`), so an installed package builds
   bundles; before they were only in the source repository, and
-  `make_bundle.sh` (now a wrapper over
-  [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md))
-  needed bash, Python, zip and shasum. The runner’s OTIS-only steps (the
-  DML recompute, the region map shapefile, `OTIS_MRP_SYNTHETIC`) are now
-  settings of that project’s `config.json` (`optional_stages`,
-  `env_packages`, `synthetic_env`), so other projects get none of them.
+  `make_bundle.sh` (now removed:
+  [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md),
+  or `rmbl pack` from a shell, does what it did) needed bash, Python,
+  zip and shasum. The runner’s OTIS-only steps (the DML recompute, the
+  region map shapefile, `OTIS_MRP_SYNTHETIC`) are now settings of that
+  project’s `config.json` (`optional_stages`, `env_packages`,
+  `synthetic_env`), so other projects get none of them.
 - Fixed: a bundle built from 1.0.3’s development code stopped at its
   first step, because the boxed print-outs added a helper the runner did
   not source; and the bundle’s pages named version 0.1 of the package
