@@ -286,15 +286,19 @@ test_that(
       "Accept: application/json",
       "Accept-Language: en"
     )
-    # same origin: everything travels
-    same <- r4_json(r4(".bl_http_get_local")(
+    # same origin: an API call carrying a key does not send it again, not even
+    # to its own host (network review of 1.0.3: a 302 or 307 sent the key to
+    # whatever path the reply named); without one the redirect is followed
+    same <- r4(".bl_http_get_local")(file.path(srv$base, "self"), 10, hdrs)
+    expect_identical(as.integer(same$status), -1L)
+    expect_match(same$error, "a request carrying a key is not sent again")
+    plain <- r4_json(r4(".bl_http_get_local")(
       file.path(srv$base, "self"),
       10,
-      hdrs
+      hdrs[5:6]
     ))
-    expect_identical(same[["authorization"]], "Bearer SECRET-A")
-    expect_identical(same[["x-api-key"]], "SECRET-X")
-    expect_identical(same[["private-token"]], "SECRET-P")
+    expect_identical(plain[["accept"]], "application/json")
+    expect_null(plain[["authorization"]])
     # another port on the same host is another origin. An API call (a JSON
     # answer acted on: a model, Save Page Now, OCSP) takes its answer only from
     # the host it asked, so the redirect is refused and the second origin is

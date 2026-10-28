@@ -558,6 +558,17 @@ CURLcode secure_perform(CURL *h, const std::string &start_url,
                 why = "the reply was redirected to another host (" + origin_of(u) + "), and an API answer is taken only "
                       "from the host that was asked";
             }
+            /* a credential is not sent again on a redirect, even on its own host: a 302 or 307 from a
+             * provider sent the key to whatever path the reply named (network review of 1.0.3) */
+            if (why.empty() && same_origin && headers) {
+                for (const std::string &line : *headers) {
+                    if (!header_travels(line)) {
+                        why = "the API answered with a redirect (to " + url + "), and a request carrying a key is "
+                              "not sent again";
+                        break;
+                    }
+                }
+            }
         }
         if (!why.empty()) {
             if (err) *err = "refused: " + why;
