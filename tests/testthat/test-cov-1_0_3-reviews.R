@@ -60,6 +60,9 @@ test_that("a bad timeout option falls back to the default", {
 
 test_that("a FIPS configuration that is not a file is refused", {
   expect_error(.rmbl_fipsmod_given_conf(tempdir()), "`conf` is not a file")
+  conf <- withr::local_tempfile(lines = "config_diagnostics = 1")
+  expect_identical(.rmbl_fipsmod_given_conf(conf),
+                   normalizePath(conf, winslash = "/"))
 })
 
 test_that("a bundle run longer than its timeout is stopped and logged", {
