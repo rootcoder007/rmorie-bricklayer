@@ -106,7 +106,7 @@ the long title at the terminal width, which is only cosmetic):
 
 ```bibtex
 @Manual{ruhela_rmoriebricklayer_2026,
-  title  = {rmoriebricklayer: Post-Quantum Signing and Reproducibility Capsules for R},
+  title  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},
   author = {Vansh Singh Ruhela},
   year   = {2026},
   url    = {https://github.com/rootcoder007/rmorie-bricklayer},

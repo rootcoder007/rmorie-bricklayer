@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use rmoriebricklayer in your research, please cite the software (see preferred-citation below)."
-title: "rmoriebricklayer: Post-Quantum Signing and Reproducibility Capsules for R"
+title: "rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback"
 authors:
   - family-names: "Ruhela"
     given-names: "Vansh Singh"
@@ -19,7 +19,7 @@ identifiers:
 license: "AGPL-3.0-or-later"
 preferred-citation:
   type: software
-  title: "rmoriebricklayer: Post-Quantum Signing and Reproducibility Capsules for R"
+  title: "rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback"
   authors:
     - family-names: "Ruhela"
       given-names: "Vansh Singh"

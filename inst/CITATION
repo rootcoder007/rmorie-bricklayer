@@ -6,7 +6,7 @@ citHeader(
 bibentry(
   bibtype = "Manual",
   key     = "ruhela_rmoriebricklayer_2026",
-  title   = "rmoriebricklayer: Post-Quantum Signing and Reproducibility Capsules for R",
+  title   = paste0("rmoriebricklayer: ", meta$Title),
   author  = person(c("Vansh", "Singh"), "Ruhela",
                    comment = c(ORCID = "0009-0004-1750-3592")),
   year    = "2026",
