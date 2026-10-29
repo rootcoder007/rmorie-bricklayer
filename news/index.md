@@ -608,7 +608,7 @@
 - Error messages name the function they came from even after S3 methods
   are registered at run time; before,
   [`registerS3method()`](https://rdrr.io/r/base/ns-internal.html) turned
-  the namespace’s method table into a list and the lookup failed.
+  the method table of the namespace into a list and the lookup failed.
 - Archive and web addresses encode names that already contain `%XX`
   sequences, so a hand-edited capture can no longer turn an upload key
   into another item’s path or an `?acl` request. The same fix covers the
