@@ -39,8 +39,11 @@ when a person is watching (an interactive session, or
 silences it. Hashing runs at roughly 100 MB a second or faster.
 
 When this file is sourced on its own inside a capsule bundle (outside
-the package), the same digest comes from the bundle's pure-R SHA-256
-implementation, which reads the whole file at once.
+the package), the same digest comes from base R's
+[`tools::sha256sum()`](https://rdrr.io/r/tools/sha256sum.html) (R 4.5.0
+and later) or else from the bundle's pure-R SHA-256 implementation,
+which reads the file 1 MB at a time (slow on a large file, but in
+constant memory).
 
 Refusals: anything other than a single string naming an existing regular
 file – a missing path, a directory, `NA`, a number or a vector of
@@ -93,5 +96,5 @@ identical(sha256file(f), csha256(readBin(f, "raw", file.size(f))))
 
 # A directory or a missing file is refused.
 try(sha256file(tempdir()))
-#> Error : sha256file: /tmp/RtmpAwgnfi is not a file
+#> Error : sha256file: /tmp/Rtmp5MSEQX is not a file
 ```

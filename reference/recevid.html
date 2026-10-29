@@ -120,36 +120,36 @@ result records each control that ran (1 for passed).</p>
 <span class="r-in"><span><span class="va">d</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">d</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dm</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">y</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">x</span> <span class="op">==</span> <span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">y</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">x</span> <span class="op">==</span> <span class="fl">0</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu"><a href="mkmnf.html">mkmnf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>project <span class="op">=</span> <span class="st">"demo"</span><span class="op">)</span>, env <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu">recevid</span><span class="op">(</span><span class="va">man</span>, <span class="fu"><a href="cpsplant.html">cpsplant</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">dm</span>, <span class="st">"y"</span>, <span class="st">"x"</span>, n <span class="op">=</span> <span class="fl">20</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   planted effect 0 recovered                   observed = 0.0525       expected = 0.0000       [INFO]</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   planted effect 0.5 recovered                 observed = 0.3880       expected = 0.5000       [INFO]</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   planted effect 1 recovered                   observed = 1.0259       expected = 1.0000       [INFO]</span>
+<span class="r-in"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu">recevid</span><span class="op">(</span><span class="va">man</span>, <span class="fu"><a href="cpsplant.html">cpsplant</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">dm</span>, <span class="st">"y"</span>, <span class="st">"x"</span>, n <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   planted effect 0 recovered                   observed = -0.0221      expected = 0.0000       [INFO]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   planted effect 0.5 recovered                 observed = 0.4756       expected = 0.5000       [INFO]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   planted effect 1 recovered                   observed = 0.9878       expected = 1.0000       [INFO]</span>
 <span class="r-in"><span><span class="va">man</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Run manifest</span> ────────────────────────────────────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   project       demo                                                       │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   synthetic     TRUE                                                       │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cross-checks  3 (INFO 3)                                                 │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Environment   not captured                                               │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                            │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cross-checks                                                             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   check                         group     observed    expected  diff       │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----------------------------  --------  ----------  --------  ---------- │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 0 recovered    evidence  0.05246858  0         0.05246858 │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 0.5 recovered  evidence  0.3879529   0.5       0.1120471  │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 1 recovered    evidence  1.02593     1         0.02593038 │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                            │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   check                         tol        status                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----------------------------  ---------  ------                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 0 recovered    0.2304338  INFO                            │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 0.5 recovered  0.2105028  INFO                            │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 1 recovered    0.2635938  INFO                            │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                            │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   No cross-check differs; 0 of 3 pass and the rest are INFO.               │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Built on synthetic data: every cross-check is INFO, not evidence.        │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                            │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   wrmnfjs() writes it as JSON; mnfdgst() is the digest a signature         │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   covers. Neither depends on how it prints.                                │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ╰────────────────────────────────────────────────────────────────────────────╯</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Run manifest</span> ─────────────────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   project       demo                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   synthetic     TRUE                                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cross-checks  3 (INFO 3)                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Environment   not captured                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Cross-checks                                                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   check                         group     observed     expected  diff       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----------------------------  --------  -----------  --------  ---------- │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 0 recovered    evidence  -0.02211655  0         0.02211655 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 0.5 recovered  evidence  0.4756232    0.5       0.02437684 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 1 recovered    evidence  0.9878458    1         0.0121542  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   check                         tol        status                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----------------------------  ---------  ------                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 0 recovered    0.1296016  INFO                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 0.5 recovered  0.1367524  INFO                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   planted effect 1 recovered    0.1324775  INFO                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   No cross-check differs; 0 of 3 pass and the rest are INFO.                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Built on synthetic data: every cross-check is INFO, not evidence.         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   wrmnfjs() writes it as JSON; mnfdgst() is the digest a signature          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   covers. Neither depends on how it prints.                                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

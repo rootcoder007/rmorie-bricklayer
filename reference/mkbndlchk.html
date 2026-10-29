@@ -87,7 +87,14 @@ executable is reported as a warning: it still runs as
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mkbndlchk</span><span class="op">(</span><span class="va">bundle</span>, data <span class="op">=</span> <span class="cn">NULL</span>, synthetic <span class="op">=</span> <span class="cn">FALSE</span>, dir <span class="op">=</span> <span class="cn">NULL</span>, keep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mkbndlchk</span><span class="op">(</span></span>
+<span>  <span class="va">bundle</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  synthetic <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  keep <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  container <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -117,6 +124,12 @@ new folder under <code><a href="https://rdrr.io/r/base/tempfile.html" class="ext
 <dt id="arg-keep">keep<a class="anchor" aria-label="anchor" href="#arg-keep"></a></dt>
 <dd><p>Keep that folder after the check, default <code>FALSE</code>.</p></dd>
 
+
+<dt id="arg-container">container<a class="anchor" aria-label="anchor" href="#arg-container"></a></dt>
+<dd><p>Run the bundle in a container: <code>NULL</code> or
+<code>FALSE</code> (default) do not, <code>TRUE</code> uses podman, else docker,
+and <code>"podman"</code> or <code>"docker"</code> names the runtime. See Details.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -127,14 +140,80 @@ used, from its manifest: <code>synthetic</code> when it is marked
 synthetic, else its <code>meta$input_mode</code> when it records one, such
 as <code>csv</code>, else <code>real</code>), <code>counts</code> (<code>total</code>, <code>pass</code>,
 <code>differ</code>, <code>info</code>), <code>log</code> (the last 30 lines the run
-printed), <code>bundle</code> and <code>dir</code> (the unzipped bundle, or
-<code>NA</code> once removed). It prints as a box.</p>
+printed), <code>isolation</code> (how the run was contained: see Details),
+<code>bundle</code> and <code>dir</code> (the unzipped bundle, or for a container
+run the folder it wrote into; <code>NA</code> once removed). It prints as a
+box.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Errors: <code>bundle</code> that is not an existing <code class="file">.zip</code> file; a zip
-without <code class="file">setup_and_run.R</code>; <code>data</code> that is not an existing
-file; <code>dir</code> that already exists.</p>
+    <p><strong>Warning: this runs the bundle's code on your machine</strong>, with your
+user's rights: its <code class="file">setup_and_run.R</code>, its analysis script and
+anything they start. Check only bundles you built or whose author you
+trust. To limit what a hostile bundle can reach, the run gets a minimal
+environment: <code class="env">PATH</code>, the locale variables (<code class="env">LANG</code>,
+<code class="env">LANGUAGE</code>, <code class="env">LC_ALL</code> and the <code class="env">LC_</code> categories such as
+<code class="env">LC_CTYPE</code>, no other <code class="env">LC_</code> name; <code class="env">TZ</code>), the library paths
+of this session (<code class="env">R_LIBS</code>), a fresh temporary <code class="env">HOME</code> and
+<code class="env">TMPDIR</code>, and no other variable, so API keys, tokens and passwords
+in the environment (or in <code class="file">~/.Renviron</code>) do not reach it. On
+Windows the variables that look like credentials are removed instead (a
+best effort): names holding <code>KEY</code>, <code>TOKEN</code>, <code>SECRET</code>,
+<code>PASS</code>, <code>CREDENTIAL</code>, <code>AUTH</code>, <code>COOKIE</code> or
+<code>SESSION</code>, a service's prefix (<code class="env">GITHUB_</code>, <code class="env">AWS_</code>, ...),
+connection strings (<code class="env">DATABASE_URL</code>, <code class="env">*_DATABASE_URL</code>,
+<code class="env">*_WEBHOOK_URL</code>, <code class="env">SENTRY_DSN</code>, <code class="env">*_DSN</code>), <code class="env">*_PWD</code>,
+<code class="env">*_SK</code>, other
+<code class="env">LC_</code> names, and any value that is a URL with a password in it.
+This is not a sandbox: the files your user can read stay readable.</p>
+<p>The run is stopped after <code>getOption("rmbl.bundle.timeout")</code>
+seconds (default 1800, 30 minutes; the exit status is then 124). How
+the processes it starts are contained (the <code>isolation</code> of the
+result, and a row of the checks):</p><dl><dt>container</dt>
+<dd><p>with <code>container = TRUE</code> (podman, else docker) or
+a runtime named: the run in a container, removed afterwards, with the
+unzipped bundle mounted read-only and copied into a writable folder,
+no network unless the real data is to be downloaded (no <code>data</code>,
+not synthetic), 4 GB of memory, 2 CPUs, 512 processes, a read-only
+root file system, no capabilities and your user id. The image is
+<code>getOption("rmbl.bundle.image")</code>, default R 4.6.1 from the
+Rocker project pinned by digest; it holds base R only, so a bundle
+that lists packages in <code>r_packages</code> (or downloads its data, which
+needs rmoriebricklayer) needs an image that has them. Without the
+runtime the check falls back to the next mode and says so.</p></dd>
+
+<dt>pid namespace</dt>
+<dd><p>Linux, when <code class="command">unshare</code> can make an
+unprivileged user and PID namespace: every process the run started,
+also one that started its own session or forked twice, is killed when
+the run ends or times out.</p></dd>
+
+<dt>job object</dt>
+<dd><p>Windows: the run is started inside a job object that
+kills every process in it when the run ends or times out.</p></dd>
+
+<dt>process group</dt>
+<dd><p>Linux without user namespaces, and macOS: the
+run leads a process group, killed when it ends, times out or is
+interrupted. A process can leave the group (setsid, a double fork) and
+clear its environment. On Linux this R session is made the run's child
+subreaper, so such a process is re-parented to it rather than to
+init: every process the run left behind is found by the process tree,
+killed by its PID and fails the check (the isolation row is an error).
+Where that cannot be done (macOS, or a Linux kernel older than 3.4)
+escaped processes cannot be detected, and the isolation row fails:
+use <code>container = TRUE</code> there.</p></dd>
+
+
+</dl><p>Only a <code class="file">results_*</code> folder the run itself created counts: one the
+zip already carries (which <code><a href="mkbndl.html">mkbndl()</a></code> never packs) is not read, and
+fails the check. A run that writes no manifest, or whose runner reports
+“NOT completed”, fails.</p>
+<p>Errors: <code>bundle</code> that is not an existing <code class="file">.zip</code> file, or not
+a zip this function reads (more than 65535 entries, an entry name with a
+NUL byte, one too long, absolute or leaving the folder, or an entry
+given twice); a zip without <code class="file">setup_and_run.R</code>; <code>data</code> that is
+not an existing file; <code>dir</code> that already exists.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -147,7 +226,7 @@ file; <code>dir</code> that already exists.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"audit-demo"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="mkbndlproj.html">mkbndlproj</a></span><span class="op">(</span><span class="va">proj</span>, title <span class="op">=</span> <span class="st">"Demo analysis"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Bundle project</span> ───────────────────────────────────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Folder  /tmp/RtmpAwgnfi/audit-demo                                        │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Folder  /tmp/Rtmp5MSEQX/audit-demo                                        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Files   config.json, data_provenance.json, analysis.R                     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Edit config.json (who and what), data_provenance.json (the data file,     │</span>
@@ -160,10 +239,11 @@ file; <code>dir</code> that already exists.</p>
 <span class="r-in"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu">mkbndlchk</span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">path</span>, synthetic <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">a</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Bundle audit: VERIFIED</span> ───────────────────────────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │ <span style="color: #00BB00;">✔ VERIFIED</span>  <span style="font-weight: 100;">· 5 of 5 checks passed</span>                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │ <span style="color: #00BB00;">✔ VERIFIED</span>  <span style="font-weight: 100;">· 7 of 7 checks passed</span>                                          │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Bundle      audit-demo_v1.zip                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Input mode  synthetic                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Isolation   process group                                                 │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Checks      2                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>           0                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   DIFFER      0                                                             │</span>
@@ -172,13 +252,16 @@ file; <code>dir</code> that already exists.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Every check passed: the bundle runs as a recipient's copy will and is     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   safe to ship.                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    run finished              exit status 0                              │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    manifest written          /tmp/RtmpAwgnfi/bndlchk21d92b3d1163/audit- │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                  demo_v1/results_20261028-150731/manifest.j │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                  son                                        │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    no cross-check differs    0 DIFFER                                   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    counts match config.json  not compared: a synthetic run              │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    launchers executable      2 launcher(s)                              │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    run finished                  exit status 0                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    manifest written                                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        /tmp/Rtmp5MSEQX/bndlchk1e786833a66b/audit-demo_v1/results_20261029-0 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        70107/manifest.json                                                  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    no cross-check differs        0 DIFFER                               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    counts match config.json      not compared: a synthetic run          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    launchers executable          2 launcher(s)                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    no results packed in the zip  none                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    isolation process group: no process outlived the run                 │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="va">a</span><span class="op">$</span><span class="va">counts</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  total   pass differ   info </span>

@@ -570,6 +570,194 @@
 - A release updates the rmoriebricklayer formula in the homebrew-morie
   tap and checks that it installs and passes its test on macOS.
 
+### Fixed after the 1.0.3 recheck
+
+- In a process group (Linux without user namespaces),
+  [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  also lists the user’s running systemd services before and after the
+  run, so a bundle that starts one with `systemd-run --user` is stopped
+  and fails the check.
+- [`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)’s
+  Markdown report escapes control bytes in its title and table cells,
+  and writes each number on its own (20, not 20.00000).
+- DESCRIPTION lists the optional tools
+  [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  uses when it runs a bundle (`unshare`, `systemctl`, podman or docker).
+- On Linux,
+  [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  makes R the run’s subreaper and compares the process list before and
+  after, so a process that leaves the session or clears its environment
+  is still found and killed, and fails the check. Where escaped
+  processes cannot be detected (macOS, or very old Linux kernels) a
+  check without `container = TRUE` fails with a message saying so
+  instead of passing.
+- [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md)
+  counts a project’s files before checking or copying any of them, so a
+  project too large for a zip is refused in seconds. Documents (`.md`,
+  `.Rmd`, `.qmd`, `.html`, `.pdf` and similar) are no longer left out
+  because their names contain a word such as “key” or “credentials”.
+- Report files (Markdown, HTML and text from
+  [`mkset()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkset.md),
+  [`yoymd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md),
+  [`yoyhtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md),
+  [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md),
+  capsule checks and dashboards) escape terminal control bytes from
+  labels and headings as the console output already did.
+- More secret-looking variables are dropped from a bundle’s environment,
+  including `*_SK` names and URLs with a password but no user name.
+- Error messages name the function they came from even after S3 methods
+  are registered at run time; before,
+  [`registerS3method()`](https://rdrr.io/r/base/ns-internal.html) turned
+  the namespace’s method table into a list and the lookup failed.
+- Archive and web addresses encode names that already contain `%XX`
+  sequences, so a hand-edited capture can no longer turn an upload key
+  into another item’s path or an `?acl` request. The same fix covers the
+  archive lookup, the Wayback save form, CKAN searches,
+  [`wbsnpurl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsnpurl.md)
+  and model names in language-model addresses.
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  treats `a//x` and `a/./x` as the same entry as `a/x`, so a zip can no
+  longer carry a second runner under an equivalent name.
+- [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md)
+  leaves out more secret files by name (any name with a word such as
+  key, token, secret, credential, password, pat or adc, plus `.env`
+  files and kubeconfig); data tables and `.pub` files are kept, and
+  `secrets = TRUE` packs everything. It also refuses a bundle with too
+  many files before copying anything.
+- A bundle hashes files with the installed package’s compiled SHA-256
+  when it can, then R’s own
+  [`tools::sha256sum()`](https://rdrr.io/r/tools/sha256sum.html), then
+  the operating system’s tool (`sha256sum`, `shasum -a 256` or
+  `certutil`). The pure-R digest is used only for files up to 50 MB;
+  larger files stop with a message instead of running for hours on R
+  older than 4.5.
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  passes only real locale variables (`LANG`, `LC_ALL`, `LC_CTYPE` and
+  the other categories) to the bundle, drops more secret-looking
+  variables on Windows (`DATABASE_URL`, webhook and DSN addresses, URLs
+  with a password), and fails the isolation check when a process
+  outlives the run on systems without a PID namespace.
+- Labels and headings escape terminal colour codes as well as other
+  control sequences; the package’s own colours are kept.
+- [`certprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certprs.md),
+  [`certchnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certchnvrf.md)
+  and name-constraint checks show bytes that are not valid UTF-8 as
+  `<xx>` instead of failing with “invalid multibyte string”.
+- [`ralloc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ralloc.md)
+  refuses arm and stratum names that are blank after removing Unicode
+  spaces such as U+00A0 and U+200B;
+  [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  and
+  [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
+  take `visibility` only in full.
+- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+  [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+  and `analyse_table()` no longer warn in a C locale when group labels
+  are not ASCII.
+- Tests no longer use the network when CRAN runs them: the
+  [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
+  archive lookup is mocked and the morie cross-check skips on CRAN. A
+  sweep of all 238 test files with every outside connection blocked and
+  logged found nothing else.
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  reads only the results folder its own run created. A `results_*`
+  folder packed in the zip, a run that writes no manifest, and a runner
+  that says “NOT completed” all fail the check.
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  and `rmbl pack --check` run the bundle with a minimal environment and
+  a temporary HOME and TMPDIR, so no API keys, tokens or passwords reach
+  it. The run is contained and every process it started is killed when
+  it ends, times out or is interrupted: in a PID namespace on Linux
+  (even `setsid` daemons die), in a job object on Windows, otherwise in
+  its own process group. The mode used is shown as `isolation`. The
+  default time limit is 30 minutes (`rmbl.bundle.timeout`), and both
+  warn that they run the bundle’s code.
+- `mkbndlchk(container = TRUE | "podman" | "docker")` and
+  `rmbl pack --check --container` run the bundle in a locked-down
+  container: read-only bundle, no network unless the real data must be
+  downloaded, memory, CPU and process limits, a non-root user, removed
+  afterwards. The image is a pinned Rocker R 4.6.1, overridable with
+  `options(rmbl.bundle.image)`.
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  refuses zips with duplicate entries, NUL, over-long, absolute or `..`
+  entry names, or zip64 counts, and reads a large zip’s directory in
+  linear time (70,000 entries in under 2 seconds).
+- A bundle downloads its data only through an installed rmoriebricklayer
+  (1.0.3 or later), which pins addresses and checks every redirect;
+  without it the runner explains how to supply the file, for example in
+  the bundle’s `data/` folder. Every file a reviewer supplies is checked
+  against the pinned SHA-256 (exit 7 unless `--allow-digest-drift`).
+- A bundle’s `setup_and_run.R` stops with a clear message (exit 2) on a
+  malformed or duplicate-key `config.json`, exits 8 when the analysis
+  writes no manifest, and a refusal raised inside a bundle no longer
+  fails with “not a namespace”.
+- [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md)
+  refuses a `project$name` or `version` that is not a plain name, does
+  not follow symbolic links out of the project, and leaves out files
+  that look like credentials unless `secrets = TRUE`
+  (`rmbl pack --secrets`). It writes the zip under a temporary name, so
+  an interrupted build leaves no partial zip, and refuses more than
+  65,535 entries.
+- [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
+  refuses manifest file names that leave the capture folder (`..`,
+  absolute paths, backslashes, control characters, symbolic links out),
+  and percent-encodes S3 keys and mirror URLs within the one archive.org
+  item.
+- [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  and
+  [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
+  check the time-stamping authority’s reply with
+  [`tsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
+  and the request’s nonce before keeping it; a junk reply is not saved,
+  and a junk `manifest.tsr` kept by an earlier version is set aside as
+  `manifest.tsr.rejected` and stamped again. The capture summary no
+  longer prints “imprint and signature verified” for a token that did
+  not verify, and one private address no longer stops the Wayback
+  Machine request for the other files.
+- [`tsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
+  reads the unsigned parts of a token strictly (SignedData and
+  SignerInfo versions, `digestAlgorithms` against the SignerInfo digest,
+  the signature algorithm against the certificate key, the class and
+  form of every field, every certificate the token carries): of 26,054
+  byte mutations of the test tokens, none verifies except ones shown
+  harmless.
+- [`certprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certprs.md)
+  checks the whole certificate layout (RFC 5280 4.1), refuses an outer
+  `signatureAlgorithm` that differs from the signed one and a malformed
+  time, and refuses every malformed certificate in words, not with an R
+  error.
+- Printed labels escape C1 control characters (such as U+009B), and so
+  do
+  [`mkset()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkset.md)
+  headings and progress labels.
+- `plot(ratechg(..., prdord = ))` follows `prdord`, and the
+  [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+  box prints whole-number periods as labels (2020, not 2020.000).
+- [`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md),
+  [`evstudy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evstudy.md)
+  and
+  [`loounit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loounit.md)
+  refuse a `data` that is not a data frame, in words; weights large
+  enough to overflow (`w = 1e308`) give the same estimate as equal
+  weights.
+- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  folds labels a C-locale console cannot show, as
+  [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md)
+  does.
+- [`mkset()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkset.md)
+  no longer embeds a data frame’s pairs plot.
+  [`ralloc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ralloc.md)
+  refuses blank arm and stratum names and names that differ only in
+  spaces.
+  [`vrfmrg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfmrg.md)
+  refuses an empty or NA `pub`.
+- [`cpsplant()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsplant.md)
+  allows at most 1.5 times `tol` (one Monte Carlo standard error, which
+  must be at most `tol`/2): an estimator attenuated to 0.7 with moderate
+  noise now fails. The default `n` is now 100 (was 50), so a difference
+  in means on about 120 rows is no longer reported as too noisy; a
+  noisier statistic may need a larger `n`.
+
 ### Fixed after the 1.0.3 reviews
 
 #### Timestamps, certificates and revocation
@@ -918,7 +1106,9 @@ CRAN release: 2026-10-21
   which read “50" and stopped).
 - Spelling: US spelling throughout (“optimized”, “renormalized”,
   “victimized”), code names in code font, and the technical terms in
-  `inst/WORDLIST`; `spelling::spell_check_package()` finds nothing.
+  `inst/WORDLIST`;
+  [`spelling::spell_check_package()`](https://docs.ropensci.org/spelling//reference/spell_check_package.html)
+  finds nothing.
 - R CMD check no longer reruns the vignettes’ analyses: when it
   re-builds a vignette, only the setup chunk runs. R CMD build,
   r-universe and pkgdown still build every vignette in full, so the

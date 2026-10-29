@@ -61,7 +61,8 @@ and the runner finds, downloads and checks the real file.
 
 Errors: `dir` holding any of the three files when `overwrite` is
 `FALSE`; a `name` with characters other than letters, digits, dot, dash
-and underscore.
+and underscore, one that starts with a dot or holds `..`, or one longer
+than 64 characters.
 
 ## See also
 
@@ -74,7 +75,7 @@ to build the bundle.
 p <- mkbndlproj(file.path(tempdir(), "my-study"), title = "My study")
 p
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpAwgnfi/my-study                                          │
+#> │   Folder  /tmp/Rtmp5MSEQX/my-study                                          │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -92,5 +93,5 @@ readLines(file.path(p$dir, "analysis.R"), n = 5)
 
 # files are kept unless overwrite = TRUE
 try(mkbndlproj(p$dir))
-#> Error : /tmp/RtmpAwgnfi/my-study already holds config.json, data_provenance.json, analysis.R: pass overwrite = TRUE to replace
+#> Error : /tmp/Rtmp5MSEQX/my-study already holds config.json, data_provenance.json, analysis.R: pass overwrite = TRUE to replace
 ```

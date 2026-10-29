@@ -249,8 +249,8 @@ that gets their size wrong.</p>
 <span><span class="va">tr</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">1.5</span> <span class="op">*</span> <span class="va">tr</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span><span class="op">)</span></span>
 <span><span class="va">diffmeans</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">[</span><span class="va">z</span><span class="op">$</span><span class="va">x</span> <span class="op">==</span> <span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">[</span><span class="va">z</span><span class="op">$</span><span class="va">x</span> <span class="op">==</span> <span class="fl">0</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/cpsplant.html">cpsplant</a></span><span class="op">(</span><span class="va">tr</span>, <span class="va">diffmeans</span>, y <span class="op">=</span> <span class="st">"y"</span>, trt <span class="op">=</span> <span class="st">"x"</span>, n <span class="op">=</span> <span class="fl">25</span>, seed <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Planted-effect recovery: passed</span> ──────────────────────────────────────────╮</span></span>
-<span><span class="co">#&gt; │ <span style="color: #00BB00;">✔ VERIFIED</span>                                                                  │</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Planted-effect recovery: FAILED</span> ──────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │ <span style="color: #BB0000;">✖ NOT VERIFIED</span>                                                              │</span></span>
 <span><span class="co">#&gt; │                                                                             │</span></span>
 <span><span class="co">#&gt; │   Outcome                    y                                              │</span></span>
 <span><span class="co">#&gt; │   Treatment                  x                                              │</span></span>
@@ -260,13 +260,14 @@ that gets their size wrong.</p>
 <span><span class="co">#&gt; │   Seed                       4                                              │</span></span>
 <span><span class="co">#&gt; │                                                                             │</span></span>
 <span><span class="co">#&gt; │   planted  recovered      bias       se  result                             │</span></span>
-<span><span class="co">#&gt; │   -------  ---------  --------  -------  ------                             │</span></span>
+<span><span class="co">#&gt; │   -------  ---------  --------  -------  ---------                          │</span></span>
 <span><span class="co">#&gt; │    0.0000     0.0593   0.05934  0.03462  ok                                 │</span></span>
 <span><span class="co">#&gt; │    0.5000     0.4677  -0.03235  0.04025  ok                                 │</span></span>
-<span><span class="co">#&gt; │    1.0000     1.0012   0.00119  0.05026  ok                                 │</span></span>
+<span><span class="co">#&gt; │    1.0000     1.0012   0.00119  0.05026  too noisy                          │</span></span>
 <span><span class="co">#&gt; │                                                                             │</span></span>
-<span><span class="co">#&gt; │   The statistic recovered every planted effect on this data, so it          │</span></span>
-<span><span class="co">#&gt; │   measures the treatment's effect on the outcome as intended.               │</span></span>
+<span><span class="co">#&gt; │   The statistic missed at least one planted effect: it does not measure     │</span></span>
+<span><span class="co">#&gt; │   what it is meant to on this data. Check it before reporting its           │</span></span>
+<span><span class="co">#&gt; │   estimate.                                                                 │</span></span>
 <span><span class="co">#&gt; │                                                                             │</span></span>
 <span><span class="co">#&gt; │   Each planted data set shuffles the outcome, removing its real             │</span></span>
 <span><span class="co">#&gt; │   association, then adds effect x treatment.                                │</span></span>

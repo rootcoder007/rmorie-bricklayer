@@ -193,8 +193,8 @@ tr <- data.frame(x = rbinom(150, 1, 0.5))
 tr$y <- 1.5 * tr$x + rnorm(150)
 diffmeans <- function(z) mean(z$y[z$x == 1]) - mean(z$y[z$x == 0])
 cpsplant(tr, diffmeans, y = "y", trt = "x", n = 25, seed = 4)
-#> ╭── Planted-effect recovery: passed ──────────────────────────────────────────╮
-#> │ ✔ VERIFIED                                                                  │
+#> ╭── Planted-effect recovery: FAILED ──────────────────────────────────────────╮
+#> │ ✖ NOT VERIFIED                                                              │
 #> │                                                                             │
 #> │   Outcome                    y                                              │
 #> │   Treatment                  x                                              │
@@ -204,13 +204,14 @@ cpsplant(tr, diffmeans, y = "y", trt = "x", n = 25, seed = 4)
 #> │   Seed                       4                                              │
 #> │                                                                             │
 #> │   planted  recovered      bias       se  result                             │
-#> │   -------  ---------  --------  -------  ------                             │
+#> │   -------  ---------  --------  -------  ---------                          │
 #> │    0.0000     0.0593   0.05934  0.03462  ok                                 │
 #> │    0.5000     0.4677  -0.03235  0.04025  ok                                 │
-#> │    1.0000     1.0012   0.00119  0.05026  ok                                 │
+#> │    1.0000     1.0012   0.00119  0.05026  too noisy                          │
 #> │                                                                             │
-#> │   The statistic recovered every planted effect on this data, so it          │
-#> │   measures the treatment's effect on the outcome as intended.               │
+#> │   The statistic missed at least one planted effect: it does not measure     │
+#> │   what it is meant to on this data. Check it before reporting its           │
+#> │   estimate.                                                                 │
 #> │                                                                             │
 #> │   Each planted data set shuffles the outcome, removing its real             │
 #> │   association, then adds effect x treatment.                                │

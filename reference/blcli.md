@@ -64,20 +64,25 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   [`agentbndl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agentbndl.md)
   from the shell
 
-- `pack DIR [--dest D] [--data FILE] [--version V] [--overwrite]`:
+- `pack DIR [--dest D] [--data FILE] [--version V] [--overwrite] [--secrets]`:
 
   a reproducibility bundle of the project in DIR, or of a shipped
   example such as `otis-mrp`, with
   [`mkbndl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md):
   one zip a reviewer unzips and double-clicks (default `--dest`: the
-  working directory);
+  working directory; `--secrets` packs files that look like credentials,
+  left out otherwise);
   `pack --new DIR [--title T] [--author A] [--contact C]` writes a
   starter project with
   [`mkbndlproj`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlproj.md);
-  `pack --check ZIP [--data FILE] [--synthetic] [--keep]` runs a built
-  bundle as a recipient would and checks its results with
+  `pack --check ZIP [--data FILE] [--synthetic] [--keep] [--container[=podman|docker]]`
+  runs a built bundle as a recipient would and checks its results with
   [`mkbndlchk`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
-  (exit status 1 when it fails)
+  (exit status 1 when it fails). It RUNS THE BUNDLE'S CODE on this
+  machine, with a minimal environment and a temporary HOME: check only
+  bundles you trust. `--container` runs it in a podman or docker
+  container; otherwise a PID namespace (Linux), a job object (Windows)
+  or only a process group (macOS) contains it
 
 - `wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max N]`:
 
@@ -398,33 +403,33 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.0.3](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpAwgnfi/capsule-21d91ac4c9e7`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/Rtmp5MSEQX/capsule-1e7822e1c4c5`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpAwgnfi/capsule-21d91ac4c9e7` | /tmp/RtmpAwgnfi/temp_libpath21d967f9bb9a/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/Rtmp5MSEQX/capsule-1e7822e1c4c5` | /tmp/Rtmp5MSEQX/temp_libpath1e786a31c741/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpAwgnfi/capsule-21d91ac4c9e7</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/Rtmp5MSEQX/capsule-1e7822e1c4c5</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpAwgnfi/temp_libpath21d967f9bb9a/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/Rtmp5MSEQX/temp_libpath1e786a31c741/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpAwgnfi/capsule-21d91ac4c9e7/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpAwgnfi/capsule-21d91ac4c9e7/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/Rtmp5MSEQX/capsule-1e7822e1c4c5/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/Rtmp5MSEQX/capsule-1e7822e1c4c5/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpAwgnfi/capsule-21d91ac4c9e7/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/Rtmp5MSEQX/capsule-1e7822e1c4c5/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000282 Wh, 0.000129 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000268 Wh, 0.000123 gCO2e at 458.3 gCO2e/kWh (World, 2025).
 #> 
 #> ---
 #> 

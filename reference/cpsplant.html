@@ -75,7 +75,7 @@ effect on the outcome should return about <code>effect</code> on every one.</p>
 <span>  <span class="va">y</span>,</span>
 <span>  <span class="va">trt</span>,</span>
 <span>  effects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">50L</span>,</span>
+<span>  n <span class="op">=</span> <span class="fl">100L</span>,</span>
 <span>  tol <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -141,11 +141,13 @@ levels (the second is coded 1). Effects are on the outcome's own scale
 per unit of treatment, so the statistic must estimate an additive
 effect: a difference in means, a regression slope, an average treatment
 effect. An effect is recovered when the average estimate is within
-<code>tol</code> of it, after allowing three Monte Carlo standard errors, and that
-standard error is itself no larger than <code>tol</code>: a statistic too noisy for
-the check to mean anything is not recovered (raise <code>n</code>). Without the
-second condition the allowance grew with the noise, and a statistic that
-returned pure noise passed.</p>
+<code>tol</code> of it, after allowing one Monte Carlo standard error, and that
+standard error is itself no larger than half of <code>tol</code>: a statistic too
+noisy for the check to mean anything is not recovered (raise <code>n</code>). The
+allowance is so at most 1.5 times <code>tol</code>. Without the second condition the
+allowance grew with the noise, and a statistic that returned pure noise
+passed; with up to four times <code>tol</code> allowed, an estimator that
+returned 0.7 of the effect with some noise passed.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

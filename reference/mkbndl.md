@@ -11,7 +11,14 @@ analysis script and summarises its `manifest.json` in plain language.
 ## Usage
 
 ``` r
-mkbndl(project, dest, data = NULL, version = "1", overwrite = FALSE)
+mkbndl(
+  project,
+  dest,
+  data = NULL,
+  version = "1",
+  overwrite = FALSE,
+  secrets = FALSE
+)
 ```
 
 ## Arguments
@@ -40,6 +47,11 @@ mkbndl(project, dest, data = NULL, version = "1", overwrite = FALSE)
 
   Replace a zip of the same name, default `FALSE`.
 
+- secrets:
+
+  Pack files whose names look like credentials (see Details), default
+  `FALSE`: they are left out with a warning.
+
 ## Value
 
 An object of class `rmbl_bundle`: a list with `path` (the zip),
@@ -57,6 +69,23 @@ writes a working starter. `data_provenance.json` pins the data file
 for the offline synthetic route. Every other file in the folder is
 copied into the bundle too, except hidden files, `results_*` folders and
 zip files.
+
+Symbolic links are not followed: a link to a file inside the project is
+packed as that file, and a link to a folder, or to anything outside the
+project, is left out with a warning that names it. Files whose names
+look like credentials are left out too, with a warning that lists them,
+unless `secrets = TRUE`: `llm.json`, `credentials.json`, `secrets.yaml`,
+`token.txt`, `api_key*`, `id_rsa` and the other SSH private keys, `.env`
+and `*.env`, `.netrc`, `.Renviron`, `.pgpass`, `kubeconfig` and
+`kube.config`, key stores (`.p12`, `.pfx`, `.jks`, `.ppk`), `.pem` or
+`.key` files holding a private key, and any other file (not a data table
+such as `.csv` or `.rds`, nor a document such as `.md`, `.html`, `.Rmd`
+or `.qmd`) whose name, split into words at `-`, `_`, `.` and spaces, has
+the word `key`, `keys`, `apikey`, `token`, `tokens`, `secret`,
+`secrets`, `credential`, `credentials`, `creds`, `password`,
+`passwords`, `passwd`, `pat` or `adc` (`openai_key.txt`,
+`github_pat.txt`, `access_token`, `aws_credentials`, `gcloud_adc.json`,
+`keys.R`; not `keyboard.csv`). Public keys (`.pub`) are packed.
 
 The runner calls the analysis script as
 `Rscript analysis.R <data file> <results folder>`, with
@@ -86,15 +115,21 @@ when the runner calls it: a bundle that would stop with “could not find
 function” on the reviewer's machine is refused here instead.
 
 Nothing is written except the zip in `dest`; the staging folder is a
-temporary directory removed on exit. Send the SHA-256 that is printed to
-recipients separately, so they can check the zip was not altered.
+temporary directory removed on exit. The zip is written under a
+temporary name in `dest` and renamed when it is complete, so an
+interrupted build leaves no partial zip (and keeps the one it was to
+replace). Send the SHA-256 that is printed to recipients separately, so
+they can check the zip was not altered.
 
 Errors: `project` that is neither a folder nor a bundled example; a
 project without `config.json` or without its analysis script; a project
 file whose name a bundle file already uses; `dest` that is not an
 existing folder; a zip that exists when `overwrite` is `FALSE`; `data`
-that is not an existing file; a `version` with characters other than
-letters, digits, dot, dash and underscore.
+that is not an existing file; a `version`, or a `project$name` in
+`config.json`, that is not a plain name (letters, digits, dot, dash and
+underscore, not starting with a dot, no `..`, at most 64 characters); a
+bundle of more than 65535 files and folders or over 4 GB (more than a
+plain zip holds).
 
 ## See also
 
@@ -112,7 +147,7 @@ for the manifest the analysis writes.
 proj <- file.path(tempdir(), "demo-project")
 mkbndlproj(proj, title = "Demo analysis", author = "A. Researcher")
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpAwgnfi/demo-project                                      │
+#> │   Folder  /tmp/Rtmp5MSEQX/demo-project                                      │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -126,12 +161,12 @@ b
 #> ╭── Reproducibility bundle ───────────────────────────────────────────────────╮
 #> │   Project    demo-project                                                   │
 #> │   Zip        demo-project_v1.zip                                            │
-#> │   Folder     /tmp/RtmpAwgnfi                                                │
-#> │   Size       197.2 KB                                                       │
+#> │   Folder     /tmp/Rtmp5MSEQX                                                │
+#> │   Size       202.7 KB                                                       │
 #> │   Files      26                                                             │
 #> │   Data file  not inside                                                     │
-#> │   SHA-256    f9d2a5e8a66e999db13aac8be60b2608d536da41593afab8a1018e38c5b03f │
-#> │              b8                                                             │
+#> │   SHA-256    d51320d201eaad49d4bc71a92a4cd55545d8289861e87ff3bbceb3f9a5bd74 │
+#> │              39                                                             │
 #> │                                                                             │
 #> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │
 #> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │
@@ -149,9 +184,9 @@ head(b$files)
 # the example shipped with the package
 otis <- mkbndl("otis-mrp", dest = tempdir(), overwrite = TRUE)
 otis$sha256
-#> [1] "42b12084036ccd70f5c5e81ef02d5afe3fa0fdd968653109e9b06eb11350505c"
+#> [1] "db2e07a594869afbc0e9a9abbc6a2bd30b577ac4f8866e26521bd9a15f565b1f"
 
 # an existing zip is kept unless overwrite = TRUE
 try(mkbndl(proj, dest = tempdir()))
-#> Error : /tmp/RtmpAwgnfi/demo-project_v1.zip exists: pass overwrite = TRUE to replace it
+#> Error : /tmp/Rtmp5MSEQX/demo-project_v1.zip exists: pass overwrite = TRUE to replace it
 ```

@@ -16,7 +16,7 @@ cpsplant(
   y,
   trt,
   effects = c(0, 0.5, 1),
-  n = 50L,
+  n = 100L,
   tol = NULL,
   seed = NULL
 )
@@ -81,11 +81,13 @@ levels (the second is coded 1). Effects are on the outcome's own scale
 per unit of treatment, so the statistic must estimate an additive
 effect: a difference in means, a regression slope, an average treatment
 effect. An effect is recovered when the average estimate is within `tol`
-of it, after allowing three Monte Carlo standard errors, and that
-standard error is itself no larger than `tol`: a statistic too noisy for
-the check to mean anything is not recovered (raise `n`). Without the
-second condition the allowance grew with the noise, and a statistic that
-returned pure noise passed.
+of it, after allowing one Monte Carlo standard error, and that standard
+error is itself no larger than half of `tol`: a statistic too noisy for
+the check to mean anything is not recovered (raise `n`). The allowance
+is so at most 1.5 times `tol`. Without the second condition the
+allowance grew with the noise, and a statistic that returned pure noise
+passed; with up to four times `tol` allowed, an estimator that returned
+0.7 of the effect with some noise passed.
 
 ## See also
 

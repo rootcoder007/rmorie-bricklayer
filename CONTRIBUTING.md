@@ -60,7 +60,8 @@ Out of scope (politely declined):
   sources (use `\u` escapes).
   [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html)
   must report nothing (the rules are in `.lintr`), and
-  `goodpractice::gp()` must stay clean.
+  [`goodpractice::gp()`](https://docs.ropensci.org/goodpractice/reference/gp.html)
+  must stay clean.
 - **C and C++.** No new compiler warnings in `R CMD check --as-cran`;
   the sanitizer and constant-time workflows must stay green. Changes
   under `src/` also need the fuzz targets to build
