@@ -572,6 +572,15 @@
 
 ### Fixed after the 1.0.3 recheck
 
+- In a C locale, files the package writes (capture and categorical
+  manifests, provenance, reports, summaries, launcher scripts) had each
+  character the locale cannot show written as text such as `<U+00E9>`,
+  so a manifest naming `é.csv` named a file that does not exist. They
+  are written as UTF-8 bytes now, in any locale.
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  with `container = TRUE` refused every folder on Windows, reading the
+  drive’s colon (`C:`) as a separator; only a colon or comma after the
+  drive is refused now.
 - Panel estimators with one unit’s weight near the largest double (1e308
   next to 1) no longer stop with “system is exactly singular”: the
   weights are scaled so the smaller ones stay normal numbers, and a

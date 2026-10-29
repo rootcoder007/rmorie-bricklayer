@@ -152,7 +152,10 @@
 </ul></div>
 <div class="section level3">
 <h3 id="fixed-after-the-recheck-1-0-3">Fixed after the 1.0.3 recheck<a class="anchor" aria-label="anchor" href="#fixed-after-the-recheck-1-0-3"></a></h3>
-<ul><li>Panel estimators with one unit’s weight near the largest double (1e308 next to 1) no longer stop with “system is exactly singular”: the weights are scaled so the smaller ones stay normal numbers, and a pre-trend test with no variation is NA.</li>
+<ul><li>In a C locale, files the package writes (capture and categorical manifests, provenance, reports, summaries, launcher scripts) had each character the locale cannot show written as text such as <code>&lt;U+00E9&gt;</code>, so a manifest naming <code>é.csv</code> named a file that does not exist. They are written as UTF-8 bytes now, in any locale.</li>
+<li>
+<code><a href="../reference/mkbndlchk.html">mkbndlchk()</a></code> with <code>container = TRUE</code> refused every folder on Windows, reading the drive’s colon (<code>C:</code>) as a separator; only a colon or comma after the drive is refused now.</li>
+<li>Panel estimators with one unit’s weight near the largest double (1e308 next to 1) no longer stop with “system is exactly singular”: the weights are scaled so the smaller ones stay normal numbers, and a pre-trend test with no variation is NA.</li>
 <li>
 <code><a href="../reference/mkbndlchk.html">mkbndlchk()</a></code> no longer waits out its whole time limit when <code>bash</code> is not on the PATH (<code>/bin/sh</code> is dash on Debian and Ubuntu, which has no job control without a terminal): a one-second run took the full limit and reported a timeout.</li>
 <li>
