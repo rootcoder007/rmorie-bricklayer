@@ -69,7 +69,7 @@ vrfsha256(f, list(toupper(sha256file(f))))$match
 
 # a missing file, or more than one expected digest, is an error
 try(vrfsha256(file.path(tempdir(), "missing.csv"), strrep("0", 64L)))
-#> Error : sha256file: /tmp/Rtmp5MSEQX/missing.csv is not a file
+#> Error : sha256file: /tmp/Rtmp42Vi4h/missing.csv is not a file
 try(vrfsha256(f, c("a", "b")))
 #> Error : `expsha` must be a single SHA-256 hex string
 ```
