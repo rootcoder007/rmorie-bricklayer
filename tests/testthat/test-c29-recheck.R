@@ -62,7 +62,7 @@ test_that("OIDs decode long arcs and a first arc of 2.x without warnings", {
   expect_true(is.na(.rmbl_oid_string(as.raw(c(0x2a, 0x80, 0x01)))))
 })
 
-test_that("ralloc() refuses a ratio past the integers, with or without blocks", {
+test_that("ralloc() refuses a ratio past the integers, blocks or not", {
   expect_error(ralloc(10, arms = c("A", "B"), ratio = c(2^31, 1)),
                "summing to at most 1000000")
   expect_error(ralloc(10, arms = c("A", "B"), ratio = c(2^31, 1), block = 4),

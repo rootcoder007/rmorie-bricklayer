@@ -1378,9 +1378,13 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' The width a table row may take on this console, inside a box.
 #' @return An integer.
 #' @noRd
-.rmbl_avail <- function() max(30L, .rmbl_print_caps()$width - 6L)
+.rmbl_avail <- function() {
+  w <- suppressWarnings(as.integer(getOption("width", 80L)))
+  if (length(w) != 1L || is.na(w)) w <- 80L
+  max(24L, min(.rmbl_print_caps()$width, w) - 6L)
+}
 
-.rmbl_stat_table <- function(df, digits = 4L) {
+.rmbl_stat_table <- function(df, digits = 4L, stack = TRUE) {
   cols <- lapply(names(df), function(nm) {
     v <- df[[nm]]
     if (.rmbl_is_p_col(nm) && is.numeric(v)) {
@@ -1417,7 +1421,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
     vapply(seq_along(cols), function(i) cell(names(cols)[i], i), ""),
     collapse = "  "
   )
-  if (sum(w) + 2L * (length(w) - 1L) > .rmbl_avail()) {
+  if (isTRUE(stack) && sum(w) + 2L * (length(w) - 1L) > .rmbl_avail()) {
     return(paste0("  ", .rmbl_stack(names(cols), cols, nrow(df))))
   }
   rule <- paste(vapply(w, function(k) strrep("-", k), ""), collapse = "  ")

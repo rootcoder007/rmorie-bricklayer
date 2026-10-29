@@ -1165,10 +1165,11 @@ all.equal.rmbl_measure <- function(target, current, ...) {
   lim <- .an_width()
   df <- .an_clip_cols(df, lim)
   wide <- function(cols) {
-    max(nchar(.rmbl_stat_table(df[cols], digits), type = "width"))
+    max(nchar(.rmbl_stat_table(df[cols], digits, stack = FALSE),
+              type = "width"))
   }
   if (ncol(df) < 3L || wide(seq_len(ncol(df))) <= lim) {
-    return(.rmbl_stat_table(df, digits))
+    return(.rmbl_stat_table(df, digits, stack = ncol(df) < 3L))
   }
   out <- character()
   rest <- seq_len(ncol(df))[-1L]
@@ -1180,7 +1181,7 @@ all.equal.rmbl_measure <- function(target, current, ...) {
       }
       take <- c(take, j)
     }
-    part <- .rmbl_stat_table(df[c(1L, take)], digits)
+    part <- .rmbl_stat_table(df[c(1L, take)], digits, stack = FALSE)
     out <- c(out, if (length(out)) "", part)
     rest <- setdiff(rest, take)
   }

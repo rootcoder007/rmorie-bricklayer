@@ -60,9 +60,13 @@ cpsxvrf <- function(msg, sig, key, ctx = NULL,
   if (!inherits(sig, "bricklayer_signature")) {
     stop("`sig` must come from cpssign()", call. = FALSE)
   }
-  if (!is.list(key) && !is.raw(key)) {
-    stop("cpsxvrf: `key` must be a key from cpskg() or drvkey()",
-         call. = FALSE)
+  hmac <- identical(sig$scheme, "hmac")
+  if (!is.list(key) &&
+        !(hmac && (is.raw(key) ||
+                     (is.character(key) && length(key) == 1L &&
+                        !is.na(key))))) {
+    stop("cpsxvrf: `key` must be a key pair from cpskg(), or for an HMAC ",
+         "signature the key from drvkey()", call. = FALSE)
   }
   if (!is.null(ctx) && !is.raw(ctx) &&
         !(is.character(ctx) && length(ctx) == 1L && !is.na(ctx))) {
