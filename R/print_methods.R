@@ -387,7 +387,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
                     grepl("[^ -~]", s, useBytes = TRUE))) {
     u <- utf8ToInt(s[[i]])
     k <- u[u > 126L]
-    if (!anyNA(k) && any(!nzchar(toascii(intToUtf8(k, multiple = TRUE))))) {
+    if (!anyNA(k) && !all(nzchar(toascii(intToUtf8(k, multiple = TRUE))))) {
       out[[i]] <- .rmbl_fold1(s[[i]])
     }
   }
@@ -402,11 +402,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' @return One ASCII string.
 #' @noRd
 .rmbl_fold1 <- function(x) {
-  u <- utf8ToInt(x)
-  if (anyNA(u)) {
-    return(toascii(x))
-  }
-  parts <- vapply(u, function(k) {
+  parts <- vapply(utf8ToInt(x), function(k) {
     if (k >= 32L && k <= 126L) {
       return(intToUtf8(k))
     }
@@ -1313,11 +1309,6 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   toString(as.character(v))
 }
 
-#' An estimate table as aligned text lines with a rule under the header.
-#' @param df The table.
-#' @param digits Significant digits.
-#' @return A character vector of lines, indented two spaces.
-#' @noRd
 #' Cuts strings to a display width, marking the cut with "...".
 #' @param s Strings.
 #' @param w The width.
@@ -1358,7 +1349,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' narrow for its columns.
 #' @param hdr The column names.
 #' @param cols The columns, as strings.
-#' @param n The number of rows.
+#' @param n The number of table rows to stack.
 #' @return Lines, without indent.
 #' @noRd
 .rmbl_stack <- function(hdr, cols, n) {
@@ -1379,13 +1370,17 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' @return An integer.
 #' @noRd
 .rmbl_avail <- function() {
-  w <- suppressWarnings(as.integer(getOption("width", 80L)))
-  if (length(w) != 1L || is.na(w)) w <- 80L
-  max(24L, min(.rmbl_print_caps()$width, w) - 6L)
+  max(24L, min(.rmbl_print_caps()$width, getOption("width", 80L)) - 6L)
 }
 
-.rmbl_stat_table <- function(df, digits = 4L, stack = TRUE) {
-  cols <- lapply(names(df), function(nm) {
+#' The columns of an estimate table as strings, each formatted by its kind
+#' (p-values, periods, numbers, text).
+#' @param df The estimate table.
+#' @param digits Significant digits for its numbers.
+#' @return A list of character vectors, one per column.
+#' @noRd
+.rmbl_stat_cols <- function(df, digits) {
+  lapply(names(df), function(nm) {
     v <- df[[nm]]
     if (.rmbl_is_p_col(nm) && is.numeric(v)) {
       .rmbl_fmt_p(v)
@@ -1397,6 +1392,17 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
       ifelse(is.na(v), "", .rmbl_txt(as.character(v)))
     }
   })
+}
+
+#' An estimate table as aligned text lines with a rule under the header.
+#' @param df The table.
+#' @param digits Significant digits.
+#' @param stack Whether a table too wide for the console is printed one
+#'   record per block.
+#' @return A character vector of lines, indented two spaces.
+#' @noRd
+.rmbl_stat_table <- function(df, digits = 4L, stack = TRUE) {
+  cols <- .rmbl_stat_cols(df, digits)
   num <- vapply(df, is.numeric, NA)
   fit <- .rmbl_fit(
     lapply(seq_along(cols), function(i) c(.rmbl_txt(names(df))[i], cols[[i]])),

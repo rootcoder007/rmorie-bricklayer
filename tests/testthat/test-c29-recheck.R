@@ -15,8 +15,7 @@ test_that("evstudy() with one unit weighted 1e308 gives no LAPACK error", {
   set.seed(1)
   dd <- expand.grid(unit = 1:12, time = 1:8)
   dd$ft <- ifelse(dd$unit <= 6, 5L, NA_integer_)
-  dd$y <- rnorm(nrow(dd)) +
-    ifelse(!is.na(dd$ft) & dd$time >= dd$ft, 1, 0)
+  dd$y <- rnorm(nrow(dd)) + as.numeric(!is.na(dd$ft) & dd$time >= dd$ft)
   dd$w <- 1
   dd$w[dd$unit == 1] <- 1e308
   expect_no_error(

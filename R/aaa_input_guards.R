@@ -628,8 +628,8 @@
 
 #' Stops when a path has a part longer than file systems allow (255
 #' bytes), which file() otherwise meets as "cannot open the connection".
-#' @param path The path.
-#' @param what The argument's name.
+#' @param path The file or folder path to check.
+#' @param what The argument's name, for the message.
 #' @return `path`, invisibly.
 #' @noRd
 .rmbl_name_ok <- function(path, what) {

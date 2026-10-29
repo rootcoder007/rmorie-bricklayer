@@ -421,12 +421,7 @@ fnllim <- function(expd, target = 1, lvls = c(0.95, 0.998)) {
     stop("fnllim: `expd` must be positive", call. = FALSE)
   }
   # c(1, 2) used the first target and said nothing of the second
-  target <- .rmbl_num(target, "target")
-  if (length(target) != 1L || !is.finite(target) || target <= 0 ||
-        target > 1e100) {
-    stop(.rmbl_fn(), "`target` must be positive: one finite number",
-         call. = FALSE)
-  }
+  target <- .fnl_target(target)
   lvls <- .rmbl_num(lvls, "lvls")
   # NULL, NA and numeric(0) gave an empty frame of limits
   if (!length(lvls) || anyNA(lvls)) {
@@ -991,4 +986,19 @@ format.rmbl_expected <- function(x, digits = 4L, ...) {
       "give, like a checkerboard."
     )
   }
+}
+
+#' fnllim()'s target, checked: one positive finite number, at most 1e100
+#' (1e308 overflowed the limits to NaN).
+#' @param target The funnel's target rate.
+#' @return The target.
+#' @noRd
+.fnl_target <- function(target) {
+  target <- .rmbl_num(target, "target")
+  if (length(target) != 1L || !is.finite(target) || target <= 0 ||
+        target > 1e100) {
+    stop("fnllim: `target` must be positive: one finite number",
+         call. = FALSE)
+  }
+  target
 }

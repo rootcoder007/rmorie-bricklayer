@@ -108,20 +108,7 @@ plothwk <- function(
 ) {
   .hk_fit_check(fit)
   what <- .rmbl_arg(what)
-  times <- .rmbl_num(times, "times")
-  if (!length(times) || anyNA(times) || !all(is.finite(times)) ||
-        any(abs(times) > 1e12)) {
-    stop(
-      "plothwk: `times` must be the event times, finite and none missing",
-      call. = FALSE
-    )
-  }
-  if (any(times < 0 | times > fit$horizon)) {
-    stop(sprintf(
-      "plothwk: `times` must lie in the fit's window, 0 to %s",
-      format(fit$horizon)), call. = FALSE)
-  }
-  times <- sort(times)
+  times <- .hk_times(times, fit)
   cols <- .bl_cols(3L, col, pal)
   op <- .bl_par(NULL)
   on.exit(graphics::par(op), add = TRUE)
@@ -359,4 +346,26 @@ plothwk <- function(
     )
   ))
   invisible(data.frame(t = tg, lambda = lam))
+}
+
+#' plothwk()'s event times, checked and sorted: finite, none missing, in
+#' the fit's window (times past it were drawn off the panel).
+#' @param times The event times plothwk() was given.
+#' @param fit The Hawkes fit, for its horizon.
+#' @return The sorted times.
+#' @noRd
+.hk_times <- function(times, fit) {
+  times <- .rmbl_num(times, "times")
+  if (!length(times) || anyNA(times) || !all(is.finite(times))) {
+    stop(
+      "plothwk: `times` must be the event times, finite and none missing",
+      call. = FALSE
+    )
+  }
+  if (any(times < 0 | times > fit$horizon)) {
+    stop(sprintf(
+      "plothwk: `times` must lie in the fit's window, 0 to %s",
+      format(fit$horizon)), call. = FALSE)
+  }
+  sort(times)
 }

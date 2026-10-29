@@ -227,17 +227,7 @@ loounit <- function(
   w = NULL
 ) {
   .rmbl_df_names(data)
-  # the full fit checks the arguments; its messages name loounit(), not
-  # plndid() (c29 recheck)
-  full <- withCallingHandlers(
-    plndid(data, unit, time, y, trtd, covs = covs, cl = cl, w = w),
-    error = function(e) {
-      m <- conditionMessage(e)
-      if (startsWith(m, "plndid: ")) {
-        stop("loounit: ", substring(m, 9L), call. = FALSE)
-      }
-    }
-  )
+  full <- .lou_full(data, unit, time, y, trtd, covs, cl, w)
   ever <- tapply(data[[trtd]], data[[unit]], max) > 0
   if (is.null(units)) {
     units <- names(ever)[ever]
@@ -628,4 +618,21 @@ plot.rmbl_cohort_trends <- function(
     out[[paste("cohort", g)]] <- x$value[i][match(ev, x$evtm[i])]
   }
   out
+}
+
+#' loounit()'s fit on every unit. plndid() checks the arguments, and its
+#' messages are renamed to loounit()'s own (c29 recheck).
+#' @param data,unit,time,y,trtd,covs,cl,w As loounit() was given them.
+#' @return The plndid() fit.
+#' @noRd
+.lou_full <- function(data, unit, time, y, trtd, covs, cl, w) {
+  withCallingHandlers(
+    plndid(data, unit, time, y, trtd, covs = covs, cl = cl, w = w),
+    error = function(e) {
+      m <- conditionMessage(e)
+      if (startsWith(m, "plndid: ")) {
+        stop("loounit: ", substring(m, 9L), call. = FALSE)
+      }
+    }
+  )
 }

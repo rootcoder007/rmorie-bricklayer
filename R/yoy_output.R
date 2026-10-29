@@ -544,6 +544,23 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
   lapply(cols, .rmbl_txt)
 }
 
+#' The yoy table's columns and headers cut to fit the console (a
+#' 300-character label collapsed the table).
+#' @param cols The yoy columns, as strings.
+#' @param hdr Their headers.
+#' @return list(cols, hdr).
+#' @noRd
+.yoy_fit <- function(cols, hdr) {
+  num <- vapply(cols, function(v) {
+    all(is.na(v) | grepl("^[ +-]?[0-9.,%]*$|^NA$", v))
+  }, NA)
+  fit <- .rmbl_fit(lapply(seq_along(cols), function(i) c(hdr[i], cols[[i]])),
+                   num, .rmbl_avail())
+  out <- lapply(fit, `[`, -1L)
+  names(out) <- names(cols)
+  list(cols = out, hdr = vapply(fit, `[`, "", 1L))
+}
+
 #' The header, the rule and the rows of a year-over-year table, as lines.
 #' @param d The rows printed.
 #' @param cols The columns as text.
@@ -554,16 +571,9 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
 #' @return A character vector of lines.
 #' @noRd
 .yoy_print_rows <- function(d, cols, hdr, color, pal, palette) {
-  # the table fits the console (a 300-character label collapsed it)
-  num <- vapply(cols, function(v) {
-    all(is.na(v) | grepl("^[ +-]?[0-9.,%]*$|^NA$", v))
-  }, NA)
-  fit <- .rmbl_fit(lapply(seq_along(cols), function(i) c(hdr[i], cols[[i]])),
-                   num, .rmbl_avail())
-  hdr <- vapply(fit, `[`, "", 1L)
-  nm <- names(cols)
-  cols <- lapply(fit, `[`, -1L)
-  names(cols) <- nm
+  f <- .yoy_fit(cols, hdr)
+  cols <- f$cols
+  hdr <- f$hdr
   # display widths: a CJK label takes two columns
   wd <- function(s) nchar(ifelse(is.na(s), "NA", s), type = "width")
   widths <- vapply(

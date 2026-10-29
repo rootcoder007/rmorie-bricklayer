@@ -101,10 +101,6 @@ bldl <- function(
   maxbytes = 2^31
 ) {
   .rmbl_no_fn(url = url)
-  if (!missing(label)) {
-    # as.character() of a closure; the default is checked with `dest`
-    .rmbl_no_fn(label = label)
-  }
   # the capsule path's transport: https only, never a local or private
   # address, and file:// only when the caller says so (an offline test)
   url <- .rmbl_check_public_url(url, "url", allow_file = allowfile)
@@ -112,6 +108,8 @@ bldl <- function(
     quiet <- .bl_dl_quiet()
   }
   dest <- .rmbl_out_file(dest, "dest", connection = FALSE)
+  # as.character() of a closure; checked once `dest`, its default, is
+  .rmbl_no_fn(label = label)
   quiet <- .rmbl_flag1(quiet, "quiet")
   size <- .bl_dl_size(size)
   # a console that redraws a line in place: a terminal, or the RStudio, Positron

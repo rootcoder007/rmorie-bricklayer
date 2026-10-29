@@ -60,19 +60,7 @@ cpsxvrf <- function(msg, sig, key, ctx = NULL,
   if (!inherits(sig, "bricklayer_signature")) {
     stop("`sig` must come from cpssign()", call. = FALSE)
   }
-  hmac <- identical(sig$scheme, "hmac")
-  if (!is.list(key) &&
-        !(hmac && (is.raw(key) ||
-                     (is.character(key) && length(key) == 1L &&
-                        !is.na(key))))) {
-    stop("cpsxvrf: `key` must be a key pair from cpskg(), or for an HMAC ",
-         "signature the key from drvkey()", call. = FALSE)
-  }
-  if (!is.null(ctx) && !is.raw(ctx) &&
-        !(is.character(ctx) && length(ctx) == 1L && !is.na(ctx))) {
-    stop("cpsxvrf: `ctx` must be one string, raw bytes or NULL",
-         call. = FALSE)
-  }
+  .xvrf_args(sig, key, ctx)
   ours <- isTRUE(cpsvrf(msg, sig, key, ctx = ctx))
   ext <- .rmbl_xvrf_openssl(msg, sig, key, ctx, openssl)
   out <- list(
@@ -308,4 +296,31 @@ format.rmbl_xvrf <- function(x, ...) {
     ))
   }
   list(none = NULL, ver = ver, oid = oid)
+}
+
+#' One string, not NA.
+#' @param x The value to test.
+#' @return TRUE or FALSE.
+#' @noRd
+.xvrf_str1 <- function(x) is.character(x) && length(x) == 1L && !is.na(x)
+
+#' Stops unless cpsxvrf()'s key and context can reach the verifiers: a key
+#' pair (a list), or for an HMAC signature the drvkey() key; a context of
+#' one string, raw bytes or NULL. A string key reached `$` before.
+#' @param sig The signature cpsxvrf() checks.
+#' @param key The key it was given.
+#' @param ctx The context it was given.
+#' @return NULL, invisibly.
+#' @noRd
+.xvrf_args <- function(sig, key, ctx) {
+  hmac <- identical(sig$scheme, "hmac")
+  if (!is.list(key) && !(hmac && (is.raw(key) || .xvrf_str1(key)))) {
+    stop("cpsxvrf: `key` must be a key pair from cpskg(), or for an HMAC ",
+         "signature the key from drvkey()", call. = FALSE)
+  }
+  if (!is.null(ctx) && !is.raw(ctx) && !.xvrf_str1(ctx)) {
+    stop("cpsxvrf: `ctx` must be one string, raw bytes or NULL",
+         call. = FALSE)
+  }
+  invisible(NULL)
 }
