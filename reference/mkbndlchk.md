@@ -78,16 +78,18 @@ they start. Check only bundles you built or whose author you trust. To
 limit what a hostile bundle can reach, the run gets a minimal
 environment: `PATH`, the locale variables (`LANG`, `LANGUAGE`, `LC_ALL`
 and the `LC_` categories such as `LC_CTYPE`, no other `LC_` name; `TZ`),
-the library paths of this session (`R_LIBS`), a fresh temporary `HOME`
-and `TMPDIR`, and no other variable, so API keys, tokens and passwords
-in the environment (or in `~/.Renviron`) do not reach it. On Windows the
-variables that look like credentials are removed instead (a best
-effort): names holding `KEY`, `TOKEN`, `SECRET`, `PASS`, `CREDENTIAL`,
-`AUTH`, `COOKIE` or `SESSION`, a service's prefix (`GITHUB_`, `AWS_`,
-...), connection strings (`DATABASE_URL`, `*_DATABASE_URL`,
-`*_WEBHOOK_URL`, `SENTRY_DSN`, `*_DSN`), `*_PWD`, `*_SK`, other `LC_`
-names, and any value that is a URL with a password in it. This is not a
-sandbox: the files your user can read stay readable.
+the library paths of this session (`R_LIBS`), the proxy variables
+(`http_proxy`, `https_proxy`, `no_proxy`) when they hold no user name or
+password, a fresh temporary `HOME` and `TMPDIR`, and no other variable,
+so API keys, tokens and passwords in the environment (or in
+`~/.Renviron`) do not reach it. On Windows the variables that look like
+credentials are removed instead (a best effort): names holding `KEY`,
+`TOKEN`, `SECRET`, `PASS`, `CREDENTIAL`, `AUTH`, `COOKIE` or `SESSION`,
+a service's prefix (`GITHUB_`, `AWS_`, ...), connection strings
+(`DATABASE_URL`, `*_DATABASE_URL`, `*_WEBHOOK_URL`, `SENTRY_DSN`,
+`*_DSN`), `*_PWD`, `*_SK`, other `LC_` names, and any value that is a
+URL with a password in it. This is not a sandbox: the files your user
+can read stay readable.
 
 The run is stopped after `getOption("rmbl.bundle.timeout")` seconds
 (default 1800, 30 minutes; the exit status is then 124). How the
@@ -157,7 +159,7 @@ starts a project.
 proj <- file.path(tempdir(), "audit-demo")
 mkbndlproj(proj, title = "Demo analysis")
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpQLXSSx/audit-demo                                        │
+#> │   Folder  /tmp/RtmptAMHMc/audit-demo                                        │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -185,8 +187,8 @@ a
 #> │                                                                             │
 #> │   ✔    run finished                  exit status 0                          │
 #> │   ✔    manifest written                                                     │
-#> │        /tmp/RtmpQLXSSx/bndlchk1f5576f161ab/audit-demo_v1/results_20261029-1 │
-#> │        71426/manifest.json                                                  │
+#> │        /tmp/RtmptAMHMc/bndlchk1f8f3f370f03/audit-demo_v1/results_20261029-1 │
+#> │        73918/manifest.json                                                  │
 #> │   ✔    no cross-check differs        0 DIFFER                               │
 #> │   ✔    counts match config.json      not compared: a synthetic run          │
 #> │   ✔    launchers executable          2 launcher(s)                          │
