@@ -217,7 +217,8 @@ test_that("yoy() compares ordered-factor periods by level order", {
   expect_identical(r$previous, c(NA, 10, NA))
   # unordered: no order, so no comparison
   d$q <- factor(as.character(d$q))
-  expect_true(all(is.na(yoy(d, "n", "q")$previous)))
+  expect_warning(un <- yoy(d, "n", "q"), "of no form yoy\\(\\) reads")
+  expect_true(all(is.na(un$previous)))
   expect_error(yoy(list(1)), "a numeric or integer vector, or a ts, not list")
 })
 

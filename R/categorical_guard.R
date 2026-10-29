@@ -1552,7 +1552,9 @@ format.rmbl_transfer_check <- function(x, ...) {
         "numeric codes are NOT the categories)"
       )
     )
-    v <- as.character(v)
+    # unclass(): the codes as plain numbers, so the text never depends on
+    # how a vctrs version casts labelled (or I()-wrapped) columns
+    v <- as.character(unclass(v))
   }
   lv <- if (is.factor(v)) {
     levels(v)

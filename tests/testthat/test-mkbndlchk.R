@@ -51,6 +51,12 @@ man_run <- function(status, mode = "csv") {
 # Whether a check ran clean. Where escaped processes cannot be detected
 # (a process group on macOS) the isolation row fails closed by design:
 # there every other row must be ok and the row must say why.
+# macOS has no PID namespace or subreaper: a run there fails closed
+blind <- function() identical(Sys.info()[["sysname"]], "Darwin")
+
+# the exit status of a pack --check run on a bundle that passes
+pass_status <- function() if (blind()) 1L else 0L
+
 ran_ok <- function(a) {
   iso <- a$checks$check == "isolation"
   blind <- grepl("cannot detect escaped processes", a$checks$detail[iso],
@@ -85,8 +91,14 @@ test_that("a bundle that runs and gives the expected counts is verified", {
   expect_match(a$checks$detail[5L], "1 launcher(s)", fixed = TRUE)
   out <- capture.output(res <- withVisible(print(a)))
   expect_false(res$visible)
-  expect_match(out[1L], "Bundle audit: VERIFIED", fixed = TRUE)
-  expect_false(any(grepl("last lines", out, fixed = TRUE)))
+  if (blind()) {
+    expect_match(out[1L], "Bundle audit: NOT VERIFIED", fixed = TRUE)
+    expect_true(any(grepl("cannot detect escaped processes", out,
+                          fixed = TRUE)))
+  } else {
+    expect_match(out[1L], "Bundle audit: VERIFIED", fixed = TRUE)
+    expect_false(any(grepl("last lines", out, fixed = TRUE)))
+  }
   # by default the folder is removed afterwards
   b <- mkbndlchk(zip)
   expect_true(ran_ok(b))
@@ -224,14 +236,18 @@ test_that("rmbl pack --check runs mkbndlchk from a terminal", {
   }
   good <- fake_bundle(d, man_run(c("PASS", "PASS", "INFO")), expect3)
   r <- run("pack", "--check", good)
-  expect_identical(r$status, 0L)
-  expect_match(r$text, "Bundle audit: VERIFIED", fixed = TRUE)
+  expect_identical(r$status, pass_status())
+  expect_match(r$text, if (blind()) {
+    "cannot detect escaped processes"
+  } else {
+    "Bundle audit: VERIFIED"
+  }, fixed = TRUE)
   expect_match(r$text, "WARNING: pack --check runs the bundle's code",
                fixed = TRUE)
   expect_match(.bl_verb_usage("pack", "rmbl"), "RUNS THE BUNDLE'S CODE",
                fixed = TRUE)
   r <- run("pack", "--check", good, "--synthetic", "--keep")
-  expect_identical(r$status, 0L)
+  expect_identical(r$status, pass_status())
   bad <- fake_bundle(d, man_run("DIFFER"), top = "bad_v1")
   r <- run("pack", "--check", bad)
   expect_identical(r$status, 1L)
@@ -740,11 +756,11 @@ test_that("container choices, the image and their refusals", {
   }
   zip <- fake_bundle(d, man_run("PASS"), top = "cli_v1")
   r <- run("pack", "--check", zip, "--container=docker")
-  expect_identical(r$status, 0L)
+  expect_identical(r$status, pass_status())
   expect_match(r$text, "no docker found", fixed = TRUE)
   expect_identical(run("pack", "--check", zip, "--container=lxc")$status, 2L)
   r <- run("pack", "--check", zip, "--container")
-  expect_identical(r$status, 0L)
+  expect_identical(r$status, pass_status())
   expect_match(r$text, "no podman or docker found", fixed = TRUE)
   expect_identical(.bl_cli_packpos(c("p", "--container", "--secrets")), "p")
 })

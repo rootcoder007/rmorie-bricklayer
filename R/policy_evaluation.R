@@ -2128,7 +2128,12 @@ polex <- function(seed = 20240101) {
 #' @return The weights, rescaled only when needed.
 #' @noRd
 .rmbl_wscale <- function(w) {
-  if (length(w) && !is.finite(sum(w * w))) w / max(w) else w
+  if (!length(w) || is.finite(sum(w * w))) {
+    return(w)
+  }
+  # a power of two scales exactly on every CPU, so the ratios between the
+  # weights (all an estimator uses) are kept bit for bit
+  w * 2^(-ceiling(log2(max(w))))
 }
 
 #' Fits weighted least squares on demeaned data with cluster-robust variance.

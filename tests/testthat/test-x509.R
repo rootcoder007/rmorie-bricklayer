@@ -378,3 +378,19 @@ test_that("no byte mutation of a token verifies but the ones proven harmless", {
     expect_identical(survive, character(), info = nm)
   }
 })
+
+test_that("a GeneralizedTime with stray bytes reads as NA, without warnings", {
+  bad <- rawToChar(as.raw(c(0x32, 0xb2, 0x32, 0x36, 0x30, 0x39, 0x31, 0x32,
+                            0x32, 0x32, 0x30, 0x30, 0x33, 0x35, 0x5a)))
+  expect_no_warning(t <- .rmbl_ts_gentime(bad))
+  expect_true(is.na(t))
+  expect_true(inherits(t, "POSIXct"))
+  expect_true(is.na(.rmbl_ts_gentime("20260912220035")))
+  expect_identical(
+    format(.rmbl_ts_gentime("20260912220035Z"), "%Y-%m-%d %H:%M:%S",
+           tz = "UTC"),
+    "2026-09-12 22:00:35"
+  )
+  expect_equal(as.numeric(.rmbl_ts_gentime("20260912220035.25Z")) -
+                 as.numeric(.rmbl_ts_gentime("20260912220035Z")), 0.25)
+})

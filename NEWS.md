@@ -89,6 +89,9 @@
 
 ## Fixed after the 1.0.3 recheck
 
+* `audcats()` reads haven-labelled columns (also inside `I()`) by their codes, so it no longer fails with the vctrs version on macOS.
+* Panel estimators scale weights too large to square by an exact power of two, so the result is the same on every CPU.
+* Timestamp, OCSP and CRL times with stray bytes read as missing without warnings, and `rallocvrf()` refuses a function as `seed` without a warning first.
 * In a process group (Linux without user namespaces), `mkbndlchk()` also lists the user's running systemd services before and after the run, so a bundle that starts one with `systemd-run --user` is stopped and fails the check.
 * `rptanl()`'s Markdown report escapes control bytes in its title and table cells, and writes each number on its own (20, not 20.00000).
 * DESCRIPTION lists the optional tools `mkbndlchk()` uses when it runs a bundle (`unshare`, `systemctl`, podman or docker).

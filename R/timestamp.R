@@ -1008,6 +1008,10 @@ format.bricklayer_timestamp <- function(x, ...) {
 #' @return A POSIXct time in UTC.
 #' @noRd
 .rmbl_ts_gentime <- function(s) {
+  if (!length(s) || is.na(s) ||
+        !grepl("^[0-9]{14}([.][0-9]+)?Z$", s, useBytes = TRUE)) {
+    return(as.POSIXct(NA_real_, origin = "1970-01-01", tz = "UTC"))
+  }
   s <- sub("Z$", "", s)
   frac <- 0
   if (grepl(".", s, fixed = TRUE)) {

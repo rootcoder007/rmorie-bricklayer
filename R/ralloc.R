@@ -455,8 +455,9 @@ plot.rmbl_alloc <- function(x, ...) {
   }
   # a vector or list was read by its first element, and a function was an
   # error of R's own
-  one <- length(seed) == 1L && !is.list(seed) && !is.na(seed) &&
-    (is.character(seed) || (is.numeric(seed) && is.finite(seed)))
+  one <- length(seed) == 1L &&
+    (is.character(seed) || is.numeric(seed)) && !is.na(seed) &&
+    (is.character(seed) || is.finite(seed))
   if (!is.raw(seed) && !one) {
     stop(
       "ralloc: `seed` must be NULL, 48 raw bytes, their 96 ",

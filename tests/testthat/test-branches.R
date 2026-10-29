@@ -184,7 +184,7 @@ test_that("a period column that is not a grid is left alone", {
   expect_true(all(is.na(chr$previous)))
   expect_true(all(chr$flag == "no comparison period"))
   # a factor period is the same case
-  fct <- as.data.frame(yoy(
+  expect_warning(fct <- as.data.frame(yoy(
     data.frame(
       p = factor(c("Q1", "Q2")),
       n = c(10, 20)
@@ -192,7 +192,7 @@ test_that("a period column that is not a grid is left alone", {
     value = "n",
     prd = "p",
     minbase = 0
-  ))
+  )), "of no form yoy\\(\\) reads")
   expect_identical(nrow(fct), 2L)
   expect_true(all(is.na(fct$previous)))
 
