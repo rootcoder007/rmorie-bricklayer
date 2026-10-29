@@ -425,10 +425,14 @@ if (!is.null(DATA_ARG)) {
         script_dir   = script_dir,
         project_name = PROJECT_NAME,
         quick        = QUICK_MODE)
+      # an empty address is no address (a config without a source)
+      blank <- function(x) {
+        is.null(x) || length(x) == 0L || is.na(x[[1L]]) || !nzchar(x[[1L]])
+      }
       url <- rslvckan(prov)
-      if (is.null(url)) url <- rslvckns(prov)
-      if (is.null(url)) url <- prov$resource$direct_url
-      if (is.null(url)) {
+      if (blank(url)) url <- rslvckns(prov)
+      if (blank(url)) url <- prov$resource$direct_url
+      if (blank(url)) {
         say("ERROR: no download URL available — provenance missing.")
         quit(status = 5)
       }

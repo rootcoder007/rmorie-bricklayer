@@ -667,7 +667,7 @@ format.rmbl_bundle_project <- function(x, ...) {
     normalizePath(full, winslash = "/", mustWork = FALSE),
     paste0(sub("/$", "", top), "/")
   )
-  if (!nzchar(Sys.readlink(full)) && inside) {
+  if (!.bndl_islink(full) && inside) {
     return(if (isdir) "dir" else "file")
   }
   if (!isdir && file.exists(full) && inside) "file" else "link"
@@ -1137,6 +1137,29 @@ format.rmbl_bundle_project <- function(x, ...) {
 #' @param pdir The project folder.
 #' @return A number.
 #' @noRd
+#' Which paths are symbolic links (or, on Windows, any reparse point:
+#' a symbolic link or a junction).
+#'
+#' Sys.readlink() reports links on Unix only; on Windows it gives "" for
+#' every path, so a link to a parent folder was followed for ever. There a
+#' path is a link when its real path is not its parent's real path plus
+#' its own name.
+#' @param p Paths.
+#' @param win Whether this is Windows.
+#' @return Logical, one per path.
+#' @noRd
+.bndl_islink <- function(p, win = .Platform$OS.type == "windows") {
+  if (!length(p)) {
+    return(logical())
+  }
+  if (!isTRUE(win)) {
+    return(nzchar(Sys.readlink(p)))
+  }
+  real <- normalizePath(p, winslash = "/", mustWork = FALSE)
+  par <- normalizePath(dirname(p), winslash = "/", mustWork = FALSE)
+  tolower(real) != tolower(file.path(par, basename(p)))
+}
+
 .bndl_count <- function(pdir) {
   n <- 0
   todo <- pdir
@@ -1145,7 +1168,7 @@ format.rmbl_bundle_project <- function(x, ...) {
     todo <- todo[-1L]
     e <- e[!grepl("^results_", basename(e)) & !grepl("[.]zip$", e)]
     d <- e[dir.exists(e)]
-    d <- d[!nzchar(Sys.readlink(d))]
+    d <- d[!.bndl_islink(d)]
     n <- n + length(e)
     todo <- c(todo, d)
   }

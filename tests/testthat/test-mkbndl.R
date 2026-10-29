@@ -550,14 +550,31 @@ test_that("the runner downloads only with the package; files are checked", {
   base <- normalizePath(.Library)
   skip_if(nzchar(system.file(package = "rmoriebricklayer", lib.loc = base)),
           "rmoriebricklayer is in R's own library")
-  withr::with_envvar(
-    c(R_LIBS = empty, R_LIBS_USER = empty, R_LIBS_SITE = empty), {
-      r <- run()
-    }
-  )
+  libs <- c(R_LIBS = empty, R_LIBS_USER = empty, R_LIBS_SITE = empty)
+  # on some systems (Windows CI) the child still sees the package through
+  # a site library; then it has a downloader, and the config has no
+  # address: refused all the same, exit 5, never a raw R error
+  seen <- withr::with_envvar(libs, suppressWarnings(system2(
+    rs, c("-e", shQuote(paste0("cat(nzchar(system.file(package=",
+                               "'rmoriebricklayer')))"))),
+    stdout = TRUE, stderr = FALSE
+  )))
+  withr::with_envvar(libs, {
+    r <- run()
+  })
   expect_identical(r$status, 5L)
-  expect_match(r$text, "downloads only through the rmoriebricklayer package",
-               fixed = TRUE)
+  if (identical(seen, "TRUE")) {
+    expect_match(r$text, "no download URL available", fixed = TRUE)
+  } else {
+    expect_match(r$text,
+                 "downloads only through the rmoriebricklayer package",
+                 fixed = TRUE)
+  }
+  expect_no_match(r$text, "must be a single non-empty string", fixed = TRUE)
+  # with the package (this session's libraries) and still no address
+  r <- run()
+  expect_identical(r$status, 5L)
+  expect_match(r$text, "no download URL available", fixed = TRUE)
   # a file in data/ is found; a pinned digest it does not match stops it
   csv <- c("group,value", "a,4", "b,6")
   dir.create(file.path(st, "data"))
@@ -608,6 +625,18 @@ test_that("a project of too many files is refused before it is walked", {
   )
   expect_error(mkbndl(p$dir, withr::local_tempdir()),
                "70000 files and folders, more than a plain zip holds")
+})
+
+test_that("links are found on Unix and, by their real path, on Windows", {
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  dir.create(file.path(d, "real"))
+  file.symlink(file.path(d, "real"), file.path(d, "ln"))
+  file.symlink(d, file.path(d, "up"))
+  p <- file.path(d, c("real", "ln", "up"))
+  expect_identical(.bndl_islink(p), c(FALSE, TRUE, TRUE))
+  expect_identical(.bndl_islink(p, win = TRUE), c(FALSE, TRUE, TRUE))
+  expect_identical(.bndl_islink(character()), logical())
 })
 
 test_that("66,000 files are counted and refused in seconds", {

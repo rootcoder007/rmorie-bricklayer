@@ -91,6 +91,7 @@
 
 * In a C locale, files the package writes (capture and categorical manifests, provenance, reports, summaries, launcher scripts) had each character the locale cannot show written as text such as `<U+00E9>`, so a manifest naming `é.csv` named a file that does not exist. They are written as UTF-8 bytes now, in any locale.
 * `mkbndlchk()` with `container = TRUE` refused every folder on Windows, reading the drive's colon (`C:`) as a separator; only a colon or comma after the drive is refused now.
+* On Windows, `mkbndl()` counted files through a folder link (`Sys.readlink()` sees no link there), so a link to the project's own folder was followed for ever; links and junctions are found by their real path now. A bundle's runner whose provenance has no download address says so and stops (exit 5) instead of failing with an R error.
 * Panel estimators with one unit's weight near the largest double (1e308 next to 1) no longer stop with "system is exactly singular": the weights are scaled so the smaller ones stay normal numbers, and a pre-trend test with no variation is NA.
 * `mkbndlchk()` no longer waits out its whole time limit when `bash` is not on the PATH (`/bin/sh` is dash on Debian and Ubuntu, which has no job control without a terminal): a one-second run took the full limit and reported a timeout.
 * `mkbndlchk()` stops only what the run left behind: a process the user's own job (for example `parallel::mcparallel()`) started during the run is left alone, and a user systemd service is stopped only when its process carries the run's mark.
