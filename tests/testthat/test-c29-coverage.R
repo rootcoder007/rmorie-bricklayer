@@ -167,6 +167,8 @@ test_that("files are written as UTF-8 in a C locale too", {
 # ---- the rest of the patch: every branch codecov found unreached ----
 
 test_that("with no XDG_RUNTIME_DIR the user's runtime folder is /run/user", {
+  # user services (and /proc) are Linux only
+  skip_on_os(c("windows", "mac", "solaris"))
   withr::local_envvar(XDG_RUNTIME_DIR = "")
   expect_match(.bndlchk_uenv(), "^XDG_RUNTIME_DIR=/run/user/")
 })

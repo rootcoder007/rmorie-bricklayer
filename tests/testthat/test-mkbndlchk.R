@@ -688,7 +688,8 @@ test_that("a container check: the run's arguments and its clean-up", {
   local_mocked_bindings(
     system2 = function(command, args = character(), stdout = "",
                        stderr = "", timeout = 0, ...) {
-      a <- gsub("^'|'$", "", args)
+      # shQuote() quotes with ' on Unix and " on Windows
+      a <- gsub("^['\"]|['\"]$", "", args)
       got$calls[[length(got$calls) + 1L]] <- list(cmd = command, args = a,
                                                   timeout = timeout)
       if (identical(a[1L], "run")) {
@@ -711,8 +712,9 @@ test_that("a container check: the run's arguments and its clean-up", {
   expect_true(file.exists(file.path(a$dir, "results_1", "manifest.json")))
   run <- Filter(function(x) identical(x$args[1L], "run"), got$calls)[[1L]]
   r <- run$args
+  uid <- if (.Platform$OS.type == "unix") "1234:1234" else "1000:1000"
   for (f in c("--rm", "--read-only", "--userns=keep-id", "no-new-privileges",
-              "ALL", "1234:1234", "4g", "512", "/out")) {
+              "ALL", uid, "4g", "512", "/out")) {
     expect_true(f %in% r, info = f)
   }
   expect_identical(r[match("--network", r) + 1L], "none")
