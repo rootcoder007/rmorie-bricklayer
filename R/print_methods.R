@@ -1318,14 +1318,14 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' @param digits Significant digits.
 #' @return A character vector of lines, indented two spaces.
 #' @noRd
-#' Cuts strings to a display width, marking the cut with "~".
+#' Cuts strings to a display width, marking the cut with "...".
 #' @param s Strings.
 #' @param w The width.
 #' @return The strings.
 #' @noRd
 .rmbl_cut <- function(s, w) {
   long <- !is.na(s) & nchar(s, type = "width") > w
-  s[long] <- paste0(strtrim(s[long], w - 1L), "~")
+  s[long] <- paste0(strtrim(s[long], w - 3L), "...")
   s
 }
 

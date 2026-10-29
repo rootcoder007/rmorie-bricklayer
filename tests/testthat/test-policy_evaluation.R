@@ -1174,6 +1174,7 @@ test_that("weights too large to square give the estimate of weights 1", {
   big <- c(1e308, 5e307)
   s <- .rmbl_wscale(big)
   expect_true(is.finite(sum(s * s)))
-  expect_identical(s, big * 2^-1024)
+  expect_identical(s, big * 2^(500 - 1 - 1024))
+  expect_true(all(s >= .Machine$double.xmin))
   expect_identical(s[2L] / s[1L], big[2L] / big[1L])
 })

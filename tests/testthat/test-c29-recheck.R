@@ -106,7 +106,7 @@ test_that("tables fit the console: long labels are cut, numbers never", {
   cols <- list(c("label", strrep("w", 300)), c("n", "12"))
   fit <- .rmbl_fit(cols, c(FALSE, TRUE), 30L)
   expect_lte(nchar(fit[[1L]][2L]), 26L)
-  expect_true(endsWith(fit[[1L]][2L], "~"))
+  expect_true(endsWith(fit[[1L]][2L], "..."))
   expect_identical(fit[[2L]], c("n", "12"))
   withr::local_options(width = 30)
   d <- data.frame(g = rep(c(strrep("w", 300), "b"), each = 2),

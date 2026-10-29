@@ -95,7 +95,7 @@
 * `mkbndl()` refuses file names `mkbndlchk()` would refuse (a backslash, or two names that differ only in case), `mkbndlchk()` refuses a zip that unpacks past 512 MiB (option `rmbl.bundle.maxsize`), and a bundle's runner refuses an unknown argument, a bare `--data` and a folder given as `--data`.
 * OID decoding works in exact arithmetic for long arcs and reads a first arc of 2.x correctly, without warnings.
 * Readers and writers given a folder, a file name longer than 255 bytes or a folder they cannot write in say so instead of failing with "cannot open the connection".
-* Printed tables fit the console: long labels are cut with "~", and a label the console cannot spell keeps its characters as `<U+XXXX>` instead of printing blank.
+* Printed tables fit the console: long labels are cut with "...", and a label the console cannot spell keeps its characters as `<U+XXXX>` instead of printing blank.
 * A run of argument checks found by a hostile battery: plot colours and bandwidths, plot titles with control bytes, numbers past the integer range (`ralloc()` ratios, counts, digits), functions or environments where data belong, and `NA` where names belong now give clean errors.
 * In a bundle without a fast SHA-256, `openssl` is tried before the pure-R digest, which is kept to files of 4 MiB.
 * `audcats()` reads haven-labelled columns (also inside `I()`) by their codes, so it no longer fails with the `vctrs` version on macOS.
