@@ -1491,8 +1491,8 @@ library as estimators. Any error in that translation is ours.
 
 If you use rmoriebricklayer in your research, please cite the software:
 
-> Ruhela, V. S. (2026). *rmoriebricklayer: Post-Quantum Signing and
-> Reproducibility Capsules for R.* R package version 1.0.3.
+> Ruhela, V. S. (2026). *rmoriebricklayer: Reproducible Data Capsules
+> with Provenance and Fallback.* R package version 1.0.3.
 > <doi:10.32614/CRAN.package.rmoriebricklayer>.
 > <https://CRAN.R-project.org/package=rmoriebricklayer>
 
@@ -1502,7 +1502,7 @@ entry stamped with the exact installed version, sourced from
 
 ``` bibtex
 @Manual{ruhela_rmoriebricklayer_2026,
-  title  = {rmoriebricklayer: Post-Quantum Signing and Reproducibility Capsules for R},
+  title  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},
   author = {Ruhela, Vansh Singh},
   year   = {2026},
   doi    = {10.32614/CRAN.package.rmoriebricklayer},
