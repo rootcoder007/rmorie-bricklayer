@@ -1494,7 +1494,7 @@ If you use rmoriebricklayer in your research, please cite the software:
 > Ruhela, V. S. (2026). *rmoriebricklayer: Reproducible Data Capsules
 > with Provenance and Fallback.* R package version 1.0.3.
 > <doi:10.32614/CRAN.package.rmoriebricklayer>.
-> <https://CRAN.R-project.org/package=rmoriebricklayer>
+> <https://github.com/rootcoder007/rmorie-bricklayer>
 
 BibTeX (or run `citation("rmoriebricklayer")` after installation for the
 entry stamped with the exact installed version, sourced from
@@ -1506,7 +1506,7 @@ entry stamped with the exact installed version, sourced from
   author = {Ruhela, Vansh Singh},
   year   = {2026},
   doi    = {10.32614/CRAN.package.rmoriebricklayer},
-  url    = {https://rootcoder007.r-universe.dev/rmoriebricklayer}
+  url    = {https://github.com/rootcoder007/rmorie-bricklayer}
 }
 ```
 
