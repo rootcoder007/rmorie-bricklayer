@@ -24,7 +24,9 @@
 #' environment: \env{PATH}, the locale variables (\env{LANG},
 #' \env{LANGUAGE}, \env{LC_ALL} and the \env{LC_} categories such as
 #' \env{LC_CTYPE}, no other \env{LC_} name; \env{TZ}), the library paths
-#' of this session (\env{R_LIBS}), a fresh temporary \env{HOME} and
+#' of this session (\env{R_LIBS}), the proxy variables
+#' (\env{http_proxy}, \env{https_proxy}, \env{no_proxy}) when they hold
+#' no user name or password, a fresh temporary \env{HOME} and
 #' \env{TMPDIR}, and no other variable, so API keys, tokens and passwords
 #' in the environment (or in \file{~/.Renviron}) do not reach it. On
 #' Windows the variables that look like credentials are removed instead (a

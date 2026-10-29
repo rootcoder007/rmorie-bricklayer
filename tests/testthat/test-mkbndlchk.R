@@ -66,6 +66,30 @@ ran_ok <- function(a) {
 
 expect3 <- '{"expected": {"total_checks": 3, "pass_csv": 2, "pass_real": 3}}'
 
+sleeper <- function(tok) {
+  if (identical(Sys.info()[["sysname"]], "Linux")) {
+    file.copy(normalizePath(Sys.which("sh")), tok)
+    Sys.chmod(tok, "0755")
+    return('-c "while :; do sleep 1; done"')
+  }
+  file.symlink(Sys.which("sleep"), tok)
+  "300"
+}
+
+procs_named <- function(argv0) {
+  pids <- list.files("/proc", pattern = "^[0-9]+$")
+  hit <- vapply(pids, function(p) {
+    # a process can end between the listing and the read
+    a <- tryCatch(readBin(file.path("/proc", p, "cmdline"), "raw", 4096L),
+                  error = function(e) raw(), warning = function(w) raw())
+    if (!length(a)) return(FALSE)
+    z <- which(a == as.raw(0L))
+    first <- if (length(z)) a[seq_len(z[1L] - 1L)] else a
+    identical(rawToChar(first), argv0)
+  }, NA)
+  as.integer(pids[hit])
+}
+
 test_that("a bundle that runs and gives the expected counts is verified", {
   d <- withr::local_tempdir()
   zip <- fake_bundle(d, man_run(c("PASS", "PASS", "INFO")), expect3)
@@ -326,10 +350,15 @@ test_that("the run gets no credentials, a fresh HOME and no orphans", {
     IA_S3_ACCESS_KEY = "fake", IA_S3_SECRET_KEY = "fake",
     MY_DB_PASSWORD = "fake"
   )
+  # the background sleep runs under a unique name, so it can be found in
+  # this machine's process table whatever PID namespace it started in
+  tok <- file.path(d, paste0("rmbl_sleep_", basename(tempfile(""))))
+  arg <- sleeper(tok)
   run <- c(
     "writeLines(names(Sys.getenv()), 'envnames.txt')",
     "writeLines(Sys.getenv(c('HOME', 'TMPDIR')), 'home.txt')",
-    "system('sleep 300 > /dev/null 2>&1 & echo $! > orphan.pid')",
+    sprintf("system('%s %s > /dev/null 2>&1 & echo $! > orphan.pid')",
+            tok, arg),
     man_run("PASS")
   )
   a <- mkbndlchk(fake_bundle(d, run, top = "leak_v1"), keep = TRUE,
@@ -345,10 +374,18 @@ test_that("the run gets no credentials, a fresh HOME and no orphans", {
   expect_false(dir.exists(home[[1L]]))
   expect_true(startsWith(home[[2L]], home[[1L]]))
   # what the run put in the background was killed with it
-  pid <- as.integer(readLines(file.path(a$dir, "orphan.pid")))
-  alive <- isTRUE(tools::pskill(pid, 0L))
-  if (alive) tools::pskill(pid)
-  expect_false(alive)
+  Sys.sleep(0.3)
+  if (dir.exists("/proc")) {
+    left <- procs_named(tok)
+    for (p in left) tools::pskill(p)
+    expect_length(left, 0L)
+  } else if (identical(a$isolation, "process group")) {
+    # the PID the run wrote is this machine's only outside a PID namespace
+    pid <- as.integer(readLines(file.path(a$dir, "orphan.pid")))
+    alive <- isTRUE(tools::pskill(pid, 0L))
+    if (alive) tools::pskill(pid)
+    expect_false(alive)
+  }
 })
 
 test_that("the run's environment keeps only what R needs", {
@@ -535,30 +572,6 @@ test_that("an unzip that fails and a manifest that is not an object", {
 # sleep does not do on Linux, where uutils' sleep (r-universe's image) is
 # one program that refuses to start under another name. Returns the
 # arguments that keep it running.
-sleeper <- function(tok) {
-  if (identical(Sys.info()[["sysname"]], "Linux")) {
-    file.copy(normalizePath(Sys.which("sh")), tok)
-    Sys.chmod(tok, "0755")
-    return('-c "while :; do sleep 1; done"')
-  }
-  file.symlink(Sys.which("sleep"), tok)
-  "300"
-}
-
-procs_named <- function(argv0) {
-  pids <- list.files("/proc", pattern = "^[0-9]+$")
-  hit <- vapply(pids, function(p) {
-    # a process can end between the listing and the read
-    a <- tryCatch(readBin(file.path("/proc", p, "cmdline"), "raw", 4096L),
-                  error = function(e) raw(), warning = function(w) raw())
-    if (!length(a)) return(FALSE)
-    z <- which(a == as.raw(0L))
-    first <- if (length(z)) a[seq_len(z[1L] - 1L)] else a
-    identical(rawToChar(first), argv0)
-  }, NA)
-  as.integer(pids[hit])
-}
-
 test_that("in a PID namespace even a setsid daemon dies with the run", {
   skip_on_os(c("windows", "mac", "solaris"))
   skip_if(is.null(.bndlchk_unshare()), "no unprivileged PID namespace here")
