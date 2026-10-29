@@ -93,7 +93,12 @@ cases <- list(
     r <- run("pack", d, "--dest", home); check(r$status == 0L && file.exists(file.path(home, "packproj_v1.zip")), r$text)
     # the zip run as a recipient's copy, offline on synthetic data, and checked
     r <- run("pack", "--check", file.path(home, "packproj_v1.zip"), "--synthetic")
-    check(r$status == 0L && grepl("Bundle audit: VERIFIED", r$text, fixed = TRUE), r$text)
+    if (identical(Sys.info()[["sysname"]], "Darwin")) {
+      # macOS cannot see a process that leaves the run: without a container the check fails closed (by design)
+      check(r$status == 1L && grepl("cannot detect escaped processes", r$text, fixed = TRUE) && grepl("1 of 7 checks failed", r$text, fixed = TRUE), r$text)
+    } else {
+      check(r$status == 0L && grepl("Bundle audit: VERIFIED", r$text, fixed = TRUE), r$text)
+    }
     r <- run("pack", "--check", file.path(home, "none.zip")); check(r$status == 1L && grepl("not an existing .zip", r$text, fixed = TRUE), r$text)
     r <- run("pack"); check(r$status == 2L && grepl("pack DIR", r$text, fixed = TRUE), r$text)
   },

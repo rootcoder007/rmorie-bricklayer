@@ -340,4 +340,3 @@ test_that("rptanl() Markdown tables hold no raw control bytes", {
   expect_identical(.md_num1(c(20, 2023, NA), big = FALSE),
                    c("20", "2023", ""))
 })
-

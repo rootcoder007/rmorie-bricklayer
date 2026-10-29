@@ -809,4 +809,3 @@ test_that("user services a run starts are found, stopped and fail the check", {
   expect_identical(.bndlchk_units(sc), character())
   expect_identical(.bndlchk_units(""), character())
 })
-
