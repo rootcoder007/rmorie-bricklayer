@@ -373,7 +373,7 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20, offline = FALSE) {
 .rmbl_services_write <- function(path, doc_bytes, sig_json) {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   writeBin(doc_bytes, path)
-  writeLines(sig_json, sub("[.]json$", ".sig", path))
+  .rmbl_wlines(sig_json, sub("[.]json$", ".sig", path))
   invisible(path)
 }
 

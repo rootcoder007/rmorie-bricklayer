@@ -370,7 +370,7 @@ format.rmbl_fipsmod <- function(x, ...) {
   d <- file.path(tempdir(), "rmbl-fips")
   dir.create(d, showWarnings = FALSE, mode = "0700")
   cfg <- file.path(d, "openssl.cnf")
-  writeLines(.rmbl_fipsmod_conf_text(), cfg)
+  .rmbl_wlines(.rmbl_fipsmod_conf_text(), cfg)
   if (!is.null(.rmbl_fipsmod_provider(openssl, cfg))) {
     return(cfg)
   }
@@ -386,7 +386,7 @@ format.rmbl_fipsmod <- function(x, ...) {
   if (res$status != 0L || !file.exists(inst)) {
     return(cfg)
   }
-  writeLines(.rmbl_fipsmod_conf_text(inst), cfg)
+  .rmbl_wlines(.rmbl_fipsmod_conf_text(inst), cfg)
   cfg
 }
 
@@ -576,7 +576,7 @@ format.rmbl_fipsmod <- function(x, ...) {
   d <- .rmbl_fipsmod_dir()
   on.exit(unlink(d, recursive = TRUE), add = TRUE)
   f <- file.path(d, c("key.pem", "msg", "sig"))
-  writeLines(key$pem, f[1L])
+  .rmbl_wlines(key$pem, f[1L])
   writeBin(.rmbl_sign_message(msg), f[2L])
   cx <- .rmbl_fips_context(ctx)
   args <- c("pkeyutl", "-sign", "-rawin", "-inkey", .rmbl_fipsmod_q(f[1L]),

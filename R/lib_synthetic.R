@@ -535,7 +535,7 @@ print.bricklayer_synthetic <- function(x, ...) {
   jstr <- function(x) {
     paste0("\"", gsub("\"", "\\\"", as.character(x), fixed = TRUE), "\"")
   }
-  writeLines(
+  .rmbl_wlines(
     c(
       "{",
       "  \"synthetic\": true,",

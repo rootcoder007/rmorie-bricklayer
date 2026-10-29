@@ -383,7 +383,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
 #' @return `path`, invisibly.
 #' @noRd
 .bl_bnd_write <- function(bundle, path) {
-  writeLines(
+  .rmbl_wlines(
     tojs(
       unclass(bundle),
       auto_unbox = TRUE,

@@ -1018,7 +1018,7 @@ wrrcdmnf <- function(man, path) {
     stop("`path` must be a file path or a connection", call. = FALSE)
   }
   path <- .rmbl_out_file(path, "path")
-  writeLines(tojs(unclass(man)), path)
+  .rmbl_wlines(tojs(unclass(man)), path)
   invisible(path)
 }
 

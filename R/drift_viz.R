@@ -1356,10 +1356,10 @@ drftapp <- function(
     drfthtml(now(), f, warn = bands()$warn, fail = bands()$fail)
   })
   output$md <- shiny::downloadHandler("drift.md", function(f) {
-    writeLines(.bl_drift_md(now(), bands()), f)
+    .rmbl_wlines(.bl_drift_md(now(), bands()), f)
   })
   output$json <- shiny::downloadHandler("drift.json", function(f) {
-    writeLines(
+    .rmbl_wlines(
       .bl_drift_json(.bl_drift_payload(now(), bands()$warn, bands()$fail)),
       f
     )

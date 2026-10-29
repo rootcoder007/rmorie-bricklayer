@@ -78,9 +78,10 @@ usecpstmpl <- function(path, name = basename(path), ex = FALSE) {
   } else {
     "TODO: https://example.org/open-data/table.csv"
   }
-  writeLines(.bl_tmpl_prov(name, src), file.path(path, "data_provenance.json"))
-  writeLines(.bl_tmpl_script(), file.path(path, "analysis.R"))
-  writeLines(.bl_tmpl_readme(name), file.path(path, "README.md"))
+  .rmbl_wlines(.bl_tmpl_prov(name, src),
+               file.path(path, "data_provenance.json"))
+  .rmbl_wlines(.bl_tmpl_script(), file.path(path, "analysis.R"))
+  .rmbl_wlines(.bl_tmpl_readme(name), file.path(path, "README.md"))
   invisible(path)
 }
 

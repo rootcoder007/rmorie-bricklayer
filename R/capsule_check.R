@@ -511,7 +511,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
           call. = FALSE
         )
       }
-      writeLines(
+      .rmbl_wlines(
         tojs(
           .bl_pin(prov, df, fn),
           auto_unbox = TRUE,

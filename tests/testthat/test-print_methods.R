@@ -555,7 +555,16 @@ test_that("report writers write no control byte from a label", {
                            c(esc, paste0(esc, "2")))
   for (ext in c("md", "html", "txt")) {
     f <- file.path(d, paste0("r.", ext))
-    do.call(mkset, c(items, list(title = esc, file = f, plots = FALSE)))
+    # R itself warns when it makes an argument name it cannot show in a C
+    # locale (the names reach mkset() as call tags); mkset() adds none
+    withCallingHandlers(
+      do.call(mkset, c(items, list(title = esc, file = f, plots = FALSE))),
+      warning = function(w) {
+        if (grepl("unable to translate", conditionMessage(w), fixed = TRUE)) {
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
     txt <- paste(readLines(f, warn = FALSE), collapse = "\n")
     expect_false(bad(txt), info = ext)
     expect_match(txt, "\\033", fixed = TRUE, info = ext)

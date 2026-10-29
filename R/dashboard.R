@@ -1158,7 +1158,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   } else if (.bl_dl_table(x, TRUE)) {
     utils::write.csv(.bl_dl_table(x), file, row.names = FALSE)
   } else {
-    writeLines(utils::capture.output(print(x)), file)
+    .rmbl_wlines(utils::capture.output(print(x)), file)
   }
   invisible(file)
 }

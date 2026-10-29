@@ -570,7 +570,7 @@ rmbldemo <- function(name = NULL) {
     theorems = th
   )
   f <- tempfile("rmbl-demo-ledger-", fileext = ".json")
-  writeLines(tojs(led, auto_unbox = TRUE), f)
+  .rmbl_wlines(tojs(led, auto_unbox = TRUE), f)
   ldgrread(f)
 }
 

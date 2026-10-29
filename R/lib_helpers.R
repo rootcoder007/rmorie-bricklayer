@@ -299,7 +299,7 @@ wrtxtfb <- function(text, path) {
     error = function(e) FALSE
   )
   if (!ok) {
-    writeLines(toascii(text), path)
+    .rmbl_wlines(toascii(text), path)
   } # nocov -- encoding-error retry
   invisible(path)
 }
@@ -1143,4 +1143,17 @@ wrtxtfb <- function(text, path) {
 .rmbl_pct <- function(x) {
   vapply(x, utils::URLencode, "", reserved = TRUE, repeated = TRUE,
          USE.NAMES = FALSE)
+}
+
+#' Writes text to a file as UTF-8 bytes, whatever the locale: writeLines()
+#' alone turns each character a C locale cannot show into "<U+00E9>" text
+#' (a manifest naming "\u00e9.csv" was written as "<U+00E9>.csv").
+#' @param text The lines.
+#' @param con A file name or connection.
+#' @param sep The line end.
+#' @param useBytes Ignored: the bytes are always written as they are.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_wlines <- function(text, con = stdout(), sep = "\n", useBytes = TRUE) {
+  writeLines(enc2utf8(as.character(text)), con, sep = sep, useBytes = TRUE)
 }

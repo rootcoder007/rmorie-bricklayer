@@ -840,7 +840,7 @@ format.rmbl_archive_capture <- function(x, ...) {
     })
   )
   mpath <- file.path(dir, "manifest.json")
-  writeLines(tojs(man), mpath)
+  .rmbl_wlines(tojs(man), mpath)
   mpath
 }
 

@@ -89,6 +89,8 @@
 
 ## Fixed after the 1.0.3 recheck
 
+* In a C locale, files the package writes (capture and categorical manifests, provenance, reports, summaries, launcher scripts) had each character the locale cannot show written as text such as `<U+00E9>`, so a manifest naming `é.csv` named a file that does not exist. They are written as UTF-8 bytes now, in any locale.
+* `mkbndlchk()` with `container = TRUE` refused every folder on Windows, reading the drive's colon (`C:`) as a separator; only a colon or comma after the drive is refused now.
 * Panel estimators with one unit's weight near the largest double (1e308 next to 1) no longer stop with "system is exactly singular": the weights are scaled so the smaller ones stay normal numbers, and a pre-trend test with no variation is NA.
 * `mkbndlchk()` no longer waits out its whole time limit when `bash` is not on the PATH (`/bin/sh` is dash on Debian and Ubuntu, which has no job control without a terminal): a one-second run took the full limit and reported a timeout.
 * `mkbndlchk()` stops only what the run left behind: a process the user's own job (for example `parallel::mcparallel()`) started during the run is left alone, and a user systemd service is stopped only when its process carries the run's mark.

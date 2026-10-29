@@ -192,7 +192,7 @@
       f <- file.path(d, paste0(key, ".json"))
       # never a fixed name
       tmp <- tempfile(pattern = paste0(key, "-"), tmpdir = d, fileext = ".tmp")
-      writeLines(
+      .rmbl_wlines(
         enc2utf8(tojs(
           list(
             question = prompt,

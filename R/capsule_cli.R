@@ -409,7 +409,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   if (!identical(.rmbl_realpath(f$path), .rmbl_realpath(dest))) {
     file.copy(f$path, dest, overwrite = TRUE)
   }
-  writeLines(js, pf)
+  .rmbl_wlines(js, pf)
   invisible(dest)
 }
 

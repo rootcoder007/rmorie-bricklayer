@@ -360,7 +360,7 @@ rptmd <- function(report, path = NULL, title = "Capsule report") {
   if (is.null(path)) {
     return(md)
   }
-  writeLines(md, path)
+  .rmbl_wlines(md, path)
   invisible(md)
 }
 

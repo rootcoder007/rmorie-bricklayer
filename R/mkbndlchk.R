@@ -535,7 +535,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
   envp <- Sys.which("env")
   if (!nzchar(envp)) envp <- "/usr/bin/env"
   wrap <- file.path(home, "run.sh")
-  writeLines(.bndlchk_wrap(), wrap)
+  .rmbl_wlines(.bndlchk_wrap(), wrap)
   # the run's mark: what still carries it afterwards outlived the run
   tag <- basename(tempfile("rmblchk"))
   env <- c(.rmbl_envmin(home), RMBL_CHKRUN = tag)
@@ -864,7 +864,8 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' @return Character.
 #' @noRd
 .bndlchk_ctrargs <- function(kind, name, net, root, out, dd) {
-  bad <- grepl("[:,]", c(root, out, dd))
+  # a Windows drive ("C:") is not a separator; any other ':' or ',' is
+  bad <- grepl("[:,]", sub("^[A-Za-z]:", "", c(root, out, dd)))
   if (any(bad)) {
     stop("mkbndlchk: a container check needs folders without ':' or ','",
          call. = FALSE)

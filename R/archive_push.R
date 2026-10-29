@@ -221,7 +221,7 @@ arcpush <- function(
     as.list(out[i, c("url", "mirror", "capture_id", "archive", "wayback")])
   })
   p <- file.path(dir, "push.json")
-  writeLines(tojs(recs), p)
+  .rmbl_wlines(tojs(recs), p)
   invisible(p)
 }
 

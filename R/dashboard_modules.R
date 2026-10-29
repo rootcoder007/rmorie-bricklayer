@@ -333,10 +333,10 @@
       if (length(chosen())) .bl_rpt_md(chosen(), input$title) else ""
     )
     output$html <- shiny::downloadHandler("rmbl-report.html", function(file) {
-      writeLines(.bl_rpt_html(chosen(), input$title), file)
+      .rmbl_wlines(.bl_rpt_html(chosen(), input$title), file)
     })
     output$md <- shiny::downloadHandler("rmbl-report.md", function(file) {
-      writeLines(.bl_rpt_md(chosen(), input$title), file)
+      .rmbl_wlines(.bl_rpt_md(chosen(), input$title), file)
     })
     invisible(NULL)
   })

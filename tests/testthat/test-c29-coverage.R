@@ -150,3 +150,134 @@ test_that("plots check colours and escape titles", {
   expect_no_warning(plotsm(1:6, rep(1:3, 2), rep(c("a", "b"), each = 3),
                            main = "A\033[2J"))
 })
+
+test_that("files are written as UTF-8 in a C locale too", {
+  skip_on_os("windows")
+  old <- Sys.getlocale("LC_CTYPE")
+  on.exit(Sys.setlocale("LC_CTYPE", old), add = TRUE)
+  skip_if(!nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", "C"))),
+          "no C locale")
+  f <- withr::local_tempfile()
+  .rmbl_wlines(tojs(list(file = "\u00e9.csv")), f)
+  expect_gt(grepRaw(as.raw(c(0xc3, 0xa9)), readBin(f, "raw", 100L),
+                    fixed = TRUE), 0L)
+  expect_false(grepl("<U+", rawToChar(readBin(f, "raw", 100L)), fixed = TRUE))
+})
+
+# ---- the rest of the patch: every branch codecov found unreached ----
+
+test_that("with no XDG_RUNTIME_DIR the user's runtime folder is /run/user", {
+  withr::local_envvar(XDG_RUNTIME_DIR = "")
+  expect_match(.bndlchk_uenv(), "^XDG_RUNTIME_DIR=/run/user/")
+})
+
+test_that("a run in a PID namespace looks for no user services", {
+  skip_on_os(c("windows", "mac", "solaris"))
+  # "env" stands in for unshare: the run's command is then the same
+  local_mocked_bindings(.bndlchk_unshare = function(...) "env")
+  root <- withr::local_tempdir()
+  writeLines("cat('ran\\n')", file.path(root, "setup_and_run.R"))
+  r <- .bndlchk_run(root, NULL, FALSE, win = FALSE)
+  expect_identical(r$status, 0L)
+  expect_match(r$isolation, "pid namespace", fixed = TRUE)
+})
+
+test_that("process listing and its helpers outside Linux", {
+  expect_identical(.bndlchk_desc(NULL), integer())
+  expect_length(.bndlchk_left("rmblchk-none", sys = "Darwin"), 0L)
+  expect_null(.bndlchk_unshare(""))
+  skip_on_os(c("windows", "mac", "solaris"))
+  expect_null(.bndlchk_unshare(Sys.which("false")))
+  local_mocked_bindings(Sys.info = function(...) c(sysname = "Darwin"),
+                        .package = "base")
+  expect_null(.bndlchk_procs())
+})
+
+test_that("every SHA-256 tool a system may have is found", {
+  only <- function(keep) {
+    function(names) {
+      stats::setNames(ifelse(names %in% keep, file.path("/x", names), ""),
+                      names)
+    }
+  }
+  local_mocked_bindings(Sys.which = only("certutil"), .package = "base")
+  expect_identical(.rmbl_shatool("Windows")$args, "-hashfile")
+  local_mocked_bindings(Sys.which = only("shasum"), .package = "base")
+  expect_identical(.rmbl_shatool("Linux")$args, c("-a", "256"))
+  local_mocked_bindings(Sys.which = only(c("sha256sum", "shasum")),
+                        .package = "base")
+  expect_identical(.rmbl_shatool("Darwin")$args, c("-a", "256"))
+  local_mocked_bindings(.rmbl_shatool = function(sys) NULL)
+  expect_null(.rmbl_ossha(tempfile()))
+})
+
+test_that("a timestamp whose checks all passed reads not verified", {
+  need <- c("token_structure", "message_imprint", "signature",
+            "attribute_digest")
+  ts <- list(checks = data.frame(check = need, ok = TRUE))
+  expect_identical(.bl_ts_failed(ts), "not verified")
+})
+
+test_that("a URL ending in .. names the capture index", {
+  expect_identical(.bl_capture_name("https://x.org/a/.."), "index")
+})
+
+test_that("rows the Wayback refuses offline are never sent", {
+  local_mocked_bindings(.bl_cap_wb_why = function(u) "not http(s)")
+  out <- data.frame(url = "ftp://x.org/a", wayback = NA_character_)
+  r <- .bl_cap_wayback(out, TRUE, "AK", "SK")
+  expect_identical(r$wayback, "not asked: not http(s)")
+})
+
+test_that("certprs passes the package's own refusals through", {
+  local_mocked_bindings(.rmbl_certprs = function(der) {
+    stop(simpleError("boom"))
+  })
+  expect_error(certprs(as.raw(1:3)), "^boom$")
+})
+
+test_that("a certificate whose tbsCertificate is cut short is refused", {
+  der <- as.raw(c(
+    0x30, 0x18,
+    0x30, 0x03, 0x02, 0x01, 0x01,
+    0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01,
+    0x0b, 0x05, 0x00,
+    0x03, 0x02, 0x00, 0x00
+  ))
+  expect_error(certprs(der), "tbsCertificate is incomplete")
+})
+
+test_that("a plain text column in a table is escaped, not formatted", {
+  out <- .md_table(data.frame(period = c("a\033[2J", "b"), n = 1:2),
+                   plain = "period")
+  txt <- paste(out, collapse = "\n")
+  expect_false(grepl("\033", txt, fixed = TRUE))
+  expect_match(txt, "b", fixed = TRUE)
+})
+
+test_that("folding to ASCII spells or names each character", {
+  expect_identical(.rmbl_fold1("aé"), "ae")
+  local_mocked_bindings(toascii = function(x, ...) "")
+  expect_identical(.rmbl_fold1("aé"), "a<U+00E9>")
+})
+
+test_that("a plot title may be an expression", {
+  e <- expression(alpha^2)
+  expect_identical(.bl_main(e, "x"), e)
+})
+
+test_that("a token with no digest algorithm or an empty certificates field", {
+  set <- list(class = 0L, tag = 17, constructed = TRUE, children = list())
+  expect_error(.rmbl_ts_digest_algs(set), "digestAlgorithms is empty")
+  sd <- list(children = list(list(class = 2L, tag = 0, constructed = TRUE,
+                                  children = list())))
+  expect_error(.rmbl_ts_certs(sd, raw()), "certificates field is empty")
+})
+
+test_that("a signature algorithm that names another digest is refused", {
+  expect_match(
+    .rmbl_ts_sigalg_why("1.2.840.113549.1.1.11", "RSA", "sha384"),
+    "names sha256, the SignerInfo digest is sha384", fixed = TRUE
+  )
+  expect_null(.rmbl_ts_sigalg_why("1.2.840.113549.1.1.11", "RSA", "sha256"))
+})

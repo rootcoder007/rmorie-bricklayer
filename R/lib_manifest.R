@@ -337,7 +337,7 @@ wrmnfjs <- function(man, path, canon = FALSE) {
     writeLines(mnfcanon(man), path, useBytes = TRUE)
     return(invisible(path))
   }
-  writeLines(
+  .rmbl_wlines(
     tojs(
       man,
       auto_unbox = TRUE,
@@ -532,7 +532,7 @@ wrsmrytxt <- function(
     .rmbl_smry_counts(counts, files),
     .rmbl_smry_tail(man, whatwasdone, contact, lic)
   )
-  writeLines(lines, file.path(outdir, "SUMMARY.txt"))
+  .rmbl_wlines(lines, file.path(outdir, "SUMMARY.txt"))
   invisible(file.path(outdir, "SUMMARY.txt"))
 }
 

@@ -2768,7 +2768,7 @@ instcli <- function(
 # nocov start -- the Windows wrapper; the coverage runner is Linux
 .bl_launcher_cmd <- function(dir, nm, lib) {
   target <- file.path(dir, paste0(nm, ".cmd"))
-  writeLines(
+  .rmbl_wlines(
     sprintf(
       paste0(
         "@echo off\r\nset RMBL_PROG=",
@@ -2809,7 +2809,7 @@ instcli <- function(
     "quit(status = as.integer(q)) })"
   )
   body <- gsub("'", "'\\''", body, fixed = TRUE)
-  writeLines(
+  .rmbl_wlines(
     c(
       "#!/bin/sh",
       sprintf(

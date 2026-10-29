@@ -243,7 +243,7 @@ push_hostile <- function(dir, files) {
     one$url <- sprintf("https://s.org/h%d", k)
     m$files[[length(m$files) + 1L]] <- one
   }
-  writeLines(tojs(m), file.path(dir, "manifest.json"))
+  .rmbl_wlines(tojs(m), file.path(dir, "manifest.json"))
   invisible(dir)
 }
 
@@ -299,10 +299,14 @@ test_that(
 test_that("a file name is percent-encoded in its S3 key and mirror", {
   dir <- withr::local_tempdir()
   push_capture(dir)
-  file.rename(file.path(dir, "a.zip"), file.path(dir, "a b#?.zip"))
+  # Windows allows no '?' in a file name: '%' stands in for it there
+  win <- .Platform$OS.type == "windows"
+  nm <- if (win) "a b#%.zip" else "a b#?.zip"
+  enc <- if (win) "a%20b%23%25.zip" else "a%20b%23%3F.zip"
+  file.rename(file.path(dir, "a.zip"), file.path(dir, nm))
   m <- fromjs(file.path(dir, "manifest.json"), simplifyVector = FALSE)
-  m$files[[1L]]$file <- "a b#?.zip"
-  writeLines(tojs(m), file.path(dir, "manifest.json"))
+  m$files[[1L]]$file <- nm
+  .rmbl_wlines(tojs(m), file.path(dir, "manifest.json"))
   rec <- new.env()
   rec$puts <- character()
   local_mocked_bindings(
@@ -314,10 +318,10 @@ test_that("a file name is percent-encoded in its S3 key and mirror", {
   r <- arcpush(dir, item = "test-item-2026", ak = "AK1", sk = "SK1",
                tsa = NULL)
   expect_true(
-    "https://s3.us.archive.org/test-item-2026/a%20b%23%3F.zip" %in% rec$puts
+    paste0("https://s3.us.archive.org/test-item-2026/", enc) %in% rec$puts
   )
   expect_identical(
-    r$mirror[1L], "https://archive.org/download/test-item-2026/a%20b%23%3F.zip"
+    r$mirror[1L], paste0("https://archive.org/download/test-item-2026/", enc)
   )
   expect_error(.bl_ia_key_path("../x"), "not a file name inside")
 })

@@ -530,6 +530,21 @@ test_that("an unzip that fails and a manifest that is not an object", {
 })
 
 # PIDs of processes whose first argument is exactly `argv0` (Linux /proc)
+# A process the run leaves behind, under a name of its own (procs_named()
+# finds it by argv[0]): a copy of the shell sleeping in a loop. A link to
+# sleep does not do on Linux, where uutils' sleep (r-universe's image) is
+# one program that refuses to start under another name. Returns the
+# arguments that keep it running.
+sleeper <- function(tok) {
+  if (identical(Sys.info()[["sysname"]], "Linux")) {
+    file.copy(normalizePath(Sys.which("sh")), tok)
+    Sys.chmod(tok, "0755")
+    return('-c "while :; do sleep 1; done"')
+  }
+  file.symlink(Sys.which("sleep"), tok)
+  "300"
+}
+
 procs_named <- function(argv0) {
   pids <- list.files("/proc", pattern = "^[0-9]+$")
   hit <- vapply(pids, function(p) {
@@ -550,8 +565,8 @@ test_that("in a PID namespace even a setsid daemon dies with the run", {
   skip_if(!nzchar(Sys.which("setsid")), "no setsid")
   d <- withr::local_tempdir()
   tok <- file.path(d, paste0("rmbl_sleep_", basename(tempfile(""))))
-  file.symlink(Sys.which("sleep"), tok)
-  run <- c(sprintf("system('setsid -f %s 300 > /dev/null 2>&1')", tok),
+  arg <- sleeper(tok)
+  run <- c(sprintf("system('setsid -f %s %s > /dev/null 2>&1')", tok, arg),
            "Sys.sleep(0.5)", man_run("PASS"))
   a <- mkbndlchk(fake_bundle(d, run, top = "daemon_v1"))
   expect_true(ran_ok(a))
@@ -602,9 +617,9 @@ test_that("an escape that clears its environment is still found and killed", {
   d <- withr::local_tempdir()
   for (how in c("env -u RMBL_CHKRUN", "env -i PATH=/usr/bin:/bin")) {
     tok <- file.path(d, paste0("rmbl_sleep_", basename(tempfile(""))))
-    file.symlink(Sys.which("sleep"), tok)
-    run <- c(sprintf("system('%s setsid -f %s 300 > /dev/null 2>&1')", how,
-                     tok), "Sys.sleep(0.5)", man_run("PASS"))
+    arg <- sleeper(tok)
+    run <- c(sprintf("system('%s setsid -f %s %s > /dev/null 2>&1')", how,
+                     tok, arg), "Sys.sleep(0.5)", man_run("PASS"))
     a <- mkbndlchk(fake_bundle(d, run, top = basename(tok)))
     expect_false(a$ok, info = how)
     row <- a$checks[a$checks$check == "isolation", ]
@@ -626,10 +641,11 @@ test_that("a process that outlives a process-group run fails the check", {
   local_mocked_bindings(.bndlchk_unshare = function(...) NULL)
   d <- withr::local_tempdir()
   tok <- file.path(d, paste0("rmbl_sleep_", basename(tempfile(""))))
-  file.symlink(Sys.which("sleep"), tok)
+  arg <- sleeper(tok)
   # setsid leaves the run's process group; on macOS a perl setsid() does
   daemon <- if (nzchar(Sys.which("setsid"))) {
-    sprintf("system('setsid %s 300 > /dev/null 2>&1 < /dev/null &')", tok)
+    sprintf("system('setsid %s %s > /dev/null 2>&1 < /dev/null &')", tok,
+            arg)
   } else {
     sprintf(paste0("system('perl -e \"use POSIX; fork and exit; ",
                    "POSIX::setsid(); exec q{%s}, 300\" > /dev/null 2>&1')"),

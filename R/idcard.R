@@ -169,7 +169,7 @@ idcrd <- function(
   if (is.null(file)) {
     return(card)
   }
-  writeLines(
+  .rmbl_wlines(
     .bl_id_json(card),
     .rmbl_out_file(file, "file", connection = FALSE)
   )
