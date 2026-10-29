@@ -280,30 +280,85 @@ y
 #> │   Better  lower values                                                      │
 #> │   Groups  2 (by Gender)                                                     │
 #> │                                                                             │
-#> │   Gender  EndFiscalYear  NumberOfPlacements previous change change %        │
-#> │                          interval                                           │
-#> │   ──────  ─────────────  ────────────────── ──────── ────── ────────        │
-#> │                          ─────────────                                      │
-#> │   Female  2019           31 — — — —                                         │
+#> │   Gender              Female                                                │
+#> │   EndFiscalYear       2019                                                  │
+#> │   NumberOfPlacements  31                                                    │
+#> │   previous            —                                                     │
+#> │   change              —                                                     │
+#> │   change %              —                                                   │
+#> │   interval            —                                                     │
 #> │                                                                             │
-#> │   Female  2020           28 31 -3 ▼ -9.7% [-48%, +56%]                      │
+#> │   Gender              Female                                                │
+#> │   EndFiscalYear       2020                                                  │
+#> │   NumberOfPlacements  28                                                    │
+#> │   previous            31                                                    │
+#> │   change              -3                                                    │
+#> │   change %            ▼ -9.7%                                               │
+#> │   interval            [-48%...                                              │
 #> │                                                                             │
-#> │   Female  2021           12 28 -16 ▼ -57.1% [-80%, -13%]                    │
+#> │   Gender              Female                                                │
+#> │   EndFiscalYear       2021                                                  │
+#> │   NumberOfPlacements  12                                                    │
+#> │   previous            28                                                    │
+#> │   change              -16                                                   │
+#> │   change %            ▼ -57.1%                                              │
+#> │   interval            [-80%...                                              │
 #> │                                                                             │
-#> │   Female  2022           19 12 7 ▲ +58.3% [-27%, +258%]                     │
+#> │   Gender              Female                                                │
+#> │   EndFiscalYear       2022                                                  │
+#> │   NumberOfPlacements  19                                                    │
+#> │   previous            12                                                    │
+#> │   change              7                                                     │
+#> │   change %            ▲ +58.3%                                              │
+#> │   interval            [-27%...                                              │
 #> │                                                                             │
-#> │   Female  2023           24 19 5 ▲ +26.3% [-34%, +144%]                     │
+#> │   Gender              Female                                                │
+#> │   EndFiscalYear       2023                                                  │
+#> │   NumberOfPlacements  24                                                    │
+#> │   previous            19                                                    │
+#> │   change              5                                                     │
+#> │   change %            ▲ +26.3%                                              │
+#> │   interval            [-34%...                                              │
 #> │                                                                             │
-#> │   Male    2019           402 — — — —                                        │
+#> │   Gender              Male                                                  │
+#> │   EndFiscalYear       2019                                                  │
+#> │   NumberOfPlacements  402                                                   │
+#> │   previous            —                                                     │
+#> │   change              —                                                     │
+#> │   change %              —                                                   │
+#> │   interval            —                                                     │
 #> │                                                                             │
-#> │   Male    2020           377 402 -25 ▼ -6.2% [-19%, +8%]                    │
+#> │   Gender              Male                                                  │
+#> │   EndFiscalYear       2020                                                  │
+#> │   NumberOfPlacements  377                                                   │
+#> │   previous            402                                                   │
+#> │   change              -25                                                   │
+#> │   change %            ▼ -6.2%                                               │
+#> │   interval            [-19%...                                              │
 #> │                                                                             │
-#> │   Male    2021           190 377 -187 ▼ -49.6% [-58%, -40%]                 │
+#> │   Gender              Male                                                  │
+#> │   EndFiscalYear       2021                                                  │
+#> │   NumberOfPlacements  190                                                   │
+#> │   previous            377                                                   │
+#> │   change              -187                                                  │
+#> │   change %            ▼ -49.6%                                              │
+#> │   interval            [-58%...                                              │
 #> │                                                                             │
-#> │   Male    2022           268 190 78 ▲ +41.1% [+17%, +71%]                   │
+#> │   Gender              Male                                                  │
+#> │   EndFiscalYear       2022                                                  │
+#> │   NumberOfPlacements  268                                                   │
+#> │   previous            190                                                   │
+#> │   change              78                                                    │
+#> │   change %            ▲ +41.1%                                              │
+#> │   interval            [+17%...                                              │
 #> │                                                                             │
-#> │   Male    2023           331 268 63 ▲ +23.5% [+5%, +46%]                    │
-#> │                                                                             │
+#> │   Gender              Male                                                  │
+#> │   EndFiscalYear       2023                                                  │
+#> │   NumberOfPlacements  331                                                   │
+#> │   previous            268                                                   │
+#> │   change              63                                                    │
+#> │   change %            ▲ +23.5%                                              │
+#> │   interval            [+5%,...                                              │
 #> │                                                                             │
 #> │   Note: the first period of each group has nothing to compare with, so it   │
 #> │   shows no change.                                                          │

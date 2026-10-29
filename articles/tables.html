@@ -331,40 +331,40 @@ sides of it: a facility assigned two regions, a facility assigned none,
 a region code that belongs to a different province.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rgnmapintg.html">rgnmapintg</a></span><span class="op">(</span><span class="va">cw</span>, <span class="st">"facility"</span>, <span class="st">"region"</span>, regs <span class="op">=</span> <span class="va">pop</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Region map integrity</span> ───────────────────────────────────────────────────╮</span></span>
-<span><span class="co">#&gt; │   Checks   3                                                              │</span></span>
-<span><span class="co">#&gt; │   Verdict  every check passed                                             │</span></span>
-<span><span class="co">#&gt; │                                                                           │</span></span>
-<span><span class="co">#&gt; │   check                                        observed  expected  result │</span></span>
-<span><span class="co">#&gt; │   -------------------------------------------  --------  --------  ------ │</span></span>
-<span><span class="co">#&gt; │   units assigned more than one region                 0         0  pass   │</span></span>
-<span><span class="co">#&gt; │   units assigned no region                            0         0  pass   │</span></span>
-<span><span class="co">#&gt; │   region codes not in the reference geography         0         0  pass   │</span></span>
-<span><span class="co">#&gt; │                                                                           │</span></span>
-<span><span class="co">#&gt; │   A sound map gives each unit exactly one region, and only regions of     │</span></span>
-<span><span class="co">#&gt; │   the reference geography; each check counts the units that break that,   │</span></span>
-<span><span class="co">#&gt; │   and 0 passes.                                                           │</span></span>
-<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Region map integrity</span> ─────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Checks   3                                                            │</span></span>
+<span><span class="co">#&gt; │   Verdict  every check passed                                           │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   check                                     observed  expected  result  │</span></span>
+<span><span class="co">#&gt; │   ----------------------------------------  --------  --------  ------  │</span></span>
+<span><span class="co">#&gt; │   units assigned more than one region              0         0  pass    │</span></span>
+<span><span class="co">#&gt; │   units assigned no region                         0         0  pass    │</span></span>
+<span><span class="co">#&gt; │   region codes not in the reference geo...         0         0  pass    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   A sound map gives each unit exactly one region, and only regions of   │</span></span>
+<span><span class="co">#&gt; │   the reference geography; each check counts the units that break that, │</span></span>
+<span><span class="co">#&gt; │   and 0 passes.                                                         │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>Every check is written so that zero is the passing value, which is
 what makes the frame safe to record directly into a manifest.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">cw</span></span>
 <span><span class="va">bad</span><span class="op">$</span><span class="va">region</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"2406"</span>          <span class="co"># a code from another province</span></span>
 <span><span class="fu"><a href="../reference/rgnmapintg.html">rgnmapintg</a></span><span class="op">(</span><span class="va">bad</span>, <span class="st">"facility"</span>, <span class="st">"region"</span>, regs <span class="op">=</span> <span class="va">pop</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Region map integrity</span> ───────────────────────────────────────────────────╮</span></span>
-<span><span class="co">#&gt; │   Checks   3                                                              │</span></span>
-<span><span class="co">#&gt; │   Verdict  1 of 3 checks failed                                           │</span></span>
-<span><span class="co">#&gt; │                                                                           │</span></span>
-<span><span class="co">#&gt; │   check                                        observed  expected  result │</span></span>
-<span><span class="co">#&gt; │   -------------------------------------------  --------  --------  ------ │</span></span>
-<span><span class="co">#&gt; │   units assigned more than one region                 0         0  pass   │</span></span>
-<span><span class="co">#&gt; │   units assigned no region                            0         0  pass   │</span></span>
-<span><span class="co">#&gt; │   region codes not in the reference geography         1         0  FAIL   │</span></span>
-<span><span class="co">#&gt; │                                                                           │</span></span>
-<span><span class="co">#&gt; │   A sound map gives each unit exactly one region, and only regions of     │</span></span>
-<span><span class="co">#&gt; │   the reference geography; each check counts the units that break that,   │</span></span>
-<span><span class="co">#&gt; │   and 0 passes.                                                           │</span></span>
-<span><span class="co">#&gt; ╰───────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Region map integrity</span> ─────────────────────────────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Checks   3                                                            │</span></span>
+<span><span class="co">#&gt; │   Verdict  1 of 3 checks failed                                         │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   check                                     observed  expected  result  │</span></span>
+<span><span class="co">#&gt; │   ----------------------------------------  --------  --------  ------  │</span></span>
+<span><span class="co">#&gt; │   units assigned more than one region              0         0  pass    │</span></span>
+<span><span class="co">#&gt; │   units assigned no region                         0         0  pass    │</span></span>
+<span><span class="co">#&gt; │   region codes not in the reference geo...         1         0  FAIL    │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   A sound map gives each unit exactly one region, and only regions of   │</span></span>
+<span><span class="co">#&gt; │   the reference geography; each check counts the units that break that, │</span></span>
+<span><span class="co">#&gt; │   and 0 passes.                                                         │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="recomputing-is-not-the-same-as-checking">Recomputing is not the same as checking<a class="anchor" aria-label="anchor" href="#recomputing-is-not-the-same-as-checking"></a>
 </h3>
@@ -376,20 +376,20 @@ through text is not reported as a change.</p>
 <code class="sourceCode R"><span><span class="va">recomputed</span> <span class="op">&lt;-</span> <span class="va">cw</span></span>
 <span><span class="va">recomputed</span><span class="op">$</span><span class="va">region</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"3519"</span></span>
 <span><span class="fu"><a href="../reference/rgnmapcmp.html">rgnmapcmp</a></span><span class="op">(</span><span class="va">cw</span>, <span class="va">recomputed</span>, <span class="st">"facility"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Published and rebuilt region maps compared</span> ────────────────────────────╮</span></span>
-<span><span class="co">#&gt; │   Columns compared  1                                                    │</span></span>
-<span><span class="co">#&gt; │   Mismatched cells  1                                                    │</span></span>
-<span><span class="co">#&gt; │   Verdict           the maps disagree                                    │</span></span>
-<span><span class="co">#&gt; │                                                                          │</span></span>
-<span><span class="co">#&gt; │   column  cells  mismatched  first                                       │</span></span>
-<span><span class="co">#&gt; │   ------  -----  ----------  ------------------------------------------- │</span></span>
-<span><span class="co">#&gt; │   rows        4           0                                              │</span></span>
-<span><span class="co">#&gt; │   region      4           1  South Jail: published 3520, recomputed 3519 │</span></span>
-<span><span class="co">#&gt; │                                                                          │</span></span>
-<span><span class="co">#&gt; │   The rows line counts units present on one side only; each other line   │</span></span>
-<span><span class="co">#&gt; │   compares one column over the shared units. first writes out the first  │</span></span>
-<span><span class="co">#&gt; │   disagreement, and 0 mismatched throughout is agreement.                │</span></span>
-<span><span class="co">#&gt; ╰──────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Published and rebuilt region maps compared</span> ───────────────────────────╮</span></span>
+<span><span class="co">#&gt; │   Columns compared  1                                                   │</span></span>
+<span><span class="co">#&gt; │   Mismatched cells  1                                                   │</span></span>
+<span><span class="co">#&gt; │   Verdict           the maps disagree                                   │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   column  cells  mismatched  first                                      │</span></span>
+<span><span class="co">#&gt; │   ------  -----  ----------  ----------------------------------------   │</span></span>
+<span><span class="co">#&gt; │   rows        4           0                                             │</span></span>
+<span><span class="co">#&gt; │   region      4           1  South Jail: published 3520, recompute...   │</span></span>
+<span><span class="co">#&gt; │                                                                         │</span></span>
+<span><span class="co">#&gt; │   The rows line counts units present on one side only; each other line  │</span></span>
+<span><span class="co">#&gt; │   compares one column over the shared units. first writes out the first │</span></span>
+<span><span class="co">#&gt; │   disagreement, and 0 mismatched throughout is agreement.               │</span></span>
+<span><span class="co">#&gt; ╰─────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <p>That is worth having, and it is worth being clear about what it
 establishes: the recomputation reproduced the published assignment. Run
 the same method against the same boundary file and a

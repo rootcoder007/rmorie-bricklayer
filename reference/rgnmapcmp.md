@@ -96,20 +96,20 @@ rgnmapcmp(pub, obs, "inst")
 # a changed assignment is reported with the unit that moved
 obs$cd[2] <- "3521"
 rgnmapcmp(pub, obs, "inst")
-#> ╭── Published and rebuilt region maps compared ────────────────────────────╮
-#> │   Columns compared  1                                                    │
-#> │   Mismatched cells  1                                                    │
-#> │   Verdict           the maps disagree                                    │
-#> │                                                                          │
-#> │   column  cells  mismatched  first                                       │
-#> │   ------  -----  ----------  ------------------------------------------- │
-#> │   rows        2           0                                              │
-#> │   cd          2           1  South Jail: published 3520, recomputed 3521 │
-#> │                                                                          │
-#> │   The rows line counts units present on one side only; each other line   │
-#> │   compares one column over the shared units. first writes out the first  │
-#> │   disagreement, and 0 mismatched throughout is agreement.                │
-#> ╰──────────────────────────────────────────────────────────────────────────╯
+#> ╭── Published and rebuilt region maps compared ───────────────────────────╮
+#> │   Columns compared  1                                                   │
+#> │   Mismatched cells  1                                                   │
+#> │   Verdict           the maps disagree                                   │
+#> │                                                                         │
+#> │   column  cells  mismatched  first                                      │
+#> │   ------  -----  ----------  ----------------------------------------   │
+#> │   rows        2           0                                             │
+#> │   cd          2           1  South Jail: published 3520, recompute...   │
+#> │                                                                         │
+#> │   The rows line counts units present on one side only; each other line  │
+#> │   compares one column over the shared units. first writes out the first │
+#> │   disagreement, and 0 mismatched throughout is agreement.               │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a unit on one side only, and a coordinate that only moved by rounding noise
 pub$lat <- c(44.39, 43.65)

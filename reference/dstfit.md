@@ -170,12 +170,12 @@ f
 #> │                                                                         │
 #> │   Parameters                                                            │
 #> │   family       params                                                   │
-#> │   -----------  -------------------------------------------              │
+#> │   -----------  ----------------------------------------                 │
 #> │   weibull      shape = 1.523, scale = 4.349                             │
 #> │   gamma        shape = 2.0060, rate = 0.5125                            │
 #> │   lognormal    meanlog = 1.095, sdlog = 0.812                           │
 #> │   exponential  rate = 0.2555                                            │
-#> │   t            location = 3.686, scale = 2.283, df = 8.140              │
+#> │   t            location = 3.686, scale = 2.283, df =...                 │
 #> │   normal       mean = 3.914, sd = 2.642                                 │
 #> │   pareto       xmin = 0.1680, alpha = 0.3474                            │
 #> │                                                                         │

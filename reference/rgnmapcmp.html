@@ -154,20 +154,20 @@ definitional error reproduces perfectly. That is what
 <span class="r-in"><span><span class="co"># a changed assignment is reported with the unit that moved</span></span></span>
 <span class="r-in"><span><span class="va">obs</span><span class="op">$</span><span class="va">cd</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"3521"</span></span></span>
 <span class="r-in"><span><span class="fu">rgnmapcmp</span><span class="op">(</span><span class="va">pub</span>, <span class="va">obs</span>, <span class="st">"inst"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Published and rebuilt region maps compared</span> ────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns compared  1                                                    │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Mismatched cells  1                                                    │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Verdict           the maps disagree                                    │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   column  cells  mismatched  first                                       │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  -----  ----------  ------------------------------------------- │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   rows        2           0                                              │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   cd          2           1  South Jail: published 3520, recomputed 3521 │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   The rows line counts units present on one side only; each other line   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   compares one column over the shared units. first writes out the first  │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   disagreement, and 0 mismatched throughout is agreement.                │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ╰──────────────────────────────────────────────────────────────────────────╯</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Published and rebuilt region maps compared</span> ───────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Columns compared  1                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Mismatched cells  1                                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Verdict           the maps disagree                                   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   column  cells  mismatched  first                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ------  -----  ----------  ----------------------------------------   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   rows        2           0                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   cd          2           1  South Jail: published 3520, recompute...   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   The rows line counts units present on one side only; each other line  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   compares one column over the shared units. first writes out the first │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   disagreement, and 0 mismatched throughout is agreement.               │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a unit on one side only, and a coordinate that only moved by rounding noise</span></span></span>
 <span class="r-in"><span><span class="va">pub</span><span class="op">$</span><span class="va">lat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">44.39</span>, <span class="fl">43.65</span><span class="op">)</span></span></span>

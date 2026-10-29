@@ -572,6 +572,45 @@
 
 ### Fixed after the 1.0.3 recheck
 
+- Panel estimators with one unit’s weight near the largest double (1e308
+  next to 1) no longer stop with “system is exactly singular”: the
+  weights are scaled so the smaller ones stay normal numbers, and a
+  pre-trend test with no variation is NA.
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  no longer waits out its whole time limit when `bash` is not on the
+  PATH (`/bin/sh` is dash on Debian and Ubuntu, which has no job control
+  without a terminal): a one-second run took the full limit and reported
+  a timeout.
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  stops only what the run left behind: a process the user’s own job (for
+  example
+  [`parallel::mcparallel()`](https://rdrr.io/r/parallel/mcparallel.html))
+  started during the run is left alone, and a user systemd service is
+  stopped only when its process carries the run’s mark.
+- [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md)
+  refuses file names
+  [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  would refuse (a backslash, or two names that differ only in case),
+  [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  refuses a zip that unpacks past 512 MiB (option
+  `rmbl.bundle.maxsize`), and a bundle’s runner refuses an unknown
+  argument, a bare `--data` and a folder given as `--data`.
+- OID decoding works in exact arithmetic for long arcs and reads a first
+  arc of 2.x correctly, without warnings.
+- Readers and writers given a folder, a file name longer than 255 bytes
+  or a folder they cannot write in say so instead of failing with
+  “cannot open the connection”.
+- Printed tables fit the console: long labels are cut with “…”, and a
+  label the console cannot spell keeps its characters as `<U+XXXX>`
+  instead of printing blank.
+- A run of argument checks found by a hostile battery: plot colours and
+  bandwidths, plot titles with control bytes, numbers past the integer
+  range
+  ([`ralloc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ralloc.md)
+  ratios, counts, digits), functions or environments where data belong,
+  and `NA` where names belong now give clean errors.
+- In a bundle without a fast SHA-256, `openssl` is tried before the
+  pure-R digest, which is kept to files of 4 MiB.
 - [`audcats()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audcats.md)
   reads haven-labelled columns (also inside
   [`I()`](https://rdrr.io/r/base/AsIs.html)) by their codes, so it no

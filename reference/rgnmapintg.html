@@ -128,38 +128,38 @@ Errors: <code>map</code> not a data frame, or without the named columns.</p>
 <span class="r-in"><span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">rgnmapintg</span><span class="op">(</span><span class="va">cw</span>, <span class="st">"inst"</span>, <span class="st">"cd"</span>, regs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"3557"</span>, <span class="st">"3520"</span>, <span class="st">"3506"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Region map integrity</span> ───────────────────────────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Checks   3                                                              │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Verdict  every check passed                                             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   check                                        observed  expected  result │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   -------------------------------------------  --------  --------  ------ │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   units assigned more than one region                 0         0  pass   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   units assigned no region                            0         0  pass   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   region codes not in the reference geography         0         0  pass   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   A sound map gives each unit exactly one region, and only regions of     │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   the reference geography; each check counts the units that break that,   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   and 0 passes.                                                           │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────────╯</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Region map integrity</span> ─────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Checks   3                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Verdict  every check passed                                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   check                                     observed  expected  result  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----------------------------------------  --------  --------  ------  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units assigned more than one region              0         0  pass    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units assigned no region                         0         0  pass    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   region codes not in the reference geo...         0         0  pass    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A sound map gives each unit exactly one region, and only regions of   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the reference geography; each check counts the units that break that, │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   and 0 passes.                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a region code the geography does not know fails the third check</span></span></span>
 <span class="r-in"><span><span class="va">cw</span><span class="op">$</span><span class="va">cd</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"2406"</span></span></span>
 <span class="r-in"><span><span class="fu">rgnmapintg</span><span class="op">(</span><span class="va">cw</span>, <span class="st">"inst"</span>, <span class="st">"cd"</span>, regs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"3557"</span>, <span class="st">"3520"</span>, <span class="st">"3506"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Region map integrity</span> ───────────────────────────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Checks   3                                                              │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Verdict  1 of 3 checks failed                                           │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   check                                        observed  expected  result │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   -------------------------------------------  --------  --------  ------ │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   units assigned more than one region                 0         0  pass   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   units assigned no region                            0         0  pass   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   region codes not in the reference geography         1         0  FAIL   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                           │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   A sound map gives each unit exactly one region, and only regions of     │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   the reference geography; each check counts the units that break that,   │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   and 0 passes.                                                           │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ╰───────────────────────────────────────────────────────────────────────────╯</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Region map integrity</span> ─────────────────────────────────────────────────╮</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Checks   3                                                            │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Verdict  1 of 3 checks failed                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   check                                     observed  expected  result  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   ----------------------------------------  --------  --------  ------  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units assigned more than one region              0         0  pass    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   units assigned no region                         0         0  pass    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   region codes not in the reference geo...         1         0  FAIL    │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   A sound map gives each unit exactly one region, and only regions of   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   the reference geography; each check counts the units that break that, │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   and 0 passes.                                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a unit listed twice and a unit with no region, without a reference list</span></span></span>
 <span class="r-in"><span><span class="va">cw2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span></span>

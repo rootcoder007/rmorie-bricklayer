@@ -152,7 +152,19 @@
 </ul></div>
 <div class="section level3">
 <h3 id="fixed-after-the-recheck-1-0-3">Fixed after the 1.0.3 recheck<a class="anchor" aria-label="anchor" href="#fixed-after-the-recheck-1-0-3"></a></h3>
-<ul><li>
+<ul><li>Panel estimators with one unit’s weight near the largest double (1e308 next to 1) no longer stop with “system is exactly singular”: the weights are scaled so the smaller ones stay normal numbers, and a pre-trend test with no variation is NA.</li>
+<li>
+<code><a href="../reference/mkbndlchk.html">mkbndlchk()</a></code> no longer waits out its whole time limit when <code>bash</code> is not on the PATH (<code>/bin/sh</code> is dash on Debian and Ubuntu, which has no job control without a terminal): a one-second run took the full limit and reported a timeout.</li>
+<li>
+<code><a href="../reference/mkbndlchk.html">mkbndlchk()</a></code> stops only what the run left behind: a process the user’s own job (for example <code><a href="https://rdrr.io/r/parallel/mcparallel.html" class="external-link">parallel::mcparallel()</a></code>) started during the run is left alone, and a user systemd service is stopped only when its process carries the run’s mark.</li>
+<li>
+<code><a href="../reference/mkbndl.html">mkbndl()</a></code> refuses file names <code><a href="../reference/mkbndlchk.html">mkbndlchk()</a></code> would refuse (a backslash, or two names that differ only in case), <code><a href="../reference/mkbndlchk.html">mkbndlchk()</a></code> refuses a zip that unpacks past 512 MiB (option <code>rmbl.bundle.maxsize</code>), and a bundle’s runner refuses an unknown argument, a bare <code>--data</code> and a folder given as <code>--data</code>.</li>
+<li>OID decoding works in exact arithmetic for long arcs and reads a first arc of 2.x correctly, without warnings.</li>
+<li>Readers and writers given a folder, a file name longer than 255 bytes or a folder they cannot write in say so instead of failing with “cannot open the connection”.</li>
+<li>Printed tables fit the console: long labels are cut with “…”, and a label the console cannot spell keeps its characters as <code>&lt;U+XXXX&gt;</code> instead of printing blank.</li>
+<li>A run of argument checks found by a hostile battery: plot colours and bandwidths, plot titles with control bytes, numbers past the integer range (<code><a href="../reference/ralloc.html">ralloc()</a></code> ratios, counts, digits), functions or environments where data belong, and <code>NA</code> where names belong now give clean errors.</li>
+<li>In a bundle without a fast SHA-256, <code>openssl</code> is tried before the pure-R digest, which is kept to files of 4 MiB.</li>
+<li>
 <code><a href="../reference/audcats.html">audcats()</a></code> reads haven-labelled columns (also inside <code><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I()</a></code>) by their codes, so it no longer fails with the <code>vctrs</code> version on macOS.</li>
 <li>Panel estimators scale weights too large to square by an exact power of two, so the result is the same on every CPU.</li>
 <li>Timestamp, OCSP and CRL times with stray bytes read as missing without warnings, and <code><a href="../reference/rallocvrf.html">rallocvrf()</a></code> refuses a function as <code>seed</code> without a warning first.</li>

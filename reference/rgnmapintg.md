@@ -72,38 +72,38 @@ cw <- data.frame(
   stringsAsFactors = FALSE
 )
 rgnmapintg(cw, "inst", "cd", regs = c("3557", "3520", "3506"))
-#> ╭── Region map integrity ───────────────────────────────────────────────────╮
-#> │   Checks   3                                                              │
-#> │   Verdict  every check passed                                             │
-#> │                                                                           │
-#> │   check                                        observed  expected  result │
-#> │   -------------------------------------------  --------  --------  ------ │
-#> │   units assigned more than one region                 0         0  pass   │
-#> │   units assigned no region                            0         0  pass   │
-#> │   region codes not in the reference geography         0         0  pass   │
-#> │                                                                           │
-#> │   A sound map gives each unit exactly one region, and only regions of     │
-#> │   the reference geography; each check counts the units that break that,   │
-#> │   and 0 passes.                                                           │
-#> ╰───────────────────────────────────────────────────────────────────────────╯
+#> ╭── Region map integrity ─────────────────────────────────────────────────╮
+#> │   Checks   3                                                            │
+#> │   Verdict  every check passed                                           │
+#> │                                                                         │
+#> │   check                                     observed  expected  result  │
+#> │   ----------------------------------------  --------  --------  ------  │
+#> │   units assigned more than one region              0         0  pass    │
+#> │   units assigned no region                         0         0  pass    │
+#> │   region codes not in the reference geo...         0         0  pass    │
+#> │                                                                         │
+#> │   A sound map gives each unit exactly one region, and only regions of   │
+#> │   the reference geography; each check counts the units that break that, │
+#> │   and 0 passes.                                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a region code the geography does not know fails the third check
 cw$cd[3] <- "2406"
 rgnmapintg(cw, "inst", "cd", regs = c("3557", "3520", "3506"))
-#> ╭── Region map integrity ───────────────────────────────────────────────────╮
-#> │   Checks   3                                                              │
-#> │   Verdict  1 of 3 checks failed                                           │
-#> │                                                                           │
-#> │   check                                        observed  expected  result │
-#> │   -------------------------------------------  --------  --------  ------ │
-#> │   units assigned more than one region                 0         0  pass   │
-#> │   units assigned no region                            0         0  pass   │
-#> │   region codes not in the reference geography         1         0  FAIL   │
-#> │                                                                           │
-#> │   A sound map gives each unit exactly one region, and only regions of     │
-#> │   the reference geography; each check counts the units that break that,   │
-#> │   and 0 passes.                                                           │
-#> ╰───────────────────────────────────────────────────────────────────────────╯
+#> ╭── Region map integrity ─────────────────────────────────────────────────╮
+#> │   Checks   3                                                            │
+#> │   Verdict  1 of 3 checks failed                                         │
+#> │                                                                         │
+#> │   check                                     observed  expected  result  │
+#> │   ----------------------------------------  --------  --------  ------  │
+#> │   units assigned more than one region              0         0  pass    │
+#> │   units assigned no region                         0         0  pass    │
+#> │   region codes not in the reference geo...         1         0  FAIL    │
+#> │                                                                         │
+#> │   A sound map gives each unit exactly one region, and only regions of   │
+#> │   the reference geography; each check counts the units that break that, │
+#> │   and 0 passes.                                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 
 # a unit listed twice and a unit with no region, without a reference list
 cw2 <- rbind(

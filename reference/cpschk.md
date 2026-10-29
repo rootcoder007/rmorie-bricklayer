@@ -268,18 +268,14 @@ x
 #> │ ✔ VERIFIED  · 7 of 7 checks passed                                          │
 #> │                                                                             │
 #> │   Status    ok                                                              │
-#> │   Path      /tmp/Rtmp6i9Dbh/capsules-1ede17ba1cd                            │
+#> │   Path      /tmp/RtmpeuB1Ln/capsules-1f7f449f32ad                           │
 #> │   Capsules  1                                                               │
 #> │   Checks    7 of 7 passed                                                   │
 #> │   Checked   rmoriebricklayer 1.0.3, R version 4.6.1 (2026-06-24)            │
 #> │                                                                             │
-#> │   capsule  result  passed  checks                                           │
-#> │   -------  ------  ------  ------                                           │
-#> │   one      ok           7       7                                           │
-#> │                                                                             │
-#> │   capsule  source                                                           │
-#> │   -------  --------------------------------------------------------------   │
-#> │   one      /tmp/Rtmp6i9Dbh/temp_libpath1ede396504b/rmoriebricklayer/ex...   │
+#> │   capsule  result  passed  checks  source                                   │
+#> │   -------  ------  ------  ------  ---------------------------------------- │
+#> │   one      ok           7       7  /tmp/RtmpeuB1Ln/temp_libpath1f7f7f5c0... │
 #> │                                                                             │
 #> │   capsule  sha256        size    rows  bounds                               │
 #> │   -------  ------------  ------  ----  ------                               │
@@ -287,22 +283,22 @@ x
 #> │                                                                             │
 #> │   Every capsule is still the one its analysis was run on.                   │
 #> │                                                                             │
-#> │   /tmp/Rtmp6i9Dbh/capsules-1ede17ba1cd/one: ok                              │
+#> │   /tmp/RtmpeuB1Ln/capsules-1f7f449f32ad/one: ok                             │
 #> │     source:                                                                 │
-#> │     /tmp/Rtmp6i9Dbh/temp_libpath1ede396504b/rmoriebricklayer/extdata/otis_a │
-#> │     01_individuals.csv                                                      │
+#> │     /tmp/RtmpeuB1Ln/temp_libpath1f7f7f5c0523/rmoriebricklayer/extdata/otis_ │
+#> │     a01_individuals.csv                                                     │
 #> │     pinned SHA-256:                                                         │
 #> │     6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248        │
 #> │   ✔    schema: data_provenance.json  valid against capsule.schema.json      │
 #> │   ✔    provenance_readable                                                  │
-#> │        /tmp/Rtmp6i9Dbh/capsules-1ede17ba1cd/one/data_provenance.json        │
+#> │        /tmp/RtmpeuB1Ln/capsules-1f7f449f32ad/one/data_provenance.json       │
 #> │   ✔    data_present                                                         │
-#> │        /tmp/Rtmp6i9Dbh/capsules-1ede17ba1cd/one/otis_a01_individuals.csv    │
+#> │        /tmp/RtmpeuB1Ln/capsules-1f7f449f32ad/one/otis_a01_individuals.csv   │
 #> │   ✔    data_sha256                                                          │
 #> │        6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248     │
 #> │   ✔    data_size_bytes               462 bytes on disk                      │
 #> │   ✔    data_readable                                                        │
-#> │        /tmp/Rtmp6i9Dbh/capsules-1ede17ba1cd/one/otis_a01_individuals.csv    │
+#> │        /tmp/RtmpeuB1Ln/capsules-1f7f449f32ad/one/otis_a01_individuals.csv   │
 #> │   ✔    data_not_synthetic no synthetic marker: sidecar, manifest and        │
 #> │        provenance all say real data                                         │
 #> │   format(x) gives the full Markdown report.                                 │
@@ -328,14 +324,14 @@ x$capsules[[1]]$notes
 #> [1] "explained: the data file's size differs from resource$size_bytes: its bytes changed"
 #> 
 substr(format(x, fmt = "json"), 1, 120)
-#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/Rtmp6i9Dbh/capsules-1ede17ba1cd\",\n  \"capsules\": [\n    {\n     "
+#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmpeuB1Ln/capsules-1f7f449f32ad\",\n  \"capsules\": [\n    {\n    "
 
 # drift: fetch the source again (here a local file) and compare
 cpschk(root, "drift", psiwarn = 0.05, fp = FALSE)$status
 #> [1] "error"
 
 try(cpschk(tempfile()))
-#> Error : cpschk: `path` is not an existing directory: /tmp/Rtmp6i9Dbh/file1ede5f6e25db
+#> Error : cpschk: `path` is not an existing directory: /tmp/RtmpeuB1Ln/file1f7f3526787f
 try(cpschk(root, psiwarn = 1))
 #> Error : cpschk: `psiwarn` (1) must not exceed `psifail` (0.25)
 ```

@@ -296,20 +296,20 @@ different province.
 ``` r
 
 rgnmapintg(cw, "facility", "region", regs = pop$region)
-#> ╭── Region map integrity ───────────────────────────────────────────────────╮
-#> │   Checks   3                                                              │
-#> │   Verdict  every check passed                                             │
-#> │                                                                           │
-#> │   check                                        observed  expected  result │
-#> │   -------------------------------------------  --------  --------  ------ │
-#> │   units assigned more than one region                 0         0  pass   │
-#> │   units assigned no region                            0         0  pass   │
-#> │   region codes not in the reference geography         0         0  pass   │
-#> │                                                                           │
-#> │   A sound map gives each unit exactly one region, and only regions of     │
-#> │   the reference geography; each check counts the units that break that,   │
-#> │   and 0 passes.                                                           │
-#> ╰───────────────────────────────────────────────────────────────────────────╯
+#> ╭── Region map integrity ─────────────────────────────────────────────────╮
+#> │   Checks   3                                                            │
+#> │   Verdict  every check passed                                           │
+#> │                                                                         │
+#> │   check                                     observed  expected  result  │
+#> │   ----------------------------------------  --------  --------  ------  │
+#> │   units assigned more than one region              0         0  pass    │
+#> │   units assigned no region                         0         0  pass    │
+#> │   region codes not in the reference geo...         0         0  pass    │
+#> │                                                                         │
+#> │   A sound map gives each unit exactly one region, and only regions of   │
+#> │   the reference geography; each check counts the units that break that, │
+#> │   and 0 passes.                                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 Every check is written so that zero is the passing value, which is what
@@ -320,20 +320,20 @@ makes the frame safe to record directly into a manifest.
 bad <- cw
 bad$region[3] <- "2406"          # a code from another province
 rgnmapintg(bad, "facility", "region", regs = pop$region)
-#> ╭── Region map integrity ───────────────────────────────────────────────────╮
-#> │   Checks   3                                                              │
-#> │   Verdict  1 of 3 checks failed                                           │
-#> │                                                                           │
-#> │   check                                        observed  expected  result │
-#> │   -------------------------------------------  --------  --------  ------ │
-#> │   units assigned more than one region                 0         0  pass   │
-#> │   units assigned no region                            0         0  pass   │
-#> │   region codes not in the reference geography         1         0  FAIL   │
-#> │                                                                           │
-#> │   A sound map gives each unit exactly one region, and only regions of     │
-#> │   the reference geography; each check counts the units that break that,   │
-#> │   and 0 passes.                                                           │
-#> ╰───────────────────────────────────────────────────────────────────────────╯
+#> ╭── Region map integrity ─────────────────────────────────────────────────╮
+#> │   Checks   3                                                            │
+#> │   Verdict  1 of 3 checks failed                                         │
+#> │                                                                         │
+#> │   check                                     observed  expected  result  │
+#> │   ----------------------------------------  --------  --------  ------  │
+#> │   units assigned more than one region              0         0  pass    │
+#> │   units assigned no region                         0         0  pass    │
+#> │   region codes not in the reference geo...         1         0  FAIL    │
+#> │                                                                         │
+#> │   A sound map gives each unit exactly one region, and only regions of   │
+#> │   the reference geography; each check counts the units that break that, │
+#> │   and 0 passes.                                                         │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 ### Recomputing is not the same as checking
@@ -349,20 +349,20 @@ that survived a round trip through text is not reported as a change.
 recomputed <- cw
 recomputed$region[2] <- "3519"
 rgnmapcmp(cw, recomputed, "facility")
-#> ╭── Published and rebuilt region maps compared ────────────────────────────╮
-#> │   Columns compared  1                                                    │
-#> │   Mismatched cells  1                                                    │
-#> │   Verdict           the maps disagree                                    │
-#> │                                                                          │
-#> │   column  cells  mismatched  first                                       │
-#> │   ------  -----  ----------  ------------------------------------------- │
-#> │   rows        4           0                                              │
-#> │   region      4           1  South Jail: published 3520, recomputed 3519 │
-#> │                                                                          │
-#> │   The rows line counts units present on one side only; each other line   │
-#> │   compares one column over the shared units. first writes out the first  │
-#> │   disagreement, and 0 mismatched throughout is agreement.                │
-#> ╰──────────────────────────────────────────────────────────────────────────╯
+#> ╭── Published and rebuilt region maps compared ───────────────────────────╮
+#> │   Columns compared  1                                                   │
+#> │   Mismatched cells  1                                                   │
+#> │   Verdict           the maps disagree                                   │
+#> │                                                                         │
+#> │   column  cells  mismatched  first                                      │
+#> │   ------  -----  ----------  ----------------------------------------   │
+#> │   rows        4           0                                             │
+#> │   region      4           1  South Jail: published 3520, recompute...   │
+#> │                                                                         │
+#> │   The rows line counts units present on one side only; each other line  │
+#> │   compares one column over the shared units. first writes out the first │
+#> │   disagreement, and 0 mismatched throughout is agreement.               │
+#> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 That is worth having, and it is worth being clear about what it

@@ -152,5 +152,5 @@ infsch(df, slack = 0)$numeric_ranges$score
 
 # a negative slack is refused
 try(infsch(df, slack = -0.1))
-#> Error : `slack` must be a single non-negative number
+#> Error : `slack` must be a single non-negative number, at most 100
 ```
