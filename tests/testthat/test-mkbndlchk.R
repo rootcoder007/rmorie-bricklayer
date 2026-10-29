@@ -48,6 +48,16 @@ man_run <- function(status, mode = "csv") {
   )
 }
 
+# Whether a check ran clean. Where escaped processes cannot be detected
+# (a process group on macOS) the isolation row fails closed by design:
+# there every other row must be ok and the row must say why.
+ran_ok <- function(a) {
+  iso <- a$checks$check == "isolation"
+  blind <- grepl("cannot detect escaped processes", a$checks$detail[iso],
+                 fixed = TRUE)
+  if (isTRUE(blind)) all(a$checks$ok[!iso]) else isTRUE(a$ok)
+}
+
 expect3 <- '{"expected": {"total_checks": 3, "pass_csv": 2, "pass_real": 3}}'
 
 test_that("a bundle that runs and gives the expected counts is verified", {
@@ -56,17 +66,19 @@ test_that("a bundle that runs and gives the expected counts is verified", {
   w <- file.path(d, "w1")
   a <- mkbndlchk(zip, dir = w, keep = TRUE)
   expect_s3_class(a, "rmbl_bundle_audit")
-  expect_true(a$ok)
+  expect_true(ran_ok(a))
   expect_identical(a$mode, "csv")
   expect_identical(
     a$counts, c(total = 3L, pass = 2L, differ = 0L, info = 1L)
   )
   # the isolation row depends on the machine (a process group on macOS
-  # and on Linux without user namespaces): ok there too, or a warning
+  # and on Linux without user namespaces): ok there too, a warning, or
+  # where escapes cannot be seen (macOS) a refusal that says so
   iso <- a$checks$check == "isolation"
   expect_true(all(a$checks$ok[!iso]))
   expect_true(isTRUE(a$checks$ok[iso]) ||
-                identical(a$checks$severity[iso], "warn"))
+                identical(a$checks$severity[iso], "warn") ||
+                grepl("cannot detect", a$checks$detail[iso], fixed = TRUE))
   expect_true(dir.exists(a$dir))
   expect_identical(readLines(file.path(a$dir, "args.txt")), "--quick")
   expect_match(a$checks$detail[4L], "pass_csv expects 2/3 PASS", fixed = TRUE)
@@ -77,7 +89,7 @@ test_that("a bundle that runs and gives the expected counts is verified", {
   expect_false(any(grepl("last lines", out, fixed = TRUE)))
   # by default the folder is removed afterwards
   b <- mkbndlchk(zip)
-  expect_true(b$ok)
+  expect_true(ran_ok(b))
   expect_true(is.na(b$dir))
 })
 
@@ -93,7 +105,7 @@ test_that("the data file and synthetic mode reach the run", {
     c("--quick", "--synthetic", "--data", normalizePath(csv, winslash = "/"))
   )
   # synthetic runs mark every check INFO, so they are not compared
-  expect_true(a$ok)
+  expect_true(ran_ok(a))
   expect_identical(a$checks$detail[4L], "not compared: a synthetic run")
 })
 
@@ -113,25 +125,25 @@ test_that("a differing check or other counts than expected fail", {
   # a run on the .RData compares pass_real
   r <- mkbndlchk(fake_bundle(d, man_run(rep("PASS", 3L), mode = "real"),
                              expect3, top = "real_v1"))
-  expect_true(r$ok)
+  expect_true(ran_ok(r))
   expect_match(r$checks$detail[4L], "pass_real expects 3/3", fixed = TRUE)
   # a manifest that records no input mode is a run on the real data
   n <- mkbndlchk(fake_bundle(d, man_run(rep("PASS", 3L), mode = NULL),
                              expect3, top = "nomode_v1"))
   expect_identical(n$mode, "real")
-  expect_true(n$ok)
+  expect_true(ran_ok(n))
 })
 
 test_that("a bundle with no expected counts is not compared", {
   d <- withr::local_tempdir()
   a <- mkbndlchk(fake_bundle(d, man_run("PASS"), top = "nocfg_v1"))
-  expect_true(a$ok)
+  expect_true(ran_ok(a))
   expect_identical(
     a$checks$detail[4L], "not compared: config.json expects none"
   )
   b <- mkbndlchk(fake_bundle(d, man_run("PASS"), '{"project": {}}',
                              top = "noexp_v1"))
-  expect_true(b$ok)
+  expect_true(ran_ok(b))
 })
 
 test_that("a run that stops, or writes no manifest, fails", {
@@ -153,7 +165,7 @@ test_that("the child R runs without the test harness's startup file", {
   d <- withr::local_tempdir()
   zip <- fake_bundle(d, man_run("PASS"))
   withr::local_envvar(R_TESTS = file.path(d, "no-such-startup.R"))
-  expect_true(mkbndlchk(zip)$ok)
+  expect_true(ran_ok(mkbndlchk(zip)))
   expect_identical(Sys.getenv("R_TESTS"), file.path(d, "no-such-startup.R"))
 })
 
@@ -232,7 +244,7 @@ test_that("a starter project's bundle passes its own check", {
   p <- mkbndlproj(file.path(d, "starter"), title = "Starter")
   b <- mkbndl(p$dir, dest = d, overwrite = TRUE)
   a <- mkbndlchk(b$path, synthetic = TRUE)
-  expect_true(a$ok)
+  expect_true(ran_ok(a))
   expect_identical(a$mode, "synthetic")
   expect_gt(a$counts[["total"]], 0L)
 })
@@ -285,7 +297,7 @@ test_that("a results folder the zip carries is never read as the run's", {
            "writeLines('{}', 'results_2/manifest.json')",
            "cat('  Results folder: ', normalizePath('results_1'), '\\n')")
   t2 <- mkbndlchk(fake_bundle(d, two, top = "two_v1"))
-  expect_true(t2$ok)
+  expect_true(ran_ok(t2))
   expect_match(t2$checks$detail[2L], "results_1/manifest.json", fixed = TRUE)
 })
 
@@ -306,7 +318,7 @@ test_that("the run gets no credentials, a fresh HOME and no orphans", {
   )
   a <- mkbndlchk(fake_bundle(d, run, top = "leak_v1"), keep = TRUE,
                  dir = file.path(d, "w"))
-  expect_true(a$ok)
+  expect_true(ran_ok(a))
   got <- readLines(file.path(a$dir, "envnames.txt"))
   expect_false(any(c("RMBL_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
                      "GITHUB_TOKEN", "IA_S3_ACCESS_KEY", "IA_S3_SECRET_KEY",
@@ -358,6 +370,12 @@ test_that("the run's environment keeps only what R needs", {
   v <- c(rep("fake", 11L), "https://u:fake@host/x", "C", "C", "/x", "C",
          "/h")
   expect_identical(.rmbl_envdrop(n, v), n[1:12])
+  # a password with no user name, and a service's secret key
+  expect_identical(
+    .rmbl_envdrop(c("CACHE_URL", "STRIPE_SK", "TASK", "DISK", "HOME"),
+                  c("redis://:fake@h:6379/0", "fake", "x", "y", "/h")),
+    c("CACHE_URL", "STRIPE_SK")
+  )
 })
 
 test_that("the default time limit is 30 minutes", {
@@ -499,8 +517,9 @@ test_that("an unzip that fails and a manifest that is not an object", {
 procs_named <- function(argv0) {
   pids <- list.files("/proc", pattern = "^[0-9]+$")
   hit <- vapply(pids, function(p) {
+    # a process can end between the listing and the read
     a <- tryCatch(readBin(file.path("/proc", p, "cmdline"), "raw", 4096L),
-                  error = function(e) raw())
+                  error = function(e) raw(), warning = function(w) raw())
     if (!length(a)) return(FALSE)
     z <- which(a == as.raw(0L))
     first <- if (length(z)) a[seq_len(z[1L] - 1L)] else a
@@ -519,7 +538,7 @@ test_that("in a PID namespace even a setsid daemon dies with the run", {
   run <- c(sprintf("system('setsid -f %s 300 > /dev/null 2>&1')", tok),
            "Sys.sleep(0.5)", man_run("PASS"))
   a <- mkbndlchk(fake_bundle(d, run, top = "daemon_v1"))
-  expect_true(a$ok)
+  expect_true(ran_ok(a))
   expect_identical(a$isolation, "pid namespace")
   row <- a$checks[a$checks$check == "isolation", ]
   expect_true(row$ok)
@@ -536,12 +555,51 @@ test_that("without unshare the run falls back to its process group", {
   local_mocked_bindings(.bndlchk_unshare = function(...) NULL)
   d <- withr::local_tempdir()
   a <- mkbndlchk(fake_bundle(d, man_run("PASS"), top = "pg_v1"))
-  expect_true(a$ok)
+  expect_true(ran_ok(a))
   expect_identical(a$isolation, "process group")
-  # every row ok, the isolation row too: no process outlived the run
-  expect_true(all(a$checks$ok))
   row <- a$checks[a$checks$check == "isolation", ]
-  expect_match(row$detail, "no process outlived the run", fixed = TRUE)
+  if (.bndlchk_reaper(TRUE)) {
+    .bndlchk_reaper(FALSE)
+    # every row ok, the isolation row too: no process outlived the run
+    expect_true(all(a$checks$ok))
+    expect_match(row$detail, "no process outlived the run", fixed = TRUE)
+  } else {
+    expect_false(a$ok)
+    expect_match(row$detail, "cannot detect escaped processes", fixed = TRUE)
+  }
+  # where the session cannot be the run's subreaper, the check fails closed
+  local_mocked_bindings(.bndlchk_reaper = function(on) FALSE)
+  b <- mkbndlchk(fake_bundle(d, man_run("PASS"), top = "blind_v1"))
+  expect_false(b$ok)
+  row <- b$checks[b$checks$check == "isolation", ]
+  expect_identical(row$severity, "error")
+  expect_match(row$detail, "process group: cannot detect escaped processes",
+               fixed = TRUE)
+})
+
+test_that("an escape that clears its environment is still found and killed", {
+  skip_on_os(c("windows", "mac", "solaris"))
+  skip_if(!nzchar(Sys.which("setsid")), "no setsid")
+  skip_if(!.bndlchk_reaper(TRUE), "no child subreaper here")
+  .bndlchk_reaper(FALSE)
+  local_mocked_bindings(.bndlchk_unshare = function(...) NULL)
+  d <- withr::local_tempdir()
+  for (how in c("env -u RMBL_CHKRUN", "env -i PATH=/usr/bin:/bin")) {
+    tok <- file.path(d, paste0("rmbl_sleep_", basename(tempfile(""))))
+    file.symlink(Sys.which("sleep"), tok)
+    run <- c(sprintf("system('%s setsid -f %s 300 > /dev/null 2>&1')", how,
+                     tok), "Sys.sleep(0.5)", man_run("PASS"))
+    a <- mkbndlchk(fake_bundle(d, run, top = basename(tok)))
+    expect_false(a$ok, info = how)
+    row <- a$checks[a$checks$check == "isolation", ]
+    expect_identical(row$severity, "error", info = how)
+    expect_match(row$detail, "outlived the run and were killed", fixed = TRUE,
+                 info = how)
+    Sys.sleep(0.3)
+    left <- procs_named(tok)
+    for (p in left) tools::pskill(p)
+    expect_length(left, 0L)
+  }
 })
 
 test_that("a process that outlives a process-group run fails the check", {
@@ -616,7 +674,7 @@ test_that("a container check: the run's arguments and its clean-up", {
   writeLines("a,b", csv)
   a <- mkbndlchk(zip, data = csv, container = TRUE, keep = TRUE,
                  dir = file.path(d, "w"))
-  expect_true(a$ok)
+  expect_true(ran_ok(a))
   expect_identical(a$isolation, "container (podman)")
   expect_true(file.exists(file.path(a$dir, "results_1", "manifest.json")))
   run <- Filter(function(x) identical(x$args[1L], "run"), got$calls)[[1L]]
@@ -639,7 +697,7 @@ test_that("a container check: the run's arguments and its clean-up", {
   b <- mkbndlchk(zip, container = "podman")
   run <- Filter(function(x) identical(x$args[1L], "run"), got$calls)[[1L]]
   expect_false("--network" %in% run$args)
-  expect_true(b$ok)
+  expect_true(ran_ok(b))
 })
 
 test_that("container choices, the image and their refusals", {
@@ -671,7 +729,7 @@ test_that("container choices, the image and their refusals", {
   local_mocked_bindings(.bndlchk_which = function(x) "")
   r <- mkbndlchk(fake_bundle(d, man_run("PASS"), top = "nort_v1"),
                  container = TRUE)
-  expect_true(r$ok)
+  expect_true(ran_ok(r))
   expect_match(r$isolation, "(no podman or docker found for a container)",
                fixed = TRUE)
   run <- function(...) {
@@ -703,7 +761,7 @@ test_that("a container check with podman runs the starter bundle", {
   p <- mkbndlproj(file.path(d, "starter"), title = "Starter")
   b <- mkbndl(p$dir, dest = d)
   a <- mkbndlchk(b$path, synthetic = TRUE, container = "podman")
-  expect_true(a$ok)
+  expect_true(ran_ok(a))
   expect_identical(a$isolation, "container (podman)")
   expect_identical(a$mode, "synthetic")
 })

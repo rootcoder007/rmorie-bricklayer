@@ -1016,6 +1016,7 @@ rptanl <- function(
 #' @return `s`, escaped.
 #' @noRd
 .md_esc <- function(s) {
+  s <- .rmbl_ctl_escape(s, ws = TRUE)
   s <- gsub("&", "&amp;", s, fixed = TRUE)
   s <- gsub("<", "&lt;", s, fixed = TRUE)
   gsub(">", "&gt;", s, fixed = TRUE)

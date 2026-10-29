@@ -379,7 +379,7 @@ test_that("the timestamp reply is checked against the request's nonce", {
     wbsave = function(urls, ...) stop("offline", call. = FALSE)
   )
   expect_warning(arcpush(dir, upload = "wayback"), "failed: nonce")
-  expect_true(is.raw(seen$nonce))
+  expect_type(seen$nonce, "raw")
   expect_length(seen$nonce, 8L)
   expect_false(file.exists(file.path(dir, "manifest.tsr")))
 })

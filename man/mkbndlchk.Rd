@@ -75,7 +75,8 @@ best effort): names holding \code{KEY}, \code{TOKEN}, \code{SECRET},
 \code{PASS}, \code{CREDENTIAL}, \code{AUTH}, \code{COOKIE} or
 \code{SESSION}, a service's prefix (\env{GITHUB_}, \env{AWS_}, ...),
 connection strings (\env{DATABASE_URL}, \env{*_DATABASE_URL},
-\env{*_WEBHOOK_URL}, \env{SENTRY_DSN}, \env{*_DSN}), \env{*_PWD}, other
+\env{*_WEBHOOK_URL}, \env{SENTRY_DSN}, \env{*_DSN}), \env{*_PWD},
+\env{*_SK}, other
 \env{LC_} names, and any value that is a URL with a password in it.
 This is not a sandbox: the files your user can read stay readable.
 
@@ -101,13 +102,16 @@ also one that started its own session or forked twice, is killed when
 the run ends or times out.}
 \item{job object}{Windows: the run is started inside a job object that
 kills every process in it when the run ends or times out.}
-\item{process group}{macOS, and Linux without user namespaces: the run
-leads a process group, killed when it ends, times out or is
-interrupted. A process that deliberately leaves the group (setsid, a
-double fork) can outlive it: every process still carrying the run's
-mark in its environment afterwards is killed and fails the check (the
-isolation row is an error). A process that also clears its
-environment is not seen.}
+\item{process group}{Linux without user namespaces, and macOS: the
+run leads a process group, killed when it ends, times out or is
+interrupted. A process can leave the group (setsid, a double fork) and
+clear its environment. On Linux this R session is made the run's child
+subreaper, so such a process is re-parented to it rather than to
+init: every process the run left behind is found by the process tree,
+killed by its PID and fails the check (the isolation row is an error).
+Where that cannot be done (macOS, or a Linux kernel older than 3.4)
+escaped processes cannot be detected, and the isolation row fails:
+use \code{container = TRUE} there.}
 }
 
 Only a \file{results_*} folder the run itself created counts: one the

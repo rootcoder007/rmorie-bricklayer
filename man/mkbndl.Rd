@@ -69,7 +69,8 @@ unless \code{secrets = TRUE}: \file{llm.json}, \file{credentials.json},
 \file{kubeconfig} and \file{kube.config}, key stores (\file{.p12},
 \file{.pfx}, \file{.jks}, \file{.ppk}), \file{.pem} or \file{.key}
 files holding a private key, and any other file (not a data table such
-as \file{.csv} or \file{.rds}) whose name, split into words at
+as \file{.csv} or \file{.rds}, nor a document such as \file{.md},
+\file{.html}, \file{.Rmd} or \file{.qmd}) whose name, split into words at
 \samp{-}, \samp{_}, \samp{.} and spaces, has the word \code{key},
 \code{keys}, \code{apikey}, \code{token}, \code{tokens}, \code{secret},
 \code{secrets}, \code{credential}, \code{credentials}, \code{creds},

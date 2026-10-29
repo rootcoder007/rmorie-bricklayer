@@ -38,7 +38,8 @@
 #' \file{kubeconfig} and \file{kube.config}, key stores (\file{.p12},
 #' \file{.pfx}, \file{.jks}, \file{.ppk}), \file{.pem} or \file{.key}
 #' files holding a private key, and any other file (not a data table such
-#' as \file{.csv} or \file{.rds}) whose name, split into words at
+#' as \file{.csv} or \file{.rds}, nor a document such as \file{.md},
+#' \file{.html}, \file{.Rmd} or \file{.qmd}) whose name, split into words at
 #' \samp{-}, \samp{_}, \samp{.} and spaces, has the word \code{key},
 #' \code{keys}, \code{apikey}, \code{token}, \code{tokens}, \code{secret},
 #' \code{secrets}, \code{credential}, \code{credentials}, \code{creds},
@@ -592,6 +593,9 @@ format.rmbl_bundle_project <- function(x, ...) {
 #' @return Relative paths.
 #' @noRd
 .bndl_project_files <- function(pdir, secrets = FALSE) {
+  # counted first, in one listing a folder: the walk below checks every
+  # entry for links and credentials, which took minutes on 66,000 files
+  .bndl_toomany(.bndl_count(pdir))
   w <- .bndl_walk(pdir)
   f <- w$files
   keep <- !grepl("(^|/)results_[^/]*(/|$)", f) & !grepl("[.]zip$", f)
@@ -706,14 +710,16 @@ format.rmbl_bundle_project <- function(x, ...) {
 #' Whether a file name holds a word that names a credential: split at
 #' "-", "_", "." and spaces, a word such as key, token, secret, credential,
 #' password, pat or adc (openai_key.txt, github_pat.txt, aws_credentials,
-#' gcloud_adc.json, keys.R). A data table (.csv, .rds, ...) is not judged
-#' by its words: tokens_per_doc.csv is data.
+#' gcloud_adc.json, keys.R). A data table (.csv, .rds, ...) or a document
+#' (.md, .html, .Rmd, .qmd, ...) is not judged by its words:
+#' tokens_per_doc.csv is data, credentials_policy.md a text about them.
 #' @param b The file's base name, in lower case.
 #' @return TRUE or FALSE.
 #' @noRd
 .bndl_secword <- function(b) {
   data <- "[.](csv|tsv|rds|rda|rdata|parquet|feather|xlsx?|sav|dta)$"
-  if (grepl(data, b)) {
+  docs <- "[.](md|markdown|html?|rmd|qmd|rst|adoc|tex|pdf|docx?)$"
+  if (grepl(data, b) || grepl(docs, b)) {
     return(FALSE)
   }
   w <- strsplit(b, "[-_. ]+")[[1L]]
@@ -1104,6 +1110,28 @@ format.rmbl_bundle_project <- function(x, ...) {
   invisible(NULL)
 }
 
+#' How many files and folders a bundle of a project holds at least: every
+#' entry .bndl_walk() would see (no hidden ones), without the results_*
+#' folders and zip files mkbndl() leaves out, one listing per folder and
+#' no folder link followed.
+#' @param pdir The project folder.
+#' @return A number.
+#' @noRd
+.bndl_count <- function(pdir) {
+  n <- 0
+  todo <- pdir
+  while (length(todo)) {
+    e <- list.files(todo[[1L]], full.names = TRUE, no.. = TRUE)
+    todo <- todo[-1L]
+    e <- e[!grepl("^results_", basename(e)) & !grepl("[.]zip$", e)]
+    d <- e[dir.exists(e)]
+    d <- d[!nzchar(Sys.readlink(d))]
+    n <- n + length(e)
+    todo <- c(todo, d)
+  }
+  n
+}
+
 #' The folders that hold some files, every level of them.
 #' @param f Relative file paths.
 #' @return Relative folder paths, each once.
@@ -1111,9 +1139,10 @@ format.rmbl_bundle_project <- function(x, ...) {
 .bndl_dirs <- function(f) {
   d <- unique(dirname(f))
   out <- character()
-  while (length(d <- setdiff(d, c(".", out)))) {
+  d <- setdiff(d, ".")
+  while (length(d)) {
     out <- c(out, d)
-    d <- unique(dirname(d))
+    d <- setdiff(unique(dirname(d)), c(".", out))
   }
   out
 }

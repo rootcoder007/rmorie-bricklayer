@@ -1237,7 +1237,8 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' @return Text.
 #' @noRd
 .bl_md_esc <- function(x) {
-  gsub("|", "\\|", gsub("\n", " ", x, fixed = TRUE), fixed = TRUE)
+  x <- .rmbl_ctl_escape(gsub("\n", " ", x, fixed = TRUE))
+  gsub("|", "\\|", x, fixed = TRUE)
 }
 
 #' A number for the report: three significant digits, \code{"-"} for NA.

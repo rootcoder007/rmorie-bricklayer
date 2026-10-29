@@ -405,7 +405,9 @@ test_that("files that look like credentials are left out unless asked", {
   writeLines(c("-----BEGIN PRIVATE KEY-----", "fake",
                "-----END PRIVATE KEY-----"), file.path(p$dir, "key.pem"))
   ok <- c("cert.pem", "id_rsa.pub", "tokens_per_doc.csv", "authors.txt",
-          "keyboard.csv", "monkey.R", "patients.R", "environment.R")
+          "keyboard.csv", "monkey.R", "patients.R", "environment.R",
+          "credentials_policy.md", "keys_to_success.md", "token_notes.Rmd",
+          "secret_sauce.html")
   writeLines(c("-----BEGIN CERTIFICATE-----", "fake"),
              file.path(p$dir, "cert.pem"))
   for (f in ok[-1L]) writeLines("x", file.path(p$dir, f))
@@ -596,4 +598,33 @@ test_that("too many files are refused before anything is copied", {
                "70\\d+ files and folders, more than a plain zip holds")
   expect_identical(copied$n, 0L)
   expect_identical(.bndl_dirs(c("a/b/c.R", "a/d.R", "e.R")), c("a/b", "a"))
+})
+
+test_that("a project of too many files is refused before it is walked", {
+  p <- bndl_proj()
+  local_mocked_bindings(
+    .bndl_count = function(pdir) 70000,
+    .bndl_walk = function(pdir) stop("walked")
+  )
+  expect_error(mkbndl(p$dir, withr::local_tempdir()),
+               "70000 files and folders, more than a plain zip holds")
+})
+
+test_that("66,000 files are counted and refused in seconds", {
+  skip_on_cran()
+  p <- bndl_proj()
+  dir.create(file.path(p$dir, "many"))
+  file.create(file.path(p$dir, "many", sprintf("f%05d.txt", 1:66000)))
+  # what is never packed is not counted
+  dir.create(file.path(p$dir, "results_1"))
+  file.create(file.path(p$dir, "results_1", "x.csv"))
+  file.symlink(p$dir, file.path(p$dir, "loop"))
+  n <- .bndl_count(p$dir)
+  # the top entries but results_1 (the link itself counted, not followed)
+  expect_identical(n, length(list.files(p$dir)) - 1 + 66000)
+  t <- system.time(
+    expect_error(mkbndl(p$dir, withr::local_tempdir()),
+                 "more than a plain zip holds")
+  )[["elapsed"]]
+  expect_lt(t, 5)
 })

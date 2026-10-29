@@ -1808,9 +1808,10 @@ instcli <- function(
     "minimal environment and a temporary HOME): check only bundles you",
     "built or trust. --container runs it in a container (no network",
     "unless it downloads the real data); otherwise on Linux a PID",
-    "namespace, on Windows a job object, and on macOS only a process",
-    "group contain it, which a process can deliberately escape (one seen",
-    "outliving the run is killed and fails the check)"
+    "namespace (or a process group whose escaped processes are found,",
+    "killed and fail the check), on Windows a job object; on macOS only",
+    "a process group, where escaped processes cannot be seen, so the",
+    "check fails there without --container"
   )
 }
 

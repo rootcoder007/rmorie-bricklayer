@@ -47,14 +47,32 @@
 #' @return \dQuote{fn: } or "".
 #' @noRd
 .rmbl_fnlab <- function(nm, s3, ex) {
-  if (is.na(nm)) {
+  nm <- .rmbl_s3col(nm)
+  if (is.na(nm[1L])) {
     return("")
   }
-  g <- s3[which(s3[, 3L] == nm), 1L]
+  g <- s3[which(.rmbl_s3col(s3[, 3L]) == nm[1L]), 1L]
   if (length(g)) {
     return(paste0(g[[1L]], ": "))
   }
   if (nm %in% ex) paste0(nm, ": ") else ""
+}
+
+#' The method-name column of a namespace's S3 table as text.
+#'
+#' The table is a character matrix until methods are registered at run
+#' time (registerS3method()), which turns it into a list matrix; a list
+#' entry that is not one string reads as NA.
+#' @param x A column, or one entry, of the table.
+#' @return A character vector.
+#' @noRd
+.rmbl_s3col <- function(x) {
+  if (!is.list(x)) {
+    return(as.character(x))
+  }
+  vapply(x, function(v) {
+    if (is.character(v) && length(v) == 1L) v else NA_character_
+  }, character(1L))
 }
 
 #' Whether .rmbl_fn() passes over a co2fp() frame.

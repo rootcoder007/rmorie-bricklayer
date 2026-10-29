@@ -422,7 +422,7 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   # a pipe would end the cell, a line break the row, and HTML in a label
   # would run in a renderer that allows it
   cols <- lapply(cols, function(v) {
-    v <- gsub("[\r\n]+", " ", v)
+    v <- .rmbl_ctl_escape(gsub("[\r\n]+", " ", v))
     v <- gsub("&", "&amp;", v, fixed = TRUE)
     v <- gsub("<", "&lt;", v, fixed = TRUE)
     v <- gsub(">", "&gt;", v, fixed = TRUE)

@@ -142,6 +142,15 @@ test_that(".rmbl_fn() outside a namespace, and its name helpers", {
   expect_identical(.rmbl_fnlab(s3[1L, 3L], s3, ex), paste0(s3[1L, 1L], ": "))
   expect_identical(.rmbl_fnlab("fromjs", s3, ex), "fromjs: ")
   expect_identical(.rmbl_fnlab(".rmbl_fn", s3, ex), "")
+  # registerS3method() at run time turns the table into a list matrix
+  s3l <- matrix(list("print", "rmbl_x", "print.rmbl_x", NULL,
+                     "format", "rmbl_y", function(x) x, NULL),
+                nrow = 2L, byrow = TRUE)
+  expect_identical(.rmbl_fnlab("print.rmbl_x", s3l, ex), "print: ")
+  expect_identical(.rmbl_fnlab(list("print.rmbl_x"), s3l, ex), "print: ")
+  expect_identical(.rmbl_fnlab("fromjs", s3l, ex), "fromjs: ")
+  expect_identical(.rmbl_s3col(list("a", NULL, 1, c("b", "c"))),
+                   c("a", NA, NA, NA))
   expect_identical(
     .rmbl_fnname(quote(rmoriebricklayer::fromjs), fromjs, ns, ex), "fromjs"
   )

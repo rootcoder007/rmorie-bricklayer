@@ -854,9 +854,11 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' (`keep = TRUE`, .rmbl_cat()), and only the codes it draws.
 #' @param s Strings.
 #' @param keep Whether the package's own colour codes are kept.
+#' @param ws Whether tabs and line breaks are kept (text a file writer
+#'   lays out itself: a report's Markdown or HTML).
 #' @return `s`, escaped where needed.
 #' @noRd
-.rmbl_ctl_escape <- function(s, keep = FALSE) {
+.rmbl_ctl_escape <- function(s, keep = FALSE, ws = FALSE) {
   # text read in a C locale is UTF-8 bytes marked "unknown": marked as UTF-8,
   # as .rmbl_printable() does, it is matched and folded, not warned about
   # (recheck of a8cdaf9: yoy() labels in a C locale)
@@ -872,7 +874,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   )
   hit <- which(!is.na(s) & grepl(re, s, perl = TRUE))
   for (i in hit) {
-    s[i] <- .rmbl_ctl_escape1(s[i], keep)
+    s[i] <- .rmbl_ctl_escape1(s[i], keep, ws)
   }
   s
 }
@@ -898,16 +900,21 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #'   bold, dim, normal, the eight colours, default colour, 256 colours and
 #'   true colour (ESC [0m, 1m, 2m, 22m, 30m-37m, 39m, 38;5;Nm, 38;2;R;G;Bm);
 #'   any other code (hidden, blink, a background) is escaped.
+#' @param ws Whether tabs and line breaks are kept.
 #' @return The string.
 #' @noRd
-.rmbl_ctl_escape1 <- function(x, keep = FALSE) {
+.rmbl_ctl_escape1 <- function(x, keep = FALSE, ws = FALSE) {
   codes <- character()
   part <- x
-  if (keep) {
-    sgr <- gregexpr(paste0(
-      "\033\\[(0|1|2|22|3[0-79]|38;5;[0-9]{1,3}|",
-      "38;2;[0-9]{1,3};[0-9]{1,3};[0-9]{1,3})m"
-    ), x)
+  re <- c(
+    if (keep) {
+      paste0("\033\\[(0|1|2|22|3[0-79]|38;5;[0-9]{1,3}|",
+             "38;2;[0-9]{1,3};[0-9]{1,3};[0-9]{1,3})m")
+    },
+    if (ws) "[\t\n]"
+  )
+  if (length(re)) {
+    sgr <- gregexpr(paste(re, collapse = "|"), x)
     codes <- regmatches(x, sgr)[[1L]]
     part <- regmatches(x, sgr, invert = TRUE)[[1L]]
   }

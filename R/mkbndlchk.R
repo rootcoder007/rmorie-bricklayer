@@ -32,7 +32,8 @@
 #' \code{PASS}, \code{CREDENTIAL}, \code{AUTH}, \code{COOKIE} or
 #' \code{SESSION}, a service's prefix (\env{GITHUB_}, \env{AWS_}, ...),
 #' connection strings (\env{DATABASE_URL}, \env{*_DATABASE_URL},
-#' \env{*_WEBHOOK_URL}, \env{SENTRY_DSN}, \env{*_DSN}), \env{*_PWD}, other
+#' \env{*_WEBHOOK_URL}, \env{SENTRY_DSN}, \env{*_DSN}), \env{*_PWD},
+#' \env{*_SK}, other
 #' \env{LC_} names, and any value that is a URL with a password in it.
 #' This is not a sandbox: the files your user can read stay readable.
 #'
@@ -58,13 +59,16 @@
 #'   the run ends or times out.}
 #' \item{job object}{Windows: the run is started inside a job object that
 #'   kills every process in it when the run ends or times out.}
-#' \item{process group}{macOS, and Linux without user namespaces: the run
-#'   leads a process group, killed when it ends, times out or is
-#'   interrupted. A process that deliberately leaves the group (setsid, a
-#'   double fork) can outlive it: every process still carrying the run's
-#'   mark in its environment afterwards is killed and fails the check (the
-#'   isolation row is an error). A process that also clears its
-#'   environment is not seen.}
+#' \item{process group}{Linux without user namespaces, and macOS: the
+#'   run leads a process group, killed when it ends, times out or is
+#'   interrupted. A process can leave the group (setsid, a double fork) and
+#'   clear its environment. On Linux this R session is made the run's child
+#'   subreaper, so such a process is re-parented to it rather than to
+#'   init: every process the run left behind is found by the process tree,
+#'   killed by its PID and fails the check (the isolation row is an error).
+#'   Where that cannot be done (macOS, or a Linux kernel older than 3.4)
+#'   escaped processes cannot be detected, and the isolation row fails:
+#'   use \code{container = TRUE} there.}
 #' }
 #'
 #' Only a \file{results_*} folder the run itself created counts: one the
@@ -214,7 +218,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
         "none"
       }
     ),
-    .bndlchk_iso(run$isolation, run$left)
+    .bndlchk_iso(run$isolation, run$left, run$blind)
   )
 }
 
@@ -238,14 +242,23 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' outlived the run (only a process group held it, and a process left it).
 #' @param iso The isolation, from .bndlchk_run().
 #' @param left The processes that outlived the run (killed since).
+#' @param blind Whether escaped processes could not be looked for.
 #' @return A one-row data frame.
 #' @noRd
-.bndlchk_iso <- function(iso, left = integer()) {
+.bndlchk_iso <- function(iso, left = integer(), blind = FALSE) {
   if (length(left)) {
     return(.bndlchk_row(
       "isolation", FALSE,
       sprintf("%s: %d process(es) outlived the run and were killed (%s)",
               iso, length(left), toString(utils::head(left, 5L)))
+    ))
+  }
+  if (isTRUE(blind)) {
+    return(.bndlchk_row(
+      "isolation", FALSE,
+      paste0(iso, ": cannot detect escaped processes on this system ",
+             "(a process that left the group would go unseen): check it ",
+             "with container = TRUE")
     ))
   }
   .bndlchk_row(
@@ -367,7 +380,8 @@ format.rmbl_bundle_audit <- function(x, ...) {
       sprintf(" (no %s found for a container)", rt$kind)
     }),
     root = r$root %||% root,
-    left = r$left %||% integer()
+    left = r$left %||% integer(),
+    blind = isTRUE(r$blind)
   )
 }
 
@@ -410,19 +424,100 @@ format.rmbl_bundle_audit <- function(x, ...) {
     "-i", paste0(names(env), "=", env), pidns, sh, wrap, tmout,
     file.path(home, "timed_out"), rscript, args
   )
+  # this session the run's subreaper: what leaves the run stays below it
+  reap <- .bndlchk_reaper(TRUE)
+  if (reap) {
+    on.exit(.bndlchk_reaper(FALSE), add = TRUE)
+  }
+  before <- .bndlchk_procs()
   # system2()'s own limit is a backstop: the shell stops the run first
   st <- suppressWarnings(system2(
     envp, shQuote(cmd), stdout = log, stderr = log, timeout = tmout + 60L
   ))
-  left <- .bndlchk_left(tag)
-  if (length(left)) {
-    tools::pskill(left, tools::SIGKILL)
-  }
+  left <- union(.bndlchk_left(tag), .bndlchk_desc(before))
+  .bndlchk_kill(left)
   list(
     status = st,
     mode = if (length(pidns)) "pid namespace" else "process group",
-    left = left
+    left = left,
+    blind = !reap && !length(pidns)
   )
+}
+
+#' Makes this R session the child subreaper of what it starts, or stops it
+#' being one (Linux; rmbl_reap.c).
+#' @param on TRUE to set, FALSE to clear.
+#' @return TRUE when it is now as asked (always FALSE off Linux).
+#' @noRd
+.bndlchk_reaper <- function(on) {
+  isTRUE(.Call(C_rmbl_subreap, on))
+}
+
+#' The processes of this machine as /proc lists them (Linux), each with its
+#' parent, state and start time; NULL elsewhere.
+#' @return A data frame (pid, ppid, state, key), or NULL.
+#' @noRd
+.bndlchk_procs <- function() {
+  if (!identical(Sys.info()[["sysname"]], "Linux") || !dir.exists("/proc")) {
+    return(NULL)
+  }
+  p <- list.files("/proc", pattern = "^[0-9]+$")
+  # a process can end while it is read: its line is then ""
+  st <- vapply(p, function(k) {
+    c(tryCatch(readLines(file.path("/proc", k, "stat"), n = 1L, warn = FALSE),
+               error = function(e) "", warning = function(w) ""), "")[1L]
+  }, "", USE.NAMES = FALSE)
+  # the fields after the name in parentheses (which may hold spaces)
+  f <- strsplit(sub("^.*\\) ", "", st), " ", fixed = TRUE)
+  ok <- nzchar(st) & lengths(f) >= 20L
+  f <- f[ok]
+  data.frame(
+    pid = as.integer(p[ok]),
+    ppid = as.integer(vapply(f, `[`, "", 2L)),
+    state = vapply(f, `[`, "", 1L),
+    key = paste(p[ok], vapply(f, `[`, "", 20L)),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' The processes below this session that were not there before the run:
+#' what the run left behind. A zombie (one that already ended) does not
+#' count, and is reaped.
+#' @param before The processes before the run, from .bndlchk_procs().
+#' @param me This session's process id.
+#' @return Process ids.
+#' @noRd
+.bndlchk_desc <- function(before, me = Sys.getpid()) {
+  now <- .bndlchk_procs()
+  if (is.null(before) || is.null(now)) {
+    return(integer())
+  }
+  below <- integer()
+  up <- me
+  while (length(up)) {
+    up <- setdiff(now$pid[now$ppid %in% up], c(below, me))
+    below <- c(below, up)
+  }
+  new <- now[now$pid %in% below & !now$key %in% before$key, ]
+  z <- new$pid[new$state == "Z"]
+  if (length(z)) {
+    .Call(C_rmbl_reap, z)
+  }
+  new$pid[new$state != "Z"]
+}
+
+#' Kills processes by their exact ids and reaps those that were this
+#' session's children.
+#' @param pids Process ids.
+#' @return NULL, invisibly.
+#' @noRd
+.bndlchk_kill <- function(pids) {
+  if (length(pids)) {
+    tools::pskill(pids, tools::SIGKILL)
+    Sys.sleep(0.2)
+    .Call(C_rmbl_reap, as.integer(pids))
+  }
+  invisible(NULL)
 }
 
 #' The processes that still carry a run's mark (RMBL_CHKRUN) in their
@@ -709,8 +804,9 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' Removed: a service's prefix (GITHUB_, AWS_, ...); a name holding KEY,
 #' TOKEN, SECRET, PASS (PASSWORD), CREDENTIAL, AUTH, COOKIE or SESSION; a
 #' connection string (DATABASE_URL, *_DATABASE_URL, *_WEBHOOK_URL,
-#' SENTRY_DSN, *_DSN), a *_PWD; an LC_* name that is not a locale
-#' category; and a value that is a URL with a user name and password.
+#' SENTRY_DSN, *_DSN), a *_PWD or *_SK (STRIPE_SK); an LC_* name that is
+#' not a locale category; and a value that is a URL with a password in it
+#' (with or without a user name).
 #' @param n Variable names.
 #' @param v Their values, or NULL.
 #' @return The ones to remove.
@@ -724,11 +820,12 @@ format.rmbl_bundle_audit <- function(x, ...) {
   bad <- grepl(pre, n, ignore.case = TRUE) |
     grepl("KEY|TOKEN|SECRET|PASS|CREDENTIAL|AUTH|COOKIE|SESSION", n,
           ignore.case = TRUE) |
-    grepl("(^|_)(DATABASE_URL|WEBHOOK_URL|DSN)$|_PWD$", n,
+    grepl("(^|_)(DATABASE_URL|WEBHOOK_URL|DSN|SK)$|_PWD$", n,
           ignore.case = TRUE) |
     (startsWith(toupper(n), "LC_") & !toupper(n) %in% .rmbl_lcvars())
   if (!is.null(v)) {
-    bad <- bad | grepl("://[^/@[:space:]]+:[^/@[:space:]]*@", v)
+    # a password with or without a user name: redis://:pw@host
+    bad <- bad | grepl("://[^/@[:space:]]*:[^/@[:space:]]*@", v)
   }
   n[bad]
 }

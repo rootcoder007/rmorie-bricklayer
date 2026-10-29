@@ -324,6 +324,8 @@ yoypdf <- function(
 .yoy_esc <- function(s) {
   s <- as.character(s)
   s[is.na(s)] <- ""
+  # a label's control characters (ESC, C1) are shown escaped, never written
+  s <- .rmbl_ctl_escape(s, ws = TRUE)
   s <- gsub("&", "&amp;", s, fixed = TRUE)
   s <- gsub("<", "&lt;", s, fixed = TRUE)
   s <- gsub(">", "&gt;", s, fixed = TRUE)

@@ -1232,3 +1232,8 @@ podman
 setsid
 SignedData
 TMPDIR
+adc
+DSN
+kubeconfig
+subreaper
+webhook

@@ -234,6 +234,7 @@
 #' @noRd
 .bl_md_fenced <- function(text, lang = "") {
   text <- unlist(strsplit(as.character(text), "\n", fixed = TRUE))
+  text <- .rmbl_ctl_escape(text, ws = TRUE)
   runs <- unlist(regmatches(text, gregexpr("`+", text)))
   fence <- strrep("`", max(3L, nchar(runs) + 1L))
   c(paste0(fence, lang), text, fence)
@@ -247,6 +248,7 @@
 #' @noRd
 .bl_md_line <- function(s) {
   s <- gsub("[\r\n]+", " ", paste(as.character(s), collapse = " "))
+  s <- .rmbl_ctl_escape(s)
   s <- gsub("&", "&amp;", s, fixed = TRUE)
   s <- gsub("<", "&lt;", s, fixed = TRUE)
   s <- gsub(">", "&gt;", s, fixed = TRUE)

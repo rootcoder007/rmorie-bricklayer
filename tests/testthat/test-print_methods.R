@@ -543,3 +543,27 @@ test_that("colour codes in a label are escaped; the package's own are kept", {
   expect_true(any(grepl("\033[32mok\033[39m", out, fixed = TRUE)))
   expect_false(any(grepl("\033[8m", out, fixed = TRUE)))
 })
+
+test_that("report writers write no control byte from a label", {
+  esc <- paste0("H", intToUtf8(27L), "[2J", intToUtf8(0x9b), "x")
+  bad <- function(txt) {
+    grepl("[\001-\010\013-\037\177]", txt, useBytes = TRUE) ||
+      grepl(intToUtf8(0x9b), txt, fixed = TRUE)
+  }
+  d <- withr::local_tempdir()
+  items <- stats::setNames(list(yoy(c(1, 2)), data.frame(x = 1)),
+                           c(esc, paste0(esc, "2")))
+  for (ext in c("md", "html", "txt")) {
+    f <- file.path(d, paste0("r.", ext))
+    do.call(mkset, c(items, list(title = esc, file = f, plots = FALSE)))
+    txt <- paste(readLines(f, warn = FALSE), collapse = "\n")
+    expect_false(bad(txt), info = ext)
+    expect_match(txt, "\\033", fixed = TRUE, info = ext)
+  }
+  # the escapers each report writer uses keep tabs and line breaks
+  expect_identical(.yoy_esc("a\tb\nc\033"), "a\tb\nc\\033")
+  expect_identical(.md_esc("a\033b"), "a\\033b")
+  expect_identical(.bl_md_esc("a|\033"), "a\\|\\033")
+  expect_false(bad(.bl_md_line(esc)))
+  expect_false(bad(paste(.bl_md_fenced(c("x\033", "\ty")), collapse = "\n")))
+})

@@ -28,6 +28,7 @@ OBJECTS = init.o \
   rmbl_flock.o \
   rmbl_gunzip.o \
   rmbl_progress.o \
+  rmbl_reap.o \
   rmbl_survey.o \
   rmbl_unity.o \
   rmbl_winjob.o
