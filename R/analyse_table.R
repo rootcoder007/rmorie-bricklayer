@@ -427,6 +427,22 @@ rptanl <- function(
   out
 }
 
+#' Numbers written one by one: format() on a whole column pads every
+#' number to the longest one's decimals ("20.00000").
+#' @param v A numeric vector.
+#' @param big Whether numbers from 10,000 up get a thousands separator.
+#' @return A character vector.
+#' @noRd
+.md_num1 <- function(v, big) {
+  vapply(v, function(z) {
+    if (is.na(z)) {
+      return("")
+    }
+    format(z, big.mark = if (big && abs(z) >= 1e4) "," else "",
+           trim = TRUE, scientific = FALSE, digits = 15L)
+  }, character(1L))
+}
+
 #' Minimal Markdown table (pipe syntax) from a data frame; numeric
 #' columns rounded to `digits`, logicals as yes/no, NA as blank.
 #' @param d A data frame.
@@ -443,7 +459,12 @@ rptanl <- function(
     v <- d[[nm]]
     if (nm %in% plain) {
       # a period (2023) is a label, not a quantity: no thousands separator
-      ifelse(is.na(v), "", format(v, trim = TRUE, scientific = FALSE))
+      lab <- if (is.numeric(v)) {
+        .md_num1(v, big = FALSE)
+      } else {
+        .rmbl_ctl_escape(as.character(v))
+      }
+      ifelse(is.na(v), "", lab)
     } else if (is.logical(v)) {
       yn <- ifelse(v, "yes", "no")
       ifelse(is.na(v), "", yn)
@@ -451,21 +472,17 @@ rptanl <- function(
       whole <- v == round(v) & abs(v) < 1e9
       # a separator from 10,000 up only: a four-digit whole number (a year in
       # the profile's min / max) read as "2,023"
-      big <- ifelse(
-        abs(v) >= 1e4,
-        format(v, big.mark = ",", trim = TRUE, scientific = FALSE),
-        format(v, trim = TRUE, scientific = FALSE)
-      )
-      num <- ifelse(whole, big, formatC(v, digits = digits, format = "f"))
+      num <- ifelse(whole, .md_num1(v, big = TRUE),
+                    formatC(v, digits = digits, format = "f"))
       ifelse(is.na(v), "", num)
     } else {
-      ifelse(is.na(v), "", as.character(v))
+      ifelse(is.na(v), "", .rmbl_ctl_escape(as.character(v)))
     }
   })
   rows <- do.call(paste, c(cells, sep = " | "))
   paste(
     c(
-      paste("|", paste(names(d), collapse = " | "), "|"),
+      paste("|", paste(.rmbl_ctl_escape(names(d)), collapse = " | "), "|"),
       paste("|", paste(rep("---", ncol(d)), collapse = " | "), "|"),
       paste("|", rows, "|")
     ),
@@ -802,7 +819,7 @@ rptanl <- function(
   out <- character()
   out <- c(
     out,
-    paste0("# ", title),
+    paste0("# ", .rmbl_ctl_escape(title)),
     "",
     sprintf(
       paste0(

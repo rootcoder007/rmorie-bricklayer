@@ -321,3 +321,23 @@ test_that("anltab() prints as a box of facts", {
   .o2_check(anltab(rd, "n", "yr", by = "g"), "Analysis of a published table",
     c("Periods", "2 (1 to 2)", "comparison(s)", "Trend"))
 })
+
+test_that("rptanl() Markdown tables hold no raw control bytes", {
+  d <- data.frame(
+    group = c(paste0("A\033[31mR", "\u009b", "2J"),
+              paste0("B", "\u202e", "C")),
+    pct = c(20, 1.25),
+    n = c(12000, 3),
+    stringsAsFactors = FALSE
+  )
+  names(d)[1L] <- "gr\033oup"
+  md <- .md_table(d, digits = 1L)
+  expect_false(grepl("[\001-\010\013-\037\177]", md, useBytes = TRUE))
+  expect_false(grepl(paste0("\u009b", "|", "\u202e"), md))
+  # each number on its own: 20 stays 20, not 20.00000
+  expect_match(md, "| 20 |", fixed = TRUE)
+  expect_match(md, "| 12,000 |", fixed = TRUE)
+  expect_identical(.md_num1(c(20, 2023, NA), big = FALSE),
+                   c("20", "2023", ""))
+})
+

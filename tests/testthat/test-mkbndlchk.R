@@ -770,3 +770,43 @@ test_that("the job-object entry point exists everywhere, runs on Windows", {
   skip_on_os("windows")
   expect_error(.rmbl_wjob("x", tempfile(), 1), "for Windows only")
 })
+
+test_that("user services a run starts are found, stopped and fail the check", {
+  skip_on_os(c("windows", "mac", "solaris"))
+  # a fake systemctl: list prints the units in UNITS, stop logs its unit
+  d <- withr::local_tempdir()
+  units <- file.path(d, "units")
+  stops <- file.path(d, "stops")
+  sc <- file.path(d, "systemctl")
+  writeLines(c(
+    "#!/bin/sh",
+    sprintf("if [ \"$2\" = list-units ]; then cat %s; exit 0; fi",
+            shQuote(units)),
+    sprintf("if [ \"$2\" = stop ]; then echo \"$3\" >> %s; fi",
+            shQuote(stops))
+  ), sc)
+  Sys.chmod(sc, "755")
+  writeLines(c("dbus.service loaded active running D-Bus",
+               "app.scope loaded active running App"), units)
+  before <- .bndlchk_units(sc)
+  expect_identical(before, c("dbus.service", "app.scope"))
+  writeLines(c("dbus.service loaded active running D-Bus",
+               "vvesc610.service loaded active running sleep 610",
+               "app.scope loaded active running App"), units)
+  new <- setdiff(.bndlchk_units(sc), before)
+  expect_identical(new, "vvesc610.service")
+  .bndlchk_ustop(new, sc)
+  expect_identical(readLines(stops), "vvesc610.service")
+  row <- .bndlchk_iso("process group", integer(), FALSE, new)
+  expect_false(row$ok)
+  expect_match(row$detail, "1 user service\\(s\\) the run started were stopped")
+  expect_match(row$detail, "vvesc610.service", fixed = TRUE)
+  both <- .bndlchk_iso("process group", 4242L, FALSE, new)
+  expect_match(both$detail, "1 process(es) outlived the run", fixed = TRUE)
+  expect_match(both$detail, "; 1 user service(s)", fixed = TRUE)
+  # a systemctl that fails (no user manager) lists nothing
+  writeLines(c("#!/bin/sh", "exit 1"), sc)
+  expect_identical(.bndlchk_units(sc), character())
+  expect_identical(.bndlchk_units(""), character())
+})
+

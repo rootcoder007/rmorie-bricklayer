@@ -89,6 +89,9 @@
 
 ## Fixed after the 1.0.3 recheck
 
+* In a process group (Linux without user namespaces), `mkbndlchk()` also lists the user's running systemd services before and after the run, so a bundle that starts one with `systemd-run --user` is stopped and fails the check.
+* `rptanl()`'s Markdown report escapes control bytes in its title and table cells, and writes each number on its own (20, not 20.00000).
+* DESCRIPTION lists the optional tools `mkbndlchk()` uses when it runs a bundle (`unshare`, `systemctl`, podman or docker).
 * On Linux, `mkbndlchk()` makes R the run's subreaper and compares the process list before and after, so a process that leaves the session or clears its environment is still found and killed, and fails the check. Where escaped processes cannot be detected (macOS, or very old Linux kernels) a check without `container = TRUE` fails with a message saying so instead of passing.
 * `mkbndl()` counts a project's files before checking or copying any of them, so a project too large for a zip is refused in seconds. Documents (`.md`, `.Rmd`, `.qmd`, `.html`, `.pdf` and similar) are no longer left out because their names contain a word such as "key" or "credentials".
 * Report files (Markdown, HTML and text from `mkset()`, `yoymd()`, `yoyhtml()`, `anltab()`, capsule checks and dashboards) escape terminal control bytes from labels and headings as the console output already did.

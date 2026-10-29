@@ -218,7 +218,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
         "none"
       }
     ),
-    .bndlchk_iso(run$isolation, run$left, run$blind)
+    .bndlchk_iso(run$isolation, run$left, run$blind, run$units)
   )
 }
 
@@ -243,15 +243,13 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' @param iso The isolation, from .bndlchk_run().
 #' @param left The processes that outlived the run (killed since).
 #' @param blind Whether escaped processes could not be looked for.
+#' @param units The user services the run started (stopped since).
 #' @return A one-row data frame.
 #' @noRd
-.bndlchk_iso <- function(iso, left = integer(), blind = FALSE) {
-  if (length(left)) {
-    return(.bndlchk_row(
-      "isolation", FALSE,
-      sprintf("%s: %d process(es) outlived the run and were killed (%s)",
-              iso, length(left), toString(utils::head(left, 5L)))
-    ))
+.bndlchk_iso <- function(iso, left = integer(), blind = FALSE,
+                         units = character()) {
+  if (length(left) || length(units)) {
+    return(.bndlchk_row("isolation", FALSE, .bndlchk_why(iso, left, units)))
   }
   if (isTRUE(blind)) {
     return(.bndlchk_row(
@@ -270,6 +268,75 @@ format.rmbl_bundle_audit <- function(x, ...) {
     },
     severity = "warn"
   )
+}
+
+#' What outlived a run, in words.
+#' @param iso The isolation.
+#' @param left The processes that outlived the run (killed since).
+#' @param units The user services the run started (stopped since).
+#' @return One string.
+#' @noRd
+.bndlchk_why <- function(iso, left, units) {
+  out <- character()
+  if (length(left)) {
+    out <- sprintf("%d process(es) outlived the run and were killed (%s)",
+                   length(left), toString(utils::head(left, 5L)))
+  }
+  if (length(units)) {
+    out <- c(out, sprintf(
+      "%d user service(s) the run started were stopped (%s)",
+      length(units), toString(utils::head(units, 5L))
+    ))
+  }
+  paste0(iso, ": ", paste(out, collapse = "; "))
+}
+
+#' The user's running systemd units (Linux): a run in a process group can
+#' start one with systemd-run --user, which is never a descendant of R.
+#' @param sc The systemctl program.
+#' @return A character vector of unit names (empty when there is none or
+#'   systemctl cannot reach the user's manager).
+#' @noRd
+.bndlchk_units <- function(sc = Sys.which("systemctl")) {
+  if (!nzchar(sc) || !identical(Sys.info()[["sysname"]], "Linux")) {
+    return(character())
+  }
+  out <- suppressWarnings(system2(
+    sc, c("--user", "list-units", "--state=running", "--plain",
+          "--no-legend", "--no-pager"),
+    stdout = TRUE, stderr = FALSE, env = .bndlchk_uenv()
+  ))
+  if (!is.null(attr(out, "status"))) {
+    return(character())
+  }
+  u <- sub("[[:space:]].*$", "", trimws(out))
+  u[nzchar(u)]
+}
+
+#' Stops the given user units (Linux).
+#' @param units Unit names from .bndlchk_units().
+#' @param sc The systemctl program.
+#' @return The units, invisibly.
+#' @noRd
+.bndlchk_ustop <- function(units, sc = Sys.which("systemctl")) {
+  for (u in units) {
+    suppressWarnings(system2(sc, c("--user", "stop", shQuote(u)),
+                             stdout = FALSE, stderr = FALSE,
+                             env = .bndlchk_uenv()))
+  }
+  invisible(units)
+}
+
+#' The environment systemctl --user needs to reach the user's manager.
+#' @return A character vector of NAME=value.
+#' @noRd
+.bndlchk_uenv <- function() {
+  rt <- Sys.getenv("XDG_RUNTIME_DIR")
+  if (!nzchar(rt)) {
+    uid <- file.info("/proc/self", extra_cols = TRUE)$uid
+    rt <- file.path("/run/user", uid)
+  }
+  paste0("XDG_RUNTIME_DIR=", rt)
 }
 
 #' mkbndlchk()'s arguments, checked.
@@ -430,16 +497,24 @@ format.rmbl_bundle_audit <- function(x, ...) {
     on.exit(.bndlchk_reaper(FALSE), add = TRUE)
   }
   before <- .bndlchk_procs()
+  ubefore <- if (length(pidns)) character() else .bndlchk_units()
   # system2()'s own limit is a backstop: the shell stops the run first
   st <- suppressWarnings(system2(
     envp, shQuote(cmd), stdout = log, stderr = log, timeout = tmout + 60L
   ))
   left <- union(.bndlchk_left(tag), .bndlchk_desc(before))
   .bndlchk_kill(left)
+  units <- if (length(pidns)) {
+    character()
+  } else {
+    setdiff(.bndlchk_units(), ubefore)
+  }
+  .bndlchk_ustop(units)
   list(
     status = st,
     mode = if (length(pidns)) "pid namespace" else "process group",
     left = left,
+    units = units,
     blind = !reap && !length(pidns)
   )
 }
