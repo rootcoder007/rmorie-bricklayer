@@ -287,8 +287,8 @@ led
 #> │   Theorems  3 theorems (1 proved, 1 sorry, 1 axiom)                         │
 #> │   Source    https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab    │
 #> │   Lean      v4.12.0                                                         │
-#> │   File      /tmp/Rtmpa9Hd7d/temp_libpath1f9279286a56/rmoriebricklayer/extda │
-#> │             ta/ledger_sample.json                                           │
+#> │   File      /tmp/Rtmp6i9Dbh/temp_libpath1ede396504b/rmoriebricklayer/extdat │
+#> │             a/ledger_sample.json                                            │
 #> │                                                                             │
 #> │   id               theorem                         status  sorry            │
 #> │   ---------------  ------------------------------  ------  -----            │
