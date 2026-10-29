@@ -194,9 +194,9 @@ Quantifying the carbon emissions of machine learning. arXiv:1910.09700.
 ``` r
 fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 fp$enekwh$total
-#> [1] 2.684137e-08
+#> [1] 2.68422e-08
 fp$co2eg
-#> [1] 2.441759e-06
+#> [1] 2.441835e-06
 fp$co2int$year
 #> [1] 2024
 fp$assumptions
@@ -205,7 +205,7 @@ fp$assumptions
 print(fp)
 #> ╭── Computation footprint (modelled) ─────────────────────────────────────────╮
 #> │   Time         0.002 s wall, 0.003 s CPU                                    │
-#> │   Utilisation  utilisation 0.37 (process) on 4 cores                        │
+#> │   Utilisation  utilisation 0.38 (process) on 4 cores                        │
 #> │   Memory       15.6 GB                                                      │
 #> │   Energy       2.68e-08 kWh (cpu 2.36e-08, memory 3.23e-09)                 │
 #> │   CO2e         2.44e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)        │
@@ -245,18 +245,18 @@ fp2 <- co2fp(
 )
 fp2$enekwh
 #> $cpu
-#> [1] 3.015278e-08
+#> [1] 6.030556e-08
 #> 
 #> $memory
-#> [1] 5.529556e-09
+#> [1] 1.105911e-08
 #> 
 #> $total
-#> [1] 3.568233e-08
+#> [1] 7.136467e-08
 #> 
 fpeqv(fp2$co2eg)
 #> ╭── Footprint in everyday terms ────────────────────────────────────────╮
-#> │   Car travel   6.117e-09 km                                           │
-#> │   Tree uptake  1.167e-09 tree-months                                  │
+#> │   Car travel   1.223e-08 km                                           │
+#> │   Tree uptake  2.335e-09 tree-months                                  │
 #> │                                                                       │
 #> │   The same emissions as driving a European passenger car this far, or │
 #> │   what this many trees take up in a month.                            │
