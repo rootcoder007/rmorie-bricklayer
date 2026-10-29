@@ -18,6 +18,32 @@ for p in rmoriebricklayer rmoriedata rmorie; do
     [ -f "$f" ] && sed -i "/badges\//! s|https://rootcoder007.r-universe.dev/$p\b|https://CRAN.R-project.org/package=$p|g" "$f"
   done
 done
+# the CRAN copy cites the CRAN page: inst/CITATION whatever the copy is
+# installed from, and the citations in CITATION.cff and the README
+PKG="$pkg" python3 - <<'PY'
+import os, re
+pkg = os.environ["PKG"]
+cran = "https://CRAN.R-project.org/package=" + pkg
+gh = re.compile(r"https://github\.com/rootcoder007/[A-Za-z0-9._-]+")
+ru = re.compile(r"https://rootcoder007\.r-universe\.dev/" + re.escape(pkg) + r"\b")
+def cite(s):
+    return ru.sub(cran, gh.sub(cran, s))
+if os.path.exists("inst/CITATION"):
+    s = open("inst/CITATION", encoding="utf-8").read()
+    open("inst/CITATION", "w", encoding="utf-8").write(cite(s))
+if os.path.exists("CITATION.cff"):
+    s = open("CITATION.cff", encoding="utf-8").read()
+    s = re.sub(r'^(\s*)url: "[^"]*"', lambda m: m.group(1) + 'url: "' + cran + '"', s, flags=re.M)
+    open("CITATION.cff", "w", encoding="utf-8").write(s)
+if os.path.exists("README.md"):
+    s = open("README.md", encoding="utf-8").read()
+    i = s.find("## Citation")
+    if i >= 0:
+        j = s.find("\n## ", i + 3)
+        j = len(s) if j < 0 else j
+        s = s[:i] + cite(s[i:j]) + s[j:]
+        open("README.md", "w", encoding="utf-8").write(s)
+PY
 # CRAN does not know the Remotes field (its sibling pins are for r-universe and GitHub installs)
 python3 - <<'PY'
 import re

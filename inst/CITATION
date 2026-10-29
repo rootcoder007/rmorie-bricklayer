@@ -3,6 +3,18 @@ citHeader(
   "It is part of the MORIE ecosystem; see also the 'morie' and 'rmorie' packages."
 )
 
+# the address of the copy that is installed: CRAN's page for a CRAN
+# install, the r-universe page for an r-universe one, otherwise (from
+# GitHub or a source folder) the repository
+repo <- if (is.null(meta$Repository)) "" else meta$Repository
+url <- if (identical(repo, "CRAN")) {
+  "https://CRAN.R-project.org/package=rmoriebricklayer"
+} else if (grepl("r-universe.dev", repo, fixed = TRUE)) {
+  "https://rootcoder007.r-universe.dev/rmoriebricklayer"
+} else {
+  "https://github.com/rootcoder007/rmorie-bricklayer"
+}
+
 bibentry(
   bibtype = "Manual",
   key     = "ruhela_rmoriebricklayer_2026",
@@ -12,5 +24,5 @@ bibentry(
   year    = "2026",
   note    = paste("R package version", meta$Version),
   doi     = "10.32614/CRAN.package.rmoriebricklayer",
-  url     = "https://CRAN.R-project.org/package=rmoriebricklayer"
+  url     = url
 )
