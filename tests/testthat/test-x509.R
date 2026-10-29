@@ -384,7 +384,7 @@ test_that("a GeneralizedTime with stray bytes reads as NA, without warnings", {
                             0x32, 0x32, 0x30, 0x30, 0x33, 0x35, 0x5a)))
   expect_no_warning(t <- .rmbl_ts_gentime(bad))
   expect_true(is.na(t))
-  expect_true(inherits(t, "POSIXct"))
+  expect_s3_class(t, "POSIXct")
   expect_true(is.na(.rmbl_ts_gentime("20260912220035")))
   expect_identical(
     format(.rmbl_ts_gentime("20260912220035Z"), "%Y-%m-%d %H:%M:%S",
