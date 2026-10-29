@@ -184,7 +184,7 @@ cpsrpt(cur, ref = ref, schema = infsch(ref))
 #> │   Columns        3                                        │
 #> │   Missing cells  0.0%                                     │
 #> │   Complete rows  100.0%                                   │
-#> │   Digest         5d70a73bdcbc84111491db56743c94fd         │
+#> │   Digest         f4d14169312fbd9d251a6ab1daffadef         │
 #> │   Findings       0                                        │
 #> │                                                           │
 #> │   No finding is proof of correctness: each check has a    │
@@ -203,7 +203,7 @@ r
 #> │   Columns        3                                                          │
 #> │   Missing cells  0.0%                                                       │
 #> │   Complete rows  100.0%                                                     │
-#> │   Digest         7889e99fa5a2e10e04c767d3958f3c84                           │
+#> │   Digest         ecc02c79b75e352ef946af8cde6b1dd2                           │
 #> │   Findings       4                                                          │
 #> │                                                                             │
 #> │   No finding is proof of correctness: each check has a                      │

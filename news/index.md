@@ -547,9 +547,8 @@
   lists the exported functions an error is reached from through any
   helpers a function is split into, as well as up to four calls of
   shared code. Every line of R, of the tests and of the vignettes’ code
-  is at most 80 characters, and
-  [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html)
-  reports nothing. The source is formatted with air (`air.toml`).
+  is at most 80 characters, and `lintr::lint_package()` reports nothing.
+  The source is formatted with air (`air.toml`).
 - A function defined twice, the second copy silently replacing the
   first, is defined once:
   [`plot.rmbl_prevalence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
@@ -581,6 +580,14 @@
   with `container = TRUE` refused every folder on Windows, reading the
   drive’s colon (`C:`) as a separator; only a colon or comma after the
   drive is refused now.
+- On Windows,
+  [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md)
+  counted files through a folder link
+  ([`Sys.readlink()`](https://rdrr.io/r/base/Sys.readlink.html) sees no
+  link there), so a link to the project’s own folder was followed for
+  ever; links and junctions are found by their real path now. A bundle’s
+  runner whose provenance has no download address says so and stops
+  (exit 5) instead of failing with an R error.
 - Panel estimators with one unit’s weight near the largest double (1e308
   next to 1) no longer stop with “system is exactly singular”: the
   weights are scaled so the smaller ones stay normal numbers, and a
@@ -1164,9 +1171,7 @@ CRAN release: 2026-10-21
   which read “50" and stopped).
 - Spelling: US spelling throughout (“optimized”, “renormalized”,
   “victimized”), code names in code font, and the technical terms in
-  `inst/WORDLIST`;
-  [`spelling::spell_check_package()`](https://docs.ropensci.org/spelling//reference/spell_check_package.html)
-  finds nothing.
+  `inst/WORDLIST`; `spelling::spell_check_package()` finds nothing.
 - R CMD check no longer reruns the vignettes’ analyses: when it
   re-builds a vignette, only the setup chunk runs. R CMD build,
   r-universe and pkgdown still build every vignette in full, so the
@@ -3554,14 +3559,13 @@ fixes overstated corrected.
   cut gzip or bzip2 file decodes to, with no error and no warning, so
   half a file was read as a whole one (status ok). gzip is now inflated
   in C with zlib, every member’s CRC-32 and length checked (several
-  members, as `gzip -c a b` and
-  [`data.table::fwrite()`](https://rdrr.io/pkg/data.table/man/fwrite.html)
-  write, are read whole); a bzip2 file must end with its end-of-stream
-  marker; an xz decoder warning is an error. The decompressed size is
-  capped while it is read (`options(rmoriebricklayer.maxcsvbytes)`, 1
-  GiB): a few megabytes of gzip no longer grow to gigabytes before
-  anything is refused. zlib is now a system requirement (it ships with
-  R’s own build dependencies).
+  members, as `gzip -c a b` and `data.table::fwrite()` write, are read
+  whole); a bzip2 file must end with its end-of-stream marker; an xz
+  decoder warning is an error. The decompressed size is capped while it
+  is read (`options(rmoriebricklayer.maxcsvbytes)`, 1 GiB): a few
+  megabytes of gzip no longer grow to gigabytes before anything is
+  refused. zlib is now a system requirement (it ships with R’s own build
+  dependencies).
 - **A baseline rate below one per 100,000 needs `rare_outcome = TRUE`,
   whatever its unit.** The check ran only when `baseline_rate_per` was
   missing, so a wrapper or

@@ -71,19 +71,19 @@ b$r_version <- "9.9.9"
 d <- envdiff(a, b)
 d$packages
 #>   package     a     b  change
-#> 1   stats 4.6.1 0.0.0 changed
+#> 1   stats 4.6.2 0.0.0 changed
 #> 2   tools  <NA> 4.9.0   added
 d$r_version
 #>       a       b 
-#> "4.6.1" "9.9.9" 
+#> "4.6.2" "9.9.9" 
 d
 #> ╭── Environment diff ─────────────────────────────────────────────────╮
 #> │   Status     ✗ environments differ                                  │
-#> │   R version  4.6.1 -> 9.9.9                                         │
+#> │   R version  4.6.2 -> 9.9.9                                         │
 #> │                                                                     │
 #> │   package  a      b      change                                     │
 #> │   -------  -----  -----  -------                                    │
-#> │   stats    4.6.1  0.0.0  changed                                    │
+#> │   stats    4.6.2  0.0.0  changed                                    │
 #> │   tools    –      4.9.0  added                                      │
 #> │                                                                     │
 #> │   The records differ: a result may not reproduce until these agree. │

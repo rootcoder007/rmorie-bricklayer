@@ -60,8 +60,8 @@ Error: `pkgs` that is not a character vector.
 deps <- capdeps(c("stats", "utils"))
 deps[, c("package", "version")]
 #>   package version
-#> 1   stats   4.6.1
-#> 2   utils   4.6.1
+#> 1   stats   4.6.2
+#> 2   utils   4.6.2
 
 # a package with no repository field records that fact
 is.na(capdeps("stats")$repository)

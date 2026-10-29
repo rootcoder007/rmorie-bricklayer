@@ -126,7 +126,7 @@ against a pinned digest.</p>
 the bytes, so attributes, names and types are part of the identity:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">1L</span>, b <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "bf5d21a8b26f6cec8503a46f69e854bf98fea03b62dfaf90cb780feac7165b27"</span></span>
+<span><span class="co">#&gt; [1] "4cc01b9a681cfbfedd5161e7a04da73553abe74690551e27f97f2f1541870039"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, <span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">11</span><span class="op">)</span></span>
@@ -134,7 +134,7 @@ the bytes, so attributes, names and types are part of the identity:</p>
 <span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, nrow <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>   <span class="co"># dimensions count</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span>
 <span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "24b0995a368ea8d1178b7f6e44c6d8956db4aadfc91d3e6f6911868b38c06d21"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "dd08e77a78d0f614de146150484e2d8596312ef5aec96cb91199859beb9f899b"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="keyed-digests-and-constant-time-comparison">Keyed digests and constant-time comparison<a class="anchor" aria-label="anchor" href="#keyed-digests-and-constant-time-comparison"></a>
@@ -274,7 +274,7 @@ check its copy, and check single rows without the rest:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"suicide"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "b8faefff893183d72b4030a00407eb55c8952cedc4a35beb3416fece9d85c90f"</span></span>
+<span><span class="co">#&gt; [1] "22674fdf50debe68aa228d3eb363e2293539a3954370b3503018644e9567b1f3"</span></span>
 <span><span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">d</span>, <span class="fl">1</span>, <span class="va">paste</span>, collapse <span class="op">=</span> <span class="st">","</span><span class="op">)</span></span>
 <span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mrk.html">mrkroot</a></span><span class="op">(</span><span class="va">rows</span><span class="op">)</span></span>
 <span><span class="va">proof</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mrk.html">mrkprf</a></span><span class="op">(</span><span class="va">rows</span>, <span class="fl">3</span><span class="op">)</span></span>

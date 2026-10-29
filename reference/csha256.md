@@ -77,5 +77,5 @@ csha256(raw(0))
 
 # Fingerprint an arbitrary object via its serialization.
 csha256(serialize(list(a = 1L, b = "x"), NULL))
-#> [1] "5d31430add6fdb81ad2d63cc9b82953ee454b281238856418d0bb6ca232afbc7"
+#> [1] "f5181b87ed29f3c0211034dde17373ea84b0cea5665c43405dabd8230d8b2f8c"
 ```

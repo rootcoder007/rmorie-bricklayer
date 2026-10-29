@@ -54,7 +54,7 @@ names and types are part of the identity:
 ``` r
 
 dgstobj(list(a = 1L, b = "x"))
-#> [1] "bf5d21a8b26f6cec8503a46f69e854bf98fea03b62dfaf90cb780feac7165b27"
+#> [1] "4cc01b9a681cfbfedd5161e7a04da73553abe74690551e27f97f2f1541870039"
 identical(dgstobj(1:10), dgstobj(1:10))
 #> [1] TRUE
 dgstobj(1:10) == dgstobj(1:11)
@@ -62,7 +62,7 @@ dgstobj(1:10) == dgstobj(1:11)
 dgstobj(matrix(1:6, nrow = 2)) == dgstobj(1:6)   # dimensions count
 #> [1] FALSE
 dgstobj(data.frame(x = 1:3))
-#> [1] "24b0995a368ea8d1178b7f6e44c6d8956db4aadfc91d3e6f6911868b38c06d21"
+#> [1] "dd08e77a78d0f614de146150484e2d8596312ef5aec96cb91199859beb9f899b"
 ```
 
 ## Keyed digests and constant-time comparison
@@ -230,7 +230,7 @@ check its copy, and check single rows without the rest:
 
 d <- indiex("suicide")
 dgstobj(d)
-#> [1] "b8faefff893183d72b4030a00407eb55c8952cedc4a35beb3416fece9d85c90f"
+#> [1] "22674fdf50debe68aa228d3eb363e2293539a3954370b3503018644e9567b1f3"
 rows <- apply(d, 1, paste, collapse = ",")
 root <- mrkroot(rows)
 proof <- mrkprf(rows, 3)

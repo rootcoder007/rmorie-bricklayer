@@ -32,7 +32,7 @@ cpsrpt(fresh, ref = reference,
 #> │   Columns        3                                        │
 #> │   Missing cells  0.0%                                     │
 #> │   Complete rows  100.0%                                   │
-#> │   Digest         6037a08fc090f81243bc07b5094099e0         │
+#> │   Digest         ad930cb00cf3cb9fbe8ee20bbaf05c22         │
 #> │   Findings       0                                        │
 #> │                                                           │
 #> │   No finding is proof of correctness: each check has a    │
@@ -61,7 +61,7 @@ report
 #> │   Columns        5                                                          │
 #> │   Missing cells  20.0%                                                      │
 #> │   Complete rows  0.0%                                                       │
-#> │   Digest         a70671d4bd03067f631d54ce3143d9a2                           │
+#> │   Digest         f6feaada9e0873cd12c76519075a8ec1                           │
 #> │   Findings       8                                                          │
 #> │                                                                             │
 #> │   No finding is proof of correctness: each check has a                      │
@@ -113,7 +113,7 @@ cat(head(rptmd(report), 12), sep = "\n")
 #> | columns | 5 |
 #> | missing cells | 20.0% |
 #> | complete rows | 0.0% |
-#> | data digest | `a70671d4bd03067f631d54ce3143d9a29a498637315736cf2770ec5777746c33` |
+#> | data digest | `f6feaada9e0873cd12c76519075a8ec1c7d7849750e599185ae4140528e355a4` |
 ```
 
 ## Per column

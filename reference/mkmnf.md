@@ -94,7 +94,7 @@ full <- mkmnf(list(project = "demo"), env = TRUE)
 names(full) # adds "environment"
 #> [1] "meta"        "results"     "environment"
 full$environment$r_version
-#> [1] "4.6.1"
+#> [1] "4.6.2"
 
 # a run on generated data is flagged, and its checks become INFO
 syn <- mkmnf(list(project = "demo", synthetic = TRUE), env = FALSE)

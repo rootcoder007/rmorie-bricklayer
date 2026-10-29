@@ -69,7 +69,7 @@ for a readable form that keeps types and attributes.
 
 ``` r
 dgstobj(list(a = 1L, b = "x"))
-#> [1] "bf5d21a8b26f6cec8503a46f69e854bf98fea03b62dfaf90cb780feac7165b27"
+#> [1] "4cc01b9a681cfbfedd5161e7a04da73553abe74690551e27f97f2f1541870039"
 
 # Stable across calls, and sensitive to any change.
 identical(dgstobj(1:10), dgstobj(1:10))
@@ -83,15 +83,15 @@ dgstobj(matrix(1:6, nrow = 2)) == dgstobj(1:6)
 
 # Any of the hashes, and a keyed fingerprint.
 dgstobj(mtcars, algo = "sha512")
-#> [1] "c53613500c91362b1d1ff5b142277240a9f80aa35ad4e6e8f1642c8c1023d79d2e249b54ffe9c6f1a176fb337eca8cd57c7e057d473f0f3137e319c890477655"
+#> [1] "d3c1f66ebbfc07c75c80c61eb312c7e1f5eb4a437d6d903c2bd3ac625d0259779ca4ad3aebeaa1f5b832062a839e52c868b1052f7bf934b0e3ef28cd8eae8b68"
 dgstobj(mtcars, algo = "crc32")
-#> [1] 358362979
+#> [1] 561500927
 dgstobj(mtcars, algo = "blake2b", key = "secret")
-#> [1] "fa9c0c955ca0d50abcb2bc2a984cbd143035beeaf7366c689755873d8aa84d8d"
+#> [1] "c442d9eaf9d8a809894558bb3858b0ddba93ae18236d881d6c26a07202663a8b"
 
 # A data frame's digest pins the data, so it can go in a manifest.
 dgstobj(data.frame(x = 1:3))
-#> [1] "24b0995a368ea8d1178b7f6e44c6d8956db4aadfc91d3e6f6911868b38c06d21"
+#> [1] "dd08e77a78d0f614de146150484e2d8596312ef5aec96cb91199859beb9f899b"
 
 # a key with an algorithm that has no keyed form is refused
 try(dgstobj(1:3, algo = "crc32", key = "secret"))

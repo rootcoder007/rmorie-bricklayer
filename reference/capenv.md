@@ -80,15 +80,15 @@ environment. Nothing is written and the random state is not touched.
 # Record specific packages' versions alongside the session facts.
 env <- capenv(c("stats", "utils"))
 env$r_version
-#> [1] "4.6.1"
+#> [1] "4.6.2"
 env$os
 #> [1] "Linux 7.0.0-1017-azure"
 env$packages          # named list of versions
 #> $stats
-#> [1] "4.6.1"
+#> [1] "4.6.2"
 #> 
 #> $utils
-#> [1] "4.6.1"
+#> [1] "4.6.2"
 #> 
 
 # Default captures every currently loaded namespace.
@@ -112,6 +112,6 @@ capenv(c("stats", "notapackage123"))$packages
 #> [1] NA
 #> 
 #> $stats
-#> [1] "4.6.1"
+#> [1] "4.6.2"
 #> 
 ```
