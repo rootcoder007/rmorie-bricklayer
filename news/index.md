@@ -572,6 +572,16 @@
 
 ### Fixed after the 1.0.3 recheck
 
+- [`audcats()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audcats.md)
+  reads haven-labelled columns (also inside
+  [`I()`](https://rdrr.io/r/base/AsIs.html)) by their codes, so it no
+  longer fails with the vctrs version on macOS.
+- Panel estimators scale weights too large to square by an exact power
+  of two, so the result is the same on every CPU.
+- Timestamp, OCSP and CRL times with stray bytes read as missing without
+  warnings, and
+  [`rallocvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rallocvrf.md)
+  refuses a function as `seed` without a warning first.
 - In a process group (Linux without user namespaces),
   [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
   also lists the user’s running systemd services before and after the

@@ -152,7 +152,11 @@
 </ul></div>
 <div class="section level3">
 <h3 id="fixed-after-the-recheck-1-0-3">Fixed after the 1.0.3 recheck<a class="anchor" aria-label="anchor" href="#fixed-after-the-recheck-1-0-3"></a></h3>
-<ul><li>In a process group (Linux without user namespaces), <code><a href="../reference/mkbndlchk.html">mkbndlchk()</a></code> also lists the user’s running systemd services before and after the run, so a bundle that starts one with <code>systemd-run --user</code> is stopped and fails the check.</li>
+<ul><li>
+<code><a href="../reference/audcats.html">audcats()</a></code> reads haven-labelled columns (also inside <code><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I()</a></code>) by their codes, so it no longer fails with the vctrs version on macOS.</li>
+<li>Panel estimators scale weights too large to square by an exact power of two, so the result is the same on every CPU.</li>
+<li>Timestamp, OCSP and CRL times with stray bytes read as missing without warnings, and <code><a href="../reference/rallocvrf.html">rallocvrf()</a></code> refuses a function as <code>seed</code> without a warning first.</li>
+<li>In a process group (Linux without user namespaces), <code><a href="../reference/mkbndlchk.html">mkbndlchk()</a></code> also lists the user’s running systemd services before and after the run, so a bundle that starts one with <code>systemd-run --user</code> is stopped and fails the check.</li>
 <li>
 <code><a href="../reference/rptanl.html">rptanl()</a></code>’s Markdown report escapes control bytes in its title and table cells, and writes each number on its own (20, not 20.00000).</li>
 <li>DESCRIPTION lists the optional tools <code><a href="../reference/mkbndlchk.html">mkbndlchk()</a></code> uses when it runs a bundle (<code>unshare</code>, <code>systemctl</code>, podman or docker).</li>

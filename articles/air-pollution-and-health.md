@@ -416,9 +416,9 @@ b <- co2fp(busy(), loc = "CA-ON", cpupwrw = 45, memgb = 16,
                        usage = "machine", loadcur = "codecarbon")
 rbind(prolin = c(usage = a$usage, cpukwh = a$enekwh$cpu),
       maccod = c(usage = b$usage, cpukwh = b$enekwh$cpu))
-#>        usage    cpukwh
-#> prolin  0.25 1.250e-08
-#> maccod  0.20 3.216e-08
+#>            usage       cpukwh
+#> prolin 0.2500000 1.250000e-08
+#> maccod 0.2222222 3.296296e-08
 b$usagemode
 #> [1] "machine"
 ```
