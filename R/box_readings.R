@@ -50,8 +50,8 @@
 #' @return One string.
 #' @noRd
 .rd_num <- function(v) {
-  if (is.finite(v) && abs(v) >= 1000) {
-    return(formatC(round(v), format = "d", big.mark = ","))
+  if (is.finite(v) && abs(v) >= 1000 && abs(v) < 1e15) {
+    return(formatC(round(v), format = "f", digits = 0, big.mark = ","))
   }
   .rmbl_fmt_num(v)
 }
@@ -64,6 +64,7 @@
 #' @return One or two sentences.
 #' @noRd
 .rd_groups <- function(lab, est, lo = NULL, hi = NULL, what = "estimate") {
+  lab <- .rmbl_cut(as.character(lab), 40L)
   ok <- which(is.finite(est))
   if (!length(ok)) {
     return(sprintf("No group has a %s to compare.", what))

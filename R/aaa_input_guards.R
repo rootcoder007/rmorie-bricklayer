@@ -615,7 +615,33 @@
                  dirname(file)),
          call. = FALSE)
   }
+  .rmbl_name_ok(file, what)
+  if (!file.exists(file) &&
+        file.access(dirname(path.expand(file)), 2L) != 0L) {
+    stop(.rmbl_fn(),
+         sprintf("the folder for `%s` cannot be written to: %s", what,
+                 dirname(file)),
+         call. = FALSE)
+  }
   file
+}
+
+#' Stops when a path has a part longer than file systems allow (255
+#' bytes), which file() otherwise meets as "cannot open the connection".
+#' @param path The path.
+#' @param what The argument's name.
+#' @return `path`, invisibly.
+#' @noRd
+.rmbl_name_ok <- function(path, what) {
+  parts <- strsplit(path, "[/\\\\]")[[1L]]
+  if (any(nchar(parts, type = "bytes") > 255L)) {
+    stop(.rmbl_fn(),
+         sprintf(paste0("`%s` has a name longer than the 255 bytes a file ",
+                        "system allows: %s..."),
+                 what, substr(utils::tail(parts, 1L), 1L, 40L)),
+         call. = FALSE)
+  }
+  invisible(path)
 }
 
 #' TRUE or FALSE, said in words when it is neither (`if (quiet)` failed on NA, a
@@ -1193,4 +1219,20 @@ if (!exists("%||%", envir = baseenv(), inherits = FALSE)) {
   sp <- paste0("[\\h\\v", intToUtf8(c(0x200b, 0xfeff)), "]")
   t <- trimws(enc2utf8(as.character(x)), whitespace = sp)
   !all(nzchar(t)) || anyDuplicated(t) > 0L
+}
+
+#' Stops when a path that must be a file is a folder.
+#' @param path The path, one string.
+#' @param arg The argument's name, for the message.
+#' @param fn The function's name, or "".
+#' @return `path`, invisibly.
+#' @noRd
+.rmbl_notdir <- function(path, arg, fn = "") {
+  if (is.character(path) && length(path) == 1L && !is.na(path) &&
+        dir.exists(path)) {
+    stop(sprintf("%s`%s` is a folder (%s), not a file",
+                 if (nzchar(fn)) paste0(fn, ": ") else "", arg, path),
+         call. = FALSE)
+  }
+  invisible(path)
 }

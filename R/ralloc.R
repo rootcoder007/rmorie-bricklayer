@@ -365,9 +365,12 @@ plot.rmbl_alloc <- function(x, ...) {
          call. = FALSE)
   }
   if (.rmbl_anyof(!is.numeric(ratio), length(ratio) != length(arms),
-                  anyNA(ratio), any(ratio < 1), any(ratio != round(ratio)))) {
-    stop("ralloc: `ratio` must be one positive whole number per arm",
-         call. = FALSE)
+                  anyNA(ratio), !all(is.finite(ratio)), any(ratio < 1),
+                  any(ratio != round(ratio)), sum(ratio) > 1e6)) {
+    # 2^31 turned into NA by as.integer() ("positive multiple of NA", or
+    # "invalid 'times' argument" with blocks; c29 recheck)
+    stop("ralloc: `ratio` must be one positive whole number per arm, ",
+         "summing to at most 1000000", call. = FALSE)
   }
   ratio <- as.integer(ratio)
   block <- .ralloc_block(block, ratio)

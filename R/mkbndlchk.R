@@ -284,7 +284,9 @@ format.rmbl_bundle_audit <- function(x, ...) {
   }
   if (length(units)) {
     out <- c(out, sprintf(
-      "%d user service(s) the run started were stopped (%s)",
+      paste0("%d user service(s) the run may have started (%s): those ",
+             "carrying the run's mark were stopped, any other was left ",
+             "running"),
       length(units), toString(utils::head(units, 5L))
     ))
   }
@@ -297,7 +299,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' @return A character vector of unit names (empty when there is none or
 #'   systemctl cannot reach the user's manager).
 #' @noRd
-.bndlchk_units <- function(sc = Sys.which("systemctl")) {
+.bndlchk_units <- function(sc = .bndlchk_sc()) {
   if (!nzchar(sc) || !identical(Sys.info()[["sysname"]], "Linux")) {
     return(character())
   }
@@ -318,13 +320,51 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' @param sc The systemctl program.
 #' @return The units, invisibly.
 #' @noRd
-.bndlchk_ustop <- function(units, sc = Sys.which("systemctl")) {
+.bndlchk_ustop <- function(units, sc = .bndlchk_sc()) {
   for (u in units) {
     suppressWarnings(system2(sc, c("--user", "stop", shQuote(u)),
                              stdout = FALSE, stderr = FALSE,
                              env = .bndlchk_uenv()))
   }
   invisible(units)
+}
+
+#' The systemctl program, or "" when option rmbl.bundle.systemd is FALSE.
+#' @return A path, or "".
+#' @noRd
+.bndlchk_sc <- function() {
+  if (isFALSE(getOption("rmbl.bundle.systemd", TRUE))) {
+    return("")
+  }
+  unname(Sys.which("systemctl"))
+}
+
+#' The units among `units` whose main process carries the run's mark.
+#' @param units Unit names.
+#' @param tag The run's mark.
+#' @param sc The systemctl program.
+#' @return Unit names.
+#' @noRd
+.bndlchk_umine <- function(units, tag, sc = .bndlchk_sc()) {
+  if (!length(units) || !nzchar(sc)) {
+    return(character())
+  }
+  mark <- paste0("RMBL_CHKRUN=", tag)
+  units[vapply(units, function(u) {
+    pid <- suppressWarnings(system2(
+      sc, c("--user", "show", "-p", "MainPID", "--value", shQuote(u)),
+      stdout = TRUE, stderr = FALSE, env = .bndlchk_uenv()
+    ))
+    pid <- suppressWarnings(as.integer(pid[1L]))
+    if (is.na(pid) || pid <= 0L) {
+      return(FALSE)
+    }
+    b <- tryCatch(
+      readBin(file.path("/proc", pid, "environ"), "raw", 1048576L),
+      error = function(e) raw(), warning = function(w) raw()
+    )
+    length(grepRaw(mark, b, fixed = TRUE)) > 0L
+  }, NA)]
 }
 
 #' The environment systemctl --user needs to reach the user's manager.
@@ -376,6 +416,19 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' @return The folder holding setup_and_run.R.
 #' @noRd
 .bndlchk_unzip <- function(bundle, dir) {
+  cap <- suppressWarnings(as.numeric(
+    getOption("rmbl.bundle.maxsize", 512 * 1024^2)))
+  if (length(cap) != 1L || is.na(cap) || cap <= 0) {
+    cap <- 512 * 1024^2
+  }
+  sz <- tryCatch(sum(as.numeric(utils::unzip(bundle, list = TRUE)$Length)),
+                 error = function(e) NA_real_, warning = function(w) NA_real_)
+  if (!is.na(sz) && sz > cap) {
+    stop(sprintf(paste0(
+      "mkbndlchk: %s unpacks to %.0f MiB, more than the %.0f MiB a bundle ",
+      "may hold (option rmbl.bundle.maxsize)"),
+      basename(bundle), sz / 1024^2, cap / 1024^2), call. = FALSE)
+  }
   ok <- tryCatch(
     {
       utils::unzip(bundle, exdir = dir)
@@ -509,7 +562,13 @@ format.rmbl_bundle_audit <- function(x, ...) {
   } else {
     setdiff(.bndlchk_units(), ubefore)
   }
-  .bndlchk_ustop(units)
+  # a unit the user started meanwhile is not the run's: only one whose main
+  # process carries the run's mark is stopped, and only that or an unmarked
+  # "run-..." unit (systemd-run's own naming) fails the check (c29 n29
+  # finding 1; 42d41d4 recheck: an app opened during a check failed it)
+  mine <- .bndlchk_umine(units, tag)
+  .bndlchk_ustop(mine)
+  units <- union(mine, grep("^run-", units, value = TRUE))
   list(
     status = st,
     mode = if (length(pidns)) "pid namespace" else "process group",
@@ -555,9 +614,12 @@ format.rmbl_bundle_audit <- function(x, ...) {
   )
 }
 
-#' The processes below this session that were not there before the run:
-#' what the run left behind. A zombie (one that already ended) does not
-#' count, and is reaped.
+#' The processes the run left behind: new direct children of this session
+#' (orphans of the run, adopted by it as their subreaper) and what is below
+#' them. A process below one of the session's older children (a job the
+#' user started with parallel::mcparallel(), say) is not the run's and is
+#' left alone. A zombie (one that already ended) does not count, and is
+#' reaped.
 #' @param before The processes before the run, from .bndlchk_procs().
 #' @param me This session's process id.
 #' @return Process ids.
@@ -567,8 +629,8 @@ format.rmbl_bundle_audit <- function(x, ...) {
   if (is.null(before) || is.null(now)) {
     return(integer())
   }
-  below <- integer()
-  up <- me
+  up <- now$pid[now$ppid == me & !now$key %in% before$key]
+  below <- up
   while (length(up)) {
     up <- setdiff(now$pid[now$ppid %in% up], c(below, me))
     below <- c(below, up)
@@ -650,32 +712,36 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' The shell that runs a bundle in its own process group.
 #'
 #' Arguments: the time limit, the file that marks a timeout, then the
-#' command. The run is started with job control on, so it leads a process
-#' group of its own; a watchdog stops that group at the limit; when the run
-#' ends, whatever is left in the group (a process it put in the background)
-#' is killed; an interrupt or TERM kills the group too.
+#' command. The run is started with job control on where the shell has it,
+#' so it leads a process group of its own; a watchdog stops that group at
+#' the limit; when the run ends, whatever is left in the group (a process it
+#' put in the background) is killed; an interrupt or TERM kills the group
+#' too. A shell without job control (dash with no terminal) signals the
+#' processes themselves, and the watchdog stops its own sleep when told to,
+#' so a short run is not held to the limit (mkbndlchk reported 124 for a
+#' one-second run there; ASAN + UBSAN job).
 #' @return The lines of the script.
 #' @noRd
 .bndlchk_wrap <- function() {
   c(
     "t=$1; m=$2; shift 2",
-    "set -m",
+    paste("g() { kill \"$1\" -\"$2\" 2>/dev/null ||",
+          "kill \"$1\" \"$2\" 2>/dev/null; }"),
+    "set -m 2>/dev/null",
     "\"$@\" < /dev/null &",
     "p=$!",
     paste(
-      "( sleep \"$t\"; : > \"$m\"; kill -TERM -\"$p\" 2>/dev/null;",
-      "sleep 5; kill -KILL -\"$p\" 2>/dev/null ) &"
+      "( trap 'kill \"$s\" 2>/dev/null; exit 0' TERM;",
+      "sleep \"$t\" & s=$!; wait \"$s\" || exit 0;",
+      ": > \"$m\"; g -TERM \"$p\"; sleep 5; g -KILL \"$p\" ) &"
     ),
     "w=$!",
-    "set +m",
-    paste(
-      "trap 'kill -TERM -\"$p\" 2>/dev/null; kill -TERM -\"$w\"",
-      "2>/dev/null; exit 130' INT TERM HUP"
-    ),
+    "set +m 2>/dev/null",
+    "trap 'g -TERM \"$p\"; g -TERM \"$w\"; exit 130' INT TERM HUP",
     "wait \"$p\"",
     "rc=$?",
     "trap - INT TERM HUP",
-    "{ kill -TERM -\"$w\"; wait \"$w\"; } 2>/dev/null",
+    "{ g -TERM \"$w\"; wait \"$w\"; } 2>/dev/null",
     "if kill -0 -\"$p\" 2>/dev/null; then",
     "  kill -TERM -\"$p\" 2>/dev/null",
     "  sleep 1",

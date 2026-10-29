@@ -79,7 +79,10 @@ yoylbl <- function(x, labels) {
     )
   }
   lab <- if (is.function(labels)) {
-    as.character(labels(p))
+    tryCatch(as.character(labels(p)), error = function(e) {
+      stop("yoylbl: `labels` failed on the periods: ",
+           conditionMessage(e), call. = FALSE)
+    })
   } else if (!is.null(names(labels))) {
     # a named mapping covers only the periods it names; the rest keep
     # their own value, so a partial mapping is not a partial table

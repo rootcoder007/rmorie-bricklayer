@@ -58,7 +58,7 @@ plotevgrid <- function(x, ncol = NULL, main = NULL, ...) {
   }
   ncol <- .rmbl_scalar(ncol, "ncol", 1, 20, integer = TRUE)
   if (!is.null(main)) {
-    main <- .rmbl_text1(main, "main")
+    main <- .bl_main(.rmbl_text1(main, "main"), "")
   }
   nrow <- ceiling(n / ncol)
   op <- .bl_par_set(
@@ -227,7 +227,17 @@ loounit <- function(
   w = NULL
 ) {
   .rmbl_df_names(data)
-  full <- plndid(data, unit, time, y, trtd, covs = covs, cl = cl, w = w)
+  # the full fit checks the arguments; its messages name loounit(), not
+  # plndid() (c29 recheck)
+  full <- withCallingHandlers(
+    plndid(data, unit, time, y, trtd, covs = covs, cl = cl, w = w),
+    error = function(e) {
+      m <- conditionMessage(e)
+      if (startsWith(m, "plndid: ")) {
+        stop("loounit: ", substring(m, 9L), call. = FALSE)
+      }
+    }
+  )
   ever <- tapply(data[[trtd]], data[[unit]], max) > 0
   if (is.null(units)) {
     units <- names(ever)[ever]

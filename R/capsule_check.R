@@ -366,6 +366,10 @@ ghcmt <- function(
   limit = 65000L
 ) {
   .bl_is_cpschk(x)
+  if (!is.null(failon) && (!is.character(failon) || anyNA(failon))) {
+    stop("ghcmt: `failon` must be NULL or check names (text)",
+         call. = FALSE)
+  }
   marker <- .rmbl_string1(marker, "marker")
   limit <- .rmbl_scalar(limit, "limit", 100, integer = TRUE)
   if (!is.null(runurl)) {

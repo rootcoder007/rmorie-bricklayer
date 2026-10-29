@@ -701,8 +701,9 @@ exprspplr <- function(
   }
   rstate <- .rmbl_r_seed(rstate)
   nboot <- .pollution_scalar(nboot, "nboot")
-  if (nboot != round(nboot)) {
-    stop("`nboot` must be a whole number of resamples", call. = FALSE)
+  if (nboot != round(nboot) || nboot > 1e6) {
+    stop("`nboot` must be a whole number of resamples, at most 1000000",
+         call. = FALSE)
   }
   nboot <- as.integer(nboot)
   pg <- blprog("exposure-response bootstrap", nboot + 1L)

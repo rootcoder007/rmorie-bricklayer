@@ -429,6 +429,7 @@ siuso <- function(text) {
       nchar(html, type = "bytes") < 1000L &&
       file.exists(html)
   ) {
+    .rmbl_notdir(html, "html", "siuprs")
     html <- paste(
       readLines(html, warn = FALSE, encoding = "UTF-8"),
       collapse = "\n"

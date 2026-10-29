@@ -1060,6 +1060,7 @@ format.rmbl_co2eqv <- function(x, digits = 4L, ...) {
       length(x) != 1L ||
       !is.finite(x) ||
       x < 0 ||
+      x > 1e9 ||
       (positive && x <= 0)
   ) {
     stop(

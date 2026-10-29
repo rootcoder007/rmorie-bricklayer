@@ -89,6 +89,15 @@
 
 ## Fixed after the 1.0.3 recheck
 
+* Panel estimators with one unit's weight near the largest double (1e308 next to 1) no longer stop with "system is exactly singular": the weights are scaled so the smaller ones stay normal numbers, and a pre-trend test with no variation is NA.
+* `mkbndlchk()` no longer waits out its whole time limit when `bash` is not on the PATH (`/bin/sh` is dash on Debian and Ubuntu, which has no job control without a terminal): a one-second run took the full limit and reported a timeout.
+* `mkbndlchk()` stops only what the run left behind: a process the user's own job (for example `parallel::mcparallel()`) started during the run is left alone, and a user systemd service is stopped only when its process carries the run's mark.
+* `mkbndl()` refuses file names `mkbndlchk()` would refuse (a backslash, or two names that differ only in case), `mkbndlchk()` refuses a zip that unpacks past 512 MiB (option `rmbl.bundle.maxsize`), and a bundle's runner refuses an unknown argument, a bare `--data` and a folder given as `--data`.
+* OID decoding works in exact arithmetic for long arcs and reads a first arc of 2.x correctly, without warnings.
+* Readers and writers given a folder, a file name longer than 255 bytes or a folder they cannot write in say so instead of failing with "cannot open the connection".
+* Printed tables fit the console: long labels are cut with "~", and a label the console cannot spell keeps its characters as `<U+XXXX>` instead of printing blank.
+* A run of argument checks found by a hostile battery: plot colours and bandwidths, plot titles with control bytes, numbers past the integer range (`ralloc()` ratios, counts, digits), functions or environments where data belong, and `NA` where names belong now give clean errors.
+* In a bundle without a fast SHA-256, `openssl` is tried before the pure-R digest, which is kept to files of 4 MiB.
 * `audcats()` reads haven-labelled columns (also inside `I()`) by their codes, so it no longer fails with the `vctrs` version on macOS.
 * Panel estimators scale weights too large to square by an exact power of two, so the result is the same on every CPU.
 * Timestamp, OCSP and CRL times with stray bytes read as missing without warnings, and `rallocvrf()` refuses a function as `seed` without a warning first.

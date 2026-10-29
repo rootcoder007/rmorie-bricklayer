@@ -174,8 +174,9 @@ format.bricklayer_schema <- function(x, ...) {
 #' @noRd
 .infsch_check <- function(slack, maxlvl) {
   slack <- .rmbl_num(slack, "slack")
-  if (length(slack) != 1L || is.na(slack) || slack < 0) {
-    stop("`slack` must be a single non-negative number", call. = FALSE)
+  if (length(slack) != 1L || is.na(slack) || slack < 0 || slack > 100) {
+    stop("`slack` must be a single non-negative number, at most 100",
+         call. = FALSE)
   }
   maxlvl <- .rmbl_num(maxlvl, "maxlvl", integer = TRUE)
   if (length(maxlvl) != 1L || is.na(maxlvl) || maxlvl < 1L) {

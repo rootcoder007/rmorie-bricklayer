@@ -315,9 +315,9 @@ wrtxtfb <- function(text, path) {
 #' In order: an installed rmoriebricklayer (1.0.3 or later), whose
 #' sha256file() is compiled; base R's tools::sha256sum() (R 4.5.0 or
 #' later); the system's own tool (sha256sum on Linux, shasum on macOS,
-#' certutil on Windows); else the pure-R implementation, which runs at
-#' about 15 KB a second, so only for a file of at most `cap` bytes (a
-#' 300 MB file took five and a half hours).
+#' certutil on Windows, or openssl); else the pure-R implementation,
+#' which runs at about 17 KB a second, so only for a file of at most `cap`
+#' bytes (4 MiB, about four minutes; 8 MiB took 485 s).
 #' @inheritParams .bndl_write_text
 #' @param base Whether tools::sha256sum() is used when R has it.
 #' @param pkg The installed package's sha256file(), from .rmbl_bsha(), or
@@ -332,7 +332,7 @@ wrtxtfb <- function(text, path) {
   base = exists("sha256sum", envir = asNamespace("tools"), inherits = FALSE),
   pkg = .rmbl_bsha(),
   os = function(p) .rmbl_ossha(p),
-  cap = 52428800
+  cap = 4194304
 ) {
   if (is.function(pkg)) {
     return(pkg(path))
@@ -401,7 +401,7 @@ wrtxtfb <- function(text, path) {
   if (!is.null(attr(out, "status"))) {
     return(NULL)
   }
-  .rmbl_shaout(out, sys)
+  .rmbl_shaout(out, if (isTRUE(tool$plain)) "" else sys)
 }
 
 #' The system tool .rmbl_ossha() runs.
@@ -411,10 +411,17 @@ wrtxtfb <- function(text, path) {
 #' @noRd
 .rmbl_shatool <- function(sys) {
   w <- function(x) unname(Sys.which(x))
+  ossl <- function() {
+    p <- w("openssl")
+    if (nzchar(p)) list(cmd = p, args = c("dgst", "-sha256", "-r"),
+                        plain = TRUE)
+  }
   if (identical(sys, "Windows")) {
     p <- w("certutil")
     return(if (nzchar(p)) {
       list(cmd = p, args = "-hashfile", post = "SHA256")
+    } else {
+      ossl()
     })
   }
   p <- w("sha256sum")
@@ -422,7 +429,7 @@ wrtxtfb <- function(text, path) {
     return(list(cmd = p, args = character()))
   }
   p <- w("shasum")
-  if (nzchar(p)) list(cmd = p, args = c("-a", "256")) else NULL
+  if (nzchar(p)) list(cmd = p, args = c("-a", "256")) else ossl()
 }
 
 #' The digest in a system tool's answer, checked.

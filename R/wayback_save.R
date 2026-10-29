@@ -353,6 +353,7 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
   if (!file.exists(output)) {
     stop(sprintf("no results file at %s", output), call. = FALSE)
   }
+  .rmbl_notdir(output, "output", "wbrtry")
   .bl_wb_rtry_flag(incgone, "incgone")
   .bl_wb_rtry_flag(lookup, "lookup")
   recs <- .bl_wb_records(output)

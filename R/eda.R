@@ -566,6 +566,11 @@ clncolnms <- function(
   case <- .rmbl_arg(case)
   sep <- .rmbl_text1(sep, "sep")
   quiet <- .rmbl_flag1(quiet, "quiet")
+  if (!is.data.frame(data) &&
+        (!(is.character(data) || is.factor(data)) || anyNA(data))) {
+    stop("clncolnms: `data` must be a data frame or column names, ",
+         "without NA", call. = FALSE)
+  }
   nms <- if (is.data.frame(data)) names(data) else as.character(data)
   if (length(nms) == 0L) {
     if (is.data.frame(data)) {

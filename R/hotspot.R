@@ -370,7 +370,8 @@ plot.rmbl_hotspot <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
     stop("`lon`, `lat` and `prd` must have the same length", call. = FALSE)
   }
   if (
-    !is.numeric(cell) || length(cell) != 1L || !is.finite(cell) || cell <= 0
+    !is.numeric(cell) || length(cell) != 1L || !is.finite(cell) ||
+      cell <= 0 || cell > 360
   ) {
     stop("`cell` must be a positive number", call. = FALSE)
   }

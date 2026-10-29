@@ -381,9 +381,39 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
     return(s)
   }
   out <- toascii(s)
+  # what toascii() could not spell (Chinese without stringi) shows as
+  # <U+XXXX> rather than vanishing, so no label prints blank
+  for (i in which(!is.na(s) & validUTF8(s) &
+                    grepl("[^ -~]", s, useBytes = TRUE))) {
+    u <- utf8ToInt(s[[i]])
+    k <- u[u > 126L]
+    if (!anyNA(k) && any(!nzchar(toascii(intToUtf8(k, multiple = TRUE))))) {
+      out[[i]] <- .rmbl_fold1(s[[i]])
+    }
+  }
   out[is.na(s)] <- NA_character_
   attributes(out) <- attributes(s)
   out
+}
+
+#' One string in ASCII, character by character: toascii()'s spelling where
+#' it has one, <U+XXXX> where it has none.
+#' @param x One valid UTF-8 string.
+#' @return One ASCII string.
+#' @noRd
+.rmbl_fold1 <- function(x) {
+  u <- utf8ToInt(x)
+  if (anyNA(u)) {
+    return(toascii(x))
+  }
+  parts <- vapply(u, function(k) {
+    if (k >= 32L && k <= 126L) {
+      return(intToUtf8(k))
+    }
+    m <- toascii(intToUtf8(k))
+    if (nzchar(m)) m else sprintf("<U+%04X>", k)
+  }, "")
+  paste(parts, collapse = "")
 }
 
 #' Text with its symbols spelt in ASCII where the console cannot show them.
@@ -1271,6 +1301,15 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   if (is.numeric(v)) {
     return(toString(.rmbl_fmt_num(v)))
   }
+  if (!is.atomic(v) && !is.list(v)) {
+    return(sprintf("<%s>", class(v)[1L]))
+  }
+  if (is.list(v)) {
+    return(toString(vapply(v, function(e) {
+      if (is.atomic(e) && length(e) == 1L) as.character(e) else
+        sprintf("<%s>", class(e)[1L])
+    }, "")))
+  }
   toString(as.character(v))
 }
 
@@ -1279,6 +1318,68 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 #' @param digits Significant digits.
 #' @return A character vector of lines, indented two spaces.
 #' @noRd
+#' Cuts strings to a display width, marking the cut with "~".
+#' @param s Strings.
+#' @param w The width.
+#' @return The strings.
+#' @noRd
+.rmbl_cut <- function(s, w) {
+  long <- !is.na(s) & nchar(s, type = "width") > w
+  s[long] <- paste0(strtrim(s[long], w - 1L), "~")
+  s
+}
+
+#' Column widths that fit the console, and the columns cut to them.
+#' @param cols The columns, as strings, header first in each.
+#' @param num Which columns are numbers (never cut).
+#' @param avail The width a row may take.
+#' @param gap The space between columns.
+#' @return The cut columns, each with its header first.
+#' @noRd
+.rmbl_fit <- function(cols, num, avail, gap = 2L) {
+  wd <- function(v) max(c(0L, nchar(ifelse(is.na(v), "NA", v), type = "width")))
+  cols <- lapply(seq_along(cols), function(i) {
+    if (num[[i]]) cols[[i]] else .rmbl_cut(cols[[i]], 40L)
+  })
+  w <- vapply(cols, wd, 1L)
+  over <- sum(w) + gap * (length(w) - 1L) - avail
+  while (over > 0L) {
+    txt <- which(!num & w > 8L)
+    if (!length(txt)) break
+    i <- txt[which.max(w[txt])]
+    w[i] <- max(8L, w[i] - over)
+    cols[[i]] <- .rmbl_cut(cols[[i]], w[i])
+    over <- sum(w) + gap * (length(w) - 1L) - avail
+  }
+  cols
+}
+
+#' A table as one block of "name: value" lines per row, for a console too
+#' narrow for its columns.
+#' @param hdr The column names.
+#' @param cols The columns, as strings.
+#' @param n The number of rows.
+#' @return Lines, without indent.
+#' @noRd
+.rmbl_stack <- function(hdr, cols, n) {
+  w <- max(nchar(hdr, type = "width"))
+  out <- character()
+  for (r in seq_len(n)) {
+    if (r > 1L) out <- c(out, "")
+    out <- c(out, vapply(seq_along(cols), function(i) {
+      v <- cols[[i]][r]
+      paste0(formatC(hdr[i], width = w, flag = "-"), "  ",
+             if (is.na(v)) "NA" else v)
+    }, ""))
+  }
+  out
+}
+
+#' The width a table row may take on this console, inside a box.
+#' @return An integer.
+#' @noRd
+.rmbl_avail <- function() max(30L, .rmbl_print_caps()$width - 6L)
+
 .rmbl_stat_table <- function(df, digits = 4L) {
   cols <- lapply(names(df), function(nm) {
     v <- df[[nm]]
@@ -1292,8 +1393,13 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
       ifelse(is.na(v), "", .rmbl_txt(as.character(v)))
     }
   })
-  names(cols) <- .rmbl_txt(names(df))
   num <- vapply(df, is.numeric, NA)
+  fit <- .rmbl_fit(
+    lapply(seq_along(cols), function(i) c(.rmbl_txt(names(df))[i], cols[[i]])),
+    num, .rmbl_avail()
+  )
+  cols <- lapply(fit, `[`, -1L)
+  names(cols) <- vapply(fit, `[`, "", 1L)
   w <- pmax(
     nchar(names(cols), type = "width"),
     vapply(
@@ -1311,6 +1417,9 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
     vapply(seq_along(cols), function(i) cell(names(cols)[i], i), ""),
     collapse = "  "
   )
+  if (sum(w) + 2L * (length(w) - 1L) > .rmbl_avail()) {
+    return(paste0("  ", .rmbl_stack(names(cols), cols, nrow(df))))
+  }
   rule <- paste(vapply(w, function(k) strrep("-", k), ""), collapse = "  ")
   rows <- vapply(
     seq_len(nrow(df)),

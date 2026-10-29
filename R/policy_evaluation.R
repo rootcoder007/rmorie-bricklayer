@@ -2120,7 +2120,7 @@ polex <- function(seed = 20240101) {
   x
 }
 
-#' Weights divided by their largest when their squares overflow (w =
+#' Weights scaled by a power of two when their squares would overflow (w =
 #' 1e308 gave "missing value where TRUE/FALSE needed" in evstudy(); recheck
 #' of a8cdaf9). The demeaning, the coefficients and the CR1 variance
 #' depend only on the weights' ratios, so nothing else changes.
@@ -2131,9 +2131,11 @@ polex <- function(seed = 20240101) {
   if (!length(w) || is.finite(sum(w * w))) {
     return(w)
   }
-  # a power of two scales exactly on every CPU, so the ratios between the
-  # weights (all an estimator uses) are kept bit for bit
-  w * 2^(-ceiling(log2(max(w))))
+  # the largest goes to 2^(500 - log2 n), so n squares still sum finitely
+  # and a weight 2^-500 times smaller is still a normal number; a power of
+  # two scales exactly, so the ratios are unchanged (dividing by max(w)
+  # made a weight of 1 next to 1e308 subnormal; c29 recheck)
+  w * 2^(500 - ceiling(log2(length(w))) - ceiling(log2(max(w))))
 }
 
 #' Fits weighted least squares on demeaned data with cluster-robust variance.
@@ -2785,7 +2787,13 @@ polex <- function(seed = 20240101) {
   pre <- if (any(ks < 0)) paste0("k", ks[ks < 0]) else character()
   if (length(pre)) {
     gm <- fit$coef[pre]
-    w <- as.numeric(t(gm) %*% solve(fit$vcov[pre, pre, drop = FALSE], gm))
+    # a singular variance of the leads (all the weight on one unit, say)
+    # has no joint test: NA, not "Lapack routine dgesv: system is exactly
+    # singular" (c29 recheck)
+    w <- tryCatch(
+      as.numeric(t(gm) %*% solve(fit$vcov[pre, pre, drop = FALSE], gm)),
+      error = function(e) NA_real_
+    )
     q <- length(pre)
     pt <- list(
       F = w / q,
@@ -3579,7 +3587,11 @@ polex <- function(seed = 20240101) {
 .rmbl_pp_vcov <- function(X, fit, theta, .y, clk, fes, nx) {
   mu <- fit$fitted.values
   wt <- if (is.finite(theta)) mu * theta / (theta + mu) else mu
-  bread <- solve(crossprod(X * sqrt(wt)))
+  bread <- tryCatch(solve(crossprod(X * sqrt(wt))), error = function(e) {
+    stop("the fitted means leave the design singular (every count 0, or a ",
+         "unit or period with no variation); no variance can be computed",
+         call. = FALSE)
+  })
   s <- rowsum(X * ((.y - mu) * wt / mu), clk)
   gn <- nrow(s)
   ny <- length(.y)

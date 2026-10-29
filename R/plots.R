@@ -2267,7 +2267,7 @@ plothex <- function(
   shades <- if (is.null(col)) {
     blpal(if (is.null(pal)) "sequential" else pal, 9L)
   } else {
-    rep_len(col, 9L)
+    .bl_cols(9L, col)
   }
   lvl <- pmin(9L, 1L + floor(8 * (out$count - 1) / max(1, max(out$count) - 1)))
   op <- .bl_par(y)
@@ -2399,7 +2399,7 @@ plotcal <- function(x, y, ..., main = NULL, col = NULL, pal = NULL) {
   shades <- if (is.null(col)) {
     blpal(if (is.null(pal)) "sequential" else pal, 9L)
   } else {
-    rep_len(col, 9L)
+    .bl_cols(9L, col)
   }
   r <- range(d$y, finite = TRUE)
   lvl <- ifelse(
@@ -2524,7 +2524,7 @@ plotsm <- function(
     .bl_title(lv[i])
   }
   if (!is.null(main)) {
-    graphics::mtext(main, outer = TRUE, side = 1, line = 1)
+    graphics::mtext(.bl_main(main, ""), outer = TRUE, side = 1, line = 1)
   }
   out <- d[, c("grp", "prd", "y")]
   attr(out, "plnkey") <- .bl_panels_end()
@@ -3045,7 +3045,7 @@ plotbump <- function(
       call. = FALSE
     )
   }
-  main
+  if (is.character(main)) .rmbl_ctl_escape(main) else main
 }
 
 #' Starts a set of panels on one device, with the grid from `.bl_panel_grid()`.
@@ -5858,7 +5858,8 @@ plotbump <- function(
   ok <- if (is.character(bw)) {
     length(bw) == 1L && !is.na(bw) && tolower(bw) %in% rules
   } else {
-    is.numeric(bw) && length(bw) == 1L && is.finite(bw) && bw > 0
+    is.numeric(bw) && length(bw) == 1L && is.finite(bw) && bw > 0 &&
+      bw < 1e15
   }
   if (!ok) {
     stop(

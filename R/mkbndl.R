@@ -230,6 +230,11 @@ mkbndlproj <- function(
   author <- .bndl_text(author, "author")
   contact <- .bndl_text(contact, "contact")
   overwrite <- .rmbl_flag1(overwrite, "overwrite")
+  if (file.exists(dir) && !dir.exists(dir)) {
+    # writing into a file gave "cannot open the connection" (c29 recheck)
+    stop(sprintf("mkbndlproj: `dir` (%s) is a file, not a folder", dir),
+         call. = FALSE)
+  }
   files <- c("config.json", "data_provenance.json", "analysis.R")
   there <- files[file.exists(file.path(dir, files))]
   if (length(there) && !overwrite) {
@@ -1087,6 +1092,21 @@ format.rmbl_bundle_project <- function(x, ...) {
   ))
   ents <- c(top, file.path(top, rel))
   .bndl_toomany(length(ents), nmax)
+  bs <- grepl("\\", rel, fixed = TRUE)
+  if (any(bs)) {
+    stop(sprintf(paste0(
+      "mkbndl: file names with a backslash, which Windows and unzip read ",
+      "as a folder separator: %s; rename them"),
+      toString(.rmbl_printable(utils::head(rel[bs], 3L)))), call. = FALSE)
+  }
+  # the same checks mkbndlchk() makes of the zip, so a bundle never fails
+  # its own check
+  .bndlchk_names(ents, function(why) {
+    stop(sprintf("mkbndl: the folder %s; rename them", sub(
+      "^holds the same entry twice",
+      "holds names that differ only in case (one file on Windows and macOS)",
+      sub("^has ", "has ", why))), call. = FALSE)
+  })
   ents
 }
 

@@ -645,7 +645,7 @@ cpsdrft <- function(
     stop("`ref` and `cur` must both be data frames", call. = FALSE)
   }
   o <- .drift_args(alpha, psiminn, idelvls)
-  o$psithr <- psithr
+  o$psithr <- .rmbl_scalar(psithr, "psithr", 0)
   o$bins <- bins
   o$seed <- seed
   shared <- intersect(names(ref), names(cur))

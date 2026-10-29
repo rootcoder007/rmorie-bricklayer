@@ -393,7 +393,7 @@ pswppod <- function(
 ) {
   model <- .rmbl_arg(model)
   W <- .sr_num(W, "W", positive = TRUE)
-  S <- .sr_num(S, "S", positive = TRUE)
+  S <- .sr_num(S, "S", positive = TRUE, max = 1e12)
   m <- .sr_num(m, "m", positive = TRUE, min = 0, max = 1)
   navsd <- .sr_num(navsd, "navsd", min = 0)
   npts <- .sr_num(npts, "npts", min = 3, max = 1e5, whole = TRUE)
@@ -1065,6 +1065,9 @@ plot.rmbl_opteffort <- function(
 #' @return A double vector.
 #' @noRd
 .sr_incr <- function(x, what) {
+  if (!is.null(dim(x))) {
+    .sr_stop("`%s` must be a vector of edges, not a matrix", what)
+  }
   v <- .sr_num(x, what, scalar = FALSE)
   if (length(v) < 2L || is.unsorted(v, strictly = TRUE)) {
     .sr_stop("`%s` must hold at least two strictly increasing values", what)

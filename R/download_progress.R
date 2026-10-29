@@ -101,6 +101,10 @@ bldl <- function(
   maxbytes = 2^31
 ) {
   .rmbl_no_fn(url = url)
+  if (!missing(label)) {
+    # as.character() of a closure; the default is checked with `dest`
+    .rmbl_no_fn(label = label)
+  }
   # the capsule path's transport: https only, never a local or private
   # address, and file:// only when the caller says so (an offline test)
   url <- .rmbl_check_public_url(url, "url", allow_file = allowfile)

@@ -742,7 +742,11 @@ format.rmbl_census_cwb <- function(x, ...) {
     )
   }
   id <- if (is.numeric(v)) {
-    as.integer(v)
+    if (is.finite(v) && v == round(v) && abs(v) <= .Machine$integer.max) {
+      as.integer(v)
+    } else {
+      NA_integer_
+    }
   } else {
     unique(x$chaid[x$characteristic == v])
   }

@@ -815,8 +815,16 @@ test_that("user services a run starts are found, stopped and fail the check", {
   expect_identical(readLines(stops), "vvesc610.service")
   row <- .bndlchk_iso("process group", integer(), FALSE, new)
   expect_false(row$ok)
-  expect_match(row$detail, "1 user service\\(s\\) the run started were stopped")
+  expect_match(row$detail, "1 user service\\(s\\) the run may have started")
+  expect_match(row$detail, "those carrying the run's mark were stopped",
+               fixed = TRUE)
   expect_match(row$detail, "vvesc610.service", fixed = TRUE)
+  # only a unit whose main process carries the run's mark is the run's: one
+  # the user started meanwhile is left running (c29 n29 finding 1)
+  writeLines(c("#!/bin/sh", "echo 0"), sc)
+  expect_identical(.bndlchk_umine(new, "tag", sc), character())
+  writeLines(c("#!/bin/sh", sprintf("echo %d", Sys.getpid())), sc)
+  expect_identical(.bndlchk_umine(new, "no-such-mark", sc), character())
   both <- .bndlchk_iso("process group", 4242L, FALSE, new)
   expect_match(both$detail, "1 process(es) outlived the run", fixed = TRUE)
   expect_match(both$detail, "; 1 user service(s)", fixed = TRUE)

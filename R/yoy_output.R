@@ -554,6 +554,16 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
 #' @return A character vector of lines.
 #' @noRd
 .yoy_print_rows <- function(d, cols, hdr, color, pal, palette) {
+  # the table fits the console (a 300-character label collapsed it)
+  num <- vapply(cols, function(v) {
+    all(is.na(v) | grepl("^[ +-]?[0-9.,%]*$|^NA$", v))
+  }, NA)
+  fit <- .rmbl_fit(lapply(seq_along(cols), function(i) c(hdr[i], cols[[i]])),
+                   num, .rmbl_avail())
+  hdr <- vapply(fit, `[`, "", 1L)
+  nm <- names(cols)
+  cols <- lapply(fit, `[`, -1L)
+  names(cols) <- nm
   # display widths: a CJK label takes two columns
   wd <- function(s) nchar(ifelse(is.na(s), "NA", s), type = "width")
   widths <- vapply(
@@ -563,6 +573,9 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
   )
   pad <- function(s, w) {
     paste0(ifelse(is.na(s), "NA", s), strrep(" ", max(0L, w - wd(s))))
+  }
+  if (sum(widths) + 2L * (length(widths) - 1L) > .rmbl_avail()) {
+    return(.rmbl_stack(hdr, cols, nrow(d)))
   }
   out <- c(
     paste(

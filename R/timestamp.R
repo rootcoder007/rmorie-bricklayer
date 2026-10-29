@@ -448,18 +448,31 @@ format.bricklayer_timestamp <- function(x, ...) {
   if (!length(v)) {
     return(NA_character_)
   }
-  b <- as.integer(v)
-  first <- b[1]
-  out <- c(first %/% 40L, first %% 40L)
-  acc <- 0L
-  for (i in seq_along(b)[-1]) {
-    acc <- acc * 128L + (b[i] %% 128L)
-    if (b[i] < 128L) {
-      out <- c(out, acc)
-      acc <- 0L
+  # integers overflowed on long arcs ("NAs produced by integer overflow",
+  # "1.2.NA"), and a first subidentifier of 128 or more was read as one
+  # byte (c29 recheck); arcs are doubles, exact up to 2^53
+  b <- as.numeric(as.integer(v))
+  arcs <- numeric()
+  acc <- 0
+  for (x in b) {
+    if (acc == 0 && x == 128) {
+      return(NA_character_)
+    }
+    acc <- acc * 128 + x %% 128
+    if (acc > 2^53) {
+      return(NA_character_)
+    }
+    if (x < 128) {
+      arcs <- c(arcs, acc)
+      acc <- 0
     }
   }
-  paste(out, collapse = ".")
+  if (acc != 0 || b[length(b)] >= 128 || !length(arcs)) {
+    return(NA_character_)
+  }
+  first <- if (arcs[1] < 80) arcs[1] %/% 40 else 2
+  out <- c(first, arcs[1] - 40 * first, arcs[-1])
+  paste(format(out, scientific = FALSE, trim = TRUE), collapse = ".")
 }
 
 #' Tells whether a DER node is an OBJECT IDENTIFIER with the given dotted value.

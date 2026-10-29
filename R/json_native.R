@@ -2060,11 +2060,12 @@ jsunser <- function(txt, trusted = FALSE) {
     !is.null(digits) &&
       (!(is.numeric(digits) || is.logical(digits)) ||
         length(digits) != 1L ||
-        (!is.na(digits) && !is.numeric(digits)))
+        (!is.na(digits) && !is.numeric(digits)) ||
+        (!is.na(digits) && (digits < 0 || digits > 22)))
   ) {
     stop(
-      "`digits` must be one number, NA for 15 significant digits, or ",
-      "I(n) for n",
+      "`digits` must be one number from 0 to 22, NA for 15 significant ",
+      "digits, or I(n) for n",
       call. = FALSE
     )
   }
@@ -3303,6 +3304,7 @@ bricklayer_json_unbox <- function(x) {
       return(.rmbl_json_fetch_url(txt))
     }
     if (file.exists(txt)) {
+      .rmbl_notdir(txt, "txt", "fromjs")
       txt <- file(txt)
     }
   }

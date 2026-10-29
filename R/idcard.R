@@ -560,7 +560,8 @@ print.rmbl_id_check <- function(x, ...) {
 #' @return A one-row data frame.
 #' @noRd
 .bl_id_atst_row <- function(card, atst) {
-  if (inherits(atst, "bricklayer_bundle") || is.list(atst$attestation)) {
+  if (inherits(atst, "bricklayer_bundle") ||
+        (is.list(atst) && is.list(atst$attestation))) {
     atst <- atst$attestation
   }
   if (!is.list(atst) || is.null(atst$public) || is.null(atst$scheme)) {

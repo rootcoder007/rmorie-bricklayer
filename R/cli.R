@@ -229,7 +229,8 @@
 #' blcli(c("examples", "perdays"))
 #' @export
 blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
-  if (!is.function(out)) {
+  if (!is.function(out) ||
+        (!is.primitive(out) && !length(formals(out)))) {
     stop(
       "`out` must be a function that writes text, as cat() does",
       call. = FALSE

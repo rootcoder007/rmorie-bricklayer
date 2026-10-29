@@ -775,7 +775,10 @@ expbands <- function(bands, cnts, ..., drpunp = FALSE) {
     function(cp) {
       bv <- bandvals(bands, rule = rule, openupcap = cp)
       x <- rep(bv$value, times = cnts)
-      out <- suppressWarnings(stat(x))
+      out <- tryCatch(suppressWarnings(stat(x)), error = function(e) {
+        stop("bandsens: `stat` failed on the band values: ",
+             conditionMessage(e), call. = FALSE)
+      })
       if (length(out) != 1L) NA_real_ else as.numeric(out)
     },
     0

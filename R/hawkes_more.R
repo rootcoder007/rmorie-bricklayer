@@ -31,7 +31,7 @@ chwksim <- function(fit, hor = NULL, seed = 1L) {
   hor <- if (is.null(hor)) {
     fit$horizon
   } else {
-    .rmbl_scalar(hor, "hor", .Machine$double.eps)
+    .rmbl_scalar(hor, "hor", .Machine$double.eps, 1e9)
   }
   .rmbl_local_seed(seed)
   a <- fit$basepar
@@ -109,11 +109,17 @@ plothwk <- function(
   .hk_fit_check(fit)
   what <- .rmbl_arg(what)
   times <- .rmbl_num(times, "times")
-  if (!length(times) || anyNA(times)) {
+  if (!length(times) || anyNA(times) || !all(is.finite(times)) ||
+        any(abs(times) > 1e12)) {
     stop(
-      "plothwk: `times` must be the event times, none missing",
+      "plothwk: `times` must be the event times, finite and none missing",
       call. = FALSE
     )
+  }
+  if (any(times < 0 | times > fit$horizon)) {
+    stop(sprintf(
+      "plothwk: `times` must lie in the fit's window, 0 to %s",
+      format(fit$horizon)), call. = FALSE)
   }
   times <- sort(times)
   cols <- .bl_cols(3L, col, pal)

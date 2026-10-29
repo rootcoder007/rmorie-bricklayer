@@ -163,7 +163,8 @@ test_that("yoy folds labels the console cannot show, as rtcalc does", {
   expect_true(any(grepl("Metis", out, fixed = TRUE)))
   # nothing outside ASCII, so no "unable to translate" and no misalignment
   expect_false(any(grepl("[^ -~]", out, useBytes = TRUE)))
-  rows <- out[grepl("^ +(Metis|zhong wen) ", out)]
+  # romanised with stringi; kept as <U+XXXX> without it (r-devel-san)
+  rows <- out[grepl("^ +(Metis|zhong wen|<U\\+4E2D><U\\+6587>) ", out)]
   expect_length(rows, 4L)
   expect_length(unique(regexpr("202[01]", rows)), 1L)
 })

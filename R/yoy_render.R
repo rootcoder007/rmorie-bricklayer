@@ -507,8 +507,10 @@ yoypdf <- function(
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot.new()
   graphics::plot.window(c(0, 1), c(0, 1), xaxs = "i", yaxs = "i")
-  graphics::text(0, 0.965, title, adj = c(0, 1), cex = 1.5, font = 2)
-  graphics::text(0, 0.925, subtitle, adj = c(0, 1), cex = 0.8, col = pal$flat)
+  graphics::text(0, 0.965, .rmbl_ctl_escape(title), adj = c(0, 1),
+                 cex = 1.5, font = 2)
+  graphics::text(0, 0.925, .rmbl_ctl_escape(subtitle), adj = c(0, 1),
+                 cex = 0.8, col = pal$flat)
   # Right-align the numeric columns and left-align the labels, which is
   # the only way a column of figures reads as a column.
   numeric_from <- ncol - (if (hdr[ncol] == "interval") 3L else 2L)
@@ -891,7 +893,7 @@ yoypdf <- function(
     graphics::text(
       0,
       top_n,
-      paste(notes, collapse = "\n"),
+      paste(.rmbl_ctl_escape(notes), collapse = "\n"),
       adj = c(0, 1),
       cex = cex_n,
       col = pal$flat

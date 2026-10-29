@@ -75,9 +75,26 @@ if (!QUICK_MODE && !isatty(stdin())) {
   AUTO_QUICK <- TRUE
 }
 DATA_ARG   <- NULL
+usage_stop <- function(...) {
+  cat("ERROR: ", ..., "\n", sep = "")
+  cat("Usage: Rscript setup_and_run.R [--quick] [--synthetic] ",
+      "[--data PATH] [--allow-digest-drift] [--help]\n", sep = "")
+  quit(status = 2)
+}
 if (any(args == "--data")) {
   i <- which(args == "--data")[1]
-  if (length(args) >= i + 1) DATA_ARG <- args[i + 1]
+  if (length(args) < i + 1 || startsWith(args[i + 1], "-")) {
+    usage_stop("--data needs a file path after it")
+  }
+  DATA_ARG <- args[i + 1]
+}
+known <- c("-q", "--quick", "-h", "--help", "--synthetic",
+           "--allow-digest-drift", "--data")
+rest <- args
+if (!is.null(DATA_ARG)) rest <- rest[-(which(args == "--data")[1] + 0:1)]
+odd <- rest[!rest %in% known]
+if (length(odd)) {
+  usage_stop("unknown argument(s): ", paste(odd, collapse = " "))
 }
 
 if (HELP_MODE) {
@@ -301,6 +318,10 @@ check_pinned <- function(path) {
 if (!is.null(DATA_ARG)) {
   if (!file.exists(DATA_ARG)) {
     say("ERROR: --data path does not exist: ", DATA_ARG)
+    quit(status = 4)
+  }
+  if (dir.exists(DATA_ARG)) {
+    say("ERROR: --data is a folder, not a data file: ", DATA_ARG)
     quit(status = 4)
   }
   input_path <- DATA_ARG

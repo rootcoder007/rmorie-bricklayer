@@ -60,6 +60,15 @@ cpsxvrf <- function(msg, sig, key, ctx = NULL,
   if (!inherits(sig, "bricklayer_signature")) {
     stop("`sig` must come from cpssign()", call. = FALSE)
   }
+  if (!is.list(key) && !is.raw(key)) {
+    stop("cpsxvrf: `key` must be a key from cpskg() or drvkey()",
+         call. = FALSE)
+  }
+  if (!is.null(ctx) && !is.raw(ctx) &&
+        !(is.character(ctx) && length(ctx) == 1L && !is.na(ctx))) {
+    stop("cpsxvrf: `ctx` must be one string, raw bytes or NULL",
+         call. = FALSE)
+  }
   ours <- isTRUE(cpsvrf(msg, sig, key, ctx = ctx))
   ext <- .rmbl_xvrf_openssl(msg, sig, key, ctx, openssl)
   out <- list(

@@ -266,6 +266,9 @@ rsvidx <- function(n, k, seed = 42L) {
   if (k > .Machine$integer.max) {
     stop("`k` must be at most 2147483647", call. = FALSE)
   }
+  if (n > .Machine$integer.max) {
+    stop("rsvidx: `n` must be at most 2147483647", call. = FALSE)
+  }
   seed <- .rmbl_seed(seed)
   .Call(C_rmbl_reservoir, n, k, seed)
 }

@@ -838,7 +838,7 @@ trcprog <- function(
 ) {
   done <- .rmbl_num(done, "done", integer = TRUE)
   yearend <- .rmbl_num(yearend, "yearend")
-  total <- .rmbl_scalar(total, "total", 1)
+  total <- .rmbl_scalar(total, "total", 1, 1e6, integer = TRUE)
   start <- .rmbl_scalar(start, "start")
   conflvl <- .rmbl_conf_level(conflvl)
   .rmbl_trc_check(done, yearend, total)
