@@ -55,6 +55,8 @@ PY
 python3 "$src/dev/cran_merge_vignettes.py"
 # every web address as plain text in the CRAN copy (dev/cran_plain_urls.py)
 python3 "$src/dev/cran_plain_urls.py"
+# the help pages merged by source file in the CRAN copy (dev/cran_merge_rd.R)
+Rscript "$src/dev/cran_merge_rd.R" man
 if [ "$pkg" = rmoriebricklayer ]; then
   printf '^tests/testthat/vectors$\n^tests/testthat/wycheproof-.*\\.txt$\n' >> .Rbuildignore
 fi
