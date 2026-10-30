@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,7 @@
 <li>
 <strong>Documentation.</strong> Exported functions have roxygen2 documentation with <code>@param</code>, <code>@return</code> and a runnable <code>@examples</code> block; run <code><a href="https://roxygen2.r-lib.org/reference/roxygenize.html" class="external-link">roxygen2::roxygenise()</a></code> and commit the <code>man/</code> changes. User-visible changes get a bullet in <code>NEWS.md</code>.</li>
 <li>
-<strong>Style.</strong> Base R, lines of at most 80 characters, ASCII-only R sources (use <code>\u</code> escapes). <code>lintr::lint_package()</code> must report nothing (the rules are in <code>.lintr</code>), and <code>goodpractice::gp()</code> must stay clean.</li>
+<strong>Style.</strong> Base R, lines of at most 80 characters, ASCII-only R sources (use <code>\u</code> escapes). <code><a href="https://lintr.r-lib.org/reference/lint.html" class="external-link">lintr::lint_package()</a></code> must report nothing (the rules are in <code>.lintr</code>), and <code><a href="https://docs.ropensci.org/goodpractice/reference/gp.html" class="external-link">goodpractice::gp()</a></code> must stay clean.</li>
 <li>
 <strong>C and C++.</strong> No new compiler warnings in <code>R CMD check --as-cran</code>; the sanitizer and constant-time workflows must stay green. Changes under <code>src/</code> also need the fuzz targets to build (<code>inst/fuzz/build.sh</code>).</li>
 <li>

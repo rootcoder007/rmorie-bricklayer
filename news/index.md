@@ -1,5 +1,11 @@
 # Changelog
 
+## rmoriebricklayer 1.0.4
+
+- The CRAN release is rebuilt with its vignette outputs (the 1.0.3
+  tarball sent to CRAN carried the vignettes without them). No code
+  changes.
+
 ## rmoriebricklayer 1.0.3
 
 ### Printed results
@@ -547,8 +553,9 @@
   lists the exported functions an error is reached from through any
   helpers a function is split into, as well as up to four calls of
   shared code. Every line of R, of the tests and of the vignettes’ code
-  is at most 80 characters, and `lintr::lint_package()` reports nothing.
-  The source is formatted with air (`air.toml`).
+  is at most 80 characters, and
+  [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html)
+  reports nothing. The source is formatted with air (`air.toml`).
 - A function defined twice, the second copy silently replacing the
   first, is defined once:
   [`plot.rmbl_prevalence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
@@ -1171,7 +1178,9 @@ CRAN release: 2026-10-21
   which read “50" and stopped).
 - Spelling: US spelling throughout (“optimized”, “renormalized”,
   “victimized”), code names in code font, and the technical terms in
-  `inst/WORDLIST`; `spelling::spell_check_package()` finds nothing.
+  `inst/WORDLIST`;
+  [`spelling::spell_check_package()`](https://docs.ropensci.org/spelling//reference/spell_check_package.html)
+  finds nothing.
 - R CMD check no longer reruns the vignettes’ analyses: when it
   re-builds a vignette, only the setup chunk runs. R CMD build,
   r-universe and pkgdown still build every vignette in full, so the

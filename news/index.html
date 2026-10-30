@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,10 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.4" id="rmoriebricklayer-104">rmoriebricklayer 1.0.4<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-104"></a></h2>
+<ul><li>The CRAN release is rebuilt with its vignette outputs (the 1.0.3 tarball sent to CRAN carried the vignettes without them). No code changes.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.3" id="rmoriebricklayer-103">rmoriebricklayer 1.0.3<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-103"></a></h2>
 <div class="section level3">
@@ -141,7 +145,7 @@
 <h3 id="code-health-1-0-3">Code health<a class="anchor" aria-label="anchor" href="#code-health-1-0-3"></a></h3>
 <ul><li>goodpractice passes every one of its checks. Every exported function’s cyclomatic complexity is at most 15 and every function is at most 50 lines: long functions are split into named helpers, with no change in what they return or the errors they give (every exported function was run on the old and the new code with the same inputs and compared). In each file the exported functions come first; arguments that were tested with <code><a href="https://rdrr.io/r/base/missing.html" class="external-link">missing()</a></code> default to <code>NULL</code>; each R file has a test file of the same name.</li>
 <li>
-<code><a href="../reference/explerr.html">explerr()</a></code> lists the exported functions an error is reached from through any helpers a function is split into, as well as up to four calls of shared code. Every line of R, of the tests and of the vignettes’ code is at most 80 characters, and <code>lintr::lint_package()</code> reports nothing. The source is formatted with air (<code>air.toml</code>).</li>
+<code><a href="../reference/explerr.html">explerr()</a></code> lists the exported functions an error is reached from through any helpers a function is split into, as well as up to four calls of shared code. Every line of R, of the tests and of the vignettes’ code is at most 80 characters, and <code><a href="https://lintr.r-lib.org/reference/lint.html" class="external-link">lintr::lint_package()</a></code> reports nothing. The source is formatted with air (<code>air.toml</code>).</li>
 <li>A function defined twice, the second copy silently replacing the first, is defined once: <code><a href="../reference/plot-methods.html">plot.rmbl_prevalence()</a></code> (its help page showed it twice), <code>.bl_interactive()</code>, <code>.bl_stdin_tty()</code> and <code>.rmbl_permutations()</code>.</li>
 <li>Continuous integration runs goodpractice with every check, and fails on any that fails.</li>
 </ul></div>
@@ -327,7 +331,7 @@
 <li>The README and the DESCRIPTION now say first, in plain words, what the package is for: analyzing published and unpublished tables, including your own data, pinning the data a result came from, and signing the record. The README says why it exists and shows how it is used, with code that runs.</li>
 <li>README: three examples used 0.5.x argument names (<code>anltab(period =, rounding =)</code>, <code>recrd(observed =, expected =, synthetic =)</code>, <code>wrsmrytxt(what_was_done =)</code>) and one read a renamed field (<code>$any_drift</code>, now <code>$anydrft</code>, which printed NULL); every R block of the README now runs as written.</li>
 <li>Help pages: quoted words and phrases use <code>\dQuote{}</code>, so the PDF manual prints an opening and a closing quotation mark instead of two closing ones, and quoted values are in code font (<code>\code{"mean"}</code>). A percent sign written in a help page’s text no longer cuts off the rest of its line (in 11 pages, for example the 50% rule in <code><a href="../reference/cnsprof.html">?cnsprof</a></code>, which read “50" and stopped).</li>
-<li>Spelling: US spelling throughout (“optimized”, “renormalized”, “victimized”), code names in code font, and the technical terms in <code>inst/WORDLIST</code>; <code>spelling::spell_check_package()</code> finds nothing.</li>
+<li>Spelling: US spelling throughout (“optimized”, “renormalized”, “victimized”), code names in code font, and the technical terms in <code>inst/WORDLIST</code>; <code><a href="https://docs.ropensci.org/spelling//reference/spell_check_package.html" class="external-link">spelling::spell_check_package()</a></code> finds nothing.</li>
 <li>R CMD check no longer reruns the vignettes’ analyses: when it re-builds a vignette, only the setup chunk runs. R CMD build, r-universe and pkgdown still build every vignette in full, so the package carries each one’s HTML, figures and R code.</li>
 <li>On CRAN the 33 guides are combined into five vignettes, one per theme: <code>vignette("capsules-and-provenance")</code>, <code>vignette("integrity-and-cryptography")</code>, <code>vignette("describing-data-and-tables")</code>, <code>vignette("statistical-methods")</code> and <code>vignette("applied-analyses")</code>, each former guide a section of one of them, with its text, code and figures unchanged. The package from GitHub or r-universe, and the package website, keep all 33.</li>
 <li>Every example runs in GitHub CI, on r-universe, on the package website and in an interactive session (for example with <code><a href="https://rdrr.io/r/utils/example.html" class="external-link">example()</a></code>), and the full test suite runs in GitHub CI and on r-universe. On CRAN, to keep the check within its time limit, the help pages show every example but R CMD check runs only those of <code><a href="../reference/csha256.html">csha256()</a></code> and <code><a href="../reference/keyeddgst.html">keyeddgst()</a></code>, and the tests run their fast core.</li>
