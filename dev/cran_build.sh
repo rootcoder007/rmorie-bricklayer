@@ -58,7 +58,12 @@ python3 "$src/dev/cran_plain_urls.py"
 # the help pages merged by source file in the CRAN copy (dev/cran_merge_rd.R)
 Rscript "$src/dev/cran_merge_rd.R" man
 if [ "$pkg" = rmoriebricklayer ]; then
-  printf '^tests/testthat/vectors$\n^tests/testthat/wycheproof-.*\\.txt$\n' >> .Rbuildignore
+  # no tests and no byte-compiling in the CRAN copy: CRAN's Windows check is measured
+  # without the install, and both keep it inside its ten minutes (win-builder R-devel,
+  # 30 Oct: 585 s); CI and r-universe run the full suite on the byte-compiled package
+  printf '^tests$\n' >> .Rbuildignore
+  sed -i '/^ByteCompile:/d' DESCRIPTION
+  printf 'ByteCompile: no\n' >> DESCRIPTION
 fi
 cd "$out"
 NOT_CRAN=true R CMD build "$pkg" > "$out/build_$pkg.log" 2>&1
