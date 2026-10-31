@@ -2,11 +2,15 @@
 
 ## rmoriebricklayer 1.0.4
 
-- The CRAN release is rebuilt with its vignette outputs (the 1.0.3
-  tarball sent to CRAN carried the vignettes without them). No code
-  changes.
+- The CRAN copy has its help pages again, one per function as on GitHub
+  and r-universe. The CRAN copy of 1.0.3 had merged them into five pages
+  by subject, which put the usage, arguments and examples of every
+  function on a page into one long section each; the PDF and HTML
+  manuals now list every page.
 
 ## rmoriebricklayer 1.0.3
+
+CRAN release: 2026-10-31
 
 ### Printed results
 
@@ -1201,8 +1205,8 @@ CRAN release: 2026-10-21
   CMD check runs only those of
   [`csha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/csha256.md)
   and
-  [`keyeddgst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/keyeddgst.md),
-  and the tests run their fast core.
+  [`keyeddgst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/keyeddgst.md);
+  the tests run only off CRAN.
 - Every vignette now draws its results: the 21 that had no figure gain
   one or more, drawn with the package’s own
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) methods and
