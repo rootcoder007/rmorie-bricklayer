@@ -7,7 +7,7 @@ set -eu
 src=$(cd "$(dirname "$0")/.." && pwd)
 pkg=$(sed -n 's/^Package: //p' "$src/DESCRIPTION")
 out=${1:-/tmp/cran}
-rm -rf "$out/$pkg"
+rm -rf "${out:?}/${pkg:?}"
 mkdir -p "$out"
 rsync -a --exclude .git --exclude '.Rd2pdf*' --exclude 'src/*.o' --exclude 'src/*.so' \
   --exclude '*.gcno' --exclude '*.gcda' --exclude '*.gcov' "$src/" "$out/$pkg/"
