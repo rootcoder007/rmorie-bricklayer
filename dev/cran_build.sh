@@ -55,12 +55,10 @@ PY
 python3 "$src/dev/cran_merge_vignettes.py"
 # every web address as plain text in the CRAN copy (dev/cran_plain_urls.py)
 python3 "$src/dev/cran_plain_urls.py"
-# the help pages merged by subject into five pages in the CRAN copy (dev/cran_merge_rd.R)
-Rscript "$src/dev/cran_merge_rd.R" man
 if [ "$pkg" = rmoriebricklayer ]; then
-  # the CRAN copy runs no tests (tests/testthat.R stops on CRAN) and is byte-compiled; with
-  # the five merged help pages that keeps CRAN's Windows check inside its ten minutes
-  # (win-builder R-devel, 30 Oct: 570 s); CI and r-universe run the full suite
+  # the CRAN copy runs no tests (tests/testthat.R stops on CRAN) and is byte-compiled, which
+  # keeps CRAN's Windows check inside its ten minutes; the help pages stay one per function
+  # (CRAN incoming, 31 Oct: 372 s with the pages merged); CI and r-universe run the full suite
   printf '^tests/testthat/vectors$\n^tests/testthat/wycheproof-.*\\.txt$\n' >> .Rbuildignore
   sed -i '/^ByteCompile:/d' DESCRIPTION
   printf 'ByteCompile: yes\n' >> DESCRIPTION

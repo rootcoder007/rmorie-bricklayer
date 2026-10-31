@@ -1,3 +1,7 @@
+# rmoriebricklayer 1.0.4
+
+* The CRAN copy has its help pages again, one per function as on GitHub and r-universe. The CRAN copy of 1.0.3 had merged them into five pages by subject, which put the usage, arguments and examples of every function on a page into one long section each; the PDF and HTML manuals now list every page.
+
 # rmoriebricklayer 1.0.3
 
 ## Printed results
