@@ -269,8 +269,8 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
 }
 
 #' Uploads a file in one request unless the archive already holds it.
-#' @param path The file.
-#' @param sha Its SHA-256.
+#' @param path The file to send in one request.
+#' @param sha The SHA-256 of that file.
 #' @param mime Its media type.
 #' @param key,base The archive's key and address.
 #' @param tmout Seconds.
@@ -307,8 +307,8 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
 #' Each part is a blob of its own, which the archive checks against its
 #' SHA-256; the list names them in order under the whole file's SHA-256. A
 #' part already there is not sent again, so a stopped upload resumes.
-#' @param path The file.
-#' @param sha Its SHA-256.
+#' @param path The file to send in parts.
+#' @param sha The SHA-256 of the whole file.
 #' @param key,base The archive's key and address.
 #' @param tmout Seconds, for each part.
 #' @return NULL, invisibly.

@@ -1130,13 +1130,6 @@ format.rmbl_bundle_project <- function(x, ...) {
   invisible(NULL)
 }
 
-#' How many files and folders a bundle of a project holds at least: every
-#' entry .bndl_walk() would see (no hidden ones), without the results_*
-#' folders and zip files mkbndl() leaves out, one listing per folder and
-#' no folder link followed.
-#' @param pdir The project folder.
-#' @return A number.
-#' @noRd
 #' Which paths are symbolic links (or, on Windows, any reparse point:
 #' a symbolic link or a junction).
 #'
@@ -1160,6 +1153,13 @@ format.rmbl_bundle_project <- function(x, ...) {
   tolower(real) != tolower(file.path(par, basename(p)))
 }
 
+#' How many files and folders a bundle of a project holds at least: every
+#' entry .bndl_walk() would see (no hidden ones), without the results_*
+#' folders and zip files mkbndl() leaves out, one listing per folder and
+#' no folder link followed.
+#' @param pdir The project folder.
+#' @return A number.
+#' @noRd
 .bndl_count <- function(pdir) {
   n <- 0
   todo <- pdir
