@@ -361,9 +361,14 @@ format.rmbl_bundle_audit <- function(x, ...) {
     if (is.na(pid) || pid <= 0L) {
       return(FALSE)
     }
+    # suppressWarnings() inside, not a warning handler: file() warns that it
+    # cannot open the file before it releases the connection, and a handler
+    # that leaves there leaks it; a scan over /proc used up all 128
     b <- tryCatch(
-      readBin(file.path("/proc", pid, "environ"), "raw", 1048576L),
-      error = function(e) raw(), warning = function(w) raw()
+      suppressWarnings(
+        readBin(file.path("/proc", pid, "environ"), "raw", 1048576L)
+      ),
+      error = function(e) raw()
     )
     length(grepRaw(mark, b, fixed = TRUE)) > 0L
   }, NA)]
@@ -600,8 +605,12 @@ format.rmbl_bundle_audit <- function(x, ...) {
   p <- list.files("/proc", pattern = "^[0-9]+$")
   # a process can end while it is read: its line is then ""
   st <- vapply(p, function(k) {
-    c(tryCatch(readLines(file.path("/proc", k, "stat"), n = 1L, warn = FALSE),
-               error = function(e) "", warning = function(w) ""), "")[1L]
+    c(tryCatch(
+      suppressWarnings(
+        readLines(file.path("/proc", k, "stat"), n = 1L, warn = FALSE)
+      ),
+      error = function(e) ""
+    ), "")[1L]
   }, "", USE.NAMES = FALSE)
   # the fields after the name in parentheses (which may hold spaces)
   f <- strsplit(sub("^.*\\) ", "", st), " ", fixed = TRUE)
@@ -671,9 +680,14 @@ format.rmbl_bundle_audit <- function(x, ...) {
   pids <- if (identical(sys, "Linux") && dir.exists("/proc")) {
     p <- list.files("/proc", pattern = "^[0-9]+$")
     p[vapply(p, function(k) {
+      # suppressWarnings() inside, not a warning handler: file() warns that it
+      # cannot open the file before it releases the connection, and a handler
+      # that leaves there leaks it; a scan over /proc used up all 128
       b <- tryCatch(
-        readBin(file.path("/proc", k, "environ"), "raw", 1048576L),
-        error = function(e) raw(), warning = function(w) raw()
+        suppressWarnings(
+          readBin(file.path("/proc", k, "environ"), "raw", 1048576L)
+        ),
+        error = function(e) raw()
       )
       length(grepRaw(mark, b, fixed = TRUE)) > 0L
     }, NA)]

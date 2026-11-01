@@ -101,10 +101,14 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 #' @return 16 hex characters.
 #' @noRd
 .rmbl_xmss_writer <- function() {
+  # suppressWarnings() inside, not a warning handler: file() warns that it
+  # cannot open the file before it releases the connection, and a handler
+  # that leaves there leaks it; a scan over /proc used up all 128
   b <- tryCatch(
-    readLines("/proc/sys/kernel/random/boot_id", n = 1L, warn = FALSE),
-    error = function(e) "",
-    warning = function(w) ""
+    suppressWarnings(
+      readLines("/proc/sys/kernel/random/boot_id", n = 1L, warn = FALSE)
+    ),
+    error = function(e) ""
   )
   substr(
     tolower(csha256(charToRaw(paste0(

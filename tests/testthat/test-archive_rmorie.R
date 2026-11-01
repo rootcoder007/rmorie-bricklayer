@@ -38,6 +38,10 @@ fake_archive <- function() {
     if (!is.null(f)) {
       return(f)
     }
+    busy <- !is.null(s$head_status) && method == "GET"
+    if (busy && grepl("^/v1/blob/", path)) {
+      return(reply(s$head_status, list(error = "busy")))
+    }
     if (method == "GET" && grepl("^/cdx/search/cdx", path)) {
       u <- utils::URLdecode(sub("^.*[?&]url=([^&]*).*$", "\\1", path))
       matches <- function(c) {
@@ -109,6 +113,27 @@ fake_archive <- function() {
       }
       s$blobs[[sha]] <- b
       return(reply(201, list(ok = TRUE)))
+    }
+    if (method == "POST" && grepl("^/v1/blob/[0-9a-f]{64}/parts$", path)) {
+      # an archive from before parts answers 404 here
+      if (isTRUE(s$no_parts)) {
+        return(reply(404, list(error = "no route")))
+      }
+      if (!is.null(s$parts_status)) {
+        return(reply(s$parts_status, list(error = "refused")))
+      }
+      sha <- sub("^/v1/blob/([0-9a-f]{64})/parts$", "\\1", path)
+      ps <- unlist(body$parts)
+      if (!all(ps %in% names(s$blobs))) {
+        return(reply(409, list(error = "a part is not uploaded")))
+      }
+      b <- do.call(c, unname(s$blobs[ps]))
+      if (length(b) != body$length) {
+        return(reply(400, list(error = "the parts hold another length")))
+      }
+      s$blobs[[sha]] <- b
+      s$parts[[sha]] <- ps
+      return(reply(201, list(ok = TRUE, verified = "parts")))
     }
     if (method == "POST" && path == "/v1/captures") {
       id <- sprintf("%s-%08x", body$timestamp, length(s$caps) + 1L)
@@ -1260,4 +1285,62 @@ test_that("a capture list without addresses has no link lines", {
   expect_null(.bl_arc_find_links(
     data.frame(id = "a", stringsAsFactors = FALSE)
   ))
+})
+
+test_that("a file over one upload goes as parts, resumes, and reads back", {
+  s <- fake_archive()
+  withr::local_options(rmoriebricklayer.arcpartbytes = 10)
+  f <- withr::local_tempfile()
+  bytes <- charToRaw("abcdefghijklmnopqrstuvwxy")
+  writeBin(bytes, f)
+  up <- function() {
+    .bl_arc_upload(
+      f, "https://s.org/big.csv", as.POSIXct("2026-11-01", tz = "UTC"),
+      "kept for the test of parts", "public", "text/csv",
+      "https://archive.rmorie.com", "sk-test-key", 60L
+    )
+  }
+  with_archive(s, {
+    r <- up()
+    expect_match(r$capture_id, "^[0-9]{14}-")
+    sha <- sha256file(f)
+    # three parts of at most 10 bytes, each its own blob, listed in order
+    ps <- s$parts[[sha]]
+    expect_length(ps, 3L)
+    expect_identical(
+      lapply(ps, function(p) length(s$blobs[[p]])),
+      list(10L, 10L, 5L)
+    )
+    expect_identical(s$blobs[[sha]], bytes)
+    # sent again: the whole file is there, so no part is sent
+    puts <- function() {
+      sum(vapply(s$calls, function(x) identical(x$method, "PUT"), NA))
+    }
+    before <- puts()
+    up()
+    expect_identical(puts(), before)
+    # a part already there is not sent again
+    s$blobs[[sha]] <- NULL
+    s$parts[[sha]] <- NULL
+    before <- puts()
+    up()
+    expect_identical(puts(), before)
+    expect_identical(s$blobs[[sha]], bytes)
+  })
+  # an archive that takes no parts says how much it takes
+  old <- fake_archive()
+  old$no_parts <- TRUE
+  with_archive(old, expect_error(up(), "takes files of up to 10 bytes only"))
+  # a refused list, and a failed look-up, are said in the package's words
+  bad <- fake_archive()
+  bad$parts_status <- 409L
+  with_archive(bad, expect_error(up(), "listing the parts: .*HTTP 409"))
+  down <- fake_archive()
+  down$head_status <- 503L
+  with_archive(down, expect_error(up(), "checking the archive: .*HTTP 503"))
+  # the part size is checked
+  withr::local_options(rmoriebricklayer.arcpartbytes = 0)
+  expect_error(.bl_arc_part_bytes(), "from 1 to 95e6")
+  withr::local_options(rmoriebricklayer.arcpartbytes = NULL)
+  expect_identical(.bl_arc_part_bytes(), 9e7)
 })

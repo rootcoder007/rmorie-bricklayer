@@ -249,6 +249,121 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
   v
 }
 
+#' The largest file sent in one upload; a larger one goes as parts.
+#'
+#' archive.rmorie.com takes up to 95 MB in one request (Cloudflare's limit
+#' is 100 MB); option rmoriebricklayer.arcpartbytes (default 90 MB) sets the
+#' part size.
+#' @return Bytes.
+#' @noRd
+.bl_arc_part_bytes <- function() {
+  b <- .rmbl_getopt("arcpartbytes", 90e6)
+  if (!is.numeric(b) || length(b) != 1L || is.na(b) || b < 1 || b > 95e6) {
+    stop(
+      "option rmoriebricklayer.arcpartbytes must be a number of bytes ",
+      "from 1 to 95e6",
+      call. = FALSE
+    )
+  }
+  floor(b)
+}
+
+#' Uploads a file in one request unless the archive already holds it.
+#' @param path The file.
+#' @param sha Its SHA-256.
+#' @param mime Its media type.
+#' @param key,base The archive's key and address.
+#' @param tmout Seconds.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_arc_put_blob <- function(path, sha, mime, key, base, tmout) {
+  have <- .bl_arc_req(
+    "GET",
+    sprintf("/v1/blob/%s", sha),
+    key = key,
+    base = base
+  )
+  if (have$status == 404L) {
+    put <- .bl_arc_req(
+      "PUT",
+      sprintf("/v1/blob/%s", sha),
+      file = path,
+      ctype = mime,
+      key = key,
+      base = base,
+      timeout = tmout
+    )
+    if (!put$status %in% c(200L, 201L)) {
+      stop(.bl_arc_why(put, "uploading the bytes"), call. = FALSE)
+    }
+  } else if (have$status != 200L) {
+    stop(.bl_arc_why(have, "checking the archive"), call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' Uploads a file too large for one request as parts, then lists them.
+#'
+#' Each part is a blob of its own, which the archive checks against its
+#' SHA-256; the list names them in order under the whole file's SHA-256. A
+#' part already there is not sent again, so a stopped upload resumes.
+#' @param path The file.
+#' @param sha Its SHA-256.
+#' @param key,base The archive's key and address.
+#' @param tmout Seconds, for each part.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_arc_put_parts <- function(path, sha, key, base, tmout) {
+  have <- .bl_arc_req(
+    "GET",
+    sprintf("/v1/blob/%s", sha),
+    key = key,
+    base = base
+  )
+  if (have$status == 200L) {
+    return(invisible(NULL))
+  }
+  if (have$status != 404L) {
+    stop(.bl_arc_why(have, "checking the archive"), call. = FALSE)
+  }
+  size <- file.size(path)
+  step <- .bl_arc_part_bytes()
+  n <- ceiling(size / step)
+  con <- file(path, "rb")
+  on.exit(close(con), add = TRUE)
+  part <- tempfile("rmbl-part-")
+  on.exit(unlink(part), add = TRUE)
+  shas <- character(n)
+  for (i in seq_len(n)) {
+    writeBin(readBin(con, "raw", step), part)
+    shas[[i]] <- sha256file(part)
+    .bl_arc_put_blob(
+      part, shas[[i]], "application/octet-stream", key, base, tmout
+    )
+  }
+  res <- .bl_arc_req(
+    "POST",
+    sprintf("/v1/blob/%s/parts", sha),
+    body = list(length = size, parts = as.list(shas)),
+    key = key,
+    base = base
+  )
+  if (res$status == 404L) {
+    stop(
+      sprintf(
+        "uploading the bytes: %s takes files of up to %s bytes only",
+        sub("^https?://", "", base),
+        format(step, big.mark = ",", scientific = FALSE)
+      ),
+      call. = FALSE
+    )
+  }
+  if (!res$status %in% c(200L, 201L)) {
+    stop(.bl_arc_why(res, "listing the parts"), call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 #' One request to the archive.
 #' @param method "GET", "POST" or "PUT".
 #' @param path The path on the archive, with any query.
@@ -361,27 +476,10 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
   tmout
 ) {
   sha <- sha256file(path)
-  have <- .bl_arc_req(
-    "GET",
-    sprintf("/v1/blob/%s", sha),
-    key = key,
-    base = base
-  )
-  if (have$status == 404L) {
-    put <- .bl_arc_req(
-      "PUT",
-      sprintf("/v1/blob/%s", sha),
-      file = path,
-      ctype = mime,
-      key = key,
-      base = base,
-      timeout = tmout
-    )
-    if (!put$status %in% c(200L, 201L)) {
-      stop(.bl_arc_why(put, "uploading the bytes"), call. = FALSE)
-    }
-  } else if (have$status != 200L) {
-    stop(.bl_arc_why(have, "checking the archive"), call. = FALSE)
+  if (file.size(path) > .bl_arc_part_bytes()) {
+    .bl_arc_put_parts(path, sha, key, base, tmout)
+  } else {
+    .bl_arc_put_blob(path, sha, mime, key, base, tmout)
   }
   rec <- .bl_arc_req(
     "POST",

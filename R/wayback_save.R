@@ -1150,14 +1150,16 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
       call. = FALSE
     )
   }
+  # suppressWarnings() inside, not a warning handler: file() warns that it
+  # cannot open the file before it releases the connection, and a handler
+  # that leaves there leaks it; a scan over /proc used up all 128
   ok <- tryCatch(
-    {
+    suppressWarnings({
       con <- file(output, "a")
       close(con)
       TRUE
-    },
-    error = function(e) FALSE,
-    warning = function(w) FALSE
+    }),
+    error = function(e) FALSE
   )
   if (!ok || dir.exists(output)) {
     stop(sprintf("cannot write the results file %s", output), call. = FALSE)
