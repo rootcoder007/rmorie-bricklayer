@@ -776,7 +776,7 @@ format.rmbl_or_check <- function(x, ...) {
 #' try(grdbin(c(0, 1, 2), "treated"))
 #' @export
 grdbin <- function(x, col) {
-  if (is.null(x) || !is.atomic(x)) {
+  if (is.null(x) || !.rmbl_is_atomic(x)) {
     stop("Column `", col, "` must be an atomic vector", call. = FALSE)
   }
   if (is.factor(x) || is.character(x)) {
@@ -1219,7 +1219,7 @@ relbl <- function(x, map, keep = character()) {
 #'   code order), from labelled codes.
 declbld <- function(x, vlabs = NULL) {
   .rmbl_no_fn(x = x)
-  if (!is.atomic(x) && !is.factor(x)) {
+  if (!.rmbl_is_atomic(x) && !is.factor(x)) {
     stop("`x` must be a vector of codes", call. = FALSE)
   }
   lab <- attr(x, "labels", exact = TRUE)
@@ -1592,7 +1592,10 @@ format.rmbl_transfer_check <- function(x, ...) {
 #' @param cnts,ref,rptd As for orchk().
 #' @noRd
 .orchk_check <- function(cnts, ref, rptd) {
-  if (!is.null(ref) && (!is.atomic(ref) || length(ref) != 1L || is.na(ref))) {
+  if (
+    !is.null(ref) &&
+      (!.rmbl_is_atomic(ref) || length(ref) != 1L || is.na(ref))
+  ) {
     stop("`ref` must be one group label (a row name of `cnts`)", call. = FALSE)
   }
   if (
@@ -1715,7 +1718,7 @@ format.rmbl_transfer_check <- function(x, ...) {
 #' @return list(orig, recd).
 #' @noRd
 .vrf_inputs <- function(orig, recd) {
-  if (!is.atomic(orig) || is.null(orig) || !is.atomic(recd) || is.null(recd)) {
+  if (!.rmbl_is_atomic(orig) || !.rmbl_is_atomic(recd)) {
     stop("`orig` and `recd` must be atomic vectors", call. = FALSE)
   }
   if (is.factor(orig)) {
@@ -1826,7 +1829,7 @@ format.rmbl_transfer_check <- function(x, ...) {
 #' @return NULL, invisibly.
 #' @noRd
 .relbl_check <- function(x, map) {
-  if (is.null(x) || !is.atomic(x) || is.complex(x) || is.raw(x)) {
+  if (is.null(x) || !.rmbl_is_atomic(x) || is.complex(x) || is.raw(x)) {
     stop(
       "`x` must be a vector of labels (character, factor or numbers)",
       call. = FALSE
@@ -1982,7 +1985,7 @@ format.rmbl_transfer_check <- function(x, ...) {
 .xfr_codebook_arg <- function(codebook) {
   if (
     !is.null(codebook) &&
-      (!is.atomic(codebook) ||
+      (!.rmbl_is_atomic(codebook) ||
         is.null(names(codebook)) ||
         inherits(codebook, c("Date", "POSIXt")))
   ) {

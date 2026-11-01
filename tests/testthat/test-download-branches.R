@@ -132,10 +132,7 @@ test_that(".bl_data_get passes the manifest's compressed size for a table", {
 test_that("a staged bundle without bldl falls back to the bundle fetcher", {
   called <- NULL
   te <- environment()
-  testthat::local_mocked_bindings(
-    exists = function(x, ...) FALSE,
-    .package = "base"
-  )
+  local_pkg_lacks_everything()
   # the fallback keeps the URL policy (download.file() did not; 1.0.3
   # recheck #13)
   testthat::local_mocked_bindings(

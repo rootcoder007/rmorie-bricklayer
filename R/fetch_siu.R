@@ -76,7 +76,7 @@ siufetch <- function(drid, dest, lang = c("en", "fr"), wb = "", tmout = 120L) {
 #' @noRd
 .rmbl_drid <- function(drid) {
   v <- if (
-    is.atomic(drid) &&
+    .rmbl_is_atomic(drid) &&
       length(drid) == 1L &&
       !is.logical(drid) &&
       !is.complex(drid)

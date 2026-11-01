@@ -72,7 +72,7 @@ yoylbl <- function(x, labels) {
   }
   m <- .yoy_meta(x)
   p <- x[[m$period]]
-  if (!is.function(labels) && !is.atomic(labels)) {
+  if (!is.function(labels) && !.rmbl_is_atomic(labels)) {
     stop(
       "`labels` must be a function of the periods or a vector of labels",
       call. = FALSE

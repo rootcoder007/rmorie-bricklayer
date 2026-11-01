@@ -82,10 +82,16 @@ test_that(
       j(as.raw(0x23), raw = "js", auto_unbox = TRUE),
       "(new Uint8Array([35]))"
     )
-    expect_identical(j(as.raw(c(0x0f, 0xff)), raw = "hex"), "[\"f\",\"ff\"]")
+    # base R writes a byte as "0f" on R 4.1 and "f" on R 4.6; jsonlite and
+    # tojs() both follow as.character.hexmode()
+    hx <- function(b) as.character.hexmode(as.raw(b))
+    expect_identical(
+      j(as.raw(c(0x0f, 0xff)), raw = "hex"),
+      sprintf("[\"%s\",\"ff\"]", hx(c(0x0f, 0xff))[1])
+    )
     expect_identical(
       j(data.frame(r = I(list(as.raw(c(1, 0xab))))), raw = "hex"),
-      "[{\"r\":[\"1\",\"ab\"]}]"
+      sprintf("[{\"r\":[\"%s\",\"ab\"]}]", hx(c(1, 0xab))[1])
     )
     expect_identical(
       j(

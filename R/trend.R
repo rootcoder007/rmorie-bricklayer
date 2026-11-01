@@ -997,7 +997,7 @@ format.rmbl_count_trend <- function(x, digits = 4L, ...) {
   if (is.null(x)) {
     x <- seq_along(y)
   }
-  if (!is.atomic(x) || is.matrix(x) || length(x) != length(y)) {
+  if (!.rmbl_is_atomic(x) || is.matrix(x) || length(x) != length(y)) {
     stop("`x` must be one time or position per value of `y`", call. = FALSE)
   }
   if (any(is.infinite(y))) {

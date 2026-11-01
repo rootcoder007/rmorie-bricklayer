@@ -1,6 +1,10 @@
 # rmoriebricklayer 1.0.5
 
 * The JSON reader works on R 4.1 to 4.4 again. Its R fallback, which reads what the compiled reader hands back (malformed text, a duplicate key, deep nesting) and every document in a staged bundle, passed `findInterval()` two arguments R only has from 4.5.0, so on older R it stopped with `unused arguments (checkSorted = FALSE, checkNA = FALSE)` instead of reading the document or saying what is wrong with it. It now passes them only where `findInterval()` has them.
+* The JSON reader makes a list column of records that hold arrays (`[{"a":[1,2]},{"a":[3]}]`) on R 4.1 to 4.3 too. There it relied on `is.atomic(NULL)` being `FALSE`, which it is only from R 4.4.0, so such a column came out as `NA` or stopped with "replacement has length zero". Every `is.atomic()` in the package now has the R 4.4.0 meaning on every R.
+* `tojs()` reaches its 100-level cap on R 4.1 instead of running out of C stack about 80 levels down: each level costs two calls fewer.
+* The JSON reader and `tojs()` count nesting the same way, by the arrays and objects open. The reader counted a value inside the hundredth array as a 101st level, so it refused 100 arrays around a number, which `tojs()` writes; it now reads them, and `tojs()` refuses a 101st level that it used to write and the reader could not read back.
+* The test suite needs 'testthat' 3.2.0 and 'withr' 2.5.0 (Suggests); with older versions some tests could not run. It now runs whole on R 4.1.
 
 # rmoriebricklayer 1.0.4
 

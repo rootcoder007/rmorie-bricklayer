@@ -1498,7 +1498,7 @@ plot.rmbl_svy_compare <- function(
   nm <- names(data) %||% character(length(data))
   # the columns that can be found again by name: atomic, named, the name used
   # once
-  keep <- vapply(data, function(v) is.atomic(v) && !is.null(v), NA) &
+  keep <- vapply(data, function(v) .rmbl_is_atomic(v) && !is.null(v), NA) &
     !is.na(nm) &
     nzchar(nm) &
     !(nm %in% nm[duplicated(nm)])

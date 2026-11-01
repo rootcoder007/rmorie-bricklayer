@@ -392,3 +392,36 @@ test_that("JSON: the R parser runs where findInterval() lacks checkSorted", {
     all(c("checkSorted", "checkNA") %in% names(formals(findInterval)))
   )
 })
+
+test_that("JSON: 100 arrays deep reads and writes back, a 101st does not", {
+  # the depth is the arrays and objects open; 1.0.4 also counted the value
+  # inside the hundredth, so fromjs() refused what tojs() had written
+  mk <- function(n) Reduce(function(acc, i) list(acc), seq_len(n), list(1))
+  at100 <- paste0(strrep("[", 100), "1", strrep("]", 100))
+  at101 <- paste0(strrep("[", 101), "1", strrep("]", 101))
+  obj100 <- paste0(strrep("{\"a\":", 100), "1", strrep("}", 100))
+  old <- .rmbl_native$json
+  withr::defer({
+    .rmbl_native$json <- old
+  })
+  for (native in c(TRUE, FALSE)) {
+    .rmbl_native$json <- if (native) NULL else FALSE
+    nat <- if (native) "native parser" else "R parser"
+    expect_identical(as.vector(unlist(fromjs(at100))), 1L, info = nat)
+    expect_identical(unlist(fromjs(obj100), use.names = FALSE), 1L, info = nat)
+    expect_error(fromjs(at101), "100 levels at character 101", info = nat)
+    # mk(98) is 99 lists and the vector [1] inside: 100 arrays
+    s <- tojs(mk(98))
+    expect_identical(nchar(gsub("[^[]", "", s)), 100L)
+    # read back unsimplified, the [1] is list(1L): written unboxed, it is [1]
+    back <- fromjs(s, simplifyVector = FALSE)
+    expect_identical(tojs(back, auto_unbox = TRUE), s, info = nat)
+  }
+  # one list more puts the vector's [1] at the 101st level
+  expect_error(tojs(mk(99)), "nesting deeper than 100 levels")
+  # unboxed, the 1 inside the hundredth array opens nothing
+  expect_identical(
+    nchar(gsub("[^[]", "", tojs(mk(99), auto_unbox = TRUE))),
+    100L
+  )
+})

@@ -48,7 +48,7 @@ Imports:
     tools,
     utils
 Suggests:
-    withr,
+    withr (>= 2.5.0),
     bslib (>= 0.9.0),
     digest,
     fixest,
@@ -69,7 +69,7 @@ Suggests:
     stringi,
     survival,
     survey,
-    testthat (>= 3.0.0)
+    testthat (>= 3.2.0)
 VignetteBuilder: knitr
 URL: https://github.com/rootcoder007/rmorie-bricklayer,
     https://rootcoder007.github.io/rmorie-bricklayer/

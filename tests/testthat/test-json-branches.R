@@ -114,8 +114,13 @@ test_that(
     )
     dfr <- data.frame(id = 1:2)
     dfr$r <- as.raw(c(1, 255))
-    # jsonlite writes a raw column with as.character.hexmode(): no zero padding
-    expect_identical(to(dfr), '[{"id":1,"r":"1"},{"id":2,"r":"ff"}]')
+    # jsonlite writes a raw column with as.character.hexmode(), which pads to
+    # the widest byte on R 4.1 ("01") and does not on R 4.6 ("1")
+    hx <- as.character.hexmode(as.raw(c(1, 255)))
+    expect_identical(
+      to(dfr),
+      sprintf('[{"id":1,"r":"%s"},{"id":2,"r":"%s"}]', hx[1], hx[2])
+    )
     dfc <- data.frame(id = 1:2)
     dfc$z <- c(1 + 2i, 3 - 1i)
     expect_identical(

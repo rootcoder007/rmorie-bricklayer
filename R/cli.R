@@ -241,7 +241,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   old_cache <- .bl_cli_cache_opt()
   on.exit(options(old_cache), add = TRUE)
   # NA or a closure failed in R's words further on (pre-CRAN audit of 30bed8e)
-  if (!is.null(args) && (!is.atomic(args) || anyNA(args))) {
+  if (!is.null(args) && (!.rmbl_is_atomic(args) || anyNA(args))) {
     stop(
       .rmbl_fn(),
       "`args` must be a character vector of command-line words, with no NA",

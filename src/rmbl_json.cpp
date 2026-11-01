@@ -356,8 +356,6 @@ SEXP container(Parser &P, bool obj) {
 }
 
 SEXP value(Parser &P) {
-    /* the R parser counts every value, a scalar too, and refuses past 100 */
-    if (++P.depth > 100) { ws(P); return failed(P, "nesting deeper than 100 levels"); }
     if ((++P.count & 4095UL) == 0) rmbl::check_interrupt();
     ws(P);
     SEXP r = R_NilValue;
@@ -366,7 +364,14 @@ SEXP value(Parser &P) {
     } else {
         const unsigned char c = P.p[P.i];
         if (c == '{' || c == '[') {
-            r = container(P, c == '{');
+            /* the depth is the arrays and objects open, as in the R parser and
+               tojs(): a scalar inside the hundredth is not a 101st level */
+            if (++P.depth > 100) {
+                failed(P, "nesting deeper than 100 levels");
+            } else {
+                r = container(P, c == '{');
+            }
+            --P.depth;
         } else if (c == '"') {
             SEXP s = string_(P);
             if (!P.fail) r = Rf_ScalarString(s);
@@ -384,7 +389,6 @@ SEXP value(Parser &P) {
             failed(P, "unexpected character");
         }
     }
-    --P.depth;
     return P.fail ? R_NilValue : r;
 }
 

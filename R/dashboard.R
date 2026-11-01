@@ -1140,7 +1140,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
     x
   } else if (is.list(x) && is.data.frame(x$table)) {
     x$table
-  } else if (is.atomic(x) && is.numeric(x) && is.null(dim(x))) {
+  } else if (.rmbl_is_atomic(x) && is.numeric(x) && is.null(dim(x))) {
     data.frame(value = as.numeric(x))
   }
   if (test) !is.null(t) else as.data.frame(t)

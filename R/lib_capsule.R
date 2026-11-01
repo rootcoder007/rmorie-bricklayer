@@ -443,7 +443,7 @@ format.rmbl_citation <- function(x, ...) {
   if (is.list(v) && length(v) == 1L && !is.list(v[[1L]])) {
     v <- v[[1L]]
   }
-  if (!is.atomic(v) || length(v) != 1L || is.na(v)) {
+  if (!.rmbl_is_atomic(v) || length(v) != 1L || is.na(v)) {
     return(NA_character_)
   }
   as.character(v)

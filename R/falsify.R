@@ -210,7 +210,7 @@ format.bricklayer_falsification <- function(x, ...) {
   # a data frame or a list returned by the statistic failed in R's words in
   # as.numeric() (final audit of 1.0.0): refused here, as any other non-number
   # is
-  if (!is.atomic(v)) {
+  if (!.rmbl_is_atomic(v)) {
     stop(
       .rmbl_fn(),
       sprintf("the statistic must return one finite number; on %s it ", what),

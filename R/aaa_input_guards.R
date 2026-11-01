@@ -467,7 +467,8 @@
   # to type 'double'") or read a factor's codes (re-test of the b617a3f CRAN
   # stress fixes, hostile battery)
   if (
-    !is.null(x) && (!is.atomic(x) || is.factor(x) || is.complex(x) || is.raw(x))
+    !is.null(x) &&
+      (!.rmbl_is_atomic(x) || is.factor(x) || is.complex(x) || is.raw(x))
   ) {
     stop(
       .rmbl_fn(),
@@ -1162,6 +1163,13 @@
 if (!exists("%||%", envir = baseenv(), inherits = FALSE)) {
   `%||%` <- function(a, b) if (is.null(a)) b else a
 }
+
+# is.atomic(NULL) is FALSE from R 4.4.0 and TRUE before it, so code that
+# relies on the first sent a NULL down the vector branch on R 4.1 to 4.3 (the
+# JSON simplifier filled a column of records holding arrays with NA). This is
+# is.atomic() as R 4.4.0 and later have it, on every R; here for the same
+# reason as `%||%` above.
+.rmbl_is_atomic <- function(x) !is.null(x) && is.atomic(x)
 
 #' Refuses the arguments an S3 method's `...` would otherwise swallow.
 #'

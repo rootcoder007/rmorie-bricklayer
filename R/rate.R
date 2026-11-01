@@ -352,7 +352,7 @@ shrs.data.frame <- function(
 #' @rdname shrs
 #' @export
 shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
-  if (is.null(x) || !is.atomic(x) || all(is.na(x)) || any(is.infinite(x))) {
+  if (!.rmbl_is_atomic(x) || all(is.na(x)) || any(is.infinite(x))) {
     stop(
       "`x` must be finite counts (a numeric vector) or a data frame of them",
       call. = FALSE

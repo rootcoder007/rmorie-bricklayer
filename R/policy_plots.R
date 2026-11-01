@@ -232,7 +232,7 @@ loounit <- function(
   if (is.null(units)) {
     units <- names(ever)[ever]
   }
-  if (!is.atomic(units)) {
+  if (!.rmbl_is_atomic(units)) {
     stop(.rmbl_fn(), "`units` must be unit labels of `data`", call. = FALSE)
   }
   units <- as.character(units)

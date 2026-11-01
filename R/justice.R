@@ -2140,7 +2140,7 @@ NULL
   }
   if (!is.null(base)) {
     if (
-      !is.atomic(base) ||
+      !.rmbl_is_atomic(base) ||
         is.complex(base) ||
         length(base) != 1L ||
         is.na(base) ||

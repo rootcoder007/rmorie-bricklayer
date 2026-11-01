@@ -1238,7 +1238,7 @@ format.rmbl_trc_progress <- function(x, ...) {
 #' @return NULL, invisibly.
 #' @noRd
 .qr_check_x <- function(x) {
-  if (!is.atomic(x)) {
+  if (!.rmbl_is_atomic(x)) {
     stop(.rmbl_fn(), "`x` must be a vector of flags", call. = FALSE)
   }
   if (!is.character(x) && !is.factor(x) && !all(is.na(x))) {

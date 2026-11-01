@@ -1297,12 +1297,12 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   if (is.numeric(v)) {
     return(toString(.rmbl_fmt_num(v)))
   }
-  if (!is.atomic(v) && !is.list(v)) {
+  if (!.rmbl_is_atomic(v) && !is.list(v)) {
     return(sprintf("<%s>", class(v)[1L]))
   }
   if (is.list(v)) {
     return(toString(vapply(v, function(e) {
-      if (is.atomic(e) && length(e) == 1L) as.character(e) else
+      if (.rmbl_is_atomic(e) && length(e) == 1L) as.character(e) else
         sprintf("<%s>", class(e)[1L])
     }, "")))
   }

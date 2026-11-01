@@ -1023,7 +1023,7 @@
     return(list())
   }
   out <- lapply(meta, function(v) {
-    if (is.atomic(v) && length(v) <= 6L) {
+    if (.rmbl_is_atomic(v) && length(v) <= 6L) {
       toString(v)
     } else {
       sprintf("<%s of %d>", class(v)[1L], length(v))

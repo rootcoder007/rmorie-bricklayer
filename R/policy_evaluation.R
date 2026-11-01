@@ -3631,7 +3631,7 @@ polex <- function(seed = 20240101) {
 #' @return The unit, as text.
 #' @noRd
 .rmbl_sc_unit <- function(treunit, p) {
-  if (!is.atomic(treunit)) {
+  if (!.rmbl_is_atomic(treunit)) {
     stop("synctl: `treunit` is not a unit of `data`", call. = FALSE)
   }
   tu <- as.character(treunit)

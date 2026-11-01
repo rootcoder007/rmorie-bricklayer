@@ -742,7 +742,7 @@
     }
     return(.bl_scalars(v))
   }
-  if (is.atomic(v) && length(v)) {
+  if (.rmbl_is_atomic(v) && length(v)) {
     return(data.frame(value = v, stringsAsFactors = FALSE))
   }
   data.frame()
@@ -760,7 +760,9 @@
       stringsAsFactors = FALSE
     ))
   }
-  keep <- names(v)[vapply(v, function(x) is.atomic(x) && length(x) == 1L, TRUE)]
+  keep <- names(v)[
+    vapply(v, function(x) .rmbl_is_atomic(x) && length(x) == 1L, TRUE)
+  ]
   data.frame(
     field = keep,
     value = vapply(keep, function(k) .bl_cell(v[[k]], 4L), ""),

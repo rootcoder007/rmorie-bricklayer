@@ -1126,7 +1126,7 @@ jsunser <- function(txt, trusted = FALSE) {
     ))
   }
   class(x) <- setdiff(cls, "AsIs")
-  if (is.atomic(x) && length(x) == 1L) {
+  if (.rmbl_is_atomic(x) && length(x) == 1L) {
     auto_unbox <- FALSE
   }
   .rmbl_json_as(x, o, collapse, na, oldna, auto_unbox, indent)
@@ -1919,20 +1919,26 @@ jsunser <- function(txt, trusted = FALSE) {
   inc <- .rmbl_json_indent_inc(indent)
   # a data frame's columns under auto_unbox unbox only their list cells
   unbox_lists <- if (is_df && auto_unbox) TRUE else FALSE
-  tmp <- vapply(
-    x,
-    function(y) {
-      .rmbl_json_as(
-        y,
-        o,
-        na = na,
-        oldna = oldna,
-        auto_unbox = if (unbox_lists) is.list(y) else auto_unbox,
-        indent = inc
-      )
-    },
-    character(1)
-  )
+  # a loop, not vapply() and a closure: two calls fewer per level of nesting,
+  # which R 4.1 needs to reach the 100-level cap before its C stack runs out
+  tmp <- character(length(x))
+  for (i in seq_along(x)) {
+    y <- x[[i]]
+    tmp[[i]] <- .rmbl_json_as(
+      y,
+      o,
+      na = na,
+      oldna = oldna,
+      auto_unbox = if (unbox_lists) is.list(y) else auto_unbox,
+      indent = inc
+    )
+    # inside the hundredth array or object, an element written as an array or
+    # object (a vector boxed as [1], a data frame) is a 101st level, which
+    # fromjs() refuses: what tojs() writes, fromjs() reads back
+    if (o$depth >= 100L && grepl("^[[:space:]]*[[{]", tmp[[i]])) {
+      stop("nesting deeper than 100 levels", call. = FALSE)
+    }
+  }
   if (!is.null(names(x))) {
     keys <- if (isTRUE(o$keep_empty_names)) {
       .rmbl_json_esc(names(x))
@@ -2092,7 +2098,7 @@ bricklayer_json_unbox <- function(x) {
   if (length(x) == 1L && inherits(x, "POSIXt")) {
     return(.rmbl_json_as_scalar(x))
   }
-  if (!is.atomic(x) || length(dim(x)) > 1L) {
+  if (!.rmbl_is_atomic(x) || length(dim(x)) > 1L) {
     stop(
       "Only atomic vectors of length 1 or data frames with 1 row can be ",
       "unboxed.",
@@ -2645,19 +2651,12 @@ bricklayer_json_unbox <- function(x) {
   v
 }
 
-#' Reads a value, one level deeper; the depth is put back on return. An error
-#' ends the parse, so no exit handler (a cost per value).
+#' Reads a value.
 #' @param P The parse state.
 #' @return The value.
 #' @noRd
 .rmbl_jp_value <- function(P) {
-  P$depth <- P$depth + 1L
-  if (P$depth > 100L) {
-    .rmbl_jp_bad(P, "nesting deeper than 100 levels")
-  }
-  v <- .rmbl_jp_value_(P)
-  P$depth <- P$depth - 1L
-  v
+  .rmbl_jp_value_(P)
 }
 
 #' Reads a value at the cursor.
@@ -2670,11 +2669,17 @@ bricklayer_json_unbox <- function(x) {
     .rmbl_jp_bad(P, "unexpected end of input")
   }
   c0 <- P$ch[P$i]
-  if (c0 == "{") {
-    return(.rmbl_jp_object(P))
-  }
-  if (c0 == "[") {
-    return(.rmbl_jp_array(P))
+  if (c0 == "{" || c0 == "[") {
+    # the depth is the arrays and objects open, as in the native parser and
+    # tojs(): a scalar inside the hundredth is not a 101st level. An error
+    # ends the parse, so no exit handler puts the depth back.
+    P$depth <- P$depth + 1L
+    if (P$depth > 100L) {
+      .rmbl_jp_bad(P, "nesting deeper than 100 levels")
+    }
+    v <- if (c0 == "{") .rmbl_jp_object(P) else .rmbl_jp_array(P)
+    P$depth <- P$depth - 1L
+    return(v)
   }
   if (c0 == "\"") {
     return(.rmbl_jp_str(P))
@@ -3096,7 +3101,7 @@ bricklayer_json_unbox <- function(x) {
   if (
     all(vapply(
       out[!isempty],
-      function(z) isTRUE(is.vector(z) && is.atomic(z)),
+      function(z) isTRUE(is.vector(z) && .rmbl_is_atomic(z)),
       logical(1)
     ))
   ) {
@@ -3253,7 +3258,7 @@ bricklayer_json_unbox <- function(x) {
       unlist(pv[one], recursive = FALSE, use.names = FALSE)
     }
     if (
-      is.atomic(u) &&
+      .rmbl_is_atomic(u) &&
         !(is.character(u) && any(u %in% c("NA", "NaN", "Inf", "-Inf")))
     ) {
       col <- rep(NA, length(recordlist))

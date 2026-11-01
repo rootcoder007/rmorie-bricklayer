@@ -211,7 +211,7 @@ stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
   }
   if (
     !is.null(area) &&
-      (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))
+      (!.rmbl_is_atomic(area) || is.matrix(area) || length(area) != length(obs))
   ) {
     stop(
       "stdinc: `area` must be NULL or one label per area (as many as `obs`)",
@@ -810,7 +810,7 @@ format.rmbl_expected <- function(x, digits = 4L, ...) {
   }
   if (
     !is.null(area) &&
-      (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))
+      (!.rmbl_is_atomic(area) || is.matrix(area) || length(area) != length(obs))
   ) {
     stop(
       "ebrates: `area` must be NULL or one label per area (as many as `obs`)",

@@ -174,7 +174,7 @@ test_that("without the compiled code the namespace uses the bundle paths", {
       invisible(dest)
     }
   )
-  local_mocked_bindings(exists = function(x, ...) FALSE, .package = "base")
+  local_pkg_lacks_everything()
   expect_identical(sha256file(f), want)
   expect_identical(fromjs("https://example.org/m.json")$k, 1L)
   .bl_fetch_file(paste0("file://", f), dest, allow_file = TRUE)

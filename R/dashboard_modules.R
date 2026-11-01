@@ -360,7 +360,7 @@
     key <- paste0(prefix, nm)
     if (is.list(v) && !is.null(names(v))) {
       out <- rbind(out, .bl_fields(v, paste0(key, ".")))
-    } else if (is.atomic(v) && length(v)) {
+    } else if (.rmbl_is_atomic(v) && length(v)) {
       out <- rbind(
         out,
         data.frame(
