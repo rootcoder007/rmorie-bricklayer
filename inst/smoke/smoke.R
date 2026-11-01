@@ -198,6 +198,19 @@ cases <- list(
     keyp <- fipskg("ML-DSA-44")
     b <- cpsbndl(dir, m, keyp)
     check(isTRUE(cpsbndlvrf(attr(b, "path"), dir, man = m)$ok), "bundle does not verify")
+  },
+  # the JSON reader and writer (1.0.5): records holding arrays read as a list column on every R,
+  # 100 nested arrays written and read back, and a 101st level refused by both
+  json = function() {
+    x <- fromjs('[{"a":[1,2]},{"a":[3]}]')
+    check(is.data.frame(x) && is.list(x$a) && identical(lengths(x$a), c(2L, 1L)), "records with arrays")
+    deep <- function(n) { v <- 1; for (i in seq_len(n)) v <- list(v); v }
+    s <- tojs(deep(100), auto_unbox = TRUE)
+    check(identical(tojs(fromjs(s), auto_unbox = TRUE), s), "100 levels do not read back")
+    e <- tryCatch(tojs(deep(101), auto_unbox = TRUE), error = conditionMessage)
+    check(is.character(e) && grepl("deeper than 100", e, fixed = TRUE), paste("tojs 101:", e))
+    e <- tryCatch(fromjs(paste0(strrep("[", 101), "1", strrep("]", 101))), error = conditionMessage)
+    check(is.character(e) && grepl("deeper than 100", e, fixed = TRUE), paste("fromjs 101:", e))
   }
 )
 help_text <- run("help")$text
