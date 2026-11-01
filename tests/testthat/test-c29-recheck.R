@@ -129,6 +129,24 @@ test_that("the bundle wrapper does not wait out the limit for a short run", {
   expect_lt(proc.time()[["elapsed"]] - t0, 10)
 })
 
+test_that("the bundle wrapper ends a short run started with TERM ignored", {
+  # unshare before util-linux 2.38 (Ubuntu 22.04) starts the wrapper with TERM
+  # ignored; a TERM to the watchdog then did nothing and every run waited out
+  # the limit, 30 minutes for each bundle check
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  w <- file.path(d, "w.sh")
+  writeLines(.bndlchk_wrap(), w)
+  t0 <- proc.time()[["elapsed"]]
+  st <- system2("sh", c("-c", shQuote("trap '' TERM; exec sh \"$@\""), "sh",
+                        shQuote(w), "30", shQuote(file.path(d, "m")),
+                        "sh", "-c", shQuote("exit 3")),
+                stdout = FALSE, stderr = FALSE)
+  expect_identical(as.integer(st), 3L)
+  expect_false(file.exists(file.path(d, "m")))
+  expect_lt(proc.time()[["elapsed"]] - t0, 10)
+})
+
 test_that("the reaper leaves processes below the session's older children", {
   before <- data.frame(pid = c(10L, 20L), ppid = c(1L, 1L),
                        state = "S", key = c("10 a", "20 b"))

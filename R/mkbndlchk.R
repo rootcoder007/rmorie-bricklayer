@@ -735,7 +735,11 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' too. A shell without job control (dash with no terminal) signals the
 #' processes themselves, and the watchdog stops its own sleep when told to,
 #' so a short run is not held to the limit (mkbndlchk reported 124 for a
-#' one-second run there; ASAN + UBSAN job).
+#' one-second run there; ASAN + UBSAN job). The watchdog is stopped with
+#' KILL: a shell started with TERM ignored (unshare from util-linux before
+#' 2.38 ignores TERM in what it starts, so Ubuntu 22.04 runs every bundle
+#' that way) can neither trap TERM nor pass it on, and a TERM left every
+#' run there waiting out the whole limit.
 #' @return The lines of the script.
 #' @noRd
 .bndlchk_wrap <- function() {
@@ -757,7 +761,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
     "wait \"$p\"",
     "rc=$?",
     "trap - INT TERM HUP",
-    "{ g -TERM \"$w\"; wait \"$w\"; } 2>/dev/null",
+    "{ g -KILL \"$w\"; wait \"$w\"; } 2>/dev/null",
     "if kill -0 -\"$p\" 2>/dev/null; then",
     "  kill -TERM -\"$p\" 2>/dev/null",
     "  sleep 1",
