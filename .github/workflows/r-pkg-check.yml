@@ -31,7 +31,8 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})${{ matrix.config.locale && ' C-locale' || '' }}
     # R-devel builds every dependency from source, about 50 minutes
-    timeout-minutes: 100
+    # the R 4.1 cell builds its dependencies from source: it gets longer
+    timeout-minutes: ${{ matrix.config.timeout || 100 }}
     strategy:
       fail-fast: false
       matrix:
@@ -47,7 +48,7 @@ jobs:
           # Current CRAN cannot be solved on R 4.1 (lme4 -> Matrix >= 1.5 -> R >= 4.4),
           # so this cell installs the hard dependencies and the test tools only; the
           # tests skip what is missing, as they do for any user.
-          - {os: ubuntu-22.04,  r: '4.1', deps: '"hard"',
+          - {os: ubuntu-22.04,  r: '4.1', deps: '"hard"', timeout: 180,
              extra: 'any::testthat, any::withr, any::knitr, any::rmarkdown, any::jsonlite, any::digest'}
           # A C locale changes what enc2utf8()/validUTF8() report; 0.5.0
           # passed every UTF-8 cell and failed here. Keep one cell on it.
