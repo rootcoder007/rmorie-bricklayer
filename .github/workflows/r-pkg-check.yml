@@ -44,7 +44,11 @@ jobs:
           - {os: ubuntu-24.04,  r: 'release'}
           - {os: ubuntu-24.04,  r: 'oldrel-1'}
           # Depends says R >= 4.1.0; 1.0.4 broke on R 4.1 to 4.4 with no cell there.
-          - {os: ubuntu-22.04,  r: '4.1'}
+          # Current CRAN cannot be solved on R 4.1 (lme4 -> Matrix >= 1.5 -> R >= 4.4),
+          # so this cell installs the hard dependencies and the test tools only; the
+          # tests skip what is missing, as they do for any user.
+          - {os: ubuntu-22.04,  r: '4.1', deps: '"hard"',
+             extra: 'any::testthat, any::withr, any::knitr, any::rmarkdown, any::jsonlite, any::digest'}
           # A C locale changes what enc2utf8()/validUTF8() report; 0.5.0
           # passed every UTF-8 cell and failed here. Keep one cell on it.
           - {os: ubuntu-24.04,  r: 'release', locale: 'C'}
@@ -80,9 +84,16 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
 
+      - name: Let a cell without every Suggests package check
+        if: matrix.config.deps
+        shell: bash
+        run: echo "_R_CHECK_FORCE_SUGGESTS_=false" >> "$GITHUB_ENV"
+
       - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
         with:
-          extra-packages: any::rcmdcheck, any::roxygen2, any::srr
+          dependencies: ${{ matrix.config.deps || '"all"' }}
+          extra-packages: >-
+            any::rcmdcheck, any::roxygen2, any::srr${{ matrix.config.extra && ', ' || '' }}${{ matrix.config.extra }}
           cache: 'always'
           cache-version: 2
 
