@@ -86,5 +86,5 @@ cpsrfrsh(d)$change     # the source has not changed since
 #> [1] "unchanged"
 
 try(cpsrfrsh(tempfile()))
-#> Error : cpsrfrsh: `dir` is not an existing directory: /tmp/Rtmp0cAXIK/file1e99530082d0
+#> Error : cpsrfrsh: `dir` is not an existing directory: /tmp/Rtmpkp2kgT/file1e6d4d193840
 ```
