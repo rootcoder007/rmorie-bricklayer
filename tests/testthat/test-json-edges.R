@@ -393,6 +393,27 @@ test_that("JSON: the R parser runs where findInterval() lacks checkSorted", {
   )
 })
 
+test_that("JSON: records holding arrays read as a list column on every R", {
+  # is.atomic(NULL) is TRUE before R 4.4.0; 1.0.4 relied on FALSE, so on
+  # R 4.1 to 4.3 this column came out as NA or stopped
+  expect_false(.rmbl_is_atomic(NULL))
+  expect_true(.rmbl_is_atomic(1:2))
+  expect_false(.rmbl_is_atomic(list(1)))
+  old <- .rmbl_native$json
+  withr::defer({
+    .rmbl_native$json <- old
+  })
+  for (native in c(TRUE, FALSE)) {
+    .rmbl_native$json <- if (native) NULL else FALSE
+    nat <- if (native) "native parser" else "R parser"
+    x <- fromjs('[{"a":[1,2]},{"a":[3]}]')
+    expect_s3_class(x, "data.frame")
+    expect_identical(x$a, list(1:2, 3L), info = nat)
+    y <- fromjs('[{"a":[1,2]},{"a":3}]')
+    expect_identical(y$a, list(1:2, 3L), info = nat)
+  }
+})
+
 test_that("JSON: 100 arrays deep reads and writes back, a 101st does not", {
   # the depth is the arrays and objects open; 1.0.4 also counted the value
   # inside the hundredth, so fromjs() refused what tojs() had written
