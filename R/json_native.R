@@ -2341,8 +2341,32 @@ bricklayer_json_unbox <- function(x) {
 #' @return A position.
 #' @noRd
 .rmbl_jp_after <- function(P, pos, v) {
-  j <- v[findInterval(pos - 1L, v, checkSorted = FALSE, checkNA = FALSE) + 1L]
+  j <- v[.rmbl_findint(pos - 1L, v) + 1L]
   if (is.na(j)) P$n + 1L else as.integer(j)
+}
+
+#' `findInterval(x, v)` for a sorted `v` without missing values.
+#'
+#' R 4.5.0 added `checkSorted` and `checkNA`; switching both checks off
+#' keeps each call from scanning all of `v`, which the parser does once a
+#' token. Before R 4.5.0 the arguments do not exist and passing them is an
+#' error, so they are passed only where `findInterval()` has them
+#' (`do.call()`, so that older R's code checks see no unknown argument).
+#' @param x Positions to look up.
+#' @param v Sorted positions.
+#' @return The interval index of each `x`.
+#' @noRd
+.rmbl_findint <- function(x, v) {
+  if (is.null(.rmbl_native$findint)) {
+    .rmbl_native$findint <- all(
+      c("checkSorted", "checkNA") %in% names(formals(findInterval))
+    )
+  }
+  if (.rmbl_native$findint) {
+    do.call(findInterval, list(x, v, checkSorted = FALSE, checkNA = FALSE))
+  } else {
+    findInterval(x, v)
+  }
 }
 
 #' Stops the parse with the position it reached.

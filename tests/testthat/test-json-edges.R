@@ -360,3 +360,35 @@ test_that("the codec still agrees with jsonlite where it is installed", {
     expect_equal(mine, theirs, info = paste("mismatch for", deparse(x)[1]))
   }
 })
+
+test_that("JSON: the R parser runs where findInterval() lacks checkSorted", {
+  # R 4.1 to 4.4 have no checkSorted / checkNA; 1.0.4 passed them anyway,
+  # so there every document the R parser read stopped with "unused
+  # arguments" (an error, a duplicate key, a staged bundle)
+  old <- list(json = .rmbl_native$json, fi = .rmbl_native$findint)
+  withr::defer({
+    .rmbl_native$json <- old$json
+    .rmbl_native$findint <- old$fi
+  })
+  .rmbl_native$json <- FALSE
+  txt <- "{ \"a\" : [ 1, 22 , \"x y\" ],\n \"b\": { \"c\": null } }"
+  want <- fromjs(txt, simplifyVector = FALSE)
+  .rmbl_native$findint <- FALSE
+  expect_identical(fromjs(txt, simplifyVector = FALSE), want)
+  expect_error(fromjs("{\"a\": }"), "unexpected character at character 7")
+  expect_error(
+    fromjs("{\"a\": 1, \"a\": 2}"),
+    "duplicate key \"a\" at character 17",
+    fixed = TRUE
+  )
+  expect_identical(
+    .rmbl_findint(c(0, 2.5, 9), c(1, 2, 3)),
+    findInterval(c(0, 2.5, 9), c(1, 2, 3))
+  )
+  .rmbl_native$findint <- NULL
+  expect_identical(fromjs(txt, simplifyVector = FALSE), want)
+  expect_identical(
+    .rmbl_native$findint,
+    all(c("checkSorted", "checkNA") %in% names(formals(findInterval)))
+  )
+})
