@@ -326,7 +326,7 @@ to put the command on your PATH.
 
 ``` r
 blcli("version")
-#> rmoriebricklayer 1.0.5
+#> rmoriebricklayer 1.1.0
 blcli("help")
 #> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command as rmoriebricklayer)
 #> 
@@ -401,39 +401,39 @@ blcli("nonsense")
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 invisible(cpsrfrsh(d))
 blcli(c("verify", d))
-#> ## rmbl capsule verify with [rmoriebricklayer 1.0.5](https://github.com/rootcoder007/rmorie-bricklayer)
+#> ## rmbl capsule verify with [rmoriebricklayer 1.1.0](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpGEz5Sa/capsule-1f12627627fd`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/Rtmp0CzY27/capsule-1f5045d2f4b3`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpGEz5Sa/capsule-1f12627627fd` | /tmp/RtmpGEz5Sa/temp_libpath1f121d54d428/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/Rtmp0CzY27/capsule-1f5045d2f4b3` | /tmp/Rtmp0CzY27/temp_libpath1f50766810e1/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpGEz5Sa/capsule-1f12627627fd</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/Rtmp0CzY27/capsule-1f5045d2f4b3</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpGEz5Sa/temp_libpath1f121d54d428/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/Rtmp0CzY27/temp_libpath1f50766810e1/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpGEz5Sa/capsule-1f12627627fd/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpGEz5Sa/capsule-1f12627627fd/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/Rtmp0CzY27/capsule-1f5045d2f4b3/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/Rtmp0CzY27/capsule-1f5045d2f4b3/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpGEz5Sa/capsule-1f12627627fd/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/Rtmp0CzY27/capsule-1f5045d2f4b3/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000295 Wh, 0.000135 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000309 Wh, 0.000141 gCO2e at 458.3 gCO2e/kWh (World, 2025).
 #> 
 #> ---
 #> 
-#> mode `verify` · fail-on `error` · rmoriebricklayer 1.0.5 · R version 4.6.2 (2026-10-29)
+#> mode `verify` · fail-on `error` · rmoriebricklayer 1.1.0 · R version 4.6.2 (2026-10-29)
 if (FALSE) { # interactive()
 # these read every help page, which takes a few seconds
 blcli(c("functions", "json"))

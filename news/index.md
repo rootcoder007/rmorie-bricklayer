@@ -1,5 +1,16 @@
 # Changelog
 
+## rmoriebricklayer 1.1.0
+
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  no longer holds a bundle run to its whole time limit on Linux systems
+  whose `unshare` comes from util-linux before 2.38 (Ubuntu 22.04,
+  Debian 11). That `unshare` starts what it runs with TERM ignored, so
+  the signal meant to stop the run’s watchdog did nothing: every check
+  waited out the limit (30 minutes by default) and reported a timeout
+  (exit status 124) for a run that had finished in seconds. The watchdog
+  is now stopped with KILL.
+
 ## rmoriebricklayer 1.0.5
 
 - The JSON reader works on R 4.1 to 4.4 again. Its R fallback, which
