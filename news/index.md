@@ -6,11 +6,11 @@
   reads what the compiled reader hands back (malformed text, a duplicate
   key, deep nesting) and every document in a staged bundle, passed
   [`findInterval()`](https://rdrr.io/r/base/findInterval.html) two
-  arguments R only has from 4.5.0, so on older R it stopped with “unused
-  arguments (checkSorted = FALSE, checkNA = FALSE)” instead of reading
-  the document or saying what is wrong with it. It now passes them only
-  where [`findInterval()`](https://rdrr.io/r/base/findInterval.html) has
-  them.
+  arguments R only has from 4.5.0, so on older R it stopped with
+  `unused arguments (checkSorted = FALSE, checkNA = FALSE)` instead of
+  reading the document or saying what is wrong with it. It now passes
+  them only where
+  [`findInterval()`](https://rdrr.io/r/base/findInterval.html) has them.
 
 ## rmoriebricklayer 1.0.4
 
