@@ -1,6 +1,20 @@
 # Changelog
 
+## rmoriebricklayer 1.0.5
+
+- The JSON reader works on R 4.1 to 4.4 again. Its R fallback, which
+  reads what the compiled reader hands back (malformed text, a duplicate
+  key, deep nesting) and every document in a staged bundle, passed
+  [`findInterval()`](https://rdrr.io/r/base/findInterval.html) two
+  arguments R only has from 4.5.0, so on older R it stopped with “unused
+  arguments (checkSorted = FALSE, checkNA = FALSE)” instead of reading
+  the document or saying what is wrong with it. It now passes them only
+  where [`findInterval()`](https://rdrr.io/r/base/findInterval.html) has
+  them.
+
 ## rmoriebricklayer 1.0.4
+
+CRAN release: 2026-10-31
 
 - The CRAN copy has its help pages again, one per function as on GitHub
   and r-universe. The CRAN copy of 1.0.3 had merged them into five pages

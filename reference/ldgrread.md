@@ -127,7 +127,7 @@ l
 #> │   Theorems  3 theorems (1 proved, 1 sorry, 1 axiom)                         │
 #> │   Source    https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab    │
 #> │   Lean      v4.12.0                                                         │
-#> │   File      /tmp/RtmpEUy99e/temp_libpath1f8d6611ebf/rmoriebricklayer/extdat │
+#> │   File      /tmp/RtmpXlOshS/temp_libpath1f6f5bb0f15/rmoriebricklayer/extdat │
 #> │             a/ledger_sample.json                                            │
 #> │                                                                             │
 #> │   id               theorem                         status  sorry            │
@@ -169,6 +169,6 @@ r[, c("check", "ok", "severity", "detail")]
 bad <- tempfile(fileext = ".json")
 writeLines('{"name": "x"}', bad)
 try(ldgrread(bad))
-#> Error : ldgrread: file1f8d4c5bbbe6.json is not a ledger: $: missing required toolchain, source, theorems
+#> Error : ldgrread: file1f6f1f216526.json is not a ledger: $: missing required toolchain, source, theorems
 unlink(bad)
 ```
