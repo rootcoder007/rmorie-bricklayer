@@ -247,8 +247,8 @@ key <- pqckg(height = 2)
 key
 #> ╭── Signing key (post-quantum) ───────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
-#> │   root       34b48ee1ae1674e265db1b13d2c36c09645c6afd44f8a75aa34dacfb3b2554 │
-#> │              ad                                                             │
+#> │   root       05e7c771d4916f5e1907e1641df82393a23aaf304fe47892b424e3853f07be │
+#> │              58                                                             │
 #> │   height     2                                                              │
 #> │   used       0 of 4 signatures                                              │
 #> │   remaining  4                                                              │
@@ -259,9 +259,9 @@ cpssign("a-manifest", key)
 #> ╭── Capsule signature ────────────────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
 #> │   index      0                                                              │
-#> │   root       34b48ee1ae1674e265db1b13d2c36c09645c6afd44f8a75aa34dacfb3b2554 │
-#> │              ad                                                             │
-#> │   signature  55c5a8b1d468871fa80d5282267755fc... (2144 bytes)               │
+#> │   root       05e7c771d4916f5e1907e1641df82393a23aaf304fe47892b424e3853f07be │
+#> │              58                                                             │
+#> │   signature  7a6a6b0a5bdf7fdd524d46d16d4a2300... (2144 bytes)               │
 #> │   auth path  2 nodes                                                        │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 options(op)
