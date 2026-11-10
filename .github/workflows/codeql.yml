@@ -54,7 +54,7 @@ jobs:
         if: matrix.language == 'c-cpp'
         run: sudo apt-get update -qq && sudo apt-get install -y libcurl4-openssl-dev
 
-      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
@@ -64,6 +64,6 @@ jobs:
         if: matrix.language == 'c-cpp'
         run: R CMD INSTALL --no-test-load --library="$RUNNER_TEMP" .
 
-      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
         with:
           category: "/language:${{ matrix.language }}"
