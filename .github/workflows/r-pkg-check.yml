@@ -64,6 +64,8 @@ jobs:
       # the live transport checks (archive.org lookups, never a capture; cloud.r-project.org) run
       # here and nowhere a test run did not ask for them
       RMBL_LIVE_TESTS: "1"
+      # Disable CRAN incoming version comparison checks for container updates & PRs
+      _R_CHECK_CRAN_INCOMING_: "false"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
