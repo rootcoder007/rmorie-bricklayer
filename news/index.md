@@ -2,6 +2,8 @@
 
 ## rmoriebricklayer 1.1.0
 
+CRAN release: 2026-11-07
+
 - [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
   no longer holds a bundle run to its whole time limit on Linux systems
   whose `unshare` comes from util-linux before 2.38 (Ubuntu 22.04,
