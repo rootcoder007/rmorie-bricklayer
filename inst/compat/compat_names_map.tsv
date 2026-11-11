@@ -302,3 +302,6 @@ yoy_write	yoywr	x,file,format,...	x,file,format,...	...:subtitle=sub;...:palette
 rate	rtcalc	x,count,population,by,per,conf_level,min_count	x,count,pop,by,per,conflvl,mincnt	
 rate_change	ratechg	x,count,population,period,by,lag,per,conf_level,min_count	x,count,pop,prd,by,lag,per,conflvl,mincnt	
 share	shrs	x,count,by,total,conf_level	x,count,by,total,conflvl	
+anltab	anytab	data,value,prd,by,pop,prior,units,rnd,rndkind,suplim,dir,per,conflvl,alpha,adjust,prdord	data,value,prd,by,pop,prior,units,rnd,rndkind,suplim,dir,per,conflvl,alpha,adjust,prdord	
+plotecdf	plotcdfs	x,grp,...,main,col,pal	x,grp,...,main,col,pal	
+plotsm	plotmult	y,prd,grp,...,main,col,pal	y,prd,grp,...,main,col,pal	

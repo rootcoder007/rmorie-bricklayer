@@ -301,6 +301,15 @@ map <- rbind(map, data.frame(
                "x,count,pop,prd,by,lag,per,conflvl,mincnt",
                "x,count,by,total,conflvl"),
   values = ""))
+# 1.1.1 renamed three 1.0.0 names for the same reason; same arguments
+map <- rbind(map, data.frame(
+  old = c("anltab", "plotecdf", "plotsm"),
+  new = c("anytab", "plotcdfs", "plotmult"),
+  old_args = c("data,value,prd,by,pop,prior,units,rnd,rndkind,suplim,dir,per,conflvl,alpha,adjust,prdord",
+               "x,grp,...,main,col,pal", "y,prd,grp,...,main,col,pal"),
+  new_args = c("data,value,prd,by,pop,prior,units,rnd,rndkind,suplim,dir,per,conflvl,alpha,adjust,prdord",
+               "x,grp,...,main,col,pal", "y,prd,grp,...,main,col,pal"),
+  values = ""))
 dir.create("inst/compat", showWarnings = FALSE, recursive = TRUE)
 write.table(map, "inst/compat/compat_names_map.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
 # the result names: page, 0.5.x name, 1.0.0 name, and whether the 1.0.0 name is unambiguous (no

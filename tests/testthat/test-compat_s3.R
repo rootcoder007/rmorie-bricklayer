@@ -11,7 +11,10 @@ test_that("the command line translates rate(), rate_change() and share()", {
   writeLines(c(
     'r <- rate(d, count = "n", population = "p", conf_level = 0.9)',
     's <- share(d, count = "n")',
-    'g <- rate_change(d, count = "n", population = "p", period = "y")'
+    'g <- rate_change(d, count = "n", population = "p", period = "y")',
+    'a <- anltab(d, "n", "y")',
+    "plotecdf(x)",
+    'plotsm(y, "p")'
   ), f)
   o <- character()
   blcli(c("migrate", f), out = function(...) o <<- c(o, paste0(...)))
@@ -21,6 +24,9 @@ test_that("the command line translates rate(), rate_change() and share()", {
   expect_match(o, 'shrs(d, count = "n")', fixed = TRUE)
   expect_match(o, 'ratechg(d, count = "n", pop = "p", prd = "y")',
                fixed = TRUE)
+  expect_match(o, 'anytab(d, "n", "y")', fixed = TRUE)
+  expect_match(o, "plotcdfs(x)", fixed = TRUE)
+  expect_match(o, 'plotmult(y, "p")', fixed = TRUE)
   o <- character()
   blcli(c("describe", "rate_change"),
         out = function(...) o <<- c(o, paste0(...)))
