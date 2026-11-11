@@ -26,18 +26,29 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: dependencies, without a memory cap
+        # the bot's server has its dependencies already; compiling them here
+        # (RcppEigen, stringi, ...) takes more than 2 GB on its own, so they are
+        # installed first and the cap covers only what the bot runs
+        run: |
+          mkdir -p .pkgcheck/lib
+          docker run --rm -e GITHUB_TOKEN -v "$PWD:/pkg" -w /pkg \
+            --entrypoint Rscript \
+            ghcr.io/ropensci-review-tools/pkgcheck-action:latest -e '
+              .libPaths(c("/pkg/.pkgcheck/lib", .libPaths()))
+              pak::lockfile_create("local::.", lockfile = ".pkgcheck/pkg.lock",
+                                   dependencies = "all")
+              pak::lockfile_install(".pkgcheck/pkg.lock",
+                                    lib = "/pkg/.pkgcheck/lib")
+            '
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: pkgcheck in the bot's image, 2 GB memory cap
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p .pkgcheck
           cat > .pkgcheck/run.R <<'RSCRIPT'
-          # the dependency install of the image's /check.R, then pkgcheck()
-          # with its results printed here (the image's own markdown step can
-          # fail after the checks have run and hide them)
-          pak::lockfile_create("local::.", lockfile = ".pkgcheck/pkg.lock",
-                               dependencies = "all")
-          pak::lockfile_install(".pkgcheck/pkg.lock")
+          .libPaths(c("/pkg/.pkgcheck/lib", .libPaths()))
           pkgstats::ctags_install(sudo = TRUE)
           x <- pkgcheck::pkgcheck(".")
           s <- capture.output(summary(x))
@@ -55,10 +66,10 @@ jobs:
           if (inherits(cv, "try-error")) cat(cv) else
             cat("coverage:", round(cv$pct_by_line, 2), "%\n")
           # a cross (U+2716) is a failing check; the eyes ones are optional
-          quit(status = as.integer(any(grepl("✖", s))))
+          quit(status = as.integer(any(grepl("\u2716", s))))
           RSCRIPT
           docker run --rm --memory=2g --memory-swap=2g \
-            -e GITHUB_TOKEN -v "$PWD:/pkg" -w /pkg \
-            --entrypoint Rscript \
+            -e GITHUB_TOKEN -e R_LIBS=/pkg/.pkgcheck/lib \
+            -v "$PWD:/pkg" -w /pkg --entrypoint Rscript \
             ghcr.io/ropensci-review-tools/pkgcheck-action:latest \
             .pkgcheck/run.R
