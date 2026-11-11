@@ -10,7 +10,7 @@ test_that("an analysis prints its missing columns and its suppression", {
     note = c(NA, "x", "y", "z", "p", "q", "r", "s"),
     stringsAsFactors = FALSE
   )
-  a <- anltab(d, "n", "year", by = "g", rnd = 5, suplim = 5)
+  a <- anytab(d, "n", "year", by = "g", rnd = 5, suplim = 5)
   out <- capture.output(print(a))
   expect_true(any(grepl("Rows +8", out)))
   expect_true(any(grepl("Columns +4", out)))

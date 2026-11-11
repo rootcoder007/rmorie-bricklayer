@@ -38,7 +38,7 @@ The files: \describe{ \item{\code{data_provenance.json}}{the fields
 must be filled in is marked \code{TODO}.} \item{\code{analysis.R}}{reads the
 provenance, downloads the source with \code{\link{fdl}} (a local path is read
 directly), computes its SHA-256 with \code{\link{sha256file}} and stops if it
-no longer matches the pinned value, runs \code{\link{anltab}}, and writes
+no longer matches the pinned value, runs \code{\link{anytab}}, and writes
 \code{manifest.json}, \code{report.html} and \code{report.md} in
 \code{results/}.} \item{\code{README.md}}{the three steps to fill in and run
 the capsule.} } With \code{example = TRUE} the source is the OTIS table
@@ -70,5 +70,5 @@ try(usecpstmpl(d))
 }
 \seealso{
 \code{\link{loadprov}}, \code{\link{vrfcps}},
-\code{\link{anltab}}.
+\code{\link{anytab}}.
 }

@@ -84,7 +84,7 @@ reference:
       drift screen against the prior capsule; then a report and a capsule
       template.
     contents:
-      - anltab
+      - anytab
       - rptanl
       - mkset
       - pubbnd

@@ -438,7 +438,7 @@ otis <- read.csv(system.file(
 ))
 wired(
   "trends",
-  anltab(otis, value = "individuals", prd = "year", by = c("table", "group")),
+  anytab(otis, value = "individuals", prd = "year", by = c("table", "group")),
   "trends: 1 of"
 )
 wired("exact p-values", yoypv(yoy(c(10, 20, 15, 30, 25, 40))), "exact p-values")

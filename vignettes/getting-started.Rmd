@@ -43,7 +43,7 @@ otis
 ## One call
 
 ```{r}
-a <- anltab(otis, value = "individuals", prd = "year",
+a <- anytab(otis, value = "individuals", prd = "year",
                    by = c("table", "group"))
 a
 ```
@@ -71,7 +71,7 @@ off a rounded table. Suppressed cells (`"x"`, `"<5"`) are handled the
 same way through `suplim`.
 
 ```{r}
-b <- anltab(otis, value = "individuals", prd = "year",
+b <- anytab(otis, value = "individuals", prd = "year",
                    by = c("table", "group"), rnd = 5)
 b$change[!is.na(b$change$previous),
          c("group", "year", "pctchg", "pctlo", "pctup",

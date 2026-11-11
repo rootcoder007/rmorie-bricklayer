@@ -726,9 +726,9 @@ test_that(
     # two columns with one name are refused in words
     d <- data.frame(a = 1:3, b = 4:6)
     names(d) <- c("a", "a")
-    expect_error(anltab(d, "a", "a"), "has two columns named a", fixed = TRUE)
+    expect_error(anytab(d, "a", "a"), "has two columns named a", fixed = TRUE)
     names(d) <- c("a", "")
-    expect_error(anltab(d, "a", "a"), "must have a name", fixed = TRUE)
+    expect_error(anytab(d, "a", "a"), "must have a name", fixed = TRUE)
     # a file named .gz that is plain CSV, larger than the in-memory limit, is
     # read streamed
     p <- tempfile(fileext = ".csv.gz")

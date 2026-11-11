@@ -914,7 +914,7 @@ test_that(
     d2 <- data.frame(a = 1:6, b = 1:6)
     names(d2) <- c("a", "a")
     expect_error(svydes(d2, w = "a"), "two columns named a")
-    expect_error(anltab(d2, value = "a", prd = "a"), "two columns named a")
+    expect_error(anytab(d2, value = "a", prd = "a"), "two columns named a")
   }
 )
 

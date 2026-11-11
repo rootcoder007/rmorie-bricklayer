@@ -61,9 +61,9 @@ test_that("migrate leaves a value that is not a renamed string literal", {
   expect_identical(
     m$lines,
     c(
-      "anltab(d, dir = dd)",
-      "anltab(d, dir = \"neutral\")",
-      "anltab(d, dir = \"higher\")"
+      "anytab(d, dir = dd)",
+      "anytab(d, dir = \"neutral\")",
+      "anytab(d, dir = \"higher\")"
     )
   )
 })

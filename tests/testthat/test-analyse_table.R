@@ -122,8 +122,8 @@ test_that("drftcal reports a false-alarm rate on identical data", {
   expect_error(drftcal(d[1:2, ]), "four rows")
 })
 
-test_that("anltab runs the whole workflow on the shipped table", {
-  a <- anltab(
+test_that("anytab runs the whole workflow on the shipped table", {
+  a <- anytab(
     otis,
     value = "individuals",
     prd = "year",
@@ -145,12 +145,12 @@ test_that("anltab runs the whole workflow on the shipped table", {
   expect_output(print(a), "5 comparison|comparison")
 })
 
-test_that("anltab with bounds, exposure and a prior capsule", {
+test_that("anytab with bounds, exposure and a prior capsule", {
   d <- otis
   d$pop <- c(rep(25000, 9), rep(21000, 6))
   prior <- d
   prior$individuals <- round(prior$individuals * 0.9)
-  a <- anltab(
+  a <- anytab(
     d,
     value = "individuals",
     prd = "year",
@@ -168,11 +168,11 @@ test_that("anltab with bounds, exposure and a prior capsule", {
   expect_true("individuals" %in% a$drift$columns$column)
   expect_output(print(a), "Publication bounds")
   expect_output(print(a), "Drift vs prior")
-  expect_error(anltab(d, value = "nope", prd = "year"), "not found")
+  expect_error(anytab(d, value = "nope", prd = "year"), "not found")
 })
 
 test_that("rptanl writes Markdown and self-contained HTML", {
-  a <- anltab(
+  a <- anytab(
     otis,
     value = "individuals",
     prd = "year",
@@ -194,7 +194,7 @@ test_that("rptanl writes Markdown and self-contained HTML", {
   g <- tempfile(fileext = ".md")
   rptanl(a, g)
   expect_match(readLines(g, warn = FALSE)[1], "^# ")
-  expect_error(rptanl(otis), "anltab")
+  expect_error(rptanl(otis), "anytab")
 })
 
 test_that("the capsule template runs as written on the shipped example", {
@@ -245,32 +245,32 @@ test_that("rptanl() renders a percent analysis", {
     share = c(50, 52, 53, 55, 54, 57, 58, 60),
     stringsAsFactors = FALSE
   )
-  a <- anltab(d, value = "share", prd = "year", by = "g", units = "percent")
+  a <- anytab(d, value = "share", prd = "year", by = "g", units = "percent")
   txt <- rptanl(a)
   expect_type(txt, "character")
   expect_match(paste(txt, collapse = "\n"), "ppchg")
 })
 
-test_that("anltab() refuses an infinite or zero rounding base (C7)", {
+test_that("anytab() refuses an infinite or zero rounding base (C7)", {
   d <- data.frame(year = 2019:2021, n = c(10, 12, 15))
   expect_error(
-    anltab(d, "n", "year", rnd = Inf),
+    anytab(d, "n", "year", rnd = Inf),
     "`rnd` must be one positive number, finite, or NULL"
   )
-  expect_error(anltab(d, "n", "year", rnd = 0), "`rnd` must be one positive")
+  expect_error(anytab(d, "n", "year", rnd = 0), "`rnd` must be one positive")
   expect_error(
-    anltab(d, "n", "year", suplim = Inf),
+    anytab(d, "n", "year", suplim = Inf),
     "`suplim` must be one non-negative number, finite, or NULL"
   )
 })
 
-test_that("anltab() orders text periods as yoy() reads them (C18)", {
+test_that("anytab() orders text periods as yoy() reads them (C18)", {
   d <- data.frame(
     p = c("2020 Q2", "2020 Q1", "2020 Q4", "2020 Q3"),
     n = 1:4,
     stringsAsFactors = FALSE
   )
-  a <- anltab(d, "n", "p")
+  a <- anytab(d, "n", "p")
   expect_identical(a$change$p, c("2020 Q1", "2020 Q2", "2020 Q3", "2020 Q4"))
   expect_identical(a$change$previous, c(NA, 2, 1, 4))
   expect_identical(a$meta$periods, a$change$p)
@@ -311,14 +311,14 @@ test_that("anltab() orders text periods as yoy() reads them (C18)", {
   invisible(b$out)
 }
 
-test_that("anltab() prints as a box of facts", {
+test_that("anytab() prints as a box of facts", {
   rd <- data.frame(
     g = c("a", "b", "a", "b"),
     yr = c(1, 1, 2, 2),
     n = c(3, 40, 5, 60),
     stringsAsFactors = FALSE
   )
-  .o2_check(anltab(rd, "n", "yr", by = "g"), "Analysis of a published table",
+  .o2_check(anytab(rd, "n", "yr", by = "g"), "Analysis of a published table",
     c("Periods", "2 (1 to 2)", "comparison(s)", "Trend"))
 })
 

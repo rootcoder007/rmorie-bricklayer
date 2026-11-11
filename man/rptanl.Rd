@@ -14,7 +14,7 @@ rptanl(
 }
 \arguments{
 \item{x}{A \code{bricklayer_analysis} from
-\code{\link[=anltab]{anltab()}}.}
+\code{\link[=anytab]{anytab()}}.}
 
 \item{path}{Where to write, a file path. With \code{NULL} (the default)
 the text is returned invisibly and nothing is written.}
@@ -33,7 +33,7 @@ The report text (a length-1 character string, Markdown or a full
 HTML document), invisibly.
 }
 \description{
-Renders an \code{\link[=anltab]{anltab()}} result as a report: the
+Renders an \code{\link[=anytab]{anytab()}} result as a report: the
 change table with
 its intervals and adjusted p-values, the rates, the trends, the drift
 screen and the column profile, each with one sentence saying how to read
@@ -55,14 +55,14 @@ is produced by a small built-in converter (headings, paragraphs, tables and
 inline code, with the text escaped). The file is written as UTF-8 and
 overwritten if it exists.
 
-Errors: \code{x} not from \code{\link[=anltab]{anltab()}}; an invalid
+Errors: \code{x} not from \code{\link[=anytab]{anytab()}}; an invalid
 \code{format}.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 path <- system.file("extdata", "otis_a01_individuals.csv",
                     package = "rmoriebricklayer")
-a <- anltab(read.csv(path), value = "individuals",
+a <- anytab(read.csv(path), value = "individuals",
                    prd = "year", by = c("table", "group"))
 md <- rptanl(a)
 cat(substr(md, 1, 400))
@@ -72,7 +72,7 @@ out <- tempfile(fileext = ".html")
 rptanl(a, out, title = "OTIS A01: individuals in custody", digits = 2)
 readLines(out, n = 3)
 
-# only an anltab() result can be reported
+# only an anytab() result can be reported
 try(rptanl(read.csv(path)))
 unlink(out)
 \dontshow{\}) # examplesIf}

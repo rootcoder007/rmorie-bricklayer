@@ -82,8 +82,8 @@ test_that(
 test_that("literal copies in function bodies start with the function name", {
   df <- data.frame(a = 1:3, b = c("x", "y", "z"), stringsAsFactors = FALSE)
   err(
-    anltab(data.frame(v = 1, p = 1), value = "zz", prd = "p"),
-    "anltab: column `zz` not found in `data`"
+    anytab(data.frame(v = 1, p = 1), value = "zz", prd = "p"),
+    "anytab: column `zz` not found in `data`"
   )
   err(expcnts(1, 0, 1), "expcnts: `pop` must be positive")
   err(stdinc(1:2, 1:3), "stdinc: `obs` and `expd` must be the same length")

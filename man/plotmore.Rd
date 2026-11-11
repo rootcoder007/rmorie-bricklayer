@@ -3,7 +3,7 @@
 \name{plotmore}
 \alias{plotmore}
 \alias{plotrdg}
-\alias{plotecdf}
+\alias{plotcdfs}
 \alias{plotvln}
 \alias{plothex}
 \alias{plotgain}
@@ -12,7 +12,7 @@ concentration curves}
 \usage{
 plotrdg(x, grp = NULL, bw = "nrd0", ..., main = NULL, col = NULL, pal = NULL)
 
-plotecdf(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
+plotcdfs(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
 
 plotvln(x, grp = NULL, bw = "nrd0", ..., main = NULL, col = NULL, pal = NULL)
 
@@ -43,7 +43,7 @@ the name of a rule (\code{"nrd0"}, the default, \code{"nrd"}, \code{"ucv"}, \cod
 The data drawn, invisibly: for \code{plotrdg()} and \code{plotvln()} the
 densities (\code{grp}, \code{x}, \code{y}), for \code{plotvln()} with the
 per-group \code{median}, \code{q1} and \code{q3} as an attribute
-\code{summary}, for \code{plotecdf()} the steps (\code{grp}, \code{x},
+\code{summary}, for \code{plotcdfs()} the steps (\code{grp}, \code{x},
 \code{y}), for \code{plothex()} the hexagon centres (\code{x}, \code{y})
 and \code{count}, for \code{plotgain()} the curves (\code{grp},
 \code{population}, \code{value}) with the Gini coefficients as an attribute
@@ -53,7 +53,7 @@ and \code{count}, for \code{plotgain()} the curves (\code{grp},
 Base-graphics plots in the house style for a numeric variable split by a
 group, or two numeric variables: \describe{ \item{\code{plotrdg()}}{a ridgeline:
 one kernel density per group, stacked with a small overlap.}
-\item{\code{plotecdf()}}{the empirical distribution function of each group,
+\item{\code{plotcdfs()}}{the empirical distribution function of each group,
 overlaid.} \item{\code{plotvln()}}{a violin per group: the mirrored density, the
 median as a point and the interquartile range as a bar.}
 \item{\code{plothex()}}{the two-dimensional density of \code{x} and \code{y} in
@@ -69,7 +69,7 @@ set.seed(3)
 x <- c(stats::rnorm(200), stats::rnorm(200, 2, 0.6))
 g <- rep(c("before", "after"), each = 200)
 plotrdg(x, g)
-plotecdf(x, g)
+plotcdfs(x, g)
 plotvln(x, g)
 plothex(x, x + stats::rnorm(400), bins = 20)
 plotgain(stats::rexp(400), g)

@@ -3,7 +3,7 @@ admissions	admits	adp,alos,t	adp,alos,t
 adp_from_counts	adpcnts	counts,t	cnts,t	
 advection_diffusion_2d	advdif2d	c0,u,v,kx,ky,dx,dy,dt,n_steps,source,max_work	c0,u,v,kx,ky,dx,dy,dt,nsteps,source,maxwork	
 agent_bundle	agentbndl	request,model,route	req,model,route	
-analyse_table	anltab	data,value,period,by,population,prior,units,rounding,rounding_kind,suppression_limit,direction,per,conf_level,alpha,adjust	data,value,prd,by,pop,prior,units,rnd,rndkind,suplim,dir,per,conflvl,alpha,adjust	direction:higher_is_better=higher;direction:lower_is_better=lower
+analyse_table	anytab	data,value,period,by,population,prior,units,rounding,rounding_kind,suppression_limit,direction,per,conf_level,alpha,adjust	data,value,prd,by,pop,prior,units,rnd,rndkind,suplim,dir,per,conflvl,alpha,adjust	direction:higher_is_better=higher;direction:lower_is_better=lower
 apply_schema_validation	schval	df_raw,provenance	dfraw,prov	
 ascii_fallback	asciifb	x,force	x,force	
 attributable_fraction	attrfrac	rr,exposure_prevalence,rr_lower,rr_upper	rr,expoprev,rrlo,rrup	

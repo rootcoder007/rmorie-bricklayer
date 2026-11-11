@@ -352,7 +352,7 @@ test_that(
         freqtbl = list(),
         mahaoutl = list(source = "datasets::mtcars"),
         plotrdg = list(),
-        plotecdf = list(),
+        plotcdfs = list(),
         plotvln = list(),
         plothex = list(),
         plotgain = list()
@@ -365,7 +365,7 @@ test_that(
         cnttrnd = list(),
         plotcal = list(source = 4L),
         plothrz = list(source = 2L),
-        plotsm = list(source = 2L),
+        plotmult = list(source = 2L),
         plotbump = list(source = 2L)
       ),
       survey = list(svyest = list(), svycmp = list(a_ref = "Central")),

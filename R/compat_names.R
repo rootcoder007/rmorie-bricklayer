@@ -5,9 +5,11 @@
 #'
 #' 1.0.0 renamed most functions rmoriebricklayer 0.5.13 exported. The old names
 #' are no longer R functions, except the eleven rmoriedata 0.3.x calls
-#' (\link{rmbl-compat}) and the S3 generics \code{rate()}, \code{rate_change()},
-#' \code{share()} and \code{yoy_summary()}, which stay so methods written for
-#' them still dispatch. The command line knows every old name, from
+#' (\link{rmbl-compat}) and the S3 generic \code{yoy_summary()}, which stays so
+#' methods written for it still dispatch (1.1.0 dropped \code{rate()},
+#' \code{rate_change()} and \code{share()}, whose names other CRAN packages
+#' use: \code{rtcalc()}, \code{ratechg()} and \code{shrs()} are the functions).
+#' The command line knows every old name, from
 #' \code{inst/compat/compat_names_map.tsv}:
 #' \preformatted{
 #' rmbl describe admissions
@@ -195,17 +197,7 @@
 #'   out <<- c(out, paste0(...))
 #' })
 #' cat(head(strsplit(paste(out, collapse = ""), "\n")[[1]], 3), sep = "\n")
-#' # the generics kept their names, and return their result under the 0.5.x
-#' # names
-#' r <- rate(c(5, 12), population = c(1000, 4000))
-#' names(r)
-#' rate_change(
-#'   data.frame(year = 2023:2024, n = c(10, 14), pop = 1000),
-#'   count = "n",
-#'   population = "pop",
-#'   period = "year"
-#' )
-#' share(c(a = 3, b = 7))
+#' # the generic kept its name, and returns its result under the 0.5.x names
 #' y <- yoy(
 #'   data.frame(year = 2021:2024, n = c(10, 12, 9, 15)),
 #'   value = "n",

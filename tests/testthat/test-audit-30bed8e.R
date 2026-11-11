@@ -4,102 +4,36 @@
 # a result an alias returned, in its 1.0.0 names again
 nn <- function(x) .rmbl_new_names(x)
 
-test_that(
-  paste0(
-    "rate, rate_change, share and yoy_summary are S3 generics again, with ",
-    "the old arguments"
-  ),
-  {
-    # a dispatching body with a default method, read so that it holds under covr
-    # too, whose tracing wraps the body and makes isS3stdGeneric() FALSE
-    ns <- asNamespace("rmoriebricklayer")
-    for (g in c("rate", "rate_change", "share", "yoy_summary")) {
-      f <- get(g, envir = ns)
-      expect_true("UseMethod" %in% all.names(body(f)), info = g)
-      expect_false(
-        is.null(utils::getS3method(g, "default", optional = TRUE, envir = ns)),
-        info = g
-      )
-      expect_identical(environment(f), ns, info = g)
-    }
-    d <- data.frame(
-      n = c(5, 8, 3),
-      pop = c(1000, 1200, 900),
-      g = c("a", "b", "c"),
-      stringsAsFactors = FALSE
+test_that("yoy_summary is an S3 generic again, with the old arguments", {
+  # a dispatching body with a default method, read so that it holds under covr
+  # too, whose tracing wraps the body and makes isS3stdGeneric() FALSE
+  ns <- asNamespace("rmoriebricklayer")
+  f <- get("yoy_summary", envir = ns)
+  expect_true("UseMethod" %in% all.names(body(f)))
+  expect_false(
+    is.null(utils::getS3method("yoy_summary", "default", optional = TRUE,
+                               envir = ns))
+  )
+  expect_identical(environment(f), ns)
+  y <- yoy(
+    data.frame(year = 2019:2022, n = c(10, 12, 9, 15)),
+    value = "n",
+    prd = "year"
+  )
+  expect_identical(nn(yoy_summary(y)), yoysmry(y))
+  expect_error(yoy_summary(1), "yoy")
+  # a method written for the old generic dispatches
+  local({
+    yoy_summary.mycls <- function(object, ...) "mine"
+    registerS3method(
+      "yoy_summary",
+      "mycls",
+      yoy_summary.mycls,
+      envir = asNamespace("rmoriebricklayer")
     )
-    expect_identical(
-      nn(rate(d, count = "n", population = "pop", by = "g")),
-      rtcalc(d, count = "n", pop = "pop", by = "g")
-    )
-    expect_identical(nn(rate(10, population = 1000)), rtcalc(10, pop = 1000))
-    # conf_level reaches the method instead of vanishing in `...`
-    expect_identical(
-      rate(d, count = "n", pop = "pop", conf_level = 0.5)$lower,
-      rtcalc(d, count = "n", pop = "pop", conflvl = 0.5)$lower
-    )
-    expect_equal(
-      share(c(1, 2, 3), conf_level = 0.5)$lower,
-      c(8.85, 21.9, 36.7),
-      tolerance = 0.01
-    )
-    expect_identical(
-      nn(share(d, count = "n", conf_level = 0.5)),
-      shrs(d, count = "n", conflvl = 0.5)
-    )
-    # bare column names still read as columns through the old generic
-    expect_identical(
-      nn(rate(d, n, pop, by = "g")),
-      rtcalc(d, count = "n", pop = "pop", by = "g")
-    )
-    ch <- data.frame(
-      year = rep(2019:2021, 2),
-      g = rep(c("a", "b"), each = 3),
-      n = c(4, 6, 9, 3, 2, 5),
-      pop = 1000,
-      stringsAsFactors = FALSE
-    )
-    expect_identical(
-      nn(rate_change(
-        ch,
-        count = "n",
-        population = "pop",
-        period = "year",
-        by = "g",
-        conf_level = 0.9,
-        min_count = 3
-      )),
-      ratechg(
-        ch,
-        count = "n",
-        pop = "pop",
-        prd = "year",
-        by = "g",
-        conflvl = 0.9,
-        mincnt = 3
-      )
-    )
-    expect_error(rate_change(1:3), "data frame")
-    y <- yoy(
-      data.frame(year = 2019:2022, n = c(10, 12, 9, 15)),
-      value = "n",
-      prd = "year"
-    )
-    expect_identical(nn(yoy_summary(y)), yoysmry(y))
-    expect_error(yoy_summary(1), "yoy")
-    # a method written for the old generic dispatches
-    local({
-      rate.mycls <- function(x, ...) "mine"
-      registerS3method(
-        "rate",
-        "mycls",
-        rate.mycls,
-        envir = asNamespace("rmoriebricklayer")
-      )
-      expect_identical(nn(rate(structure(1, class = "mycls"))), "mine")
-    })
-  }
-)
+    expect_identical(nn(yoy_summary(structure(1, class = "mycls"))), "mine")
+  })
+})
 
 test_that(
   paste0(

@@ -1,3 +1,10 @@
+# rmoriebricklayer (development version)
+
+* Three functions have new names, so that no exported name is also a function in another CRAN package: `plotecdf()` is `plotcdfs()`, `plotsm()` is `plotmult()`, and `anltab()` is `anytab()`. The 0.5.x name `analyse_table` now leads to `anytab()` in `rmbl describe`, `rmbl run` and `rmbl migrate`.
+* The 0.5.13 S3 generics `rate()`, `rate_change()` and `share()` are gone, for the same reason; `rtcalc()`, `ratechg()` and `shrs()` are the functions, with the 1.0.0 arguments and result names. `yoy_summary()` stays.
+* The `@srrstatsNA` entry for standard G2.14c (imputation) starts its own line again, so 'srr' reads it.
+* Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
+
 # rmoriebricklayer 1.1.0
 
 * `mkbndlchk()` no longer holds a bundle run to its whole time limit on Linux systems whose `unshare` comes from util-linux before 2.38 (Ubuntu 22.04, Debian 11). That `unshare` starts what it runs with TERM ignored, so the signal meant to stop the run's watchdog did nothing: every check waited out the limit (30 minutes by default) and reported a timeout (exit status 124) for a run that had finished in seconds. The watchdog is now stopped with KILL.

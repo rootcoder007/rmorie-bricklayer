@@ -48,7 +48,7 @@ The menus and their tabs: \describe{ \item{Data}{Describe:
 \code{\link[=profcols]{profcols()}}, \code{\link[=freqtbl]{freqtbl()}},
 \code{\link[=cortbl]{cortbl()}}, \code{\link[=mahaoutl]{mahaoutl()}},
 \code{\link[=missgrid]{missgrid()}} and the distribution plots
-(\code{\link[=plotrdg]{plotrdg()}}, \code{\link[=plotecdf]{plotecdf()}},
+(\code{\link[=plotrdg]{plotrdg()}}, \code{\link[=plotcdfs]{plotcdfs()}},
 \code{\link[=plotvln]{plotvln()}}, \code{\link[=plothex]{plothex()}},
 \code{\link[=plotgain]{plotgain()}}); click a column of the profile to see its
 distribution. Distributions: \code{\link[=dstfit]{dstfit()}} with its density, QQ, PP
@@ -60,7 +60,7 @@ and tail plots, and a synthetic sample from a fit through
 \code{\link[=shrs]{shrs()}}. Trends: \code{\link[=trndtst]{trndtst()}} (Mann-Kendall
 with the Theil-Sen slope), \code{\link[=stepchg]{stepchg()}},
 \code{\link[=cnttrnd]{cnttrnd()}}, and \code{\link[=plotcal]{plotcal()}},
-\code{\link[=plothrz]{plothrz()}}, \code{\link[=plotsm]{plotsm()}} and
+\code{\link[=plothrz]{plothrz()}}, \code{\link[=plotmult]{plotmult()}} and
 \code{\link[=plotbump]{plotbump()}}.} \item{Causal and survey}{Survey:
 \code{\link[=svydes]{svydes()}} with weights, strata, clusters or replicate weights,
 then \code{\link[=svyest]{svyest()}} or \code{\link[=svycmp]{svycmp()}}. Policy:
@@ -95,7 +95,7 @@ and CARE principles and the source tables. Courts and corrections:
 report readers \code{\link[=siuprs]{siuprs()}} and \code{\link[=siuso]{siuso()}} on
 pasted text. Air pollution: \code{\link[=plmfld]{plmfld()}} and
 \code{\link[=gplume]{gplume()}} for a Gaussian plume, the monitors of the demo series
-(\code{\link[=plotsm]{plotsm()}}), \code{\link[=crfpm25]{crfpm25()}},
+(\code{\link[=plotmult]{plotmult()}}), \code{\link[=crfpm25]{crfpm25()}},
 \code{\link[=crfno2]{crfno2()}}, \code{\link[=polbrdn]{polbrdn()}} and
 \code{\link[=vrfpol]{vrfpol()}}. Hawkes: \code{\link[=chwkfit]{chwkfit()}} with
 \code{\link[=plothwk]{plothwk()}} (intensity, time-rescaling QQ, branching tree),

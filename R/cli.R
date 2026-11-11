@@ -225,7 +225,7 @@
 #' @examplesIf interactive()
 #' # these read every help page, which takes a few seconds
 #' blcli(c("functions", "json"))
-#' blcli(c("describe", "anltab"))
+#' blcli(c("describe", "anytab"))
 #' blcli(c("examples", "perdays"))
 #' @export
 blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {

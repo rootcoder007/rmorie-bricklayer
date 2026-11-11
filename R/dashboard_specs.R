@@ -200,7 +200,7 @@
     q <- list(qual = col("Quality flag", "quality"))
     # the series a trend test reads, drawn as it is
     series <- .us(
-      "plotsm",
+      "plotmult",
       "plot",
       y = vec("Value", "n"),
       prd = .ua("vec", label = "Period", default = "year", input = "x")
@@ -290,9 +290,9 @@
         x = vec("Value", c("age", "Ozone")),
         grp = vec("Group", c("stratum", "Month"))
       ),
-      plotecdf = .ufp(
-        "Distribution functions by group (plotecdf)",
-        "plotecdf",
+      plotcdfs = .ufp(
+        "Distribution functions by group (plotcdfs)",
+        "plotcdfs",
         x = vec("Value", c("income", "Ozone")),
         grp = vec("Group", c("stratum", "Month"))
       ),
@@ -577,9 +577,9 @@
         prd = vec("Period", "year"),
         grp = vec("Series", "area")
       ),
-      plotsm = .ufp(
-        "Small multiples (plotsm)",
-        "plotsm",
+      plotmult = .ufp(
+        "Small multiples (plotmult)",
+        "plotmult",
         y = vec("Value", "n"),
         prd = vec("Period", "year"),
         grp = vec("Series", "area")
@@ -795,7 +795,7 @@
             n = num("Sample size", 500)
           )
         ),
-        plot = .us("plotecdf", "plot", x = .ua("ref", name = "sim")),
+        plot = .us("plotcdfs", "plot", x = .ua("ref", name = "sim")),
         diag = list(.ud(
           "QQ plot of the fit drawn from",
           "fit",
@@ -1786,8 +1786,8 @@
         plot = .us("plot", "plot", x = .ua("ref", name = "f", pos = TRUE))
       ),
       monitors = .ufp(
-        "The monitors' readings over time (plotsm)",
-        "plotsm",
+        "The monitors' readings over time (plotmult)",
+        "plotmult",
         y = vec("Value", "no2"),
         prd = vec("Period", "hour"),
         grp = vec("Series", "monitor")
@@ -1820,7 +1820,7 @@
           stab = ch("Stability class", c("D", "A", "B", "C", "E", "F"))
         )),
         plot = .us(
-          "plotsm",
+          "plotmult",
           "plot",
           y = .ua("ref", name = "conc"),
           prd = .ua("fixed", value = quote(seq(100, 5000, by = 50)))

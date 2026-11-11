@@ -19,7 +19,7 @@
 ministry's open-data portal, Statistics Canada, a police oversight agency, or your own data. It
 does three things with such a table.
 
-1. **It analyzes the table.** `anltab()` takes counts by period and group and reports what changed
+1. **It analyzes the table.** `anytab()` takes counts by period and group and reports what changed
    between periods, with exact intervals, trends and rates, and says how far the publisher's
    rounding and suppressed cells could move each figure.
 2. **It pins the data the result came from.** A *capsule* records where the table came from, the
@@ -60,7 +60,7 @@ analyzed, plotted and written up:
 library(rmoriebricklayer)
 f <- system.file("extdata", "otis_a01_individuals.csv", package = "rmoriebricklayer")
 otis <- read.csv(f)
-a <- anltab(otis, value = "individuals", prd = "year", by = c("table", "group"), rnd = 5)
+a <- anytab(otis, value = "individuals", prd = "year", by = c("table", "group"), rnd = 5)
 a                                              # what changed, how sure, what was withheld
 plot(a)
 rptanl(a, file.path(tempdir(), "otis.html"))   # one self-contained page
@@ -88,7 +88,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
 
 ## What it does
 
-- **One call for a published table** — `anltab()` takes a table of
+- **One call for a published table** — `anytab()` takes a table of
   counts by period and group and returns what changed with exact intervals,
   p-values adjusted over the whole scan, the envelope that rounding and
   suppression in the release imply (`pubbnd()`), trend, rates if
@@ -109,8 +109,8 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
 - **Distributions and plots** — `dstfit()` fits and ranks candidate distributions by maximum
   likelihood (continuous, proportions and counts with zero inflation), with bootstrap intervals,
   a Hill tail index and density, QQ, PP and tail plots; `mksyncol(list(type = "fitted"))` draws
-  from a fit. `plotrdg()`, `plotecdf()`, `plotvln()`, `plothex()`, `plotgain()`, `plotcal()`,
-  `plothrz()`, `plotsm()` and `plotbump()` draw distributions and many series in the house style;
+  from a fit. `plotrdg()`, `plotcdfs()`, `plotvln()`, `plothex()`, `plotgain()`, `plotcal()`,
+  `plothrz()`, `plotmult()` and `plotbump()` draw distributions and many series in the house style;
   `plothwk()` and `chwksim()` show and simulate a fitted Hawkes process.
 - **Proof ledgers** — `ldgrread()` reads a ledger of formal proofs (Lean theorems, their status
   and the package functions they cover) against `schemapath("ledger")`; `ldgrchk()` checks each
@@ -741,7 +741,7 @@ The shortest path, on the OTIS table that ships with the package:
 library(rmoriebricklayer)
 otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
                              package = "rmoriebricklayer"))
-a <- anltab(otis, value = "individuals", prd = "year",
+a <- anytab(otis, value = "individuals", prd = "year",
             by = c("table", "group"), rnd = 5)
 a                                   # what changed, how sure, what was withheld
 rptanl(a, file.path(tempdir(), "otis.html"))   # one self-contained file
@@ -863,7 +863,7 @@ See `vignette("drift")` for the distributional checks and
 
 ## Finding a function
 
-The names are short (`anltab()`, `mkbndl()`, `svyest()`), so look for a
+The names are short (`anytab()`, `mkbndl()`, `svyest()`), so look for a
 function by what it does:
 
 ```r

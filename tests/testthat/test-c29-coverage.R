@@ -147,7 +147,7 @@ test_that("plots check colours and escape titles", {
   expect_error(plotcal(as.Date("2024-01-01") + 0:9, 1:10, col = "x"),
                "must be colours")
   expect_error(plothex(rnorm(20), rnorm(20), col = "x"), "must be colours")
-  expect_no_warning(plotsm(1:6, rep(1:3, 2), rep(c("a", "b"), each = 3),
+  expect_no_warning(plotmult(1:6, rep(1:3, 2), rep(c("a", "b"), each = 3),
                            main = "A\033[2J"))
 })
 

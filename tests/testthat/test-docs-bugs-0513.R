@@ -322,7 +322,7 @@ test_that("every confidence level outside (0, 1) is refused with one message", {
   expect_error(ratechg(d, n, pop, year, conflvl = 2), msg, fixed = TRUE)
   expect_error(yoy(d, "n", "year", conflvl = 2), msg, fixed = TRUE)
   expect_error(staysmry(c(1, 2, 3), conflvl = c(0.9, 0.95)), msg, fixed = TRUE)
-  expect_error(anltab(d, "n", "year", conflvl = 2), msg, fixed = TRUE)
+  expect_error(anytab(d, "n", "year", conflvl = 2), msg, fixed = TRUE)
   toy <- data.frame(
     s = rep(c("a", "b"), each = 6),
     p = rep(1:4, each = 3),
@@ -579,17 +579,17 @@ test_that("cnormlpdf, cgamcdf and ctrmmean refuse or answer the edge cases", {
   )
 })
 
-test_that("anltab() warns that rounding and suppression apply only to counts", {
+test_that("anytab() warns that rounding and suppression apply only to counts", {
   d <- data.frame(year = 2018:2023, n = c(10, 12, 15, 11, 18, 20))
   expect_warning(
-    anltab(d, "n", "year", units = "continuous", rnd = 5),
+    anytab(d, "n", "year", units = "continuous", rnd = 5),
     "apply only to counts"
   )
   expect_warning(
-    anltab(d, "n", "year", units = "percent", suplim = 5),
+    anytab(d, "n", "year", units = "percent", suplim = 5),
     "apply only to counts"
   )
-  expect_no_warning(anltab(d, "n", "year", rnd = 5))
+  expect_no_warning(anytab(d, "n", "year", rnd = 5))
 })
 
 test_that("provenance errors name loadprov(), which exists", {

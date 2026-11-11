@@ -4,7 +4,7 @@
 \alias{plotseries}
 \alias{plotcal}
 \alias{plothrz}
-\alias{plotsm}
+\alias{plotmult}
 \alias{plotbump}
 \title{Plots for many series over time}
 \usage{
@@ -21,7 +21,7 @@ plothrz(
   pal = NULL
 )
 
-plotsm(y, prd, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
+plotmult(y, prd, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
 
 plotbump(y, prd, grp, desc = TRUE, ..., main = NULL, col = NULL, pal = NULL)
 }
@@ -59,7 +59,7 @@ daily series: one tile per day, weeks across and weekdays down, one block per
 year.} \item{\code{plothrz()}}{a horizon chart: each series in its own thin row,
 its deviation from its own median folded into \code{bands} shaded bands, above in
 blue and below in red, so many series fit in little height.}
-\item{\code{plotsm()}}{small multiples: one panel per series on a shared scale.}
+\item{\code{plotmult()}}{small multiples: one panel per series on a shared scale.}
 \item{\code{plotbump()}}{a bump chart: the rank of each series in each period (1 =
 largest), so changes of order stand out.} }
 }
@@ -76,7 +76,7 @@ d$n <- stats::rpois(
   nrow(d),
   50 + 10 * as.integer(d$area) + 2 * (d$year - 2015)
 )
-plotsm(d$n, d$year, d$area)
+plotmult(d$n, d$year, d$area)
 plothrz(d$n, d$year, d$area)
 plotbump(d$n, d$year, d$area)
 try(plotcal("not a date", 1))

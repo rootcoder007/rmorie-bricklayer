@@ -146,7 +146,7 @@ test_that("each tab has its fields and its analyses, in order", {
       "mahaoutl",
       "missgrid",
       "plotrdg",
-      "plotecdf",
+      "plotcdfs",
       "plotvln",
       "plothex",
       "plotgain"
@@ -163,7 +163,7 @@ test_that("each tab has its fields and its analyses, in order", {
       "cnttrnd",
       "plotcal",
       "plothrz",
-      "plotsm",
+      "plotmult",
       "plotbump"
     ),
     survey = c(

@@ -24,7 +24,7 @@
 #' `TRUE` or `FALSE`.
 #'
 #' @param ... The results. A name gives a result its heading
-#'   (`"Change by year" = anltab(...)`); an unnamed one is headed by its
+#'   (`"Change by year" = anytab(...)`); an unnamed one is headed by its
 #'   box's own title. One unnamed plain list is read as the list of results.
 #' @param title The report's heading, default `"Analysis results"`.
 #' @param file `NULL` (default) to print, or a file to write: the extension
@@ -36,7 +36,7 @@
 #'   `file`, it is returned invisibly with the written file's path in
 #'   attribute `"path"`.
 #' @seealso [rptanl()] for the report of one
-#' [anltab()] analysis;
+#' [anytab()] analysis;
 #'   [rmblapp()], whose dashboard gathers results the same way.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' x <- c(3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5)

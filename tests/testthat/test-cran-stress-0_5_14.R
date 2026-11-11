@@ -569,9 +569,9 @@ test_that("the survey row keys from C are the keys the R arithmetic made", {
 test_that("every new refusal is reached (one call per branch)", {
   w <- function(expr, pat) expect_error(expr, pat)
   d <- data.frame(v = c(10, 12, 15), p = 2020:2022)
-  w(anltab(d, "v", "p", by = 1), "`by` must be one or more column names")
+  w(anytab(d, "v", "p", by = 1), "`by` must be one or more column names")
   w(
-    anltab(d, "v", "p", suplim = -1),
+    anytab(d, "v", "p", suplim = -1),
     "`suplim` must be one non-negative number"
   )
   w(

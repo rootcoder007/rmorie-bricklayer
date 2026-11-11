@@ -35,7 +35,7 @@ test_that("plot.rmbl_bounds passes the caller's title on", {
 
 test_that("an analysis with no rates draws the caller's empty title", {
   local_null_device()
-  a <- anltab(data.frame(year = 2019:2022, n = c(10, 12, 9, 15)), "n", "year")
+  a <- anytab(data.frame(year = 2019:2022, n = c(10, 12, 9, 15)), "n", "year")
   r <- withVisible(plot(a, which = "rates", main = "none here"))
   expect_false(r$visible)
   expect_identical(r$value, list())

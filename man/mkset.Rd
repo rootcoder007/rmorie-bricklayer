@@ -8,7 +8,7 @@ mkset(..., title = "Analysis results", file = NULL, plots = TRUE)
 }
 \arguments{
 \item{...}{The results. A name gives a result its heading
-(\code{"Change by year" = anltab(...)}); an unnamed one is headed by its
+(\code{"Change by year" = anytab(...)}); an unnamed one is headed by its
 box's own title. One unnamed plain list is read as the list of results.}
 
 \item{title}{The report's heading, default \code{"Analysis results"}.}
@@ -70,6 +70,6 @@ try(mkset(ginicoef(x), file = file.path(tempdir(), "r.pdf")))
 }
 \seealso{
 \code{\link[=rptanl]{rptanl()}} for the report of one
-\code{\link[=anltab]{anltab()}} analysis;
+\code{\link[=anytab]{anytab()}} analysis;
 \code{\link[=rmblapp]{rmblapp()}}, whose dashboard gathers results the same way.
 }

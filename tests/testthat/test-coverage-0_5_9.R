@@ -30,7 +30,7 @@ test_that("rptanl names the columns added and removed against the prior", {
     individuals = c(10, 20, 12, 22, 15, 25),
     stringsAsFactors = FALSE
   )
-  a <- anltab(
+  a <- anytab(
     d,
     value = "individuals",
     prd = "year",

@@ -267,7 +267,7 @@ test_that("old plot values are translated", {
     plot(sf, what = c("flowrate", "stkrate"))
   )
   tab <- data.frame(year = 2018:2022, n = c(10, 12, 9, 15, 14), pop = 1000)
-  a <- anltab(tab, value = "n", prd = "year", pop = "pop")
+  a <- anytab(tab, value = "n", prd = "year", pop = "pop")
   expect_identical(plot(a, which = "rate_change"), plot(a, which = "ratechg"))
 })
 

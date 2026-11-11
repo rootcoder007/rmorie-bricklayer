@@ -26,7 +26,8 @@ for (f in compat_files) {
 }
 new_exports <- setdiff(new_exports, compat_defs)
 gone <- setdiff(old_exports, new_exports)
-# the four 0.5.13 S3 generics are written by hand in R/compat_s3.R
+# the 0.5.13 S3 generics: yoy_summary() is written by hand in R/compat_s3.R;
+# rate(), rate_change() and share() were dropped in 1.1.0 (CRAN name clashes)
 manual <- c("rate", "rate_change", "share", "yoy_summary")
 already <- c(manual, "capsule_sign", "capsule_verify", "pqc_keygen", "signing_public_key", "core_sha256",
              "core_mean", "sha256_file", "bricklayer_json_to_json", "bricklayer_json_from_json",

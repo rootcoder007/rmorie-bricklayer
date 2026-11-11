@@ -19,7 +19,7 @@
 #' must be filled in is marked \code{TODO}.} \item{\code{analysis.R}}{reads the
 #' provenance, downloads the source with \code{\link{fdl}} (a local path is read
 #' directly), computes its SHA-256 with \code{\link{sha256file}} and stops if it
-#' no longer matches the pinned value, runs \code{\link{anltab}}, and writes
+#' no longer matches the pinned value, runs \code{\link{anytab}}, and writes
 #' \code{manifest.json}, \code{report.html} and \code{report.md} in
 #' \code{results/}.} \item{\code{README.md}}{the three steps to fill in and run
 #' the capsule.} } With \code{example = TRUE} the source is the OTIS table
@@ -42,7 +42,7 @@
 #'   \code{FALSE} leaves a \code{TODO} URL.
 #' @return The directory path, invisibly.
 #' @seealso \code{\link{loadprov}}, \code{\link{vrfcps}},
-#'   \code{\link{anltab}}.
+#'   \code{\link{anytab}}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 #' list.files(d)
@@ -194,7 +194,7 @@ usecpstmpl <- function(path, name = basename(path), ex = FALSE) {
     "# 2. Analyse: change with exact intervals and adjusted p-values, trend,",
     "#    publication bounds if the release rounds or suppresses.",
     "tab <- prov$table",
-    "a <- anltab(data, value = tab$value, prd = tab$period,",
+    "a <- anytab(data, value = tab$value, prd = tab$period,",
     "                   by = unlist(tab$by),",
     "                   rnd = tab$rounding,",
     "                   suplim = tab$suppression_limit)",

@@ -195,5 +195,5 @@ test_that("in a C locale yoy() itself does not warn about UTF-8 labels", {
   tr <- "unable to translate"
   expect_no_warning(ratechg(d, count = "n", pop = "pop", prd = "yr", by = "g"),
                     message = tr)
-  expect_no_warning(anltab(d, value = "n", prd = "yr", by = "g"), message = tr)
+  expect_no_warning(anytab(d, value = "n", prd = "yr", by = "g"), message = tr)
 })

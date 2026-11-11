@@ -224,7 +224,7 @@ explerr <- function(msg = geterrmessage(), pkgs = NULL, n = 3L) {
 
 #' Which templates match the message exactly: the template as a regular
 #' expression, its variable parts as wildcards, after the name of the function
-#' that refused ("anltab: ") that a shared check puts first.
+#' that refused ("anytab: ") that a shared check puts first.
 #' @param tab The message table.
 #' @param .msg The cleaned message.
 #' @return A logical vector.

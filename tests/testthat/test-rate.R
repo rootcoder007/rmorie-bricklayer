@@ -457,7 +457,7 @@ test_that("plot(ratechg(..., prdord = )) draws the periods in that order", {
   expect_identical(a$label, paste("a:", ord))
 })
 
-test_that("ratechg() and anltab() take prdord, and refuse what they lack", {
+test_that("ratechg() and anytab() take prdord, and refuse what they lack", {
   d <- data.frame(p = c("spring", "summer", "autumn", "spring", "autumn"),
                   g = c("a", "a", "a", "b", "b"),
                   n = c(10, 12, 15, 4, 6), pop = 1000)
@@ -473,7 +473,7 @@ test_that("ratechg() and anltab() take prdord, and refuse what they lack", {
   # alphabetical order would have put autumn first
   expect_false(identical(as.character(ratechg(d, "n", "pop", "p",
                                               by = "g")$p[1:3]), ord))
-  t <- anltab(d, value = "n", prd = "p", by = "g", pop = "pop",
+  t <- anytab(d, value = "n", prd = "p", by = "g", pop = "pop",
               prdord = ord)
   expect_identical(t$meta$periods, ord)
   expect_identical(t$meta$prdord, ord)

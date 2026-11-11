@@ -231,7 +231,7 @@ blcli(c("verify", d))
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # these read every help page, which takes a few seconds
 blcli(c("functions", "json"))
-blcli(c("describe", "anltab"))
+blcli(c("describe", "anytab"))
 blcli(c("examples", "perdays"))
 \dontshow{\}) # examplesIf}
 }

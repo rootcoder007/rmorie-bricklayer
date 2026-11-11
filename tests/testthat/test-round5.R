@@ -227,7 +227,7 @@ test_that(
       pct = c(10, 12, 15, 11, 30, 28, 25, 27),
       stringsAsFactors = FALSE
     )
-    a <- anltab(d, value = "pct", prd = "year", by = "grp", units = "percent")
+    a <- anytab(d, value = "pct", prd = "year", by = "grp", units = "percent")
     f <- tempfile(fileext = ".md")
     rptanl(a, f)
     txt <- paste(readLines(f), collapse = "\n")
@@ -376,7 +376,7 @@ test_that("rptanl renders the rate changes when a population is given", {
     package = "rmoriebricklayer"
   ))
   d$pop <- c(rep(25000, 9), rep(21000, 6))
-  a <- anltab(
+  a <- anytab(
     d,
     value = "individuals",
     prd = "year",

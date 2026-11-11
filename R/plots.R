@@ -268,7 +268,7 @@ plotopt <- function(...) {
 #'   \code{\link{lagrprt}}) a concentration field as an image with contours;
 #'   particle positions, with the counting grid behind them when one was given.}
 #'   \item{\code{rmbl_count_trend}}{(\code{\link{cnttrnd}}) the counts with the
-#'   fitted trend.} \item{\code{bricklayer_analysis}}{(\code{\link{anltab}}) the
+#'   fitted trend.} \item{\code{bricklayer_analysis}}{(\code{\link{anytab}}) the
 #'   change, rates and rate change of a published table, one panel each.}
 #'   \item{\code{rmbl_event_study}, \code{rmbl_staggered_att}}{
 #'   (\code{\link{evstudy}}, \code{\link{stgatt}}) the effect at each period
@@ -488,7 +488,7 @@ plotopt <- function(...) {
 #'   n = c(10, 20, 12, 22, 11, 25, 15, 24),
 #'   pop = rep(c(1000, 2000), 4)
 #' )
-#' plot(anltab(tab, value = "n", prd = "year", by = "g", pop = "pop"))
+#' plot(anytab(tab, value = "n", prd = "year", by = "g", pop = "pop"))
 #' plot(cnttrnd(c(21000, 23000, 22000, 25000, 24000)))
 #' # banded tables
 #' plot(bandsens(
@@ -2048,7 +2048,7 @@ plotfnl <- function(
 #' Base-graphics plots in the house style for a numeric variable split by a
 #' group, or two numeric variables: \describe{ \item{`plotrdg()`}{a ridgeline:
 #' one kernel density per group, stacked with a small overlap.}
-#' \item{`plotecdf()`}{the empirical distribution function of each group,
+#' \item{`plotcdfs()`}{the empirical distribution function of each group,
 #' overlaid.} \item{`plotvln()`}{a violin per group: the mirrored density, the
 #' median as a point and the interquartile range as a bar.}
 #' \item{`plothex()`}{the two-dimensional density of `x` and `y` in
@@ -2071,7 +2071,7 @@ plotfnl <- function(
 #' @return The data drawn, invisibly: for `plotrdg()` and `plotvln()` the
 #'   densities (`grp`, `x`, `y`), for `plotvln()` with the
 #'   per-group `median`, `q1` and `q3` as an attribute
-#'   `summary`, for `plotecdf()` the steps (`grp`, `x`,
+#'   `summary`, for `plotcdfs()` the steps (`grp`, `x`,
 #'   `y`), for `plothex()` the hexagon centres (`x`, `y`)
 #'   and `count`, for `plotgain()` the curves (`grp`,
 #'   `population`, `value`) with the Gini coefficients as an attribute
@@ -2081,7 +2081,7 @@ plotfnl <- function(
 #' x <- c(stats::rnorm(200), stats::rnorm(200, 2, 0.6))
 #' g <- rep(c("before", "after"), each = 200)
 #' plotrdg(x, g)
-#' plotecdf(x, g)
+#' plotcdfs(x, g)
 #' plotvln(x, g)
 #' plothex(x, x + stats::rnorm(400), bins = 20)
 #' plotgain(stats::rexp(400), g)
@@ -2150,7 +2150,7 @@ plotrdg <- function(
 
 #' @rdname plotmore
 #' @export
-plotecdf <- function(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL) {
+plotcdfs <- function(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL) {
   d <- .bl_xgrp(x, grp)
   lv <- levels(d$grp)
   cols <- .bl_cols(length(lv), col, pal)
@@ -2353,7 +2353,7 @@ plotgain <- function(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL) {
 #' year.} \item{`plothrz()`}{a horizon chart: each series in its own thin row,
 #' its deviation from its own median folded into `bands` shaded bands, above in
 #' blue and below in red, so many series fit in little height.}
-#' \item{`plotsm()`}{small multiples: one panel per series on a shared scale.}
+#' \item{`plotmult()`}{small multiples: one panel per series on a shared scale.}
 #' \item{`plotbump()`}{a bump chart: the rank of each series in each period (1 =
 #' largest), so changes of order stand out.} }
 #' @param x Dates (a `Date` or text `as.Date()` reads) for
@@ -2384,7 +2384,7 @@ plotgain <- function(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL) {
 #'   nrow(d),
 #'   50 + 10 * as.integer(d$area) + 2 * (d$year - 2015)
 #' )
-#' plotsm(d$n, d$year, d$area)
+#' plotmult(d$n, d$year, d$area)
 #' plothrz(d$n, d$year, d$area)
 #' plotbump(d$n, d$year, d$area)
 #' try(plotcal("not a date", 1))
@@ -2491,7 +2491,7 @@ plothrz <- function(
 
 #' @rdname plotseries
 #' @export
-plotsm <- function(
+plotmult <- function(
   y,
   prd,
   grp = NULL,

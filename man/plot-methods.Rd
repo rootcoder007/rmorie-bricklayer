@@ -528,7 +528,7 @@ measure} when the work took no measurable time.} \item{\code{rmbl_field},
 \code{\link{lagrprt}}) a concentration field as an image with contours;
 particle positions, with the counting grid behind them when one was given.}
 \item{\code{rmbl_count_trend}}{(\code{\link{cnttrnd}}) the counts with the
-fitted trend.} \item{\code{bricklayer_analysis}}{(\code{\link{anltab}}) the
+fitted trend.} \item{\code{bricklayer_analysis}}{(\code{\link{anytab}}) the
 change, rates and rate change of a published table, one panel each.}
 \item{\code{rmbl_event_study}, \code{rmbl_staggered_att}}{
 (\code{\link{evstudy}}, \code{\link{stgatt}}) the effect at each period
@@ -694,7 +694,7 @@ tab <- data.frame(
   n = c(10, 20, 12, 22, 11, 25, 15, 24),
   pop = rep(c(1000, 2000), 4)
 )
-plot(anltab(tab, value = "n", prd = "year", by = "g", pop = "pop"))
+plot(anytab(tab, value = "n", prd = "year", by = "g", pop = "pop"))
 plot(cnttrnd(c(21000, 23000, 22000, 25000, 24000)))
 # banded tables
 plot(bandsens(

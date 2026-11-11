@@ -33,7 +33,7 @@
 #' [profcols()], [freqtbl()],
 #' [cortbl()], [mahaoutl()],
 #' [missgrid()] and the distribution plots
-#' ([plotrdg()], [plotecdf()],
+#' ([plotrdg()], [plotcdfs()],
 #' [plotvln()], [plothex()],
 #' [plotgain()]); click a column of the profile to see its
 #' distribution. Distributions: [dstfit()] with its density, QQ, PP
@@ -45,7 +45,7 @@
 #' [shrs()]. Trends: [trndtst()] (Mann-Kendall
 #' with the Theil-Sen slope), [stepchg()],
 #' [cnttrnd()], and [plotcal()],
-#' [plothrz()], [plotsm()] and
+#' [plothrz()], [plotmult()] and
 #' [plotbump()].} \item{Causal and survey}{Survey:
 #' [svydes()] with weights, strata, clusters or replicate weights,
 #' then [svyest()] or [svycmp()]. Policy:
@@ -80,7 +80,7 @@
 #' report readers [siuprs()] and [siuso()] on
 #' pasted text. Air pollution: [plmfld()] and
 #' [gplume()] for a Gaussian plume, the monitors of the demo series
-#' ([plotsm()]), [crfpm25()],
+#' ([plotmult()]), [crfpm25()],
 #' [crfno2()], [polbrdn()] and
 #' [vrfpol()]. Hawkes: [chwkfit()] with
 #' [plothwk()] (intensity, time-rescaling QQ, branching tree),

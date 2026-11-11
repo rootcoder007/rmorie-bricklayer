@@ -96,14 +96,14 @@
 #' path <- system.file("extdata", "otis_a01_individuals.csv",
 #'                     package = "rmoriebricklayer")
 #' otis <- read.csv(path)
-#' a <- anltab(otis, value = "individuals", prd = "year",
+#' a <- anytab(otis, value = "individuals", prd = "year",
 #'                    by = c("table", "group"))
 #' a
 #' a$change[, c("table", "group", "year", "pctchg", "padj")]
 #' a$trend[, c("group", "tau", "trndp", "rateratio")]
 #'
 #' # counts published rounded to base 5: the intervals widen
-#' b <- anltab(otis, value = "individuals", prd = "year",
+#' b <- anytab(otis, value = "individuals", prd = "year",
 #'                    by = c("table", "group"), rnd = 5)
 #' b$change[1:3, c("group", "year", "pctlo", "compctlo")]
 #'
@@ -111,11 +111,11 @@
 #' d <- data.frame(year = rep(2019:2022, 2), site = rep(c("A", "B"), each = 4),
 #'                 n = c(10, 12, 15, 9, 30, 28, 35, 40),
 #'                 pop = rep(c(1000, 2000), each = 4))
-#' r <- anltab(d, "n", "year", by = "site", pop = "pop", per = 1000)
+#' r <- anytab(d, "n", "year", by = "site", pop = "pop", per = 1000)
 #' r$ratechg[, c("site", "year", "rate", "rateratio", "padj")]
 #'
 #' # a column that is not in the data is an error
-#' try(anltab(otis, value = "count", prd = "year"))
+#' try(anytab(otis, value = "count", prd = "year"))
 #' @seealso [rptanl()] writes the result as a
 #'   Markdown or HTML
 #'   report.
@@ -128,7 +128,7 @@
 #' @srrstats {EA3.0} One call runs profile, change, Benjamini-Hochberg
 #'   adjustment over the whole scan, publication envelope, trend, rates and
 #'   drift, which otherwise take separate manual steps; test-analyse_table.R.
-anltab <- function(
+anytab <- function(
   data,
   value,
   prd,
@@ -191,7 +191,7 @@ format.bricklayer_analysis <- function(x, ...) {
 
 #' Write an analysis as a Markdown or HTML report
 #'
-#' Renders an [anltab()] result as a report: the
+#' Renders an [anytab()] result as a report: the
 #' change table with
 #' its intervals and adjusted p-values, the rates, the trends, the drift
 #' screen and the column profile, each with one sentence saying how to read
@@ -212,11 +212,11 @@ format.bricklayer_analysis <- function(x, ...) {
 #' inline code, with the text escaped). The file is written as UTF-8 and
 #' overwritten if it exists.
 #'
-#' Errors: \code{x} not from [anltab()]; an invalid
+#' Errors: \code{x} not from [anytab()]; an invalid
 #' \code{format}.
 #'
 #' @param x A \code{bricklayer_analysis} from
-#'   [anltab()].
+#'   [anytab()].
 #' @param path Where to write, a file path. With \code{NULL} (the default)
 #'   the text is returned invisibly and nothing is written.
 #' @param format \code{"markdown"} or \code{"html"}. With \code{NULL} (the
@@ -230,7 +230,7 @@ format.bricklayer_analysis <- function(x, ...) {
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' path <- system.file("extdata", "otis_a01_individuals.csv",
 #'                     package = "rmoriebricklayer")
-#' a <- anltab(read.csv(path), value = "individuals",
+#' a <- anytab(read.csv(path), value = "individuals",
 #'                    prd = "year", by = c("table", "group"))
 #' md <- rptanl(a)
 #' cat(substr(md, 1, 400))
@@ -240,7 +240,7 @@ format.bricklayer_analysis <- function(x, ...) {
 #' rptanl(a, out, title = "OTIS A01: individuals in custody", digits = 2)
 #' readLines(out, n = 3)
 #'
-#' # only an anltab() result can be reported
+#' # only an anytab() result can be reported
 #' try(rptanl(read.csv(path)))
 #' unlink(out)
 #' @export
@@ -252,7 +252,7 @@ rptanl <- function(
   digits = 1L
 ) {
   if (!inherits(x, "bricklayer_analysis")) {
-    stop("`x` must come from anltab()", call. = FALSE)
+    stop("`x` must come from anytab()", call. = FALSE)
   }
   if (!is.null(path)) {
     path <- .rmbl_out_file(path, "path")
@@ -289,8 +289,8 @@ rptanl <- function(
   invisible(text)
 }
 
-#' anltab()'s rounding base and suppression limit, checked.
-#' @param rnd,suplim As for anltab().
+#' anytab()'s rounding base and suppression limit, checked.
+#' @param rnd,suplim As for anytab().
 #' @return A list: rnd and suplim.
 #' @noRd
 .anl_check_bounds <- function(rnd, suplim) {
@@ -317,15 +317,15 @@ rptanl <- function(
   list(rnd = rnd, suplim = suplim)
 }
 
-#' anltab()'s columns, each in the data.
-#' @param data The table given to anltab(), whose names must include `cols`.
+#' anytab()'s columns, each in the data.
+#' @param data The table given to anytab(), whose names must include `cols`.
 #' @param cols The columns.
 #' @noRd
 .anl_check_cols <- function(data, cols) {
   for (col in cols) {
     if (!col %in% names(data)) {
       stop(
-        sprintf("anltab: column `%s` not found in `data`", col),
+        sprintf("anytab: column `%s` not found in `data`", col),
         call. = FALSE
       )
     }
@@ -333,9 +333,9 @@ rptanl <- function(
   invisible(NULL)
 }
 
-#' anltab()'s rates and their changes, when there is an exposure.
+#' anytab()'s rates and their changes, when there is an exposure.
 #' @param data,value,prd,by,pop,per,conflvl,adjust,alpha,prdord As for
-#'   anltab().
+#'   anytab().
 #' @return A list: rates and rc (NULL without `pop`).
 #' @noRd
 .anl_rates <- function(data, value, prd, by, pop, per, conflvl, adjust, alpha,
@@ -526,20 +526,20 @@ rptanl <- function(
   .md_html_page(out, title)
 }
 
-#' anltab()'s data, column names, confidence level and alpha, checked.
-#' @param data,value,prd,by,pop,conflvl,alpha As for anltab().
+#' anytab()'s data, column names, confidence level and alpha, checked.
+#' @param data,value,prd,by,pop,conflvl,alpha As for anytab().
 #' @return A list: value, prd, pop, conflvl and alpha.
 #' @noRd
 .anl_inputs <- function(data, value, prd, by, pop, conflvl, alpha) {
   if (!is.data.frame(data)) {
-    stop("anltab: `data` must be a data frame", call. = FALSE)
+    stop("anytab: `data` must be a data frame", call. = FALSE)
   }
   .rmbl_df_names(data)
   value <- .rmbl_string1(value, "value")
   prd <- .rmbl_string1(prd, "prd")
   if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
     stop(
-      "anltab: `by` must be one or more column names, or NULL",
+      "anytab: `by` must be one or more column names, or NULL",
       call. = FALSE
     )
   }
@@ -555,7 +555,7 @@ rptanl <- function(
 }
 
 #' Warns that rounding and suppression are ignored for a non-count.
-#' @param o anltab()'s settings.
+#' @param o anytab()'s settings.
 #' @return NULL, invisibly.
 #' @noRd
 .anl_warn_bounds <- function(o) {
@@ -575,10 +575,10 @@ rptanl <- function(
   invisible(NULL)
 }
 
-#' anltab()'s analysis, once its arguments are checked.
+#' anytab()'s analysis, once its arguments are checked.
 #' @param data The table analysed: profiled, checked for gaps and change.
 #' @param prior The prior capsule, or NULL.
-#' @param o anltab()'s settings.
+#' @param o anytab()'s settings.
 #' @return A bricklayer_analysis.
 #' @noRd
 .anl_run <- function(data, prior, o) {
@@ -632,14 +632,14 @@ rptanl <- function(
   )
 }
 
-#' anltab()'s year-on-year change, multiplicity-adjusted and bounded for a
+#' anytab()'s year-on-year change, multiplicity-adjusted and bounded for a
 #' count.
 #' @param data The table whose change between periods is measured.
-#' @param o anltab()'s settings.
+#' @param o anytab()'s settings.
 #' @return A yoy() result.
 #' @noRd
 .anl_change <- function(data, o) {
-  # bare `value` and `prd`, as anltab() passed them to yoy()
+  # bare `value` and `prd`, as anytab() passed them to yoy()
   value <- o$value
   prd <- o$period
   change <- yoy(
@@ -1106,7 +1106,7 @@ rptanl <- function(
   )
 }
 
-#' anltab()'s drift against the prior capsule.
+#' anytab()'s drift against the prior capsule.
 #' @param prior The prior capsule, or NULL.
 #' @param data The current table, compared with `prior` by cpsdrft().
 #' @param alpha The significance level.
@@ -1122,9 +1122,9 @@ rptanl <- function(
   cpsdrft(prior, data, alpha = alpha)
 }
 
-#' The `meta` of an anltab() result: its settings, then the data's size,
+#' The `meta` of an anytab() result: its settings, then the data's size,
 #' periods and when it ran.
-#' @param o anltab()'s settings.
+#' @param o anytab()'s settings.
 #' @param data The table analysed, giving the row count and the periods.
 #' @param prior The prior capsule, or NULL.
 #' @return A list.
