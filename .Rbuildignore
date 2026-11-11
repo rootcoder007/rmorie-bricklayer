@@ -45,3 +45,4 @@
 ^\.dockerignore$
 \.gc(no|da|ov)$
 ^\.pkgcheck$
+^[^/]*\.log$

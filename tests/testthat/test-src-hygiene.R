@@ -462,15 +462,15 @@ test_that("every SIU entry point reads its text through the same cap", {
 
 test_that(
   paste0(
-    "OBJECTS lists every C source, and rmbl_unity.cpp includes every C++ ",
-    "source once"
+    "OBJECTS lists every C source, and the rmbl_unity*.cpp files include ",
+    "every C++ source once"
   ),
   {
     d <- src_dir()
     skip_if(is.na(d), "package sources not available from here")
     want <- sort(c(
       sub("\\.c$", ".o", list.files(d, pattern = "\\.c$")),
-      "rmbl_unity.o"
+      sprintf("rmbl_unity%d.o", 1:3)
     ))
     for (mv in c("Makevars.in", "Makevars.win")) {
       x <- paste(readLines(file.path(d, mv), warn = FALSE), collapse = "\n")
@@ -482,11 +482,13 @@ test_that(
         info = mv
       )
     }
-    u <- readLines(file.path(d, "rmbl_unity.cpp"), warn = FALSE)
+    units <- list.files(d, pattern = "^rmbl_unity[0-9]+\\.cpp$")
+    expect_identical(units, sprintf("rmbl_unity%d.cpp", 1:3))
+    u <- unlist(lapply(file.path(d, units), readLines, warn = FALSE))
     inc <- sub('^#include "(.*)"$', "\\1", grep("^#include", u, value = TRUE))
     expect_identical(
       sort(inc),
-      sort(setdiff(list.files(d, pattern = "\\.cpp$"), "rmbl_unity.cpp"))
+      sort(setdiff(list.files(d, pattern = "\\.cpp$"), units))
     )
     expect_false(anyDuplicated(inc) > 0)
   }

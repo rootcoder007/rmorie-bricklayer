@@ -471,6 +471,14 @@ test_that("the key hints name the command the user typed", {
   )
   # a manifest an earlier test cached in this process would answer without a key
   withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
+  # the tables need no key; a service that still asks for one (401) gets the
+  # hint, in the command the user typed. No network: the transport answers 401.
+  testthat::local_mocked_bindings(
+    .bl_data_url = function() "https://data.example.org",
+    bldl = function(...) {
+      stop("bldl: https://data.example.org/x answered HTTP 401", call. = FALSE)
+    }
+  )
   expect_error(dmnf(), "`rmbl login`", fixed = TRUE)
 })
 

@@ -9,8 +9,11 @@ pkg=$(sed -n 's/^Package: //p' "$src/DESCRIPTION")
 out=${1:-/tmp/cran}
 rm -rf "${out:?}/${pkg:?}"
 mkdir -p "$out"
-rsync -a --exclude .git --exclude '.Rd2pdf*' --exclude 'src/*.o' --exclude 'src/*.so' \
-  --exclude '*.gcno' --exclude '*.gcda' --exclude '*.gcov' "$src/" "$out/$pkg/"
+# only what git tracks or would track: a file git ignores (a stray log, a scratch copy)
+# never reaches the CRAN tarball (1.1.1's first build carried a check.log)
+rsync -a --exclude .git --filter=':- .gitignore' --exclude '.Rd2pdf*' --exclude 'src/*.o' \
+  --exclude 'src/*.so' --exclude '*.gcno' --exclude '*.gcda' --exclude '*.gcov' \
+  "$src/" "$out/$pkg/"
 cd "$out/$pkg"
 for p in rmoriebricklayer rmoriedata rmorie; do
   for f in README.md inst/CITATION CITATION.cff; do

@@ -72,8 +72,23 @@ jobs:
           # a cross (U+2716) is a failing check; the eyes ones are optional
           quit(status = as.integer(any(grepl("\u2716", s))))
           RSCRIPT
-          docker run --rm --memory=2g --memory-swap=2g \
+          # a memory log every 2 s (container total and its largest processes), printed at the
+          # end, so a run stopped for memory says which step and process it was
+          docker run -d --name pkc --memory=2g --memory-swap=2g \
             -e GITHUB_TOKEN -e R_LIBS=/pkg/.pkgcheck/lib \
             -v "$PWD:/pkg" -w /pkg --entrypoint Rscript \
             ghcr.io/ropensci-review-tools/pkgcheck-action:latest \
             .pkgcheck/run.R
+          ( while docker inspect -f "{{.State.Running}}" pkc 2>/dev/null | grep -q true; do
+              echo "$(date +%T) $(docker stats --no-stream --format "{{.MemUsage}}" pkc 2>/dev/null)"
+              docker top pkc -o pid,rss,args 2>/dev/null | sort -k2 -n -r | head -3 | cut -c1-160
+              sleep 2
+            done ) > .pkgcheck/mem.log &
+          status=$(docker wait pkc)
+          docker logs pkc
+          echo "== peak memory samples"
+          grep "GiB\|MiB" .pkgcheck/mem.log | sort -k2 -h | tail -3
+          echo "== last samples"
+          tail -12 .pkgcheck/mem.log
+          docker rm pkc > /dev/null
+          exit "$status"
