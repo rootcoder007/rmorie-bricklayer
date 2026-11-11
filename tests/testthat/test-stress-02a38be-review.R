@@ -423,8 +423,10 @@ test_that("C8: parallel refreshes each use their own temporary file", {
   res <- parallel::mclapply(
     1:12,
     refresh3,
-    # R CMD check --as-cran caps child processes at 2 (_R_CHECK_LIMIT_CORES_)
-    mc.cores = if (nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_"))) 2L else 12L
+    # two writers at a time are enough for the race; each forked child is a
+    # copy of this test process (about 850 MB under covr), and 12 at once ran
+    # a 2 GB machine out of memory, killing the test run (pkgcheck's covr)
+    mc.cores = 2L
   )
   expect_identical(unique(unlist(res)), "ok")
   expect_length(list.files(d, pattern = "[.]part$"), 0L)
