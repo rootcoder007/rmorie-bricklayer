@@ -73,8 +73,8 @@ NULL
 #'
 #' @srrstatsNA {G1.5} No associated publication is cited in inst/CITATION.
 #'   README's OTIS recomputation ships as the bundle example
-#' (inst/bundle/otis-mrp/). @srrstatsNA {G2.14c} Imputation
-#' is deliberately excluded: published tables'
+#'   (inst/bundle/otis-mrp/).
+#' @srrstatsNA {G2.14c} Imputation is deliberately excluded: published tables'
 #'   suppressed cells are never imputed (comment at top of R/indigenous.R).
 #' @srrstatsNA {EA2.0} The package does no extensive table filtering or joining;
 #'   its only internal merge fills missing periods into one user table.
