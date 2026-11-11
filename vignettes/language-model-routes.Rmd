@@ -167,14 +167,14 @@ anywhere else. `rmbl doctor` says whether one is stored.
 
 The same routes serve the CLI installed by `instcli()`:
 
-```sh
+~~~sh
 rmoriebricklayer config setup       # pick a provider, paste its key (saved privately), pick a model
 rmoriebricklayer doctor             # the routes, and the one ask takes
 rmoriebricklayer models --route anthropic
 rmoriebricklayer ask "what does cpsbndl() cover?"
 rmoriebricklayer ask --route ollama --model gemma3:4b "how do I verify a capsule?"
 rmoriebricklayer login --token      # the data key: paste it when asked; it never sits in the shell history
-```
+~~~
 
 
 ## Asking about the Indigenous tables

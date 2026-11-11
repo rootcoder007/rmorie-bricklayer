@@ -55,10 +55,10 @@ hints), each passed through an explicit declassification point. The harness is b
 the package's own sources with GCC and Clang, and it also scans the dead stack after each
 operation for surviving copies of the secret.
 
-```sh
+~~~sh
 bash inst/ctcheck/build.sh     # needs R, a C++17 compiler, valgrind headers
 bash inst/ctcheck/run.sh       # exit 0 = every case clean
-```
+~~~
 
 ### Measured on hardware: dudect (`inst/dudect`)
 Reparaz, Balasch and Verbauwhede's *Dude, is my code constant time?* (DATE 2017): each
@@ -67,10 +67,10 @@ measurement times the operation on an input drawn at random from a *fixed* class
 difference; |t| < 4.5 is none. A positive control, an early-exit comparison, must be flagged
 or the run is invalid. CI runs it on x86-64 Linux, arm64 Linux and Apple silicon.
 
-```sh
+~~~sh
 bash inst/dudect/build.sh
 N=300000 bash inst/dudect/run.sh     # exit 1 on any |t| > 10
-```
+~~~
 
 ### What this found
 ML-KEM compression divided by *q*; at `-O0` the compiler emitted a hardware divide whose
@@ -141,11 +141,11 @@ every sample, in two independent experiments; a point leaks when |t| > 4.5 in bo
 same sign. Each masked kernel runs beside its unmasked control (the same code with share 1
 zero), because a control that does not leak means the harness sees nothing.
 
-```sh
+~~~sh
 bash inst/tvla/build.sh                 # arm-none-eabi-g++, unicorn, capstone
 cd inst/tvla && ./build/tvla all 5000   # Hamming-weight model
 TVLA_MODEL=hd ./build/tvla all 5000     # Hamming-distance model
-```
+~~~
 
 At 2 x 3,000 traces every masked kernel is clean under both models (max |t| 3.0) and every
 unmasked control leaks (|t| 87 to 163). CI fails on a masked leak under either model. The

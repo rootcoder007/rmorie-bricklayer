@@ -445,7 +445,7 @@ copy needs no key. Saving needs one, except in a GitHub Actions job allowed `id-
 GitHub for the job's short-lived OIDC token, the archive checks GitHub's signature, and the repository is the saver, so
 no secret is stored.
 
-```yaml
+~~~yaml
 permissions:
   contents: read
   id-token: write
@@ -456,7 +456,7 @@ steps:
       mode: refresh
       wayback: true
       archive: true
-```
+~~~
 
 ## One file to hand someone
 
@@ -558,10 +558,10 @@ checks come out INFO: generated data never counts as a reproduction.
 
 The same from a terminal, once `instcli()` has put `rmbl` on the path:
 
-```sh
+~~~sh
 rmbl pack --new my-study --title "My study"
 rmbl pack my-study --data my_data.csv       # writes my-study_v1_with_data.zip here
-```
+~~~
 
 The package ships a full example, the Ontario restrictive confinement
 analysis with 55 checks: `mkbndl("otis-mrp", dest = tempdir())`.

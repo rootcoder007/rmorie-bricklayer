@@ -31,11 +31,11 @@ library(rmoriebricklayer)
 `rmblapp()` opens a dashboard over the package's analyses in your browser. It runs on your machine,
 in your R session. It needs the shiny package.
 
-```r
+~~~r
 rmblapp()                          # every tab opens on its own demo dataset
 rmblapp(indiex("health"))          # start with a data frame
 rmblapp(capsule = "path/to/capsule")
-```
+~~~
 
 From a terminal, `rmbl app [PATH] [--port N] [--no-browser]` does the same. PATH is a CSV file or a
 capsule directory.
