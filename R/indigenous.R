@@ -40,9 +40,8 @@
 #' @param x A data frame read from a Statistics Canada table (English-language
 #'   full-table CSV), or a key of the data service
 #'   (\code{"statcan_indigenous/tbl_13100924"}, or the eight-digit table id
-#'   alone). A key needs a data service key: sign in once with
-#'   \code{\link{dlogin}} (see \code{\link{dload}}); a data frame you read
-#'   yourself needs none.
+#'   alone), downloaded with \code{\link{dload}} (no sign-in); a data frame
+#'   you read yourself needs no network.
 #' @return The data frame with \code{VALUE} numeric and a factor column
 #'   \code{quality} with levels \code{"ok"}, \code{"E"}, \code{"F"}, \code{"x"},
 #'   \code{".."}, \code{"..."}, of class \code{c("rmbl_statcan", "data.frame")}.
@@ -59,7 +58,7 @@
 #' sctidy(d)
 #'
 #' @examplesIf interactive()
-#' # needs a data service key: sign in once with dlogin()
+#' # downloads the table from data.rmorie.com
 #' t924 <- sctidy("13100924")
 #' @export
 sctidy <- function(x) {
@@ -885,7 +884,7 @@ trcprog <- function(
 #' @param refresh Fetch the manifest again (default \code{FALSE}).
 #' @return A data frame: \code{key}, \code{rows}, \code{description},
 #'   \code{license}, \code{source}.
-#' @details Needs a data service key: sign in once with \code{\link{dlogin}}.
+#' @details Needs the network; no sign-in.
 #' Only openly licensed aggregate tables are mirrored. First Nations Information
 #' Governance Centre data (the First Nations Regional Health Survey and its
 #' companions) are governed by the OCAP(R) principles and are not; ask the

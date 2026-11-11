@@ -603,7 +603,7 @@ test_that(
       year = 2015:2024,
       n = c(402, 377, 190, 268, 331, 300, 310, 290, 305, 320)
     )
-    y <- yoy(d, value = "n", prd = "year")
+    y <- yoychg(d, value = "n", prd = "year")
     f <- withr::local_tempfile(fileext = ".pdf")
     notes <- sprintf(
       "note %d of thirty, a footnote that explains one row of the table",

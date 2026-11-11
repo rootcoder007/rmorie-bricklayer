@@ -4,7 +4,7 @@
 
 test_that("print() shows each period's change and the footer", {
   d <- data.frame(year = 2021:2023, n = c(100, 120, 90))
-  y <- yoy(d, value = "n", prd = "year")
+  y <- yoychg(d, value = "n", prd = "year")
   out <- capture.output(print(y, color = FALSE))
   expect_true(any(grepl("change %", out, fixed = TRUE)))
   expect_true(any(grepl("2023", out, fixed = TRUE)))
@@ -19,7 +19,7 @@ test_that("print() shows each period's change and the footer", {
 
 test_that("yoysmry() gives the span, total and compound change", {
   d <- data.frame(year = 2021:2023, n = c(100, 120, 90))
-  s <- yoysmry(yoy(d, value = "n", prd = "year"))
+  s <- yoysmry(yoychg(d, value = "n", prd = "year"))
   expect_identical(s$first, 100)
   expect_identical(s$last, 90)
   expect_equal(s$totalpct, -10, tolerance = 1e-12)
@@ -31,20 +31,20 @@ test_that("yoysmry() gives the span, total and compound change", {
     n = c(10, 20, 30, 15),
     stringsAsFactors = FALSE
   )
-  sg <- yoysmry(yoy(g, value = "n", prd = "year", by = "g"))
+  sg <- yoysmry(yoychg(g, value = "n", prd = "year", by = "g"))
   expect_identical(sg$g, c("a", "b"))
   expect_identical(sg$totalpct, c(100, -50))
   expect_type(yoypals(), "character")
   expect_true("diverging" %in% yoypals())
 })
 
-test_that("yoysmry() spans text periods in the order yoy() reads (C18)", {
+test_that("yoysmry() spans text periods in the order yoychg() reads (C18)", {
   d <- data.frame(
     p = c("Mar 2021", "Jan 2021", "Feb 2021"),
     n = c(30, 10, 20),
     stringsAsFactors = FALSE
   )
-  s <- yoysmry(yoy(d, "n", "p"))
+  s <- yoysmry(yoychg(d, "n", "p"))
   expect_identical(c(s$from, s$to), c("Jan 2021", "Mar 2021"))
   expect_equal(s$totalpct, 200, tolerance = 1e-12)
   ws <- data.frame(
@@ -52,13 +52,13 @@ test_that("yoysmry() spans text periods in the order yoy() reads (C18)", {
     n = c(4, 1),
     stringsAsFactors = FALSE
   )
-  y <- yoy(ws, "n", "s", prdord = c("spring", "summer", "fall"))
+  y <- yoychg(ws, "n", "s", prdord = c("spring", "summer", "fall"))
   expect_identical(yoysmry(y)$from, "spring")
 })
 
 test_that("yoysmry() gives NA, with the reason, for periods with no order", {
   d <- data.frame(p = c("b", "a"), n = c(1, 2), stringsAsFactors = FALSE)
-  y <- suppressWarnings(yoy(d, "n", "p"))
+  y <- suppressWarnings(yoychg(d, "n", "p"))
   expect_warning(yoysmry(y), "yoysmry: the periods have no order")
   s <- suppressWarnings(yoysmry(y))
   expect_true(all(is.na(s[c("from", "to", "first", "last")])))
@@ -72,12 +72,12 @@ test_that("yoysmry() gives NA, with the reason, for periods with no order", {
     n = 1:4,
     stringsAsFactors = FALSE
   )
-  yg <- suppressWarnings(yoy(g, "n", "p", by = "k"))
+  yg <- suppressWarnings(yoychg(g, "n", "p", by = "k"))
   w <- testthat::capture_warnings(yoysmry(yg))
   sg <- suppressWarnings(yoysmry(yg))
   expect_length(w, 1L)
   expect_true(all(is.na(sg$totalpct)))
-  # the writers say nothing more: yoy() has warned already
+  # the writers say nothing more: yoychg() has warned already
   expect_silent(yoyjs(y, NULL))
 })
 
@@ -108,7 +108,7 @@ expect_box <- function(x, title, has = character()) {
 
 test_that("a change table prints as a box with its settings", {
   d <- data.frame(year = 2021:2023, n = c(100, 120, 90))
-  y <- yoy(d, value = "n", prd = "year", dir = "lower")
+  y <- yoychg(d, value = "n", prd = "year", dir = "lower")
   out <- expect_box(
     y,
     "Change in n by year",
@@ -123,7 +123,7 @@ test_that("a change table prints as a box with its settings", {
   # an empty table is one line, and a subset a plain table
   expect_identical(format(y[0, ]), "<rmbl_yoy: no periods>")
   expect_output(print(y[, c("year", "value")]), "value")
-  g <- yoy(
+  g <- yoychg(
     data.frame(
       year = rep(2020:2021, 2),
       g = rep(c("a", "b"), each = 2),
@@ -143,7 +143,7 @@ test_that("a change table prints as a box with its settings", {
 })
 
 test_that("yoysmry() results print as a box", {
-  y <- yoy(data.frame(year = 2019:2023, n = c(10, 12, 9, 15, 16)), "n", "year")
+  y <- yoychg(data.frame(year = 2019:2023, n = c(10, 12, 9, 15, 16)), "n", "year")
   s <- yoysmry(y)
   expect_s3_class(s, c("rmbl_yoy_summary", "data.frame"))
   out <- expect_box2(s, "Year-over-year summary", c("2019", "cagrpct"))
@@ -159,7 +159,7 @@ test_that("yoy folds labels the console cannot show, as rtcalc does", {
     g = rep(c("M\u00e9tis", "\u4e2d\u6587"), each = 2),
     p = rep(2020:2021, 2), n = c(10, 12, 5, 6), stringsAsFactors = FALSE
   )
-  out <- format(yoy(d, "n", "p", by = "g"))
+  out <- format(yoychg(d, "n", "p", by = "g"))
   expect_true(any(grepl("Metis", out, fixed = TRUE)))
   # nothing outside ASCII, so no "unable to translate" and no misalignment
   expect_false(any(grepl("[^ -~]", out, useBytes = TRUE)))
@@ -177,12 +177,12 @@ test_that("in a C locale yoy folds UTF-8 labels read as unknown bytes", {
   Encoding(g) <- "unknown"
   d <- data.frame(g = g, p = rep(2020:2021, 2), n = c(10, 12, 5, 6),
                   stringsAsFactors = FALSE)
-  expect_silent(out <- format(yoy(d, "n", "p", by = "g")))
+  expect_silent(out <- format(yoychg(d, "n", "p", by = "g")))
   expect_true(any(grepl("Metis", out, fixed = TRUE)))
   expect_false(any(grepl("[^ -~]", out, useBytes = TRUE)))
 })
 
-test_that("in a C locale yoy() itself does not warn about UTF-8 labels", {
+test_that("in a C locale yoychg() itself does not warn about UTF-8 labels", {
   withr::local_locale(c(LC_CTYPE = "C"))
   skip_if(isTRUE(l10n_info()[["UTF-8"]]), "the C locale cannot be set here")
   # marked UTF-8, as intToUtf8() and a UTF-8 file read with its encoding give
@@ -190,7 +190,7 @@ test_that("in a C locale yoy() itself does not warn about UTF-8 labels", {
              "Plain"), each = 3)
   d <- data.frame(g = g, yr = rep(2020:2022, 3), n = c(10, 12, 15, 20, 22, 19,
                                                        5, 6, 7))
-  expect_silent(yoy(d, "n", "yr", by = "g"))
+  expect_silent(yoychg(d, "n", "yr", by = "g"))
   d$pop <- 1000
   tr <- "unable to translate"
   expect_no_warning(ratechg(d, count = "n", pop = "pop", prd = "yr", by = "g"),

@@ -10,9 +10,8 @@ sctidy(x)
 \item{x}{A data frame read from a Statistics Canada table (English-language
 full-table CSV), or a key of the data service
 (\code{"statcan_indigenous/tbl_13100924"}, or the eight-digit table id
-alone). A key needs a data service key: sign in once with
-\code{\link{dlogin}} (see \code{\link{dload}}); a data frame you read
-yourself needs none.}
+alone), downloaded with \code{\link{dload}} (no sign-in); a data frame
+you read yourself needs no network.}
 }
 \value{
 The data frame with \code{VALUE} numeric and a factor column
@@ -58,7 +57,7 @@ d <- data.frame(REF_DATE = "2019/2022", GEO = "Canada",
 sctidy(d)
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
-# needs a data service key: sign in once with dlogin()
+# downloads the table from data.rmorie.com
 t924 <- sctidy("13100924")
 \dontshow{\}) # examplesIf}
 }

@@ -884,7 +884,7 @@
   x
 }
 
-# 0.5.x argument names reaching a function through `...` (yoy() kept its name,
+# 0.5.x argument names reaching a function through `...` (yoychg(), yoy() before 1.1.1,
 # so it has no alias): when the call that is running used one, returns that call
 # with the new names and the frame to evaluate it in, else NULL. A call naming
 # both forms is refused.
@@ -962,7 +962,7 @@
 
 # ---- 0.5.x result names ------------------------------------------------------
 # Results keep their 1.0.0 names when a 1.0.0 function is called. Called through
-# a 0.5.x alias (or yoy() with its 0.5.x argument names), the result comes back
+# a 0.5.x alias (or yoychg() with its 0.5.x argument names), the result comes back
 # under its 0.5.x column and field names, from
 # inst/compat/compat_results_map.tsv: the names of that page, then the
 # unambiguous ones of every page (a 1.0.0 name no 0.5.13 result used). The

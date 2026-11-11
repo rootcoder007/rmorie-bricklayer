@@ -953,7 +953,7 @@ test_that("a tab shows the exact call, the refusal and its explanation", {
   expect_identical(
     strsplit(g$code, "\n", fixed = TRUE)[[1L]][2L],
     paste(
-      "y <- yoy(data, value = \"n\", prd = \"year\", by = \"area\", lag = 1,",
+      "y <- yoychg(data, value = \"n\", prd = \"year\", by = \"area\", lag = 1,",
       "units = \"count\",",
       "minbase = 20, dir = \"neutral\")"
     )
@@ -963,7 +963,7 @@ test_that("a tab shows the exact call, the refusal and its explanation", {
   expect_s3_class(g$rpt[[1L]]$yoy, "rmbl_yoy")
   # the same call in a script gives the same table
   data <- eval(str2lang(src))
-  y <- yoy(
+  y <- yoychg(
     data,
     value = "n",
     prd = "year",
@@ -998,7 +998,7 @@ test_that("a tab shows the exact call, the refusal and its explanation", {
 test_that("results download as the package writes them", {
   skip_if_not_installed("shiny")
   f <- tempfile()
-  y <- yoy(c(1, 2, 4))
+  y <- yoychg(c(1, 2, 4))
   expect_identical(ns$.bl_dl_name(y, "yoy"), "rmbl-yoy.html")
   ns$.bl_dl_write(y, f)
   expect_match(paste(readLines(f), collapse = ""), "<table>", fixed = TRUE)
@@ -1403,7 +1403,7 @@ test_that("tabs made in a loop each keep their own spec", {
         if (nzchar(output[[paste0(tab, "-code")]])) break
       }
     }
-    expect_match(output[["yoy-code"]], "yoy(data", fixed = TRUE)
+    expect_match(output[["yoy-code"]], "yoychg(data", fixed = TRUE)
     expect_match(output[["hawkes-code"]], "chwkfit(", fixed = TRUE)
   })
 })

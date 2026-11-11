@@ -258,7 +258,7 @@ test_that("0.5.x option names are still read", {
 test_that("old plot values are translated", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  y <- yoy(
+  y <- yoychg(
     data.frame(year = 2019:2022, n = c(10, 12, 9, 15)),
     value = "n",
     prd = "year"
@@ -324,8 +324,8 @@ test_that("results come back under their 0.5.x names through an alias", {
 
 test_that("a translated result prints, plots and is read back by the aliases", {
   seg <- data.frame(year = 2019:2022, n = c(10, 12, 9, 15))
-  y <- yoy(seg, value = "n", period = "year")
-  y1 <- yoy(seg, value = "n", prd = "year")
+  y <- yoychg(seg, value = "n", period = "year")
+  y1 <- yoychg(seg, value = "n", prd = "year")
   expect_true("pct_change" %in% names(y))
   expect_false("pct_change" %in% names(y1))
   expect_identical(capture.output(print(y)), capture.output(print(y1)))

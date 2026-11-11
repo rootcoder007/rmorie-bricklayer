@@ -539,12 +539,12 @@ test_that("cnttrnd refuses an infinite x", {
 
 test_that(
   paste0(
-    "yoy: a label function must give one label per row; grouped print; PDF ",
+    "yoychg: a label function must give one label per row; grouped print; PDF ",
     "colours and page breaks"
   ),
   {
     d <- data.frame(year = 2019:2022, n = c(10, 12, 9, 15))
-    y <- yoy(d, value = "n", prd = "year")
+    y <- yoychg(d, value = "n", prd = "year")
     expect_error(yoylbl(y, function(p) "one"), "one label per row")
     seg <- data.frame(
       year = rep(2019:2021, each = 2),
@@ -552,7 +552,7 @@ test_that(
       n = c(31, 402, 28, 377, 12, 190),
       stringsAsFactors = FALSE
     )
-    g <- yoy(seg, value = "n", prd = "year", by = "gender", minbase = 0)
+    g <- yoychg(seg, value = "n", prd = "year", by = "gender", minbase = 0)
     out <- utils::capture.output(print(g))
     expect_true(any(grepl("Female", out, fixed = TRUE)))
     f <- tempfile(fileext = ".pdf")
@@ -561,7 +561,7 @@ test_that(
       year = 2000:2070,
       n = c(seq(100L, 450L, by = 10L), seq(440L, 100L, by = -10L))
     )
-    yl <- yoy(long, value = "n", prd = "year")
+    yl <- yoychg(long, value = "n", prd = "year")
     expect_silent(yoypdf(yl, f, title = "Up then down"))
     expect_gt(file.size(f), 1000)
   }

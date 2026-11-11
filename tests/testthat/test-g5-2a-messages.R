@@ -29,7 +29,7 @@ test_that(
     err(chnvrf(list()), "chnvrf: `chain` must come from chnnew()")
     err(
       yoycsv(1, tempfile()),
-      "yoycsv: `x` must be an rmbl_yoy object from yoy()"
+      "yoycsv: `x` must be an rmbl_yoy object from yoychg()"
     )
     # S3 methods are named by their generic, and do.call() is followed to the
     # function it calls
@@ -168,7 +168,7 @@ test_that("literal copies in function bodies start with the function name", {
   err(topcors(df), "topcors: need at least two numeric columns to correlate")
   err(misspat(1), "misspat: `data` must be a data frame")
   err(misspat(data.frame()), "misspat: `data` has no columns")
-  err(yoybnd(1), "yoybnd: `y` must come from yoy()")
+  err(yoybnd(1), "yoybnd: `y` must come from yoychg()")
   err(cpsrpt(1), "cpsrpt: `data` must be a data frame")
   err(mnfrecseed(1), "mnfrecseed: `man` must be a manifest from mkmnf()")
   err(duprows(1), "duprows: `data` must be a data frame")
@@ -196,8 +196,8 @@ test_that("literal copies in function bodies start with the function name", {
   out <- withr::local_tempfile()
   writeLines("x", out)
   err(wbrtry(out, incgone = NA), "wbrtry: `incgone` must be TRUE or FALSE")
-  err(yoyjs(1, tempfile()), "yoyjs: `x` must be an rmbl_yoy object from yoy()")
-  err(yoymd(1, tempfile()), "yoymd: `x` must be an rmbl_yoy object from yoy()")
+  err(yoyjs(1, tempfile()), "yoyjs: `x` must be an rmbl_yoy object from yoychg()")
+  err(yoymd(1, tempfile()), "yoymd: `x` must be an rmbl_yoy object from yoychg()")
 })
 
 test_that("the signing refusals name their function", {

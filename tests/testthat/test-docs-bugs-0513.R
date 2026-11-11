@@ -320,7 +320,7 @@ test_that("every confidence level outside (0, 1) is refused with one message", {
   expect_error(rtcalc(d, n, pop, conflvl = 2), msg, fixed = TRUE)
   expect_error(shrs(c(3, 7), conflvl = 2), msg, fixed = TRUE)
   expect_error(ratechg(d, n, pop, year, conflvl = 2), msg, fixed = TRUE)
-  expect_error(yoy(d, "n", "year", conflvl = 2), msg, fixed = TRUE)
+  expect_error(yoychg(d, "n", "year", conflvl = 2), msg, fixed = TRUE)
   expect_error(staysmry(c(1, 2, 3), conflvl = c(0.9, 0.95)), msg, fixed = TRUE)
   expect_error(anytab(d, "n", "year", conflvl = 2), msg, fixed = TRUE)
   toy <- data.frame(
@@ -652,7 +652,7 @@ test_that("instcli() refuses an empty or malformed name", {
 
 test_that("yoymd() right-aligns every numeric column", {
   md <- yoymd(
-    yoy(data.frame(year = 2019:2021, n = c(4, 5, 6)), "n", "year"),
+    yoychg(data.frame(year = 2019:2021, n = c(4, 5, 6)), "n", "year"),
     NULL
   )
   rule <- strsplit(md, "\n", fixed = TRUE)[[1L]][2L]
@@ -674,7 +674,7 @@ test_that(
       .yoy_verdict_class(c("up", "down", "worse", "better", "flat", NA)),
       c("flat", "flat", "bad", "good", "flat", "flat")
     )
-    y <- yoy(data.frame(year = 2019:2021, n = c(4, 8, 2)), "n", "year")
+    y <- yoychg(data.frame(year = 2019:2021, n = c(4, 8, 2)), "n", "year")
     rd <- function(z) {
       f <- tempfile(fileext = ".html")
       yoyhtml(z, f)
@@ -682,7 +682,7 @@ test_that(
     }
     html <- rd(y)
     expect_false(grepl("<tr class=\"(bad|good)\"", html))
-    y2 <- yoy(
+    y2 <- yoychg(
       data.frame(year = 2019:2021, n = c(4, 8, 2)),
       "n",
       "year",

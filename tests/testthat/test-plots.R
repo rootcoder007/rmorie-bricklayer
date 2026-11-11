@@ -91,7 +91,7 @@ test_that("stock and flow", {
 
 test_that("period-over-period change", {
   # bases large enough for a percentage change
-  big <- yoy(
+  big <- yoychg(
     data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)),
     value = "n",
     prd = "year"
@@ -101,7 +101,7 @@ test_that("period-over-period change", {
   expect_identical(d$pctchg, big$pctchg)
   expect_true(any(is.finite(d$pctchg)))
   # small counts draw their percentages like any other
-  small <- yoy(
+  small <- yoychg(
     data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)),
     value = "n",
     prd = "year"
@@ -111,7 +111,7 @@ test_that("period-over-period change", {
   expect_identical(is.finite(ds$pctchg), c(FALSE, TRUE, TRUE, TRUE, TRUE))
   # only zero bases leave no percentage at all: the counts are drawn instead of
   # an empty frame
-  y <- yoy(
+  y <- yoychg(
     data.frame(year = 2019:2021, n = c(0, 0, 5)),
     value = "n",
     prd = "year"
@@ -125,7 +125,7 @@ test_that("period-over-period change", {
     n = c(500, 600, 700, 900, 800, 1000),
     stringsAsFactors = FALSE
   )
-  yg <- yoy(seg, value = "n", prd = "year", by = "g")
+  yg <- yoychg(seg, value = "n", prd = "year", by = "g")
   dg <- with_dev(plot(yg))
   expect_true(all(grepl("^(a|b): ", dg$label)))
   vg <- with_dev(plot(yg, what = "value"))
@@ -827,7 +827,7 @@ test_that("plots leave par('col') and par('mar') as they found them (B1, B2)", {
   .par_kept(plotmult(1:12, rep(1:4, 3), rep(c("a", "b", "c"), each = 4)))
   .par_kept(plotbump(1:6, rep(1:3, 2), rep(c("a", "b"), each = 3)))
   .par_kept(plotfnl(c(3, 8, 20), c(5, 10, 18), area = c("p", "q", "r")))
-  y <- yoy(data.frame(year = 2019:2022, n = c(5, 7, 6, 9)), "n", "year")
+  y <- yoychg(data.frame(year = 2019:2022, n = c(5, 7, 6, 9)), "n", "year")
   .par_kept(plot(y))
   # a panel grid reset cex: it comes back too
   grDevices::pdf(NULL)

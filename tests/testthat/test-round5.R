@@ -200,13 +200,13 @@ test_that(
     "'no data'"
   ),
   {
-    b <- yoy(
+    b <- yoychg(
       data.frame(year = c(2015, 2017, 2019, 2021), n = c(100, 120, 90, 130)),
       value = "n",
       prd = "year"
     )
     expect_identical(b$previous, c(NA, 100, 120, 90))
-    g <- yoy(
+    g <- yoychg(
       data.frame(year = c(2020, 2021, 2023), n = c(5, 8, 20)),
       value = "n",
       prd = "year"
@@ -576,7 +576,7 @@ test_that(
   ),
   {
     withr::local_envvar(RMBL_ASCII_ONLY = "1")
-    out <- utils::capture.output(print(yoy(
+    out <- utils::capture.output(print(yoychg(
       data.frame(year = 2020:2022, n = c(0, 20, 30)),
       value = "n",
       prd = "year"
@@ -646,7 +646,7 @@ test_that("bad inputs get a worded error and no coercion warning", {
   d <- withr::local_tempdir()
   dir.create(file.path(d, "adir"))
   expect_error(
-    yoy("abc"),
+    yoychg("abc"),
     paste0(
       "`x` must be a data frame, a numeric or integer vector, or a ts, ",
       "not character"
@@ -655,7 +655,7 @@ test_that("bad inputs get a worded error and no coercion warning", {
   )
   expect_error(
     yoysmry(NULL),
-    "`object` must be a yoy() result, not NULL",
+    "`object` must be a yoychg() result, not NULL",
     fixed = TRUE
   )
   expect_error(ratechg(NA), "`x` must be a data frame", fixed = TRUE)

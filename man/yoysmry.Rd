@@ -13,13 +13,13 @@ yoysmry(object, ...)
 \method{yoysmry}{rmbl_yoy}(object, ...)
 }
 \arguments{
-\item{object}{An \code{rmbl_yoy} object returned by \code{\link{yoy}}.}
+\item{object}{An \code{rmbl_yoy} object returned by \code{\link{yoychg}}.}
 
 \item{...}{Further arguments for methods; not used.}
 }
 \value{
 A data frame with one row per series or group and columns: the
-\code{by} columns (character), when \code{yoy()} had \code{by};
+\code{by} columns (character), when \code{yoychg()} had \code{by};
 \code{from}, \code{to} (the first and last observed period, same type as
 the period column); \code{first}, \code{last} (numeric values at those
 periods); \code{totalpct}, \code{cagrpct} (numeric, percent);
@@ -27,8 +27,8 @@ periods); \code{totalpct}, \code{cagrpct} (numeric, percent);
 \code{flat} (integer counts of period-to-period changes).
 }
 \description{
-Collapses a period-over-period change table from \code{\link{yoy}} into
-one row per series (or one row per group when \code{yoy()} was called with
+Collapses a period-over-period change table from \code{\link{yoychg}} into
+one row per series (or one row per group when \code{yoychg()} was called with
 \code{by}). Each row gives the first and last observed periods, the total
 change between them, the compound annual growth rate, and how many
 period-to-period changes went up, went down or stayed flat. Use it to
@@ -37,8 +37,8 @@ report the whole span of a series in one line next to the detailed table.
 \details{
 Rows whose \code{value} is missing are dropped before the summary,
 and the remaining rows are sorted by period, text periods in the order
-\code{yoy()} read them (its \code{prd} and \code{prdord}). Periods with no
-order (text \code{yoy()} could not read, an unordered factor) have no first
+\code{yoychg()} read them (its \code{prd} and \code{prdord}). Periods with no
+order (text \code{yoychg()} could not read, an unordered factor) have no first
 or last: \code{from}, \code{to}, \code{first}, \code{last}, \code{totalpct}
 and \code{cagrpct} are then \code{NA}, with a warning saying why. With
 \eqn{v_1} the first and \eqn{v_T} the last observed value, the total
@@ -56,24 +56,24 @@ percent-change column (\code{pctchg}, or \code{ppchg} for
 change and is not counted in any of the three. A group with no non-missing
 value gives a row of \code{NA} with \code{periods = 0}.
 
-Anything other than a \code{yoy()} result is refused with the error
-\dQuote{\code{object} must be a yoy() result}.
+Anything other than a \code{yoychg()} result is refused with the error
+\dQuote{\code{object} must be a yoychg() result}.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # one series
 d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
-yoysmry(yoy(d, value = "n", prd = "year"))
+yoysmry(yoychg(d, value = "n", prd = "year"))
 
 # one row per group; a zero base gives no percent change
 g <- data.frame(year = rep(2019:2022, 2), unit = rep(c("A", "B"), each = 4),
                 n = c(10, 12, 0, 15, 5, 7, 6, 9))
-yoysmry(yoy(g, value = "n", prd = "year", by = "unit"))
+yoysmry(yoychg(g, value = "n", prd = "year", by = "unit"))
 
-# anything that is not a yoy() result is refused
+# anything that is not a yoychg() result is refused
 try(yoysmry(d))
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link{yoy}}, \code{\link{yoypals}}.
+\code{\link{yoychg}}, \code{\link{yoypals}}.
 }

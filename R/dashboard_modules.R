@@ -162,7 +162,7 @@
 ) {
   f <- tempfile(fileext = ".html")
   on.exit(unlink(f), add = TRUE)
-  yoyhtml(yoy(c(1, 2)), f)
+  yoyhtml(yoychg(c(1, 2)), f)
   page <- paste(readLines(f, warn = FALSE), collapse = "\n")
   style <- regmatches(
     page,

@@ -295,7 +295,7 @@ format.rmbl_change_bounds <- function(x, digits = 4L, ...) {
 
 #' Add publication bounds to a year-over-year table
 #'
-#' [yoy()] gives an exact conditional-binomial interval for the percent
+#' [yoychg()] gives an exact conditional-binomial interval for the percent
 #' change of a count, which covers sampling variation. This adds the
 #' interval that rounding and suppression in the published cells imply
 #' ([pubbnd()] carried through
@@ -317,10 +317,10 @@ format.rmbl_change_bounds <- function(x, digits = 4L, ...) {
 #' function does not check that \code{y} holds counts; publication bounds
 #' make sense only for counts.
 #'
-#' Errors when \code{y} does not come from [yoy()], and for the reasons
+#' Errors when \code{y} does not come from [yoychg()], and for the reasons
 #' [pubbnd()] gives.
 #'
-#' @param y An \code{rmbl_yoy} object from [yoy()], with counts as
+#' @param y An \code{rmbl_yoy} object from [yoychg()], with counts as
 #'   values.
 #' @inheritParams pubbnd
 #' @return \code{y} (still an \code{rmbl_yoy}) with added numeric columns
@@ -330,10 +330,10 @@ format.rmbl_change_bounds <- function(x, digits = 4L, ...) {
 #'   \code{compctup}. The rounding settings are recorded as
 #'   \code{bounds} in the \code{"yoy"} attribute.
 #' @seealso [pubbnd()],
-#'   [chgenv()], [yoy()].
+#'   [chgenv()], [yoychg()].
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' seg <- data.frame(year = 2021:2023, n = c(40, 45, 60))
-#' y <- yoy(seg, value = "n", prd = "year")
+#' y <- yoychg(seg, value = "n", prd = "year")
 #' yoybnd(y, rnd = 5)
 #'
 #' # random rounding to base 5 widens the envelope
@@ -341,7 +341,7 @@ format.rmbl_change_bounds <- function(x, digits = 4L, ...) {
 #' as.data.frame(yb)[, c("year", "envpctlo", "envpctup",
 #'                       "compctlo", "compctup")]
 #'
-#' # only yoy() results are accepted
+#' # only yoychg() results are accepted
 #' try(yoybnd(seg, rnd = 5))
 #' @export
 yoybnd <- function(
@@ -351,7 +351,7 @@ yoybnd <- function(
   suplim = NULL
 ) {
   if (!inherits(y, "rmbl_yoy")) {
-    stop("yoybnd: `y` must come from yoy()", call. = FALSE)
+    stop("yoybnd: `y` must come from yoychg()", call. = FALSE)
   }
   rndkind <- .rmbl_arg(rndkind)
   m <- attr(y, "yoy")

@@ -373,7 +373,7 @@ text.}
 \item{gaps}{For \code{rmbl_yoy} (\code{what = "value"}) and
 \code{rmbl_event_study} (\code{style = "stata"}): how a missing value
 shows in a line. \code{"break"} (the default) breaks the
-line there, so a \dQuote{no data} period that \code{yoy(complete = TRUE)}
+line there, so a \dQuote{no data} period that \code{yoychg(complete = TRUE)}
 inserted is a visible gap; \code{"join"} draws the line straight over it.}
 
 \item{period}{For \code{rmbl_rate}, a \code{by} column holding the period:
@@ -452,7 +452,7 @@ method returns the data it drew, invisibly, as a data frame.
 \describe{ \item{\code{rmbl_stock_flow}}{(\code{\link{stkflow}}) the average
 daily population, length of stay, people and person-days over the periods,
 one panel per measure in \code{what}; with an exposure, the flow and stock
-rates too.} \item{\code{rmbl_yoy}}{(\code{\link{yoy}}) the
+rates too.} \item{\code{rmbl_yoy}}{(\code{\link{yoychg}}) the
 period-over-period percent change with its interval over the periods, the
 period across and the change up, groups side by side, coloured by verdict;
 \code{what = "value"} draws the values instead.} \item{\code{rmbl_rate},
@@ -592,14 +592,14 @@ sf <- stkflow(
 )
 plot(sf)
 plot(sf, what = "alos", col = "firebrick", main = "Length of stay")
-y <- yoy(
+y <- yoychg(
   data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)),
   value = "n",
   prd = "year"
 )
 plot(y)
 # small counts: each percentage carries its exact interval
-plot(yoy(
+plot(yoychg(
   data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)),
   value = "n",
   prd = "year"

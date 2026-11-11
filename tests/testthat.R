@@ -13,11 +13,12 @@ full <- identical(Sys.getenv("NOT_CRAN"), "true") ||
 
 # One R process never gives memory back, so the whole suite in one process
 # peaks near 1.8 GB (2 GB and more under covr), which a small checking machine
-# kills. The full suite therefore runs in batches of files, each in a fresh R
-# process, so the peak is the largest batch's. covr still counts every line:
+# kills. The full suite therefore runs in batches of 8 files, each in a fresh R
+# process, so the peak is the largest batch's (under 1 GB; batches of 25 reached
+# 2 GB with R CMD check alongside). covr still counts every line:
 # each process that loads the instrumented package writes its own trace file,
 # and covr merges them all. RMBL_TEST_BATCH=0 runs it in one process.
-batch <- suppressWarnings(as.integer(Sys.getenv("RMBL_TEST_BATCH", "25")))
+batch <- suppressWarnings(as.integer(Sys.getenv("RMBL_TEST_BATCH", "8")))
 split_run <- full && !is.na(batch) && batch > 0
 if (split_run) {
   files <- sort(list.files("testthat", "^test.*\\.[rR]$"))

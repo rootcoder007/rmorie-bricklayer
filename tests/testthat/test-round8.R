@@ -435,7 +435,7 @@ test_that("bad inputs get argument errors in words, not R internals", {
   expect_error(jsunser(-1), "one string of JSON")
   expect_error(jsunser(1e300), "one string of JSON")
   expect_error(cpsbndl(character(0)), "`dir`")
-  expect_error(yoy(Inf), "infinite entry")
+  expect_error(yoychg(Inf), "infinite entry")
   expect_no_warning(expect_error(
     dstncnt(1e300),
     "non-negative integer registers"

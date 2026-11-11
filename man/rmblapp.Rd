@@ -54,7 +54,7 @@ The menus and their tabs: \describe{ \item{Data}{Describe:
 distribution. Distributions: \code{\link[=dstfit]{dstfit()}} with its density, QQ, PP
 and tail plots, and a synthetic sample from a fit through
 \code{\link[=mksyncol]{mksyncol()}}.} \item{Over time}{Year over year:
-\code{\link[=yoy]{yoy()}} (hover a period of its plot for the period's rows) and the
+\code{\link[=yoychg]{yoychg()}} (hover a period of its plot for the period's rows) and the
 \code{\link[=yoyhtml]{yoyhtml()}} page to download. Rates:
 \code{\link[=rtcalc]{rtcalc()}}, \code{\link[=ratechg]{ratechg()}} and
 \code{\link[=shrs]{shrs()}}. Trends: \code{\link[=trndtst]{trndtst()}} (Mann-Kendall

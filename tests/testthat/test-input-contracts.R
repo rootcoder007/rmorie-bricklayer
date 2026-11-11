@@ -162,7 +162,7 @@ test_that("midranks keep NA in place and registers must be finite", {
 test_that("writers given a folder, or a folder that is not there, say so", {
   dd <- withr::local_tempdir()
   miss <- file.path(dd, "no-such-folder", "out.csv")
-  y <- yoy(data.frame(p = 2020:2022, n = c(1, 2, 4)), "n", "p")
+  y <- yoychg(data.frame(p = 2020:2022, n = c(1, 2, 4)), "n", "p")
   man <- mkmnf(list(project = "x"), env = FALSE)
   calls <- list(
     yoycsv = function(t) yoycsv(y, t),

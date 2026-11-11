@@ -42,7 +42,7 @@
 #' accept. In every palette the colour says whether a change is good or bad
 #' news for the series, not whether the number went up or down: the arrow in
 #' the table carries the sign, and the colour carries the
-#' \code{direction} chosen in \code{\link{yoy}}. Use this to see which values
+#' \code{direction} chosen in \code{\link{yoychg}}. Use this to see which values
 #' the \code{palette} argument of \code{print()}, \code{\link{yoyhtml}} and
 #' \code{\link{yoypdf}} takes.
 #'
@@ -60,14 +60,14 @@
 #' Unchanged rows and rows without a comparison use grey (\code{#6b6b6b}).
 #' The verdict-to-colour mapping is: \code{"worse"} uses the bad colour and
 #' \code{"better"} the good colour. With \code{direction = "neutral"} in
-#' \code{\link{yoy}} the verdicts are \code{"up"}/\code{"down"}, which say
+#' \code{\link{yoychg}} the verdicts are \code{"up"}/\code{"down"}, which say
 #' nothing about good or bad news, so those rows use the grey as well; the
 #' arrow still shows the sign.
 #' A palette name not in this list is an error in every renderer.
 #'
 #' @return A character vector of palette names, currently
 #' \code{c("diverging", "safe", "mono")}.
-#' @seealso \code{\link{yoy}}, \code{\link{yoysmry}},
+#' @seealso \code{\link{yoychg}}, \code{\link{yoysmry}},
 #'   \code{\link{yoyhtml}}, \code{\link{yoypdf}}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # the palette names
@@ -75,14 +75,14 @@
 #'
 #' # use one of them when printing a change table
 #' d <- data.frame(year = 2019:2023, n = c(40, 46, 38, 52, 49))
-#' print(yoy(d, value = "n", prd = "year"), palette = "safe", color = FALSE)
+#' print(yoychg(d, value = "n", prd = "year"), palette = "safe", color = FALSE)
 #'
 #' # a name that is not a palette is refused
-#' try(print(yoy(d, value = "n", prd = "year"), palette = "rainbow"))
+#' try(print(yoychg(d, value = "n", prd = "year"), palette = "rainbow"))
 #' @export
 yoypals <- function() names(.YOY_PALETTES)
 
-#' @param x An \code{rmbl_yoy} object returned by \code{yoy()}.
+#' @param x An \code{rmbl_yoy} object returned by \code{yoychg()}.
 #' @param digits Integer, default \code{1}. Decimal places shown in the
 #'   percent (or percentage-point) change column. The interval column is
 #'   always shown to whole percent.
@@ -101,7 +101,7 @@ yoypals <- function() names(.YOY_PALETTES)
 #' @usage
 #' \method{format}{rmbl_yoy}(x, digits = 1L, palette = "diverging",
 #'   color = FALSE, n = 30, ...)
-#' @rdname yoy
+#' @rdname yoychg
 #' @export
 format.rmbl_yoy <- function(
   x,
@@ -147,7 +147,7 @@ format.rmbl_yoy <- function(
   )
 }
 
-#' @rdname yoy
+#' @rdname yoychg
 #' @export
 print.rmbl_yoy <- function(
   x,
@@ -172,8 +172,8 @@ print.rmbl_yoy <- function(
 #' Summarise a change table
 #'
 #' @description
-#' Collapses a period-over-period change table from \code{\link{yoy}} into
-#' one row per series (or one row per group when \code{yoy()} was called with
+#' Collapses a period-over-period change table from \code{\link{yoychg}} into
+#' one row per series (or one row per group when \code{yoychg()} was called with
 #' \code{by}). Each row gives the first and last observed periods, the total
 #' change between them, the compound annual growth rate, and how many
 #' period-to-period changes went up, went down or stayed flat. Use it to
@@ -181,8 +181,8 @@ print.rmbl_yoy <- function(
 #'
 #' @details Rows whose \code{value} is missing are dropped before the summary,
 #' and the remaining rows are sorted by period, text periods in the order
-#' \code{yoy()} read them (its \code{prd} and \code{prdord}). Periods with no
-#' order (text \code{yoy()} could not read, an unordered factor) have no first
+#' \code{yoychg()} read them (its \code{prd} and \code{prdord}). Periods with no
+#' order (text \code{yoychg()} could not read, an unordered factor) have no first
 #' or last: \code{from}, \code{to}, \code{first}, \code{last}, \code{totalpct}
 #' and \code{cagrpct} are then \code{NA}, with a warning saying why. With
 #' \eqn{v_1} the first and \eqn{v_T} the last observed value, the total
@@ -200,30 +200,30 @@ print.rmbl_yoy <- function(
 #' change and is not counted in any of the three. A group with no non-missing
 #' value gives a row of \code{NA} with \code{periods = 0}.
 #'
-#' Anything other than a \code{yoy()} result is refused with the error
-#' \dQuote{\code{object} must be a yoy() result}.
+#' Anything other than a \code{yoychg()} result is refused with the error
+#' \dQuote{\code{object} must be a yoychg() result}.
 #'
-#' @param object An \code{rmbl_yoy} object returned by \code{\link{yoy}}.
+#' @param object An \code{rmbl_yoy} object returned by \code{\link{yoychg}}.
 #' @param ... Further arguments for methods; not used.
 #' @return A data frame with one row per series or group and columns: the
-#' \code{by} columns (character), when \code{yoy()} had \code{by};
+#' \code{by} columns (character), when \code{yoychg()} had \code{by};
 #' \code{from}, \code{to} (the first and last observed period, same type as
 #' the period column); \code{first}, \code{last} (numeric values at those
 #' periods); \code{totalpct}, \code{cagrpct} (numeric, percent);
 #' \code{periods} (integer, observed periods); \code{up}, \code{down},
 #' \code{flat} (integer counts of period-to-period changes).
-#' @seealso \code{\link{yoy}}, \code{\link{yoypals}}.
+#' @seealso \code{\link{yoychg}}, \code{\link{yoypals}}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # one series
 #' d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
-#' yoysmry(yoy(d, value = "n", prd = "year"))
+#' yoysmry(yoychg(d, value = "n", prd = "year"))
 #'
 #' # one row per group; a zero base gives no percent change
 #' g <- data.frame(year = rep(2019:2022, 2), unit = rep(c("A", "B"), each = 4),
 #'                 n = c(10, 12, 0, 15, 5, 7, 6, 9))
-#' yoysmry(yoy(g, value = "n", prd = "year", by = "unit"))
+#' yoysmry(yoychg(g, value = "n", prd = "year", by = "unit"))
 #'
-#' # anything that is not a yoy() result is refused
+#' # anything that is not a yoychg() result is refused
 #' try(yoysmry(d))
 #' @export
 yoysmry <- function(object, ...) UseMethod("yoysmry")
@@ -232,7 +232,7 @@ yoysmry <- function(object, ...) UseMethod("yoysmry")
 #' @export
 yoysmry.default <- function(object, ...) {
   stop(
-    sprintf("`object` must be a yoy() result, not %s", class(object)[1L]),
+    sprintf("`object` must be a yoychg() result, not %s", class(object)[1L]),
     call. = FALSE
   )
 }
@@ -249,7 +249,7 @@ yoysmry.rmbl_yoy <- function(object, ...) {
   if (is.null(rk)) {
     warning(
       "yoysmry: the periods have no order, so `from`, `to`, `first`, ",
-      "`last`, `totalpct` and `cagrpct` are NA; give yoy() their order ",
+      "`last`, `totalpct` and `cagrpct` are NA; give yoychg() their order ",
       "with `prdord`",
       call. = FALSE
     )
@@ -315,14 +315,14 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
   .YOY_PALETTES[[palette]]
 }
 
-#' Returns the settings that yoy() stored on its result.
-#' @param x A yoy() result.
+#' Returns the settings that yoychg() stored on its result.
+#' @param x A yoychg() result.
 #' @return The list held in the \code{"yoy"} attribute, or NULL.
 #' @noRd
 .yoy_meta <- function(x) attr(x, "yoy", exact = TRUE)
 
-#' Names the change column of a yoy() result.
-#' @param x A yoy() result.
+#' Names the change column of a yoychg() result.
+#' @param x A yoychg() result.
 #' @return \code{"ppchg"} for a percentage-point change, else \code{"pctchg"}.
 #' @noRd
 .yoy_change_col <- function(x) {
@@ -403,17 +403,17 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
   sprintf("\033[38;2;%d;%d;%dm", r, g, b)
 }
 
-#' Writes the footer line that states a yoy() table's settings.
-#' @param m The settings of the yoy() result (see `.yoy_meta()`).
+#' Writes the footer line that states a yoychg() table's settings.
+#' @param m The settings of the yoychg() result (see `.yoy_meta()`).
 #' @return One string.
 #' @noRd
 .yoy_footer <- function(m) {
   paste(.yoy_footer_bits(m), collapse = .yg(" \u00b7 "))
 }
 
-#' The settings of a yoy() table, one phrase each: lag, units, interval,
+#' The settings of a yoychg() table, one phrase each: lag, units, interval,
 #' direction.
-#' @param m The settings of the yoy() result (see `.yoy_meta()`).
+#' @param m The settings of the yoychg() result (see `.yoy_meta()`).
 #' @return A character vector.
 #' @noRd
 .yoy_footer_bits <- function(m) {

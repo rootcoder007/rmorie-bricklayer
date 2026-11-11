@@ -192,7 +192,7 @@ plotopt <- function(...) {
 #' \describe{ \item{\code{rmbl_stock_flow}}{(\code{\link{stkflow}}) the average
 #'   daily population, length of stay, people and person-days over the periods,
 #'   one panel per measure in \code{what}; with an exposure, the flow and stock
-#'   rates too.} \item{\code{rmbl_yoy}}{(\code{\link{yoy}}) the
+#'   rates too.} \item{\code{rmbl_yoy}}{(\code{\link{yoychg}}) the
 #'   period-over-period percent change with its interval over the periods, the
 #'   period across and the change up, groups side by side, coloured by verdict;
 #'   \code{what = "value"} draws the values instead.} \item{\code{rmbl_rate},
@@ -372,7 +372,7 @@ plotopt <- function(...) {
 #' @param gaps For \code{rmbl_yoy} (\code{what = "value"}) and
 #'   \code{rmbl_event_study} (\code{style = "stata"}): how a missing value
 #'   shows in a line. \code{"break"} (the default) breaks the
-#'   line there, so a \dQuote{no data} period that \code{yoy(complete = TRUE)}
+#'   line there, so a \dQuote{no data} period that \code{yoychg(complete = TRUE)}
 #'   inserted is a visible gap; \code{"join"} draws the line straight over it.
 #' @return The data drawn, invisibly. For the plots over time the frame
 #'   carries the x position of each point drawn: an \code{at} column
@@ -386,14 +386,14 @@ plotopt <- function(...) {
 #' )
 #' plot(sf)
 #' plot(sf, what = "alos", col = "firebrick", main = "Length of stay")
-#' y <- yoy(
+#' y <- yoychg(
 #'   data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)),
 #'   value = "n",
 #'   prd = "year"
 #' )
 #' plot(y)
 #' # small counts: each percentage carries its exact interval
-#' plot(yoy(
+#' plot(yoychg(
 #'   data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)),
 #'   value = "n",
 #'   prd = "year"
@@ -2829,7 +2829,7 @@ plotbump <- function(
 #' A series drawn as a line over a soft fill down to the axis, with haloed
 #' points and its last value emphasised and labelled. gaps = \code{"break"}
 #' keeps a missing value as a break in the line and its fill (a \dQuote{no data}
-#' year that yoy(complete = TRUE) inserted); \code{"join"} draws over it.
+#' year that yoychg(complete = TRUE) inserted); \code{"join"} draws over it.
 #' @param x The x values.
 #' @param y The y values.
 #' @param col The line colour.
@@ -3821,7 +3821,7 @@ plotbump <- function(
   )
 }
 
-# Text periods in time order, read as the tables read them (yoy()'s period
+# Text periods in time order, read as the tables read them (yoychg()'s period
 # reader: fiscal years "2019/20", "Q1 2022", "2022 Q1", "Mar 2021", "March
 # 2021" and dates), or in the order `prdord` gives; anything the reader does
 # not know is sorted. Before, only year-first labels were ordered, so a plot

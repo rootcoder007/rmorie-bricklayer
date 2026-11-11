@@ -201,7 +201,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   published table. `ratechg()` gives the change in a rate between
   periods, conditioning on the two counts and correcting for the exposure
   ratio rather than treating two rates as measured numbers.
-- **Change tables** — `yoy()` computes period-over-period change matched on
+- **Change tables** — `yoychg()` computes period-over-period change matched on
   the period's own value rather than on row order, so a missing year is a
   gap instead of a quietly multi-year comparison. A percent off a small
   base is withheld with its reason; a column already in percent is
@@ -454,12 +454,10 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   base64 and base64url codecs beside it.
 - **Curated tables** — `dtabs()` lists the tables served
   at data.rmorie.com (Google BigQuery public datasets and the survey, court
-  and justice data the MORIE ledger uses), and `dload("db/table")` opens one with your
-  MORIE key (`rmoriebricklayer login` signs in with GitHub or an emailed
-  code; or ask at `www.rmorie.com/access/`), under the terms at
-  `www.rmorie.com/data-license/`, cached locally. The ICPSR, NCVS
-  38604 and a2aj tables open once you accept their terms at
-  `data.rmorie.com/terms`. `blfetch()` downloads any URL with an Internet Archive
+  and justice data the MORIE ledger uses), and `dload("db/table")` opens one,
+  with no sign-in, checked against the SHA-256 its manifest lists and cached
+  locally; each table keeps its source's licence. The ICPSR studies are not
+  served: ICPSR's terms do not allow it, so `dload()` points to ICPSR. `blfetch()` downloads any URL with an Internet Archive
   fallback (libcurl).
 
 ## Security posture
@@ -987,7 +985,7 @@ rmoriebricklayer login                          # or: GitHub device flow
 rmoriebricklayer login --no-browser             # server / SSH: prints a link + code for any device
 rmoriebricklayer logout                         # forget the data key
 rmoriebricklayer data list                      # the curated tables at data.rmorie.com
-rmoriebricklayer data pull db/table --out t.csv # download one (your MORIE key)
+rmoriebricklayer data pull db/table --out t.csv # download one
 rmoriebricklayer app [PATH]                     # the analysis dashboard (needs shiny)
 rmoriebricklayer wayback urls.txt --out w.jsonl # archive every URL in a file (archive.org keys)
 rmoriebricklayer wayback --retry w.jsonl        # retry the ones that failed

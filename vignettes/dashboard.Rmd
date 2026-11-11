@@ -107,7 +107,7 @@ in first with `rmbl login`. The app never holds your data key: `dload()` reads i
   ridgelines, distribution functions, violins, hexagonal bins and concentration curves.
 - **Distributions**: `dstfit()` fits candidate distributions and ranks them, with density, QQ, PP
   and tail plots. You can draw a synthetic sample from the best fit with `mksyncol()`.
-- **Year over year**: `yoy()` with the period, value, groups, the smallest base for a percentage
+- **Year over year**: `yoychg()` with the period, value, groups, the smallest base for a percentage
   and which direction is better. Download the result as the `yoyhtml()` page.
 - **Rates**: `rtcalc()`, `ratechg()` and `shrs()`. A rate per population and a share of a total
   stay apart.

@@ -1267,7 +1267,7 @@ test_that(
 test_that("a period-over-period plot says why a row has no percentage", {
   # the first period and a zero base have no percentage; every other row has
   # one, small bases included
-  y <- yoy(
+  y <- yoychg(
     data.frame(year = 2019:2023, n = c(10, 12, 420, 0, 450)),
     value = "n",
     prd = "year"
@@ -1298,7 +1298,7 @@ test_that(
     "too short for it"
   ),
   {
-    y <- yoy(
+    y <- yoychg(
       data.frame(year = 2019:2023, n = c(10, 12, 420, 0, 450)),
       value = "n",
       prd = "year"

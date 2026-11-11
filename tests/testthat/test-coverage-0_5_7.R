@@ -1131,7 +1131,7 @@ test_that("power, bounds, scan adjustment and falsification guards", {
   e <- chgenv(now, prev[1:2, ], pop = c(1000, 2000), prepop = c(900, 1900))
   expect_identical(e$ratelo, 1000 * now$lower / c(1000, 2000))
   expect_identical(e$prerateup, 1000 * prev$upper[1:2] / c(900, 1900))
-  expect_error(yoypv(1), "`y` must come from yoy()")
+  expect_error(yoypv(1), "`y` must come from yoychg()")
   expect_error(scanadj(1), "`x` must be a data frame")
   expect_identical(.exact_ratio_p(c(0, 3), c(0, 3)), c(NA, 1))
   cal <- structure(
@@ -1296,7 +1296,7 @@ test_that(
 )
 
 test_that("yoy PDF with groups, verdict colours and notes", {
-  y <- yoy(
+  y <- yoychg(
     data.frame(
       year = rep(2000:2003, 2),
       g = rep(c("a", "b"), each = 4),

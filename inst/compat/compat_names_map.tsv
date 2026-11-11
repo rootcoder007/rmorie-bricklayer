@@ -305,3 +305,4 @@ share	shrs	x,count,by,total,conf_level	x,count,by,total,conflvl
 anltab	anytab	data,value,prd,by,pop,prior,units,rnd,rndkind,suplim,dir,per,conflvl,alpha,adjust,prdord	data,value,prd,by,pop,prior,units,rnd,rndkind,suplim,dir,per,conflvl,alpha,adjust,prdord	
 plotecdf	plotcdfs	x,grp,...,main,col,pal	x,grp,...,main,col,pal	
 plotsm	plotmult	y,prd,grp,...,main,col,pal	y,prd,grp,...,main,col,pal	
+yoy	yoychg	x,value,prd,by,lag,fun,units,minbase,conflvl,dir,complete,prdord,...	x,value,prd,by,lag,fun,units,minbase,conflvl,dir,complete,prdord,...	

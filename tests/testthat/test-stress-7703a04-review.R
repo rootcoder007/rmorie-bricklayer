@@ -530,7 +530,7 @@ test_that("the earlier round's weak tests, sharpened", {
     year = 2015:2024,
     n = c(402, 377, 190, 268, 331, 300, 310, 290, 305, 320)
   )
-  y <- yoy(d, value = "n", prd = "year")
+  y <- yoychg(d, value = "n", prd = "year")
   f <- withr::local_tempfile(fileext = ".pdf")
   yoypdf(y, f, notes = sprintf("note %d", 1:30), height = 5)
   bytes <- readBin(f, "raw", file.size(f))

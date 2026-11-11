@@ -1762,7 +1762,7 @@ instcli <- function(
     ),
     data = paste0(
       "data list | data pull db/table [--out FILE.csv]   curated tables ",
-      "at data.rmorie.com (your MORIE key)"
+      "at data.rmorie.com (no sign-in)"
     ),
     app = paste0(
       "app [PATH] [--port N] [--no-browser]   the analysis dashboard ",
@@ -2253,7 +2253,7 @@ instcli <- function(
     out(.bl_format_data_tables(
       dtabs(),
       hint = sprintf(
-        "`%s data pull KEY` downloads one (your MORIE key)",
+        "`%s data pull KEY` downloads one",
         .bl_prog()
       )
     ))

@@ -43,7 +43,7 @@ test_that("chgenv is the exact image of the input intervals", {
 })
 
 test_that("yoybnd widens the sampling interval, never narrows it", {
-  y <- yoy(otis, value = "individuals", prd = "year", by = c("table", "group"))
+  y <- yoychg(otis, value = "individuals", prd = "year", by = c("table", "group"))
   yb <- yoybnd(y, rnd = 5)
   ok <- !is.na(yb$pctlo)
   expect_true(all(yb$compctlo[ok] <= yb$pctlo[ok]))
@@ -51,11 +51,11 @@ test_that("yoybnd widens the sampling interval, never narrows it", {
   expect_true(all(yb$envpctlo[ok] <= yb$pctchg[ok]))
   expect_true(all(yb$envpctup[ok] >= yb$pctchg[ok]))
   expect_s3_class(yb, "rmbl_yoy")
-  expect_error(yoybnd(otis), "yoy\\(\\)")
+  expect_error(yoybnd(otis), "yoychg\\(\\)")
 })
 
 test_that("exact p-values agree with binom.test and adjust over the scan", {
-  y <- yoy(otis, value = "individuals", prd = "year", by = c("table", "group"))
+  y <- yoychg(otis, value = "individuals", prd = "year", by = c("table", "group"))
   yp <- yoypv(y)
   i <- which(!is.na(yp$previous))[1]
   expect_identical(
@@ -73,7 +73,7 @@ test_that("exact p-values agree with binom.test and adjust over the scan", {
   expect_identical(scanadj(d)$padj, p.adjust(d$p_value, "BH"))
   expect_error(scanadj(data.frame(a = 1)), "p_value")
   # continuous units carry no exact test
-  yc <- yoy(
+  yc <- yoychg(
     otis,
     value = "individuals",
     prd = "year",
@@ -264,7 +264,7 @@ test_that("anytab() refuses an infinite or zero rounding base (C7)", {
   )
 })
 
-test_that("anytab() orders text periods as yoy() reads them (C18)", {
+test_that("anytab() orders text periods as yoychg() reads them (C18)", {
   d <- data.frame(
     p = c("2020 Q2", "2020 Q1", "2020 Q4", "2020 Q3"),
     n = 1:4,

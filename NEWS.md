@@ -1,7 +1,9 @@
 # rmoriebricklayer 1.1.1
 
-* Three functions have new names, so that no exported name is also a function in another CRAN package: `plotecdf()` is `plotcdfs()`, `plotsm()` is `plotmult()`, and `anltab()` is `anytab()`. The 0.5.x name `analyse_table` now leads to `anytab()`, and `rmbl migrate` rewrites calls of the three 1.1.0 names in a script to the new ones (`rmbl describe anltab` says what it became).
+* Four functions have new names, so that no exported name is also a function in another CRAN package: `plotecdf()` is `plotcdfs()`, `plotsm()` is `plotmult()`, `anltab()` is `anytab()`, and `yoy()` is `yoychg()` (same arguments, same result). The 0.5.x name `analyse_table` now leads to `anytab()`, and `rmbl migrate` rewrites calls of the old names in a script to the new ones (`rmbl describe anltab` says what it became).
 * The 0.5.13 S3 generics `rate()`, `rate_change()` and `share()` are gone, for the same reason; `rtcalc()`, `ratechg()` and `shrs()` are the functions, with the 1.0.0 arguments and result names. `yoy_summary()` stays. The command line still knows the three old names: `rmbl describe rate` says what it became, and `rmbl migrate` rewrites a script's `rate()`, `rate_change()` and `share()` calls to the new functions and argument names.
+* The curated tables at data.rmorie.com need no sign-in: `dload()`, `dtabs()` and `rmbl data pull` work without a key, and a key stored earlier with `dlogin()` is still sent. ICPSR studies are no longer served there (ICPSR's terms do not allow redistribution); asking for one says where to get it.
+* The full test suite runs in batches of 8 files, each in a fresh R process, so no process grows past about 1 GB; in batches of 25, R CMD check on a 2 GB machine was stopped for lack of memory.
 * The `@srrstatsNA` entry for standard G2.14c (imputation) starts its own line again, so 'srr' reads it.
 * Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
 

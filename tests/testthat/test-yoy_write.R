@@ -3,7 +3,7 @@
 
 yoy_small <- function() {
   d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-  yoy(d, value = "n", prd = "year")
+  yoychg(d, value = "n", prd = "year")
 }
 
 test_that("yoymd() writes an aligned Markdown table", {
@@ -39,7 +39,7 @@ test_that("delimited text quotes what needs it and keeps its rows", {
 })
 
 test_that("the writers check their flags and digits (D6, D7)", {
-  y <- yoy(data.frame(year = 2019:2021, n = c(5, 7, 9)), "n", "year")
+  y <- yoychg(data.frame(year = 2019:2021, n = c(5, 7, 9)), "n", "year")
   expect_error(yoycsv(y, NULL, meta = "TRUE"), "yoycsv: `meta` must be TRUE")
   expect_error(yoytsv(y, NULL, meta = NA), "yoytsv: `meta` must be TRUE")
   expect_error(yoyjs(y, NULL, pretty = "no"), "yoyjs: `pretty` must be TRUE")

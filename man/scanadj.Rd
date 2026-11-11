@@ -32,7 +32,7 @@ finding. This adds \code{padj} (Benjamini-Hochberg by default, which
 controls the false discovery rate over the scan) and \code{significant}
 at level \code{alpha} after adjustment. Exact p-values are computed where
 the object does not carry them: the conditional binomial test for
-\code{\link[=yoy]{yoy()}} counts and for \code{\link[=ratechg]{ratechg()}}
+\code{\link[=yoychg]{yoychg()}} counts and for \code{\link[=ratechg]{ratechg()}}
 (with the exposures as the
 binomial weights).
 }
@@ -53,7 +53,7 @@ specific row needs. A row is \code{significant} when its adjusted p-value
 is strictly below \code{alpha}.
 
 Errors: \code{x} not a data frame; no \code{p_value} column and not a
-\code{yoy()} or \code{ratechg()} result; a \code{yoy()} result
+\code{yoychg()} or \code{ratechg()} result; a \code{yoychg()} result
 without count units; a p-value outside \eqn{[0, 1]}; a method unknown to
 \code{p.adjust()}.
 }
@@ -62,7 +62,7 @@ without count units; a p-value outside \eqn{[0, 1]}; a method unknown to
 seg <- data.frame(year = rep(2022:2023, each = 3),
                   site = rep(c("A", "B", "C"), 2),
                   n = c(30, 50, 80, 45, 52, 79))
-y <- yoy(seg, value = "n", prd = "year", by = "site")
+y <- yoychg(seg, value = "n", prd = "year", by = "site")
 scanadj(y)[, c("site", "pctchg", "p_value", "padj")]
 
 # family-wise control instead of the false discovery rate

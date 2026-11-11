@@ -18,7 +18,7 @@ yoymd(x, file, digits = 1L, align = TRUE, ...)
 }
 \arguments{
 \item{x}{An \code{rmbl_yoy} object from
-\code{\link[=yoy]{yoy()}}.}
+\code{\link[=yoychg]{yoychg()}}.}
 
 \item{file}{Character scalar, the output path, or \code{NULL} to return the
 text instead of writing it.}
@@ -76,13 +76,13 @@ quoted, quotes doubled). The metadata line names the value and period
 columns, the grouping, the lag, the units, and for counts the interval's
 confidence level and the base below which changes are noted. A pipe inside
 a Markdown cell is escaped. An existing file is overwritten. Errors when
-\code{x} does not come from \code{\link[=yoy]{yoy()}}, or \code{digits} is not a whole
+\code{x} does not come from \code{\link[=yoychg]{yoychg()}}, or \code{digits} is not a whole
 number.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-y <- yoy(d, value = "n", prd = "year")
+y <- yoychg(d, value = "n", prd = "year")
 
 # Straight to text, for inspection.
 cat(yoycsv(y, NULL))
@@ -101,7 +101,7 @@ f <- tempfile(fileext = ".csv")
 yoycsv(y, f)
 read.csv(f, comment.char = "#")[, c("year", "pctchg", "flag")]
 
-# only yoy() results are accepted
+# only yoychg() results are accepted
 try(yoycsv(d, NULL))
 \dontshow{\}) # examplesIf}
 }

@@ -4,13 +4,13 @@
 #'
 #' @description
 #' Adds a two-sided exact p-value to each row of a period-over-period change
-#' table of counts from \code{\link{yoy}}, testing whether the count changed
+#' table of counts from \code{\link{yoychg}}, testing whether the count changed
 #' by more than chance between the two periods. Use it when you want a test
 #' to go with each change, and then pass the table to
 #' \code{\link{scanadj}} to correct for the number of rows tested.
 #'
 #' @details
-#' For count units the interval in [yoy()] is the exact conditional
+#' For count units the interval in [yoychg()] is the exact conditional
 #' binomial interval for the ratio of two Poisson means; this is the
 #' matching two-sided test. The test conditions on
 #' the total of the two periods and asks whether the split is
@@ -21,38 +21,38 @@
 #' populations use \code{\link{ratechg}} and \code{\link{scanadj}},
 #' which weight by the exposures. Counts are rounded to whole numbers.
 #'
-#' Errors: \code{y} not a \code{yoy()} result; a \code{yoy()} result whose
+#' Errors: \code{y} not a \code{yoychg()} result; a \code{yoychg()} result whose
 #' units are not counts (percentages and measured values have no Poisson
 #' test). A progress indicator is shown for long tables in an interactive
 #' session.
 #'
-#' @param y An \code{rmbl_yoy} object from \code{\link{yoy}} with
+#' @param y An \code{rmbl_yoy} object from \code{\link{yoychg}} with
 #'   \code{units = "count"}.
 #' @return \code{y}, with its class and attributes, and an added numeric
 #'   \code{p_value} column; \code{NA} where there is no comparison period or
 #'   both counts are zero.
-#' @seealso \code{\link{scanadj}}, \code{\link{yoy}}.
+#' @seealso \code{\link{scanadj}}, \code{\link{yoychg}}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' seg <- data.frame(year = rep(2022:2023, each = 3),
 #'                   site = rep(c("A", "B", "C"), 2),
 #'                   n = c(30, 50, 80, 45, 52, 79))
-#' y <- yoy(seg, value = "n", prd = "year", by = "site")
+#' y <- yoychg(seg, value = "n", prd = "year", by = "site")
 #' yoypv(y)$p_value
 #'
 #' # the same test by hand for site A: 45 against 30
 #' stats::binom.test(45, 75)$p.value
 #'
-#' # anything that is not a yoy() table is refused
+#' # anything that is not a yoychg() table is refused
 #' try(yoypv(seg))
 #' @export
 yoypv <- function(y) {
   if (!inherits(y, "rmbl_yoy")) {
-    stop("yoypv: `y` must come from yoy()", call. = FALSE)
+    stop("yoypv: `y` must come from yoychg()", call. = FALSE)
   }
   m <- attr(y, "yoy")
   if (!identical(m$units, "count")) {
     stop(
-      "exact p-values need count units; yoy() was run with units = \"",
+      "exact p-values need count units; yoychg() was run with units = \"",
       m$units,
       "\"",
       call. = FALSE
@@ -71,7 +71,7 @@ yoypv <- function(y) {
 #' controls the false discovery rate over the scan) and `significant`
 #' at level `alpha` after adjustment. Exact p-values are computed where
 #' the object does not carry them: the conditional binomial test for
-#' [yoy()] counts and for [ratechg()]
+#' [yoychg()] counts and for [ratechg()]
 #' (with the exposures as the
 #' binomial weights).
 #'
@@ -92,7 +92,7 @@ yoypv <- function(y) {
 #' is strictly below \code{alpha}.
 #'
 #' Errors: \code{x} not a data frame; no \code{p_value} column and not a
-#' \code{yoy()} or \code{ratechg()} result; a \code{yoy()} result
+#' \code{yoychg()} or \code{ratechg()} result; a \code{yoychg()} result
 #' without count units; a p-value outside \eqn{[0, 1]}; a method unknown to
 #' \code{p.adjust()}.
 #'
@@ -115,7 +115,7 @@ yoypv <- function(y) {
 #' seg <- data.frame(year = rep(2022:2023, each = 3),
 #'                   site = rep(c("A", "B", "C"), 2),
 #'                   n = c(30, 50, 80, 45, 52, 79))
-#' y <- yoy(seg, value = "n", prd = "year", by = "site")
+#' y <- yoychg(seg, value = "n", prd = "year", by = "site")
 #' scanadj(y)[, c("site", "pctchg", "p_value", "padj")]
 #'
 #' # family-wise control instead of the false discovery rate
@@ -140,7 +140,7 @@ scanadj <- function(x, meth = "BH", alpha = 0.05) {
     x$p_value <- .exact_ratio_p(x$count, x$precnt, x$population, x$prepop)
   } else if (is.null(x$p_value)) {
     stop(
-      "`x` has no `p_value` column and is not a yoy() or ",
+      "`x` has no `p_value` column and is not a yoychg() or ",
       "ratechg() result",
       call. = FALSE
     )

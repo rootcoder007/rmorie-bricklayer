@@ -19,7 +19,7 @@
 # which is NOT the percent change of two rates treated as measured
 # numbers: the denominators move too. ratechg() conditions on the
 # total of the two counts and corrects for the exposure ratio, which is
-# the same exact conditional construction yoy() uses for counts,
+# the same exact conditional construction yoychg() uses for counts,
 # generalised to unequal denominators.
 
 #' Event rates per unit of population
@@ -294,7 +294,7 @@ format.rmbl_rate <- function(x, digits = 4L, ...) {
 #'   a list of \code{count}, \code{by}, \code{total} and \code{conflvl}.
 #'
 #' @seealso \code{\link{rtcalc}} for events per population,
-#'   \code{\link{yoy}} for change between periods.
+#'   \code{\link{yoychg}} for change between periods.
 #'
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' stops <- data.frame(
@@ -390,7 +390,7 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
 #' and an interval that ignores the denominators understates the
 #' uncertainty of the change. The construction here conditions on the
 #' total of the two counts and corrects for the ratio of the two
-#' exposures, which is \code{\link{yoy}}'s exact conditional-binomial
+#' exposures, which is \code{\link{yoychg}}'s exact conditional-binomial
 #' interval generalised to unequal denominators: with equal populations it
 #' reduces to exactly that.
 #'
@@ -424,14 +424,14 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
 #' @param prd Column of periods (unquoted or a string). Sorted within
 #'   each group; see Details for how the earlier period is found.
 #' @param prdord Optional character vector: the period labels in order, as
-#'   for [yoy()]. A label it lists that the data lacks is a gap, so the
+#'   for [yoychg()]. A label it lists that the data lacks is a gap, so the
 #'   change across it is not reported as one step.
 #' @param by Character vector of grouping columns, default \code{NULL}.
 #' @param lag Whole number, default 1: how many periods back to compare
 #'   against.
 #' @param mincnt Number, default 0. Comparisons where the earlier count
 #'   is at or below this are flagged as resting on a small count; the percent
-#'   change and its exact interval are still reported, as \code{\link{yoy}}
+#'   change and its exact interval are still reported, as \code{\link{yoychg}}
 #'   does.
 #'
 #' @return A data frame of class \code{c("rmbl_rate_change", "data.frame")}
@@ -444,7 +444,7 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
 #'   small-count note, or \code{NA}. The \code{ratechg} attribute records
 #'   the settings.
 #'
-#' @seealso \code{\link{rtcalc}}, \code{\link{yoy}} for change in a count or a
+#' @seealso \code{\link{rtcalc}}, \code{\link{yoychg}} for change in a count or a
 #'   measured quantity.
 #'
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
@@ -516,7 +516,7 @@ ratechg.data.frame <- function(
     mincnt,
     prdord
   )
-  # unnamed: group labels as row names warned in a C locale (as yoy())
+  # unnamed: group labels as row names warned in a C locale (as yoychg())
   out <- do.call(rbind, unname(.res))
   rownames(out) <- NULL
   structure(
@@ -876,7 +876,7 @@ format.rmbl_share <- function(x, digits = 4L, ...) {
 #' a is binomial on a + b with success probability
 #' p = RR * ta / (RR * ta + tb); inverting a qbeta interval for p gives
 #' the interval for RR. With ta == tb this is the same construction
-#' yoy() uses for counts.
+#' yoychg() uses for counts.
 #' @param a The current counts, the rate ratio's numerator events.
 #' @param b The comparison counts.
 #' @param ta The current exposures.
@@ -1020,7 +1020,7 @@ format.rmbl_share <- function(x, digits = 4L, ...) {
 }
 
 #' The row order of ratechg() periods: text periods (fiscal years,
-#' quarters, months) in time order, read the way yoy() reads them.
+#' quarters, months) in time order, read the way yoychg() reads them.
 #' @param p The periods to order.
 #' @return An integer order.
 #' @noRd

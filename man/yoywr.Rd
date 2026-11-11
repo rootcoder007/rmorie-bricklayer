@@ -8,7 +8,7 @@ yoywr(x, file, format = "auto", ...)
 }
 \arguments{
 \item{x}{An \code{rmbl_yoy} object from
-\code{\link[=yoy]{yoy()}}.}
+\code{\link[=yoychg]{yoychg()}}.}
 
 \item{file}{Character scalar, the output path.}
 
@@ -25,7 +25,7 @@ digit and layout options of \code{\link[=yoyhtml]{yoyhtml()}} and
 \code{file}, invisibly (as returned by the chosen writer).
 }
 \description{
-Writes a period-over-period table from \code{\link[=yoy]{yoy()}} in the format the
+Writes a period-over-period table from \code{\link[=yoychg]{yoychg()}} in the format the
 file
 name implies, so one call serves a web page, a PDF for a report, a CSV for
 a spreadsheet, JSON for a program or Markdown for a README. Every format is
@@ -41,14 +41,14 @@ go to \code{\link[=yoyhtml]{yoyhtml()}}, \code{.pdf} to
 \code{\link[=yoyjs]{yoyjs()}}, \code{.md} and \code{.markdown} to
 \code{\link[=yoymd]{yoymd()}}. An
 existing file is overwritten. Errors when \code{x} does not come from
-\code{\link[=yoy]{yoy()}}, when the format cannot be read from the extension (pass
+\code{\link[=yoychg]{yoychg()}}, when the format cannot be read from the extension (pass
 \code{format}), or when \code{format} is not one of the names below; and
 whatever error the chosen writer raises.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-y <- yoy(d, value = "n", prd = "year")
+y <- yoychg(d, value = "n", prd = "year")
 
 for (ext in c("csv", "tsv", "json", "md", "html")) {
   f <- file.path(tempdir(), paste0("change.", ext))

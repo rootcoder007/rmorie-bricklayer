@@ -14,7 +14,7 @@
 #'
 #' @details The steps, in order: \enumerate{ \item profile:
 #' [profcols()] and [misssmry()] on
-#' \code{data}; \item change: [yoy()] between consecutive periods within
+#' \code{data}; \item change: [yoychg()] between consecutive periods within
 #' each \code{by} group. For \code{units = "count"} the exact p-values are then
 #' adjusted across all comparisons with [scanadj()], and, when
 #' \code{rnd} or \code{suplim} is given, [yoybnd()] adds the
@@ -34,7 +34,7 @@
 #' \code{data} or \code{prior} not a data frame; a named column not in
 #' \code{data}; an invalid \code{units}, \code{dir} or \code{rndkind}; a
 #' \code{conflvl} outside (0, 1); and any error of the functions called (for
-#' example negative counts in [yoy()]).
+#' example negative counts in [yoychg()]).
 #'
 #' @param data A data frame in long form: one row per period and group.
 #' @param value Name of the column (a string) with the published count (or
@@ -42,7 +42,7 @@
 #' @param prd Name of the column with the period (fiscal year, quarter,
 #'   ...); numeric periods are used as the time axis of the trend tests. Text
 #'   periods (\code{"2019/20"}, \code{"2021 Q3"}, \code{"Mar 2021"}) are
-#'   ordered as [yoy()] reads them (see its \code{prd}), or as
+#'   ordered as [yoychg()] reads them (see its \code{prd}), or as
 #'   \code{prdord} gives.
 #' @param by Optional character vector of grouping column names
 #'   (institution, region, ...). \code{NULL} (the default) treats the table as
@@ -52,7 +52,7 @@
 #' @param prior Optional data frame: the previous capsule of the same
 #'   table, for the drift screen. \code{NULL} (the default) skips it.
 #' @param units \code{"count"} (the default), \code{"continuous"} or
-#'   \code{"percent"}, as in [yoy()].
+#'   \code{"percent"}, as in [yoychg()].
 #' @param rnd,rndkind,suplim How the release rounds
 #'   or suppresses cells; see [pubbnd()].
 #'   \code{rnd} is the
@@ -61,7 +61,7 @@
 #'   which cells are suppressed. \code{NULL} when the counts are exact. Used
 #'   only for counts: with other \code{units} they are ignored, with a
 #'   warning.
-#' @param dir Which way is an improvement, as in [yoy()]:
+#' @param dir Which way is an improvement, as in [yoychg()]:
 #'   \code{"neutral"} (the default), \code{"higher"} or
 #'   \code{"lower"}.
 #' @param per Rate denominator, as in [rtcalc()]; default 1000 (rates
@@ -73,13 +73,13 @@
 #' @param adjust Multiple-comparison method for
 #'   [scanadj()]. The default is \code{"BH"} (Benjamini-Hochberg).
 #' @param prdord Optional character vector: the period labels in order,
-#'   for text periods the reader does not know (see [yoy()]); passed to
-#'   [yoy()], [ratechg()] and the trend tests.
+#'   for text periods the reader does not know (see [yoychg()]); passed to
+#'   [yoychg()], [ratechg()] and the trend tests.
 #' @return A list of class \code{bricklayer_analysis} (with a print method that
 #'   summarises it in a few lines): \describe{
 #'   \item{\code{profile}}{[profcols()] of \code{data}.}
 #'   \item{\code{missingness}}{named numeric from [misssmry()].}
-#'   \item{\code{change}}{the [yoy()] table; for counts with the added
+#'   \item{\code{change}}{the [yoychg()] table; for counts with the added
 #'   columns \code{p_value}, \code{padj} and \code{significant}, and with
 #'   \code{env_*} and \code{compctlo}/\code{compctup} when publication bounds
 #'   were requested.} \item{\code{rates}, \code{ratechg}}{the
@@ -381,8 +381,8 @@ rptanl <- function(
 .analysis_trends <- function(data, value, period, by, units, conf_level,
                              prdord = NULL) {
   conf_level <- .rmbl_conf_level(conf_level)
-  # text periods in the order yoy() reads them ("Mar 2021" after "Feb 2021"),
-  # not alphabetically; yoy() has already warned about any it cannot order
+  # text periods in the order yoychg() reads them ("Mar 2021" after "Feb 2021"),
+  # not alphabetically; yoychg() has already warned about any it cannot order
   data[[period]] <- .yoy_prd_read(data[[period]], prdord, quiet = TRUE)$p
   groups <- if (is.null(by)) {
     list(data)
@@ -421,7 +421,7 @@ rptanl <- function(
     }
     out
   })
-  # unnamed: group labels as row names warned in a C locale (as yoy())
+  # unnamed: group labels as row names warned in a C locale (as yoychg())
   out <- do.call(rbind, unname(rows))
   rownames(out) <- NULL
   out
@@ -636,13 +636,13 @@ rptanl <- function(
 #' count.
 #' @param data The table whose change between periods is measured.
 #' @param o anytab()'s settings.
-#' @return A yoy() result.
+#' @return A yoychg() result.
 #' @noRd
 .anl_change <- function(data, o) {
-  # bare `value` and `prd`, as anytab() passed them to yoy()
+  # bare `value` and `prd`, as anytab() passed them to yoychg()
   value <- o$value
   prd <- o$period
-  change <- yoy(
+  change <- yoychg(
     data,
     value = value,
     prd = prd,

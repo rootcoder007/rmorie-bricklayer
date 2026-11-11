@@ -149,8 +149,7 @@ for (v in names(oldenv)) {
 }
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
-# the real service: needs a key and the network
-dlogin(token = "sk-...")  # a key issued at www.rmorie.com/access/
+# the real service: needs the network, no sign-in
 head(dtabs())
 df <- dload("chicago_crime/incidents")
 \dontshow{\}) # examplesIf}

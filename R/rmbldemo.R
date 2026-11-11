@@ -536,7 +536,7 @@ rmbldemo <- function(name = NULL) {
 .bl_demo_ledger <- function() {
   fns <- c(
     "ginicoef",
-    "yoy",
+    "yoychg",
     "rtcalc",
     "trndtst",
     "stepchg",

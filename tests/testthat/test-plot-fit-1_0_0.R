@@ -78,11 +78,11 @@ test_that(
 
 test_that(
   paste0(
-    "a column subset of a yoy() result ",
+    "a column subset of a yoychg() result ",
     "prints its rows, not \"no periods\""
   ),
   {
-    y <- yoy(
+    y <- yoychg(
       data.frame(year = 2018:2021, n = c(40, 44, 41, 55)),
       value = "n",
       prd = "year"

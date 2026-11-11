@@ -15,7 +15,7 @@ test_that("fylbl() names a fiscal year by its two calendar years", {
 
 test_that("yoylbl() labels the periods and leaves the values alone", {
   d <- data.frame(year = 2021:2023, n = c(100, 120, 90))
-  y <- yoy(d, value = "n", prd = "year")
+  y <- yoychg(d, value = "n", prd = "year")
   f <- yoylbl(y, function(p) fylbl(p))
   expect_identical(f$perlbl, c("2020/21", "2021/22", "2022/23"))
   expect_true(attr(f, "yoy")$perlbl)

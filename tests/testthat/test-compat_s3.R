@@ -38,7 +38,7 @@ test_that("the old generics refuse what their methods do not take", {
 })
 
 test_that("an old-named result prints, formats and summarises", {
-  y <- yoy(
+  y <- yoychg(
     data.frame(year = 2019:2022, n = c(10, 12, 9, 15)),
     value = "n",
     prd = "year"

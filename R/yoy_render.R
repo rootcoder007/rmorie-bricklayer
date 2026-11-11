@@ -9,7 +9,7 @@
 
 #' Render a change table to HTML or PDF
 #'
-#' Writes a change table from [yoy()] to a file for people who will not
+#' Writes a change table from [yoychg()] to a file for people who will not
 #' run
 #' R: \code{yoyhtml()} to a single self-contained web page, \code{yoypdf()}
 #' to a PDF. Each row shows the period, the value, the previous value, the
@@ -38,11 +38,11 @@
 #' fit and on pages of their own otherwise. The interval column appears only
 #' when the table has \code{pctlo} and \code{pctup} (counts).
 #'
-#' Both overwrite \code{file}. Errors: \code{x} not from [yoy()]; a
+#' Both overwrite \code{file}. Errors: \code{x} not from [yoychg()]; a
 #' \code{pal} not in [yoypals()]; a file that cannot
 #' be written.
 #'
-#' @param x An \code{rmbl_yoy} object from [yoy()], written as HTML.
+#' @param x An \code{rmbl_yoy} object from [yoychg()], written as HTML.
 #' @param file Output path (a string). \code{yoyhtml()} writes a single
 #'   self-contained HTML file with no external requests; \code{yoypdf()}
 #'   writes a PDF using R's own device, so neither needs a package beyond
@@ -70,7 +70,7 @@
 #' d <- data.frame(year = rep(2019:2023, each = 2),
 #'                 region = rep(c("North", "South"), 5),
 #'                 n = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331))
-#' y <- yoy(d, value = "n", prd = "year", by = "region",
+#' y <- yoychg(d, value = "n", prd = "year", by = "region",
 #'          dir = "lower")
 #'
 #' h <- file.path(tempdir(), "change.html")
@@ -89,7 +89,7 @@
 #' # portrait letter pages, with fiscal-year labels
 #' yoypdf(yoylbl(y, fylbl), p, width = 8.5, height = 11)
 #'
-#' # only yoy() tables can be rendered
+#' # only yoychg() tables can be rendered
 #' try(yoyhtml(d, h))
 #' unlink(c(h, p))
 #' @name yoyren
@@ -107,7 +107,7 @@ yoyhtml <- function(
   ...
 ) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("yoyhtml: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoyhtml: `x` must be an rmbl_yoy object from yoychg()", call. = FALSE)
   }
   # an HTML page is written to a file or a connection (writeLines(html, NULL)
   # failed in base R's words)
@@ -141,7 +141,7 @@ yoyhtml <- function(
     .pal,
     head_cells,
     rows,
-    # yoy() has already warned about periods with no order
+    # yoychg() has already warned about periods with no order
     suppressWarnings(yoysmry(x)),
     m,
     c(.yoy_first_note(d, m), notes)
@@ -166,7 +166,7 @@ yoypdf <- function(
   ...
 ) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("yoypdf: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoypdf: `x` must be an rmbl_yoy object from yoychg()", call. = FALSE)
   }
   file <- .rmbl_out_file(file, connection = FALSE)
   width <- .rmbl_scalar(width, "width", 2, 200)

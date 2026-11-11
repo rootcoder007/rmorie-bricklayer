@@ -39,7 +39,7 @@
 #' distribution. Distributions: [dstfit()] with its density, QQ, PP
 #' and tail plots, and a synthetic sample from a fit through
 #' [mksyncol()].} \item{Over time}{Year over year:
-#' [yoy()] (hover a period of its plot for the period's rows) and the
+#' [yoychg()] (hover a period of its plot for the period's rows) and the
 #' [yoyhtml()] page to download. Rates:
 #' [rtcalc()], [ratechg()] and
 #' [shrs()]. Trends: [trndtst()] (Mann-Kendall
@@ -1146,7 +1146,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   if (test) !is.null(t) else as.data.frame(t)
 }
 
-#' Writes a downloaded result: a yoy() table as yoyhtml() draws it, a table as
+#' Writes a downloaded result: a yoychg() table as yoyhtml() draws it, a table as
 #' CSV, else the print.
 #' @param x The result to write: as HTML, as CSV or as printed text.
 #' @param file The path the download is written to.

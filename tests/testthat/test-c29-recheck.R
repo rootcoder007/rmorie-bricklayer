@@ -110,7 +110,7 @@ test_that("tables fit the console: long labels are cut, numbers never", {
   withr::local_options(width = 30)
   d <- data.frame(g = rep(c(strrep("w", 300), "b"), each = 2),
                   p = rep(2020:2021, 2), n = c(10, 12, 5, 6))
-  out <- format(yoy(d, "n", "p", by = "g"))
+  out <- format(yoychg(d, "n", "p", by = "g"))
   rows <- out[grepl("202[01]", out)]
   expect_true(all(nchar(rows, type = "width") <= 40L))
   expect_false(any(grepl(strrep("w", 41), out, fixed = TRUE)))

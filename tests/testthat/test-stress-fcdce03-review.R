@@ -865,7 +865,7 @@ test_that(
     expect_identical(dtctloc(tz = "Europe/Jersey")$location, "FR")
     expect_identical(dtctloc(tz = "Europe/Guernsey")$location, "FR")
     d <- data.frame(year = 1985:2024, n = 300 + (0:39) * 7)
-    y <- yoy(d, value = "n", prd = "year")
+    y <- yoychg(d, value = "n", prd = "year")
     pages_of <- function(notes) {
       f <- withr::local_tempfile(
         fileext = ".pdf",

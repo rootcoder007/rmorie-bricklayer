@@ -1,6 +1,6 @@
 # Curated datasets at data.rmorie.com (the address comes from the signed
-# services document), opened by the MORIE key this package stores with dlogin()
-# (GitHub or an emailed code), or one asked for at www.rmorie.com/access/. The
+# services document), with no sign-in; a MORIE key stored earlier with dlogin()
+# is still sent. The
 # same tables rmorie and morie pull; a manifest lists every table with its rows,
 # columns, SHA-256 and the BigQuery public dataset it was built from.
 
@@ -143,8 +143,7 @@
 #' }
 #'
 #' @examplesIf interactive()
-#' # the real service: needs a key and the network
-#' dlogin(token = "sk-...")  # a key issued at www.rmorie.com/access/
+#' # the real service: needs the network, no sign-in
 #' head(dtabs())
 #' df <- dload("chicago_crime/incidents")
 #' @export
@@ -576,14 +575,12 @@ dload <- function(key, refresh = FALSE, token = NULL) {
 #' @return `dest`, invisibly.
 #' @noRd
 .bl_data_get <- function(path, dest, timeout = 600, max_bytes = 2^31) {
+  # the open tables need no key; a stored one is still sent
   key <- .bl_data_key()
-  if (is.null(key)) {
-    .bl_data_no_key()
-  }
   old <- options(timeout = max(getOption("timeout", 60), timeout))
   on.exit(options(old), add = TRUE)
   hdr <- c(
-    Authorization = paste("Bearer", key),
+    if (!is.null(key)) c(Authorization = paste("Bearer", key)),
     "User-Agent" = "rmoriebricklayer/1 (+https://www.rmorie.com)"
   )
   lb <- .bl_data_label(path)
@@ -603,7 +600,7 @@ dload <- function(key, refresh = FALSE, token = NULL) {
     warning = function(w) w
   )
   if (inherits(rc, "condition")) {
-    .bl_data_get_failed(rc, label)
+    .bl_data_get_failed(rc, label, keyed = !is.null(key))
   }
   invisible(dest)
 }
@@ -1071,36 +1068,6 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   )
 }
 
-#' Refuses a download from the curated-data service without a key.
-#' @noRd
-.bl_data_no_key <- function() {
-  env <- trimws(Sys.getenv("MORIE_DATA_URL", unset = ""))
-  if (nzchar(env) && !is.null(.bl_hosted_key())) {
-    stop(
-      sprintf(
-        paste(
-          "MORIE_DATA_URL=%s is not the curated-data address of the",
-          "signed services document,",
-          "so the stored key is not sent to it: unset MORIE_DATA_URL",
-          "(the address comes from the",
-          "document)"
-        ),
-        env
-      ),
-      call. = FALSE
-    )
-  }
-  stop(
-    "the curated tables need your MORIE key: run ",
-    sprintf(
-      "dlogin() (or `%s login`) once; %s.",
-      .bl_prog(),
-      .bl_access_hint()
-    ),
-    call. = FALSE
-  )
-}
-
 #' The label and the expected size of a download from the service.
 #' @param path The path on the service.
 #' @return list(label, size): the table's key for a table (its size from the
@@ -1125,9 +1092,18 @@ dload <- function(key, refresh = FALSE, token = NULL) {
 #' Says why a download from the curated-data service failed.
 #' @param rc The error or warning the download raised.
 #' @param label The download's label.
+#' @param keyed Whether a key was sent.
 #' @noRd
-.bl_data_get_failed <- function(rc, label) {
+.bl_data_get_failed <- function(rc, label, keyed = TRUE) {
   msg <- conditionMessage(rc)
+  if (grepl("\\b410\\b|Gone", msg)) {
+    stop(
+      label,
+      " is not served by data.rmorie.com: ICPSR's terms do not allow ",
+      "redistribution; download it from ICPSR (https://www.icpsr.umich.edu)",
+      call. = FALSE
+    )
+  }
   if (grepl("403|Forbidden", msg) && .bl_data_restricted(label)) {
     stop(
       sprintf(
@@ -1138,6 +1114,19 @@ dload <- function(key, refresh = FALSE, token = NULL) {
           "your key, then ask again"
         ),
         label
+      ),
+      call. = FALSE
+    )
+  }
+  if (grepl("401|403|Unauthorized|Forbidden", msg) && !keyed) {
+    stop(
+      sprintf(
+        paste(
+          "data.rmorie.com asked for a key for %s: run dlogin() (or",
+          "`%s login`) once, or update the package"
+        ),
+        label,
+        .bl_prog()
       ),
       call. = FALSE
     )

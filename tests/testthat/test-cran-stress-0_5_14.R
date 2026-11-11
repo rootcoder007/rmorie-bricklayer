@@ -657,10 +657,10 @@ test_that("every new refusal is reached (one call per branch)", {
   )
   w(stepchg(1:6, x = matrix(1:6)), "`x` must be one time or position")
   w(certchnvrf(NULL, NULL, attm = "now"), "`attm` must be a single date-time")
-  w(yoy(d, "v", "p", by = 1), "`by` must be one or more column names")
-  w(yoy(c(1, 2, 3), value = 1), "for a numeric `x`")
-  w(yoy(c(1, 2, 3), prd = 1:2), "`prd` must have one entry per value")
-  y <- yoy(c(10, 12, 15))
+  w(yoychg(d, "v", "p", by = 1), "`by` must be one or more column names")
+  w(yoychg(c(1, 2, 3), value = 1), "for a numeric `x`")
+  w(yoychg(c(1, 2, 3), prd = 1:2), "`prd` must have one entry per value")
+  y <- yoychg(c(10, 12, 15))
   w(yoyhtml(y, NULL), "`file` must be a file path or a connection")
   w(
     yoyhtml(y, tempfile(fileext = ".html"), sub = 1),

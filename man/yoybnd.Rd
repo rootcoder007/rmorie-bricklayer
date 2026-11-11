@@ -7,7 +7,7 @@
 yoybnd(y, rnd = NULL, rndkind = c("nearest", "random"), suplim = NULL)
 }
 \arguments{
-\item{y}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}, with counts as
+\item{y}{An \code{rmbl_yoy} object from \code{\link[=yoychg]{yoychg()}}, with counts as
 values.}
 
 \item{rnd}{Numeric scalar, the base the release rounds to
@@ -34,7 +34,7 @@ percent-change intervals, \code{compctlo} and
 \code{bounds} in the \code{"yoy"} attribute.
 }
 \description{
-\code{\link[=yoy]{yoy()}} gives an exact conditional-binomial interval for the percent
+\code{\link[=yoychg]{yoychg()}} gives an exact conditional-binomial interval for the percent
 change of a count, which covers sampling variation. This adds the
 interval that rounding and suppression in the published cells imply
 (\code{\link[=pubbnd]{pubbnd()}} carried through
@@ -56,13 +56,13 @@ previous cell that could be zero) the combined end is \code{NA}. The
 function does not check that \code{y} holds counts; publication bounds
 make sense only for counts.
 
-Errors when \code{y} does not come from \code{\link[=yoy]{yoy()}}, and for the reasons
+Errors when \code{y} does not come from \code{\link[=yoychg]{yoychg()}}, and for the reasons
 \code{\link[=pubbnd]{pubbnd()}} gives.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 seg <- data.frame(year = 2021:2023, n = c(40, 45, 60))
-y <- yoy(seg, value = "n", prd = "year")
+y <- yoychg(seg, value = "n", prd = "year")
 yoybnd(y, rnd = 5)
 
 # random rounding to base 5 widens the envelope
@@ -70,11 +70,11 @@ yb <- yoybnd(y, rnd = 5, rndkind = "random")
 as.data.frame(yb)[, c("year", "envpctlo", "envpctup",
                       "compctlo", "compctup")]
 
-# only yoy() results are accepted
+# only yoychg() results are accepted
 try(yoybnd(seg, rnd = 5))
 \dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=pubbnd]{pubbnd()}},
-\code{\link[=chgenv]{chgenv()}}, \code{\link[=yoy]{yoy()}}.
+\code{\link[=chgenv]{chgenv()}}, \code{\link[=yoychg]{yoychg()}}.
 }

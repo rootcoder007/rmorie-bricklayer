@@ -441,7 +441,7 @@ wired(
   anytab(otis, value = "individuals", prd = "year", by = c("table", "group")),
   "trends: 1 of"
 )
-wired("exact p-values", yoypv(yoy(c(10, 20, 15, 30, 25, 40))), "exact p-values")
+wired("exact p-values", yoypv(yoychg(c(10, 20, 15, 30, 25, 40))), "exact p-values")
 
 # ---- the long native calls: a spinner with the stage, through .bl_busy() -----
 

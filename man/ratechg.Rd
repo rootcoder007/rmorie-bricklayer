@@ -50,11 +50,11 @@ the interval.}
 
 \item{mincnt}{Number, default 0. Comparisons where the earlier count
 is at or below this are flagged as resting on a small count; the percent
-change and its exact interval are still reported, as \code{\link{yoy}}
+change and its exact interval are still reported, as \code{\link{yoychg}}
 does.}
 
 \item{prdord}{Optional character vector: the period labels in order, as
-for \code{\link[=yoy]{yoy()}}. A label it lists that the data lacks is a gap, so the
+for \code{\link[=yoychg]{yoychg()}}. A label it lists that the data lacks is a gap, so the
 change across it is not reported as one step.}
 }
 \value{
@@ -82,7 +82,7 @@ numbers. Both the counts and the denominators move between periods,
 and an interval that ignores the denominators understates the
 uncertainty of the change. The construction here conditions on the
 total of the two counts and corrects for the ratio of the two
-exposures, which is \code{\link{yoy}}'s exact conditional-binomial
+exposures, which is \code{\link{yoychg}}'s exact conditional-binomial
 interval generalised to unequal denominators: with equal populations it
 reduces to exactly that.
 
@@ -134,6 +134,6 @@ try(ratechg(1:3))
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link{rtcalc}}, \code{\link{yoy}} for change in a count or a
+\code{\link{rtcalc}}, \code{\link{yoychg}} for change in a count or a
 measured quantity.
 }

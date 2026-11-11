@@ -23,7 +23,7 @@ the 2021 Census Indigenous Population Profile (\code{census2021_ipp}), with
 their descriptions, row counts and licences, searchable.
 }
 \details{
-Needs a data service key: sign in once with \code{\link{dlogin}}.
+Needs the network; no sign-in.
 Only openly licensed aggregate tables are mirrored. First Nations Information
 Governance Centre data (the First Nations Regional Health Survey and its
 companions) are governed by the OCAP(R) principles and are not; ask the

@@ -19,7 +19,7 @@ test_that("an aggregation restores each key column's own type", {
     d
   }
   # two rows per period, so the aggregation path is taken
-  int <- yoy(
+  int <- yoychg(
     mk(rep(c(2019L, 2020L, 2021L), each = 2L)),
     value = "n",
     prd = "p",
@@ -28,7 +28,7 @@ test_that("an aggregation restores each key column's own type", {
   expect_type(as.data.frame(int)$p, "integer")
   expect_identical(as.data.frame(int)$value, c(3, 7, 11))
 
-  dbl <- yoy(
+  dbl <- yoychg(
     mk(rep(c(1.5, 2.5, 3.5), each = 2L)),
     value = "n",
     prd = "p",
@@ -36,7 +36,7 @@ test_that("an aggregation restores each key column's own type", {
   )
   expect_type(as.data.frame(dbl)$p, "double")
 
-  dte <- yoy(
+  dte <- yoychg(
     mk(rep(as.Date(c("2019-01-01", "2020-01-01", "2021-01-01")), each = 2L)),
     value = "n",
     prd = "p",
@@ -49,12 +49,12 @@ test_that("an aggregation restores each key column's own type", {
     as.POSIXct(c("2019-01-01", "2020-01-01", "2021-01-01"), tz = "UTC"),
     each = 2L
   )
-  pos <- yoy(mk(tm), value = "n", prd = "p", minbase = 0)
+  pos <- yoychg(mk(tm), value = "n", prd = "p", minbase = 0)
   expect_s3_class(as.data.frame(pos)$p, "POSIXct")
 
   # a FACTOR grouping column, which is what read.csv used to give and
   # what a factor-coded region still is
-  fac <- yoy(
+  fac <- yoychg(
     mk(rep(2019:2021, each = 2L), by = factor(rep(c("a", "b"), 3L))),
     value = "n",
     prd = "p",
@@ -65,7 +65,7 @@ test_that("an aggregation restores each key column's own type", {
   expect_identical(levels(as.data.frame(fac)$g), c("a", "b"))
 
   # a logical grouping column
-  lg <- yoy(
+  lg <- yoychg(
     mk(rep(2019:2021, each = 2L), by = rep(c(TRUE, FALSE), 3L)),
     value = "n",
     prd = "p",
@@ -75,7 +75,7 @@ test_that("an aggregation restores each key column's own type", {
   expect_type(as.data.frame(lg)$g, "logical")
 
   # and a character one, which needs no restoring but must survive
-  ch <- yoy(
+  ch <- yoychg(
     mk(rep(2019:2021, each = 2L), by = rep(c("x", "y"), 3L)),
     value = "n",
     prd = "p",
@@ -93,7 +93,7 @@ test_that("a gap inside groups is completed within each group", {
     n = c(100, 200, 110, 210, 130, 230),
     stringsAsFactors = FALSE
   )
-  got <- as.data.frame(yoy(
+  got <- as.data.frame(yoychg(
     d,
     value = "n",
     prd = "year",
@@ -114,7 +114,7 @@ test_that("a period column that is not a grid is left alone", {
   # common divisor of the differences -- so 1, 2, 5, 11 completes to
   # 1..11 with the absent years present and empty. That is the intended
   # behaviour: the gaps are what stop a comparison from spanning them.
-  irr <- as.data.frame(yoy(
+  irr <- as.data.frame(yoychg(
     data.frame(
       p = c(1, 2, 5, 11),
       n = c(10, 20, 30, 40)
@@ -142,7 +142,7 @@ test_that("a period column that is not a grid is left alone", {
   # non-integer step the grid need not contain every observed value --
   # 1, 1.5 and 4.2 give a step of 0.5 and a grid that stops short of
   # 4.2 -- and an inner join would silently drop the row.
-  odd <- as.data.frame(yoy(
+  odd <- as.data.frame(yoychg(
     data.frame(
       p = c(1, 1.5, 4.2),
       n = c(10, 20, 30)
@@ -156,7 +156,7 @@ test_that("a period column that is not a grid is left alone", {
   expect_identical(sum(!is.na(odd$value)), 3L)
 
   # a single period has no step either
-  one <- as.data.frame(yoy(data.frame(p = 2019, n = 5), value = "n", prd = "p"))
+  one <- as.data.frame(yoychg(data.frame(p = 2019, n = 5), value = "n", prd = "p"))
   expect_identical(nrow(one), 1L)
   expect_true(is.na(one$previous))
 
@@ -166,7 +166,7 @@ test_that("a period column that is not a grid is left alone", {
   # the whole call.
   expect_warning(
     {
-      chr <- as.data.frame(yoy(
+      chr <- as.data.frame(yoychg(
         data.frame(
           p = c("Q1", "Q2", "Q3"),
           n = c(10, 20, 30),
@@ -184,7 +184,7 @@ test_that("a period column that is not a grid is left alone", {
   expect_true(all(is.na(chr$previous)))
   expect_true(all(chr$flag == "no comparison period"))
   # a factor period is the same case
-  expect_warning(fct <- as.data.frame(yoy(
+  expect_warning(fct <- as.data.frame(yoychg(
     data.frame(
       p = factor(c("Q1", "Q2")),
       n = c(10, 20)
@@ -192,13 +192,13 @@ test_that("a period column that is not a grid is left alone", {
     value = "n",
     prd = "p",
     minbase = 0
-  )), "of no form yoy\\(\\) reads")
+  )), "of no form yoychg\\(\\) reads")
   expect_identical(nrow(fct), 2L)
   expect_true(all(is.na(fct$previous)))
 
   # a period range so wide that completing it would fabricate a vast
   # table is left alone rather than expanded
-  huge <- as.data.frame(yoy(
+  huge <- as.data.frame(yoychg(
     data.frame(
       p = c(1, 2, 1e9),
       n = c(10, 20, 30)
@@ -211,14 +211,14 @@ test_that("a period column that is not a grid is left alone", {
 
   # a column name must be a name or a string, not an expression
   expect_error(
-    yoy(data.frame(a = 1:3, b = 1:3), value = 1 + 1, prd = "a"),
+    yoychg(data.frame(a = 1:3, b = 1:3), value = 1 + 1, prd = "a"),
     "must be a column name"
   )
 })
 
 test_that("the value-digit count handles both extremes", {
   # no finite values to inspect
-  na <- yoy(
+  na <- yoychg(
     data.frame(p = 2019:2021, n = rep(NA_real_, 3L)),
     value = "n",
     prd = "p",
@@ -227,7 +227,7 @@ test_that("the value-digit count handles both extremes", {
   expect_output(print(na, color = FALSE), "2019")
 
   # more decimals than are worth printing are capped
-  fine <- yoy(
+  fine <- yoychg(
     data.frame(
       p = 2019:2021,
       n = c(1.1234567891, 2.2, 3.3)
@@ -240,7 +240,7 @@ test_that("the value-digit count handles both extremes", {
   expect_match(out, "1.123457", fixed = TRUE)
 
   # an integer-valued continuous measure prints without decimals
-  whole <- yoy(
+  whole <- yoychg(
     data.frame(p = 2019:2021, n = c(1, 2, 3)),
     value = "n",
     prd = "p",
@@ -263,7 +263,7 @@ test_that("the writers refuse anything that is not a change table", {
 test_that("the settings line reports the units and the direction", {
   # a percentage-units table says so, and names no interval it does not
   # have
-  pct <- yoy(
+  pct <- yoychg(
     data.frame(p = 2019:2021, s = c(4.1, 4.6, 5.2)),
     value = "s",
     prd = "p",
@@ -275,7 +275,7 @@ test_that("the settings line reports the units and the direction", {
   expect_match(line, "direction: lower is better")
   expect_false(grepl("exact rate ratio", line, fixed = TRUE))
   # and a count table names the interval and the base gate instead
-  cnt <- yoy(
+  cnt <- yoychg(
     data.frame(p = 2019:2021, n = c(100, 120, 140)),
     value = "n",
     prd = "p"
@@ -283,7 +283,7 @@ test_that("the settings line reports the units and the direction", {
   cl <- yoycsv(cnt, NULL)
   expect_match(cl, "exact rate ratio")
   expect_false(grepl("bases below", cl, fixed = TRUE))
-  noted <- yoy(
+  noted <- yoychg(
     data.frame(p = 2019:2021, n = c(100, 120, 140)),
     value = "n",
     prd = "p",
@@ -295,7 +295,7 @@ test_that("the settings line reports the units and the direction", {
   # drift between formats
   expect_match(yoymd(pct, NULL), "percentage points")
   # and a grouped table names its grouping
-  g <- yoy(
+  g <- yoychg(
     data.frame(
       p = rep(2019:2020, each = 2L),
       k = rep(c("a", "b"), 2L),

@@ -32,7 +32,7 @@ measure).}
 \item{prd}{Name of the column with the period (fiscal year, quarter,
 ...); numeric periods are used as the time axis of the trend tests. Text
 periods (\code{"2019/20"}, \code{"2021 Q3"}, \code{"Mar 2021"}) are
-ordered as \code{\link[=yoy]{yoy()}} reads them (see its \code{prd}), or as
+ordered as \code{\link[=yoychg]{yoychg()}} reads them (see its \code{prd}), or as
 \code{prdord} gives.}
 
 \item{by}{Optional character vector of grouping column names
@@ -46,7 +46,7 @@ one series.}
 table, for the drift screen. \code{NULL} (the default) skips it.}
 
 \item{units}{\code{"count"} (the default), \code{"continuous"} or
-\code{"percent"}, as in \code{\link[=yoy]{yoy()}}.}
+\code{"percent"}, as in \code{\link[=yoychg]{yoychg()}}.}
 
 \item{rnd, rndkind, suplim}{How the release rounds
 or suppresses cells; see \code{\link[=pubbnd]{pubbnd()}}.
@@ -57,7 +57,7 @@ which cells are suppressed. \code{NULL} when the counts are exact. Used
 only for counts: with other \code{units} they are ignored, with a
 warning.}
 
-\item{dir}{Which way is an improvement, as in \code{\link[=yoy]{yoy()}}:
+\item{dir}{Which way is an improvement, as in \code{\link[=yoychg]{yoychg()}}:
 \code{"neutral"} (the default), \code{"higher"} or
 \code{"lower"}.}
 
@@ -74,15 +74,15 @@ screens, default 0.05.}
 \code{\link[=scanadj]{scanadj()}}. The default is \code{"BH"} (Benjamini-Hochberg).}
 
 \item{prdord}{Optional character vector: the period labels in order,
-for text periods the reader does not know (see \code{\link[=yoy]{yoy()}}); passed to
-\code{\link[=yoy]{yoy()}}, \code{\link[=ratechg]{ratechg()}} and the trend tests.}
+for text periods the reader does not know (see \code{\link[=yoychg]{yoychg()}}); passed to
+\code{\link[=yoychg]{yoychg()}}, \code{\link[=ratechg]{ratechg()}} and the trend tests.}
 }
 \value{
 A list of class \code{bricklayer_analysis} (with a print method that
 summarises it in a few lines): \describe{
 \item{\code{profile}}{\code{\link[=profcols]{profcols()}} of \code{data}.}
 \item{\code{missingness}}{named numeric from \code{\link[=misssmry]{misssmry()}}.}
-\item{\code{change}}{the \code{\link[=yoy]{yoy()}} table; for counts with the added
+\item{\code{change}}{the \code{\link[=yoychg]{yoychg()}} table; for counts with the added
 columns \code{p_value}, \code{padj} and \code{significant}, and with
 \code{env_*} and \code{compctlo}/\code{compctup} when publication bounds
 were requested.} \item{\code{rates}, \code{ratechg}}{the
@@ -110,7 +110,7 @@ release imply, and a drift screen against the prior capsule.
 \details{
 The steps, in order: \enumerate{ \item profile:
 \code{\link[=profcols]{profcols()}} and \code{\link[=misssmry]{misssmry()}} on
-\code{data}; \item change: \code{\link[=yoy]{yoy()}} between consecutive periods within
+\code{data}; \item change: \code{\link[=yoychg]{yoychg()}} between consecutive periods within
 each \code{by} group. For \code{units = "count"} the exact p-values are then
 adjusted across all comparisons with \code{\link[=scanadj]{scanadj()}}, and, when
 \code{rnd} or \code{suplim} is given, \code{\link[=yoybnd]{yoybnd()}} adds the
@@ -130,7 +130,7 @@ is drawn on stderr unless \code{options(morie.quiet = TRUE)}. Errors:
 \code{data} or \code{prior} not a data frame; a named column not in
 \code{data}; an invalid \code{units}, \code{dir} or \code{rndkind}; a
 \code{conflvl} outside (0, 1); and any error of the functions called (for
-example negative counts in \code{\link[=yoy]{yoy()}}).
+example negative counts in \code{\link[=yoychg]{yoychg()}}).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

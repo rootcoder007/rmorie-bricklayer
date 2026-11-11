@@ -230,9 +230,9 @@ test_that("CRLs: none covering the path, a signature that errors, bad ones", {
   expect_identical(cr$serials, "")
 })
 
-test_that("yoy() warns of rows with no period and keeps them", {
+test_that("yoychg() warns of rows with no period and keeps them", {
   d <- data.frame(p = c(2019, 2020, NA), n = c(5, 6, 7))
-  expect_warning(out <- yoy(d, value = "n", prd = "p"),
+  expect_warning(out <- yoychg(d, value = "n", prd = "p"),
                  "1 row\\(s\\) have no period")
   expect_identical(nrow(as.data.frame(out)), 3L)
 })

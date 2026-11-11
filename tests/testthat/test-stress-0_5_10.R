@@ -417,7 +417,7 @@ test_that("yoypdf keeps every row on the page whatever the height", {
     area = rep(sprintf("a%02d", 1:60), 2),
     n = c(rep(10, 60), 8:67)
   )
-  y <- yoy(seg, value = "n", prd = "year", by = "area")
+  y <- yoychg(seg, value = "n", prd = "year", by = "area")
   f <- tempfile(fileext = ".pdf")
   on.exit(unlink(f))
   yoypdf(y, f, height = 14)

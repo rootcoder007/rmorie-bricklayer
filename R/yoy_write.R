@@ -9,7 +9,7 @@
 
 #' Write a change table to a file, in whatever format the name implies
 #'
-#' Writes a period-over-period table from [yoy()] in the format the
+#' Writes a period-over-period table from [yoychg()] in the format the
 #' file
 #' name implies, so one call serves a web page, a PDF for a report, a CSV for
 #' a spreadsheet, JSON for a program or Markdown for a README. Every format is
@@ -25,12 +25,12 @@
 #' [yoyjs()], \code{.md} and \code{.markdown} to
 #' [yoymd()]. An
 #' existing file is overwritten. Errors when \code{x} does not come from
-#' [yoy()], when the format cannot be read from the extension (pass
+#' [yoychg()], when the format cannot be read from the extension (pass
 #' \code{format}), or when \code{format} is not one of the names below; and
 #' whatever error the chosen writer raises.
 #'
 #' @param x An \code{rmbl_yoy} object from
-#' [yoy()].
+#' [yoychg()].
 #' @param file Character scalar, the output path.
 #' @param format Character scalar, the output format: \code{"auto"} (the
 #' default) reads it from the file extension; otherwise one of
@@ -45,7 +45,7 @@
 #' [yoycsv()]
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-#' y <- yoy(d, value = "n", prd = "year")
+#' y <- yoychg(d, value = "n", prd = "year")
 #'
 #' for (ext in c("csv", "tsv", "json", "md", "html")) {
 #'   f <- file.path(tempdir(), paste0("change.", ext))
@@ -69,7 +69,7 @@
 yoywr <- function(x, file, format = "auto", ...) {
   .rmbl_no_fn(file = file, format = format)
   if (!inherits(x, "rmbl_yoy")) {
-    stop("yoywr: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoywr: `x` must be an rmbl_yoy object from yoychg()", call. = FALSE)
   }
   file <- as.character(file)[1L]
   format <- tolower(as.character(format)[1L])
@@ -113,11 +113,11 @@ yoywr <- function(x, file, format = "auto", ...) {
 #' columns, the grouping, the lag, the units, and for counts the interval's
 #' confidence level and the base below which changes are noted. A pipe inside
 #' a Markdown cell is escaped. An existing file is overwritten. Errors when
-#' `x` does not come from [yoy()], or `digits` is not a whole
+#' `x` does not come from [yoychg()], or `digits` is not a whole
 #' number.
 #'
 #' @param x An `rmbl_yoy` object from
-#' [yoy()].
+#' [yoychg()].
 #' @param file Character scalar, the output path, or `NULL` to return the
 #' text instead of writing it.
 #' @param digits A whole number from 0 to 15, or `NULL`: decimal places for the
@@ -142,7 +142,7 @@ yoywr <- function(x, file, format = "auto", ...) {
 #' character scalar.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-#' y <- yoy(d, value = "n", prd = "year")
+#' y <- yoychg(d, value = "n", prd = "year")
 #'
 #' # Straight to text, for inspection.
 #' cat(yoycsv(y, NULL))
@@ -161,7 +161,7 @@ yoywr <- function(x, file, format = "auto", ...) {
 #' yoycsv(y, f)
 #' read.csv(f, comment.char = "#")[, c("year", "pctchg", "flag")]
 #'
-#' # only yoy() results are accepted
+#' # only yoychg() results are accepted
 #' try(yoycsv(d, NULL))
 #' @name yoydelim
 #' @export
@@ -215,7 +215,7 @@ yoytsv <- function(
 #' @export
 yoyjs <- function(x, file, digits = NULL, pretty = TRUE, ...) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("yoyjs: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoyjs: `x` must be an rmbl_yoy object from yoychg()", call. = FALSE)
   }
   file <- .rmbl_out_file(file)
   pretty <- .rmbl_flag1(pretty, "pretty")
@@ -242,7 +242,7 @@ yoyjs <- function(x, file, digits = NULL, pretty = TRUE, ...) {
   )
   obj <- list(
     settings = settings,
-    # yoy() has already warned about periods with no order
+    # yoychg() has already warned about periods with no order
     summary = suppressWarnings(yoysmry(x)),
     rows = d
   )
@@ -263,7 +263,7 @@ yoyjs <- function(x, file, digits = NULL, pretty = TRUE, ...) {
 #' @export
 yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("yoymd: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoymd: `x` must be an rmbl_yoy object from yoychg()", call. = FALSE)
   }
   file <- .rmbl_out_file(file)
   align <- .rmbl_flag1(align, "align")
@@ -294,7 +294,7 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
 #' @noRd
 .yoy_delim <- function(x, file, sep, digits, na, metadata, comment) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop(.rmbl_fn(), "`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop(.rmbl_fn(), "`x` must be an rmbl_yoy object from yoychg()", call. = FALSE)
   }
   file <- .rmbl_out_file(file)
   na <- .rmbl_text1(na, "na")

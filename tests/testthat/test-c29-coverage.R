@@ -113,7 +113,7 @@ test_that("ghcmt() refuses a failon that is not check names", {
 })
 
 test_that("a label function that fails names yoylbl()", {
-  y <- yoy(data.frame(year = 2019:2022, n = c(10, 12, 9, 15)), "n", "year")
+  y <- yoychg(data.frame(year = 2019:2022, n = c(10, 12, 9, 15)), "n", "year")
   expect_error(yoylbl(y, function() "x"), "yoylbl: `labels` failed")
 })
 

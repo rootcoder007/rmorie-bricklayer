@@ -15,7 +15,7 @@ test_that("yoy_summary is an S3 generic again, with the old arguments", {
                                envir = ns))
   )
   expect_identical(environment(f), ns)
-  y <- yoy(
+  y <- yoychg(
     data.frame(year = 2019:2022, n = c(10, 12, 9, 15)),
     value = "n",
     prd = "year"
@@ -56,12 +56,12 @@ test_that(
 
 test_that(
   paste0(
-    "yoy() takes its 0.5.x argument names and ",
+    "yoychg() takes its 0.5.x argument names and ",
     "values; giving both is refused"
   ),
   {
     seg <- data.frame(year = 2019:2022, n = c(10, 12, 9, 15))
-    new <- yoy(
+    new <- yoychg(
       seg,
       value = "n",
       prd = "year",
@@ -70,7 +70,7 @@ test_that(
       dir = "higher"
     )
     expect_identical(
-      nn(yoy(
+      nn(yoychg(
         seg,
         value = "n",
         period = "year",
@@ -81,7 +81,7 @@ test_that(
       new
     )
     expect_identical(
-      nn(yoy(
+      nn(yoychg(
         seg,
         value = n,
         period = year,
@@ -92,27 +92,27 @@ test_that(
       new
     )
     expect_identical(
-      yoy(seg, value = "n", prd = "year", dir = "lower_is_better"),
-      yoy(seg, value = "n", prd = "year", dir = "lower")
+      yoychg(seg, value = "n", prd = "year", dir = "lower_is_better"),
+      yoychg(seg, value = "n", prd = "year", dir = "lower")
     )
     expect_error(
-      yoy(seg, value = "n", period = "year", prd = "year"),
-      "yoy: give `prd` or its 0.5.x name `period`, not both"
+      yoychg(seg, value = "n", period = "year", prd = "year"),
+      "yoychg: give `prd` or its 0.5.x name `period`, not both"
     )
     expect_identical(
-      nn(yoy(c(10, 12, 9), period = 2001:2003)),
-      yoy(c(10, 12, 9), prd = 2001:2003)
+      nn(yoychg(c(10, 12, 9), period = 2001:2003)),
+      yoychg(c(10, 12, 9), prd = 2001:2003)
     )
     expect_identical(
-      nn(yoy(c(10L, 12L, 9L), period = 2001:2003)),
-      yoy(c(10L, 12L, 9L), prd = 2001:2003)
+      nn(yoychg(c(10L, 12L, 9L), period = 2001:2003)),
+      yoychg(c(10L, 12L, 9L), prd = 2001:2003)
     )
     tsx <- stats::ts(
       c(10, 12, 9, 15, 11, 13, 12, 14),
       frequency = 4,
       start = 2020
     )
-    expect_identical(nn(yoy(tsx, conf_level = 0.5)), yoy(tsx, conflvl = 0.5))
+    expect_identical(nn(yoychg(tsx, conf_level = 0.5)), yoychg(tsx, conflvl = 0.5))
   }
 )
 
@@ -122,7 +122,7 @@ test_that(
     "periods compare on calendar steps"
   ),
   {
-    y <- yoy(
+    y <- yoychg(
       data.frame(
         d = as.Date(c("2019-01-01", "2020-01-01", "2021-01-01")),
         n = c(10, 12, 15)
@@ -132,7 +132,7 @@ test_that(
     )
     expect_identical(nrow(y), 3L)
     expect_identical(y$previous, c(NA, 10, 12))
-    y0 <- yoy(
+    y0 <- yoychg(
       data.frame(
         d = as.Date(c("2019-01-01", "2020-01-01", "2021-01-01")),
         n = c(10, 12, 15)
@@ -143,7 +143,7 @@ test_that(
     )
     expect_identical(y0$previous, c(NA, 10, 12))
     # a missing year is inserted as one row, not 365 days
-    yg <- yoy(
+    yg <- yoychg(
       data.frame(
         d = as.Date(c("2018-07-01", "2019-07-01", "2021-07-01")),
         n = c(5, 6, 8)
@@ -160,31 +160,31 @@ test_that(
       d = seq(as.Date("2020-01-15"), by = "month", length.out = 40),
       n = 1:40 + 10
     )
-    y12 <- yoy(m, value = "n", prd = "d", lag = 12)
+    y12 <- yoychg(m, value = "n", prd = "d", lag = 12)
     expect_identical(nrow(y12), 40L)
     expect_identical(sum(!is.na(y12$previous)), 28L)
     # a month missing: complete = TRUE puts it back, complete = FALSE leaves the
     # gap uncompared
-    yc <- yoy(m[-5, ], value = "n", prd = "d")
+    yc <- yoychg(m[-5, ], value = "n", prd = "d")
     expect_identical(c(nrow(yc), sum(!is.na(yc$previous))), c(40L, 38L))
-    yn <- yoy(m[-5, ], value = "n", prd = "d", complete = FALSE)
+    yn <- yoychg(m[-5, ], value = "n", prd = "d", complete = FALSE)
     expect_identical(c(nrow(yn), sum(!is.na(yn$previous))), c(39L, 37L))
     q <- data.frame(
       d = seq(as.Date("2020-01-01"), by = "3 months", length.out = 8),
       n = 1:8
     )
     expect_identical(
-      yoy(q, value = "n", prd = "d", lag = 4)$previous,
+      yoychg(q, value = "n", prd = "d", lag = 4)$previous,
       c(rep(NA, 4), 1:4 + 0)
     )
     me <- data.frame(
       d = seq(as.Date("2020-02-01"), by = "month", length.out = 6) - 1,
       n = 1:6
     )
-    expect_identical(yoy(me[-3, ], value = "n", prd = "d")$d, me$d)
+    expect_identical(yoychg(me[-3, ], value = "n", prd = "d")$d, me$d)
     # daily and weekly data keep the grid of days
     wk <- data.frame(d = as.Date("2020-01-06") + 7 * c(0, 1, 3), n = c(3, 4, 5))
-    expect_identical(nrow(yoy(wk, value = "n", prd = "d")), 4L)
+    expect_identical(nrow(yoychg(wk, value = "n", prd = "d")), 4L)
     # the plot draws every period
     grDevices::pdf(NULL)
     on.exit(grDevices::dev.off(), add = TRUE)
@@ -318,7 +318,7 @@ test_that("text periods are drawn in time order", {
   expect_identical(.bl_period_axis(f)$at, 1:2)
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  r <- plot(yoy(
+  r <- plot(yoychg(
     data.frame(
       fy = c("2019/20", "2021/22", "2020/21"),
       grp = c("A", "A", "B"),
@@ -336,7 +336,7 @@ test_that("text periods are drawn in time order", {
 
 test_that(
   paste0(
-    "plot(yoy()) labels a period after a gap, and refuses a result with no ",
+    "plot(yoychg()) labels a period after a gap, and refuses a result with no ",
     "values"
   ),
   {
@@ -364,7 +364,7 @@ test_that(
       .package = "rmoriebricklayer"
     )
     d1 <- data.frame(year = 2015:2022, n = c(0, 10, 0, 5, NA, 12, 15, 9))
-    plot(yoy(d1, value = "n", prd = "year"))
+    plot(yoychg(d1, value = "n", prd = "year"))
     why <- seen$note[[1]]
     expect_identical(why[1], "first period: nothing to compare with")
     expect_identical(why[5], "no data")
@@ -376,7 +376,7 @@ test_that(
       q = factor(c("q1", "q2", "q4"), levels = lv, ordered = TRUE),
       n = c(3, 4, 6)
     )
-    plot(yoy(of, value = "n", prd = "q"))
+    plot(yoychg(of, value = "n", prd = "q"))
     expect_identical(seen$note[[2]][4], "no data in the previous period")
     g <- data.frame(
       year = c(2019, 2020, 2022, 2019, 2020, 2021),
@@ -384,12 +384,12 @@ test_that(
       n = c(5, 6, 7, 2, 3, 4),
       stringsAsFactors = FALSE
     )
-    plot(yoy(g, value = "n", prd = "year", by = "grp", complete = FALSE))
+    plot(yoychg(g, value = "n", prd = "year", by = "grp", complete = FALSE))
     w <- seen$note[[3]]
     expect_identical(sum(w == "first period: nothing to compare with"), 2L)
     expect_identical(sum(w == "no data in the previous period"), 1L)
     expect_error(
-      plot(yoy(
+      plot(yoychg(
         data.frame(year = 2019:2022, n = NA_real_),
         value = "n",
         prd = "year"

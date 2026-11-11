@@ -9,7 +9,7 @@
 #' Label a period without changing it
 #'
 #' Attaches display labels to the periods of a change table from
-#' [yoy()],
+#' [yoychg()],
 #' so a fiscal year keyed as 2023 can print as \code{"2022/23"}, or a year can
 #' carry a note such as \dQuote{(COVID)}. The arithmetic already ran on the
 #' period's value, so a label can only affect what is printed: relabelling
@@ -29,12 +29,12 @@
 #' keep their own value; an unnamed character vector gives one label per
 #' distinct period, in order of first appearance.
 #'
-#' Errors: \code{x} not from [yoy()]; an unnamed vector whose length is
+#' Errors: \code{x} not from [yoychg()]; an unnamed vector whose length is
 #' not
 #' the number of distinct periods; a function that does not return one label
 #' per row.
 #'
-#' @param x An \code{rmbl_yoy} object from [yoy()],
+#' @param x An \code{rmbl_yoy} object from [yoychg()],
 #'   whose periods are labelled.
 #' @param labels Either a function applied to the period
 #'   column, or a character vector the same length as the number of distinct
@@ -49,7 +49,7 @@
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' seg <- data.frame(EndFiscalYear = 2019:2023,
 #'                   n = c(402, 377, 190, 268, 331))
-#' y <- yoy(seg, value = n, prd = EndFiscalYear)
+#' y <- yoychg(seg, value = n, prd = EndFiscalYear)
 #'
 #' # 2023 means the fiscal year 2022/23, so say so.
 #' yoylbl(y, fylbl)
@@ -68,7 +68,7 @@
 #' @export
 yoylbl <- function(x, labels) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("yoylbl: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoylbl: `x` must be an rmbl_yoy object from yoychg()", call. = FALSE)
   }
   m <- .yoy_meta(x)
   p <- x[[m$period]]

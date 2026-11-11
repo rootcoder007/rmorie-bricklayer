@@ -89,7 +89,7 @@
 #' The result keeps the labels as text, with any period the grid inserts
 #' spelled like the first one. Labels of mixed forms, or of a form not listed
 #' (`"Q3"`, `"FY19/20"`), or that read as two forms alike (`"2010-11"`,
-#' `"2011-12"`: fiscal years or months), have no order: yoy() warns once,
+#' `"2011-12"`: fiscal years or months), have no order: yoychg() warns once,
 #' naming them, and no row has a comparison period. Give their order with
 #' `prdord`.
 #' @param prdord Optional character vector: the period labels in order, one
@@ -170,7 +170,7 @@
 #'   NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
 #' )
 #'
-#' y <- yoy(
+#' y <- yoychg(
 #'   seg,
 #'   value = "NumberOfPlacements",
 #'   prd = "EndFiscalYear",
@@ -186,10 +186,10 @@
 #' # A percentage is handled as percentage points, not as a percent of a
 #' # percent.
 #' rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
-#' yoy(rate, value = "share", prd = "year", units = "percent")
+#' yoychg(rate, value = "share", prd = "year", units = "percent")
 #'
 #' # a missing year stays a gap; a bare column name works too
-#' yoy(
+#' yoychg(
 #'   data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)),
 #'   value = n,
 #'   prd = year
@@ -198,23 +198,23 @@
 #' # a quarterly series compares each quarter with the same quarter a year
 #' # earlier
 #' q <- ts(c(5, 6, 7, 8, 6, 7, 9, 9), frequency = 4, start = c(2020, 1))
-#' as.data.frame(yoy(q))[5:8, c("period", "value", "previous", "pctchg")]
+#' as.data.frame(yoychg(q))[5:8, c("period", "value", "previous", "pctchg")]
 #'
 #' # text periods are read: fiscal years, quarters, months
 #' fy <- data.frame(fy = c("2019/20", "2020/21", "2022/23"), n = c(5, 7, 9))
-#' as.data.frame(yoy(fy, "n", "fy"))[, c("fy", "previous", "flag")]
+#' as.data.frame(yoychg(fy, "n", "fy"))[, c("fy", "previous", "flag")]
 #' qt <- data.frame(q = c("2021 Q4", "2022 Q1", "2022 Q2"), n = c(3, 4, 6))
-#' as.data.frame(yoy(qt, "n", "q"))[, c("q", "previous", "pctchg")]
+#' as.data.frame(yoychg(qt, "n", "q"))[, c("q", "previous", "pctchg")]
 #'
 #' # labels the reader does not know take their order from `prdord`
 #' ws <- data.frame(s = c("spring", "summer", "fall"), n = c(4, 6, 5))
-#' yoy(ws, "n", "s", prdord = c("spring", "summer", "fall", "winter"))
+#' yoychg(ws, "n", "s", prdord = c("spring", "summer", "fall", "winter"))
 #'
 #' # counts must be whole numbers
-#' try(yoy(data.frame(year = 1:3, n = c(1.5, 2, 3)), "n", "year"))
+#' try(yoychg(data.frame(year = 1:3, n = c(1.5, 2, 3)), "n", "year"))
 #' @export
 #' @srrstats {G2.6} S3 methods for numeric, integer and ts pre-process 1-D input
-#'   (as.numeric, ts frequency used as lag) before yoy.data.frame.
+#'   (as.numeric, ts frequency used as lag) before yoychg.data.frame.
 #' @srrstats {G2.10} Columns are extracted with `x[[value]]`, which returns a
 #'   vector for data.frame, tibble and data.table alike.
 #' @srrstats {G3.0} Whole-count check uses tolerance abs(v - round(v)) > 1e-8
@@ -231,11 +231,11 @@
 #' @srrstats {TS1.1} @param x/prd list data frame, numeric, integer or ts input,
 #'   with Date, POSIXct, integer or ordered-factor periods; methods dispatch on
 #'   each class.
-#' @srrstats {TS1.2} yoy.default rejects other classes, and .rmbl_num rejects
+#' @srrstats {TS1.2} yoychg.default rejects other classes, and .rmbl_num rejects
 #'   factors, text, lists and logicals; tested in test-round5.R:317 and
 #'   test-input-contracts.R.
-#' @srrstats {TS1.3} yoy.numeric, yoy.integer and yoy.ts all convert to one
-#'   period/value data frame and pass it to yoy.data.frame, the single
+#' @srrstats {TS1.3} yoychg.numeric, yoychg.integer and yoychg.ts all convert to one
+#'   period/value data frame and pass it to yoychg.data.frame, the single
 #'   validation and compute path.
 #' @srrstats {TS1.4} .yoy_restore keeps the Date or POSIXct class and the tzone
 #'   of the period column; tested in test-branches.R:32-42.
@@ -260,11 +260,11 @@
 #'   "yoy".
 #' @srrstats {TS4.2} @return gives the class, every column with its type, and
 #'   the contents of the "yoy" attribute.
-yoy <- function(x, ...) UseMethod("yoy")
+yoychg <- function(x, ...) UseMethod("yoychg")
 
-#' @rdname yoy
+#' @rdname yoychg
 #' @export
-yoy.default <- function(x, ...) {
+yoychg.default <- function(x, ...) {
   stop(
     sprintf(
       "`x` must be a data frame, a numeric or integer vector, or a ts, not %s",
@@ -274,9 +274,9 @@ yoy.default <- function(x, ...) {
   )
 }
 
-#' @rdname yoy
+#' @rdname yoychg
 #' @export
-yoy.data.frame <- function(
+yoychg.data.frame <- function(
   x,
   value,
   prd,
@@ -298,9 +298,9 @@ yoy.data.frame <- function(
   old <- .rmbl_old_names(.yoy_old_args)
   if (!is.null(old)) {
     # called the 0.5.x way: the result comes back under its 0.5.x names
-    return(.rmbl_alias_out("yoy", withVisible(eval(old$call, old$env))))
+    return(.rmbl_alias_out("yoychg", withVisible(eval(old$call, old$env))))
   }
-  .rmbl_no_dots("yoy", ...)
+  .rmbl_no_dots("yoychg", ...)
   .yoy_by_type(by)
   units <- .rmbl_arg(units)
   dir <- .rmbl_alias_val(
@@ -340,13 +340,13 @@ yoy.data.frame <- function(
   )
 }
 
-#' @rdname yoy
+#' @rdname yoychg
 #' @export
-yoy.numeric <- function(x, prd = seq_along(x), ...) {
+yoychg.numeric <- function(x, prd = seq_along(x), ...) {
   old <- .rmbl_old_names(.yoy_old_args)
   if (!is.null(old)) {
     # called the 0.5.x way: the result comes back under its 0.5.x names
-    return(.rmbl_alias_out("yoy", withVisible(eval(old$call, old$env))))
+    return(.rmbl_alias_out("yoychg", withVisible(eval(old$call, old$env))))
   }
   if (any(c("value", "data") %in% names(list(...)))) {
     stop(
@@ -359,27 +359,27 @@ yoy.numeric <- function(x, prd = seq_along(x), ...) {
     stop("`prd` must have one entry per value of `x`", call. = FALSE)
   }
   d <- data.frame(period = prd, value = as.numeric(x))
-  yoy.data.frame(d, value = "value", prd = "period", ...)
+  yoychg.data.frame(d, value = "value", prd = "period", ...)
 }
 
-#' @rdname yoy
+#' @rdname yoychg
 #' @export
-yoy.integer <- function(x, prd = seq_along(x), ...) {
+yoychg.integer <- function(x, prd = seq_along(x), ...) {
   old <- .rmbl_old_names(.yoy_old_args)
   if (!is.null(old)) {
     # called the 0.5.x way: the result comes back under its 0.5.x names
-    return(.rmbl_alias_out("yoy", withVisible(eval(old$call, old$env))))
+    return(.rmbl_alias_out("yoychg", withVisible(eval(old$call, old$env))))
   }
-  yoy.numeric(as.numeric(x), prd = prd, ...)
+  yoychg.numeric(as.numeric(x), prd = prd, ...)
 }
 
-#' @rdname yoy
+#' @rdname yoychg
 #' @export
-yoy.ts <- function(x, lag = NULL, ...) {
+yoychg.ts <- function(x, lag = NULL, ...) {
   old <- .rmbl_old_names(.yoy_old_args)
   if (!is.null(old)) {
     # called the 0.5.x way: the result comes back under its 0.5.x names
-    return(.rmbl_alias_out("yoy", withVisible(eval(old$call, old$env))))
+    return(.rmbl_alias_out("yoychg", withVisible(eval(old$call, old$env))))
   }
   f <- stats::frequency(x)
   # a year-over-year comparison on a seasonal series means the same
@@ -390,10 +390,10 @@ yoy.ts <- function(x, lag = NULL, ...) {
   }
   tt <- stats::time(x)
   d <- data.frame(period = as.numeric(tt), value = as.numeric(x))
-  yoy.data.frame(d, value = "value", prd = "period", lag = lag, ...)
+  yoychg.data.frame(d, value = "value", prd = "period", lag = lag, ...)
 }
 
-#' yoy()'s grouping columns, each in the data.
+#' yoychg()'s grouping columns, each in the data.
 #' @param by The columns.
 #' @param x The data, which must have the `by` columns.
 #' @return The columns, as text.
@@ -404,7 +404,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   if (length(miss)) {
     stop(
       sprintf(
-        "yoy: `by` column not found: %s",
+        "yoychg: `by` column not found: %s",
         toString(miss)
       ),
       call. = FALSE
@@ -413,7 +413,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   by
 }
 
-#' yoy()'s value column: numeric, finite, and whole and non-negative for
+#' yoychg()'s value column: numeric, finite, and whole and non-negative for
 #' counts.
 #' @param v The value column, checked numeric and finite.
 #' @param value Its name.
@@ -422,7 +422,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
 .yoy_check_value <- function(v, value, units) {
   if (!is.numeric(v)) {
     stop(
-      sprintf("yoy: `%s` must be numeric, not %s", value, class(v)[1L]),
+      sprintf("yoychg: `%s` must be numeric, not %s", value, class(v)[1L]),
       call. = FALSE
     )
   }
@@ -449,7 +449,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   invisible(NULL)
 }
 
-# the 0.5.x argument names of yoy(), still accepted (yoy() kept its name, so it
+# the 0.5.x argument names of yoychg(), still accepted (yoychg() kept its name, so it
 # has no alias)
 .yoy_old_args <- c(
   period = "prd",
@@ -526,7 +526,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   if (anyNA(p)) {
     warning(
       sprintf(
-        "yoy: %d row(s) have no period (NA): they are kept, with no change",
+        "yoychg: %d row(s) have no period (NA): they are kept, with no change",
         sum(is.na(p))
       ),
       call. = FALSE
@@ -919,30 +919,30 @@ yoy.ts <- function(x, lag = NULL, ...) {
   out
 }
 
-#' Checks yoy()'s `by` is NULL or column names.
+#' Checks yoychg()'s `by` is NULL or column names.
 #' @param by The value passed.
 #' @return `by`, invisibly.
 #' @noRd
 .yoy_by_type <- function(by) {
   if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
-    stop("yoy: `by` must be one or more column names, or NULL", call. = FALSE)
+    stop("yoychg: `by` must be one or more column names, or NULL", call. = FALSE)
   }
   invisible(by)
 }
 
-#' Checks yoy()'s `lag`.
+#' Checks yoychg()'s `lag`.
 #' @param lag The value passed.
 #' @return `lag` as a positive whole number.
 #' @noRd
 .yoy_check_lag <- function(lag) {
   lag <- .rmbl_num(lag, "lag", integer = TRUE)
   if (length(lag) != 1L || is.na(lag) || lag < 1L) {
-    stop("yoy: `lag` must be a positive integer", call. = FALSE)
+    stop("yoychg: `lag` must be a positive integer", call. = FALSE)
   }
   lag
 }
 
-#' The `yoy` attribute of a yoy() result: what was compared, and how.
+#' The `yoy` attribute of a yoychg() result: what was compared, and how.
 #' @param value,period,by,lag,units,minbase,conflvl,direction As used.
 #' @param v The value column, for its printed digits.
 #' @return A list.
@@ -971,10 +971,10 @@ yoy.ts <- function(x, lag = NULL, ...) {
   )
 }
 
-#' A yoy() result: the table, its class and its settings.
+#' A yoychg() result: the table, its class and its settings.
 #' @param out The change table.
 #' @param meta The settings, from .yoy_settings().
-#' @param prdord The order of text periods yoy() was given, or NULL; yoysmry()
+#' @param prdord The order of text periods yoychg() was given, or NULL; yoysmry()
 #'   reads it.
 #' @return An `rmbl_yoy` object.
 #' @noRd
@@ -1069,11 +1069,11 @@ yoy.ts <- function(x, lag = NULL, ...) {
   flag
 }
 
-#' Reads text periods into an order yoy() can step through.
+#' Reads text periods into an order yoychg() can step through.
 #'
 #' A character period column had no order, so every row was flagged \dQuote{no
 #' comparison period} for "2019/20" or "2021 Q3" alike (C18). The labels are
-#' read when all of them have one form the reader knows (see yoy()'s `prd`);
+#' read when all of them have one form the reader knows (see yoychg()'s `prd`);
 #' `prdord` gives the order of any others.
 #' @param p The period column.
 #' @param prdord NULL, or the labels in order.
@@ -1111,7 +1111,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   .yoy_prd_factor(p, lab, k)
 }
 
-#' yoy()'s periods in the order `prdord` gives.
+#' yoychg()'s periods in the order `prdord` gives.
 #' @param p The period column, text or a factor.
 #' @param prdord The labels in order, one label one step.
 #' @return As for .yoy_prd_read().
@@ -1125,7 +1125,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
       anyDuplicated(prdord)
   ) {
     stop(
-      "yoy: `prdord` must be the period labels in order: distinct, ",
+      "yoychg: `prdord` must be the period labels in order: distinct, ",
       "non-empty strings",
       call. = FALSE
     )
@@ -1133,7 +1133,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   if (!is.character(p) && !is.factor(p)) {
     stop(
       sprintf(
-        "yoy: `prdord` orders text periods, but the `prd` column is %s",
+        "yoychg: `prdord` orders text periods, but the `prd` column is %s",
         class(p)[1L]
       ),
       call. = FALSE
@@ -1144,7 +1144,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   if (length(miss)) {
     stop(
       sprintf(
-        "yoy: `prdord` must list every period label; it lacks %s",
+        "yoychg: `prdord` must list every period label; it lacks %s",
         .yoy_prd_shown(miss)
       ),
       call. = FALSE
@@ -1165,14 +1165,14 @@ yoy.ts <- function(x, lag = NULL, ...) {
   paste0(toString(dQuote(utils::head(b, 5L), FALSE)), more)
 }
 
-#' Warns once that yoy()'s text periods have no order, naming them.
+#' Warns once that yoychg()'s text periods have no order, naming them.
 #' @param k The reader's verdict, from .yoy_prd_kind(): `bad` and `why`.
 #' @noRd
 .yoy_prd_warn <- function(k) {
   warning(
     sprintf(
       paste0(
-        "yoy: the periods %s %s, so they have no order and no row has a ",
+        "yoychg: the periods %s %s, so they have no order and no row has a ",
         "comparison period; give their order with `prdord`"
       ),
       .yoy_prd_shown(k$bad),
@@ -1208,7 +1208,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   }
   hit <- vapply(keys, function(k) sum(!is.na(k)), 0L)
   if (!any(hit > 0L)) {
-    return(list(bad = lab, why = "are of no form yoy() reads"))
+    return(list(bad = lab, why = "are of no form yoychg() reads"))
   }
   best <- which.max(hit)
   list(
@@ -1217,7 +1217,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   )
 }
 
-#' The forms of text period yoy() reads, each a function giving a label's step
+#' The forms of text period yoychg() reads, each a function giving a label's step
 #' number (NA when the label is not of that form).
 #' @return A named list of functions.
 #' @noRd
@@ -1432,7 +1432,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   if (grepl("^[0-9]", tpl)) paste(y, mon) else paste(mon, y)
 }
 
-#' yoy()'s computed periods back as the text they were given as.
+#' yoychg()'s computed periods back as the text they were given as.
 #' @param out The change table.
 #' @param prd The period column's name.
 #' @param pk The reader's result, from .yoy_prd_read().
@@ -1445,10 +1445,10 @@ yoy.ts <- function(x, lag = NULL, ...) {
   out
 }
 
-#' A sort key for periods, read as yoy() reads them, or NULL when they have no
+#' A sort key for periods, read as yoychg() reads them, or NULL when they have no
 #' order (text or an unordered factor the reader cannot place).
 #' @param p The periods.
-#' @param prdord The order yoy() was given, or NULL.
+#' @param prdord The order yoychg() was given, or NULL.
 #' @return An integer or double vector, or NULL.
 #' @noRd
 .yoy_prd_rank <- function(p, prdord = NULL) {
@@ -1465,7 +1465,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   if (is.null(r) || is.character(r)) NULL else xtfrm(r)
 }
 
-#' The distinct periods, in the order yoy() reads them (sorted when they have
+#' The distinct periods, in the order yoychg() reads them (sorted when they have
 #' none).
 #' @param p The periods.
 #' @return The distinct non-missing periods.

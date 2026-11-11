@@ -82,7 +82,7 @@ test_that("audit coverage: refusals in words across the input guards", {
     "`health` must be a data frame of indicators"
   )
   seg <- data.frame(EndFiscalYear = 2019:2023, n = c(402, 377, 190, 268, 331))
-  y <- yoy(seg, value = n, prd = EndFiscalYear)
+  y <- yoychg(seg, value = n, prd = EndFiscalYear)
   expect_error(
     yoylbl(y, list()),
     "`labels` must be a function of the periods or a vector"

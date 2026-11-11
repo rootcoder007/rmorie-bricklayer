@@ -57,10 +57,10 @@ test_that("bootstrap results agree across seeds within tolerance", {
   }
 })
 
-#' @srrstats {EA6.0d} The yoy(), rtcalc(), cpsdrft()$columns and profcols()
+#' @srrstats {EA6.0d} The yoychg(), rtcalc(), cpsdrft()$columns and profcols()
 #'   frames are checked column by column for their class.
 test_that("the main result frames have the documented column classes", {
-  y <- yoy(data.frame(year = 2019:2023, n = c(10, 12, 9, 15, 20)), "n", "year")
+  y <- yoychg(data.frame(year = 2019:2023, n = c(10, 12, 9, 15, 20)), "n", "year")
   expect_identical(
     vapply(y, function(z) class(z)[1L], ""),
     c(
@@ -203,23 +203,23 @@ test_that("chwkfit() warns when the branching ratio sits on its bound", {
   expect_identical(f$atbound, "eta")
 })
 
-test_that("yoy() compares ordered-factor periods by level order", {
+test_that("yoychg() compares ordered-factor periods by level order", {
   d <- data.frame(
     q = factor(c("Q1", "Q2", "Q4"), levels = paste0("Q", 1:4), ordered = TRUE),
     n = c(10, 12, 15)
   )
-  r <- yoy(d, "n", "q")
+  r <- yoychg(d, "n", "q")
   expect_identical(as.character(r$q), paste0("Q", 1:4))
   expect_s3_class(r$q, "ordered")
   expect_identical(r$previous, c(NA, 10, 12, NA))
   expect_identical(r$flag[3L], "no data")
-  r <- yoy(d, "n", "q", complete = FALSE)
+  r <- yoychg(d, "n", "q", complete = FALSE)
   expect_identical(r$previous, c(NA, 10, NA))
   # unordered: no order, so no comparison
   d$q <- factor(as.character(d$q))
-  expect_warning(un <- yoy(d, "n", "q"), "of no form yoy\\(\\) reads")
+  expect_warning(un <- yoychg(d, "n", "q"), "of no form yoychg\\(\\) reads")
   expect_true(all(is.na(un$previous)))
-  expect_error(yoy(list(1)), "a numeric or integer vector, or a ts, not list")
+  expect_error(yoychg(list(1)), "a numeric or integer vector, or a ts, not list")
 })
 
 test_that("fylbl() refuses a fractional year, as documented", {
@@ -292,7 +292,7 @@ test_that("the period axis keeps the period's own scale and names its unit", {
 #' @srrstats {TS5.2} yoy and rate-change plots put the period across: points sit
 #'   at the period's own x.
 test_that("change plots draw the period across, groups side by side", {
-  y <- yoy(
+  y <- yoychg(
     data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)),
     value = "n",
     prd = "year"
@@ -306,7 +306,7 @@ test_that("change plots draw the period across, groups side by side", {
     n = c(500, 600, 700, 900, 800, 1000),
     stringsAsFactors = FALSE
   )
-  dg <- with_pdf(plot(yoy(seg, value = "n", prd = "year", by = "g")))
+  dg <- with_pdf(plot(yoychg(seg, value = "n", prd = "year", by = "g")))
   # two groups in one period: a to the left of the period, b to the right
   expect_equal(
     dg$at,
@@ -362,7 +362,7 @@ test_that("change plots draw the period across, groups side by side", {
     n = rep(c(100, 120), 6)
   )
   expect_equal(
-    nrow(with_pdf(plot(yoy(many, value = "n", prd = "year", by = "g")))),
+    nrow(with_pdf(plot(yoychg(many, value = "n", prd = "year", by = "g")))),
     12L,
     tolerance = 1e-8
   )
@@ -378,7 +378,7 @@ test_that("xlab is an argument of the plots over time", {
   )
   out <- with_pdf(plot(sf, xlab = "Year"))
   expect_identical(attr(out, "at"), c(2021, 2022, 2023))
-  y <- yoy(
+  y <- yoychg(
     data.frame(year = 2019:2021, n = c(40, 44, 41)),
     value = "n",
     prd = "year"
@@ -411,7 +411,7 @@ test_that("xlab is an argument of the plots over time", {
     es$evtm,
     tolerance = 1e-8
   )
-  dt <- yoy(
+  dt <- yoychg(
     data.frame(
       d = as.Date(c("2020-01-01", "2021-01-01", "2022-01-01")),
       n = c(40, 44, 41)
@@ -443,8 +443,8 @@ test_that("missing values break lines by default and can be joined", {
     )
     expect_null(bl(1:2, c(NA, NA), "black", gaps = "break"))
   })
-  # a year with no data, inserted by yoy(complete = TRUE)
-  y <- yoy(
+  # a year with no data, inserted by yoychg(complete = TRUE)
+  y <- yoychg(
     data.frame(year = c(2019, 2020, 2022, 2023), n = c(40, 44, 41, 50)),
     value = "n",
     prd = "year"

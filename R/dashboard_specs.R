@@ -379,7 +379,7 @@
         yoy = c(.uf(
           "Change from period to period (yoy)",
           list(.us(
-            "yoy",
+            "yoychg",
             "y",
             x = D,
             value = col("Value", "n"),

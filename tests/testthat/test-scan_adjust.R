@@ -7,7 +7,7 @@ sa_yoy <- function() {
     n = c(30, 50, 80, 45, 52, 79),
     stringsAsFactors = FALSE
   )
-  yoy(seg, value = "n", prd = "year", by = "site")
+  yoychg(seg, value = "n", prd = "year", by = "site")
 }
 
 test_that("yoypv() gives the exact binomial p-value of each change", {
@@ -17,7 +17,7 @@ test_that("yoypv() gives the exact binomial p-value of each change", {
   expect_equal(a, stats::binom.test(45, 75)$p.value, tolerance = 1e-12)
   expect_error(
     yoypv(data.frame(n = 1)),
-    "`y` must come from yoy()",
+    "`y` must come from yoychg()",
     fixed = TRUE
   )
 })

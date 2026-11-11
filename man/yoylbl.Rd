@@ -7,7 +7,7 @@
 yoylbl(x, labels)
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}},
+\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoychg]{yoychg()}},
 whose periods are labelled.}
 
 \item{labels}{Either a function applied to the period
@@ -24,7 +24,7 @@ the delimited writers.
 }
 \description{
 Attaches display labels to the periods of a change table from
-\code{\link[=yoy]{yoy()}},
+\code{\link[=yoychg]{yoychg()}},
 so a fiscal year keyed as 2023 can print as \code{"2022/23"}, or a year can
 carry a note such as \dQuote{(COVID)}. The arithmetic already ran on the
 period's value, so a label can only affect what is printed: relabelling
@@ -44,7 +44,7 @@ maps periods (matched as strings) to labels, and periods it does not name
 keep their own value; an unnamed character vector gives one label per
 distinct period, in order of first appearance.
 
-Errors: \code{x} not from \code{\link[=yoy]{yoy()}}; an unnamed vector whose length is
+Errors: \code{x} not from \code{\link[=yoychg]{yoychg()}}; an unnamed vector whose length is
 not
 the number of distinct periods; a function that does not return one label
 per row.
@@ -53,7 +53,7 @@ per row.
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 seg <- data.frame(EndFiscalYear = 2019:2023,
                   n = c(402, 377, 190, 268, 331))
-y <- yoy(seg, value = n, prd = EndFiscalYear)
+y <- yoychg(seg, value = n, prd = EndFiscalYear)
 
 # 2023 means the fiscal year 2022/23, so say so.
 yoylbl(y, fylbl)

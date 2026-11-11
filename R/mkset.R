@@ -10,7 +10,7 @@
 #' @details
 #' Any object this package returns can go in, and any other R object that
 #' prints (a model, a data frame): each is shown as it prints. A
-#' year-over-year table from [yoy()] becomes a real table in HTML and
+#' year-over-year table from [yoychg()] becomes a real table in HTML and
 #' Markdown.
 #'
 #' In a file the boxes are drawn 80 characters wide and without colour, so

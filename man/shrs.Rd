@@ -96,5 +96,5 @@ try(shrs(c(5, 2), total = 4))
 }
 \seealso{
 \code{\link{rtcalc}} for events per population,
-\code{\link{yoy}} for change between periods.
+\code{\link{yoychg}} for change between periods.
 }

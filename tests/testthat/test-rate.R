@@ -2,7 +2,7 @@
 #
 # Every interval here is checked against something that could disagree
 # with it: stats::poisson.test for the rate and the rate ratio,
-# stats::prop.test(correct = FALSE) for the Wilson share, and yoy()
+# stats::prop.test(correct = FALSE) for the Wilson share, and yoychg()
 # itself for the case where the two denominators are equal and the two
 # constructions must coincide. A test that only compared these
 # functions to themselves would pass on any sound-looking arithmetic,
@@ -63,13 +63,13 @@ test_that("the rate-ratio interval is the two-sample poisson.test", {
   )
 })
 
-test_that("equal denominators reduce to yoy()'s interval exactly", {
+test_that("equal denominators reduce to yoychg()'s interval exactly", {
   # This is the property that says the exposure correction is applied
   # in the right direction: with nothing to correct for, the two
   # constructions must give the same numbers to the last digit.
   e <- data.frame(year = c(2022, 2023), n = c(70, 90), pop = c(50000, 50000))
   rc <- ratechg(e, n, pop, year, per = 1000)
-  y <- yoy(e, n, year, units = "count")
+  y <- yoychg(e, n, year, units = "count")
   expect_equal(
     rc$pctchg[2],
     y$pctchg[2],
@@ -486,8 +486,8 @@ test_that("ratechg() and anytab() take prdord, and refuse what they lack", {
   expect_error(shrs(d, "n", by = "g", denom = 5),
                "shrs: unused argument: denom")
   expect_error(shrs(c(1, 2), denom = 5), "shrs: unused argument: denom")
-  expect_error(yoy(d, "n", "p", by = "g", prdrd = ord),
-               "yoy: unused argument: prdrd")
+  expect_error(yoychg(d, "n", "p", by = "g", prdrd = ord),
+               "yoychg: unused argument: prdrd")
 })
 
 test_that("a ratechg box prints whole-number periods as labels", {

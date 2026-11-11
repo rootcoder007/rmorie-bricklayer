@@ -9,7 +9,7 @@ set_parts <- function() {
   list(
     g = ginicoef(c(3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5)),
     r = rtcalc(d, "n", "pop", by = "grp"),
-    y = yoy(c(10, 12, 15, 11))
+    y = yoychg(c(10, 12, 15, 11))
   )
 }
 
@@ -86,7 +86,7 @@ test_that("a plot that fails is left out, the box kept", {
   cls <- structure(df, class = c("rmbl_noplot", "data.frame"))
   expect_null(asNamespace("rmoriebricklayer")$.mkset_plot(cls))
   # past the size limit the plot is a picture, not vectors
-  y <- yoy(c(10, 12, 15, 11))
+  y <- yoychg(c(10, 12, 15, 11))
   big <- asNamespace("rmoriebricklayer")$.mkset_plot(y, big = 10)
   expect_match(big, "^<img alt=\"plot\" src=\"data:image/png;base64,")
 })

@@ -8,7 +8,7 @@ yoy_demo <- function() {
     n = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331),
     stringsAsFactors = FALSE
   )
-  yoy(d, value = "n", prd = "year", by = "region", dir = "lower")
+  yoychg(d, value = "n", prd = "year", by = "region", dir = "lower")
 }
 
 test_that("yoyhtml() writes a page with a row per change and the notes", {
@@ -55,7 +55,7 @@ test_that("the PDF pages hold the rows that fit, notes after them", {
 })
 
 test_that("yoyhtml() and yoypdf() name `pal` and check their flags (D2, D6)", {
-  y <- yoy(data.frame(year = 2019:2021, n = c(5, 7, 9)), "n", "year")
+  y <- yoychg(data.frame(year = 2019:2021, n = c(5, 7, 9)), "n", "year")
   f <- tempfile(fileext = ".html")
   p <- tempfile(fileext = ".pdf")
   on.exit(unlink(c(f, p)), add = TRUE)

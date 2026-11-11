@@ -887,7 +887,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 .rmbl_ctl_escape <- function(s, keep = FALSE, ws = FALSE) {
   # text read in a C locale is UTF-8 bytes marked "unknown": marked as UTF-8,
   # as .rmbl_printable() does, it is matched and folded, not warned about
-  # (recheck of a8cdaf9: yoy() labels in a C locale)
+  # (recheck of a8cdaf9: yoychg() labels in a C locale)
   s <- .rmbl_mark8(s)
   # the class is built from the characters themselves: a pattern marked
   # UTF-8 matches the bidi controls whatever the session's locale
