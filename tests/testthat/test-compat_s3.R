@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-test_that("1.1.0 no longer exports rate(), rate_change() or share()", {
+test_that("1.1.1 no longer exports rate(), rate_change() or share()", {
   ex <- getNamespaceExports("rmoriebricklayer")
   expect_false(any(c("rate", "rate_change", "share") %in% ex))
   expect_true(all(c("rtcalc", "ratechg", "shrs", "yoy_summary") %in% ex))

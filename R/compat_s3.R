@@ -3,7 +3,7 @@
 # its method.
 
 # yoy_summary() stays a generic, so methods written for it still dispatch; its
-# method calls yoysmry() and returns the result under the 0.5.13 names. (1.1.0
+# method calls yoysmry() and returns the result under the 0.5.13 names. (1.1.1
 # dropped the other three 0.5.13 generics, rate(), rate_change() and share():
 # their names clash with functions in other CRAN packages; rtcalc(), ratechg()
 # and shrs() are the functions.)

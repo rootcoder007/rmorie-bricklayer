@@ -6,7 +6,7 @@
 #' 1.0.0 renamed most functions rmoriebricklayer 0.5.13 exported. The old names
 #' are no longer R functions, except the eleven rmoriedata 0.3.x calls
 #' (\link{rmbl-compat}) and the S3 generic \code{yoy_summary()}, which stays so
-#' methods written for it still dispatch (1.1.0 dropped \code{rate()},
+#' methods written for it still dispatch (1.1.1 dropped \code{rate()},
 #' \code{rate_change()} and \code{share()}, whose names other CRAN packages
 #' use: \code{rtcalc()}, \code{ratechg()} and \code{shrs()} are the functions).
 #' The command line knows every old name, from
