@@ -97,8 +97,9 @@ trcind <- function() {
 #' @param ref The reference group's label (default \code{"Non-Indigenous"}).
 #' @param agetot The label of the all-ages row in the \code{age} column, one
 #'   string for both tables or two (\code{health}, then \code{suiide}).
-#'   Default \code{NULL}: Statistics Canada's \code{"Total, 18 years and
-#'   over"} and \code{"Total, 15 years and over"}. A table of your own with no
+#'   Default \code{NULL}: Statistics Canada's
+#'   \code{"Total, 18 years and over"} and
+#'   \code{"Total, 15 years and over"}. A table of your own with no
 #'   \code{age} column is used whole.
 #' @return A data frame of class \code{rmbl_trc_gaps}: \code{indicator},
 #'   \code{measure}, \code{period}, \code{group}, \code{estimate},

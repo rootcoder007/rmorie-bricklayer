@@ -15,8 +15,9 @@ year or a month index) and the outcome.}
 \item{trtd}{Column name of the treatment indicator (0 or 1).}
 }
 \value{
-A data frame of class \code{rmbl_bacon}: \code{type} (\code{"treated
-  vs never"}, \code{"earlier vs later"}, \code{"later vs earlier"}),
+A data frame of class \code{rmbl_bacon}: \code{type}
+(\code{"treated vs never"}, \code{"earlier vs later"},
+\code{"later vs earlier"}),
 \code{treated}, \code{control} (the adoption periods; \code{Inf} for
 never), \code{estimate}, \code{weight}; attribute \code{twfe} (the weighted
 sum, equal to the two-way estimate).

@@ -20,9 +20,10 @@
 #'
 #' @details Each label of the statistics column is read as an estimate or as one
 #' of its measures of precision, in every form the tables use: \itemize{ \item
-#' \code{"Low 95\% confidence interval"}; \item \code{"High 95\% confidence
-#' interval, age-standardized rate"}; \item \code{"Confidence interval lower
-#' bound of count"}; \item \code{"95\% confidence interval (upper limit)"};
+#' \code{"Low 95\% confidence interval"}; \item
+#' \code{"High 95\% confidence interval, age-standardized rate"}; \item
+#' \code{"Confidence interval lower bound of count"}; \item
+#' \code{"95\% confidence interval (upper limit)"};
 #' \item \code{"95\% confidence interval lower bound, 2020"}; \item
 #' \code{"Coefficient of variation for percent"}; \item \code{"Standard error"}.
 #' } A limit that names its measure is matched to it (ignoring case and

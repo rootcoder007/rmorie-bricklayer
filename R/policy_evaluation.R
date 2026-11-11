@@ -688,8 +688,9 @@ plot.rmbl_staggered_att <- function(
 #' biased.
 #'
 #' @inheritParams plndid
-#' @return A data frame of class \code{rmbl_bacon}: \code{type} (\code{"treated
-#'   vs never"}, \code{"earlier vs later"}, \code{"later vs earlier"}),
+#' @return A data frame of class \code{rmbl_bacon}: \code{type}
+#'   (\code{"treated vs never"}, \code{"earlier vs later"},
+#'   \code{"later vs earlier"}),
 #'   \code{treated}, \code{control} (the adoption periods; \code{Inf} for
 #'   never), \code{estimate}, \code{weight}; attribute \code{twfe} (the weighted
 #'   sum, equal to the two-way estimate).

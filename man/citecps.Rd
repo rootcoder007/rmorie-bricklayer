@@ -29,8 +29,9 @@ licence that were actually pinned.
 \details{
 The fields used, with their fallbacks: \itemize{ \item author:
 \code{dataset$publisher}, else \code{"Unknown publisher"}; \item title:
-\code{resource$name}, else \code{dataset$package_slug}, else \code{"Untitled
-dataset"}; \item year: the first four characters of \code{captured_at_utc},
+\code{resource$name}, else \code{dataset$package_slug}, else
+\code{"Untitled dataset"}; \item year: the first four characters of
+\code{captured_at_utc},
 else the current year; retrieval date: its first ten characters (omitted if
 absent); \item link: \code{https://doi.org/<dataset$doi>} if a DOI is
 recorded, else \code{resource$direct_url}, else
