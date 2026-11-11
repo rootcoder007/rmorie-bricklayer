@@ -113,7 +113,8 @@ yoywr <- function(x, file, format = "auto", ...) {
 #' columns, the grouping, the lag, the units, and for counts the interval's
 #' confidence level and the base below which changes are noted. A pipe inside
 #' a Markdown cell is escaped. An existing file is overwritten. Errors when
-#' `x` does not come from [yoychg()], or `digits` is not a whole
+#' `x` does not come from [yoychg()], or `digits` is not a
+#' whole
 #' number.
 #'
 #' @param x An `rmbl_yoy` object from

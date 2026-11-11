@@ -76,7 +76,8 @@ quoted, quotes doubled). The metadata line names the value and period
 columns, the grouping, the lag, the units, and for counts the interval's
 confidence level and the base below which changes are noted. A pipe inside
 a Markdown cell is escaped. An existing file is overwritten. Errors when
-\code{x} does not come from \code{\link[=yoychg]{yoychg()}}, or \code{digits} is not a whole
+\code{x} does not come from \code{\link[=yoychg]{yoychg()}}, or \code{digits} is not a
+whole
 number.
 }
 \examples{

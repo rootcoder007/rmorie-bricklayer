@@ -72,7 +72,8 @@ landscape US letter).}
 The path \code{file}, invisibly.
 }
 \description{
-Writes a change table from \code{\link[=yoychg]{yoychg()}} to a file for people who will not
+Writes a change table from \code{\link[=yoychg]{yoychg()}} to a file for people who
+will not
 run
 R: \code{yoyhtml()} to a single self-contained web page, \code{yoypdf()}
 to a PDF. Each row shows the period, the value, the previous value, the

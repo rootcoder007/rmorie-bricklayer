@@ -295,7 +295,8 @@ format.rmbl_change_bounds <- function(x, digits = 4L, ...) {
 
 #' Add publication bounds to a year-over-year table
 #'
-#' [yoychg()] gives an exact conditional-binomial interval for the percent
+#' [yoychg()] gives an exact conditional-binomial interval for the
+#' percent
 #' change of a count, which covers sampling variation. This adds the
 #' interval that rounding and suppression in the published cells imply
 #' ([pubbnd()] carried through
@@ -317,7 +318,8 @@ format.rmbl_change_bounds <- function(x, digits = 4L, ...) {
 #' function does not check that \code{y} holds counts; publication bounds
 #' make sense only for counts.
 #'
-#' Errors when \code{y} does not come from [yoychg()], and for the reasons
+#' Errors when \code{y} does not come from [yoychg()], and for the
+#' reasons
 #' [pubbnd()] gives.
 #'
 #' @param y An \code{rmbl_yoy} object from [yoychg()], with counts as

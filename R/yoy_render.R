@@ -9,7 +9,8 @@
 
 #' Render a change table to HTML or PDF
 #'
-#' Writes a change table from [yoychg()] to a file for people who will not
+#' Writes a change table from [yoychg()] to a file for people who
+#' will not
 #' run
 #' R: \code{yoyhtml()} to a single self-contained web page, \code{yoypdf()}
 #' to a PDF. Each row shows the period, the value, the previous value, the

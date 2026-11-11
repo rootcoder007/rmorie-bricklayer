@@ -110,7 +110,8 @@ release imply, and a drift screen against the prior capsule.
 \details{
 The steps, in order: \enumerate{ \item profile:
 \code{\link[=profcols]{profcols()}} and \code{\link[=misssmry]{misssmry()}} on
-\code{data}; \item change: \code{\link[=yoychg]{yoychg()}} between consecutive periods within
+\code{data}; \item change: \code{\link[=yoychg]{yoychg()}} between consecutive
+periods within
 each \code{by} group. For \code{units = "count"} the exact p-values are then
 adjusted across all comparisons with \code{\link[=scanadj]{scanadj()}}, and, when
 \code{rnd} or \code{suplim} is given, \code{\link[=yoybnd]{yoybnd()}} adds the

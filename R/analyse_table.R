@@ -14,7 +14,8 @@
 #'
 #' @details The steps, in order: \enumerate{ \item profile:
 #' [profcols()] and [misssmry()] on
-#' \code{data}; \item change: [yoychg()] between consecutive periods within
+#' \code{data}; \item change: [yoychg()] between consecutive
+#' periods within
 #' each \code{by} group. For \code{units = "count"} the exact p-values are then
 #' adjusted across all comparisons with [scanadj()], and, when
 #' \code{rnd} or \code{suplim} is given, [yoybnd()] adds the

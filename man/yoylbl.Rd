@@ -44,7 +44,8 @@ maps periods (matched as strings) to labels, and periods it does not name
 keep their own value; an unnamed character vector gives one label per
 distinct period, in order of first appearance.
 
-Errors: \code{x} not from \code{\link[=yoychg]{yoychg()}}; an unnamed vector whose length is
+Errors: \code{x} not from \code{\link[=yoychg]{yoychg()}}; an unnamed vector whose
+length is
 not
 the number of distinct periods; a function that does not return one label
 per row.

@@ -7,7 +7,9 @@ test_that("data hub: key, manifest cache, table cache, CLI verbs", {
     MORIE_DATA_URL = "https://data.example.test"
   )
   withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
-  expect_error(dmnf(), "dlogin")
+  # no key: nothing is refused locally, the request goes out (to a .test name
+  # that never resolves), without an Authorization header
+  expect_error(dmnf(), "data.example.test")
   withr::local_envvar(MORIE_HOSTED_KEY = "sk-good")
   rec <- new.env()
   rec$calls <- character()

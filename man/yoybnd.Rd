@@ -34,7 +34,8 @@ percent-change intervals, \code{compctlo} and
 \code{bounds} in the \code{"yoy"} attribute.
 }
 \description{
-\code{\link[=yoychg]{yoychg()}} gives an exact conditional-binomial interval for the percent
+\code{\link[=yoychg]{yoychg()}} gives an exact conditional-binomial interval for the
+percent
 change of a count, which covers sampling variation. This adds the
 interval that rounding and suppression in the published cells imply
 (\code{\link[=pubbnd]{pubbnd()}} carried through
@@ -56,7 +57,8 @@ previous cell that could be zero) the combined end is \code{NA}. The
 function does not check that \code{y} holds counts; publication bounds
 make sense only for counts.
 
-Errors when \code{y} does not come from \code{\link[=yoychg]{yoychg()}}, and for the reasons
+Errors when \code{y} does not come from \code{\link[=yoychg]{yoychg()}}, and for the
+reasons
 \code{\link[=pubbnd]{pubbnd()}} gives.
 }
 \examples{
