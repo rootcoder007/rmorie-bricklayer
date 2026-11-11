@@ -70,3 +70,4 @@ Rplots.pdf
 
 # copied from R/ by configure for mkbndl()
 inst/bundle/lib/
+.pkgcheck/

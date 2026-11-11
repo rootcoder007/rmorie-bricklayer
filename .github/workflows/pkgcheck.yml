@@ -1,7 +1,7 @@
 # The checks the rOpenSci review bot runs on a submission: pkgcheck() in the
 # bot's own image, with goodpractice's full R CMD check and covr (the parts
 # goodpractice.yml leaves out), srr standards, duplicated names and the rest.
-# The container gets a memory cap, so a suite that only passes on a 16 GB
+# The container gets a 2 GB memory cap, so a suite that only fits on a large
 # runner fails here first instead of on the bot.
 name: pkgcheck
 
@@ -20,27 +20,45 @@ concurrency:
 jobs:
   pkgcheck:
     runs-on: ubuntu-24.04
-    timeout-minutes: 180
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: pkgcheck in the bot's image, memory capped
-        run: |
-          mkdir -p .pkgcheck
-          # the image's own /check.R: installs the dependencies with pak, runs
-          # pkgcheck() and writes .pkgcheck/summary.md and full.md
-          docker run --rm --memory=4g --memory-swap=4g \
-            -e GITHUB_OUTPUT=/pkg/.pkgcheck/out -e GITHUB_TOKEN \
-            -v "$PWD:/pkg" -w /pkg \
-            ghcr.io/ropensci-review-tools/pkgcheck-action:latest
+      - name: pkgcheck in the bot's image, 2 GB memory cap
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: summary
-        if: always()
         run: |
-          cat .pkgcheck/full.md || true
-          test -s .pkgcheck/summary.md
-          # a cross is a failing check; the eyes ones are optional
-          ! grep -q ':heavy_multiplication_x:' .pkgcheck/summary.md
+          mkdir -p .pkgcheck
+          cat > .pkgcheck/run.R <<'RSCRIPT'
+          # the dependency install of the image's /check.R, then pkgcheck()
+          # with its results printed here (the image's own markdown step can
+          # fail after the checks have run and hide them)
+          pak::lockfile_create("local::.", lockfile = ".pkgcheck/pkg.lock",
+                               dependencies = "all")
+          pak::lockfile_install(".pkgcheck/pkg.lock")
+          pkgstats::ctags_install(sudo = TRUE)
+          x <- pkgcheck::pkgcheck(".")
+          s <- capture.output(summary(x))
+          writeLines(s)
+          gp <- x$goodpractice
+          cat("\n== R CMD check\n")
+          rc <- gp$rcmdcheck
+          if (inherits(rc, "try-error")) cat(rc) else {
+            cat("errors:", length(rc$errors), " warnings:",
+                length(rc$warnings), " notes:", length(rc$notes), "\n")
+            writeLines(c(rc$errors, rc$warnings))
+          }
+          cat("\n== covr\n")
+          cv <- gp$covr
+          if (inherits(cv, "try-error")) cat(cv) else
+            cat("coverage:", round(cv$pct_by_line, 2), "%\n")
+          # a cross (U+2716) is a failing check; the eyes ones are optional
+          quit(status = as.integer(any(grepl("✖", s))))
+          RSCRIPT
+          docker run --rm --memory=2g --memory-swap=2g \
+            -e GITHUB_TOKEN -v "$PWD:/pkg" -w /pkg \
+            --entrypoint Rscript \
+            ghcr.io/ropensci-review-tools/pkgcheck-action:latest \
+            .pkgcheck/run.R

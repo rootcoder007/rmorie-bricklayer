@@ -44,3 +44,4 @@
 ^air\.toml$
 ^\.dockerignore$
 \.gc(no|da|ov)$
+^\.pkgcheck$
