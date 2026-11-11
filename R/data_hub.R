@@ -586,6 +586,10 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   lb <- .bl_data_label(path)
   label <- lb$label
   size <- lb$size
+  part <- .bl_data_part_bytes()
+  if (!is.null(size) && is.finite(size) && size > 2 * part) {
+    return(.bl_data_get_parts(path, dest, hdr, label, size, part, timeout))
+  }
   rc <- tryCatch(
     bldl(
       paste0(.bl_data_url(), path),
@@ -601,6 +605,103 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   )
   if (inherits(rc, "condition")) {
     .bl_data_get_failed(rc, label, keyed = !is.null(key))
+  }
+  invisible(dest)
+}
+
+#' The size of one part of a large download (option
+#' `rmoriebricklayer.dpart`, default 90 MB).
+#' @return A number of bytes.
+#' @noRd
+.bl_data_part_bytes <- function() {
+  .rmbl_getopt_ok(
+    "dpart",
+    90 * 2^20,
+    function(v) is.numeric(v) && length(v) == 1L && is.finite(v) && v >= 2^20,
+    "a number of bytes, at least 1 MB"
+  )
+}
+
+#' Downloads a large table in parts, each a byte range of the file.
+#'
+#' A slow or broken connection loses at most one part: each part is retried by
+#' the transport, kept on disk once whole, and a later run starts from the
+#' first part still missing. The parts are joined into `dest`, whose SHA-256
+#' the caller checks against the manifest.
+#' @param path,dest,timeout As for .bl_data_get().
+#' @param hdr The request headers.
+#' @param label The table's key.
+#' @param size The file's size, from the manifest.
+#' @param part The size of one part.
+#' @return `dest`, invisibly.
+#' @noRd
+.bl_data_get_parts <- function(path, dest, hdr, label, size, part, timeout) {
+  starts <- seq(0, size - 1, by = part)
+  n <- length(starts)
+  pdir <- paste0(dest, ".parts")
+  dir.create(pdir, recursive = TRUE, showWarnings = FALSE)
+  pfile <- file.path(pdir, sprintf("%05d", seq_len(n)))
+  for (i in seq_len(n)) {
+    a <- starts[i]
+    want <- min(a + part, size) - a
+    if (file.exists(pfile[i]) && identical(file.size(pfile[i]), want)) {
+      next
+    }
+    unlink(pfile[i])
+    rc <- tryCatch(
+      bldl(
+        paste0(.bl_data_url(), path),
+        pfile[i],
+        headers = c(hdr, Range = sprintf("bytes=%.0f-%.0f", a, a + want - 1)),
+        label = sprintf("%s (part %d of %d)", label, i, n),
+        size = want,
+        tmout = timeout,
+        maxbytes = want
+      ),
+      error = function(e) .bl_unless_interrupted(e, e),
+      warning = function(w) w
+    )
+    if (inherits(rc, "condition")) {
+      .bl_data_get_failed(rc, label, keyed = "Authorization" %in% names(hdr))
+    }
+    if (!identical(file.size(pfile[i]), want)) {
+      got <- file.size(pfile[i])
+      unlink(pfile[i])
+      stop(
+        sprintf(
+          paste(
+            "data.rmorie.com: part %d of %s came back with %.0f bytes, not",
+            "%.0f; run again to resume from that part"
+          ),
+          i, label, got, want
+        ),
+        call. = FALSE
+      )
+    }
+  }
+  .bl_data_join(pfile, dest)
+  unlink(pdir, recursive = TRUE)
+  invisible(dest)
+}
+
+#' Joins the parts of a download into one file.
+#' @param pfile The part files, in order.
+#' @param dest The file written.
+#' @return `dest`, invisibly.
+#' @noRd
+.bl_data_join <- function(pfile, dest) {
+  out <- file(dest, "wb")
+  on.exit(close(out), add = TRUE)
+  for (p in pfile) {
+    con <- file(p, "rb")
+    repeat {
+      buf <- readBin(con, "raw", 2^24)
+      if (!length(buf)) {
+        break
+      }
+      writeBin(buf, out)
+    }
+    close(con)
   }
   invisible(dest)
 }
