@@ -1,7 +1,7 @@
 # rmoriebricklayer 1.1.1
 
 * Three functions have new names, so that no exported name is also a function in another CRAN package: `plotecdf()` is `plotcdfs()`, `plotsm()` is `plotmult()`, and `anltab()` is `anytab()`. The 0.5.x name `analyse_table` now leads to `anytab()` in `rmbl describe`, `rmbl run` and `rmbl migrate`.
-* The 0.5.13 S3 generics `rate()`, `rate_change()` and `share()` are gone, for the same reason; `rtcalc()`, `ratechg()` and `shrs()` are the functions, with the 1.0.0 arguments and result names. `yoy_summary()` stays.
+* The 0.5.13 S3 generics `rate()`, `rate_change()` and `share()` are gone, for the same reason; `rtcalc()`, `ratechg()` and `shrs()` are the functions, with the 1.0.0 arguments and result names. `yoy_summary()` stays. The command line still knows the three old names: `rmbl describe rate` says what it became, and `rmbl migrate` rewrites a script's `rate()`, `rate_change()` and `share()` calls to the new functions and argument names.
 * The `@srrstatsNA` entry for standard G2.14c (imputation) starts its own line again, so 'srr' reads it.
 * Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
 

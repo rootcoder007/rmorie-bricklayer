@@ -288,6 +288,19 @@ vals <- function(r) paste(c(unlist(lapply(names(r$vals), function(a)
 map <- do.call(rbind, lapply(rows, function(r) data.frame(old = r$old, new = r$new,
   old_args = paste(r$old_names, collapse = ","), new_args = paste(r$new_names, collapse = ","),
   values = vals(r))))
+# rate(), rate_change() and share() were R generics until 1.1.1 dropped them
+# (their names clash with other CRAN packages); the command line still knows
+# them, so rmbl describe, run and migrate translate them like any 0.5.x name
+map <- rbind(map, data.frame(
+  old = c("rate", "rate_change", "share"),
+  new = c("rtcalc", "ratechg", "shrs"),
+  old_args = c("x,count,population,by,per,conf_level,min_count",
+               "x,count,population,period,by,lag,per,conf_level,min_count",
+               "x,count,by,total,conf_level"),
+  new_args = c("x,count,pop,by,per,conflvl,mincnt",
+               "x,count,pop,prd,by,lag,per,conflvl,mincnt",
+               "x,count,by,total,conflvl"),
+  values = ""))
 dir.create("inst/compat", showWarnings = FALSE, recursive = TRUE)
 write.table(map, "inst/compat/compat_names_map.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
 # the result names: page, 0.5.x name, 1.0.0 name, and whether the 1.0.0 name is unambiguous (no
