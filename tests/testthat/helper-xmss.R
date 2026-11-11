@@ -75,7 +75,7 @@ mem_cap <- function() {
 }
 
 # A second R process (a child Rscript or a fork) beside the test session does
-# not fit a 2 GB check machine: rOpenSci's pkgcheck holds about 900 MB of its own
+# not fit a 2 GB check machine: rOpenSci's pkgcheck holds about 900 MB itself
 # once coverage is done, a test session takes 500 to 800 MB, and a fork or a
 # child R that loads the package takes as much again (the kernel killed the run
 # in the coverage step and again in R CMD check). Tests that start one skip
