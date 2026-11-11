@@ -82,3 +82,47 @@ test_that("only a table more than twice the part size goes in parts", {
   ns$.bl_data_get("/db/t.csv.gz", withr::local_tempfile())
   expect_identical(called, c(300 * 2^20, 90 * 2^20))
 })
+
+test_that("a refused table says why: ICPSR (410), a key asked for, a key rejected", {
+  ns <- asNamespace("rmoriebricklayer")
+  fail <- "bldl: https://data.example.org/x answered HTTP 410"
+  key <- NULL
+  testthat::local_mocked_bindings(
+    .bl_data_url = function() "https://data.example.org",
+    .bl_data_label = function(path) list(label = "icpsr_9/t", size = NULL),
+    .bl_data_key = function() key,
+    bldl = function(...) stop(fail, call. = FALSE)
+  )
+  dest <- withr::local_tempfile()
+  expect_error(
+    ns$.bl_data_get("/icpsr_9/t.csv.gz", dest),
+    "icpsr_9/t is not served by data.rmorie.com: ICPSR's terms"
+  )
+  fail <- "bldl: https://data.example.org/x answered HTTP 401"
+  expect_error(
+    ns$.bl_data_get("/icpsr_9/t.csv.gz", dest),
+    "data.rmorie.com asked for a key for icpsr_9/t"
+  )
+  key <- "sk-x"
+  expect_error(
+    ns$.bl_data_get("/icpsr_9/t.csv.gz", dest),
+    "rejected the stored key"
+  )
+})
+
+test_that("a part whose download fails says why, as a whole download does", {
+  testthat::local_mocked_bindings(
+    .bl_data_url = function() "https://data.example.org",
+    bldl = function(...) {
+      stop("bldl: https://data.example.org/x answered HTTP 410", call. = FALSE)
+    }
+  )
+  ns <- asNamespace("rmoriebricklayer")
+  expect_error(
+    ns$.bl_data_get_parts(
+      "/icpsr_9/t.csv.gz", withr::local_tempfile(), character(), "icpsr_9/t",
+      5000, 1024, 60
+    ),
+    "icpsr_9/t is not served by data.rmorie.com"
+  )
+})

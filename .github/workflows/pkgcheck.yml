@@ -32,7 +32,11 @@ jobs:
         # installed first and the cap covers only what the bot runs
         run: |
           mkdir -p .pkgcheck/lib
-          docker run --rm -e GITHUB_TOKEN -v "$PWD:/pkg" -w /pkg \
+          # PKG_SYSREQS=false: the image already has every -dev library the
+          # dependencies build against; letting pak add more (gdal-bin from
+          # the ubuntugis PPA) fails whenever launchpad.net times out
+          docker run --rm -e GITHUB_TOKEN -e PKG_SYSREQS=false \
+            -v "$PWD:/pkg" -w /pkg \
             --entrypoint Rscript \
             ghcr.io/ropensci-review-tools/pkgcheck-action:latest -e '
               .libPaths(c("/pkg/.pkgcheck/lib", .libPaths()))
