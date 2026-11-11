@@ -19,7 +19,7 @@ xmss_kid <- function(k) .rmbl_xmss_ids(k)$id
 # (covr's merge then fails), and forked children on macOS can die soon after
 # they start. `out` captures the child's standard output.
 rscript_bg <- function(code, wait = FALSE, out = FALSE) {
-  skip_if_covr_small()
+  skip_if_lowmem()
   rscript <- file.path(R.home("bin"), "Rscript")
   lib <- paste(.libPaths(), collapse = .Platform$path.sep)
   pre <- sprintf(
@@ -74,12 +74,15 @@ mem_cap <- function() {
   cap
 }
 
-# A child R under covr loads the instrumented package (about 570 MB) beside the
-# test session (about 700 MB) and the covr parent (about 480 MB): on a 2 GB
-# machine (rOpenSci's pkgcheck) the kernel kills the run. Tests that start a
-# child R skip in a covr run with under 3 GB; the full coverage job runs them.
-skip_if_covr_small <- function() {
-  if (nzchar(Sys.getenv("R_COVR")) && mem_cap() < 3 * 1024^3) {
-    testthat::skip("a child R under covr needs more memory than this has")
+# A second R process (a child Rscript or a fork) beside the test session does
+# not fit a 2 GB check machine: rOpenSci's pkgcheck holds about 900 MB of its own
+# once coverage is done, a test session takes 500 to 800 MB, and a fork or a
+# child R that loads the package takes as much again (the kernel killed the run
+# in the coverage step and again in R CMD check). Tests that start one skip
+# when the machine or container has under 3 GB; CI and the coverage job, on
+# larger machines, run them.
+skip_if_lowmem <- function() {
+  if (mem_cap() < 3 * 1024^3) {
+    testthat::skip("a second R process needs more memory than this has")
   }
 }

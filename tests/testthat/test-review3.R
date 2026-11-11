@@ -92,7 +92,7 @@ test_that(
         ),
         scr
       )
-      skip_if_covr_small()
+      skip_if_lowmem()
       out <- suppressWarnings(system2(
         file.path(R.home("bin"), "Rscript"),
         shQuote(scr),

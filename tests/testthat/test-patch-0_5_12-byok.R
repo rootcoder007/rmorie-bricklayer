@@ -158,7 +158,7 @@ test_that(
       srv
     )
     withr::local_envvar(R_TESTS = NA)
-    skip_if_covr_small()
+    skip_if_lowmem()
     system2(
       file.path(R.home("bin"), "Rscript"),
       c("--vanilla", srv),

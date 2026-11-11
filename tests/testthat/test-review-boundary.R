@@ -290,6 +290,7 @@ test_that("a DRBG reseeds itself in a new process", {
   # differs, so it must reseed and produce other bytes than the parent's
   # deterministic continuation would
   d2 <- drbgnew(as.raw(0:47))
+  skip_if_lowmem()
   job <- parallel::mcparallel(drbggen(d2, 16))
   child <- parallel::mccollect(job)[[1L]]
   expect_false(identical(child, parent))

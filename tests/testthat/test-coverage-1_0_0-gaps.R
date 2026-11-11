@@ -71,7 +71,7 @@ gap_shim <- local({
       return(rec$so)
     }
     testthat::skip_on_os(c("windows", "mac"))
-    skip_if_covr_small()
+    skip_if_lowmem()
     cc <- tryCatch(
       system2(
         file.path(R.home("bin"), "R"),
@@ -200,7 +200,7 @@ gap_child <- function(mode, call, setup = "") {
     ),
     f
   )
-  skip_if_covr_small()
+  skip_if_lowmem()
   out <- suppressWarnings(system2(
     file.path(R.home("bin"), "Rscript"),
     shQuote(f),

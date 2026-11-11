@@ -124,7 +124,7 @@ test_that(
   ),
   {
     skip_on_cran()
-    skip_if_covr_small()
+    skip_if_lowmem()
     rscript <- file.path(R.home("bin"), "Rscript")
     skip_if_not(file.exists(rscript))
     idx <- withr::local_tempfile(fileext = ".txt")
