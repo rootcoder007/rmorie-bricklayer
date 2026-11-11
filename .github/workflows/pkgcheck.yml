@@ -1,0 +1,46 @@
+# The checks the rOpenSci review bot runs on a submission: pkgcheck() in the
+# bot's own image, with goodpractice's full R CMD check and covr (the parts
+# goodpractice.yml leaves out), srr standards, duplicated names and the rest.
+# The container gets a memory cap, so a suite that only passes on a 16 GB
+# runner fails here first instead of on the bot.
+name: pkgcheck
+
+on:
+  push:
+    branches: [ropensci-checks, ropensci]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pkgcheck-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pkgcheck:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: pkgcheck in the bot's image, memory capped
+        run: |
+          mkdir -p .pkgcheck
+          # the image's own /check.R: installs the dependencies with pak, runs
+          # pkgcheck() and writes .pkgcheck/summary.md and full.md
+          docker run --rm --memory=4g --memory-swap=4g \
+            -e GITHUB_OUTPUT=/pkg/.pkgcheck/out -e GITHUB_TOKEN \
+            -v "$PWD:/pkg" -w /pkg \
+            ghcr.io/ropensci-review-tools/pkgcheck-action:latest
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: summary
+        if: always()
+        run: |
+          cat .pkgcheck/full.md || true
+          test -s .pkgcheck/summary.md
+          # a cross is a failing check; the eyes ones are optional
+          ! grep -q ':heavy_multiplication_x:' .pkgcheck/summary.md
