@@ -56,7 +56,11 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
       - uses: r-lib/actions/setup-tinytex@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
       # the PDF manual needs makeindex and the inconsolata font, which the minimal TinyTeX lacks
+      # a stalled download here once held the job for 40 minutes: the step is cut after six
+      # and may fail; the check then runs without the PDF manual and says so
       - name: LaTeX packages for the PDF manual
+        timeout-minutes: 6
+        continue-on-error: true
         run: |
           tlmgr update --self
           tlmgr install makeindex inconsolata
@@ -73,7 +77,10 @@ jobs:
           unset NOT_CRAN
           tb=$(ls tb/rmoriebricklayer_*.tar.gz)
           t0=$(date +%s)
-          R CMD check --as-cran "$tb" 2>&1 | while IFS= read -r l; do printf '%s %s\n' "$(date +%s)" "$l"; done > stamped.txt || true
+          manual=""
+          command -v makeindex >/dev/null 2>&1 || manual="--no-manual"
+          [ -z "$manual" ] || echo "## no makeindex: PDF manual step not run" >> "$GITHUB_STEP_SUMMARY"
+          R CMD check --as-cran $manual "$tb" 2>&1 | while IFS= read -r l; do printf '%s %s\n' "$(date +%s)" "$l"; done > stamped.txt || true
           cut -d' ' -f2- stamped.txt > check.txt
           t1=$(date +%s)
           {
