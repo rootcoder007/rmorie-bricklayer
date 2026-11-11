@@ -286,6 +286,7 @@ test_that("an unzipped bundle runs on synthetic and on real data", {
   out <- withr::local_tempdir()
   utils::unzip(b$path, exdir = out)
   st <- file.path(out, sub("[.]zip$", "", basename(b$path)))
+  skip_if_covr_small()
   rs <- file.path(R.home("bin"), "Rscript")
   run <- function(...) {
     r <- system2(rs, c(shQuote(file.path(st, "setup_and_run.R")), ...),
@@ -484,6 +485,7 @@ test_that("rmbl pack --secrets packs what looks like credentials", {
 test_that("the runner stops in words on a bad config.json or no manifest", {
   skip_on_cran()
   withr::local_envvar(R_TESTS = NA, BRICKLAYER_SYNTHETIC = NA)
+  skip_if_covr_small()
   rs <- file.path(R.home("bin"), "Rscript")
   unpack <- function(p) {
     b <- mkbndl(p$dir, withr::local_tempdir(.local_envir = parent.frame()))
@@ -533,6 +535,7 @@ test_that("a rename that fails, a bad name and an over-long path", {
 test_that("the runner downloads only with the package; files are checked", {
   skip_on_cran()
   withr::local_envvar(R_TESTS = NA, BRICKLAYER_SYNTHETIC = NA)
+  skip_if_covr_small()
   rs <- file.path(R.home("bin"), "Rscript")
   b <- mkbndl(bndl_proj()$dir, withr::local_tempdir())
   out <- withr::local_tempdir()

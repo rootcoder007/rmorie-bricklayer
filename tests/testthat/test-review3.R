@@ -92,6 +92,7 @@ test_that(
         ),
         scr
       )
+      skip_if_covr_small()
       out <- suppressWarnings(system2(
         file.path(R.home("bin"), "Rscript"),
         shQuote(scr),

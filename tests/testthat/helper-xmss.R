@@ -19,6 +19,7 @@ xmss_kid <- function(k) .rmbl_xmss_ids(k)$id
 # (covr's merge then fails), and forked children on macOS can die soon after
 # they start. `out` captures the child's standard output.
 rscript_bg <- function(code, wait = FALSE, out = FALSE) {
+  skip_if_covr_small()
   rscript <- file.path(R.home("bin"), "Rscript")
   lib <- paste(.libPaths(), collapse = .Platform$path.sep)
   pre <- sprintf(
@@ -47,4 +48,38 @@ wait_files <- function(files, seconds = 60) {
     Sys.sleep(0.1)
   }
   FALSE
+}
+
+# Memory this test process may use, in bytes: the cgroup limit (a container) or
+# the machine's RAM, whichever is smaller; Inf when neither can be read.
+mem_cap <- function() {
+  cap <- Inf
+  for (f in c(
+    "/sys/fs/cgroup/memory.max",
+    "/sys/fs/cgroup/memory/memory.limit_in_bytes"
+  )) {
+    v <- suppressWarnings(as.numeric(
+      tryCatch(readLines(f, 1L, warn = FALSE), error = function(e) NA)
+    ))
+    if (length(v) == 1L && !is.na(v) && v > 0) cap <- min(cap, v)
+  }
+  mi <- tryCatch(
+    readLines("/proc/meminfo", warn = FALSE),
+    error = function(e) character()
+  )
+  kb <- suppressWarnings(as.numeric(
+    sub("^MemTotal:\\s+(\\d+) kB$", "\\1", grep("^MemTotal:", mi, value = TRUE))
+  ))
+  if (length(kb) == 1L && !is.na(kb)) cap <- min(cap, kb * 1024)
+  cap
+}
+
+# A child R under covr loads the instrumented package (about 570 MB) beside the
+# test session (about 700 MB) and the covr parent (about 480 MB): on a 2 GB
+# machine (rOpenSci's pkgcheck) the kernel kills the run. Tests that start a
+# child R skip in a covr run with under 3 GB; the full coverage job runs them.
+skip_if_covr_small <- function() {
+  if (nzchar(Sys.getenv("R_COVR")) && mem_cap() < 3 * 1024^3) {
+    testthat::skip("a child R under covr needs more memory than this has")
+  }
 }

@@ -28,6 +28,7 @@ skip_if_sigint_ignored <- function() {
 # helper could not run in time). Works where this process inherited SIGINT as
 # ignored, which skip_if_sigint_ignored() would otherwise skip over.
 interrupt_probe <- function(expr_text, after = 1, timeout = 120) {
+  skip_if_covr_small()
   marker <- tempfile("probe-")
   code <- sprintf(
     paste(

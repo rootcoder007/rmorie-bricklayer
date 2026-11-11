@@ -605,6 +605,7 @@ test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
     # `Rscript` first on PATH that refuses to run ("should not be used without a
     # path"), so the launcher starts this R's own (every Linux CI leg, fc5ccfc
     # and d6f3616; the transcript showed the second)
+    skip_if_covr_small()
     st <- withr::with_envvar(
       c(
         HOME = h,

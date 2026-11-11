@@ -627,6 +627,7 @@ test_that("#17: RMBL_KEY leaves the process at once, its startup copy wiped", {
   )
   skip_on_cran()
   skip_if_not(file.exists("/proc/self/environ"), "no /proc/self/environ here")
+  skip_if_covr_small()
   rs <- file.path(R.home("bin"), "Rscript")
   code <- paste0(
     "d <- tempfile(); dir.create(d); ",

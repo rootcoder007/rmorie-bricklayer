@@ -367,6 +367,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
 
   lib <- consumer_lib
   dir.create(lib, showWarnings = FALSE)
+  skip_if_covr_small()
   out <- suppressWarnings(system2(
     file.path(R.home("bin"), "R"),
     c(
@@ -405,6 +406,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
     'writeLines(attr(r, "sha256_abc"))',
     sep = "; "
   )
+  skip_if_covr_small()
   res <- suppressWarnings(system2(
     file.path(R.home("bin"), "Rscript"),
     c("-e", shQuote(code)),
@@ -595,6 +597,7 @@ test_that(
       ),
       f
     )
+    skip_if_covr_small()
     res <- suppressWarnings(system2(
       file.path(R.home("bin"), "Rscript"),
       shQuote(f),

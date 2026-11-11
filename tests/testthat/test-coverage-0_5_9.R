@@ -116,6 +116,7 @@ test_that(
     # touched
     f <- tempfile()
     writeLines("  answer  ", f)
+    skip_if_covr_small()
     out <- system2(
       file.path(R.home("bin"), "Rscript"),
       c("-e", shQuote("cat(rmoriebricklayer:::.bl_readline('p> '))")),

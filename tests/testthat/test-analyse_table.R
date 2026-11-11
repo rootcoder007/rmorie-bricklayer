@@ -207,6 +207,7 @@ test_that("the capsule template runs as written on the shipped example", {
   expect_true(file.exists(prov$source$url))
   expect_error(usecpstmpl(d), "not empty")
   skip_on_cran()
+  skip_if_covr_small()
   res <- system2(
     file.path(R.home("bin"), "Rscript"),
     c(shQuote(file.path(d, "analysis.R"))),
@@ -226,6 +227,7 @@ test_that("the capsule template runs as written on the shipped example", {
   expect_true(file.exists(file.path(d, prov2$resource$filename)))
   expect_true(vrfcps(d)$ok)
   # a second run sees the pin and goes through again
+  skip_if_covr_small()
   res2 <- system2(
     file.path(R.home("bin"), "Rscript"),
     c(shQuote(file.path(d, "analysis.R"))),

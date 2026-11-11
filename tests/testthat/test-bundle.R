@@ -149,6 +149,7 @@ test_that(
       ", ", deparse(dir), ", man = readRDS(", deparse(mf), "), key = ",
       deparse(fx_secret), "); cat(l10n_info()[['UTF-8']], isTRUE(r$ok))"
     )
+    skip_if_covr_small()
     out <- withr::with_envvar(
       c(
         LC_ALL = "C",
