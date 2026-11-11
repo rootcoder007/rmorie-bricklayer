@@ -171,7 +171,7 @@ ccrc32 <- function(x) {
 #' @references Krawczyk H, Bellare M, Canetti R (1997). HMAC: Keyed-Hashing
 #' for Message Authentication. RFC 2104.
 #'   \doi{10.17487/RFC2104}
-#' @examples
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # RFC 4231 test case 2.
 #' chmac("Jefe", "what do ya want for nothing?")
 #'

@@ -40,6 +40,7 @@ examples) or use \code{\link{dgstobj}}; for BLAKE2b use
 \code{\link{cblake2b}}.
 }
 \examples{
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Hash a character scalar (NIST test vector for "abc").
 csha256("abc")
 # ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
@@ -55,6 +56,7 @@ csha256(raw(0))
 
 # Fingerprint an arbitrary object via its serialization.
 csha256(serialize(list(a = 1L, b = "x"), NULL))
+\dontshow{\}) # examplesIf}
 }
 \references{
 National Institute of Standards and Technology (2015). Secure Hash

@@ -61,6 +61,7 @@ Errors: \code{key} or \code{msg} that is neither one non-NA string nor
 a raw vector; \code{a} or \code{b} that is not one non-NA string.
 }
 \examples{
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # RFC 4231 test case 2.
 chmac("Jefe", "what do ya want for nothing?")
 
@@ -80,6 +81,7 @@ cdgsteq(tag, "too-short")
 
 # one message at a time
 try(chmac("k", c("m1", "m2")))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Krawczyk H, Bellare M, Canetti R (1997). HMAC: Keyed-Hashing

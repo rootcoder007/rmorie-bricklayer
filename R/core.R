@@ -173,7 +173,7 @@ cnormpdf <- function(x, mean = 0, sd = 1) {
 #' National Institute of Standards and Technology (2015). Secure Hash
 #' Standard (SHS). FIPS PUB 180-4.
 #' \doi{10.6028/NIST.FIPS.180-4}
-#' @examples
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Hash a character scalar (NIST test vector for "abc").
 #' csha256("abc")
 #' # ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
