@@ -52,7 +52,15 @@ test_that(
       expect_false(m$old[i] %in% ns, info = m$old[i])
       expect_true(m$new[i] %in% ns, info = m$new[i])
       expect_identical(length(old), length(new), info = m$old[i])
-      tf <- names(formals(get(m$new[i], asNamespace("rmoriebricklayer"))))
+      ns_env <- asNamespace("rmoriebricklayer")
+      tf <- names(formals(get(m$new[i], ns_env)))
+      # a generic takes its arguments through its methods (rtcalc(x, ...) and
+      # rtcalc.data.frame(x, count, pop, ...)): read those too
+      tbl <- ns_env[[".__S3MethodsTable__."]]
+      own <- grep(paste0("^", m$new[i], "\\."), names(tbl), value = TRUE)
+      for (meth in own) {
+        tf <- union(tf, names(formals(tbl[[meth]])))
+      }
       expect_true(all(new %in% tf), info = m$old[i])
     }
   }
