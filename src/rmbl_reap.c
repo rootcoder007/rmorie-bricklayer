@@ -52,6 +52,8 @@ SEXP C_rmbl_reap(SEXP pids) {
         } while (r < 0 && errno == EINTR);
         if (r == (pid_t) pid) n++;
     }
+#else
+    (void) p; /* nothing to reap on Windows */
 #endif
     UNPROTECT(1);
     return ScalarInteger(n);
