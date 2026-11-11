@@ -3,17 +3,18 @@
 # stub that serves the range asked for from a local file.
 
 test_that("a large table comes in parts, resumed and joined in order", {
+  st <- new.env()
   src <- withr::local_tempfile()
   set.seed(1)
   bytes <- as.raw(sample(0:255, 5000, replace = TRUE))
   writeBin(bytes, src)
-  seen <- character()
+  st$seen <- character()
   testthat::local_mocked_bindings(
     .bl_data_url = function() "https://data.example.org",
     bldl = function(url, dest, headers = NULL, maxbytes = 2^31, ...) {
       rng <- sub("^bytes=", "", headers[["Range"]])
       r <- as.numeric(strsplit(rng, "-")[[1]])
-      seen <<- c(seen, headers[["Range"]])
+      st$seen <- c(st$seen, headers[["Range"]])
       writeBin(bytes[(r[1] + 1):(r[2] + 1)], dest)
       invisible(dest)
     }
@@ -23,8 +24,10 @@ test_that("a large table comes in parts, resumed and joined in order", {
   ns$.bl_data_get_parts("/db/t.csv.gz", dest, c(`User-Agent` = "x"), "db/t",
                         5000, 1024, 60)
   expect_identical(readBin(dest, "raw", 6000), bytes)
-  expect_identical(seen, c("bytes=0-1023", "bytes=1024-2047", "bytes=2048-3071",
-                           "bytes=3072-4095", "bytes=4096-4999"))
+  expect_identical(st$seen, c(
+    "bytes=0-1023", "bytes=1024-2047", "bytes=2048-3071",
+    "bytes=3072-4095", "bytes=4096-4999"
+  ))
   expect_false(dir.exists(paste0(dest, ".parts")))
   # a broken earlier run: parts 1 and 2 whole, part 3 short; 3-5 are fetched
   unlink(dest)
@@ -33,12 +36,12 @@ test_that("a large table comes in parts, resumed and joined in order", {
   writeBin(bytes[1:1024], file.path(pd, "00001"))
   writeBin(bytes[1025:2048], file.path(pd, "00002"))
   writeBin(bytes[2049:2100], file.path(pd, "00003"))
-  seen <- character()
+  st$seen <- character()
   ns$.bl_data_get_parts("/db/t.csv.gz", dest, c(`User-Agent` = "x"), "db/t",
                         5000, 1024, 60)
   expect_identical(readBin(dest, "raw", 6000), bytes)
   expect_identical(
-    seen,
+    st$seen,
     c("bytes=2048-3071", "bytes=3072-4095", "bytes=4096-4999")
   )
 })
@@ -63,6 +66,7 @@ test_that("a short part is refused and dropped, to resume later", {
 })
 
 test_that("only a table more than twice the part size goes in parts", {
+  st <- new.env()
   ns <- asNamespace("rmoriebricklayer")
   withr::local_options(rmoriebricklayer.dpart = 2^20)
   expect_identical(ns$.bl_data_part_bytes(), 2^20)
@@ -70,20 +74,20 @@ test_that("only a table more than twice the part size goes in parts", {
   expect_error(ns$.bl_data_part_bytes(), "at least 1 MB")
   withr::local_options(rmoriebricklayer.dpart = NULL)
   expect_identical(ns$.bl_data_part_bytes(), 90 * 2^20)
-  called <- NULL
+  st$called <- NULL
   testthat::local_mocked_bindings(
     .bl_data_label = function(path) list(label = "db/t", size = 300 * 2^20),
     .bl_data_get_parts = function(path, dest, hdr, label, size, part, timeout) {
-      called <<- c(size, part)
+      st$called <- c(size, part)
       invisible(dest)
     },
     .bl_data_key = function() NULL
   )
   ns$.bl_data_get("/db/t.csv.gz", withr::local_tempfile())
-  expect_identical(called, c(300 * 2^20, 90 * 2^20))
+  expect_identical(st$called, c(300 * 2^20, 90 * 2^20))
 })
 
-test_that("a refused table says why: ICPSR (410), a key asked for, a key rejected", {
+test_that("a refused table says why: ICPSR, a key asked for or rejected", {
   ns <- asNamespace("rmoriebricklayer")
   fail <- "bldl: https://data.example.org/x answered HTTP 410"
   key <- NULL
