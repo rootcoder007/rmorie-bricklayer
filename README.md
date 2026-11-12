@@ -17,7 +17,7 @@
 
 `rmoriebricklayer` is for individuals who work from a variety of published and unpublished tables: a
 ministry's open-data portal, Statistics Canada, a police oversight agency, or your own data. It
-does three things with such a table.
+does four things with such a table.
 
 1. **It analyzes the table.** `anytab()` takes counts by period and group and reports what changed
    between periods, with exact intervals, trends and rates, and says how far the publisher's
@@ -29,9 +29,13 @@ does three things with such a table.
 3. **It signs the record.** A capsule can be signed (with a shared key, or with the post-quantum
    signature standards), so a reader can check who produced a result and that nothing changed
    afterwards.
+4. **It estimates what a policy changed.** From a panel of such tables, `plndid()`, `stgatt()`,
+   `syndid()`, `plndml()` and the functions around them give difference-in-differences,
+   staggered-adoption, synthetic-control and double machine learning estimates with their
+   diagnostics; `vignette("policy-evaluation")` and `vignette("causal-effects")` work through them.
 
 The rest of the package (the statistics for administrative tables, the plots, the dashboard, the
-cryptography written from the standards) serves one of these three.
+cryptography written from the standards) serves one of these four.
 
 ## Why it exists
 

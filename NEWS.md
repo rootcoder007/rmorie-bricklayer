@@ -31,6 +31,7 @@
 * New `arcmine()`, `arcvis()` and `arcwd()`: list the captures you saved in archive.rmorie.com, make one private or public, and withdraw one for good (`arcwd(id, confirm = TRUE)`); until now only the website could. From a terminal: `rmbl archive mine`, `rmbl archive private ID`, `rmbl archive public ID` and `rmbl archive withdraw ID --yes`. Withdrawing a private capture also deletes its stored bytes unless another capture holds them; a public capture's bytes are kept.
 * The `@srrstatsNA` entry for standard G2.14c (imputation) starts its own line again, so 'srr' reads it.
 * Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
+* The package description and the README now name the policy-evaluation functions (`plndid()`, `stgatt()`, `syndid()`, `plndml()` and the functions around them), and the reference index lists them straight after `anytab()`; nothing in the code changes.
 
 # rmoriebricklayer 1.1.0
 

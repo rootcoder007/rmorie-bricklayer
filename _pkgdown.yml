@@ -94,6 +94,47 @@ reference:
       - scanadj
       - drftcal
       - usecpstmpl
+  - title: Evaluating a policy
+    desc: >
+      Difference in differences with two-way fixed effects, event studies,
+      staggered adoption (Callaway and Sant'Anna; Wooldridge), the Goodman-Bacon
+      decomposition, switching treatments, permutation inference and
+      Westfall-Young stepdown p-values, fixed-effects Poisson, synthetic control;
+      severity-weighted crime indices, justice-pipeline rates, cumulative risk of
+      a first event, and place-based buffers.
+    contents:
+      - plndid
+      - evstudy
+      - stgatt
+      - bacondcmp
+      - swtdid
+      - perminf
+      - stpdnpv
+      - plnpois
+      - synctl
+      - sevidx
+      - piperate
+      - cmlrisk
+      - bufasgn
+      - polex
+      - plotevgrid
+      - loounit
+      - cohtrnd
+  - title: Causal estimation on panels
+    desc: >
+      Double machine learning with fixed effects (lasso, ridge or any learner,
+      cross-fitted by unit), matching on pre-treatment trajectories, synthetic
+      difference in differences, the wild cluster bootstrap for few clusters,
+      sensitivity to departures from parallel trends, and design-based power.
+    contents:
+      - plndml
+      - aipwcf
+      - mtchdid
+      - baltab
+      - syndid
+      - wcb
+      - tse
+      - plnpwr
   - title: Fetch open data
     desc: >
       Resilient downloaders with libcurl + Wayback fallback for pulling public
@@ -491,47 +532,6 @@ reference:
       - ltrlrng
       - optsqr
       - srchfig
-  - title: Evaluating a policy
-    desc: >
-      Difference in differences with two-way fixed effects, event studies,
-      staggered adoption (Callaway and Sant'Anna; Wooldridge), the Goodman-Bacon
-      decomposition, switching treatments, permutation inference and
-      Westfall-Young stepdown p-values, fixed-effects Poisson, synthetic control;
-      severity-weighted crime indices, justice-pipeline rates, cumulative risk of
-      a first event, and place-based buffers.
-    contents:
-      - plndid
-      - evstudy
-      - stgatt
-      - bacondcmp
-      - swtdid
-      - perminf
-      - stpdnpv
-      - plnpois
-      - synctl
-      - sevidx
-      - piperate
-      - cmlrisk
-      - bufasgn
-      - polex
-      - plotevgrid
-      - loounit
-      - cohtrnd
-  - title: Causal estimation on panels
-    desc: >
-      Double machine learning with fixed effects (lasso, ridge or any learner,
-      cross-fitted by unit), matching on pre-treatment trajectories, synthetic
-      difference in differences, the wild cluster bootstrap for few clusters,
-      sensitivity to departures from parallel trends, and design-based power.
-    contents:
-      - plndml
-      - aipwcf
-      - mtchdid
-      - baltab
-      - syndid
-      - wcb
-      - tse
-      - plnpwr
   - title: First Nations, Métis and Inuit health
     desc: >
       Statistics Canada tables read as published (suppressed cells never imputed),
