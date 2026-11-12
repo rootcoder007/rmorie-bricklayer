@@ -19,8 +19,30 @@ concurrency:
 
 jobs:
   pkgcheck:
+    name: pkgcheck (${{ matrix.label }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 240
+    timeout-minutes: 330
+    # the bot's server sets no container limit, so its memory is the size of
+    # its machine, which is not published: the suite is held to each of the
+    # sizes it could be. The 1 GB machine with no swap is reported, not
+    # required: pkgcheck's own R process takes most of 1 GB by itself.
+    continue-on-error: ${{ matrix.required == false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: 2 GB
+            mem: 2g
+            swap: 2g
+            required: true
+          - label: 1 GB + 1 GB swap
+            mem: 1g
+            swap: 2g
+            required: true
+          - label: 1 GB, no swap
+            mem: 1g
+            swap: 1g
+            required: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -47,9 +69,11 @@ jobs:
             '
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: pkgcheck in the bot's image, 2 GB memory cap
+      - name: pkgcheck in the bot's image, memory cap ${{ matrix.label }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          MEM: ${{ matrix.mem }}
+          MEMSWAP: ${{ matrix.swap }}
         run: |
           cat > .pkgcheck/run.R <<'RSCRIPT'
           .libPaths(c("/pkg/.pkgcheck/lib", .libPaths()))
@@ -79,7 +103,8 @@ jobs:
           RSCRIPT
           # a memory log every 2 s (container total and its largest processes), printed at the
           # end, so a run stopped for memory says which step and process it was
-          docker run -d --name pkc --memory=2g --memory-swap=2g \
+          swapon --show || true
+          docker run -d --name pkc --memory="$MEM" --memory-swap="$MEMSWAP" \
             -e GITHUB_TOKEN -e R_LIBS=/pkg/.pkgcheck/lib \
             -v "$PWD:/pkg" -w /pkg --entrypoint Rscript \
             ghcr.io/ropensci-review-tools/pkgcheck-action:latest \
@@ -91,6 +116,7 @@ jobs:
             done ) > .pkgcheck/mem.log &
           status=$(docker wait pkc)
           docker logs pkc
+          echo "== container: $(docker inspect -f "exit {{.State.ExitCode}} oom-killed {{.State.OOMKilled}}" pkc)"
           echo "== peak memory samples"
           grep "GiB\|MiB" .pkgcheck/mem.log | sort -k2 -h | tail -3
           echo "== last samples"
