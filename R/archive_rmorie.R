@@ -703,9 +703,9 @@ arcwd <- function(id, confirm = FALSE) {
 #' The archive's error text for a message, or NULL when it is no text.
 #'
 #' A server or proxy may repeat the Authorization header in its error text,
-#' as sent, split over lines, percent-encoded or in base64. Text that holds
-#' the key in any of these forms is withheld whole; other text has anything
-#' shaped like a bearer token taken out.
+#' as sent, cut short, split over lines, percent-encoded or in base64. Text
+#' that holds the key in any of these forms is withheld whole; other text has
+#' anything shaped like a bearer token taken out.
 #' @param e The `error` member of the archive's reply.
 #' @param key The key sent, or NULL.
 #' @return One printable string, or NULL.
@@ -722,6 +722,13 @@ arcwd <- function(id, confirm = FALSE) {
       b64(key),
       b64(paste("Bearer", key))
     )
+    # a proxy that cuts headers short echoes part of the key: every run of
+    # 12 characters of it counts (a shorter key counts whole)
+    n <- nchar(key)
+    if (n > 12L) {
+      from <- seq_len(n - 11L)
+      forms <- c(forms, substring(key, from, from + 11L))
+    }
     flat <- tolower(gsub("[[:space:]]+", "", e))
     held <- vapply(
       tolower(forms),
@@ -830,7 +837,11 @@ arcwd <- function(id, confirm = FALSE) {
   }
   one <- function(v) is.character(v) && length(v) == 1L && !is.na(v)
   if (
-    !is.list(rec$json) || !one(rec$json$capture_id) || !one(rec$json$capture)
+    !is.list(rec$json) ||
+      !one(rec$json[["capture_id"]]) ||
+      !grepl("^[0-9]{14}-[0-9a-f]{8}$", rec$json[["capture_id"]]) ||
+      # [[ ]]: `$capture` would also match a lone `capture_id`
+      !one(rec$json[["capture"]])
   ) {
     stop(
       sprintf(

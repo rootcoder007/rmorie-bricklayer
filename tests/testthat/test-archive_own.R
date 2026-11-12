@@ -213,6 +213,23 @@ test_that("rmbl archive mine, private, public and withdraw", {
   r <- run("archive", "withdraw", id1, "--yes")
   expect_identical(r$status, 0L)
   expect_match(r$text, "withdrawn; its stored bytes were deleted", fixed = TRUE)
+  e$was <- "public"
+  r <- run("archive", "withdraw", id1, "--yes")
+  expect_match(r$text, "its stored bytes were kept", fixed = TRUE)
+  local_mocked_bindings(
+    .bl_arc_req = function(...) {
+      list(
+        status = 200L,
+        json = list(capture_id = id1, withdrawn = TRUE),
+        body = "",
+        error = ""
+      )
+    }
+  )
+  r <- run("archive", "withdraw", id1, "--yes")
+  expect_identical(r$status, 0L)
+  expect_match(r$text, "did not say whether", fixed = TRUE)
+  local_mocked_bindings(.bl_arc_req = own_stub(e))
   expect_identical(run("archive", "withdraw")$status, 2L)
   expect_identical(run("archive", "private")$status, 2L)
   e$rows <- list()

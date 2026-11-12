@@ -464,6 +464,14 @@ test_that("the key is withheld in every form an archive may send it back", {
       fixed = TRUE
     )
   }
+  for (part in c(substr(key, 1, 15), substring(key, 12), substr(key, 5, 16))) {
+    expect_identical(
+      .bl_arc_errtext(paste("bad key", part), key),
+      "the error text is withheld: it repeated your key"
+    )
+  }
+  expect_identical(.bl_arc_errtext("bad key abc", "abc"),
+                   "the error text is withheld: it repeated your key")
   expect_identical(
     .bl_arc_errtext("quota exceeded for this account", key),
     "quota exceeded for this account"
@@ -474,10 +482,11 @@ test_that("the key is withheld in every form an archive may send it back", {
 })
 
 test_that("a capture recorded without an id is a failed upload, in words", {
+  rec <- NULL
   local_mocked_bindings(
     .bl_arc_req = function(method, path, ...) {
       if (method == "POST") {
-        list(status = 201L, json = NULL, body = "<html>", error = "")
+        list(status = 201L, json = rec, body = "<html>", error = "")
       } else if (method == "PUT") {
         list(status = 201L, json = list(ok = TRUE), body = "", error = "")
       } else {
@@ -487,12 +496,24 @@ test_that("a capture recorded without an id is a failed upload, in words", {
   )
   f <- withr::local_tempfile(fileext = ".txt")
   writeLines("x", f)
-  expect_error(
+  up <- function() {
     .bl_arc_upload(
       f, "https://example.org/", Sys.time(),
       "a reason of more than twenty characters", "private", "text/plain",
       "https://my.archive.example", "k", 30L
-    ),
-    "without a capture id"
-  )
+    )
+  }
+  page <- "https://my.archive.example/capture/x"
+  for (bad in list(
+    NULL,
+    list(capture = page),
+    list(capture_id = 5, capture = page),
+    list(capture_id = "../../x", capture = page),
+    list(capture_id = "20260101120000-0123abcd")
+  )) {
+    rec <- bad
+    expect_error(up(), "without a capture id")
+  }
+  rec <- list(capture_id = "20260101120000-0123abcd", capture = page)
+  expect_identical(up()$capture_id, "20260101120000-0123abcd")
 })
