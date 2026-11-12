@@ -7,6 +7,7 @@
 * A test that refreshes the data manifest from several processes at once forks two at a time instead of twelve: under coverage each fork copied an 850 MB test session, and twelve ran a 2 GB check machine out of memory.
 * On a machine or container with less than 3 GB (rOpenSci's pkgcheck runs in 2 GB), the tests that fork or start a second R process skip: that process takes 500 to 800 MB beside the test session and the checker's own session, and the three overran 2 GB, in the coverage step and again in R CMD check. CI and the coverage job, on larger machines, still run them.
 * The full test suite runs in batches of 8 files, each in a fresh R process, so no process grows past about 1 GB; in batches of 25, R CMD check on a 2 GB machine was stopped for lack of memory.
+* On a machine or container with less than 3 GB the batches are 3 files (under coverage a batch of 8 reached 1.1 GB), and the C++ sources compile as three units, so no compiler process needs more than about 460 MB (one unit needed over 700 MB). The Windows check time is unchanged.
 * The `@srrstatsNA` entry for standard G2.14c (imputation) starts its own line again, so 'srr' reads it.
 * Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
 

@@ -18,7 +18,31 @@ full <- identical(Sys.getenv("NOT_CRAN"), "true") ||
 # 2 GB with R CMD check alongside). covr still counts every line:
 # each process that loads the instrumented package writes its own trace file,
 # and covr merges them all. RMBL_TEST_BATCH=0 runs it in one process.
-batch <- suppressWarnings(as.integer(Sys.getenv("RMBL_TEST_BATCH", "8")))
+# On a machine or container with under 3 GB the batches are three files: under
+# covr a batch of eight reached 1.1 GB beside the checker's own 500 MB.
+mem_gb <- function() {
+  cap <- Inf
+  for (f in c(
+    "/sys/fs/cgroup/memory.max",
+    "/sys/fs/cgroup/memory/memory.limit_in_bytes"
+  )) {
+    v <- suppressWarnings(as.numeric(
+      tryCatch(readLines(f, 1L, warn = FALSE), error = function(e) NA)
+    ))
+    if (length(v) == 1L && !is.na(v) && v > 0) cap <- min(cap, v)
+  }
+  mi <- tryCatch(
+    readLines("/proc/meminfo", warn = FALSE),
+    error = function(e) character()
+  )
+  kb <- suppressWarnings(as.numeric(
+    sub("^MemTotal:\\s+(\\d+) kB$", "\\1", grep("^MemTotal:", mi, value = TRUE))
+  ))
+  if (length(kb) == 1L && !is.na(kb)) cap <- min(cap, kb * 1024)
+  cap / 1024^3
+}
+size <- if (mem_gb() < 3) "3" else "8"
+batch <- suppressWarnings(as.integer(Sys.getenv("RMBL_TEST_BATCH", size)))
 split_run <- full && !is.na(batch) && batch > 0
 if (split_run) {
   files <- sort(list.files("testthat", "^test.*\\.[rR]$"))
@@ -45,7 +69,7 @@ if (split_run) {
     if (!identical(system2(rscript, shQuote(child)), 0L)) failed <- c(failed, g)
   }
   if (length(failed)) {
-    stop("tests failed in: ", paste(failed, collapse = ", "), call. = FALSE)
+    stop("tests failed in: ", toString(failed), call. = FALSE)
   }
 } else if (full) {
   testthat::test_check("rmoriebricklayer")

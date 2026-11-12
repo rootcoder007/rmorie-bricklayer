@@ -107,18 +107,18 @@ test_that(
     withr::local_envvar(MORIE_DATA_URL = "https://elsewhere.example.org")
     # no key is needed: the stored one is withheld from that address, said
     # so, and the request goes out without it
-    seen <- NULL
+    got <- new.env()
     testthat::local_mocked_bindings(bldl = function(
       url,
       dest,
       headers = NULL,
       ...
     ) {
-      seen <<- headers
+      got$seen <- headers
       invisible(dest)
     })
     expect_message(.bl_data_get("/x.csv.gz", tempfile()), "MORIE_DATA_URL")
-    expect_false("Authorization" %in% names(seen))
+    expect_false("Authorization" %in% names(got$seen))
   }
 )
 

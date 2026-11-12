@@ -16,9 +16,11 @@ test_that("the command line translates rate(), rate_change() and share()", {
     "plotecdf(x)",
     'plotsm(y, "p")'
   ), f)
-  o <- character()
-  blcli(c("migrate", f), out = function(...) o <<- c(o, paste0(...)))
-  o <- paste(o, collapse = "")
+  got <- new.env()
+  got$o <- character()
+  keep <- function(...) got$o <- c(got$o, paste0(...))
+  blcli(c("migrate", f), out = keep)
+  o <- paste(got$o, collapse = "")
   expect_match(o, 'rtcalc(d, count = "n", pop = "p", conflvl = 0.9)',
                fixed = TRUE)
   expect_match(o, 'shrs(d, count = "n")', fixed = TRUE)
@@ -27,10 +29,13 @@ test_that("the command line translates rate(), rate_change() and share()", {
   expect_match(o, 'anytab(d, "n", "y")', fixed = TRUE)
   expect_match(o, "plotcdfs(x)", fixed = TRUE)
   expect_match(o, 'plotmult(y, "p")', fixed = TRUE)
-  o <- character()
-  blcli(c("describe", "rate_change"),
-        out = function(...) o <<- c(o, paste0(...)))
-  expect_match(paste(o, collapse = ""), "0.5.x name of ratechg()", fixed = TRUE)
+  got$o <- character()
+  blcli(c("describe", "rate_change"), out = keep)
+  expect_match(
+    paste(got$o, collapse = ""),
+    "0.5.x name of ratechg()",
+    fixed = TRUE
+  )
 })
 
 test_that("the old generics refuse what their methods do not take", {

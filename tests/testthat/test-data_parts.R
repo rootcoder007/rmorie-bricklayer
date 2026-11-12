@@ -13,7 +13,7 @@ test_that("a large table comes in parts, resumed and joined in order", {
     .bl_data_url = function() "https://data.example.org",
     bldl = function(url, dest, headers = NULL, maxbytes = 2^31, ...) {
       rng <- sub("^bytes=", "", headers[["Range"]])
-      r <- as.numeric(strsplit(rng, "-")[[1]])
+      r <- as.numeric(strsplit(rng, "-", fixed = TRUE)[[1]])
       st$seen <- c(st$seen, headers[["Range"]])
       writeBin(bytes[(r[1] + 1):(r[2] + 1)], dest)
       invisible(dest)
