@@ -153,7 +153,12 @@ test_that("a percentage changes by points, not by percent", {
   # two are different quantities and reporting the second as "the
   # change" is the standard error
   d <- data.frame(year = 2019:2021, share = c(4.0, 5.0, 5.5))
-  got <- as.data.frame(yoychg(d, value = "share", prd = "year", units = "percent"))
+  got <- as.data.frame(yoychg(
+    d,
+    value = "share",
+    prd = "year",
+    units = "percent"
+  ))
   expect_true("ppchg" %in% names(got))
   expect_false("pctchg" %in% names(got))
   expect_equal(got$ppchg, c(NA, 1.0, 0.5))
@@ -179,7 +184,12 @@ test_that("count units refuse a measured quantity", {
     "whole numbers"
   )
   # and continuous units accept it, without claiming an interval
-  got <- as.data.frame(yoychg(d, value = "x", prd = "year", units = "continuous"))
+  got <- as.data.frame(yoychg(
+    d,
+    value = "x",
+    prd = "year",
+    units = "continuous"
+  ))
   expect_equal(
     got$pctchg,
     c(NA, 100 * (2.5 / 1.5 - 1), 100 * (3.5 / 2.5 - 1)),
@@ -335,8 +345,11 @@ test_that("the span summary is the compound rate", {
   # fourth root of the total growth
   expect_equal(s$cagrpct, 100 * ((160 / 100)^(1 / 4) - 1), tolerance = 1e-12)
   # and compounding it back over the span returns the total
-  expect_equal(100 * ((1 + s$cagrpct / 100)^4 - 1), s$totalpct,
-    tolerance = 1e-12)
+  expect_equal(
+    100 * ((1 + s$cagrpct / 100)^4 - 1),
+    s$totalpct,
+    tolerance = 1e-12
+  )
   expect_identical(s$periods, 5L)
   expect_identical(s$up, 4L)
   expect_identical(s$down, 0L)
@@ -706,7 +719,11 @@ test_that("degenerate input degrades rather than erroring", {
   expect_true(is.na(one$previous))
   expect_identical(one$flag, "no comparison period")
   expect_identical(
-    nrow(yoysmry(yoychg(data.frame(y = 2019, n = 100), value = "n", prd = "y"))),
+    nrow(yoysmry(yoychg(
+      data.frame(y = 2019, n = 100),
+      value = "n",
+      prd = "y"
+    ))),
     1L
   )
   # an all-missing value column
@@ -1056,11 +1073,17 @@ test_that("the first period is said once, not once per group or on the plot", {
   # the zero bases keep their own note, one per row
   expect_length(grep("previous period is zero", out, fixed = TRUE), 2L)
   y1 <- yoychg(c(10, 12, 15))
-  expect_true(any(grepl("Note: the first period has nothing", format(y1),
-                        fixed = TRUE)))
+  expect_true(any(grepl(
+    "Note: the first period has nothing",
+    format(y1),
+    fixed = TRUE
+  )))
   y2 <- yoychg(c(10, 12, 15, 11), lag = 2)
-  expect_true(any(grepl("the first 2 periods have nothing", format(y2),
-                        fixed = TRUE)))
+  expect_true(any(grepl(
+    "the first 2 periods have nothing",
+    format(y2),
+    fixed = TRUE
+  )))
   # the plot draws no first-period label and each other reason once
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
@@ -1073,7 +1096,8 @@ test_that("the first period is said once, not once per group or on the plot", {
   plot(y)
   expect_false(any(grepl("first period", rec$calls, fixed = TRUE)))
   expect_identical(
-    sum(grepl("previous period is zero", rec$calls, fixed = TRUE)), 1L
+    sum(grepl("previous period is zero", rec$calls, fixed = TRUE)),
+    1L
   )
   # the HTML table says it once too, under the table
   f <- withr::local_tempfile(fileext = ".html")
@@ -1081,8 +1105,10 @@ test_that("the first period is said once, not once per group or on the plot", {
   h <- paste(readLines(f, encoding = "UTF-8"), collapse = "\n")
   expect_false(grepl("note: no comparison period", h, fixed = TRUE))
   expect_identical(
-    lengths(regmatches(h, gregexpr("first period of each group", h,
-                                   fixed = TRUE))),
+    lengths(regmatches(
+      h,
+      gregexpr("first period of each group", h, fixed = TRUE)
+    )),
     1L
   )
 })

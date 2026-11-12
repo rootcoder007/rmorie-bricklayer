@@ -43,7 +43,12 @@ test_that("chgenv is the exact image of the input intervals", {
 })
 
 test_that("yoybnd widens the sampling interval, never narrows it", {
-  y <- yoychg(otis, value = "individuals", prd = "year", by = c("table", "group"))
+  y <- yoychg(
+    otis,
+    value = "individuals",
+    prd = "year",
+    by = c("table", "group")
+  )
   yb <- yoybnd(y, rnd = 5)
   ok <- !is.na(yb$pctlo)
   expect_true(all(yb$compctlo[ok] <= yb$pctlo[ok]))
@@ -55,7 +60,12 @@ test_that("yoybnd widens the sampling interval, never narrows it", {
 })
 
 test_that("exact p-values agree with binom.test and adjust over the scan", {
-  y <- yoychg(otis, value = "individuals", prd = "year", by = c("table", "group"))
+  y <- yoychg(
+    otis,
+    value = "individuals",
+    prd = "year",
+    by = c("table", "group")
+  )
   yp <- yoypv(y)
   i <- which(!is.na(yp$previous))[1]
   expect_identical(
@@ -320,14 +330,16 @@ test_that("anytab() prints as a box of facts", {
     n = c(3, 40, 5, 60),
     stringsAsFactors = FALSE
   )
-  .o2_check(anytab(rd, "n", "yr", by = "g"), "Analysis of a published table",
-    c("Periods", "2 (1 to 2)", "comparison(s)", "Trend"))
+  .o2_check(
+    anytab(rd, "n", "yr", by = "g"),
+    "Analysis of a published table",
+    c("Periods", "2 (1 to 2)", "comparison(s)", "Trend")
+  )
 })
 
 test_that("rptanl() Markdown tables hold no raw control bytes", {
   d <- data.frame(
-    group = c(paste0("A\033[31mR", "\u009b", "2J"),
-              paste0("B", "\u202e", "C")),
+    group = c(paste0("A\033[31mR", "\u009b", "2J"), paste0("B", "\u202e", "C")),
     pct = c(20, 1.25),
     n = c(12000, 3),
     stringsAsFactors = FALSE
@@ -339,6 +351,5 @@ test_that("rptanl() Markdown tables hold no raw control bytes", {
   # each number on its own: 20 stays 20, not 20.00000
   expect_match(md, "| 20 |", fixed = TRUE)
   expect_match(md, "| 12,000 |", fixed = TRUE)
-  expect_identical(.md_num1(c(20, 2023, NA), big = FALSE),
-                   c("20", "2023", ""))
+  expect_identical(.md_num1(c(20, 2023, NA), big = FALSE), c("20", "2023", ""))
 })

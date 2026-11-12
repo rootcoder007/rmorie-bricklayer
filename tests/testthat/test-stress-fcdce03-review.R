@@ -108,7 +108,12 @@ test_that(
     # no key is needed: the stored one is withheld from that address, said
     # so, and the request goes out without it
     seen <- NULL
-    testthat::local_mocked_bindings(bldl = function(url, dest, headers = NULL, ...) {
+    testthat::local_mocked_bindings(bldl = function(
+      url,
+      dest,
+      headers = NULL,
+      ...
+    ) {
       seen <<- headers
       invisible(dest)
     })

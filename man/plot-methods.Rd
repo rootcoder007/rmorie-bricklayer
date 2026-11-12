@@ -373,7 +373,8 @@ text.}
 \item{gaps}{For \code{rmbl_yoy} (\code{what = "value"}) and
 \code{rmbl_event_study} (\code{style = "stata"}): how a missing value
 shows in a line. \code{"break"} (the default) breaks the
-line there, so a \dQuote{no data} period that \code{yoychg(complete = TRUE)}
+line there, so a \dQuote{no data} period that \code{yoychg(complete =
+TRUE)}
 inserted is a visible gap; \code{"join"} draws the line straight over it.}
 
 \item{period}{For \code{rmbl_rate}, a \code{by} column holding the period:

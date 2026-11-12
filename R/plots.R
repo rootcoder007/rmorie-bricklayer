@@ -372,7 +372,8 @@ plotopt <- function(...) {
 #' @param gaps For \code{rmbl_yoy} (\code{what = "value"}) and
 #'   \code{rmbl_event_study} (\code{style = "stata"}): how a missing value
 #'   shows in a line. \code{"break"} (the default) breaks the
-#'   line there, so a \dQuote{no data} period that \code{yoychg(complete = TRUE)}
+#'   line there, so a \dQuote{no data} period that \code{yoychg(complete =
+#'   TRUE)}
 #'   inserted is a visible gap; \code{"join"} draws the line straight over it.
 #' @return The data drawn, invisibly. For the plots over time the frame
 #'   carries the x position of each point drawn: an \code{at} column

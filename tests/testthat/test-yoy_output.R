@@ -143,7 +143,11 @@ test_that("a change table prints as a box with its settings", {
 })
 
 test_that("yoysmry() results print as a box", {
-  y <- yoychg(data.frame(year = 2019:2023, n = c(10, 12, 9, 15, 16)), "n", "year")
+  y <- yoychg(
+    data.frame(year = 2019:2023, n = c(10, 12, 9, 15, 16)),
+    "n",
+    "year"
+  )
   s <- yoysmry(y)
   expect_s3_class(s, c("rmbl_yoy_summary", "data.frame"))
   out <- expect_box2(s, "Year-over-year summary", c("2019", "cagrpct"))
@@ -157,7 +161,9 @@ test_that("yoy folds labels the console cannot show, as rtcalc does", {
   withr::local_envvar(RMBL_ASCII_ONLY = "1")
   d <- data.frame(
     g = rep(c("M\u00e9tis", "\u4e2d\u6587"), each = 2),
-    p = rep(2020:2021, 2), n = c(10, 12, 5, 6), stringsAsFactors = FALSE
+    p = rep(2020:2021, 2),
+    n = c(10, 12, 5, 6),
+    stringsAsFactors = FALSE
   )
   out <- format(yoychg(d, "n", "p", by = "g"))
   expect_true(any(grepl("Metis", out, fixed = TRUE)))
@@ -175,8 +181,12 @@ test_that("in a C locale yoy folds UTF-8 labels read as unknown bytes", {
   g <- rep(c("Métis", "中文"), each = 2)
   # as a C session reads a UTF-8 file: the bytes, of no declared encoding
   Encoding(g) <- "unknown"
-  d <- data.frame(g = g, p = rep(2020:2021, 2), n = c(10, 12, 5, 6),
-                  stringsAsFactors = FALSE)
+  d <- data.frame(
+    g = g,
+    p = rep(2020:2021, 2),
+    n = c(10, 12, 5, 6),
+    stringsAsFactors = FALSE
+  )
   expect_silent(out <- format(yoychg(d, "n", "p", by = "g")))
   expect_true(any(grepl("Metis", out, fixed = TRUE)))
   expect_false(any(grepl("[^ -~]", out, useBytes = TRUE)))
@@ -186,14 +196,25 @@ test_that("in a C locale yoychg() itself does not warn about UTF-8 labels", {
   withr::local_locale(c(LC_CTYPE = "C"))
   skip_if(isTRUE(l10n_info()[["UTF-8"]]), "the C locale cannot be set here")
   # marked UTF-8, as intToUtf8() and a UTF-8 file read with its encoding give
-  g <- rep(c(intToUtf8(c(77, 233, 116, 105, 115)), intToUtf8(c(0x4e2d, 0x6587)),
-             "Plain"), each = 3)
-  d <- data.frame(g = g, yr = rep(2020:2022, 3), n = c(10, 12, 15, 20, 22, 19,
-                                                       5, 6, 7))
+  g <- rep(
+    c(
+      intToUtf8(c(77, 233, 116, 105, 115)),
+      intToUtf8(c(0x4e2d, 0x6587)),
+      "Plain"
+    ),
+    each = 3
+  )
+  d <- data.frame(
+    g = g,
+    yr = rep(2020:2022, 3),
+    n = c(10, 12, 15, 20, 22, 19, 5, 6, 7)
+  )
   expect_silent(yoychg(d, "n", "yr", by = "g"))
   d$pop <- 1000
   tr <- "unable to translate"
-  expect_no_warning(ratechg(d, count = "n", pop = "pop", prd = "yr", by = "g"),
-                    message = tr)
+  expect_no_warning(
+    ratechg(d, count = "n", pop = "pop", prd = "yr", by = "g"),
+    message = tr
+  )
   expect_no_warning(anytab(d, value = "n", prd = "yr", by = "g"), message = tr)
 })

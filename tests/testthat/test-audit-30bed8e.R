@@ -11,8 +11,12 @@ test_that("yoy_summary is an S3 generic again, with the old arguments", {
   f <- get("yoy_summary", envir = ns)
   expect_true("UseMethod" %in% all.names(body(f)))
   expect_false(
-    is.null(utils::getS3method("yoy_summary", "default", optional = TRUE,
-                               envir = ns))
+    is.null(utils::getS3method(
+      "yoy_summary",
+      "default",
+      optional = TRUE,
+      envir = ns
+    ))
   )
   expect_identical(environment(f), ns)
   y <- yoychg(
@@ -112,7 +116,10 @@ test_that(
       frequency = 4,
       start = 2020
     )
-    expect_identical(nn(yoychg(tsx, conf_level = 0.5)), yoychg(tsx, conflvl = 0.5))
+    expect_identical(
+      nn(yoychg(tsx, conf_level = 0.5)),
+      yoychg(tsx, conflvl = 0.5)
+    )
   }
 )
 

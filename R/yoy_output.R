@@ -182,7 +182,8 @@ print.rmbl_yoy <- function(
 #' @details Rows whose \code{value} is missing are dropped before the summary,
 #' and the remaining rows are sorted by period, text periods in the order
 #' \code{yoychg()} read them (its \code{prd} and \code{prdord}). Periods with no
-#' order (text \code{yoychg()} could not read, an unordered factor) have no first
+#' order (text \code{yoychg()} could not read, an unordered factor) have no
+#' first
 #' or last: \code{from}, \code{to}, \code{first}, \code{last}, \code{totalpct}
 #' and \code{cagrpct} are then \code{NA}, with a warning saying why. With
 #' \eqn{v_1} the first and \eqn{v_T} the last observed value, the total

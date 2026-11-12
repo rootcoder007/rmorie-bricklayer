@@ -134,6 +134,7 @@ try(ratechg(1:3))
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link{rtcalc}}, \code{\link{yoychg}} for change in a count or a
+\code{\link{rtcalc}}, \code{\link{yoychg}} for change in a count or
+a
 measured quantity.
 }

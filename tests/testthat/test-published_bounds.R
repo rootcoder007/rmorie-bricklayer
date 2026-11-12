@@ -60,7 +60,11 @@ test_that("yoybnd() adds the envelope to a yoychg() table", {
   expect_s3_class(yb, "rmbl_yoy")
   expect_true(all(c("envpctlo", "envpctup", "compctlo") %in% names(yb)))
   expect_identical(attr(yb, "yoy")$bounds$rounding, 5)
-  expect_error(yoybnd(seg, rnd = 5), "`y` must come from yoychg()", fixed = TRUE)
+  expect_error(
+    yoybnd(seg, rnd = 5),
+    "`y` must come from yoychg()",
+    fixed = TRUE
+  )
 })
 
 test_that("pubbnd refuses negative or infinite counts and an infinite rnd", {

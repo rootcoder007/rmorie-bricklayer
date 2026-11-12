@@ -37,7 +37,8 @@
 #' @srrstats {G5.11a} skip_if_no_internet()/online_now() skip with a message
 #'   ("no internet", "no network") when a download fails.
 #' @srrstats {EA1.3} Every export's @param gives the accepted input type (for
-#'   example yoychg x: data frame, numeric vector or ts; ginicoef x: non-negative
+#'   example yoychg x: data frame, numeric vector or ts; ginicoef x:
+#'   non-negative
 #'   numeric vector).
 #' @srrstats {EA6.0} 159 testthat files check return values: classes,
 #'   dimensions, names and numeric values against reference computations.
@@ -74,8 +75,9 @@ NULL
 #' @srrstatsNA {G1.5} No associated publication is cited in inst/CITATION.
 #'   README's OTIS recomputation ships as the bundle example
 #'   (inst/bundle/otis-mrp/).
-#' @srrstatsNA {G2.14c} Imputation is deliberately excluded: published tables'
-#'   suppressed cells are never imputed (comment at top of R/indigenous.R).
+#' @srrstatsNA {G2.14c} Imputation is deliberately excluded: the suppressed
+#'   cells of published tables are never imputed (comment at top of
+#'   R/indigenous.R).
 #' @srrstatsNA {EA2.0} The package does no extensive table filtering or joining;
 #'   its only internal merge fills missing periods into one user table.
 #' @srrstatsNA {EA2.1} No index-column system, because no multi-table joins

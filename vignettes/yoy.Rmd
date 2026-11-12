@@ -238,12 +238,13 @@ or excellent, 2015/2018 to 2019/2022, from the bundled health indicators:
 hi <- indiex("health")
 m <- hi[hi$age == "Total, 18 years and over" &
           hi$indicator == "Perceived mental health, very good or excellent", ]
-# yoychg() steps through consecutive periods: number the two survey cycles 1 and 2
+# yoychg() steps through consecutive periods: number the two survey cycles
+# 1 and 2
 m$cycle <- match(m$period, c("2015/2018", "2019/2022"))
 for (g in unique(m$group)) {
   s <- m[m$group == g, ]
-  print(as.data.frame(yoychg(s, value = estimate, prd = cycle, units = "percent"))[
-    2, c("value", "previous", "ppchg", "verdict")])
+  y <- yoychg(s, value = estimate, prd = cycle, units = "percent")
+  print(as.data.frame(y)[2, c("value", "previous", "ppchg", "verdict")])
 }
 ```
 

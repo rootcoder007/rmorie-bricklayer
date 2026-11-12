@@ -797,12 +797,16 @@ test_that(
       }
       rec$out
     }
+    # a short analysis runs in this process
+    expect_identical(ns$.bl_bg(function() 1, FALSE), 1)
+    # a long one forks this session (parallel::mcparallel): a second copy of
+    # it, which a 2 GB check machine has no room for
+    skip_if_lowmem()
     expect_identical(wait(ns$.bl_bg(function() 6 * 7, TRUE))$ok, 42)
     expect_match(
       wait(ns$.bl_bg(function() stop("no luck"), TRUE))$err,
       "no luck"
     )
-    expect_identical(ns$.bl_bg(function() 1, FALSE), 1)
     local_mocked_bindings(
       mccollect = function(...) list(NULL),
       .package = "parallel"
@@ -953,8 +957,8 @@ test_that("a tab shows the exact call, the refusal and its explanation", {
   expect_identical(
     strsplit(g$code, "\n", fixed = TRUE)[[1L]][2L],
     paste(
-      "y <- yoychg(data, value = \"n\", prd = \"year\", by = \"area\", lag = 1,",
-      "units = \"count\",",
+      "y <- yoychg(data, value = \"n\", prd = \"year\", by = \"area\",",
+      "lag = 1, units = \"count\",",
       "minbase = 20, dir = \"neutral\")"
     )
   )

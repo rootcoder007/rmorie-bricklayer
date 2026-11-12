@@ -234,7 +234,8 @@
 #' @srrstats {TS1.2} yoychg.default rejects other classes, and .rmbl_num rejects
 #'   factors, text, lists and logicals; tested in test-round5.R:317 and
 #'   test-input-contracts.R.
-#' @srrstats {TS1.3} yoychg.numeric, yoychg.integer and yoychg.ts all convert to one
+#' @srrstats {TS1.3} yoychg.numeric, yoychg.integer and yoychg.ts all convert to
+#'   one
 #'   period/value data frame and pass it to yoychg.data.frame, the single
 #'   validation and compute path.
 #' @srrstats {TS1.4} .yoy_restore keeps the Date or POSIXct class and the tzone
@@ -449,7 +450,8 @@ yoychg.ts <- function(x, lag = NULL, ...) {
   invisible(NULL)
 }
 
-# the 0.5.x argument names of yoychg(), still accepted (yoychg() kept its name, so it
+# the 0.5.x argument names of yoychg(), still accepted (yoychg() kept its name,
+# so it
 # has no alias)
 .yoy_old_args <- c(
   period = "prd",
@@ -925,7 +927,10 @@ yoychg.ts <- function(x, lag = NULL, ...) {
 #' @noRd
 .yoy_by_type <- function(by) {
   if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
-    stop("yoychg: `by` must be one or more column names, or NULL", call. = FALSE)
+    stop(
+      "yoychg: `by` must be one or more column names, or NULL",
+      call. = FALSE
+    )
   }
   invisible(by)
 }
@@ -974,7 +979,8 @@ yoychg.ts <- function(x, lag = NULL, ...) {
 #' A yoychg() result: the table, its class and its settings.
 #' @param out The change table.
 #' @param meta The settings, from .yoy_settings().
-#' @param prdord The order of text periods yoychg() was given, or NULL; yoysmry()
+#' @param prdord The order of text periods yoychg() was given, or NULL;
+#'   yoysmry()
 #'   reads it.
 #' @return An `rmbl_yoy` object.
 #' @noRd
@@ -1217,7 +1223,8 @@ yoychg.ts <- function(x, lag = NULL, ...) {
   )
 }
 
-#' The forms of text period yoychg() reads, each a function giving a label's step
+#' The forms of text period yoychg() reads, each a function giving a label's
+#' step
 #' number (NA when the label is not of that form).
 #' @return A named list of functions.
 #' @noRd
@@ -1445,7 +1452,8 @@ yoychg.ts <- function(x, lag = NULL, ...) {
   out
 }
 
-#' A sort key for periods, read as yoychg() reads them, or NULL when they have no
+#' A sort key for periods, read as yoychg() reads them, or NULL when they have
+#' no
 #' order (text or an unordered factor the reader cannot place).
 #' @param p The periods.
 #' @param prdord The order yoychg() was given, or NULL.

@@ -196,8 +196,14 @@ test_that("literal copies in function bodies start with the function name", {
   out <- withr::local_tempfile()
   writeLines("x", out)
   err(wbrtry(out, incgone = NA), "wbrtry: `incgone` must be TRUE or FALSE")
-  err(yoyjs(1, tempfile()), "yoyjs: `x` must be an rmbl_yoy object from yoychg()")
-  err(yoymd(1, tempfile()), "yoymd: `x` must be an rmbl_yoy object from yoychg()")
+  err(
+    yoyjs(1, tempfile()),
+    "yoyjs: `x` must be an rmbl_yoy object from yoychg()"
+  )
+  err(
+    yoymd(1, tempfile()),
+    "yoymd: `x` must be an rmbl_yoy object from yoychg()"
+  )
 })
 
 test_that("the signing refusals name their function", {

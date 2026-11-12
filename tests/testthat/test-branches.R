@@ -156,7 +156,11 @@ test_that("a period column that is not a grid is left alone", {
   expect_identical(sum(!is.na(odd$value)), 3L)
 
   # a single period has no step either
-  one <- as.data.frame(yoychg(data.frame(p = 2019, n = 5), value = "n", prd = "p"))
+  one <- as.data.frame(yoychg(
+    data.frame(p = 2019, n = 5),
+    value = "n",
+    prd = "p"
+  ))
   expect_identical(nrow(one), 1L)
   expect_true(is.na(one$previous))
 
@@ -184,15 +188,18 @@ test_that("a period column that is not a grid is left alone", {
   expect_true(all(is.na(chr$previous)))
   expect_true(all(chr$flag == "no comparison period"))
   # a factor period is the same case
-  expect_warning(fct <- as.data.frame(yoychg(
-    data.frame(
-      p = factor(c("Q1", "Q2")),
-      n = c(10, 20)
-    ),
-    value = "n",
-    prd = "p",
-    minbase = 0
-  )), "of no form yoychg\\(\\) reads")
+  expect_warning(
+    fct <- as.data.frame(yoychg(
+      data.frame(
+        p = factor(c("Q1", "Q2")),
+        n = c(10, 20)
+      ),
+      value = "n",
+      prd = "p",
+      minbase = 0
+    )),
+    "of no form yoychg\\(\\) reads"
+  )
   expect_identical(nrow(fct), 2L)
   expect_true(all(is.na(fct$previous)))
 

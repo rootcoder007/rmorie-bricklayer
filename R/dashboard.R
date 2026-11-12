@@ -1146,7 +1146,8 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   if (test) !is.null(t) else as.data.frame(t)
 }
 
-#' Writes a downloaded result: a yoychg() table as yoyhtml() draws it, a table as
+#' Writes a downloaded result: a yoychg() table as yoyhtml() draws it, a table
+#' as
 #' CSV, else the print.
 #' @param x The result to write: as HTML, as CSV or as printed text.
 #' @param file The path the download is written to.

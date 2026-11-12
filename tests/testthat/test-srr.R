@@ -60,7 +60,11 @@ test_that("bootstrap results agree across seeds within tolerance", {
 #' @srrstats {EA6.0d} The yoychg(), rtcalc(), cpsdrft()$columns and profcols()
 #'   frames are checked column by column for their class.
 test_that("the main result frames have the documented column classes", {
-  y <- yoychg(data.frame(year = 2019:2023, n = c(10, 12, 9, 15, 20)), "n", "year")
+  y <- yoychg(
+    data.frame(year = 2019:2023, n = c(10, 12, 9, 15, 20)),
+    "n",
+    "year"
+  )
   expect_identical(
     vapply(y, function(z) class(z)[1L], ""),
     c(
@@ -219,7 +223,10 @@ test_that("yoychg() compares ordered-factor periods by level order", {
   d$q <- factor(as.character(d$q))
   expect_warning(un <- yoychg(d, "n", "q"), "of no form yoychg\\(\\) reads")
   expect_true(all(is.na(un$previous)))
-  expect_error(yoychg(list(1)), "a numeric or integer vector, or a ts, not list")
+  expect_error(
+    yoychg(list(1)),
+    "a numeric or integer vector, or a ts, not list"
+  )
 })
 
 test_that("fylbl() refuses a fractional year, as documented", {

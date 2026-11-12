@@ -36,7 +36,8 @@ field names (nested tables and attributes too; the last table lists them)
 and, for a delimited writer, the 0.5.x header. Such a result carries the
 class \code{rmbl_old} in front, so \code{print()}, \code{format()},
 \code{plot()}, \code{summary()} and the generics read it in the 1.0.0 names.
-A 1.0.0 call is never translated. \code{yoychg()} kept its name: it returns the
+A 1.0.0 call is never translated. \code{yoychg()} kept its name: it returns
+the
 0.5.x names when called with a 0.5.x argument name, and the 1.0.0 names
 otherwise.
 }

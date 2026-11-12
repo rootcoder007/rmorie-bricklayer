@@ -295,7 +295,11 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
 #' @noRd
 .yoy_delim <- function(x, file, sep, digits, na, metadata, comment) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop(.rmbl_fn(), "`x` must be an rmbl_yoy object from yoychg()", call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      "`x` must be an rmbl_yoy object from yoychg()",
+      call. = FALSE
+    )
   }
   file <- .rmbl_out_file(file)
   na <- .rmbl_text1(na, "na")
@@ -548,8 +552,15 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   }
   ext <- tolower(sub(".*\\.", "", basename(file)))
   map <- c(
-    html = "html", htm = "html", pdf = "pdf", csv = "csv", tsv = "tsv",
-    tab = "tsv", json = "json", md = "markdown", markdown = "markdown"
+    html = "html",
+    htm = "html",
+    pdf = "pdf",
+    csv = "csv",
+    tsv = "tsv",
+    tab = "tsv",
+    json = "json",
+    md = "markdown",
+    markdown = "markdown"
   )
   if (!ext %in% names(map)) {
     stop(

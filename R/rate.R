@@ -444,7 +444,8 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
 #'   small-count note, or \code{NA}. The \code{ratechg} attribute records
 #'   the settings.
 #'
-#' @seealso \code{\link{rtcalc}}, \code{\link{yoychg}} for change in a count or a
+#' @seealso \code{\link{rtcalc}}, \code{\link{yoychg}} for change in a count or
+#'   a
 #'   measured quantity.
 #'
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
