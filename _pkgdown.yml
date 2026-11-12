@@ -105,6 +105,7 @@ reference:
       - arcpush
       - arcfind
       - arcget
+      - arcmine
       - siufetch
       - dldata
       - fdl

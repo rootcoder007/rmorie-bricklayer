@@ -1882,7 +1882,11 @@ format.rmbl_transfer_check <- function(x, ...) {
 .rcm_counts <- function(m, recd) {
   after <- table(as.character(recd), useNA = "no")
   after_num <- stats::setNames(as.numeric(after), names(after))
-  man_num <- vapply(m$counts_after, as.numeric, numeric(1))
+  man_num <- vapply(
+    m$counts_after,
+    function(v) suppressWarnings(as.numeric(v)[1L]),
+    numeric(1)
+  )
   if (
     !identical(names(after_num), names(man_num)) ||
       !isTRUE(all.equal(unname(after_num), unname(man_num)))

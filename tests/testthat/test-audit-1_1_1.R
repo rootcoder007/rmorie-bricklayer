@@ -287,3 +287,85 @@ test_that("the verify and drift Markdown cells escape HTML", {
   expect_identical(.bl_arc_host("https://my.archive.example"),
                    "my.archive.example")
 })
+
+test_that("a provenance text member that is not one string is dropped", {
+  ep <- "https://open.canada.ca/data/api/3/action/package_show?id=abc"
+  one <- .rmbl_prov_shape(list(resource = list(filename = list("d.csv"))))
+  expect_identical(one$resource$filename, "d.csv")
+  for (bad in list(42, NA, TRUE, list(), list("a", "b"), c("a", "b"))) {
+    p <- .rmbl_prov_shape(list(
+      dataset = list(ckan_api_endpoint = bad, publisher = "kept"),
+      resource = list(search_query = bad, size_bytes = 3)
+    ))
+    expect_null(p$dataset$ckan_api_endpoint)
+    expect_null(p$resource$search_query)
+    expect_identical(p$dataset$publisher, "kept")
+    expect_identical(p$resource$size_bytes, 3)
+    expect_null(rslvckns(list(
+      dataset = list(ckan_api_endpoint = ep),
+      resource = list(search_query = bad)
+    )))
+    expect_null(rslvckan(list(
+      dataset = list(ckan_api_endpoint = bad),
+      resource = list(name_match_pattern = "d")
+    )))
+    expect_null(rslvckns(list(
+      dataset = list(ckan_api_endpoint = bad),
+      resource = list(search_query = "d")
+    )))
+  }
+  ok <- .rmbl_prov_shape(list(
+    dataset = list(ckan_api_endpoint = ep),
+    resource = list(search_query = "d", filename = "d.csv")
+  ))
+  expect_identical(ok$dataset$ckan_api_endpoint, ep)
+  expect_identical(ok$resource$filename, "d.csv")
+})
+
+test_that("a count written as text in a provenance file gives no warning", {
+  d <- withr::local_tempdir()
+  utils::write.csv(data.frame(id = 1:3), file.path(d, "d.csv"))
+  writeLines(
+    paste0(
+      "{\"resource\": {\"filename\": \"d.csv\", ",
+      "\"row_count_data_rows\": \"three\", \"size_bytes\": \"many\"}}"
+    ),
+    file.path(d, "data_provenance.json")
+  )
+  expect_no_warning(r <- vrfcps(d))
+  expect_false(isTRUE(r$ok))
+})
+
+test_that("a code span in the verify table is not HTML-escaped", {
+  expect_identical(.bl_md_code("R&D <b> a|b"), "R&D <b> a\\|b")
+  expect_identical(.bl_md_code("a`b\nc"), "a'b c")
+  root <- withr::local_tempdir()
+  d <- file.path(root, "R&D survey")
+  dir.create(d)
+  utils::write.csv(data.frame(x = 1:3), file.path(d, "data.csv"))
+  writeLines(
+    "{\"resource\": {\"filename\": \"data.csv\"}}",
+    file.path(d, "data_provenance.json")
+  )
+  buf <- character()
+  blcli(
+    c("verify", root, "--no-footprint"),
+    out = function(s) buf <<- c(buf, s)
+  )
+  row <- grep("^\\| `", strsplit(paste(buf, collapse = ""), "\n")[[1]],
+              value = TRUE)
+  expect_length(row, 1L)
+  expect_match(row, "R&D survey`", fixed = TRUE)
+})
+
+test_that("the missing-key advice fits the archive that was asked", {
+  expect_match(.bl_arc_keyhow("https://archive.rmorie.com"), "dlogin()",
+               fixed = TRUE)
+  expect_match(.bl_arc_keyhow("https://my.archive.example"),
+               "MORIE_ARCHIVE_KEY", fixed = TRUE)
+  local_mocked_bindings(
+    .bl_arc_base = function() "https://my.archive.example",
+    .bl_arc_key = function(base) NULL
+  )
+  expect_error(arcmine(), "set MORIE_ARCHIVE_KEY")
+})

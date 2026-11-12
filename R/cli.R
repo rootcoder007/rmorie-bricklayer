@@ -64,7 +64,11 @@
 #' kept in DIR on later, the same bytes, with \code{\link{arcpush}} (run it
 #' again to retry what failed); \code{archive find URL} and \code{archive
 #' get ID|URL -o FILE} list the captures of a URL and fetch one's exact bytes
-#' (\code{\link{arcfind}}, \code{\link{arcget}})}
+#' (\code{\link{arcfind}}, \code{\link{arcget}}); \code{archive mine}
+#' lists your own captures, \code{archive private ID} and \code{archive
+#' public ID} hide or show one, and \code{archive withdraw ID --yes}
+#' withdraws one for good (\code{\link{arcmine}}, \code{\link{arcvis}},
+#' \code{\link{arcwd}})}
 #' \item{\code{verify PATH [--json] [--fail-on LEVEL]
 #' [--public-key HEX]}}{check every capsule under PATH as the rmbl GitHub Action
 #' does (\code{\link{cpschk}}): each file against its JSON Schema
@@ -766,6 +770,7 @@ instcli <- function(
       "--reason",
       "--dir",
       "--private",
+      "--yes",
       "--also",
       "--out",
       "--sha256",
@@ -1785,7 +1790,11 @@ instcli <- function(
       "archive get ID|URL -o FILE [--sha256 HEX] [--at YYYYMMDD]   the",
       "exact bytes, checked;",
       "archive push DIR [--reason TEXT] [--private] [--also wayback]",
-      "  send a capture kept in DIR on later, the same bytes"
+      "  send a capture kept in DIR on later, the same bytes;",
+      "archive mine [--json]   list your captures;",
+      "archive private ID | archive public ID   hide one from others, or",
+      "show it;",
+      "archive withdraw ID --yes   withdraw one for good"
     ),
     pack = .bl_usage_p()
   )
@@ -2365,6 +2374,10 @@ instcli <- function(
     "fetch the exact bytes, checked\n",
     "  archive push DIR --reason TEXT            send a capture kept ",
     "here on later\n",
+    "  archive mine | private ID | public ID     list your captures; ",
+    "hide or show one\n",
+    "  archive withdraw ID --yes                 withdraw one of your ",
+    "captures for good\n",
     "  pack DIR [--dest D] [--data FILE]         a reproducibility ",
     "bundle a reviewer double-clicks\n",
     "  pack --new DIR [--title T]                start a bundle project ",
@@ -2685,6 +2698,53 @@ instcli <- function(
   if (nrow(f)) 0L else 1L
 }
 
+#' `archive mine`: the caller's captures, as a table or JSON.
+#' @param args The verb's arguments.
+#' @param out Writes text.
+#' @return The exit status: 0 with captures, 1 with none.
+#' @noRd
+.bl_cli_archive_mine <- function(args, out) {
+  f <- arcmine()
+  if ("--json" %in% args) {
+    d <- as.data.frame(unclass(f))
+    d$captured <- format(d$captured, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+    out(paste0(tojs(d, dataframe = "rows", auto_unbox = TRUE), "\n"))
+  } else {
+    out(paste0(paste(utils::capture.output(print(f)), collapse = "\n"), "\n"))
+  }
+  if (nrow(f)) 0L else 1L
+}
+
+#' `archive withdraw|private|public ID`: one of the caller's captures.
+#' @param sub The subcommand.
+#' @param id The capture id.
+#' @param args The verb's arguments (`--yes` confirms a withdrawal).
+#' @param out Writes text.
+#' @return The exit status: 0 done, 2 a withdrawal not confirmed.
+#' @noRd
+.bl_cli_archive_own <- function(sub, id, args, out) {
+  if (sub != "withdraw") {
+    r <- suppressMessages(arcvis(id, sub))
+    out(sprintf("capture %s is now %s\n", r$capture_id, r$visibility))
+    return(0L)
+  }
+  if (!"--yes" %in% args) {
+    out(paste0(
+      "withdrawing cannot be undone; nothing was changed. To withdraw ",
+      id,
+      ", add --yes\n"
+    ))
+    return(2L)
+  }
+  r <- suppressMessages(arcwd(id, confirm = TRUE))
+  out(sprintf(
+    "capture %s is withdrawn; its stored bytes were %s\n",
+    r$capture_id,
+    if (r$bytes_removed) "deleted" else "kept"
+  ))
+  0L
+}
+
 #' The words of an archive subcommand that are not options or their values.
 #' @param args The arguments after the subcommand.
 #' @return The positional arguments.
@@ -2699,7 +2759,7 @@ instcli <- function(
     i <- match(f, pos)
     if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
   }
-  setdiff(pos, c("--private", "--json"))
+  setdiff(pos, c("--private", "--json", "--yes"))
 }
 
 #' The archive verb: archive.rmorie.com from a terminal (arccap(upload =
@@ -2719,6 +2779,12 @@ instcli <- function(
   }
   if (sub %in% c("help", "--help", "-h")) {
     return(usage(0L))
+  }
+  if (sub == "mine") {
+    return(.bl_cli_archive_mine(args, out))
+  }
+  if (sub %in% c("withdraw", "private", "public") && length(pos)) {
+    return(.bl_cli_archive_own(sub, pos[[1L]], args, out))
   }
   if (!sub %in% c("save", "find", "get", "push") || !length(pos)) {
     return(usage(2L))

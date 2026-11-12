@@ -22,8 +22,10 @@
 * `llmchat()` and `llmask()` say that the model's server did not answer in the provider's format when a member of its reply has the wrong type; they stopped with an internal error.
 * `arcget()` given an address refuses a capture the archive lists without a capture id or SHA-256 (a plain Wayback archive), since its bytes cannot be checked; it asked for a file named `NA`.
 * A provenance file whose `dataset`, `resource`, `source`, `script` or `schema` is not an object no longer stops `vrfcps()` and the resolvers `rslvckan()`, `rslvckns()`, `rslvsoc()` and `rslvarc()` with an internal error, and neither does a portal reply of the wrong shape: the check fails as a row and the resolver returns `NULL`.
+* A provenance text member that is not one string (a number, a list) is dropped the same way, a count written as text gives no coercion warning, and the summary table of `rmbl verify` shows a folder name such as `R&D survey` as written.
 * `idcrdvrf()` reports a card whose issue or expiry date is not one string as a failed row; it stopped with an internal error.
 * The Markdown of `rmbl verify`, `rmbl report` and the drift report escapes HTML in a table cell, and the missing-key message of `arccap()` and `arcpush()` names the archive set in `MORIE_ARCHIVE_URL`.
+* New `arcmine()`, `arcvis()` and `arcwd()`: list the captures you saved in archive.rmorie.com, make one private or public, and withdraw one for good (`arcwd(id, confirm = TRUE)`); until now only the website could. From a terminal: `rmbl archive mine`, `rmbl archive private ID`, `rmbl archive public ID` and `rmbl archive withdraw ID --yes`. Withdrawing a private capture also deletes its stored bytes unless another capture holds them; a public capture's bytes are kept.
 * The `@srrstatsNA` entry for standard G2.14c (imputation) starts its own line again, so 'srr' reads it.
 * Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
 

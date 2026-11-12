@@ -557,7 +557,10 @@ format.rmbl_citation <- function(x, ...) {
     .vc_note(
       acc,
       "data_size_bytes",
-      file.size(dpath) == as.numeric(prov$resource$size_bytes),
+      isTRUE(
+        file.size(dpath) ==
+          suppressWarnings(as.numeric(prov$resource$size_bytes)[1L])
+      ),
       sprintf("%d bytes on disk", file.size(dpath))
     )
   }
@@ -638,7 +641,10 @@ format.rmbl_citation <- function(x, ...) {
     .vc_note(
       acc,
       "data_row_count",
-      nrow(df) == as.numeric(prov$resource$row_count_data_rows),
+      isTRUE(
+        nrow(df) ==
+          suppressWarnings(as.numeric(prov$resource$row_count_data_rows)[1L])
+      ),
       sprintf("%d rows on disk", nrow(df))
     )
   }

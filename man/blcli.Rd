@@ -76,7 +76,11 @@ push DIR [--reason TEXT] [--private] [--also wayback]} sends a capture
 kept in DIR on later, the same bytes, with \code{\link{arcpush}} (run it
 again to retry what failed); \code{archive find URL} and \code{archive
 get ID|URL -o FILE} list the captures of a URL and fetch one's exact bytes
-(\code{\link{arcfind}}, \code{\link{arcget}})}
+(\code{\link{arcfind}}, \code{\link{arcget}}); \code{archive mine}
+lists your own captures, \code{archive private ID} and \code{archive
+public ID} hide or show one, and \code{archive withdraw ID --yes}
+withdraws one for good (\code{\link{arcmine}}, \code{\link{arcvis}},
+\code{\link{arcwd}})}
 \item{\code{verify PATH [--json] [--fail-on LEVEL]
 [--public-key HEX]}}{check every capsule under PATH as the rmbl GitHub Action
 does (\code{\link{cpschk}}): each file against its JSON Schema

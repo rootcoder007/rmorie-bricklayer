@@ -91,7 +91,10 @@ format.rmbl_archive_find <- function(x, ...) {
   d$captured <- format(d$captured, "%Y-%m-%d %H:%M")
   top <- utils::head(d, 20L)
   cols <- intersect(
-    c("captured", "status", "bytes", "mime", "mode", "visibility", "sha256"),
+    c(
+      "captured", "status", "bytes", "mime", "mode", "visibility",
+      "withdrawn", "sha256"
+    ),
     names(d)
   )
   .rmbl_res_block(
@@ -167,6 +170,225 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
     sha256 = got,
     captured = as.POSIXct(cap$ts, format = "%Y%m%d%H%M%S", tz = "UTC")
   ))
+}
+
+#' List, hide or withdraw your captures in archive.rmorie.com
+#'
+#' \code{arcmine()} lists the captures saved with your key, newest first,
+#' the withdrawn ones included. \code{arcvis()} makes one of them private or
+#' public. \code{arcwd()} withdraws one for good.
+#'
+#' @details Only the account that saved a capture can change or withdraw it,
+#'   so all three need your key (see \code{\link{dlogin}}).
+#'
+#'   A private capture is listed and served to you alone; a public one to
+#'   anyone. A withdrawn capture leaves search, its page and every download,
+#'   for everyone including you, and cannot be brought back. Its record stays
+#'   as a mark that the id existed and was withdrawn by its saver. What
+#'   happens to the stored bytes depends on who could have seen them: a
+#'   capture that is private when withdrawn loses its search text, and its
+#'   bytes are deleted unless another capture holds the same bytes; a public
+#'   capture's bytes are kept, since others may have cited their SHA-256.
+#'   \code{bytes_removed} in the result says what was done.
+#' @param limit The most captures to list (default 100, at most 1000).
+#' @param id A capture id, as \code{arcmine()} and \code{\link{arcfind}} give
+#'   it (\code{"20260101120000-0123abcd"}).
+#' @param to \code{"private"} or \code{"public"}.
+#' @param confirm Must be \code{TRUE} for \code{arcwd()} to withdraw: a
+#'   withdrawal cannot be undone, so the default \code{FALSE} stops with a
+#'   message and changes nothing.
+#' @return \code{arcmine()}: a data frame of class \code{rmbl_archive_find}
+#'   with the columns of \code{\link{arcfind}} that the archive lists
+#'   (\code{capture_id}, \code{captured}, \code{url}, \code{status},
+#'   \code{mime}, \code{bytes}, \code{sha256}, \code{mode},
+#'   \code{visibility}) and \code{withdrawn} (logical).
+#'   \code{arcvis()}: a list with \code{capture_id} and \code{visibility},
+#'   invisibly. \code{arcwd()}: a list with \code{capture_id}, \code{url},
+#'   \code{withdrawn} (\code{TRUE}), \code{was} (its visibility when
+#'   withdrawn) and \code{bytes_removed}, invisibly.
+#' @seealso \code{\link{arcfind}}, \code{\link{arccap}}, \code{\link{arcget}}.
+#' @examplesIf interactive()
+#' mine <- arcmine()
+#' mine
+#' # hide the newest from everyone else, then show it again
+#' arcvis(mine$capture_id[1], "private")
+#' arcvis(mine$capture_id[1], "public")
+#' # without confirm = TRUE nothing is withdrawn
+#' try(arcwd(mine$capture_id[1]))
+#' @export
+arcmine <- function(limit = 100L) {
+  limit <- .rmbl_scalar(limit, "limit", 1, 1000, integer = TRUE)
+  base <- .bl_arc_base()
+  key <- .bl_arc_mykey(base)
+  res <- .bl_arc_req(
+    "GET",
+    paste0("/v1/captures?limit=", limit),
+    key = key,
+    base = base
+  )
+  if (res$status != 200L) {
+    stop(.bl_arc_why(res, "listing your captures"), call. = FALSE)
+  }
+  if (!is.list(res$json) || !is.list(res$json$captures)) {
+    stop(
+      sprintf(
+        paste0(
+          "listing your captures: %s answered HTTP 200 with something ",
+          "that is no list of captures"
+        ),
+        .bl_arc_host(base)
+      ),
+      call. = FALSE
+    )
+  }
+  rows <- .rmbl_recs(res$json$captures)
+  col <- function(k) {
+    vapply(
+      rows,
+      function(r) {
+        v <- r[[k]]
+        if (length(v) == 1L && is.atomic(v)) as.character(v) else NA_character_
+      },
+      ""
+    )
+  }
+  num <- function(k) suppressWarnings(as.numeric(col(k)))
+  out <- data.frame(
+    capture_id = col("capture_id"),
+    captured = as.POSIXct(
+      col("timestamp"),
+      format = "%Y%m%d%H%M%S",
+      tz = "UTC"
+    ),
+    url = col("url"),
+    status = as.integer(num("status")),
+    mime = col("mime"),
+    bytes = num("length"),
+    sha256 = col("sha256"),
+    mode = col("mode"),
+    visibility = col("visibility"),
+    withdrawn = !is.na(col("withdrawn_at")),
+    stringsAsFactors = FALSE
+  )
+  attr(out, "archive") <- base
+  class(out) <- c("rmbl_archive_find", "data.frame")
+  out
+}
+
+#' @rdname arcmine
+#' @export
+arcvis <- function(id, to) {
+  id <- .bl_arc_id(id)
+  to <- .rmbl_string1(to, "to")
+  if (!to %in% c("private", "public")) {
+    stop("`to` must be \"private\" or \"public\"", call. = FALSE)
+  }
+  base <- .bl_arc_base()
+  key <- .bl_arc_mykey(base)
+  res <- .bl_arc_req(
+    "POST",
+    sprintf("/v1/captures/%s/visibility", id),
+    body = list(visibility = to),
+    key = key,
+    base = base
+  )
+  if (res$status != 200L) {
+    stop(.bl_arc_why(res, sprintf("capture %s", id)), call. = FALSE)
+  }
+  message(sprintf("Capture %s is now %s.", id, to))
+  invisible(list(capture_id = id, visibility = to))
+}
+
+#' @rdname arcmine
+#' @export
+arcwd <- function(id, confirm = FALSE) {
+  id <- .bl_arc_id(id)
+  confirm <- .rmbl_flag1(confirm, "confirm")
+  if (!confirm) {
+    stop(
+      "arcwd: a withdrawal cannot be undone; nothing was changed. To ",
+      "withdraw capture ",
+      id,
+      ", call arcwd(id, confirm = TRUE)",
+      call. = FALSE
+    )
+  }
+  base <- .bl_arc_base()
+  key <- .bl_arc_mykey(base)
+  res <- .bl_arc_req(
+    "POST",
+    sprintf("/v1/captures/%s/withdraw", id),
+    body = list(confirm = TRUE),
+    key = key,
+    base = base
+  )
+  if (res$status != 200L || !is.list(res$json)) {
+    stop(.bl_arc_why(res, sprintf("capture %s", id)), call. = FALSE)
+  }
+  gone <- isTRUE(res$json$bytes_removed)
+  message(sprintf(
+    "Capture %s is withdrawn; its stored bytes were %s.",
+    id,
+    if (gone) "deleted" else "kept"
+  ))
+  one <- function(v) {
+    if (length(v) == 1L && is.atomic(v)) as.character(v) else NA_character_
+  }
+  invisible(list(
+    capture_id = id,
+    url = one(res$json$url),
+    withdrawn = TRUE,
+    was = one(res$json$was),
+    bytes_removed = gone
+  ))
+}
+
+#' Checks a capture id.
+#' @param id The id the user passed.
+#' @return The id.
+#' @noRd
+.bl_arc_id <- function(id) {
+  id <- .rmbl_string1(id, "id")
+  if (!grepl("^[0-9]{14}-[0-9a-f]{8}$", id)) {
+    stop(
+      "`id` must be a capture id such as \"20260101120000-0123abcd\"",
+      call. = FALSE
+    )
+  }
+  id
+}
+
+#' The caller's archive key, required: who saved a capture decides who may
+#' change it.
+#' @param base The archive's base address.
+#' @return The key.
+#' @noRd
+.bl_arc_mykey <- function(base) {
+  key <- .bl_arc_key(base)
+  if (is.null(key)) {
+    stop(
+      sprintf(
+        "%s needs your key: %s",
+        .bl_arc_host(base),
+        .bl_arc_keyhow(base)
+      ),
+      call. = FALSE
+    )
+  }
+  key
+}
+
+#' How to give the archive a key: sign in for archive.rmorie.com, the
+#' environment variable for another archive.
+#' @param base The archive's base address.
+#' @return One sentence fragment.
+#' @noRd
+.bl_arc_keyhow <- function(base) {
+  if (identical(base, "https://archive.rmorie.com")) {
+    sprintf("run dlogin() (or `%s login`) once", .bl_prog())
+  } else {
+    "set MORIE_ARCHIVE_KEY to your key for that archive"
+  }
 }
 
 #' The archive's host name, for a message.

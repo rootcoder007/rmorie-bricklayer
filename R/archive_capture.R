@@ -695,12 +695,11 @@ format.rmbl_archive_capture <- function(x, ...) {
     stop(
       sprintf(
         paste0(
-          "%s needs your key: run dlogin() (or `%s ",
-          "login`) once, or in GitHub ",
+          "%s needs your key: %s, or in GitHub ",
           "Actions allow the job `id-token: write`; the files are kept in %s"
         ),
         .bl_arc_host(base),
-        .bl_prog(),
+        .bl_arc_keyhow(base),
         dir
       ),
       call. = FALSE

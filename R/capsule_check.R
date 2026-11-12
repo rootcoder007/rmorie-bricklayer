@@ -1244,6 +1244,17 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   .yoy_md_esc(x)
 }
 
+#' Text for a code span in a table cell: one line, the pipe escaped, and a
+#' backtick (which would end the span) written as a quote. No HTML escaping:
+#' inside a code span Markdown shows `&amp;` as written.
+#' @param x The text placed between backticks.
+#' @return The text.
+#' @noRd
+.bl_md_code <- function(x) {
+  x <- .rmbl_ctl_escape(gsub("[\r\n]+", " ", x))
+  gsub("|", "\\|", gsub("`", "'", x, fixed = TRUE), fixed = TRUE)
+}
+
 #' A number for the report: three significant digits, \code{"-"} for NA.
 #' @param x Numbers to format, NA shown as a dash.
 #' @param digits Significant digits of each formatted number (default 3).
@@ -1762,7 +1773,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
       md,
       sprintf(
         "| `%s` | %s | `%s` | %s | %s | %s | %s %s |",
-        .bl_md_esc(cp$capsule),
+        .bl_md_code(cp$capsule),
         .bl_md_esc(i$host),
         i$sha,
         i$size,
