@@ -147,3 +147,143 @@ test_that("the archive client takes short rows and names the host it asked", {
   )
   expect_error(arcfind("https://example.org/a"), "no list of captures")
 })
+
+test_that("the sign-in wait holds to its limit whatever interval is sent", {
+  for (iv in list(100000, "abc", -1, 0, NULL)) {
+    local_mocked_bindings(
+      .bl_hosted_auth = function() "https://auth.invalid",
+      .bl_post_json = function(url, ...) {
+        if (grepl("code$", url)) {
+          list(
+            status = 200L,
+            json = list(
+              verification_uri = "https://auth.invalid/go",
+              user_code = "AB-12",
+              device_code = "d",
+              interval = iv
+            )
+          )
+        } else {
+          list(status = 428L, json = list())
+        }
+      }
+    )
+    t0 <- Sys.time()
+    expect_error(
+      suppressMessages(
+        .bl_login_device(open_browser = FALSE, poll_max_seconds = 2)
+      ),
+      "timed out"
+    )
+    took <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+    expect_lt(took, 8)
+    expect_gt(took, 1)
+  }
+})
+
+test_that("a key with a line break from the sign-in service is not stored", {
+  stored <- FALSE
+  local_mocked_bindings(
+    .bl_hosted_auth = function() "https://auth.invalid",
+    .bl_store_key = function(...) stored <<- TRUE,
+    .bl_post_json = function(url, ...) {
+      if (grepl("code$", url)) {
+        list(status = 200L, json = list(
+          verification_uri = "https://auth.invalid/go",
+          user_code = "AB-12",
+          device_code = "d",
+          interval = 1
+        ))
+      } else {
+        list(status = 200L, json = list(api_key = "sk-a\nb", user = "u"))
+      }
+    }
+  )
+  expect_error(
+    suppressMessages(
+      .bl_login_device(open_browser = FALSE, poll_max_seconds = 5)
+    ),
+    "nothing was stored"
+  )
+  expect_false(stored)
+})
+
+test_that("a model reply with a member of the wrong type is named as such", {
+  for (api in c("openai", "anthropic", "gemini")) {
+    for (bad in list(
+      list(choices = "busy"),
+      list(content = "x"),
+      list(candidates = "x"),
+      list(choices = list("x"))
+    )) {
+      r <- tryCatch(
+        .bl_llm_parse(list(api = api), bad),
+        error = function(e) conditionMessage(e)
+      )
+      if (is.character(r)) {
+        expect_match(r, "format", info = api)
+      } else {
+        expect_named(r, c("text", "tool_calls", "finish"), info = api)
+      }
+    }
+  }
+})
+
+test_that("arcget() refuses a listed capture that has no id or digest", {
+  local_mocked_bindings(
+    arcfind = function(...) {
+      .bl_arc_rows(
+        list(list("k", "20260101000000", "https://example.org/a",
+                  "text/plain", "200", "D", "20")),
+        "http://x"
+      )
+    }
+  )
+  dest <- withr::local_tempfile()
+  expect_error(
+    arcget("https://example.org/a", dest),
+    "without a capture id or a SHA-256"
+  )
+  expect_false(file.exists(dest))
+})
+
+test_that("a provenance member of the wrong type is a failed row or NULL", {
+  d <- withr::local_tempdir()
+  utils::write.csv(data.frame(id = 1:3), file.path(d, "d.csv"))
+  for (js in c(
+    "{\"resource\": \"d.csv\"}",
+    "{\"dataset\": 1, \"resource\": {\"filename\": \"d.csv\"}}",
+    "{\"schema\": \"x\", \"source\": [1], \"script\": \"y\"}"
+  )) {
+    writeLines(js, file.path(d, "data_provenance.json"))
+    r <- tryCatch(vrfcps(d), error = function(e) conditionMessage(e))
+    if (is.character(r)) {
+      expect_no_match(r, "operator is invalid", info = js)
+    }
+  }
+  bad <- list(dataset = "x", resource = "d.csv")
+  expect_null(rslvckan(bad))
+  expect_null(rslvckns(bad))
+  expect_null(rslvsoc(bad))
+  expect_null(rslvarc(bad))
+  expect_identical(.rmbl_recs("x"), list())
+  expect_identical(.rmbl_recs(list("a", list(b = 1))), list(list(b = 1)))
+  expect_null(.rmbl_ckan_pick("x", "a"))
+})
+
+test_that("an identity card whose date is no string fails as a row", {
+  f <- withr::local_tempfile(fileext = ".json")
+  idcrd(fipskg("ML-DSA-44"), "Ada Lovelace", file = f)
+  txt <- readLines(f)
+  writeLines(sub("\"issued_utc\": \"[^\"]*\"", "\"issued_utc\": []", txt), f)
+  r <- idcrdvrf(f)
+  expect_s3_class(r, "rmbl_id_check")
+  expect_false(r$ok)
+  expect_false(r$checks$ok[r$checks$check == "in_date"])
+})
+
+test_that("the verify and drift Markdown cells escape HTML", {
+  expect_identical(.bl_md_esc("a|<img src=x>"), "a\\|&lt;img src=x&gt;")
+  expect_identical(.bl_arc_host("https://my.archive.example"),
+                   "my.archive.example")
+})

@@ -716,6 +716,19 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
     }
     i <- utils::tail(which(found$sha256 == sha256), 1L)
   }
+  if (is.na(found$capture_id[i]) || is.na(found$sha256[i])) {
+    stop(
+      sprintf(
+        paste0(
+          "%s lists a capture of %s without a capture id or a SHA-256, so ",
+          "its bytes could not be checked: nothing was fetched"
+        ),
+        .bl_arc_host(),
+        x
+      ),
+      call. = FALSE
+    )
+  }
   list(
     id = found$capture_id[i],
     url = found$url[i],

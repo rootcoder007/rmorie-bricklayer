@@ -2554,11 +2554,19 @@ llmstat <- function() {
   if (isTRUE(open_browser) && .bl_browsable(info$verification_uri)) {
     try(utils::browseURL(info$verification_uri), silent = TRUE)
   }
-  interval <- as.numeric(if (is.null(info$interval)) 5 else info$interval)
+  # the service's interval is a suggestion from the network: one number from
+  # 1 to 60 seconds, else 5 (100000 slept past `pollmaxsec`, 0 polled with no
+  # pause, text stopped with "invalid 'time' value")
+  interval <- suppressWarnings(as.numeric(info$interval %||% 5))[1L]
+  if (length(interval) != 1L || is.na(interval)) {
+    interval <- 5
+  }
+  interval <- min(max(interval, 1), 60)
   deadline <- Sys.time() + poll_max_seconds
   waited <- 0
   while (Sys.time() < deadline) {
-    Sys.sleep(interval)
+    left <- as.numeric(difftime(deadline, Sys.time(), units = "secs"))
+    Sys.sleep(max(0, min(interval, left)))
     waited <- waited + interval
     if (waited %% 30 < interval) {
       # a silent wait reads as a hang
@@ -2575,6 +2583,15 @@ llmstat <- function() {
       list(device_code = info$device_code)
     )
     if (res$status == 200L && is.character(res$json$api_key)) {
+      k <- res$json$api_key
+      if (length(k) != 1L || is.na(k) || !nzchar(k) ||
+            grepl("[[:cntrl:]]", k)) {
+        stop(
+          "the sign-in service sent a key that is empty or has a line break ",
+          "or control character in it; nothing was stored",
+          call. = FALSE
+        )
+      }
       p <- .bl_store_key(res$json$api_key, res$json$user)
       message(sprintf(
         "Logged in as %s; key stored in %s",

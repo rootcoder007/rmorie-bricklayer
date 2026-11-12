@@ -501,11 +501,19 @@ print.rmbl_id_check <- function(x, ...) {
     ok,
     sprintf(
       "valid %s to %s; checked at %s",
-      card$issued_utc %||% "?",
-      card$expires_utc %||% "?",
+      .bl_id_txt(card$issued_utc),
+      .bl_id_txt(card$expires_utc),
       .bl_id_utc(at)
     )
   )
+}
+
+#' A card member for a message: itself when it is one string, else "?".
+#' @param v The member as read from the card file.
+#' @return One string.
+#' @noRd
+.bl_id_txt <- function(v) {
+  if (is.character(v) && length(v) == 1L && !is.na(v)) v else "?"
 }
 
 #' The rows a card check adds for an ORCID iD, a fingerprint and an

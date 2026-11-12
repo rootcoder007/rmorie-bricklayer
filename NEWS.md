@@ -18,6 +18,12 @@
 * Under coverage the test runner adds each batch's counts into one trace file as the suite goes. covr reads the trace file of every R process before adding them up, and the 52 files of a full run took 2.06 GB, which stopped rOpenSci's pkgcheck ("Package coverage failed") on a 2 GB machine after every test had passed. The coverage figures are unchanged.
 * `cpsbndlrd()` and `cpsbndlvrf()` also refuse a bundle whose file list holds something other than records with a path and a digest.
 * `arcfind()` and `arcget()` read the seven-field rows of a plain Wayback CDX answer (they stopped with "subscript out of bounds"), say so when the archive answers 200 with something that is no capture record (a sign-in or proxy page; the error message was empty), and name the archive set in `MORIE_ARCHIVE_URL` in their messages.
+* `dlogin()` holds to `pollmaxsec` whatever polling interval the sign-in service sends (an interval longer than the limit never returned, zero polled without a pause, text stopped with an internal error), and does not store a key that has a line break or control character in it.
+* `llmchat()` and `llmask()` say that the model's server did not answer in the provider's format when a member of its reply has the wrong type; they stopped with an internal error.
+* `arcget()` given an address refuses a capture the archive lists without a capture id or SHA-256 (a plain Wayback archive), since its bytes cannot be checked; it asked for a file named `NA`.
+* A provenance file whose `dataset`, `resource`, `source`, `script` or `schema` is not an object no longer stops `vrfcps()` and the resolvers `rslvckan()`, `rslvckns()`, `rslvsoc()` and `rslvarc()` with an internal error, and neither does a portal reply of the wrong shape: the check fails as a row and the resolver returns `NULL`.
+* `idcrdvrf()` reports a card whose issue or expiry date is not one string as a failed row; it stopped with an internal error.
+* The Markdown of `rmbl verify`, `rmbl report` and the drift report escapes HTML in a table cell, and the missing-key message of `arccap()` and `arcpush()` names the archive set in `MORIE_ARCHIVE_URL`.
 * The `@srrstatsNA` entry for standard G2.14c (imputation) starts its own line again, so 'srr' reads it.
 * Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
 

@@ -695,10 +695,11 @@ format.rmbl_archive_capture <- function(x, ...) {
     stop(
       sprintf(
         paste0(
-          "archive.rmorie.com needs your key: run dlogin() (or `%s ",
+          "%s needs your key: run dlogin() (or `%s ",
           "login`) once, or in GitHub ",
           "Actions allow the job `id-token: write`; the files are kept in %s"
         ),
+        .bl_arc_host(base),
         .bl_prog(),
         dir
       ),

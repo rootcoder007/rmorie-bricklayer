@@ -82,10 +82,33 @@ loadprov <- function(path) {
   }
   p <- .rmbl_read_json(path, simplify = FALSE)
   if (is.list(p) && !is.data.frame(p) && !is.object(p)) {
-    p <- .rmbl_cls(p, "rmbl_provenance")
+    p <- .rmbl_cls(.rmbl_prov_shape(p), "rmbl_provenance")
   }
   p
 }
+
+#' A provenance list whose object members are objects.
+#'
+#' `dataset`, `resource`, `source`, `script` and `schema` are read member by
+#' member; one that is a string or a number (a hand-edited file) is dropped,
+#' so the check that needs it fails as a row instead of stopping on `$`.
+#' @param prov A provenance list.
+#' @return `prov` without the object members that are not lists.
+#' @noRd
+.rmbl_prov_shape <- function(prov) {
+  for (m in c("dataset", "resource", "source", "script", "schema")) {
+    if (!is.null(prov[[m]]) && !is.list(prov[[m]])) {
+      prov[[m]] <- NULL
+    }
+  }
+  prov
+}
+
+#' The records of a portal's reply: its list members that are lists.
+#' @param x A member of a parsed reply.
+#' @return A list of lists, possibly empty.
+#' @noRd
+.rmbl_recs <- function(x) if (is.list(x)) Filter(is.list, x) else list()
 
 #' @export
 format.rmbl_provenance <- function(x, ...) {
@@ -188,6 +211,7 @@ rslvckan <- function(prov) {
       call. = FALSE
     )
   }
+  prov <- .rmbl_prov_shape(prov)
   api_url <- .rmbl_ckan_endpoint(prov)
   if (is.null(api_url)) {
     return(NULL)
@@ -197,7 +221,7 @@ rslvckan <- function(prov) {
     .rmbl_read_json(api_url, simplify = FALSE, strict = FALSE),
     error = function(e) NULL
   )
-  if (is.null(resp) || !isTRUE(resp$success)) {
+  if (!is.list(resp) || !isTRUE(resp$success) || !is.list(resp$result)) {
     return(NULL)
   }
   .rmbl_ckan_pick(resp$result$resources, prov$resource$name_match_pattern)
@@ -277,6 +301,7 @@ rslvckns <- function(prov) {
       call. = FALSE
     )
   }
+  prov <- .rmbl_prov_shape(prov)
   res <- prov$resource
   q <- res$search_query
   if (is.null(q) || !nzchar(q)) {
@@ -307,7 +332,7 @@ rslvckns <- function(prov) {
     .rmbl_read_json(api_url, simplify = FALSE, strict = FALSE),
     error = function(e) NULL
   )
-  if (is.null(resp)) {
+  if (!is.list(resp) || !is.list(resp$result)) {
     return(NULL)
   }
   .rmbl_ckan_match(resp, res)
@@ -948,6 +973,7 @@ rslvsoc <- function(prov) {
       call. = FALSE
     )
   }
+  prov <- .rmbl_prov_shape(prov)
   domain <- prov$dataset$socrata_domain
   id <- prov$dataset$socrata_id
   if (is.null(domain) || is.null(id)) {
@@ -959,7 +985,7 @@ rslvsoc <- function(prov) {
     .rmbl_read_json(meta_url, strict = FALSE),
     error = function(e) NULL
   )
-  if (is.null(meta) || is.null(meta$id)) {
+  if (!is.list(meta) || is.null(meta$id)) {
     return(NULL)
   }
   file.path(base, "api", "views", id, "rows.csv?accessType=DOWNLOAD")
@@ -1024,6 +1050,7 @@ rslvarc <- function(prov) {
       call. = FALSE
     )
   }
+  prov <- .rmbl_prov_shape(prov)
   layer <- prov$dataset$arcgis_layer_url
   if (is.null(layer)) {
     return(NULL)
@@ -1033,7 +1060,7 @@ rslvarc <- function(prov) {
     .rmbl_read_json(paste0(layer, "?f=json"), strict = FALSE),
     error = function(e) NULL
   )
-  if (is.null(meta) || !is.null(meta$error) || is.null(meta$name)) {
+  if (!is.list(meta) || !is.null(meta$error) || is.null(meta$name)) {
     return(NULL)
   }
   file.path(layer, "query?where=1%3D1&outFields=*&f=geojson")
@@ -1047,8 +1074,8 @@ rslvarc <- function(prov) {
 #' @noRd
 .rmbl_ckan_match <- function(resp, res) {
   pat <- res$name_match_pattern
-  for (pkg in resp$result$results) {
-    for (r in pkg$resources) {
+  for (pkg in .rmbl_recs(resp$result$results)) {
+    for (r in .rmbl_recs(pkg$resources)) {
       name <- if (is.null(r$name)) "" else r$name
       fmt <- toupper(r$format %||% "")
       if (
@@ -1613,7 +1640,7 @@ rslvarc <- function(prov) {
 #' @return The resource's checked URL, or NULL.
 #' @noRd
 .rmbl_ckan_pick <- function(resources, pat) {
-  for (r in resources) {
+  for (r in .rmbl_recs(resources)) {
     name <- if (is.null(r$name)) "" else r$name
     if (grepl(pat, name, ignore.case = TRUE)) {
       # a hostile record is an error in words, not "source unreachable"

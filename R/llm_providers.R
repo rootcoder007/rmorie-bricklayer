@@ -759,11 +759,26 @@
 #' @return A list with `text`, `tool_calls` and `finish`.
 #' @noRd
 .bl_llm_parse <- function(rt, json) {
-  switch(
-    rt$api %||% "openai",
-    anthropic = .bl_anthropic_parse(json),
-    gemini = .bl_gemini_parse(json),
-    .bl_openai_parse(json)
+  api <- rt$api %||% "openai"
+  tryCatch(
+    switch(
+      api,
+      anthropic = .bl_anthropic_parse(json),
+      gemini = .bl_gemini_parse(json),
+      .bl_openai_parse(json)
+    ),
+    error = function(e) {
+      stop(
+        sprintf(
+          paste0(
+            "the model's server answered, but not with a reply in the %s ",
+            "format (a member has the wrong type)"
+          ),
+          api
+        ),
+        call. = FALSE
+      )
+    }
   )
 }
 

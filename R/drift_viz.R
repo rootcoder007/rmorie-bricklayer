@@ -531,7 +531,7 @@ drftapp <- function(
   f <- function(v) {
     ifelse(is.na(v), "", trimws(formatC(v, digits = 3, format = "g")))
   }
-  esc <- function(s) gsub("|", "\\|", s, fixed = TRUE)
+  esc <- .yoy_md_esc
   paste(
     c(
       sprintf(
