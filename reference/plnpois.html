@@ -143,7 +143,7 @@ cluster-robust sandwich, with the small-sample factors of
 fit alternates iteratively reweighted least squares at fixed \(\theta\)
 with the maximum of the profile likelihood in \(\theta\), and the sandwich
 uses the negative binomial scores with \(\theta\) held at its estimate (as
-<code><a href="https://rdrr.io/pkg/sandwich/man/vcovCL.html" class="external-link">sandwich::vcovCL()</a></code> does for <code><a href="https://rdrr.io/pkg/MASS/man/glm.nb.html" class="external-link">MASS::glm.nb()</a></code>;
+<code><a href="https://zeileis.codeberg.page/sandwich/reference/vcovCL.html" class="external-link">sandwich::vcovCL()</a></code> does for <code><a href="https://rdrr.io/pkg/MASS/man/glm.nb.html" class="external-link">MASS::glm.nb()</a></code>;
 <code><a href="https://lrberge.github.io/fixest/reference/femlm.html" class="external-link">fixest::fenegbin()</a></code>, which treats \(\theta\) as a parameter of the
 variance too, gives slightly larger errors). With unit dummies this is the
 unconditional fixed-effects negative binomial, which behaves well as the
@@ -188,7 +188,7 @@ models. Sociological Methodology 32:247-265. <a href="https://doi.org/10.1111/14
 <span class="r-in"><span>           family <span class="op">=</span> <span class="st">"negbin"</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>no overdispersion: theta is at its bound, the Poisson model fits</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Fixed-effects count model</span> ────────────────────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Model          negative binomial (theta 3187000)                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Model          negative binomial (theta 3229000)                      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Fixed effects  unit and period                                        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Observations   720                                                    │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Clusters       20                                                     │</span>

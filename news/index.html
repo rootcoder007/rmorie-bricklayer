@@ -59,6 +59,7 @@
 <li>On a machine or container with less than 3 GB the batches are 3 files (under coverage a batch of 8 reached 1.1 GB), and the C++ sources compile as three units, so no compiler process needs more than about 460 MB (one unit needed over 700 MB). The Windows check time is unchanged.</li>
 <li>
 <code><a href="../reference/co2fp.html">co2fp()</a></code> and <code><a href="../reference/raplok.html">raplok()</a></code> skip a RAPL power domain whose <code>name</code> file cannot be read (as inside a container) without a warning; each such domain used to print “cannot open file”.</li>
+<li>On Windows, the internal check that a socket to a private or loopback address is refused answered “refused” for every address, public ones too, when it ran in an R process that had made no transfer yet: the socket layer starts with libcurl’s first handle. It now starts it itself. Downloads were not affected (they always make a handle first); the package’s own test of the policy failed on Windows once the tests ran in fresh processes.</li>
 <li>
 <code><a href="../reference/crob.html">cqnt()</a></code>, <code><a href="../reference/crob.html">cmed()</a></code>, <code><a href="../reference/crob.html">ciqr()</a></code> and <code><a href="../reference/crob.html">ctkyfnc()</a></code> handle an infinite value as <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">stats::quantile()</a></code> does (<code>cmed(c(-Inf, 1))</code> is <code>-Inf</code>); they returned <code>NaN</code>.</li>
 <li>

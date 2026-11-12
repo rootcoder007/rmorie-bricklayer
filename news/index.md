@@ -66,6 +66,13 @@
   skip a RAPL power domain whose `name` file cannot be read (as inside a
   container) without a warning; each such domain used to print “cannot
   open file”.
+- On Windows, the internal check that a socket to a private or loopback
+  address is refused answered “refused” for every address, public ones
+  too, when it ran in an R process that had made no transfer yet: the
+  socket layer starts with libcurl’s first handle. It now starts it
+  itself. Downloads were not affected (they always make a handle first);
+  the package’s own test of the policy failed on Windows once the tests
+  ran in fresh processes.
 - [`cqnt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md),
   [`cmed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md),
   [`ciqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)

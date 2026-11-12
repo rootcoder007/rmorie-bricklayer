@@ -164,8 +164,8 @@ att
 #> │   Context          <none>                                                   │
 #> │   Prehash          none                                                     │
 #> │   Note             counts as published                                      │
-#> │   Signed           2026-11-12T11:58:06Z                                     │
-#> │   Public key       8629af088db787159699ddcde210ccf4... (1952 bytes)         │
+#> │   Signed           2026-11-12T19:24:17Z                                     │
+#> │   Public key       1563cf545278c67569f8402b20b1a677... (1952 bytes)         │
 #> │                                                                             │
 #> │   A signed claim that a manifest with this digest was attested by the       │
 #> │   holder of the key; check it against the manifest with cpschkatst().       │

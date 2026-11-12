@@ -82,7 +82,7 @@ p1 <- p[is.na(p$refmonth) | p$refmonth == 13, ]
 syndid(p1, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
 #> ╭── Synthetic difference in differences ─────────────────────────────────╮
 #> │   Estimate              -3.126                                         │
-#> │   Standard error        0.2473 (jackknife)                             │
+#> │   Standard error        0.2474 (jackknife)                             │
 #> │   Interval              [-3.611, -2.641]                               │
 #> │   Adoption              13                                             │
 #> │   Comparison units      5                                              │
