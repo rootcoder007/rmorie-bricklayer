@@ -24,8 +24,9 @@ jobs:
     timeout-minutes: 330
     # the bot's server sets no container limit, so its memory is the size of
     # its machine, which is not published: the suite is held to each of the
-    # sizes it could be. The 1 GB machine with no swap is reported, not
-    # required: pkgcheck's own R process takes most of 1 GB by itself.
+    # sizes it could be. 1 GB with no swap is not one of them: pkgcheck's own R
+    # process takes most of 1 GB by itself, so the bot could not run there at
+    # all. 1.5 GB is reported, not required, until it has been seen to pass.
     continue-on-error: ${{ matrix.required == false }}
     strategy:
       fail-fast: false
@@ -39,9 +40,9 @@ jobs:
             mem: 1g
             swap: 2g
             required: true
-          - label: 1 GB, no swap
-            mem: 1g
-            swap: 1g
+          - label: 1.5 GB
+            mem: 1536m
+            swap: 1536m
             required: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
