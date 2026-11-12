@@ -182,10 +182,11 @@ test_that("the sign-in wait holds to its limit whatever interval is sent", {
 })
 
 test_that("a key with a line break from the sign-in service is not stored", {
-  stored <- FALSE
+  rec <- new.env()
+  rec$stored <- FALSE
   local_mocked_bindings(
     .bl_hosted_auth = function() "https://auth.invalid",
-    .bl_store_key = function(...) stored <<- TRUE,
+    .bl_store_key = function(...) rec$stored <- TRUE,
     .bl_post_json = function(url, ...) {
       if (grepl("code$", url)) {
         list(status = 200L, json = list(
@@ -205,7 +206,7 @@ test_that("a key with a line break from the sign-in service is not stored", {
     ),
     "nothing was stored"
   )
-  expect_false(stored)
+  expect_false(rec$stored)
 })
 
 test_that("a model reply with a member of the wrong type is named as such", {
@@ -347,13 +348,14 @@ test_that("a code span in the verify table is not HTML-escaped", {
     "{\"resource\": {\"filename\": \"data.csv\"}}",
     file.path(d, "data_provenance.json")
   )
-  buf <- character()
+  rec <- new.env()
+  rec$buf <- character()
   blcli(
     c("verify", root, "--no-footprint"),
-    out = function(s) buf <<- c(buf, s)
+    out = function(s) rec$buf <- c(rec$buf, s)
   )
-  row <- grep("^\\| `", strsplit(paste(buf, collapse = ""), "\n")[[1]],
-              value = TRUE)
+  lines <- strsplit(paste(rec$buf, collapse = ""), "\n", fixed = TRUE)[[1]]
+  row <- lines[startsWith(lines, "| `")]
   expect_length(row, 1L)
   expect_match(row, "R&D survey`", fixed = TRUE)
 })

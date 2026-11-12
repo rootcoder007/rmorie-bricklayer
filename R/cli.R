@@ -2717,7 +2717,7 @@ instcli <- function(
 
 #' `archive withdraw|private|public ID`: one of the caller's captures.
 #' @param sub The subcommand.
-#' @param id The capture id.
+#' @param id The id given on the command line.
 #' @param args The verb's arguments (`--yes` confirms a withdrawal).
 #' @param out Writes text.
 #' @return The exit status: 0 done, 2 a withdrawal not confirmed.
@@ -2740,13 +2740,7 @@ instcli <- function(
   out(sprintf(
     "capture %s is withdrawn; %s\n",
     r$capture_id,
-    if (is.na(r$bytes_removed)) {
-      "the archive did not say whether its stored bytes were deleted"
-    } else if (r$bytes_removed) {
-      "its stored bytes were deleted"
-    } else {
-      "its stored bytes were kept"
-    }
+    .bl_arc_bytes(r$bytes_removed)
   ))
   0L
 }

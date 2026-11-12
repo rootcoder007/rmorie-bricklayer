@@ -241,38 +241,7 @@ arcmine <- function(limit = 100L) {
       call. = FALSE
     )
   }
-  rows <- .rmbl_recs(res$json$captures)
-  col <- function(k) {
-    vapply(
-      rows,
-      function(r) {
-        v <- r[[k]]
-        if (length(v) == 1L && is.atomic(v)) as.character(v) else NA_character_
-      },
-      ""
-    )
-  }
-  num <- function(k) suppressWarnings(as.numeric(col(k)))
-  out <- data.frame(
-    capture_id = col("capture_id"),
-    captured = as.POSIXct(
-      col("timestamp"),
-      format = "%Y%m%d%H%M%S",
-      tz = "UTC"
-    ),
-    url = col("url"),
-    status = as.integer(num("status")),
-    mime = col("mime"),
-    bytes = num("length"),
-    sha256 = col("sha256"),
-    mode = col("mode"),
-    visibility = col("visibility"),
-    withdrawn = !is.na(col("withdrawn_at")),
-    stringsAsFactors = FALSE
-  )
-  attr(out, "archive") <- base
-  class(out) <- c("rmbl_archive_find", "data.frame")
-  out
+  .bl_arc_minetab(.rmbl_recs(res$json$captures), base)
 }
 
 #' @rdname arcmine
@@ -339,31 +308,89 @@ arcwd <- function(id, confirm = FALSE) {
   ) {
     .bl_arc_unsure(id, base)
   }
-  # the rest is what the archive adds: taken only in the type it documents
-  text <- function(v) {
-    if (is.character(v) && length(v) == 1L && !is.na(v)) v else NA_character_
-  }
-  gone <- res$json$bytes_removed
-  gone <- if (is.logical(gone) && length(gone) == 1L) gone else NA
-  was <- text(res$json$was)
+  r <- .bl_arc_wdres(res$json, id)
   message(sprintf(
     "Capture %s is withdrawn; %s.",
     id,
-    if (is.na(gone)) {
-      "the archive did not say whether its stored bytes were deleted"
-    } else if (gone) {
-      "its stored bytes were deleted"
-    } else {
-      "its stored bytes were kept"
-    }
+    .bl_arc_bytes(r$bytes_removed)
   ))
-  invisible(list(
+  invisible(r)
+}
+
+#' The table arcmine() returns, from the archive's records.
+#' @param rows The records, each a list.
+#' @param base The archive they came from, kept as an attribute.
+#' @return A data frame of class rmbl_archive_find.
+#' @noRd
+.bl_arc_minetab <- function(rows, base) {
+  col <- function(k) {
+    vapply(
+      rows,
+      function(r) {
+        v <- r[[k]]
+        if (length(v) == 1L && is.atomic(v)) as.character(v) else NA_character_
+      },
+      ""
+    )
+  }
+  num <- function(k) suppressWarnings(as.numeric(col(k)))
+  out <- data.frame(
+    capture_id = col("capture_id"),
+    captured = as.POSIXct(
+      col("timestamp"),
+      format = "%Y%m%d%H%M%S",
+      tz = "UTC"
+    ),
+    url = col("url"),
+    status = as.integer(num("status")),
+    mime = col("mime"),
+    bytes = num("length"),
+    sha256 = col("sha256"),
+    mode = col("mode"),
+    visibility = col("visibility"),
+    withdrawn = !is.na(col("withdrawn_at")),
+    stringsAsFactors = FALSE
+  )
+  attr(out, "archive") <- base
+  class(out) <- c("rmbl_archive_find", "data.frame")
+  out
+}
+
+#' What arcwd() returns, from a reply that confirmed the withdrawal.
+#'
+#' Beyond the confirmation, the members are what the archive adds: each is
+#' taken only in the type it documents, else it is NA.
+#' @param json The parsed reply.
+#' @param id The capture that was withdrawn.
+#' @return The list arcwd() returns.
+#' @noRd
+.bl_arc_wdres <- function(json, id) {
+  text <- function(v) {
+    if (is.character(v) && length(v) == 1L && !is.na(v)) v else NA_character_
+  }
+  gone <- json$bytes_removed
+  was <- text(json$was)
+  list(
     capture_id = id,
-    url = text(res$json$url),
+    url = text(json$url),
     withdrawn = TRUE,
     was = if (was %in% c("private", "public")) was else NA_character_,
-    bytes_removed = gone
-  ))
+    bytes_removed = if (is.logical(gone) && length(gone) == 1L) gone else NA
+  )
+}
+
+#' Says what became of a withdrawn capture's stored bytes.
+#' @param gone TRUE (deleted), FALSE (kept) or NA (the archive did not say).
+#' @return A sentence fragment.
+#' @noRd
+.bl_arc_bytes <- function(gone) {
+  if (is.na(gone)) {
+    "the archive did not say whether its stored bytes were deleted"
+  } else if (gone) {
+    "its stored bytes were deleted"
+  } else {
+    "its stored bytes were kept"
+  }
 }
 
 #' Checks a capture id.
@@ -730,11 +757,7 @@ arcwd <- function(id, confirm = FALSE) {
       forms <- c(forms, substring(key, from, from + 11L))
     }
     flat <- tolower(gsub("[[:space:]]+", "", e))
-    held <- vapply(
-      tolower(forms),
-      function(f) grepl(f, flat, fixed = TRUE),
-      NA
-    )
+    held <- vapply(tolower(forms), grepl, NA, x = flat, fixed = TRUE)
     if (any(held)) {
       return("the error text is withheld: it repeated your key")
     }
@@ -743,8 +766,8 @@ arcwd <- function(id, confirm = FALSE) {
 }
 
 #' Says that the archive answered 200 without confirming a change.
-#' @param id The capture id.
-#' @param base The archive's base address.
+#' @param id The capture the change was asked for.
+#' @param base The address of the archive that answered.
 #' @return Never: stops.
 #' @noRd
 .bl_arc_unsure <- function(id, base) {

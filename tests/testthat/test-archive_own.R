@@ -135,7 +135,7 @@ test_that("arcvis() sends the visibility and refuses any other word", {
   expect_identical(e$calls[[1]]$method, "POST")
   expect_identical(
     e$calls[[1]]$path,
-    paste0("/v1/captures/", id1, "/visibility")
+    sprintf("/v1/captures/%s/visibility", id1)
   )
   expect_identical(e$calls[[1]]$body, list(visibility = "private"))
   expect_message(arcvis(id1, "public"), "now public")
@@ -169,7 +169,7 @@ test_that("arcwd() withdraws only when confirmed, and says what was removed", {
   )
   expect_identical(
     e$calls[[1]]$path,
-    paste0("/v1/captures/", id1, "/withdraw")
+    sprintf("/v1/captures/%s/withdraw", id1)
   )
   expect_identical(e$calls[[1]]$body, list(confirm = TRUE))
   e$was <- "public"

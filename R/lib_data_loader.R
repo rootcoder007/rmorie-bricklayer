@@ -86,57 +86,6 @@ loadprov <- function(path) {
   }
   p
 }
-
-#' A provenance list whose object members are objects.
-#'
-#' `dataset`, `resource`, `source`, `script` and `schema` are read member by
-#' member; one that is a string or a number (a hand-edited file) is dropped,
-#' and so is a text member of `dataset` or `resource` that is not one string,
-#' so the check that needs it fails as a row instead of stopping inside R.
-#' @param prov A provenance list.
-#' @return `prov` without the object members that are not lists.
-#' @noRd
-.rmbl_prov_shape <- function(prov) {
-  for (m in c("dataset", "resource", "source", "script", "schema")) {
-    if (!is.null(prov[[m]]) && !is.list(prov[[m]])) {
-      prov[[m]] <- NULL
-    }
-  }
-  # the members read as one string: a number, a list or NA there is dropped
-  # too (search_query = 42 stopped a resolver in strsplit())
-  text <- list(
-    dataset = c(
-      "ckan_api_endpoint", "socrata_domain", "socrata_id",
-      "arcgis_layer_url", "package_slug"
-    ),
-    resource = c(
-      "search_query", "name_match_pattern", "format", "name",
-      "direct_url", "filename"
-    )
-  )
-  for (m in names(text)) {
-    for (k in intersect(text[[m]], names(prov[[m]]))) {
-      v <- prov[[m]][[k]]
-      # JSON written without unboxing gives a one-element list: the string
-      if (is.list(v) && length(v) == 1L) {
-        v <- v[[1L]]
-      }
-      if (is.character(v) && length(v) == 1L && !is.na(v)) {
-        prov[[m]][[k]] <- v
-      } else {
-        prov[[m]][[k]] <- NULL
-      }
-    }
-  }
-  prov
-}
-
-#' The records of a portal's reply: its list members that are lists.
-#' @param x A member of a parsed reply.
-#' @return A list of lists, possibly empty.
-#' @noRd
-.rmbl_recs <- function(x) if (is.list(x)) Filter(is.list, x) else list()
-
 #' @export
 format.rmbl_provenance <- function(x, ...) {
   fl <- .mf_flat(unclass(x))
@@ -1787,3 +1736,53 @@ rslvarc <- function(prov) {
   }
   invisible(NULL)
 }
+
+#' A provenance list whose object members are objects.
+#'
+#' `dataset`, `resource`, `source`, `script` and `schema` are read member by
+#' member; one that is a string or a number (a hand-edited file) is dropped,
+#' and so is a text member of `dataset` or `resource` that is not one string,
+#' so the check that needs it fails as a row instead of stopping inside R.
+#' @param prov A provenance list.
+#' @return `prov` without the object members that are not lists.
+#' @noRd
+.rmbl_prov_shape <- function(prov) {
+  for (m in c("dataset", "resource", "source", "script", "schema")) {
+    if (!is.null(prov[[m]]) && !is.list(prov[[m]])) {
+      prov[[m]] <- NULL
+    }
+  }
+  # the members read as one string: a number, a list or NA there is dropped
+  # too (search_query = 42 stopped a resolver in strsplit())
+  text <- list(
+    dataset = c(
+      "ckan_api_endpoint", "socrata_domain", "socrata_id",
+      "arcgis_layer_url", "package_slug"
+    ),
+    resource = c(
+      "search_query", "name_match_pattern", "format", "name",
+      "direct_url", "filename"
+    )
+  )
+  for (m in names(text)) {
+    for (k in intersect(text[[m]], names(prov[[m]]))) {
+      v <- prov[[m]][[k]]
+      # JSON written without unboxing gives a one-element list: the string
+      if (is.list(v) && length(v) == 1L) {
+        v <- v[[1L]]
+      }
+      if (is.character(v) && length(v) == 1L && !is.na(v)) {
+        prov[[m]][[k]] <- v
+      } else {
+        prov[[m]][[k]] <- NULL
+      }
+    }
+  }
+  prov
+}
+
+#' The records of a portal's reply: its list members that are lists.
+#' @param x A member of a parsed reply.
+#' @return A list of lists, possibly empty.
+#' @noRd
+.rmbl_recs <- function(x) if (is.list(x)) Filter(is.list, x) else list()
