@@ -16,6 +16,8 @@
 * `cpssign()` given something that is no key names the keys it takes.
 * The help of `benfordtst()` says which digit a value within rounding of a power of ten counts under: the one R prints.
 * Under coverage the test runner adds each batch's counts into one trace file as the suite goes. covr reads the trace file of every R process before adding them up, and the 52 files of a full run took 2.06 GB, which stopped rOpenSci's pkgcheck ("Package coverage failed") on a 2 GB machine after every test had passed. The coverage figures are unchanged.
+* `cpsbndlrd()` and `cpsbndlvrf()` also refuse a bundle whose file list holds something other than records with a path and a digest.
+* `arcfind()` and `arcget()` read the seven-field rows of a plain Wayback CDX answer (they stopped with "subscript out of bounds"), say so when the archive answers 200 with something that is no capture record (a sign-in or proxy page; the error message was empty), and name the archive set in `MORIE_ARCHIVE_URL` in their messages.
 * The `@srrstatsNA` entry for standard G2.14c (imputation) starts its own line again, so 'srr' reads it.
 * Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
 

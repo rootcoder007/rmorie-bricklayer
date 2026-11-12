@@ -53,7 +53,20 @@ arcfind <- function(url, from = NULL, to = NULL, limit = 1000L) {
     base = base,
     timeout = 60L
   )
-  if (res$status != 200L || !is.list(res$json)) {
+  if (res$status == 200L && !is.list(res$json)) {
+    stop(
+      sprintf(
+        paste0(
+          "finding captures: %s answered HTTP 200 with something that is no ",
+          "list of captures (a sign-in page or a proxy's error page looks ",
+          "like this)"
+        ),
+        .bl_arc_host(base)
+      ),
+      call. = FALSE
+    )
+  }
+  if (res$status != 200L) {
     stop(.bl_arc_why(res, "finding captures"), call. = FALSE)
   }
   out <- .bl_arc_rows(res$json[-1L], base)
@@ -155,6 +168,12 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
     captured = as.POSIXct(cap$ts, format = "%Y%m%d%H%M%S", tz = "UTC")
   ))
 }
+
+#' The archive's host name, for a message.
+#' @param base The archive's base address.
+#' @return One string.
+#' @noRd
+.bl_arc_host <- function(base = .bl_arc_base()) sub("^https?://", "", base)
 
 #' The archive's address: MORIE_ARCHIVE_URL, else archive.rmorie.com.
 #' @return One address without a trailing slash.
@@ -439,7 +458,7 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
 .bl_arc_why <- function(res, what) {
   if (res$status <= 0L) {
     why <- if (nzchar(res$error)) res$error else "no reply"
-    return(sprintf("%s: archive.rmorie.com did not answer (%s)", what, why))
+    return(sprintf("%s: %s did not answer (%s)", what, .bl_arc_host(), why))
   }
   sprintf(
     "%s: the archive answered HTTP %d%s",
@@ -574,7 +593,13 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
 #' @noRd
 .bl_arc_rows <- function(rows, base) {
   col <- function(k) {
-    vapply(rows, function(r) as.character(r[[k]] %||% NA_character_), "")
+    vapply(
+      rows,
+      function(r) {
+        if (length(r) < k) NA_character_ else as.character(r[[k]])[1L]
+      },
+      ""
+    )
   }
   ts <- col(2L)
   out <- data.frame(
@@ -630,6 +655,21 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
   if (res$status != 200L) {
     stop(.bl_arc_why(res, sprintf("capture %s", x)), call. = FALSE)
   }
+  one <- function(v) is.character(v) && length(v) == 1L && !is.na(v)
+  if (!is.list(res$json) || !one(res$json$url) || !one(res$json$sha256)) {
+    stop(
+      sprintf(
+        paste0(
+          "capture %s: %s answered HTTP 200 with something that is no ",
+          "capture record (a sign-in page or a proxy's error page looks ",
+          "like this)"
+        ),
+        x,
+        .bl_arc_host(base)
+      ),
+      call. = FALSE
+    )
+  }
   list(
     id = x,
     url = res$json$url,
@@ -646,7 +686,7 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
 .bl_arc_by_url <- function(x, at, sha256) {
   found <- arcfind(x)
   if (!nrow(found)) {
-    stop(sprintf("archive.rmorie.com has no capture of %s", x), call. = FALSE)
+    stop(sprintf("%s has no capture of %s", .bl_arc_host(), x), call. = FALSE)
   }
   i <- nrow(found)
   if (!is.null(at)) {

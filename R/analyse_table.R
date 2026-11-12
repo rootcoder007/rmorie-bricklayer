@@ -1063,7 +1063,12 @@ rptanl <- function(
       " | ",
       fixed = TRUE
     )[[1L]]
-    trimws(v)
+    # a cell is Markdown: its pipe is written \| and its &, < and > as
+    # entities; back to the text first, so .md_inline() escapes it once
+    v <- gsub("\\|", "|", trimws(v), fixed = TRUE)
+    v <- gsub("&lt;", "<", v, fixed = TRUE)
+    v <- gsub("&gt;", ">", v, fixed = TRUE)
+    gsub("&amp;", "&", v, fixed = TRUE)
   })
   hdr <- paste0(
     "<tr>",
