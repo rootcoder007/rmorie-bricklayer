@@ -395,13 +395,22 @@ test_that("rates, rate changes and shares print as boxes", {
     pop = c(1000, 2000, 1000, 2000),
     stringsAsFactors = FALSE
   )
-  out <- .o2_check(rtcalc(rd, "n", "pop", by = "g", mincnt = 10),
-    "Rate per 1,000", c("95% exact Poisson", "[1] count at or below 10"))
+  out <- .o2_check(
+    rtcalc(rd, "n", "pop", by = "g", mincnt = 10),
+    "Rate per 1,000",
+    c("95% exact Poisson", "[1] count at or below 10")
+  )
   rc <- ratechg(rd, "n", "pop", "yr", by = "g")
-  .o2_check(rc, "Change in rate per 1,000",
-    c("pct_interval", "[1] no comparison period"))
-  .o2_check(scanadj(rc), "Change in rate per 1,000",
-    c("Adjustment", "adj_p", "significant"))
+  .o2_check(
+    rc,
+    "Change in rate per 1,000",
+    c("pct_interval", "[1] no comparison period")
+  )
+  .o2_check(
+    scanadj(rc),
+    "Change in rate per 1,000",
+    c("Adjustment", "adj_p", "significant")
+  )
   .o2_check(shrs(c(a = 3, b = 7)), "Share", c("95% Wilson", "label"))
 })
 
@@ -410,9 +419,12 @@ test_that("rates, rate changes and shares print as boxes", {
 ls_flat <- function(x) gsub("\\s+", " ", paste(format(x), collapse = " "))
 
 test_that("rtcalc()'s reading compares the groups and flags small counts", {
-  s <- data.frame(division = c("North", "South", "East"),
-    stops = c(412, 77, 3), residents = c(120000, 41000, 9500),
-    stringsAsFactors = FALSE)
+  s <- data.frame(
+    division = c("North", "South", "East"),
+    stops = c(412, 77, 3),
+    residents = c(120000, 41000, 9500),
+    stringsAsFactors = FALSE
+  )
   r <- ls_flat(rtcalc(s, stops, residents, by = "division", mincnt = 5))
   expect_match(r, "Highest rate: North", fixed = TRUE)
   expect_match(r, "lowest: East", fixed = TRUE)
@@ -426,15 +438,20 @@ test_that("rtcalc()'s reading compares the groups and flags small counts", {
 test_that("ratechg()'s reading separates real changes from chance", {
   d <- data.frame(year = 2021:2022, n = c(400, 800), pop = 1e5)
   up <- ls_flat(ratechg(d, n, pop, year))
-  expect_match(up,
+  expect_match(
+    up,
     "Rose by more than chance (interval above 0): 2022 (+100.0%)",
-    fixed = TRUE)
+    fixed = TRUE
+  )
   d$n <- c(400, 410)
   same <- ls_flat(ratechg(d, n, pop, year))
   expect_match(same, "Not distinguishable from 0", fixed = TRUE)
   d$n <- c(800, 400)
-  expect_match(ls_flat(ratechg(d, n, pop, year)), "Fell by more than chance",
-    fixed = TRUE)
+  expect_match(
+    ls_flat(ratechg(d, n, pop, year)),
+    "Fell by more than chance",
+    fixed = TRUE
+  )
 })
 
 test_that("a subset of a rate change or share prints as a plain table", {
@@ -443,9 +460,13 @@ test_that("a subset of a rate change or share prints as a plain table", {
 })
 
 test_that("plot(ratechg(..., prdord = )) draws the periods in that order", {
-  d <- data.frame(p = c("spring", "summer", "autumn", "spring", "autumn"),
-                  g = c("a", "a", "a", "b", "b"),
-                  n = c(10, 12, 15, 4, 6), pop = 1000)
+  d <- data.frame(
+    p = c("spring", "summer", "autumn", "spring", "autumn"),
+    g = c("a", "a", "a", "b", "b"),
+    n = c(10, 12, 15, 4, 6),
+    pop = 1000,
+    stringsAsFactors = FALSE
+  )
   ord <- c("spring", "summer", "autumn")
   r <- ratechg(d, "n", "pop", "p", by = "g", prdord = ord)
   grDevices::pdf(NULL)
@@ -458,9 +479,13 @@ test_that("plot(ratechg(..., prdord = )) draws the periods in that order", {
 })
 
 test_that("ratechg() and anytab() take prdord, and refuse what they lack", {
-  d <- data.frame(p = c("spring", "summer", "autumn", "spring", "autumn"),
-                  g = c("a", "a", "a", "b", "b"),
-                  n = c(10, 12, 15, 4, 6), pop = 1000)
+  d <- data.frame(
+    p = c("spring", "summer", "autumn", "spring", "autumn"),
+    g = c("a", "a", "a", "b", "b"),
+    n = c(10, 12, 15, 4, 6),
+    pop = 1000,
+    stringsAsFactors = FALSE
+  )
   ord <- c("spring", "summer", "autumn")
   r <- ratechg(d, "n", "pop", "p", by = "g", prdord = ord)
   a <- r[r$g == "a", ]
@@ -471,28 +496,42 @@ test_that("ratechg() and anytab() take prdord, and refuse what they lack", {
   expect_true(is.na(b$prerate[b$p == "autumn"]))
   expect_identical(attr(r, "ratechg")$prdord, ord)
   # alphabetical order would have put autumn first
-  expect_false(identical(as.character(ratechg(d, "n", "pop", "p",
-                                              by = "g")$p[1:3]), ord))
-  t <- anytab(d, value = "n", prd = "p", by = "g", pop = "pop",
-              prdord = ord)
+  expect_false(identical(
+    as.character(ratechg(d, "n", "pop", "p", by = "g")$p[1:3]),
+    ord
+  ))
+  t <- anytab(d, value = "n", prd = "p", by = "g", pop = "pop", prdord = ord)
   expect_identical(t$meta$periods, ord)
   expect_identical(t$meta$prdord, ord)
   # an argument the method does not take is named, not swallowed
-  expect_error(ratechg(d, "n", "pop", "p", prdrd = ord),
-               "ratechg: unused argument: prdrd")
-  expect_error(rtcalc(d, "n", "pop", by = "g", conflevel = 0.9),
-               "rtcalc: unused argument: conflevel")
+  expect_error(
+    ratechg(d, "n", "pop", "p", prdrd = ord),
+    "ratechg: unused argument: prdrd"
+  )
+  expect_error(
+    rtcalc(d, "n", "pop", by = "g", conflevel = 0.9),
+    "rtcalc: unused argument: conflevel"
+  )
   expect_error(rtcalc(c(1, 2), c(10, 20), 5, 6, 7, 8), "unused argument")
-  expect_error(shrs(d, "n", by = "g", denom = 5),
-               "shrs: unused argument: denom")
+  expect_error(
+    shrs(d, "n", by = "g", denom = 5),
+    "shrs: unused argument: denom"
+  )
   expect_error(shrs(c(1, 2), denom = 5), "shrs: unused argument: denom")
-  expect_error(yoychg(d, "n", "p", by = "g", prdrd = ord),
-               "yoychg: unused argument: prdrd")
+  expect_error(
+    yoychg(d, "n", "p", by = "g", prdrd = ord),
+    "yoychg: unused argument: prdrd"
+  )
 })
 
 test_that("a ratechg box prints whole-number periods as labels", {
-  d <- data.frame(p = rep(2019:2022, 2), g = rep(c("a", "b"), each = 4),
-                  n = c(5, 7, 9, 11, 4, 6, 8, 7), pop = 1000)
+  d <- data.frame(
+    p = rep(2019:2022, 2),
+    g = rep(c("a", "b"), each = 4),
+    n = c(5, 7, 9, 11, 4, 6, 8, 7),
+    pop = 1000,
+    stringsAsFactors = FALSE
+  )
   out <- format(ratechg(d, "n", "pop", "p", by = "g"))
   expect_false(any(grepl("2020.000", out, fixed = TRUE)))
   expect_true(any(grepl("\\b2020\\b", out, perl = TRUE)))

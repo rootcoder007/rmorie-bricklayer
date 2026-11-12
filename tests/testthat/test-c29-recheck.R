@@ -25,8 +25,7 @@ test_that("evstudy() with one unit weighted 1e308 gives no LAPACK error", {
 
 test_that("loounit() errors name loounit(), not plndid()", {
   d <- data.frame(u = 1:2, t = 1:2, y = 1:2, d = 0:1)
-  e <- tryCatch(loounit(d, "u", "t", "y", "nope"),
-                error = conditionMessage)
+  e <- tryCatch(loounit(d, "u", "t", "y", "nope"), error = conditionMessage)
   expect_false(startsWith(e, "plndid"))
 })
 
@@ -42,14 +41,18 @@ test_that("readers given a folder say so", {
 test_that("writers refuse a name longer than file systems allow", {
   long <- file.path(tempdir(), strrep("w", 300))
   expect_error(.rmbl_out_file(long, "file"), "longer than the 255 bytes")
-  expect_identical(.rmbl_out_file(file.path(tempdir(), "ok.txt"), "file"),
-                   file.path(tempdir(), "ok.txt"))
+  expect_identical(
+    .rmbl_out_file(file.path(tempdir(), "ok.txt"), "file"),
+    file.path(tempdir(), "ok.txt")
+  )
 })
 
 test_that("OIDs decode long arcs and a first arc of 2.x without warnings", {
-  expect_no_warning(s <- .rmbl_oid_string(
-    as.raw(c(0x2a, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f))
-  ))
+  expect_no_warning(
+    s <- .rmbl_oid_string(
+      as.raw(c(0x2a, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f))
+    )
+  )
   expect_false(grepl("NA", s, fixed = TRUE))
   expect_identical(.rmbl_oid_string(as.raw(c(0x88, 0x37, 0x03))), "2.999.3")
   expect_identical(
@@ -62,10 +65,14 @@ test_that("OIDs decode long arcs and a first arc of 2.x without warnings", {
 })
 
 test_that("ralloc() refuses a ratio past the integers, blocks or not", {
-  expect_error(ralloc(10, arms = c("A", "B"), ratio = c(2^31, 1)),
-               "summing to at most 1000000")
-  expect_error(ralloc(10, arms = c("A", "B"), ratio = c(2^31, 1), block = 4),
-               "summing to at most 1000000")
+  expect_error(
+    ralloc(10, arms = c("A", "B"), ratio = c(2^31, 1)),
+    "summing to at most 1000000"
+  )
+  expect_error(
+    ralloc(10, arms = c("A", "B"), ratio = c(2^31, 1), block = 4),
+    "summing to at most 1000000"
+  )
 })
 
 test_that("argument checks the battery found missing", {
@@ -77,8 +84,10 @@ test_that("argument checks the battery found missing", {
   expect_error(.bl_cols(9L, "x"), "must be colours")
   expect_error(.bl_check_bw(1e308), "`bw` must be one positive number")
   expect_error(tojs(1, digits = Inf), "from 0 to 22")
-  expect_error(blcli(character(), out = function() 1),
-               "must be a function that writes text")
+  expect_error(
+    blcli(character(), out = function() 1),
+    "must be a function that writes text"
+  )
 })
 
 test_that("facts of any type print, plot titles show control bytes escaped", {
@@ -108,8 +117,11 @@ test_that("tables fit the console: long labels are cut, numbers never", {
   expect_true(endsWith(fit[[1L]][2L], "..."))
   expect_identical(fit[[2L]], c("n", "12"))
   withr::local_options(width = 30)
-  d <- data.frame(g = rep(c(strrep("w", 300), "b"), each = 2),
-                  p = rep(2020:2021, 2), n = c(10, 12, 5, 6))
+  d <- data.frame(
+    g = rep(c(strrep("w", 300), "b"), each = 2),
+    p = rep(2020:2021, 2),
+    n = c(10, 12, 5, 6)
+  )
   out <- format(yoychg(d, "n", "p", by = "g"))
   rows <- out[grepl("202[01]", out)]
   expect_true(all(nchar(rows, type = "width") <= 40L))
@@ -122,9 +134,19 @@ test_that("the bundle wrapper does not wait out the limit for a short run", {
   w <- file.path(d, "w.sh")
   writeLines(.bndlchk_wrap(), w)
   t0 <- proc.time()[["elapsed"]]
-  st <- system2("sh", c(shQuote(w), "30", shQuote(file.path(d, "m")),
-                        "sh", "-c", shQuote("exit 3")),
-                stdout = FALSE, stderr = FALSE)
+  st <- system2(
+    "sh",
+    c(
+      shQuote(w),
+      "30",
+      shQuote(file.path(d, "m")),
+      "sh",
+      "-c",
+      shQuote("exit 3")
+    ),
+    stdout = FALSE,
+    stderr = FALSE
+  )
   expect_identical(as.integer(st), 3L)
   expect_lt(proc.time()[["elapsed"]] - t0, 10)
 })
@@ -138,21 +160,41 @@ test_that("the bundle wrapper ends a short run started with TERM ignored", {
   w <- file.path(d, "w.sh")
   writeLines(.bndlchk_wrap(), w)
   t0 <- proc.time()[["elapsed"]]
-  st <- system2("sh", c("-c", shQuote("trap '' TERM; exec sh \"$@\""), "sh",
-                        shQuote(w), "30", shQuote(file.path(d, "m")),
-                        "sh", "-c", shQuote("exit 3")),
-                stdout = FALSE, stderr = FALSE)
+  st <- system2(
+    "sh",
+    c(
+      "-c",
+      shQuote("trap '' TERM; exec sh \"$@\""),
+      "sh",
+      shQuote(w),
+      "30",
+      shQuote(file.path(d, "m")),
+      "sh",
+      "-c",
+      shQuote("exit 3")
+    ),
+    stdout = FALSE,
+    stderr = FALSE
+  )
   expect_identical(as.integer(st), 3L)
   expect_false(file.exists(file.path(d, "m")))
   expect_lt(proc.time()[["elapsed"]] - t0, 10)
 })
 
 test_that("the reaper leaves processes below the session's older children", {
-  before <- data.frame(pid = c(10L, 20L), ppid = c(1L, 1L),
-                       state = "S", key = c("10 a", "20 b"))
+  before <- data.frame(
+    pid = c(10L, 20L),
+    ppid = c(1L, 1L),
+    state = "S",
+    key = c("10 a", "20 b"),
+    stringsAsFactors = FALSE
+  )
   now <- data.frame(
-    pid = c(10L, 11L, 12L, 13L), ppid = c(1L, 10L, 1L, 12L),
-    state = "S", key = c("10 a", "11 c", "12 d", "13 e")
+    pid = c(10L, 11L, 12L, 13L),
+    ppid = c(1L, 10L, 1L, 12L),
+    state = "S",
+    key = c("10 a", "11 c", "12 d", "13 e"),
+    stringsAsFactors = FALSE
   )
   local_mocked_bindings(.bndlchk_procs = function() now)
   expect_identical(sort(.bndlchk_desc(before, me = 1L)), c(12L, 13L))

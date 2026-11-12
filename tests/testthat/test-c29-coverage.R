@@ -2,10 +2,11 @@
 # coverage), with real inputs where the branch is reachable from the API.
 
 test_that("a pre-trend test with a singular variance is NA, not an error", {
-  fit <- list(coef = c(`k-2` = 0.5, `k-1` = 0.2),
-              vcov = matrix(0, 2, 2, dimnames = list(c("k-2", "k-1"),
-                                                     c("k-2", "k-1"))),
-              clusters = 10L)
+  fit <- list(
+    coef = c(`k-2` = 0.5, `k-1` = 0.2),
+    vcov = matrix(0, 2, 2, dimnames = list(c("k-2", "k-1"), c("k-2", "k-1"))),
+    clusters = 10L
+  )
   pt <- .rmbl_es_pretrend(fit, c(-2L, -1L))
   expect_true(is.na(pt$F))
   expect_true(is.na(pt$p_value))
@@ -32,13 +33,17 @@ test_that("a writer refuses a folder it cannot write in", {
   d <- withr::local_tempdir()
   Sys.chmod(d, "0500")
   on.exit(Sys.chmod(d, "0700"), add = TRUE)
-  expect_error(.rmbl_out_file(file.path(d, "out.txt"), "file"),
-               "cannot be written to")
+  expect_error(
+    .rmbl_out_file(file.path(d, "out.txt"), "file"),
+    "cannot be written to"
+  )
 })
 
 test_that("usecpstmpl() refuses a name too long for a file system", {
-  expect_error(usecpstmpl(file.path(tempdir(), strrep("c", 300))),
-               "longer than the 255 bytes")
+  expect_error(
+    usecpstmpl(file.path(tempdir(), strrep("c", 300))),
+    "longer than the 255 bytes"
+  )
 })
 
 test_that("a bad size cap option falls back to 512 MiB", {
@@ -61,8 +66,10 @@ test_that("with systemd allowed the check finds systemctl on the PATH", {
 test_that("openssl is the SHA-256 tool when nothing else is there", {
   only <- function(keep) {
     function(names) {
-      stats::setNames(ifelse(names == keep, file.path("/usr/bin", keep), ""),
-                      names)
+      stats::setNames(
+        ifelse(names == keep, file.path("/usr/bin", keep), ""),
+        names
+      )
     }
   }
   local_mocked_bindings(Sys.which = only("openssl"), .package = "base")
@@ -91,8 +98,14 @@ test_that("a table of numbers too wide to cut is left whole", {
 
 test_that("a stat table too wide for the console is stacked", {
   withr::local_options(width = 30)
-  df <- data.frame(group = c("a", "b"), estimate = c(1.5, 2.5),
-                   lower = c(1, 2), upper = c(2, 3), p.value = c(0.01, 0.2))
+  df <- data.frame(
+    group = c("a", "b"),
+    estimate = c(1.5, 2.5),
+    lower = c(1, 2),
+    upper = c(2, 3),
+    p.value = c(0.01, 0.2),
+    stringsAsFactors = FALSE
+  )
   out <- .rmbl_stat_table(df)
   expect_true(any(grepl("^  group +a$", out)))
   expect_true(all(nchar(out) <= 30L))
@@ -103,8 +116,10 @@ test_that("cpsxvrf() refuses a key or context it cannot use", {
   sig <- structure(list(scheme = "ML-DSA-44"), class = "bricklayer_signature")
   expect_error(cpsxvrf("m", sig, 1), "must be a key pair from cpskg")
   expect_error(cpsxvrf("m", sig, "abc"), "must be a key pair from cpskg")
-  expect_error(cpsxvrf("m", sig, list(), ctx = new.env()),
-               "`ctx` must be one string")
+  expect_error(
+    cpsxvrf("m", sig, list(), ctx = new.env()),
+    "`ctx` must be one string"
+  )
 })
 
 test_that("ghcmt() refuses a failon that is not check names", {
@@ -119,8 +134,10 @@ test_that("a label function that fails names yoylbl()", {
 
 test_that("a statistic that fails names bandsens()", {
   b <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
-  expect_error(bandsens(b, c(1200, 430, 110, 38), stat = function() 1),
-               "bandsens: `stat` failed")
+  expect_error(
+    bandsens(b, c(1200, 430, 110, 38), stat = function() 1),
+    "bandsens: `stat` failed"
+  )
 })
 
 test_that("edges given as a matrix are refused", {
@@ -128,9 +145,11 @@ test_that("edges given as a matrix are refused", {
 })
 
 test_that("a characteristic id past the integers names no characteristic", {
-  x <- data.frame(chaid = 1L, characteristic = "a")
-  expect_error(.rmbl_profshr_pick(x, 2^31, "numerator"),
-               "names no characteristic")
+  x <- data.frame(chaid = 1L, characteristic = "a", stringsAsFactors = FALSE)
+  expect_error(
+    .rmbl_profshr_pick(x, 2^31, "numerator"),
+    "names no characteristic"
+  )
 })
 
 test_that("plothwk() refuses event times outside the fit's window", {
@@ -144,23 +163,33 @@ test_that("plots check colours and escape titles", {
   grDevices::pdf(NULL)
   withr::defer(grDevices::dev.off())
   set.seed(1)
-  expect_error(plotcal(as.Date("2024-01-01") + 0:9, 1:10, col = "x"),
-               "must be colours")
+  expect_error(
+    plotcal(as.Date("2024-01-01") + 0:9, 1:10, col = "x"),
+    "must be colours"
+  )
   expect_error(plothex(rnorm(20), rnorm(20), col = "x"), "must be colours")
-  expect_no_warning(plotmult(1:6, rep(1:3, 2), rep(c("a", "b"), each = 3),
-                           main = "A\033[2J"))
+  expect_no_warning(plotmult(
+    1:6,
+    rep(1:3, 2),
+    rep(c("a", "b"), each = 3),
+    main = "A\033[2J"
+  ))
 })
 
 test_that("files are written as UTF-8 in a C locale too", {
   skip_on_os("windows")
   old <- Sys.getlocale("LC_CTYPE")
   on.exit(Sys.setlocale("LC_CTYPE", old), add = TRUE)
-  skip_if(!nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", "C"))),
-          "no C locale")
+  skip_if(
+    !nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", "C"))),
+    "no C locale"
+  )
   f <- withr::local_tempfile()
   .rmbl_wlines(tojs(list(file = "\u00e9.csv")), f)
-  expect_gt(grepRaw(as.raw(c(0xc3, 0xa9)), readBin(f, "raw", 100L),
-                    fixed = TRUE), 0L)
+  expect_gt(
+    grepRaw(as.raw(c(0xc3, 0xa9)), readBin(f, "raw", 100L), fixed = TRUE),
+    0L
+  )
   expect_false(grepl("<U+", rawToChar(readBin(f, "raw", 100L)), fixed = TRUE))
 })
 
@@ -190,32 +219,42 @@ test_that("process listing and its helpers outside Linux", {
   expect_null(.bndlchk_unshare(""))
   skip_on_os(c("windows", "mac", "solaris"))
   expect_null(.bndlchk_unshare(Sys.which("false")))
-  local_mocked_bindings(Sys.info = function(...) c(sysname = "Darwin"),
-                        .package = "base")
+  local_mocked_bindings(
+    Sys.info = function(...) c(sysname = "Darwin"),
+    .package = "base"
+  )
   expect_null(.bndlchk_procs())
 })
 
 test_that("every SHA-256 tool a system may have is found", {
   only <- function(keep) {
     function(names) {
-      stats::setNames(ifelse(names %in% keep, file.path("/x", names), ""),
-                      names)
+      stats::setNames(
+        ifelse(names %in% keep, file.path("/x", names), ""),
+        names
+      )
     }
   }
   local_mocked_bindings(Sys.which = only("certutil"), .package = "base")
   expect_identical(.rmbl_shatool("Windows")$args, "-hashfile")
   local_mocked_bindings(Sys.which = only("shasum"), .package = "base")
   expect_identical(.rmbl_shatool("Linux")$args, c("-a", "256"))
-  local_mocked_bindings(Sys.which = only(c("sha256sum", "shasum")),
-                        .package = "base")
+  local_mocked_bindings(
+    Sys.which = only(c("sha256sum", "shasum")),
+    .package = "base"
+  )
   expect_identical(.rmbl_shatool("Darwin")$args, c("-a", "256"))
   local_mocked_bindings(.rmbl_shatool = function(sys) NULL)
   expect_null(.rmbl_ossha(tempfile()))
 })
 
 test_that("a timestamp whose checks all passed reads not verified", {
-  need <- c("token_structure", "message_imprint", "signature",
-            "attribute_digest")
+  need <- c(
+    "token_structure",
+    "message_imprint",
+    "signature",
+    "attribute_digest"
+  )
   ts <- list(checks = data.frame(check = need, ok = TRUE))
   expect_identical(.bl_ts_failed(ts), "not verified")
 })
@@ -226,7 +265,11 @@ test_that("a URL ending in .. names the capture index", {
 
 test_that("rows the Wayback refuses offline are never sent", {
   local_mocked_bindings(.bl_cap_wb_why = function(u) "not http(s)")
-  out <- data.frame(url = "ftp://x.org/a", wayback = NA_character_)
+  out <- data.frame(
+    url = "ftp://x.org/a",
+    wayback = NA_character_,
+    stringsAsFactors = FALSE
+  )
   r <- .bl_cap_wayback(out, TRUE, "AK", "SK")
   expect_identical(r$wayback, "not asked: not http(s)")
 })
@@ -240,18 +283,41 @@ test_that("certprs passes the package's own refusals through", {
 
 test_that("a certificate whose tbsCertificate is cut short is refused", {
   der <- as.raw(c(
-    0x30, 0x18,
-    0x30, 0x03, 0x02, 0x01, 0x01,
-    0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01,
-    0x0b, 0x05, 0x00,
-    0x03, 0x02, 0x00, 0x00
+    0x30,
+    0x18,
+    0x30,
+    0x03,
+    0x02,
+    0x01,
+    0x01,
+    0x30,
+    0x0d,
+    0x06,
+    0x09,
+    0x2a,
+    0x86,
+    0x48,
+    0x86,
+    0xf7,
+    0x0d,
+    0x01,
+    0x01,
+    0x0b,
+    0x05,
+    0x00,
+    0x03,
+    0x02,
+    0x00,
+    0x00
   ))
   expect_error(certprs(der), "tbsCertificate is incomplete")
 })
 
 test_that("a plain text column in a table is escaped, not formatted", {
-  out <- .md_table(data.frame(period = c("a\033[2J", "b"), n = 1:2),
-                   plain = "period")
+  out <- .md_table(
+    data.frame(period = c("a\033[2J", "b"), n = 1:2, stringsAsFactors = FALSE),
+    plain = "period"
+  )
   txt <- paste(out, collapse = "\n")
   expect_false(grepl("\033", txt, fixed = TRUE))
   expect_match(txt, "b", fixed = TRUE)
@@ -271,15 +337,22 @@ test_that("a plot title may be an expression", {
 test_that("a token with no digest algorithm or an empty certificates field", {
   set <- list(class = 0L, tag = 17, constructed = TRUE, children = list())
   expect_error(.rmbl_ts_digest_algs(set), "digestAlgorithms is empty")
-  sd <- list(children = list(list(class = 2L, tag = 0, constructed = TRUE,
-                                  children = list())))
+  sd <- list(
+    children = list(list(
+      class = 2L,
+      tag = 0,
+      constructed = TRUE,
+      children = list()
+    ))
+  )
   expect_error(.rmbl_ts_certs(sd, raw()), "certificates field is empty")
 })
 
 test_that("a signature algorithm that names another digest is refused", {
   expect_match(
     .rmbl_ts_sigalg_why("1.2.840.113549.1.1.11", "RSA", "sha384"),
-    "names sha256, the SignerInfo digest is sha384", fixed = TRUE
+    "names sha256, the SignerInfo digest is sha384",
+    fixed = TRUE
   )
   expect_null(.rmbl_ts_sigalg_why("1.2.840.113549.1.1.11", "RSA", "sha256"))
 })

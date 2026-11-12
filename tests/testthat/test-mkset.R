@@ -2,8 +2,10 @@
 
 set_parts <- function() {
   d <- data.frame(
-    year = rep(2020:2023, 2), grp = rep(c("a", "b"), each = 4),
-    n = c(5, 7, 9, 11, 4, 6, 8, 7), pop = 1000,
+    year = rep(2020:2023, 2),
+    grp = rep(c("a", "b"), each = 4),
+    n = c(5, 7, 9, 11, 4, 6, 8, 7),
+    pop = 1000,
     stringsAsFactors = FALSE
   )
   list(
@@ -51,17 +53,23 @@ test_that("mkset writes text, Markdown and one HTML page", {
   expect_true(any(grepl("Gini coefficient", txt, fixed = TRUE)))
   expect_false(any(grepl("\033[", txt, fixed = TRUE)))
   expect_true(all(nchar(txt, type = "width") <= 80L))
-  mkset("Gini" = p$g, "Change" = p$y, title = "T",
-        file = file.path(d, "r.md"))
+  mkset("Gini" = p$g, "Change" = p$y, title = "T", file = file.path(d, "r.md"))
   md <- readLines(file.path(d, "r.md"), encoding = "UTF-8")
   expect_identical(md[1L], "# T")
   expect_true(all(c("## Gini", "## Change") %in% md))
   expect_false(any(md == "```r"))
   expect_true(any(startsWith(md, "|")))
-  mkset("Gini" = p$g, "Rates" = p$r, "Change" = p$y, title = "T & co",
-        file = file.path(d, "r.html"))
-  h <- paste(readLines(file.path(d, "r.html"), encoding = "UTF-8"),
-             collapse = "\n")
+  mkset(
+    "Gini" = p$g,
+    "Rates" = p$r,
+    "Change" = p$y,
+    title = "T & co",
+    file = file.path(d, "r.html")
+  )
+  h <- paste(
+    readLines(file.path(d, "r.html"), encoding = "UTF-8"),
+    collapse = "\n"
+  )
   expect_match(h, "<title>T &amp; co</title>", fixed = TRUE)
   expect_match(h, "3 results, each as it prints, with its plot", fixed = TRUE)
   sec <- gregexpr("<section>", h, fixed = TRUE)
@@ -80,7 +88,7 @@ test_that("a plot that fails is left out, the box kept", {
   expect_null(asNamespace("rmoriebricklayer")$.mkset_plot(1:3))
   # a data frame, or a result with no plot method of its own, gets no
   # pairs plot (which warned on text columns)
-  df <- data.frame(a = c("x", "y"), b = 1:2)
+  df <- data.frame(a = c("x", "y"), b = 1:2, stringsAsFactors = FALSE)
   expect_silent(n1 <- asNamespace("rmoriebricklayer")$.mkset_plot(df))
   expect_null(n1)
   cls <- structure(df, class = c("rmbl_noplot", "data.frame"))
@@ -95,8 +103,10 @@ test_that("mkset refuses what it cannot do", {
   p <- set_parts()
   expect_error(mkset(), "at least one result")
   expect_error(mkset(list()), "at least one result")
-  expect_error(mkset(p$g, file = file.path(tempdir(), "r.pdf")),
-               "must end in .html, .md or .txt, not .pdf")
+  expect_error(
+    mkset(p$g, file = file.path(tempdir(), "r.pdf")),
+    "must end in .html, .md or .txt, not .pdf"
+  )
   expect_error(mkset(p$g, title = 1), "title")
   expect_error(mkset(p$g, plots = NA), "plots")
 })
