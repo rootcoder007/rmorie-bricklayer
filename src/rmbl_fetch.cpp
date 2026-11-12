@@ -1796,6 +1796,12 @@ SEXP C_rmbl_net_probe_impl(SEXP url, SEXP addr, SEXP local_ok, SEXP tmo) {
             std::memcpy(at, &s6, sizeof s6);   /* within `room` */
         }
         if (ca.family) {
+            /* libcurl starts the socket layer when its first handle is made (on Windows,
+             * WSAStartup); guard_socket() normally runs inside a transfer, after that. Called
+             * here in a process that has made no handle yet, socket() failed on Windows and the
+             * probe said "refused" for every address (1.1.1: the tests run in fresh processes) */
+            CURL *h0 = curl_easy_init();
+            if (h0) curl_easy_cleanup(h0);
             SockGuard g = {Rf_asLogical(local_ok) == TRUE};
             errno = 0;
             const curl_socket_t fd = guard_socket(&g, CURLSOCKTYPE_IPCXN, &ca);
