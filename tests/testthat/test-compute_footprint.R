@@ -751,3 +751,13 @@ test_that("co2int() and fpeqv() results print as boxes", {
   expect_s3_class(q, "rmbl_co2eqv")
   expect_box2(q, "Footprint in everyday terms", c("6.857 km", "car: 175"))
 })
+
+test_that("a RAPL domain without a readable name is skipped in silence", {
+  skip_on_os("windows")
+  d <- tempfile("powercap")
+  dir.create(file.path(d, "intel-rapl:0"), recursive = TRUE)
+  on.exit(unlink(d, recursive = TRUE), add = TRUE)
+  expect_no_warning(out <- .rapl_domains(d))
+  expect_identical(out, character(0))
+  expect_false(raplok(d))
+})

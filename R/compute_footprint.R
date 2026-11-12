@@ -843,7 +843,9 @@ format.rmbl_co2eqv <- function(x, digits = 4L, ...) {
     d,
     function(p) {
       nm <- tryCatch(
-        readLines(file.path(p, "name"), n = 1L, warn = FALSE),
+        suppressWarnings(
+          readLines(file.path(p, "name"), n = 1L, warn = FALSE)
+        ),
         error = function(e) ""
       )
       file.exists(file.path(p, "energy_uj")) &&
