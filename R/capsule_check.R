@@ -1252,8 +1252,13 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' @return The span, backticks included.
 #' @noRd
 .bl_md_code <- function(x) {
-  x <- gsub("|", "\\|", .rmbl_ctl_escape(gsub("[\r\n]+", " ", x)), fixed = TRUE)
-  ifelse(grepl("`", x, fixed = TRUE), paste0("`` ", x, " ``"), paste0("`", x, "`"))
+  x <- .rmbl_ctl_escape(gsub("[\r\n]+", " ", x))
+  x <- gsub("|", "\\|", x, fixed = TRUE)
+  ifelse(
+    grepl("`", x, fixed = TRUE),
+    paste0("`` ", x, " ``"),
+    paste0("`", x, "`")
+  )
 }
 
 #' A number for the report: three significant digits, \code{"-"} for NA.
