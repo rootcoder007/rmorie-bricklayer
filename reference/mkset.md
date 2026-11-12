@@ -16,7 +16,7 @@ mkset(..., title = "Analysis results", file = NULL, plots = TRUE)
 - ...:
 
   The results. A name gives a result its heading
-  (`"Change by year" = anltab(...)`); an unnamed one is headed by its
+  (`"Change by year" = anytab(...)`); an unnamed one is headed by its
   box's own title. One unnamed plain list is read as the list of
   results.
 
@@ -46,7 +46,7 @@ it is returned invisibly with the written file's path in attribute
 Any object this package returns can go in, and any other R object that
 prints (a model, a data frame): each is shown as it prints. A
 year-over-year table from
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 becomes a real table in HTML and Markdown.
 
 In a file the boxes are drawn 80 characters wide and without colour, so
@@ -64,7 +64,7 @@ or `FALSE`.
 
 [`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
 for the report of one
-[`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
+[`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md)
 analysis;
 [`rmblapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmblapp.md),
 whose dashboard gathers results the same way.

@@ -1,5 +1,187 @@
 # Changelog
 
+## rmoriebricklayer 1.1.1
+
+- Four functions have new names, so that no exported name is also a
+  function in another CRAN package: `plotecdf()` is
+  [`plotcdfs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
+  `plotsm()` is
+  [`plotmult()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md),
+  `anltab()` is
+  [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md),
+  and `yoy()` is
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
+  (same arguments, same result). The 0.5.x name `analyse_table` now
+  leads to
+  [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md),
+  and `rmbl migrate` rewrites calls of the old names in a script to the
+  new ones (`rmbl describe anltab` says what it became).
+- The 0.5.13 S3 generics `rate()`, `rate_change()` and `share()` are
+  gone, for the same reason;
+  [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md),
+  [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+  and
+  [`shrs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md)
+  are the functions, with the 1.0.0 arguments and result names.
+  [`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
+  stays. The command line still knows the three old names:
+  `rmbl describe rate` says what it became, and `rmbl migrate` rewrites
+  a script’s `rate()`, `rate_change()` and `share()` calls to the new
+  functions and argument names.
+- The curated tables at data.rmorie.com need no sign-in:
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
+  [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  and `rmbl data pull` work without a key, and a key stored earlier with
+  [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
+  is still sent. ICPSR studies are no longer served there (ICPSR’s terms
+  do not allow redistribution); asking for one says where to get it.
+- A curated table larger than twice the part size (option
+  `rmoriebricklayer.dpart`, 90 MB by default) is downloaded in parts,
+  each a byte range of the file: a slow or broken connection costs at
+  most one part, each part is kept once whole, and running
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  again resumes from the first part still missing. The joined file is
+  checked against the manifest SHA-256 as before.
+- A test that refreshes the data manifest from several processes at once
+  forks two at a time instead of twelve: under coverage each fork copied
+  an 850 MB test session, and twelve ran a 2 GB check machine out of
+  memory.
+- On a machine or container with less than 3 GB (rOpenSci’s pkgcheck
+  runs in 2 GB), the tests that fork or start a second R process skip:
+  that process takes 500 to 800 MB beside the test session and the
+  checker’s own session, and the three overran 2 GB, in the coverage
+  step and again in R CMD check. CI and the coverage job, on larger
+  machines, still run them.
+- The full test suite runs in batches of 8 files, each in a fresh R
+  process, so no process grows past about 1 GB; in batches of 25, R CMD
+  check on a 2 GB machine was stopped for lack of memory.
+- On a machine or container with less than 3 GB the batches are 3 files
+  (under coverage a batch of 8 reached 1.1 GB), and the C++ sources
+  compile as three units, so no compiler process needs more than about
+  460 MB (one unit needed over 700 MB). The Windows check time is
+  unchanged.
+- [`co2fp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md)
+  and
+  [`raplok()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/raplok.md)
+  skip a RAPL power domain whose `name` file cannot be read (as inside a
+  container) without a warning; each such domain used to print “cannot
+  open file”.
+- [`cqnt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md),
+  [`cmed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md),
+  [`ciqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
+  and
+  [`ctkyfnc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
+  handle an infinite value as
+  [`stats::quantile()`](https://rdrr.io/r/stats/quantile.html) does
+  (`cmed(c(-Inf, 1))` is `-Inf`); they returned `NaN`.
+- [`cgamcdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cgamcdf.md)
+  agrees with [`pgamma()`](https://rdrr.io/r/stats/GammaDist.html) to
+  rounding far below the shape too: `cgamcdf(30, 1e-8)` was off in the
+  sixth digit.
+- [`cpsbndlrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  and
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  say that a file whose attestation has no signature is not a capsule
+  bundle; they stopped with an internal error.
+- [`yoymd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md)
+  and the Markdown of
+  [`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
+  escape a pipe or HTML in a column name or group label as they do in a
+  value, and the metadata line of
+  [`yoycsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md)
+  and
+  [`yoytsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md)
+  stays one line when a column name holds a line break.
+- [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+  given something that is no key names the keys it takes.
+- The help of
+  [`benfordtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benfordtst.md)
+  says which digit a value within rounding of a power of ten counts
+  under: the one R prints.
+- Under coverage the test runner adds each batch’s counts into one trace
+  file as the suite goes. covr reads the trace file of every R process
+  before adding them up, and the 52 files of a full run took 2.06 GB,
+  which stopped rOpenSci’s pkgcheck (“Package coverage failed”) on a 2
+  GB machine after every test had passed. The coverage figures are
+  unchanged.
+- [`cpsbndlrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  and
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  also refuse a bundle whose file list holds something other than
+  records with a path and a digest.
+- [`arcfind()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcfind.md)
+  and
+  [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
+  read the seven-field rows of a plain Wayback CDX answer (they stopped
+  with “subscript out of bounds”), say so when the archive answers 200
+  with something that is no capture record (a sign-in or proxy page; the
+  error message was empty), and name the archive set in
+  `MORIE_ARCHIVE_URL` in their messages.
+- [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
+  holds to `pollmaxsec` whatever polling interval the sign-in service
+  sends (an interval longer than the limit never returned, zero polled
+  without a pause, text stopped with an internal error), and does not
+  store a key that has a line break or control character in it.
+- [`llmchat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmchat.md)
+  and
+  [`llmask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.md)
+  say that the model’s server did not answer in the provider’s format
+  when a member of its reply has the wrong type; they stopped with an
+  internal error.
+- [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
+  given an address refuses a capture the archive lists without a capture
+  id or SHA-256 (a plain Wayback archive), since its bytes cannot be
+  checked; it asked for a file named `NA`.
+- A provenance file whose `dataset`, `resource`, `source`, `script` or
+  `schema` is not an object no longer stops
+  [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
+  and the resolvers
+  [`rslvckan()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rslvckan.md),
+  [`rslvckns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rslvckns.md),
+  [`rslvsoc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rslvsoc.md)
+  and
+  [`rslvarc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rslvarc.md)
+  with an internal error, and neither does a portal reply of the wrong
+  shape: the check fails as a row and the resolver returns `NULL`.
+- A provenance text member that is not one string (a number, a list) is
+  dropped the same way, a count written as text gives no coercion
+  warning, and the summary table of `rmbl verify` shows a folder name
+  such as `R&D survey` as written.
+- The archive functions withhold an error text the archive sends back
+  when it repeats your key, as sent, split over lines, percent-encoded
+  or in base64.
+  [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
+  and
+  [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  record a failed upload, in words, when the archive answers 201 without
+  a capture id; they stopped with an internal error.
+- [`idcrdvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
+  reports a card whose issue or expiry date is not one string as a
+  failed row; it stopped with an internal error.
+- The Markdown of `rmbl verify`, `rmbl report` and the drift report
+  escapes HTML in a table cell, and the missing-key message of
+  [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  and
+  [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
+  names the archive set in `MORIE_ARCHIVE_URL`.
+- New
+  [`arcmine()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md),
+  [`arcvis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
+  and
+  [`arcwd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md):
+  list the captures you saved in archive.rmorie.com, make one private or
+  public, and withdraw one for good (`arcwd(id, confirm = TRUE)`); until
+  now only the website could. From a terminal: `rmbl archive mine`,
+  `rmbl archive private ID`, `rmbl archive public ID` and
+  `rmbl archive withdraw ID --yes`. Withdrawing a private capture also
+  deletes its stored bytes unless another capture holds them; a public
+  capture’s bytes are kept.
+- The `@srrstatsNA` entry for standard G2.14c (imputation) starts its
+  own line again, so ‘srr’ reads it.
+- Code blocks in vignettes that are not R (shell, YAML, R shown but not
+  run) are fenced with `~~~`, which ‘goodpractice’ does not take for the
+  end of an R chunk.
+
 ## rmoriebricklayer 1.1.0
 
 CRAN release: 2026-11-07
@@ -390,19 +572,16 @@ CRAN release: 2026-10-31
 
 ### Periods
 
-- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  reads text periods in time order whatever the years: fiscal years
-  (`"2019/20"`, `"2019-2020"`, `"FY 2019-20"`; `"2020/21"` no longer
-  comes before `"2019/20"`), one-year fiscal labels (`"FY2020"`),
+- `yoy()` reads text periods in time order whatever the years: fiscal
+  years (`"2019/20"`, `"2019-2020"`, `"FY 2019-20"`; `"2020/21"` no
+  longer comes before `"2019/20"`), one-year fiscal labels (`"FY2020"`),
   quarters (`"2021 Q3"`, `"Q3 2021"`), months (`"2021-03"`,
   `"Mar 2021"`) and dates. A period missing from the data is a gap. The
   new argument `prdord` gives the order of any other labels; labels
   whose order cannot be read keep the old behaviour, with one warning
   that names them.
   [`yoysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md)
-  and
-  [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
-  follow the same order, and
+  and `anltab()` follow the same order, and
   [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
   orders text periods the same way.
 
@@ -739,9 +918,8 @@ CRAN release: 2026-10-31
   [`mkset()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkset.md),
   [`yoymd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md),
   [`yoyhtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md),
-  [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md),
-  capsule checks and dashboards) escape terminal control bytes from
-  labels and headings as the console output already did.
+  `anltab()`, capsule checks and dashboards) escape terminal control
+  bytes from labels and headings as the console output already did.
 - More secret-looking variables are dropped from a bundle’s environment,
   including `*_SK` names and URLs with a password but no user name.
 - Error messages name the function they came from even after S3 methods
@@ -789,7 +967,7 @@ CRAN release: 2026-10-31
   and
   [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
   take `visibility` only in full.
-- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+- `yoy()`,
   [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
   and `analyse_table()` no longer warn in a C locale when group labels
   are not ASCII.
@@ -879,8 +1057,7 @@ CRAN release: 2026-10-31
   refuse a `data` that is not a data frame, in words; weights large
   enough to overflow (`w = 1e308`) give the same estimate as equal
   weights.
-- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  folds labels a C-locale console cannot show, as
+- `yoy()` folds labels a C-locale console cannot show, as
   [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md)
   does.
 - [`mkset()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkset.md)
@@ -1004,18 +1181,14 @@ CRAN release: 2026-10-31
   Overlapping intervals are no longer read as “the data cannot tell the
   two apart”: the difference has its own, narrower interval.
 - [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
-  and
-  [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
-  take `prdord`; in
+  and `anltab()` take `prdord`; in
   [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
   a label the order lists that the data lacks is a gap.
   [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md),
   [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md),
   [`shrs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md)
-  and
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  refuse an argument they do not take, by name, where it vanished into
-  `...`.
+  and `yoy()` refuse an argument they do not take, by name, where it
+  vanished into `...`.
 - [`staysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/staysmry.md)
   and the other Lakner measures name the function and the argument in
   every refusal.
@@ -1323,8 +1496,7 @@ CRAN release: 2026-10-21
   takes `type = "fitted"` to draw from a fit.
 - New plots in the house style, each returning what it drew:
   [`plotrdg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
-  (ridgelines),
-  [`plotecdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
+  (ridgelines), `plotecdf()`,
   [`plotvln()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
   (violins),
   [`plothex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
@@ -1334,9 +1506,7 @@ CRAN release: 2026-10-21
   [`plotcal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   (calendar heatmap),
   [`plothrz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
-  (horizon chart),
-  [`plotsm()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
-  (small multiples) and
+  (horizon chart), `plotsm()` (small multiples) and
   [`plotbump()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   (ranks over time).
   [`plothwk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plothwk.md)
@@ -1369,14 +1539,12 @@ CRAN release: 2026-10-21
 - The plots over time put the period on its own scale (a number or a
   `Date`; text at labelled positions) with the unit as the axis title,
   and take `xlab`, which passed through `...` was an error.
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) of a
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) of a `yoy()`
   or
   [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
   result draws the period across and the change up, with vertical
   interval bars; groups sit side by side. `gaps = "break"` (the default)
-  breaks a line at a missing value, such as a “no data” year
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  breaks a line at a missing value, such as a “no data” year `yoy()`
   inserted, and `gaps = "join"` draws over it.
 - A refusal that several functions share now starts with the name of the
   function that refused (`"anltab: data must be a data frame"`), and so
@@ -1389,10 +1557,9 @@ CRAN release: 2026-10-21
   period or is not strictly increasing.
   [`trndtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trndtst.md)
   refuses duplicated periods.
-- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  compares yearly, quarterly and monthly `Date` periods (all on one day
-  of the month, or all month ends) on a grid of calendar months; on a
-  grid of days none of them had a comparison.
+- `yoy()` compares yearly, quarterly and monthly `Date` periods (all on
+  one day of the month, or all month ends) on a grid of calendar months;
+  on a grid of days none of them had a comparison.
 - `svydes(type = "jkn")` on a domain keeps a replicate that deletes a
   PSU of a stratum of 101 or more PSUs: its factor, within 1% of the
   weight, is the 1 / `rscale` its `rscales` says, and it was refused as
@@ -1422,9 +1589,8 @@ CRAN release: 2026-10-21
   run only in an interactive session.
 - [`chwkfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkfit.md)
   warns when the branching ratio sits on its 0.99 bound.
-- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  compares ordered-factor periods by level order and completes missing
-  levels; its refusal names every accepted input.
+- `yoy()` compares ordered-factor periods by level order and completes
+  missing levels; its refusal names every accepted input.
   [`fylbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fylbl.md)’s
   help says a fractional year is an error.
 - Every internal function has a roxygen2 block with `@noRd` (srr G1.4a).
@@ -1651,14 +1817,10 @@ names (`?rmbl-compat`), and so do the four S3 generics below;
 `?rmbl-aliases` lists every renamed value, column and field. The nine
 options read their 0.5.x names too (`rmoriebricklayer.xmss_index_file`
 for `rmoriebricklayer.xmssidxfile`), so a record or cache an old
-`.Rprofile` points to is still used.
-[`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
-[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
-[`share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
-and
+`.Rprofile` points to is still used. `rate()`, `rate_change()`,
+`share()` and
 [`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
-stay S3 generics, so methods written for them still dispatch.
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+stay S3 generics, so methods written for them still dispatch. `yoy()`
 kept its name and takes its 0.5.x argument names (`period`, `min_base`,
 `conf_level`, `direction`) beside the new ones. Results of the four
 generics come back under their 0.5.x column and field names (`co2e_g`,
@@ -1667,8 +1829,7 @@ delimited writer), and [`print()`](https://rdrr.io/r/base/print.html),
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html),
 [`format()`](https://rdrr.io/r/base/format.html) and
 [`summary()`](https://rdrr.io/r/base/summary.html) work on them. A 1.0.0
-call returns the 1.0.0 names. The one call that cannot tell is
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+call returns the 1.0.0 names. The one call that cannot tell is `yoy()`,
 which kept its name: with a 0.5.x argument name it returns the 0.5.x
 names, without one the 1.0.0 names (`pctchg` for `pct_change`);
 `?rmbl-aliases` lists every renamed column and field. `rmbl functions`
@@ -2191,7 +2352,7 @@ New estimators, each checked against the reference implementation
 - The statement about a third-party security audit is gone from
   `DESCRIPTION`, the README, `SECURITY.md` and the help pages.
 - Every example’s output was read against its comment.
-  [`print.rmbl_yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  [`print.rmbl_yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
   printed “no periods” for a column subset; the
   [`cpsrpt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrpt.md)
   example read a `mrkroot` field that is called `merkle_root`; the
@@ -2818,13 +2979,9 @@ weaker scheme.
   `trend_test()`, `count_trend()`, `analyse_table()` and
   `survey_compare()` returned `NaN` intervals for a level outside (0,
   1); `case_flow()`, `life_table()`, `disposition_mix()`,
-  `clearance_decomposition()`,
-  [`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
-  [`share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
-  [`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
-  `stay_summary()` and `survey_estimate()` checked it in four different
-  wordings. The interval helpers behind them refuse it too.
+  `clearance_decomposition()`, `rate()`, `share()`, `rate_change()`,
+  `yoy()`, `stay_summary()` and `survey_estimate()` checked it in four
+  different wordings. The interval helpers behind them refuse it too.
 
 - `manifest_recompute()` reports a statistic that returns `NA`, `NaN` or
   `Inf` as `DIFFER` (or `MATCH` when the record holds the identical
@@ -3537,17 +3694,15 @@ fixes overstated corrected.
 
 ### Small bases compute
 
-- **[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  and
-  [`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
-  report every percent change.** A small base no longer withholds the
-  percent: 2 to 20 reports +900% with its exact rate-ratio interval, and
-  a change of a few tenths of a percent off a base of 15 is reported as
-  such. `min_base` now defaults to 0 for every unit and, when set, only
-  adds a “small base” note; `min_count` likewise notes without hiding.
-  Only a zero base has no percent change. Printed, CSV, Markdown and
-  HTML footers say “note” where they said “percent withheld”, and the
-  period-over-period plot draws small-base percentages.
+- **`yoy()` and `rate_change()` report every percent change.** A small
+  base no longer withholds the percent: 2 to 20 reports +900% with its
+  exact rate-ratio interval, and a change of a few tenths of a percent
+  off a base of 15 is reported as such. `min_base` now defaults to 0 for
+  every unit and, when set, only adds a “small base” note; `min_count`
+  likewise notes without hiding. Only a zero base has no percent change.
+  Printed, CSV, Markdown and HTML footers say “note” where they said
+  “percent withheld”, and the period-over-period plot draws small-base
+  percentages.
 - **`compute_footprint()` no longer reads 0 g for fast work.** A call
   shorter than the elapsed clock’s resolution had 0 s of wall time and
   so 0 energy; the duration is now at least the CPU time spread over the
@@ -4324,22 +4479,20 @@ tells them apart, and for the fixes below; this is both.
 - [`plot()`](https://rdrr.io/r/graphics/plot.default.html) methods for
   every result the package returns, on base graphics only: stock and
   flow (`stock_flow()`, one panel per measure), period-over-period
-  change with intervals
-  ([`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)),
-  rates, shares and rate change, band sensitivity, drift by column
-  (`capsule_drift()`, `drift_calibrate()`), Benford digits, power
-  curves, frequencies, missingness patterns, region coverage,
-  Mahalanobis outliers, correlations, permutation nulls, rounding
-  envelopes, concentration-response curves, burdens, concentration
-  curves, the whole `verify_pollution()` report on one page, the
-  footprint with its equivalents, concentration fields and particle
-  clouds, count trends, and `analyse_table()` one panel at a time. The
-  same customisation everywhere (`main`, `col` or `palette`, `grid`,
-  `...` to the base call), `bricklayer_plot_options()` for the session,
-  `bricklayer_palette()` with four colour-blind-safe palettes, and every
-  method returns the data it drew. `plume_field()` evaluates a plume on
-  a grid; `plot_lorenz()` and `plot_funnel()` serve the results that are
-  plain data frames.
+  change with intervals (`yoy()`), rates, shares and rate change, band
+  sensitivity, drift by column (`capsule_drift()`, `drift_calibrate()`),
+  Benford digits, power curves, frequencies, missingness patterns,
+  region coverage, Mahalanobis outliers, correlations, permutation
+  nulls, rounding envelopes, concentration-response curves, burdens,
+  concentration curves, the whole `verify_pollution()` report on one
+  page, the footprint with its equivalents, concentration fields and
+  particle clouds, count trends, and `analyse_table()` one panel at a
+  time. The same customisation everywhere (`main`, `col` or `palette`,
+  `grid`, `...` to the base call), `bricklayer_plot_options()` for the
+  session, `bricklayer_palette()` with four colour-blind-safe palettes,
+  and every method returns the data it drew. `plume_field()` evaluates a
+  plume on a grid; `plot_lorenz()` and `plot_funnel()` serve the results
+  that are plain data frames.
   [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md).
   Titles fit their panel: a title too wide is drawn a step smaller, in a
   panel set one that still does not fit becomes a letter with the key
@@ -5406,12 +5559,10 @@ was fixed, and each has a test that fails on 0.5.5).
 - Argument errors in words where R’s internals spoke:
   `bricklayer_json_base64url_dec(character(0))` (now empty, as
   `bricklayer_json_base64_dec()`), `bricklayer_json_unserialize()` of a
-  number, `capsule_bundle(character(0))`,
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  of an infinite value, HyperLogLog registers beyond 64
-  (`distinct_count(1e300)`), and `bricklayer_fetch_parse_siu()` with an
-  invalid drid, which is now an argument error before any network
-  instead of a message and `NULL`.
+  number, `capsule_bundle(character(0))`, `yoy()` of an infinite value,
+  HyperLogLog registers beyond 64 (`distinct_count(1e300)`), and
+  `bricklayer_fetch_parse_siu()` with an invalid drid, which is now an
+  argument error before any network instead of a message and `NULL`.
 
 - `core_hawkes_jitter(horizon = )` spreads each event over
   `[t, min(t + resolution, horizon)]`, so a time dated on the horizon
@@ -5578,8 +5729,7 @@ was fixed, and each has a test that fails on 0.5.5).
   February 2018”, “22nd of March 2019”) and abbreviated months read, the
   hex quotes and dashes decode as the decimal ones, report pages are
   read from their body rather than the table of contents (incident dates
-  were empty), and the helpers take `NA` and several reports.
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  were empty), and the helpers take `NA` and several reports. `yoy()`
   compares a biennial series step to step (it found no comparisons) and
   labels an inserted year “no data”; `report_analysis()` prints years
   without a thousands separator and describes a percent analysis in
@@ -5608,14 +5758,12 @@ was fixed, and each has a test that fails on 0.5.5).
   lookup returns nothing usable, and names a cause for an error it does
   not recognise;
   [`wayback_snapshot_url()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
-  returns `NULL` for a malformed answer;
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  averages several rows of one period for continuous values and
-  percentages (counts still add up; pass `fun` to choose);
-  `report_analysis()` renders a percent analysis (its changes are
-  percentage points); the SIU parser reads French dates (“3 ao0fbt
-  2017”) and decodes accented named entities (`&ccedil;`, `&eacute;`, …)
-  and every numeric entity.
+  returns `NULL` for a malformed answer; `yoy()` averages several rows
+  of one period for continuous values and percentages (counts still add
+  up; pass `fun` to choose); `report_analysis()` renders a percent
+  analysis (its changes are percentage points); the SIU parser reads
+  French dates (“3 ao0fbt 2017”) and decodes accented named entities
+  (`&ccedil;`, `&eacute;`, …) and every numeric entity.
 
 ## rmoriebricklayer 0.5.4
 
@@ -5868,8 +6016,7 @@ through it in twenty lines.
 Statistics Canada random rounding) and suppressed (`"x"`, `"<5"`) cells
 into the interval of observed counts that could have produced them;
 `change_envelope()` carries that interval through a difference, a
-percent change or a rate exactly; `yoy_bounds()` adds it to a
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+percent change or a rate exactly; `yoy_bounds()` adds it to a `yoy()`
 table with a combined interval that is the union of the sampling
 interval and the envelope. No confidence interval covers this
 uncertainty, so it was previously invisible.
@@ -5877,17 +6024,11 @@ uncertainty, so it was previously invisible.
 ### Many comparisons, and screens that fire on nothing
 
 `yoy_pvalues()` gives the exact conditional-binomial test that matches
-the
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-interval; `scan_adjust()` adjusts a
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-or
-[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
-scan for multiple comparisons (Benjamini-Hochberg by default) and marks
-what survives;
-[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
-now returns `previous_count` and `previous_population` so the test is
-exact given the exposures. `drift_calibrate()` estimates how often
+the `yoy()` interval; `scan_adjust()` adjusts a `yoy()` or
+`rate_change()` scan for multiple comparisons (Benjamini-Hochberg by
+default) and marks what survives; `rate_change()` now returns
+`previous_count` and `previous_population` so the test is exact given
+the exposures. `drift_calibrate()` estimates how often
 `capsule_drift()`’s screens fire on identical data by splitting one
 release into random halves, per column and family-wise, with the
 per-screen alpha that would hold the family-wise rate.
@@ -6006,14 +6147,11 @@ adds the checks that can find it.
 
 ### Printing
 
-- The statistics that return a classed data frame –
-  [`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
-  [`share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
-  [`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
-  `stock_flow()`, `region_coverage()` and `band_sensitivity()` – print
-  through one frame: a titled rule, the table, the lines that qualify
-  it. The caveats each of them carries are laid out the same way instead
-  of rewritten per method.
+- The statistics that return a classed data frame – `rate()`, `share()`,
+  `rate_change()`, `stock_flow()`, `region_coverage()` and
+  `band_sensitivity()` – print through one frame: a titled rule, the
+  table, the lines that qualify it. The caveats each of them carries are
+  laid out the same way instead of rewritten per method.
 
 ### Bug fixes
 
@@ -6166,42 +6304,35 @@ this code, which is the property a test needs.
 ### Rates, shares and rate change
 
 A count is not comparable across places of different size or years of
-different population, so
-[`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
-divides counts by exposure and scales to a denominator – `per = 1000`,
-`"10k"`, `"100k"`, `"1m"`, or any positive number. The interval is the
-exact Poisson one, matching
+different population, so `rate()` divides counts by exposure and scales
+to a denominator – `per = 1000`, `"10k"`, `"100k"`, `"1m"`, or any
+positive number. The interval is the exact Poisson one, matching
 [`stats::poisson.test`](https://rdrr.io/r/stats/poisson.test.html) to
 the last digit, so a count of zero gives a lower limit of exactly zero
 instead of a negative rate.
 
-[`share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
-is the other quantity people mean by “percentage”: what fraction of a
-total each count is. Its denominator is the total of the same events,
-not a population, so shares over a complete grouping sum to 100. The
-interval is Wilson’s rather than the normal approximation, which runs
-past the ends of the scale and reports negative percentages at exactly
-the small counts people reach for it.
+`share()` is the other quantity people mean by “percentage”: what
+fraction of a total each count is. Its denominator is the total of the
+same events, not a population, so shares over a complete grouping sum to
+100. The interval is Wilson’s rather than the normal approximation,
+which runs past the ends of the scale and reports negative percentages
+at exactly the small counts people reach for it.
 
 Labelling one of these as the other is the most common error in a
 published table, which is why they are separate functions with separate
 intervals rather than one function with a flag.
 
-[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
-is the change in a rate between periods. This is not the percent change
-of two rates treated as measured numbers: both denominators move, and an
-interval that ignores them understates the uncertainty. It conditions on
-the total of the two counts and corrects for the exposure ratio –
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)’s
-exact conditional-binomial interval generalised to unequal denominators,
-and it reduces to exactly that interval when the two populations are
-equal, which is a test.
+`rate_change()` is the change in a rate between periods. This is not the
+percent change of two rates treated as measured numbers: both
+denominators move, and an interval that ignores them understates the
+uncertainty. It conditions on the total of the two counts and corrects
+for the exposure ratio – `yoy()`’s exact conditional-binomial interval
+generalised to unequal denominators, and it reduces to exactly that
+interval when the two populations are equal, which is a test.
 
-Like
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
-the comparison period is matched on the period value and not on row
-position, so a missing year reports no comparison instead of silently
-comparing 2023 against 2020.
+Like `yoy()`, the comparison period is matched on the period value and
+not on row position, so a missing year reports no comparison instead of
+silently comparing 2023 against 2020.
 
 ### Verifying the published year-over-year tables
 
@@ -6288,17 +6419,15 @@ custody solitary use fell from 376.7 to 221.0 per 1,000. The two move in
 opposite directions, which a count alone hides.
 
 The recomputation deliberately does not port the generator’s arithmetic,
-as the year-over-year check does; it goes through
-[`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
-and
-[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
-whose intervals are anchored to base R. That independence found two
-defects in the generator that a like-for-like port would have reproduced
-silently: the rate-ratio arguments were reversed, giving a +34.4% change
-an interval of -25.9 to -25.3 that did not contain its own estimate, and
-a group with no exposure in a year got an upper limit of `Inf` on a
-change that was simply undefined. Both are now guarded by assertions
-that every rate and every change must lie inside its own interval.
+as the year-over-year check does; it goes through `rate()` and
+`rate_change()`, whose intervals are anchored to base R. That
+independence found two defects in the generator that a like-for-like
+port would have reproduced silently: the rate-ratio arguments were
+reversed, giving a +34.4% change an interval of -25.9 to -25.3 that did
+not contain its own estimate, and a group with no exposure in a year got
+an upper limit of `Inf` on a change that was simply undefined. Both are
+now guarded by assertions that every rate and every change must lie
+inside its own interval.
 
 A group row in these tables is a CONTRIBUTION, not a per-capita rate:
 the numerator is that group’s count and the denominator is the whole
@@ -6368,10 +6497,9 @@ total, and the year-over-year change in the rate. Capsule bundles carry
 - The version-drift test read `DESCRIPTION` from a source tree that
   `R CMD check` does not provide, erroring on all five platforms.
 
-- [`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
-  on non-numeric periods indexed with positions that could be zero,
-  which returns a shorter vector and recycles wrong answers rather than
-  reporting anything.
+- `rate_change()` on non-numeric periods indexed with positions that
+  could be zero, which returns a shorter vector and recycles wrong
+  answers rather than reporting anything.
 
 - `analysis.R` called `say()`, which is defined only in the bundle’s
   `lib_interactive.R`. Run from a bundle it resolved; run directly from
@@ -6997,13 +7125,12 @@ general-purpose toolkits do not assume: a handful of fiscal years,
 counts rather than measurements, categories reported as bands rather
 than values, and a region code with no geometry attached.
 
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-computes period-over-period change and declines it in the three cases
-where the figure would describe something other than the data. Periods
-are matched on their own **value**, not on row position, so a missing
-year is a gap rather than a quietly multi-year comparison. A percent off
-a base below the gate is withheld with its reason recorded – two
-placements becoming twenty is a 900% rise and also nothing at all –
+`yoy()` computes period-over-period change and declines it in the three
+cases where the figure would describe something other than the data.
+Periods are matched on their own **value**, not on row position, so a
+missing year is a gap rather than a quietly multi-year comparison. A
+percent off a base below the gate is withheld with its reason recorded –
+two placements becoming twenty is a 900% rise and also nothing at all –
 while the count change and the direction are still reported, those being
 facts. A column already in percent is handled in percentage **points**,
 a percent of a percent being a different quantity. For counts the

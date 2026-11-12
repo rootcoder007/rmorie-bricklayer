@@ -29,7 +29,7 @@ method returns the data it drew, invisibly, as a data frame."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -486,7 +486,8 @@ text.</p></dd>
 <dd><p>For <code>rmbl_yoy</code> (<code>what = "value"</code>) and
 <code>rmbl_event_study</code> (<code>style = "stata"</code>): how a missing value
 shows in a line. <code>"break"</code> (the default) breaks the
-line there, so a “no data” period that <code>yoy(complete = TRUE)</code>
+line there, so a “no data” period that <code>yoychg(complete =
+TRUE)</code>
 inserted is a visible gap; <code>"join"</code> draws the line straight over it.</p></dd>
 
 
@@ -590,7 +591,7 @@ daily population, length of stay, people and person-days over the periods,
 one panel per measure in <code>what</code>; with an exposure, the flow and stock
 rates too.</p></dd>
  <dt><code>rmbl_yoy</code></dt>
-<dd><p>(<code><a href="yoy.html">yoy</a></code>) the
+<dd><p>(<code><a href="yoychg.html">yoychg</a></code>) the
 period-over-period percent change with its interval over the periods, the
 period across and the change up, groups side by side, coloured by verdict;
 <code>what = "value"</code> draws the values instead.</p></dd>
@@ -716,7 +717,7 @@ particle positions, with the counting grid behind them when one was given.</p></
 <dd><p>(<code><a href="cnttrnd.html">cnttrnd</a></code>) the counts with the
 fitted trend.</p></dd>
  <dt><code>bricklayer_analysis</code></dt>
-<dd><p>(<code><a href="anltab.html">anltab</a></code>) the
+<dd><p>(<code><a href="anytab.html">anytab</a></code>) the
 change, rates and rate change of a published table, one panel each.</p></dd>
 
 <dt><code>rmbl_event_study</code>, <code>rmbl_staggered_att</code></dt>
@@ -821,7 +822,7 @@ pictures that show a Simpson's-paradox reversal and why it happened.</p></dd>
 <span class="r-plt img"><img src="plot-methods-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sf</span>, what <span class="op">=</span> <span class="st">"alos"</span>, col <span class="op">=</span> <span class="st">"firebrick"</span>, main <span class="op">=</span> <span class="st">"Length of stay"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-2.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="yoy.html">yoy</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="yoychg.html">yoychg</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">400</span>, <span class="fl">420</span>, <span class="fl">390</span>, <span class="fl">460</span>, <span class="fl">450</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  value <span class="op">=</span> <span class="st">"n"</span>,</span></span>
 <span class="r-in"><span>  prd <span class="op">=</span> <span class="st">"year"</span></span></span>
@@ -829,7 +830,7 @@ pictures that show a Simpson's-paradox reversal and why it happened.</p></dd>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># small counts: each percentage carries its exact interval</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="yoy.html">yoy</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="yoychg.html">yoychg</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">12</span>, <span class="fl">11</span>, <span class="fl">15</span>, <span class="fl">14</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  value <span class="op">=</span> <span class="st">"n"</span>,</span></span>
 <span class="r-in"><span>  prd <span class="op">=</span> <span class="st">"year"</span></span></span>
@@ -941,7 +942,7 @@ pictures that show a Simpson's-paradox reversal and why it happened.</p></dd>
 <span class="r-in"><span>  n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">20</span>, <span class="fl">12</span>, <span class="fl">22</span>, <span class="fl">11</span>, <span class="fl">25</span>, <span class="fl">15</span>, <span class="fl">24</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">2000</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="anltab.html">anltab</a></span><span class="op">(</span><span class="va">tab</span>, value <span class="op">=</span> <span class="st">"n"</span>, prd <span class="op">=</span> <span class="st">"year"</span>, by <span class="op">=</span> <span class="st">"g"</span>, pop <span class="op">=</span> <span class="st">"pop"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="anytab.html">anytab</a></span><span class="op">(</span><span class="va">tab</span>, value <span class="op">=</span> <span class="st">"n"</span>, prd <span class="op">=</span> <span class="st">"year"</span>, by <span class="op">=</span> <span class="st">"g"</span>, pop <span class="op">=</span> <span class="st">"pop"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-21.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="cnttrnd.html">cnttrnd</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21000</span>, <span class="fl">23000</span>, <span class="fl">22000</span>, <span class="fl">25000</span>, <span class="fl">24000</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot-methods-22.png" alt="" width="700" height="433"></span>

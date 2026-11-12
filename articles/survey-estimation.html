@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -261,9 +261,9 @@ the average of 12 bootstrap weights, so the bootstrap variance is
 multiplied by 12 (Health Canada’s technical notes; the same as Fay’s BRR
 with
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ρ</mi><mo>=</mo><mn>1</mn><mo>−</mo><mn>1</mn><mi>/</mi><msqrt><mn>12</mn></msqrt></mrow><annotation encoding="application/x-tex">\rho = 1 - 1/\sqrt{12}</annotation></semantics></math>).
-The public-use file and its weights are on data.rmorie.com (sign in once
-with <code>rmbl login</code>), where <code><a href="../reference/dmnf.html">dload()</a></code> checks each
-table against the SHA-256 its manifest lists:</p>
+The public-use file and its weights are on data.rmorie.com (no sign-in),
+where <code><a href="../reference/dmnf.html">dload()</a></code> checks each table against the SHA-256 its
+manifest lists:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dmnf.html">dload</a></span><span class="op">(</span><span class="st">"csus_2023/pumf"</span><span class="op">)</span>        <span class="co"># 36,180 respondents</span></span>
 <span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dmnf.html">dload</a></span><span class="op">(</span><span class="st">"csus_2023/bootstrap"</span><span class="op">)</span>   <span class="co"># PUMF_ID, WGT_PUMF and BWGT1 ... BWGT1000</span></span></code></pre></div>

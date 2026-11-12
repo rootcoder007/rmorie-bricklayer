@@ -77,13 +77,13 @@ ratechg(
   Number, default 0. Comparisons where the earlier count is at or below
   this are flagged as resting on a small count; the percent change and
   its exact interval are still reported, as
-  [`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  [`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
   does.
 
 - prdord:
 
   Optional character vector: the period labels in order, as for
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md).
   A label it lists that the data lacks is a gap, so the change across it
   is not reported as one step.
 
@@ -103,7 +103,7 @@ Both the counts and the denominators move between periods, and an
 interval that ignores the denominators understates the uncertainty of
 the change. The construction here conditions on the total of the two
 counts and corrects for the ratio of the two exposures, which is
-[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)'s
+[`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)'s
 exact conditional-binomial interval generalised to unequal denominators:
 with equal populations it reduces to exactly that.
 
@@ -131,7 +131,7 @@ whole number; `conflvl` outside (0, 1); a population of zero or below.
 ## See also
 
 [`rtcalc`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md),
-[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 for change in a count or a measured quantity.
 
 ## Examples

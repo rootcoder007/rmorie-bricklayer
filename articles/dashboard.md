@@ -155,7 +155,7 @@ reads it from where `rmbl login` stored it.
   tail plots. You can draw a synthetic sample from the best fit with
   [`mksyncol()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncol.md).
 - **Year over year**:
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
   with the period, value, groups, the smallest base for a percentage and
   which direction is better. Download the result as the
   [`yoyhtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md)
@@ -287,7 +287,7 @@ led
 #> │   Theorems  3 theorems (1 proved, 1 sorry, 1 axiom)                         │
 #> │   Source    https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab    │
 #> │   Lean      v4.12.0                                                         │
-#> │   File      /tmp/RtmpvG5O1x/temp_libpath1fc6236d3ad5/rmoriebricklayer/extda │
+#> │   File      /tmp/RtmpfCFbEJ/temp_libpath1f4a48eeabb0/rmoriebricklayer/extda │
 #> │             ta/ledger_sample.json                                           │
 #> │                                                                             │
 #> │   id               theorem                         status  sorry            │

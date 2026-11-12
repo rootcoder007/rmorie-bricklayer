@@ -17,7 +17,7 @@ interval here accounts for the randomness in the counts."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,13 +138,13 @@ the interval.</p></dd>
 <dt id="arg-mincnt">mincnt<a class="anchor" aria-label="anchor" href="#arg-mincnt"></a></dt>
 <dd><p>Number, default 0. Comparisons where the earlier count
 is at or below this are flagged as resting on a small count; the percent
-change and its exact interval are still reported, as <code><a href="yoy.html">yoy</a></code>
+change and its exact interval are still reported, as <code><a href="yoychg.html">yoychg</a></code>
 does.</p></dd>
 
 
 <dt id="arg-prdord">prdord<a class="anchor" aria-label="anchor" href="#arg-prdord"></a></dt>
 <dd><p>Optional character vector: the period labels in order, as
-for <code><a href="yoy.html">yoy()</a></code>. A label it lists that the data lacks is a gap, so the
+for <code><a href="yoychg.html">yoychg()</a></code>. A label it lists that the data lacks is a gap, so the
 change across it is not reported as one step.</p></dd>
 
 </dl></div>
@@ -167,7 +167,7 @@ numbers. Both the counts and the denominators move between periods,
 and an interval that ignores the denominators understates the
 uncertainty of the change. The construction here conditions on the
 total of the two counts and corrects for the ratio of the two
-exposures, which is <code><a href="yoy.html">yoy</a></code>'s exact conditional-binomial
+exposures, which is <code><a href="yoychg.html">yoychg</a></code>'s exact conditional-binomial
 interval generalised to unequal denominators: with equal populations it
 reduces to exactly that.</p>
 <p>With counts \(a\) (now) and \(b\) (earlier) and exposures
@@ -193,7 +193,8 @@ zero or below.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="rtcalc.html">rtcalc</a></code>, <code><a href="yoy.html">yoy</a></code> for change in a count or a
+    <div class="dont-index"><p><code><a href="rtcalc.html">rtcalc</a></code>, <code><a href="yoychg.html">yoychg</a></code> for change in a count or
+a
 measured quantity.</p></div>
     </div>
 

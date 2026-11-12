@@ -420,8 +420,8 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
   For `rmbl_yoy` (`what = "value"`) and `rmbl_event_study`
   (`style = "stata"`): how a missing value shows in a line. `"break"`
   (the default) breaks the line there, so a “no data” period that
-  `yoy(complete = TRUE)` inserted is a visible gap; `"join"` draws the
-  line straight over it.
+  `yoychg(complete = TRUE)` inserted is a visible gap; `"join"` draws
+  the line straight over it.
 
 - period:
 
@@ -518,7 +518,7 @@ x position of each point drawn: an `at` column (`rmbl_yoy`,
 
 - `rmbl_yoy`:
 
-  ([`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md))
+  ([`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md))
   the period-over-period percent change with its interval over the
   periods, the period across and the change up, groups side by side,
   coloured by verdict; `what = "value"` draws the values instead.
@@ -691,7 +691,7 @@ x position of each point drawn: an `at` column (`rmbl_yoy`,
 
 - `bricklayer_analysis`:
 
-  ([`anltab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md))
+  ([`anytab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md))
   the change, rates and rate change of a published table, one panel
   each.
 
@@ -830,7 +830,7 @@ plot(sf)
 
 plot(sf, what = "alos", col = "firebrick", main = "Length of stay")
 
-y <- yoy(
+y <- yoychg(
   data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)),
   value = "n",
   prd = "year"
@@ -838,7 +838,7 @@ y <- yoy(
 plot(y)
 
 # small counts: each percentage carries its exact interval
-plot(yoy(
+plot(yoychg(
   data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)),
   value = "n",
   prd = "year"
@@ -950,7 +950,7 @@ tab <- data.frame(
   n = c(10, 20, 12, 22, 11, 25, 15, 24),
   pop = rep(c(1000, 2000), 4)
 )
-plot(anltab(tab, value = "n", prd = "year", by = "g", pop = "pop"))
+plot(anytab(tab, value = "n", prd = "year", by = "g", pop = "pop"))
 
 plot(cnttrnd(c(21000, 23000, 22000, 25000, 24000)))
 

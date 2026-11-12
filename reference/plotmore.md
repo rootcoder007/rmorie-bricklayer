@@ -8,7 +8,7 @@ group, or two numeric variables:
   a ridgeline: one kernel density per group, stacked with a small
   overlap.
 
-- `plotecdf()`:
+- `plotcdfs()`:
 
   the empirical distribution function of each group, overlaid.
 
@@ -36,7 +36,7 @@ values draws no density.
 ``` r
 plotrdg(x, grp = NULL, bw = "nrd0", ..., main = NULL, col = NULL, pal = NULL)
 
-plotecdf(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
+plotcdfs(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
 
 plotvln(x, grp = NULL, bw = "nrd0", ..., main = NULL, col = NULL, pal = NULL)
 
@@ -86,7 +86,7 @@ plotgain(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
 
 The data drawn, invisibly: for `plotrdg()` and `plotvln()` the densities
 (`grp`, `x`, `y`), for `plotvln()` with the per-group `median`, `q1` and
-`q3` as an attribute `summary`, for `plotecdf()` the steps (`grp`, `x`,
+`q3` as an attribute `summary`, for `plotcdfs()` the steps (`grp`, `x`,
 `y`), for `plothex()` the hexagon centres (`x`, `y`) and `count`, for
 `plotgain()` the curves (`grp`, `population`, `value`) with the Gini
 coefficients as an attribute `gini`.
@@ -99,7 +99,7 @@ x <- c(stats::rnorm(200), stats::rnorm(200, 2, 0.6))
 g <- rep(c("before", "after"), each = 200)
 plotrdg(x, g)
 
-plotecdf(x, g)
+plotcdfs(x, g)
 
 plotvln(x, g)
 

@@ -70,7 +70,7 @@ The menus and their tabs:
   [`missgrid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missgrid.md)
   and the distribution plots
   ([`plotrdg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
-  [`plotecdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
+  [`plotcdfs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
   [`plotvln()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
   [`plothex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
   [`plotgain()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md));
@@ -83,7 +83,7 @@ The menus and their tabs:
 - Over time:
 
   Year over year:
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
   (hover a period of its plot for the period's rows) and the
   [`yoyhtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md)
   page to download. Rates:
@@ -99,7 +99,7 @@ The menus and their tabs:
   and
   [`plotcal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md),
   [`plothrz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md),
-  [`plotsm()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  [`plotmult()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   and
   [`plotbump()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md).
 
@@ -185,7 +185,7 @@ The menus and their tabs:
   and
   [`gplume()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md)
   for a Gaussian plume, the monitors of the demo series
-  ([`plotsm()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)),
+  ([`plotmult()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)),
   [`crfpm25()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crfpm25.md),
   [`crfno2()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crfpm25.md),
   [`polbrdn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/polbrdn.md)

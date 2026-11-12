@@ -88,7 +88,7 @@ counts; a total of zero or below; a count larger than the total;
 
 [`rtcalc`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md)
 for events per population,
-[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 for change between periods.
 
 ## Examples

@@ -37,7 +37,9 @@ and a bar chart of observed against expected shares.
 ## Details
 
 Zeros and non-finite values have no leading significant digit and are
-excluded; the sign is ignored.
+excluded; the sign is ignored. The digit is that of the value as R
+prints it, at 15 significant digits: `0.99999999999999989`, which prints
+as `1`, counts under 1.
 
 With \\n\\ usable values, \\O_d\\ the count with leading digit \\d\\ and
 \\E_d = n \log\_{10}(1 + 1/d)\\, \$\$X^2 = \sum\_{d=1}^{9} \frac{(O_d -

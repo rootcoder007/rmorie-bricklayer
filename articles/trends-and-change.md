@@ -220,7 +220,7 @@ trcprog()
 | Is the series moving in one direction? | [`trndtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trndtst.md) | Mann–Kendall p-value, Sen’s slope with interval |
 | By what factor per period? | [`cnttrnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnttrnd.md) | rate ratio with interval, optional offset |
 | Did it change once, and when? | [`stepchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stepchg.md) | split point, segment means, permutation p-value |
-| Year over year, with publication rounding | [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md) (its own vignette) | exact intervals on each change |
+| Year over year, with publication rounding | [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md) (its own vignette) | exact intervals on each change |
 
 All of them work on the five to ten values a published table gives, and
 none of them assumes the counts are large.

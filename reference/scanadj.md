@@ -6,7 +6,7 @@ This adds `padj` (Benjamini-Hochberg by default, which controls the
 false discovery rate over the scan) and `significant` at level `alpha`
 after adjustment. Exact p-values are computed where the object does not
 carry them: the conditional binomial test for
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 counts and for
 [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
 (with the exposures as the binomial weights).
@@ -62,11 +62,11 @@ needs. A row is `significant` when its adjusted p-value is strictly
 below `alpha`.
 
 Errors: `x` not a data frame; no `p_value` column and not a
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 or
 [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
 result; a
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 result without count units; a p-value outside \\\[0, 1\]\\; a method
 unknown to [`p.adjust()`](https://rdrr.io/r/stats/p.adjust.html).
 
@@ -83,7 +83,7 @@ for a family of falsification results,
 seg <- data.frame(year = rep(2022:2023, each = 3),
                   site = rep(c("A", "B", "C"), 2),
                   n = c(30, 50, 80, 45, 52, 79))
-y <- yoy(seg, value = "n", prd = "year", by = "site")
+y <- yoychg(seg, value = "n", prd = "year", by = "site")
 scanadj(y)[, c("site", "pctchg", "p_value", "padj")]
 #>   site pctchg   p_value      padj
 #> 1    A     NA        NA        NA

@@ -7,7 +7,7 @@ intervals on every change, multiple-comparison adjustment over the scan,
 the envelope that rounding and suppression imply, trend, and a drift
 screen against the prior capsule; then a report and a capsule template.
 
-- [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
+- [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md)
   : Analyse a published administrative table in one call
 - [`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
   : Write an analysis as a Markdown or HTML report
@@ -47,6 +47,10 @@ datasets over flaky endpoints.
   : Find saved copies of an address in archive.rmorie.com
 - [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
   : Fetch the exact bytes of a saved copy from archive.rmorie.com
+- [`arcmine()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
+  [`arcvis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
+  [`arcwd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
+  : List, hide or withdraw your captures in archive.rmorie.com
 - [`siufetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siufetch.md)
   : Fetch an Ontario SIU director's report by drid
 - [`dldata()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dldata.md)
@@ -218,7 +222,7 @@ ledgers.
 - [`plot(`*`<rmbl_dstfit>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot.rmbl_dstfit.md)
   : Plot fitted distributions
 - [`plotrdg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
-  [`plotecdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
+  [`plotcdfs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
   [`plotvln()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
   [`plothex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
   [`plotgain()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
@@ -226,7 +230,7 @@ ledgers.
   concentration curves
 - [`plotcal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   [`plothrz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
-  [`plotsm()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  [`plotmult()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   [`plotbump()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   : Plots for many series over time
 - [`plothwk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plothwk.md)
@@ -597,9 +601,9 @@ percentage is reported in percentage points; a ratio of counts carries
 the exact conditional-binomial interval. The same object renders to
 HTML, PDF, CSV, TSV, JSON or Markdown.
 
-- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  [`format(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  [`print(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+- [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
+  [`format(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
+  [`print(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
   : Year-over-year (and period-over-period) change
 - [`yoysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md)
   : Summarise a change table

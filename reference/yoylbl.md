@@ -1,7 +1,7 @@
 # Label a period without changing it
 
 Attaches display labels to the periods of a change table from
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md),
 so a fiscal year keyed as 2023 can print as `"2022/23"`, or a year can
 carry a note such as “(COVID)”. The arithmetic already ran on the
 period's value, so a label can only affect what is printed: relabelling
@@ -18,7 +18,7 @@ yoylbl(x, labels)
 - x:
 
   An `rmbl_yoy` object from
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md),
   whose periods are labelled.
 
 - labels:
@@ -55,7 +55,7 @@ not name keep their own value; an unnamed character vector gives one
 label per distinct period, in order of first appearance.
 
 Errors: `x` not from
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md);
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md);
 an unnamed vector whose length is not the number of distinct periods; a
 function that does not return one label per row.
 
@@ -68,7 +68,7 @@ function that does not return one label per row.
 ``` r
 seg <- data.frame(EndFiscalYear = 2019:2023,
                   n = c(402, 377, 190, 268, 331))
-y <- yoy(seg, value = n, prd = EndFiscalYear)
+y <- yoychg(seg, value = n, prd = EndFiscalYear)
 
 # 2023 means the fiscal year 2022/23, so say so.
 yoylbl(y, fylbl)

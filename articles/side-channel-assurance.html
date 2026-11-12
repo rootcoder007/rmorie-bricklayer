@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -345,7 +345,7 @@ whether they are indistinguishable.</p>
 <span>  <span class="va">honest</span><span class="op">[</span><span class="va">k</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">tm</span><span class="op">(</span><span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span></span>
 <span>  <span class="va">tampered</span><span class="op">[</span><span class="va">k</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">tm</span><span class="op">(</span><span class="va">bad</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="fu"><a href="../reference/plotmore.html">plotecdf</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="../reference/plotmore.html">plotcdfs</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">honest</span>, <span class="va">tampered</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"honest ciphertext"</span>, <span class="st">"one digit changed"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">60</span><span class="op">)</span>,</span>
 <span>  main <span class="op">=</span> <span class="st">"ML-KEM-512 decapsulation time (microseconds)"</span></span>

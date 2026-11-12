@@ -11,7 +11,7 @@ Statistics Canada, a police oversight agency, or your own data. It does
 three things with such a table.
 
 1.  **It analyzes the table.**
-    [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
+    [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md)
     takes counts by period and group and reports what changed between
     periods, with exact intervals, trends and rates, and says how far
     the publisher’s rounding and suppressed cells could move each
@@ -64,7 +64,7 @@ shipped with the package), analyzed, plotted and written up:
 library(rmoriebricklayer)
 f <- system.file("extdata", "otis_a01_individuals.csv", package = "rmoriebricklayer")
 otis <- read.csv(f)
-a <- anltab(otis, value = "individuals", prd = "year", by = c("table", "group"), rnd = 5)
+a <- anytab(otis, value = "individuals", prd = "year", by = c("table", "group"), rnd = 5)
 a                                              # what changed, how sure, what was withheld
 plot(a)
 rptanl(a, file.path(tempdir(), "otis.html"))   # one self-contained page
@@ -99,7 +99,7 @@ walks through it.
 ## What it does
 
 - **One call for a published table** —
-  [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
+  [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md)
   takes a table of counts by period and group and returns what changed
   with exact intervals, p-values adjusted over the whole scan, the
   envelope that rounding and suppression in the release imply
@@ -138,13 +138,13 @@ walks through it.
   bootstrap intervals, a Hill tail index and density, QQ, PP and tail
   plots; `mksyncol(list(type = "fitted"))` draws from a fit.
   [`plotrdg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
-  [`plotecdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
+  [`plotcdfs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
   [`plotvln()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
   [`plothex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
   [`plotgain()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
   [`plotcal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md),
   [`plothrz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md),
-  [`plotsm()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  [`plotmult()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   and
   [`plotbump()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   draw distributions and many series in the house style;
@@ -344,7 +344,7 @@ walks through it.
   rates as measured numbers.
 
 - **Change tables** —
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
   computes period-over-period change matched on the period’s own value
   rather than on row order, so a missing year is a gap instead of a
   quietly multi-year comparison. A percent off a small base is withheld
@@ -814,12 +814,12 @@ walks through it.
   [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   lists the tables served at data.rmorie.com (Google BigQuery public
   datasets and the survey, court and justice data the MORIE ledger
-  uses), and `dload("db/table")` opens one with your MORIE key
-  (`rmoriebricklayer login` signs in with GitHub or an emailed code; or
-  ask at `www.rmorie.com/access/`), under the terms at
-  `www.rmorie.com/data-license/`, cached locally. The ICPSR, NCVS 38604
-  and a2aj tables open once you accept their terms at
-  `data.rmorie.com/terms`.
+  uses), and `dload("db/table")` opens one, with no sign-in, checked
+  against the SHA-256 its manifest lists and cached locally; each table
+  keeps its source’s licence. The ICPSR studies are not served: ICPSR’s
+  terms do not allow it, so
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  points to ICPSR.
   [`blfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blfetch.md)
   downloads any URL with an Internet Archive fallback (libcurl).
 
@@ -1134,7 +1134,7 @@ The shortest path, on the OTIS table that ships with the package:
 library(rmoriebricklayer)
 otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
                              package = "rmoriebricklayer"))
-a <- anltab(otis, value = "individuals", prd = "year",
+a <- anytab(otis, value = "individuals", prd = "year",
             by = c("table", "group"), rnd = 5)
 a                                   # what changed, how sure, what was withheld
 rptanl(a, file.path(tempdir(), "otis.html"))   # one self-contained file
@@ -1276,7 +1276,7 @@ for signing, Merkle pinning and manifest chains.
 ## Finding a function
 
 The names are short
-([`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md),
+([`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md),
 [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md),
 [`svyest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svyest.md)),
 so look for a function by what it does:
@@ -1416,7 +1416,7 @@ rmoriebricklayer login                          # or: GitHub device flow
 rmoriebricklayer login --no-browser             # server / SSH: prints a link + code for any device
 rmoriebricklayer logout                         # forget the data key
 rmoriebricklayer data list                      # the curated tables at data.rmorie.com
-rmoriebricklayer data pull db/table --out t.csv # download one (your MORIE key)
+rmoriebricklayer data pull db/table --out t.csv # download one
 rmoriebricklayer app [PATH]                     # the analysis dashboard (needs shiny)
 rmoriebricklayer wayback urls.txt --out w.jsonl # archive every URL in a file (archive.org keys)
 rmoriebricklayer wayback --retry w.jsonl        # retry the ones that failed
@@ -1492,7 +1492,7 @@ library as estimators. Any error in that translation is ours.
 If you use rmoriebricklayer in your research, please cite the software:
 
 > Ruhela, V. S. (2026). *rmoriebricklayer: Reproducible Data Capsules
-> with Provenance and Fallback.* R package version 1.1.0.
+> with Provenance and Fallback.* R package version 1.1.1.
 > <doi:10.32614/CRAN.package.rmoriebricklayer>.
 > <https://github.com/rootcoder007/rmorie-bricklayer>
 
@@ -1534,7 +1534,7 @@ intervals on every change, multiple-comparison adjustment over the scan,
 the envelope that rounding and suppression imply, trend, and a drift
 screen against the prior capsule; then a report and a capsule template.
 
-- [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
+- [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md)
   : Analyse a published administrative table in one call
 - [`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
   : Write an analysis as a Markdown or HTML report
@@ -1574,6 +1574,10 @@ datasets over flaky endpoints.
   : Find saved copies of an address in archive.rmorie.com
 - [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
   : Fetch the exact bytes of a saved copy from archive.rmorie.com
+- [`arcmine()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
+  [`arcvis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
+  [`arcwd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
+  : List, hide or withdraw your captures in archive.rmorie.com
 - [`siufetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siufetch.md)
   : Fetch an Ontario SIU director's report by drid
 - [`dldata()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dldata.md)
@@ -1745,7 +1749,7 @@ ledgers.
 - [`plot(`*`<rmbl_dstfit>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot.rmbl_dstfit.md)
   : Plot fitted distributions
 - [`plotrdg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
-  [`plotecdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
+  [`plotcdfs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
   [`plotvln()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
   [`plothex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
   [`plotgain()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
@@ -1753,7 +1757,7 @@ ledgers.
   concentration curves
 - [`plotcal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   [`plothrz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
-  [`plotsm()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  [`plotmult()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   [`plotbump()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
   : Plots for many series over time
 - [`plothwk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plothwk.md)
@@ -2124,9 +2128,9 @@ percentage is reported in percentage points; a ratio of counts carries
 the exact conditional-binomial interval. The same object renders to
 HTML, PDF, CSV, TSV, JSON or Markdown.
 
-- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  [`format(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  [`print(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+- [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
+  [`format(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
+  [`print(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
   : Year-over-year (and period-over-period) change
 - [`yoysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md)
   : Summarise a change table

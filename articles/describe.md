@@ -565,7 +565,7 @@ clean column is symmetric, the bimodal one has two peaks, the skewed one
 a long right tail (drawn on a log scale), and the last a pile of zeros.
 The second compares the fresh scores with the reference scores as
 empirical distribution functions with
-[`plotecdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md);
+[`plotcdfs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md);
 where the curves part, the data have changed.
 
 ``` r
@@ -592,7 +592,7 @@ for (nm in names(messy)) {
 ``` r
 
 par(op)
-plotecdf(
+plotcdfs(
   c(reference$score, fresh$score),
   rep(c("reference", "fresh"), c(nrow(reference), nrow(fresh))),
   main = "Fresh scores against the reference"

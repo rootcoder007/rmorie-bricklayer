@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,9 +83,9 @@
     
     
 <p>A year-over-year percent change is the most-quoted number in
-open-data reporting and the least qualified. <code><a href="../reference/yoy.html">yoy()</a></code> computes
-it, and refuses to compute it in the three cases where the figure would
-describe something other than the data.</p>
+open-data reporting and the least qualified. <code><a href="../reference/yoychg.html">yoychg()</a></code>
+computes it, and refuses to compute it in the three cases where the
+figure would describe something other than the data.</p>
 <div class="section level2">
 <h2 id="the-data">The data<a class="anchor" aria-label="anchor" href="#the-data"></a>
 </h2>
@@ -102,7 +102,7 @@ year and by group. A realistic shape:</p>
 declared. That affects colour and the verdict column, never the
 arithmetic.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/yoy.html">yoy</a></span><span class="op">(</span><span class="va">seg</span>,</span>
+<code class="sourceCode R"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/yoychg.html">yoychg</a></span><span class="op">(</span><span class="va">seg</span>,</span>
 <span>  value <span class="op">=</span> <span class="va">NumberOfPlacements</span>,</span>
 <span>  prd <span class="op">=</span> <span class="va">EndFiscalYear</span>,</span>
 <span>  by <span class="op">=</span> <span class="st">"Gender"</span>,</span>
@@ -221,7 +221,7 @@ compares 2023 with 2021 and labels it a one-year change. Matching on the
 period’s own value cannot do that:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2019</span>, <span class="fl">2020</span>, <span class="fl">2022</span>, <span class="fl">2023</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">120</span>, <span class="fl">140</span>, <span class="fl">150</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/yoy.html">yoy</a></span><span class="op">(</span><span class="va">gap</span>, value <span class="op">=</span> <span class="va">n</span>, prd <span class="op">=</span> <span class="va">year</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/yoychg.html">yoychg</a></span><span class="op">(</span><span class="va">gap</span>, value <span class="op">=</span> <span class="va">n</span>, prd <span class="op">=</span> <span class="va">year</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Change in n by year</span> ──────────────────────────────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   Rows    5                                                                 │</span></span>
 <span><span class="co">#&gt; │   Change  in percent                                                        │</span></span>
@@ -254,7 +254,7 @@ a base of two is far less certain than off a base of two hundred. The
 percent is still the right number; what changes is its interval:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tiny</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2021</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">20</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoy.html">yoy</a></span><span class="op">(</span><span class="va">tiny</span>, value <span class="op">=</span> <span class="va">n</span>, prd <span class="op">=</span> <span class="va">year</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"pctchg"</span>,</span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoychg.html">yoychg</a></span><span class="op">(</span><span class="va">tiny</span>, value <span class="op">=</span> <span class="va">n</span>, prd <span class="op">=</span> <span class="va">year</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"pctchg"</span>,</span>
 <span>                                                     <span class="st">"pctlo"</span>, <span class="st">"pctup"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;   year pctchg    pctlo     pctup</span></span>
 <span><span class="co">#&gt; 1 2019     NA       NA        NA</span></span>
@@ -264,7 +264,7 @@ percent is still the right number; what changes is its interval:</p>
 small the base or the change. Set <code>minbase</code> to add a note to
 small-base rows; nothing is withheld either way:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoy.html">yoy</a></span><span class="op">(</span><span class="va">tiny</span>, value <span class="op">=</span> <span class="va">n</span>, prd <span class="op">=</span> <span class="va">year</span>, minbase <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">flag</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoychg.html">yoychg</a></span><span class="op">(</span><span class="va">tiny</span>, value <span class="op">=</span> <span class="va">n</span>, prd <span class="op">=</span> <span class="va">year</span>, minbase <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">flag</span></span>
 <span><span class="co">#&gt; [1] "no comparison period"  "small base (below 20)" NA</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -274,7 +274,7 @@ small-base rows; nothing is withheld either way:</p>
 it 25% answers a different question:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, share <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.1</span>, <span class="fl">4.6</span>, <span class="fl">5.2</span>, <span class="fl">5.0</span>, <span class="fl">5.4</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/yoy.html">yoy</a></span><span class="op">(</span><span class="va">rate</span>, value <span class="op">=</span> <span class="va">share</span>, prd <span class="op">=</span> <span class="va">year</span>, units <span class="op">=</span> <span class="st">"percent"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/yoychg.html">yoychg</a></span><span class="op">(</span><span class="va">rate</span>, value <span class="op">=</span> <span class="va">share</span>, prd <span class="op">=</span> <span class="va">year</span>, units <span class="op">=</span> <span class="st">"percent"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Change in share by year</span> ──────────────────────────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   Rows    5                                                                 │</span></span>
 <span><span class="co">#&gt; │   Change  in percentage points                                              │</span></span>
@@ -306,7 +306,7 @@ follows the series’ own frequency, so January is never put against
 December:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/ts.html" class="external-link">ts</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span><span class="op">:</span><span class="fl">21</span>, <span class="fl">20</span><span class="op">:</span><span class="fl">31</span><span class="op">)</span>, start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2021</span>, <span class="fl">1</span><span class="op">)</span>, frequency <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoy.html">yoy</a></span><span class="op">(</span><span class="va">m</span>, minbase <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">12</span><span class="op">:</span><span class="fl">14</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"period"</span>, <span class="st">"value"</span>,</span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoychg.html">yoychg</a></span><span class="op">(</span><span class="va">m</span>, minbase <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">12</span><span class="op">:</span><span class="fl">14</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"period"</span>, <span class="st">"value"</span>,</span>
 <span>                                                  <span class="st">"previous"</span>, <span class="st">"change"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      period value previous change</span></span>
 <span><span class="co">#&gt; 12 2021.917    21       NA     NA</span></span>
@@ -341,10 +341,10 @@ across the span returns <code>totalpct</code> exactly.</p>
 <div class="section level2">
 <h2 id="rates-when-the-denominator-moves-too">Rates, when the denominator moves too<a class="anchor" aria-label="anchor" href="#rates-when-the-denominator-moves-too"></a>
 </h2>
-<p><code><a href="../reference/yoy.html">yoy()</a></code> compares counts. A count is not comparable across
-places of different size, or across years whose populations differ, and
-the fix is a rate – but a rate is not made trustworthy by being a
-rate.</p>
+<p><code><a href="../reference/yoychg.html">yoychg()</a></code> compares counts. A count is not comparable
+across places of different size, or across years whose populations
+differ, and the fix is a rate – but a rate is not made trustworthy by
+being a rate.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">stops</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  division <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North"</span>, <span class="st">"South"</span>, <span class="st">"East"</span><span class="op">)</span>,</span>
@@ -454,7 +454,7 @@ move:</p>
 smaller than the count change – which is the whole reason to look at the
 rate. The interval conditions on the two counts and corrects for the
 ratio of the two exposures; with equal populations it reduces to exactly
-the conditional-binomial interval <code><a href="../reference/yoy.html">yoy()</a></code> uses above.</p>
+the conditional-binomial interval <code><a href="../reference/yoychg.html">yoychg()</a></code> uses above.</p>
 </div>
 <div class="section level2">
 <h2 id="output">Output<a class="anchor" aria-label="anchor" href="#output"></a>
@@ -493,7 +493,7 @@ period) travels with it:</p>
 <span><span class="co">#&gt; Male,2023,331,268,63,23.5,,4.8,45.6,worse</span></span></code></pre></div>
 <p>Markdown, for a report:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoydelim.html">yoymd</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoy.html">yoy</a></span><span class="op">(</span><span class="va">gap</span>, value <span class="op">=</span> <span class="va">n</span>, prd <span class="op">=</span> <span class="va">year</span><span class="op">)</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoydelim.html">yoymd</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoychg.html">yoychg</a></span><span class="op">(</span><span class="va">gap</span>, value <span class="op">=</span> <span class="va">n</span>, prd <span class="op">=</span> <span class="va">year</span><span class="op">)</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; | year |   n | previous | change | change % |     interval | note                 |</span></span>
 <span><span class="co">#&gt; | ---- | --: | -------: | -----: | -------: | -----------: | -------------------- |</span></span>
 <span><span class="co">#&gt; | 2019 | 100 |        — |      — |        — |              | no comparison period |</span></span>
@@ -525,12 +525,13 @@ adults rating their mental health very good or excellent, 2015/2018 to
 <code class="sourceCode R"><span><span class="va">hi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"health"</span><span class="op">)</span></span>
 <span><span class="va">m</span> <span class="op">&lt;-</span> <span class="va">hi</span><span class="op">[</span><span class="va">hi</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total, 18 years and over"</span> <span class="op">&amp;</span></span>
 <span>          <span class="va">hi</span><span class="op">$</span><span class="va">indicator</span> <span class="op">==</span> <span class="st">"Perceived mental health, very good or excellent"</span>, <span class="op">]</span></span>
-<span><span class="co"># yoy() steps through consecutive periods: number the two survey cycles 1 and 2</span></span>
+<span><span class="co"># yoychg() steps through consecutive periods: number the two survey cycles</span></span>
+<span><span class="co"># 1 and 2</span></span>
 <span><span class="va">m</span><span class="op">$</span><span class="va">cycle</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">m</span><span class="op">$</span><span class="va">period</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2015/2018"</span>, <span class="st">"2019/2022"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">g</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">m</span><span class="op">$</span><span class="va">group</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">s</span> <span class="op">&lt;-</span> <span class="va">m</span><span class="op">[</span><span class="va">m</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="va">g</span>, <span class="op">]</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoy.html">yoy</a></span><span class="op">(</span><span class="va">s</span>, value <span class="op">=</span> <span class="va">estimate</span>, prd <span class="op">=</span> <span class="va">cycle</span>, units <span class="op">=</span> <span class="st">"percent"</span><span class="op">)</span><span class="op">)</span><span class="op">[</span></span>
-<span>    <span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"previous"</span>, <span class="st">"ppchg"</span>, <span class="st">"verdict"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/yoychg.html">yoychg</a></span><span class="op">(</span><span class="va">s</span>, value <span class="op">=</span> <span class="va">estimate</span>, prd <span class="op">=</span> <span class="va">cycle</span>, units <span class="op">=</span> <span class="st">"percent"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"previous"</span>, <span class="st">"ppchg"</span>, <span class="st">"verdict"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span><span class="co">#&gt;   value previous ppchg verdict</span></span>
 <span><span class="co">#&gt; 2  45.8     59.8   -14    down</span></span>

@@ -2,7 +2,7 @@
 
 Adds a two-sided exact p-value to each row of a period-over-period
 change table of counts from
-[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+[`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md),
 testing whether the count changed by more than chance between the two
 periods. Use it when you want a test to go with each change, and then
 pass the table to
@@ -20,7 +20,7 @@ yoypv(y)
 - y:
 
   An `rmbl_yoy` object from
-  [`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  [`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
   with `units = "count"`.
 
 ## Value
@@ -32,7 +32,7 @@ zero.
 ## Details
 
 For count units the interval in
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 is the exact conditional binomial interval for the ratio of two Poisson
 means; this is the matching two-sided test. The test conditions on the
 total of the two periods and asks whether the split is compatible with
@@ -46,9 +46,9 @@ and
 which weight by the exposures. Counts are rounded to whole numbers.
 
 Errors: `y` not a
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 result; a
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 result whose units are not counts (percentages and measured values have
 no Poisson test). A progress indicator is shown for long tables in an
 interactive session.
@@ -56,7 +56,7 @@ interactive session.
 ## See also
 
 [`scanadj`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.md),
-[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
+[`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md).
 
 ## Examples
 
@@ -64,7 +64,7 @@ interactive session.
 seg <- data.frame(year = rep(2022:2023, each = 3),
                   site = rep(c("A", "B", "C"), 2),
                   n = c(30, 50, 80, 45, 52, 79))
-y <- yoy(seg, value = "n", prd = "year", by = "site")
+y <- yoychg(seg, value = "n", prd = "year", by = "site")
 yoypv(y)$p_value
 #> [1]        NA 0.1053423        NA 0.9211910        NA 1.0000000
 
@@ -72,7 +72,7 @@ yoypv(y)$p_value
 stats::binom.test(45, 75)$p.value
 #> [1] 0.1053423
 
-# anything that is not a yoy() table is refused
+# anything that is not a yoychg() table is refused
 try(yoypv(seg))
-#> Error : yoypv: `y` must come from yoy()
+#> Error : yoypv: `y` must come from yoychg()
 ```

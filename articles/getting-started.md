@@ -40,7 +40,7 @@ otis
 
 ``` r
 
-a <- anltab(otis, value = "individuals", prd = "year",
+a <- anytab(otis, value = "individuals", prd = "year",
                    by = c("table", "group"))
 a
 #> ╭── Analysis of a published table ────────────────────────────────────────╮
@@ -58,7 +58,7 @@ a
 #> │   adjusted for the number of comparisons; rptanl() writes the full      │
 #> │   tables as a report, and x$change, x$rates and x$trend hold them.      │
 #> │                                                                         │
-#> │   Run 2026-11-11 00:43                                                  │
+#> │   Run 2026-11-12 12:00                                                  │
 #> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -119,7 +119,7 @@ same way through `suplim`.
 
 ``` r
 
-b <- anltab(otis, value = "individuals", prd = "year",
+b <- anytab(otis, value = "individuals", prd = "year",
                    by = c("table", "group"), rnd = 5)
 b$change[!is.na(b$change$previous),
          c("group", "year", "pctchg", "pctlo", "pctup",

@@ -1,7 +1,7 @@
 # Render a change table to HTML or PDF
 
 Writes a change table from
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 to a file for people who will not run R: `yoyhtml()` to a single
 self-contained web page, `yoypdf()` to a PDF. Each row shows the period,
 the value, the previous value, the change and the percent change,
@@ -47,7 +47,7 @@ yoypdf(
 - x:
 
   An `rmbl_yoy` object from
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md),
   written as HTML.
 
 - file:
@@ -124,7 +124,7 @@ and on pages of their own otherwise. The interval column appears only
 when the table has `pctlo` and `pctup` (counts).
 
 Both overwrite `file`. Errors: `x` not from
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md);
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md);
 a `pal` not in
 [`yoypals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoypals.md);
 a file that cannot be written.
@@ -135,7 +135,7 @@ a file that cannot be written.
 d <- data.frame(year = rep(2019:2023, each = 2),
                 region = rep(c("North", "South"), 5),
                 n = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331))
-y <- yoy(d, value = "n", prd = "year", by = "region",
+y <- yoychg(d, value = "n", prd = "year", by = "region",
          dir = "lower")
 
 h <- file.path(tempdir(), "change.html")
@@ -157,8 +157,8 @@ any(grepl("suppressed", readLines(h)))
 # portrait letter pages, with fiscal-year labels
 yoypdf(yoylbl(y, fylbl), p, width = 8.5, height = 11)
 
-# only yoy() tables can be rendered
+# only yoychg() tables can be rendered
 try(yoyhtml(d, h))
-#> Error : yoyhtml: `x` must be an rmbl_yoy object from yoy()
+#> Error : yoyhtml: `x` must be an rmbl_yoy object from yoychg()
 unlink(c(h, p))
 ```

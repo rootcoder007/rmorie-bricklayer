@@ -1,7 +1,7 @@
 # Write an analysis as a Markdown or HTML report
 
 Renders an
-[`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
+[`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md)
 result as a report: the change table with its intervals and adjusted
 p-values, the rates, the trends, the drift screen and the column
 profile, each with one sentence saying how to read it. The Markdown is
@@ -26,7 +26,7 @@ rptanl(
 - x:
 
   A `bricklayer_analysis` from
-  [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md).
+  [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md).
 
 - path:
 
@@ -68,7 +68,7 @@ the text escaped). The file is written as UTF-8 and overwritten if it
 exists.
 
 Errors: `x` not from
-[`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md);
+[`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md);
 an invalid `format`.
 
 ## Examples
@@ -76,13 +76,13 @@ an invalid `format`.
 ``` r
 path <- system.file("extdata", "otis_a01_individuals.csv",
                     package = "rmoriebricklayer")
-a <- anltab(read.csv(path), value = "individuals",
+a <- anytab(read.csv(path), value = "individuals",
                    prd = "year", by = c("table", "group"))
 md <- rptanl(a)
 cat(substr(md, 1, 400))
 #> # Analysis of a published table
 #> 
-#> `individuals` by `year`, grouped by `table` and `group`; 15 rows; 3 period(s) from 2023 to 2025; generated 2026-11-11 00:42.
+#> `individuals` by `year`, grouped by `table` and `group`; 15 rows; 3 period(s) from 2023 to 2025; generated 2026-11-12 11:59.
 #> 
 #> ## Change between periods
 #> 
@@ -98,8 +98,8 @@ readLines(out, n = 3)
 #> [2] "<html lang=\"en\"><head><meta charset=\"utf-8\">"
 #> [3] "<title>OTIS A01: individuals in custody</title>" 
 
-# only an anltab() result can be reported
+# only an anytab() result can be reported
 try(rptanl(read.csv(path)))
-#> Error : `x` must come from anltab()
+#> Error : `x` must come from anytab()
 unlink(out)
 ```

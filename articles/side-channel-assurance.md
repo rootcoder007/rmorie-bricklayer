@@ -267,7 +267,7 @@ for (k in 1:60) {
   honest[k] <- tm(sent$ciphertext)
   tampered[k] <- tm(bad)
 }
-plotecdf(
+plotcdfs(
   c(honest, tampered),
   rep(c("honest ciphertext", "one digit changed"), each = 60),
   main = "ML-KEM-512 decapsulation time (microseconds)"

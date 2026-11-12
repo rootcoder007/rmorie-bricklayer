@@ -28,7 +28,7 @@ Period-over-period change with its interval, coloured by verdict:
 
 ``` r
 
-y <- yoy(
+y <- yoychg(
   data.frame(year = 2018:2023, n = c(40, 44, 41, 55, 52, 61)),
   value = "n",
   prd = "year"
@@ -44,7 +44,7 @@ percentage, and its row says so.
 
 ``` r
 
-plot(yoy(
+plot(yoychg(
   data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)),
   value = "n",
   prd = "year"

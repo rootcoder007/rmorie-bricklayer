@@ -14,7 +14,7 @@ for one series or many:
   its own median folded into `bands` shaded bands, above in blue and
   below in red, so many series fit in little height.
 
-- `plotsm()`:
+- `plotmult()`:
 
   small multiples: one panel per series on a shared scale.
 
@@ -39,7 +39,7 @@ plothrz(
   pal = NULL
 )
 
-plotsm(y, prd, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
+plotmult(y, prd, grp = NULL, ..., main = NULL, col = NULL, pal = NULL)
 
 plotbump(y, prd, grp, desc = TRUE, ..., main = NULL, col = NULL, pal = NULL)
 ```
@@ -107,7 +107,7 @@ d$n <- stats::rpois(
   nrow(d),
   50 + 10 * as.integer(d$area) + 2 * (d$year - 2015)
 )
-plotsm(d$n, d$year, d$area)
+plotmult(d$n, d$year, d$area)
 
 plothrz(d$n, d$year, d$area)
 

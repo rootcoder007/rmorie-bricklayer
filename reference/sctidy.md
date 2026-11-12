@@ -18,11 +18,9 @@ sctidy(x)
   A data frame read from a Statistics Canada table (English-language
   full-table CSV), or a key of the data service
   (`"statcan_indigenous/tbl_13100924"`, or the eight-digit table id
-  alone). A key needs a data service key: sign in once with
-  [`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
-  (see
-  [`dload`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md));
-  a data frame you read yourself needs none.
+  alone), downloaded with
+  [`dload`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  (no sign-in); a data frame you read yourself needs no network.
 
 ## Value
 
@@ -93,7 +91,7 @@ sctidy(d)
 #> │   x suppressed (confidentiality); .. not available; ... not applicable. │
 #> ╰─────────────────────────────────────────────────────────────────────────╯
 if (FALSE) { # interactive()
-# needs a data service key: sign in once with dlogin()
+# downloads the table from data.rmorie.com
 t924 <- sctidy("13100924")
 }
 ```

@@ -190,7 +190,7 @@ CSUS 2023 ships 1,000 **mean bootstrap** weights, each the average of 12
 bootstrap weights, so the bootstrap variance is multiplied by 12 (Health
 Canada’s technical notes; the same as Fay’s BRR with
 $`\rho = 1 - 1/\sqrt{12}`$). The public-use file and its weights are on
-data.rmorie.com (sign in once with `rmbl login`), where
+data.rmorie.com (no sign-in), where
 [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
 checks each table against the SHA-256 its manifest lists:
 

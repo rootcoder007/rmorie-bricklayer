@@ -13,7 +13,7 @@ reproducibility is the point."><meta property="og:image" content="https://rootco
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -104,7 +104,7 @@ no readable operating-system source.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 61 48 fb 39 48 19 45 a7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 47 53 5a a0 fe 04 7d 2e</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Independent between calls, unlike a seeded generator.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">16</span><span class="op">)</span>, <span class="fu">rndbytes</span><span class="op">(</span><span class="fl">16</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -120,7 +120,7 @@ no readable operating-system source.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># As hex, for a seed argument.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "a8be8b42"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "3fb836c4"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `n` must be a single integer between 1 and 1048576</span>

@@ -5,7 +5,7 @@ plotrdg()
 a ridgeline:
 one kernel density per group, stacked with a small overlap.
 
-plotecdf()
+plotcdfs()
 the empirical distribution function of each group,
 overlaid.
  plotvln()
@@ -28,7 +28,7 @@ plotrdg()
 a ridgeline:
 one kernel density per group, stacked with a small overlap.
 
-plotecdf()
+plotcdfs()
 the empirical distribution function of each group,
 overlaid.
  plotvln()
@@ -53,7 +53,7 @@ density."><meta property="og:image" content="https://rootcoder007.github.io/rmor
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,7 +100,7 @@ group, or two numeric variables:</p><dl><dt><code>plotrdg()</code></dt>
 <dd><p>a ridgeline:
 one kernel density per group, stacked with a small overlap.</p></dd>
 
-<dt><code>plotecdf()</code></dt>
+<dt><code>plotcdfs()</code></dt>
 <dd><p>the empirical distribution function of each group,
 overlaid.</p></dd>
  <dt><code>plotvln()</code></dt>
@@ -124,7 +124,7 @@ density.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plotrdg</span><span class="op">(</span><span class="va">x</span>, grp <span class="op">=</span> <span class="cn">NULL</span>, bw <span class="op">=</span> <span class="st">"nrd0"</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, pal <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">plotecdf</span><span class="op">(</span><span class="va">x</span>, grp <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, pal <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">plotcdfs</span><span class="op">(</span><span class="va">x</span>, grp <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, pal <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">plotvln</span><span class="op">(</span><span class="va">x</span>, grp <span class="op">=</span> <span class="cn">NULL</span>, bw <span class="op">=</span> <span class="st">"nrd0"</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, pal <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
@@ -174,7 +174,7 @@ the name of a rule (<code>"nrd0"</code>, the default, <code>"nrd"</code>, <code>
     <p>The data drawn, invisibly: for <code>plotrdg()</code> and <code>plotvln()</code> the
 densities (<code>grp</code>, <code>x</code>, <code>y</code>), for <code>plotvln()</code> with the
 per-group <code>median</code>, <code>q1</code> and <code>q3</code> as an attribute
-<code>summary</code>, for <code>plotecdf()</code> the steps (<code>grp</code>, <code>x</code>,
+<code>summary</code>, for <code>plotcdfs()</code> the steps (<code>grp</code>, <code>x</code>,
 <code>y</code>), for <code>plothex()</code> the hexagon centres (<code>x</code>, <code>y</code>)
 and <code>count</code>, for <code>plotgain()</code> the curves (<code>grp</code>,
 <code>population</code>, <code>value</code>) with the Gini coefficients as an attribute
@@ -188,7 +188,7 @@ and <code>count</code>, for <code>plotgain()</code> the curves (<code>grp</code>
 <span class="r-in"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"before"</span>, <span class="st">"after"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">plotrdg</span><span class="op">(</span><span class="va">x</span>, <span class="va">g</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plotmore-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">plotecdf</span><span class="op">(</span><span class="va">x</span>, <span class="va">g</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">plotcdfs</span><span class="op">(</span><span class="va">x</span>, <span class="va">g</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plotmore-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu">plotvln</span><span class="op">(</span><span class="va">x</span>, <span class="va">g</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plotmore-3.png" alt="" width="700" height="433"></span>

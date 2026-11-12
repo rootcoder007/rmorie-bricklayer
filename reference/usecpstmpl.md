@@ -56,7 +56,7 @@ The files:
   (a local path is read directly), computes its SHA-256 with
   [`sha256file`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256file.md)
   and stops if it no longer matches the pinned value, runs
-  [`anltab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md),
+  [`anytab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md),
   and writes `manifest.json`, `report.html` and `report.md` in
   `results/`.
 
@@ -79,7 +79,7 @@ strings, so quotes and backslashes are safe.
 
 [`loadprov`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md),
 [`vrfcps`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md),
-[`anltab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md).
+[`anytab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md).
 
 ## Examples
 
@@ -91,9 +91,9 @@ list.files(d)
 # the provenance file to fill in
 cat(readLines(file.path(d, "data_provenance.json")), sep = "\n")
 #> {
-#>   "name": "capsule-1fc645e64c88",
+#>   "name": "capsule-1f4a631d037c",
 #>   "source": {
-#>     "url": "/tmp/RtmpvG5O1x/temp_libpath1fc6236d3ad5/rmoriebricklayer/extdata/otis_a01_individuals.csv",
+#>     "url": "/tmp/RtmpfCFbEJ/temp_libpath1f4a48eeabb0/rmoriebricklayer/extdata/otis_a01_individuals.csv",
 #>     "publisher": "TODO: who publishes the table",
 #>     "licence": "TODO: e.g. Open Government Licence - Ontario",
 #>     "retrieved": "TODO: YYYY-MM-DD",

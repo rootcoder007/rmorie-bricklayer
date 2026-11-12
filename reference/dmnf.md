@@ -174,8 +174,7 @@ for (v in names(oldenv)) {
   }
 }
 if (FALSE) { # interactive()
-# the real service: needs a key and the network
-dlogin(token = "sk-...")  # a key issued at www.rmorie.com/access/
+# the real service: needs the network, no sign-in
 head(dtabs())
 df <- dload("chicago_crime/incidents")
 }

@@ -93,8 +93,7 @@ With `family = "negbin"` the variance is \\\mu + \mu^2/\theta\\: the fit
 alternates iteratively reweighted least squares at fixed \\\theta\\ with
 the maximum of the profile likelihood in \\\theta\\, and the sandwich
 uses the negative binomial scores with \\\theta\\ held at its estimate
-(as
-[`sandwich::vcovCL()`](https://zeileis.codeberg.page/sandwich/reference/vcovCL.html)
+(as [`sandwich::vcovCL()`](https://rdrr.io/pkg/sandwich/man/vcovCL.html)
 does for [`MASS::glm.nb()`](https://rdrr.io/pkg/MASS/man/glm.nb.html);
 [`fixest::fenegbin()`](https://lrberge.github.io/fixest/reference/femlm.html),
 which treats \\\theta\\ as a parameter of the variance too, gives

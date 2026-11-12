@@ -1,6 +1,6 @@
 # Add publication bounds to a year-over-year table
 
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 gives an exact conditional-binomial interval for the percent change of a
 count, which covers sampling variation. This adds the interval that
 rounding and suppression in the published cells imply
@@ -21,7 +21,7 @@ yoybnd(y, rnd = NULL, rndkind = c("nearest", "random"), suplim = NULL)
 - y:
 
   An `rmbl_yoy` object from
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md),
   with counts as values.
 
 - rnd:
@@ -65,7 +65,7 @@ does not check that `y` holds counts; publication bounds make sense only
 for counts.
 
 Errors when `y` does not come from
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md),
 and for the reasons
 [`pubbnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pubbnd.md)
 gives.
@@ -74,13 +74,13 @@ gives.
 
 [`pubbnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pubbnd.md),
 [`chgenv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chgenv.md),
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md).
 
 ## Examples
 
 ``` r
 seg <- data.frame(year = 2021:2023, n = c(40, 45, 60))
-y <- yoy(seg, value = "n", prd = "year")
+y <- yoychg(seg, value = "n", prd = "year")
 yoybnd(y, rnd = 5)
 #> ╭── Change in n by year ──────────────────────────────────────────────────────╮
 #> │   Rows    3                                                                 │
@@ -110,7 +110,7 @@ as.data.frame(yb)[, c("year", "envpctlo", "envpctup",
 #> 2 2022 -6.818182 36.11111 -28.16209  76.74679
 #> 3 2023 14.285714 56.09756 -10.91249 100.82285
 
-# only yoy() results are accepted
+# only yoychg() results are accepted
 try(yoybnd(seg, rnd = 5))
-#> Error : yoybnd: `y` must come from yoy()
+#> Error : yoybnd: `y` must come from yoychg()
 ```

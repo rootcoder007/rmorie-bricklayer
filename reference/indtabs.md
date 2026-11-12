@@ -29,13 +29,12 @@ A data frame: `key`, `rows`, `description`, `license`, `source`.
 
 ## Details
 
-Needs a data service key: sign in once with
-[`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md).
-Only openly licensed aggregate tables are mirrored. First Nations
-Information Governance Centre data (the First Nations Regional Health
-Survey and its companions) are governed by the OCAP(R) principles and
-are not; ask the Centre (fnigc.ca; the site answers scripts with 403,
-archived copy web.archive.org/web/20261001141317/fnigc.ca).
+Needs the network; no sign-in. Only openly licensed aggregate tables are
+mirrored. First Nations Information Governance Centre data (the First
+Nations Regional Health Survey and its companions) are governed by the
+OCAP(R) principles and are not; ask the Centre (fnigc.ca; the site
+answers scripts with 403, archived copy
+web.archive.org/web/20261001141317/fnigc.ca).
 
 ## Examples
 

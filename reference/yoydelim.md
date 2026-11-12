@@ -30,7 +30,7 @@ yoymd(x, file, digits = 1L, align = TRUE, ...)
 - x:
 
   An `rmbl_yoy` object from
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md).
 
 - file:
 
@@ -96,14 +96,14 @@ period columns, the grouping, the lag, the units, and for counts the
 interval's confidence level and the base below which changes are noted.
 A pipe inside a Markdown cell is escaped. An existing file is
 overwritten. Errors when `x` does not come from
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md),
 or `digits` is not a whole number.
 
 ## Examples
 
 ``` r
 d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-y <- yoy(d, value = "n", prd = "year")
+y <- yoychg(d, value = "n", prd = "year")
 
 # Straight to text, for inspection.
 cat(yoycsv(y, NULL))
@@ -151,7 +151,7 @@ read.csv(f, comment.char = "#")[, c("year", "pctchg", "flag")]
 #> 4 2022  41.052632                     
 #> 5 2023  23.507463                     
 
-# only yoy() results are accepted
+# only yoychg() results are accepted
 try(yoycsv(d, NULL))
-#> Error : yoycsv: `x` must be an rmbl_yoy object from yoy()
+#> Error : yoycsv: `x` must be an rmbl_yoy object from yoychg()
 ```

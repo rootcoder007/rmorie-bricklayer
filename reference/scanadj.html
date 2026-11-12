@@ -5,7 +5,7 @@ finding. This adds padj (Benjamini-Hochberg by default, which
 controls the false discovery rate over the scan) and significant
 at level alpha after adjustment. Exact p-values are computed where
 the object does not carry them: the conditional binomial test for
-yoy() counts and for ratechg()
+yoychg() counts and for ratechg()
 (with the exposures as the
 binomial weights)."><meta property="og:description" content="A change table over fifty institutions is fifty tests. Reporting the
 raw p-values invites reading the largest of fifty noise draws as a
@@ -13,7 +13,7 @@ finding. This adds padj (Benjamini-Hochberg by default, which
 controls the false discovery rate over the scan) and significant
 at level alpha after adjustment. Exact p-values are computed where
 the object does not carry them: the conditional binomial test for
-yoy() counts and for ratechg()
+yoychg() counts and for ratechg()
 (with the exposures as the
 binomial weights)."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -23,7 +23,7 @@ binomial weights)."><meta property="og:image" content="https://rootcoder007.gith
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,7 +71,7 @@ finding. This adds <code>padj</code> (Benjamini-Hochberg by default, which
 controls the false discovery rate over the scan) and <code>significant</code>
 at level <code>alpha</code> after adjustment. Exact p-values are computed where
 the object does not carry them: the conditional binomial test for
-<code><a href="yoy.html">yoy()</a></code> counts and for <code><a href="ratechg.html">ratechg()</a></code>
+<code><a href="yoychg.html">yoychg()</a></code> counts and for <code><a href="ratechg.html">ratechg()</a></code>
 (with the exposures as the
 binomial weights).</p>
     </div>
@@ -126,7 +126,7 @@ control the chance of any false discovery, which a claim about one
 specific row needs. A row is <code>significant</code> when its adjusted p-value
 is strictly below <code>alpha</code>.</p>
 <p>Errors: <code>x</code> not a data frame; no <code>p_value</code> column and not a
-<code><a href="yoy.html">yoy()</a></code> or <code><a href="ratechg.html">ratechg()</a></code> result; a <code><a href="yoy.html">yoy()</a></code> result
+<code><a href="yoychg.html">yoychg()</a></code> or <code><a href="ratechg.html">ratechg()</a></code> result; a <code><a href="yoychg.html">yoychg()</a></code> result
 without count units; a p-value outside \([0, 1]\); a method unknown to
 <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">p.adjust()</a></code>.</p>
     </div>
@@ -141,7 +141,7 @@ family of falsification results, <code><a href="drftcal.html">drftcal</a></code>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">seg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2022</span><span class="op">:</span><span class="fl">2023</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                  site <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                  n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">50</span>, <span class="fl">80</span>, <span class="fl">45</span>, <span class="fl">52</span>, <span class="fl">79</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="yoy.html">yoy</a></span><span class="op">(</span><span class="va">seg</span>, value <span class="op">=</span> <span class="st">"n"</span>, prd <span class="op">=</span> <span class="st">"year"</span>, by <span class="op">=</span> <span class="st">"site"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="yoychg.html">yoychg</a></span><span class="op">(</span><span class="va">seg</span>, value <span class="op">=</span> <span class="st">"n"</span>, prd <span class="op">=</span> <span class="st">"year"</span>, by <span class="op">=</span> <span class="st">"site"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">scanadj</span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"site"</span>, <span class="st">"pctchg"</span>, <span class="st">"p_value"</span>, <span class="st">"padj"</span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   site pctchg   p_value      padj</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1    A     NA        NA        NA</span>

@@ -2,7 +2,7 @@
 
 A year-over-year percent change is the most-quoted number in open-data
 reporting and the least qualified.
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 computes it, and refuses to compute it in the three cases where the
 figure would describe something other than the data.
 
@@ -26,7 +26,7 @@ That affects colour and the verdict column, never the arithmetic.
 
 ``` r
 
-y <- yoy(seg,
+y <- yoychg(seg,
   value = NumberOfPlacements,
   prd = EndFiscalYear,
   by = "Gender",
@@ -152,7 +152,7 @@ value cannot do that:
 ``` r
 
 gap <- data.frame(year = c(2019, 2020, 2022, 2023), n = c(100, 120, 140, 150))
-yoy(gap, value = n, prd = year)
+yoychg(gap, value = n, prd = year)
 #> ╭── Change in n by year ──────────────────────────────────────────────────────╮
 #> │   Rows    5                                                                 │
 #> │   Change  in percent                                                        │
@@ -188,7 +188,7 @@ percent is still the right number; what changes is its interval:
 ``` r
 
 tiny <- data.frame(year = 2019:2021, n = c(2, 20, 25))
-as.data.frame(yoy(tiny, value = n, prd = year))[, c("year", "pctchg",
+as.data.frame(yoychg(tiny, value = n, prd = year))[, c("year", "pctchg",
                                                      "pctlo", "pctup")]
 #>   year pctchg    pctlo     pctup
 #> 1 2019     NA       NA        NA
@@ -202,7 +202,7 @@ nothing is withheld either way:
 
 ``` r
 
-as.data.frame(yoy(tiny, value = n, prd = year, minbase = 20))$flag
+as.data.frame(yoychg(tiny, value = n, prd = year, minbase = 20))$flag
 #> [1] "no comparison period"  "small base (below 20)" NA
 ```
 
@@ -214,7 +214,7 @@ If a rate moves from 4% to 5% that is one percentage point. Calling it
 ``` r
 
 rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
-yoy(rate, value = share, prd = year, units = "percent")
+yoychg(rate, value = share, prd = year, units = "percent")
 #> ╭── Change in share by year ──────────────────────────────────────────────────╮
 #> │   Rows    5                                                                 │
 #> │   Change  in percentage points                                              │
@@ -249,7 +249,7 @@ December:
 ``` r
 
 m <- stats::ts(c(10:21, 20:31), start = c(2021, 1), frequency = 12)
-head(as.data.frame(yoy(m, minbase = 0))[12:14, c("period", "value",
+head(as.data.frame(yoychg(m, minbase = 0))[12:14, c("period", "value",
                                                   "previous", "change")], 3)
 #>      period value previous change
 #> 12 2021.917    21       NA     NA
@@ -286,7 +286,7 @@ returns `totalpct` exactly.
 
 ## Rates, when the denominator moves too
 
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 compares counts. A count is not comparable across places of different
 size, or across years whose populations differ, and the fix is a rate –
 but a rate is not made trustworthy by being a rate.
@@ -412,7 +412,7 @@ smaller than the count change – which is the whole reason to look at the
 rate. The interval conditions on the two counts and corrects for the
 ratio of the two exposures; with equal populations it reduces to exactly
 the conditional-binomial interval
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 uses above.
 
 ## Output
@@ -460,7 +460,7 @@ Markdown, for a report:
 
 ``` r
 
-cat(yoymd(yoy(gap, value = n, prd = year), NULL))
+cat(yoymd(yoychg(gap, value = n, prd = year), NULL))
 #> | year |   n | previous | change | change % |     interval | note                 |
 #> | ---- | --: | -------: | -----: | -------: | -----------: | -------------------- |
 #> | 2019 | 100 |        — |      — |        — |              | no comparison period |
@@ -498,12 +498,13 @@ adults rating their mental health very good or excellent, 2015/2018 to
 hi <- indiex("health")
 m <- hi[hi$age == "Total, 18 years and over" &
           hi$indicator == "Perceived mental health, very good or excellent", ]
-# yoy() steps through consecutive periods: number the two survey cycles 1 and 2
+# yoychg() steps through consecutive periods: number the two survey cycles
+# 1 and 2
 m$cycle <- match(m$period, c("2015/2018", "2019/2022"))
 for (g in unique(m$group)) {
   s <- m[m$group == g, ]
-  print(as.data.frame(yoy(s, value = estimate, prd = cycle, units = "percent"))[
-    2, c("value", "previous", "ppchg", "verdict")])
+  y <- yoychg(s, value = estimate, prd = cycle, units = "percent")
+  print(as.data.frame(y)[2, c("value", "previous", "ppchg", "verdict")])
 }
 #>   value previous ppchg verdict
 #> 2  45.8     59.8   -14    down

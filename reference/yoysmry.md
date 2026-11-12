@@ -1,9 +1,9 @@
 # Summarise a change table
 
 Collapses a period-over-period change table from
-[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 into one row per series (or one row per group when
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 was called with `by`). Each row gives the first and last observed
 periods, the total change between them, the compound annual growth rate,
 and how many period-to-period changes went up, went down or stayed flat.
@@ -27,7 +27,7 @@ yoysmry(object, ...)
 - object:
 
   An `rmbl_yoy` object returned by
-  [`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
+  [`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md).
 
 - ...:
 
@@ -37,7 +37,7 @@ yoysmry(object, ...)
 
 A data frame with one row per series or group and columns: the `by`
 columns (character), when
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 had `by`; `from`, `to` (the first and last observed period, same type as
 the period column); `first`, `last` (numeric values at those periods);
 `totalpct`, `cagrpct` (numeric, percent); `periods` (integer, observed
@@ -48,9 +48,9 @@ changes).
 
 Rows whose `value` is missing are dropped before the summary, and the
 remaining rows are sorted by period, text periods in the order
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 read them (its `prd` and `prdord`). Periods with no order (text
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 could not read, an unordered factor) have no first or last: `from`,
 `to`, `first`, `last`, `totalpct` and `cagrpct` are then `NA`, with a
 warning saying why. With \\v_1\\ the first and \\v_T\\ the last observed
@@ -69,12 +69,12 @@ A group with no non-missing value gives a row of `NA` with
 `periods = 0`.
 
 Anything other than a
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-result is refused with the error “`object` must be a yoy() result”.
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
+result is refused with the error “`object` must be a yoychg() result”.
 
 ## See also
 
-[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+[`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md),
 [`yoypals`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoypals.md).
 
 ## Examples
@@ -82,7 +82,7 @@ result is refused with the error “`object` must be a yoy() result”.
 ``` r
 # one series
 d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
-yoysmry(yoy(d, value = "n", prd = "year"))
+yoysmry(yoychg(d, value = "n", prd = "year"))
 #> ╭── Year-over-year summary ──────────────────────────────────────────────╮
 #> │   Series  1                                                            │
 #> │                                                                        │
@@ -98,7 +98,7 @@ yoysmry(yoy(d, value = "n", prd = "year"))
 # one row per group; a zero base gives no percent change
 g <- data.frame(year = rep(2019:2022, 2), unit = rep(c("A", "B"), each = 4),
                 n = c(10, 12, 0, 15, 5, 7, 6, 9))
-yoysmry(yoy(g, value = "n", prd = "year", by = "unit"))
+yoysmry(yoychg(g, value = "n", prd = "year", by = "unit"))
 #> ╭── Year-over-year summary ──────────────────────────────────────────────╮
 #> │   Series  2                                                            │
 #> │                                                                        │
@@ -117,7 +117,7 @@ yoysmry(yoy(g, value = "n", prd = "year", by = "unit"))
 #> │   one period to the next.                                              │
 #> ╰────────────────────────────────────────────────────────────────────────╯
 
-# anything that is not a yoy() result is refused
+# anything that is not a yoychg() result is refused
 try(yoysmry(d))
-#> Error : `object` must be a yoy() result, not data.frame
+#> Error : `object` must be a yoychg() result, not data.frame
 ```

@@ -1,7 +1,7 @@
 # Write a change table to a file, in whatever format the name implies
 
 Writes a period-over-period table from
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 in the format the file name implies, so one call serves a web page, a
 PDF for a report, a CSV for a spreadsheet, JSON for a program or
 Markdown for a README. Every format is written from the same object,
@@ -19,7 +19,7 @@ yoywr(x, file, format = "auto", ...)
 - x:
 
   An `rmbl_yoy` object from
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md).
 
 - file:
 
@@ -59,7 +59,7 @@ The extension is matched case-insensitively: `.html` and `.htm` go to
 `.md` and `.markdown` to
 [`yoymd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md).
 An existing file is overwritten. Errors when `x` does not come from
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md),
 when the format cannot be read from the extension (pass `format`), or
 when `format` is not one of the names below; and whatever error the
 chosen writer raises.
@@ -74,7 +74,7 @@ chosen writer raises.
 
 ``` r
 d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-y <- yoy(d, value = "n", prd = "year")
+y <- yoychg(d, value = "n", prd = "year")
 
 for (ext in c("csv", "tsv", "json", "md", "html")) {
   f <- file.path(tempdir(), paste0("change.", ext))

@@ -5,7 +5,7 @@ accept. In every palette the colour says whether a change is good or bad
 news for the series, not whether the number went up or down: the arrow
 in the table carries the sign, and the colour carries the `direction`
 chosen in
-[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
+[`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md).
 Use this to see which values the `palette` argument of
 [`print()`](https://rdrr.io/r/base/print.html),
 [`yoyhtml`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md)
@@ -47,14 +47,14 @@ Three palettes are defined:
 Unchanged rows and rows without a comparison use grey (`#6b6b6b`). The
 verdict-to-colour mapping is: `"worse"` uses the bad colour and
 `"better"` the good colour. With `direction = "neutral"` in
-[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 the verdicts are `"up"`/`"down"`, which say nothing about good or bad
 news, so those rows use the grey as well; the arrow still shows the
 sign. A palette name not in this list is an error in every renderer.
 
 ## See also
 
-[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+[`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md),
 [`yoysmry`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md),
 [`yoyhtml`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md),
 [`yoypdf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md).
@@ -68,7 +68,7 @@ yoypals()
 
 # use one of them when printing a change table
 d <- data.frame(year = 2019:2023, n = c(40, 46, 38, 52, 49))
-print(yoy(d, value = "n", prd = "year"), palette = "safe", color = FALSE)
+print(yoychg(d, value = "n", prd = "year"), palette = "safe", color = FALSE)
 #> ╭── Change in n by year ──────────────────────────────────────────────────────╮
 #> │   Rows    5                                                                 │
 #> │   Change  in percent                                                        │
@@ -91,6 +91,6 @@ print(yoy(d, value = "n", prd = "year"), palette = "safe", color = FALSE)
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 
 # a name that is not a palette is refused
-try(print(yoy(d, value = "n", prd = "year"), palette = "rainbow"))
+try(print(yoychg(d, value = "n", prd = "year"), palette = "rainbow"))
 #> Error : format: `palette` must be one of "diverging", "safe", "mono", not "rainbow"
 ```

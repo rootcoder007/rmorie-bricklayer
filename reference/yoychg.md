@@ -1,0 +1,490 @@
+# Year-over-year (and period-over-period) change
+
+Computes the change from one period to the period `lag` places before
+it, matched on the period's own value rather than on row order, and
+carries an exact interval for count data. Use it for the "up 12% on last
+year" figures of an annual report or an open-data release: a missing
+year shows as a gap instead of shifting every comparison, a percentage
+is compared in percentage points, and a change off a small count comes
+with an interval as wide as the count is small.
+
+## Usage
+
+``` r
+yoychg(x, ...)
+
+# Default S3 method
+yoychg(x, ...)
+
+# S3 method for class 'data.frame'
+yoychg(
+  x,
+  value,
+  prd,
+  by = NULL,
+  lag = 1L,
+  fun = NULL,
+  units = c("count", "continuous", "percent"),
+  minbase = NULL,
+  conflvl = 0.95,
+  dir = c("neutral", "higher", "lower"),
+  complete = TRUE,
+  prdord = NULL,
+  ...
+)
+
+# S3 method for class 'numeric'
+yoychg(x, prd = seq_along(x), ...)
+
+# S3 method for class 'integer'
+yoychg(x, prd = seq_along(x), ...)
+
+# S3 method for class 'ts'
+yoychg(x, lag = NULL, ...)
+
+# S3 method for class 'rmbl_yoy'
+format(x, digits = 1L, palette = "diverging",
+  color = FALSE, n = 30, ...)
+
+# S3 method for class 'rmbl_yoy'
+print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
+```
+
+## Arguments
+
+- x:
+
+  An `rmbl_yoy` object returned by `yoychg()`.
+
+- ...:
+
+  Further arguments from [`print()`](https://rdrr.io/r/base/print.html);
+  the table ignores them.
+
+- value:
+
+  For a data frame, the column holding the measure, as a string or a
+  bare name.
+
+- prd:
+
+  For a data frame, the column holding the period (a year, a `Date`, a
+  fiscal-year integer, an ordered factor, or text). An ordered factor is
+  compared by level order, one level being one period; an unordered
+  factor has no order, so every row is flagged “no comparison period”.
+  For a numeric vector, the periods themselves.
+
+  Text periods are read when every label has the same one of these forms
+  (one step is the period itself, so a missing period is a gap):
+
+  - a year: `"1987"`, `"2031"`;
+
+  - a fiscal year by the two years it spans, ordered by the first:
+    `"2019/20"`, `"2019/2020"`, `"2019-20"`, `"2019-2020"`,
+    `"FY 2019-20"`, `"FY2019/20"`; or by one year: `"FY2020"`,
+    `"FY 2020"` (the two kinds do not mix);
+
+  - a quarter: `"2021 Q3"`, `"2021Q3"`, `"2021-Q3"`, `"Q3 2021"`;
+
+  - a month: `"2021-03"`, `"2021/03"`, `"2021-3"`, or an English month
+    name or its three-letter abbreviation: `"Mar 2021"`, `"March 2021"`,
+    `"2021 Mar"`;
+
+  - a date: `"2021-03-15"`, `"2021/03/15"`, compared as a `Date`.
+
+  The result keeps the labels as text, with any period the grid inserts
+  spelled like the first one. Labels of mixed forms, or of a form not
+  listed (`"Q3"`, `"FY19/20"`), or that read as two forms alike
+  (`"2010-11"`, `"2011-12"`: fiscal years or months), have no order:
+  yoychg() warns once, naming them, and no row has a comparison period.
+  Give their order with `prdord`.
+
+- by:
+
+  Optional grouping columns, as a character vector. The change is
+  computed within each group.
+
+- lag:
+
+  How many periods back to compare with. `1` is year-over-year on annual
+  data; for a `ts` the default follows the series' own frequency, so
+  monthly data compares with the same month a year earlier.
+
+- fun:
+
+  How several rows of one period (and group) are combined into one
+  value: `NULL` (the default) sums counts
+  ([`sum()`](https://rdrr.io/r/base/sum.html)) and averages continuous
+  values and percentages ([`mean()`](https://rdrr.io/r/base/mean.html));
+  pass a function of a numeric vector returning one number to choose.
+
+- units:
+
+  What the measure is. `"count"` gets the exact rate-ratio interval.
+  `"continuous"` gets the percent change without one, since a single
+  pair of totals carries no information about its own variability.
+  `"percent"` reports a percentage-POINT change and withholds the
+  percent change, which for a percentage is a different quantity.
+
+- minbase:
+
+  Optional: previous-period values below this get a “small base” note.
+  Nothing is withheld either way: every non-zero base gets its percent
+  change and exact interval, which is as wide as the base is small.
+  Defaults to 0 (no note); only a zero base has no percent change.
+
+- conflvl:
+
+  Numeric scalar in (0, 1), the confidence level for the count interval;
+  default 0.95.
+
+- dir:
+
+  Which way is an improvement: `"higher"`, `"lower"` (segregation days,
+  deaths in custody, use of force), or `"neutral"`. Affects colour and
+  the `verdict` column only, never the arithmetic.
+
+- complete:
+
+  Logical scalar, default `TRUE`: insert the missing periods in the
+  observed range so that a gap is visible as a gap instead of closing
+  up.
+
+- prdord:
+
+  Optional character vector: the period labels in order, one label being
+  one step, for text (or factor) periods the reader above does not know.
+  Every label in the data must be in it; one it lists that the data
+  lacks is a gap. `NULL` (the default) reads the labels as above.
+
+- digits:
+
+  Integer, default `1`. Decimal places shown in the percent (or
+  percentage-point) change column. The interval column is always shown
+  to whole percent.
+
+- palette:
+
+  Character, default `"diverging"`. One of
+  [`yoypals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoypals.md);
+  chooses the colours used when `color = TRUE`. An unknown name is an
+  error.
+
+- color:
+
+  Logical or `NULL` (the default). `TRUE` wraps each row in 24-bit ANSI
+  colour codes chosen from its verdict; `FALSE` prints plain text.
+  `NULL` means colour only in an interactive session with the `NO_COLOR`
+  environment variable unset, so output that is redirected or captured
+  stays plain text. [`format()`](https://rdrr.io/r/base/format.html)
+  takes `TRUE` or `FALSE` (default `FALSE`).
+
+- n:
+
+  Integer, default `30`. Maximum number of rows printed; the number of
+  rows left out is reported on a final line.
+
+## Value
+
+An `rmbl_yoy` object (a data frame of class
+`c("rmbl_yoy", "data.frame")`) with one row per period (and group): the
+period column under its own name (`period` for a vector or a `ts`), the
+grouping columns, then `value`, `previous`, `change`, `pctchg` (or
+`ppchg` for percentages), `flag` (character: “no comparison period”, “no
+data”, “previous period is zero”, or a small-base note when `minbase` is
+set; `NA` otherwise), `pctlo` and `pctup` for counts, and `verdict`.
+Attribute `"yoy"` records `value`, `period`, `by`, `lag`, `units`,
+`minbase`, `conflvl`, `direction` and the display digits; the writers
+([`yoywr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoywr.md))
+and
+[`yoysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md)
+read it.
+
+## Details
+
+Rows are first combined to one per period (and group) with `fun`. With
+`complete = TRUE` the periods missing from a regular grid (numbers,
+`Date` or `POSIXct` with a common step, the levels of an ordered factor,
+text periods read as described under `prd`) are inserted with `NA`
+values and flagged “no data”. Each period is then compared with the
+period `lag` steps earlier in that grid: `change` is the difference,
+`pctchg` \\100 (v_t / v\_{t-lag} - 1)\\ (`NA` off a zero base), and for
+percentages `ppchg` is the difference in percentage points.
+
+For counts, conditional on their sum \\n = a + b\\ the current count
+\\a\\ is binomial with probability \\\rho / (1 + \rho)\\, \\\rho\\ the
+rate ratio; the Clopper-Pearson interval for that probability,
+transformed back, is an exact interval for the ratio, reported as
+`pctlo` and `pctup` (percent change). It is the interval
+[`stats::poisson.test()`](https://rdrr.io/r/stats/poisson.test.html)
+gives for two counts with equal exposure. A zero base has no percent
+change but still an interval (with an infinite upper end).
+
+`verdict` is `"up"`, `"down"` or `"unchanged"` for
+`direction = "neutral"`, and `"better"`, `"worse"` or `"unchanged"`
+otherwise; it reads the sign of the change only and makes no claim of
+significance.
+
+Errors: `x` neither a data frame, a numeric vector nor a `ts`; `value`,
+`period` or `by` naming a column that does not exist; a non-numeric or
+infinite `value`; for `units = "count"`, negative or fractional values;
+`lag` not a positive whole number; `conflvl` outside (0, 1); an unknown
+`units` or `direction`; a `prdord` that is not distinct labels, lacks a
+label of the data, or is given for periods that are not text.
+
+## 0.5.x argument names
+
+The 0.5.x names `period`, `min_base`, `conf_level` and `direction` are
+still accepted for `prd`, `minbase`, `conflvl` and `dir`, the names to
+use, as are the 0.5.x values `"higher_is_better"` and
+`"lower_is_better"` of `dir`. A call that gives both names of one
+argument is refused.
+
+## References
+
+The exact interval for a ratio of two counts is the conditional-binomial
+(Clopper-Pearson) one, which is the construction
+[`stats::poisson.test`](https://rdrr.io/r/stats/poisson.test.html) uses
+and which this is verified against. On the reporting conventions, the
+Toronto Police Service's *Understanding Strip Searches in 2020
+Methodological Report* – in the local corpus – reports year-over-year
+change on exactly this kind of administrative extract, and is the shape
+this function is built for.
+
+## See also
+
+[`yoyhtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md),
+[`yoypdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md),
+[`yoysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md)
+
+## Examples
+
+``` r
+seg <- data.frame(
+  EndFiscalYear = rep(2019:2023, each = 2),
+  Gender = rep(c("Female", "Male"), 5),
+  NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
+)
+
+y <- yoychg(
+  seg,
+  value = "NumberOfPlacements",
+  prd = "EndFiscalYear",
+  by = "Gender",
+  dir = "lower"
+)
+y
+#> ╭── Change in NumberOfPlacements by EndFiscalYear ────────────────────────────╮
+#> │   Rows    10                                                                │
+#> │   Change  in percent                                                        │
+#> │   Better  lower values                                                      │
+#> │   Groups  2 (by Gender)                                                     │
+#> │                                                                             │
+#> │   Gender              Female                                                │
+#> │   EndFiscalYear       2019                                                  │
+#> │   NumberOfPlacements  31                                                    │
+#> │   previous            —                                                     │
+#> │   change              —                                                     │
+#> │   change %              —                                                   │
+#> │   interval            —                                                     │
+#> │                                                                             │
+#> │   Gender              Female                                                │
+#> │   EndFiscalYear       2020                                                  │
+#> │   NumberOfPlacements  28                                                    │
+#> │   previous            31                                                    │
+#> │   change              -3                                                    │
+#> │   change %            ▼ -9.7%                                               │
+#> │   interval            [-48%...                                              │
+#> │                                                                             │
+#> │   Gender              Female                                                │
+#> │   EndFiscalYear       2021                                                  │
+#> │   NumberOfPlacements  12                                                    │
+#> │   previous            28                                                    │
+#> │   change              -16                                                   │
+#> │   change %            ▼ -57.1%                                              │
+#> │   interval            [-80%...                                              │
+#> │                                                                             │
+#> │   Gender              Female                                                │
+#> │   EndFiscalYear       2022                                                  │
+#> │   NumberOfPlacements  19                                                    │
+#> │   previous            12                                                    │
+#> │   change              7                                                     │
+#> │   change %            ▲ +58.3%                                              │
+#> │   interval            [-27%...                                              │
+#> │                                                                             │
+#> │   Gender              Female                                                │
+#> │   EndFiscalYear       2023                                                  │
+#> │   NumberOfPlacements  24                                                    │
+#> │   previous            19                                                    │
+#> │   change              5                                                     │
+#> │   change %            ▲ +26.3%                                              │
+#> │   interval            [-34%...                                              │
+#> │                                                                             │
+#> │   Gender              Male                                                  │
+#> │   EndFiscalYear       2019                                                  │
+#> │   NumberOfPlacements  402                                                   │
+#> │   previous            —                                                     │
+#> │   change              —                                                     │
+#> │   change %              —                                                   │
+#> │   interval            —                                                     │
+#> │                                                                             │
+#> │   Gender              Male                                                  │
+#> │   EndFiscalYear       2020                                                  │
+#> │   NumberOfPlacements  377                                                   │
+#> │   previous            402                                                   │
+#> │   change              -25                                                   │
+#> │   change %            ▼ -6.2%                                               │
+#> │   interval            [-19%...                                              │
+#> │                                                                             │
+#> │   Gender              Male                                                  │
+#> │   EndFiscalYear       2021                                                  │
+#> │   NumberOfPlacements  190                                                   │
+#> │   previous            377                                                   │
+#> │   change              -187                                                  │
+#> │   change %            ▼ -49.6%                                              │
+#> │   interval            [-58%...                                              │
+#> │                                                                             │
+#> │   Gender              Male                                                  │
+#> │   EndFiscalYear       2022                                                  │
+#> │   NumberOfPlacements  268                                                   │
+#> │   previous            190                                                   │
+#> │   change              78                                                    │
+#> │   change %            ▲ +41.1%                                              │
+#> │   interval            [+17%...                                              │
+#> │                                                                             │
+#> │   Gender              Male                                                  │
+#> │   EndFiscalYear       2023                                                  │
+#> │   NumberOfPlacements  331                                                   │
+#> │   previous            268                                                   │
+#> │   change              63                                                    │
+#> │   change %            ▲ +23.5%                                              │
+#> │   interval            [+5%,...                                              │
+#> │                                                                             │
+#> │   Note: the first period of each group has nothing to compare with, so it   │
+#> │   shows no change.                                                          │
+#> │                                                                             │
+#> │   lag 1 period                                                              │
+#> │   units: count                                                              │
+#> │   95% exact rate-ratio interval                                             │
+#> │   lower is better                                                           │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+
+# The interval is exact, so a small group does not get a confident
+# percent it has not earned.
+subset(as.data.frame(y), Gender == "Female")
+#>   Gender EndFiscalYear value previous change     pctchg                 flag
+#> 1 Female          2019    31       NA     NA         NA no comparison period
+#> 2 Female          2020    28       31     -3  -9.677419                 <NA>
+#> 3 Female          2021    12       28    -16 -57.142857                 <NA>
+#> 4 Female          2022    19       12      7  58.333333                 <NA>
+#> 5 Female          2023    24       19      5  26.315789                 <NA>
+#>       pctlo     pctup verdict
+#> 1        NA        NA    <NA>
+#> 2 -47.79679  55.62836  better
+#> 3 -80.14950 -12.97354  better
+#> 4 -27.02865 257.66674   worse
+#> 5 -33.67876 143.90121   worse
+
+# A percentage is handled as percentage points, not as a percent of a
+# percent.
+rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
+yoychg(rate, value = "share", prd = "year", units = "percent")
+#> ╭── Change in share by year ──────────────────────────────────────────────────╮
+#> │   Rows    5                                                                 │
+#> │   Change  in percentage points                                              │
+#> │   Better  not set (direction neutral): the colour shows no verdict          │
+#> │                                                                             │
+#> │   year  share  previous  change  points                                     │
+#> │   ────  ─────  ────────  ──────  ────────                                   │
+#> │   2019  4.1    —         —         —                                        │
+#> │   2020  4.6    4.1       0.5     ▲ +0.5pp                                   │
+#> │   2021  5.2    4.6       0.6     ▲ +0.6pp                                   │
+#> │   2022  5.0    5.2       -0.2    ▼ -0.2pp                                   │
+#> │   2023  5.4    5.0       0.4     ▲ +0.4pp                                   │
+#> │                                                                             │
+#> │   Note: the first period has nothing to compare with, so it shows no        │
+#> │   change.                                                                   │
+#> │                                                                             │
+#> │   lag 1 period                                                              │
+#> │   units: percent                                                            │
+#> │   percentage-point change, not percent of a percent                         │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+
+# a missing year stays a gap; a bare column name works too
+yoychg(
+  data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)),
+  value = n,
+  prd = year
+)
+#> ╭── Change in n by year ──────────────────────────────────────────────────────╮
+#> │   Rows    4                                                                 │
+#> │   Change  in percent                                                        │
+#> │   Better  not set (direction neutral): the colour shows no verdict          │
+#> │                                                                             │
+#> │   year  n   previous  change  change %  interval                            │
+#> │   ────  ──  ────────  ──────  ────────  ─────────────                       │
+#> │   2019  10  —         —         —       —                                   │
+#> │   2020  —   10        —         —       —                                   │
+#> │     ↳ note: no data                                                         │
+#> │   2021  12  —         —         —       —                                   │
+#> │   2022  15  12        3       ▲ +25.0%  [-45%, +192%]                       │
+#> │                                                                             │
+#> │   Note: the first period has nothing to compare with, so it shows no        │
+#> │   change.                                                                   │
+#> │                                                                             │
+#> │   lag 1 period                                                              │
+#> │   units: count                                                              │
+#> │   95% exact rate-ratio interval                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+
+# a quarterly series compares each quarter with the same quarter a year
+# earlier
+q <- ts(c(5, 6, 7, 8, 6, 7, 9, 9), frequency = 4, start = c(2020, 1))
+as.data.frame(yoychg(q))[5:8, c("period", "value", "previous", "pctchg")]
+#>    period value previous   pctchg
+#> 5 2021.00     6        5 20.00000
+#> 6 2021.25     7        6 16.66667
+#> 7 2021.50     9        7 28.57143
+#> 8 2021.75     9        8 12.50000
+
+# text periods are read: fiscal years, quarters, months
+fy <- data.frame(fy = c("2019/20", "2020/21", "2022/23"), n = c(5, 7, 9))
+as.data.frame(yoychg(fy, "n", "fy"))[, c("fy", "previous", "flag")]
+#>        fy previous                 flag
+#> 1 2019/20       NA no comparison period
+#> 2 2020/21        5                 <NA>
+#> 3 2021/22        7              no data
+#> 4 2022/23       NA no comparison period
+qt <- data.frame(q = c("2021 Q4", "2022 Q1", "2022 Q2"), n = c(3, 4, 6))
+as.data.frame(yoychg(qt, "n", "q"))[, c("q", "previous", "pctchg")]
+#>         q previous   pctchg
+#> 1 2021 Q4       NA       NA
+#> 2 2022 Q1        3 33.33333
+#> 3 2022 Q2        4 50.00000
+
+# labels the reader does not know take their order from `prdord`
+ws <- data.frame(s = c("spring", "summer", "fall"), n = c(4, 6, 5))
+yoychg(ws, "n", "s", prdord = c("spring", "summer", "fall", "winter"))
+#> ╭── Change in n by s ─────────────────────────────────────────────────────────╮
+#> │   Rows    3                                                                 │
+#> │   Change  in percent                                                        │
+#> │   Better  not set (direction neutral): the colour shows no verdict          │
+#> │                                                                             │
+#> │   s       n  previous  change  change %  interval                           │
+#> │   ──────  ─  ────────  ──────  ────────  ─────────────                      │
+#> │   spring  4  —         —         —       —                                  │
+#> │   summer  6  4         2       ▲ +50.0%  [-64%, +623%]                      │
+#> │   fall    5  6         -1      ▼ -16.7%  [-80%, +228%]                      │
+#> │                                                                             │
+#> │   Note: the first period has nothing to compare with, so it shows no        │
+#> │   change.                                                                   │
+#> │                                                                             │
+#> │   lag 1 period                                                              │
+#> │   units: count                                                              │
+#> │   95% exact rate-ratio interval                                             │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+
+# counts must be whole numbers
+try(yoychg(data.frame(year = 1:3, n = c(1.5, 2, 3)), "n", "year"))
+#> Error : `units = "count"` needs non-negative whole numbers; use units = "continuous" for a measured quantity
+```

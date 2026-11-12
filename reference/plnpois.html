@@ -11,7 +11,7 @@ cluster-robust standard errors that do not need the counts to be Poisson."><meta
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -143,7 +143,7 @@ cluster-robust sandwich, with the small-sample factors of
 fit alternates iteratively reweighted least squares at fixed \(\theta\)
 with the maximum of the profile likelihood in \(\theta\), and the sandwich
 uses the negative binomial scores with \(\theta\) held at its estimate (as
-<code><a href="https://zeileis.codeberg.page/sandwich/reference/vcovCL.html" class="external-link">sandwich::vcovCL()</a></code> does for <code><a href="https://rdrr.io/pkg/MASS/man/glm.nb.html" class="external-link">MASS::glm.nb()</a></code>;
+<code><a href="https://rdrr.io/pkg/sandwich/man/vcovCL.html" class="external-link">sandwich::vcovCL()</a></code> does for <code><a href="https://rdrr.io/pkg/MASS/man/glm.nb.html" class="external-link">MASS::glm.nb()</a></code>;
 <code><a href="https://lrberge.github.io/fixest/reference/femlm.html" class="external-link">fixest::fenegbin()</a></code>, which treats \(\theta\) as a parameter of the
 variance too, gives slightly larger errors). With unit dummies this is the
 unconditional fixed-effects negative binomial, which behaves well as the

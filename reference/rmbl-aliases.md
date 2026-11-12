@@ -4,9 +4,14 @@
 names are no longer R functions, except the eleven rmoriedata 0.3.x
 calls
 ([rmbl-compat](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md))
-and the S3 generics `rate()`, `rate_change()`, `share()` and
-`yoy_summary()`, which stay so methods written for them still dispatch.
-The command line knows every old name, from
+and the S3 generic `yoy_summary()`, which stays so methods written for
+it still dispatch (1.1.1 dropped `rate()`, `rate_change()` and
+`share()`, whose names other CRAN packages use:
+[`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md),
+[`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+and
+[`shrs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md)
+are the functions). The command line knows every old name, from
 `inst/compat/compat_names_map.tsv`:
 
 
@@ -33,7 +38,7 @@ carries the class `rmbl_old` in front, so
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html),
 [`summary()`](https://rdrr.io/r/base/summary.html) and the generics read
 it in the 1.0.0 names. A 1.0.0 call is never translated.
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 kept its name: it returns the 0.5.x names when called with a 0.5.x
 argument name, and the 1.0.0 names otherwise.
 
@@ -211,60 +216,8 @@ cat(head(strsplit(paste(out, collapse = ""), "\n")[[1]], 3), sep = "\n")
 #> admissions() is the 0.5.x name of admits() (renamed in 1.0.0)
 #> Admissions implied by a population and a length of stay
 #> 
-# the generics kept their names, and return their result under the 0.5.x
-# names
-r <- rate(c(5, 12), population = c(1000, 4000))
-names(r)
-#> [1] "count"      "population" "rate"       "lower"      "upper"     
-#> [6] "flag"      
-rate_change(
-  data.frame(year = 2023:2024, n = c(10, 14), pop = 1000),
-  count = "n",
-  population = "pop",
-  period = "year"
-)
-#> ╭── Change in rate per 1,000 ─────────────────────────────────────────────╮
-#> │   Count       n                                                         │
-#> │   Population  pop                                                       │
-#> │   Period      year                                                      │
-#> │   Lag         1                                                         │
-#> │   Interval    95% exact conditional, on the % change                    │
-#> │                                                                         │
-#> │   year  count  population  rate  precnt  prepop  prerate  rateratio     │
-#> │   ----  -----  ----------  ----  ------  ------  -------  ---------     │
-#> │   2023     10       1,000    10                                         │
-#> │   2024     14       1,000    14      10   1,000       10      1.400     │
-#> │                                                                         │
-#> │   year  pctchg  pct_interval    flag                                    │
-#> │   ----  ------  --------------  ----                                    │
-#> │   2023                          [1]                                     │
-#> │   2024   40.00  [-42.2, 252.3]                                          │
-#> │                                                                         │
-#> │   Not distinguishable from 0 (interval includes it): 2024 (+40.0%).     │
-#> │                                                                         │
-#> │   [1] no comparison period                                              │
-#> │   pctchg is the percentage change in the rate from the period `lag`     │
-#> │   before; an interval that includes 0 means the change could be chance. │
-#> ╰─────────────────────────────────────────────────────────────────────────╯
-share(c(a = 3, b = 7))
-#> ╭── Share ───────────────────────────────────────────────────────────────╮
-#> │   Count     count                                                      │
-#> │   Total     10                                                         │
-#> │   Interval  95% Wilson                                                 │
-#> │                                                                        │
-#> │   label  count  total  share  95% CI                                   │
-#> │   -----  -----  -----  -----  --------------                           │
-#> │   a          3     10     30  [10.78, 60.32]                           │
-#> │   b          7     10     70  [39.68, 89.22]                           │
-#> │                                                                        │
-#> │   Highest share: row 2 (70); lowest: row 1 (30). Their intervals       │
-#> │   overlap, which alone does not mean they are the same: the difference │
-#> │   has its own, narrower interval (svycmp() for survey domains).        │
-#> │                                                                        │
-#> │   Each share is the count as a percentage of the total, with a Wilson  │
-#> │   interval, which stays inside 0 to 100 for small counts.              │
-#> ╰────────────────────────────────────────────────────────────────────────╯
-y <- yoy(
+# the generic kept its name, and returns its result under the 0.5.x names
+y <- yoychg(
   data.frame(year = 2021:2024, n = c(10, 12, 9, 15)),
   value = "n",
   period = "year"
