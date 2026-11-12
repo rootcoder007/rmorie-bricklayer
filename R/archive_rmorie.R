@@ -295,6 +295,9 @@ arcvis <- function(id, to) {
   if (res$status != 200L) {
     stop(.bl_arc_why(res, sprintf("capture %s", id)), call. = FALSE)
   }
+  if (!is.list(res$json) || !identical(res$json$visibility, to)) {
+    .bl_arc_unsure(id, base)
+  }
   message(sprintf("Capture %s is now %s.", id, to))
   invisible(list(capture_id = id, visibility = to))
 }
@@ -322,8 +325,11 @@ arcwd <- function(id, confirm = FALSE) {
     key = key,
     base = base
   )
-  if (res$status != 200L || !is.list(res$json)) {
+  if (res$status != 200L) {
     stop(.bl_arc_why(res, sprintf("capture %s", id)), call. = FALSE)
+  }
+  if (!is.list(res$json) || !isTRUE(res$json$withdrawn)) {
+    .bl_arc_unsure(id, base)
   }
   gone <- isTRUE(res$json$bytes_removed)
   message(sprintf(
@@ -334,11 +340,12 @@ arcwd <- function(id, confirm = FALSE) {
   one <- function(v) {
     if (length(v) == 1L && is.atomic(v)) as.character(v) else NA_character_
   }
+  was <- one(res$json$was)
   invisible(list(
     capture_id = id,
     url = one(res$json$url),
     withdrawn = TRUE,
-    was = one(res$json$was),
+    was = if (was %in% c("private", "public")) was else NA_character_,
     bytes_removed = gone
   ))
 }
@@ -664,11 +671,39 @@ arcwd <- function(id, confirm = FALSE) {
       error = function(e) NULL
     )
   }
+  # the archive's own error text goes into messages: one printable string,
+  # with the key taken out should the archive have repeated it
+  if (is.list(json) && !is.null(json$error)) {
+    e <- json$error
+    json$error <- if (is.character(e) && length(e) == 1L && !is.na(e)) {
+      .rmbl_printable(.bl_redact(e, key))
+    }
+  }
   list(
     status = as.integer(res$status %||% -1L),
     json = json,
     body = res$body,
     error = res$error %||% ""
+  )
+}
+
+#' Says that the archive answered 200 without confirming a change.
+#' @param id The capture id.
+#' @param base The archive's base address.
+#' @return Never: stops.
+#' @noRd
+.bl_arc_unsure <- function(id, base) {
+  stop(
+    sprintf(
+      paste0(
+        "capture %s: %s answered HTTP 200 without confirming the change (a ",
+        "sign-in page or a proxy's page looks like this); whether it was ",
+        "made is not known: see arcmine()"
+      ),
+      id,
+      .bl_arc_host(base)
+    ),
+    call. = FALSE
   )
 }
 

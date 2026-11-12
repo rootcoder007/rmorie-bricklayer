@@ -1244,15 +1244,16 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   .yoy_md_esc(x)
 }
 
-#' Text for a code span in a table cell: one line, the pipe escaped, and a
-#' backtick (which would end the span) written as a quote. No HTML escaping:
-#' inside a code span Markdown shows `&amp;` as written.
-#' @param x The text placed between backticks.
-#' @return The text.
+#' A code span for a table cell: one line, the pipe escaped, fenced with two
+#' backticks when the text has one of its own (which would end a span fenced
+#' with one). No HTML escaping: inside a code span Markdown shows `&amp;` as
+#' written.
+#' @param x The text shown as code.
+#' @return The span, backticks included.
 #' @noRd
 .bl_md_code <- function(x) {
-  x <- .rmbl_ctl_escape(gsub("[\r\n]+", " ", x))
-  gsub("|", "\\|", gsub("`", "'", x, fixed = TRUE), fixed = TRUE)
+  x <- gsub("|", "\\|", .rmbl_ctl_escape(gsub("[\r\n]+", " ", x)), fixed = TRUE)
+  ifelse(grepl("`", x, fixed = TRUE), paste0("`` ", x, " ``"), paste0("`", x, "`"))
 }
 
 #' A number for the report: three significant digits, \code{"-"} for NA.
@@ -1772,7 +1773,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     md <- c(
       md,
       sprintf(
-        "| `%s` | %s | `%s` | %s | %s | %s | %s %s |",
+        "| %s | %s | `%s` | %s | %s | %s | %s %s |",
         .bl_md_code(cp$capsule),
         .bl_md_esc(i$host),
         i$sha,

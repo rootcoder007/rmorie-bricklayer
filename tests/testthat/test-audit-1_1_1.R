@@ -337,8 +337,8 @@ test_that("a count written as text in a provenance file gives no warning", {
 })
 
 test_that("a code span in the verify table is not HTML-escaped", {
-  expect_identical(.bl_md_code("R&D <b> a|b"), "R&D <b> a\\|b")
-  expect_identical(.bl_md_code("a`b\nc"), "a'b c")
+  expect_identical(.bl_md_code("R&D <b> a|b"), "`R&D <b> a\\|b`")
+  expect_identical(.bl_md_code("a`b\nc"), "`` a`b c ``")
   root <- withr::local_tempdir()
   d <- file.path(root, "R&D survey")
   dir.create(d)
@@ -368,4 +368,59 @@ test_that("the missing-key advice fits the archive that was asked", {
     .bl_arc_key = function(base) NULL
   )
   expect_error(arcmine(), "set MORIE_ARCHIVE_KEY")
+})
+
+test_that("a key the archive repeats in its error text is not shown", {
+  local_mocked_bindings(
+    .bl_arc_base = function() "http://127.0.0.1:9",
+    .bl_arc_key = function(base) "SECRET-KEY-123",
+    .bl_net = function(url, res) {
+      list(
+        status = 401L,
+        body = charToRaw("{\"error\": \"bad key Bearer SECRET-KEY-123\"}"),
+        error = ""
+      )
+    },
+    .bl_loopback_url = function(base) FALSE
+  )
+  for (f in list(
+    function() arcmine(),
+    function() arcfind("https://example.org/"),
+    function() arcvis("20260101120000-0123abcd", "private"),
+    function() arcwd("20260101120000-0123abcd", confirm = TRUE)
+  )) {
+    msg <- tryCatch(f(), error = conditionMessage)
+    expect_match(msg, "HTTP 401", fixed = TRUE)
+    expect_no_match(msg, "SECRET-KEY-123", fixed = TRUE)
+  }
+})
+
+test_that("arcvis() and arcwd() report only what the archive confirmed", {
+  id <- "20260101120000-0123abcd"
+  ans <- NULL
+  local_mocked_bindings(
+    .bl_arc_base = function() "https://archive.rmorie.com",
+    .bl_arc_key = function(base) "sk-test",
+    .bl_arc_req = function(...) {
+      list(status = 200L, json = ans, body = "", error = "")
+    }
+  )
+  for (bad in list(
+    NULL,
+    "sign in",
+    list(),
+    list(capture_id = 5, visibility = list("x")),
+    list(visibility = "public"),
+    list(withdrawn = "yes"),
+    list(withdrawn = FALSE)
+  )) {
+    ans <- bad
+    expect_error(arcvis(id, "private"), "without confirming the change")
+    expect_error(arcwd(id, confirm = TRUE), "without confirming the change")
+  }
+  ans <- list(withdrawn = TRUE, was = list("odd"), bytes_removed = "x", url = 5)
+  r <- suppressMessages(arcwd(id, confirm = TRUE))
+  expect_identical(r$was, NA_character_)
+  expect_false(r$bytes_removed)
+  expect_identical(r$url, "5")
 })
