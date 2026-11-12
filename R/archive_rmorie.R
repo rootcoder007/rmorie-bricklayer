@@ -360,7 +360,7 @@ arcwd <- function(id, confirm = FALSE) {
 #'
 #' Beyond the confirmation, the members are what the archive adds: each is
 #' taken only in the type it documents, else it is NA.
-#' @param json The parsed reply.
+#' @param json The archive's answer to the withdrawal, as a list.
 #' @param id The capture that was withdrawn.
 #' @return The list arcwd() returns.
 #' @noRd
@@ -708,23 +708,34 @@ arcwd <- function(id, confirm = FALSE) {
       .Call(C_rmbl_http_put, url, file, ctype, as.integer(timeout), hdr, local)
     )
   )
-  json <- if (length(res$body)) {
-    tryCatch(
-      .rmbl_json_text(res$body, simplifyVector = FALSE),
-      error = function(e) NULL
-    )
-  }
-  # the archive's own error text goes into messages: one printable string,
-  # with the key taken out should the archive have repeated it
-  if (is.list(json) && !is.null(json$error)) {
-    json$error <- .bl_arc_errtext(json$error, key)
-  }
   list(
     status = as.integer(res$status %||% -1L),
-    json = json,
+    json = .bl_arc_json(res$body, key),
     body = res$body,
     error = res$error %||% ""
   )
+}
+
+#' The archive's reply as parsed JSON, or NULL when it is none.
+#'
+#' The reply's own error text goes into messages, so it is made one printable
+#' string here, with the key withheld should the archive have repeated it.
+#' @param body The reply's bytes or text.
+#' @param key The key that was sent, or NULL.
+#' @return A list, or NULL.
+#' @noRd
+.bl_arc_json <- function(body, key) {
+  if (!length(body)) {
+    return(NULL)
+  }
+  json <- tryCatch(
+    .rmbl_json_text(body, simplifyVector = FALSE),
+    error = function(e) NULL
+  )
+  if (is.list(json) && !is.null(json$error)) {
+    json$error <- .bl_arc_errtext(json$error, key)
+  }
+  json
 }
 
 #' The archive's error text for a message, or NULL when it is no text.
@@ -858,13 +869,23 @@ arcwd <- function(id, confirm = FALSE) {
   if (rec$status != 201L) {
     stop(.bl_arc_why(rec, "recording the capture"), call. = FALSE)
   }
+  .bl_arc_recorded(rec$json, base)
+}
+
+#' The archive's record of a new capture, checked: it names the capture by an
+#' id of the capture-id shape and gives its page.
+#' @param rec The parsed 201 reply.
+#' @param base The address of the archive the capture was sent to.
+#' @return `rec`; stops when it is no capture record.
+#' @noRd
+.bl_arc_recorded <- function(rec, base) {
   one <- function(v) is.character(v) && length(v) == 1L && !is.na(v)
   if (
-    !is.list(rec$json) ||
-      !one(rec$json[["capture_id"]]) ||
-      !grepl("^[0-9]{14}-[0-9a-f]{8}$", rec$json[["capture_id"]]) ||
+    !is.list(rec) ||
+      !one(rec[["capture_id"]]) ||
+      !grepl("^[0-9]{14}-[0-9a-f]{8}$", rec[["capture_id"]]) ||
       # [[ ]]: `$capture` would also match a lone `capture_id`
-      !one(rec$json[["capture"]])
+      !one(rec[["capture"]])
   ) {
     stop(
       sprintf(
@@ -877,7 +898,29 @@ arcwd <- function(id, confirm = FALSE) {
       call. = FALSE
     )
   }
-  rec$json
+  rec
+}
+
+#' Stops when a listed capture has no id or no digest to check its bytes by.
+#' @param cid,sha The capture's id and SHA-256 as listed, possibly NA.
+#' @param x The address whose capture was asked for.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_arc_checkable <- function(cid, sha, x) {
+  if (is.na(cid) || is.na(sha)) {
+    stop(
+      sprintf(
+        paste0(
+          "%s lists a capture of %s without a capture id or a SHA-256, so ",
+          "its bytes could not be checked: nothing was fetched"
+        ),
+        .bl_arc_host(),
+        x
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }
 
 #' A media type from a file name, for the WARC record and the upload.
@@ -1070,19 +1113,7 @@ arcwd <- function(id, confirm = FALSE) {
     }
     i <- utils::tail(which(found$sha256 == sha256), 1L)
   }
-  if (is.na(found$capture_id[i]) || is.na(found$sha256[i])) {
-    stop(
-      sprintf(
-        paste0(
-          "%s lists a capture of %s without a capture id or a SHA-256, so ",
-          "its bytes could not be checked: nothing was fetched"
-        ),
-        .bl_arc_host(),
-        x
-      ),
-      call. = FALSE
-    )
-  }
+  .bl_arc_checkable(found$capture_id[i], found$sha256[i], x)
   list(
     id = found$capture_id[i],
     url = found$url[i],

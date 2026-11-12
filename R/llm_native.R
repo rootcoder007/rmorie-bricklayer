@@ -2554,19 +2554,11 @@ llmstat <- function() {
   if (isTRUE(open_browser) && .bl_browsable(info$verification_uri)) {
     try(utils::browseURL(info$verification_uri), silent = TRUE)
   }
-  # the service's interval is a suggestion from the network: one number from
-  # 1 to 60 seconds, else 5 (100000 slept past `pollmaxsec`, 0 polled with no
-  # pause, text stopped with "invalid 'time' value")
-  interval <- suppressWarnings(as.numeric(info$interval %||% 5))[1L]
-  if (length(interval) != 1L || is.na(interval)) {
-    interval <- 5
-  }
-  interval <- min(max(interval, 1), 60)
+  interval <- .bl_login_interval(info$interval)
   deadline <- Sys.time() + poll_max_seconds
   waited <- 0
   while (Sys.time() < deadline) {
-    left <- as.numeric(difftime(deadline, Sys.time(), units = "secs"))
-    Sys.sleep(max(0, min(interval, left)))
+    .bl_login_wait(interval, deadline)
     waited <- waited + interval
     if (waited %% 30 < interval) {
       # a silent wait reads as a hang
@@ -2583,26 +2575,59 @@ llmstat <- function() {
       list(device_code = info$device_code)
     )
     if (res$status == 200L && is.character(res$json$api_key)) {
-      k <- res$json$api_key
-      if (length(k) != 1L || is.na(k) || !nzchar(k) ||
-            grepl("[[:cntrl:]]", k)) {
-        stop(
-          "the sign-in service sent a key that is empty or has a line break ",
-          "or control character in it; nothing was stored",
-          call. = FALSE
-        )
-      }
-      p <- .bl_store_key(res$json$api_key, res$json$user)
+      k <- .bl_login_key(res$json$api_key)
+      p <- .bl_store_key(k, res$json$user)
       message(sprintf(
         "Logged in as %s; key stored in %s",
         if (is.null(res$json$user)) "user" else res$json$user,
         p
       ))
-      return(invisible(res$json$api_key))
+      return(invisible(k))
     }
     if (res$status != 428L) .bl_reply_error(res, "the sign-in service")
   }
   stop("timed out waiting for the GitHub approval", call. = FALSE)
+}
+
+#' The seconds between two polls of the sign-in service.
+#'
+#' The service's interval is a suggestion from the network: one number from 1
+#' to 60 seconds, else 5 (100000 slept past `pollmaxsec`, 0 polled with no
+#' pause, text stopped with "invalid 'time' value").
+#' @param v The `interval` member of the service's reply.
+#' @return One number from 1 to 60.
+#' @noRd
+.bl_login_interval <- function(v) {
+  v <- suppressWarnings(as.numeric(v %||% 5))[1L]
+  if (length(v) != 1L || is.na(v)) {
+    v <- 5
+  }
+  min(max(v, 1), 60)
+}
+
+#' Waits one polling interval, or what is left of the limit when that is less.
+#' @param interval Seconds between polls.
+#' @param deadline When the wait for the approval ends (POSIXct).
+#' @return NULL, invisibly.
+#' @noRd
+.bl_login_wait <- function(interval, deadline) {
+  left <- as.numeric(difftime(deadline, Sys.time(), units = "secs"))
+  Sys.sleep(max(0, min(interval, left)))
+}
+
+#' The key the sign-in service sent, checked before it is stored.
+#' @param k The `api_key` member of the service's reply, a character vector.
+#' @return The key; stops when it is empty or holds a control character.
+#' @noRd
+.bl_login_key <- function(k) {
+  if (length(k) != 1L || is.na(k) || !nzchar(k) || grepl("[[:cntrl:]]", k)) {
+    stop(
+      "the sign-in service sent a key that is empty or has a line break ",
+      "or control character in it; nothing was stored",
+      call. = FALSE
+    )
+  }
+  k
 }
 
 #' The packages llmask() reads the documentation of, checked as installed.
