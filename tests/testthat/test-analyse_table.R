@@ -218,11 +218,21 @@ test_that("the capsule template runs as written on the shipped example", {
   expect_error(usecpstmpl(d), "not empty")
   skip_on_cran()
   skip_if_lowmem()
-  res <- system2(
-    file.path(R.home("bin"), "Rscript"),
-    c(shQuote(file.path(d, "analysis.R"))),
-    stdout = TRUE,
-    stderr = TRUE
+  # the child R loads the package from the library this session uses, however
+  # the tests were started (R CMD check sets R_LIBS; a plain test_dir() does
+  # not, and the child then loaded an older installed copy)
+  child_env <- c(
+    R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep),
+    R_TESTS = NA
+  )
+  res <- withr::with_envvar(
+    child_env,
+    system2(
+      file.path(R.home("bin"), "Rscript"),
+      c(shQuote(file.path(d, "analysis.R"))),
+      stdout = TRUE,
+      stderr = TRUE
+    )
   )
   expect_true(
     file.exists(file.path(d, "results", "manifest.json")),
@@ -238,11 +248,14 @@ test_that("the capsule template runs as written on the shipped example", {
   expect_true(vrfcps(d)$ok)
   # a second run sees the pin and goes through again
   skip_if_lowmem()
-  res2 <- system2(
-    file.path(R.home("bin"), "Rscript"),
-    c(shQuote(file.path(d, "analysis.R"))),
-    stdout = TRUE,
-    stderr = TRUE
+  res2 <- withr::with_envvar(
+    child_env,
+    system2(
+      file.path(R.home("bin"), "Rscript"),
+      c(shQuote(file.path(d, "analysis.R"))),
+      stdout = TRUE,
+      stderr = TRUE
+    )
   )
   expect_true(
     any(grepl("results in", res2, fixed = TRUE)),
