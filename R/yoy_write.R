@@ -435,7 +435,7 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
 }
 
 #' Escapes text for a Markdown table cell.
-#' @param v A character vector.
+#' @param v The texts of one Markdown table column, or its header names.
 #' @return `v` on one line, with HTML and the pipe escaped.
 #' @noRd
 .yoy_md_esc <- function(v) {

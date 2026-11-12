@@ -34,7 +34,10 @@ test_that("a bundle whose attestation has no signature is no bundle", {
   utils::write.csv(data.frame(x = 1:3), file.path(dir, "d.csv"))
   m <- mkmnf(list(dataset = "demo"), env = FALSE)
   p <- attr(cpsbndl(dir, m, "shared-secret"), "path")
-  writeLines(sub("\"signature\":", "\"signaturX\":", readLines(p)), p)
+  writeLines(
+    sub("\"signature\":", "\"signaturX\":", readLines(p), fixed = TRUE),
+    p
+  )
   expect_error(cpsbndlrd(p), "not a capsule bundle")
   expect_error(
     cpsbndlvrf(p, dir, man = m, key = "shared-secret"),
@@ -48,11 +51,20 @@ test_that("cpssign() names the keys it takes when given none of them", {
 })
 
 test_that("a column name with a pipe, HTML or a line break stays in its cell", {
-  d <- data.frame(yr = 2019:2021, n = c(5, 9, 7), g = "a|b")
+  d <- data.frame(
+    yr = 2019:2021,
+    n = c(5, 9, 7),
+    g = "a|b",
+    stringsAsFactors = FALSE
+  )
   names(d)[2] <- "cases|<b>all</b>"
-  md <- strsplit(yoymd(yoychg(d, names(d)[2], "yr", by = "g"), NULL), "\n")[[1]]
+  md <- strsplit(
+    yoymd(yoychg(d, names(d)[2], "yr", by = "g"), NULL),
+    "\n",
+    fixed = TRUE
+  )[[1]]
   cells <- lengths(gregexpr("(?<!\\\\)\\|", md[1:5], perl = TRUE))
-  expect_identical(length(unique(cells)), 1L)
+  expect_length(unique(cells), 1L)
   expect_false(any(grepl("<b>", md, fixed = TRUE)))
 
   e <- data.frame(yr = 2019:2021, n = c(5, 9, 7))
@@ -69,20 +81,25 @@ test_that("rptanl() escapes a pipe in a group label", {
   d <- data.frame(
     year = rep(2018:2020, 2),
     grp = rep(c("A|B", "C"), each = 3),
-    n = c(5, 7, 9, 3, 4, 6)
+    n = c(5, 7, 9, 3, 4, 6),
+    stringsAsFactors = FALSE
   )
-  md <- strsplit(rptanl(anytab(d, value = "n", prd = "year", by = "grp")),
-                 "\n")[[1]]
-  tab <- md[grepl("^\\|", md)][1:4]
+  md <- strsplit(
+    rptanl(anytab(d, value = "n", prd = "year", by = "grp")),
+    "\n",
+    fixed = TRUE
+  )[[1]]
+  tab <- grep("^\\|", md, value = TRUE)[1:4]
   cells <- lengths(gregexpr("(?<!\\\\)\\|", tab, perl = TRUE))
-  expect_identical(length(unique(cells)), 1L)
+  expect_length(unique(cells), 1L)
 })
 
 test_that("the HTML report escapes a label once", {
   d <- data.frame(
     year = rep(2018:2020, 2),
     grp = rep(c("A|B & C <i>", "D"), each = 3),
-    n = c(5, 7, 9, 3, 4, 6)
+    n = c(5, 7, 9, 3, 4, 6),
+    stringsAsFactors = FALSE
   )
   h <- rptanl(
     anytab(d, value = "n", prd = "year", by = "grp"),

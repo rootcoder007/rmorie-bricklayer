@@ -445,8 +445,8 @@ rptanl <- function(
 }
 
 #' Text for a Markdown table cell: one line, HTML and the pipe escaped.
-#' @param v A vector.
-#' @return A character vector.
+#' @param v The values of one table column, or the header names.
+#' @return The cell texts.
 #' @noRd
 .md_cell <- function(v) .yoy_md_esc(as.character(v))
 

@@ -64,37 +64,37 @@ if (split_run) {
   # all its counters (about 40 MB once read), and covr reads them all before
   # it adds them up: 52 files took 2.06 GB, which stopped pkgcheck on a 2 GB
   # machine after every test had passed. Adding each batch into one file as
-  # the suite goes gives covr the same counts in one file. Anything not as
-  # expected (another covr layout, recorded tests) leaves the files alone.
-  squash <- function() {
-    dir <- dirname(find.package("rmoriebricklayer"))
-    fs <- list.files(dir, "^covr_trace_", full.names = TRUE)
-    if (length(fs) < 2L) {
-      return(invisible(NULL))
-    }
-    acc <- readRDS(fs[1L])
-    if (!is.environment(acc) || exists("tests", acc, inherits = FALSE)) {
-      return(invisible(NULL))
-    }
-    for (f in fs[-1L]) {
-      x <- readRDS(f)
-      if (!is.environment(x) || exists("tests", x, inherits = FALSE)) {
-        return(invisible(NULL))
-      }
-      for (k in ls(x, all.names = TRUE)) {
-        if (exists(k, acc, inherits = FALSE)) {
-          acc[[k]]$value <- acc[[k]]$value + x[[k]]$value
-        } else {
-          acc[[k]] <- x[[k]]
-        }
-      }
-    }
-    tmp <- tempfile("sq_", tmpdir = dir)
-    saveRDS(acc, tmp)
-    unlink(fs[-1L])
-    file.rename(tmp, fs[1L])
-    invisible(NULL)
-  }
+  # the suite goes gives covr the same counts in one file. The adding runs in
+  # an R process of its own, which ends before the next batch starts: done in
+  # this process it left less room for each batch, and the last ones were
+  # stopped for memory. Anything not as expected (another covr layout,
+  # recorded tests) leaves the files alone.
+  squash <- tempfile(fileext = ".R")
+  writeLines(c(
+    "dir <- dirname(find.package('rmoriebricklayer'))",
+    "fs <- list.files(dir, '^covr_trace_', full.names = TRUE)",
+    "if (length(fs) < 2L) quit(status = 0L)",
+    "plain <- function(e) {",
+    "  is.environment(e) && !exists('tests', e, inherits = FALSE)",
+    "}",
+    "acc <- readRDS(fs[1L])",
+    "if (!plain(acc)) quit(status = 0L)",
+    "for (f in fs[-1L]) {",
+    "  x <- readRDS(f)",
+    "  if (!plain(x)) quit(status = 0L)",
+    "  for (k in ls(x, all.names = TRUE)) {",
+    "    if (exists(k, acc, inherits = FALSE)) {",
+    "      acc[[k]]$value <- acc[[k]]$value + x[[k]]$value",
+    "    } else {",
+    "      acc[[k]] <- x[[k]]",
+    "    }",
+    "  }",
+    "}",
+    "tmp <- tempfile('sq_', tmpdir = dir)",
+    "saveRDS(acc, tmp)",
+    "unlink(fs[-1L])",
+    "invisible(file.rename(tmp, fs[1L]))"
+  ), squash)
   covr <- nzchar(Sys.getenv("R_COVR"))
   failed <- character()
   for (g in groups) {
@@ -103,7 +103,7 @@ if (split_run) {
     filter <- paste0("^(", paste(esc, collapse = "|"), ")$")
     Sys.setenv(RMBL_TEST_FILTER = filter)
     if (!identical(system2(rscript, shQuote(child)), 0L)) failed <- c(failed, g)
-    if (covr) try(squash(), silent = TRUE)
+    if (covr) try(system2(rscript, shQuote(squash)), silent = TRUE)
   }
   if (length(failed)) {
     stop("tests failed in: ", toString(failed), call. = FALSE)

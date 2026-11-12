@@ -211,21 +211,6 @@ cpsbndl <- function(
   invisible(bundle)
 }
 
-#' Whether a bundle's file list is a list of records, each with one path and
-#' one digest as strings.
-#' @param files The `files` member of a parsed bundle.
-#' @return TRUE or FALSE.
-#' @noRd
-.bl_bnd_files_ok <- function(files) {
-  one <- function(v) is.character(v) && length(v) == 1L && !is.na(v)
-  is.list(files) &&
-    all(vapply(
-      files,
-      function(e) is.list(e) && one(e$path) && one(e$sha256),
-      NA
-    ))
-}
-
 #' @rdname cpsbndl
 #' @export
 cpsbndlrd <- function(path) {
@@ -346,6 +331,21 @@ format.bricklayer_bundle_check <- function(x, ...) {
     ),
     notes = .rmbl_check_lines(x$checks)
   )
+}
+
+#' Whether a bundle's file list is a list of records, each with one path and
+#' one digest as strings.
+#' @param files The `files` member of a parsed bundle.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_bnd_files_ok <- function(files) {
+  one <- function(v) is.character(v) && length(v) == 1L && !is.na(v)
+  is.list(files) &&
+    all(vapply(
+      files,
+      function(e) is.list(e) && one(e$path) && one(e$sha256),
+      NA
+    ))
 }
 
 #' The files a bundle covers: those named, or every regular file in `dir`
