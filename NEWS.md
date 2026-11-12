@@ -15,6 +15,7 @@
 * `yoymd()` and the Markdown of `rptanl()` escape a pipe or HTML in a column name or group label as they do in a value, and the metadata line of `yoycsv()` and `yoytsv()` stays one line when a column name holds a line break.
 * `cpssign()` given something that is no key names the keys it takes.
 * The help of `benfordtst()` says which digit a value within rounding of a power of ten counts under: the one R prints.
+* Under coverage the test runner adds each batch's counts into one trace file as the suite goes. covr reads the trace file of every R process before adding them up, and the 52 files of a full run took 2.06 GB, which stopped rOpenSci's pkgcheck ("Package coverage failed") on a 2 GB machine after every test had passed. The coverage figures are unchanged.
 * The `@srrstatsNA` entry for standard G2.14c (imputation) starts its own line again, so 'srr' reads it.
 * Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
 

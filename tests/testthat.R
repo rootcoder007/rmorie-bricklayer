@@ -60,6 +60,42 @@ if (split_run) {
     "  reporter = testthat::check_reporter(), stop_on_failure = TRUE",
     ")"
   ), child)
+  # Under covr every R process that loaded the package leaves a trace file of
+  # all its counters (about 40 MB once read), and covr reads them all before
+  # it adds them up: 52 files took 2.06 GB, which stopped pkgcheck on a 2 GB
+  # machine after every test had passed. Adding each batch into one file as
+  # the suite goes gives covr the same counts in one file. Anything not as
+  # expected (another covr layout, recorded tests) leaves the files alone.
+  squash <- function() {
+    dir <- dirname(find.package("rmoriebricklayer"))
+    fs <- list.files(dir, "^covr_trace_", full.names = TRUE)
+    if (length(fs) < 2L) {
+      return(invisible(NULL))
+    }
+    acc <- readRDS(fs[1L])
+    if (!is.environment(acc) || exists("tests", acc, inherits = FALSE)) {
+      return(invisible(NULL))
+    }
+    for (f in fs[-1L]) {
+      x <- readRDS(f)
+      if (!is.environment(x) || exists("tests", x, inherits = FALSE)) {
+        return(invisible(NULL))
+      }
+      for (k in ls(x, all.names = TRUE)) {
+        if (exists(k, acc, inherits = FALSE)) {
+          acc[[k]]$value <- acc[[k]]$value + x[[k]]$value
+        } else {
+          acc[[k]] <- x[[k]]
+        }
+      }
+    }
+    tmp <- tempfile("sq_", tmpdir = dir)
+    saveRDS(acc, tmp)
+    unlink(fs[-1L])
+    file.rename(tmp, fs[1L])
+    invisible(NULL)
+  }
+  covr <- nzchar(Sys.getenv("R_COVR"))
   failed <- character()
   for (g in groups) {
     # test file names are letters, digits, "_", "-" and "."; only "." is special
@@ -67,6 +103,7 @@ if (split_run) {
     filter <- paste0("^(", paste(esc, collapse = "|"), ")$")
     Sys.setenv(RMBL_TEST_FILTER = filter)
     if (!identical(system2(rscript, shQuote(child)), 0L)) failed <- c(failed, g)
+    if (covr) try(squash(), silent = TRUE)
   }
   if (length(failed)) {
     stop("tests failed in: ", toString(failed), call. = FALSE)
