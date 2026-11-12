@@ -60,7 +60,7 @@ readLines(file.path(d, "credentials.json"))
 # a damaged file is refused, not overwritten
 writeLines("not json", file.path(d, "credentials.json"))
 try(dlogout())
-#> Error : /tmp/RtmpXDYe1N/file1e863d8e5fdf/morie/credentials.json is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it (it is shared with morie and rmorie)
+#> Error : /tmp/RtmprtFVRz/file1f851b31cbf8/morie/credentials.json is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it (it is shared with morie and rmorie)
 
 if (is.na(old)) {
   Sys.unsetenv("XDG_CONFIG_HOME")

@@ -73,6 +73,9 @@
   it itself. Downloads were not affected (they always make a handle
   first); the package’s own test of the policy failed on Windows once
   the tests ran in fresh processes.
+- A new hex logo (`man/figures/logo.png`, source
+  `data-raw/hex_logo.svg`): contour lines of a density in the shape of a
+  fingerprint, with the package name on the lower edge.
 - [`cqnt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md),
   [`cmed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md),
   [`ciqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
