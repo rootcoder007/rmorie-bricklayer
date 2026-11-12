@@ -1030,6 +1030,13 @@ cpssign <- function(
   scheme <- .rmbl_arg(scheme, c("xmss", "hmac"))
 
   if (identical(scheme, "hmac")) {
+    if (!is.character(key) && !is.raw(key)) {
+      stop(
+        "`key` must come from fipskg() or pqckg(), or be a shared secret (a ",
+        "string or raw vector) for hmac",
+        call. = FALSE
+      )
+    }
     tag <- chmac(key, msg)
     out <- list(scheme = "hmac", signature = tag)
     class(out) <- c("bricklayer_signature", "list")

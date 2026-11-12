@@ -34,7 +34,9 @@ p-value as a reason to look, never as evidence of fabrication.
 }
 \details{
 Zeros and non-finite values have no leading significant digit and are
-excluded; the sign is ignored.
+excluded; the sign is ignored. The digit is that of the value as R prints
+it, at 15 significant digits: \code{0.99999999999999989}, which prints as \code{1},
+counts under 1.
 
 With \eqn{n} usable values, \eqn{O_d} the count with leading digit
 \eqn{d} and \eqn{E_d = n \log_{10}(1 + 1/d)},

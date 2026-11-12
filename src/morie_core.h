@@ -380,7 +380,11 @@ inline double gamma_log_prefactor(double a, double x) {
     const double ia = 1.0 / a, ia2 = ia * ia;
     const double stirlerr =
         ia * (1.0 / 12.0 - ia2 * (1.0 / 360.0 - ia2 * (1.0 / 1260.0 - ia2 / 1680.0)));
-    return a * (std::log1p(t) - t) + 0.5 * std::log(a) - 0.91893853320467274178 - stirlerr;
+    // far below the shape, t is close to -1 and log1p(t) keeps only the digits
+    // of 1 + t (six lost at x / a = 3e-10); log(x / a) is the same quantity
+    const double r = x / a;
+    const double l = (r < 0.5) ? std::log(r) : std::log1p(t);
+    return a * (l - t) + 0.5 * std::log(a) - 0.91893853320467274178 - stirlerr;
 }
 
 // Regularized lower incomplete gamma P(a, x): series for x < a+1,

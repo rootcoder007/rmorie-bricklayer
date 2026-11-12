@@ -274,7 +274,7 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   pp <- identical(chgcol, "ppchg")
   cols <- .yoy_md_cols(d, m, chgcol, pp, digits)
   lines <- .yoy_md_lines(cols, align, length(m$by), nrow(d))
-  meta <- paste0("_", .yoy_meta_lines(m), "_")
+  meta <- paste0("_", .yoy_md_esc(.yoy_meta_lines(m)), "_")
   txt <- paste0(paste(c(lines, "", meta), collapse = "\n"), "\n")
   if (is.null(file)) {
     return(txt)
@@ -368,7 +368,9 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   if (!identical(m$direction, "neutral")) {
     bits <- c(bits, sprintf("direction: %s is better", m$direction))
   }
-  paste(bits, collapse = "; ")
+  # one line: a column name with a line break would start a second line with
+  # no comment prefix, which a reader then takes for data
+  gsub("[\r\n]+", " ", paste(bits, collapse = "; "))
 }
 
 #' Builds the data frame the machine-readable writers export.
@@ -426,14 +428,22 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   cols[["note"]] <- ifelse(is.na(d$flag), "", d$flag)
   # a pipe would end the cell, a line break the row, and HTML in a label
   # would run in a renderer that allows it
-  cols <- lapply(cols, function(v) {
-    v <- .rmbl_ctl_escape(gsub("[\r\n]+", " ", v))
-    v <- gsub("&", "&amp;", v, fixed = TRUE)
-    v <- gsub("<", "&lt;", v, fixed = TRUE)
-    v <- gsub(">", "&gt;", v, fixed = TRUE)
-    gsub("|", "\\|", v, fixed = TRUE)
-  })
+  cols <- lapply(cols, .yoy_md_esc)
+  # the header cells are column names from the data, so they get the same
+  names(cols) <- .yoy_md_esc(names(cols))
   cols
+}
+
+#' Escapes text for a Markdown table cell.
+#' @param v A character vector.
+#' @return `v` on one line, with HTML and the pipe escaped.
+#' @noRd
+.yoy_md_esc <- function(v) {
+  v <- .rmbl_ctl_escape(gsub("[\r\n]+", " ", v))
+  v <- gsub("&", "&amp;", v, fixed = TRUE)
+  v <- gsub("<", "&lt;", v, fixed = TRUE)
+  v <- gsub(">", "&gt;", v, fixed = TRUE)
+  gsub("|", "\\|", v, fixed = TRUE)
 }
 
 #' The lines of a Markdown table: the header, the rule and the rows.

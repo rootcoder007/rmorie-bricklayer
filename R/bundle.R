@@ -219,7 +219,12 @@ cpsbndlrd <- function(path) {
     paste(readLines(path, warn = FALSE), collapse = "\n"),
     simplifyVector = FALSE
   )
-  if (!is.list(b) || is.null(b$attestation) || is.null(b$files)) {
+  if (
+    !is.list(b) ||
+      !is.list(b$attestation) ||
+      !is.list(b$attestation$signature) ||
+      is.null(b$files)
+  ) {
     stop("`path` is not a capsule bundle", call. = FALSE)
   }
   class(b$attestation) <- c("bricklayer_attestation", "list")

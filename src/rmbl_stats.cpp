@@ -59,7 +59,15 @@ inline double quantile7_sorted(const std::vector<double> &v, double p) {
     R_xlen_t lo = static_cast<R_xlen_t>(fl);
     if (lo < 0) lo = 0;
     if (lo >= n - 1) return v[n - 1];
-    return v[lo] + (h - fl) * (v[lo + 1] - v[lo]);
+    /* as quantile(type = 7): the lower value alone when the weight on the upper
+     * one is zero, and a weighted mean when their difference is not finite
+     * (an infinite value, or two finite ones whose difference overflows), where
+     * lo + g * (hi - lo) gave NaN or Inf */
+    const double g = h - fl;
+    if (g == 0.0) return v[lo];
+    const double d = v[lo + 1] - v[lo];
+    if (std::isfinite(d)) return v[lo] + g * d;
+    return (1.0 - g) * v[lo] + g * v[lo + 1];
 }
 
 inline double median_sorted(const std::vector<double> &v) {

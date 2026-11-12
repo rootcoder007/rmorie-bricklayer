@@ -9,6 +9,12 @@
 * The full test suite runs in batches of 8 files, each in a fresh R process, so no process grows past about 1 GB; in batches of 25, R CMD check on a 2 GB machine was stopped for lack of memory.
 * On a machine or container with less than 3 GB the batches are 3 files (under coverage a batch of 8 reached 1.1 GB), and the C++ sources compile as three units, so no compiler process needs more than about 460 MB (one unit needed over 700 MB). The Windows check time is unchanged.
 * `co2fp()` and `raplok()` skip a RAPL power domain whose `name` file cannot be read (as inside a container) without a warning; each such domain used to print "cannot open file".
+* `cqnt()`, `cmed()`, `ciqr()` and `ctkyfnc()` handle an infinite value as `stats::quantile()` does (`cmed(c(-Inf, 1))` is `-Inf`); they returned `NaN`.
+* `cgamcdf()` agrees with `pgamma()` to rounding far below the shape too: `cgamcdf(30, 1e-8)` was off in the sixth digit.
+* `cpsbndlrd()` and `cpsbndlvrf()` say that a file whose attestation has no signature is not a capsule bundle; they stopped with an internal error.
+* `yoymd()` and the Markdown of `rptanl()` escape a pipe or HTML in a column name or group label as they do in a value, and the metadata line of `yoycsv()` and `yoytsv()` stays one line when a column name holds a line break.
+* `cpssign()` given something that is no key names the keys it takes.
+* The help of `benfordtst()` says which digit a value within rounding of a power of ten counts under: the one R prints.
 * The `@srrstatsNA` entry for standard G2.14c (imputation) starts its own line again, so 'srr' reads it.
 * Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
 

@@ -444,6 +444,12 @@ rptanl <- function(
   }, character(1L))
 }
 
+#' Text for a Markdown table cell: one line, HTML and the pipe escaped.
+#' @param v A vector.
+#' @return A character vector.
+#' @noRd
+.md_cell <- function(v) .yoy_md_esc(as.character(v))
+
 #' Minimal Markdown table (pipe syntax) from a data frame; numeric
 #' columns rounded to `digits`, logicals as yes/no, NA as blank.
 #' @param d A data frame.
@@ -463,7 +469,7 @@ rptanl <- function(
       lab <- if (is.numeric(v)) {
         .md_num1(v, big = FALSE)
       } else {
-        .rmbl_ctl_escape(as.character(v))
+        .md_cell(v)
       }
       ifelse(is.na(v), "", lab)
     } else if (is.logical(v)) {
@@ -477,13 +483,13 @@ rptanl <- function(
                     formatC(v, digits = digits, format = "f"))
       ifelse(is.na(v), "", num)
     } else {
-      ifelse(is.na(v), "", .rmbl_ctl_escape(as.character(v)))
+      ifelse(is.na(v), "", .md_cell(v))
     }
   })
   rows <- do.call(paste, c(cells, sep = " | "))
   paste(
     c(
-      paste("|", paste(.rmbl_ctl_escape(names(d)), collapse = " | "), "|"),
+      paste("|", paste(.md_cell(names(d)), collapse = " | "), "|"),
       paste("|", paste(rep("---", ncol(d)), collapse = " | "), "|"),
       paste("|", rows, "|")
     ),
