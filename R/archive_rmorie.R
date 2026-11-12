@@ -295,7 +295,11 @@ arcvis <- function(id, to) {
   if (res$status != 200L) {
     stop(.bl_arc_why(res, sprintf("capture %s", id)), call. = FALSE)
   }
-  if (!is.list(res$json) || !identical(res$json$visibility, to)) {
+  if (
+    !is.list(res$json) ||
+      !identical(res$json$visibility, to) ||
+      !identical(res$json$capture_id, id)
+  ) {
     .bl_arc_unsure(id, base)
   }
   message(sprintf("Capture %s is now %s.", id, to))
@@ -328,22 +332,34 @@ arcwd <- function(id, confirm = FALSE) {
   if (res$status != 200L) {
     stop(.bl_arc_why(res, sprintf("capture %s", id)), call. = FALSE)
   }
-  if (!is.list(res$json) || !isTRUE(res$json$withdrawn)) {
+  if (
+    !is.list(res$json) ||
+      !isTRUE(res$json$withdrawn) ||
+      !identical(res$json$capture_id, id)
+  ) {
     .bl_arc_unsure(id, base)
   }
-  gone <- isTRUE(res$json$bytes_removed)
-  message(sprintf(
-    "Capture %s is withdrawn; its stored bytes were %s.",
-    id,
-    if (gone) "deleted" else "kept"
-  ))
-  one <- function(v) {
-    if (length(v) == 1L && is.atomic(v)) as.character(v) else NA_character_
+  # the rest is what the archive adds: taken only in the type it documents
+  text <- function(v) {
+    if (is.character(v) && length(v) == 1L && !is.na(v)) v else NA_character_
   }
-  was <- one(res$json$was)
+  gone <- res$json$bytes_removed
+  gone <- if (is.logical(gone) && length(gone) == 1L) gone else NA
+  was <- text(res$json$was)
+  message(sprintf(
+    "Capture %s is withdrawn; %s.",
+    id,
+    if (is.na(gone)) {
+      "the archive did not say whether its stored bytes were deleted"
+    } else if (gone) {
+      "its stored bytes were deleted"
+    } else {
+      "its stored bytes were kept"
+    }
+  ))
   invisible(list(
     capture_id = id,
-    url = one(res$json$url),
+    url = text(res$json$url),
     withdrawn = TRUE,
     was = if (was %in% c("private", "public")) was else NA_character_,
     bytes_removed = gone
@@ -674,10 +690,7 @@ arcwd <- function(id, confirm = FALSE) {
   # the archive's own error text goes into messages: one printable string,
   # with the key taken out should the archive have repeated it
   if (is.list(json) && !is.null(json$error)) {
-    e <- json$error
-    json$error <- if (is.character(e) && length(e) == 1L && !is.na(e)) {
-      .rmbl_printable(.bl_redact(e, key))
-    }
+    json$error <- .bl_arc_errtext(json$error, key)
   }
   list(
     status = as.integer(res$status %||% -1L),
@@ -685,6 +698,41 @@ arcwd <- function(id, confirm = FALSE) {
     body = res$body,
     error = res$error %||% ""
   )
+}
+
+#' The archive's error text for a message, or NULL when it is no text.
+#'
+#' A server or proxy may repeat the Authorization header in its error text,
+#' as sent, split over lines, percent-encoded or in base64. Text that holds
+#' the key in any of these forms is withheld whole; other text has anything
+#' shaped like a bearer token taken out.
+#' @param e The `error` member of the archive's reply.
+#' @param key The key sent, or NULL.
+#' @return One printable string, or NULL.
+#' @noRd
+.bl_arc_errtext <- function(e, key) {
+  if (!(is.character(e) && length(e) == 1L && !is.na(e))) {
+    return(NULL)
+  }
+  if (is.character(key) && length(key) == 1L && nzchar(key)) {
+    b64 <- function(s) sub("=+$", "", jsb64enc(charToRaw(s)))
+    forms <- c(
+      key,
+      utils::URLencode(key, reserved = TRUE),
+      b64(key),
+      b64(paste("Bearer", key))
+    )
+    flat <- tolower(gsub("[[:space:]]+", "", e))
+    held <- vapply(
+      tolower(forms),
+      function(f) grepl(f, flat, fixed = TRUE),
+      NA
+    )
+    if (any(held)) {
+      return("the error text is withheld: it repeated your key")
+    }
+  }
+  .rmbl_printable(.bl_redact(e, key))
 }
 
 #' Says that the archive answered 200 without confirming a change.
@@ -779,6 +827,21 @@ arcwd <- function(id, confirm = FALSE) {
   )
   if (rec$status != 201L) {
     stop(.bl_arc_why(rec, "recording the capture"), call. = FALSE)
+  }
+  one <- function(v) is.character(v) && length(v) == 1L && !is.na(v)
+  if (
+    !is.list(rec$json) || !one(rec$json$capture_id) || !one(rec$json$capture)
+  ) {
+    stop(
+      sprintf(
+        paste0(
+          "recording the capture: %s answered HTTP 201 without a capture id ",
+          "(a sign-in page or a proxy's page looks like this)"
+        ),
+        .bl_arc_host(base)
+      ),
+      call. = FALSE
+    )
   }
   rec$json
 }

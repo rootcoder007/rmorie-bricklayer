@@ -2738,9 +2738,15 @@ instcli <- function(
   }
   r <- suppressMessages(arcwd(id, confirm = TRUE))
   out(sprintf(
-    "capture %s is withdrawn; its stored bytes were %s\n",
+    "capture %s is withdrawn; %s\n",
     r$capture_id,
-    if (r$bytes_removed) "deleted" else "kept"
+    if (is.na(r$bytes_removed)) {
+      "the archive did not say whether its stored bytes were deleted"
+    } else if (r$bytes_removed) {
+      "its stored bytes were deleted"
+    } else {
+      "its stored bytes were kept"
+    }
   ))
   0L
 }

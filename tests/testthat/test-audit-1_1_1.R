@@ -418,9 +418,81 @@ test_that("arcvis() and arcwd() report only what the archive confirmed", {
     expect_error(arcvis(id, "private"), "without confirming the change")
     expect_error(arcwd(id, confirm = TRUE), "without confirming the change")
   }
-  ans <- list(withdrawn = TRUE, was = list("odd"), bytes_removed = "x", url = 5)
-  r <- suppressMessages(arcwd(id, confirm = TRUE))
+  for (bad in list(
+    list(capture_id = 5, visibility = "private"),
+    list(capture_id = "20260101120000-ffffffff", visibility = "private")
+  )) {
+    ans <- bad
+    expect_error(arcvis(id, "private"), "without confirming the change")
+  }
+  ans <- list(withdrawn = TRUE, capture_id = "20260101120000-ffffffff")
+  expect_error(arcwd(id, confirm = TRUE), "without confirming the change")
+  ans <- list(
+    capture_id = id,
+    withdrawn = TRUE,
+    was = list("odd"),
+    bytes_removed = "x",
+    url = 5
+  )
+  expect_message(r <- arcwd(id, confirm = TRUE), "did not say whether")
   expect_identical(r$was, NA_character_)
-  expect_false(r$bytes_removed)
-  expect_identical(r$url, "5")
+  expect_identical(r$bytes_removed, NA)
+  expect_identical(r$url, NA_character_)
+  ans <- list(capture_id = id, visibility = "private")
+  expect_message(arcvis(id, "private"), "now private")
+})
+
+test_that("the key is withheld in every form an archive may send it back", {
+  key <- "s3cr+t/K=y_0123456789abcdefXYZ"
+  b64 <- function(s) jsb64enc(charToRaw(s))
+  half <- nchar(key) %/% 2L
+  for (echo in c(
+    paste("bad key Bearer", key),
+    paste0("bad key ", substr(key, 1, half), "\n", substring(key, half + 1L)),
+    paste0("bad key Bearer%20", utils::URLencode(key, reserved = TRUE)),
+    paste("bad key", b64(paste("Bearer", key))),
+    paste("bad key", b64(key)),
+    paste("bad key", toupper(utils::URLencode(key, reserved = TRUE)))
+  )) {
+    got <- .bl_arc_errtext(echo, key)
+    flat <- gsub("[[:space:]]", "", got)
+    expect_no_match(flat, key, fixed = TRUE)
+    expect_no_match(flat, sub("=+$", "", b64(key)), fixed = TRUE)
+    expect_no_match(
+      tolower(flat),
+      tolower(utils::URLencode(key, reserved = TRUE)),
+      fixed = TRUE
+    )
+  }
+  expect_identical(
+    .bl_arc_errtext("quota exceeded for this account", key),
+    "quota exceeded for this account"
+  )
+  expect_identical(.bl_arc_errtext("plain", NULL), "plain")
+  expect_null(.bl_arc_errtext(list("x"), key))
+  expect_null(.bl_arc_errtext(5, key))
+})
+
+test_that("a capture recorded without an id is a failed upload, in words", {
+  local_mocked_bindings(
+    .bl_arc_req = function(method, path, ...) {
+      if (method == "POST") {
+        list(status = 201L, json = NULL, body = "<html>", error = "")
+      } else if (method == "PUT") {
+        list(status = 201L, json = list(ok = TRUE), body = "", error = "")
+      } else {
+        list(status = 404L, json = NULL, body = "", error = "")
+      }
+    }
+  )
+  f <- withr::local_tempfile(fileext = ".txt")
+  writeLines("x", f)
+  expect_error(
+    .bl_arc_upload(
+      f, "https://example.org/", Sys.time(),
+      "a reason of more than twenty characters", "private", "text/plain",
+      "https://my.archive.example", "k", 30L
+    ),
+    "without a capture id"
+  )
 })

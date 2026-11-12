@@ -9,8 +9,9 @@ own_stub <- function(env) {
     if (method == "GET") {
       return(ok(list(captures = env$rows)))
     }
+    cid <- sub("^/v1/captures/([^/]+)/.*$", "\\1", path)
     if (grepl("/visibility$", path)) {
-      return(ok(list(capture_id = "x", visibility = body$visibility)))
+      return(ok(list(capture_id = cid, visibility = body$visibility)))
     }
     if (grepl("-00000000/withdraw$", path)) {
       return(list(
@@ -21,7 +22,7 @@ own_stub <- function(env) {
       ))
     }
     ok(list(
-      capture_id = "x",
+      capture_id = cid,
       url = "https://example.org/",
       withdrawn = TRUE,
       was = env$was,
@@ -155,6 +156,7 @@ test_that("arcwd() withdraws only when confirmed, and says what was removed", {
   expect_error(arcwd(id1, confirm = "yes"), "confirm")
   expect_length(e$calls, 0L)
   expect_message(r <- arcwd(id1, confirm = TRUE), "bytes were deleted")
+  expect_true(r$bytes_removed)
   expect_identical(
     r,
     list(
