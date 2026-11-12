@@ -69,8 +69,13 @@ jobs:
           cv <- gp$covr
           if (inherits(cv, "try-error")) cat(cv) else
             cat("coverage:", round(cv$pct_by_line, 2), "%\n")
-          # a cross (U+2716) is a failing check; the eyes ones are optional
-          quit(status = as.integer(any(grepl("\u2716", s))))
+          # a cross (U+2716) is a failing check; the eyes ones are optional.
+          # The summary goes to stderr, where capture.output() does not see it,
+          # so the two checks the bot blocks on are also read from the object.
+          bad <- any(grepl("\u2716", s)) ||
+            inherits(rc, "try-error") || length(rc$errors) > 0 ||
+            inherits(cv, "try-error")
+          quit(status = as.integer(bad))
           RSCRIPT
           # a memory log every 2 s (container total and its largest processes), printed at the
           # end, so a run stopped for memory says which step and process it was
@@ -92,3 +97,67 @@ jobs:
           tail -12 .pkgcheck/mem.log
           docker rm pkc > /dev/null
           exit "$status"
+
+  # covr alone, as pkgcheck runs it (goodpractice calls
+  # covr::package_coverage()), in the same image under the same cap. pkgcheck
+  # reports only "Package coverage failed"; this job prints the failing test.
+  covr:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: dependencies, without a memory cap
+        run: |
+          mkdir -p .pkgcheck/lib
+          docker run --rm -e GITHUB_TOKEN -e PKG_SYSREQS=false \
+            -v "$PWD:/pkg" -w /pkg \
+            --entrypoint Rscript \
+            ghcr.io/ropensci-review-tools/pkgcheck-action:latest -e '
+              .libPaths(c("/pkg/.pkgcheck/lib", .libPaths()))
+              pak::lockfile_create("local::.", lockfile = ".pkgcheck/pkg.lock",
+                                   dependencies = "all")
+              pak::lockfile_install(".pkgcheck/pkg.lock",
+                                    lib = "/pkg/.pkgcheck/lib")
+            '
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: covr in the bot's image, 2 GB memory cap
+        run: |
+          cat > .pkgcheck/cov.R <<'RSCRIPT'
+          .libPaths(c("/pkg/.pkgcheck/lib", .libPaths()))
+          r <- try(
+            covr::package_coverage("/pkg", clean = FALSE, quiet = TRUE),
+            silent = TRUE
+          )
+          if (!inherits(r, "try-error")) {
+            cat("coverage:", round(covr::percent_coverage(r), 2), "%\n")
+            quit(status = 0L)
+          }
+          msg <- as.character(r)
+          cat("covr failed:", substr(msg, 1, 400), "\n")
+          f <- regmatches(
+            msg, regexpr("/tmp/[^`[:space:]]+testthat\\.Rout\\.fail", msg)
+          )
+          if (length(f) && file.exists(f)) {
+            x <- readLines(f, warn = FALSE)
+            hit <- grep(paste0(
+              "tests failed in|FAIL [1-9]|^── (Failure|Error)|Killed|",
+              "Execution halted|cannot allocate"
+            ), x)
+            cat("== failing lines\n")
+            for (i in hit) {
+              writeLines(x[i:min(length(x), i + 25L)])
+              cat("--\n")
+            }
+            cat("== end of the test output\n")
+            writeLines(utils::tail(x, 60))
+          }
+          quit(status = 1L)
+          RSCRIPT
+          docker run --name pkv --memory=2g --memory-swap=2g \
+            -e R_LIBS=/pkg/.pkgcheck/lib \
+            -v "$PWD:/pkg" -w /pkg --entrypoint Rscript \
+            ghcr.io/ropensci-review-tools/pkgcheck-action:latest \
+            .pkgcheck/cov.R
