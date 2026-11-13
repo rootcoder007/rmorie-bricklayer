@@ -32,9 +32,9 @@ Description: For analyzing published and unpublished tables, from open-data
     by stock-and-flow measures; the burden of air pollution from
     dispersion to attributable deaths; and the effect of a policy from a
     panel of such tables, by difference in differences with staggered
-    adoption, synthetic difference in differences (Arkhangelsky and
+    adoption, synthetic difference in differences ('Arkhangelsky' and
     others (2021) <doi:10.1257/aer.20190159>), matching on trajectories
-    before treatment and double machine learning (Chernozhukov and
+    before treatment and double machine learning ('Chernozhukov' and
     others (2018) <doi:10.1111/ectj.12097>).
 License: AGPL-3
 Copyright: The bundled excerpts of published statistics in inst/extdata belong
