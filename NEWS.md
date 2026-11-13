@@ -1,5 +1,6 @@
 # rmoriebricklayer 1.1.1
 
+* `rmbl data` with no subcommand prints its usage line instead of downloading the table list, and `rmbl data pull` refuses a key that is not `db/table` (`../../etc/passwd`) before any download. `blfetch()` says why the live address could not be reached (the TLS or connection error), as `bldl()` does.
 * `rmbl login`, `rmbl logout`, `rmbl archive find` (and `get`, `mine`, `private`, `public`, `withdraw`), `rmbl help login` and `rmbl describe dlogin` (or `dlogout`, `arcfind`, `arcget`) say that the command or function was removed in 1.1.1 and why, instead of "unknown verb" or "no help page". `rmbl describe yoy` (and `anltab`, `plotecdf`, `plotsm`) says the name was renamed in 1.1.1, not 1.0.0.
 * Smaller refusals in words: `rmbl functions` with a pattern that is not a regular expression; `mkbndlproj()` and `usecpstmpl()` given a folder that cannot be created; `blcli(out = )` given a primitive such as `sum`; a model reply whose `content` is a number. `siuprs()` no longer warns once per string function on a page with bytes that are not UTF-8.
 * A Ctrl-C in the first tenth of a second of `rmbl`, while R is still starting, exits 130 where `/bin/sh` is bash (Fedora, macOS) too; it exited 1 there. The launchers `instcli()` writes do the same.

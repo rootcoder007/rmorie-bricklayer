@@ -129,3 +129,46 @@ test_that("siuprs does not warn on bytes that are not UTF-8", {
   expect_no_warning(r <- siuprs(h))
   expect_type(r, "character")
 })
+
+test_that("data with no subcommand is a usage line, and a bad key is refused", {
+  local_mocked_bindings(
+    dtabs = function(...) stop("the table list was downloaded"),
+    dload = function(...) stop("a table was downloaded")
+  )
+  run <- function(a) {
+    txt <- character()
+    st <- blcli(a, out = function(...) txt <<- c(txt, paste0(...)))
+    list(st = st, txt = paste(txt, collapse = ""))
+  }
+  r <- run("data")
+  expect_identical(r$st, 2L)
+  expect_match(r$txt, "^usage: ")
+  for (k in c("../../up/tbl", "/abs/tbl", "-x", "a b")) {
+    r <- run(c("data", "pull", k))
+    expect_identical(r$st, 2L, info = k)
+    expect_match(r$txt, "is not a table key", info = k)
+  }
+})
+
+test_that("blfetch says why the live address was not reached", {
+  expect_error(
+    .bl_fetch_fail(-10L, "https://example.org/x", "f", "TLS: unexpected eof"),
+    "could not reach https://example.org/x (TLS: unexpected eof); ",
+    fixed = TRUE
+  )
+  expect_error(
+    .bl_fetch_fail(-10L, "https://example.org/x", "f"),
+    "could not reach https://example.org/x; ",
+    fixed = TRUE
+  )
+  expect_error(
+    .bl_fetch_fail(-5030L, "https://example.org/x", "f", "ignored"),
+    "answered HTTP 503; ",
+    fixed = TRUE
+  )
+})
+
+test_that("child processes of the tests keep their session folders here", {
+  skip_on_os("windows")
+  expect_identical(Sys.getenv("TMPDIR"), file.path(tempdir(), "kids"))
+})

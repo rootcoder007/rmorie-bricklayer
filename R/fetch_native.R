@@ -97,7 +97,7 @@ blfetch <- function(url, dest, wb = "", tmout = 120L) {
   if (code == 1L) {
     return(invisible("wayback"))
   }
-  .bl_fetch_fail(code, url, dest)
+  .bl_fetch_fail(code, url, dest, attr(code, "why"))
 }
 
 #' Resolve a Wayback Machine snapshot URL (C++/libcurl)
@@ -219,8 +219,9 @@ wbsnpnat <- function(url, tmout = 30L) {
 #' Wayback fallback was tried.
 #' @param code The compiled layer's code.
 #' @param url,dest As for blfetch().
+#' @param why The transport's reason the live address was not reached, or NULL.
 #' @noRd
-.bl_fetch_fail <- function(code, url, dest) {
+.bl_fetch_fail <- function(code, url, dest, why = NULL) {
   # the destination could not be written: a local failure, and no Wayback lookup
   # was made
   if (code == -2L) {
@@ -238,7 +239,13 @@ wbsnpnat <- function(url, tmout = 30L) {
     sprintf(
       "blfetch: %s; %s",
       if (live == 1L) {
-        sprintf("could not reach %s", url)
+        # the transport's own reason (a TLS error, a refused address)
+        paste0(
+          sprintf("could not reach %s", url),
+          if (length(why) == 1L && nzchar(why)) {
+            sprintf(" (%s)", .rmbl_ctl_escape(why))
+          }
+        )
       } else {
         sprintf("%s answered HTTP %d", url, live)
       },

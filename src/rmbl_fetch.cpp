@@ -1387,14 +1387,20 @@ std::string wayback_snapshot(const std::string &url, long timeout_s, bool *inter
 /* A Ctrl-C ends the pipeline where it lands: the Wayback lookup and the snapshot GET after an
  * interrupted download ran to their timeouts and the call came back as an ordinary error (CRAN
  * stress test of b617a3f, #5). `*interrupted` says so; the exported wrappers raise it. */
+/* why the live URL was not reached, in the transport's words, for blfetch()'s message */
+static std::string g_fetch_why;
+
 static int fetch_with_fallback(const char *url, const char *wayback, const char *path, int timeout_s,
                                bool *interrupted, const std::string &base = "") {
+    g_fetch_why.clear();
+    std::string why;
     if (timeout_s < 1) timeout_s = 120;   /* the C API's callers too: 0 would be no limit (M1) */
     const bool local = !base.empty();
     bool local_fail = false;
-    long code = http_get_file(url, path, timeout_s, nullptr, R_NilValue, nullptr, nullptr, interrupted,
+    long code = http_get_file(url, path, timeout_s, nullptr, R_NilValue, nullptr, &why, interrupted,
                               kMaxDownload, local, &local_fail);
     if (code >= 200 && code < 300) return 0;
+    if (code <= 0) g_fetch_why = why;
     if (*interrupted) return -1;
     /* the destination could not be written: no snapshot would fare better (review of 1.0.0, M2) */
     if (local_fail) return -2;
@@ -1668,7 +1674,14 @@ SEXP C_rmbl_fetch_fallback_impl(SEXP url, SEXP wayback, SEXP path, SEXP timeout,
     const std::string p = path_arg(path, "path");
     /* the C API's own entry when no test server is named: the path other packages call */
     int r = b[0] ? fetch_raise(u, w, p.c_str(), t, b) : rmbl_fetch_with_fallback(u, w, p.c_str(), t);
-    return Rf_ScalarInteger(r);
+    SEXP ans = PROTECT(Rf_ScalarInteger(r));
+    if (r <= -10 && !g_fetch_why.empty()) {
+        SEXP why = PROTECT(Rf_mkString(g_fetch_why.c_str()));
+        Rf_setAttrib(ans, Rf_install("why"), why);
+        UNPROTECT(1);
+    }
+    UNPROTECT(1);
+    return ans;
 }
 
 /* The request headers, one "Name: value" each. A line break inside one (a key pasted with a

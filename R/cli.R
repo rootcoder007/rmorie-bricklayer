@@ -2070,6 +2070,20 @@ instcli <- function(
 #' @return The exit status.
 #' @noRd
 .bl_cli_data_pull <- function(rest, flag, out) {
+  # a key is db/table: anything else is refused before the table list is
+  # downloaded to look it up
+  key <- rest[[2L]]
+  if (
+    !grepl("^[A-Za-z0-9][A-Za-z0-9_./-]*$", key) ||
+      grepl("..", key, fixed = TRUE)
+  ) {
+    out(sprintf(
+      "'%s' is not a table key (`%s data list` shows them)\n",
+      .rmbl_printable(key),
+      .bl_prog()
+    ))
+    return(2L)
+  }
   dest <- flag("--out") %||%
     paste0(gsub("[^A-Za-z0-9_.-]", "_", rest[[2L]]), ".csv")
   # refuse an unwritable destination before downloading the table, not after
@@ -2107,7 +2121,8 @@ instcli <- function(
 #' @return The exit status.
 #' @noRd
 .bl_cli_data <- function(rest, flag, out) {
-  sub <- if (length(rest)) rest[[1L]] else "list"
+  # no subcommand is a usage line, not a download of the table list
+  sub <- if (length(rest)) rest[[1L]] else ""
   # the positional words, without --out and its value: an extra word was
   # silently ignored
   pos <- rest
