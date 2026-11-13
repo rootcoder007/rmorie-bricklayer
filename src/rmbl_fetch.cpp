@@ -30,6 +30,7 @@
 #include <cmath>
 #include <cstdarg>
 #include <thread>
+#include <stdexcept>
 #include <R.h>
 #include <Rinternals.h>
 #include <curl/curl.h>
@@ -45,9 +46,33 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <signal.h>
 #endif
 
 namespace {
+
+/* SIGPIPE ignored for as long as the guard lives, the previous action restored after, also when the
+ * scope is left by an exception (POSIX; Windows has no SIGPIPE). */
+struct PipeGuard {
+#ifndef _WIN32
+    struct sigaction old_action;
+    bool saved;
+    PipeGuard() {
+        struct sigaction ign;
+        std::memset(&ign, 0, sizeof ign);
+        ign.sa_handler = SIG_IGN;
+        sigemptyset(&ign.sa_mask);
+        saved = sigaction(SIGPIPE, &ign, &old_action) == 0;
+    }
+    ~PipeGuard() {
+        if (saved) sigaction(SIGPIPE, &old_action, nullptr);
+    }
+#else
+    PipeGuard() {}
+#endif
+    PipeGuard(const PipeGuard &) = delete;
+    PipeGuard &operator=(const PipeGuard &) = delete;
+};
 
 const char *kUA = "morie-bricklayer/1.0 (+https://github.com/rootcoder007/rmorie-bricklayer)";
 
@@ -595,7 +620,14 @@ CURLcode secure_perform(CURL *h, const std::string &start_url,
         curl_easy_setopt(h, CURLOPT_URL, url.c_str());
         curl_easy_setopt(h, CURLOPT_RESOLVE, pin);
         curl_easy_setopt(h, CURLOPT_HTTPHEADER, hdr);
-        const CURLcode rc = curl_easy_perform(h);
+        CURLcode rc;
+        {
+            /* CURLOPT_NOSIGNAL (needed so timeouts do not use SIGALRM) also stops libcurl ignoring
+             * SIGPIPE: a write to a connection the peer closed raised it, and R's handler stopped the
+             * call with "ignoring SIGPIPE signal" instead of libcurl's send error (rmorie CI) */
+            PipeGuard pipe_guard;
+            rc = curl_easy_perform(h);
+        }
         long code = 0;
         if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
         std::string next;
@@ -1762,6 +1794,33 @@ SEXP C_rmbl_wayback_into_impl(SEXP url, SEXP timeout, SEXP api, SEXP cap) {
  * the name its CURLOPT_RESOLVE pin would carry (they must agree); `connect` is guard_socket()'s
  * answer for the IP literal `addr` (NA when it is not one), with `local_ok` as a hop admitted to a
  * local host would have it; `timeout` is what the timeout argument `tmo` becomes. */
+/* For the tests: the SIGPIPE guard that wraps every transfer. Returns three flags: inside the guard
+ * SIGPIPE is ignored; a SIGPIPE raised there does not reach R; after the guard (left normally, or by
+ * an exception when `fail` is TRUE) the action before it is back. NA on Windows. */
+SEXP C_rmbl_sigpipe_probe_impl(SEXP fail) {
+    SEXP out = PROTECT(Rf_allocVector(LGLSXP, 3));
+#ifdef _WIN32
+    for (int i = 0; i < 3; ++i) LOGICAL(out)[i] = NA_LOGICAL;
+#else
+    struct sigaction before, inside, after;
+    sigaction(SIGPIPE, nullptr, &before);
+    bool raised = false;
+    try {
+        PipeGuard g;
+        sigaction(SIGPIPE, nullptr, &inside);
+        raised = raise(SIGPIPE) == 0;
+        if (Rf_asLogical(fail) == TRUE) throw std::runtime_error("probe");
+    } catch (const std::runtime_error &) {
+    }
+    sigaction(SIGPIPE, nullptr, &after);
+    LOGICAL(out)[0] = inside.sa_handler == SIG_IGN;
+    LOGICAL(out)[1] = raised;
+    LOGICAL(out)[2] = after.sa_handler == before.sa_handler && after.sa_flags == before.sa_flags;
+#endif
+    UNPROTECT(1);
+    return out;
+}
+
 SEXP C_rmbl_net_probe_impl(SEXP url, SEXP addr, SEXP local_ok, SEXP tmo) {
     (void) rmbl_str0(url, "url");
     (void) rmbl_str0(addr, "addr");

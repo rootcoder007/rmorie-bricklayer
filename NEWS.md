@@ -33,6 +33,7 @@
 * Code blocks in vignettes that are not R (shell, YAML, R shown but not run) are fenced with `~~~`, which 'goodpractice' does not take for the end of an R chunk.
 * The package description and the README now name the policy-evaluation functions (`plndid()`, `stgatt()`, `syndid()`, `plndml()` and the functions around them), and the reference index lists them straight after `anytab()`; nothing in the code changes.
 * `rmbl migrate` no longer rewrites a list element or method named like a removed function (`obj$rate(1)` became `obj$rtcalc(1)`), and now also rewrites a renamed function passed by name (`lapply(x, yoy)`) or named by a string in `do.call()`, `match.fun()`, `get()`, `get0()` or `exists()`, unless the script defines that name itself.
+* A dropped connection during a download or upload is reported as the send or receive error libcurl gives: every transfer ignores SIGPIPE while it runs (and restores the previous handler after), where a write to a TLS connection the peer had closed stopped R with "ignoring SIGPIPE signal".
 
 # rmoriebricklayer 1.1.0
 

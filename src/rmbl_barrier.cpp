@@ -180,6 +180,7 @@ SEXP C_rmbl_wayback_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_wayback_into_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_url_check_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_net_probe_impl(SEXP, SEXP, SEXP, SEXP);
+SEXP C_rmbl_sigpipe_probe_impl(SEXP);
 SEXP C_rmbl_siu_html_to_text_impl(SEXP);
 SEXP C_rmbl_siu_parse_html_impl(SEXP);
 SEXP C_rmbl_siu_to_iso_date_impl(SEXP);
@@ -341,6 +342,9 @@ SEXP C_rmbl_url_check(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
 }
 SEXP C_rmbl_net_probe(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
     return rmbl_guard("C_rmbl_net_probe", [&] { return C_rmbl_net_probe_impl(a0, a1, a2, a3); });
+}
+SEXP C_rmbl_sigpipe_probe(SEXP a0) {
+    return rmbl_guard("C_rmbl_sigpipe_probe", [&] { return C_rmbl_sigpipe_probe_impl(a0); });
 }
 SEXP C_rmbl_siu_html_to_text(SEXP a0) {
     return rmbl_guard("C_rmbl_siu_html_to_text", [&] { return C_rmbl_siu_html_to_text_impl(a0); });

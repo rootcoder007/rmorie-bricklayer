@@ -117,3 +117,15 @@ test_that("a progress callback that fails ends the download", {
   expect_lt(r[[1L]], 0L)
   expect_false(file.exists(dest))
 })
+
+test_that("a transfer ignores SIGPIPE, then restores it (BL-N1)", {
+  skip_on_os("windows")
+  # CURLOPT_NOSIGNAL stops libcurl ignoring SIGPIPE itself; a write to a TLS
+  # connection the peer closed then stopped R with "ignoring SIGPIPE signal".
+  # Inside the guard SIGPIPE is ignored (a raised one does not reach R), and
+  # the action before it is back afterwards, also when the guard's scope is
+  # left by an error.
+  probe <- get("C_rmbl_sigpipe_probe", asNamespace("rmoriebricklayer"))
+  expect_identical(.Call(probe, FALSE), c(TRUE, TRUE, TRUE))
+  expect_identical(.Call(probe, TRUE), c(TRUE, TRUE, TRUE))
+})

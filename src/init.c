@@ -178,6 +178,7 @@ extern SEXP C_rmbl_http_download(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_redirect_check(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_url_check(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_net_probe(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_sigpipe_probe(SEXP);
 extern SEXP C_rmbl_wayback(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_wayback_into(SEXP, SEXP, SEXP, SEXP);
 /* .Call wrappers (defined in rmbl_siu.cpp) -- vendored SIU parse/resolve */
@@ -303,6 +304,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_wayback_into",   (DL_FUNC) &C_rmbl_wayback_into,   4},
     {"C_rmbl_url_check",      (DL_FUNC) &C_rmbl_url_check,      4},
     {"C_rmbl_net_probe",      (DL_FUNC) &C_rmbl_net_probe,      4},
+    {"C_rmbl_sigpipe_probe",  (DL_FUNC) &C_rmbl_sigpipe_probe,  1},
     {"C_rmbl_siu_html_to_text",      (DL_FUNC) &C_rmbl_siu_html_to_text,      1},
     {"C_rmbl_siu_parse_html",        (DL_FUNC) &C_rmbl_siu_parse_html,        1},
     {"C_rmbl_siu_to_iso_date",       (DL_FUNC) &C_rmbl_siu_to_iso_date,       1},

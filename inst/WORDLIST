@@ -971,6 +971,7 @@ Shor's
 SHS
 sigGen
 SIGINT
+SIGPIPE
 sigVer
 SIMD
 simplifier's
