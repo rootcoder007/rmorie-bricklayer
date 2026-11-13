@@ -10,7 +10,7 @@ fetchvrf(
   sha256 = NULL,
   mirrors = character(),
   tmout = 120L,
-  arcs = "rmorie"
+  arcs = character()
 )
 }
 \arguments{
@@ -26,15 +26,14 @@ the source.}
 
 \item{tmout}{Seconds allowed for each download (default 120).}
 
-\item{arcs}{Archives tried after the source, its Wayback snapshot and the
-mirrors: \code{"rmorie"} (archive.rmorie.com, by \code{\link{arcget}}) and
-folders written by \code{\link{arccap}} (read from their WARC files), in
-order. \code{character()} tries none.}
+\item{arcs}{Folders written by \code{\link{arccap}}, tried in order after
+the source, its Wayback snapshot and the mirrors (read from their WARC
+files). \code{character()} (default) tries none.}
 }
 \value{
 Invisibly, a list of class \code{rmbl_fetch} (it prints as a
 box): \code{source} (\code{"live"}, \code{"wayback"},
-\code{"mirror"}, \code{"rmorie"} or \code{"local"}), \code{url} (the URL
+\code{"mirror"} or \code{"local"}), \code{url} (the URL
 that served the kept copy), \code{sha256}, \code{bytes}, and \code{tried}
 (a data frame of every attempt: \code{url}, \code{outcome}).
 }

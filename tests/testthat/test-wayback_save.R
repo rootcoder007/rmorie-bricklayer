@@ -1210,28 +1210,6 @@ test_that(
   }
 )
 
-test_that(
-  paste0(
-    "wbsave(fallback = 'rmorie') with nothing refused leaves the result as ",
-    "it was"
-  ),
-  {
-    withr::local_envvar(keys)
-    s <- fake_spn2()
-    res <- with_fake(
-      s,
-      wbsave(
-        "https://example.org/fine",
-        quiet = TRUE,
-        fallback = "rmorie",
-        reason = "Pages cited in a methods paper"
-      )
-    )
-    expect_identical(res$status, "saved")
-    expect_null(attr(res, "archive"))
-  }
-)
-
 # Prints `x` on an ASCII console: the lines and what print() returned.
 o1_box <- function(x, ...) {
   withr::local_envvar(RMBL_ASCII_ONLY = "1")

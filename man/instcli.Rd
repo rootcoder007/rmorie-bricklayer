@@ -23,7 +23,7 @@ The path of the first launcher written (normally
 }
 \description{
 Writes small launcher scripts into a directory on your PATH so that
-\code{rmoriebricklayer login}, \code{rmbl ask ...} and the other verbs of
+\code{rmoriebricklayer doctor}, \code{rmbl ask ...} and the other verbs of
 \code{\link{blcli}} work from any shell. Run it once after
 installing or upgrading the package. Nothing outside \code{dir} is
 touched, and only when you call this.

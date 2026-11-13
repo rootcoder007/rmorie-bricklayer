@@ -28,8 +28,6 @@ bricklayer_json_unserialize	jsunser	txt,trusted	txt,trusted
 bricklayer_llm_ask	llmask	prompt,model,timeout,system_prompt,route,docs,packages,fresh	prompt,model,tmout,syspro,route,docs,pkgs,fresh	
 bricklayer_llm_chat	llmchat	messages,model,route,timeout	msgs,model,route,tmout	
 bricklayer_llm_config	llmcfg	...	...	
-bricklayer_llm_login	dlogin	token,email,code,open_browser,poll_max_seconds	token,email,code,openbro,pollmaxsec	
-bricklayer_llm_logout	dlogout			
 bricklayer_llm_models	llmmdls	route,timeout	route,tmout	
 bricklayer_llm_providers	llmprvd			
 bricklayer_llm_route_info	llmrte	route	route	

@@ -4,8 +4,6 @@ tree <- Sys.getenv("MORIE_SMOKE_TREE", "")
 if (nzchar(tree)) suppressPackageStartupMessages(pkgload::load_all(tree, quiet = TRUE)) else suppressPackageStartupMessages(library(rmoriebricklayer))
 home <- tempfile("bl-smoke-"); dir.create(home); setwd(home)
 Sys.setenv(HOME = home, XDG_CONFIG_HOME = file.path(home, "cfg"))
-key <- Sys.getenv("MORIE_SMOKE_KEY", "")
-if (nzchar(key)) Sys.setenv(MORIE_HOSTED_KEY = key) else Sys.unsetenv("MORIE_HOSTED_KEY")
 options(timeout = 600)
 run <- function(...) { buf <- character(); st <- blcli(c(...), out = function(s) buf <<- c(buf, s)); list(status = st, text = paste(buf, collapse = "")) }
 check <- function(cond, what) if (!isTRUE(cond)) stop(what, call. = FALSE)
@@ -42,15 +40,12 @@ cases <- list(
       "--args", "version"), stdout = TRUE, stderr = TRUE))
     check(is.null(attr(r, "status")) && any(grepl("rmoriebricklayer [0-9]+\\.", r)), paste("launcher:", paste(r, collapse = " | ")))
   },
-  login = function() { if (!nzchar(key)) return(message("  login: SKIP")); r <- run("login", "--token", key); check(r$status == 0, r$text) },
-  logout = function() { check(run("logout")$status == 0, "logout") },
   functions = function() { r <- run("functions", "cps"); check(r$status == 0 && grepl("cpssign", r$text), substr(r$text, 1, 200)) },
   describe = function() { r <- run("describe", "mkmnf"); check(r$status == 0 && grepl("manifest", r$text, ignore.case = TRUE), substr(r$text, 1, 200)) },
   examples = function() { r <- run("examples", "cpsbndl"); check(r$status == 0 && nzchar(r$text), r$text) },
   bundle = function() { r <- run("bundle", "validate a csv schema"); check(r$status %in% c(0L, 1L), r$text) },
   data = function() {
     r <- run("data"); check(r$status %in% c(0L, 1L), r$text)
-    if (!nzchar(key)) return(message("  data list/pull: SKIP (MORIE_SMOKE_KEY not set)"))
     r <- run("data", "list"); check(r$status == 0 && grepl("chicago_crime", r$text), substr(r$text, 1, 300))
     r <- run("data", "pull", "fec_cm_2020/fec_cm_2020", "--out", "fec.csv"); check(r$status == 0 && nrow(utils::read.csv("fec.csv")) > 1000, r$text)
     df <- dload("fec_cm_2020/fec_cm_2020"); check(nrow(df) > 1000, "dload")
@@ -68,23 +63,16 @@ cases <- list(
     r <- run("wayback", "--retry", "no-such.jsonl"); check(r$status == 1L && grepl("no such file", r$text, fixed = TRUE), r$text)
   },
   archive = function() {
-    # usage and argument checks offline; with MORIE_SMOKE_ARCHIVE set (an archive's address), a real find
+    # usage and argument checks offline; nothing is sent
     r <- run("archive"); check(r$status == 2L && grepl("archive save URL", r$text, fixed = TRUE), r$text)
-    r <- run("archive", "help"); check(r$status == 0L && grepl("archive get ID", r$text, fixed = TRUE), r$text)
-    r <- run("archive", "save", "https://example.org/"); check(r$status == 2L && grepl("--reason", r$text, fixed = TRUE), r$text)
-    r <- run("archive", "save", "https://example.org/", "--reason", "x", "--also", "dropbox")
+    r <- run("archive", "help"); check(r$status == 0L && grepl("archive push DIR", r$text, fixed = TRUE), r$text)
+    r <- run("archive", "save", "https://example.org/", "--also", "dropbox")
     check(r$status == 2L && grepl("--also takes one value", r$text, fixed = TRUE), r$text)
-    r <- run("archive", "get", "https://example.org/"); check(r$status == 2L && grepl("-o FILE", r$text, fixed = TRUE), r$text)
+    r <- run("archive", "find", "https://example.org/"); check(r$status == 2L, r$text)
     # push: a capture kept here, sent on later; checked offline, nothing sent
-    r <- run("archive", "help"); check(grepl("archive push DIR", r$text, fixed = TRUE), r$text)
-    r <- run("archive", "push", home); check(r$status == 2L && grepl("--reason", r$text, fixed = TRUE), r$text)
-    r <- run("archive", "push", home, "--reason", "Tables cited in the smoke study")
+    r <- run("archive", "push", home); check(r$status == 2L && grepl("--also wayback", r$text, fixed = TRUE), r$text)
+    r <- run("archive", "push", home, "--also", "wayback")
     check(r$status == 1L && grepl("manifest.json is missing", r$text, fixed = TRUE), r$text)
-    a <- Sys.getenv("MORIE_SMOKE_ARCHIVE")
-    if (!nzchar(a)) return(message("  archive find: SKIP (no MORIE_SMOKE_ARCHIVE)"))
-    Sys.setenv(MORIE_ARCHIVE_URL = a)
-    r <- run("archive", "find", "https://cran.r-project.org/web/packages/rmoriebricklayer/index.html", "--json")
-    check(r$status %in% c(0L, 1L) && startsWith(trimws(r$text), "["), substr(r$text, 1, 300))
   },
   pack = function() {
     # a starter project, then its zip, in the empty HOME
@@ -109,8 +97,6 @@ cases <- list(
     r <- run("config", "get", "ollama.model"); check(r$status == 0 && grepl("smoke-model:1", r$text, fixed = TRUE), r$text)
     r <- run("config", "unset", "ollama.model"); check(r$status == 0, r$text)
     check(run("config", "set", "route", "nowhere")$status != 0L, "config set accepted a bad route")
-    # a stored key is shown only as set / (not set), never any of its characters
-    if (nzchar(key)) check(!grepl(substr(key, nchar(key) - 5L, nchar(key)), run("config")$text, fixed = TRUE), "config printed part of the key")
   },
   # the capsule verbs, on a capsule whose source is a local CSV: refresh pins it, then the rest read it
   verify = function() {

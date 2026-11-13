@@ -7,8 +7,8 @@
 #' @description
 #' [arccap()] keeps every capture on this computer first: the files,
 #' their SHA-256, a manifest and, by default, a WARC copy. When the Wayback
-#' Machine, archive.rmorie.com or archive.org is down, or there is no
-#' network but the source's, the capture is still complete there.
+#' Machine or archive.org is down, or there is no network but the
+#' source's, the capture is still complete there.
 #' \code{arcpush()} sends that same capture on later: the very files that
 #' were fetched, each checked first against the SHA-256 the manifest
 #' recorded, so an archive keeps what you captured, not a new download. Run
@@ -28,11 +28,10 @@
 #' Errors: \code{dir} without the \file{manifest.json} that [arccap()]
 #' writes, or a manifest that lists no files; nowhere to send (neither
 #' \code{item} nor \code{upload}); as for [arccap()] for \code{item},
-#' \code{meta}, \code{upload}, \code{reason}, \code{tmout} and the keys.
+#' \code{meta}, \code{upload}, \code{tmout} and the keys.
 #'
 #' @param dir The folder of an [arccap()] capture.
-#' @param item,meta,ak,sk,upload,reason,visibility,tmout As for
-#'   [arccap()].
+#' @param item,meta,ak,sk,upload,tmout As for [arccap()].
 #' @param tsa A time-stamping authority, asked only when the manifest has
 #'   no timestamp yet (default as for [arccap()]); \code{NULL} asks none.
 #' @return An object of class \code{rmbl_archive_capture}, as [arccap()]
@@ -51,11 +50,7 @@
 #' d <- file.path(tempdir(), "cap")
 #' arccap(src, d, tsa = NULL)
 #' # later, when the archives answer: the same bytes, sent on
-#' arcpush(
-#'   d,
-#'   upload = c("rmorie", "wayback"),
-#'   reason = "Custody table cited in chapter 3"
-#' )
+#' arcpush(d, upload = "wayback")
 #' @export
 arcpush <- function(
   dir,
@@ -64,17 +59,13 @@ arcpush <- function(
   ak = NULL,
   sk = NULL,
   upload = NULL,
-  reason = NULL,
-  visibility = c("public", "private"),
   tsa = "https://freetsa.org/tsr",
   tmout = 600L
 ) {
-  .rmbl_whole(visibility, c("public", "private"), "visibility")
-  visibility <- .rmbl_arg(visibility)
-  up <- .bl_cap_upload_arg(upload, reason)
+  upload <- .bl_cap_upload_arg(upload)
   dir <- .rmbl_string1(dir, "dir")
   .bl_cap_item_meta(item, meta)
-  if (is.null(item) && is.null(up$upload)) {
+  if (is.null(item) && is.null(upload)) {
     stop("give `item`, `upload` or both: where the capture goes",
          call. = FALSE)
   }
@@ -88,13 +79,7 @@ arcpush <- function(
   ts <- .bl_push_stamp(tsa, mpath, dir)
   ok <- out$status == "captured"
   out <- .bl_push_ia(out, ok, item, meta, dir, keys, tmout)
-  if ("rmorie" %in% up$upload) {
-    todo <- ok & is.na(out$capture_id)
-    if (any(todo)) {
-      out <- .bl_cap_rmorie(out, todo, dir, up$reason, visibility, tmout)
-    }
-  }
-  if ("wayback" %in% up$upload) {
+  if ("wayback" %in% upload) {
     todo <- ok & !grepl("^(saved|existing)", .bl_push_na(out$wayback))
     if (any(todo)) {
       out <- .bl_cap_wayback(out, todo, ak, sk)
@@ -129,7 +114,6 @@ arcpush <- function(
     url = col("url"), file = col("file"), sha256 = col("sha256"),
     bytes = as.numeric(col("bytes")), fetched_utc = col("fetched_utc"),
     status = "captured", mirror = NA_character_, warc = NA_character_,
-    capture_id = NA_character_, archive = NA_character_,
     wayback = NA_character_, stringsAsFactors = FALSE
   )
   # the manifest is input: a name that leaves the folder ("../x", "/etc/x",
@@ -204,7 +188,7 @@ arcpush <- function(
   }
   prev <- fromjs(p, simplifyVector = FALSE)
   j <- match(out$url, .bl_push_field(prev, "url"))
-  for (k in c("mirror", "capture_id", "archive", "wayback")) {
+  for (k in c("mirror", "wayback")) {
     v <- .bl_push_field(prev, k)[j]
     out[[k]] <- ifelse(is.na(v), out[[k]], v)
   }
@@ -218,7 +202,7 @@ arcpush <- function(
 #' @noRd
 .bl_push_save <- function(out, dir) {
   recs <- lapply(seq_len(nrow(out)), function(i) {
-    as.list(out[i, c("url", "mirror", "capture_id", "archive", "wayback")])
+    as.list(out[i, c("url", "mirror", "wayback")])
   })
   p <- file.path(dir, "push.json")
   .rmbl_wlines(tojs(recs), p)
@@ -283,14 +267,13 @@ arcpush <- function(
   )
 }
 
-#' Each file's status from what the archives hold: archived, uploaded,
-#' captured, or the failure.
+#' Each file's status from what the archives hold: uploaded, captured, or
+#' the failure.
 #' @param out The capture table of arcpush().
 #' @return The table.
 #' @noRd
 .bl_push_status <- function(out) {
   kept <- out$status %in% c("captured", "uploaded")
   out$status[kept & !is.na(out$mirror)] <- "uploaded"
-  out$status[kept & !is.na(out$capture_id)] <- "archived"
   out
 }

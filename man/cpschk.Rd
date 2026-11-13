@@ -83,13 +83,10 @@ or \code{""}. Every XMSS bundle gets an \code{xmss_index} row, failed
 when the same key signed its index with another signature in what was
 seen.}
 
-\item{archive}{Logical: use archive.rmorie.com when a source cannot be
-fetched. In \code{"drift"} and \code{"refresh"}, a source that neither
-answers nor has its pinned Wayback snapshot is fetched from a copy kept
-there with the pinned SHA-256 (public copies need no key); with
-\code{wayback = TRUE}, a changed source the Wayback Machine refuses is
-saved there instead (\code{wbsave(fallback = "rmorie")}, which needs a
-key: \code{dlogin()} or \env{MORIE_HOSTED_KEY}).}
+\item{archive}{Ignored, with a warning when \code{TRUE}: the hosted copy of
+sources it fell back to is gone. Kept so that callers written for
+earlier versions (the rmbl GitHub Action passes it) still run; use
+\code{cache} for a copy kept by an earlier run.}
 
 \item{x}{An \code{rmbl_cpschk} result.}
 

@@ -194,3 +194,84 @@ test_that("a WARC read back takes only what the file holds", {
   expect_error(.bl_warc_get(d, "https://s.org/a.csv", out),
                "outside archive/")
 })
+
+test_that("media types from file names", {
+  expect_identical(.bl_mime("x.CSV"), "text/csv")
+  expect_identical(
+    .bl_mime("a/b/c.parquet"),
+    "application/vnd.apache.parquet"
+  )
+  expect_identical(.bl_mime("noext"), "application/octet-stream")
+  expect_identical(.bl_mime("x.weird"), "application/octet-stream")
+})
+
+test_that(
+  paste0(
+    "a capture folder's WARC files are read back exactly, and damage is ",
+    "caught"
+  ),
+  {
+    dir <- withr::local_tempdir()
+    body <- charToRaw("x,y\n3,4\n")
+    local_mocked_bindings(
+      blfetch = function(url, dest, wb = "", tmout = 120L) {
+        writeBin(body, dest)
+        invisible("live")
+      }
+    )
+    arccap("https://s.org/w.csv", dir, tsa = NULL)
+    g <- withr::local_tempfile()
+    .bl_warc_get(dir, "https://s.org/w.csv", g, csha256(body))
+    expect_identical(readBin(g, "raw", 100), body)
+    expect_error(
+      .bl_warc_get(withr::local_tempdir(), "https://s.org/w.csv", g),
+      "has no index"
+    )
+    expect_error(
+      .bl_warc_get(dir, "https://s.org/other.csv", g),
+      "no capture of"
+    )
+    w <- list.files(file.path(dir, "archive"), full.names = TRUE)
+    raw <- readBin(w, "raw", file.size(w))
+    i <- grepRaw("3,4", raw)
+    raw[i] <- charToRaw("9")
+    writeBin(raw, w)
+    expect_error(
+      .bl_warc_get(dir, "https://s.org/w.csv", g),
+      "does not match its index"
+    )
+    writeBin(charToRaw("WARC/1.1\r\nno blank line"), w)
+    idx <- file.path(dir, "indexes", "index.cdxj")
+    l <- readLines(idx)
+    writeLines(
+      sub(
+        '"offset":"[0-9]+"',
+        '"offset":"0"',
+        sub('"length":"[0-9]+"', '"length":"23"', l)
+      ),
+      idx
+    )
+    expect_error(
+      .bl_warc_get(dir, "https://s.org/w.csv", g),
+      "damaged WARC record"
+    )
+  }
+)
+
+test_that("the reason given to arccap() is written into each WARC file", {
+  d <- withr::local_tempdir()
+  local_mocked_bindings(
+    blfetch = function(url, dest, wb = "", tmout = 120L) {
+      writeBin(charToRaw("x,y\n1,2\n"), dest)
+      invisible("live")
+    }
+  )
+  cap <- arccap(
+    "https://s.org/r.csv",
+    d,
+    tsa = NULL,
+    reason = "Cited in chapter 3\nof the thesis"
+  )
+  w <- readBin(cap$warc, "raw", file.size(cap$warc))
+  expect_length(grepRaw("reason: Cited in chapter 3 of the thesis", w), 1L)
+})

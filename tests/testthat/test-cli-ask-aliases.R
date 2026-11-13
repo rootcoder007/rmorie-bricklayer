@@ -155,7 +155,6 @@ test_that(
       "models?",
       "version?",
       "doctor?",
-      "logout?",
       "?",
       c("conifg", "set", "anthropic.key", crlf_key),
       paste("please use", strrep("k", 40)),

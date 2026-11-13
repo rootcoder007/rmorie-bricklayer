@@ -144,9 +144,6 @@ reference:
       - fetchvrf
       - arccap
       - arcpush
-      - arcfind
-      - arcget
-      - arcmine
       - siufetch
       - dldata
       - fdl
@@ -213,8 +210,6 @@ reference:
       - llmask
       - explerr
       - llmcfg
-      - dlogin
-      - dlogout
       - llmstat
       - svcs
       - llmmdls

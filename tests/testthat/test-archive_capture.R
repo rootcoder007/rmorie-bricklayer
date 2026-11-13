@@ -219,7 +219,6 @@ test_that("a capture result prints as a box", {
     file = c("a", "b"),
     bytes = c(10, NA),
     status = c("captured", "failed: 404"),
-    archive = c("https://archive.rmorie.com/c/1", NA),
     stringsAsFactors = FALSE
   )
   class(x) <- c("rmbl_archive_capture", "data.frame")
@@ -229,11 +228,154 @@ test_that("a capture result prints as a box", {
     b,
     x,
     "Archive capture",
-    c("1 of 2 URLs", "demo-item", "1 saved", "1 failed")
+    c("1 of 2 URLs", "demo-item", "1 failed")
   )
   expect_null(.bl_cap_ts_text(NULL))
 })
 
 test_that("a capture table without its status column prints plainly", {
   expect_plain_df("rmbl_archive_capture")
+})
+
+test_that(
+  "arccap() checks upload and warc before fetching anything",
+  {
+    local_mocked_bindings(blfetch = function(...) stop("must not be called"))
+    d <- withr::local_tempdir()
+    expect_error(
+      arccap("https://s.org/a", d, upload = "dropbox"),
+      "`upload` must be"
+    )
+    expect_error(
+      arccap("https://s.org/a", d, upload = character()),
+      "`upload` must be"
+    )
+    expect_error(
+      arccap("https://s.org/a", d, upload = "rmorie"),
+      "`upload` must be"
+    )
+    expect_error(
+      arccap("https://s.org/a", d, warc = NA),
+      "`warc` must be TRUE or FALSE"
+    )
+  }
+)
+
+test_that(
+  paste0(
+    "arccap(upload = 'wayback') asks the Wayback Machine too, and says when ",
+    "it cannot"
+  ),
+  {
+    dir <- withr::local_tempdir()
+    wb <- function(urls, status, timestamp) {
+      d <- data.frame(url = urls, status = status, timestamp = timestamp)
+      structure(d, class = c("rmbl_wayback_save", "data.frame"))
+    }
+    local_mocked_bindings(
+      blfetch = .cap_stub(list(
+        "https://s.org/a.csv" = charToRaw("a"),
+        "https://s.org/b.csv" = charToRaw("b")
+      )),
+      wbsave = function(urls, ...) wb(urls[1], "saved", "20261022000000")
+    )
+    cap <- arccap(
+      c("https://s.org/a.csv", "https://s.org/b.csv"),
+      dir,
+      tsa = NULL,
+      upload = "wayback",
+      warc = FALSE
+    )
+    expect_identical(cap$wayback, c("saved 20261022000000", NA))
+    expect_true(all(is.na(cap$warc)))
+    local_mocked_bindings(wbsave = function(urls, ...) {
+      stop("wbsave() needs your archive.org keys")
+    })
+    cap <- arccap(
+      "https://s.org/a.csv",
+      withr::local_tempdir(),
+      tsa = NULL,
+      upload = "wayback"
+    )
+    expect_match(
+      cap$wayback,
+      "^not asked: wbsave\\(\\) needs your archive.org keys"
+    )
+    local_mocked_bindings(wbsave = function(urls, ...) {
+      wb(urls, "failed", NA_character_)
+    })
+    cap <- arccap(
+      "https://s.org/a.csv",
+      withr::local_tempdir(),
+      tsa = NULL,
+      upload = "wayback"
+    )
+    expect_identical(cap$wayback, "failed")
+  }
+)
+
+test_that("rmbl archive save captures from a terminal", {
+  rec <- new.env()
+  rec$outbuf <- character()
+  run <- function(...) {
+    rec$outbuf <- character()
+    st <- blcli(c("archive", ...), out = function(s) {
+      rec$outbuf <- c(rec$outbuf, s)
+    })
+    list(status = st, text = paste(rec$outbuf, collapse = ""))
+  }
+  expect_identical(run()$status, 2L)
+  expect_match(run("help")$text, "archive save URL")
+  expect_identical(run("help")$status, 0L)
+  # the command list of `rmbl help` names it too
+  expect_match(
+    paste(capture.output(blcli("help")), collapse = "\n"),
+    "archive save URL... [--dir D]",
+    fixed = TRUE
+  )
+  expect_identical(run("save")$status, 2L)
+  expect_identical(run("find", "https://s.org/a")$status, 2L)
+  expect_match(
+    run("save", "https://s.org/a", "--reason", "x", "--also", "dropbox")$text,
+    "--also takes one value"
+  )
+  got <- new.env()
+  local_mocked_bindings(
+    arccap = function(urls, dir, tsa, upload, reason) {
+      got$upload <- upload
+      got$reason <- reason
+      got$dir <- dir
+      structure(
+        data.frame(
+          url = urls,
+          status = c("captured", "failed: refused")[seq_along(urls)],
+          wayback = c("saved 20261020120000", NA)[seq_along(urls)]
+        ),
+        class = c("rmbl_archive_capture", "data.frame")
+      )
+    }
+  )
+  r <- run(
+    "save",
+    "https://s.org/a",
+    "--reason",
+    "Tables cited in a methods paper",
+    "--also",
+    "wayback",
+    "--dir",
+    "d1"
+  )
+  expect_identical(r$status, 0L)
+  expect_identical(got$upload, "wayback")
+  expect_identical(got$reason, "Tables cited in a methods paper")
+  expect_identical(got$dir, "d1")
+  expect_match(
+    r$text,
+    "captured  https://s.org/a\n  wayback: saved 20261020120000"
+  )
+  r <- run("save", "https://s.org/a", "https://s.org/b")
+  expect_identical(r$status, 1L)
+  expect_null(got$upload)
+  expect_null(got$reason)
+  expect_match(r$text, "failed: refused  https://s.org/b")
 })

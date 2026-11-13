@@ -15,7 +15,6 @@ test_that("VERB --help prints the verb's usage and never runs it", {
     MORIE_HOSTED_KEY = NA
   )
   for (v in c(
-    "logout",
     "doctor",
     "models",
     "bundle",
@@ -23,7 +22,6 @@ test_that("VERB --help prints the verb's usage and never runs it", {
     "describe",
     "examples",
     "data",
-    "login",
     "ask"
   )) {
     r <- .cap(v, "--help")
@@ -48,35 +46,7 @@ test_that("usage errors exit 2, an unknown function 1", {
   expect_identical(r$status, 1L)
   expect_match(r$text, "no help page for 'nosuchfn'")
   expect_identical(.cap("examples", "nosuchfn")$status, 1L)
-  expect_identical(.cap("login", "--code", "123456")$status, 2L)
-  testthat::local_mocked_bindings(.bl_readline = function(prompt, ...) "")
-  expect_identical(.cap("login", "--token")$status, 2L)
 })
-
-test_that(
-  paste0(
-    "a pasted key the gateway refuses is not stored; an address is checked ",
-    "first"
-  ),
-  {
-    withr::local_envvar(
-      XDG_CONFIG_HOME = withr::local_tempdir(),
-      MORIE_HOSTED_KEY = NA,
-      MORIE_HOSTED_BASE_URL = NA
-    )
-    local_mocked_bindings(.bl_key_reply = function(base, key, timeout = 10) {
-      list(status = 401L, body = raw(0))
-    })
-    r <- .cap("login", "--token", "sk-bad")
-    expect_identical(r$status, 1L)
-    expect_match(r$text, "did not accept that key")
-    expect_null(.bl_hosted_key())
-    expect_error(
-      dlogin(email = "notanemail"),
-      "'notanemail' is not an email address"
-    )
-  }
-)
 
 test_that(
   paste0(
@@ -279,96 +249,6 @@ test_that("an unknown verb with --help is a usage error naming the verb", {
   expect_null(.bl_verb_usage("bogus", "rmbl"))
 })
 
-test_that(
-  paste0(
-    "login --token asks the gateway first ",
-    "and stores nothing it refuses"
-  ),
-  {
-    withr::local_envvar(
-      XDG_CONFIG_HOME = withr::local_tempdir(),
-      MORIE_HOSTED_KEY = NA,
-      MORIE_HOSTED_BASE_URL = NA
-    )
-    reply <- NULL
-    testthat::local_mocked_bindings(.bl_key_reply = function(
-      base,
-      key,
-      timeout = 10
-    ) {
-      reply
-    })
-    expect_error(.bl_check_token("sk-x"), "could not reach .* nothing stored")
-    reply <- list(status = 401L)
-    expect_error(
-      .bl_check_token("sk-x"),
-      "did not accept that key (HTTP 401)",
-      fixed = TRUE
-    )
-    reply <- list(status = 200L)
-    expect_true(.bl_check_token("sk-x"))
-    # with the data service switched off there is nothing to ask
-    testthat::local_mocked_bindings(.rmbl_services_data = function() {
-      list(mode = "off")
-    })
-    reply <- NULL
-    expect_true(.bl_check_token("sk-x"))
-  }
-)
-
-test_that(
-  paste0(
-    "the device flow says it is still ",
-    "waiting instead of hanging silently"
-  ),
-  {
-    # the terms and profile step has its own tests (test-signin-profile.R)
-    local_no_signin_profile()
-    withr::local_envvar(
-      XDG_CONFIG_HOME = withr::local_tempdir(),
-      MORIE_HOSTED_KEY = NA
-    )
-    testthat::local_mocked_bindings(
-      Sys.sleep = function(time) invisible(NULL),
-      .package = "base"
-    )
-    testthat::local_mocked_bindings(
-      .bl_http_post = function(url, body, content_type, timeout, headers) {
-        if (grepl("/device/code$", url)) {
-          return(list(
-            status = 200L,
-            body = charToRaw(paste0(
-              "{\"device_code\":\"d\",\"user_code\":\"AB-12\",",
-              "\"verification_uri\":\"https://github.com/login/device\",\"inte",
-              "rv",
-              "al\":30}"
-            ))
-          ))
-        }
-        list(
-          status = 200L,
-          body = charToRaw("{\"api_key\":\"sk-dev\",\"user\":\"octocat\"}")
-        )
-      }
-    )
-    rec <- new.env()
-    rec$msgs <- character()
-    key <- withCallingHandlers(
-      dlogin(openbro = FALSE, pollmaxsec = 600),
-      message = function(m) {
-        rec$msgs <- c(rec$msgs, conditionMessage(m))
-        invokeRestart("muffleMessage")
-      }
-    )
-    expect_identical(key, "sk-dev")
-    expect_true(any(grepl(
-      "still waiting for the sign-in to be approved (30s elapsed",
-      rec$msgs,
-      fixed = TRUE
-    )))
-  }
-)
-
 test_that("rptanl renders the rate changes when a population is given", {
   d <- read.csv(system.file(
     "extdata",
@@ -399,7 +279,7 @@ test_that("numeric entities outside Unicode, and NUL, are dropped", {
 
 test_that(
   paste0(
-    "login --token with no value reads the key from stdin when not ",
+    "a key prompt reads the key from stdin when not ",
     "interactive"
   ),
   {
@@ -422,7 +302,7 @@ test_that(
   }
 )
 
-test_that("login --token with no value prompts in an interactive session", {
+test_that("a key prompt reads the terminal in an interactive session", {
   testthat::local_mocked_bindings(.bl_interactive = function() TRUE)
   testthat::local_mocked_bindings(
     readline = function(prompt = "") " sk-typed ",
@@ -430,38 +310,6 @@ test_that("login --token with no value prompts in an interactive session", {
   )
   expect_identical(.bl_readline("Paste your MORIE key: "), "sk-typed")
 })
-
-test_that(
-  paste0(
-    "an email sign-in with no code typed says how to finish instead of ",
-    "posting an empty code"
-  ),
-  {
-    # the terms and profile step has its own tests (test-signin-profile.R)
-    local_no_signin_profile()
-    withr::local_envvar(
-      XDG_CONFIG_HOME = withr::local_tempdir(),
-      MORIE_HOSTED_KEY = NA
-    )
-    rec <- new.env()
-    rec$calls <- character()
-    testthat::local_mocked_bindings(
-      .bl_http_post = function(url, body, content_type, timeout, headers) {
-        rec$calls <- c(rec$calls, sub(".*(/email/[a-z]+)$", "\\1", url))
-        list(status = 200L, body = charToRaw("{}"))
-      },
-      .bl_readline = function(prompt, ...) ""
-    )
-    expect_error(
-      suppressMessages(dlogin(email = "vee@example.com")),
-      paste0(
-        "no code entered; finish with `.* login --email vee@example.com ",
-        "--code CODE`"
-      )
-    )
-    expect_identical(rec$calls, "/email/code")
-  }
-)
 
 test_that("the key hints name the command the user typed", {
   withr::local_envvar(
@@ -472,8 +320,7 @@ test_that("the key hints name the command the user typed", {
   # a manifest an earlier test cached in this process would answer without a key
   withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
   # the tables need no key: a service that asks for one (401) is not answered
-  # with a sign-in hint, and a rejected stored key is pointed to logout, in
-  # the command the user typed. No network: the transport answers 401.
+  # with a sign-in hint. No network: the transport answers 401.
   testthat::local_mocked_bindings(
     .bl_data_url = function() "https://data.example.org",
     bldl = function(...) {
@@ -481,8 +328,6 @@ test_that("the key hints name the command the user typed", {
     }
   )
   expect_error(dmnf(), "the tables need no sign-in", fixed = TRUE)
-  withr::local_envvar(MORIE_HOSTED_KEY = "sk-x", MORIE_DATA_URL = NA)
-  expect_error(dmnf(), "`rmbl logout`", fixed = TRUE)
 })
 
 test_that("a model the key does not have is named, not blamed on the key", {
@@ -523,23 +368,6 @@ test_that("no answer at all is reported as unreachable, not as HTTP -1", {
     ),
     fixed = TRUE
   )
-})
-
-test_that("dlogin(token =) refuses a key the gateway rejects", {
-  withr::local_envvar(
-    XDG_CONFIG_HOME = withr::local_tempdir(),
-    MORIE_HOSTED_KEY = NA,
-    MORIE_HOSTED_BASE_URL = NA
-  )
-  testthat::local_mocked_bindings(.bl_key_reply = function(
-    base,
-    key,
-    timeout = 10
-  ) {
-    list(status = 401L)
-  })
-  expect_error(dlogin(token = "sk-bad"), "did not accept that key")
-  expect_null(.bl_hosted_key())
 })
 
 test_that(
@@ -604,13 +432,11 @@ test_that("an option a verb does not take is refused and nothing runs", {
     RMBL_PROG = "rmbl"
   )
   for (v in c(
-    "logout",
     "doctor",
     "models",
     "functions",
     "ask",
-    "bundle",
-    "login"
+    "bundle"
   )) {
     r <- .cap(v, "--nosuch-flag-xyz")
     expect_equal(r$status, 2L, info = v)

@@ -297,7 +297,7 @@ test_that(
 test_that(
   paste0(
     "L1, L2, L3, L5 residuals: Ollama by model is announced; wrong types ",
-    "are errors; keys follow addresses"
+    "are errors; a saved address is one address"
   ),
   {
     cf_env3()
@@ -335,52 +335,6 @@ test_that(
       )
     }
     unlink(cfg)
-    # a credentials file without hosted_base_url (morie writes one) sends the
-    # key only to the document's address
-    withr::local_envvar(c(MORIE_HOSTED_KEY = NA))
-    cred <- .bl_credentials_path()
-    writeLines(
-      paste0(
-        '{"hosted_key": "sk-saved", "other": ["x"], "n": null, "big": ',
-        "9007199254740993}"
-      ),
-      cred
-    )
-    withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "https://other.example.org"))
-    expect_message(
-      expect_null(.bl_hosted_key()),
-      "not sent to"
-    )
-    withr::local_envvar(c(MORIE_HOSTED_BASE_URL = NA))
-    # login and logout keep the other package's entries as they were
-    withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "https://llm.example.org"))
-    .bl_store_key("sk-new")
-    flat <- function() {
-      gsub(
-        "[[:space:]]",
-        "",
-        paste(readLines(cred, warn = FALSE), collapse = "")
-      )
-    }
-    expect_match(flat(), '"other":\\["x"\\]')
-    expect_match(flat(), '"n":null')
-    expect_match(flat(), "9007199254740993")
-    dlogout()
-    txt <- flat()
-    expect_match(txt, '"other":\\["x"\\]')
-    expect_false(grepl("hosted_key", txt, fixed = TRUE))
-    # MORIE_DATA_URL does not receive the hosted key unless it is the document's
-    # address
-    withr::local_envvar(c(
-      MORIE_HOSTED_KEY = "sk-h",
-      MORIE_DATA_URL = "https://elsewhere.example.org"
-    ))
-    expect_message(
-      expect_null(.bl_data_key()),
-      "not sent to it"
-    )
-    withr::local_envvar(c(MORIE_DATA_URL = NA))
-    expect_identical(.bl_data_key(), "sk-h")
     # a saved address is one address
     for (bad in c(
       "http://local host:1234/v1",
@@ -403,14 +357,7 @@ test_that(
     blcli("help", out = function(s) {
       assign("out", c(out, s), envir = parent.env(environment()))
     })
-    blcli(c("login", "--help"), out = function(s) {
-      assign("out", c(out, s), envir = parent.env(environment()))
-    })
     expect_false(any(grepl("--token KEY|--token \\[KEY\\]", out)))
-    expect_false(grepl(
-      "--token KEY|\\[KEY\\]",
-      .bl_access_hint()
-    ))
     for (lc in c("C", "en_US.UTF-8")) {
       r <- try(
         withr::with_locale(c(LC_CTYPE = lc), {
@@ -750,30 +697,6 @@ test_that(
     fk <- structure(list(public = "abcd"), class = "bricklayer_oqs_public_key")
     chk <- cpschkatst(a, list(n = 1), keyexp = fk)
     expect_false(chk$checks$ok[chk$checks$check == "key_as_expected"])
-  }
-)
-
-test_that(
-  paste0(
-    "the data key follows the services document address; a credentials file ",
-    "that is not an object is reported"
-  ),
-  {
-    testthat::local_mocked_bindings(
-      .bl_hosted_key = function(...) "sk-data",
-      .rmbl_services_data = function(...) {
-        list(base_url = "https://data.example.org/")
-      }
-    )
-    withr::local_envvar(MORIE_DATA_URL = "https://data.example.org")
-    expect_identical(.bl_data_key(), "sk-data")
-    withr::local_envvar(MORIE_DATA_URL = "https://other.example.org")
-    expect_message(expect_null(.bl_data_key()), "not sent")
-    withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
-    cred <- .bl_credentials_path()
-    dir.create(dirname(cred), recursive = TRUE, showWarnings = FALSE)
-    writeLines("[1, 2]", cred)
-    expect_error(.bl_read_credentials(), "not a JSON object")
   }
 )
 

@@ -954,39 +954,6 @@ test_that(
   }
 )
 
-test_that("the status of a key stored for another address says so", {
-  st_other <- list(
-    state = "other_address",
-    key = NULL,
-    saved_for = "https://a.example",
-    now = "https://b.example"
-  )
-  local_mocked_bindings(
-    .bl_hosted_key_state = function() st_other,
-    .bl_hosted_base = function() "https://b.example",
-    .bl_hosted_key = function() NULL,
-    .bl_own_base = function() NULL,
-    .bl_ollama_base = function() NULL
-  )
-  out <- character()
-  ns(".bl_cli_doctor")(function(x) {
-    assign("out", c(out, x), envir = parent.env(environment()))
-  })
-  expect_true(any(grepl(
-    "data key: issued for https://a.example, so not sent to https://b.example",
-    out,
-    fixed = TRUE
-  )))
-  local_mocked_bindings(.bl_hosted_key_state = function() {
-    list(state = "ok", key = "k")
-  })
-  out <- character()
-  ns(".bl_cli_doctor")(function(x) {
-    assign("out", c(out, x), envir = parent.env(environment()))
-  })
-  expect_true(any(grepl("data key: stored", out, fixed = TRUE)))
-})
-
 
 test_that(
   paste0(

@@ -135,46 +135,39 @@ test_that("a table with a blank description and source is named by its key", {
 
 test_that(
   paste0(
-    "dload(token = ) sends that key for the ",
-    "call only, over the stored one"
+    "dload(token = ) is ignored with a warning, and no key is sent"
   ),
   {
     withr::local_envvar(
       XDG_CONFIG_HOME = withr::local_tempdir(),
-      MORIE_HOSTED_KEY = NA,
+      MORIE_HOSTED_KEY = "sk-stored",
       MORIE_DATA_URL = NA
     )
     withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
     rec <- new.env()
-    rec$used <- character()
-    testthat::local_mocked_bindings(.bl_data_get = function(path, dest, ...) {
-      rec$used <- c(rec$used, .bl_data_key() %||% "none")
-      if (path == "/manifest.json") {
-        writeLines('{"datasets":[{"key":"demo/t","rows":1}]}', dest)
-      } else {
-        con <- gzfile(dest, "w")
-        writeLines(c("a", "1"), con)
-        close(con)
+    rec$hdr <- character()
+    testthat::local_mocked_bindings(
+      .bl_data_url = function() "https://data.example.org",
+      .bl_data_label = function(path) list(label = path, size = NULL),
+      bldl = function(url, dest, headers = NULL, ...) {
+        rec$hdr <- c(rec$hdr, names(headers))
+        if (grepl("manifest", url, fixed = TRUE)) {
+          writeLines('{"datasets":[{"key":"demo/t","rows":1}]}', dest)
+        } else {
+          con <- gzfile(dest, "w")
+          writeLines(c("a", "1"), con)
+          close(con)
+        }
+        invisible(dest)
       }
-      invisible(dest)
-    })
-    expect_nodigest(got <- dload("demo/t", token = " sk-call-key "))
+    )
+    expect_warning(
+      expect_nodigest(got <- dload("demo/t", token = " sk-call-key ")),
+      "`token` is ignored: the curated tables need no key"
+    )
     expect_identical(got$a, 1L)
-    expect_true(all(rec$used == "sk-call-key"))
-    expect_null(.bl_data_key())
-    withr::local_envvar(MORIE_HOSTED_KEY = "sk-stored")
-    rec$used <- character()
-    dload("demo/t", refresh = TRUE, token = "sk-other")
-    expect_true(all(rec$used == "sk-other"))
-    expect_identical(.bl_data_key(), "sk-stored")
-    expect_error(
-      dload("demo/t", token = ""),
-      "dload: `token` must be a single non-empty string"
-    )
-    expect_error(
-      dload("demo/t", token = c("a", "b")),
-      "dload: `token` must be a single non-empty string"
-    )
+    expect_true(length(rec$hdr) > 0L)
+    expect_false("Authorization" %in% rec$hdr)
   }
 )
 

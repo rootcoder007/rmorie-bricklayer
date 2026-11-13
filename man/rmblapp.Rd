@@ -110,8 +110,7 @@ one self-contained HTML page (plots as inline SVG, year-over-year tables as
 \code{\link[=yoyhtml]{yoyhtml()}} draws them), as Markdown, or as a GitHub comment to
 copy.} \item{Settings}{light, dark or the system's theme (also the switch in
 the navbar), digits, and the seed of the seeded analyses.} } The tables of
-data.rmorie.com need no key; a data key stored with \verb{rmbl login} is never
-held by the app: \code{\link[=dload]{dload()}} reads it from where it is stored.
+data.rmorie.com need no key and no sign-in.
 
 The dashboard needs the shiny package (Suggests), and with it bslib, which
 shiny installs; without shiny \code{rmblapp()} refuses.

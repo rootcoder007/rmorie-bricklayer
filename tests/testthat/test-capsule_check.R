@@ -1117,3 +1117,11 @@ test_that("the capsule check lines: no rows, a fetched digest, each status", {
     "A source has moved since it was pinned: see the rows below."
   )
 })
+
+test_that("cpschk(archive = TRUE) is ignored with a warning", {
+  d <- withr::local_tempdir()
+  expect_warning(
+    cpschk(d, fp = FALSE, archive = TRUE),
+    "`archive` is ignored"
+  )
+})

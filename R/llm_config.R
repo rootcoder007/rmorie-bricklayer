@@ -383,7 +383,7 @@ llmcfg <- function(...) {
   # only the settings that changed are written, in place: the rest of the file
   # stays as it was written (a full rewrite cut floats to 4 digits, unboxed
   # one-element arrays, turned a "" key into "1" and rounded integers past 2^53;
-  # network stress test of 5e1dce5). credentials.json is written the same way.
+  # network stress test of 5e1dce5).
   old <- if (file.exists(p)) .bl_read_config() else list()
   txt <- if (file.exists(p)) .bl_read_text(p) else "{}"
   for (k in union(names(old), names(data))) {
@@ -979,7 +979,7 @@ llmcfg <- function(...) {
 #' @noRd
 .bl_config_setup <- function(out) {
   ask <- function(q, current = "", secret = FALSE) {
-    # a key is typed without echo, like `login --token` (review of 52a8883, B6)
+    # a key is typed without echo (review of 52a8883, B6)
     a <- .bl_readline(
       sprintf(
         "%s%s: ",
@@ -1188,30 +1188,13 @@ llmcfg <- function(...) {
   }
 }
 
-#' Prints the state of the data key.
+#' Prints the doctor's line on the curated tables: they need no key.
 #' @param out The function that writes the output.
-#' @param prog The command's name, used in the doctor's advice.
+#' @param prog The command's name (unused: kept for the doctor's callers).
 #' @return What `out` returns.
 #' @noRd
 .bl_doctor_key <- function(out, prog) {
-  # the data key goes to the curated tables only, never a language model
-  ks <- tryCatch(.bl_hosted_key_state(), error = function(e) {
-    list(state = "none")
-  })
-  out(switch(
-    ks$state,
-    ok = paste0(
-      "\n  data key: stored (sent to the curated tables at data.rmorie.com, ",
-      "which need none)\n"
-    ),
-    other_address = sprintf(
-      "\n  data key: issued for %s, so not sent to %s (`%s login` again)\n",
-      ks$saved_for,
-      ks$now,
-      prog
-    ),
-    "\n  data key: none (the curated tables need none)\n"
-  ))
+  out("\n  data key: none (the curated tables need none)\n")
 }
 
 #' Moves an unreadable settings file aside.

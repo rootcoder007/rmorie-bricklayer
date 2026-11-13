@@ -95,8 +95,7 @@
 #' [yoyhtml()] draws them), as Markdown, or as a GitHub comment to
 #' copy.} \item{Settings}{light, dark or the system's theme (also the switch in
 #' the navbar), digits, and the seed of the seeded analyses.} } The tables of
-#' data.rmorie.com need no key; a data key stored with `rmbl login` is never
-#' held by the app: [dload()] reads it from where it is stored.
+#' data.rmorie.com need no key and no sign-in.
 #'
 #' The dashboard needs the shiny package (Suggests), and with it bslib, which
 #' shiny installs; without shiny `rmblapp()` refuses.
@@ -1822,15 +1821,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 #' @noRd
 .bl_data_outputs <- function(output, session, st) {
   output$signin <- shiny::renderUI({
-    # whether a key is stored, never the key
-    shiny::tags$p(
-      class = "bl-about",
-      if (is.null(.bl_hosted_key())) {
-        "Not signed in: the tables need no key; list them."
-      } else {
-        "Signed in: a data key is stored where `rmbl login` put it."
-      }
-    )
+    shiny::tags$p(class = "bl-about", "The tables need no sign-in; list them.")
   })
   output$status <- shiny::renderUI(.bl_data_status(st$msg(), st$cur()))
   output$cols <- shiny::renderTable(.bl_app_types(st$cur()$data))

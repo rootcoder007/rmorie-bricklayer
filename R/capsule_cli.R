@@ -414,15 +414,14 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 }
 
 #' A capsule's remote source, fetched: live or its pinned Wayback copy, then
-#' the archive's copy of the pinned bytes, then an earlier run's cache.
+#' an earlier run's cache.
 #' @param src The https:// source URL to fetch.
 #' @param prov The capsule's provenance, which may pin a Wayback copy.
-#' @param cache,archive As for .bl_fetch_pin().
-#' @return A list: got, cached, archived and tmp.
+#' @param cache As for .bl_fetch_pin().
+#' @return A list: got, cached and tmp.
 #' @noRd
-.bl_fetch_remote <- function(src, prov, cache, archive) {
+.bl_fetch_remote <- function(src, prov, cache) {
   s1 <- .bl_s1
-  archived <- FALSE
   # a source in a capsule (a pull request's, in the action) is fetched over
   # https only (audit of 30bed8e, #6)
   if (!grepl("^https://", src, ignore.case = TRUE)) {
@@ -441,15 +440,6 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     fdl(src, got, attwb = s1(prov[["wayback"]][["csv_snapshot"]]) %||% ""),
     error = function(e) e
   )
-  # then the copy kept on archive.rmorie.com with the pinned bytes, before an
-  # earlier run's cache
-  pin <- s1(prov[["resource"]][["sha256"]]) %||% ""
-  if (!isTRUE(ok) && isTRUE(archive) && nzchar(pin)) {
-    archived <- .bl_fetch_archived(src, got, pin)
-    if (archived) {
-      ok <- TRUE
-    }
-  }
   keep <- if (!is.null(cache)) {
     file.path(
       cache,
@@ -463,23 +453,9 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     unlink(got)
     .bl_fetch_unfetched(ok, keep, src)
     # an earlier run's copy, kept in the cache: not a temporary file
-    return(list(got = keep, cached = TRUE, archived = archived, tmp = FALSE))
+    return(list(got = keep, cached = TRUE, tmp = FALSE))
   }
-  list(got = got, cached = FALSE, archived = archived, tmp = TRUE)
-}
-
-#' Fetches a source's copy kept on archive.rmorie.com with the pinned bytes.
-#' @param src The source URL whose archive.rmorie.com copy is fetched.
-#' @param got The file to write.
-#' @param pin The pinned SHA-256.
-#' @return TRUE when the copy was fetched.
-#' @noRd
-.bl_fetch_archived <- function(src, got, pin) {
-  unlink(got)
-  a <- tryCatch(arcget(src, got, sha256 = pin), error = function(e) {
-    .bl_unless_interrupted(e, NULL)
-  })
-  !is.null(a) && file.exists(got)
+  list(got = got, cached = FALSE, tmp = TRUE)
 }
 
 #' Stops when a source could not be fetched and no earlier copy is cached.
@@ -523,8 +499,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   dir,
   allowfile = FALSE,
   cache = NULL,
-  root = dir,
-  archive = FALSE
+  root = dir
 ) {
   prov <- loadprov(file.path(dir, "data_provenance.json"))
   if (is.null(prov)) {
@@ -543,7 +518,6 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     )
   }
   cached <- FALSE
-  archived <- FALSE
   tmp <- FALSE
   if (
     grepl("^file://", src, ignore.case = TRUE) ||
@@ -551,10 +525,9 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   ) {
     got <- .bl_local_source(src, dir, allowfile, root)
   } else {
-    r <- .bl_fetch_remote(src, prov, cache, archive)
+    r <- .bl_fetch_remote(src, prov, cache)
     got <- r$got
     cached <- r$cached
-    archived <- r$archived
     tmp <- r$tmp
   }
   f <- list(
@@ -562,7 +535,6 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     path = got,
     src = src,
     cached = cached,
-    archived = archived,
     tmp = tmp
   )
   f$new <- tryCatch(

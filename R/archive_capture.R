@@ -55,26 +55,20 @@
 #' @param ak,sk archive.org keys; default from the environment as
 #'   \code{\link{wbsave}} reads them.
 #' @param tmout Seconds allowed for each download and each upload (default 600).
-#' @param upload Where else to keep the captures: \code{"rmorie"}
-#'   (archive.rmorie.com, from this connection, with your key; see
-#'   \code{\link{dlogin}}), \code{"wayback"} (ask the Wayback Machine to save
-#'   the same addresses, with archive.org keys as for \code{\link{wbsave}}),
-#'   both, or \code{NULL} (default: only the local folder and, with \code{item},
-#'   archive.org).
-#' @param reason Why the files are kept, one sentence of 20 characters or more;
-#'   needed with \code{upload = "rmorie"}, and written into each WARC file.
-#' @param visibility \code{"public"} (default: listed in the archive's search;
-#'   anyone can download and check it) or \code{"private"} (only you, with your
-#'   key).
+#' @param upload \code{"wayback"} asks the Wayback Machine to save the same
+#'   addresses too, with archive.org keys as for \code{\link{wbsave}};
+#'   \code{NULL} (default) keeps the captures only in the local folder and,
+#'   with \code{item}, archive.org.
+#' @param reason Optional note on why the files are kept, written into each
+#'   WARC file.
 #' @param warc Write each capture as a WARC/1.1 file with a CDXJ index
 #'   (\code{dir/archive/}, \code{dir/indexes/index.cdxj}), the layout pywb and
 #'   warcio read and \code{\link{fetchvrf}} falls back to (default \code{TRUE}).
 #' @return A data frame of class \code{rmbl_archive_capture}, one row per URL:
 #'   \code{url}, \code{file}, \code{sha256}, \code{bytes}, \code{fetched_utc},
-#'   \code{status} (\code{"captured"}, \code{"uploaded"}, \code{"archived"} or
+#'   \code{status} (\code{"captured"}, \code{"uploaded"} or
 #'   \code{"failed: ..."}), \code{mirror} (the archive.org download address, for
-#'   \code{\link{fetchvrf}}), \code{warc} (the local WARC file),
-#'   \code{capture_id} and \code{archive} (its page at archive.rmorie.com) and
+#'   \code{\link{fetchvrf}}), \code{warc} (the local WARC file) and
 #'   \code{wayback} (the Wayback Machine's answer); attributes \code{manifest},
 #'   \code{timestamp} (a \code{\link{tsvrf}} result, or \code{NULL}) and
 #'   \code{item}.
@@ -87,16 +81,16 @@
 #' @seealso \code{\link{fetchvrf}}, \code{\link{wbsave}},
 #'   \code{\link{tsvrf}}.
 #' @examplesIf interactive()
-#' # save from your own connection to archive.rmorie.com and the Wayback Machine
-#' # at once
+#' # keep a copy from your own connection (files, manifest, WARC) and ask the
+#' # Wayback Machine at once
 #' src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
 #' cap <- arccap(
 #'   src,
 #'   file.path(tempdir(), "cap"),
-#'   upload = c("rmorie", "wayback"),
+#'   upload = "wayback",
 #'   reason = "Custody table cited in chapter 3"
 #' )
-#' cap$archive
+#' cap$warc
 #' w <- wbsave(urls)
 #' lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
 #' meta <- list(
@@ -128,14 +122,9 @@ arccap <- function(
   tmout = 600L,
   upload = NULL,
   reason = NULL,
-  visibility = c("public", "private"),
   warc = TRUE
 ) {
-  .rmbl_whole(visibility, c("public", "private"), "visibility")
-  visibility <- .rmbl_arg(visibility)
-  up <- .bl_cap_upload_arg(upload, reason)
-  upload <- up$upload
-  reason <- up$reason
+  upload <- .bl_cap_upload_arg(upload)
   a <- .bl_cap_args(warc, urls, dir, item, meta, tsa, tmout)
   urls <- a$urls
   dir <- a$dir
@@ -157,16 +146,11 @@ arccap <- function(
   }
   ok <- out$status %in% c("captured", "uploaded")
   if (any(ok)) {
-    out <- .bl_cap_publish(
-      out,
-      ok,
-      dir,
-      warc,
-      upload,
-      reason,
-      visibility,
-      tmout
-    )
+    # WARC/1.1 files and a CDXJ index make a pywb collection, and fetchvrf()'s
+    # last fallback
+    if (isTRUE(warc)) {
+      out <- .bl_cap_warc(out, ok, dir, reason)
+    }
     if ("wayback" %in% upload) {
       out <- .bl_cap_wayback(out, ok, ak, sk)
     }
@@ -191,14 +175,11 @@ format.rmbl_archive_capture <- function(x, ...) {
     facts = list(
       Captured = sprintf(
         "%d of %d URLs",
-        sum(d$status %in% c("captured", "uploaded", "archived")),
+        sum(d$status %in% c("captured", "uploaded")),
         nrow(d)
       ),
       `archive.org item` = if (!is.null(item)) {
         sprintf("%s: %d uploaded", item, sum(d$status == "uploaded"))
-      },
-      `archive.rmorie.com` = if (!all(is.na(d$archive))) {
-        sprintf("%d saved", sum(!is.na(d$archive)))
       },
       Manifest = attr(x, "manifest"),
       `Manifest timestamp` = .bl_cap_ts_text(attr(x, "timestamp"))
@@ -441,33 +422,23 @@ format.rmbl_archive_capture <- function(x, ...) {
   invisible(NULL)
 }
 
-#' arccap()'s `upload`, checked, and the reason archive.rmorie.com needs.
-#' @param upload,reason As for arccap().
-#' @return A list: upload and reason.
+#' arccap()'s `upload`, checked.
+#' @param upload As for arccap().
+#' @return The upload.
 #' @noRd
-.bl_cap_upload_arg <- function(upload, reason) {
+.bl_cap_upload_arg <- function(upload) {
   if (!is.null(upload)) {
     if (
       !is.character(upload) ||
         anyNA(upload) ||
         !length(upload) ||
-        !all(upload %in% c("rmorie", "wayback"))
+        !all(upload == "wayback")
     ) {
-      stop('`upload` must be "rmorie", "wayback", both, or NULL', call. = FALSE)
+      stop('`upload` must be "wayback" or NULL', call. = FALSE)
     }
     upload <- unique(upload)
   }
-  if ("rmorie" %in% upload) {
-    reason <- if (is.null(reason)) "" else .rmbl_string1(reason, "reason")
-    if (nchar(trimws(reason)) < 20L) {
-      stop(
-        "`reason` is needed with upload = \"rmorie\": ",
-        "one sentence (20 characters or more) on why you keep the files",
-        call. = FALSE
-      )
-    }
-  }
-  list(upload = upload, reason = reason)
+  upload
 }
 
 #' The URLs to capture: given, or the ones the Wayback Machine refused in a
@@ -532,8 +503,6 @@ format.rmbl_archive_capture <- function(x, ...) {
     status = NA_character_,
     mirror = NA_character_,
     warc = NA_character_,
-    capture_id = NA_character_,
-    archive = NA_character_,
     wayback = NA_character_,
     stringsAsFactors = FALSE
   )
@@ -672,49 +641,13 @@ format.rmbl_archive_capture <- function(x, ...) {
         file.path(dir, out$file[i]),
         t,
         id,
-        mime = .bl_arc_mime(out$file[i]),
+        mime = .bl_mime(out$file[i]),
         meta = meta
       )
     )
     out$warc[i] <- wf
   }
   .bl_cdxj_add(file.path(dir, "indexes", "index.cdxj"), lines)
-  out
-}
-
-#' Keeps each capture at archive.rmorie.com.
-#' @param out The capture table.
-#' @param ok The rows kept.
-#' @param dir,reason,visibility,tmout As for arccap().
-#' @return The capture table, with each row's capture id and address.
-#' @noRd
-.bl_cap_rmorie <- function(out, ok, dir, reason, visibility, tmout) {
-  base <- .bl_arc_base()
-  key <- .bl_arc_key(base)
-  if (is.null(key)) {
-    stop(
-      sprintf(
-        paste0(
-          "%s needs your key: %s, or in GitHub ",
-          "Actions allow the job `id-token: write`; the files are kept in %s"
-        ),
-        .bl_arc_host(base),
-        .bl_arc_keyhow(base),
-        dir
-      ),
-      call. = FALSE
-    )
-  }
-  for (i in which(ok)) {
-    r <- .bl_cap_rmorie1(out, i, dir, reason, visibility, base, key, tmout)
-    if (inherits(r, "rmbl_fail")) {
-      out$status[i] <- paste("failed:", r, "(the file is kept locally)")
-    } else {
-      out$capture_id[i] <- r$capture_id
-      out$archive[i] <- r$capture
-      if (out$status[i] == "captured") out$status[i] <- "archived"
-    }
-  }
   out
 }
 
@@ -844,35 +777,6 @@ format.rmbl_archive_capture <- function(x, ...) {
   mpath
 }
 
-#' arccap()'s WARC files and archive.rmorie.com upload, as asked for.
-#'
-#' WARC/1.1 files and a CDXJ index make a pywb collection, and fetchvrf()'s
-#' last fallback.
-#' @param out The capture table.
-#' @param ok Which rows were captured or uploaded.
-#' @param dir The capture folder holding the files to publish.
-#' @param warc,upload,reason,visibility,tmout As for arccap() (checked).
-#' @return `out`, with the WARC and archive columns filled in.
-#' @noRd
-.bl_cap_publish <- function(
-  out,
-  ok,
-  dir,
-  warc,
-  upload,
-  reason,
-  visibility,
-  tmout
-) {
-  if (isTRUE(warc)) {
-    out <- .bl_cap_warc(out, ok, dir, reason)
-  }
-  if ("rmorie" %in% upload) {
-    out <- .bl_cap_rmorie(out, ok, dir, reason, visibility, tmout)
-  }
-  out
-}
-
 #' Sends one file of an arccap() capture to its Internet Archive item.
 #' @param file The file name, relative to `dir`.
 #' @param first Whether this is the first file, which makes the item.
@@ -960,37 +864,32 @@ format.rmbl_archive_capture <- function(x, ...) {
   out
 }
 
-#' Uploads one captured file to archive.rmorie.com.
-#' @param out The capture table.
-#' @param i The row of the capture table whose file is uploaded.
-#' @param dir The capture folder the row's file is read from.
-#' @param reason,visibility As for arccap().
-#' @param base,key The archive's base URL and key.
-#' @param tmout Seconds the upload to archive.rmorie.com may take.
-#' @return The archive's reply, or an `rmbl_fail` string with the error.
+#' A media type from a file name, for the WARC record.
+#' @param f A file name.
+#' @return One media type.
 #' @noRd
-.bl_cap_rmorie1 <- function(out, i, dir, reason, visibility, base, key, tmout) {
-  tryCatch(
-    .bl_arc_upload(
-      file.path(dir, out$file[i]),
-      out$url[i],
-      as.POSIXct(
-        out$fetched_utc[i],
-        format = "%Y-%m-%dT%H:%M:%SZ",
-        tz = "UTC"
-      ),
-      reason,
-      visibility,
-      .bl_arc_mime(out$file[i]),
-      base,
-      key,
-      tmout
-    ),
-    error = function(e) {
-      .bl_unless_interrupted(
-        e,
-        structure(conditionMessage(e), class = "rmbl_fail")
-      )
-    }
+.bl_mime <- function(f) {
+  ext <- tolower(sub("^.*\\.", "", basename(f)))
+  m <- c(
+    csv = "text/csv",
+    tsv = "text/tab-separated-values",
+    txt = "text/plain",
+    json = "application/json",
+    html = "text/html",
+    htm = "text/html",
+    xml = "application/xml",
+    zip = "application/zip",
+    gz = "application/gzip",
+    pdf = "application/pdf",
+    xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    xls = "application/vnd.ms-excel",
+    parquet = "application/vnd.apache.parquet",
+    png = "image/png",
+    jpg = "image/jpeg",
+    jpeg = "image/jpeg",
+    svg = "image/svg+xml",
+    css = "text/css",
+    js = "text/javascript"
   )
+  if (ext %in% names(m)) m[[ext]] else "application/octet-stream"
 }

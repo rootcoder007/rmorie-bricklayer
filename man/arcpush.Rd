@@ -11,8 +11,6 @@ arcpush(
   ak = NULL,
   sk = NULL,
   upload = NULL,
-  reason = NULL,
-  visibility = c("public", "private"),
   tsa = "https://freetsa.org/tsr",
   tmout = 600L
 )
@@ -20,8 +18,7 @@ arcpush(
 \arguments{
 \item{dir}{The folder of an \code{\link[=arccap]{arccap()}} capture.}
 
-\item{item, meta, ak, sk, upload, reason, visibility, tmout}{As for
-\code{\link[=arccap]{arccap()}}.}
+\item{item, meta, ak, sk, upload, tmout}{As for \code{\link[=arccap]{arccap()}}.}
 
 \item{tsa}{A time-stamping authority, asked only when the manifest has
 no timestamp yet (default as for \code{\link[=arccap]{arccap()}}); \code{NULL} asks none.}
@@ -37,8 +34,8 @@ sent. What each archive took is also kept in \file{push.json} in
 \description{
 \code{\link[=arccap]{arccap()}} keeps every capture on this computer first: the files,
 their SHA-256, a manifest and, by default, a WARC copy. When the Wayback
-Machine, archive.rmorie.com or archive.org is down, or there is no
-network but the source's, the capture is still complete there.
+Machine or archive.org is down, or there is no network but the
+source's, the capture is still complete there.
 \code{arcpush()} sends that same capture on later: the very files that
 were fetched, each checked first against the SHA-256 the manifest
 recorded, so an archive keeps what you captured, not a new download. Run
@@ -58,7 +55,7 @@ fetched.
 Errors: \code{dir} without the \file{manifest.json} that \code{\link[=arccap]{arccap()}}
 writes, or a manifest that lists no files; nowhere to send (neither
 \code{item} nor \code{upload}); as for \code{\link[=arccap]{arccap()}} for \code{item},
-\code{meta}, \code{upload}, \code{reason}, \code{tmout} and the keys.
+\code{meta}, \code{upload}, \code{tmout} and the keys.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
@@ -67,11 +64,7 @@ src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
 d <- file.path(tempdir(), "cap")
 arccap(src, d, tsa = NULL)
 # later, when the archives answer: the same bytes, sent on
-arcpush(
-  d,
-  upload = c("rmorie", "wayback"),
-  reason = "Custody table cited in chapter 3"
-)
+arcpush(d, upload = "wayback")
 \dontshow{\}) # examplesIf}
 }
 \seealso{

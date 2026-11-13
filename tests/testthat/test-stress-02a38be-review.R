@@ -580,7 +580,7 @@ test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
   launcher <- system.file("bin", "rmbl", package = "rmoriebricklayer")
   skip_if_not(nzchar(launcher))
   h <- withr::local_tempdir()
-  for (args in c("login --token", "config set own.key")) {
+  for (args in "config set own.key") {
     # the terminal's transcript is kept, so a failure shows what the child
     # printed
     ty <- withr::local_tempfile(fileext = ".typescript")
@@ -703,49 +703,6 @@ test_that(
         "not a whole number >= 0 \\(below 2\\^31\\)"
       )
     }
-  }
-)
-
-test_that(
-  paste0(
-    "L3: a key saved for another hosted address is said once, and the ",
-    "summary says so"
-  ),
-  {
-    d <- withr::local_tempdir()
-    withr::local_envvar(
-      XDG_CONFIG_HOME = d,
-      MORIE_HOSTED_KEY = "",
-      MORIE_HOSTED_BASE_URL = "https://llm.example.org/v1"
-    )
-    dir.create(file.path(d, "morie"))
-    writeLines(
-      paste0(
-        '{"hosted_key": "sk-test", "hosted_base_url": ',
-        '"https://old.example.org/v1"}'
-      ),
-      file.path(d, "morie", "credentials.json")
-    )
-    rm(
-      list = ls(.bl_said_once),
-      envir = .bl_said_once
-    )
-    expect_message(
-      expect_null(.bl_hosted_key()),
-      "issued for https://old.example.org/v1"
-    )
-    expect_silent(expect_null(.bl_hosted_key()))
-    got <- new.env()
-    got$out <- character()
-    .bl_cli_doctor(function(x) got$out <- c(got$out, x))
-    expect_true(any(grepl(
-      paste0(
-        "data key: issued for https://old.example.org/v1, so not sent to ",
-        "https://llm.example.org/v1"
-      ),
-      got$out,
-      fixed = TRUE
-    )))
   }
 )
 

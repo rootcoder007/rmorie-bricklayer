@@ -352,8 +352,8 @@ test_that(
 
 test_that(
   paste0(
-    "L2: a non-object llm.json and a malformed credentials.json are errors, ",
-    "and nothing writes over them"
+    "L2: a non-object llm.json is an error, and nothing writes over it or ",
+    "over credentials.json"
   ),
   {
     cf_env2()
@@ -368,35 +368,17 @@ test_that(
     unlink(cfg)
     cred <- .bl_credentials_path()
     writeLines("{not json", cred)
-    expect_error(.bl_read_credentials(), "shared with morie")
-    expect_error(
-      .bl_store_key("sk-new"),
-      "not a JSON object"
-    )
+    llmcfg(ollama.model = "m1")
     expect_identical(readLines(cred, warn = FALSE), "{not json")
-    writeLines("[1, 2]", cred)
-    expect_error(
-      .bl_store_key("sk-new"),
-      "not a JSON object"
-    )
   }
 )
 
 test_that(
   paste0(
-    "L3: the hosted key is tied to the address it was saved for; a new ",
-    "own.url drops the saved own.key"
+    "L3: a new own.url drops the saved own.key"
   ),
   {
     cf_env2()
-    withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "https://llm.example.org"))
-    .bl_store_key("sk-saved")
-    expect_identical(.bl_hosted_key(), "sk-saved")
-    withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "https://other.example.org"))
-    expect_null(.bl_hosted_key())
-    withr::local_envvar(c(MORIE_HOSTED_KEY = "sk-env"))
-    expect_identical(.bl_hosted_key(), "sk-env")
-    withr::local_envvar(c(MORIE_HOSTED_KEY = NA, MORIE_HOSTED_BASE_URL = NA))
     llmcfg(own.url = "http://localhost:1234/v1", own.key = "k-one")
     expect_identical(
       .bl_config_value("MORIE_LLM_API_KEY"),
@@ -682,21 +664,11 @@ test_that(
 )
 
 test_that("the help never suggests a key on the command line", {
-  expect_false(grepl(
-    "--token KEY",
-    .bl_access_hint(),
-    fixed = TRUE
-  ))
   out <- character()
   blcli("help", out = function(s) {
     assign("out", c(out, s), envir = parent.env(environment()))
   })
-  expect_false(any(grepl("login --token KEY", out, fixed = TRUE)))
-  out <- character()
-  blcli(c("login", "--help"), out = function(s) {
-    assign("out", c(out, s), envir = parent.env(environment()))
-  })
-  expect_false(any(grepl("login --token KEY", out, fixed = TRUE)))
+  expect_false(any(grepl("--token KEY", out, fixed = TRUE)))
 })
 
 test_that(
@@ -761,13 +733,5 @@ test_that(
     unlink(cfg)
     .bl_write_config(list(route = "hosted"))
     expect_identical(.bl_read_config()$route, "hosted")
-    cred <- .bl_credentials_path()
-    writeLines("{\"hosted_key\": \"k\"}", cred)
-    expect_identical(
-      .bl_credentials_object(cred)$hosted_key,
-      "k"
-    )
-    writeLines("{", cred)
-    expect_null(.bl_credentials_object(cred))
   }
 )

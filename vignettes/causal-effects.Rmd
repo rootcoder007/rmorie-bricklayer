@@ -61,7 +61,7 @@ programme of the 1970s, and asked whether the econometric methods of the day cou
 experimental effect on 1978 earnings when the randomised controls are replaced by a survey
 sample (the PSID). Dehejia and Wahba (1999) kept the men with 1974 earnings: 185 treated, 260
 randomised controls, and 2,490 PSID-1 comparison men. The three files are on data.rmorie.com
-(`rmbl login` once), checked against the SHA-256 the manifest lists:
+(no sign-in), checked against the SHA-256 the manifest lists:
 
 ```{r causal-effects-nsw-load, eval = FALSE}
 tr <- dload("nsw_dw/treated")

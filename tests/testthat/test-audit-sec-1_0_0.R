@@ -667,7 +667,6 @@ test_that("the shapes the routing fuzz still sent are refused", {
     expect_true(ns$.bl_key_shaped(k), info = k)
     expect_false(ns$.bl_bare_question(k), info = k)
   }
-  expect_false(ns$.bl_bare_question("login set openai.model gpt-4o?"))
   expect_false(ns$.bl_bare_question("config set openai.model gpt-4o?"))
   expect_false(ns$.bl_bare_question("verify the capsule --json?"))
   # questions stay questions

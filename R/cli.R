@@ -9,13 +9,7 @@
 #' Run the rmoriebricklayer command line
 #'
 #' Dispatches the verbs of the \code{rmoriebricklayer} launcher: \describe{
-#' \item{\code{login [--token] [--email ADDRESS [--code CODE]]
-#' [--no-browser]}}{store a MORIE data key (issued at
-#' \code{www.rmorie.com/access/}; the curated tables at data.rmorie.com need
-#' none, and a stored key is still sent to them): a key you paste
-#' with \code{--token} (read from the terminal or a pipe when KEY is omitted), a
-#' code sent to \code{--email}, or the GitHub device flow}
-#' \item{\code{logout}}{forget the data key} \item{\code{doctor}}{report the
+#' \item{\code{doctor}}{report the
 #' language-model routes available here (own endpoint, each provider with your
 #' key, local Ollama), in the order \code{ask} tries them} \item{\code{models
 #' [--route ROUTE]}}{list the models your provider (or server) offers, the one
@@ -57,19 +51,13 @@
 #' \code{\link{wbsave}}, results in \code{--out} (default
 #' \code{FILE.wayback.jsonl}), so a stopped run carries on; \code{wayback
 #' --retry FILE.jsonl [--include-gone]} retries the failures of an earlier run
-#' (\code{\link{wbrtry}})} \item{\code{archive save URL... --reason TEXT
-#' [--dir D] [--private] [--also wayback]}}{save from this connection to
-#' archive.rmorie.com with \code{\link{arccap}}, keeping the files, their
-#' manifest and WARC copies in D (default \file{captures}); \code{archive
-#' push DIR [--reason TEXT] [--private] [--also wayback]} sends a capture
-#' kept in DIR on later, the same bytes, with \code{\link{arcpush}} (run it
-#' again to retry what failed); \code{archive find URL} and \code{archive
-#' get ID|URL -o FILE} list the captures of a URL and fetch one's exact bytes
-#' (\code{\link{arcfind}}, \code{\link{arcget}}); \code{archive mine}
-#' lists your own captures, \code{archive private ID} and \code{archive
-#' public ID} hide or show one, and \code{archive withdraw ID --yes}
-#' withdraws one for good (\code{\link{arcmine}}, \code{\link{arcvis}},
-#' \code{\link{arcwd}})}
+#' (\code{\link{wbrtry}})} \item{\code{archive save URL... [--reason TEXT]
+#' [--dir D] [--also wayback]}}{capture from this connection with
+#' \code{\link{arccap}}, keeping the files, their manifest and WARC copies in
+#' D (default \file{captures}), and with \code{--also wayback} ask the
+#' Wayback Machine too; \code{archive push DIR --also wayback} asks the
+#' Wayback Machine later for the addresses of a capture kept in DIR, with
+#' \code{\link{arcpush}} (run it again to retry what failed)}
 #' \item{\code{verify PATH [--json] [--fail-on LEVEL]
 #' [--public-key HEX]}}{check every capsule under PATH as the rmbl GitHub Action
 #' does (\code{\link{cpschk}}): each file against its JSON Schema
@@ -137,8 +125,7 @@
 #' launcher sets it) and \code{options(rmoriebricklayer.dcache)} is not,
 #' the data.rmorie.com manifest and tables are kept in
 #' \code{tools::R_user_dir("rmoriebricklayer", "cache")} rather than a fresh
-#' temporary folder. The verbs \code{login}, \code{logout} and
-#' \code{config} write the shared credentials and settings files;
+#' temporary folder. The verb \code{config} writes the settings file;
 #' \code{ask}, \code{models}, \code{data}, \code{bundle} and
 #' \code{wayback} use the network, and \code{drift} and \code{refresh}
 #' fetch each capsule's source (\code{refresh} writes the capsule),
@@ -265,7 +252,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 #' Install the rmoriebricklayer command-line launcher
 #'
 #' Writes small launcher scripts into a directory on your PATH so that
-#' \code{rmoriebricklayer login}, \code{rmbl ask ...} and the other verbs of
+#' \code{rmoriebricklayer doctor}, \code{rmbl ask ...} and the other verbs of
 #' \code{\link{blcli}} work from any shell. Run it once after
 #' installing or upgrading the package. Nothing outside \code{dir} is
 #' touched, and only when you call this.
@@ -514,10 +501,10 @@ instcli <- function(
 
 #' Reads one typed line for a prompt.
 #'
-#' One typed line for a prompt (the key of `login --token`, the emailed code).
+#' One typed line for a prompt (a provider key for `config`).
 #' The launchers run Rscript, where readline() returns \code{""} at once, so
 #' outside an interactive session read one line of stdin: typed at a terminal,
-#' or piped (`echo KEY | rmbl login --token` keeps the key out of the shell
+#' or piped (`echo KEY | rmbl config set ...` keeps the key out of the shell
 #' history). Closed or empty stdin gives \code{""}.
 #' @param prompt The prompt text.
 #' @param con A connection to read from instead of the terminal or standard
@@ -736,21 +723,11 @@ instcli <- function(
   c(.bl_cli_opts_a(), .bl_cli_opts_b(rest))
 }
 
-#' The options of login, ask, models, data, app, wayback and archive.
+#' The options of ask, models, data, app, wayback and archive.
 #' @return A list by verb.
 #' @noRd
 .bl_cli_opts_a <- function() {
   list(
-    login = c(
-      "--email",
-      "--code",
-      "--no-browser",
-      "--token",
-      "--accept-terms",
-      "--name",
-      "--affiliation",
-      "--reason"
-    ),
     ask = c("--model", "--route", "--fresh"),
     models = "--route",
     data = "--out",
@@ -763,19 +740,7 @@ instcli <- function(
       "--retry",
       "--include-gone"
     ),
-    archive = c(
-      "--reason",
-      "--dir",
-      "--private",
-      "--yes",
-      "--also",
-      "--out",
-      "--sha256",
-      "--at",
-      "--from",
-      "--to",
-      "--json"
-    )
+    archive = c("--reason", "--dir", "--also")
   )
 }
 
@@ -822,16 +787,11 @@ instcli <- function(
   opts <- rest[startsWith(rest, "--")]
   values <- unlist(lapply(
     c(
-      "--email",
-      "--code",
-      "--token",
       "--model",
       "--route",
       "--out",
       "--jobs",
       "--within",
-      "--name",
-      "--affiliation",
       "--reason",
       "--port",
       .bl_capsule_valued,
@@ -866,8 +826,6 @@ instcli <- function(
 #' @noRd
 .bl_cli_handlers <- function() {
   list(
-    login = .bl_v_login,
-    logout = function(ctx) .bl_v_noargs(ctx, "logout", dlogout),
     doctor = .bl_v_doctor,
     config = .bl_v_config,
     models = .bl_v_models,
@@ -1013,84 +971,6 @@ instcli <- function(
   }
   fn()
   NULL
-}
-
-#' `login`: a pasted key, or GitHub or an emailed code.
-#' @param ctx The command's context.
-#' @return NULL (exit status 0).
-#' @noRd
-.bl_v_login <- function(ctx) {
-  rest <- ctx$rest
-  flag <- .bl_cli_flagger(rest)
-  has <- function(name) name %in% rest
-  if (has("--token")) {
-    .bl_v_login_token(ctx)
-  } else {
-    if (has("--code") && is.null(flag("--email"))) {
-      .bl_cli_usage_error(
-        "--code needs --email ADDRESS (the code was sent there)"
-      )
-    }
-    em <- flag("--email")
-    if (
-      !is.null(em) &&
-        !grepl("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", trimws(em))
-    ) {
-      .bl_cli_usage_error(sprintf(
-        "--email: '%s' is not an email address",
-        em
-      ))
-    }
-    dlogin(
-      email = flag("--email"),
-      code = flag("--code"),
-      openbro = !has("--no-browser") &&
-        interactive(),
-      accter = has("--accept-terms"),
-      name = flag("--name"),
-      affil = flag("--affiliation"),
-      purp = flag("--reason")
-    )
-  }
-  ctx$out(sprintf(
-    "Logged in: the key is stored and sent to %s\n",
-    tryCatch(.bl_data_url(), error = function(e) "data.rmorie.com")
-  ))
-  NULL
-}
-
-#' `login --token`: the key given (with a warning: it stays in the shell
-#' history), or asked for.
-#' @param ctx The command's context.
-#' @noRd
-.bl_v_login_token <- function(ctx) {
-  rest <- ctx$rest
-  i <- match("--token", rest)
-  tok <- if (i < length(rest)) rest[[i + 1L]] else ""
-  if (nzchar(tok)) {
-    ctx$out(sprintf(
-      paste(
-        "%s: a key given on the command line stays in the",
-        "shell history and is visible",
-        "to other users in the process list; `%s login",
-        "--token` with no value asks for it\n"
-      ),
-      ctx$prog,
-      ctx$prog
-    ))
-  }
-  if (!nzchar(tok)) {
-    tok <- .bl_readline("Paste your MORIE key: ", secret = TRUE)
-  }
-  if (!nzchar(tok)) {
-    .bl_cli_usage_error(
-      paste0(
-        "--token needs a key: run `login --token` and paste it ",
-        "when asked"
-      )
-    )
-  }
-  dlogin(token = tok)
 }
 
 #' The usage error for a route the command line does not know.
@@ -1692,18 +1572,11 @@ instcli <- function(
   sprintf("usage: %s %s\n", prog, u[[verb]])
 }
 
-#' The usage lines of the verbs login to examples.
+#' The usage lines of the verbs doctor to examples.
 #' @return A named character vector.
 #' @noRd
 .bl_usage_a <- function() {
   c(
-    login = paste(
-      "login [--email ADDRESS [--code CODE]] [--no-browser]",
-      "[--accept-terms] [--name NAME]",
-      "[--affiliation ORG] [--reason TEXT] | login --token",
-      "  store a MORIE data key (the curated tables need none)"
-    ),
-    logout = "logout   forget the data key",
     doctor = "doctor   report the language-model routes available here",
     models = paste0(
       "models [--route ROUTE]   the models your provider (or server) ",
@@ -1769,20 +1642,11 @@ instcli <- function(
       "(keys: IA_S3_ACCESS_KEY and IA_S3_SECRET_KEY, or their _FILE twins)"
     ),
     archive = paste(
-      "archive save URL... --reason TEXT [--dir D] [--private] [--also",
-      "wayback]   save from this",
-      "connection to archive.rmorie.com (your key: login), with WARC",
-      "copies in D;",
-      "archive find URL [--from YYYY] [--to YYYY] [--json]   list its",
-      "captures (URL* for a prefix);",
-      "archive get ID|URL -o FILE [--sha256 HEX] [--at YYYYMMDD]   the",
-      "exact bytes, checked;",
-      "archive push DIR [--reason TEXT] [--private] [--also wayback]",
-      "  send a capture kept in DIR on later, the same bytes;",
-      "archive mine [--json]   list your captures;",
-      "archive private ID | archive public ID   hide one from others, or",
-      "show it;",
-      "archive withdraw ID --yes   withdraw one for good"
+      "archive save URL... [--reason TEXT] [--dir D] [--also wayback]",
+      "  capture from this connection, with WARC copies in D",
+      "(--also wayback: ask the Wayback Machine too);",
+      "archive push DIR --also wayback   ask the Wayback Machine later",
+      "for the addresses of a capture kept in DIR"
     ),
     pack = .bl_usage_p()
   )
@@ -2332,9 +2196,7 @@ instcli <- function(
     "  models [--route R]                        models your provider ",
     "or server offers\n",
     "  bundle REQUEST...                         agentbndl() from the shell\n",
-    "\nData and functions\n",
-    "  login [--token] [--email ADDRESS]         store a data key ",
-    "(the curated tables need none)\n"
+    "\nData and functions\n"
   )
 }
 
@@ -2344,28 +2206,20 @@ instcli <- function(
 #' @noRd
 .bl_help_verbs2 <- function(prog) {
   paste0(
-    "        [--code CODE] [--no-browser]\n",
-    "  logout                                    forget the data key\n",
     "  data list                                 curated tables at ",
     "data.rmorie.com\n",
     "  data pull db/table [--out FILE.csv]       download one of them ",
-    "(your MORIE data key)\n",
+    "(no sign-in)\n",
     "  app [PATH] [--port N] [--no-browser]      the analysis dashboard ",
     "on this machine (needs shiny)\n",
     "  wayback FILE [--out F.jsonl] [--jobs N]   archive every URL in ",
     "FILE (archive.org keys)\n",
     "  wayback --retry F.jsonl                   retry the failed URLs ",
     "of an earlier wayback run\n",
-    "  archive save URL... --reason TEXT         save from this ",
-    "connection to archive.rmorie.com\n",
-    "  archive find URL | get ID -o FILE         list its captures; ",
-    "fetch the exact bytes, checked\n",
-    "  archive push DIR --reason TEXT            send a capture kept ",
-    "here on later\n",
-    "  archive mine | private ID | public ID     list your captures; ",
-    "hide or show one\n",
-    "  archive withdraw ID --yes                 withdraw one of your ",
-    "captures for good\n",
+    "  archive save URL... [--dir D]             capture from this ",
+    "connection, with WARC copies\n",
+    "  archive push DIR --also wayback           ask the Wayback ",
+    "Machine later for a kept capture\n",
     "  pack DIR [--dest D] [--data FILE]         a reproducibility ",
     "bundle a reviewer double-clicks\n",
     "  pack --new DIR [--title T]                start a bundle project ",
@@ -2588,9 +2442,7 @@ instcli <- function(
     "  llmcfg(own.url = \"http://localhost:1234/v1\", own.model = \"m\")\n",
     "  llmcfg(route = NULL)                       # back to auto\n",
     "  llmmdls()\n",
-    "  llmask(\"What can a Benford screen show?\")\n",
-    "  dlogin()                                    # a data key (the ",
-    "tables need none)\n\n",
+    "  llmask(\"What can a Benford screen show?\")\n\n",
     "From the shell:\n",
     "  Rscript -e 'cat(rmoriebricklayer::llmask(\"What can a Benford ",
     "screen show?\"), \"\\n\")'\n"
@@ -2601,7 +2453,8 @@ instcli <- function(
 #' @param pos The URLs.
 #' @param args The verb's arguments.
 #' @param flag,out As for .bl_cli_archive().
-#' @return The exit status.
+#' @return The exit status: 0 when every file was captured (and, with
+#'   `--also wayback`, taken by the Wayback Machine), else 1.
 #' @noRd
 .bl_cli_archive_save <- function(pos, args, flag, out) {
   also <- flag("--also")
@@ -2609,24 +2462,13 @@ instcli <- function(
     out("--also takes one value: wayback\n")
     return(2L)
   }
-  reason <- flag("--reason")
-  if (is.null(reason)) {
-    out(
-      paste0(
-        "save needs --reason \"why you keep it\" (one sentence, 20 ",
-        "characters or more)\n"
-      )
-    )
-    return(2L)
-  }
   dir <- flag("--dir") %||% file.path(getwd(), "captures")
   cap <- arccap(
     pos,
     dir,
     tsa = NULL,
-    upload = c("rmorie", if (!is.null(also)) "wayback"),
-    reason = reason,
-    visibility = if ("--private" %in% args) "private" else "public"
+    upload = also,
+    reason = flag("--reason")
   )
   d <- as.data.frame(unclass(cap))
   for (i in seq_len(nrow(d))) {
@@ -2634,104 +2476,43 @@ instcli <- function(
       "%s  %s%s\n",
       d$status[i],
       d$url[i],
-      if (!is.na(d$archive[i])) paste0("\n  ", d$archive[i]) else ""
+      if (!is.na(d$wayback[i])) paste0("\n  wayback: ", d$wayback[i]) else ""
     ))
   }
   out(sprintf("local copies and WARC files: %s\n", dir))
-  if (all(d$status == "archived")) 0L else 1L
+  .bl_cli_archive_done(d, also)
 }
 
-#' `archive push`: a capture kept here, sent on to archive.rmorie.com (and
-#' the Wayback Machine) later.
+#' Whether every file of a capture was kept, and taken by the Wayback
+#' Machine when it was asked.
+#' @param d The capture table.
+#' @param also "wayback", or NULL.
+#' @return The exit status: 0 or 1.
+#' @noRd
+.bl_cli_archive_done <- function(d, also) {
+  ok <- !startsWith(d$status, "failed")
+  if (!is.null(also)) {
+    ok <- ok & grepl("^(saved|existing)", .bl_push_na(d$wayback))
+  }
+  if (all(ok)) 0L else 1L
+}
+
+#' `archive push`: a capture kept here, sent on to the Wayback Machine later.
 #' @param pos The capture folder.
 #' @param args The verb's arguments.
 #' @param flag,out As for .bl_cli_archive().
-#' @return The exit status: 0 when every file is archived, else 1.
+#' @return The exit status: 0 when the Wayback Machine took every file, else
+#'   1.
 #' @noRd
 .bl_cli_archive_push <- function(pos, args, flag, out) {
   also <- flag("--also")
-  if (!is.null(also) && !identical(also, "wayback")) {
-    out("--also takes one value: wayback\n")
+  if (!identical(also, "wayback")) {
+    out("push needs --also wayback (where the capture goes)\n")
     return(2L)
   }
-  if (is.null(flag("--reason"))) {
-    out("push needs --reason \"why you keep it\" (20 characters or more)\n")
-    return(2L)
-  }
-  cap <- arcpush(
-    pos[[1L]],
-    upload = c("rmorie", if (!is.null(also)) "wayback"),
-    reason = flag("--reason"),
-    visibility = if ("--private" %in% args) "private" else "public",
-    tsa = NULL
-  )
+  cap <- arcpush(pos[[1L]], upload = also, tsa = NULL)
   out(paste0(paste(utils::capture.output(print(cap)), collapse = "\n"), "\n"))
-  if (all(cap$status == "archived")) 0L else 1L
-}
-
-#' `archive find`: a URL's captures, as a table or JSON.
-#' @param pos The URL.
-#' @param args The verb's arguments.
-#' @param flag,out As for .bl_cli_archive().
-#' @return The exit status.
-#' @noRd
-.bl_cli_archive_find <- function(pos, args, flag, out) {
-  f <- arcfind(pos[[1L]], from = flag("--from"), to = flag("--to"))
-  if ("--json" %in% args) {
-    d <- as.data.frame(unclass(f))
-    d$captured <- format(d$captured, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
-    out(paste0(tojs(d, dataframe = "rows", auto_unbox = TRUE), "\n"))
-  } else {
-    out(paste0(paste(utils::capture.output(print(f)), collapse = "\n"), "\n"))
-  }
-  if (nrow(f)) 0L else 1L
-}
-
-#' `archive mine`: the caller's captures, as a table or JSON.
-#' @param args The verb's arguments.
-#' @param out Writes text.
-#' @return The exit status: 0 with captures, 1 with none.
-#' @noRd
-.bl_cli_archive_mine <- function(args, out) {
-  f <- arcmine()
-  if ("--json" %in% args) {
-    d <- as.data.frame(unclass(f))
-    d$captured <- format(d$captured, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
-    out(paste0(tojs(d, dataframe = "rows", auto_unbox = TRUE), "\n"))
-  } else {
-    out(paste0(paste(utils::capture.output(print(f)), collapse = "\n"), "\n"))
-  }
-  if (nrow(f)) 0L else 1L
-}
-
-#' `archive withdraw|private|public ID`: one of the caller's captures.
-#' @param sub The subcommand.
-#' @param id The id given on the command line.
-#' @param args The verb's arguments (`--yes` confirms a withdrawal).
-#' @param out Writes text.
-#' @return The exit status: 0 done, 2 a withdrawal not confirmed.
-#' @noRd
-.bl_cli_archive_own <- function(sub, id, args, out) {
-  if (sub != "withdraw") {
-    r <- suppressMessages(arcvis(id, sub))
-    out(sprintf("capture %s is now %s\n", r$capture_id, r$visibility))
-    return(0L)
-  }
-  if (!"--yes" %in% args) {
-    out(paste0(
-      "withdrawing cannot be undone; nothing was changed. To withdraw ",
-      id,
-      ", add --yes\n"
-    ))
-    return(2L)
-  }
-  r <- suppressMessages(arcwd(id, confirm = TRUE))
-  out(sprintf(
-    "capture %s is withdrawn; %s\n",
-    r$capture_id,
-    .bl_arc_bytes(r$bytes_removed)
-  ))
-  0L
+  .bl_cli_archive_done(as.data.frame(unclass(cap)), also)
 }
 
 #' The words of an archive subcommand that are not options or their values.
@@ -2740,19 +2521,15 @@ instcli <- function(
 #' @noRd
 .bl_cli_archive_pos <- function(args) {
   pos <- args
-  valued <- c(
-    "--reason", "--dir", "--also", "-o", "--out", "--sha256", "--at",
-    "--from", "--to"
-  )
-  for (f in valued) {
+  for (f in c("--reason", "--dir", "--also")) {
     i <- match(f, pos)
     if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
   }
-  setdiff(pos, c("--private", "--json", "--yes"))
+  pos
 }
 
-#' The archive verb: archive.rmorie.com from a terminal (arccap(upload =
-#' "rmorie"), arcfind(), arcget()).
+#' The archive verb: captures kept on this computer (arccap()) and sent on to
+#' the Wayback Machine (arcpush()) from a terminal.
 #' @param rest The arguments after `archive`: the subcommand and its arguments.
 #' @param flag Looks up an option's value.
 #' @param out Writes text.
@@ -2769,37 +2546,13 @@ instcli <- function(
   if (sub %in% c("help", "--help", "-h")) {
     return(usage(0L))
   }
-  if (sub == "mine") {
-    return(.bl_cli_archive_mine(args, out))
-  }
-  if (sub %in% c("withdraw", "private", "public") && length(pos)) {
-    return(.bl_cli_archive_own(sub, pos[[1L]], args, out))
-  }
-  if (!sub %in% c("save", "find", "get", "push") || !length(pos)) {
+  if (!sub %in% c("save", "push") || !length(pos)) {
     return(usage(2L))
   }
   if (sub == "push") {
     return(.bl_cli_archive_push(pos, args, flag, out))
   }
-  if (sub == "save") {
-    return(.bl_cli_archive_save(pos, args, flag, out))
-  }
-  if (sub == "find") {
-    return(.bl_cli_archive_find(pos, args, flag, out))
-  }
-  dest <- flag("-o") %||% flag("--out")
-  if (is.null(dest)) {
-    out("get needs -o FILE (where to write the bytes)\n")
-    return(2L)
-  }
-  g <- arcget(pos[[1L]], dest, sha256 = flag("--sha256"), at = flag("--at"))
-  out(sprintf(
-    "%s  capture %s, SHA-256 %s\n",
-    dest,
-    attr(g, "capture_id"),
-    attr(g, "sha256")
-  ))
-  0L
+  .bl_cli_archive_save(pos, args, flag, out)
 }
 
 #' Writes one launcher of instcli().

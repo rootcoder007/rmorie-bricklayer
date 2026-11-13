@@ -379,10 +379,9 @@ test_that("a null setting in the config file is an error that says null", {
   )
 })
 
-test_that("doctor reports no data key when the key state cannot be read", {
+test_that("doctor says the curated tables need no data key", {
   got <- new.env()
   got$out <- character()
-  local_mocked_bindings(.bl_hosted_key_state = function() stop("broken"))
   .bl_doctor_key(function(s) got$out <- c(got$out, s), "rmbl")
   expect_identical(
     got$out,

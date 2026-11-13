@@ -16,9 +16,7 @@ wbsave(
   capall = FALSE,
   quiet = NULL,
   permin = 6,
-  maxcap = 1000,
-  fallback = NULL,
-  reason = NULL
+  maxcap = 1000
 )
 }
 \arguments{
@@ -67,14 +65,6 @@ shows it while a person is watching.}
 \item{maxcap}{The most captures this run starts; default
 1000. The rest are left for the next run (with the same
 \code{output}, it carries on from them).}
-
-\item{fallback}{\code{"rmorie"} saves what the Wayback Machine refused (a
-server that refuses its crawler, Statistics Canada among them) from this
-connection to archive.rmorie.com, with \code{\link{arccap}}; the result is
-attribute \code{archive}. \code{NULL} (default) does not.}
-
-\item{reason}{With \code{fallback = "rmorie"}: why the files are kept (20
-characters or more).}
 }
 \value{
 A data frame of class \code{rmbl_wayback_save}, one

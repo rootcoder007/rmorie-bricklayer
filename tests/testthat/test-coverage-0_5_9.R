@@ -291,24 +291,6 @@ test_that(
 
 test_that(
   paste0(
-    "the sign-in address falls back to the built-in default when the ",
-    "services document has none"
-  ),
-  {
-    withr::local_envvar(
-      MORIE_HOSTED_AUTH_URL = "",
-      MORIE_HOSTED_MODEL = "",
-      MORIE_HOSTED_BASE_URL = ""
-    )
-    local_mocked_bindings(.rmbl_services_llm = function() list())
-    expect_match(.bl_hosted_auth(), "^https://.*/auth$")
-    expect_error(.bl_login_email(""), "email address is required")
-    expect_error(.bl_login_email("   "), "email address is required")
-  }
-)
-
-test_that(
-  paste0(
     "mcar: a singular observed block in EM, a fit that does not converge, ",
     "an all-missing row, skipped patterns"
   ),

@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# The hosted MORIE services (the curated tables at data.rmorie.com and the
-# sign-in that issues their key) are described by one document on the
-# project site, signed with ML-DSA-44. The packages pin the public key
-# and the document's URL and nothing else: an endpoint, a model list or an
-# access mode can change on the site without a package release, and a
-# hijacked site cannot redirect anyone's key, because the signature fails
-# and the package keeps its last good copy.
+# The hosted MORIE services (the curated tables at data.rmorie.com) are
+# described by one document on the project site, signed with ML-DSA-44. The
+# packages pin the public key and the document's URL and nothing else: an
+# endpoint, a model list or an access mode can change on the site without a
+# package release, and a hijacked site cannot redirect anyone, because the
+# signature fails and the package keeps its last good copy.
 #
 # Resolution order: a fresh cached copy; the live document (fetched through
 # the package's own checked transport, verified, newer than the cache); the
@@ -16,9 +15,9 @@
 #' The hosted MORIE services, as the project site currently describes them
 #'
 #' Reads \code{https://rmorie.com/.well-known/morie-services.json}, a signed
-#' document naming the curated-data service and its sign-in: their
-#' endpoints, whether each is \code{"key"} (reachable with a key requested on
-#' the site) or \code{"off"}, and a notice.
+#' document naming the curated-data service: its endpoint, whether it is
+#' \code{"key"} (reachable; the open tables need no key) or \code{"off"}, and
+#' a notice. This package reads no sign-in address from it.
 #' The signature (ML-DSA-44, public key pinned in this package) is checked
 #' before anything in it is believed, so the endpoints can move or be
 #' switched off on the site without a package release, and a document that
@@ -26,7 +25,7 @@
 #' network the cached copy is used, then the copy bundled with the package.
 #'
 #' Every other MORIE package reads the same document through this function,
-#' so one sign-in and one document serve rmorie, rmoriedata and morie alike.
+#' so one document serves rmorie, rmoriedata and morie alike.
 #' Language models are never hosted: you bring your own key or model
 #' (\code{\link{llmask}}). The \code{llm} block of documents
 #' signed before that change carries the sign-in address only.
@@ -69,14 +68,14 @@
 #'   the examples and an offline session get).
 #' @return A list with \code{version} (integer, 1), \code{issued} (the
 #'   signing time, ISO 8601 UTC), \code{notice} (text for the user, possibly
-#'   empty), \code{llm} (\code{mode}, \code{base_url}, \code{auth_url}: where
-#'   the sign-in for the data key is reached; also \code{models},
+#'   empty), \code{llm} (\code{mode}, \code{base_url}, \code{auth_url} (read
+#'   as the document gives it; the package signs in nowhere), \code{models},
 #'   \code{default_model} and \code{request_access}) and
 #'   \code{data} (\code{mode}, \code{base_url}, \code{license},
 #'   \code{request_access}, and \code{auth_url} when the document has one),
 #'   with the attribute \code{"source"} set to
 #'   \code{"live"}, \code{"cache"}, \code{"bundled"} or \code{"off"}.
-#' @seealso \code{\link{dlogin}}, \code{\link{dmnf}}.
+#' @seealso \code{\link{dmnf}}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Nothing is fetched here: the cached copy if there is one, else the
 #' # document bundled with the package.
@@ -508,7 +507,7 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20, offline = FALSE) {
 }
 
 # The one-line answers the rest of the package asks for. Offline inside the
-# package: a sign-in or a table fetch must not block on the site; the daily
+# package: a table fetch must not block on the site; the daily
 # refresh happens when svcs() is called for its own sake.
 #' Returns the language-model block of the services document, without going
 #' online.

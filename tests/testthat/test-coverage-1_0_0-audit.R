@@ -508,7 +508,6 @@ test_that(
   ),
   {
     expect_error(blcli("version", out = 1), "`out` must be a function")
-    expect_error(dlogin(token = function(x) x), "`token` must be one string")
     cp <- structure(
       data.frame(),
       class = c("rmbl_census_profile", "data.frame")

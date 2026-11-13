@@ -82,10 +82,8 @@ test_that(
 )
 
 test_that("fetchvrf() says what every source did when none serves the file", {
-  # the default arcs = "rmorie" asks archive.rmorie.com last: offline here
   local_mocked_bindings(
-    blfetch = .fv_stub(list("https://m.org/x" = charToRaw("y"))),
-    arcget = function(...) stop("arcget: offline in the tests", call. = FALSE)
+    blfetch = .fv_stub(list("https://m.org/x" = charToRaw("y")))
   )
   expect_error(
     fetchvrf(
@@ -96,8 +94,7 @@ test_that("fetchvrf() says what every source did when none serves the file", {
     ),
     paste0(
       "with the pinned SHA-256:\n  https://example.org/x: failed.*\n  ",
-      "https://m.org/x: refused.*\n  ",
-      "archive.rmorie.com: failed: arcget: offline in the tests"
+      "https://m.org/x: refused.*$"
     )
   )
   expect_error(
@@ -150,3 +147,62 @@ test_that("a verified download prints as a box", {
     c("live", "https://s.org/a.csv: ok", "Attempts")
   )
 })
+
+test_that(
+  "fetchvrf() falls back to a capture folder's WARC files",
+  {
+    body <- charToRaw("a,b\n1,2\n")
+    dest <- withr::local_tempfile()
+    dir <- withr::local_tempdir()
+    local_mocked_bindings(
+      blfetch = .fv_stub(list("https://s.org/local.csv" = body))
+    )
+    arccap("https://s.org/local.csv", dir, tsa = NULL)
+    local_mocked_bindings(blfetch = function(...) {
+      stop("blfetch: could not reach")
+    })
+    r <- fetchvrf(
+      "https://s.org/local.csv",
+      dest,
+      sha256 = csha256(body),
+      arcs = c(withr::local_tempdir(), dir)
+    )
+    expect_identical(r$source, "local")
+    expect_identical(readBin(dest, "raw", 100), body)
+    expect_match(r$tried$outcome[2], "^failed: ")
+    expect_identical(r$tried$outcome[3], "kept")
+    expect_error(
+      fetchvrf("https://s.org/local.csv", dest, arcs = character()),
+      "no source served the file"
+    )
+    expect_error(
+      fetchvrf("https://s.org/local.csv", dest, arcs = NA_character_),
+      "`arcs` must be"
+    )
+    # a destination the file cannot be moved to
+    local_mocked_bindings(.bl_move = function(from, to) FALSE)
+    expect_error(
+      fetchvrf(
+        "https://s.org/local.csv",
+        withr::local_tempfile(),
+        sha256 = csha256(body),
+        arcs = dir
+      ),
+      "^cannot write"
+    )
+  }
+)
+
+test_that(
+  paste0(
+    "a finished download is moved into ",
+    "place, and a failed move says so"
+  ),
+  {
+    f1 <- withr::local_tempfile()
+    f2 <- withr::local_tempfile()
+    writeLines("x", f1)
+    expect_true(.bl_move(f1, f2))
+    expect_false(.bl_move(f1, f2))
+  }
+)

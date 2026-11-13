@@ -47,17 +47,6 @@ test_that("a statistic that returns no finite number is refused by cpsfals()", {
   )
 })
 
-test_that("a damaged credentials file is named", {
-  dir <- withr::local_tempdir()
-  withr::local_envvar(XDG_CONFIG_HOME = dir)
-  dir.create(file.path(dir, "morie"))
-  writeLines("[1]", file.path(dir, "morie", "credentials.json"))
-  expect_error(
-    .bl_read_credentials(),
-    "is not a JSON object; fix or remove it"
-  )
-})
-
 test_that(
   paste0(
     "an interval that does not contain its estimate warns, naming the ",

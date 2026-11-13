@@ -98,8 +98,7 @@ The **Data** sidebar (the arrow at the left) takes a demo dataset, a CSV file (p
 capsule directory, or a table from data.rmorie.com, and **Load all demos** loads every demo dataset
 so you can switch between them. Data chosen there is used by every tab ("The dataset chosen at the
 left" in a tab's Data menu). For a capsule it loads the pinned data file. The tables of
-data.rmorie.com need no sign-in. The app never holds a data key: when one was stored with
-`rmbl login`, `dload()` reads it from where it is stored.
+data.rmorie.com need no sign-in and no key.
 
 ## The tabs
 

@@ -94,19 +94,17 @@ test_that(
 
 test_that(
   paste0(
-    "Z1 sibling: a MORIE_DATA_URL that is not the document's address is ",
-    "named, not 'run login'"
+    "Z1 sibling: a MORIE_DATA_URL that is not the document's address gets ",
+    "no key"
   ),
   {
     testthat::local_mocked_bindings(
-      .bl_hosted_key = function(...) "sk-x",
       .rmbl_services_data = function(...) {
         list(base_url = "https://data.example.org")
       }
     )
     withr::local_envvar(MORIE_DATA_URL = "https://elsewhere.example.org")
-    # no key is needed: the stored one is withheld from that address, said
-    # so, and the request goes out without it
+    # no key is needed: the request goes out without one
     got <- new.env()
     testthat::local_mocked_bindings(bldl = function(
       url,
@@ -117,7 +115,7 @@ test_that(
       got$seen <- headers
       invisible(dest)
     })
-    expect_message(.bl_data_get("/x.csv.gz", tempfile()), "MORIE_DATA_URL")
+    .bl_data_get("/x.csv.gz", tempfile())
     expect_false("Authorization" %in% names(got$seen))
   }
 )
@@ -453,77 +451,6 @@ test_that(
 
 test_that(
   paste0(
-    "Z10: login and logout leave every other byte of credentials.json as it ",
-    "was"
-  ),
-  {
-    withr::local_envvar(
-      XDG_CONFIG_HOME = withr::local_tempdir(),
-      MORIE_HOSTED_BASE_URL = NA
-    )
-    testthat::local_mocked_bindings(.bl_hosted_base = function(...) {
-      "https://llm.example.org"
-    })
-    p <- .bl_credentials_path()
-    dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
-    other <- paste0(
-      '"other_pkg": {"f": 3.14159265358979, "big": 12345678901234567890, ',
-      '"": "empty", ',
-      '"x": [1, 2.0, 1e300, null], "nom": "Montréal"}'
-    )
-    orig <- paste0("{\n  ", other, ",\n  \"tail\": 1.0\n}\n")
-    write_bytes(p, charToRaw(orig))
-    .bl_store_key("sk-new", user = "u@example.org")
-    txt <- .bl_read_text(p)
-    expect_true(grepl(other, txt, fixed = TRUE))
-    expect_true(grepl('"tail": 1.0', txt, fixed = TRUE))
-    expect_true(grepl('"hosted_key": "sk-new"', txt, fixed = TRUE))
-    expect_true(grepl(
-      '"hosted_base_url": "https://llm.example.org"',
-      txt,
-      fixed = TRUE
-    ))
-    expect_identical(
-      .bl_read_credentials()$hosted_key,
-      "sk-new"
-    )
-    # a second login replaces the three members in place
-    .bl_store_key("sk-again")
-    txt <- .bl_read_text(p)
-    expect_identical(
-      lengths(regmatches(txt, gregexpr("hosted_key", txt, fixed = TRUE))),
-      1L
-    )
-    expect_true(grepl('"hosted_key": "sk-again"', txt, fixed = TRUE))
-    expect_true(grepl(other, txt, fixed = TRUE))
-    suppressMessages(dlogout())
-    txt <- .bl_read_text(p)
-    expect_false(grepl("hosted_", txt, fixed = TRUE))
-    expect_true(grepl(other, txt, fixed = TRUE))
-    expect_true(grepl('"tail": 1.0', txt, fixed = TRUE))
-    expect_type(.bl_credentials_object(p), "list")
-    # only this package's members: the file goes away
-    write_bytes(
-      p,
-      charToRaw(
-        paste0(
-          '{"hosted_key": "sk-only", "hosted_base_url": ',
-          '"https://llm.example.org"}'
-        )
-      )
-    )
-    suppressMessages(dlogout())
-    expect_false(file.exists(p))
-    # a file that is not an object is never written over
-    write_bytes(p, charToRaw("[1, 2]"))
-    expect_error(.bl_store_key("sk-x"), "not a JSON object")
-    expect_error(dlogout(), "not a JSON object")
-    expect_identical(.bl_read_text(p), "[1, 2]")
-  }
-)
-
-test_that(
-  paste0(
     "the top-level member scanner reads ",
     "the shapes other packages write"
   ),
@@ -808,7 +735,7 @@ test_that(
   ),
   {
     got <- new.env()
-    for (v in c("logout", "doctor", "version")) {
+    for (v in c("doctor", "version")) {
       got$out <- character()
       s <- blcli(c(v, "extra"), out = function(x) got$out <- c(got$out, x))
       expect_identical(s, 2L, info = v)
@@ -823,14 +750,14 @@ test_that(
       2L
     )
     expect_true(any(grepl("usage: .* models \\[--route ROUTE\\]", got$out)))
-    testthat::local_mocked_bindings(dlogout = function() {
+    testthat::local_mocked_bindings(.bl_cli_doctor = function(...) {
       stop(structure(
         class = c("interrupt", "condition"),
         list(message = "", call = NULL)
       ))
     })
     got$out <- character()
-    s <- blcli("logout", out = function(x) got$out <- c(got$out, x))
+    s <- blcli("doctor", out = function(x) got$out <- c(got$out, x))
     expect_identical(s, 130L)
     expect_true(any(grepl("interrupted", got$out, fixed = TRUE)))
   }
@@ -915,16 +842,15 @@ test_that("the branch's refusals that codecov found untested are exercised", {
     .bl_credentials_text_set("[1]", "k", "v"),
     "not a JSON object"
   )
-  # the credentials reader with and without a file, and the unsimplified read
-  # keeps a null
-  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
-  expect_identical(.bl_read_credentials(), list())
-  cred <- .bl_credentials_path()
-  dir.create(dirname(cred), recursive = TRUE, showWarnings = FALSE)
-  writeLines('{"hosted_key": "sk-1", "n": null}', cred)
-  raw <- .bl_credentials_object(cred, simplify = FALSE)
-  expect_identical(raw$hosted_key, "sk-1")
-  expect_true("n" %in% names(raw))
+  # a member that does not start with a name, and removing what is not there
+  expect_error(
+    .bl_credentials_text_set('{"a": "1", 2}', "k", "v"),
+    "not a JSON object"
+  )
+  expect_identical(
+    .bl_credentials_text_set('{"a": "1"}', "b", NULL),
+    '{"a": "1"}'
+  )
   # the CSV reader's edges
   f <- withr::local_tempfile(fileext = ".csv")
   file.create(f)

@@ -50,7 +50,6 @@ test_that(
       "cnfig\tset\topenai.key",
       "cnfig set openai.key",
       "config set openai.key",
-      "logn --token",
       "doctor now",
       "descibe svydes"
     )) {

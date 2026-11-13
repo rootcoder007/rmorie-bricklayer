@@ -75,7 +75,7 @@ test_that(
 
 test_that(
   paste0(
-    ".bl_data_get maps a refused key and ",
+    ".bl_data_get maps a key asked for and ",
     "other transport errors to words"
   ),
   {
@@ -89,7 +89,7 @@ test_that(
     )
     expect_error(
       .bl_data_get("/manifest.json", tempfile()),
-      "rejected the stored key"
+      "asked for a key"
     )
     testthat::local_mocked_bindings(
       bldl = function(url, dest, ...) stop("Could not resolve host")
@@ -115,7 +115,7 @@ test_that(".bl_data_get passes the manifest's compressed size for a table", {
           url = url,
           label = label,
           size = size,
-          auth = headers[["Authorization"]]
+          auth = "Authorization" %in% names(headers)
         ),
         envir = te
       )
@@ -126,7 +126,7 @@ test_that(".bl_data_get passes the manifest's compressed size for a table", {
   .bl_data_get("/db/tbl.csv.gz", tempfile())
   expect_identical(seen$size, 4321)
   expect_identical(seen$label, "db/tbl")
-  expect_identical(seen$auth, "Bearer sk-test")
+  expect_false(seen$auth)
 })
 
 test_that("a staged bundle without bldl falls back to the bundle fetcher", {

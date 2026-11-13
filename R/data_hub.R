@@ -1,15 +1,7 @@
 # Curated datasets at data.rmorie.com (the address comes from the signed
-# services document), with no sign-in; a MORIE key stored earlier with dlogin()
-# is still sent. The
-# same tables rmorie and morie pull; a manifest lists every table with its rows,
-# columns, SHA-256 and the BigQuery public dataset it was built from.
-
-#' The MORIE key a call to dload() was given, held only while that call runs.
-#'
-#' An environment, not a variable of the process environment: a child process
-#' never inherits it.
-#' @noRd
-.bl_data_token <- new.env(parent = emptyenv())
+# services document), with no sign-in and no key. The same tables rmorie and
+# morie pull; a manifest lists every table with its rows, columns, SHA-256
+# and the BigQuery public dataset it was built from.
 
 #' Curated datasets at data.rmorie.com
 #'
@@ -17,8 +9,7 @@
 #' public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 #' NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 #' tables from the edge, under the data access terms at
-#' \code{www.rmorie.com/data-license/}. They need no sign-in and no key; a
-#' MORIE key stored earlier with \code{\link{dlogin}} is still sent. The
+#' \code{www.rmorie.com/data-license/}. They need no sign-in and no key. The
 #' service address comes from \code{\link{svcs}}.
 #' \code{dmnf()} returns the gateway's manifest
 #' (every table with rows, columns, size, SHA-256 and its BigQuery source),
@@ -61,31 +52,27 @@
 #' A table the manifest lists without any digest is used with a warning, once
 #' per session and table.
 #'
-#' A stored key is sent only to the address of the signed services document;
-#' with \code{MORIE_DATA_URL} set to another address it is not sent, and a
-#' message says so. Tables whose source terms do not allow redistribution
-#' (ICPSR studies, among them the NCVS 38604 extract, and any table the
-#' manifest marks restricted, with \code{access} other than \code{"open"} or
-#' \code{"public"} or \code{restricted: true}) are not served:
+#' \code{MORIE_DATA_URL} sets another address for the service (https and
+#' public). No key is sent to either. Tables whose source terms do not allow
+#' redistribution (ICPSR studies, among them the NCVS 38604 extract, and any
+#' table the manifest marks restricted, with \code{access} other than
+#' \code{"open"} or \code{"public"} or \code{restricted: true}) are not served:
 #' \code{dmnf()} and \code{dtabs()} leave them out (the listing counts them in
 #' one line), and \code{dload()} refuses them before any request, saying
 #' where to get them. Downloads draw a progress bar when
 #' \code{options(morie.progress)} allows it.
 #'
 #' Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; the service
-#' unavailable, or a stored key rejected; a \code{key} that is not of the
-#' form \code{db/table}, not listed in the manifest, or a table that is not
-#' served; a \code{token} that is not one non-empty string; a digest
-#' mismatch.
+#' unavailable; a \code{key} that is not of the form \code{db/table}, not
+#' listed in the manifest, or a table that is not served; a digest mismatch.
 #'
 #' @param refresh Logical scalar, default \code{FALSE}: fetch again even when a
 #'   day-old copy (of the manifest, or for \code{dload()} of the
 #'   table) is cached.
 #' @param key Character scalar, a \code{db/table} key from the manifest (the
 #'   \code{key} column of \code{dtabs()}).
-#' @param token For \code{dload()}: the MORIE key to use for this call,
-#'   in place of the one \code{\link{dlogin}} stored; \code{NULL} (the
-#'   default) uses the stored key. It is never printed or written to disk.
+#' @param token Ignored, with a warning: the tables need no key, and none is
+#'   sent. Kept so that calls written for earlier versions still run.
 #' @return \code{dmnf()}: the manifest as a list (element
 #'   \code{datasets}, one list per table served with at least \code{key},
 #'   attribute \code{unserved} the number of tables left out; and as the
@@ -97,13 +84,10 @@
 #'   \code{dtabs}, which prints one left-aligned line per
 #'   table, cut to the console width);
 #'   \code{dload()}: the table as a data frame.
-#' @seealso \code{\link{dlogin}}, \code{\link{svcs}}.
+#' @seealso \code{\link{svcs}}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Offline, against a cache folder holding a manifest and one table made
-#' # here (no key is stored and nothing is fetched).
-#' oldenv <- Sys.getenv(c("XDG_CONFIG_HOME", "MORIE_HOSTED_KEY"), unset = NA)
-#' Sys.setenv(XDG_CONFIG_HOME = tempfile())
-#' Sys.unsetenv("MORIE_HOSTED_KEY")
+#' # here (nothing is fetched).
 #' cache <- file.path(tempdir(), "data-hub-example")
 #' dir.create(cache)
 #' old <- options(rmoriebricklayer.dcache = cache)
@@ -140,13 +124,6 @@
 #'
 #' options(old)
 #' unlink(cache, recursive = TRUE)
-#' for (v in names(oldenv)) {
-#'   if (is.na(oldenv[[v]])) {
-#'     Sys.unsetenv(v)
-#'   } else {
-#'     do.call(Sys.setenv, as.list(oldenv[v]))
-#'   }
-#' }
 #'
 #' @examplesIf interactive()
 #' # the real service: needs the network, no sign-in
@@ -208,8 +185,10 @@ dload <- function(key, refresh = FALSE, token = NULL) {
     .bl_data_unserved_stop(key)
   }
   if (!is.null(token)) {
-    .bl_data_token$key <- trimws(.rmbl_string1(token, "token"))
-    on.exit(assign("key", NULL, envir = .bl_data_token), add = TRUE)
+    warning(
+      "dload(): `token` is ignored: the curated tables need no key",
+      call. = FALSE
+    )
   }
   .bl_data_known(key)
   dest <- file.path(
@@ -487,7 +466,7 @@ dload <- function(key, refresh = FALSE, token = NULL) {
 .bl_data_url <- function() {
   env <- sub("/+$", "", trimws(Sys.getenv("MORIE_DATA_URL", unset = "")))
   if (nzchar(env)) {
-    # the bearer key goes to this host: https and a public address, or no key
+    # https and a public address only
     return(.rmbl_check_public_url(env, "MORIE_DATA_URL"))
   }
   svc <- .rmbl_services_data()
@@ -585,38 +564,6 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   )
 }
 
-#' Returns the hosted key to send to the data service, or NULL.
-#'
-#' The hosted key for the data service: to the address the signed services
-#' document names, never to an address set in MORIE_DATA_URL (a key that belongs
-#' to one service does not follow a URL).
-#' @return One string, or NULL.
-#' @noRd
-.bl_data_key <- function() {
-  # a key passed to dload(token = ) beats the stored one
-  key <- .bl_data_token$key %||% .bl_hosted_key()
-  if (is.null(key)) {
-    return(NULL)
-  }
-  env <- sub("/+$", "", trimws(Sys.getenv("MORIE_DATA_URL", unset = "")))
-  if (!nzchar(env)) {
-    return(key)
-  }
-  doc <- sub("/+$", "", .rmbl_services_data()$base_url %||% "")
-  if (nzchar(doc) && identical(env, doc)) {
-    return(key)
-  }
-  message(sprintf(
-    paste(
-      "MORIE_DATA_URL=%s is not the curated-data address of the",
-      "services document;",
-      "the stored key is not sent to it"
-    ),
-    env
-  ))
-  NULL
-}
-
 #' Returns the directory of the data cache, made when missing.
 #' @return A path.
 #' @noRd
@@ -657,7 +604,7 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   value
 }
 
-#' Downloads a path from the curated-data service with the hosted key.
+#' Downloads a path from the curated-data service (no key: none is needed).
 #' @param path The path on the service.
 #' @param dest The local file the downloaded table is written to.
 #' @param timeout Seconds before the download gives up.
@@ -665,14 +612,9 @@ dload <- function(key, refresh = FALSE, token = NULL) {
 #' @return `dest`, invisibly.
 #' @noRd
 .bl_data_get <- function(path, dest, timeout = 600, max_bytes = 2^31) {
-  # the open tables need no key; a stored one is still sent
-  key <- .bl_data_key()
   old <- options(timeout = max(getOption("timeout", 60), timeout))
   on.exit(options(old), add = TRUE)
-  hdr <- c(
-    if (!is.null(key)) c(Authorization = paste("Bearer", key)),
-    "User-Agent" = "rmoriebricklayer/1 (+https://www.rmorie.com)"
-  )
+  hdr <- c("User-Agent" = "rmoriebricklayer/1 (+https://www.rmorie.com)")
   lb <- .bl_data_label(path)
   label <- lb$label
   size <- lb$size
@@ -694,7 +636,7 @@ dload <- function(key, refresh = FALSE, token = NULL) {
     warning = function(w) w
   )
   if (inherits(rc, "condition")) {
-    .bl_data_get_failed(rc, label, keyed = !is.null(key))
+    .bl_data_get_failed(rc, label)
   }
   invisible(dest)
 }
@@ -752,7 +694,7 @@ dload <- function(key, refresh = FALSE, token = NULL) {
       warning = function(w) w
     )
     if (inherits(rc, "condition")) {
-      .bl_data_get_failed(rc, label, keyed = "Authorization" %in% names(hdr))
+      .bl_data_get_failed(rc, label)
     }
     if (!identical(file.size(pfile[i]), want)) {
       got <- file.size(pfile[i])
@@ -1360,9 +1302,8 @@ dload <- function(key, refresh = FALSE, token = NULL) {
 #' Says why a download from the curated-data service failed.
 #' @param rc The error or warning the download raised.
 #' @param label The download's label.
-#' @param keyed Whether a key was sent.
 #' @noRd
-.bl_data_get_failed <- function(rc, label, keyed = TRUE) {
+.bl_data_get_failed <- function(rc, label) {
   msg <- conditionMessage(rc)
   if (grepl("\\b410\\b|Gone", msg)) {
     stop(
@@ -1372,7 +1313,7 @@ dload <- function(key, refresh = FALSE, token = NULL) {
       call. = FALSE
     )
   }
-  if (grepl("401|403|Unauthorized|Forbidden", msg) && !keyed) {
+  if (grepl("401|403|Unauthorized|Forbidden", msg)) {
     stop(
       sprintf(
         paste(
@@ -1380,16 +1321,6 @@ dload <- function(key, refresh = FALSE, token = NULL) {
           "sign-in; update the package, or try again later"
         ),
         label
-      ),
-      call. = FALSE
-    )
-  }
-  if (grepl("401|403|Unauthorized|Forbidden", msg)) {
-    stop(
-      "the curated-data service rejected the stored key; the tables need ",
-      sprintf(
-        "no key: remove it with dlogout() (or `%s logout`).",
-        .bl_prog()
       ),
       call. = FALSE
     )

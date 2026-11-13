@@ -2,10 +2,10 @@
 #
 # Captures written as WARC/1.1 files with a CDXJ index, in the layout of a pywb
 # collection (<dir>/archive/<capture_id>.warc, <dir>/indexes/index.cdxj). pywb
-# and warcio read it as is, archive.rmorie.com stores the same records, and
-# fetchvrf() reads a capture back from it when the source, the Wayback Machine
-# and the archive are all out of reach. Written from the WARC 1.1 specification
-# and pywb's documented CDXJ format; no code is copied from either.
+# and warcio read it as is, and fetchvrf() reads a capture back from it when
+# the source, the Wayback Machine and the mirrors are all out of reach.
+# Written from the WARC 1.1 specification and pywb's documented CDXJ format;
+# no code is copied from either.
 
 #' Encodes bytes as RFC 4648 Base32 with padding.
 #'

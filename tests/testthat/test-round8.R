@@ -21,8 +21,7 @@ test_that("help refuses an unknown option like every other verb", {
 
 test_that(
   paste0(
-    "an empty prompt or request, and a ",
-    "malformed --email, are usage errors"
+    "an empty prompt or request is a usage error"
   ),
   {
     r <- .cap8("ask", "")
@@ -31,15 +30,11 @@ test_that(
     expect_false(grepl("`prompt`", r$text, fixed = TRUE))
     expect_identical(.cap8("ask", "  ")$status, 2L)
     expect_identical(.cap8("bundle", "")$status, 2L)
-    r <- .cap8("login", "--email", "notanemail")
-    expect_identical(r$status, 2L)
-    expect_match(r$text, "'notanemail' is not an email address")
   }
 )
 
 test_that("bundle with no language-model route fails", {
   skip_if_cannot_mock()
-  testthat::local_mocked_bindings(.bl_hosted_base = function(...) NULL)
   r <- .cap8("bundle", "scaffold", "a", "bundle")
   expect_identical(r$status, 1L)
   expect_match(r$text, "No language-model route is set up")

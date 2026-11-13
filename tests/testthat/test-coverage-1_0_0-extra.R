@@ -7,18 +7,6 @@ test_that(".rmbl_utf8() leaves what is not text alone", {
   expect_null(.rmbl_utf8(NULL))
 })
 
-test_that(".bl_check_email() names what is not an address", {
-  expect_error(
-    .bl_check_email("not an address"),
-    "'not an address' is not an email address"
-  )
-  expect_error(
-    .bl_check_email(""),
-    "an email address is required"
-  )
-  expect_identical(.bl_check_email("  A@b.ca "), "a@b.ca")
-})
-
 test_that(
   paste0(
     "sprd() says that an empty x has no ",
@@ -107,26 +95,5 @@ test_that(
     b$done <- 150
     d <- .bl_rate_sample(b, 3)
     expect_identical(d$rate, 25 + 0.3 * (100 - 25))
-  }
-)
-
-test_that(
-  paste0(
-    ".bl_login_email() refuses what is not an ",
-    "address before anything is sent"
-  ),
-  {
-    local_mocked_bindings(
-      .bl_hosted_auth = function() list(url = "https://auth.invalid"),
-      .package = "rmoriebricklayer"
-    )
-    expect_error(
-      .bl_login_email("nope"),
-      "'nope' is not an email address"
-    )
-    expect_error(
-      .bl_login_email(" "),
-      "an email address is required"
-    )
   }
 )

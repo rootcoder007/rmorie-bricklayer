@@ -734,56 +734,6 @@ test_that(
 
 test_that(
   paste0(
-    "B5: login refuses a credentials file that is not valid JSON, and ",
-    "leaves it as it was"
-  ),
-  {
-    home <- withr::local_tempdir()
-    withr::local_envvar(
-      XDG_CONFIG_HOME = home,
-      MORIE_HOSTED_BASE_URL = "https://llm.example.org"
-    )
-    p <- file.path(home, "morie", "credentials.json")
-    dir.create(dirname(p), recursive = TRUE)
-    for (bad in c(
-      '{"a": tru}',
-      '{"a": 1 "b": 2}',
-      '{"a": 1,}',
-      '{"a": 1} junk',
-      '{"hosted_key": "sk-OLD-1", "hosted_key": "sk-OLD-2"}'
-    )) {
-      writeLines(bad, p)
-      expect_error(
-        .bl_store_key("sk-NEW"),
-        "not a JSON object",
-        info = bad
-      )
-      expect_identical(readLines(p), bad)
-      expect_error(dlogout(), "not a JSON object", info = bad)
-    }
-    writeLines('{"big": 12345678901234567890, "hosted_key": "sk-OLD"}', p)
-    .bl_store_key("sk-BIG")
-    expect_match(
-      paste(readLines(p), collapse = ""),
-      "12345678901234567890",
-      fixed = TRUE
-    )
-    writeLines('{"other": [1, 2], "hosted_key": "sk-OLD"}', p)
-    .bl_store_key("sk-NEW")
-    expect_identical(
-      fromjs(paste(readLines(p), collapse = "\n"))$hosted_key,
-      "sk-NEW"
-    )
-    expect_message(dlogout(), "Logged out")
-    expect_identical(
-      fromjs(paste(readLines(p), collapse = "\n"))$other,
-      c(1L, 2L)
-    )
-  }
-)
-
-test_that(
-  paste0(
     "B6: config setup asks for the MORIE ",
     "key and the own key without echo"
   ),
@@ -823,8 +773,7 @@ test_that(
 
 test_that(
   paste0(
-    "B6: an interrupted read exits 130 and a key on the command line is ",
-    "warned about"
+    "B6: an interrupted read exits 130"
   ),
   {
     e <- tryCatch(
@@ -832,14 +781,6 @@ test_that(
       interrupt = function(i) "interrupt"
     )
     expect_identical(e, "interrupt")
-    out <- character()
-    te <- environment()
-    local_mocked_bindings(dlogin = function(...) invisible(TRUE))
-    st <- blcli(c("login", "--token", "sk-ARGV"), out = function(x) {
-      assign("out", c(out, x), envir = te)
-    })
-    expect_identical(st, 0L)
-    expect_match(paste(out, collapse = ""), "stays in the shell history")
   }
 )
 
@@ -1173,45 +1114,6 @@ test_that(
     expect_null(.bl_json_top_members(
       '{"a": {"b": "unterminated}'
     ))
-  }
-)
-
-test_that(
-  paste0(
-    "an edit that would damage credentials.json is refused and the file is ",
-    "left as it was"
-  ),
-  {
-    home <- withr::local_tempdir()
-    withr::local_envvar(
-      XDG_CONFIG_HOME = home,
-      MORIE_HOSTED_BASE_URL = "https://llm.example.org"
-    )
-    p <- file.path(home, "morie", "credentials.json")
-    dir.create(dirname(p), recursive = TRUE)
-    writeLines('{"hosted_key": "sk-OLD"}', p)
-    # an editor that leaves the text as it was: the new key is not in what would
-    # be written
-    local_mocked_bindings(.bl_credentials_text_set = function(txt, key, value) {
-      txt
-    })
-    expect_error(
-      .bl_store_key("sk-NEW"),
-      "without damaging it"
-    )
-    # an editor whose result is not valid JSON at all is refused the same way
-    local_mocked_bindings(.bl_credentials_text_set = function(txt, key, value) {
-      paste0(txt, " junk")
-    })
-    expect_error(
-      .bl_store_key("sk-NEW"),
-      "without damaging it"
-    )
-    local_mocked_bindings(.bl_credentials_text_set = function(txt, key, value) {
-      txt
-    })
-    expect_error(dlogout(), "without damaging it")
-    expect_identical(readLines(p), '{"hosted_key": "sk-OLD"}')
   }
 )
 

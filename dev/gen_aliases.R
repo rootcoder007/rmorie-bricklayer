@@ -91,7 +91,7 @@ override <- c(capsule_attest = "cpsatst", capsule_bundle_verify = "cpsbndlvrf",
   rule_col_count = "rulecolcnt", rule_complete_rows = "rulecmpl", rule_distinct_rows = "ruledstn",
   rule_in_set = "ruleinset", rule_increasing = "ruleincr", rule_not_null = "rulenull",
   rule_regex = "rulerx", rule_unique = "ruleuniq", rule_within_n_mads = "rulemad",
-  sha512_file = "sha512file", top_share = "topshr", bricklayer_llm_login = "dlogin")
+  sha512_file = "sha512file", top_share = "topshr")
 rows <- list(); unmatched <- character()
 for (o in gone) {
   n <- if (o %in% names(override)) unname(override[o]) else unname(pair[o])

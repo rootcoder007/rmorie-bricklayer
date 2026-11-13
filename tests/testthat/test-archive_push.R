@@ -102,38 +102,6 @@ test_that("a file that changed or went missing is not sent", {
   expect_identical(n$sent, 0L)
 })
 
-test_that("archive.rmorie.com takes the capture when it is back", {
-  dir <- withr::local_tempdir()
-  push_capture(dir)
-  n <- new.env()
-  n$calls <- 0L
-  up <- FALSE
-  local_mocked_bindings(
-    .bl_arc_base = function() "https://archive.rmorie.com",
-    .bl_arc_key = function(base) "key",
-    .bl_arc_upload = function(path, url, ...) {
-      n$calls <- n$calls + 1L
-      if (!up) {
-        stop("archive.rmorie.com answered 503", call. = FALSE)
-      }
-      list(capture_id = basename(path),
-           capture = paste0("https://archive.rmorie.com/c/", basename(path)))
-    }
-  )
-  why <- "Tables cited in chapter 3 of the thesis"
-  r <- arcpush(dir, upload = "rmorie", reason = why, tsa = NULL)
-  expect_match(r$status, "answered 503 \\(the file is kept locally\\)")
-  up <- TRUE
-  r <- arcpush(dir, upload = "rmorie", reason = why, tsa = NULL)
-  expect_identical(r$status, c("archived", "archived"))
-  expect_identical(r$capture_id, c("a.zip", "b.csv"))
-  expect_identical(n$calls, 4L)
-  # a later run keeps what was archived and sends nothing
-  r <- arcpush(dir, upload = "rmorie", reason = why, tsa = NULL)
-  expect_identical(n$calls, 4L)
-  expect_identical(r$archive[1L], "https://archive.rmorie.com/c/a.zip")
-})
-
 test_that("the Wayback Machine is asked again until it answers", {
   dir <- withr::local_tempdir()
   push_capture(dir)
@@ -195,7 +163,6 @@ test_that("arcpush refuses what it cannot send", {
   writeLines('{"files": []}', file.path(dir, "manifest.json"))
   expect_error(arcpush(dir, upload = "wayback"), "lists no files")
   expect_error(arcpush(dir), "give `item`, `upload` or both")
-  expect_error(arcpush(dir, upload = "rmorie"), "`reason` is needed")
   expect_error(arcpush(dir, upload = "elsewhere"), "`upload` must be")
   expect_error(arcpush(dir, item = "x"), "`item` must be")
 })
@@ -211,24 +178,24 @@ test_that("rmbl archive push sends a capture kept here", {
   }
   up <- FALSE
   local_mocked_bindings(
-    .bl_arc_base = function() "https://archive.rmorie.com",
-    .bl_arc_key = function(base) "key",
-    .bl_arc_upload = function(path, url, ...) {
-      if (!up) stop("archive.rmorie.com answered 503", call. = FALSE)
-      list(capture_id = "c1", capture = "https://archive.rmorie.com/c/c1")
-    },
-    wbsave = function(urls, ...) stop("offline", call. = FALSE)
+    wbsave = function(urls, ...) {
+      if (!up) stop("offline", call. = FALSE)
+      structure(
+        data.frame(url = urls, status = "saved",
+                   timestamp = "20261028120000", stringsAsFactors = FALSE),
+        class = c("rmbl_wayback_save", "data.frame")
+      )
+    }
   )
-  why <- "Tables cited in chapter 3 of the thesis"
   expect_identical(run("archive", "push", dir)$status, 2L)
   expect_identical(
-    run("archive", "push", dir, "--reason", why, "--also", "x")$status, 2L
+    run("archive", "push", dir, "--also", "x")$status, 2L
   )
-  r <- run("archive", "push", dir, "--reason", why, "--also", "wayback")
+  r <- run("archive", "push", dir, "--also", "wayback")
   expect_identical(r$status, 1L)
   expect_match(r$text, "Archive capture", fixed = TRUE)
   up <- TRUE
-  r <- run("archive", "push", dir, "--reason", why, "--private")
+  r <- run("archive", "push", dir, "--also", "wayback")
   expect_identical(r$status, 0L)
 })
 
@@ -271,18 +238,11 @@ test_that(
         rec$puts <- c(rec$puts, url)
         rec$paths <- c(rec$paths, path)
         list(status = 200L, body = raw(), error = "")
-      },
-      .bl_arc_base = function() "https://archive.rmorie.com",
-      .bl_arc_key = function(base) "key",
-      .bl_arc_upload = function(path, url, ...) {
-        rec$paths <- c(rec$paths, path)
-        list(capture_id = "c1", capture = "https://archive.rmorie.com/c/c1")
       }
     )
-    why <- "Tables cited in chapter 3 of the thesis"
     r <- arcpush(dir, item = "test-item-2026", ak = "AK1", sk = "SK1",
-                 upload = "rmorie", reason = why, tsa = NULL)
-    expect_identical(r$status[1:2], c("archived", "archived"))
+                 tsa = NULL)
+    expect_identical(r$status[1:2], c("uploaded", "uploaded"))
     expect_true(all(grepl(
       "not a plain relative path inside the capture folder", r$status[-1:-2],
       fixed = TRUE
@@ -438,20 +398,6 @@ test_that("one private address does not stop the Wayback for the others", {
   expect_false(any(grepl("10.0.0.7", unlist(asked$urls), fixed = TRUE)))
 })
 
-test_that("a bad `visibility` is refused in words", {
-  dir <- withr::local_tempdir()
-  for (v in list(NA, 1, c("a", "b"), "secret", character(), NA_character_)) {
-    expect_error(
-      arcpush(dir, upload = "wayback", visibility = v),
-      "`visibility` must be one of"
-    )
-    expect_error(
-      arccap("https://s.org/a", dir, visibility = v),
-      "`visibility` must be one of"
-    )
-  }
-})
-
 test_that("a key or a URL part holding %XX is encoded whole", {
   # utils::URLencode() left a string holding "%41" as it was
   expect_identical(.bl_ia_key_path("x%41?y=1#z.txt"), "x%2541%3Fy%3D1%23z.txt")
@@ -465,14 +411,4 @@ test_that("a key or a URL part holding %XX is encoded whole", {
   expect_identical(
     f, "url=https%3A%2F%2Fs.org%2Fa%2520b%3Fx%3D1%26y%3D2&skip_first_archive=1"
   )
-})
-
-test_that("`visibility` is matched whole, not abbreviated", {
-  dir <- withr::local_tempdir()
-  for (v in c("pub", "priv", "p", "Public")) {
-    expect_error(arcpush(dir, upload = "wayback", visibility = v),
-                 "`visibility` must be one of", info = v)
-    expect_error(arccap("https://s.org/a", dir, visibility = v),
-                 "`visibility` must be one of", info = v)
-  }
 })

@@ -24,9 +24,9 @@ test_that("version, help and a verb's usage exit 0", {
   expect_match(r$text, "One call only", fixed = TRUE)
   r <- cli_run("help", "r")
   expect_match(r$text, "library(rmoriebricklayer)", fixed = TRUE)
-  r <- cli_run("logout", "--help")
+  r <- cli_run("doctor", "--help")
   expect_identical(r$status, 0L)
-  expect_match(r$text, "usage: .* logout")
+  expect_match(r$text, "usage: .* doctor")
 })
 
 test_that("unknown verbs, options and topics are usage errors", {
@@ -35,7 +35,7 @@ test_that("unknown verbs, options and topics are usage errors", {
   expect_match(r$text, "unknown verb 'nonsense'", fixed = TRUE)
   r <- cli_run("doctr")
   expect_match(r$text, "did you mean", fixed = TRUE)
-  r <- cli_run("logout", "--nosuch")
+  r <- cli_run("doctor", "--nosuch")
   expect_identical(r$status, 2L)
   expect_match(r$text, "unknown option --nosuch", fixed = TRUE)
   r <- cli_run("help", "nosuchtopic")
@@ -97,7 +97,7 @@ test_that("a plain question is asked, a command or a key is not", {
 
 test_that("every verb has a usage line", {
   v <- .bl_verb_usage(NULL)
-  expect_true(all(c("login", "ask", "verify", "sign", "version") %in% v))
+  expect_true(all(c("doctor", "ask", "verify", "sign", "version") %in% v))
   expect_match(.bl_verb_usage("data", "rmbl"), "^usage: rmbl data")
   expect_null(.bl_verb_usage("nonsense"))
 })

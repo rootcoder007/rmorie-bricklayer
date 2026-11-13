@@ -96,13 +96,10 @@
 #' @param wayback Logical: with \code{"refresh"}, capture each changed
 #'   http(s) source in the Wayback Machine first (archive.org keys, as
 #'   \code{wbsave()} reads them).
-#' @param archive Logical: use archive.rmorie.com when a source cannot be
-#'   fetched. In \code{"drift"} and \code{"refresh"}, a source that neither
-#'   answers nor has its pinned Wayback snapshot is fetched from a copy kept
-#'   there with the pinned SHA-256 (public copies need no key); with
-#'   \code{wayback = TRUE}, a changed source the Wayback Machine refuses is
-#'   saved there instead (\code{wbsave(fallback = "rmorie")}, which needs a
-#'   key: \code{dlogin()} or \env{MORIE_HOSTED_KEY}).
+#' @param archive Ignored, with a warning when \code{TRUE}: the hosted copy of
+#'   sources it fell back to is gone. Kept so that callers written for
+#'   earlier versions (the rmbl GitHub Action passes it) still run; use
+#'   \code{cache} for a copy kept by an earlier run.
 #' @param glob Character scalar: check only the capsule files whose path
 #'   matches this glob (\code{*} also matches \code{/}), or \code{""}.
 #' @param fp Logical: measure the footprint of the checks
@@ -184,6 +181,13 @@ cpschk <- function(
   seenlog = "",
   archive = FALSE
 ) {
+  if (isTRUE(archive)) {
+    warning(
+      "cpschk(): `archive` is ignored: there is no hosted copy to fall back ",
+      "to; `cache` keeps a copy from an earlier run",
+      call. = FALSE
+    )
+  }
   path <- .rmbl_string1(path, "path")
   if (!dir.exists(path)) {
     stop(
@@ -200,8 +204,7 @@ cpschk <- function(
     psiwarn,
     psifail,
     base,
-    list(allowfile = allowfile, snapshot = snapshot, wayback = wayback),
-    archive
+    list(allowfile = allowfile, snapshot = snapshot, wayback = wayback)
   )
   glob <- .bl_str0(glob, "glob")
   fp <- .rmbl_flag1(fp, "fp")
@@ -903,8 +906,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
       d,
       o$allowfile,
       o$cache,
-      root = o$path,
-      archive = isTRUE(o$archive)
+      root = o$path
     ),
     error = function(e) e
   )
@@ -1391,7 +1393,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 
 #' cpschk()'s options, checked.
 #' @param o A list with the checked `path` and `mode`.
-#' @param key,pubkey,psiwarn,psifail,base,archive As for cpschk().
+#' @param key,pubkey,psiwarn,psifail,base As for cpschk().
 #' @param flags A list with cpschk()'s `allowfile`, `snapshot` and `wayback`.
 #' @return The options list.
 #' @noRd
@@ -1402,8 +1404,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   psiwarn,
   psifail,
   base,
-  flags,
-  archive
+  flags
 ) {
   o <- c(
     o,
@@ -1415,8 +1416,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
       base = .bl_base_arg(base),
       allowfile = .bl_allowfile_arg(flags$allowfile),
       snapshot = .rmbl_flag1(flags$snapshot, "snapshot"),
-      wayback = .rmbl_flag1(flags$wayback, "wayback"),
-      archive = .rmbl_flag1(archive, "archive")
+      wayback = .rmbl_flag1(flags$wayback, "wayback")
     )
   )
   if (o$psiwarn > o$psifail) {
@@ -1524,11 +1524,6 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 .bl_cps_drift_note <- function(f) {
   if (f$cached) {
     "source unreachable: used the copy cached by an earlier run"
-  } else if (isTRUE(f$archived)) {
-    paste0(
-      "source unreachable: used the copy kept on archive.rmorie.com ",
-      "with the pinned SHA-256"
-    )
   }
 }
 
@@ -1689,27 +1684,18 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   )
 }
 
-#' Saves a refreshed capsule's source to the Wayback Machine (and, when it
-#' is refused, to archive.rmorie.com if asked), noting what happened.
+#' Saves a refreshed capsule's source to the Wayback Machine, noting what
+#' happened.
 #' @param d The capsule folder.
 #' @param f The fetch.
-#' @param o The options of cpschk(); `archive` allows the rmorie fallback.
+#' @param o The options of cpschk().
 #' @param out The capsule's drift result so far.
 #' @return A list with `f` (its snapshot recorded when saved) and `out` (with
 #'   the notes).
 #' @noRd
 .bl_refresh_wayback <- function(d, f, o, out) {
-  why <- sprintf(
-    "Source of the data capsule %s, refreshed by cpschk()",
-    basename(d)
-  )
   wb <- tryCatch(
-    wbsave(
-      f$src,
-      quiet = TRUE,
-      fallback = if (isTRUE(o$archive)) "rmorie",
-      reason = if (isTRUE(o$archive)) why
-    ),
+    wbsave(f$src, quiet = TRUE),
     error = function(e) e
   )
   if (inherits(wb, "error")) {
@@ -1720,29 +1706,10 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   } else {
     out$notes <- c(
       out$notes,
-      paste("wayback: capture", wb$status[1L], wb$message[1L]),
-      .bl_archive_note(attr(wb, "archive"))
+      paste("wayback: capture", wb$status[1L], wb$message[1L])
     )
   }
   list(f = f, out = out)
-}
-
-#' The note on the archive.rmorie.com fallback of a refused Wayback capture.
-#' @param ar The `archive` attribute of the wbsave() result.
-#' @return A string, or `NULL` when there is nothing to say.
-#' @noRd
-.bl_archive_note <- function(ar) {
-  if (inherits(ar, "rmbl_fail")) {
-    return(paste("archive.rmorie.com:", ar))
-  }
-  if (!is.null(ar) && nrow(as.data.frame(unclass(ar)))) {
-    a1 <- as.data.frame(unclass(ar))[1L, ]
-    if (identical(a1$status, "archived")) {
-      paste("archive.rmorie.com: saved instead,", a1$archive)
-    } else {
-      paste("archive.rmorie.com:", a1$status)
-    }
-  }
 }
 
 #' The report's status line and its table of capsules.

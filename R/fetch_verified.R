@@ -32,13 +32,12 @@
 #' @param mirrors Further URLs that serve the same file, tried in order after
 #'   the source.
 #' @param tmout Seconds allowed for each download (default 120).
-#' @param arcs Archives tried after the source, its Wayback snapshot and the
-#'   mirrors: \code{"rmorie"} (archive.rmorie.com, by \code{\link{arcget}}) and
-#'   folders written by \code{\link{arccap}} (read from their WARC files), in
-#'   order. \code{character()} tries none.
+#' @param arcs Folders written by \code{\link{arccap}}, tried in order after
+#'   the source, its Wayback snapshot and the mirrors (read from their WARC
+#'   files). \code{character()} (default) tries none.
 #' @return Invisibly, a list of class \code{rmbl_fetch} (it prints as a
 #'   box): \code{source} (\code{"live"}, \code{"wayback"},
-#'   \code{"mirror"}, \code{"rmorie"} or \code{"local"}), \code{url} (the URL
+#'   \code{"mirror"} or \code{"local"}), \code{url} (the URL
 #'   that served the kept copy), \code{sha256}, \code{bytes}, and \code{tried}
 #'   (a data frame of every attempt: \code{url}, \code{outcome}).
 #' @seealso \code{\link{blfetch}}, \code{\link{sha256file}},
@@ -62,7 +61,7 @@ fetchvrf <- function(
   sha256 = NULL,
   mirrors = character(),
   tmout = 120L,
-  arcs = "rmorie"
+  arcs = character()
 ) {
   url <- .rmbl_string1(url, "url")
   dest <- .rmbl_out_file(dest, "dest", connection = FALSE)
@@ -84,8 +83,7 @@ fetchvrf <- function(
       return(invisible(r))
     }
   }
-  # the archives: archive.rmorie.com, then folders written by arccap() (their
-  # WARC files)
+  # then folders written by arccap() (their WARC files)
   for (a in arcs) {
     r <- .fv_try_archive(a, url, tmp, dest, sha256, tmout, note, acc)
     if (!is.null(r)) {
@@ -149,7 +147,7 @@ format.rmbl_fetch <- function(x, ...) {
     stop("`mirrors` must be URLs (a character vector)", call. = FALSE)
   }
   if (!is.character(arcs) || anyNA(arcs)) {
-    stop('`arcs` must be "rmorie" and/or folders of captures', call. = FALSE)
+    stop("`arcs` must be folders of captures", call. = FALSE)
   }
   sha256
 }
@@ -199,8 +197,8 @@ format.rmbl_fetch <- function(x, ...) {
   )
 }
 
-#' One archive of fetchvrf(): archive.rmorie.com or a folder of captures.
-#' @param a The archive.
+#' One archive of fetchvrf(): a folder of captures.
+#' @param a The folder.
 #' @param url The source URL.
 #' @param tmp,dest The part file and the destination.
 #' @param sha256,tmout As for fetchvrf().
@@ -208,29 +206,20 @@ format.rmbl_fetch <- function(x, ...) {
 #' @return The result, or NULL when the archive failed.
 #' @noRd
 .fv_try_archive <- function(a, url, tmp, dest, sha256, tmout, note, acc) {
-  if (identical(a, "rmorie")) {
-    got <- tryCatch(
-      arcget(url, tmp, sha256 = sha256, tmout = tmout),
-      error = function(e) .bl_arc_fail(e)
-    )
-    where <- "archive.rmorie.com"
-  } else {
-    got <- tryCatch(.bl_warc_get(a, url, tmp, sha256), error = function(e) {
-      .bl_arc_fail(e)
-    })
-    where <- a
-  }
+  got <- tryCatch(.bl_warc_get(a, url, tmp, sha256), error = function(e) {
+    .bl_arc_fail(e)
+  })
   if (inherits(got, "rmbl_fail")) {
-    note(where, paste("failed:", got))
+    note(a, paste("failed:", got))
     return(NULL)
   }
   h <- sha256file(tmp)
   if (!.bl_move(tmp, dest)) {
     stop(sprintf("cannot write %s", dest), call. = FALSE)
   }
-  note(where, "kept")
+  note(a, "kept")
   list(
-    source = if (identical(a, "rmorie")) "rmorie" else "local",
+    source = "local",
     url = url,
     sha256 = h,
     bytes = file.size(dest),
@@ -244,3 +233,14 @@ format.rmbl_fetch <- function(x, ...) {
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_rename <- function(from, to) file.rename(from, to)
+
+#' Moves a finished download into place: a rename, else a copy (another file
+#' system).
+#' @param from The temporary file.
+#' @param to The destination.
+#' @return TRUE when the file is in place.
+#' @noRd
+.bl_move <- function(from, to) {
+  suppressWarnings(file.rename(from, to)) ||
+    isTRUE(file.copy(from, to, overwrite = TRUE))
+}

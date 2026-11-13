@@ -24,8 +24,8 @@ the examples and an offline session get).}
 \value{
 A list with \code{version} (integer, 1), \code{issued} (the
 signing time, ISO 8601 UTC), \code{notice} (text for the user, possibly
-empty), \code{llm} (\code{mode}, \code{base_url}, \code{auth_url}: where
-the sign-in for the data key is reached; also \code{models},
+empty), \code{llm} (\code{mode}, \code{base_url}, \code{auth_url} (read
+as the document gives it; the package signs in nowhere), \code{models},
 \code{default_model} and \code{request_access}) and
 \code{data} (\code{mode}, \code{base_url}, \code{license},
 \code{request_access}, and \code{auth_url} when the document has one),
@@ -34,9 +34,9 @@ with the attribute \code{"source"} set to
 }
 \description{
 Reads \code{https://rmorie.com/.well-known/morie-services.json}, a signed
-document naming the curated-data service and its sign-in: their
-endpoints, whether each is \code{"key"} (reachable with a key requested on
-the site) or \code{"off"}, and a notice.
+document naming the curated-data service: its endpoint, whether it is
+\code{"key"} (reachable; the open tables need no key) or \code{"off"}, and
+a notice. This package reads no sign-in address from it.
 The signature (ML-DSA-44, public key pinned in this package) is checked
 before anything in it is believed, so the endpoints can move or be
 switched off on the site without a package release, and a document that
@@ -45,7 +45,7 @@ network the cached copy is used, then the copy bundled with the package.
 }
 \details{
 Every other MORIE package reads the same document through this function,
-so one sign-in and one document serve rmorie, rmoriedata and morie alike.
+so one document serves rmorie, rmoriedata and morie alike.
 Language models are never hosted: you bring your own key or model
 (\code{\link{llmask}}). The \code{llm} block of documents
 signed before that change carries the sign-in address only.
@@ -96,5 +96,5 @@ svcs(refresh = TRUE)
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link{dlogin}}, \code{\link{dmnf}}.
+\code{\link{dmnf}}.
 }

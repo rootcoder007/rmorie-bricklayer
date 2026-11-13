@@ -126,89 +126,6 @@ test_that("a bundle whose file list holds no records is no bundle", {
   }
 })
 
-test_that("the archive client takes short rows and names the host it asked", {
-  row <- list("org,example)/a", "20260101000000", "https://example.org/a",
-              "text/plain", "200", "D", "20")
-  out <- .bl_arc_rows(list(row), "http://x")
-  expect_identical(out$url, "https://example.org/a")
-  expect_identical(out$status, 200L)
-  expect_true(is.na(out$capture_id))
-  withr::local_envvar(MORIE_ARCHIVE_URL = "http://127.0.0.1:9")
-  why <- .bl_arc_why(list(status = -1L, error = "refused", json = NULL), "x")
-  expect_match(why, "127.0.0.1:9 did not answer", fixed = TRUE)
-  local_mocked_bindings(
-    .bl_arc_req = function(...) {
-      list(status = 200L, json = NULL, body = "<html>", error = "")
-    }
-  )
-  expect_error(
-    arcget("20260101000000-0123abcd", withr::local_tempfile()),
-    "no capture record"
-  )
-  expect_error(arcfind("https://example.org/a"), "no list of captures")
-})
-
-test_that("the sign-in wait holds to its limit whatever interval is sent", {
-  for (iv in list(100000, "abc", -1, 0, NULL)) {
-    local_mocked_bindings(
-      .bl_hosted_auth = function() "https://auth.invalid",
-      .bl_post_json = function(url, ...) {
-        if (grepl("code$", url)) {
-          list(
-            status = 200L,
-            json = list(
-              verification_uri = "https://auth.invalid/go",
-              user_code = "AB-12",
-              device_code = "d",
-              interval = iv
-            )
-          )
-        } else {
-          list(status = 428L, json = list())
-        }
-      }
-    )
-    t0 <- Sys.time()
-    expect_error(
-      suppressMessages(
-        .bl_login_device(open_browser = FALSE, poll_max_seconds = 2)
-      ),
-      "timed out"
-    )
-    took <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
-    expect_lt(took, 8)
-    expect_gt(took, 1)
-  }
-})
-
-test_that("a key with a line break from the sign-in service is not stored", {
-  rec <- new.env()
-  rec$stored <- FALSE
-  local_mocked_bindings(
-    .bl_hosted_auth = function() "https://auth.invalid",
-    .bl_store_key = function(...) rec$stored <- TRUE,
-    .bl_post_json = function(url, ...) {
-      if (grepl("code$", url)) {
-        list(status = 200L, json = list(
-          verification_uri = "https://auth.invalid/go",
-          user_code = "AB-12",
-          device_code = "d",
-          interval = 1
-        ))
-      } else {
-        list(status = 200L, json = list(api_key = "sk-a\nb", user = "u"))
-      }
-    }
-  )
-  expect_error(
-    suppressMessages(
-      .bl_login_device(open_browser = FALSE, poll_max_seconds = 5)
-    ),
-    "nothing was stored"
-  )
-  expect_false(rec$stored)
-})
-
 test_that("a model reply with a member of the wrong type is named as such", {
   for (api in c("openai", "anthropic", "gemini")) {
     for (bad in list(
@@ -228,24 +145,6 @@ test_that("a model reply with a member of the wrong type is named as such", {
       }
     }
   }
-})
-
-test_that("arcget() refuses a listed capture that has no id or digest", {
-  local_mocked_bindings(
-    arcfind = function(...) {
-      .bl_arc_rows(
-        list(list("k", "20260101000000", "https://example.org/a",
-                  "text/plain", "200", "D", "20")),
-        "http://x"
-      )
-    }
-  )
-  dest <- withr::local_tempfile()
-  expect_error(
-    arcget("https://example.org/a", dest),
-    "without a capture id or a SHA-256"
-  )
-  expect_false(file.exists(dest))
 })
 
 test_that("a provenance member of the wrong type is a failed row or NULL", {
@@ -285,8 +184,6 @@ test_that("an identity card whose date is no string fails as a row", {
 
 test_that("the verify and drift Markdown cells escape HTML", {
   expect_identical(.bl_md_esc("a|<img src=x>"), "a\\|&lt;img src=x&gt;")
-  expect_identical(.bl_arc_host("https://my.archive.example"),
-                   "my.archive.example")
 })
 
 test_that("a provenance text member that is not one string is dropped", {
@@ -360,91 +257,14 @@ test_that("a code span in the verify table is not HTML-escaped", {
   expect_match(row, "R&D survey`", fixed = TRUE)
 })
 
-test_that("the missing-key advice fits the archive that was asked", {
-  expect_match(.bl_arc_keyhow("https://archive.rmorie.com"), "dlogin()",
-               fixed = TRUE)
-  expect_match(.bl_arc_keyhow("https://my.archive.example"),
-               "MORIE_ARCHIVE_KEY", fixed = TRUE)
-  local_mocked_bindings(
-    .bl_arc_base = function() "https://my.archive.example",
-    .bl_arc_key = function(base) NULL
-  )
-  expect_error(arcmine(), "set MORIE_ARCHIVE_KEY")
-})
+# A server's error text as the package shows it: withheld whole when it
+# repeats the key (the Save Page Now reader, .bl_wb_json())
+errtext <- function(text, key) {
+  body <- charToRaw(tojs(list(message = text), auto_unbox = TRUE))
+  .bl_wb_json(list(body = body), key)$message
+}
 
-test_that("a key the archive repeats in its error text is not shown", {
-  local_mocked_bindings(
-    .bl_arc_base = function() "http://127.0.0.1:9",
-    .bl_arc_key = function(base) "SECRET-KEY-123",
-    .bl_net = function(url, res) {
-      list(
-        status = 401L,
-        body = charToRaw("{\"error\": \"bad key Bearer SECRET-KEY-123\"}"),
-        error = ""
-      )
-    },
-    .bl_loopback_url = function(base) FALSE
-  )
-  for (f in list(
-    function() arcmine(),
-    function() arcfind("https://example.org/"),
-    function() arcvis("20260101120000-0123abcd", "private"),
-    function() arcwd("20260101120000-0123abcd", confirm = TRUE)
-  )) {
-    msg <- tryCatch(f(), error = conditionMessage)
-    expect_match(msg, "HTTP 401", fixed = TRUE)
-    expect_no_match(msg, "SECRET-KEY-123", fixed = TRUE)
-  }
-})
-
-test_that("arcvis() and arcwd() report only what the archive confirmed", {
-  id <- "20260101120000-0123abcd"
-  ans <- NULL
-  local_mocked_bindings(
-    .bl_arc_base = function() "https://archive.rmorie.com",
-    .bl_arc_key = function(base) "sk-test",
-    .bl_arc_req = function(...) {
-      list(status = 200L, json = ans, body = "", error = "")
-    }
-  )
-  for (bad in list(
-    NULL,
-    "sign in",
-    list(),
-    list(capture_id = 5, visibility = list("x")),
-    list(visibility = "public"),
-    list(withdrawn = "yes"),
-    list(withdrawn = FALSE)
-  )) {
-    ans <- bad
-    expect_error(arcvis(id, "private"), "without confirming the change")
-    expect_error(arcwd(id, confirm = TRUE), "without confirming the change")
-  }
-  for (bad in list(
-    list(capture_id = 5, visibility = "private"),
-    list(capture_id = "20260101120000-ffffffff", visibility = "private")
-  )) {
-    ans <- bad
-    expect_error(arcvis(id, "private"), "without confirming the change")
-  }
-  ans <- list(withdrawn = TRUE, capture_id = "20260101120000-ffffffff")
-  expect_error(arcwd(id, confirm = TRUE), "without confirming the change")
-  ans <- list(
-    capture_id = id,
-    withdrawn = TRUE,
-    was = list("odd"),
-    bytes_removed = "x",
-    url = 5
-  )
-  expect_message(r <- arcwd(id, confirm = TRUE), "did not say whether")
-  expect_identical(r$was, NA_character_)
-  expect_identical(r$bytes_removed, NA)
-  expect_identical(r$url, NA_character_)
-  ans <- list(capture_id = id, visibility = "private")
-  expect_message(arcvis(id, "private"), "now private")
-})
-
-test_that("the key is withheld in every form an archive may send it back", {
+test_that("the key is withheld in every form a server may send it back", {
   key <- "s3cr+t/K=y_0123456789abcdefXYZ"
   b64 <- function(s) jsb64enc(charToRaw(s))
   half <- nchar(key) %/% 2L
@@ -456,7 +276,7 @@ test_that("the key is withheld in every form an archive may send it back", {
     paste("bad key", b64(key)),
     paste("bad key", toupper(utils::URLencode(key, reserved = TRUE)))
   )) {
-    got <- .bl_arc_errtext(echo, key)
+    got <- errtext(echo, key)
     flat <- gsub("[[:space:]]", "", got)
     expect_no_match(flat, key, fixed = TRUE)
     expect_no_match(flat, sub("=+$", "", b64(key)), fixed = TRUE)
@@ -468,56 +288,17 @@ test_that("the key is withheld in every form an archive may send it back", {
   }
   for (part in c(substr(key, 1, 15), substring(key, 12), substr(key, 5, 16))) {
     expect_identical(
-      .bl_arc_errtext(paste("bad key", part), key),
+      errtext(paste("bad key", part), key),
       "the error text is withheld: it repeated your key"
     )
   }
-  expect_identical(.bl_arc_errtext("bad key abc", "abc"),
+  expect_identical(errtext("bad key abc", "abc"),
                    "the error text is withheld: it repeated your key")
   expect_identical(
-    .bl_arc_errtext("quota exceeded for this account", key),
+    errtext("quota exceeded for this account", key),
     "quota exceeded for this account"
   )
-  expect_identical(.bl_arc_errtext("plain", NULL), "plain")
-  expect_null(.bl_arc_errtext(list("x"), key))
-  expect_null(.bl_arc_errtext(5, key))
-})
-
-test_that("a capture recorded without an id is a failed upload, in words", {
-  rec <- NULL
-  local_mocked_bindings(
-    .bl_arc_req = function(method, path, ...) {
-      if (method == "POST") {
-        list(status = 201L, json = rec, body = "<html>", error = "")
-      } else if (method == "PUT") {
-        list(status = 201L, json = list(ok = TRUE), body = "", error = "")
-      } else {
-        list(status = 404L, json = NULL, body = "", error = "")
-      }
-    }
-  )
-  f <- withr::local_tempfile(fileext = ".txt")
-  writeLines("x", f)
-  up <- function() {
-    .bl_arc_upload(
-      f, "https://example.org/", Sys.time(),
-      "a reason of more than twenty characters", "private", "text/plain",
-      "https://my.archive.example", "k", 30L
-    )
-  }
-  page <- "https://my.archive.example/capture/x"
-  for (bad in list(
-    NULL,
-    list(capture = page),
-    list(capture_id = 5, capture = page),
-    list(capture_id = "../../x", capture = page),
-    list(capture_id = "20260101120000-0123abcd")
-  )) {
-    rec <- bad
-    expect_error(up(), "without a capture id")
-  }
-  rec <- list(capture_id = "20260101120000-0123abcd", capture = page)
-  expect_identical(up()$capture_id, "20260101120000-0123abcd")
+  expect_identical(errtext("plain", NULL), "plain")
 })
 
 # Findings of the pre-CRAN audit of 1.1.1 (BL-M2, BL-L1 to BL-L9).
@@ -534,22 +315,22 @@ test_that("the key is withheld at every base64 alignment (BL-M2)", {
   for (lead in c("", "a", "ab", "abc")) {
     dump <- b64(paste0(lead, pre, key, "\r\n"))
     expect_identical(
-      .bl_arc_errtext(paste("request dump:", dump), key),
+      errtext(paste("request dump:", dump), key),
       held,
       info = lead
     )
     url <- chartr("+/", "-_", dump)
-    expect_identical(.bl_arc_errtext(url, key), held, info = lead)
+    expect_identical(errtext(url, key), held, info = lead)
   }
   hex <- paste(as.character(charToRaw(key)), collapse = "")
   pct <- paste0("%", toupper(as.character(charToRaw(key))), collapse = "")
   sep8 <- paste(substring(key, seq(1, 40, 8), seq(8, 40, 8)), collapse = "-")
   for (echo in c(hex, toupper(hex), pct, sep8)) {
-    expect_identical(.bl_arc_errtext(paste("dump", echo), key), held)
+    expect_identical(errtext(paste("dump", echo), key), held)
   }
   # text that does not hold the key is shown
   expect_identical(
-    .bl_arc_errtext(paste("dump", b64("GET / HTTP/1.1\r\n")), key),
+    errtext(paste("dump", b64("GET / HTTP/1.1\r\n")), key),
     paste("dump", b64("GET / HTTP/1.1\r\n"))
   )
   expect_false(.bl_key_echoed("anything", c(NA, "", NULL)))
@@ -628,30 +409,6 @@ test_that("rptanl() keeps names on one line, labels as written (BL-L3)", {
   expect_identical(.md_inline("a\\`b `c`"), "a&#96;b <code>c</code>")
 })
 
-test_that("the emailed-code sign-in refuses a key with a line break (BL-L4)", {
-  rec <- new.env()
-  rec$stored <- FALSE
-  local_mocked_bindings(
-    .bl_hosted_auth = function() "https://auth.invalid",
-    .bl_store_key = function(...) rec$stored <- TRUE,
-    .bl_post_json = function(url, ...) {
-      list(status = 200L, json = list(api_key = "sk-a\nb", user = "u"))
-    }
-  )
-  expect_error(
-    .bl_login_email("ada@example.org", code = "123456"),
-    "line break or control character in it; nothing was stored"
-  )
-  expect_false(rec$stored)
-})
-
-test_that("an archive status past the integer range is NA, silently (BL-L5)", {
-  expect_no_warning(
-    got <- .bl_arc_status(c(200, 99999999999, 1.5, NA, 99, 1000, 404))
-  )
-  expect_identical(got, c(200L, NA, NA, NA, NA, NA, 404L))
-})
-
 test_that("a share of zero has a lower bound of exactly 0 (BL-L6)", {
   s <- unclass(shrs(c(a = 0, b = 10)))
   expect_identical(s$lower[1], 0)
@@ -681,12 +438,4 @@ test_that("densities of values near the largest double fail in words (BL-L7)", {
   expect_no_warning(hurwzeta(c(1e308, -1e308), -0.5))
   expect_true(.rmbl_even(2^53))
   expect_false(.rmbl_even(3))
-})
-
-test_that("a token that is not one string says so (BL-L8)", {
-  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
-  expect_error(dlogin(token = c(-1, 0, 3)), "`token` must be one string, not 3")
-  expect_error(dlogin(token = character()), "`token` must be one string, not 0")
-  expect_error(dlogin(token = NA_character_), "an empty token cannot be stored")
-  expect_error(dlogin(token = "sk-a\nb"), "line break or control character")
 })

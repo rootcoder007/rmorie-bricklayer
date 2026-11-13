@@ -80,21 +80,18 @@ test_that("only a table more than twice the part size goes in parts", {
     .bl_data_get_parts = function(path, dest, hdr, label, size, part, timeout) {
       st$called <- c(size, part)
       invisible(dest)
-    },
-    .bl_data_key = function() NULL
+    }
   )
   ns$.bl_data_get("/db/t.csv.gz", withr::local_tempfile())
   expect_identical(st$called, c(300 * 2^20, 90 * 2^20))
 })
 
-test_that("a refused table says why: ICPSR, a key asked for or rejected", {
+test_that("a refused table says why: ICPSR, or a key asked for", {
   ns <- asNamespace("rmoriebricklayer")
   fail <- "bldl: https://data.example.org/x answered HTTP 410"
-  key <- NULL
   testthat::local_mocked_bindings(
     .bl_data_url = function() "https://data.example.org",
     .bl_data_label = function(path) list(label = "icpsr_9/t", size = NULL),
-    .bl_data_key = function() key,
     bldl = function(...) stop(fail, call. = FALSE)
   )
   dest <- withr::local_tempfile()
@@ -106,11 +103,6 @@ test_that("a refused table says why: ICPSR, a key asked for or rejected", {
   expect_error(
     ns$.bl_data_get("/icpsr_9/t.csv.gz", dest),
     "data.rmorie.com asked for a key for icpsr_9/t"
-  )
-  key <- "sk-x"
-  expect_error(
-    ns$.bl_data_get("/icpsr_9/t.csv.gz", dest),
-    "rejected the stored key"
   )
 })
 

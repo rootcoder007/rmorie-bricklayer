@@ -126,12 +126,8 @@ test_that(
     expect_true(svc_ns(".rmbl_services_verify")(bytes, sig))
     bytes[length(bytes) - 1L] <- as.raw(0x20)
     expect_false(svc_ns(".rmbl_services_verify")(bytes, sig))
-    # and the hosted helpers read this document
-    expect_null(svc_ns(".bl_hosted_base")())
-    expect_identical(
-      svc_ns(".bl_hosted_auth")(),
-      "https://data.rmorie.com/auth"
-    )
+    # and the helpers read this document
+    expect_identical(svc_ns(".rmbl_services_llm")()$mode, "off")
     expect_identical(svc_ns(".bl_data_url")(), "https://data.rmorie.com")
   }
 )
@@ -169,9 +165,11 @@ test_that(
     s2 <- svcs()
     expect_identical(attr(s2, "source"), "cache")
     expect_identical(s2$llm, s$llm)
-    # the hosted helpers follow the document, not the old constants
-    expect_identical(svc_ns(".bl_hosted_base")(), "https://gw.example.org")
-    expect_identical(svc_ns(".bl_hosted_auth")(), "https://gw.example.org/auth")
+    # the helpers follow the document, not the old constants
+    expect_identical(
+      svc_ns(".rmbl_services_llm")()$base_url,
+      "https://gw.example.org"
+    )
     expect_identical(svc_ns(".bl_data_url")(), "https://tables.example.org")
     # env overrides still win over the document
     withr::local_envvar(c(
@@ -179,10 +177,7 @@ test_that(
       MORIE_HOSTED_MODEL = "local:latest",
       MORIE_DATA_URL = "https://d.example.org"
     ))
-    expect_identical(svc_ns(".bl_hosted_base")(), "https://mine.example.org")
     expect_identical(svc_ns(".bl_data_url")(), "https://d.example.org")
-    withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "off"))
-    expect_null(svc_ns(".bl_hosted_base")())
   }
 )
 
@@ -282,7 +277,7 @@ test_that("a document that does not verify is ignored at every step", {
     expect_false(file.exists(file.path(td, "morie-services.json")), info = nm)
   }
   # with every service off the data helpers say so and nothing is called
-  expect_null(svc_ns(".bl_hosted_base")())
+  expect_identical(svc_ns(".rmbl_services_llm")()$mode, "off")
   expect_error(
     svc_ns(".bl_data_url")(),
     "not available right now.*rmorie.com/access"
@@ -358,7 +353,10 @@ test_that("the offline memo is per session and a refresh replaces it", {
   # ... until something asks the site
   expect_identical(attr(svcs(), "source"), "live")
   expect_identical(attr(svcs(offline = TRUE), "source"), "live")
-  expect_identical(svc_ns(".bl_hosted_base")(), "https://gw.example.org")
+  expect_identical(
+    svc_ns(".rmbl_services_llm")()$base_url,
+    "https://gw.example.org"
+  )
 })
 
 test_that("svcs() argument checks", {

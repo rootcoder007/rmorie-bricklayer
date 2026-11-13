@@ -294,8 +294,7 @@ test_that(
           stringsAsFactors = FALSE
         )
       },
-      dload = function(key, ...) data.frame(x = 1:2),
-      .bl_hosted_key = function() NULL
+      dload = function(key, ...) data.frame(x = 1:2)
     )
     shiny::testServer(
       ns$.bl_data_server,
@@ -306,7 +305,7 @@ test_that(
         expect_match(cur()$label, "capsule")
         session$setInputs(cpsdir = tempfile(), cpsload = 2)
         expect_match(html(output$status), "not an existing directory")
-        expect_match(html(output$signin), "Not signed in")
+        expect_match(html(output$signin), "need no sign-in")
         session$setInputs(hublist = 1)
         session$setInputs(hubkey = "db/t", hubload = 1)
         expect_identical(cur()$code, "data <- dload(\"db/t\")")
@@ -314,14 +313,12 @@ test_that(
       }
     )
     local_mocked_bindings(
-      dtabs = function(...) stop("the data service did not answer"),
-      .bl_hosted_key = function() "k"
+      dtabs = function(...) stop("the data service did not answer")
     )
     shiny::testServer(
       ns$.bl_data_server,
       args = list(id = "data", init = nodata),
       {
-        expect_match(html(output$signin), "Signed in")
         session$setInputs(hublist = 1)
         expect_match(html(output$status), "the data service did not answer")
       }

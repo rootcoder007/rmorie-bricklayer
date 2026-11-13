@@ -427,10 +427,6 @@ test_that("refusals name the current arguments and the function", {
   )
   expect_error(blcli(NA_character_), "blcli: `args` must be a character vector")
   expect_error(blcli(function() 1), "blcli: `args` must be a character vector")
-  expect_error(
-    dlogin(email = function() 1),
-    "dlogin: `email` must be one string"
-  )
   od <- tempfile()
   dir.create(od)
   writeLines("", file.path(od, "x"))
@@ -493,7 +489,6 @@ test_that("the readers of the renamed options take the 0.5.x names", {
   expect_identical(normalizePath(ns$.bl_answer_dir()), normalizePath(d))
   expect_null(ns$.bl_answer_get("nokey"))
   expect_silent(ns$.bl_answer_prune(d))
-  expect_identical(ns$.bl_check_email("A@Example.org"), "a@example.org")
   expect_error(
     stepchg(c(1, 2, 3, 4, 5, 6), x = c(1, 3, 2, 4, 5, 6)),
     "stepchg: `x` must be strictly increasing"

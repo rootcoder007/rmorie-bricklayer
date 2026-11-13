@@ -2,17 +2,12 @@
 testthat::skip_on_cran()
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# The native language-model route (a provider's key), the data key's login and
-# the command line. The HTTP layer is replaced by canned replies; the
+# The native language-model route (a provider's key) and the command line.
+# The HTTP layer is replaced by canned replies; the
 # credentials file lives in a temporary XDG_CONFIG_HOME. Nothing leaves the
 # machine and nothing touches $HOME.
 
 .sandbox <- function(env = parent.frame()) {
-  # storing a token asks the gateway first: offline here, the check passes
-  testthat::local_mocked_bindings(
-    .bl_check_token = function(token) invisible(TRUE),
-    .env = env
-  )
   dir <- tempfile("xdg-")
   dir.create(dir)
   old <- Sys.getenv(
@@ -72,41 +67,18 @@ testthat::skip_on_cran()
   list(status = status, body = charToRaw(body))
 }
 
-test_that("a token is stored owner-only in the shared credentials file", {
-  dir <- .sandbox()
-  expect_message(dlogin(token = "  sk-test "), "Token stored")
-  p <- file.path(dir, "morie", "credentials.json")
-  expect_true(file.exists(p))
-  if (.Platform$OS.type != "windows") {
-    expect_identical(as.character(file.info(p)$mode), "600")
-  }
-  expect_identical(.bl_hosted_key(), "sk-test")
-  expect_error(dlogin(token = " "), "empty token")
-  expect_message(expect_true(dlogout()), "Logged out")
-  expect_false(file.exists(p))
-  expect_null(.bl_hosted_key())
-  expect_message(expect_false(dlogout()), "No MORIE data key")
-})
-
 test_that(
   paste0(
-    "the environment key wins, off disables the data address, and a data ",
-    "key is no model route"
+    "a data key is no model route"
   ),
   {
     .sandbox()
-    suppressMessages(dlogin(token = "file-key"))
     Sys.setenv(MORIE_HOSTED_KEY = "env-key")
-    expect_identical(.bl_hosted_key(), "env-key")
-    Sys.setenv(MORIE_HOSTED_BASE_URL = "off")
-    expect_null(.bl_hosted_base())
     expect_error(
       llmask("hi"),
       "No language-model route is set up",
       fixed = TRUE
     )
-    Sys.setenv(MORIE_HOSTED_BASE_URL = "https://gw.example/")
-    expect_identical(.bl_hosted_base(), "https://gw.example")
   }
 )
 
@@ -220,18 +192,7 @@ test_that("the command line dispatches its verbs", {
   expect_match(cap()$text, "usage: rmoriebricklayer")
   # an unknown verb is a usage error
   expect_identical(cap("frobnicate")$status, 2L)
-  # `login --token` asks the gateway first: here it accepts the key
-  testthat::local_mocked_bindings(.bl_key_reply = function(...) {
-    list(status = 200L, body = charToRaw("{}"))
-  })
   expect_match(cap("frobnicate")$text, "unknown verb")
-  r <- suppressMessages(cap("login", "--token", "sk-cli"))
-  expect_identical(r$status, 0L)
-  expect_match(
-    r$text,
-    "Logged in: the key is stored and sent to https://data.rmorie.com"
-  )
-  expect_identical(.bl_hosted_key(), "sk-cli")
   d <- cap("doctor")
   # the data key is not a language model
   expect_match(d$text, "ask has no route yet")
@@ -242,8 +203,6 @@ test_that("the command line dispatches its verbs", {
   expect_identical(cap("bundle", "scaffold", "it")$text, "echo\n")
   # a missing request is a usage error
   expect_identical(cap("bundle")$status, 2L)
-  expect_identical(suppressMessages(cap("logout"))$status, 0L)
-  expect_null(.bl_hosted_key())
 })
 
 test_that("models lists the route's models and ask --model names one", {
@@ -312,111 +271,6 @@ test_that("models lists the route's models and ask --model names one", {
   )
 })
 
-test_that("the email sign-in requests a code and exchanges it for a key", {
-  # the terms and profile step has its own tests (test-signin-profile.R)
-  local_no_signin_profile()
-  .sandbox()
-  rec <- new.env()
-  rec$seen <- list()
-  testthat::local_mocked_bindings(
-    .bl_http_post = function(url, body, content_type, timeout, headers) {
-      rec$seen[[length(rec$seen) + 1L]] <- list(
-        url = url,
-        body = rawToChar(body)
-      )
-      if (grepl("/email/code$", url)) {
-        return(list(
-          status = 200L,
-          body = charToRaw("{\"sent\":true,\"expires_in\":600}")
-        ))
-      }
-      list(
-        status = 200L,
-        body = charToRaw("{\"api_key\":\"sk-mail\",\"user\":\"mail:abc\"}")
-      )
-    }
-  )
-  key <- suppressMessages(dlogin(
-    email = " Vee@Example.com",
-    code = " 123456 "
-  ))
-  expect_identical(key, "sk-mail")
-  expect_length(rec$seen, 1L) # a supplied code skips the request step
-  expect_identical(
-    rec$seen[[1]]$url,
-    "https://data.rmorie.com/auth/email/verify"
-  )
-  req <- fromjs(rec$seen[[1]]$body)
-  expect_identical(req$email, "vee@example.com")
-  expect_identical(req$code, "123456")
-  expect_identical(.bl_hosted_key(), "sk-mail")
-  expect_identical(.bl_read_credentials()$hosted_user, "mail:abc")
-  expect_error(dlogin(email = "nope"), "email address")
-  testthat::local_mocked_bindings(
-    .bl_http_post = function(...) {
-      list(
-        status = 403L,
-        body = charToRaw(
-          "{\"error\":\"wrong code\"}"
-        )
-      )
-    }
-  )
-  expect_error(
-    dlogin(email = "vee@example.com", code = "0"),
-    "403: wrong code"
-  )
-})
-
-test_that("the device flow polls until GitHub approval and stores the key", {
-  # the terms and profile step has its own tests (test-signin-profile.R)
-  local_no_signin_profile()
-  .sandbox()
-  rec <- new.env()
-  rec$polls <- 0L
-  testthat::local_mocked_bindings(
-    .bl_http_post = function(url, body, content_type, timeout, headers) {
-      if (grepl("/device/code$", url)) {
-        return(list(
-          status = 200L,
-          body = charToRaw(paste0(
-            "{\"device_code\":\"dev-1\",\"user_code\":\"ABCD-1234\",",
-            "\"verification_uri\":\"https://github.com/login/device\",",
-            "\"interval\":0}"
-          ))
-        ))
-      }
-      rec$polls <- rec$polls + 1L
-      if (rec$polls < 3L) {
-        return(list(
-          status = 428L,
-          body = charToRaw(
-            "{\"error\":\"authorization_pending\"}"
-          )
-        ))
-      }
-      list(
-        status = 200L,
-        body = charToRaw(
-          "{\"api_key\":\"sk-dev\",\"user\":\"octocat\"}"
-        )
-      )
-    }
-  )
-  msgs <- testthat::capture_messages({
-    key <- dlogin(
-      openbro = FALSE,
-      pollmaxsec = 5
-    )
-  })
-
-  expect_match(paste(msgs, collapse = ""), "ABCD-1234")
-  expect_identical(key, "sk-dev")
-  expect_identical(rec$polls, 3L)
-  expect_identical(.bl_hosted_key(), "sk-dev")
-  expect_identical(.bl_read_credentials()$hosted_user, "octocat")
-})
-
 test_that("the command line helps people find their way around the package", {
   cap <- function(...) {
     rec <- new.env()
@@ -455,7 +309,7 @@ test_that("the launcher ships and instcli() links it into a directory", {
   unlink(dir, recursive = TRUE)
 })
 
-test_that("the credentials path and reader cope with no XDG dir and bad JSON", {
+test_that("the credentials path copes with no XDG dir", {
   dir <- .sandbox()
   old <- Sys.getenv("XDG_CONFIG_HOME")
   Sys.unsetenv("XDG_CONFIG_HOME")
@@ -465,20 +319,6 @@ test_that("the credentials path and reader cope with no XDG dir and bad JSON", {
     fixed = TRUE
   )
   Sys.setenv(XDG_CONFIG_HOME = old)
-  p <- .bl_credentials_path()
-  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
-  writeLines("{not json", p)
-  # the file is shared with morie and rmorie: unreadable is an error, never "no
-  # key"
-  expect_error(.bl_read_credentials(), "not a JSON object")
-  expect_error(.bl_hosted_key(), "not a JSON object")
-  unlink(p)
-  expect_identical(.bl_read_credentials(), list())
-  expect_null(.bl_hosted_key())
-  Sys.setenv(MORIE_HOSTED_AUTH_URL = "https://auth.example/x/")
-  expect_identical(.bl_hosted_auth(), "https://auth.example/x")
-  Sys.unsetenv("MORIE_HOSTED_AUTH_URL")
-  expect_identical(.bl_hosted_auth(), "https://data.rmorie.com/auth")
 })
 
 test_that("the real POST primitive reports an unreachable host as -1", {
@@ -536,190 +376,18 @@ test_that(
   }
 )
 
-test_that(
-  paste0(
-    "the email flow asks for the code when ",
-    "none is given and reports errors"
-  ),
-  {
-    # the terms and profile step has its own tests (test-signin-profile.R)
-    local_no_signin_profile()
-    .sandbox()
-    rec <- new.env()
-    rec$calls <- character()
-    testthat::local_mocked_bindings(
-      .bl_http_post = function(url, body, content_type, timeout, headers) {
-        rec$calls <- c(rec$calls, sub(".*/auth", "", url))
-        if (grepl("/email/code$", url)) {
-          return(list(status = 200L, body = charToRaw("{\"sent\":true}")))
-        }
-        list(status = 200L, body = charToRaw("{\"api_key\":\"sk-typed\"}"))
-      }
-    )
-    testthat::local_mocked_bindings(.bl_readline = function(prompt, ...) {
-      "654321"
-    })
-    msgs <- testthat::capture_messages({
-      key <- dlogin(email = "vee@example.com")
-    })
-    expect_match(paste(msgs, collapse = ""), "one-time code")
-    expect_identical(key, "sk-typed")
-    expect_identical(rec$calls, c("/email/code", "/email/verify"))
-    testthat::local_mocked_bindings(.bl_http_post = function(...) {
-      list(
-        status = 429L,
-        body = charToRaw("{\"error\":\"too many codes\"}")
-      )
-    })
-    expect_error(
-      dlogin(email = "vee@example.com"),
-      "429: too many codes"
-    )
-    testthat::local_mocked_bindings(.bl_http_post = function(...) {
-      list(
-        status = 200L,
-        body = charToRaw("{\"sent\":true}")
-      )
-    })
-    expect_error(
-      dlogin(email = "vee@example.com", code = "1"),
-      "returned no key"
-    )
-  }
-)
-
-test_that(
-  paste0(
-    "the device flow opens the browser, ",
-    "rejects a hard error and times out"
-  ),
-  {
-    # the terms and profile step has its own tests (test-signin-profile.R)
-    local_no_signin_profile()
-    .sandbox()
-    rec <- new.env()
-    rec$opened <- NULL
-    testthat::local_mocked_bindings(
-      browseURL = function(url, ...) rec$opened <- url,
-      .package = "utils"
-    )
-    start_reply <- list(
-      status = 200L,
-      body = charToRaw(paste0(
-        "{\"device_code\":\"dev-2\",\"user_code\":\"WXYZ-0000\",",
-        "\"verification_uri\":\"https://github.com/login/device\",\"inter",
-        "val\":",
-        "0}"
-      ))
-    )
-    testthat::local_mocked_bindings(
-      .bl_http_post = function(url, ...) {
-        if (grepl("/device/code$", url)) {
-          return(start_reply)
-        }
-        list(status = 400L, body = charToRaw("{\"error\":\"expired_token\"}"))
-      }
-    )
-    expect_error(
-      suppressMessages(dlogin(
-        openbro = TRUE,
-        pollmaxsec = 5
-      )),
-      "400: expired_token"
-    )
-    expect_identical(rec$opened, "https://github.com/login/device")
-    testthat::local_mocked_bindings(
-      .bl_http_post = function(url, ...) {
-        if (grepl("/device/code$", url)) {
-          return(start_reply)
-        }
-        list(
-          status = 428L,
-          body = charToRaw("{\"error\":\"authorization_pending\"}")
-        )
-      }
-    )
-    expect_error(
-      suppressMessages(dlogin(
-        openbro = FALSE,
-        pollmaxsec = 0
-      )),
-      "timed out"
-    )
-    testthat::local_mocked_bindings(.bl_http_post = function(...) {
-      list(
-        status = 503L,
-        body = charToRaw("{\"error\":\"down\"}")
-      )
-    })
-    expect_error(dlogin(openbro = FALSE), "503: down")
-  }
-)
-
-test_that("logout keeps unrelated entries in the shared file", {
+test_that("examples needs the name of a documented function", {
   .sandbox()
-  p <- .bl_credentials_path()
-  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
-  writeLines('{"hosted_key": "sk-x", "other_tool": "keep"}', p)
-  expect_message(expect_true(dlogout()), "Logged out")
-  expect_identical(.bl_read_credentials(), list(other_tool = "keep"))
-})
-
-test_that(
-  paste0(
-    "the command line prompts for a token, runs the device flow and checks ",
-    "flags"
-  ),
-  {
-    # the terms and profile step has its own tests (test-signin-profile.R)
-    local_no_signin_profile()
-    .sandbox()
-    cap <- function(...) {
-      rec <- new.env()
-      rec$buf <- character()
-      st <- blcli(c(...), out = function(s) rec$buf <- c(rec$buf, s))
-      list(text = paste(rec$buf, collapse = ""), status = st)
-    }
-    testthat::local_mocked_bindings(.bl_readline = function(prompt, ...) {
-      "sk-prompted"
-    })
-    testthat::local_mocked_bindings(.bl_key_reply = function(...) {
-      list(status = 200L, body = charToRaw("{}"))
-    })
-    r <- suppressMessages(cap("login", "--token"))
-    expect_identical(r$status, 0L)
-    expect_identical(.bl_hosted_key(), "sk-prompted")
-    suppressMessages(dlogout())
-    e <- cap("login", "--email")
-    expect_identical(e$status, 2L) # a flag without its value is a usage error
-    expect_match(e$text, "--email needs a value")
-    testthat::local_mocked_bindings(
-      .bl_http_post = function(url, ...) {
-        if (grepl("/device/code$", url)) {
-          return(list(
-            status = 200L,
-            body = charToRaw(paste0(
-              "{\"device_code\":\"d\",\"user_code\":\"AAAA-1111\",",
-              "\"verification_uri\":\"https://github.com/login/device\",\"inte",
-              "rv",
-              "al\":0}"
-            ))
-          ))
-        }
-        list(
-          status = 200L,
-          body = charToRaw("{\"api_key\":\"sk-cli-dev\",\"user\":\"vee\"}")
-        )
-      }
-    )
-    d <- suppressMessages(cap("login", "--no-browser"))
-    expect_identical(d$status, 0L)
-    expect_identical(.bl_hosted_key(), "sk-cli-dev")
-    # a missing name is a usage error
-    expect_identical(cap("examples")$status, 2L)
-    expect_match(cap("examples", "no_such_fn")$text, "no help page")
+  cap <- function(...) {
+    rec <- new.env()
+    rec$buf <- character()
+    st <- blcli(c(...), out = function(s) rec$buf <- c(rec$buf, s))
+    list(text = paste(rec$buf, collapse = ""), status = st)
   }
-)
+  # a missing name is a usage error
+  expect_identical(cap("examples")$status, 2L)
+  expect_match(cap("examples", "no_such_fn")$text, "no help page")
+})
 
 test_that(
   paste0(
@@ -820,17 +488,6 @@ test_that(
     )
   }
 )
-
-test_that("login --help prints the usage and the usage names rmbl", {
-  rec <- new.env()
-  rec$buf <- character()
-  st <- blcli(c("login", "--help"), out = function(x) rec$buf <- c(rec$buf, x))
-  expect_identical(st, 0L)
-  expect_match(paste(rec$buf, collapse = ""), "usage: rmoriebricklayer login")
-  rec$buf <- character()
-  blcli("help", out = function(x) rec$buf <- c(rec$buf, x))
-  expect_match(paste(rec$buf, collapse = ""), "rmbl is the same command")
-})
 
 
 test_that(

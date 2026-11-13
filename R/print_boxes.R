@@ -268,9 +268,6 @@ print.rmbl_aipw <- .rmbl_print_box
 print.rmbl_archive_capture <- .rmbl_print_box
 
 #' @export
-print.rmbl_archive_find <- .rmbl_print_box
-
-#' @export
 print.rmbl_bacon <- .rmbl_print_box
 
 #' @export

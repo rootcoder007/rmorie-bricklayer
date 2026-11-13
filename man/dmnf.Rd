@@ -20,9 +20,8 @@ table) is cached.}
 \item{key}{Character scalar, a \code{db/table} key from the manifest (the
 \code{key} column of \code{dtabs()}).}
 
-\item{token}{For \code{dload()}: the MORIE key to use for this call,
-in place of the one \code{\link{dlogin}} stored; \code{NULL} (the
-default) uses the stored key. It is never printed or written to disk.}
+\item{token}{Ignored, with a warning: the tables need no key, and none is
+sent. Kept so that calls written for earlier versions still run.}
 }
 \value{
 \code{dmnf()}: the manifest as a list (element
@@ -42,8 +41,7 @@ The MORIE project keeps databases materialised from Google BigQuery
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-\code{www.rmorie.com/data-license/}. They need no sign-in and no key; a
-MORIE key stored earlier with \code{\link{dlogin}} is still sent. The
+\code{www.rmorie.com/data-license/}. They need no sign-in and no key. The
 service address comes from \code{\link{svcs}}.
 \code{dmnf()} returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
@@ -86,30 +84,24 @@ decompressed CSV takes a few GB of RAM as a data frame.
 A table the manifest lists without any digest is used with a warning, once
 per session and table.
 
-A stored key is sent only to the address of the signed services document;
-with \code{MORIE_DATA_URL} set to another address it is not sent, and a
-message says so. Tables whose source terms do not allow redistribution
-(ICPSR studies, among them the NCVS 38604 extract, and any table the
-manifest marks restricted, with \code{access} other than \code{"open"} or
-\code{"public"} or \code{restricted: true}) are not served:
+\code{MORIE_DATA_URL} sets another address for the service (https and
+public). No key is sent to either. Tables whose source terms do not allow
+redistribution (ICPSR studies, among them the NCVS 38604 extract, and any
+table the manifest marks restricted, with \code{access} other than
+\code{"open"} or \code{"public"} or \code{restricted: true}) are not served:
 \code{dmnf()} and \code{dtabs()} leave them out (the listing counts them in
 one line), and \code{dload()} refuses them before any request, saying
 where to get them. Downloads draw a progress bar when
 \code{options(morie.progress)} allows it.
 
 Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; the service
-unavailable, or a stored key rejected; a \code{key} that is not of the
-form \code{db/table}, not listed in the manifest, or a table that is not
-served; a \code{token} that is not one non-empty string; a digest
-mismatch.
+unavailable; a \code{key} that is not of the form \code{db/table}, not
+listed in the manifest, or a table that is not served; a digest mismatch.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Offline, against a cache folder holding a manifest and one table made
-# here (no key is stored and nothing is fetched).
-oldenv <- Sys.getenv(c("XDG_CONFIG_HOME", "MORIE_HOSTED_KEY"), unset = NA)
-Sys.setenv(XDG_CONFIG_HOME = tempfile())
-Sys.unsetenv("MORIE_HOSTED_KEY")
+# here (nothing is fetched).
 cache <- file.path(tempdir(), "data-hub-example")
 dir.create(cache)
 old <- options(rmoriebricklayer.dcache = cache)
@@ -146,13 +138,6 @@ file.exists(f)
 
 options(old)
 unlink(cache, recursive = TRUE)
-for (v in names(oldenv)) {
-  if (is.na(oldenv[[v]])) {
-    Sys.unsetenv(v)
-  } else {
-    do.call(Sys.setenv, as.list(oldenv[v]))
-  }
-}
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # the real service: needs the network, no sign-in
@@ -161,5 +146,5 @@ df <- dload("chicago_crime/incidents")
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link{dlogin}}, \code{\link{svcs}}.
+\code{\link{svcs}}.
 }
