@@ -45,7 +45,7 @@ cases <- list(
   examples = function() { r <- run("examples", "cpsbndl"); check(r$status == 0 && nzchar(r$text), r$text) },
   bundle = function() { r <- run("bundle", "validate a csv schema"); check(r$status %in% c(0L, 1L), r$text) },
   data = function() {
-    r <- run("data"); check(r$status %in% c(0L, 1L), r$text)
+    r <- run("data"); check(r$status == 2L && grepl("usage: ", r$text, fixed = TRUE), r$text)
     r <- run("data", "list"); check(r$status == 0 && grepl("chicago_crime", r$text), substr(r$text, 1, 300))
     r <- run("data", "pull", "fec_cm_2020/fec_cm_2020", "--out", "fec.csv"); check(r$status == 0 && nrow(utils::read.csv("fec.csv")) > 1000, r$text)
     df <- dload("fec_cm_2020/fec_cm_2020"); check(nrow(df) > 1000, "dload")
