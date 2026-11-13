@@ -122,8 +122,14 @@ double hurwitz_zeta_scalar(double s, double q) {
         /* sum_j coef_j * (s)_{2j-1} * a^{-s-2j+1} */
         long double poch = s;             /* (s)_1 */
         for (int j = 1; j <= 6; ++j) {
-            acc += bfac[j - 1] * poch *
-                   std::pow(a, -s - 2.0L * j + 1.0L);
+            /* Once this power is 0 so is every later one, and the sum is
+             * complete. Without the stop, a huge s (1e80 and up) takes
+             * (s)_k past the largest long double where long double is a
+             * double (arm64 macOS, MSVC), and infinity times 0 made the
+             * value NaN there; with an 80-bit long double it was 1. */
+            const long double pw = std::pow(a, -s - 2.0L * j + 1.0L);
+            if (pw == 0.0L) break;
+            acc += bfac[j - 1] * poch * pw;
             /* advance (s)_{2j-1} to (s)_{2j+1} */
             poch *= (s + 2.0L * j - 1.0L) * (s + 2.0L * j);
         }
