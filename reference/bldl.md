@@ -136,7 +136,7 @@ try(bldl("http://example.org/table.csv", tempfile()))
 try(bldl("https://127.0.0.1/table.csv", tempfile()))
 #> Error : url points at a local or private address ('https://127.0.0.1/table.csv'): refused (a local or private address (127.0.0.1))
 try(bldl(paste0("file://", src), tempfile()))
-#> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpQED4fI/file1ea954e2a753.txt'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
+#> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmp8SsA0G/file1f43310f0ebb.txt'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
 
 # a real download needs the network
 if (FALSE) { # interactive()
