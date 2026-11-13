@@ -93,8 +93,12 @@
 #'
 #' Each call of a renamed function (bare or rmoriebricklayer::) gets its new
 #' name, its named arguments their new names and each renamed allowed value (a
-#' string literal) its new value. Only parsed tokens change: comments, strings
-#' and spacing stay.
+#' string literal) its new value. A renamed function passed by name as an
+#' argument (`lapply(x, yoy)`) and a string naming one in do.call(),
+#' match.fun(), get(), get0() or exists() get the new name too, unless the
+#' script defines that name itself. A name after `$` or `@` (a list element or
+#' a method), or qualified with another package, is not this package's and is
+#' left alone. Only parsed tokens change: comments, strings and spacing stay.
 #' @param lines The source, a character vector of lines.
 #' @return list(lines = the rewritten source, n = the number of changes).
 #' @noRd
@@ -107,20 +111,138 @@
   edits <- list()
   hits <- which(pd$token == "SYMBOL_FUNCTION_CALL" & pd$text %in% m$old)
   for (h in hits) {
-    # a call of another package's function of the same name is not ours
-    fe <- pd$parent[h]
-    pkg <- pd[pd$parent == fe & pd$token == "SYMBOL_PACKAGE", "text"]
-    if (length(pkg) && !identical(pkg, "rmoriebricklayer")) {
+    if (!.bl_migrate_ours(pd, h)) {
       next
     }
     r <- .bl_old_row(pd$text[h])
     edits <- c(
       edits,
       list(.bl_migrate_edit(pd, h, r$new)),
-      .bl_migrate_args(pd, fe, r)
+      .bl_migrate_args(pd, pd$parent[h], r)
     )
   }
+  edits <- c(edits, .bl_migrate_refs(pd, m))
   list(lines = .bl_migrate_apply(lines, edits), n = length(edits))
+}
+
+#' Says whether a name token is this package's: not after `$` or `@` (an
+#' element or a method: `obj$rate()` is not rate()) and not qualified with
+#' another package.
+#' @param pd The parse data.
+#' @param row The token's row in `pd`.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_migrate_ours <- function(pd, row) {
+  sib <- pd$parent == pd$parent[row]
+  if (any(pd$token[sib] %in% c("'$'", "'@'"))) {
+    return(FALSE)
+  }
+  pkg <- pd$text[sib & pd$token == "SYMBOL_PACKAGE"]
+  !length(pkg) || identical(pkg, "rmoriebricklayer")
+}
+
+#' The children of a parse-data node, in source order.
+#' @param pd The parse data.
+#' @param id The node's parse id.
+#' @return Row numbers of `pd`.
+#' @noRd
+.bl_pd_kids <- function(pd, id) {
+  k <- which(pd$parent == id)
+  k[order(pd$line1[k], pd$col1[k])]
+}
+
+#' The names a script defines itself: assigned (`<-`, `=`, `<<-`, `->`),
+#' function arguments and loop variables. Such a name is the script's own, so
+#' a reference to it is not rewritten.
+#' @param pd The parse data.
+#' @return A character vector.
+#' @noRd
+.bl_migrate_defined <- function(pd) {
+  out <- pd$text[pd$token == "SYMBOL_FORMALS"]
+  as <- which(pd$token %in% c("LEFT_ASSIGN", "EQ_ASSIGN", "RIGHT_ASSIGN"))
+  for (a in as) {
+    k <- .bl_pd_kids(pd, pd$parent[a])
+    tgt <- if (pd$token[a] == "RIGHT_ASSIGN") k[length(k)] else k[1L]
+    out <- c(out, pd$text[pd$parent == pd$id[tgt] & pd$token == "SYMBOL"])
+  }
+  fc <- pd$id[pd$token == "forcond"]
+  c(out, pd$text[pd$parent %in% fc & pd$token == "SYMBOL"])
+}
+
+#' The edits to renamed functions referred to without a call: passed by name
+#' as an argument, or named by a string in do.call() and the like.
+#' @param pd The parse data.
+#' @param m The map of 0.5.x names.
+#' @return A list of edits (.bl_migrate_edit()).
+#' @noRd
+.bl_migrate_refs <- function(pd, m) {
+  old <- setdiff(m$old, .bl_migrate_defined(pd))
+  edits <- list()
+  for (s in which(pd$token == "SYMBOL" & pd$text %in% old)) {
+    if (.bl_migrate_ours(pd, s) && .bl_migrate_is_arg(pd, pd$parent[s])) {
+      edits <- c(
+        edits,
+        list(.bl_migrate_edit(pd, s, .bl_old_row(pd$text[s])$new))
+      )
+    }
+  }
+  for (s in which(pd$token == "STR_CONST")) {
+    q <- substr(pd$text[s], 1L, 1L)
+    val <- substr(pd$text[s], 2L, nchar(pd$text[s]) - 1L)
+    if (q %in% c("'", "\"") && val %in% old && .bl_migrate_fn_str(pd, s)) {
+      new <- paste0(q, .bl_old_row(val)$new, q)
+      edits <- c(edits, list(.bl_migrate_edit(pd, s, new)))
+    }
+  }
+  edits
+}
+
+#' Says whether an expression is an argument of a call (not the function
+#' called, not the body of a function or an if).
+#' @param pd The parse data.
+#' @param e The expression's parse id.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_migrate_is_arg <- function(pd, e) {
+  k <- .bl_pd_kids(pd, pd$parent[match(e, pd$id)])
+  length(k) >= 3L &&
+    pd$token[k[1L]] == "expr" &&
+    pd$token[k[2L]] == "'('" &&
+    pd$id[k[1L]] != e
+}
+
+#' Says whether a string is the function named in do.call(), match.fun(),
+#' get(), get0() or exists(): their first argument, or `what`, `FUN` or `x`.
+#' @param pd The parse data.
+#' @param s The string's row in `pd`.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_migrate_fn_str <- function(pd, s) {
+  e <- pd$parent[s]
+  if (!.bl_migrate_is_arg(pd, e)) {
+    return(FALSE)
+  }
+  k <- .bl_pd_kids(pd, pd$parent[match(e, pd$id)])
+  fn <- pd$text[
+    pd$parent == pd$id[k[1L]] & pd$token == "SYMBOL_FUNCTION_CALL"
+  ]
+  ok <- c("do.call", "match.fun", "get", "get0", "exists")
+  if (length(fn) != 1L || !fn %in% ok) {
+    return(FALSE)
+  }
+  i <- match(e, pd$id[k])
+  if (pd$token[k[i - 1L]] == "EQ_SUB") {
+    return(pd$text[k[i - 2L]] %in% c("what", "FUN", "x"))
+  }
+  # the first unnamed argument
+  args <- k[-(1:2)]
+  args <- args[pd$token[args] == "expr"]
+  named <- vapply(
+    args,
+    function(a) pd$token[k[match(a, k) - 1L]] == "EQ_SUB",
+    NA
+  )
+  identical(args[!named][1L], k[i])
 }
 
 #' The migrate verb: rewrites 0.5.x scripts to the 1.0.0 names.
@@ -256,9 +378,7 @@
 #' @return A list of edits (.bl_migrate_edit()).
 #' @noRd
 .bl_migrate_args <- function(pd, fe, r) {
-  call <- pd$parent[pd$id == fe]
-  kids <- which(pd$parent == call)
-  kids <- kids[order(pd$line1[kids], pd$col1[kids])]
+  kids <- .bl_pd_kids(pd, pd$parent[pd$id == fe])
   edits <- list()
   for (k in seq_along(kids)) {
     j <- kids[k]
