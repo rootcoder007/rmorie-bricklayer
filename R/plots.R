@@ -2207,6 +2207,12 @@ plotvln <- function(
   .bl_check_bw(bw)
   lv <- levels(d$grp)
   cols <- .bl_cols(length(lv), col, pal)
+  # every density is computed once before the frame is drawn, so that values
+  # too large for a density are refused in words on every R version (R 4.1
+  # stops in plot.window() first, with "non-finite axis extents")
+  for (l in lv) {
+    if (sum(d$grp == l) >= 2L) .bl_density(d$x[d$grp == l], bw)
+  }
   op <- .bl_par(d$x)
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(
