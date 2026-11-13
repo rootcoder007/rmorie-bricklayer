@@ -166,13 +166,13 @@ card
 #> │   orcid        0000-0002-1825-0097                                          │
 #> │   web          https://example.org/ada                                      │
 #> │   key          ML-DSA-44                                                    │
-#> │   fingerprint  1AE5 F673 BD43 3878 A471 CEA3 9273 91BA 03BC 60BC B3D7 823A  │
-#> │                2AB7 707E EB57 040A                                          │
-#> │   issued       2026-11-13T05:23:17Z                                         │
-#> │   expires      2028-11-12T05:23:17Z                                         │
+#> │   fingerprint  648C E23B 7098 B6AF 2890 8936 C384 1863 C16C 0CE3 2FD0 AB61  │
+#> │                0AEE 2BF9 F3C5 E59F                                          │
+#> │   issued       2026-11-13T06:14:20Z                                         │
+#> │   expires      2028-11-12T06:14:20Z                                         │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 card$fingerprint
-#> [1] "1AE5 F673 BD43 3878 A471 CEA3 9273 91BA 03BC 60BC B3D7 823A 2AB7 707E EB57 040A"
+#> [1] "648C E23B 7098 B6AF 2890 8936 C384 1863 C16C 0CE3 2FD0 AB61 0AEE 2BF9 F3C5 E59F"
 
 # anyone, later: is this the card I was told about, and did it sign this?
 man <- mkmnf(list(project = "demo"), env = FALSE)
@@ -193,7 +193,7 @@ res$checks
 #> 1                                                                                    
 #> 2                                 an rmbl identity card, signed under its own context
 #> 3                               made by the holder of the card's key; unchanged since
-#> 4 valid 2026-11-13T05:23:17Z to 2028-11-12T05:23:17Z; checked at 2026-11-13T05:23:17Z
+#> 4 valid 2026-11-13T06:14:20Z to 2028-11-12T06:14:20Z; checked at 2026-11-13T06:14:20Z
 #> 5                                                                 0000-0002-1825-0097
 #> 6                                            the card's key is the one you were given
 #> 7                                              the attestation carries the card's key
