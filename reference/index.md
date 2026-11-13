@@ -115,14 +115,6 @@ datasets over flaky endpoints.
   an archive.org item
 - [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
   : Send a capture kept on this computer to the archives later
-- [`arcfind()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcfind.md)
-  : Find saved copies of an address in archive.rmorie.com
-- [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
-  : Fetch the exact bytes of a saved copy from archive.rmorie.com
-- [`arcmine()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
-  [`arcvis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
-  [`arcwd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
-  : List, hide or withdraw your captures in archive.rmorie.com
 - [`siufetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siufetch.md)
   : Fetch an Ontario SIU director's report by drid
 - [`dldata()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dldata.md)
@@ -247,10 +239,6 @@ help; the rmoriebricklayer shell command.
   : Explain an error from rmoriebricklayer (or a package built on it)
 - [`llmcfg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmcfg.md)
   : Show or save the language-model settings
-- [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
-  : Sign in for the curated tables at data.rmorie.com
-- [`dlogout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogout.md)
-  : Forget the MORIE data key
 - [`llmstat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmstat.md)
   : Report the language-model routes available from this machine
 - [`svcs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svcs.md)

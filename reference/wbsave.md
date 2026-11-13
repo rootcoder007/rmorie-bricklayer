@@ -30,9 +30,7 @@ wbsave(
   capall = FALSE,
   quiet = NULL,
   permin = 6,
-  maxcap = 1000,
-  fallback = NULL,
-  reason = NULL
+  maxcap = 1000
 )
 ```
 
@@ -97,19 +95,6 @@ wbsave(
 
   The most captures this run starts; default 1000. The rest are left for
   the next run (with the same `output`, it carries on from them).
-
-- fallback:
-
-  `"rmorie"` saves what the Wayback Machine refused (a server that
-  refuses its crawler, Statistics Canada among them) from this
-  connection to archive.rmorie.com, with
-  [`arccap`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md);
-  the result is attribute `archive`. `NULL` (default) does not.
-
-- reason:
-
-  With `fallback = "rmorie"`: why the files are kept (20 characters or
-  more).
 
 ## Value
 
@@ -178,7 +163,7 @@ try(wbsave(
   sk = "def",
   output = file.path(tempdir(), "no-such-folder", "runs.jsonl")
 ))
-#> Error : the folder for `output` does not exist: /tmp/RtmpePM6yS/no-such-folder
+#> Error : the folder for `output` does not exist: /tmp/Rtmpga0DUM/no-such-folder
 
 # A real run needs archive.org keys and the network.
 if (FALSE) { # interactive()

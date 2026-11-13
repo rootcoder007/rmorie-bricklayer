@@ -4,10 +4,8 @@ The MORIE project keeps databases materialised from Google BigQuery
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-`www.rmorie.com/data-license/`. They need no sign-in and no key; a MORIE
-key stored earlier with
-[`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
-is still sent. The service address comes from
+`www.rmorie.com/data-license/`. They need no sign-in and no key. The
+service address comes from
 [`svcs`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svcs.md).
 `dmnf()` returns the gateway's manifest (every table with rows, columns,
 size, SHA-256 and its BigQuery source), kept for a day; `dtabs()` the
@@ -41,10 +39,8 @@ dload(key, refresh = FALSE, token = NULL)
 
 - token:
 
-  For `dload()`: the MORIE key to use for this call, in place of the one
-  [`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
-  stored; `NULL` (the default) uses the stored key. It is never printed
-  or written to disk.
+  Ignored, with a warning: the tables need no key, and none is sent.
+  Kept so that calls written for earlier versions still run.
 
 ## Value
 
@@ -92,34 +88,28 @@ data frame.
 A table the manifest lists without any digest is used with a warning,
 once per session and table.
 
-A stored key is sent only to the address of the signed services
-document; with `MORIE_DATA_URL` set to another address it is not sent,
-and a message says so. Tables whose source terms do not allow
-redistribution (ICPSR studies, among them the NCVS 38604 extract, and
-any table the manifest marks restricted, with `access` other than
+`MORIE_DATA_URL` sets another address for the service (https and
+public). No key is sent to either. Tables whose source terms do not
+allow redistribution (ICPSR studies, among them the NCVS 38604 extract,
+and any table the manifest marks restricted, with `access` other than
 `"open"` or `"public"` or `restricted: true`) are not served: `dmnf()`
 and `dtabs()` leave them out (the listing counts them in one line), and
 `dload()` refuses them before any request, saying where to get them.
 Downloads draw a progress bar when `options(morie.progress)` allows it.
 
-Errors: `refresh` not `TRUE` or `FALSE`; the service unavailable, or a
-stored key rejected; a `key` that is not of the form `db/table`, not
-listed in the manifest, or a table that is not served; a `token` that is
-not one non-empty string; a digest mismatch.
+Errors: `refresh` not `TRUE` or `FALSE`; the service unavailable; a
+`key` that is not of the form `db/table`, not listed in the manifest, or
+a table that is not served; a digest mismatch.
 
 ## See also
 
-[`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md),
 [`svcs`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svcs.md).
 
 ## Examples
 
 ``` r
 # Offline, against a cache folder holding a manifest and one table made
-# here (no key is stored and nothing is fetched).
-oldenv <- Sys.getenv(c("XDG_CONFIG_HOME", "MORIE_HOSTED_KEY"), unset = NA)
-Sys.setenv(XDG_CONFIG_HOME = tempfile())
-Sys.unsetenv("MORIE_HOSTED_KEY")
+# here (nothing is fetched).
 cache <- file.path(tempdir(), "data-hub-example")
 dir.create(cache)
 old <- options(rmoriebricklayer.dcache = cache)
@@ -171,13 +161,6 @@ file.exists(f)
 
 options(old)
 unlink(cache, recursive = TRUE)
-for (v in names(oldenv)) {
-  if (is.na(oldenv[[v]])) {
-    Sys.unsetenv(v)
-  } else {
-    do.call(Sys.setenv, as.list(oldenv[v]))
-  }
-}
 if (FALSE) { # interactive()
 # the real service: needs the network, no sign-in
 head(dtabs())

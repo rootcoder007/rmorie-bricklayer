@@ -134,10 +134,7 @@ data.rmorie.com, and **Load all demos** loads every demo dataset so you
 can switch between them. Data chosen there is used by every tab (“The
 dataset chosen at the left” in a tab’s Data menu). For a capsule it
 loads the pinned data file. The tables of data.rmorie.com need no
-sign-in. The app never holds a data key: when one was stored with
-`rmbl login`,
-[`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
-reads it from where it is stored.
+sign-in and no key.
 
 ## The tabs
 
@@ -288,7 +285,7 @@ led
 #> │   Theorems  3 theorems (1 proved, 1 sorry, 1 axiom)                         │
 #> │   Source    https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab    │
 #> │   Lean      v4.12.0                                                         │
-#> │   File      /tmp/RtmpePM6yS/temp_libpath1f3440b73852/rmoriebricklayer/extda │
+#> │   File      /tmp/Rtmpga0DUM/temp_libpath1f407d17ba65/rmoriebricklayer/extda │
 #> │             ta/ledger_sample.json                                           │
 #> │                                                                             │
 #> │   id               theorem                         status  sorry            │

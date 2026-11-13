@@ -222,10 +222,7 @@ The menus and their tabs:
   light, dark or the system's theme (also the switch in the navbar),
   digits, and the seed of the seeded analyses.
 
-The tables of data.rmorie.com need no key; a data key stored with
-`rmbl login` is never held by the app:
-[`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
-reads it from where it is stored.
+The tables of data.rmorie.com need no key and no sign-in.
 
 The dashboard needs the shiny package (Suggests), and with it bslib,
 which shiny installs; without shiny `rmblapp()` refuses.

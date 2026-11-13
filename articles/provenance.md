@@ -90,8 +90,8 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ╭── Signing key (post-quantum) ───────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
-#> │   root       89ffa81167021b79f649e793576331287735b5ba710265bf11ced46572b892 │
-#> │              7e                                                             │
+#> │   root       33d9e02ef950b06fc9459833001690a1b1280f746b9cf4dce9d7a3f60509a1 │
+#> │              f9                                                             │
 #> │   height     3                                                              │
 #> │   used       0 of 8 signatures                                              │
 #> │   remaining  8                                                              │
@@ -108,7 +108,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ╭── Public verification key ─────────────────────────────────────────────────╮
 #> │   scheme  xmss-sha256                                                      │
-#> │   root    89ffa81167021b79f649e793576331287735b5ba710265bf11ced46572b8927e │
+#> │   root    33d9e02ef950b06fc9459833001690a1b1280f746b9cf4dce9d7a3f60509a1f9 │
 #> │   height  3                                                                │
 #> ╰────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -451,7 +451,7 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ╭── Against the declaration of 2026-11-13T06:17:08Z: departures below ──╮
+#> ╭── Against the declaration of 2026-11-13T16:01:06Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -469,7 +469,7 @@ prrgchk(plan, "n_rows")
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ╭── Against the declaration of 2026-11-13T06:17:08Z: departures below ──╮
+#> ╭── Against the declaration of 2026-11-13T16:01:06Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -609,35 +609,36 @@ rallocvrf(moved, digest = attr(alloc, "alloc")$digest)$ok
 A capsule pins a source by its SHA-256, and
 [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
 fetches it from wherever a copy with that SHA-256 still exists: the
-source, its Wayback snapshot, any mirror you name, archive.rmorie.com,
-and folders of captures you made yourself. Some servers refuse archives
-(Statistics Canada answers the Wayback Machine’s crawler with an error),
-so the copy has to be made from a connection the server does answer:
-yours.
+source, its Wayback snapshot, any mirror you name (an archive.org item
+among them), and folders of captures you made yourself. Some servers
+refuse archives (Statistics Canada answers the Wayback Machine’s crawler
+with an error), so the copy has to be made from a connection the server
+does answer: yours.
 
 [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
-downloads each address, writes it as a WARC/1.1 file with a CDXJ index
-(a collection pywb and warcio read), and with `upload = "rmorie"` keeps
-it at archive.rmorie.com under your data key, with the reason you give.
-`upload = "wayback"` asks the Wayback Machine as well.
+downloads each address, keeps its SHA-256 in a manifest stamped by an
+RFC 3161 time-stamping authority, and writes it as a WARC/1.1 file with
+a CDXJ index (a collection pywb and warcio read), with the reason you
+give. With `item` and your archive.org keys it publishes the capture as
+an archive.org item; `upload = "wayback"` asks the Wayback Machine as
+well.
 
 ``` r
 
 cap <- arccap(
   "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip",
   "captures",
-  upload = c("rmorie", "wayback"),
+  upload = "wayback",
   reason = "Custody table cited in chapter 3"
 )
-cap$archive # its page at archive.rmorie.com
-arcfind("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip")
-arcget(cap$capture_id, "table.zip", sha256 = cap$sha256)
+cap$warc    # the WARC file of each capture
+cap$wayback # what the Wayback Machine answered
 ```
 
 When the source is gone and the Wayback Machine cannot be reached,
 [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
-takes the copy from the archive, and failing that from the WARC files in
-your own folder, still checked against the pin:
+takes the copy from the mirrors you name, and failing that from the WARC
+files in your own folder, still checked against the pin:
 
 ``` r
 
@@ -645,34 +646,18 @@ fetchvrf(
   "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip",
   "table.zip",
   sha256 = cap$sha256,
-  arcs = c("rmorie", "captures")
+  arcs = "captures"
 )
 ```
 
 From a terminal the same steps are
-`rmbl archive save URL --reason "..."`, `rmbl archive find URL` and
-`rmbl archive get ID -o FILE`.
+`rmbl archive save URL --also wayback` and, when the Wayback Machine was
+down, `rmbl archive push captures --also wayback` later.
 
-In continuous integration, `cpschk(path, "drift", archive = TRUE)` (the
-rmbl GitHub Action’s `archive: true`) takes the archived copy with the
-pinned SHA-256 when a capsule’s source and its Wayback snapshot are both
-down; reading a public copy needs no key. Saving needs one, except in a
-GitHub Actions job allowed `id-token: write`: there the package asks
-GitHub for the job’s short-lived OIDC token, the archive checks GitHub’s
-signature, and the repository is the saver, so no secret is stored.
-
-``` yaml
-permissions:
-  contents: read
-  id-token: write
-steps:
-  - uses: rootcoder007/rmbl-action@v1
-    with:
-      path: capsules
-      mode: refresh
-      wayback: true
-      archive: true
-```
+In continuous integration,
+`cpschk(path, "drift", cache = ".rmbl-cache")` keeps each source’s copy
+from an earlier run and uses it, still checked against the pin, when the
+source and its Wayback snapshot are both down.
 
 ## One file to hand someone
 
@@ -702,7 +687,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #> │   ✔    no_unlisted_files                                                    │
 #> │   ✔    attestation:attestation_complete                                     │
 #> │   ✔    attestation:manifest_digest                                          │
-#> │        e23f1ae09212dcd2be9e83a9c76e420a8ed979c845ee7b3c7eab77f9dac308f1     │
+#> │        254cd9e55d2e495bdbb61051b8d99b1eff6807809db672521bf50491d6040969     │
 #> │   ✔    attestation:signature                                                │
 #> │   ✔    manifest_digest                                                      │
 #> │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │
@@ -739,7 +724,7 @@ p <- mkbndlproj(proj, title = "My study", author = "A. Researcher",
                 contact = "a.researcher@example.org", overwrite = TRUE)
 p
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpXEvDoG/my-study                                          │
+#> │   Folder  /tmp/RtmpzCSQwV/my-study                                          │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -788,12 +773,12 @@ b
 #> ╭── Reproducibility bundle ───────────────────────────────────────────────────╮
 #> │   Project    my-study                                                       │
 #> │   Zip        my-study_v1_with_data.zip                                      │
-#> │   Folder     /tmp/RtmpXEvDoG                                                │
+#> │   Folder     /tmp/RtmpzCSQwV                                                │
 #> │   Size       207.6 KB                                                       │
 #> │   Files      28                                                             │
 #> │   Data file  inside                                                         │
-#> │   SHA-256    b432127ccc3840e89c79f8b7da7ed87e4f06208006518666c9bf3c2131b13b │
-#> │              06                                                             │
+#> │   SHA-256    3a54844c4e60cac77b3f2e3aabb30fd975e67005835f1837b9e2b09c4df98b │
+#> │              8c                                                             │
 #> │                                                                             │
 #> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │
 #> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │

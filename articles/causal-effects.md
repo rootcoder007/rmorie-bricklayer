@@ -53,8 +53,8 @@ econometric methods of the day could recover its experimental effect on
 1978 earnings when the randomised controls are replaced by a survey
 sample (the PSID). Dehejia and Wahba (1999) kept the men with 1974
 earnings: 185 treated, 260 randomised controls, and 2,490 PSID-1
-comparison men. The three files are on data.rmorie.com (`rmbl login`
-once), checked against the SHA-256 the manifest lists:
+comparison men. The three files are on data.rmorie.com (no sign-in),
+checked against the SHA-256 the manifest lists:
 
 ``` r
 

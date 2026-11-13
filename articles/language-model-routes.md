@@ -128,8 +128,8 @@ it returns the setup hint (`rmbl bundle` exits 1).
 
 ## The signed services document
 
-The data service’s addresses and its sign-in service are **not**
-hard-coded in the package. They come from a document at
+The data service’s address is **not** hard-coded in the package. They
+come from a document at
 `https://rmorie.com/.well-known/morie-services.json`, signed with
 ML-DSA-44 under a key pinned in the package, so the endpoints can change
 without a release while no one but the project can change them. A copy
@@ -180,24 +180,11 @@ these rules now hold for every byte the package sends or receives:
   three times that, and Ctrl-C ends the wait at once without sending the
   prompt again. An in-memory reply past 16 MiB is dropped; the services
   document and JSON fetches cap at 1 MiB and 16 MiB.
-- The sign-in service’s `verification_uri` is opened in a browser only
-  when it is a public https address.
 
-## The data key
+## The curated tables
 
-A data key is for `data.rmorie.com` only (its curated tables need none;
-a stored key is still sent there); it is never a language model.
-
-``` r
-
-dlogin(token = "<key issued at https://www.rmorie.com/access/>")
-dlogin()          # or: GitHub device flow / emailed code
-dlogout()         # forget the key
-```
-
-The key is stored with mode 0600 in the user’s configuration directory
-and never written anywhere else. `rmbl doctor` says whether one is
-stored.
+The curated tables at `data.rmorie.com` need no key and no sign-in; the
+package sends none.
 
 ## From the command line
 
@@ -210,7 +197,6 @@ rmoriebricklayer doctor             # the routes, and the one ask takes
 rmoriebricklayer models --route anthropic
 rmoriebricklayer ask "what does cpsbndl() cover?"
 rmoriebricklayer ask --route ollama --model gemma3:4b "how do I verify a capsule?"
-rmoriebricklayer login --token      # the data key: paste it when asked; it never sits in the shell history
 ```
 
 ## Asking about the Indigenous tables

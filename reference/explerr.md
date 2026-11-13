@@ -105,7 +105,7 @@ explerr(msg, pkgs = "rmoriebricklayer")
 #> 2 rmoriebricklayer     .bl_tmpl_name
 #> 3 rmoriebricklayer .rmbl_fips_scheme
 #>                                                        exported  kind
-#> 1            llmask, agentbndl, anytab, arccap, arcfind, arcget error
+#> 1             llmask, agentbndl, anytab, arccap, arcpush, blcli error
 #> 2                                    blcli, rmblapp, usecpstmpl error
 #> 3 blcli, capsule_sign, cpsatst, cpsbndlvrf, cpschkatst, cpssign error
 #>                                      message            match

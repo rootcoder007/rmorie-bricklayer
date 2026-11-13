@@ -23,7 +23,6 @@ arccap(
   tmout = 600L,
   upload = NULL,
   reason = NULL,
-  visibility = c("public", "private"),
   warc = TRUE
 )
 ```
@@ -68,24 +67,15 @@ arccap(
 
 - upload:
 
-  Where else to keep the captures: `"rmorie"` (archive.rmorie.com, from
-  this connection, with your key; see
-  [`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)),
-  `"wayback"` (ask the Wayback Machine to save the same addresses, with
-  archive.org keys as for
-  [`wbsave`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md)),
-  both, or `NULL` (default: only the local folder and, with `item`,
-  archive.org).
+  `"wayback"` asks the Wayback Machine to save the same addresses too,
+  with archive.org keys as for
+  [`wbsave`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md);
+  `NULL` (default) keeps the captures only in the local folder and, with
+  `item`, archive.org.
 
 - reason:
 
-  Why the files are kept, one sentence of 20 characters or more; needed
-  with `upload = "rmorie"`, and written into each WARC file.
-
-- visibility:
-
-  `"public"` (default: listed in the archive's search; anyone can
-  download and check it) or `"private"` (only you, with your key).
+  Optional note on why the files are kept, written into each WARC file.
 
 - warc:
 
@@ -99,12 +89,11 @@ arccap(
 
 A data frame of class `rmbl_archive_capture`, one row per URL: `url`,
 `file`, `sha256`, `bytes`, `fetched_utc`, `status` (`"captured"`,
-`"uploaded"`, `"archived"` or `"failed: ..."`), `mirror` (the
-archive.org download address, for
+`"uploaded"` or `"failed: ..."`), `mirror` (the archive.org download
+address, for
 [`fetchvrf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)),
-`warc` (the local WARC file), `capture_id` and `archive` (its page at
-archive.rmorie.com) and `wayback` (the Wayback Machine's answer);
-attributes `manifest`, `timestamp` (a
+`warc` (the local WARC file) and `wayback` (the Wayback Machine's
+answer); attributes `manifest`, `timestamp` (a
 [`tsvrf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
 result, or `NULL`) and `item`.
 
@@ -157,16 +146,16 @@ archive.org/developers/ias3.html
 
 ``` r
 if (FALSE) { # interactive()
-# save from your own connection to archive.rmorie.com and the Wayback Machine
-# at once
+# keep a copy from your own connection (files, manifest, WARC) and ask the
+# Wayback Machine at once
 src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
 cap <- arccap(
   src,
   file.path(tempdir(), "cap"),
-  upload = c("rmorie", "wayback"),
+  upload = "wayback",
   reason = "Custody table cited in chapter 3"
 )
-cap$archive
+cap$warc
 w <- wbsave(urls)
 lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
 meta <- list(

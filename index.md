@@ -500,27 +500,17 @@ walks through it.
 - **Your own archive copy** —
   [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
   saves files from your own connection (for servers that refuse the
-  Wayback Machine) as WARC files, and with `upload = "rmorie"` keeps
-  them at archive.rmorie.com with their SHA-256 (`upload = "wayback"`
-  asks the Wayback Machine too).
-  [`arcfind()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcfind.md)
-  lists the captures of an address and
-  [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
-  fetches the exact bytes;
+  Wayback Machine) with their SHA-256, a timestamped manifest and WARC
+  files that pywb and warcio read; with `item` it publishes them as an
+  archive.org item, and `upload = "wayback"` asks the Wayback Machine
+  too.
   [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
-  falls back to the archive and to your WARC files on its own, and
-  `wbsave(fallback = "rmorie")` saves what the Wayback Machine refused.
-  When an archive is down, the capture is still whole on your computer:
+  falls back to the item and to your WARC files on its own. When an
+  archive is down, the capture is still whole on your computer:
   [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
   sends those same files on later (checked against their SHA-256, never
   downloaded again), and running it again retries only what failed. From
-  a terminal: `rmbl archive save | push | find | get`. In CI,
-  `cpschk(archive = TRUE)` (the rmbl action’s `archive: true`) takes the
-  archived copy when a source and its Wayback snapshot are down. Reading
-  a public copy needs no key; saving needs one, except in a GitHub
-  Actions job allowed `id-token: write`, where the package uses the
-  job’s short-lived OIDC token and the repository is the saver, so no
-  secret is stored.
+  a terminal: `rmbl archive save | push`.
 
 - **Courts and police-reported crime** —
   [`caseflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/caseflow.md)
@@ -1396,10 +1386,7 @@ llmcfg(route = NULL)                            # back to the automatic order
 With `route = "auto"`, a local Ollama server that has no model pulled is
 passed over.
 
-A data key
-([`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md),
-`rmbl login`) is for data.rmorie.com only, whose curated tables need
-none (a stored key is still sent); it is never a language model.
+The curated tables at data.rmorie.com need no key and no sign-in.
 
 The same verbs exist on the command line once the launcher is on your
 `PATH`:
@@ -1423,19 +1410,13 @@ rmoriebricklayer config unset route             # back to the automatic order
 rmoriebricklayer config reset --force           # move an unreadable settings file aside
 rmoriebricklayer explain-error "the error text" # where an error comes from, no model needed
 rmoriebricklayer models --route ollama          # the models a route offers, the one in use marked
-rmoriebricklayer login --token                  # the data key: paste the key you were issued
-rmoriebricklayer login --email you@example.com  # or: a code is emailed, type it at the prompt
-rmoriebricklayer login --email you@example.com --code 123456   # the same, code passed (scripts)
-rmoriebricklayer login                          # or: GitHub device flow
-rmoriebricklayer login --no-browser             # server / SSH: prints a link + code for any device
-rmoriebricklayer logout                         # forget the data key
 rmoriebricklayer data list                      # the curated tables at data.rmorie.com
 rmoriebricklayer data pull db/table --out t.csv # download one
 rmoriebricklayer app [PATH]                     # the analysis dashboard (needs shiny)
 rmoriebricklayer wayback urls.txt --out w.jsonl # archive every URL in a file (archive.org keys)
 rmoriebricklayer wayback --retry w.jsonl        # retry the ones that failed
-rmoriebricklayer archive save URL --reason TEXT # save from this connection to archive.rmorie.com
-rmoriebricklayer archive find URL               # its captures; archive get ID -o FILE fetches one
+rmoriebricklayer archive save URL --also wayback  # capture from this connection (WARC), ask the Wayback Machine
+rmoriebricklayer archive push captures --also wayback  # ask the Wayback Machine later for a kept capture
 rmoriebricklayer pack --new my-study            # start a reproducibility bundle project (mkbndlproj())
 rmoriebricklayer pack my-study --data data.csv  # its zip, data inside; a reviewer double-clicks it (mkbndl())
 rmoriebricklayer bundle "your request"          # agentbndl() from the shell
@@ -1466,7 +1447,6 @@ rmbl ask "your question"
 rmbl aye "your question"
 rmbl tellme "your question"
 rmbl "how do I weight a survey?"               # a quoted question with no verb is asked too
-rmbl login --token
 rmbl models
 ```
 

@@ -2,13 +2,13 @@
 
 [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
 keeps every capture on this computer first: the files, their SHA-256, a
-manifest and, by default, a WARC copy. When the Wayback Machine,
-archive.rmorie.com or archive.org is down, or there is no network but
-the source's, the capture is still complete there. `arcpush()` sends
-that same capture on later: the very files that were fetched, each
-checked first against the SHA-256 the manifest recorded, so an archive
-keeps what you captured, not a new download. Run it again to retry what
-failed; what an archive already took is not sent twice.
+manifest and, by default, a WARC copy. When the Wayback Machine or
+archive.org is down, or there is no network but the source's, the
+capture is still complete there. `arcpush()` sends that same capture on
+later: the very files that were fetched, each checked first against the
+SHA-256 the manifest recorded, so an archive keeps what you captured,
+not a new download. Run it again to retry what failed; what an archive
+already took is not sent twice.
 
 The Wayback Machine takes no uploads: with `upload = "wayback"` it is
 asked to capture each address itself, as the page is then. If the page
@@ -25,7 +25,7 @@ Errors: `dir` without the `manifest.json` that
 writes, or a manifest that lists no files; nowhere to send (neither
 `item` nor `upload`); as for
 [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
-for `item`, `meta`, `upload`, `reason`, `tmout` and the keys.
+for `item`, `meta`, `upload`, `tmout` and the keys.
 
 ## Usage
 
@@ -37,8 +37,6 @@ arcpush(
   ak = NULL,
   sk = NULL,
   upload = NULL,
-  reason = NULL,
-  visibility = c("public", "private"),
   tsa = "https://freetsa.org/tsr",
   tmout = 600L
 )
@@ -52,7 +50,7 @@ arcpush(
   [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
   capture.
 
-- item, meta, ak, sk, upload, reason, visibility, tmout:
+- item, meta, ak, sk, upload, tmout:
 
   As for
   [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md).
@@ -94,10 +92,6 @@ src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
 d <- file.path(tempdir(), "cap")
 arccap(src, d, tsa = NULL)
 # later, when the archives answer: the same bytes, sent on
-arcpush(
-  d,
-  upload = c("rmorie", "wayback"),
-  reason = "Custody table cited in chapter 3"
-)
+arcpush(d, upload = "wayback")
 }
 ```

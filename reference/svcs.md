@@ -1,14 +1,14 @@
 # The hosted MORIE services, as the project site currently describes them
 
 Reads `https://rmorie.com/.well-known/morie-services.json`, a signed
-document naming the curated-data service and its sign-in: their
-endpoints, whether each is `"key"` (reachable with a key requested on
-the site) or `"off"`, and a notice. The signature (ML-DSA-44, public key
-pinned in this package) is checked before anything in it is believed, so
-the endpoints can move or be switched off on the site without a package
-release, and a document that does not verify is ignored. The result is
-cached for a day; without a network the cached copy is used, then the
-copy bundled with the package.
+document naming the curated-data service: its endpoint, whether it is
+`"key"` (reachable; the open tables need no key) or `"off"`, and a
+notice. This package reads no sign-in address from it. The signature
+(ML-DSA-44, public key pinned in this package) is checked before
+anything in it is believed, so the endpoints can move or be switched off
+on the site without a package release, and a document that does not
+verify is ignored. The result is cached for a day; without a network the
+cached copy is used, then the copy bundled with the package.
 
 ## Usage
 
@@ -43,17 +43,17 @@ svcs(refresh = FALSE, maxage = 86400, tmout = 20, offline = FALSE)
 
 A list with `version` (integer, 1), `issued` (the signing time, ISO 8601
 UTC), `notice` (text for the user, possibly empty), `llm` (`mode`,
-`base_url`, `auth_url`: where the sign-in for the data key is reached;
-also `models`, `default_model` and `request_access`) and `data` (`mode`,
-`base_url`, `license`, `request_access`, and `auth_url` when the
-document has one), with the attribute `"source"` set to `"live"`,
+`base_url`, `auth_url` (read as the document gives it; the package signs
+in nowhere), `models`, `default_model` and `request_access`) and `data`
+(`mode`, `base_url`, `license`, `request_access`, and `auth_url` when
+the document has one), with the attribute `"source"` set to `"live"`,
 `"cache"`, `"bundled"` or `"off"`.
 
 ## Details
 
 Every other MORIE package reads the same document through this function,
-so one sign-in and one document serve rmorie, rmoriedata and morie
-alike. Language models are never hosted: you bring your own key or model
+so one document serves rmorie, rmoriedata and morie alike. Language
+models are never hosted: you bring your own key or model
 ([`llmask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.md)).
 The `llm` block of documents signed before that change carries the
 sign-in address only.
@@ -85,7 +85,6 @@ least 1.
 
 ## See also
 
-[`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md),
 [`dmnf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md).
 
 ## Examples

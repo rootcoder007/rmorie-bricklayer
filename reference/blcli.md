@@ -2,18 +2,6 @@
 
 Dispatches the verbs of the `rmoriebricklayer` launcher:
 
-- `login [--token] [--email ADDRESS [--code CODE]] [--no-browser]`:
-
-  store a MORIE data key (issued at `www.rmorie.com/access/`; the
-  curated tables at data.rmorie.com need none, and a stored key is still
-  sent to them): a key you paste with `--token` (read from the terminal
-  or a pipe when KEY is omitted), a code sent to `--email`, or the
-  GitHub device flow
-
-- `logout`:
-
-  forget the data key
-
 - `doctor`:
 
   report the language-model routes available here (own endpoint, each
@@ -95,26 +83,16 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   failures of an earlier run
   ([`wbrtry`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbrtry.md))
 
-- `archive save URL... --reason TEXT [--dir D] [--private] [--also wayback]`:
+- `archive save URL... [--reason TEXT] [--dir D] [--also wayback]`:
 
-  save from this connection to archive.rmorie.com with
+  capture from this connection with
   [`arccap`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md),
   keeping the files, their manifest and WARC copies in D (default
-  `captures`);
-  `archive push DIR [--reason TEXT] [--private] [--also wayback]` sends
-  a capture kept in DIR on later, the same bytes, with
+  `captures`), and with `--also wayback` ask the Wayback Machine too;
+  `archive push DIR --also wayback` asks the Wayback Machine later for
+  the addresses of a capture kept in DIR, with
   [`arcpush`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
-  (run it again to retry what failed); `archive find URL` and
-  `archive get ID|URL -o FILE` list the captures of a URL and fetch
-  one's exact bytes
-  ([`arcfind`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcfind.md),
-  [`arcget`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md));
-  `archive mine` lists your own captures, `archive private ID` and
-  `archive public ID` hide or show one, and `archive withdraw ID --yes`
-  withdraws one for good
-  ([`arcmine`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md),
-  [`arcvis`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md),
-  [`arcwd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md))
+  (run it again to retry what failed)
 
 - `verify PATH [--json] [--fail-on LEVEL] [--public-key HEX]`:
 
@@ -252,13 +230,13 @@ so downloads draw a progress bar; when `RMBL_PROG` is set (the launcher
 sets it) and `options(rmoriebricklayer.dcache)` is not, the
 data.rmorie.com manifest and tables are kept in
 `tools::R_user_dir("rmoriebricklayer", "cache")` rather than a fresh
-temporary folder. The verbs `login`, `logout` and `config` write the
-shared credentials and settings files; `ask`, `models`, `data`, `bundle`
-and `wayback` use the network, and `drift` and `refresh` fetch each
-capsule's source (`refresh` writes the capsule), `sign` writes each
-capsule's provenance and bundle; `verify` and `report` only read the
-capsule files; `functions`, `describe`, `examples`, `explain-error`,
-`version` and `help` only read the installed help.
+temporary folder. The verb `config` writes the settings file; `ask`,
+`models`, `data`, `bundle` and `wayback` use the network, and `drift`
+and `refresh` fetch each capsule's source (`refresh` writes the
+capsule), `sign` writes each capsule's provenance and bundle; `verify`
+and `report` only read the capsule files; `functions`, `describe`,
+`examples`, `explain-error`, `version` and `help` only read the
+installed help.
 
 ## XMSS keys
 
@@ -350,19 +328,13 @@ blcli("help")
 #>   bundle REQUEST...                         agentbndl() from the shell
 #> 
 #> Data and functions
-#>   login [--token] [--email ADDRESS]         store a data key (the curated tables need none)
-#>         [--code CODE] [--no-browser]
-#>   logout                                    forget the data key
 #>   data list                                 curated tables at data.rmorie.com
-#>   data pull db/table [--out FILE.csv]       download one of them (your MORIE data key)
+#>   data pull db/table [--out FILE.csv]       download one of them (no sign-in)
 #>   app [PATH] [--port N] [--no-browser]      the analysis dashboard on this machine (needs shiny)
 #>   wayback FILE [--out F.jsonl] [--jobs N]   archive every URL in FILE (archive.org keys)
 #>   wayback --retry F.jsonl                   retry the failed URLs of an earlier wayback run
-#>   archive save URL... --reason TEXT         save from this connection to archive.rmorie.com
-#>   archive find URL | get ID -o FILE         list its captures; fetch the exact bytes, checked
-#>   archive push DIR --reason TEXT            send a capture kept here on later
-#>   archive mine | private ID | public ID     list your captures; hide or show one
-#>   archive withdraw ID --yes                 withdraw one of your captures for good
+#>   archive save URL... [--dir D]             capture from this connection, with WARC copies
+#>   archive push DIR --also wayback           ask the Wayback Machine later for a kept capture
 #>   pack DIR [--dest D] [--data FILE]         a reproducibility bundle a reviewer double-clicks
 #>   pack --new DIR [--title T]                start a bundle project that runs as it is
 #>   functions [PATTERN]                       exported functions and their titles
@@ -412,33 +384,33 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.1.1](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpePM6yS/capsule-1f3418aac1a4`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/Rtmpga0DUM/capsule-1f405402b3cc`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpePM6yS/capsule-1f3418aac1a4` | /tmp/RtmpePM6yS/temp_libpath1f3440b73852/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/Rtmpga0DUM/capsule-1f405402b3cc` | /tmp/Rtmpga0DUM/temp_libpath1f407d17ba65/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpePM6yS/capsule-1f3418aac1a4</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/Rtmpga0DUM/capsule-1f405402b3cc</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpePM6yS/temp_libpath1f3440b73852/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/Rtmpga0DUM/temp_libpath1f407d17ba65/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpePM6yS/capsule-1f3418aac1a4/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpePM6yS/capsule-1f3418aac1a4/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/Rtmpga0DUM/capsule-1f405402b3cc/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/Rtmpga0DUM/capsule-1f405402b3cc/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpePM6yS/capsule-1f3418aac1a4/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/Rtmpga0DUM/capsule-1f405402b3cc/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000295 Wh, 0.000135 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000309 Wh, 0.000141 gCO2e at 458.3 gCO2e/kWh (World, 2025).
 #> 
 #> ---
 #> 

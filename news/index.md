@@ -2,6 +2,47 @@
 
 ## rmoriebricklayer 1.1.1
 
+- The functions for archive.rmorie.com are gone: `arcfind()` and
+  `arcget()` (both in 1.1.0), and `arcmine()`, `arcvis()` and `arcwd()`
+  (never released), with the `rmbl archive find`, `get`, `mine`,
+  `private`, `public` and `withdraw` commands. Nothing in the package
+  contacts that service, names it as a default or needs a key for it,
+  and `MORIE_ARCHIVE_URL` and `MORIE_ARCHIVE_KEY` are no longer read.
+  What remains is open: the Wayback Machine
+  ([`wbsave()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md),
+  [`wbrtry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbrtry.md),
+  [`wbsnpurl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsnpurl.md));
+  captures kept on your own computer by
+  [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  as files, a manifest with an RFC 3161 timestamp and WARC/1.1 files
+  with a CDXJ index, which `fetchvrf(arcs = )` reads back; and
+  publishing a capture as an archive.org item with `arccap(item = )` or
+  later with `arcpush(item = )`.
+  [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  and
+  [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
+  no longer take `upload = "rmorie"` or `visibility`, and their result
+  has no `capture_id` or `archive` column (nor the status “archived”);
+  `reason` is an optional note written into each WARC file, and
+  [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
+  no longer takes it.
+  [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
+  tries no hosted archive (`arcs` now defaults to
+  [`character()`](https://rdrr.io/r/base/character.html), folders of
+  captures only),
+  [`wbsave()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md)
+  loses `fallback` and `reason`, and `cpschk(archive = )` is ignored,
+  with a warning when `TRUE`, so that callers such as the rmbl action
+  keep running. `rmbl archive save` no longer needs `--reason` or takes
+  `--private`, and `rmbl archive push DIR --also wayback` asks the
+  Wayback Machine for a kept capture.
+- `dlogin()`, `dlogout()` and the `rmbl login` and `rmbl logout`
+  commands are gone, with the GitHub and emailed-code sign-in behind
+  them: the curated tables at data.rmorie.com need no sign-in. A key
+  stored earlier is no longer read or sent (the credentials file is left
+  as it is on disk), `dload(token = )` is ignored with a warning, and
+  `rmbl doctor` says “data key: none (the curated tables need none)”.
+  Language-model provider keys are unchanged.
 - Four functions have new names, so that no exported name is also a
   function in another CRAN package: `plotecdf()` is
   [`plotcdfs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
@@ -31,10 +72,9 @@
 - The curated tables at data.rmorie.com need no sign-in:
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
   [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
-  and `rmbl data pull` work without a key, and a key stored earlier with
-  [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
-  is still sent. ICPSR studies are no longer served there (ICPSR’s terms
-  do not allow redistribution); asking for one says where to get it.
+  and `rmbl data pull` work without a key. ICPSR studies are no longer
+  served there (ICPSR’s terms do not allow redistribution); asking for
+  one says where to get it.
 - A curated table larger than twice the part size (option
   `rmoriebricklayer.dpart`, 90 MB by default) is downloaded in parts,
   each a byte range of the file: a slow or broken connection costs at
@@ -119,29 +159,12 @@
   [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
   also refuse a bundle whose file list holds something other than
   records with a path and a digest.
-- [`arcfind()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcfind.md)
-  and
-  [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
-  read the seven-field rows of a plain Wayback CDX answer (they stopped
-  with “subscript out of bounds”), say so when the archive answers 200
-  with something that is no capture record (a sign-in or proxy page; the
-  error message was empty), and name the archive set in
-  `MORIE_ARCHIVE_URL` in their messages.
-- [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
-  holds to `pollmaxsec` whatever polling interval the sign-in service
-  sends (an interval longer than the limit never returned, zero polled
-  without a pause, text stopped with an internal error), and does not
-  store a key that has a line break or control character in it.
 - [`llmchat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmchat.md)
   and
   [`llmask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.md)
   say that the model’s server did not answer in the provider’s format
   when a member of its reply has the wrong type; they stopped with an
   internal error.
-- [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
-  given an address refuses a capture the archive lists without a capture
-  id or SHA-256 (a plain Wayback archive), since its bytes cannot be
-  checked; it asked for a file named `NA`.
 - A provenance file whose `dataset`, `resource`, `source`, `script` or
   `schema` is not an object no longer stops
   [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
@@ -157,35 +180,11 @@
   dropped the same way, a count written as text gives no coercion
   warning, and the summary table of `rmbl verify` shows a folder name
   such as `R&D survey` as written.
-- The archive functions withhold an error text the archive sends back
-  when it repeats your key, as sent, split over lines, percent-encoded
-  or in base64.
-  [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
-  and
-  [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
-  record a failed upload, in words, when the archive answers 201 without
-  a capture id; they stopped with an internal error.
 - [`idcrdvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
   reports a card whose issue or expiry date is not one string as a
   failed row; it stopped with an internal error.
 - The Markdown of `rmbl verify`, `rmbl report` and the drift report
-  escapes HTML in a table cell, and the missing-key message of
-  [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
-  and
-  [`arcpush()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcpush.md)
-  names the archive set in `MORIE_ARCHIVE_URL`.
-- New
-  [`arcmine()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md),
-  [`arcvis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
-  and
-  [`arcwd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md):
-  list the captures you saved in archive.rmorie.com, make one private or
-  public, and withdraw one for good (`arcwd(id, confirm = TRUE)`); until
-  now only the website could. From a terminal: `rmbl archive mine`,
-  `rmbl archive private ID`, `rmbl archive public ID` and
-  `rmbl archive withdraw ID --yes`. Withdrawing a private capture also
-  deletes its stored bytes unless another capture holds them; a public
-  capture’s bytes are kept.
+  escapes HTML in a table cell.
 - The `@srrstatsNA` entry for standard G2.14c (imputation) starts its
   own line again, so ‘srr’ reads it.
 - Code blocks in vignettes that are not R (shell, YAML, R shown but not
@@ -211,19 +210,15 @@
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   and `rmbl data pull` refuse them before any request is sent, saying
   where to get them. The A2AJ case law is an ordinary open table.
-- [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
-  and `rmbl login` no longer offer the restricted tables: the Schedule B
-  prompt and the `--restricted` and `--supervisor-*` options are gone,
-  and the arguments `restr`, `supnm`, `suprole` and `supemail` are
-  ignored with a warning. A refusal with HTTP 403 no longer points to a
-  terms page.
+- The Schedule B prompt for the restricted tables and the `--restricted`
+  and `--supervisor-*` options are gone with the sign-in itself (see the
+  first two items). A refusal with HTTP 403 no longer points to a terms
+  page.
 - The help of
   [`dmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
-  [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
-  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
-  [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
+  [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   and
-  [`dlogout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogout.md),
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
   the command-line help, `rmbl doctor`, the dashboard and the vignettes
   no longer say that the curated tables need a key or a sign-in.
 - A curated table the manifest lists without any SHA-256 is still
@@ -238,12 +233,11 @@
   [`get0()`](https://rdrr.io/r/base/exists.html) or
   [`exists()`](https://rdrr.io/r/base/exists.html), unless the script
   defines that name itself.
-- The archive functions withhold an error text that repeats the key in
-  base64 at any of its three alignments, in URL-safe base64, in hex or
-  broken up by separators (only a dump in which the key started on a
-  3-byte boundary was caught). The same check now covers a
-  language-model provider’s error text (its key) and an archive.org Save
-  Page Now message (the S3 keys).
+- A language-model provider’s error text, and an archive.org Save Page
+  Now message, are withheld when they repeat the key sent (the
+  provider’s key, or the S3 keys), whether as sent, in base64 at any of
+  its three alignments, in URL-safe base64, in hex or broken up by
+  separators.
 - A dropped connection during a download or upload is reported as the
   send or receive error libcurl gives: every transfer ignores SIGPIPE
   while it runs (and restores the previous handler after), where a write
@@ -260,13 +254,6 @@
   writes a column name with a line break on one line, and shows
   backticks and asterisks in a group label as written instead of as code
   or bold, in Markdown and in HTML.
-- The emailed-code sign-in refuses a key with a line break or control
-  character, as the GitHub sign-in does; `dlogin(token = )` refuses one
-  too, and a token of length other than one is named as such instead of
-  called empty.
-- [`arcmine()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
-  reads an out-of-range `status` from the archive as NA without passing
-  on R’s integer-coercion warning.
 - [`shrs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md)
   gives a lower bound of exactly 0 for a zero count and an upper bound
   of exactly 100 for the whole total, as `prop.test(correct = FALSE)`.
@@ -1320,7 +1307,7 @@ CRAN release: 2026-10-31
   [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md),
   [`blfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blfetch.md),
   [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md),
-  [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md),
+  `arcget()`,
   [`siufetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siufetch.md),
   [`dldata()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dldata.md),
   [`fdl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fdl.md)
@@ -1355,18 +1342,14 @@ CRAN release: 2026-10-22
   the Wayback Machine, Statistics Canada among them) is written as a
   WARC/1.1 file with a CDXJ index, the layout pywb and warcio read, and
   with `upload = "rmorie"` is kept at archive.rmorie.com under your data
-  key
-  ([`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md),
-  `rmbl login`); `upload = "wayback"` asks the Wayback Machine to save
-  the same addresses, and both may be given. Captures are public unless
-  `visibility = "private"`.
-- [`arcfind()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcfind.md)
-  lists the captures of an address (or of every address under a prefix
-  ending in `*`), oldest first, with their SHA-256;
-  [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
-  downloads one capture’s exact bytes, by its id or by address (the
-  latest, the one closest to `at`, or the one with a given SHA-256), and
-  deletes a file whose SHA-256 does not match.
+  key (`dlogin()`, `rmbl login`); `upload = "wayback"` asks the Wayback
+  Machine to save the same addresses, and both may be given. Captures
+  are public unless `visibility = "private"`.
+- `arcfind()` lists the captures of an address (or of every address
+  under a prefix ending in `*`), oldest first, with their SHA-256;
+  `arcget()` downloads one capture’s exact bytes, by its id or by
+  address (the latest, the one closest to `at`, or the one with a given
+  SHA-256), and deletes a file whose SHA-256 does not match.
 - [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
   gains `arcs`: after the source, its Wayback snapshot and the mirrors,
   it tries archive.rmorie.com and then folders written by
@@ -1683,9 +1666,8 @@ CRAN release: 2026-10-21
   [`exprspplr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exprspplr.md)
   names the call `estr(data, y, expo, confs)`.
   [`blcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blcli.md)
-  refuses `NA` or a function as `args`,
-  [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
-  a function as `email`, and
+  refuses `NA` or a function as `args`, `dlogin()` a function as
+  `email`, and
   [`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
   a `dir` it cannot create or write, each with its name in front.
 - The examples that sign keep the one-time index record in a temporary
@@ -2623,9 +2605,7 @@ earlier finding)
   [`blcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blcli.md)’s
   `out`,
   [`cnscwb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnscwb.md)’s
-  `groups`,
-  [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)’s
-  `token`,
+  `groups`, `dlogin()`’s `token`,
   [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md)’s
   infinite counts,
   [`recrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recrd.md)’s

@@ -1,7 +1,7 @@
 # Install the rmoriebricklayer command-line launcher
 
 Writes small launcher scripts into a directory on your PATH so that
-`rmoriebricklayer login`, `rmbl ask ...` and the other verbs of
+`rmoriebricklayer doctor`, `rmbl ask ...` and the other verbs of
 [`blcli`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blcli.md)
 work from any shell. Run it once after installing or upgrading the
 package. Nothing outside `dir` is touched, and only when you call this.
@@ -64,18 +64,18 @@ for the verbs.
 # into a scratch folder, so nothing on your PATH changes
 d <- file.path(tempdir(), "bin")
 p <- instcli(dir = d)
-#> Installed /tmp/RtmpePM6yS/bin/rmoriebricklayer and /tmp/RtmpePM6yS/bin/rmbl; add /tmp/RtmpePM6yS/bin to your PATH
+#> Installed /tmp/Rtmpga0DUM/bin/rmoriebricklayer and /tmp/Rtmpga0DUM/bin/rmbl; add /tmp/Rtmpga0DUM/bin to your PATH
 list.files(d)
 #> [1] "rmbl"             "rmoriebricklayer"
 readLines(p)[1:4]
 #> [1] "#!/bin/sh"                                                                                        
 #> [2] "# rmoriebricklayer: the rmoriebricklayer command line (written by rmoriebricklayer::instcli())"   
-#> [3] "# runs the package in /tmp/RtmpePM6yS/temp_libpath1f3440b73852 (pinned with .libPaths() inside R)"
+#> [3] "# runs the package in /tmp/Rtmpga0DUM/temp_libpath1f407d17ba65 (pinned with .libPaths() inside R)"
 #> [4] "export RMBL_PROG=rmoriebricklayer"                                                                
 
 # one name only
 instcli(dir = d, name = "rmbl")
-#> Installed /tmp/RtmpePM6yS/bin/rmbl; add /tmp/RtmpePM6yS/bin to your PATH
+#> Installed /tmp/Rtmpga0DUM/bin/rmbl; add /tmp/Rtmpga0DUM/bin to your PATH
 if (FALSE) { # interactive()
 instcli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
 }

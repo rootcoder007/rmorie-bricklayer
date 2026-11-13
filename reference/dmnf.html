@@ -3,8 +3,7 @@
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-www.rmorie.com/data-license/. They need no sign-in and no key; a
-MORIE key stored earlier with dlogin is still sent. The
+www.rmorie.com/data-license/. They need no sign-in and no key. The
 service address comes from svcs.
 dmnf() returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
@@ -18,8 +17,7 @@ rmoriebricklayer data pull db/table [--out FILE.csv]."><meta property="og:descri
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-www.rmorie.com/data-license/. They need no sign-in and no key; a
-MORIE key stored earlier with dlogin is still sent. The
+www.rmorie.com/data-license/. They need no sign-in and no key. The
 service address comes from svcs.
 dmnf() returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
@@ -83,8 +81,7 @@ rmoriebricklayer data pull db/table [--out FILE.csv]."><meta property="og:image"
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-<code>www.rmorie.com/data-license/</code>. They need no sign-in and no key; a
-MORIE key stored earlier with <code><a href="dlogin.html">dlogin</a></code> is still sent. The
+<code>www.rmorie.com/data-license/</code>. They need no sign-in and no key. The
 service address comes from <code><a href="svcs.html">svcs</a></code>.
 <code>dmnf()</code> returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
@@ -122,9 +119,8 @@ table) is cached.</p></dd>
 
 
 <dt id="arg-token">token<a class="anchor" aria-label="anchor" href="#arg-token"></a></dt>
-<dd><p>For <code>dload()</code>: the MORIE key to use for this call,
-in place of the one <code><a href="dlogin.html">dlogin</a></code> stored; <code>NULL</code> (the
-default) uses the stored key. It is never printed or written to disk.</p></dd>
+<dd><p>Ignored, with a warning: the tables need no key, and none is
+sent. Kept so that calls written for earlier versions still run.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -170,34 +166,28 @@ decompress to at most the option <code>rmoriebricklayer.maxcsvbytes</code>
 decompressed CSV takes a few GB of RAM as a data frame.</p>
 <p>A table the manifest lists without any digest is used with a warning, once
 per session and table.</p>
-<p>A stored key is sent only to the address of the signed services document;
-with <code>MORIE_DATA_URL</code> set to another address it is not sent, and a
-message says so. Tables whose source terms do not allow redistribution
-(ICPSR studies, among them the NCVS 38604 extract, and any table the
-manifest marks restricted, with <code>access</code> other than <code>"open"</code> or
-<code>"public"</code> or <code>restricted: true</code>) are not served:
+<p><code>MORIE_DATA_URL</code> sets another address for the service (https and
+public). No key is sent to either. Tables whose source terms do not allow
+redistribution (ICPSR studies, among them the NCVS 38604 extract, and any
+table the manifest marks restricted, with <code>access</code> other than
+<code>"open"</code> or <code>"public"</code> or <code>restricted: true</code>) are not served:
 <code>dmnf()</code> and <code>dtabs()</code> leave them out (the listing counts them in
 one line), and <code>dload()</code> refuses them before any request, saying
 where to get them. Downloads draw a progress bar when
 <code>options(morie.progress)</code> allows it.</p>
 <p>Errors: <code>refresh</code> not <code>TRUE</code> or <code>FALSE</code>; the service
-unavailable, or a stored key rejected; a <code>key</code> that is not of the
-form <code>db/table</code>, not listed in the manifest, or a table that is not
-served; a <code>token</code> that is not one non-empty string; a digest
-mismatch.</p>
+unavailable; a <code>key</code> that is not of the form <code>db/table</code>, not
+listed in the manifest, or a table that is not served; a digest mismatch.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="dlogin.html">dlogin</a></code>, <code><a href="svcs.html">svcs</a></code>.</p></div>
+    <div class="dont-index"><p><code><a href="svcs.html">svcs</a></code>.</p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Offline, against a cache folder holding a manifest and one table made</span></span></span>
-<span class="r-in"><span><span class="co"># here (no key is stored and nothing is fetched).</span></span></span>
-<span class="r-in"><span><span class="va">oldenv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"XDG_CONFIG_HOME"</span>, <span class="st">"MORIE_HOSTED_KEY"</span><span class="op">)</span>, unset <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>XDG_CONFIG_HOME <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="st">"MORIE_HOSTED_KEY"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># here (nothing is fetched).</span></span></span>
 <span class="r-in"><span><span class="va">cache</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"data-hub-example"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">cache</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.dcache <span class="op">=</span> <span class="va">cache</span><span class="op">)</span></span></span>
@@ -249,13 +239,6 @@ mismatch.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">cache</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="kw">for</span> <span class="op">(</span><span class="va">v</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">oldenv</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">oldenv</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="va">v</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">Sys.setenv</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list</a></span><span class="op">(</span><span class="va">oldenv</span><span class="op">[</span><span class="va">v</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">}</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
 <span class="r-in"><span><span class="co"># the real service: needs the network, no sign-in</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">dtabs</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>

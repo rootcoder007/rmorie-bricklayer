@@ -16,7 +16,7 @@ fetchvrf(
   sha256 = NULL,
   mirrors = character(),
   tmout = 120L,
-  arcs = "rmorie"
+  arcs = character()
 )
 ```
 
@@ -45,20 +45,19 @@ fetchvrf(
 
 - arcs:
 
-  Archives tried after the source, its Wayback snapshot and the mirrors:
-  `"rmorie"` (archive.rmorie.com, by
-  [`arcget`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md))
-  and folders written by
-  [`arccap`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
-  (read from their WARC files), in order.
-  [`character()`](https://rdrr.io/r/base/character.html) tries none.
+  Folders written by
+  [`arccap`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md),
+  tried in order after the source, its Wayback snapshot and the mirrors
+  (read from their WARC files).
+  [`character()`](https://rdrr.io/r/base/character.html) (default) tries
+  none.
 
 ## Value
 
 Invisibly, a list of class `rmbl_fetch` (it prints as a box): `source`
-(`"live"`, `"wayback"`, `"mirror"`, `"rmorie"` or `"local"`), `url` (the
-URL that served the kept copy), `sha256`, `bytes`, and `tried` (a data
-frame of every attempt: `url`, `outcome`).
+(`"live"`, `"wayback"`, `"mirror"` or `"local"`), `url` (the URL that
+served the kept copy), `sha256`, `bytes`, and `tried` (a data frame of
+every attempt: `url`, `outcome`).
 
 ## Details
 
