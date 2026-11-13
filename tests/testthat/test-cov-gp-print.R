@@ -386,6 +386,6 @@ test_that("doctor reports no data key when the key state cannot be read", {
   .bl_doctor_key(function(s) got$out <- c(got$out, s), "rmbl")
   expect_identical(
     got$out,
-    "\n  data key: none (`rmbl login` opens the curated tables)\n"
+    "\n  data key: none (the curated tables need none)\n"
   )
 })

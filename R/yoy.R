@@ -51,7 +51,7 @@
 #' end).
 #'
 #' `verdict` is `"up"`, `"down"` or `"unchanged"` for
-#' `direction = "neutral"`, and `"better"`, `"worse"` or
+#' `dir = "neutral"`, and `"better"`, `"worse"` or
 #' `"unchanged"` otherwise; it reads
 #' the sign of the change only and makes no claim of significance.
 #'

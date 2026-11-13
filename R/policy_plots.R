@@ -151,7 +151,7 @@ plot.rmbl_permutation <- function(
     ttl <- sprintf("%s (p = %.3g)", d$outcome[j], d$p_value[j])
     rng <- range(c(z, d$statistic[j]))
     if (type == "density" && length(unique(z)) > 1L) {
-      k <- stats::density(z)
+      k <- .bl_density(z)
       graphics::plot(
         k,
         xlim = range(c(k$x, rng)),

@@ -342,7 +342,9 @@ arcwd <- function(id, confirm = FALSE) {
       tz = "UTC"
     ),
     url = col("url"),
-    status = as.integer(num("status")),
+    # an HTTP status is a whole number from 100 to 999; anything else (a
+    # number past the integer range warned in as.integer()) is NA
+    status = .bl_arc_status(num("status")),
     mime = col("mime"),
     bytes = num("length"),
     sha256 = col("sha256"),
@@ -353,6 +355,18 @@ arcwd <- function(id, confirm = FALSE) {
   )
   attr(out, "archive") <- base
   class(out) <- c("rmbl_archive_find", "data.frame")
+  out
+}
+
+#' The HTTP statuses of an archive listing as integers: NA for what is not a
+#' whole number from 100 to 999.
+#' @param s The statuses, as numbers.
+#' @return An integer vector.
+#' @noRd
+.bl_arc_status <- function(s) {
+  ok <- !is.na(s) & s >= 100 & s <= 999 & s == round(s)
+  out <- rep(NA_integer_, length(s))
+  out[ok] <- as.integer(s[ok])
   out
 }
 
@@ -741,9 +755,10 @@ arcwd <- function(id, confirm = FALSE) {
 #' The archive's error text for a message, or NULL when it is no text.
 #'
 #' A server or proxy may repeat the Authorization header in its error text,
-#' as sent, cut short, split over lines, percent-encoded or in base64. Text
-#' that holds the key in any of these forms is withheld whole; other text has
-#' anything shaped like a bearer token taken out.
+#' as sent, cut short, split over lines or by separators, percent-encoded, in
+#' hex or in base64 (standard or URL-safe, at any alignment). Text that holds
+#' the key in any of these forms is withheld whole (.bl_key_echoed()); other
+#' text has anything shaped like a bearer token taken out.
 #' @param e The `error` member of the archive's reply.
 #' @param key The key sent, or NULL.
 #' @return One printable string, or NULL.
@@ -752,26 +767,8 @@ arcwd <- function(id, confirm = FALSE) {
   if (!(is.character(e) && length(e) == 1L && !is.na(e))) {
     return(NULL)
   }
-  if (is.character(key) && length(key) == 1L && nzchar(key)) {
-    b64 <- function(s) sub("=+$", "", jsb64enc(charToRaw(s)))
-    forms <- c(
-      key,
-      utils::URLencode(key, reserved = TRUE),
-      b64(key),
-      b64(paste("Bearer", key))
-    )
-    # a proxy that cuts headers short echoes part of the key: every run of
-    # 12 characters of it counts (a shorter key counts whole)
-    n <- nchar(key)
-    if (n > 12L) {
-      from <- seq_len(n - 11L)
-      forms <- c(forms, substring(key, from, from + 11L))
-    }
-    flat <- tolower(gsub("[[:space:]]+", "", e))
-    held <- vapply(tolower(forms), grepl, NA, x = flat, fixed = TRUE)
-    if (any(held)) {
-      return("the error text is withheld: it repeated your key")
-    }
+  if (.bl_key_echoed(e, key)) {
+    return(.bl_key_withheld_msg)
   }
   .rmbl_printable(.bl_redact(e, key))
 }

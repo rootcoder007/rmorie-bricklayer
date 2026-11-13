@@ -1194,15 +1194,15 @@ llmcfg <- function(...) {
 #' @return What `out` returns.
 #' @noRd
 .bl_doctor_key <- function(out, prog) {
-  # the sign-in key is for the curated tables only, never a language model
+  # the data key goes to the curated tables only, never a language model
   ks <- tryCatch(.bl_hosted_key_state(), error = function(e) {
     list(state = "none")
   })
   out(switch(
     ks$state,
     ok = paste0(
-      "\n  data key: stored (the curated tables at data.rmorie.com are ",
-      "open to you)\n"
+      "\n  data key: stored (sent to the curated tables at data.rmorie.com, ",
+      "which need none)\n"
     ),
     other_address = sprintf(
       "\n  data key: issued for %s, so not sent to %s (`%s login` again)\n",
@@ -1210,7 +1210,7 @@ llmcfg <- function(...) {
       ks$now,
       prog
     ),
-    sprintf("\n  data key: none (`%s login` opens the curated tables)\n", prog)
+    "\n  data key: none (the curated tables need none)\n"
   ))
 }
 

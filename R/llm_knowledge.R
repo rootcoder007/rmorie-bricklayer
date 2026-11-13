@@ -855,7 +855,8 @@
       ),
       error = function(e) NULL
     )
-    for (d in j$datasets %||% list()) {
+    # the tables that are not served are not offered
+    for (d in .bl_data_served(j)$datasets %||% list()) {
       out <- c(
         out,
         sprintf(

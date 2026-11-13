@@ -229,7 +229,7 @@ test_that("the command line dispatches its verbs", {
   expect_identical(r$status, 0L)
   expect_match(
     r$text,
-    "Logged in: the curated tables at https://data.rmorie.com are open to you"
+    "Logged in: the key is stored and sent to https://data.rmorie.com"
   )
   expect_identical(.bl_hosted_key(), "sk-cli")
   d <- cap("doctor")

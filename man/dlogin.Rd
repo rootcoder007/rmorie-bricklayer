@@ -53,16 +53,10 @@ employer or organisation (optional; asked for when \code{NULL}).}
 \item{purp}{Character scalar or \code{NULL}: why you need the data, a
 sentence or two (asked for when \code{NULL}). Required for a new key.}
 
-\item{restr}{Logical scalar or \code{NULL}: \code{TRUE} also accepts
-Schedule B of the terms, which opens the restricted tables (ICPSR, NCVS
-38604, A2AJ case law); \code{NULL} asks at the console.}
-
-\item{supnm, suprole, supemail}{Character scalars
-or \code{NULL}: the supervisor, department chair, director or
-coordinator who knows of your use, their role and their email. Required
-with \code{restricted = TRUE}; asked for when \code{NULL}. The role is
-one of \code{"supervisor"}, \code{"chair"}, \code{"director"},
-\code{"coordinator"} or \code{"other"}.}
+\item{restr, supnm, suprole, supemail}{No longer used, kept so that older
+scripts run: no table is opened by accepting more terms (the tables
+whose source terms do not allow redistribution are not served at all).
+Giving any of them warns, and it is ignored.}
 }
 \value{
 The key (character scalar), invisibly. A message names the file
@@ -72,8 +66,9 @@ it was stored in.
 Stores your personal MORIE data key in
 \code{$XDG_CONFIG_HOME/morie/credentials.json} (owner-only; the file
 the \code{morie}, \code{rmorie} and \code{rmoriedata} packages read too,
-so one sign-in serves all of them). The key opens the curated tables
-(\code{\link{dload}}); it is not used for language models,
+so one sign-in serves all of them). The curated tables
+(\code{\link{dload}}) need no key and no sign-in; a stored key is still
+sent to the data service. It is not used for language models,
 which run on your own key or a local model (\code{\link{llmask}}).
 Keys are personal: the GitHub or emailed-code sign-in issues one, or ask at
 \code{www.rmorie.com/access/}.

@@ -334,7 +334,8 @@ cqnt <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
     stop("`probs` must lie in [0, 1]", call. = FALSE)
   }
   out <- .Call(C_rmbl_quantile, as.numeric(x), probs)
-  names(out) <- paste0(format(100 * probs, trim = TRUE), "%")
+  # the names stats::quantile() gives ("0.1%", "50%"), from quantile() itself
+  names(out) <- names(stats::quantile(0, probs))
   out
 }
 
@@ -858,6 +859,8 @@ cipw <- function(treat, ps, trimlo = 0.01, trimhi = 0.99) {
 #' (`"shape must be a single positive number"`). A negative `x` gives 0,
 #' a missing `x` gives `NA`, and `Inf` gives 1, as in
 #' [stats::pgamma()].
+#' `shape = Inf` gives the limit, 0 for every finite `x` and 1 for `Inf`, as
+#' `pgamma()` does.
 #'
 #' @param shape Shape parameter \eqn{a}, a single positive number.
 #' @param x Numeric vector of quantiles at which the gamma CDF is evaluated.
@@ -884,6 +887,11 @@ cgamcdf <- function(shape, x) {
   shape <- .rmbl_num(shape, "shape")
   if (length(shape) != 1L || is.na(shape) || shape <= 0) {
     stop("`shape` must be a single positive number", call. = FALSE)
+  }
+  if (is.infinite(shape)) {
+    # the limit, as pgamma(x, Inf): 0 below Inf, 1 at Inf (NaN in the kernel)
+    x <- .rmbl_num(x, "x")
+    return(ifelse(is.na(x), x, as.numeric(x == Inf)))
   }
   .Call(C_rmbl_gamma_cdf, shape, .rmbl_num(x, "x"))
 }

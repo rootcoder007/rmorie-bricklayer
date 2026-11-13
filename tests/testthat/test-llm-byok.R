@@ -1050,7 +1050,10 @@ test_that(
     byok_clean()
     cache <- withr::local_tempdir()
     writeLines(
-      '{"datasets":[{"key":"ncvs_38604/incidents","name":"NCVS incidents"}]}',
+      paste0(
+        '{"datasets":[{"key":"ncvs_38604/incidents","name":"NCVS incidents"},',
+        '{"key":"nij_ncvs/incidents","name":"NCVS incidents"}]}'
+      ),
       file.path(cache, "manifest.json")
     )
     local_mocked_bindings(.bl_data_cache_dir = function() cache)
@@ -1062,9 +1065,15 @@ test_that(
     }
     expect_match(
       run("list_datasets", filter = "ncvs"),
-      "dload(\"ncvs_38604/incidents\")",
+      "dload(\"nij_ncvs/incidents\")",
       fixed = TRUE
     )
+    # a table that is not served (ICPSR's terms) is not offered
+    expect_false(grepl(
+      "ncvs_38604",
+      run("list_datasets", filter = "ncvs"),
+      fixed = TRUE
+    ))
     # a manifest that does not parse is passed over
     writeLines("{not json", file.path(cache, "manifest.json"))
     expect_false(grepl("data.rmorie.com", run("list_datasets"), fixed = TRUE))

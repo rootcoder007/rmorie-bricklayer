@@ -59,7 +59,7 @@
 #' }
 #' Unchanged rows and rows without a comparison use grey (\code{#6b6b6b}).
 #' The verdict-to-colour mapping is: \code{"worse"} uses the bad colour and
-#' \code{"better"} the good colour. With \code{direction = "neutral"} in
+#' \code{"better"} the good colour. With \code{dir = "neutral"} in
 #' \code{\link{yoychg}} the verdicts are \code{"up"}/\code{"down"}, which say
 #' nothing about good or bad news, so those rows use the grey as well; the
 #' arrow still shows the sign.
@@ -333,7 +333,7 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
 #' Classes each verdict as good, bad or flat news.
 #'
 #' The colour class of each verdict: good or bad news only when a direction says
-#' which is which. \code{"up"} and \code{"down"} (direction = \code{"neutral"})
+#' which is which. \code{"up"} and \code{"down"} (\code{dir = "neutral"})
 #' are neither, so they are flat; they had been painted bad and good, which
 #' called every neutral rise bad news.
 #' @param v The verdicts.

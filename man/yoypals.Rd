@@ -32,7 +32,7 @@ at all with this palette.}
 }
 Unchanged rows and rows without a comparison use grey (\code{#6b6b6b}).
 The verdict-to-colour mapping is: \code{"worse"} uses the bad colour and
-\code{"better"} the good colour. With \code{direction = "neutral"} in
+\code{"better"} the good colour. With \code{dir = "neutral"} in
 \code{\link{yoychg}} the verdicts are \code{"up"}/\code{"down"}, which say
 nothing about good or bad news, so those rows use the grey as well; the
 arrow still shows the sign.

@@ -2109,7 +2109,7 @@ plotrdg <- function(
     if (length(v) < 2L) {
       return(NULL)
     }
-    k <- stats::density(v, bw = bw)
+    k <- .bl_density(v, bw)
     data.frame(grp = g, x = k$x, y = k$y, stringsAsFactors = FALSE)
   })
   out <- do.call(rbind, dens)
@@ -5458,7 +5458,7 @@ plotbump <- function(
   )
   out <- NULL
   if (length(v) >= 2L) {
-    k <- stats::density(v, bw = bw)
+    k <- .bl_density(v, bw)
     w <- 0.42 * k$y / max(k$y)
     graphics::polygon(
       c(i - w, rev(i + w)),
@@ -5847,6 +5847,33 @@ plotbump <- function(
     stop("plot option `", nm, "` must be ", want[[nm]], call. = FALSE)
   }
   invisible(NULL)
+}
+
+#' A kernel density, refused in words when the values are too large for one.
+#'
+#' stats::density() stops with "non-finite 'from'" (or 'to') when the values
+#' come within a few bandwidths of the largest double (review of 1.1.1).
+#' @param v The values, finite.
+#' @param bw The checked bandwidth.
+#' @return The density() result.
+#' @noRd
+.bl_density <- function(v, bw = "nrd0") {
+  tryCatch(
+    stats::density(v, bw = bw),
+    error = function(e) {
+      stop(
+        sprintf(
+          paste0(
+            "no density can be drawn for values this large (up to %s): its ",
+            "range passes the largest number R holds; rescale them (%s)"
+          ),
+          format(max(abs(v)), digits = 3L),
+          conditionMessage(e)
+        ),
+        call. = FALSE
+      )
+    }
+  )
 }
 
 #' Checks a density bandwidth: one positive number or a rule stats::density()

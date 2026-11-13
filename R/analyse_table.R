@@ -830,15 +830,15 @@ rptanl <- function(
     "",
     sprintf(
       paste0(
-        "`%s` by `%s`%s; %d rows; %d period(s) from %s to %s; ",
+        "%s by %s%s; %d rows; %d period(s) from %s to %s; ",
         "generated %s."
       ),
-      m$value,
-      m$period,
+      .md_code(m$value),
+      .md_code(m$period),
       if (length(m$by)) {
         paste0(
           ", grouped by ",
-          paste(sprintf("`%s`", m$by), collapse = " and ")
+          paste(.md_code(m$by), collapse = " and ")
         )
       } else {
         ""
@@ -1050,7 +1050,42 @@ rptanl <- function(
 #' @param s A character vector.
 #' @return `s` as HTML.
 #' @noRd
-.md_inline <- function(s) gsub("`([^`]+)`", "<code>\\1</code>", .md_esc(s))
+.md_inline <- function(s) {
+  s <- .md_esc(s)
+  # a character escaped with a backslash (.md_lit()) is shown as itself, never
+  # as the start of a code span
+  for (ch in c("\\", "`", "*")) {
+    s <- gsub(
+      paste0("\\", ch),
+      sprintf("&#%d;", utf8ToInt(ch)),
+      s,
+      fixed = TRUE
+    )
+  }
+  gsub("`([^`]+)`", "<code>\\1</code>", s)
+}
+
+#' Escapes the characters Markdown would read as code or emphasis (a
+#' backslash, a backtick, an asterisk) with a backslash, so a label shows as
+#' written.
+#' @param s A character vector.
+#' @return `s`, escaped.
+#' @noRd
+.md_lit <- function(s) gsub("([\\\\`*])", "\\\\\\1", s)
+
+#' A name as a Markdown code span, on one line. A name holding a backtick
+#' cannot be put in a single-backtick span: it is written as escaped text.
+#' @param s A character vector.
+#' @return The Markdown.
+#' @noRd
+.md_code <- function(s) {
+  s <- gsub("[\r\n]+", " ", s)
+  .rmbl_ctl_escape(ifelse(
+    grepl("`", s, fixed = TRUE),
+    .md_lit(s),
+    paste0("`", s, "`")
+  ))
+}
 
 #' Renders a Markdown table (its lines, separator second) as HTML.
 #' @param tbl The table's lines.

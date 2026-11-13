@@ -721,7 +721,7 @@ cr <- readLines(system.file("COPYRIGHTS", package = "rmoriebricklayer"))
 cat(cr[grep("indigenouslifeexpectancy", cr, fixed = TRUE) + 0:4], sep = "\n")
 ```
 
-With a data key (`dlogin()`), `indtabs()` lists the mirrored tables themselves:
+With the network (no sign-in), `indtabs()` lists the mirrored tables themselves:
 
 ```{r provenance-indigenous-tables, eval = FALSE}
 head(indtabs()[, c("key", "rows")])

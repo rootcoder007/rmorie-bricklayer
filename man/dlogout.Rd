@@ -12,9 +12,9 @@ Logical scalar, invisibly: \code{TRUE} when a key was removed,
 }
 \description{
 Removes the MORIE data key that \code{\link{dlogin}}
-stored, so this machine can no longer load the curated tables at
-data.rmorie.com until you sign in again. Use it on a shared machine, or
-to switch to another key. Nothing is contacted.
+stored, so it is no longer sent to data.rmorie.com (whose curated tables
+need no key). Use it on a shared machine, or to switch to another key.
+Nothing is contacted.
 }
 \details{
 The shared credentials file is \code{credentials.json} in the folder

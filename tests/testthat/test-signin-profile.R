@@ -1,6 +1,7 @@
 # The terms and profile step before a new key: the terms are accepted (y/N or
-# accept_terms = TRUE), a name and a reason are given, and Schedule B needs a
-# supervisor, chair, director or coordinator.
+# accept_terms = TRUE), a name and a reason are given. Schedule B (the
+# restricted tables, with a supervisor) is no longer offered: no table is
+# served under further terms.
 
 answers <- function(...) {
   a <- c(...)
@@ -85,20 +86,26 @@ test_that("terms not accepted at the prompt: no key, and how to accept", {
 test_that(
   paste0(
     "an accepted sign-in asks for name, ",
-    "organisation, reason and Schedule B"
+    "organisation and reason, and not for Schedule B"
   ),
   {
+    box <- new.env(parent = emptyenv())
+    box$seen <- character()
     local_mocked_bindings(
-      .bl_terms_info = function(...) list(version = "2026-10-16", url = "u"),
-      .bl_readline = answers(
+      .bl_terms_info = function(...) list(version = "2026-10-16", url = "u")
+    )
+    local_mocked_bindings(.bl_readline = function(prompt, ...) {
+      box$seen <- c(box$seen, prompt)
+      c(
         "YES",
         "Ada Lovelace",
         "",
-        "Course project on court delays in Ontario.",
-        "n"
-      )
-    )
+        "Course project on court delays in Ontario."
+      )[[length(box$seen)]]
+    })
     p <- suppressMessages(.bl_signin_profile())
+    expect_length(box$seen, 4L)
+    expect_false(any(grepl("Schedule B|restricted", box$seen)))
     expect_identical(p$accept_terms, "2026-10-16")
     expect_identical(p$name, "Ada Lovelace")
     expect_null(p$affiliation)
@@ -130,8 +137,8 @@ test_that("a name and a reason are required", {
 
 test_that(
   paste0(
-    "Schedule B needs a supervisor, a role ",
-    "from the list and their email"
+    "the Schedule B arguments of older releases warn and are ignored: ",
+    "no supervisor is asked for or sent"
   ),
   {
     local_mocked_bindings(
@@ -145,55 +152,34 @@ test_that(
       purpose = "Thesis chapter on court delays in Ontario.",
       restricted = TRUE
     )
-    expect_error(
-      do.call(.bl_signin_profile, base),
-      "supervisor's, chair's, director's or coordinator's name"
-    )
-    expect_error(
-      do.call(
-        .bl_signin_profile,
-        c(base, supervisor_name = "Dr B", supervisor_role = "boss")
-      ),
-      "their role, one of supervisor, chair, director, coordinator, other"
-    )
-    expect_error(
-      do.call(
+    nb <- "no table is opened by accepting more terms any more"
+    expect_warning(p <- do.call(.bl_signin_profile, base), nb)
+    expect_false(p$accept_restricted)
+    expect_warning(
+      p <- do.call(
         .bl_signin_profile,
         c(
-          base,
+          base[-5L],
           supervisor_name = "Dr B",
           supervisor_role = "Chair",
-          supervisor_email = "nope"
+          supervisor_email = "B@Uni.example"
         )
       ),
-      "their email address"
+      nb
     )
-    p <- do.call(
-      .bl_signin_profile,
-      c(
-        base,
-        supervisor_name = "Dr B",
-        supervisor_role = "Chair",
-        supervisor_email = "B@Uni.example"
-      )
-    )
-    expect_true(p$accept_restricted)
+    expect_false(p$accept_restricted)
     expect_identical(p$affiliation, "Uni")
-    expect_identical(
-      p[c("supervisor_name", "supervisor_role", "supervisor_email")],
-      list(
-        supervisor_name = "Dr B",
-        supervisor_role = "chair",
-        supervisor_email = "b@uni.example"
-      )
+    expect_false(any(grepl("^supervisor", names(p))))
+    expect_no_warning(
+      do.call(.bl_signin_profile, c(base[-5L], restricted = FALSE))
     )
   }
 )
 
 test_that(
   paste0(
-    "Schedule B can be chosen at the prompt, with the supervisor asked for ",
-    "too"
+    "Schedule B is not offered at the prompt any more, nor a supervisor ",
+    "asked for"
   ),
   {
     local_mocked_bindings(
@@ -209,8 +195,9 @@ test_that(
       )
     )
     p <- .bl_signin_profile(accept_terms = TRUE)
-    expect_true(p$accept_restricted)
-    expect_identical(p$supervisor_role, "director")
+    expect_false(p$accept_restricted)
+    expect_null(p$supervisor_role)
+    expect_identical(p$purpose, "Thesis chapter on court delays in Ontario.")
   }
 )
 
@@ -268,31 +255,28 @@ test_that("rmbl login passes the terms and profile flags through", {
       "--affiliation",
       "Uni",
       "--reason",
-      "Thesis chapter on court delays.",
-      "--restricted",
-      "--supervisor-name",
-      "Dr B",
-      "--supervisor-role",
-      "chair",
-      "--supervisor-email",
-      "b@uni.example"
+      "Thesis chapter on court delays."
     ),
     out = function(x) box2$buf <- c(box2$buf, x)
   )
   expect_identical(st, 0L)
   expect_true(box$got$accter)
   expect_identical(
-    box$got[c("name", "affil", "purp", "supnm", "suprole", "supemail")],
+    box$got[c("name", "affil", "purp")],
     list(
       name = "Ada Lovelace",
       affil = "Uni",
-      purp = "Thesis chapter on court delays.",
-      supnm = "Dr B",
-      suprole = "chair",
-      supemail = "b@uni.example"
+      purp = "Thesis chapter on court delays."
     )
   )
-  expect_true(box$got$restr)
+  expect_null(box$got$restr)
+  # --restricted and the supervisor flags are no longer options
+  for (f in c("--restricted", "--supervisor-name")) {
+    expect_identical(
+      blcli(c("login", f, "x"), out = function(x) NULL),
+      2L
+    )
+  }
   blcli(c("login", "--no-browser"), out = function(x) NULL)
   expect_false(box$got$accter)
   expect_null(box$got$restr)
@@ -300,4 +284,5 @@ test_that("rmbl login passes the terms and profile flags through", {
   box3$usage <- character()
   blcli(c("login", "--help"), out = function(x) box3$usage <- c(box3$usage, x))
   expect_match(paste(box3$usage, collapse = ""), "--accept-terms")
+  expect_false(grepl("restricted|supervisor", paste(box3$usage, collapse = "")))
 })

@@ -624,12 +624,20 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
 #' @param res A transport reply.
 #' @return A list, or NULL.
 #' @noRd
-.bl_wb_json <- function(res) {
+.bl_wb_json <- function(res, keys = NULL) {
   if (!length(res$body) || length(res$body) > .bl_wb_body_max) {
     return(NULL)
   }
   j <- tryCatch(.rmbl_json_parse(rawToChar(res$body)), error = function(e) NULL)
-  if (is.list(j)) j else NULL
+  if (!is.list(j)) {
+    return(NULL)
+  }
+  # the message is shown and written to the results: one that repeats the
+  # keys sent is not
+  if (.bl_key_echoed(.bl_wb_str(j$message), keys)) {
+    j$message <- .bl_key_withheld_msg
+  }
+  j
 }
 
 #' Returns a field as one string, or NA.
@@ -1194,6 +1202,7 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
     sprintf("Authorization: LOW %s:%s", keys$ak, keys$sk),
     "Accept: application/json"
   )
+  w$keys <- c(keys$ak, keys$sk)
   w$results <- prior[kept]
   w$counts <- c(saved = 0L, existing = 0L, failed = 0L, submitted = 0L)
   # captures in flight, by URL (two URLs given the same job id each keep their
@@ -1399,7 +1408,7 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
 .bl_wb_submit <- function(w, u, now) {
   res <- .bl_wb_post(.bl_wb_form(w, u), w$hdr)
   .bl_wb_refused(res)
-  j <- .bl_wb_json(res)
+  j <- .bl_wb_json(res, w$keys)
   id <- .bl_wb_job_id(j$job_id)
   if (!is.na(id)) {
     w$inflight[[u]] <- list(
@@ -1517,7 +1526,7 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
     w$hdr
   )
   .bl_wb_refused(res)
-  j <- .bl_wb_json(res)
+  j <- .bl_wb_json(res, w$keys)
   st <- .bl_wb_str(j$status) %|NA|% ""
   if (identical(res$status, 404L) && !identical(st, "error")) {
     .bl_wb_finish(

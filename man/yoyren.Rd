@@ -90,7 +90,7 @@ the network) and escapes every value, so the file stays the artefact and
 renders the same later. Rows are coloured by the table's \code{verdict}:
 \code{"worse"} in the palette's bad colour, \code{"better"} in its good
 colour, everything else (including the \code{"up"} and \code{"down"} of
-\code{direction = "neutral"}) in its neutral grey. Labels set
+\code{dir = "neutral"}) in its neutral grey. Labels set
 with \code{\link[=yoylbl]{yoylbl()}} replace the period. For percentage units
 the change is
 shown in points. The page ends with the package version that wrote it.

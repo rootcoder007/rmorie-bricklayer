@@ -166,10 +166,15 @@ format.rmbl_bundle_audit <- function(x, ...) {
       Bundle = basename(x$bundle),
       `Input mode` = x$mode,
       Isolation = x$isolation %||% NA_character_,
-      Checks = n[["total"]],
-      PASS = n[["pass"]],
-      DIFFER = n[["differ"]],
-      INFO = n[["info"]]
+      # the bundle run's own results, from its manifest: not the audit's
+      # checks, which the status line counts (both were "Checks")
+      `Results in the run` = sprintf(
+        "%s (%s PASS, %s DIFFER, %s INFO)",
+        n[["total"]],
+        n[["pass"]],
+        n[["differ"]],
+        n[["info"]]
+      )
     ),
     reading = .rmbl_check_reading(
       x$ok,

@@ -1379,7 +1379,7 @@
 .bl_drift_density <- function(s, col, mode) {
   opm <- .bl_par_mode(mode())
   on.exit(graphics::par(opm), add = TRUE)
-  ds <- lapply(s, function(d) stats::density(d[[col]][is.finite(d[[col]])]))
+  ds <- lapply(s, function(d) .bl_density(d[[col]][is.finite(d[[col]])]))
   cl <- .bl_cols(2L)
   graphics::plot(
     ds[[1L]],

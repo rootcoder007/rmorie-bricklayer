@@ -22,8 +22,9 @@ failure, 2 for a usage error, 130 when interrupted.
 \description{
 Dispatches the verbs of the \code{rmoriebricklayer} launcher: \describe{
 \item{\code{login [--token] [--email ADDRESS [--code CODE]]
-[--no-browser]}}{sign in for the curated tables at data.rmorie.com (a free
-MORIE data key, issued at \code{www.rmorie.com/access/}): a key you paste
+[--no-browser]}}{store a MORIE data key (issued at
+\code{www.rmorie.com/access/}; the curated tables at data.rmorie.com need
+none, and a stored key is still sent to them): a key you paste
 with \code{--token} (read from the terminal or a pipe when KEY is omitted), a
 code sent to \code{--email}, or the GitHub device flow}
 \item{\code{logout}}{forget the data key} \item{\code{doctor}}{report the

@@ -439,7 +439,9 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
 #' @return `v` on one line, with HTML and the pipe escaped.
 #' @noRd
 .yoy_md_esc <- function(v) {
-  v <- .rmbl_ctl_escape(gsub("[\r\n]+", " ", v))
+  # Markdown's own characters escaped first, so the backslash of a control
+  # byte's escape (\033) is not escaped again
+  v <- .rmbl_ctl_escape(.md_lit(gsub("[\r\n]+", " ", v)))
   v <- gsub("&", "&amp;", v, fixed = TRUE)
   v <- gsub("<", "&lt;", v, fixed = TRUE)
   v <- gsub(">", "&gt;", v, fixed = TRUE)

@@ -10,8 +10,9 @@
 #'
 #' Dispatches the verbs of the \code{rmoriebricklayer} launcher: \describe{
 #' \item{\code{login [--token] [--email ADDRESS [--code CODE]]
-#' [--no-browser]}}{sign in for the curated tables at data.rmorie.com (a free
-#' MORIE data key, issued at \code{www.rmorie.com/access/}): a key you paste
+#' [--no-browser]}}{store a MORIE data key (issued at
+#' \code{www.rmorie.com/access/}; the curated tables at data.rmorie.com need
+#' none, and a stored key is still sent to them): a key you paste
 #' with \code{--token} (read from the terminal or a pipe when KEY is omitted), a
 #' code sent to \code{--email}, or the GitHub device flow}
 #' \item{\code{logout}}{forget the data key} \item{\code{doctor}}{report the
@@ -748,11 +749,7 @@ instcli <- function(
       "--accept-terms",
       "--name",
       "--affiliation",
-      "--reason",
-      "--restricted",
-      "--supervisor-name",
-      "--supervisor-role",
-      "--supervisor-email"
+      "--reason"
     ),
     ask = c("--model", "--route", "--fresh"),
     models = "--route",
@@ -836,9 +833,6 @@ instcli <- function(
       "--name",
       "--affiliation",
       "--reason",
-      "--supervisor-name",
-      "--supervisor-role",
-      "--supervisor-email",
       "--port",
       .bl_capsule_valued,
       "--html",
@@ -1055,15 +1049,11 @@ instcli <- function(
       accter = has("--accept-terms"),
       name = flag("--name"),
       affil = flag("--affiliation"),
-      purp = flag("--reason"),
-      restr = if (has("--restricted")) TRUE else NULL,
-      supnm = flag("--supervisor-name"),
-      suprole = flag("--supervisor-role"),
-      supemail = flag("--supervisor-email")
+      purp = flag("--reason")
     )
   }
   ctx$out(sprintf(
-    "Logged in: the curated tables at %s are open to you\n",
+    "Logged in: the key is stored and sent to %s\n",
     tryCatch(.bl_data_url(), error = function(e) "data.rmorie.com")
   ))
   NULL
@@ -1710,10 +1700,8 @@ instcli <- function(
     login = paste(
       "login [--email ADDRESS [--code CODE]] [--no-browser]",
       "[--accept-terms] [--name NAME]",
-      "[--affiliation ORG] [--reason TEXT] [--restricted",
-      "--supervisor-name NAME",
-      "--supervisor-role ROLE --supervisor-email ADDRESS] | login --token",
-      "  sign in for the curated tables at data.rmorie.com"
+      "[--affiliation ORG] [--reason TEXT] | login --token",
+      "  store a MORIE data key (the curated tables need none)"
     ),
     logout = "logout   forget the data key",
     doctor = "doctor   report the language-model routes available here",
@@ -2345,8 +2333,8 @@ instcli <- function(
     "or server offers\n",
     "  bundle REQUEST...                         agentbndl() from the shell\n",
     "\nData and functions\n",
-    "  login [--token] [--email ADDRESS]         sign in for the ",
-    "curated tables at data.rmorie.com\n"
+    "  login [--token] [--email ADDRESS]         store a data key ",
+    "(the curated tables need none)\n"
   )
 }
 
@@ -2495,12 +2483,13 @@ instcli <- function(
       prog,
       prog
     ),
-    "5. The curated tables (data.rmorie.com) need a free MORIE data key:\n",
+    "5. The curated tables (data.rmorie.com) need no key or sign-in:\n",
     sprintf(
       paste0(
-        "     %s login                  (GitHub, or --email ADDRESS for a ",
-        "code)\n"
+        "     %s data list              (`%s data pull KEY` downloads ",
+        "one)\n"
       ),
+      prog,
       prog
     )
   )
@@ -2600,8 +2589,8 @@ instcli <- function(
     "  llmcfg(route = NULL)                       # back to auto\n",
     "  llmmdls()\n",
     "  llmask(\"What can a Benford screen show?\")\n",
-    "  dlogin()                                    # the data key, for ",
-    "data.rmorie.com\n\n",
+    "  dlogin()                                    # a data key (the ",
+    "tables need none)\n\n",
     "From the shell:\n",
     "  Rscript -e 'cat(rmoriebricklayer::llmask(\"What can a Benford ",
     "screen show?\"), \"\\n\")'\n"

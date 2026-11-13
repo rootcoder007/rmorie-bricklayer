@@ -460,8 +460,9 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   at data.rmorie.com (Google BigQuery public datasets and the survey, court
   and justice data the MORIE ledger uses), and `dload("db/table")` opens one,
   with no sign-in, checked against the SHA-256 its manifest lists and cached
-  locally; each table keeps its source's licence. The ICPSR studies are not
-  served: ICPSR's terms do not allow it, so `dload()` points to ICPSR. `blfetch()` downloads any URL with an Internet Archive
+  locally; each table keeps its source's licence. The ICPSR studies (the NCVS
+  38604 extract among them) are not served: ICPSR's terms do not allow it, so
+  `dtabs()` leaves them out and `dload()` points to ICPSR before any request. `blfetch()` downloads any URL with an Internet Archive
   fallback (libcurl).
 
 ## Security posture
@@ -957,8 +958,9 @@ llmcfg(route = NULL)                            # back to the automatic order
 With `route = "auto"`, a local Ollama server that has no model pulled is
 passed over.
 
-Signing in (`dlogin()`, `rmbl login`) is for the curated tables
-at data.rmorie.com only; it is never a language model.
+A data key (`dlogin()`, `rmbl login`) is for data.rmorie.com only, whose
+curated tables need none (a stored key is still sent); it is never a
+language model.
 
 The same verbs exist on the command line once the launcher is on your
 `PATH`:

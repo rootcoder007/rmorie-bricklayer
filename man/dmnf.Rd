@@ -26,7 +26,8 @@ default) uses the stored key. It is never printed or written to disk.}
 }
 \value{
 \code{dmnf()}: the manifest as a list (element
-\code{datasets}, one list per table with at least \code{key}, and as the
+\code{datasets}, one list per table served with at least \code{key},
+attribute \code{unserved} the number of tables left out; and as the
 service provides them \code{rows}, \code{columns}, sizes, the SHA-256 of
 the compressed file and the BigQuery \code{source});
 \code{dtabs()}: a data frame with \code{key},
@@ -41,11 +42,9 @@ The MORIE project keeps databases materialised from Google BigQuery
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-\code{www.rmorie.com/data-license/}. They open with the key
-\code{\link{dlogin}} stores, the same key rmorie and morie
-use; keys are personal: sign in with GitHub or an emailed code, or ask at
-\code{www.rmorie.com/access/}. The service address comes from
-\code{\link{svcs}}.
+\code{www.rmorie.com/data-license/}. They need no sign-in and no key; a
+MORIE key stored earlier with \code{\link{dlogin}} is still sent. The
+service address comes from \code{\link{svcs}}.
 \code{dmnf()} returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
 kept for a day; \code{dtabs()} the same as a data frame;
@@ -84,18 +83,25 @@ decompress to at most the option \code{rmoriebricklayer.maxcsvbytes}
 (1 GiB by default). A large table needs memory for all of it: a 1 GB
 decompressed CSV takes a few GB of RAM as a data frame.
 
-The key is sent only to the address of the signed services document. With
-\code{MORIE_DATA_URL} set to another address the key is not sent and the
-download fails with a message saying so. Some tables (ICPSR studies, the NCVS
-38604 extract, the A2AJ case law) open only after their terms are accepted on
-the terms page, \code{data.rmorie.com/terms}. Downloads draw a progress bar
-when \code{options(morie.progress)} allows it.
+A table the manifest lists without any digest is used with a warning, once
+per session and table.
 
-Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; no key stored (the
-message says how to sign in); the service unavailable, or the key rejected;
-a \code{key} that is not of the form \code{db/table}, or not listed in the
-manifest; a \code{token} that is not one non-empty string; a digest
-mismatch; a restricted table whose terms were not accepted.
+A stored key is sent only to the address of the signed services document;
+with \code{MORIE_DATA_URL} set to another address it is not sent, and a
+message says so. Tables whose source terms do not allow redistribution
+(ICPSR studies, among them the NCVS 38604 extract, and any table the
+manifest marks restricted, with \code{access} other than \code{"open"} or
+\code{"public"} or \code{restricted: true}) are not served:
+\code{dmnf()} and \code{dtabs()} leave them out (the listing counts them in
+one line), and \code{dload()} refuses them before any request, saying
+where to get them. Downloads draw a progress bar when
+\code{options(morie.progress)} allows it.
+
+Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; the service
+unavailable, or a stored key rejected; a \code{key} that is not of the
+form \code{db/table}, not listed in the manifest, or a table that is not
+served; a \code{token} that is not one non-empty string; a digest
+mismatch.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

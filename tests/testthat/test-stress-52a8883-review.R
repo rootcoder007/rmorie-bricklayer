@@ -96,10 +96,11 @@ test_that(
     # a manifest that lists the table without a digest: the fresh manifest is
     # authoritative
     d2 <- data_cache_with(good, '{"datasets":[{"key":"db/t"}]}', age_days = 0)
-    expect_true(.bl_data_check_sha(
+    expect_nodigest(ok <- .bl_data_check_sha(
       "db/t",
       file.path(d2, "db__t.csv.gz")
     ))
+    expect_true(ok)
     # the same manifest stale and unreachable: it lists the table without a
     # digest, as the live one does, so the table loads (refusing it deleted
     # genuine tables offline; review of 02a38be, C9)

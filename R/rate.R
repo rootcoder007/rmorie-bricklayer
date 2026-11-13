@@ -825,9 +825,11 @@ format.rmbl_share <- function(x, digits = 4L, ...) {
   denom <- 1 + z^2 / n
   centre <- (p + z^2 / (2 * n)) / denom
   halfwidth <- (z / denom) * sqrt(p * (1 - p) / n + z^2 / (4 * n^2))
+  # the bounds are exactly 0 at a zero count and 1 at the whole total, as
+  # prop.test() gives them; centre - halfwidth rounded to 2.8e-15
   list(
-    lower = 100 * pmax(0, centre - halfwidth),
-    upper = 100 * pmin(1, centre + halfwidth)
+    lower = 100 * ifelse(cnt == 0 & n > 0, 0, pmax(0, centre - halfwidth)),
+    upper = 100 * ifelse(cnt == n & n > 0, 1, pmin(1, centre + halfwidth))
   )
 }
 

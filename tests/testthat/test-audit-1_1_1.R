@@ -519,3 +519,174 @@ test_that("a capture recorded without an id is a failed upload, in words", {
   rec <- list(capture_id = "20260101120000-0123abcd", capture = page)
   expect_identical(up()$capture_id, "20260101120000-0123abcd")
 })
+
+# Findings of the pre-CRAN audit of 1.1.1 (BL-M2, BL-L1 to BL-L9).
+
+test_that("the key is withheld at every base64 alignment (BL-M2)", {
+  key <- "FAKEKEY_aud1t0nly_NOTREAL_zz9876543210ab"
+  b64 <- function(s) jsb64enc(charToRaw(s))
+  held <- "the error text is withheld: it repeated your key"
+  pre <- paste0(
+    "GET /v1/captures?limit=100 HTTP/1.1\r\n",
+    "Host: x\r\nAuthorization: Bearer "
+  )
+  # the key starts at each of the three byte offsets of the encoded dump
+  for (lead in c("", "a", "ab", "abc")) {
+    dump <- b64(paste0(lead, pre, key, "\r\n"))
+    expect_identical(
+      .bl_arc_errtext(paste("request dump:", dump), key),
+      held,
+      info = lead
+    )
+    url <- chartr("+/", "-_", dump)
+    expect_identical(.bl_arc_errtext(url, key), held, info = lead)
+  }
+  hex <- paste(as.character(charToRaw(key)), collapse = "")
+  pct <- paste0("%", toupper(as.character(charToRaw(key))), collapse = "")
+  sep8 <- paste(substring(key, seq(1, 40, 8), seq(8, 40, 8)), collapse = "-")
+  for (echo in c(hex, toupper(hex), pct, sep8)) {
+    expect_identical(.bl_arc_errtext(paste("dump", echo), key), held)
+  }
+  # text that does not hold the key is shown
+  expect_identical(
+    .bl_arc_errtext(paste("dump", b64("GET / HTTP/1.1\r\n")), key),
+    paste("dump", b64("GET / HTTP/1.1\r\n"))
+  )
+  expect_false(.bl_key_echoed("anything", c(NA, "", NULL)))
+  expect_false(.bl_key_echoed(NA_character_, key))
+})
+
+test_that("a provider or Wayback echo of the key is withheld (BL-M2)", {
+  key <- "sk-FAKE0nlyNOTREAL0123456789"
+  dump <- jsb64enc(charToRaw(paste0("xAuthorization: Bearer ", key)))
+  res <- list(status = 400L, json = list(error = paste("bad request", dump)))
+  expect_error(
+    .bl_reply_error(res, "the provider", secret = key),
+    "the provider answered 400: the error text is withheld"
+  )
+  res$json$error <- "bad request: model not found"
+  expect_error(
+    .bl_reply_error(res, "the provider", secret = key),
+    "answered 400: bad request: model not found",
+    fixed = TRUE
+  )
+  ak <- "FAKEaccessKEY123"
+  sk <- "FAKEsecretKEY4567"
+  body <- charToRaw(sprintf(
+    '{"message": "bad auth LOW %s:%s"}',
+    ak,
+    paste(substring(sk, 1:2 * 8 - 7, 1:2 * 8), collapse = " ")
+  ))
+  j <- .bl_wb_json(list(body = body), c(ak, sk))
+  expect_identical(
+    j$message,
+    "the error text is withheld: it repeated your key"
+  )
+  slow <- charToRaw('{"message": "slow down"}')
+  j <- .bl_wb_json(list(body = slow), c(ak, sk))
+  expect_identical(j$message, "slow down")
+})
+
+test_that("cqnt() names its quantiles as stats::quantile() does (BL-L1)", {
+  for (p in list(c(0.001, 0.5), c(0, 1 / 3, 0.25, 0.999, 1), 0.123456789)) {
+    expect_named(
+      cqnt(1:10, p),
+      names(stats::quantile(1:10, p)),
+      info = toString(p)
+    )
+  }
+})
+
+test_that("cgamcdf() at an infinite shape is the limit, as pgamma() (BL-L2)", {
+  x <- c(-1, 0, 1, 1e308, Inf, NA)
+  expect_identical(cgamcdf(Inf, x), stats::pgamma(x, Inf))
+  expect_identical(cgamcdf(Inf, x), c(0, 0, 0, 0, 1, NA))
+})
+
+test_that("rptanl() keeps names on one line, labels as written (BL-L3)", {
+  d <- data.frame(
+    y = rep(2020:2022, 2),
+    g = rep(c("x`y`**z**", "b"), each = 3),
+    n = c(10, 12, 15, 20, 18, 25),
+    stringsAsFactors = FALSE
+  )
+  names(d)[3] <- "count\nline2"
+  a <- anytab(d, "count\nline2", "y", by = "g")
+  md <- strsplit(rptanl(a), "\n", fixed = TRUE)[[1]]
+  expect_identical(
+    substr(md[3], 1L, 40L),
+    "`count line2` by `y`, grouped by `g`; 6 "
+  )
+  # the label's backticks and asterisks are escaped once, as Markdown text
+  expect_true(any(grepl("x\\`y\\`\\*\\*z\\*\\*", md, fixed = TRUE)))
+  h <- rptanl(a, format = "html")
+  expect_match(h, "<p><code>count line2</code> by <code>y</code>", fixed = TRUE)
+  expect_match(h, "<td>x&#96;y&#96;&#42;&#42;z&#42;&#42;</td>", fixed = TRUE)
+  expect_false(grepl("<code>y</code>&#42;", h, fixed = TRUE))
+  # a name with a backtick is written as escaped text, not a broken span
+  expect_identical(.md_code(c("a`b", "c")), c("a\\`b", "`c`"))
+  expect_identical(.md_inline("a\\`b `c`"), "a&#96;b <code>c</code>")
+})
+
+test_that("the emailed-code sign-in refuses a key with a line break (BL-L4)", {
+  rec <- new.env()
+  rec$stored <- FALSE
+  local_mocked_bindings(
+    .bl_hosted_auth = function() "https://auth.invalid",
+    .bl_store_key = function(...) rec$stored <- TRUE,
+    .bl_post_json = function(url, ...) {
+      list(status = 200L, json = list(api_key = "sk-a\nb", user = "u"))
+    }
+  )
+  expect_error(
+    .bl_login_email("ada@example.org", code = "123456"),
+    "line break or control character in it; nothing was stored"
+  )
+  expect_false(rec$stored)
+})
+
+test_that("an archive status past the integer range is NA, silently (BL-L5)", {
+  expect_no_warning(
+    got <- .bl_arc_status(c(200, 99999999999, 1.5, NA, 99, 1000, 404))
+  )
+  expect_identical(got, c(200L, NA, NA, NA, NA, NA, 404L))
+})
+
+test_that("a share of zero has a lower bound of exactly 0 (BL-L6)", {
+  s <- unclass(shrs(c(a = 0, b = 10)))
+  expect_identical(s$lower[1], 0)
+  expect_identical(
+    s$lower[1],
+    100 * stats::prop.test(0, 10, correct = FALSE)$conf.int[1]
+  )
+  expect_identical(s$upper[2], 100)
+  expect_equal(
+    s$upper[1],
+    100 * stats::prop.test(0, 10, correct = FALSE)$conf.int[2],
+    tolerance = 1e-12
+  )
+})
+
+test_that("densities of values near the largest double fail in words (BL-L7)", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  v <- c(1e308, 1.7e308, -1.7e308)
+  expect_error(plotrdg(v), "no density can be drawn for values this large")
+  expect_error(plotvln(v), "no density can be drawn for values this large")
+  expect_no_warning(z <- hurwzeta(c(1e308, 1.7e308)))
+  expect_identical(z, c(1, 1))
+  # zeta(-2n) = 0: every double past 2^53 is even
+  expect_no_warning(z <- hurwzeta(c(-1e308, -2^60)))
+  expect_identical(z, c(0, 0))
+  expect_no_warning(hurwzeta(c(1e308, -1e308), -0.5))
+  expect_true(.rmbl_even(2^53))
+  expect_false(.rmbl_even(3))
+})
+
+test_that("a token that is not one string says so (BL-L8)", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
+  expect_error(dlogin(token = c(-1, 0, 3)), "`token` must be one string, not 3")
+  expect_error(dlogin(token = character()), "`token` must be one string, not 0")
+  expect_error(dlogin(token = NA_character_), "an empty token cannot be stored")
+  expect_error(dlogin(token = "sk-a\nb"), "line break or control character")
+})

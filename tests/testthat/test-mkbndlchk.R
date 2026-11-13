@@ -115,6 +115,12 @@ test_that("a bundle that runs and gives the expected counts is verified", {
   expect_match(a$checks$detail[5L], "1 launcher(s)", fixed = TRUE)
   out <- capture.output(res <- withVisible(print(a)))
   expect_false(res$visible)
+  # the run's own results are not labelled as the audit's checks (BL-L9)
+  expect_true(any(grepl(
+    "Results in the run.*3 \\(2 PASS, 0 DIFFER, 1 INFO\\)",
+    out
+  )))
+  expect_false(any(grepl("^\\W*Checks\\b", out)))
   if (blind()) {
     expect_match(out[1L], "Bundle audit: NOT VERIFIED", fixed = TRUE)
     expect_true(any(grepl("cannot detect escaped processes", out,
@@ -801,6 +807,17 @@ test_that("a container check with podman runs the starter bundle", {
   skip_on_os("windows")
   pm <- Sys.which("podman")
   skip_if(!nzchar(pm), "no podman")
+  # any podman command creates its storage under the home folder: with none
+  # there (a fresh home, as R CMD check may have) the image cannot be there
+  # either, and asking would leave ~/.local/share/containers behind
+  data <- Sys.getenv(
+    "XDG_DATA_HOME",
+    file.path(path.expand("~"), ".local", "share")
+  )
+  skip_if(
+    !dir.exists(file.path(data, "containers", "storage")),
+    "no podman storage in this home"
+  )
   have <- suppressWarnings(system2(pm, c("image", "exists", .bndlchk_image()),
                                    stdout = FALSE, stderr = FALSE))
   skip_if(!identical(as.integer(have), 0L), "the pinned image is not here")

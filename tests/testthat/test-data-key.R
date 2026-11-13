@@ -1,7 +1,7 @@
 # The data key after the language-model tier was retired: the data service
 # checks a key and issues it, a document may drop its llm block, and a
-# restricted table says how to open it. Canned replies only; nothing leaves the
-# machine.
+# table whose terms forbid redistribution is not offered. Canned replies only;
+# nothing leaves the machine.
 
 dk_ns <- function(nm) get(nm, envir = asNamespace("rmoriebricklayer"))
 
@@ -129,13 +129,14 @@ test_that(
 
 test_that(
   paste0(
-    "a restricted table refused with 403 ",
-    "says where to accept the terms"
+    "a table that is not served is never offered a terms page; ",
+    "A2AJ case law is an open table"
   ),
   {
     expect_true(dk_ns(".bl_data_restricted")("icpsr_21600/ds0001"))
     expect_true(dk_ns(".bl_data_restricted")("db/ncvs_38604.db"))
-    expect_true(dk_ns(".bl_data_restricted")("files/a2aj_onca/x.zip"))
+    expect_false(dk_ns(".bl_data_restricted")("files/a2aj_onca/x.zip"))
+    expect_false(dk_ns(".bl_data_restricted")("a2aj_onca/onca_decisions_meta"))
     expect_false(dk_ns(".bl_data_restricted")("chicago_crime/incidents"))
     withr::local_envvar(MORIE_DATA_URL = NA)
     local_mocked_bindings(
@@ -144,13 +145,13 @@ test_that(
       dmnf = function(...) list(datasets = list()),
       bldl = function(...) stop("https://data.rmorie.com/x answered HTTP 403")
     )
-    expect_error(
+    # a 403 means the stored key was refused, whatever the table: no table
+    # is behind a terms page
+    e <- expect_error(
       dk_ns(".bl_data_get")("/icpsr_21600/ds0001.csv.gz", tempfile()),
-      paste0(
-        "icpsr_21600/ds0001 is a restricted table .* ",
-        "https://data.rmorie.com/terms"
-      )
+      "rejected the stored key"
     )
+    expect_false(grepl("terms", conditionMessage(e), fixed = TRUE))
     expect_error(
       dk_ns(".bl_data_get")("/chicago_crime/incidents.csv.gz", tempfile()),
       "rejected the stored key"

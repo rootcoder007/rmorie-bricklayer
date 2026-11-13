@@ -849,8 +849,16 @@ format.rmbl_cramerv <- function(x, digits = 4L, ...) {
 .rmbl_sinpi <- function(x) {
   k <- round(x)
   s <- sinpi(x - k)
-  if (k %% 2 == 0) s else -s
+  if (.rmbl_even(k)) s else -s
 }
+
+#' Says whether a whole number is even. Every double from 2^53 up is even, and
+#' %% warned "probable complete loss of accuracy in modulus" there (hurwzeta()
+#' at s = -1e308).
+#' @param k A whole number.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_even <- function(k) abs(k) >= 2^53 || k %% 2 == 0
 
 #' Computes the Hurwitz zeta function by the Euler-Maclaurin formula.
 #'
@@ -1108,7 +1116,7 @@ format.rmbl_cramerv <- function(x, digits = 4L, ...) {
       if (!is.finite(si) || si != round(si) || si == 1) {
         return(NA_real_)
       }
-      sgn <- if (si %% 2 == 0) 1 else -1
+      sgn <- if (.rmbl_even(si)) 1 else -1
       # the two terms that cancel (exactly, for an odd s at f = 1/2) are added
       # first, the small tail last
       (.rmbl_hurwitz_any(si, f) + sgn * .rmbl_hurwitz_any(si, 1 - f)) -

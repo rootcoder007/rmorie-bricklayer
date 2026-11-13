@@ -4,7 +4,8 @@
 # (MORIE_LLM_BASE_URL), each provider whose key is set (R/llm_providers.R), and
 # a local Ollama server (OLLAMA_HOST, default http://localhost:11434). The
 # hosted MORIE language-model tier is retired. The MORIE key that remains is the
-# data key for data.rmorie.com: personal, issued by the GitHub / emailed-code
+# data key for data.rmorie.com (whose tables need none; a stored key is still
+# sent): personal, issued by the GitHub / emailed-code
 # sign-in at data.rmorie.com/auth or on request at
 # https://www.rmorie.com/access, stored in a credentials file the other MORIE
 # packages read as well; its sign-in addresses come from the signed services
@@ -537,8 +538,9 @@ llmask <- function(
 #' Stores your personal MORIE data key in
 #' \code{$XDG_CONFIG_HOME/morie/credentials.json} (owner-only; the file
 #' the \code{morie}, \code{rmorie} and \code{rmoriedata} packages read too,
-#' so one sign-in serves all of them). The key opens the curated tables
-#' (\code{\link{dload}}); it is not used for language models,
+#' so one sign-in serves all of them). The curated tables
+#' (\code{\link{dload}}) need no key and no sign-in; a stored key is still
+#' sent to the data service. It is not used for language models,
 #' which run on your own key or a local model (\code{\link{llmask}}).
 #' Keys are personal: the GitHub or emailed-code sign-in issues one, or ask at
 #' \code{www.rmorie.com/access/}.
@@ -601,15 +603,10 @@ llmask <- function(
 #'   employer or organisation (optional; asked for when \code{NULL}).
 #' @param purp Character scalar or \code{NULL}: why you need the data, a
 #'   sentence or two (asked for when \code{NULL}). Required for a new key.
-#' @param restr Logical scalar or \code{NULL}: \code{TRUE} also accepts
-#'   Schedule B of the terms, which opens the restricted tables (ICPSR, NCVS
-#'   38604, A2AJ case law); \code{NULL} asks at the console.
-#' @param supnm,suprole,supemail Character scalars
-#'   or \code{NULL}: the supervisor, department chair, director or
-#'   coordinator who knows of your use, their role and their email. Required
-#'   with \code{restricted = TRUE}; asked for when \code{NULL}. The role is
-#'   one of \code{"supervisor"}, \code{"chair"}, \code{"director"},
-#'   \code{"coordinator"} or \code{"other"}.
+#' @param restr,supnm,suprole,supemail No longer used, kept so that older
+#'   scripts run: no table is opened by accepting more terms (the tables
+#'   whose source terms do not allow redistribution are not served at all).
+#'   Giving any of them warns, and it is ignored.
 #' @return The key (character scalar), invisibly. A message names the file
 #'   it was stored in.
 #' @seealso \code{\link{dlogout}} to remove the key.
@@ -657,8 +654,21 @@ dlogin <- function(
       stop("`token` must be one string", call. = FALSE)
     }
     token <- trimws(as.character(token))
-    if (length(token) != 1L || !nzchar(token)) {
+    if (length(token) != 1L) {
+      stop(
+        sprintf("`token` must be one string, not %d", length(token)),
+        call. = FALSE
+      )
+    }
+    if (is.na(token) || !nzchar(token)) {
       stop("an empty token cannot be stored", call. = FALSE)
+    }
+    if (grepl("[[:cntrl:]]", token)) {
+      stop(
+        "a token with a line break or control character in it cannot be ",
+        "stored",
+        call. = FALSE
+      )
     }
     # ask the gateway first: a mistyped key in the shared file breaks rmorie and
     # morie too
@@ -691,9 +701,9 @@ dlogin <- function(
 #' Forget the MORIE data key
 #'
 #' Removes the MORIE data key that \code{\link{dlogin}}
-#' stored, so this machine can no longer load the curated tables at
-#' data.rmorie.com until you sign in again. Use it on a shared machine, or
-#' to switch to another key. Nothing is contacted.
+#' stored, so it is no longer sent to data.rmorie.com (whose curated tables
+#' need no key). Use it on a shared machine, or to switch to another key.
+#' Nothing is contacted.
 #'
 #' @details The shared credentials file is \code{credentials.json} in the folder
 #' \code{$XDG_CONFIG_HOME/morie}, else in \code{~/.config/morie}. It is edited
@@ -2202,7 +2212,15 @@ llmstat <- function() {
   }
   detail <- ""
   if (is.character(msg) && length(msg) == 1L) {
-    detail <- paste0(": ", .rmbl_printable(.bl_redact(msg, secret)))
+    # a reply that repeats the key sent, in any encoding, is not shown at all
+    detail <- paste0(
+      ": ",
+      if (.bl_key_echoed(msg, secret)) {
+        .bl_key_withheld_msg
+      } else {
+        .rmbl_printable(.bl_redact(msg, secret))
+      }
+    )
   }
   stop(sprintf("%s answered %d%s", what, res$status, detail), call. = FALSE)
 }
@@ -2255,6 +2273,65 @@ llmstat <- function() {
     perl = TRUE
   )
   gsub("\\bsk-[A-Za-z0-9._-]{6,}", "<key>", msg, perl = TRUE)
+}
+
+#' What is said in place of a server's text that repeated a key.
+#' @noRd
+.bl_key_withheld_msg <- "the error text is withheld: it repeated your key"
+
+#' The forms a key can take in a server's echo of a request.
+#'
+#' As sent, percent-encoded, in hex, and in base64 (standard and URL-safe) at
+#' each of the three alignments a key can have in an encoded dump: the part of
+#' the encoding that depends on the key's bytes alone. A proxy that cuts a
+#' header short echoes part of the key: every run of 12 characters of it counts
+#' too (a shorter key counts whole). All are compared without case and with
+#' every character that is not a letter or a digit removed, so a key split over
+#' lines or by separators is found as well.
+#' @param key One key.
+#' @return A character vector.
+#' @noRd
+.bl_key_forms <- function(key) {
+  raw <- charToRaw(key)
+  b64 <- vapply(0:2, function(o) {
+    enc <- jsb64enc(c(as.raw(rep(0L, o)), raw))
+    keep <- 4L * ((o + length(raw)) %/% 3L)
+    substr(enc, if (o) 5L else 1L, keep)
+  }, "")
+  n <- nchar(key)
+  from <- seq_len(max(1L, n - 11L))
+  c(
+    utils::URLencode(key, reserved = TRUE),
+    paste(as.character(raw), collapse = ""),
+    b64,
+    chartr("+/", "-_", b64),
+    substring(key, from, if (n > 12L) from + 11L else n)
+  )
+}
+
+#' Says whether a server's text repeats a key in any form .bl_key_forms()
+#' knows.
+#' @param text The text.
+#' @param keys The keys sent (NULL, "" and NA are skipped).
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_key_echoed <- function(text, keys) {
+  flat <- function(x) tolower(gsub("[^[:alnum:]]+", "", x))
+  if (!is.character(text) || length(text) != 1L || is.na(text)) {
+    return(FALSE)
+  }
+  t <- flat(text)
+  for (k in keys) {
+    if (!is.character(k) || length(k) != 1L || is.na(k) || !nzchar(k)) {
+      next
+    }
+    f <- flat(.bl_key_forms(k))
+    f <- f[nzchar(f)]
+    if (any(vapply(f, grepl, NA, x = t, fixed = TRUE))) {
+      return(TRUE)
+    }
+  }
+  FALSE
 }
 
 #' The command name the user typed (the launchers set RMBL_PROG; rmbl and
@@ -2407,29 +2484,20 @@ llmstat <- function() {
   )
 }
 
-.bl_SUPERVISOR_ROLES <- c(
-  "supervisor",
-  "chair",
-  "director",
-  "coordinator",
-  "other"
-)
-
 #' Collects the profile a new key needs.
 #'
 #' Everything a new key needs said first: the terms accepted (y/N at the
-#' console, or accter = TRUE), the person's name and reason, and for Schedule B
-#' a supervisor, chair, director or coordinator. Arguments win; what is missing
+#' console, or accter = TRUE), the person's name and reason. The arguments for
+#' the restricted tables of older releases are ignored, with a warning: no
+#' table is served under further terms. Arguments win; what is missing
 #' is asked for; a missing required answer stops here, before any request that
 #' could issue a key. The data service checks the same things.
 #' @param accept_terms Whether the data access terms are accepted.
 #' @param name The person's name, or NULL to ask.
 #' @param affiliation The person's affiliation, or NULL to ask.
 #' @param purpose The reason for access, or NULL to ask.
-#' @param restricted Whether Schedule B tables are wanted, or NULL to ask.
-#' @param supervisor_name The supervisor's name, or NULL to ask.
-#' @param supervisor_role The supervisor's role, or NULL to ask.
-#' @param supervisor_email The supervisor's email, or NULL to ask.
+#' @param restricted,supervisor_name,supervisor_role,supervisor_email No
+#'   longer used; any given warns.
 #' @return A named list sent with the sign-in request.
 #' @noRd
 .bl_signin_profile <- function(
@@ -2442,6 +2510,12 @@ llmstat <- function() {
   supervisor_role = NULL,
   supervisor_email = NULL
 ) {
+  .bl_signin_unrestricted(
+    restricted,
+    supervisor_name,
+    supervisor_role,
+    supervisor_email
+  )
   terms <- .bl_terms_info()
   if (!isTRUE(accept_terms)) {
     .bl_signin_terms(terms)
@@ -2462,33 +2536,34 @@ llmstat <- function() {
       "purpose"
     )
   }
-  rs <- if (is.null(restricted)) {
-    tolower(.bl_readline(paste(
-      "Also open the restricted tables (ICPSR, NCVS 38604, A2AJ case law)",
-      "under Schedule B? [y/N]: "
-    ))) %in%
-      c("y", "yes")
-  } else {
-    isTRUE(restricted)
-  }
-  out <- list(
+  list(
     accept_terms = terms$version,
     name = nm,
     affiliation = if (nzchar(af)) af else NULL,
     purpose = pu,
-    accept_restricted = rs,
+    accept_restricted = FALSE,
     client = sprintf(
       "rmoriebricklayer/%s",
       utils::packageVersion("rmoriebricklayer")
     )
   )
-  if (rs) {
-    out <- c(
-      out,
-      .bl_signin_supervisor(supervisor_name, supervisor_role, supervisor_email)
+}
+
+#' Warns that the restricted-tables arguments are no longer used.
+#' @param ... The arguments as given (NULL or FALSE when not given).
+#' @return NULL, invisibly.
+#' @noRd
+.bl_signin_unrestricted <- function(...) {
+  given <- vapply(list(...), function(v) !is.null(v) && !isFALSE(v), NA)
+  if (any(given)) {
+    warning(
+      "no table is opened by accepting more terms any more (the tables whose ",
+      "source terms do not allow redistribution are not served): `restr` and ",
+      "the supervisor are ignored",
+      call. = FALSE
     )
   }
-  out
+  invisible(NULL)
 }
 
 #' Signs in with a one-time code sent by email and stores the key.
@@ -2521,9 +2596,11 @@ llmstat <- function() {
     .bl_reply_error(res, "the sign-in service")
   }
   key <- res$json$api_key
-  if (!is.character(key) || !nzchar(key)) {
+  if (!is.character(key) || !length(key)) {
     stop("the sign-in service returned no key", call. = FALSE)
   }
+  # the same check as the device flow's: no empty key, no line break
+  key <- .bl_login_key(key)
   p <- .bl_store_key(key, res$json$user)
   message(sprintf("Logged in; key stored in %s", p))
   invisible(key)
@@ -2958,51 +3035,6 @@ llmstat <- function() {
     )
   }
   invisible(NULL)
-}
-
-#' The supervisor a restricted-tables key needs: name, role and email.
-#' @param supervisor_name,supervisor_role,supervisor_email As given, or
-#'   `NULL` to ask.
-#' @return A list with the three, checked.
-#' @noRd
-.bl_signin_supervisor <- function(
-  supervisor_name,
-  supervisor_role,
-  supervisor_email
-) {
-  sn <- .bl_ask_given(
-    paste0(
-      "Your supervisor's, department chair's, director's or ",
-      "coordinator's name: "
-    ),
-    supervisor_name
-  )
-  if (!nzchar(sn)) {
-    .bl_need(
-      paste0(
-        "for the restricted tables, a supervisor's, chair's, director's ",
-        "or coordinator's name"
-      ),
-      "--supervisor-name",
-      "supervisor_name"
-    )
-  }
-  sr <- tolower(.bl_ask_given(
-    sprintf("Their role (%s): ", toString(.bl_SUPERVISOR_ROLES)),
-    supervisor_role
-  ))
-  if (!sr %in% .bl_SUPERVISOR_ROLES) {
-    .bl_need(
-      sprintf("their role, one of %s,", toString(.bl_SUPERVISOR_ROLES)),
-      "--supervisor-role",
-      "supervisor_role"
-    )
-  }
-  se <- tolower(.bl_ask_given("Their email: ", supervisor_email))
-  if (!grepl("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", se)) {
-    .bl_need("their email address", "--supervisor-email", "supervisor_email")
-  }
-  list(supervisor_name = sn, supervisor_role = sr, supervisor_email = se)
 }
 
 #' Asks the sign-in service to email a one-time code, and reads it.

@@ -41,7 +41,7 @@ test_that("data hub: key, manifest cache, table cache, CLI verbs", {
   expect_identical(t$rows, 3L)
   dtabs()
   expect_identical(sum(rec$calls == "/manifest.json"), 1L)
-  df <- dload("chicago_crime/incidents")
+  expect_nodigest(df <- dload("chicago_crime/incidents"))
   expect_named(df, c("id", "type"))
   expect_identical(nrow(df), 3L)
   dload("chicago_crime/incidents")
@@ -158,7 +158,8 @@ test_that(
       }
       invisible(dest)
     })
-    expect_identical(dload("demo/t", token = " sk-call-key ")$a, 1L)
+    expect_nodigest(got <- dload("demo/t", token = " sk-call-key "))
+    expect_identical(got$a, 1L)
     expect_true(all(rec$used == "sk-call-key"))
     expect_null(.bl_data_key())
     withr::local_envvar(MORIE_HOSTED_KEY = "sk-stored")
@@ -214,10 +215,10 @@ test_that(
     })
     expect_identical(nrow(dload("demo/big")), 5000L)
     expect_identical(nrow(dload("demo/big")), 5000L) # cached, verified again
-    expect_error(
+    expect_nodigest(expect_error(
       dload("demo/nodigest"),
       "decompresses to more than 10,000 bytes"
-    )
+    ))
     # the reader itself: no cap on either path once lim is Inf
     rd <- .bl_read_csv_gz
     expect_identical(nrow(rd(src, lim = Inf)), 5000L)
@@ -350,4 +351,160 @@ test_that("a gzip that inflates a thousandfold is refused under the byte cap", {
   out <- .bl_gunzip_capped(f)
   expect_gt(file.size(out), 70 * 2^20 - 1)
   unlink(out)
+})
+
+test_that("tables not served are not listed or requested (BL-M3)", {
+  withr::local_envvar(
+    XDG_CONFIG_HOME = withr::local_tempdir(),
+    MORIE_HOSTED_KEY = NA,
+    MORIE_DATA_URL = "https://data.example.test"
+  )
+  withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
+  served <- withr::local_tempfile(fileext = ".csv.gz")
+  con <- gzfile(served, "w")
+  writeLines(c("id,n", "1,2"), con)
+  close(con)
+  dig <- csha256(readBin(served, "raw", file.size(served)))
+  one <- function(k, ...) list(key = k, rows = 1, sha256_gz = dig, ...)
+  m <- list(datasets = list(
+    one("chicago_crime/incidents"),
+    one("icpsr_21600/ds0001"),
+    one("icpsr_34562/ds0002"),
+    one("ncvs_38604/incident"),
+    one("a2aj_onca/onca_decisions_meta"),
+    one("justice_open/t1", meta = list(access = "open")),
+    one("other/marked", meta = list(access = "restricted")),
+    one("other/flagged", restricted = TRUE),
+    one("other/public", access = "Public")
+  ))
+  rec <- new.env()
+  rec$calls <- character()
+  testthat::local_mocked_bindings(
+    .bl_data_get = function(path, dest, ...) {
+      rec$calls <- c(rec$calls, path)
+      if (path == "/manifest.json") {
+        writeLines(tojs(m, auto_unbox = TRUE), dest)
+      } else {
+        file.copy(served, dest, overwrite = TRUE)
+      }
+      invisible(dest)
+    }
+  )
+  keep <- c(
+    "chicago_crime/incidents",
+    "a2aj_onca/onca_decisions_meta",
+    "justice_open/t1",
+    "other/public"
+  )
+  mn <- dmnf()
+  expect_identical(vapply(mn$datasets, function(d) d$key, ""), keep)
+  expect_identical(attr(mn, "unserved"), 5L)
+  t <- dtabs()
+  expect_identical(t$key, keep)
+  expect_match(
+    paste(format(t), collapse = "\n"),
+    "5 tables are not served: their source terms do not allow redistribution",
+    fixed = TRUE
+  )
+  rec$buf <- character()
+  expect_identical(
+    blcli(c("data", "list"), out = function(s) rec$buf <- c(rec$buf, s)),
+    0L
+  )
+  expect_match(paste(rec$buf, collapse = ""), "5 tables are not served")
+  expect_false(grepl("icpsr|ncvs_38604", paste(rec$buf, collapse = "")))
+  # an ICPSR key stops before any request, the manifest's included
+  rec$calls <- character()
+  for (k in c("icpsr_21600/ds0001", "ncvs_38604/incident", "icpsr_1/new")) {
+    expect_error(
+      dload(k),
+      paste0(
+        k,
+        " is not served by data.rmorie.com: ICPSR's terms do not allow ",
+        "redistribution; download it from ICPSR"
+      ),
+      fixed = TRUE
+    )
+  }
+  expect_identical(rec$calls, character())
+  # a table the manifest marks: the manifest is read, the table never asked for
+  expect_error(
+    dload("other/marked"),
+    "other/marked is not served by data.rmorie.com: its source terms"
+  )
+  expect_error(dload("other/flagged", refresh = TRUE), "is not served")
+  expect_false(any(grepl("^/other/", rec$calls)))
+  # the CLI refuses the same way, with no request
+  expect_identical(
+    blcli(c("data", "pull", "icpsr_21600/ds0001"), out = function(s) NULL),
+    1L
+  )
+  expect_false(any(grepl("icpsr", rec$calls, fixed = TRUE)))
+  # A2AJ case law is an ordinary open table
+  expect_identical(nrow(dload("a2aj_onca/onca_decisions_meta")), 1L)
+  expect_true("/a2aj_onca/onca_decisions_meta.csv.gz" %in% rec$calls)
+  # the singular, and no note when nothing is left out
+  m$datasets <- m$datasets[1:2]
+  expect_match(
+    paste(format(dtabs(refresh = TRUE)), collapse = "\n"),
+    "1 table is not served: its source terms do not allow redistribution",
+    fixed = TRUE
+  )
+  m$datasets <- m$datasets[1L]
+  expect_false(grepl(
+    "not served",
+    paste(format(dtabs(refresh = TRUE)), collapse = "\n"),
+    fixed = TRUE
+  ))
+  m$datasets <- list(one("icpsr_21600/ds0001"))
+  expect_match(
+    .bl_format_data_tables(dtabs(refresh = TRUE)),
+    "no curated tables are listed .*\n1 table is not served"
+  )
+  # the knowledge tool for language models does not offer them either
+  expect_false(any(grepl("icpsr", .bl_kn_curated(), fixed = TRUE)))
+})
+
+test_that("sha256_gz is verified; no digest warns once (RD-H1 sibling)", {
+  withr::local_envvar(
+    XDG_CONFIG_HOME = withr::local_tempdir(),
+    MORIE_HOSTED_KEY = NA,
+    MORIE_DATA_URL = "https://data.example.test"
+  )
+  withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
+  served <- withr::local_tempfile(fileext = ".csv.gz")
+  con <- gzfile(served, "w")
+  writeLines(c("id,n", "1,2"), con)
+  close(con)
+  dig <- csha256(readBin(served, "raw", file.size(served)))
+  m <- list(datasets = list(
+    list(key = "statcan_health/t", sha256_gz = dig),
+    list(key = "statcan_health/nodigest")
+  ))
+  testthat::local_mocked_bindings(
+    .bl_data_get = function(path, dest, ...) {
+      if (path == "/manifest.json") {
+        writeLines(tojs(m, auto_unbox = TRUE), dest)
+      } else {
+        file.copy(served, dest, overwrite = TRUE)
+      }
+      invisible(dest)
+    }
+  )
+  expect_identical(dload("statcan_health/t")$n, 2L)
+  f <- file.path(.bl_data_cache_dir(), "statcan_health__t.csv.gz")
+  con <- gzfile(f, "w")
+  writeLines(c("id,n", "1,999999"), con)
+  close(con)
+  expect_error(
+    dload("statcan_health/t"),
+    paste0("does not match the manifest's SHA-256 .*", substr(dig, 1L, 12L))
+  )
+  expect_false(file.exists(f))
+  rm(list = ls(.bl_data_nodigest), envir = .bl_data_nodigest)
+  expect_warning(
+    dload("statcan_health/nodigest"),
+    "statcan_health/nodigest is listed .* without a SHA-256: it is used"
+  )
+  expect_no_warning(dload("statcan_health/nodigest"))
 })

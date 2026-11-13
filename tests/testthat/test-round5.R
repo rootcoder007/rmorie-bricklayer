@@ -471,15 +471,18 @@ test_that("the key hints name the command the user typed", {
   )
   # a manifest an earlier test cached in this process would answer without a key
   withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
-  # the tables need no key; a service that still asks for one (401) gets the
-  # hint, in the command the user typed. No network: the transport answers 401.
+  # the tables need no key: a service that asks for one (401) is not answered
+  # with a sign-in hint, and a rejected stored key is pointed to logout, in
+  # the command the user typed. No network: the transport answers 401.
   testthat::local_mocked_bindings(
     .bl_data_url = function() "https://data.example.org",
     bldl = function(...) {
       stop("bldl: https://data.example.org/x answered HTTP 401", call. = FALSE)
     }
   )
-  expect_error(dmnf(), "`rmbl login`", fixed = TRUE)
+  expect_error(dmnf(), "the tables need no sign-in", fixed = TRUE)
+  withr::local_envvar(MORIE_HOSTED_KEY = "sk-x", MORIE_DATA_URL = NA)
+  expect_error(dmnf(), "`rmbl logout`", fixed = TRUE)
 })
 
 test_that("a model the key does not have is named, not blamed on the key", {

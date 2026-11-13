@@ -479,7 +479,8 @@ test_that(
     con <- gzfile(f, "wb")
     writeLines("a,b\n1,2", con)
     close(con)
-    expect_true(.bl_data_check_sha("db/t", f))
+    expect_nodigest(ok <- .bl_data_check_sha("db/t", f))
+    expect_true(ok)
   }
 )
 

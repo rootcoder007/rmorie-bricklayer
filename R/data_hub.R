@@ -17,11 +17,9 @@
 #' public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 #' NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 #' tables from the edge, under the data access terms at
-#' \code{www.rmorie.com/data-license/}. They open with the key
-#' \code{\link{dlogin}} stores, the same key rmorie and morie
-#' use; keys are personal: sign in with GitHub or an emailed code, or ask at
-#' \code{www.rmorie.com/access/}. The service address comes from
-#' \code{\link{svcs}}.
+#' \code{www.rmorie.com/data-license/}. They need no sign-in and no key; a
+#' MORIE key stored earlier with \code{\link{dlogin}} is still sent. The
+#' service address comes from \code{\link{svcs}}.
 #' \code{dmnf()} returns the gateway's manifest
 #' (every table with rows, columns, size, SHA-256 and its BigQuery source),
 #' kept for a day; \code{dtabs()} the same as a data frame;
@@ -60,18 +58,25 @@
 #' (1 GiB by default). A large table needs memory for all of it: a 1 GB
 #' decompressed CSV takes a few GB of RAM as a data frame.
 #'
-#' The key is sent only to the address of the signed services document. With
-#' \code{MORIE_DATA_URL} set to another address the key is not sent and the
-#' download fails with a message saying so. Some tables (ICPSR studies, the NCVS
-#' 38604 extract, the A2AJ case law) open only after their terms are accepted on
-#' the terms page, \code{data.rmorie.com/terms}. Downloads draw a progress bar
-#' when \code{options(morie.progress)} allows it.
+#' A table the manifest lists without any digest is used with a warning, once
+#' per session and table.
 #'
-#' Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; no key stored (the
-#' message says how to sign in); the service unavailable, or the key rejected;
-#' a \code{key} that is not of the form \code{db/table}, or not listed in the
-#' manifest; a \code{token} that is not one non-empty string; a digest
-#' mismatch; a restricted table whose terms were not accepted.
+#' A stored key is sent only to the address of the signed services document;
+#' with \code{MORIE_DATA_URL} set to another address it is not sent, and a
+#' message says so. Tables whose source terms do not allow redistribution
+#' (ICPSR studies, among them the NCVS 38604 extract, and any table the
+#' manifest marks restricted, with \code{access} other than \code{"open"} or
+#' \code{"public"} or \code{restricted: true}) are not served:
+#' \code{dmnf()} and \code{dtabs()} leave them out (the listing counts them in
+#' one line), and \code{dload()} refuses them before any request, saying
+#' where to get them. Downloads draw a progress bar when
+#' \code{options(morie.progress)} allows it.
+#'
+#' Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; the service
+#' unavailable, or a stored key rejected; a \code{key} that is not of the
+#' form \code{db/table}, not listed in the manifest, or a table that is not
+#' served; a \code{token} that is not one non-empty string; a digest
+#' mismatch.
 #'
 #' @param refresh Logical scalar, default \code{FALSE}: fetch again even when a
 #'   day-old copy (of the manifest, or for \code{dload()} of the
@@ -82,7 +87,8 @@
 #'   in place of the one \code{\link{dlogin}} stored; \code{NULL} (the
 #'   default) uses the stored key. It is never printed or written to disk.
 #' @return \code{dmnf()}: the manifest as a list (element
-#'   \code{datasets}, one list per table with at least \code{key}, and as the
+#'   \code{datasets}, one list per table served with at least \code{key},
+#'   attribute \code{unserved} the number of tables left out; and as the
 #'   service provides them \code{rows}, \code{columns}, sizes, the SHA-256 of
 #'   the compressed file and the BigQuery \code{source});
 #'   \code{dtabs()}: a data frame with \code{key},
@@ -148,6 +154,92 @@
 #' df <- dload("chicago_crime/incidents")
 #' @export
 dmnf <- function(refresh = FALSE) {
+  .bl_data_served(.bl_dmnf_raw(refresh))
+}
+
+#' @rdname dmnf
+#' @export
+dtabs <- function(refresh = FALSE) {
+  m <- dmnf(refresh = refresh)
+  ds <- m$datasets
+  if (length(ds)) {
+    keys <- vapply(ds, function(d) d[["key"]], "")
+    names <- vapply(ds, .bl_data_name, "")
+    rows <- vapply(ds, function(d) as.integer(d[["rows"]] %||% NA), 1L)
+    sources <- vapply(ds, function(d) (d[["source"]] %||% "")[[1L]], "")
+    out <- .bl_data_tables_df(keys, names, rows, sources)
+  } else {
+    out <- .bl_data_tables_df(character(), character(), integer(), character())
+  }
+  attr(out, "unserved") <- attr(m, "unserved")
+  out
+}
+
+#' @export
+print.bricklayer_data_tables <- function(x, ...) {
+  if (!all(c("key", "name", "rows") %in% names(x))) {
+    return(NextMethod())
+  }
+  .rmbl_cat(format(x, ...), x)
+  invisible(x)
+}
+
+#' @export
+format.bricklayer_data_tables <- function(x, ...) {
+  if (!all(c("key", "name", "rows") %in% names(x))) {
+    return(utils::capture.output(print(as.data.frame(unclass(x)))))
+  }
+  txt <- .bl_format_data_tables(x, width = 72L)
+  lines <- strsplit(sub("\n+$", "", txt), "\n", fixed = TRUE)[[1L]]
+  .rmbl_stat_block(
+    "Curated tables at data.rmorie.com",
+    facts = list(Tables = nrow(x)),
+    notes = lines
+  )
+}
+
+#' @rdname dmnf
+#' @export
+dload <- function(key, refresh = FALSE, token = NULL) {
+  .bl_data_check_keyarg(key)
+  .bl_check_flag(refresh, "refresh")
+  # a table that is not served is refused before any request
+  if (.bl_data_restricted(key)) {
+    .bl_data_unserved_stop(key)
+  }
+  if (!is.null(token)) {
+    .bl_data_token$key <- trimws(.rmbl_string1(token, "token"))
+    on.exit(assign("key", NULL, envir = .bl_data_token), add = TRUE)
+  }
+  .bl_data_known(key)
+  dest <- file.path(
+    .bl_data_cache_dir(),
+    paste0(gsub("/", "__", key, fixed = TRUE), ".csv.gz")
+  )
+  cached <- !refresh && file.exists(dest)
+  if (!cached) {
+    .bl_data_get(.bl_data_path(key), dest)
+  }
+  how <- .bl_data_check_sha(key, dest, cached = cached)
+  # a file whose digest matches the manifest is the service's own, not a
+  # decompression bomb, so the size cap for untrusted CSVs does not apply:
+  # tables of 95 MB gzip and more inflate past 1 GiB and were refused
+  .bl_read_csv_gz(
+    dest,
+    lim = if (identical(attr(how, "verified"), "digest")) {
+      Inf
+    } else {
+      .rmbl_max_csv_bytes()
+    }
+  )
+}
+
+#' The manifest as the service sends it, the tables that are not served
+#' included (dmnf() leaves them out).
+#' @param refresh Whether to fetch it again.
+#' @return The manifest, a list.
+#' @noRd
+.bl_dmnf_raw <- function(refresh = FALSE) {
   .bl_check_flag(refresh, "refresh")
   p <- file.path(.bl_data_cache_dir(), "manifest.json")
   age <- if (file.exists(p)) {
@@ -184,75 +276,6 @@ dmnf <- function(refresh = FALSE) {
     return(m)
   }
   .rmbl_json_text(.bl_read_text_capped(p, 32 * 2^20), simplifyVector = FALSE)
-}
-
-#' @rdname dmnf
-#' @export
-dtabs <- function(refresh = FALSE) {
-  ds <- dmnf(refresh = refresh)$datasets
-  if (!length(ds)) {
-    return(.bl_data_tables_df(character(), character(), integer(), character()))
-  }
-  keys <- vapply(ds, function(d) d$key, "")
-  names <- vapply(ds, .bl_data_name, "")
-  rows <- vapply(ds, function(d) as.integer(d$rows %||% NA), 1L)
-  sources <- vapply(ds, function(d) (d$source %||% "")[[1L]], "")
-  .bl_data_tables_df(keys, names, rows, sources)
-}
-
-#' @export
-print.bricklayer_data_tables <- function(x, ...) {
-  if (!all(c("key", "name", "rows") %in% names(x))) {
-    return(NextMethod())
-  }
-  .rmbl_cat(format(x, ...), x)
-  invisible(x)
-}
-
-#' @export
-format.bricklayer_data_tables <- function(x, ...) {
-  if (!all(c("key", "name", "rows") %in% names(x))) {
-    return(utils::capture.output(print(as.data.frame(unclass(x)))))
-  }
-  txt <- .bl_format_data_tables(x, width = 72L)
-  lines <- strsplit(sub("\n+$", "", txt), "\n", fixed = TRUE)[[1L]]
-  .rmbl_stat_block(
-    "Curated tables at data.rmorie.com",
-    facts = list(Tables = nrow(x)),
-    notes = lines
-  )
-}
-
-#' @rdname dmnf
-#' @export
-dload <- function(key, refresh = FALSE, token = NULL) {
-  .bl_data_check_keyarg(key)
-  .bl_check_flag(refresh, "refresh")
-  if (!is.null(token)) {
-    .bl_data_token$key <- trimws(.rmbl_string1(token, "token"))
-    on.exit(assign("key", NULL, envir = .bl_data_token), add = TRUE)
-  }
-  .bl_data_known(key)
-  dest <- file.path(
-    .bl_data_cache_dir(),
-    paste0(gsub("/", "__", key, fixed = TRUE), ".csv.gz")
-  )
-  cached <- !refresh && file.exists(dest)
-  if (!cached) {
-    .bl_data_get(.bl_data_path(key), dest)
-  }
-  how <- .bl_data_check_sha(key, dest, cached = cached)
-  # a file whose digest matches the manifest is the service's own, not a
-  # decompression bomb, so the size cap for untrusted CSVs does not apply:
-  # tables of 95 MB gzip and more inflate past 1 GiB and were refused
-  .bl_read_csv_gz(
-    dest,
-    lim = if (identical(attr(how, "verified"), "digest")) {
-      Inf
-    } else {
-      .rmbl_max_csv_bytes()
-    }
-  )
 }
 
 #' Reads a gzip-compressed CSV as read.csv() reads it, faster.
@@ -483,16 +506,83 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   svc$base_url
 }
 
-#' Says whether a table's source licence asks more than attribution.
+#' The keys of the tables data.rmorie.com does not serve.
 #'
-#' The tables whose source licence asks more than attribution (ICPSR studies,
-#' the NCVS 38604 extract, the a2aj case law): data.rmorie.com opens them once
-#' the terms at /terms are accepted.
+#' Their source terms do not allow redistribution: the ICPSR studies, among
+#' them the NCVS 38604 extract. The one list in this package; dmnf() leaves
+#' them out and dload() refuses them before any request. The A2AJ case law is
+#' an open table.
+#' @noRd
+.bl_data_unserved_re <- "^(icpsr_|ncvs_38604)"
+
+#' Says whether a table key is one data.rmorie.com does not serve.
 #' @param key The table's key, with or without its db/ or files/ prefix.
 #' @return TRUE or FALSE for each key.
 #' @noRd
 .bl_data_restricted <- function(key) {
-  grepl("^(icpsr_|ncvs_38604|a2aj_)", sub("^(db|files)/", "", key))
+  grepl(.bl_data_unserved_re, sub("^(db|files)/", "", key))
+}
+
+#' Says whether a manifest entry is a table that is not served: its key is on
+#' the list, or the manifest marks it (`access` other than "open" or "public",
+#' or `restricted: true`, on the entry or in its `meta`).
+#' @param d One table's entry in the manifest.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_data_unserved <- function(d) {
+  k <- d[["key"]]
+  if (is.character(k) && length(k) == 1L && .bl_data_restricted(k)) {
+    return(TRUE)
+  }
+  for (x in list(d, d[["meta"]])) {
+    a <- if (is.list(x)) x[["access"]]
+    open <- !is.character(a) || length(a) != 1L ||
+      tolower(a) %in% c("open", "public")
+    if (!open || (is.list(x) && isTRUE(x[["restricted"]]))) {
+      return(TRUE)
+    }
+  }
+  FALSE
+}
+
+#' The manifest without the tables that are not served; attribute
+#' `unserved` counts them.
+#' @param m The manifest, as .bl_dmnf_raw() returns it.
+#' @return The manifest.
+#' @noRd
+.bl_data_served <- function(m) {
+  if (!is.list(m)) {
+    return(m)
+  }
+  ds <- m$datasets
+  off <- vapply(ds, function(d) is.list(d) && .bl_data_unserved(d), NA)
+  if (any(off)) {
+    m$datasets <- ds[!off]
+  }
+  attr(m, "unserved") <- sum(off)
+  m
+}
+
+#' Refuses a table that is not served, before any request.
+#' @param key The table's key.
+#' @noRd
+.bl_data_unserved_stop <- function(key) {
+  stop(
+    key,
+    " is not served by data.rmorie.com: ",
+    if (.bl_data_restricted(key)) {
+      paste(
+        "ICPSR's terms do not allow redistribution; download it from ICPSR",
+        "(https://www.icpsr.umich.edu)"
+      )
+    } else {
+      paste(
+        "its source terms do not allow redistribution; download it from its",
+        "source"
+      )
+    },
+    call. = FALSE
+  )
 }
 
 #' Returns the hosted key to send to the data service, or NULL.
@@ -939,10 +1029,32 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   # about the file, which is refused
   if (is.null(want)) {
     .bl_data_listed(key, dest, cached)
+    .bl_data_warn_nodigest(key)
     return(invisible(structure(TRUE, verified = "listed")))
   }
   .bl_data_digest_match(key, dest, want)
   invisible(structure(TRUE, verified = "digest"))
+}
+
+#' The tables already warned about this session for having no digest.
+#' @noRd
+.bl_data_nodigest <- new.env(parent = emptyenv())
+
+#' Warns, once per session and table, that a table the manifest lists without
+#' a digest is used unverified.
+#' @param key The table's key.
+#' @noRd
+.bl_data_warn_nodigest <- function(key) {
+  if (!isTRUE(.bl_data_nodigest[[key]])) {
+    assign(key, TRUE, envir = .bl_data_nodigest)
+    warning(
+      key,
+      " is listed in the manifest of data.rmorie.com without a SHA-256: ",
+      "it is used unverified",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }
 
 #' Builds the listing of curated tables.
@@ -981,7 +1093,10 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   hint = "dload(\"KEY\") loads one"
 ) {
   if (!nrow(tables)) {
-    return("no curated tables are listed at data.rmorie.com right now\n")
+    return(paste0(
+      "no curated tables are listed at data.rmorie.com right now\n",
+      .bl_data_unserved_note(tables)
+    ))
   }
   if (is.null(width)) {
     width <- suppressWarnings(as.integer(Sys.getenv("COLUMNS", "")))
@@ -1013,7 +1128,30 @@ dload <- function(key, refresh = FALSE, token = NULL) {
     "\n",
     paste(line(tables$key, rows, name), collapse = "\n"),
     "\n\n",
-    sprintf("%d tables; %s\n", nrow(tables), hint)
+    sprintf("%d tables; %s\n", nrow(tables), hint),
+    .bl_data_unserved_note(tables)
+  )
+}
+
+#' The line that counts the tables a listing leaves out, or "".
+#' @param tables The listing, with attribute `unserved`.
+#' @return One string.
+#' @noRd
+.bl_data_unserved_note <- function(tables) {
+  n <- attr(tables, "unserved")
+  if (!is.numeric(n) || length(n) != 1L || is.na(n) || n < 1) {
+    return("")
+  }
+  paste0(
+    sprintf(
+      ngettext(
+        n,
+        "%d table is not served: its source terms do not",
+        "%d tables are not served: their source terms do not"
+      ),
+      as.integer(n)
+    ),
+    " allow redistribution\n"
   )
 }
 
@@ -1033,8 +1171,9 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   invisible(key)
 }
 
-#' Refuses a key the manifest does not list; a manifest that cannot be read
-#' says nothing, and the download decides.
+#' Refuses a key the manifest does not list, or lists as a table that is not
+#' served; a manifest that cannot be read says nothing, and the download
+#' decides.
 #' @param key The table's key.
 #' @return `key`, invisibly.
 #' @noRd
@@ -1045,6 +1184,10 @@ dload <- function(key, refresh = FALSE, token = NULL) {
   )
   # an empty list is an answer too: no table is listed, so none is loaded
   if (!is.null(known) && !key %in% known) {
+    # left out because it is not served: said so, before any request
+    if (.bl_data_marked(key)) {
+      .bl_data_unserved_stop(key)
+    }
     stop(
       sprintf(
         "no table %s at data.rmorie.com (`%s data list` shows them)",
@@ -1055,6 +1198,30 @@ dload <- function(key, refresh = FALSE, token = NULL) {
     )
   }
   invisible(key)
+}
+
+#' Says whether the manifest copy on disk lists a table as one that is not
+#' served (marked restricted). Nothing is fetched: dmnf() has just refreshed
+#' the copy when it was stale.
+#' @param key The table's key.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_data_marked <- function(key) {
+  p <- file.path(.bl_data_cache_dir(), "manifest.json")
+  m <- if (file.exists(p)) {
+    tryCatch(
+      .rmbl_json_text(
+        .bl_read_text_capped(p, 32 * 2^20),
+        simplifyVector = FALSE
+      ),
+      error = function(e) NULL
+    )
+  }
+  ds <- if (is.list(m) && is.list(m$datasets)) m$datasets else list()
+  hit <- function(d) {
+    is.list(d) && identical(d[["key"]], key) && .bl_data_unserved(d)
+  }
+  any(vapply(ds, hit, NA))
 }
 
 #' The path of a table's file on the curated-data service.
@@ -1205,38 +1372,23 @@ dload <- function(key, refresh = FALSE, token = NULL) {
       call. = FALSE
     )
   }
-  if (grepl("403|Forbidden", msg) && .bl_data_restricted(label)) {
+  if (grepl("401|403|Unauthorized|Forbidden", msg) && !keyed) {
     stop(
       sprintf(
         paste(
-          "%s is a restricted table (its source asks more than a",
-          "citation): read and accept",
-          "the terms at https://data.rmorie.com/terms, signed in with",
-          "your key, then ask again"
+          "data.rmorie.com asked for a key for %s: the tables need no",
+          "sign-in; update the package, or try again later"
         ),
         label
       ),
       call. = FALSE
     )
   }
-  if (grepl("401|403|Unauthorized|Forbidden", msg) && !keyed) {
-    stop(
-      sprintf(
-        paste(
-          "data.rmorie.com asked for a key for %s: run dlogin() (or",
-          "`%s login`) once, or update the package"
-        ),
-        label,
-        .bl_prog()
-      ),
-      call. = FALSE
-    )
-  }
   if (grepl("401|403|Unauthorized|Forbidden", msg)) {
     stop(
-      "the curated-data service rejected the stored key; ",
+      "the curated-data service rejected the stored key; the tables need ",
       sprintf(
-        "run dlogin() again (or `%s login --token` and paste the key).",
+        "no key: remove it with dlogout() (or `%s logout`).",
         .bl_prog()
       ),
       call. = FALSE

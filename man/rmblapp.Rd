@@ -24,7 +24,7 @@ A shiny app object; printing it (or
 A local web app over the package's analyses: every tab opens on a
 demonstration dataset (\code{\link[=rmbldemo]{rmbldemo()}}) with its first analysis
 already run, and you can load a CSV file, the pinned data of a capsule, or a
-table from data.rmorie.com (after \verb{rmbl login}) instead. Everything runs on
+table from data.rmorie.com (no sign-in) instead. Everything runs on
 this machine in this R session; nothing is sent anywhere except the
 data.rmorie.com requests you make.
 }
@@ -109,9 +109,9 @@ and any figure of Frost's The Theory of Search through
 one self-contained HTML page (plots as inline SVG, year-over-year tables as
 \code{\link[=yoyhtml]{yoyhtml()}} draws them), as Markdown, or as a GitHub comment to
 copy.} \item{Settings}{light, dark or the system's theme (also the switch in
-the navbar), digits, and the seed of the seeded analyses.} } The data key of
-data.rmorie.com is never held by the app: \code{\link[=dload]{dload()}} reads it from
-where \verb{rmbl login} stored it.
+the navbar), digits, and the seed of the seeded analyses.} } The tables of
+data.rmorie.com need no key; a data key stored with \verb{rmbl login} is never
+held by the app: \code{\link[=dload]{dload()}} reads it from where it is stored.
 
 The dashboard needs the shiny package (Suggests), and with it bslib, which
 shiny installs; without shiny \code{rmblapp()} refuses.

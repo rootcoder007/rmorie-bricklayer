@@ -35,6 +35,8 @@ rate \eqn{r}, pass \code{x * r}.
 (\code{"shape must be a single positive number"}). A negative \code{x} gives 0,
 a missing \code{x} gives \code{NA}, and \code{Inf} gives 1, as in
 \code{\link[stats:pgamma]{stats::pgamma()}}.
+\code{shape = Inf} gives the limit, 0 for every finite \code{x} and 1 for \code{Inf}, as
+\code{pgamma()} does.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

@@ -186,7 +186,7 @@ base has no percent change but still an interval (with an infinite upper
 end).
 
 \code{verdict} is \code{"up"}, \code{"down"} or \code{"unchanged"} for
-\code{direction = "neutral"}, and \code{"better"}, \code{"worse"} or
+\code{dir = "neutral"}, and \code{"better"}, \code{"worse"} or
 \code{"unchanged"} otherwise; it reads
 the sign of the change only and makes no claim of significance.
 
