@@ -145,7 +145,7 @@ plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop",
            family = "negbin")
 #> Warning: no overdispersion: theta is at its bound, the Poisson model fits
 #> ╭── Fixed-effects count model ────────────────────────────────────────────╮
-#> │   Model          negative binomial (theta 3187000)                      │
+#> │   Model          negative binomial (theta 3229000)                      │
 #> │   Fixed effects  unit and period                                        │
 #> │   Observations   720                                                    │
 #> │   Clusters       20                                                     │

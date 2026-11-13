@@ -126,6 +126,199 @@
         </dt>
         <dd>Start a capsule from a template</dd>
       </dl></div><div class="section level2">
+      <h2 id="evaluating-a-policy">Evaluating a policy<a class="anchor" aria-label="anchor" href="#evaluating-a-policy"></a></h2>
+
+      <div class="section-desc"><p>Difference in differences with two-way fixed effects, event studies, staggered adoption (Callaway and Sant’Anna; Wooldridge), the Goodman-Bacon decomposition, switching treatments, permutation inference and Westfall-Young stepdown p-values, fixed-effects Poisson, synthetic control; severity-weighted crime indices, justice-pipeline rates, cumulative risk of a first event, and place-based buffers.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="plndid.html">plndid()</a></code>
+
+        </dt>
+        <dd>Difference in differences with two-way fixed effects</dd>
+
+        <dt>
+
+          <code><a href="evstudy.html">evstudy()</a></code>
+
+        </dt>
+        <dd>An event study: the effect period by period around adoption</dd>
+
+        <dt>
+
+          <code><a href="stgatt.html">stgatt()</a></code>
+
+        </dt>
+        <dd>Effects of a policy adopted at different times</dd>
+
+        <dt>
+
+          <code><a href="bacondcmp.html">bacondcmp()</a></code>
+
+        </dt>
+        <dd>The Goodman-Bacon decomposition of a two-way fixed-effects estimate</dd>
+
+        <dt>
+
+          <code><a href="swtdid.html">swtdid()</a></code>
+
+        </dt>
+        <dd>Difference in differences for treatments that switch on and off</dd>
+
+        <dt>
+
+          <code><a href="perminf.html">perminf()</a></code>
+
+        </dt>
+        <dd>Permutation inference for a policy's adoption</dd>
+
+        <dt>
+
+          <code><a href="stpdnpv.html">stpdnpv()</a></code>
+
+        </dt>
+        <dd>Westfall-Young stepdown p-values</dd>
+
+        <dt>
+
+          <code><a href="plnpois.html">plnpois()</a></code>
+
+        </dt>
+        <dd>A fixed-effects Poisson or negative binomial regression for counts</dd>
+
+        <dt>
+
+          <code><a href="synctl.html">synctl()</a></code>
+
+        </dt>
+        <dd>Synthetic control for one treated unit</dd>
+
+        <dt>
+
+          <code><a href="sevidx.html">sevidx()</a></code>
+
+        </dt>
+        <dd>A severity-weighted crime index</dd>
+
+        <dt>
+
+          <code><a href="piperate.html">piperate()</a></code>
+
+        </dt>
+        <dd>Justice-pipeline rates with a lag between stages</dd>
+
+        <dt>
+
+          <code><a href="cmlrisk.html">cmlrisk()</a></code>
+
+        </dt>
+        <dd>Cumulative risk of a first event by age</dd>
+
+        <dt>
+
+          <code><a href="bufasgn.html">bufasgn()</a></code>
+
+        </dt>
+        <dd>Treated, comparison and excluded places around sites</dd>
+
+        <dt>
+
+          <code><a href="polex.html">polex()</a></code>
+
+        </dt>
+        <dd>A simulated policy panel for the examples</dd>
+
+        <dt>
+
+          <code><a href="plotevgrid.html">plotevgrid()</a></code>
+
+        </dt>
+        <dd>Event studies for several outcomes in one grid</dd>
+
+        <dt>
+
+          <code><a href="loounit.html">loounit()</a></code>
+
+        </dt>
+        <dd>Leave-one-out estimates of a difference in differences</dd>
+
+        <dt>
+
+          <code><a href="cohtrnd.html">cohtrnd()</a></code>
+
+        </dt>
+        <dd>Raw outcome trends by adoption cohort</dd>
+      </dl></div><div class="section level2">
+      <h2 id="causal-estimation-on-panels">Causal estimation on panels<a class="anchor" aria-label="anchor" href="#causal-estimation-on-panels"></a></h2>
+
+      <div class="section-desc"><p>Double machine learning with fixed effects (lasso, ridge or any learner, cross-fitted by unit), matching on pre-treatment trajectories, synthetic difference in differences, the wild cluster bootstrap for few clusters, sensitivity to departures from parallel trends, and design-based power.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="plndml.html">plndml()</a></code>
+
+        </dt>
+        <dd>Double machine learning for panels with fixed effects</dd>
+
+        <dt>
+
+          <code><a href="aipwcf.html">aipwcf()</a></code>
+
+        </dt>
+        <dd>Cross-fitted augmented inverse probability weighting for a binary treatment</dd>
+
+        <dt>
+
+          <code><a href="mtchdid.html">mtchdid()</a></code>
+
+        </dt>
+        <dd>Difference in differences after matching on pre-treatment trajectories</dd>
+
+        <dt>
+
+          <code><a href="baltab.html">baltab()</a></code>
+
+        </dt>
+        <dd>A covariate balance table</dd>
+
+        <dt>
+
+          <code><a href="syndid.html">syndid()</a></code>
+
+        </dt>
+        <dd>Synthetic difference in differences</dd>
+
+        <dt>
+
+          <code><a href="wcb.html">wcb()</a></code>
+
+        </dt>
+        <dd>The wild cluster bootstrap for a difference in differences with few clusters</dd>
+
+        <dt>
+
+          <code><a href="tse.html">tse()</a></code>
+
+        </dt>
+        <dd>How far parallel trends can fail before an effect disappears</dd>
+
+        <dt>
+
+          <code><a href="plnpwr.html">plnpwr()</a></code>
+
+        </dt>
+        <dd>Power and minimum detectable effect of a difference-in-differences design</dd>
+      </dl></div><div class="section level2">
       <h2 id="fetch-open-data">Fetch open data<a class="anchor" aria-label="anchor" href="#fetch-open-data"></a></h2>
 
       <div class="section-desc"><p>Resilient downloaders with libcurl + Wayback fallback for pulling public datasets over flaky endpoints.</p></div>
@@ -2009,199 +2202,6 @@
 
         </dt>
         <dd>The figures of The Theory of Search</dd>
-      </dl></div><div class="section level2">
-      <h2 id="evaluating-a-policy">Evaluating a policy<a class="anchor" aria-label="anchor" href="#evaluating-a-policy"></a></h2>
-
-      <div class="section-desc"><p>Difference in differences with two-way fixed effects, event studies, staggered adoption (Callaway and Sant’Anna; Wooldridge), the Goodman-Bacon decomposition, switching treatments, permutation inference and Westfall-Young stepdown p-values, fixed-effects Poisson, synthetic control; severity-weighted crime indices, justice-pipeline rates, cumulative risk of a first event, and place-based buffers.</p></div>
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="plndid.html">plndid()</a></code>
-
-        </dt>
-        <dd>Difference in differences with two-way fixed effects</dd>
-
-        <dt>
-
-          <code><a href="evstudy.html">evstudy()</a></code>
-
-        </dt>
-        <dd>An event study: the effect period by period around adoption</dd>
-
-        <dt>
-
-          <code><a href="stgatt.html">stgatt()</a></code>
-
-        </dt>
-        <dd>Effects of a policy adopted at different times</dd>
-
-        <dt>
-
-          <code><a href="bacondcmp.html">bacondcmp()</a></code>
-
-        </dt>
-        <dd>The Goodman-Bacon decomposition of a two-way fixed-effects estimate</dd>
-
-        <dt>
-
-          <code><a href="swtdid.html">swtdid()</a></code>
-
-        </dt>
-        <dd>Difference in differences for treatments that switch on and off</dd>
-
-        <dt>
-
-          <code><a href="perminf.html">perminf()</a></code>
-
-        </dt>
-        <dd>Permutation inference for a policy's adoption</dd>
-
-        <dt>
-
-          <code><a href="stpdnpv.html">stpdnpv()</a></code>
-
-        </dt>
-        <dd>Westfall-Young stepdown p-values</dd>
-
-        <dt>
-
-          <code><a href="plnpois.html">plnpois()</a></code>
-
-        </dt>
-        <dd>A fixed-effects Poisson or negative binomial regression for counts</dd>
-
-        <dt>
-
-          <code><a href="synctl.html">synctl()</a></code>
-
-        </dt>
-        <dd>Synthetic control for one treated unit</dd>
-
-        <dt>
-
-          <code><a href="sevidx.html">sevidx()</a></code>
-
-        </dt>
-        <dd>A severity-weighted crime index</dd>
-
-        <dt>
-
-          <code><a href="piperate.html">piperate()</a></code>
-
-        </dt>
-        <dd>Justice-pipeline rates with a lag between stages</dd>
-
-        <dt>
-
-          <code><a href="cmlrisk.html">cmlrisk()</a></code>
-
-        </dt>
-        <dd>Cumulative risk of a first event by age</dd>
-
-        <dt>
-
-          <code><a href="bufasgn.html">bufasgn()</a></code>
-
-        </dt>
-        <dd>Treated, comparison and excluded places around sites</dd>
-
-        <dt>
-
-          <code><a href="polex.html">polex()</a></code>
-
-        </dt>
-        <dd>A simulated policy panel for the examples</dd>
-
-        <dt>
-
-          <code><a href="plotevgrid.html">plotevgrid()</a></code>
-
-        </dt>
-        <dd>Event studies for several outcomes in one grid</dd>
-
-        <dt>
-
-          <code><a href="loounit.html">loounit()</a></code>
-
-        </dt>
-        <dd>Leave-one-out estimates of a difference in differences</dd>
-
-        <dt>
-
-          <code><a href="cohtrnd.html">cohtrnd()</a></code>
-
-        </dt>
-        <dd>Raw outcome trends by adoption cohort</dd>
-      </dl></div><div class="section level2">
-      <h2 id="causal-estimation-on-panels">Causal estimation on panels<a class="anchor" aria-label="anchor" href="#causal-estimation-on-panels"></a></h2>
-
-      <div class="section-desc"><p>Double machine learning with fixed effects (lasso, ridge or any learner, cross-fitted by unit), matching on pre-treatment trajectories, synthetic difference in differences, the wild cluster bootstrap for few clusters, sensitivity to departures from parallel trends, and design-based power.</p></div>
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="plndml.html">plndml()</a></code>
-
-        </dt>
-        <dd>Double machine learning for panels with fixed effects</dd>
-
-        <dt>
-
-          <code><a href="aipwcf.html">aipwcf()</a></code>
-
-        </dt>
-        <dd>Cross-fitted augmented inverse probability weighting for a binary treatment</dd>
-
-        <dt>
-
-          <code><a href="mtchdid.html">mtchdid()</a></code>
-
-        </dt>
-        <dd>Difference in differences after matching on pre-treatment trajectories</dd>
-
-        <dt>
-
-          <code><a href="baltab.html">baltab()</a></code>
-
-        </dt>
-        <dd>A covariate balance table</dd>
-
-        <dt>
-
-          <code><a href="syndid.html">syndid()</a></code>
-
-        </dt>
-        <dd>Synthetic difference in differences</dd>
-
-        <dt>
-
-          <code><a href="wcb.html">wcb()</a></code>
-
-        </dt>
-        <dd>The wild cluster bootstrap for a difference in differences with few clusters</dd>
-
-        <dt>
-
-          <code><a href="tse.html">tse()</a></code>
-
-        </dt>
-        <dd>How far parallel trends can fail before an effect disappears</dd>
-
-        <dt>
-
-          <code><a href="plnpwr.html">plnpwr()</a></code>
-
-        </dt>
-        <dd>Power and minimum detectable effect of a difference-in-differences design</dd>
       </dl></div><div class="section level2">
       <h2 id="first-nations-m-tis-and-inuit-health">First Nations, Métis and Inuit health<a class="anchor" aria-label="anchor" href="#first-nations-m-tis-and-inuit-health"></a></h2>
 

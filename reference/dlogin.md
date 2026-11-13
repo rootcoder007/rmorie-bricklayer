@@ -3,10 +3,11 @@
 Stores your personal MORIE data key in
 `$XDG_CONFIG_HOME/morie/credentials.json` (owner-only; the file the
 `morie`, `rmorie` and `rmoriedata` packages read too, so one sign-in
-serves all of them). The key opens the curated tables
-([`dload`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md));
-it is not used for language models, which run on your own key or a local
-model
+serves all of them). The curated tables
+([`dload`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md))
+need no key and no sign-in; a stored key is still sent to the data
+service. It is not used for language models, which run on your own key
+or a local model
 ([`llmask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.md)).
 Keys are personal: the GitHub or emailed-code sign-in issues one, or ask
 at `www.rmorie.com/access/`. The sign-in addresses come from
@@ -97,19 +98,12 @@ dlogin(
   Character scalar or `NULL`: why you need the data, a sentence or two
   (asked for when `NULL`). Required for a new key.
 
-- restr:
+- restr, supnm, suprole, supemail:
 
-  Logical scalar or `NULL`: `TRUE` also accepts Schedule B of the terms,
-  which opens the restricted tables (ICPSR, NCVS 38604, A2AJ case law);
-  `NULL` asks at the console.
-
-- supnm, suprole, supemail:
-
-  Character scalars or `NULL`: the supervisor, department chair,
-  director or coordinator who knows of your use, their role and their
-  email. Required with `restricted = TRUE`; asked for when `NULL`. The
-  role is one of `"supervisor"`, `"chair"`, `"director"`,
-  `"coordinator"` or `"other"`.
+  No longer used, kept so that older scripts run: no table is opened by
+  accepting more terms (the tables whose source terms do not allow
+  redistribution are not served at all). Giving any of them warns, and
+  it is ignored.
 
 ## Value
 

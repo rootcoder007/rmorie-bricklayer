@@ -155,8 +155,8 @@ system dependency.</p>
 <span><span class="va">signingkey</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Signing key (post-quantum)</span> ───────────────────────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   scheme     xmss-sha256                                                    │</span></span>
-<span><span class="co">#&gt; │   root       3c561bfb7c05e259786c3ebf7d0cde990e0b528cc6d2bf85263c3dd00e35b4 │</span></span>
-<span><span class="co">#&gt; │              35                                                             │</span></span>
+<span><span class="co">#&gt; │   root       d7ee0976316d68ed3dab6334ad450a84c6ed72cfe9ea9540d1233e46d8583f │</span></span>
+<span><span class="co">#&gt; │              ec                                                             │</span></span>
 <span><span class="co">#&gt; │   height     3                                                              │</span></span>
 <span><span class="co">#&gt; │   used       0 of 8 signatures                                              │</span></span>
 <span><span class="co">#&gt; │   remaining  8                                                              │</span></span>
@@ -169,7 +169,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Public verification key</span> ─────────────────────────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   scheme  xmss-sha256                                                      │</span></span>
-<span><span class="co">#&gt; │   root    3c561bfb7c05e259786c3ebf7d0cde990e0b528cc6d2bf85263c3dd00e35b435 │</span></span>
+<span><span class="co">#&gt; │   root    d7ee0976316d68ed3dab6334ad450a84c6ed72cfe9ea9540d1233e46d8583fec │</span></span>
 <span><span class="co">#&gt; │   height  3                                                                │</span></span>
 <span><span class="co">#&gt; ╰────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -453,7 +453,7 @@ failures:</p>
 <span></span>
 <span><span class="co"># a declared outcome that was not reported</span></span>
 <span><span class="fu"><a href="../reference/prrgdecl.html">prrgchk</a></span><span class="op">(</span><span class="va">plan</span>, <span class="st">"n_rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-11-12T20:30:03Z: departures below</span> ──╮</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-11-13T04:04:17Z: departures below</span> ──╮</span></span>
 <span><span class="co">#&gt; │ <span style="color: #BB0000;">✖ NOT VERIFIED</span>                                                        │</span></span>
 <span><span class="co">#&gt; │                                                                       │</span></span>
 <span><span class="co">#&gt; │   Declared  2                                                         │</span></span>
@@ -471,7 +471,7 @@ failures:</p>
 <span></span>
 <span><span class="co"># statistics reported that were never declared</span></span>
 <span><span class="fu"><a href="../reference/prrgdecl.html">prrgchk</a></span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"n_rows"</span>, <span class="st">"byyear"</span>, <span class="st">"byprecinct"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-11-12T20:30:03Z: departures below</span> ──╮</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-11-13T04:04:17Z: departures below</span> ──╮</span></span>
 <span><span class="co">#&gt; │ <span style="color: #BB0000;">✖ NOT VERIFIED</span>                                                        │</span></span>
 <span><span class="co">#&gt; │                                                                       │</span></span>
 <span><span class="co">#&gt; │   Declared  2                                                         │</span></span>
@@ -672,7 +672,7 @@ rewritten to match whatever the files now say.</p>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    no_unlisted_files                                                    │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    attestation:attestation_complete                                     │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    attestation:manifest_digest                                          │</span></span>
-<span><span class="co">#&gt; │        8459884b97a47c5d61efacad98a2365482f75e4514efed2419ec069d590432a4     │</span></span>
+<span><span class="co">#&gt; │        101da2a17e9a1727ca7433daba060b36bbf78d9dc4663428f17c5b4281783069     │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    attestation:signature                                                │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    manifest_digest                                                      │</span></span>
 <span><span class="co">#&gt; │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │</span></span>
@@ -702,7 +702,7 @@ tried before the analysis is written.</p>
 <span>                contact <span class="op">=</span> <span class="st">"a.researcher@example.org"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">p</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Bundle project</span> ───────────────────────────────────────────────────────────╮</span></span>
-<span><span class="co">#&gt; │   Folder  /tmp/RtmpJy6sb1/my-study                                          │</span></span>
+<span><span class="co">#&gt; │   Folder  /tmp/Rtmpcja7fE/my-study                                          │</span></span>
 <span><span class="co">#&gt; │   Files   config.json, data_provenance.json, analysis.R                     │</span></span>
 <span><span class="co">#&gt; │                                                                             │</span></span>
 <span><span class="co">#&gt; │   Edit config.json (who and what), data_provenance.json (the data file,     │</span></span>
@@ -741,12 +741,12 @@ is in the bundle, so it cannot stop on the reviewer’s machine with
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Reproducibility bundle</span> ───────────────────────────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   Project    my-study                                                       │</span></span>
 <span><span class="co">#&gt; │   Zip        my-study_v1_with_data.zip                                      │</span></span>
-<span><span class="co">#&gt; │   Folder     /tmp/RtmpJy6sb1                                                │</span></span>
-<span><span class="co">#&gt; │   Size       207.5 KB                                                       │</span></span>
+<span><span class="co">#&gt; │   Folder     /tmp/Rtmpcja7fE                                                │</span></span>
+<span><span class="co">#&gt; │   Size       207.6 KB                                                       │</span></span>
 <span><span class="co">#&gt; │   Files      28                                                             │</span></span>
 <span><span class="co">#&gt; │   Data file  inside                                                         │</span></span>
-<span><span class="co">#&gt; │   SHA-256    8d70f5384b8b7d5e1994bb92b45bfa60d58d25d434bfa5c454747fcc105df9 │</span></span>
-<span><span class="co">#&gt; │              04                                                             │</span></span>
+<span><span class="co">#&gt; │   SHA-256    e723fee763f64c12529a47e659931326ea0ddc42d4055928b2f8baa565f27c │</span></span>
+<span><span class="co">#&gt; │              1e                                                             │</span></span>
 <span><span class="co">#&gt; │                                                                             │</span></span>
 <span><span class="co">#&gt; │   Recipients unzip it and double-click START_HERE.command (macOS) or        │</span></span>
 <span><span class="co">#&gt; │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │</span></span>
@@ -959,8 +959,8 @@ file:</p>
 <div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"COPYRIGHTS"</span>, package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">cr</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"indigenouslifeexpectancy"</span>, <span class="va">cr</span>, fixed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div>
-<p>With a data key (<code><a href="../reference/dlogin.html">dlogin()</a></code>), <code><a href="../reference/indtabs.html">indtabs()</a></code> lists
-the mirrored tables themselves:</p>
+<p>With the network (no sign-in), <code><a href="../reference/indtabs.html">indtabs()</a></code> lists the
+mirrored tables themselves:</p>
 <div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/indtabs.html">indtabs</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"key"</span>, <span class="st">"rows"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <p><code><a href="../reference/indtabs.html">indtabs()</a></code> lists the Statistics Canada tables on

@@ -159,7 +159,7 @@ starts a project.
 proj <- file.path(tempdir(), "audit-demo")
 mkbndlproj(proj, title = "Demo analysis")
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmprtFVRz/audit-demo                                        │
+#> │   Folder  /tmp/Rtmpu7ZjBP/audit-demo                                        │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -174,21 +174,18 @@ a
 #> ╭── Bundle audit: VERIFIED ───────────────────────────────────────────────────╮
 #> │ ✔ VERIFIED  · 7 of 7 checks passed                                          │
 #> │                                                                             │
-#> │   Bundle      audit-demo_v1.zip                                             │
-#> │   Input mode  synthetic                                                     │
-#> │   Isolation   process group                                                 │
-#> │   Checks      2                                                             │
-#> │   ✔           0                                                             │
-#> │   DIFFER      0                                                             │
-#> │   INFO        2                                                             │
+#> │   Bundle              audit-demo_v1.zip                                     │
+#> │   Input mode          synthetic                                             │
+#> │   Isolation           process group                                         │
+#> │   Results in the run  2 (0 PASS, 0 DIFFER, 2 INFO)                          │
 #> │                                                                             │
 #> │   Every check passed: the bundle runs as a recipient's copy will and is     │
 #> │   safe to ship.                                                             │
 #> │                                                                             │
 #> │   ✔    run finished                  exit status 0                          │
 #> │   ✔    manifest written                                                     │
-#> │        /tmp/RtmprtFVRz/bndlchk1f856b714710/audit-demo_v1/results_20261112-2 │
-#> │        02727/manifest.json                                                  │
+#> │        /tmp/Rtmpu7ZjBP/bndlchk1e63456c1b4/audit-demo_v1/results_20261113-04 │
+#> │        0240/manifest.json                                                   │
 #> │   ✔    no cross-check differs        0 DIFFER                               │
 #> │   ✔    counts match config.json      not compared: a synthetic run          │
 #> │   ✔    launchers executable          2 launcher(s)                          │

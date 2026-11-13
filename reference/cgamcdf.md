@@ -42,6 +42,8 @@ rate \\r\\, pass `x * r`.
 (`"shape must be a single positive number"`). A negative `x` gives 0, a
 missing `x` gives `NA`, and `Inf` gives 1, as in
 [`stats::pgamma()`](https://rdrr.io/r/stats/GammaDist.html).
+`shape = Inf` gives the limit, 0 for every finite `x` and 1 for `Inf`,
+as [`pgamma()`](https://rdrr.io/r/stats/GammaDist.html) does.
 
 ## See also
 

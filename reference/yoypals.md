@@ -46,7 +46,7 @@ Three palettes are defined:
 
 Unchanged rows and rows without a comparison use grey (`#6b6b6b`). The
 verdict-to-colour mapping is: `"worse"` uses the bad colour and
-`"better"` the good colour. With `direction = "neutral"` in
+`"better"` the good colour. With `dir = "neutral"` in
 [`yoychg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
 the verdicts are `"up"`/`"down"`, which say nothing about good or bad
 news, so those rows use the grey as well; the arrow still shows the

@@ -4,11 +4,10 @@ The MORIE project keeps databases materialised from Google BigQuery
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-`www.rmorie.com/data-license/`. They open with the key
+`www.rmorie.com/data-license/`. They need no sign-in and no key; a MORIE
+key stored earlier with
 [`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
-stores, the same key rmorie and morie use; keys are personal: sign in
-with GitHub or an emailed code, or ask at `www.rmorie.com/access/`. The
-service address comes from
+is still sent. The service address comes from
 [`svcs`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svcs.md).
 `dmnf()` returns the gateway's manifest (every table with rows, columns,
 size, SHA-256 and its BigQuery source), kept for a day; `dtabs()` the
@@ -50,12 +49,13 @@ dload(key, refresh = FALSE, token = NULL)
 ## Value
 
 `dmnf()`: the manifest as a list (element `datasets`, one list per table
-with at least `key`, and as the service provides them `rows`, `columns`,
-sizes, the SHA-256 of the compressed file and the BigQuery `source`);
-`dtabs()`: a data frame with `key`, `name` (the description, else the
-source, else the key), integer `rows` and `source` (class `dtabs`, which
-prints one left-aligned line per table, cut to the console width);
-`dload()`: the table as a data frame.
+served with at least `key`, attribute `unserved` the number of tables
+left out; and as the service provides them `rows`, `columns`, sizes, the
+SHA-256 of the compressed file and the BigQuery `source`); `dtabs()`: a
+data frame with `key`, `name` (the description, else the source, else
+the key), integer `rows` and `source` (class `dtabs`, which prints one
+left-aligned line per table, cut to the console width); `dload()`: the
+table as a data frame.
 
 ## Details
 
@@ -89,18 +89,23 @@ manifest lists without a digest may decompress to at most the option
 memory for all of it: a 1 GB decompressed CSV takes a few GB of RAM as a
 data frame.
 
-The key is sent only to the address of the signed services document.
-With `MORIE_DATA_URL` set to another address the key is not sent and the
-download fails with a message saying so. Some tables (ICPSR studies, the
-NCVS 38604 extract, the A2AJ case law) open only after their terms are
-accepted on the terms page, `data.rmorie.com/terms`. Downloads draw a
-progress bar when `options(morie.progress)` allows it.
+A table the manifest lists without any digest is used with a warning,
+once per session and table.
 
-Errors: `refresh` not `TRUE` or `FALSE`; no key stored (the message says
-how to sign in); the service unavailable, or the key rejected; a `key`
-that is not of the form `db/table`, or not listed in the manifest; a
-`token` that is not one non-empty string; a digest mismatch; a
-restricted table whose terms were not accepted.
+A stored key is sent only to the address of the signed services
+document; with `MORIE_DATA_URL` set to another address it is not sent,
+and a message says so. Tables whose source terms do not allow
+redistribution (ICPSR studies, among them the NCVS 38604 extract, and
+any table the manifest marks restricted, with `access` other than
+`"open"` or `"public"` or `restricted: true`) are not served: `dmnf()`
+and `dtabs()` leave them out (the listing counts them in one line), and
+`dload()` refuses them before any request, saying where to get them.
+Downloads draw a progress bar when `options(morie.progress)` allows it.
+
+Errors: `refresh` not `TRUE` or `FALSE`; the service unavailable, or a
+stored key rejected; a `key` that is not of the form `db/table`, not
+listed in the manifest, or a table that is not served; a `token` that is
+not one non-empty string; a digest mismatch.
 
 ## See also
 

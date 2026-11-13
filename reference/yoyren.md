@@ -109,8 +109,8 @@ stylesheet, makes no external requests (no fonts, scripts or images from
 the network) and escapes every value, so the file stays the artefact and
 renders the same later. Rows are coloured by the table's `verdict`:
 `"worse"` in the palette's bad colour, `"better"` in its good colour,
-everything else (including the `"up"` and `"down"` of
-`direction = "neutral"`) in its neutral grey. Labels set with
+everything else (including the `"up"` and `"down"` of `dir = "neutral"`)
+in its neutral grey. Labels set with
 [`yoylbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoylbl.md)
 replace the period. For percentage units the change is shown in points.
 The page ends with the package version that wrote it.

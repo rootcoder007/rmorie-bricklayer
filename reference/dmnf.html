@@ -3,11 +3,9 @@
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-www.rmorie.com/data-license/. They open with the key
-dlogin stores, the same key rmorie and morie
-use; keys are personal: sign in with GitHub or an emailed code, or ask at
-www.rmorie.com/access/. The service address comes from
-svcs.
+www.rmorie.com/data-license/. They need no sign-in and no key; a
+MORIE key stored earlier with dlogin is still sent. The
+service address comes from svcs.
 dmnf() returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
 kept for a day; dtabs() the same as a data frame;
@@ -20,11 +18,9 @@ rmoriebricklayer data pull db/table [--out FILE.csv]."><meta property="og:descri
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-www.rmorie.com/data-license/. They open with the key
-dlogin stores, the same key rmorie and morie
-use; keys are personal: sign in with GitHub or an emailed code, or ask at
-www.rmorie.com/access/. The service address comes from
-svcs.
+www.rmorie.com/data-license/. They need no sign-in and no key; a
+MORIE key stored earlier with dlogin is still sent. The
+service address comes from svcs.
 dmnf() returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
 kept for a day; dtabs() the same as a data frame;
@@ -87,11 +83,9 @@ rmoriebricklayer data pull db/table [--out FILE.csv]."><meta property="og:image"
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-<code>www.rmorie.com/data-license/</code>. They open with the key
-<code><a href="dlogin.html">dlogin</a></code> stores, the same key rmorie and morie
-use; keys are personal: sign in with GitHub or an emailed code, or ask at
-<code>www.rmorie.com/access/</code>. The service address comes from
-<code><a href="svcs.html">svcs</a></code>.
+<code>www.rmorie.com/data-license/</code>. They need no sign-in and no key; a
+MORIE key stored earlier with <code><a href="dlogin.html">dlogin</a></code> is still sent. The
+service address comes from <code><a href="svcs.html">svcs</a></code>.
 <code>dmnf()</code> returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
 kept for a day; <code>dtabs()</code> the same as a data frame;
@@ -136,7 +130,8 @@ default) uses the stored key. It is never printed or written to disk.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>dmnf()</code>: the manifest as a list (element
-<code>datasets</code>, one list per table with at least <code>key</code>, and as the
+<code>datasets</code>, one list per table served with at least <code>key</code>,
+attribute <code>unserved</code> the number of tables left out; and as the
 service provides them <code>rows</code>, <code>columns</code>, sizes, the SHA-256 of
 the compressed file and the BigQuery <code>source</code>);
 <code>dtabs()</code>: a data frame with <code>key</code>,
@@ -173,17 +168,23 @@ it is read whatever its size; one the manifest lists without a digest may
 decompress to at most the option <code>rmoriebricklayer.maxcsvbytes</code>
 (1 GiB by default). A large table needs memory for all of it: a 1 GB
 decompressed CSV takes a few GB of RAM as a data frame.</p>
-<p>The key is sent only to the address of the signed services document. With
-<code>MORIE_DATA_URL</code> set to another address the key is not sent and the
-download fails with a message saying so. Some tables (ICPSR studies, the NCVS
-38604 extract, the A2AJ case law) open only after their terms are accepted on
-the terms page, <code>data.rmorie.com/terms</code>. Downloads draw a progress bar
-when <code>options(morie.progress)</code> allows it.</p>
-<p>Errors: <code>refresh</code> not <code>TRUE</code> or <code>FALSE</code>; no key stored (the
-message says how to sign in); the service unavailable, or the key rejected;
-a <code>key</code> that is not of the form <code>db/table</code>, or not listed in the
-manifest; a <code>token</code> that is not one non-empty string; a digest
-mismatch; a restricted table whose terms were not accepted.</p>
+<p>A table the manifest lists without any digest is used with a warning, once
+per session and table.</p>
+<p>A stored key is sent only to the address of the signed services document;
+with <code>MORIE_DATA_URL</code> set to another address it is not sent, and a
+message says so. Tables whose source terms do not allow redistribution
+(ICPSR studies, among them the NCVS 38604 extract, and any table the
+manifest marks restricted, with <code>access</code> other than <code>"open"</code> or
+<code>"public"</code> or <code>restricted: true</code>) are not served:
+<code>dmnf()</code> and <code>dtabs()</code> leave them out (the listing counts them in
+one line), and <code>dload()</code> refuses them before any request, saying
+where to get them. Downloads draw a progress bar when
+<code>options(morie.progress)</code> allows it.</p>
+<p>Errors: <code>refresh</code> not <code>TRUE</code> or <code>FALSE</code>; the service
+unavailable, or a stored key rejected; a <code>key</code> that is not of the
+form <code>db/table</code>, not listed in the manifest, or a table that is not
+served; a <code>token</code> that is not one non-empty string; a digest
+mismatch.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

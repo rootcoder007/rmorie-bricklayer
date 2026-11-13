@@ -29,6 +29,78 @@ screen against the prior capsule; then a report and a capsule template.
 - [`usecpstmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)
   : Start a capsule from a template
 
+## Evaluating a policy
+
+Difference in differences with two-way fixed effects, event studies,
+staggered adoption (Callaway and Sant’Anna; Wooldridge), the
+Goodman-Bacon decomposition, switching treatments, permutation inference
+and Westfall-Young stepdown p-values, fixed-effects Poisson, synthetic
+control; severity-weighted crime indices, justice-pipeline rates,
+cumulative risk of a first event, and place-based buffers.
+
+- [`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md)
+  : Difference in differences with two-way fixed effects
+- [`evstudy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evstudy.md)
+  : An event study: the effect period by period around adoption
+- [`stgatt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stgatt.md)
+  : Effects of a policy adopted at different times
+- [`bacondcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bacondcmp.md)
+  : The Goodman-Bacon decomposition of a two-way fixed-effects estimate
+- [`swtdid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/swtdid.md)
+  : Difference in differences for treatments that switch on and off
+- [`perminf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/perminf.md)
+  : Permutation inference for a policy's adoption
+- [`stpdnpv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stpdnpv.md)
+  : Westfall-Young stepdown p-values
+- [`plnpois()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpois.md)
+  : A fixed-effects Poisson or negative binomial regression for counts
+- [`synctl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/synctl.md)
+  : Synthetic control for one treated unit
+- [`sevidx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sevidx.md)
+  : A severity-weighted crime index
+- [`piperate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/piperate.md)
+  : Justice-pipeline rates with a lag between stages
+- [`cmlrisk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cmlrisk.md)
+  : Cumulative risk of a first event by age
+- [`bufasgn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bufasgn.md)
+  : Treated, comparison and excluded places around sites
+- [`polex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/polex.md)
+  : A simulated policy panel for the examples
+- [`plotevgrid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotevgrid.md)
+  : Event studies for several outcomes in one grid
+- [`loounit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loounit.md)
+  : Leave-one-out estimates of a difference in differences
+- [`cohtrnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cohtrnd.md)
+  : Raw outcome trends by adoption cohort
+
+## Causal estimation on panels
+
+Double machine learning with fixed effects (lasso, ridge or any learner,
+cross-fitted by unit), matching on pre-treatment trajectories, synthetic
+difference in differences, the wild cluster bootstrap for few clusters,
+sensitivity to departures from parallel trends, and design-based power.
+
+- [`plndml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndml.md)
+  : Double machine learning for panels with fixed effects
+- [`aipwcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/aipwcf.md)
+  : Cross-fitted augmented inverse probability weighting for a binary
+  treatment
+- [`mtchdid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mtchdid.md)
+  : Difference in differences after matching on pre-treatment
+  trajectories
+- [`baltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/baltab.md)
+  : A covariate balance table
+- [`syndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/syndid.md)
+  : Synthetic difference in differences
+- [`wcb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wcb.md)
+  : The wild cluster bootstrap for a difference in differences with few
+  clusters
+- [`tse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tse.md)
+  : How far parallel trends can fail before an effect disappears
+- [`plnpwr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpwr.md)
+  : Power and minimum detectable effect of a difference-in-differences
+  design
+
 ## Fetch open data
 
 Resilient downloaders with libcurl + Wayback fallback for pulling public
@@ -806,78 +878,6 @@ of Search.
   : The optimal search square for a circular normal datum
 - [`srchfig()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/srchfig.md)
   : The figures of The Theory of Search
-
-## Evaluating a policy
-
-Difference in differences with two-way fixed effects, event studies,
-staggered adoption (Callaway and Sant’Anna; Wooldridge), the
-Goodman-Bacon decomposition, switching treatments, permutation inference
-and Westfall-Young stepdown p-values, fixed-effects Poisson, synthetic
-control; severity-weighted crime indices, justice-pipeline rates,
-cumulative risk of a first event, and place-based buffers.
-
-- [`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md)
-  : Difference in differences with two-way fixed effects
-- [`evstudy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evstudy.md)
-  : An event study: the effect period by period around adoption
-- [`stgatt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stgatt.md)
-  : Effects of a policy adopted at different times
-- [`bacondcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bacondcmp.md)
-  : The Goodman-Bacon decomposition of a two-way fixed-effects estimate
-- [`swtdid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/swtdid.md)
-  : Difference in differences for treatments that switch on and off
-- [`perminf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/perminf.md)
-  : Permutation inference for a policy's adoption
-- [`stpdnpv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stpdnpv.md)
-  : Westfall-Young stepdown p-values
-- [`plnpois()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpois.md)
-  : A fixed-effects Poisson or negative binomial regression for counts
-- [`synctl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/synctl.md)
-  : Synthetic control for one treated unit
-- [`sevidx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sevidx.md)
-  : A severity-weighted crime index
-- [`piperate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/piperate.md)
-  : Justice-pipeline rates with a lag between stages
-- [`cmlrisk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cmlrisk.md)
-  : Cumulative risk of a first event by age
-- [`bufasgn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bufasgn.md)
-  : Treated, comparison and excluded places around sites
-- [`polex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/polex.md)
-  : A simulated policy panel for the examples
-- [`plotevgrid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotevgrid.md)
-  : Event studies for several outcomes in one grid
-- [`loounit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loounit.md)
-  : Leave-one-out estimates of a difference in differences
-- [`cohtrnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cohtrnd.md)
-  : Raw outcome trends by adoption cohort
-
-## Causal estimation on panels
-
-Double machine learning with fixed effects (lasso, ridge or any learner,
-cross-fitted by unit), matching on pre-treatment trajectories, synthetic
-difference in differences, the wild cluster bootstrap for few clusters,
-sensitivity to departures from parallel trends, and design-based power.
-
-- [`plndml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndml.md)
-  : Double machine learning for panels with fixed effects
-- [`aipwcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/aipwcf.md)
-  : Cross-fitted augmented inverse probability weighting for a binary
-  treatment
-- [`mtchdid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mtchdid.md)
-  : Difference in differences after matching on pre-treatment
-  trajectories
-- [`baltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/baltab.md)
-  : A covariate balance table
-- [`syndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/syndid.md)
-  : Synthetic difference in differences
-- [`wcb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wcb.md)
-  : The wild cluster bootstrap for a difference in differences with few
-  clusters
-- [`tse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tse.md)
-  : How far parallel trends can fail before an effect disappears
-- [`plnpwr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpwr.md)
-  : Power and minimum detectable effect of a difference-in-differences
-  design
 
 ## First Nations, Métis and Inuit health
 

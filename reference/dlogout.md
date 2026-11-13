@@ -2,9 +2,9 @@
 
 Removes the MORIE data key that
 [`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
-stored, so this machine can no longer load the curated tables at
-data.rmorie.com until you sign in again. Use it on a shared machine, or
-to switch to another key. Nothing is contacted.
+stored, so it is no longer sent to data.rmorie.com (whose curated tables
+need no key). Use it on a shared machine, or to switch to another key.
+Nothing is contacted.
 
 ## Usage
 
@@ -60,7 +60,7 @@ readLines(file.path(d, "credentials.json"))
 # a damaged file is refused, not overwritten
 writeLines("not json", file.path(d, "credentials.json"))
 try(dlogout())
-#> Error : /tmp/RtmprtFVRz/file1f851b31cbf8/morie/credentials.json is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it (it is shared with morie and rmorie)
+#> Error : /tmp/Rtmpu7ZjBP/file1e635ff70c55/morie/credentials.json is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it (it is shared with morie and rmorie)
 
 if (is.na(old)) {
   Sys.unsetenv("XDG_CONFIG_HOME")

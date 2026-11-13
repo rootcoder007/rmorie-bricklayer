@@ -8,7 +8,7 @@
 `rmoriebricklayer` is for individuals who work from a variety of
 published and unpublished tables: a ministry’s open-data portal,
 Statistics Canada, a police oversight agency, or your own data. It does
-three things with such a table.
+four things with such a table.
 
 1.  **It analyzes the table.**
     [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md)
@@ -25,10 +25,22 @@ three things with such a table.
 3.  **It signs the record.** A capsule can be signed (with a shared key,
     or with the post-quantum signature standards), so a reader can check
     who produced a result and that nothing changed afterwards.
+4.  **It estimates what a policy changed.** From a panel of such tables,
+    [`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md),
+    [`stgatt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stgatt.md),
+    [`syndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/syndid.md),
+    [`plndml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndml.md)
+    and the functions around them give difference-in-differences,
+    staggered-adoption, synthetic-control and double machine learning
+    estimates with their diagnostics;
+    [`vignette("policy-evaluation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/policy-evaluation.md)
+    and
+    [`vignette("causal-effects")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/causal-effects.md)
+    work through them.
 
 The rest of the package (the statistics for administrative tables, the
 plots, the dashboard, the cryptography written from the standards)
-serves one of these three.
+serves one of these four.
 
 ## Why it exists
 
@@ -816,10 +828,12 @@ walks through it.
   datasets and the survey, court and justice data the MORIE ledger
   uses), and `dload("db/table")` opens one, with no sign-in, checked
   against the SHA-256 its manifest lists and cached locally; each table
-  keeps its source’s licence. The ICPSR studies are not served: ICPSR’s
-  terms do not allow it, so
+  keeps its source’s licence. The ICPSR studies (the NCVS 38604 extract
+  among them) are not served: ICPSR’s terms do not allow it, so
+  [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  leaves them out and
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
-  points to ICPSR.
+  points to ICPSR before any request.
   [`blfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blfetch.md)
   downloads any URL with an Internet Archive fallback (libcurl).
 
@@ -1382,10 +1396,10 @@ llmcfg(route = NULL)                            # back to the automatic order
 With `route = "auto"`, a local Ollama server that has no model pulled is
 passed over.
 
-Signing in
+A data key
 ([`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md),
-`rmbl login`) is for the curated tables at data.rmorie.com only; it is
-never a language model.
+`rmbl login`) is for data.rmorie.com only, whose curated tables need
+none (a stored key is still sent); it is never a language model.
 
 The same verbs exist on the command line once the launcher is on your
 `PATH`:

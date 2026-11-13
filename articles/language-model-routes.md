@@ -185,8 +185,8 @@ these rules now hold for every byte the package sends or receives:
 
 ## The data key
 
-Signing in is for the curated tables at `data.rmorie.com` only; it is
-never a language model.
+A data key is for `data.rmorie.com` only (its curated tables need none;
+a stored key is still sent there); it is never a language model.
 
 ``` r
 

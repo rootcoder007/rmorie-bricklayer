@@ -90,8 +90,8 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ╭── Signing key (post-quantum) ───────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
-#> │   root       3c561bfb7c05e259786c3ebf7d0cde990e0b528cc6d2bf85263c3dd00e35b4 │
-#> │              35                                                             │
+#> │   root       d7ee0976316d68ed3dab6334ad450a84c6ed72cfe9ea9540d1233e46d8583f │
+#> │              ec                                                             │
 #> │   height     3                                                              │
 #> │   used       0 of 8 signatures                                              │
 #> │   remaining  8                                                              │
@@ -108,7 +108,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ╭── Public verification key ─────────────────────────────────────────────────╮
 #> │   scheme  xmss-sha256                                                      │
-#> │   root    3c561bfb7c05e259786c3ebf7d0cde990e0b528cc6d2bf85263c3dd00e35b435 │
+#> │   root    d7ee0976316d68ed3dab6334ad450a84c6ed72cfe9ea9540d1233e46d8583fec │
 #> │   height  3                                                                │
 #> ╰────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -451,7 +451,7 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ╭── Against the declaration of 2026-11-12T20:30:03Z: departures below ──╮
+#> ╭── Against the declaration of 2026-11-13T04:04:17Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -469,7 +469,7 @@ prrgchk(plan, "n_rows")
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ╭── Against the declaration of 2026-11-12T20:30:03Z: departures below ──╮
+#> ╭── Against the declaration of 2026-11-13T04:04:17Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -702,7 +702,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #> │   ✔    no_unlisted_files                                                    │
 #> │   ✔    attestation:attestation_complete                                     │
 #> │   ✔    attestation:manifest_digest                                          │
-#> │        8459884b97a47c5d61efacad98a2365482f75e4514efed2419ec069d590432a4     │
+#> │        101da2a17e9a1727ca7433daba060b36bbf78d9dc4663428f17c5b4281783069     │
 #> │   ✔    attestation:signature                                                │
 #> │   ✔    manifest_digest                                                      │
 #> │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │
@@ -739,7 +739,7 @@ p <- mkbndlproj(proj, title = "My study", author = "A. Researcher",
                 contact = "a.researcher@example.org", overwrite = TRUE)
 p
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpJy6sb1/my-study                                          │
+#> │   Folder  /tmp/Rtmpcja7fE/my-study                                          │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -788,12 +788,12 @@ b
 #> ╭── Reproducibility bundle ───────────────────────────────────────────────────╮
 #> │   Project    my-study                                                       │
 #> │   Zip        my-study_v1_with_data.zip                                      │
-#> │   Folder     /tmp/RtmpJy6sb1                                                │
-#> │   Size       207.5 KB                                                       │
+#> │   Folder     /tmp/Rtmpcja7fE                                                │
+#> │   Size       207.6 KB                                                       │
 #> │   Files      28                                                             │
 #> │   Data file  inside                                                         │
-#> │   SHA-256    8d70f5384b8b7d5e1994bb92b45bfa60d58d25d434bfa5c454747fcc105df9 │
-#> │              04                                                             │
+#> │   SHA-256    e723fee763f64c12529a47e659931326ea0ddc42d4055928b2f8baa565f27c │
+#> │              1e                                                             │
 #> │                                                                             │
 #> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │
 #> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │
@@ -1054,8 +1054,7 @@ cr <- readLines(system.file("COPYRIGHTS", package = "rmoriebricklayer"))
 cat(cr[grep("indigenouslifeexpectancy", cr, fixed = TRUE) + 0:4], sep = "\n")
 ```
 
-With a data key
-([`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)),
+With the network (no sign-in),
 [`indtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indtabs.md)
 lists the mirrored tables themselves:
 

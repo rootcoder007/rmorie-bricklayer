@@ -220,10 +220,9 @@ transformed back, is an exact interval for the ratio, reported as
 gives for two counts with equal exposure. A zero base has no percent
 change but still an interval (with an infinite upper end).
 
-`verdict` is `"up"`, `"down"` or `"unchanged"` for
-`direction = "neutral"`, and `"better"`, `"worse"` or `"unchanged"`
-otherwise; it reads the sign of the change only and makes no claim of
-significance.
+`verdict` is `"up"`, `"down"` or `"unchanged"` for `dir = "neutral"`,
+and `"better"`, `"worse"` or `"unchanged"` otherwise; it reads the sign
+of the change only and makes no claim of significance.
 
 Errors: `x` neither a data frame, a numeric vector nor a `ts`; `value`,
 `period` or `by` naming a column that does not exist; a non-numeric or

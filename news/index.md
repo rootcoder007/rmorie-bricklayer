@@ -191,6 +191,103 @@
 - Code blocks in vignettes that are not R (shell, YAML, R shown but not
   run) are fenced with `~~~`, which ‘goodpractice’ does not take for the
   end of an R chunk.
+- The package description and the README now name the policy-evaluation
+  functions
+  ([`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md),
+  [`stgatt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stgatt.md),
+  [`syndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/syndid.md),
+  [`plndml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndml.md)
+  and the functions around them), and the reference index lists them
+  straight after
+  [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md);
+  nothing in the code changes.
+- Tables whose source terms do not allow redistribution (the ICPSR
+  studies, the NCVS 38604 extract among them, and any table the manifest
+  marks restricted) are left out of
+  [`dmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
+  [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
+  `rmbl data list` and the list the language-model tools see, with one
+  line counting them;
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  and `rmbl data pull` refuse them before any request is sent, saying
+  where to get them. The A2AJ case law is an ordinary open table.
+- [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
+  and `rmbl login` no longer offer the restricted tables: the Schedule B
+  prompt and the `--restricted` and `--supervisor-*` options are gone,
+  and the arguments `restr`, `supnm`, `suprole` and `supemail` are
+  ignored with a warning. A refusal with HTTP 403 no longer points to a
+  terms page.
+- The help of
+  [`dmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
+  [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
+  [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
+  and
+  [`dlogout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogout.md),
+  the command-line help, `rmbl doctor`, the dashboard and the vignettes
+  no longer say that the curated tables need a key or a sign-in.
+- A curated table the manifest lists without any SHA-256 is still
+  loaded, now with a warning (once per session and table).
+- `rmbl migrate` no longer rewrites a list element or method named like
+  a removed function (`obj$rate(1)` became `obj$rtcalc(1)`), and now
+  also rewrites a renamed function passed by name (`lapply(x, yoy)`) or
+  named by a string in
+  [`do.call()`](https://rdrr.io/r/base/do.call.html),
+  [`match.fun()`](https://rdrr.io/r/base/match.fun.html),
+  [`get()`](https://rdrr.io/r/base/get.html),
+  [`get0()`](https://rdrr.io/r/base/exists.html) or
+  [`exists()`](https://rdrr.io/r/base/exists.html), unless the script
+  defines that name itself.
+- The archive functions withhold an error text that repeats the key in
+  base64 at any of its three alignments, in URL-safe base64, in hex or
+  broken up by separators (only a dump in which the key started on a
+  3-byte boundary was caught). The same check now covers a
+  language-model provider’s error text (its key) and an archive.org Save
+  Page Now message (the S3 keys).
+- A dropped connection during a download or upload is reported as the
+  send or receive error libcurl gives: every transfer ignores SIGPIPE
+  while it runs (and restores the previous handler after), where a write
+  to a TLS connection the peer had closed stopped R with “ignoring
+  SIGPIPE signal”.
+- [`cqnt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
+  names its quantiles exactly as
+  [`quantile()`](https://rdrr.io/r/stats/quantile.html) does (`"50%"`,
+  not `"50.0%"`).
+- `cgamcdf(Inf, x)` gives the limit, 0 for a finite `x` and 1 for `Inf`,
+  as [`pgamma()`](https://rdrr.io/r/stats/GammaDist.html), instead of
+  NaN.
+- [`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
+  writes a column name with a line break on one line, and shows
+  backticks and asterisks in a group label as written instead of as code
+  or bold, in Markdown and in HTML.
+- The emailed-code sign-in refuses a key with a line break or control
+  character, as the GitHub sign-in does; `dlogin(token = )` refuses one
+  too, and a token of length other than one is named as such instead of
+  called empty.
+- [`arcmine()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcmine.md)
+  reads an out-of-range `status` from the archive as NA without passing
+  on R’s integer-coercion warning.
+- [`shrs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md)
+  gives a lower bound of exactly 0 for a zero count and an upper bound
+  of exactly 100 for the whole total, as `prop.test(correct = FALSE)`.
+- [`plotrdg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
+  and
+  [`plotvln()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
+  stop with a message in words for values too close to the largest
+  double for a density;
+  [`hurwzeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwzeta.md)
+  no longer warns “probable complete loss of accuracy in modulus” at
+  orders past 2^53.
+- The help of
+  [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
+  and its writers names the argument `dir` (not the 0.5.x name
+  `direction`); the
+  [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  box labels the bundle run’s own results “Results in the run”, apart
+  from the audit’s checks.
+- The tests leave nothing in the home folder: the dashboard tests turn
+  off the sass cache (`~/.cache/R/sass`), and the podman test does not
+  create storage for podman where there is none.
 
 ## rmoriebricklayer 1.1.0
 

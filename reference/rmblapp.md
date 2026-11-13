@@ -4,10 +4,9 @@ A local web app over the package's analyses: every tab opens on a
 demonstration dataset
 ([`rmbldemo()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbldemo.md))
 with its first analysis already run, and you can load a CSV file, the
-pinned data of a capsule, or a table from data.rmorie.com (after
-`rmbl login`) instead. Everything runs on this machine in this R
-session; nothing is sent anywhere except the data.rmorie.com requests
-you make.
+pinned data of a capsule, or a table from data.rmorie.com (no sign-in)
+instead. Everything runs on this machine in this R session; nothing is
+sent anywhere except the data.rmorie.com requests you make.
 
 ## Usage
 
@@ -223,9 +222,10 @@ The menus and their tabs:
   light, dark or the system's theme (also the switch in the navbar),
   digits, and the seed of the seeded analyses.
 
-The data key of data.rmorie.com is never held by the app:
+The tables of data.rmorie.com need no key; a data key stored with
+`rmbl login` is never held by the app:
 [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
-reads it from where `rmbl login` stored it.
+reads it from where it is stored.
 
 The dashboard needs the shiny package (Suggests), and with it bslib,
 which shiny installs; without shiny `rmblapp()` refuses.

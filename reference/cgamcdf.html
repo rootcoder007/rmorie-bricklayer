@@ -102,7 +102,9 @@ rate \(r\), pass <code>x * r</code>.</p>
 <p><code>shape</code> must be a single positive number
 (<code>"shape must be a single positive number"</code>). A negative <code>x</code> gives 0,
 a missing <code>x</code> gives <code>NA</code>, and <code>Inf</code> gives 1, as in
-<code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">stats::pgamma()</a></code>.</p>
+<code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">stats::pgamma()</a></code>.
+<code>shape = Inf</code> gives the limit, 0 for every finite <code>x</code> and 1 for <code>Inf</code>, as
+<code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">pgamma()</a></code> does.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
