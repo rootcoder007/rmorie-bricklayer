@@ -2,6 +2,56 @@
 
 ## rmoriebricklayer 1.1.1
 
+- `rmbl data` with no subcommand prints its usage line instead of
+  downloading the table list, and `rmbl data pull` refuses a key that is
+  not `db/table` (`../../etc/passwd`) before any download.
+  [`blfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blfetch.md)
+  says why the live address could not be reached (the TLS or connection
+  error), as
+  [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md)
+  does.
+- `rmbl login`, `rmbl logout`, `rmbl archive find` (and `get`, `mine`,
+  `private`, `public`, `withdraw`), `rmbl help login` and
+  `rmbl describe dlogin` (or `dlogout`, `arcfind`, `arcget`) say that
+  the command or function was removed in 1.1.1 and why, instead of
+  “unknown verb” or “no help page”. `rmbl describe yoy` (and `anltab`,
+  `plotecdf`, `plotsm`) says the name was renamed in 1.1.1, not 1.0.0.
+- Smaller refusals in words: `rmbl functions` with a pattern that is not
+  a regular expression;
+  [`mkbndlproj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlproj.md)
+  and
+  [`usecpstmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)
+  given a folder that cannot be created; `blcli(out = )` given a
+  primitive such as `sum`; a model reply whose `content` is a number.
+  [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md)
+  no longer warns once per string function on a page with bytes that are
+  not UTF-8.
+- A Ctrl-C in the first tenth of a second of `rmbl`, while R is still
+  starting, exits 130 where `/bin/sh` is bash (Fedora, macOS) too; it
+  exited 1 there. The launchers
+  [`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
+  writes do the same.
+- [`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
+  inflates with the package’s bounded reader: a damaged gzip member of
+  under 2 KB made base R’s
+  [`memDecompress()`](https://rdrr.io/r/base/memCompress.html) take more
+  than 12 GB, and is now refused at once.
+- [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md)
+  no longer waits past `tmout` between attempts: with `tmout = 30`, a
+  server answering 503 with a long `Retry-After` held the call for three
+  minutes.
+- `rmbl migrate` leaves a call of a function the script defines itself
+  alone (`rate <- function(x) x; rate(2)` became `rtcalc(2)`); a call
+  written `rmoriebricklayer::rate()` is still rewritten.
+- [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  on a JSON object that
+  [`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  did not write (`{"a":1}`) says so, instead of “missing value where
+  TRUE/FALSE needed”.
+- [`svydes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svydes.md)
+  no longer copies into a zero-length vector when a replicate column has
+  no positive entry (undefined behaviour, reported by the clang
+  sanitizer).
 - The functions for archive.rmorie.com are gone: `arcfind()` and
   `arcget()` (both in 1.1.0), and `arcmine()`, `arcvis()` and `arcwd()`
   (never released), with the `rmbl archive find`, `get`, `mine`,
@@ -52,8 +102,9 @@
   [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md),
   and `yoy()` is
   [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
-  (same arguments, same result). The 0.5.x name `analyse_table` now
-  leads to
+  (same arguments, same result). The old names are no longer R
+  functions: calling one gives “could not find function”. On the command
+  line the 0.5.x name `analyse_table` now leads to
   [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md),
   and `rmbl migrate` rewrites calls of the old names in a script to the
   new ones (`rmbl describe anltab` says what it became).
