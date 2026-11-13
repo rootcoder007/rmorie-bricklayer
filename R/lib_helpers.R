@@ -1145,17 +1145,8 @@ wrtxtfb <- function(text, path) {
          USE.NAMES = FALSE)
 }
 
-#' Writes text to a file as UTF-8 bytes, whatever the locale: writeLines()
-#' alone turns each character a C locale cannot show into "<U+00E9>" text
-#' (a manifest naming "\u00e9.csv" was written as "<U+00E9>.csv").
-#' @param text The lines.
-#' @param con A file name or connection.
-#' @param sep The line end.
-#' @param useBytes Ignored: the bytes are always written as they are.
-#' @return NULL, invisibly.
-#' @noRd
 #' Makes a folder, or stops in words when it cannot be made.
-#' @param dir The folder.
+#' @param dir The folder to make, with any missing parents.
 #' @param arg The argument that named it.
 #' @return NULL, invisibly.
 #' @noRd
@@ -1172,6 +1163,15 @@ wrtxtfb <- function(text, path) {
   invisible(NULL)
 }
 
+#' Writes text to a file as UTF-8 bytes, whatever the locale: writeLines()
+#' alone turns each character a C locale cannot show into "<U+00E9>" text
+#' (a manifest naming "\u00e9.csv" was written as "<U+00E9>.csv").
+#' @param text The lines.
+#' @param con A file name or connection.
+#' @param sep The line end.
+#' @param useBytes Ignored: the bytes are always written as they are.
+#' @return NULL, invisibly.
+#' @noRd
 .rmbl_wlines <- function(text, con = stdout(), sep = "\n", useBytes = TRUE) {
   writeLines(enc2utf8(as.character(text)), con, sep = sep, useBytes = TRUE)
 }

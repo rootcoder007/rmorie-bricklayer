@@ -810,7 +810,9 @@ test_that(
     )
     code <- .Call(ns_$C_rmbl_fetch_fallback, closed, "", tempfile(), 10L, base)
     expect_lt(code, 0L)
-    expect_identical(code %% 10L, 0L) # no snapshot was found
+    # the code's value: it now carries why the live address was not reached
+    expect_identical(as.integer(code) %% 10L, 0L) # no snapshot was found
+    expect_match(attr(code, "why"), "connect|refused", ignore.case = TRUE)
     port2 <- port + 7L
     found <- paste0(
       '{"archived_snapshots":{"closest":{"available": true,',

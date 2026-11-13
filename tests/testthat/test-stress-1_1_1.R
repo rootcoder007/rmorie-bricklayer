@@ -17,12 +17,13 @@ test_that("jsunser says an object without a type is not jsser's", {
 })
 
 test_that("bldl does not wait past tmout between attempts", {
-  slept <- numeric()
-  n <- 0L
+  got <- new.env()
+  got$slept <- numeric()
+  got$n <- 0L
   local_mocked_bindings(
-    .bl_sleep = function(s) slept <<- c(slept, s),
+    .bl_sleep = function(s) got$slept <- c(got$slept, s),
     .bl_http_download = function(...) {
-      n <<- n + 1L
+      got$n <- got$n + 1L
       list(status = 503L, retry_after = "99999", bytes = 0, error = "")
     }
   )
@@ -31,15 +32,15 @@ test_that("bldl does not wait past tmout between attempts", {
     .bl_dl_net("https://example.org/x", tempfile(), a, NULL, TRUE, "x"),
     "answered HTTP 503"
   )
-  expect_identical(n, 1L)
-  expect_length(slept, 0L)
+  expect_identical(got$n, 1L)
+  expect_length(got$slept, 0L)
   # a wait that fits is still taken
   a$tmout <- 3600
   expect_error(
     .bl_dl_net("https://example.org/x", tempfile(), a, NULL, TRUE, "x"),
     "answered HTTP 503"
   )
-  expect_identical(slept, c(60, 60, 60))
+  expect_identical(got$slept, c(60, 60, 60))
 })
 
 test_that("migrate leaves calls of a name the script defines", {
@@ -69,9 +70,9 @@ test_that("removed commands and functions say they were removed", {
   expect_match(.bl_unknown_verb("lgin", "rmbl"), "unknown verb")
   expect_null(.bl_gone("doctor"))
   run <- function(a) {
-    txt <- character()
-    st <- blcli(a, out = function(...) txt <<- c(txt, paste0(...)))
-    list(st = st, txt = paste(txt, collapse = ""))
+    got <- new.env()
+    st <- blcli(a, out = function(...) got$txt <- c(got$txt, paste0(...)))
+    list(st = st, txt = paste(got$txt, collapse = ""))
   }
   r <- run(c("archive", "find", "x"))
   expect_identical(r$st, 2L)
@@ -136,9 +137,9 @@ test_that("data with no subcommand is a usage line, and a bad key is refused", {
     dload = function(...) stop("a table was downloaded")
   )
   run <- function(a) {
-    txt <- character()
-    st <- blcli(a, out = function(...) txt <<- c(txt, paste0(...)))
-    list(st = st, txt = paste(txt, collapse = ""))
+    got <- new.env()
+    st <- blcli(a, out = function(...) got$txt <- c(got$txt, paste0(...)))
+    list(st = st, txt = paste(got$txt, collapse = ""))
   }
   r <- run("data")
   expect_identical(r$st, 2L)
