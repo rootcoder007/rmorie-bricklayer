@@ -509,12 +509,6 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20, offline = FALSE) {
 # The one-line answers the rest of the package asks for. Offline inside the
 # package: a table fetch must not block on the site; the daily
 # refresh happens when svcs() is called for its own sake.
-#' Returns the language-model block of the services document, without going
-#' online.
-#' @return The `llm` list of svcs().
-#' @noRd
-.rmbl_services_llm <- function() svcs(offline = TRUE)$llm
-
 #' Returns the data block of the services document, without going online.
 #' @return The `data` list of svcs().
 #' @noRd

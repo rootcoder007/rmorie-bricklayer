@@ -127,7 +127,7 @@ test_that(
     bytes[length(bytes) - 1L] <- as.raw(0x20)
     expect_false(svc_ns(".rmbl_services_verify")(bytes, sig))
     # and the helpers read this document
-    expect_identical(svc_ns(".rmbl_services_llm")()$mode, "off")
+    expect_identical(svcs(offline = TRUE)$llm$mode, "off")
     expect_identical(svc_ns(".bl_data_url")(), "https://data.rmorie.com")
   }
 )
@@ -167,7 +167,7 @@ test_that(
     expect_identical(s2$llm, s$llm)
     # the helpers follow the document, not the old constants
     expect_identical(
-      svc_ns(".rmbl_services_llm")()$base_url,
+      svcs(offline = TRUE)$llm$base_url,
       "https://gw.example.org"
     )
     expect_identical(svc_ns(".bl_data_url")(), "https://tables.example.org")
@@ -277,7 +277,7 @@ test_that("a document that does not verify is ignored at every step", {
     expect_false(file.exists(file.path(td, "morie-services.json")), info = nm)
   }
   # with every service off the data helpers say so and nothing is called
-  expect_identical(svc_ns(".rmbl_services_llm")()$mode, "off")
+  expect_identical(svcs(offline = TRUE)$llm$mode, "off")
   expect_error(
     svc_ns(".bl_data_url")(),
     "not available right now.*rmorie.com/access"
@@ -354,7 +354,7 @@ test_that("the offline memo is per session and a refresh replaces it", {
   expect_identical(attr(svcs(), "source"), "live")
   expect_identical(attr(svcs(offline = TRUE), "source"), "live")
   expect_identical(
-    svc_ns(".rmbl_services_llm")()$base_url,
+    svcs(offline = TRUE)$llm$base_url,
     "https://gw.example.org"
   )
 })

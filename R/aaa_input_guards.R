@@ -345,26 +345,6 @@
   unique(choices[i])
 }
 
-#' Refuses an abbreviated choice, in .rmbl_arg()'s words, where a guess
-#' must not be made (`visibility = "pub"`): one string that is not a whole
-#' choice. Anything else is left to .rmbl_arg().
-#' @param x The value given.
-#' @param choices The accepted values.
-#' @inheritParams .bl_str0
-#' @return NULL, invisibly.
-#' @noRd
-.rmbl_whole <- function(x, choices, what) {
-  if (is.character(x) && length(x) == 1L && !is.na(x) && !x %in% choices) {
-    stop(
-      .rmbl_fn(),
-      sprintf("`%s` must be one of %s, not %s", what,
-              toString(dQuote(choices, FALSE)), .rmbl_printable(deparse(x))),
-      call. = FALSE
-    )
-  }
-  invisible(NULL)
-}
-
 #' Checks that a data frame has unique, non-empty column names.
 #'
 #' A data frame's columns must be named, every name non-empty and no name twice:

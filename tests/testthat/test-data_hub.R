@@ -166,7 +166,7 @@ test_that(
       "`token` is ignored: the curated tables need no key"
     )
     expect_identical(got$a, 1L)
-    expect_true(length(rec$hdr) > 0L)
+    expect_gt(length(rec$hdr), 0L)
     expect_false("Authorization" %in% rec$hdr)
   }
 )
