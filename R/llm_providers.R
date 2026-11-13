@@ -436,6 +436,10 @@
     )
   })
   txt <- msg$content
+  # text, parts or nothing: a number is not a reply in this format
+  if (!is.null(txt) && !is.character(txt) && !is.list(txt)) {
+    stop("content is not text")
+  }
   list(
     text = if (is.character(txt)) paste(txt, collapse = "\n") else "",
     tool_calls = calls,

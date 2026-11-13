@@ -62,3 +62,70 @@ test_that("svydes takes a replicate column with no positive entry", {
     suppressWarnings(svydes(d, w = "w", reps = c("r1", "r2"), type = "jk1"))
   )
 })
+
+test_that("removed commands and functions say they were removed", {
+  expect_match(.bl_unknown_verb("login", "rmbl"), "removed in 1.1.1")
+  expect_match(.bl_unknown_verb("logout", "rmbl"), "no sign-in")
+  expect_match(.bl_unknown_verb("lgin", "rmbl"), "unknown verb")
+  expect_null(.bl_gone("doctor"))
+  run <- function(a) {
+    txt <- character()
+    st <- blcli(a, out = function(...) txt <<- c(txt, paste0(...)))
+    list(st = st, txt = paste(txt, collapse = ""))
+  }
+  r <- run(c("archive", "find", "x"))
+  expect_identical(r$st, 2L)
+  expect_match(r$txt, "archive find` was removed in 1.1.1")
+  r <- run(c("help", "login"))
+  expect_identical(r$st, 2L)
+  expect_match(r$txt, "removed in 1.1.1")
+  expect_match(run(c("help", "nosuchtopic"))$txt, "no help topic")
+  r <- run(c("describe", "arcfind"))
+  expect_identical(r$st, 1L)
+  expect_match(r$txt, "archive.rmorie.com")
+  expect_match(run(c("describe", "nosuchfn"))$txt, "no help page")
+  expect_match(
+    run(c("describe", "yoy"))$txt,
+    "1.0.0 name of yoychg() (renamed in 1.1.1)",
+    fixed = TRUE
+  )
+  expect_match(
+    .bl_old_note(.bl_old_row("rate")),
+    "0.5.x name of rtcalc() (renamed in 1.0.0)",
+    fixed = TRUE
+  )
+  r <- run(c("functions", "xyz["))
+  expect_identical(r$st, 1L)
+  expect_match(r$txt, "is not a regular expression")
+})
+
+test_that("a folder that cannot be made is refused in words", {
+  skip_on_os("windows")
+  skip_if(file.access("/", 2L) == 0L, "the root folder is writable")
+  expect_error(usecpstmpl("/nonexistent/dir/file"), "cannot create the folder")
+  expect_error(mkbndlproj("/nonexistent/dir/file"), "cannot create the folder")
+  d <- file.path(withr::local_tempdir(), "a")
+  expect_null(.rmbl_mkdir(d, "dir"))
+  expect_true(dir.exists(d))
+})
+
+test_that("blcli refuses a primitive as out", {
+  expect_error(blcli("version", out = sum), "must be a function that writes")
+})
+
+test_that("a model reply whose content is a number is not a reply", {
+  bad <- list(choices = list(list(message = list(content = 42))))
+  expect_error(.bl_llm_parse(list(api = "openai"), bad), "wrong type")
+  ok <- list(choices = list(list(message = list(content = "hi"))))
+  expect_identical(.bl_llm_parse(list(api = "openai"), ok)$text, "hi")
+})
+
+test_that("siuprs does not warn on bytes that are not UTF-8", {
+  h <- rawToChar(as.raw(c(
+    charToRaw("<html><body><p>caf"),
+    0xe9,
+    charToRaw("</p></body></html>")
+  )))
+  expect_no_warning(r <- siuprs(h))
+  expect_type(r, "character")
+})

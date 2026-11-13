@@ -221,8 +221,8 @@
 #' blcli(c("examples", "perdays"))
 #' @export
 blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
-  if (!is.function(out) ||
-        (!is.primitive(out) && !length(formals(out)))) {
+  # a primitive (sum, c) takes text and writes none
+  if (!is.function(out) || is.primitive(out) || !length(formals(out))) {
     stop(
       "`out` must be a function that writes text, as cat() does",
       call. = FALSE
@@ -1139,10 +1139,14 @@ instcli <- function(
     ctx$out(.bl_old_note(old))
     ctx$out(show(old$new))
   } else if (is.null(.bl_rd_for(rest[[1L]]))) {
-    ctx$out(sprintf(
-      "no help page for '%s' (%s functions lists them)\n",
-      rest[[1L]],
-      ctx$prog
+    ctx$out(paste0(
+      .bl_gone(rest[[1L]]) %||%
+        sprintf(
+          "no help page for '%s' (%s functions lists them)",
+          rest[[1L]],
+          ctx$prog
+        ),
+      "\n"
     ))
     return(1L)
   } else {
@@ -1521,6 +1525,10 @@ instcli <- function(
 #' @return One string.
 #' @noRd
 .bl_unknown_verb <- function(verb, prog) {
+  gone <- .bl_gone(verb)
+  if (!is.null(gone)) {
+    return(gone)
+  }
   v <- .bl_verb_names()
   # quotes and a trailing ? or ! around a typo are not part of it: `"doctr?"` is
   # a near miss too the first word of a command typed as one argument (`"cnfig
@@ -1836,7 +1844,17 @@ instcli <- function(
   keep <- if (is.null(pattern)) {
     rep(TRUE, length(ns))
   } else {
-    grepl(pattern, ns) | grepl(pattern, titles, ignore.case = TRUE)
+    tryCatch(
+      suppressWarnings(
+        grepl(pattern, ns) | grepl(pattern, titles, ignore.case = TRUE)
+      ),
+      error = function(e) {
+        stop(
+          sprintf("'%s' is not a regular expression", pattern),
+          call. = FALSE
+        )
+      }
+    )
   }
   data.frame(
     name = ns[keep],
@@ -2158,7 +2176,9 @@ instcli <- function(
   } else if (!is.null(.bl_verb_usage(topic, prog))) {
     out(.bl_verb_usage(topic, prog))
   } else {
-    out(sprintf("%s: no help topic '%s' (try: %s help)\n", prog, topic, prog))
+    why <- .bl_gone(topic) %||%
+      sprintf("no help topic '%s' (try: %s help)", topic, prog)
+    out(sprintf("%s: %s\n", prog, why))
     return(2L)
   }
   0L
@@ -2543,6 +2563,17 @@ instcli <- function(
     out(.bl_verb_usage("archive", .bl_prog()))
     code
   }
+  if (sub %in% c("find", "get", "mine", "private", "public", "withdraw")) {
+    out(sprintf(
+      paste0(
+        "`%s archive %s` was removed in 1.1.1: nothing in the package ",
+        "uses archive.rmorie.com any more\n"
+      ),
+      .bl_prog(),
+      sub
+    ))
+    return(2L)
+  }
   if (sub %in% c("help", "--help", "-h")) {
     return(usage(0L))
   }
@@ -2612,9 +2643,11 @@ instcli <- function(
     "suppressPackageStartupMessages({ .libPaths(c(",
     deparse(lib),
     ", .libPaths())); ",
-    "q <- tryCatch(rmoriebricklayer::blcli(), interrupt = ",
-    "function(e) 130L); ",
-    "quit(status = as.integer(q)) })"
+    "q <- tryCatch(tryCatch(rmoriebricklayer::blcli(), interrupt = ",
+    "function(e) 130L), error = function(e) { ",
+    "message(\"Error: \", conditionMessage(e)); 1L }); ",
+    "q <- as.integer(q); ",
+    "quit(status = if (q == 130L) q else 200L + min(q, 55L)) })"
   )
   body <- gsub("'", "'\\''", body, fixed = TRUE)
   .rmbl_wlines(
@@ -2632,7 +2665,16 @@ instcli <- function(
         lib
       ),
       sprintf("export RMBL_PROG=%s", nm),
-      sprintf("exec Rscript --no-save --no-restore -e '%s' \"$@\"", body)
+      # the status as inst/bin/rmbl reads it: the command's own comes back
+      # 200 up, a bare 1 is a Ctrl-C while R started
+      "trap : INT",
+      sprintf("Rscript --no-save --no-restore -e '%s' \"$@\"", body),
+      "st=$?",
+      paste0(
+        "if [ \"$st\" -ge 200 ]; then st=$((st - 200)); ",
+        "elif [ \"$st\" -eq 1 ]; then st=130; fi"
+      ),
+      "exit $st"
     ),
     target
   )

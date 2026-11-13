@@ -237,6 +237,7 @@ mkbndlproj <- function(
   }
   files <- c("config.json", "data_provenance.json", "analysis.R")
   there <- files[file.exists(file.path(dir, files))]
+  .rmbl_mkdir(dir, "dir")
   if (length(there) && !overwrite) {
     stop(
       sprintf(

@@ -9,7 +9,11 @@ export RMBL_PROG=rmoriebricklayer
 # and status 1: the shell notes the interrupt and reports 130 for it (final audit of 1.0.0, #11).
 rc=
 trap 'rc=130' INT
-Rscript --no-save --no-restore -e 'suppressPackageStartupMessages({ q <- tryCatch(rmoriebricklayer::blcli(), interrupt = function(e) 130L); quit(status = as.integer(q)) })' "$@"
+Rscript --no-save --no-restore -e 'suppressPackageStartupMessages({ q <- tryCatch(tryCatch(rmoriebricklayer::blcli(), interrupt = function(e) 130L), error = function(e) { message("Error: ", conditionMessage(e)); 1L }); q <- as.integer(q); quit(status = if (q == 130L) q else 200L + min(q, 55L)) })' "$@"
 st=$?
+# The command's own status comes back 200 up (130 as itself). A bare 1 is R halting before the
+# command began, which is a Ctrl-C while R started: bash, as /bin/sh, does not run the trap above
+# when R ends by itself, so the status alone has to say it (stress test of 1.1.1, F-03).
+if [ "$st" -ge 200 ]; then st=$((st - 200)); elif [ "$st" -eq 1 ]; then st=130; fi
 [ -n "$rc" ] && [ "$st" -ne 130 ] && [ "$st" -ne 0 ] && st=$rc
 exit $st

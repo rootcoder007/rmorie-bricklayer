@@ -1154,6 +1154,24 @@ wrtxtfb <- function(text, path) {
 #' @param useBytes Ignored: the bytes are always written as they are.
 #' @return NULL, invisibly.
 #' @noRd
+#' Makes a folder, or stops in words when it cannot be made.
+#' @param dir The folder.
+#' @param arg The argument that named it.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_mkdir <- function(dir, arg) {
+  if (!dir.exists(dir)) {
+    suppressWarnings(dir.create(dir, recursive = TRUE))
+    if (!dir.exists(dir)) {
+      stop(
+        sprintf("cannot create the folder `%s` names (%s)", arg, dir),
+        call. = FALSE
+      )
+    }
+  }
+  invisible(NULL)
+}
+
 .rmbl_wlines <- function(text, con = stdout(), sep = "\n", useBytes = TRUE) {
   writeLines(enc2utf8(as.character(text)), con, sep = sep, useBytes = TRUE)
 }

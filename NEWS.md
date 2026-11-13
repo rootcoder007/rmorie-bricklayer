@@ -1,5 +1,8 @@
 # rmoriebricklayer 1.1.1
 
+* `rmbl login`, `rmbl logout`, `rmbl archive find` (and `get`, `mine`, `private`, `public`, `withdraw`), `rmbl help login` and `rmbl describe dlogin` (or `dlogout`, `arcfind`, `arcget`) say that the command or function was removed in 1.1.1 and why, instead of "unknown verb" or "no help page". `rmbl describe yoy` (and `anltab`, `plotecdf`, `plotsm`) says the name was renamed in 1.1.1, not 1.0.0.
+* Smaller refusals in words: `rmbl functions` with a pattern that is not a regular expression; `mkbndlproj()` and `usecpstmpl()` given a folder that cannot be created; `blcli(out = )` given a primitive such as `sum`; a model reply whose `content` is a number. `siuprs()` no longer warns once per string function on a page with bytes that are not UTF-8.
+* A Ctrl-C in the first tenth of a second of `rmbl`, while R is still starting, exits 130 where `/bin/sh` is bash (Fedora, macOS) too; it exited 1 there. The launchers `instcli()` writes do the same.
 * `jsgzdec()` inflates with the package's bounded reader: a damaged gzip member of under 2 KB made base R's `memDecompress()` take more than 12 GB, and is now refused at once.
 * `bldl()` no longer waits past `tmout` between attempts: with `tmout = 30`, a server answering 503 with a long `Retry-After` held the call for three minutes.
 * `rmbl migrate` leaves a call of a function the script defines itself alone (`rate <- function(x) x; rate(2)` became `rtcalc(2)`); a call written `rmoriebricklayer::rate()` is still rewritten.

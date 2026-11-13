@@ -176,6 +176,12 @@ siutxt <- function(html) {
 siuprs <- function(html) {
   .rmbl_no_fn(html = html)
   .bl_siu_check_html(html)
+  # bytes that are not UTF-8 in a page (not a path) are written out as
+  # <xx>: R's string functions warned on each, in base R's words
+  bad <- !validUTF8(html) & grepl("<", html, fixed = TRUE, useBytes = TRUE)
+  if (any(bad)) {
+    html[bad] <- iconv(html[bad], "UTF-8", "UTF-8", sub = "byte")
+  }
   if (length(html) > 1L) {
     # several reports: one row each
     return(.bl_siu_rows(html))

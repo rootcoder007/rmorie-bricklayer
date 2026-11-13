@@ -68,7 +68,7 @@ usecpstmpl <- function(path, name = basename(path), ex = FALSE) {
     stop("`path` exists and is not empty", call. = FALSE)
   }
   .bl_tmpl_name(name)
-  dir.create(path, recursive = TRUE, showWarnings = FALSE)
+  .rmbl_mkdir(path, "path")
   src <- if (ex) {
     system.file(
       "extdata",

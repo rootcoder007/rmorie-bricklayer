@@ -62,6 +62,22 @@
   )
 }
 
+#' Says that a command or function was removed in 1.1.1, and why.
+#' @param x A verb, help topic or function name.
+#' @return One string, or NULL when `x` was not removed.
+#' @noRd
+.bl_gone <- function(x) {
+  key <- "the curated tables need no sign-in"
+  arc <- "nothing in the package uses archive.rmorie.com any more"
+  why <- c(
+    login = key, logout = key, dlogin = key, dlogout = key,
+    arcfind = arc, arcget = arc
+  )
+  if (length(x) == 1L && x %in% names(why)) {
+    sprintf("'%s' was removed in 1.1.1: %s", x, why[[x]])
+  }
+}
+
 #' Says what a 0.5.x name became.
 #' @param r A row from .bl_old_row().
 #' @return One string.
@@ -69,10 +85,14 @@
 .bl_old_note <- function(r) {
   ch <- r$args[names(r$args) != r$args]
   ch <- c(ch, r$dots)
+  # four names lasted from 1.0.0 to 1.1.0
+  late <- r$old %in% c("anltab", "yoy", "plotecdf", "plotsm")
   s <- sprintf(
-    "%s() is the 0.5.x name of %s() (renamed in 1.0.0)",
+    "%s() is the %s name of %s() (renamed in %s)",
     r$old,
-    r$new
+    if (late) "1.0.0" else "0.5.x",
+    r$new,
+    if (late) "1.1.1" else "1.0.0"
   )
   if (length(ch)) {
     s <- paste0(s, "; arguments: ", paste(names(ch), "->", ch, collapse = ", "))
