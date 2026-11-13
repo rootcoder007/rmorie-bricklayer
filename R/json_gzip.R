@@ -126,7 +126,14 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
     jsb64dec(as.character(txt))
   }
   .rmbl_gzip_check(bytes)
-  json <- rawToChar(memDecompress(bytes, type = "gzip"))
+  # the package's bounded inflater: base memDecompress() kept doubling its
+  # buffer on a damaged stream until the machine ran out of memory
+  json <- tryCatch(
+    rawToChar(.Call(C_rmbl_gunzip_checked, bytes, 64 * 1024^2)),
+    error = function(e) {
+      stop("jsgzdec: `txt` ", conditionMessage(e), call. = FALSE)
+    }
+  )
   fromjs(json, ...)
 }
 

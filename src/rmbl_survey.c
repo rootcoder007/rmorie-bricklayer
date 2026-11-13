@@ -127,7 +127,8 @@ SEXP C_rmbl_svy_colsumm(SEXP r, SEXP w, SEXP idv, SEXP rn) {
     }
     const R_xlen_t nh = nk < 4096 ? nk : 4096;
     SEXP hk = PROTECT(allocVector(INTSXP, nh));
-    memcpy(INTEGER(hk), h, (size_t) nh * sizeof(int));
+    /* INTEGER() of a zero-length vector is not a pointer to copy to */
+    if (nh > 0) memcpy(INTEGER(hk), h, (size_t) nh * sizeof(int));
     const char *names[] = {"same", "maxrel", "anyzero", "const", "isid", "isrow", "fullfac", "hk", ""};
     SEXP out = PROTECT(mkNamed(VECSXP, names));
     SET_VECTOR_ELT(out, 0, ScalarLogical(same));

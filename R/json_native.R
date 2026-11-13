@@ -3560,7 +3560,13 @@ bricklayer_json_validate <- function(txt) {
 #' @return The object.
 #' @noRd
 .rmbl_json_unpack <- function(obj, trusted = FALSE) {
-  mode <- obj$type
+  mode <- if (is.list(obj)) obj[["type"]] else NULL
+  if (!is.character(mode) || length(mode) != 1L || is.na(mode)) {
+    stop(
+      "`txt` is not JSON written by jsser() (an object with a type)",
+      call. = FALSE
+    )
+  }
   if (identical(mode, "NULL")) {
     return(NULL)
   }

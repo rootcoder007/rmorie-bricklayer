@@ -91,7 +91,8 @@
 
 #' Rewrites 0.5.x calls in R source to the 1.0.0 names.
 #'
-#' Each call of a renamed function (bare or rmoriebricklayer::) gets its new
+#' Each call of a renamed function (bare or rmoriebricklayer::; a bare name
+#' the script defines itself is the script's own) gets its new
 #' name, its named arguments their new names and each renamed allowed value (a
 #' string literal) its new value. A renamed function passed by name as an
 #' argument (`lapply(x, yoy)`) and a string naming one in do.call(),
@@ -110,8 +111,10 @@
   m <- .bl_old_map()
   edits <- list()
   hits <- which(pd$token == "SYMBOL_FUNCTION_CALL" & pd$text %in% m$old)
+  own <- .bl_migrate_defined(pd)
   for (h in hits) {
-    if (!.bl_migrate_ours(pd, h)) {
+    qual <- any(pd$token[pd$parent == pd$parent[h]] == "SYMBOL_PACKAGE")
+    if (!.bl_migrate_ours(pd, h) || (pd$text[h] %in% own && !qual)) {
       next
     }
     r <- .bl_old_row(pd$text[h])
