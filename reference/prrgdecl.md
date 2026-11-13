@@ -104,7 +104,7 @@ prrgchk(plan, c("ate", "nrows", "atebyyear",
 
 # the full check prints the departures
 prrgchk(plan, c("ate", "atebyyear"))
-#> ╭── Against the declaration of 2026-11-13T04:02:54Z: departures below ──╮
+#> ╭── Against the declaration of 2026-11-13T04:30:58Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
