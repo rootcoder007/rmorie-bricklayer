@@ -214,7 +214,7 @@ for the manifest the analysis writes.</p></div>
 <span class="r-in"><span><span class="va">proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"demo-project"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="mkbndlproj.html">mkbndlproj</a></span><span class="op">(</span><span class="va">proj</span>, title <span class="op">=</span> <span class="st">"Demo analysis"</span>, author <span class="op">=</span> <span class="st">"A. Researcher"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Bundle project</span> ───────────────────────────────────────────────────────────╮</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Folder  /tmp/Rtmpga0DUM/demo-project                                      │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Folder  /tmp/RtmpwEzrcH/demo-project                                      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Files   config.json, data_provenance.json, analysis.R                     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Edit config.json (who and what), data_provenance.json (the data file,     │</span>
@@ -228,12 +228,12 @@ for the manifest the analysis writes.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╭── <span style="font-weight: bold;">Reproducibility bundle</span> ───────────────────────────────────────────────────╮</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Project    demo-project                                                   │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Zip        demo-project_v1.zip                                            │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Folder     /tmp/Rtmpga0DUM                                                │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Size       206.2 KB                                                       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Folder     /tmp/RtmpwEzrcH                                                │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Size       206.0 KB                                                       │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Files      26                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Data file  not inside                                                     │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   SHA-256    8230619da70f983e91d1ae7e1d469d6b309a3d42eeb0d158df77815627190b │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │              ef                                                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   SHA-256    b4bb18493db710280356ed3a67c43b4d56ce6f4eedbc4373ee830f5dbe39bb │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │              f4                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │</span>
@@ -251,11 +251,11 @@ for the manifest the analysis writes.</p></div>
 <span class="r-in"><span><span class="co"># the example shipped with the package</span></span></span>
 <span class="r-in"><span><span class="va">otis</span> <span class="op">&lt;-</span> <span class="fu">mkbndl</span><span class="op">(</span><span class="st">"otis-mrp"</span>, dest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">otis</span><span class="op">$</span><span class="va">sha256</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "e7bbc7557d219e30dfc61aff9c62c6828e197019fe18ca90089996fb14853860"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "20a4375d03ac0b9efc7584ab6ab5228f81a416b577233831aad540b67f622ae4"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># an existing zip is kept unless overwrite = TRUE</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">mkbndl</span><span class="op">(</span><span class="va">proj</span>, dest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : /tmp/Rtmpga0DUM/demo-project_v1.zip exists: pass overwrite = TRUE to replace it</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : /tmp/RtmpwEzrcH/demo-project_v1.zip exists: pass overwrite = TRUE to replace it</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

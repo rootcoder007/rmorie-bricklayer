@@ -83,11 +83,12 @@ fdl(paste0("file://", src), tempfile(fileext = ".csv"),
 fdl(paste0("file://", src, "-missing"), tempfile(),
   attwb = "", allowfile = TRUE)
 #>   ! Download failed.
-#>     URL:   file:///tmp/Rtmpga0DUM/file1f403cad1990.csv-missing
-#>     Error: cannot open file '/tmp/Rtmpga0DUM/file1f403cad1990.csv-missing': No such file or directory
+#>     URL:   file:///tmp/RtmpwEzrcH/file1eac401bec41.csv-missing
+#>     Error: cannot open file '/tmp/RtmpwEzrcH/file1eac401bec41.csv-missing': No such file or directory
 #> 
 #>   Common causes (in rough order of likelihood):
-#>     * HTTP 403 Forbidden (geo-restriction; try a different VPN region).
+#>     * The server did not serve the file (see the error above): the URL may have moved or the
+#>       portal may be down.
 #>   The Wayback fallback is switched off; nothing more to try.
 #> [1] FALSE
 
