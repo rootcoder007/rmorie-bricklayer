@@ -2,21 +2,73 @@
 
 ## rmoriebricklayer 1.1.1
 
+- Several R processes calling
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  for the same table with one cache folder take turns: each download
+  runs under an operating-system lock beside the file, a process that
+  waited keeps the file the first one finished, and every file is
+  written under a name of its own and moved into place whole. Running
+  them in parallel used to fail in most of the processes, some told that
+  the folder was full.
+  [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
+  writes its download under a name of its own too.
+- A download that cannot be written on this computer (a cache folder
+  that does not exist, is read-only or is full) says so, with the path
+  and `options(rmoriebricklayer.dcache = )`, instead of being reported
+  as an error of data.rmorie.com.
+- A cached manifest that cannot be read (cut short or damaged on disk)
+  is fetched again, instead of stopping
+  [`dmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  with the JSON parser’s message and making
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  throw away the table it had just downloaded; when no fresh one can be
+  had, the error says the cached copy is damaged.
+- [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  and `rmbl data pull` refuse a key that is not valid text in the
+  session’s encoding, or is longer than 200 bytes, in one line (status 2
+  on the command line), without the warnings base R gave about the text.
+- [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  refuses a value that is not of the type the JSON names (`"x"` or `1`
+  as a logical, `3.7` or `"7"` as an integer, a number as text or as a
+  complex number), where it converted it, and an object whose class does
+  not fit its data (an integer vector with class `data.frame`, a factor
+  code past its levels).
+- `rmbl migrate` treats a function defined by
+  [`assign()`](https://rdrr.io/r/base/assign.html) with `envir =` (or
+  `pos =`) as defined wherever the script calls it, and a name defined
+  inside [`with()`](https://rdrr.io/r/base/with.html) or
+  [`within()`](https://rdrr.io/r/base/with.html) as defined only there.
+- The help of
+  [`dmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  and the services fallback no longer name pages at www.rmorie.com that
+  do not exist: the tables need no sign-in and have no terms of the
+  service’s own, each keeping its source’s licence, which the manifest
+  names; the fallback points at <https://data.rmorie.com/>.
 - A table downloaded in parts no longer comes out damaged when the disk
   fills up while the parts are joined: the failed write is an error that
   names the folder and the option for choosing one with room
   (`options(rmoriebricklayer.dcache = )`), where it was a silent short
-  file that then failed its checksum as “tampered with in transit”. Each
-  part is deleted once it is in the joined file, so the download needs
-  the table’s size plus one part on disk, not twice the table’s size.
+  file that then failed its checksum as “tampered with in transit”. The
+  parts are joined in place: the first becomes the joined file and each
+  other part is deleted once it is appended, so the download needs the
+  table’s size plus one part on disk, not twice the table’s size, and a
+  join cut short (a full disk, a killed session) is resumed by the next
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  from the first part not yet joined, without downloading the joined
+  parts again.
 - [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   can read part of a table, for the curated tables too large to hold in
   memory (the largest has 93 million rows): `cols` reads only the named
-  columns, `n` at most that many rows, and `keep` is a function called
-  on each piece of the file as it is read, so only the rows it accepts
-  are kept. `file = TRUE` returns the path of the downloaded, verified
-  file without reading it. Before reading a table of more than about 2
-  GB whole,
+  columns (in the file’s order), `n` at most that many rows, and `keep`
+  is a function called on each piece of the file as it is read, so only
+  the rows it accepts are kept. The file is read twice, a piece of about
+  8 MB at a time: once to check every record and settle each column’s
+  type over the whole table, then for the rows, so the names, types and
+  refusals are those of `dload(key)`, and `dload(key, keep = f)` gives
+  the rows of `dload(key)` that `f` keeps. `file = TRUE` returns the
+  path of the downloaded, verified file without reading it, and cannot
+  be combined with `cols`, `n` or `keep`. Before reading a table of more
+  than about 2 GB whole,
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   says how large it is and names these arguments.
 - `rmbl data` with nothing after it prints its usage line instead of

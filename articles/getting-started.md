@@ -1,10 +1,12 @@
 # Your first capsule: a published table, analysed and recorded
 
-Most published administrative data arrives as a table of counts by
-period and group. The questions are always the same: what changed, how
-sure can we be, is there a trend, and is this release the one we had
-before. This vignette answers them for one real table in twenty lines,
-then records the run so someone else can repeat it.
+The package works with any data an analysis reads; this first vignette
+starts with the most common kind, published administrative data, which
+arrives as a table of counts by period and group. The questions are
+always the same: what changed, how sure the answer is, whether there is
+a trend, and whether this release is the one used before. This vignette
+answers them for one real table in twenty lines, then records the run so
+someone else can repeat it.
 
 ## The table
 
@@ -58,7 +60,7 @@ a
 #> │   adjusted for the number of comparisons; rptanl() writes the full      │
 #> │   tables as a report, and x$change, x$rates and x$trend hold them.      │
 #> │                                                                         │
-#> │   Run 2026-11-14 03:57                                                  │
+#> │   Run 2026-11-14 17:18                                                  │
 #> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 

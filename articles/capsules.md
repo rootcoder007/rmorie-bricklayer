@@ -85,7 +85,7 @@ fdl(url, path)             # plain-language failure diagnosis
                                          # + automatic Wayback fallback
 ```
 
-This vignette stays offline, so we go straight to the fallback path.
+This vignette stays offline, so it goes straight to the fallback path.
 
 ## 3. Synthetic fallback: the pipeline always runs
 
@@ -171,7 +171,7 @@ summarypath <- wrsmrytxt(
 cat(readLines(summarypath)[7:12], sep = "\n")
 #> Project:   demo-study
 #> Author:    A. Author
-#> When:      2026-11-14 03:57:21 UTC
+#> When:      2026-11-14 17:17:43 UTC
 #> OS:        Linux
 #> R:         R version 4.6.2 (2026-10-29)
 #> Mode:      SYNTHETIC (not real data -- pipeline check only)

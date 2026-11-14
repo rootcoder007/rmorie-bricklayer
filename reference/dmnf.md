@@ -3,9 +3,9 @@
 The MORIE project keeps databases materialised from Google BigQuery
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
-tables from the edge, under the data access terms at
-`www.rmorie.com/data-license/`. They need no sign-in and no key. The
-service address comes from
+tables from the edge. They need no sign-in and no key, and there are no
+terms of the service's own: each table keeps the licence of its source,
+which the manifest names. The service address comes from
 [`svcs`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svcs.md).
 `dmnf()` returns the gateway's manifest (every table with rows, columns,
 size, SHA-256 and its BigQuery source), kept for a day; `dtabs()` the
@@ -54,7 +54,9 @@ dload(
 
   Character vector, default `NULL` (every column): the columns to read,
   by the names in the manifest or as `dload()` returns them. The others
-  are skipped as the file is read.
+  are skipped as the file is read. The columns come back in the order of
+  the file, whatever the order of `cols`, and a column named twice comes
+  back once.
 
 - n:
 
@@ -73,7 +75,8 @@ dload(
 
   Logical scalar, default `FALSE`. `TRUE` downloads and verifies the
   table and returns the path of its gzip-compressed CSV without reading
-  it, for tools that query a file in place.
+  it, for tools that query a file in place; it cannot be combined with
+  `cols`, `n` or `keep`.
 
 ## Value
 
@@ -129,6 +132,14 @@ and any table the manifest marks restricted, with `access` other than
 and `dtabs()` leave them out (the listing counts them in one line), and
 `dload()` refuses them before any request, saying where to get them.
 Downloads draw a progress bar when `options(morie.progress)` allows it.
+
+With `cols`, `n` or `keep` the table is read a piece of about 8 MB of
+text at a time, twice: the first pass checks every record as a whole
+read checks it and settles each column's type over the whole table, the
+second reads the pieces in those types. The names, types and refusals
+are those of `dload(key)`, and `keep` sees the values it holds:
+`dload(key, keep = f)` gives the rows of `dload(key)` that `f` keeps,
+numbered from 1. Even `n = 1` reads the file once whole, for the types.
 
 Errors: `refresh` not `TRUE` or `FALSE`; the service unavailable; a
 `key` that is not of the form `db/table`, not listed in the manifest, or

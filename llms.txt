@@ -5,19 +5,21 @@
 
 ## What it is
 
-`rmoriebricklayer` is for individuals who work from a variety of
-published and unpublished tables: a ministry’s open-data portal,
-Statistics Canada, a police oversight agency, or your own data. It does
-four things with such a table.
+`rmoriebricklayer` is for anyone whose analysis depends on data, from
+any field: any file or dataset an analysis reads, whether CSV and other
+tables, spreadsheets, survey microdata, model outputs, or documents and
+archives captured as sources, and whether it comes from a ministry’s
+open-data portal, Statistics Canada, a police oversight agency, a
+research archive or your own work. It does four things with that data.
 
-1.  **It analyzes the table.**
+1.  **It analyzes published tables.**
     [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md)
     takes counts by period and group and reports what changed between
     periods, with exact intervals, trends and rates, and says how far
     the publisher’s rounding and suppressed cells could move each
     figure.
 2.  **It pins the data the result came from.** A *capsule* records where
-    the table came from, the SHA-256 digest of the exact file, the
+    each source came from, the SHA-256 digest of the exact file, the
     columns and values it should have, and the address of an archived
     copy. Rerun later, `rmbl verify` says whether the source still
     matches, and `rmbl drift` says, column by column, what moved if it
@@ -38,35 +40,47 @@ four things with such a table.
     [`vignette("causal-effects")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/causal-effects.md)
     work through them.
 
-The rest of the package (the statistics for administrative tables, the
-plots, the dashboard, the cryptography written from the standards)
-serves one of these four.
+The rest of the package serves one of these four: the statistics for
+published administrative tables and for survey microdata, the drift and
+schema checks, the archived copies an analysis falls back on, signing
+and verification written from the standards, the plots and the
+dashboard, reproducibility bundles, the command line (`rmbl`) and the
+GitHub Action that checks capsules on every change.
 
 ## Why it exists
 
-I analyze Canadian justice and health statistics from published tables.
-Three things kept going wrong, and a checksum alone catches none of
-them.
+Data an analysis depends on can change or vanish without anyone
+noticing, and a checksum alone catches few of the ways it does. Four
+come up again and again.
 
-- **Sources go down or move.** The federal open-data portal,
+- **Sources go down or move.** A portal goes offline, a file moves to a
+  new address or is replaced. For example, the federal open-data portal,
   `open.canada.ca`, was unreachable in October 2026 while analyses
   depended on it. A capsule keeps the address of an archived copy of
   every source in the Internet Archive, so the analysis still runs, and
   it says that it used the archived copy.
-- **The same table comes back different.** A re-released extract can
-  hold the same numbers in a different byte layout, or keep a column’s
-  name and type while the column has been rescaled. The drift checks
-  compare distributions, not bytes.
-- **Labels end up on the wrong groups.** In 2020 the Ontario Human
-  Rights Commission reported Black people in Toronto as 30 to 58 times
-  as likely as White people to face police use of force; its 2023
-  correction gives 4 to 5 times, because four race codes had been
-  rotated between two statistical programs. The package relabels only by
-  a named map, never by position, and can say which rotation reproduces
-  a set of published ratios
+- **The same data comes back different.** A re-release can hold the same
+  values in a different byte layout, or keep a column’s name and type
+  while its values change meaning. For example, an extract can keep a
+  column called `count` while the column has been rescaled. The drift
+  checks compare distributions, not bytes, and the schema checks compare
+  names, types and value sets.
+- **Labels end up on the wrong groups.** Codes are matched to labels by
+  position, and one shift moves every figure onto another group. For
+  example, in 2020 the Ontario Human Rights Commission reported Black
+  people in Toronto as 30 to 58 times as likely as White people to face
+  police use of force; its 2023 correction gives 4 to 5 times, because
+  four race codes had been rotated between two statistical programs. The
+  package relabels only by a named map, never by position, and can say
+  which rotation reproduces a set of published ratios
   ([`vignette("categorical-integrity")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/categorical-integrity.md)).
+- **A result cannot be checked later.** A figure in a report rarely says
+  which bytes it came from or whether anything changed after it was
+  computed. A capsule records that, can be signed and timestamped, and
+  runs again on a reader’s machine (`rmbl verify`), or as a
+  reproducibility bundle a reviewer opens with nothing but R.
 
-## How I use it
+## An example
 
 A table of people in Ontario’s adult correctional institutions (OTIS,
 shipped with the package), analyzed, plotted and written up:
@@ -1003,14 +1017,14 @@ starts a project of your own:
 
 ``` r
 
-p <- mkbndlproj(file.path(tempdir(), "my-study"), title = "My study")
+p <- mkbndlproj(file.path(tempdir(), "a-study"), title = "A study")
 # the reviewer's copy finds or downloads the data, or runs on synthetic data
 b <- mkbndl(p$dir, dest = tempdir(), overwrite = TRUE)
 # before shipping, run it as a reviewer will and check its counts
 mkbndlchk(b$path, synthetic = TRUE)
 # or carry the data inside, to run offline
 dat <- data.frame(group = rep(c("a", "b"), 50), value = rep(c(4, 6), 50))
-csv <- file.path(tempdir(), "my_data.csv")
+csv <- file.path(tempdir(), "study_data.csv")
 utils::write.csv(dat, csv, row.names = FALSE)
 mkbndl(p$dir, dest = tempdir(), data = csv, overwrite = TRUE)
 # the OTIS example above
@@ -1036,14 +1050,14 @@ against the `survey` package’s `svymean()`, `svytotal()`, `svyratio()`,
 `svyby()` and `svyciprop()`; the Mann-Kendall trend test and Theil-Sen
 slope
 ([`trndtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trndtst.md))
-against [`stats::cor.test()`](https://rdrr.io/r/stats/cor.test.html)’s
+against [`stats::cor.test()`](https://rdrr.io/r/stats/cor.test.html)‘s
 Kendall tau and its exact p-values; the Hawkes-process fits
 ([`chwkfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkfit.md))
 against the reference fits of MORIE’s Python package, which uses the
 same C++ core; and the hashes and signatures against `digest`, `openssl`
-and published test vectors (see Verification above). Others are, as far
-as we know, new in R: the bounds that a release’s rounding and
-suppression imply for its cells
+and published test vectors (see Verification above). Others have, to the
+package authors’ knowledge, no earlier implementation in R: the bounds
+that a release’s rounding and suppression imply for its cells
 ([`pubbnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pubbnd.md))
 and the reproducible data capsules with signed manifests.
 
@@ -1192,7 +1206,7 @@ df     <- read.csv(path)
 issues <- valsch(df, prov)             # names, types, value sets, rows
 
 # 4. The manifest: named cross-checks, then the two capsule artifacts.
-man <- mkmnf(list(project = "my-study", synthetic = TRUE))
+man <- mkmnf(list(project = "a-study", synthetic = TRUE))
 man <- recrd(man, "rows", obs = nrow(df), expd = gen$rows, syn = TRUE)
 wrmnfjs(man, file.path(tempdir(), "manifest.json"))
 wrsmrytxt(man, tempdir(),
@@ -1354,7 +1368,7 @@ library(rmoriebricklayer)
 llmprvd()   # the providers, their addresses and key variables
 llmstat()      # which route would answer from this machine, and why
 Sys.setenv(ANTHROPIC_API_KEY = "...")    # or llmcfg(anthropic.key = "...")
-llmask("How do I estimate a weighted proportion with bootstrap replicate weights?")
+llmask("How is a weighted proportion estimated with bootstrap replicate weights?")
 llmask("The same question, on the local model.", route = "ollama")
 llmmdls(route = "anthropic")   # the models that route offers; attr(, "default")
 ```
@@ -1372,7 +1386,7 @@ llmcfg()                                        # every setting, its value and s
 llmcfg(route = "anthropic")                     # always this provider
 llmcfg(anthropic.model = "claude-opus-5-5")     # its model
 llmcfg(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
-llmcfg(own.url = "http://localhost:1234/v1", own.model = "my-model", own.key = "sk-...")
+llmcfg(own.url = "http://localhost:1234/v1", own.model = "a-model", own.key = "sk-...")
 llmcfg(route = NULL)                            # back to the automatic order
 ```
 
@@ -1417,8 +1431,8 @@ rmoriebricklayer wayback urls.txt --out w.jsonl # archive every URL in a file (a
 rmoriebricklayer wayback --retry w.jsonl        # retry the ones that failed
 rmoriebricklayer archive save URL --also wayback  # capture from this connection (WARC), ask the Wayback Machine
 rmoriebricklayer archive push captures --also wayback  # ask the Wayback Machine later for a kept capture
-rmoriebricklayer pack --new my-study            # start a reproducibility bundle project (mkbndlproj())
-rmoriebricklayer pack my-study --data data.csv  # its zip, data inside; a reviewer double-clicks it (mkbndl())
+rmoriebricklayer pack --new a-study             # start a reproducibility bundle project (mkbndlproj())
+rmoriebricklayer pack a-study --data data.csv   # its zip, data inside; a reviewer double-clicks it (mkbndl())
 rmoriebricklayer bundle "your request"          # agentbndl() from the shell
 rmoriebricklayer verify capsules --fail-on warn # every capsule under a folder, as the rmbl GitHub Action checks it
 rmoriebricklayer verify capsules --json         # the check rows as JSON (hmac secret: RMBL_KEY)
@@ -1446,7 +1460,7 @@ rmbl config setup
 rmbl ask "your question"
 rmbl aye "your question"
 rmbl tellme "your question"
-rmbl "how do I weight a survey?"               # a quoted question with no verb is asked too
+rmbl "how is a survey weighted?"                # a quoted question with no verb is asked too
 rmbl models
 ```
 
@@ -1479,7 +1493,8 @@ Waakebiness-Bryce Institute for Indigenous Health at the University of
 Toronto’s Dalla Lana School of Public Health, and Professor Angela
 Mashford-Pringle (Timiskaming First Nation), its Associate Director.
 Their research made it possible to bring their frameworks into this
-library as estimators. Any error in that translation is ours.
+library as estimators. Any error in that translation is the package’s,
+not theirs.
 
 ## Citation
 
