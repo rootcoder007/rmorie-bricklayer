@@ -176,7 +176,9 @@
 }
 
 #' Says whether a parse node opens a scope: a function definition, or a call
-#' of local().
+#' of local(), with() or within(), whose expression runs in an environment of
+#' its own (`with(list(), {share <- sum})` defines nothing at the top level;
+#' audit of 716154bd, N11).
 #' @param pd The parse data.
 #' @param id The node's parse id.
 #' @return TRUE or FALSE.
@@ -193,7 +195,7 @@
     any(
       pd$parent == pd$id[k[1L]] &
         pd$token == "SYMBOL_FUNCTION_CALL" &
-        pd$text == "local"
+        pd$text %in% c("local", "with", "within")
     )
 }
 
@@ -262,13 +264,38 @@
     str <- pd$text[pd$parent == pd$id[arg[1L]] & pd$token == "STR_CONST"]
     if (length(str) == 1L) {
       name <- c(name, substr(str, 2L, nchar(str) - 1L))
-      scope <- c(
-        scope,
-        if (pd$text[r] %in% c("setGeneric", "setMethod")) 0L else here(r)
-      )
+      # an environment named in the call (assign(envir = globalenv()) in a
+      # function) may be any scope, so the name counts everywhere: it was
+      # taken as the function's own (audit of 716154bd, N11)
+      gen <- pd$text[r] %in% c("setGeneric", "setMethod")
+      env <- !gen && .bl_migrate_env_arg(pd, k, pd$text[r])
+      scope <- c(scope, if (gen || env) 0L else here(r))
     }
   }
   data.frame(name = name, scope = scope, stringsAsFactors = FALSE)
+}
+
+#' Says whether a call of assign(), delayedAssign() or makeActiveBinding()
+#' names the environment it defines in, other than the one it runs in.
+#' @param pd The parse data.
+#' @param k The rows of the call's children, in order.
+#' @param fn Which of the three is called.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_migrate_env_arg <- function(pd, k, fn) {
+  at <- c(assign = 3L, delayedAssign = 4L, makeActiveBinding = 3L)[[fn]]
+  sub <- pd$token[k] == "SYMBOL_SUB"
+  named <- which(sub & pd$text[k] %in% c("envir", "pos", "assign.env", "env"))
+  val <- if (length(named)) {
+    k[named[[1L]] + 2L]
+  } else {
+    # the positional arguments: the expressions not after `name =`
+    e <- which(pd$token[k] == "expr")[-1L]
+    e <- e[pd$token[k[e - 1L]] != "EQ_SUB"]
+    if (length(e) >= at) k[e[[at]]] else NA
+  }
+  txt <- gsub("[[:space:]]", "", pd$text[val])
+  !is.na(val) && !identical(txt, "environment()")
 }
 
 #' Says whether a name used at a parse row is one the script defines in a

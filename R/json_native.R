@@ -639,25 +639,101 @@ jsunser <- function(txt, trusted = FALSE) {
   d
 }
 
-#' Converts a packed value to its type; a value that does not convert
-#' without a warning (text in a number) is not what jsser() wrote.
+#' Converts a packed value to its type, refusing a value that is not one
+#' jsser() writes for it.
+#'
+#' Each value must be of the type the JSON names: true or false for a logical,
+#' a whole number within R's integers for an integer, a number or "NaN",
+#' "Inf" or "-Inf" for a double, text for a character vector and text R reads
+#' as a complex number for a complex one; null, and "NA", stand for NA. Only a
+#' conversion that warned was refused: "x" became NA as a logical, 3.7 the
+#' integer 3, "7" the integer 7 and `[1, true]` the text "1" "1" (audit of
+#' 716154bd, N7).
 #' @param vals The packed value.
 #' @param as The conversion (as.double and the like).
 #' @param mode The type's name, for the message.
 #' @return The converted vector.
 #' @noRd
 .rmbl_json_typed <- function(vals, as, mode) {
+  bad <- function() {
+    stop(
+      "`txt` is not JSON written by jsser() (a value that is not ",
+      mode,
+      ")",
+      call. = FALSE
+    )
+  }
+  if (!.rmbl_json_fits(vals, mode)) {
+    bad()
+  }
+  # "NA" made complex warns "NAs introduced by coercion", in jsonlite too: the
+  # values fit, and the warning is left as jsonlite gives it
+  if (identical(mode, "complex")) {
+    return(as(.rmbl_json_list_to_vec(vals)))
+  }
   withCallingHandlers(
     as(.rmbl_json_list_to_vec(vals)),
-    warning = function(w) {
-      stop(
-        "`txt` is not JSON written by jsser() (a value that is not ",
-        mode,
-        ")",
-        call. = FALSE
-      )
-    }
+    warning = function(w) bad()
   )
+}
+
+#' Says whether every packed value is one jsser() writes for a type.
+#' @param vals The packed value, a list of scalars (or one vector).
+#' @param mode The type's name.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_json_fits <- function(vals, mode) {
+  v <- if (is.list(vals)) vals else as.list(vals)
+  len <- lengths(v)
+  if (any(len > 1L) || any(vapply(v, is.list, NA))) {
+    return(FALSE)
+  }
+  v <- v[len == 1L]
+  chr <- vapply(v, is.character, NA)
+  num <- vapply(v, is.numeric, NA)
+  lgl <- vapply(v, is.logical, NA)
+  s <- unlist(v[chr], use.names = FALSE)
+  na <- chr
+  na[chr] <- s %in% "NA"
+  if (mode %in% c("double", "numeric")) {
+    na[chr] <- s %in% c("NA", "NaN", "Inf", "-Inf")
+  }
+  rest <- !na
+  ok <- switch(
+    mode,
+    logical = lgl[rest],
+    integer = num[rest] & .rmbl_json_whole(v[rest]),
+    double = ,
+    numeric = num[rest],
+    complex = chr[rest] & .rmbl_json_complex_ok(v[rest]),
+    character = chr,
+    TRUE
+  )
+  all(ok)
+}
+
+#' Says which packed numbers are whole and within R's integers.
+#' @param v A list of numbers.
+#' @return A logical vector.
+#' @noRd
+.rmbl_json_whole <- function(v) {
+  x <- suppressWarnings(as.numeric(unlist(v, use.names = FALSE)))
+  if (!length(x)) {
+    return(logical())
+  }
+  !is.na(x) & x == round(x) & abs(x) <= .Machine$integer.max
+}
+
+#' Says which packed strings R reads as complex numbers.
+#' @param v A list of strings.
+#' @return A logical vector.
+#' @noRd
+.rmbl_json_complex_ok <- function(v) {
+  x <- unlist(v, use.names = FALSE)
+  if (!length(x)) {
+    return(logical())
+  }
+  !is.na(suppressWarnings(as.complex(x)))
 }
 
 #' Format doubles and integers the way jsonlite's num_to_char() does
@@ -3651,6 +3727,7 @@ bricklayer_json_validate <- function(txt) {
   }
   attrs <- lapply(obj$attributes, .rmbl_json_unpack, trusted = trusted)
   output <- do.call("structure", c(newdata, attrs), quote = TRUE)
+  .rmbl_json_shape(output, mode)
   if (mode == "closure") {
     f <- as.function(output)
     environment(f) <- globalenv()
@@ -3660,6 +3737,40 @@ bricklayer_json_validate <- function(txt) {
     return(as.pairlist(output))
   }
   output
+}
+
+#' Refuses an object whose class says one shape and whose data another: a
+#' data frame that is not a list of columns as long as its row names, a factor
+#' that is not codes into its levels. jsser() writes neither; an integer
+#' vector with class data.frame came back as a corrupt data frame (audit of
+#' 716154bd, N7).
+#' @param x The object rebuilt.
+#' @param mode The type the JSON names (a double given the class factor is
+#'   made integer on the way, 1.5 becoming 1).
+#' @return NULL, invisibly; an error for a refused object.
+#' @noRd
+.rmbl_json_shape <- function(x, mode) {
+  ok <- TRUE
+  if (inherits(x, "data.frame")) {
+    n <- .row_names_info(x, 2L)
+    ok <- is.list(x) && !is.null(attr(x, "row.names")) &&
+      length(names(x)) == length(x) &&
+      all(vapply(unclass(x), NROW, 1L) == n)
+  } else if (inherits(x, "factor")) {
+    lv <- attr(x, "levels")
+    v <- unclass(x)[!is.na(x)]
+    ok <- mode == "integer" && (is.null(lv) || is.character(lv)) &&
+      all(v >= 1L & v <= length(lv))
+  }
+  if (!ok) {
+    stop(
+      "`txt` is not JSON written by jsser() (a ",
+      class(x)[[1L]],
+      " whose data do not have its shape)",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }
 
 #' Refuses the code-bearing types of the list `jsser()` wrote unless the JSON
@@ -3722,9 +3833,9 @@ bricklayer_json_validate <- function(txt) {
       integer = typed(as.integer),
       numeric = ,
       double = typed(as.double),
-      character = as.character(.rmbl_json_list_to_vec(vals)),
-      # complex values come as text, and NA parts of one warn in base R
-      complex = as.complex(.rmbl_json_list_to_vec(vals)),
+      character = typed(as.character),
+      # complex values come as text
+      complex = typed(as.complex),
       list = ,
       pairlist = ,
       closure = lapply(vals, .rmbl_json_unpack, trusted = trusted),

@@ -2070,8 +2070,11 @@ instcli <- function(
 #' @return The exit status.
 #' @noRd
 .bl_cli_data_pull <- function(rest, flag, out) {
-  dest <- flag("--out") %||%
-    paste0(gsub("[^A-Za-z0-9_.-]", "_", rest[[2L]]), ".csv")
+  key <- rest[[2L]]
+  if (.bl_cli_key_refused(key, out)) {
+    return(2L)
+  }
+  dest <- flag("--out") %||% paste0(gsub("/", "_", key, fixed = TRUE), ".csv")
   # refuse an unwritable destination before downloading the table, not after
   dir <- dirname(dest)
   if (!dir.exists(dir) || file.access(dir, 2L) != 0L || dir.exists(dest)) {
@@ -2080,22 +2083,6 @@ instcli <- function(
       dest
     ))
     return(1L)
-  }
-  # a key is db/table: anything else is refused before the table list is
-  # downloaded to look it up
-  key <- rest[[2L]]
-  part <- "[A-Za-z0-9][A-Za-z0-9_.-]*"
-  if (
-    nchar(key) > 200L ||
-      !grepl(sprintf("^%s/%s$", part, part), key) ||
-      grepl("..", key, fixed = TRUE)
-  ) {
-    out(sprintf(
-      "'%s' is not a table key (`%s data list` shows them)\n",
-      substr(.rmbl_printable(key), 1L, 60L),
-      .bl_prog()
-    ))
-    return(2L)
   }
   df <- dload(rest[[2L]])
   ok <- tryCatch(
@@ -2114,6 +2101,38 @@ instcli <- function(
   }
   out(sprintf("wrote %s  (%d rows, %d cols)\n", dest, nrow(df), ncol(df)))
   0L
+}
+
+#' Refuses, in one line, a `data pull` key that is not db/table.
+#'
+#' Anything but db/table is refused before the table list is downloaded to
+#' look it up, and before the default file name is made from it: a key not
+#' valid in the locale, or of thousands of bytes, gave base R's errors and
+#' warnings from gsub(), nchar() and dirname() (audit of 716154bd, N6). The
+#' pattern is matched byte by byte, so no byte is read as text.
+#' @param key The key given.
+#' @param out The function that prints.
+#' @return TRUE when the key was refused.
+#' @noRd
+.bl_cli_key_refused <- function(key, out) {
+  part <- "[A-Za-z0-9][A-Za-z0-9_.-]*"
+  ok <- nchar(key, type = "bytes") <= 200L &&
+    grepl(sprintf("^%s/%s$", part, part), key, useBytes = TRUE) &&
+    !grepl("..", key, fixed = TRUE, useBytes = TRUE)
+  if (ok) {
+    return(FALSE)
+  }
+  shown <- if (validEnc(key)) {
+    .rmbl_printable(key)
+  } else {
+    iconv(key, "latin1", "ASCII", sub = "?")
+  }
+  out(sprintf(
+    "'%s' is not a table key (`%s data list` shows them)\n",
+    substr(shown, 1L, 60L),
+    .bl_prog()
+  ))
+  TRUE
 }
 
 #' The data verb: the curated tables at data.rmorie.com.

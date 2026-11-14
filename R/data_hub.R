@@ -1924,8 +1924,14 @@ dload <- function(
 #' @return `key`, invisibly.
 #' @noRd
 .bl_data_check_keyarg <- function(key) {
+  # text that is not valid in this locale, or longer than a file name can be,
+  # is refused before any function reads it as text: grepl() warned "input
+  # string 1 is invalid in this locale" (audit of 716154bd, N6)
   ok <- is.character(key) &&
     length(key) == 1L &&
+    !is.na(key) &&
+    validEnc(key) &&
+    nchar(key, type = "bytes") <= 200L &&
     grepl("/", key, fixed = TRUE) &&
     !startsWith(key, "/") &&
     !endsWith(key, "/")

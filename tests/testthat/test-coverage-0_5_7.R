@@ -1074,8 +1074,10 @@ test_that(
     })
     got <- new.env()
     got$out <- character(0)
+    # a key of the right shape: the key is checked first (audit of 716154bd,
+    # N6), and the destination is what this asks about
     rc <- .bl_cli_data(
-      c("pull", "tbl"),
+      c("pull", "db/tbl"),
       function(f) "/nonexistent-dir-zz/out.csv",
       function(s) got$out <- c(got$out, s)
     )

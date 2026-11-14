@@ -307,6 +307,111 @@ test_that("N5: a download that cannot be written says so, with the option", {
   expect_length(list.files(d, pattern = "[.]dl$"), 0L)
 })
 
+test_that("N6: a key that is not valid text, or too long, is refused once", {
+  ns <- asNamespace("rmoriebricklayer")
+  said <- character()
+  out <- function(x) said <<- c(said, x)
+  flag <- function(x) NULL
+  keys <- list(strrep("a", 5000), file.path(strrep("a", 300), "t"))
+  if (isTRUE(l10n_info()[["UTF-8"]])) {
+    keys <- c(keys, rawToChar(as.raw(c(0x61, 0xff, 0x2f, 0x62))))
+  }
+  for (k in c(keys, "a/b/c")) {
+    if (!identical(k, "a/b/c")) {
+      expect_no_warning(expect_error(dload(k), "^key must be db/table"))
+    }
+    said <- character()
+    expect_no_warning(st <- ns$.bl_cli_data_pull(c("pull", k), flag, out))
+    expect_identical(st, 2L)
+    expect_length(said, 1L)
+    expect_match(said, "is not a table key")
+    expect_lt(nchar(said, type = "bytes"), 200)
+    flag2 <- function(x) if (identical(x, "--out")) "x.csv" else NULL
+    said <- character()
+    expect_no_warning(st <- ns$.bl_cli_data_pull(c("pull", k), flag2, out))
+    expect_identical(st, 2L)
+  }
+})
+
+test_that("N7: jsunser() refuses a value that is not of its declared type", {
+  bad <- c(
+    '{"type":"logical","value":["x"]}',
+    '{"type":"logical","value":[1]}',
+    '{"type":"integer","value":[3.7]}',
+    '{"type":"integer","value":["7"]}',
+    '{"type":"integer","value":[true]}',
+    '{"type":"integer","value":[3000000000]}',
+    '{"type":"double","value":["7"]}',
+    '{"type":"double","value":[true]}',
+    '{"type":"double","value":[[1,2]]}',
+    '{"type":"character","value":[1,true]}',
+    '{"type":"complex","value":["zz"]}',
+    '{"type":"complex","value":[1]}'
+  )
+  for (s in bad) {
+    expect_no_warning(
+      expect_error(jsunser(s), "not JSON written by jsser\\(\\)", info = s)
+    )
+  }
+  ok <- list(
+    '{"type":"logical","value":[true,null,"NA",false]}' =
+      c(TRUE, NA, NA, FALSE),
+    '{"type":"integer","value":[1,"NA",null,-2]}' = c(1L, NA, NA, -2L),
+    '{"type":"double","value":[1.5,"NaN","Inf","-Inf","NA",2]}' =
+      c(1.5, NaN, Inf, -Inf, NA, 2),
+    '{"type":"character","value":["a",null,"NA"]}' = c("a", NA, "NA"),
+    '{"type":"complex","value":["1+2i"]}' = 1 + 2i
+  )
+  for (s in names(ok)) {
+    expect_identical(jsunser(s), ok[[s]], info = s)
+  }
+  for (x in list(
+    data.frame(a = 1:2, b = c("x", "y")),
+    factor(c("a", NA, "b")),
+    structure(1:4, dim = c(2L, 2L)),
+    Sys.Date()
+  )) {
+    expect_identical(jsunser(jsser(x)), x)
+  }
+})
+
+test_that("N7: jsunser() refuses a class its data do not fit", {
+  cls <- function(x) {
+    sprintf('"class":{"type":"character","value":["%s"]}', x)
+  }
+  bad <- c(
+    sprintf(
+      '{"type":"integer","value":[1],"attributes":{%s}}',
+      cls("data.frame")
+    ),
+    sprintf(
+      paste0(
+        '{"type":"list","value":[{"type":"integer","value":[1,2]}],',
+        '"attributes":{"names":{"type":"character","value":["a"]},%s,',
+        '"row.names":{"type":"integer","value":[1,2,3]}}}'
+      ),
+      cls("data.frame")
+    ),
+    sprintf(
+      paste0(
+        '{"type":"integer","value":[5],"attributes":{%s,',
+        '"levels":{"type":"character","value":["a"]}}}'
+      ),
+      cls("factor")
+    ),
+    sprintf(
+      paste0(
+        '{"type":"double","value":[1],"attributes":{%s,',
+        '"levels":{"type":"character","value":["a"]}}}'
+      ),
+      cls("factor")
+    )
+  )
+  for (s in bad) {
+    expect_error(jsunser(s), "whose data do not have its shape", info = s)
+  }
+})
+
 test_that("N8: file = TRUE with cols, n or keep is refused, not ignored", {
   aud_cache(charToRaw("a,b\n1,2\n"))
   for (a in list(
@@ -398,6 +503,29 @@ test_that("N10: no two roxygen blocks run together in the sources", {
       )
     }
   }
+})
+
+test_that("N11: migrate reads assign(envir =) and with() scopes", {
+  ns <- asNamespace("rmoriebricklayer")
+  mig <- function(src) ns$.bl_migrate_text(src)$lines
+  n4 <- c(
+    "f <- function() {",
+    "  assign(\"yoy\", function(d) d, envir = globalenv())",
+    "}",
+    "f()",
+    "yoy(1)"
+  )
+  expect_identical(mig(n4), n4)
+  n4b <- sub("envir = globalenv()", "pos = 1", n4, fixed = TRUE)
+  expect_identical(mig(n4b), n4b)
+  n4c <- sub(", envir = globalenv()", "", n4, fixed = TRUE)
+  expect_identical(mig(n4c)[5L], "yoychg(1)")
+  n4d <- sub("globalenv()", "environment()", n4, fixed = TRUE)
+  expect_identical(mig(n4d)[5L], "yoychg(1)")
+  n8 <- c("with(list(), { share <- sum; share(1) })", "share(2)")
+  expect_identical(mig(n8), c(n8[1L], "shrs(2)"))
+  n8b <- c("within(list(), share <- sum)", "share(2)")
+  expect_identical(mig(n8b)[2L], "shrs(2)")
 })
 
 test_that("N12: a damaged cached manifest is fetched again, once", {
