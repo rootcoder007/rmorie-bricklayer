@@ -280,7 +280,7 @@ test_that("a document that does not verify is ignored at every step", {
   expect_identical(svcs(offline = TRUE)$llm$mode, "off")
   expect_error(
     svc_ns(".bl_data_url")(),
-    "not available right now.*rmorie.com/access"
+    "not available right now.*see https://data.rmorie.com/"
   )
   # the fetch itself: a 404, a missing signature, an empty body
   for (pairs in list(

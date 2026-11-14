@@ -194,13 +194,13 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20, offline = FALSE) {
       auth_url = "",
       default_model = "",
       models = character(0),
-      request_access = "https://www.rmorie.com/access/"
+      request_access = "https://data.rmorie.com/"
     ),
     data = list(
       mode = "off",
       base_url = "",
-      license = "https://www.rmorie.com/data-license/",
-      request_access = "https://www.rmorie.com/access/"
+      license = "https://data.rmorie.com/",
+      request_access = "https://data.rmorie.com/"
     )
   )
 }

@@ -69,9 +69,10 @@ table, cut to the console width);
 The MORIE project keeps databases materialised from Google BigQuery
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
-tables from the edge, under the data access terms at
-\code{www.rmorie.com/data-license/}. They need no sign-in and no key. The
-service address comes from \code{\link{svcs}}.
+tables from the edge. They need no sign-in and no key, and there are no
+terms of the service's own: each table keeps the licence of its source,
+which the manifest names. The service address comes from
+\code{\link{svcs}}.
 \code{dmnf()} returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
 kept for a day; \code{dtabs()} the same as a data frame;
