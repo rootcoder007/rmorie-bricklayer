@@ -2073,13 +2073,15 @@ instcli <- function(
   # a key is db/table: anything else is refused before the table list is
   # downloaded to look it up
   key <- rest[[2L]]
+  part <- "[A-Za-z0-9][A-Za-z0-9_.-]*"
   if (
-    !grepl("^[A-Za-z0-9][A-Za-z0-9_./-]*$", key) ||
+    nchar(key) > 200L ||
+      !grepl(sprintf("^%s/%s$", part, part), key) ||
       grepl("..", key, fixed = TRUE)
   ) {
     out(sprintf(
       "'%s' is not a table key (`%s data list` shows them)\n",
-      .rmbl_printable(key),
+      substr(.rmbl_printable(key), 1L, 60L),
       .bl_prog()
     ))
     return(2L)
@@ -2658,11 +2660,9 @@ instcli <- function(
     "suppressPackageStartupMessages({ .libPaths(c(",
     deparse(lib),
     ", .libPaths())); ",
-    "q <- tryCatch(tryCatch(rmoriebricklayer::blcli(), interrupt = ",
-    "function(e) 130L), error = function(e) { ",
-    "message(\"Error: \", conditionMessage(e)); 1L }); ",
-    "q <- as.integer(q); ",
-    "quit(status = if (q == 130L) q else 200L + min(q, 55L)) })"
+    "q <- tryCatch(rmoriebricklayer::blcli(), interrupt = ",
+    "function(e) 130L); ",
+    "quit(status = as.integer(q)) })"
   )
   body <- gsub("'", "'\\''", body, fixed = TRUE)
   .rmbl_wlines(
@@ -2680,14 +2680,16 @@ instcli <- function(
         lib
       ),
       sprintf("export RMBL_PROG=%s", nm),
-      # the status as inst/bin/rmbl reads it: the command's own comes back
-      # 200 up, a bare 1 is a Ctrl-C while R started
-      "trap : INT",
+      # as inst/bin/rmbl: the shell stays (no exec) and notes a Ctrl-C, so
+      # one that ends R while it is still starting ("Execution halted",
+      # status 1) is reported as 130; any other failure keeps its status
+      "rc=",
+      "trap 'rc=130' INT",
       sprintf("Rscript --no-save --no-restore -e '%s' \"$@\"", body),
       "st=$?",
       paste0(
-        "if [ \"$st\" -ge 200 ]; then st=$((st - 200)); ",
-        "elif [ \"$st\" -eq 1 ]; then st=130; fi"
+        "[ -n \"$rc\" ] && [ \"$st\" -ne 130 ] && [ \"$st\" -ne 0 ] ",
+        "&& st=$rc"
       ),
       "exit $st"
     ),

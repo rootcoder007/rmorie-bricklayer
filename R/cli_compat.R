@@ -131,10 +131,11 @@
   m <- .bl_old_map()
   edits <- list()
   hits <- which(pd$token == "SYMBOL_FUNCTION_CALL" & pd$text %in% m$old)
-  own <- .bl_migrate_defined(pd)
+  def <- .bl_migrate_defined(pd)
   for (h in hits) {
     qual <- any(pd$token[pd$parent == pd$parent[h]] == "SYMBOL_PACKAGE")
-    if (!.bl_migrate_ours(pd, h) || (pd$text[h] %in% own && !qual)) {
+    own <- !qual && .bl_migrate_own(pd, h, pd$text[h], def)
+    if (!.bl_migrate_ours(pd, h) || own) {
       next
     }
     r <- .bl_old_row(pd$text[h])
@@ -174,22 +175,112 @@
   k[order(pd$line1[k], pd$col1[k])]
 }
 
-#' The names a script defines itself: assigned (`<-`, `=`, `<<-`, `->`),
-#' function arguments and loop variables. Such a name is the script's own, so
-#' a reference to it is not rewritten.
+#' Says whether a parse node opens a scope: a function definition, or a call
+#' of local().
 #' @param pd The parse data.
-#' @return A character vector.
+#' @param id The node's parse id.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_pd_is_scope <- function(pd, id) {
+  k <- .bl_pd_kids(pd, id)
+  if (!length(k)) {
+    return(FALSE)
+  }
+  if (any(pd$token[k] %in% c("FUNCTION", "'\\\\'"))) {
+    return(TRUE)
+  }
+  pd$token[k[1L]] == "expr" &&
+    any(
+      pd$parent == pd$id[k[1L]] &
+        pd$token == "SYMBOL_FUNCTION_CALL" &
+        pd$text == "local"
+    )
+}
+
+#' The scopes a parse node sits in, innermost first: the ids of the function
+#' definitions and local() calls around it, then 0 for the top level.
+#' @param pd The parse data.
+#' @param id The node's parse id.
+#' @return An integer vector ending in 0.
+#' @noRd
+.bl_pd_scopes <- function(pd, id) {
+  out <- integer()
+  repeat {
+    id <- pd$parent[match(id, pd$id)]
+    if (is.na(id) || id <= 0L) {
+      break
+    }
+    if (.bl_pd_is_scope(pd, id)) {
+      out <- c(out, id)
+    }
+  }
+  c(out, 0L)
+}
+
+#' The names a script defines itself, each with the scope it is defined in:
+#' assigned (`<-`, `=`, `->`; `<<-` and `->>` define at the top level),
+#' function arguments, loop variables, and names given as a string to
+#' assign(), delayedAssign(), makeActiveBinding(), setGeneric() or
+#' setMethod(). A name is the script's own only where its definition is in
+#' reach: `rate <- function(x) x` inside one function says nothing about a
+#' call of rate() at the top level.
+#' @param pd The parse data.
+#' @return A data frame: name, scope (a parse id, 0 for the top level).
 #' @noRd
 .bl_migrate_defined <- function(pd) {
-  out <- pd$text[pd$token == "SYMBOL_FORMALS"]
+  bare <- function(x) gsub("^`|`$", "", x)
+  here <- function(row) .bl_pd_scopes(pd, pd$id[row])[1L]
+  f <- which(pd$token == "SYMBOL_FORMALS")
+  name <- bare(pd$text[f])
+  scope <- pd$parent[f]
   as <- which(pd$token %in% c("LEFT_ASSIGN", "EQ_ASSIGN", "RIGHT_ASSIGN"))
   for (a in as) {
     k <- .bl_pd_kids(pd, pd$parent[a])
     tgt <- if (pd$token[a] == "RIGHT_ASSIGN") k[length(k)] else k[1L]
-    out <- c(out, pd$text[pd$parent == pd$id[tgt] & pd$token == "SYMBOL"])
+    nm <- bare(pd$text[pd$parent == pd$id[tgt] & pd$token == "SYMBOL"])
+    top <- pd$text[a] %in% c("<<-", "->>")
+    name <- c(name, nm)
+    scope <- c(scope, rep(if (top) 0L else here(a), length(nm)))
   }
-  fc <- pd$id[pd$token == "forcond"]
-  c(out, pd$text[pd$parent %in% fc & pd$token == "SYMBOL"])
+  fc <- which(pd$token == "forcond")
+  for (r in fc) {
+    nm <- bare(pd$text[pd$parent == pd$id[r] & pd$token == "SYMBOL"])
+    name <- c(name, nm)
+    scope <- c(scope, rep(here(r), length(nm)))
+  }
+  by_string <- c(
+    "assign", "delayedAssign", "makeActiveBinding", "setGeneric", "setMethod"
+  )
+  for (r in which(
+    pd$token == "SYMBOL_FUNCTION_CALL" & pd$text %in% by_string
+  )) {
+    k <- .bl_pd_kids(pd, pd$parent[pd$parent[r] == pd$id][1L])
+    arg <- k[pd$token[k] == "expr"][-1L]
+    if (!length(arg)) {
+      next
+    }
+    str <- pd$text[pd$parent == pd$id[arg[1L]] & pd$token == "STR_CONST"]
+    if (length(str) == 1L) {
+      name <- c(name, substr(str, 2L, nchar(str) - 1L))
+      scope <- c(
+        scope,
+        if (pd$text[r] %in% c("setGeneric", "setMethod")) 0L else here(r)
+      )
+    }
+  }
+  data.frame(name = name, scope = scope, stringsAsFactors = FALSE)
+}
+
+#' Says whether a name used at a parse row is one the script defines in a
+#' scope that reaches that row.
+#' @param pd The parse data.
+#' @param row The row of the use.
+#' @param name The name used.
+#' @param def The definitions (.bl_migrate_defined()).
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_migrate_own <- function(pd, row, name, def) {
+  any(def$name == name & def$scope %in% .bl_pd_scopes(pd, pd$id[row]))
 }
 
 #' The edits to renamed functions referred to without a call: passed by name
@@ -199,10 +290,15 @@
 #' @return A list of edits (.bl_migrate_edit()).
 #' @noRd
 .bl_migrate_refs <- function(pd, m) {
-  old <- setdiff(m$old, .bl_migrate_defined(pd))
+  old <- m$old
+  def <- .bl_migrate_defined(pd)
   edits <- list()
   for (s in which(pd$token == "SYMBOL" & pd$text %in% old)) {
-    if (.bl_migrate_ours(pd, s) && .bl_migrate_is_arg(pd, pd$parent[s])) {
+    if (
+      .bl_migrate_ours(pd, s) &&
+        .bl_migrate_is_arg(pd, pd$parent[s]) &&
+        !.bl_migrate_own(pd, s, pd$text[s], def)
+    ) {
       edits <- c(
         edits,
         list(.bl_migrate_edit(pd, s, .bl_old_row(pd$text[s])$new))
@@ -212,7 +308,12 @@
   for (s in which(pd$token == "STR_CONST")) {
     q <- substr(pd$text[s], 1L, 1L)
     val <- substr(pd$text[s], 2L, nchar(pd$text[s]) - 1L)
-    if (q %in% c("'", "\"") && val %in% old && .bl_migrate_fn_str(pd, s)) {
+    if (
+      q %in% c("'", "\"") &&
+        val %in% old &&
+        .bl_migrate_fn_str(pd, s) &&
+        !.bl_migrate_own(pd, s, val, def)
+    ) {
       new <- paste0(q, .bl_old_row(val)$new, q)
       edits <- c(edits, list(.bl_migrate_edit(pd, s, new)))
     }

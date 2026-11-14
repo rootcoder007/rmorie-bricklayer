@@ -388,10 +388,13 @@ bldl <- function(
 .bl_dl_net <- function(url, dest, a, draw, quiet, label) {
   t0 <- Sys.time()
   for (i in 0:3) {
+    # tmout is the whole download: an attempt gets what is left of it
+    left <- a$tmout - as.numeric(Sys.time() - t0, units = "secs")
     res <- .bl_http_download(
       url,
       dest,
-      as.integer(a$tmout),
+      # the first gets all of it; a later one whole seconds, at least one
+      as.integer(if (i == 0L) a$tmout else max(1, floor(left))),
       a$hdr_lines,
       draw,
       a$maxbytes,

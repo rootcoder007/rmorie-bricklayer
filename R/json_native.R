@@ -572,7 +572,40 @@ fromjs <- function(
 #' @export
 jsser <- function(x, digits = 8, pretty = FALSE) {
   .rmbl_flag1(pretty, "pretty")
-  tojs(.rmbl_json_pack(x), digits = digits, pretty = pretty)
+  deep <- paste0(
+    "`x` is nested too deeply for jsser(): the JSON would pass the 100 ",
+    "levels jsunser() reads"
+  )
+  packed <- tryCatch(.rmbl_json_pack(x), error = function(e) {
+    # R's own limit comes first for a few thousand levels
+    if (grepl("stack|nested too deeply", conditionMessage(e))) {
+      stop(deep, call. = FALSE)
+    }
+    stop(e)
+  })
+  if (.rmbl_json_depth(packed) > 99L) {
+    stop(deep, call. = FALSE)
+  }
+  tojs(packed, digits = digits, pretty = pretty)
+}
+
+#' How deep the lists of a packed object nest (a vector inside the last
+#' list is one JSON level more).
+#' @param x A list.
+#' @return A count of levels.
+#' @noRd
+.rmbl_json_depth <- function(x) {
+  d <- 0L
+  cur <- list(x)
+  while (length(cur)) {
+    cur <- Filter(is.list, cur)
+    if (!length(cur)) {
+      break
+    }
+    d <- d + 1L
+    cur <- unlist(cur, recursive = FALSE, use.names = FALSE)
+  }
+  d
 }
 
 #' @rdname jsserdoc
@@ -588,7 +621,22 @@ jsunser <- function(txt, trusted = FALSE) {
       call. = FALSE
     )
   }
-  .rmbl_json_unpack(obj, trusted = .rmbl_flag1(trusted, "trusted"))
+  trusted <- .rmbl_flag1(trusted, "trusted")
+  # a type jsser() does not write, or a value R cannot make into its type,
+  # is refused in the same words (the package's own refusals pass as they
+  # are)
+  not <- function(c) {
+    stop(
+      "`txt` is not JSON written by jsser() (",
+      conditionMessage(c),
+      ")",
+      call. = FALSE
+    )
+  }
+  tryCatch(
+    .rmbl_json_unpack(obj, trusted = trusted),
+    error = function(e) if (is.null(conditionCall(e))) stop(e) else not(e)
+  )
 }
 
 #' Format doubles and integers the way jsonlite's num_to_char() does
@@ -3641,6 +3689,21 @@ bricklayer_json_validate <- function(txt) {
 #' @noRd
 .rmbl_json_unpack_data <- function(obj, mode, trusted) {
   vals <- obj$value
+  # a value that does not convert to its type without a warning (text in a
+  # number) is not what jsser() wrote
+  typed <- function(as) {
+    withCallingHandlers(
+      as(.rmbl_json_list_to_vec(vals)),
+      warning = function(w) {
+        stop(
+          "`txt` is not JSON written by jsser() (a value that is not ",
+          mode,
+          ")",
+          call. = FALSE
+        )
+      }
+    )
+  }
   list(
     .Data = switch(
       mode,
@@ -3648,11 +3711,12 @@ bricklayer_json_validate <- function(txt) {
       namespace = getNamespace(obj$value$name),
       externalptr = NULL,
       raw = jsb64dec(vals),
-      logical = as.logical(.rmbl_json_list_to_vec(vals)),
-      integer = as.integer(.rmbl_json_list_to_vec(vals)),
+      logical = typed(as.logical),
+      integer = typed(as.integer),
       numeric = ,
-      double = as.double(.rmbl_json_list_to_vec(vals)),
+      double = typed(as.double),
       character = as.character(.rmbl_json_list_to_vec(vals)),
+      # complex values come as text, and NA parts of one warn in base R
       complex = as.complex(.rmbl_json_list_to_vec(vals)),
       list = ,
       pairlist = ,
@@ -3667,7 +3731,12 @@ bricklayer_json_validate <- function(txt) {
       language = as.call(parse(text = unlist(vals)))[[1L]],
       special = ,
       builtin = unserialize(jsb64dec(vals)),
-      stop("Switch falling through for encode.mode: ", mode, call. = FALSE)
+      stop(
+        "`txt` is not JSON written by jsser() (an unknown type: ",
+        .rmbl_printable(mode),
+        ")",
+        call. = FALSE
+      )
     )
   )
 }

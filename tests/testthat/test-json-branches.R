@@ -334,7 +334,7 @@ test_that("serializer covers every storage mode digest of an R object needs", {
   )
   expect_error(
     jsunser('{"type":"weird","attributes":{},"value":[]}'),
-    "encode.mode"
+    "an unknown type: weird"
   )
 })
 

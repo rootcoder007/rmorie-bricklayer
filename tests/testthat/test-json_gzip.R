@@ -41,11 +41,19 @@ test_that("jsgzdec() refuses what is not one small gzip member", {
   )
   expect_error(jsgzdec(as.raw(rep(0, 20))), "starting 1f 8b, got 20 byte")
   expect_error(jsgzdec("abc", raw = TRUE), "must be a raw vector")
-  # a trailer that declares more than 64 MiB is refused before inflating
+  # a trailer that declares a length its data does not have is damage (it
+  # was called an oversized member from the trailer alone)
   r <- jsgzenc(list(a = 1), raw = TRUE)
   n <- length(r)
   r[(n - 3L):n] <- as.raw(c(0, 0, 0, 0x10))
-  expect_error(jsgzdec(r), "refusing to inflate more than 64 MiB")
+  expect_error(jsgzdec(r), "jsgzdec: `txt` has a length trailer that does")
+  # a member that does hold more than 64 MiB is refused at the limit
+  big <- .rmbl_gzip_member(raw(65 * 1024^2))
+  expect_error(jsgzdec(big), "refusing to inflate more than 64 MiB")
+  # a truncated member, and bytes after the member
+  ok <- jsgzenc(list(a = 1:50), raw = TRUE)
+  expect_error(jsgzdec(ok[1:20]), "jsgzdec: `txt` is truncated")
+  expect_error(jsgzdec(c(ok, charToRaw("JUNK"))), "bytes after the end")
 })
 
 test_that("jsgzenc and jsgzdec check raw and take one string", {

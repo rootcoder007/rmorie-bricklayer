@@ -173,3 +173,109 @@ test_that("child processes of the tests keep their session folders here", {
   skip_on_os("windows")
   expect_identical(Sys.getenv("TMPDIR"), file.path(tempdir(), "kids"))
 })
+
+test_that("migrate reads a definition only where it is in reach", {
+  mig <- function(...) .bl_migrate_text(c(...))$lines
+  # defined inside a function, as a parameter, in local(): the top level's
+  # call is the package's
+  expect_identical(
+    mig("f <- function() { rate <- function(x) x; rate(5) }", "rate(d)"),
+    c("f <- function() { rate <- function(x) x; rate(5) }", "rtcalc(d)")
+  )
+  expect_identical(
+    mig("g <- function(rate) rate(1)", "rate(d)"),
+    c("g <- function(rate) rate(1)", "rtcalc(d)")
+  )
+  expect_identical(
+    mig("local({ yoy <- function(d) d; yoy(1) })", "yoy(d)"),
+    c("local({ yoy <- function(d) d; yoy(1) })", "yoychg(d)")
+  )
+  # a definition through a string, a backquoted name, or <<- from a function
+  own <- list(
+    c("assign(\"yoy\", function(d) d)", "yoy(1)"),
+    c("`rate` <- function(x) x", "rate(1)"),
+    c("setGeneric(\"share\", function(x) standardGeneric(\"share\"))",
+      "share(1)"),
+    c("f <- function() rate <<- function(x) x", "rate(2)"),
+    c("rate <- function(x) x", "lapply(1:3, rate)",
+      "do.call(\"rate\", list(1))")
+  )
+  for (src in own) {
+    expect_identical(mig(src), src, info = src[1L])
+  }
+  expect_identical(.bl_pd_scopes(utils::getParseData(
+    parse(text = "x", keep.source = TRUE)
+  ), 1L), 0L)
+})
+
+test_that("bldl gives each further attempt what is left of tmout", {
+  got <- new.env()
+  got$t <- integer()
+  local_mocked_bindings(
+    .bl_sleep = function(s) Sys.sleep(0.6),
+    .bl_http_download = function(url, dest, tmout, ...) {
+      got$t <- c(got$t, tmout)
+      list(status = 503L, retry_after = "1", bytes = 0, error = "")
+    }
+  )
+  a <- list(tmout = 3, hdr_lines = character(), maxbytes = 1e6)
+  expect_error(
+    .bl_dl_net("https://example.org/x", tempfile(), a, NULL, TRUE, "x"),
+    "answered HTTP 503"
+  )
+  expect_identical(got$t[1L], 3L)
+  expect_true(all(diff(got$t) <= 0L))
+  expect_lt(got$t[length(got$t)], 3L)
+  expect_true(all(got$t >= 1L))
+})
+
+test_that("jsunser, jsser and jsgzenc refuse what the other cannot read", {
+  msg <- "not JSON written by jsser"
+  expect_error(jsunser("{\"type\":\"nonsense\"}"), "an unknown type: nonsense")
+  expect_error(
+    jsunser("{\"type\":\"double\",\"value\":\"x\"}"),
+    "a value that is not double"
+  )
+  expect_error(jsunser("{\"type\":\"list\",\"value\":5,\"attributes\":7}"), msg)
+  nest <- function(d) {
+    x <- list()
+    for (i in seq_len(d)) x <- list(x)
+    x
+  }
+  expect_identical(jsunser(jsser(nest(40))), nest(40))
+  expect_error(jsser(nest(60)), "nested too deeply for jsser")
+  expect_error(jsser(nest(3000)), "nested too deeply for jsser")
+  expect_identical(.rmbl_json_depth(1), 0L)
+  expect_identical(.rmbl_json_depth(list(list(1), 2)), 2L)
+})
+
+test_that("a table key is db/table, checked before any download", {
+  local_mocked_bindings(
+    dload = function(...) stop("a table was downloaded")
+  )
+  for (k in c("a/b/c", "abc", strrep("a/", 150), "a//b")) {
+    got <- new.env()
+    st <- blcli(
+      c("data", "pull", k),
+      out = function(...) got$txt <- c(got$txt, paste0(...))
+    )
+    expect_identical(st, 2L, info = k)
+    expect_match(paste(got$txt, collapse = ""), "is not a table key")
+    expect_lt(nchar(paste(got$txt, collapse = "")), 200L)
+  }
+})
+
+test_that("the launchers keep a failure's own status", {
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  invisible(utils::capture.output(suppressMessages(instcli(dir = d))))
+  for (f in c(
+    file.path(d, "rmbl"),
+    system.file("bin", "rmbl", package = "rmoriebricklayer")
+  )) {
+    txt <- paste(readLines(f), collapse = "\n")
+    expect_match(txt, "trap 'rc=130' INT", fixed = TRUE, info = f)
+    expect_false(grepl("exec Rscript", txt, fixed = TRUE), info = f)
+    expect_false(grepl("200", txt, fixed = TRUE), info = f)
+  }
+})

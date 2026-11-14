@@ -96,7 +96,21 @@
 jsgzenc <- function(x, raw = FALSE, ...) {
   raw <- .rmbl_flag1(raw, "raw")
   txt <- tojs(x, ...)
-  bytes <- .rmbl_gzip_member(charToRaw(as.character(txt)))
+  json <- charToRaw(as.character(txt))
+  # what jsgzdec() will read back: it inflates at most 64 MiB
+  if (length(json) > 64 * 1024^2) {
+    stop(
+      sprintf(
+        paste0(
+          "jsgzenc: the JSON is %.0f bytes, and jsgzdec() reads at ",
+          "most 64 MiB (67108864 bytes)"
+        ),
+        length(json)
+      ),
+      call. = FALSE
+    )
+  }
+  bytes <- .rmbl_gzip_member(json)
   if (isTRUE(raw)) {
     return(bytes)
   }
@@ -125,13 +139,26 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
     }
     jsb64dec(as.character(txt))
   }
-  .rmbl_gzip_check(bytes)
   # the package's bounded inflater: base memDecompress() kept doubling its
-  # buffer on a damaged stream until the machine ran out of memory
+  # buffer on a damaged stream until the machine ran out of memory. It says
+  # what is wrong with the member; the trailer's declared length alone
+  # called a truncated member an oversized one.
   json <- tryCatch(
-    rawToChar(.Call(C_rmbl_gunzip_checked, bytes, 64 * 1024^2)),
+    {
+      .rmbl_gzip_check(bytes, isize = FALSE)
+      rawToChar(.Call(C_rmbl_gunzip_checked, bytes, 64 * 1024^2))
+    },
     error = function(e) {
-      stop("jsgzdec: `txt` ", conditionMessage(e), call. = FALSE)
+      m <- conditionMessage(e)
+      if (grepl("more than the size limit", m, fixed = TRUE)) {
+        m <- paste0(
+          "`txt` holds more than 64 MiB uncompressed; ",
+          "refusing to inflate more than 64 MiB"
+        )
+      } else if (!startsWith(m, "`txt`")) {
+        m <- paste("`txt`", m)
+      }
+      stop("jsgzdec: ", m, call. = FALSE)
     }
   )
   fromjs(json, ...)
@@ -191,9 +218,10 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
 #' Refuses bytes that are not one gzip member, or that declare more than 64 MiB
 #' uncompressed.
 #' @param bytes The raw bytes to inflate.
+#' @param isize Whether to check the declared length too.
 #' @return NULL, invisibly.
 #' @noRd
-.rmbl_gzip_check <- function(bytes) {
+.rmbl_gzip_check <- function(bytes, isize = TRUE) {
   # A gzip member is at least 18 bytes (10 of header, 8 of trailer) and
   # starts 1f 8b; R's own memDecompress() would return garbage on a short
   # zlib-framed input and, in R 4.6, dumps core on an empty one.
@@ -213,6 +241,9 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
   # The trailer's ISIZE (uncompressed length mod 2^32) is a free pre-check
   # against a decompression bomb from an untrusted field (gzip reaches
   # ~1000:1); zlib itself verifies the trailer while inflating.
+  if (!isize) {
+    return(invisible(NULL))
+  }
   nb <- length(bytes)
   isize <- sum(as.numeric(as.integer(bytes[(nb - 3L):nb])) * 256^(0:3))
   if (isize > 64 * 1024^2) {
