@@ -279,3 +279,70 @@ test_that("the launchers keep a failure's own status", {
     expect_false(grepl("200", txt, fixed = TRUE), info = f)
   }
 })
+
+test_that("dload reads part of a table: columns, a row cap, a filter", {
+  f <- tempfile(fileext = ".csv.gz")
+  d <- data.frame(
+    id = 1:40,
+    `Geo (3)` = rep(c("Ontario", "Quebec"), 20),
+    val = (1:40) / 4,
+    txt = rep(c("a,b", "c \"q\"", NA, "d"), 10),
+    check.names = FALSE
+  )
+  con <- gzfile(f, "wt")
+  utils::write.csv(d, con, row.names = FALSE)
+  close(con)
+  full <- .bl_read_csv_gz(f)
+  # whole, in pieces smaller than the table: the full reader's data frame
+  expect_identical(.bl_csv_part(f, NULL, Inf, NULL, piece = 7L), full)
+  # columns by the manifest's name or the data frame's, and a row cap
+  got <- .bl_csv_part(f, c("Geo (3)", "val"), 5, NULL, piece = 3L)
+  expect_identical(got, full[1:5, c("Geo..3.", "val")])
+  expect_identical(.bl_csv_part(f, "Geo..3.", 2, NULL)[[1L]], full[[2L]][1:2])
+  # a filter sees typed columns, piece by piece
+  q <- function(x) x$Geo..3. == "Quebec" & x$val > 5
+  ref <- full[full$Geo..3. == "Quebec" & full$val > 5, ]
+  rownames(ref) <- NULL
+  expect_identical(.bl_csv_part(f, NULL, Inf, q, piece = 6L), ref)
+  expect_identical(.bl_csv_part(f, "id", 3, q, piece = 6L)$id, ref$id[1:3])
+  none <- .bl_csv_part(f, NULL, Inf, function(x) rep(FALSE, nrow(x)))
+  expect_identical(dim(none), c(0L, 4L))
+  expect_error(.bl_csv_part(f, "nope", Inf, NULL), "no column nope")
+  expect_error(
+    .bl_csv_part(f, NULL, Inf, function(x) TRUE),
+    "TRUE or FALSE for each row"
+  )
+  # a join cut short leaves no file under the final name
+  p <- file.path(withr::local_tempdir(), c("1", "2"))
+  writeBin(as.raw(1:3), p[1L])
+  writeBin(as.raw(4:5), p[2L])
+  dest <- paste0(p[1L], ".out")
+  .bl_data_join(p, dest)
+  expect_identical(readBin(dest, "raw", 10L), as.raw(1:5))
+  expect_false(file.exists(paste0(dest, ".join")))
+  unlink(dest)
+  missing <- c(p[1L], file.path(dirname(p[1L]), "no"))
+  expect_error(suppressWarnings(.bl_data_join(missing, dest)))
+  expect_false(file.exists(dest))
+  expect_false(file.exists(paste0(dest, ".join")))
+  expect_false(.bl_csv_part_args(NULL, Inf, NULL))
+  expect_true(.bl_csv_part_args("a", Inf, NULL))
+  expect_true(.bl_csv_part_args(NULL, 3, NULL))
+  expect_true(.bl_csv_part_args(NULL, Inf, identity))
+  expect_error(.bl_csv_part_args(1, Inf, NULL), "column names")
+  expect_error(.bl_csv_part_args(NULL, 0, NULL), "whole number of rows")
+  expect_error(.bl_csv_part_args(NULL, 1.5, NULL), "whole number of rows")
+  expect_error(.bl_csv_part_args(NULL, Inf, 3), "must be a function")
+})
+
+test_that("dload says how large a table is before reading it whole", {
+  big <- list(datasets = list(
+    list(key = "a/big", rows = 9e7, columns = as.list(letters[1:16])),
+    list(key = "a/small", rows = 10, columns = as.list(letters[1:3]))
+  ))
+  local_mocked_bindings(dmnf = function(...) big)
+  expect_message(.bl_data_big_note("a/big"), "90,000,000 rows and 16 columns")
+  expect_message(.bl_data_big_note("a/big"), "`cols`, `n` or `keep`")
+  expect_no_message(.bl_data_big_note("a/small"))
+  expect_no_message(.bl_data_big_note("a/unknown"))
+})

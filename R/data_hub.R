@@ -71,6 +71,20 @@
 #'   table) is cached.
 #' @param key Character scalar, a \code{db/table} key from the manifest (the
 #'   \code{key} column of \code{dtabs()}).
+#' @param cols Character vector, default \code{NULL} (every column): the
+#'   columns to read, by the names in the manifest or as \code{dload()}
+#'   returns them. The others are skipped as the file is read.
+#' @param n A whole number, default \code{Inf}: at most this many rows are
+#'   kept, and reading stops there.
+#' @param keep \code{NULL}, or a function of one data frame that returns
+#'   \code{TRUE} for the rows to keep. The table is read a piece at a time
+#'   and \code{keep} is called on each piece, so a table too large for
+#'   memory can be reduced to the part that is wanted (one province, one
+#'   year) without ever being held whole. It sees every column, whatever
+#'   \code{cols} says is returned.
+#' @param file Logical scalar, default \code{FALSE}. \code{TRUE} downloads
+#'   and verifies the table and returns the path of its gzip-compressed CSV
+#'   without reading it, for tools that query a file in place.
 #' @param token Ignored, with a warning: the tables need no key, and none is
 #'   sent. Kept so that calls written for earlier versions still run.
 #' @return \code{dmnf()}: the manifest as a list (element
@@ -177,9 +191,19 @@ format.bricklayer_data_tables <- function(x, ...) {
 
 #' @rdname dmnf
 #' @export
-dload <- function(key, refresh = FALSE, token = NULL) {
+dload <- function(
+  key,
+  refresh = FALSE,
+  token = NULL,
+  cols = NULL,
+  n = Inf,
+  keep = NULL,
+  file = FALSE
+) {
   .bl_data_check_keyarg(key)
   .bl_check_flag(refresh, "refresh")
+  .bl_check_flag(file, "file")
+  part <- .bl_csv_part_args(cols, n, keep)
   # a table that is not served is refused before any request
   if (.bl_data_restricted(key)) {
     .bl_data_unserved_stop(key)
@@ -200,6 +224,13 @@ dload <- function(key, refresh = FALSE, token = NULL) {
     .bl_data_get(.bl_data_path(key), dest)
   }
   how <- .bl_data_check_sha(key, dest, cached = cached)
+  if (file) {
+    return(dest)
+  }
+  if (part) {
+    return(.bl_csv_part(dest, cols, n, keep))
+  }
+  .bl_data_big_note(key)
   # a file whose digest matches the manifest is the service's own, not a
   # decompression bomb, so the size cap for untrusted CSVs does not apply:
   # tables of 95 MB gzip and more inflate past 1 GiB and were refused
@@ -281,6 +312,192 @@ dload <- function(key, refresh = FALSE, token = NULL) {
 #'   verified against the manifest.
 #' @return A data frame.
 #' @noRd
+#' Checks dload()'s `cols`, `n` and `keep`, and says whether any asks for
+#' part of the table.
+#' @param cols,n,keep As for dload().
+#' @return TRUE when part of the table is asked for.
+#' @noRd
+.bl_csv_part_args <- function(cols, n, keep) {
+  if (
+    !is.null(cols) &&
+      (!is.character(cols) || !length(cols) || anyNA(cols) ||
+        !all(nzchar(cols)))
+  ) {
+    stop("`cols` must be column names (or NULL for all)", call. = FALSE)
+  }
+  if (
+    !is.numeric(n) || length(n) != 1L || is.na(n) || n < 1 ||
+      (is.finite(n) && n != floor(n))
+  ) {
+    stop("`n` must be one whole number of rows, at least 1", call. = FALSE)
+  }
+  if (!is.null(keep) && !is.function(keep)) {
+    stop("`keep` must be a function of a data frame (or NULL)", call. = FALSE)
+  }
+  !is.null(cols) || is.finite(n) || !is.null(keep)
+}
+
+#' Says, before a table too large for most computers is read whole, how to
+#' read part of it. A data frame takes at least 8 bytes a cell.
+#' @param key The table's key.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_data_big_note <- function(key) {
+  d <- tryCatch(
+    Filter(function(e) identical(e$key, key), dmnf()$datasets),
+    error = function(e) list()
+  )
+  if (!length(d)) {
+    return(invisible(NULL))
+  }
+  rows <- suppressWarnings(as.numeric(d[[1L]]$rows %||% NA)[1L])
+  nc <- length(d[[1L]]$columns)
+  gb <- rows * nc * 8 / 2^30
+  if (is.finite(gb) && gb > 2) {
+    message(sprintf(
+      paste0(
+        "%s has %s rows and %d columns: about %.0f GB in memory. To read ",
+        "part of it, pass `cols`, `n` or `keep`; `file = TRUE` gives the ",
+        "file's path."
+      ),
+      key,
+      format(rows, big.mark = ",", scientific = FALSE),
+      nc,
+      gb
+    ))
+  }
+  invisible(NULL)
+}
+
+#' Reads the header of a CSV being read in part and settles which columns
+#' are wanted.
+#' @param con The open connection, at the start of the file.
+#' @param cols As for dload().
+#' @return A list: nm (the data frame's column names) and want (which are
+#'   returned).
+#' @noRd
+.bl_csv_part_head <- function(con, cols) {
+  head <- utils::read.csv(
+    con,
+    nrows = 1L,
+    header = FALSE,
+    colClasses = "character",
+    check.names = FALSE,
+    na.strings = character()
+  )
+  raw <- as.character(unlist(head[1L, ], use.names = FALSE))
+  nm <- make.names(raw, unique = TRUE)
+  want <- rep(TRUE, length(nm))
+  if (!is.null(cols)) {
+    hit <- match(cols, nm)
+    hit[is.na(hit)] <- match(cols[is.na(hit)], raw)
+    if (anyNA(hit)) {
+      stop(
+        sprintf(
+          "`cols`: no column %s (the table has: %s)",
+          toString(cols[is.na(hit)]),
+          toString(nm)
+        ),
+        call. = FALSE
+      )
+    }
+    want <- seq_along(nm) %in% hit
+  }
+  # `keep` sees every column; `cols` says which are returned
+  list(nm = nm, want = want)
+}
+
+#' Reads the next piece of a CSV being read in part, every wanted column as
+#' text.
+#' @param con The open connection.
+#' @param piece Rows to read.
+#' @param nm The column names.
+#' @param classes "character" for a column read, "NULL" for one skipped.
+#' @return A data frame, or NULL at the end of the file.
+#' @noRd
+.bl_csv_part_piece <- function(con, piece, nm, classes) {
+  tryCatch(
+    utils::read.csv(
+      con,
+      nrows = piece,
+      header = FALSE,
+      col.names = nm,
+      colClasses = classes,
+      check.names = FALSE,
+      stringsAsFactors = FALSE,
+      skipNul = TRUE
+    ),
+    error = function(e) {
+      # the end of the file, said by read.csv() as an error
+      if (grepl("no lines available", conditionMessage(e), fixed = TRUE)) {
+        return(NULL)
+      }
+      stop(
+        "dload: the CSV cannot be read: ",
+        conditionMessage(e),
+        call. = FALSE
+      )
+    }
+  )
+}
+
+#' Reads part of a gzip-compressed CSV, a piece at a time: some columns, the
+#' rows a function keeps, at most `n` of them. Memory holds one piece and what
+#' has been kept. Types are settled at the end, over the kept rows, as
+#' read.csv() settles them over a whole column.
+#' @param path The gzipped CSV file.
+#' @param cols,n,keep As for dload().
+#' @param piece Rows read at a time.
+#' @return A data frame.
+#' @noRd
+.bl_csv_part <- function(path, cols, n, keep, piece = 250000L) {
+  path <- .rmbl_file1(path, "path")
+  con <- gzfile(path, "rt")
+  on.exit(close(con), add = TRUE)
+  h <- .bl_csv_part_head(con, cols)
+  nm <- h$nm
+  want <- h$want
+  classes <- ifelse(want | !is.null(keep), "character", "NULL")
+  kept <- list()
+  have <- 0
+  repeat {
+    chunk <- .bl_csv_part_piece(con, piece, nm, classes)
+    if (is.null(chunk) || !nrow(chunk)) {
+      break
+    }
+    last <- nrow(chunk) < piece
+    if (!is.null(keep)) {
+      sel <- keep(utils::type.convert(chunk, as.is = TRUE))
+      if (!is.logical(sel) || length(sel) != nrow(chunk)) {
+        stop(
+          "`keep` must return TRUE or FALSE for each row of its data frame",
+          call. = FALSE
+        )
+      }
+      chunk <- chunk[which(sel), nm[want], drop = FALSE]
+    }
+    if (nrow(chunk) > n - have) {
+      chunk <- chunk[seq_len(n - have), , drop = FALSE]
+    }
+    kept[[length(kept) + 1L]] <- chunk
+    have <- have + nrow(chunk)
+    if (have >= n || last) {
+      break
+    }
+  }
+  out <- if (length(kept)) {
+    do.call(rbind, kept)
+  } else {
+    as.data.frame(
+      stats::setNames(rep(list(character()), sum(want)), nm[want]),
+      stringsAsFactors = FALSE
+    )
+  }
+  out <- utils::type.convert(out, as.is = TRUE)
+  rownames(out) <- NULL
+  out
+}
+
 .bl_read_csv_gz <- function(
   path,
   in_memory = 512 * 2^20,
@@ -722,8 +939,24 @@ dload <- function(key, refresh = FALSE, token = NULL) {
 #' @return `dest`, invisibly.
 #' @noRd
 .bl_data_join <- function(pfile, dest) {
-  out <- file(dest, "wb")
-  on.exit(close(out), add = TRUE)
+  # written beside `dest` and renamed when whole: a join cut short (a
+  # killed session) left a file that looked finished until its digest was
+  # checked
+  tmp <- paste0(dest, ".join")
+  out <- file(tmp, "wb")
+  done <- FALSE
+  on.exit(
+    {
+      close(out)
+      if (done) {
+        unlink(dest)
+        file.rename(tmp, dest)
+      } else {
+        unlink(tmp)
+      }
+    },
+    add = TRUE
+  )
   for (p in pfile) {
     con <- file(p, "rb")
     repeat {
@@ -735,6 +968,7 @@ dload <- function(key, refresh = FALSE, token = NULL) {
     }
     close(con)
   }
+  done <- TRUE
   invisible(dest)
 }
 

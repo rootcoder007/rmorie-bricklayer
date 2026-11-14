@@ -589,25 +589,6 @@ jsser <- function(x, digits = 8, pretty = FALSE) {
   tojs(packed, digits = digits, pretty = pretty)
 }
 
-#' How deep the lists of a packed object nest (a vector inside the last
-#' list is one JSON level more).
-#' @param x A list.
-#' @return A count of levels.
-#' @noRd
-.rmbl_json_depth <- function(x) {
-  d <- 0L
-  cur <- list(x)
-  while (length(cur)) {
-    cur <- Filter(is.list, cur)
-    if (!length(cur)) {
-      break
-    }
-    d <- d + 1L
-    cur <- unlist(cur, recursive = FALSE, use.names = FALSE)
-  }
-  d
-}
-
 #' @rdname jsserdoc
 #' @export
 jsunser <- function(txt, trusted = FALSE) {
@@ -636,6 +617,46 @@ jsunser <- function(txt, trusted = FALSE) {
   tryCatch(
     .rmbl_json_unpack(obj, trusted = trusted),
     error = function(e) if (is.null(conditionCall(e))) stop(e) else not(e)
+  )
+}
+
+#' How deep the lists of a packed object nest (a vector inside the last
+#' list is one JSON level more).
+#' @param x A list.
+#' @return A count of levels.
+#' @noRd
+.rmbl_json_depth <- function(x) {
+  d <- 0L
+  cur <- list(x)
+  while (length(cur)) {
+    cur <- Filter(is.list, cur)
+    if (!length(cur)) {
+      break
+    }
+    d <- d + 1L
+    cur <- unlist(cur, recursive = FALSE, use.names = FALSE)
+  }
+  d
+}
+
+#' Converts a packed value to its type; a value that does not convert
+#' without a warning (text in a number) is not what jsser() wrote.
+#' @param vals The packed value.
+#' @param as The conversion (as.double and the like).
+#' @param mode The type's name, for the message.
+#' @return The converted vector.
+#' @noRd
+.rmbl_json_typed <- function(vals, as, mode) {
+  withCallingHandlers(
+    as(.rmbl_json_list_to_vec(vals)),
+    warning = function(w) {
+      stop(
+        "`txt` is not JSON written by jsser() (a value that is not ",
+        mode,
+        ")",
+        call. = FALSE
+      )
+    }
   )
 }
 
@@ -3689,21 +3710,7 @@ bricklayer_json_validate <- function(txt) {
 #' @noRd
 .rmbl_json_unpack_data <- function(obj, mode, trusted) {
   vals <- obj$value
-  # a value that does not convert to its type without a warning (text in a
-  # number) is not what jsser() wrote
-  typed <- function(as) {
-    withCallingHandlers(
-      as(.rmbl_json_list_to_vec(vals)),
-      warning = function(w) {
-        stop(
-          "`txt` is not JSON written by jsser() (a value that is not ",
-          mode,
-          ")",
-          call. = FALSE
-        )
-      }
-    )
-  }
+  typed <- function(as) .rmbl_json_typed(vals, as, mode)
   list(
     .Data = switch(
       mode,

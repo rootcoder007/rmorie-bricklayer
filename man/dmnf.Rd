@@ -10,7 +10,15 @@ dmnf(refresh = FALSE)
 
 dtabs(refresh = FALSE)
 
-dload(key, refresh = FALSE, token = NULL)
+dload(
+  key,
+  refresh = FALSE,
+  token = NULL,
+  cols = NULL,
+  n = Inf,
+  keep = NULL,
+  file = FALSE
+)
 }
 \arguments{
 \item{refresh}{Logical scalar, default \code{FALSE}: fetch again even when a
@@ -22,6 +30,24 @@ table) is cached.}
 
 \item{token}{Ignored, with a warning: the tables need no key, and none is
 sent. Kept so that calls written for earlier versions still run.}
+
+\item{cols}{Character vector, default \code{NULL} (every column): the
+columns to read, by the names in the manifest or as \code{dload()}
+returns them. The others are skipped as the file is read.}
+
+\item{n}{A whole number, default \code{Inf}: at most this many rows are
+kept, and reading stops there.}
+
+\item{keep}{\code{NULL}, or a function of one data frame that returns
+\code{TRUE} for the rows to keep. The table is read a piece at a time
+and \code{keep} is called on each piece, so a table too large for
+memory can be reduced to the part that is wanted (one province, one
+year) without ever being held whole. It sees every column, whatever
+\code{cols} says is returned.}
+
+\item{file}{Logical scalar, default \code{FALSE}. \code{TRUE} downloads
+and verifies the table and returns the path of its gzip-compressed CSV
+without reading it, for tools that query a file in place.}
 }
 \value{
 \code{dmnf()}: the manifest as a list (element
