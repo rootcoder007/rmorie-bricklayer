@@ -2070,6 +2070,17 @@ instcli <- function(
 #' @return The exit status.
 #' @noRd
 .bl_cli_data_pull <- function(rest, flag, out) {
+  dest <- flag("--out") %||%
+    paste0(gsub("[^A-Za-z0-9_.-]", "_", rest[[2L]]), ".csv")
+  # refuse an unwritable destination before downloading the table, not after
+  dir <- dirname(dest)
+  if (!dir.exists(dir) || file.access(dir, 2L) != 0L || dir.exists(dest)) {
+    out(sprintf(
+      "cannot write %s (the directory does not exist, or no permission)\n",
+      dest
+    ))
+    return(1L)
+  }
   # a key is db/table: anything else is refused before the table list is
   # downloaded to look it up
   key <- rest[[2L]]
@@ -2085,17 +2096,6 @@ instcli <- function(
       .bl_prog()
     ))
     return(2L)
-  }
-  dest <- flag("--out") %||%
-    paste0(gsub("[^A-Za-z0-9_.-]", "_", rest[[2L]]), ".csv")
-  # refuse an unwritable destination before downloading the table, not after
-  dir <- dirname(dest)
-  if (!dir.exists(dir) || file.access(dir, 2L) != 0L || dir.exists(dest)) {
-    out(sprintf(
-      "cannot write %s (the directory does not exist, or no permission)\n",
-      dest
-    ))
-    return(1L)
   }
   df <- dload(rest[[2L]])
   ok <- tryCatch(

@@ -196,7 +196,7 @@ test_that(
     got <- new.env()
     got$out <- character(0)
     dest <- tempfile(fileext = ".csv")
-    rc <- .bl_cli_data(c("pull", "tbl"), function(f) dest, function(s) {
+    rc <- .bl_cli_data(c("pull", "db/tbl"), function(f) dest, function(s) {
       got$out <- c(got$out, s)
     })
     expect_identical(rc, 1L)
