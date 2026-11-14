@@ -102,7 +102,10 @@ if (split_run) {
     esc <- gsub(".", "\\.", g, fixed = TRUE)
     filter <- paste0("^(", paste(esc, collapse = "|"), ")$")
     Sys.setenv(RMBL_TEST_FILTER = filter)
-    if (!identical(system2(rscript, shQuote(child)), 0L)) failed <- c(failed, g)
+    # the files' names follow as an argument the child does not read, so a
+    # process list (a memory log) shows which files a test process runs
+    cmd <- shQuote(c(child, paste(g, collapse = ",")))
+    if (!identical(system2(rscript, cmd), 0L)) failed <- c(failed, g)
     if (covr) try(system2(rscript, shQuote(squash)), silent = TRUE)
   }
   if (length(failed)) {

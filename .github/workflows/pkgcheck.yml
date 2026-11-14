@@ -81,6 +81,17 @@ jobs:
           cat > .pkgcheck/run.R <<'RSCRIPT'
           .libPaths(c("/pkg/.pkgcheck/lib", .libPaths()))
           pkgstats::ctags_install(sudo = TRUE)
+          # covr deletes its directory when it is done, the output of a failed
+          # test run with it; a copy of every testthat.Rout.fail is kept here
+          dir.create("/pkg/.pkgcheck/fail", showWarnings = FALSE)
+          trace(
+            "testInstalledPackage", where = asNamespace("tools"),
+            print = FALSE, exit = quote(file.copy(
+              list.files(outDir, "[.]Rout[.]fail$", full.names = TRUE,
+                         recursive = TRUE),
+              "/pkg/.pkgcheck/fail", overwrite = TRUE
+            ))
+          )
           x <- pkgcheck::pkgcheck(".")
           s <- capture.output(summary(x))
           writeLines(s)
@@ -104,8 +115,10 @@ jobs:
             inherits(cv, "try-error")
           quit(status = as.integer(bad))
           RSCRIPT
-          # a memory log every 2 s (container total and its largest processes), printed at the
-          # end, so a run stopped for memory says which step and process it was
+          # a memory log every 2 s (container total and its largest processes,
+          # with their parents; a test process names its test files), printed
+          # at the end and uploaded, so a run stopped for memory says which
+          # step, process and test file it was
           swapon --show || true
           docker run -d --name pkc --memory="$MEM" --memory-swap="$MEMSWAP" \
             -e GITHUB_TOKEN -e R_LIBS=/pkg/.pkgcheck/lib \
@@ -114,18 +127,36 @@ jobs:
             .pkgcheck/run.R
           ( while docker inspect -f "{{.State.Running}}" pkc 2>/dev/null | grep -q true; do
               echo "$(date +%T) $(docker stats --no-stream --format "{{.MemUsage}}" pkc 2>/dev/null)"
-              docker top pkc -o pid,rss,args 2>/dev/null | sort -k2 -n -r | head -3 | cut -c1-160
+              docker top pkc -o pid,ppid,rss,args 2>/dev/null | sort -k3 -n -r | head -4 | cut -c1-220
               sleep 2
             done ) > .pkgcheck/mem.log &
           status=$(docker wait pkc)
           docker logs pkc
           echo "== container: $(docker inspect -f "exit {{.State.ExitCode}} oom-killed {{.State.OOMKilled}}" pkc)"
-          echo "== peak memory samples"
-          grep "GiB\|MiB" .pkgcheck/mem.log | sort -k2 -h | tail -3
+          echo "== the three highest samples, each with the samples around it"
+          grep -n "^[0-9][0-9]:[0-9][0-9]:[0-9][0-9] " .pkgcheck/mem.log |
+            sort -k2 -h | tail -3 | cut -d: -f1 | while read -r n; do
+              echo "-- mem.log line $n"
+              sed -n "$((n > 10 ? n - 10 : 1)),$((n + 10))p" .pkgcheck/mem.log
+            done
           echo "== last samples"
-          tail -12 .pkgcheck/mem.log
+          tail -15 .pkgcheck/mem.log
+          for f in .pkgcheck/fail/*.Rout.fail; do
+            [ -f "$f" ] || continue
+            echo "== $f (last 80 lines)"
+            tail -80 "$f"
+          done
           docker rm pkc > /dev/null
           exit "$status"
+      - name: memory log and failed test output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pkgcheck-memory-${{ matrix.mem }}
+          path: |
+            .pkgcheck/mem.log
+            .pkgcheck/fail/
+          if-no-files-found: ignore
 
   # covr alone, as pkgcheck runs it (goodpractice calls
   # covr::package_coverage()), in the same image under the same cap. pkgcheck
