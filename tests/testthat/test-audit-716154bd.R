@@ -269,7 +269,13 @@ test_that("N5: a download that cannot be written says so, with the option", {
   )
   reg <- withr::local_tempfile()
   writeLines("x", reg)
-  for (dc in c(file.path(reg, "sub"), "/proc/rmbl-none/cache")) {
+  # a folder under a regular file cannot be made anywhere; one under /proc
+  # cannot on Linux (Windows would make it under the drive's root)
+  dcs <- file.path(reg, "sub")
+  if (dir.exists("/proc") && .Platform$OS.type != "windows") {
+    dcs <- c(dcs, "/proc/rmbl-none/cache")
+  }
+  for (dc in dcs) {
     withr::local_options(rmoriebricklayer.dcache = dc)
     for (expr in list(
       quote(dmnf(refresh = TRUE)),
