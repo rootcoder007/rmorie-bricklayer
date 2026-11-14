@@ -62,6 +62,15 @@
 #' where to get them. Downloads draw a progress bar when
 #' \code{options(morie.progress)} allows it.
 #'
+#' With \code{cols}, \code{n} or \code{keep} the table is read a piece of
+#' about 8 MB of text at a time, twice: the first pass checks every record as
+#' a whole read checks it and settles each column's type over the whole
+#' table, the second reads the pieces in those types. The names, types and
+#' refusals are those of \code{dload(key)}, and \code{keep} sees the values
+#' it holds: \code{dload(key, keep = f)} gives the rows of \code{dload(key)}
+#' that \code{f} keeps, numbered from 1. Even \code{n = 1} reads the file
+#' once whole, for the types.
+#'
 #' Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; the service
 #' unavailable; a \code{key} that is not of the form \code{db/table}, not
 #' listed in the manifest, or a table that is not served; a digest mismatch.
@@ -73,7 +82,9 @@
 #'   \code{key} column of \code{dtabs()}).
 #' @param cols Character vector, default \code{NULL} (every column): the
 #'   columns to read, by the names in the manifest or as \code{dload()}
-#'   returns them. The others are skipped as the file is read.
+#'   returns them. The others are skipped as the file is read. The columns
+#'   come back in the order of the file, whatever the order of \code{cols},
+#'   and a column named twice comes back once.
 #' @param n A whole number, default \code{Inf}: at most this many rows are
 #'   kept, and reading stops there.
 #' @param keep \code{NULL}, or a function of one data frame that returns
@@ -84,7 +95,8 @@
 #'   \code{cols} says is returned.
 #' @param file Logical scalar, default \code{FALSE}. \code{TRUE} downloads
 #'   and verifies the table and returns the path of its gzip-compressed CSV
-#'   without reading it, for tools that query a file in place.
+#'   without reading it, for tools that query a file in place; it cannot be
+#'   combined with \code{cols}, \code{n} or \code{keep}.
 #' @param token Ignored, with a warning: the tables need no key, and none is
 #'   sent. Kept so that calls written for earlier versions still run.
 #' @return \code{dmnf()}: the manifest as a list (element
@@ -203,7 +215,7 @@ dload <- function(
   .bl_data_check_keyarg(key)
   .bl_check_flag(refresh, "refresh")
   .bl_check_flag(file, "file")
-  part <- .bl_csv_part_args(cols, n, keep)
+  part <- .bl_csv_part_args(cols, n, keep, file)
   # a table that is not served is refused before any request
   if (.bl_data_restricted(key)) {
     .bl_data_unserved_stop(key)
@@ -288,36 +300,12 @@ dload <- function(
   .rmbl_json_text(.bl_read_text_capped(p, 32 * 2^20), simplifyVector = FALSE)
 }
 
-#' Reads a gzip-compressed CSV as read.csv() reads it, faster.
-#'
-#' A gzip-compressed CSV as utils::read.csv(gzfile(f), stringsAsFactors = FALSE,
-#' skipNul = TRUE) reads it (the same columns, types, names and row names), in a
-#' fraction of the time: the file is decompressed by the checked reader, split
-#' into columns in C (rmbl_csv.c) and typed by type.convert(), which is what
-#' read.csv() does after scan(). read.csv() took 20 to 28 s on a 75 MB table
-#' (review of 29a55d8 and after, CSV speed). The fast way holds the whole
-#' decompressed table in memory, so it is taken up to `in_memory` bytes (the
-#' gzip reader measures the output before it allocates any of it). Past that the
-#' table is read as read.csv(gzfile()) reads it, a piece at a time: a 2.6 MB
-#' file that inflated to 2.5 GiB of blank lines got the process killed for
-#' memory (network stress test of 5e1dce5). A file that is not gzip data at all,
-#' though its name ends in .gz, is read as the plain CSV it is, as gzfile() did.
-#' Either way the table may decompress to at most the option
-#' rmoriebricklayer.maxcsvbytes (1 GiB by default), as the pollution readers'
-#' tables may: it was not applied here, and a 612 KB gzip asked for 2 GB (CRAN
-#' stress test of b617a3f, #6).
-#' @param path The CSV file, gzipped or plain, to read.
-#' @param in_memory The most decompressed bytes read the fast way.
-#' @param lim The most bytes the table may decompress to; `Inf` for a file
-#'   verified against the manifest.
-#' @return A data frame.
-#' @noRd
 #' Checks dload()'s `cols`, `n` and `keep`, and says whether any asks for
 #' part of the table.
-#' @param cols,n,keep As for dload().
+#' @param cols,n,keep,file As for dload().
 #' @return TRUE when part of the table is asked for.
 #' @noRd
-.bl_csv_part_args <- function(cols, n, keep) {
+.bl_csv_part_args <- function(cols, n, keep, file = FALSE) {
   if (
     !is.null(cols) &&
       (!is.character(cols) || !length(cols) || anyNA(cols) ||
@@ -334,7 +322,16 @@ dload <- function(
   if (!is.null(keep) && !is.function(keep)) {
     stop("`keep` must be a function of a data frame (or NULL)", call. = FALSE)
   }
-  !is.null(cols) || is.finite(n) || !is.null(keep)
+  part <- !is.null(cols) || is.finite(n) || !is.null(keep)
+  # the path is all `file = TRUE` gives: `cols`, `n` and `keep` were ignored
+  if (isTRUE(file) && part) {
+    stop(
+      "dload(): `file = TRUE` returns the file's path without reading it, ",
+      "so `cols`, `n` and `keep` cannot go with it",
+      call. = FALSE
+    )
+  }
+  part
 }
 
 #' Says, before a table too large for most computers is read whole, how to
@@ -369,135 +366,434 @@ dload <- function(
   invisible(NULL)
 }
 
-#' Reads the header of a CSV being read in part and settles which columns
-#' are wanted.
-#' @param con The open connection, at the start of the file.
-#' @param cols As for dload().
-#' @return A list: nm (the data frame's column names) and want (which are
-#'   returned).
+#' The decompressed bytes the part reader takes at a time (internal option
+#' `rmoriebricklayer.dpiece`, 8 MiB by default; the tests make it small).
+#' @return A number of bytes.
 #' @noRd
-.bl_csv_part_head <- function(con, cols) {
-  head <- utils::read.csv(
-    con,
-    nrows = 1L,
-    header = FALSE,
-    colClasses = "character",
-    check.names = FALSE,
-    na.strings = character()
-  )
-  raw <- as.character(unlist(head[1L, ], use.names = FALSE))
-  nm <- make.names(raw, unique = TRUE)
-  want <- rep(TRUE, length(nm))
-  if (!is.null(cols)) {
-    hit <- match(cols, nm)
-    hit[is.na(hit)] <- match(cols[is.na(hit)], raw)
-    if (anyNA(hit)) {
-      stop(
-        sprintf(
-          "`cols`: no column %s (the table has: %s)",
-          toString(cols[is.na(hit)]),
-          toString(nm)
-        ),
-        call. = FALSE
-      )
-    }
-    want <- seq_along(nm) %in% hit
-  }
-  # `keep` sees every column; `cols` says which are returned
-  list(nm = nm, want = want)
-}
-
-#' Reads the next piece of a CSV being read in part, every wanted column as
-#' text.
-#' @param con The open connection.
-#' @param piece Rows to read.
-#' @param nm The column names.
-#' @param classes "character" for a column read, "NULL" for one skipped.
-#' @return A data frame, or NULL at the end of the file.
-#' @noRd
-.bl_csv_part_piece <- function(con, piece, nm, classes) {
-  tryCatch(
-    utils::read.csv(
-      con,
-      nrows = piece,
-      header = FALSE,
-      col.names = nm,
-      colClasses = classes,
-      check.names = FALSE,
-      stringsAsFactors = FALSE,
-      skipNul = TRUE
-    ),
-    error = function(e) {
-      # the end of the file, said by read.csv() as an error
-      if (grepl("no lines available", conditionMessage(e), fixed = TRUE)) {
-        return(NULL)
-      }
-      stop(
-        "dload: the CSV cannot be read: ",
-        conditionMessage(e),
-        call. = FALSE
-      )
-    }
+.bl_csv_piece_bytes <- function() {
+  .rmbl_getopt_ok(
+    "dpiece",
+    2^23,
+    function(v) is.numeric(v) && length(v) == 1L && is.finite(v) && v >= 1,
+    "a number of bytes, at least 1"
   )
 }
 
 #' Reads part of a gzip-compressed CSV, a piece at a time: some columns, the
-#' rows a function keeps, at most `n` of them. Memory holds one piece and what
-#' has been kept. Types are settled at the end, over the kept rows, as
-#' read.csv() settles them over a whole column.
-#' @param path The gzipped CSV file.
+#' rows a function keeps, at most `n` of them, with the names, types and
+#' record rules of a whole read (.bl_read_csv_gz()).
+#'
+#' Two passes over the file. The first checks every record as the whole
+#' reader checks it and settles each column's type over the whole table; the
+#' second reads each piece in those types, so `keep` sees what a whole read
+#' gives. Each piece went through read.csv(fill = TRUE) before, with types
+#' guessed piece by piece: a record with too many fields became an extra row,
+#' a quote inside an unquoted field dropped one, and `code == "007"` missed
+#' the rows of a piece that read "007" as the number 7 (audit of 716154bd, N1
+#' and N2). Memory holds one piece and what has been kept.
+#' @param path The CSV file, gzipped or plain.
 #' @param cols,n,keep As for dload().
-#' @param piece Rows read at a time.
+#' @param piece Decompressed bytes read at a time.
 #' @return A data frame.
 #' @noRd
-.bl_csv_part <- function(path, cols, n, keep, piece = 250000L) {
+.bl_csv_part <- function(path, cols, n, keep, piece = .bl_csv_piece_bytes()) {
   path <- .rmbl_file1(path, "path")
-  con <- gzfile(path, "rt")
-  on.exit(close(con), add = TRUE)
-  h <- .bl_csv_part_head(con, cols)
-  nm <- h$nm
-  want <- h$want
-  classes <- ifelse(want | !is.null(keep), "character", "NULL")
-  kept <- list()
-  have <- 0
-  repeat {
-    chunk <- .bl_csv_part_piece(con, piece, nm, classes)
-    if (is.null(chunk) || !nrow(chunk)) {
-      break
-    }
-    last <- nrow(chunk) < piece
+  ty <- .bl_csv_types(path, piece, cols, keep)
+  if (is.null(ty)) {
+    # a header of no columns: such a table holds nothing but a row count
+    return(.bl_csv_part_small(.bl_read_csv_gz(path), cols, n, keep))
+  }
+  use <- if (is.null(keep)) ty$want else rep(TRUE, length(ty$want))
+  acc <- new.env(parent = emptyenv())
+  acc$kept <- list()
+  acc$have <- 0
+  .bl_csv_each(path, piece, function(cols, rows) {
+    df <- .bl_csv_frame(cols[use], ty$types[use])
+    idx <- seq_len(nrow(df))
     if (!is.null(keep)) {
-      sel <- keep(utils::type.convert(chunk, as.is = TRUE))
-      if (!is.logical(sel) || length(sel) != nrow(chunk)) {
-        stop(
-          "`keep` must return TRUE or FALSE for each row of its data frame",
-          call. = FALSE
-        )
-      }
-      chunk <- chunk[which(sel), nm[want], drop = FALSE]
+      idx <- .bl_csv_keep(keep, df)
     }
-    if (nrow(chunk) > n - have) {
-      chunk <- chunk[seq_len(n - have), , drop = FALSE]
-    }
-    kept[[length(kept) + 1L]] <- chunk
-    have <- have + nrow(chunk)
-    if (have >= n || last) {
-      break
-    }
-  }
-  out <- if (length(kept)) {
-    do.call(rbind, kept)
-  } else {
-    as.data.frame(
-      stats::setNames(rep(list(character()), sum(want)), nm[want]),
-      stringsAsFactors = FALSE
-    )
-  }
-  out <- utils::type.convert(out, as.is = TRUE)
-  rownames(out) <- NULL
-  out
+    idx <- idx[seq_len(min(length(idx), n - acc$have))]
+    acc$kept[[length(acc$kept) + 1L]] <- lapply(df[ty$want[use]], `[`, idx)
+    acc$have <- acc$have + length(idx)
+    acc$have < n
+  })
+  .bl_csv_bind(acc$kept, ty$types[ty$want], ty$nm[ty$want])
 }
 
+#' The rows `keep` keeps of one piece.
+#' @param keep The function.
+#' @param df The piece, typed.
+#' @return Row numbers.
+#' @noRd
+.bl_csv_keep <- function(keep, df) {
+  sel <- keep(df)
+  if (!is.logical(sel) || length(sel) != nrow(df)) {
+    stop(
+      "`keep` must return TRUE or FALSE for each row of its data frame",
+      call. = FALSE
+    )
+  }
+  which(sel)
+}
+
+#' The pieces kept, joined into one data frame.
+#' @param kept A list of pieces, each a list of columns.
+#' @param types The columns' types.
+#' @param nm Their names.
+#' @return A data frame.
+#' @noRd
+.bl_csv_bind <- function(kept, types, nm) {
+  out <- lapply(seq_along(nm), function(j) {
+    do.call(c, c(list(vector(types[[j]], 0L)), lapply(kept, `[[`, j)))
+  })
+  names(out) <- nm
+  structure(
+    out,
+    class = "data.frame",
+    row.names = c(NA_integer_, -length(out[[1L]]))
+  )
+}
+
+#' Part of a table of no columns, read whole (it holds only its row count).
+#' @param df The table of no columns, read whole.
+#' @param cols,n,keep As for dload().
+#' @return A data frame.
+#' @noRd
+.bl_csv_part_small <- function(df, cols, n, keep) {
+  .bl_csv_want(names(df), names(df), cols)
+  rows <- seq_len(nrow(df))
+  if (!is.null(keep)) {
+    rows <- .bl_csv_keep(keep, df)
+  }
+  rows <- rows[seq_len(min(length(rows), n))]
+  if (identical(rows, seq_len(nrow(df)))) {
+    return(df)
+  }
+  df <- df[rows, , drop = FALSE]
+  rownames(df) <- NULL
+  df
+}
+
+#' Which columns `cols` asks for: by the names a whole read gives, by the
+#' header's own names, or by those without blanks around them (as the manifest
+#' may list them).
+#' @param nm The data frame's column names.
+#' @param raw The header's names.
+#' @param cols As for dload().
+#' @return A logical vector over the columns.
+#' @noRd
+.bl_csv_want <- function(nm, raw, cols) {
+  if (is.null(cols)) {
+    return(rep(TRUE, length(nm)))
+  }
+  hit <- match(cols, nm)
+  hit[is.na(hit)] <- match(cols[is.na(hit)], raw)
+  hit[is.na(hit)] <- match(trimws(cols[is.na(hit)]), raw)
+  if (anyNA(hit)) {
+    stop(
+      sprintf(
+        "`cols`: no column %s (the table has: %s)",
+        toString(cols[is.na(hit)]),
+        toString(nm)
+      ),
+      call. = FALSE
+    )
+  }
+  seq_along(nm) %in% hit
+}
+
+#' The first pass of the part reader: every record checked, and the type of
+#' each column needed settled over the whole table.
+#'
+#' A piece's text gives the type a whole read would give it; the table's type
+#' is the one type.convert() gives text of all the pieces' types together, so
+#' each piece adds one word of its type ("TRUE", "1", "1.5", "1i", "x") and a
+#' piece with no value adds none. A logical piece beside an integer one makes
+#' text, as type.convert(c("TRUE", "1")) does.
+#' @param path,piece As for .bl_csv_part().
+#' @param cols,keep As for dload().
+#' @return NULL for a header of no columns, else list(nm, want, types).
+#' @noRd
+.bl_csv_types <- function(path, piece, cols, keep) {
+  word <- c(
+    logical = "TRUE",
+    integer = "1",
+    double = "1.5",
+    complex = "1i",
+    character = "x"
+  )
+  acc <- new.env(parent = emptyenv())
+  h <- .bl_csv_each(path, piece, function(txt, rows) {
+    if (is.null(acc$seen)) {
+      acc$seen <- rep(list(character()), length(txt))
+      acc$want <- .bl_csv_want(names(txt), attr(txt, "raw"), cols)
+    }
+    need <- which(acc$want | !is.null(keep))
+    for (j in need[!vapply(acc$seen[need], `%in%`, NA, x = "x")]) {
+      v <- utils::type.convert(txt[[j]], as.is = TRUE, na.strings = character())
+      if (!is.logical(v) || !all(is.na(v))) {
+        acc$seen[[j]] <- union(acc$seen[[j]], word[[typeof(v)]])
+      }
+    }
+    TRUE
+  })
+  if (is.null(h)) {
+    return(NULL)
+  }
+  seen <- acc$seen
+  want <- acc$want
+  types <- vapply(
+    seen,
+    function(w) typeof(utils::type.convert(w, as.is = TRUE)),
+    ""
+  )
+  list(nm = h$nm, want = want, types = types)
+}
+
+#' One piece in the table's types, as a data frame.
+#' @param cols The piece's columns, as text.
+#' @param types Their types over the whole table.
+#' @return A data frame.
+#' @noRd
+.bl_csv_frame <- function(cols, types) {
+  for (j in which(types != "character")) {
+    v <- as.vector(
+      utils::type.convert(cols[[j]], as.is = TRUE, na.strings = character()),
+      types[[j]]
+    )
+    # a missing value made complex from another type keeps a zero imaginary
+    # part; a whole read gives NA_complex_
+    if (is.complex(v)) v[is.na(v)] <- NA_complex_
+    cols[[j]] <- v
+  }
+  structure(
+    cols,
+    class = "data.frame",
+    row.names = c(NA_integer_, -length(cols[[1L]]))
+  )
+}
+
+#' Reads a CSV a piece of whole records at a time and hands each to `fun`.
+#'
+#' Each piece goes to the compiled splitter that reads a whole table, as the
+#' header, a row of "x" in every column and the piece's records, cut at a line
+#' end outside quotes: the splitter refuses what a whole read refuses, the row
+#' of "x" keeps every column as text (the types are settled apart) and keeps a
+#' byte-order mark at a piece's start from being taken for the file's.
+#' @param path The CSV file, gzipped or plain.
+#' @param piece Decompressed bytes read at a time.
+#' @param fun A function of a piece's columns (a named list of text, attribute
+#'   `raw` the header's own names) and the rows before it; FALSE stops.
+#' @return NULL for a header of no columns, else list(nm, raw).
+#' @noRd
+.bl_csv_each <- function(path, piece, fun) {
+  con <- gzfile(path, "rb")
+  on.exit(close(con), add = TRUE)
+  st <- new.env(parent = emptyenv())
+  st$buf <- raw()
+  st$eof <- FALSE
+  st$probe <- piece
+  st$rows <- 0
+  st$given <- 0L
+  repeat {
+    if (!st$eof) {
+      b <- readBin(con, "raw", piece)
+      st$eof <- !length(b)
+      st$buf <- c(st$buf, b[b != as.raw(0L)])
+    }
+    if (is.null(st$hdr) && !.bl_csv_take_head(st)) {
+      next
+    }
+    if (!length(st$nm)) {
+      return(NULL)
+    }
+    cut <- if (st$eof) length(st$buf) else .bl_csv_cut(st$buf)
+    if (!cut && !st$eof) {
+      .bl_csv_probe(st)
+      next
+    }
+    # an empty table still gives one piece, of no rows
+    if ((!cut && st$given) || !.bl_csv_give(st, cut, fun)) {
+      break
+    }
+  }
+  list(nm = st$nm, raw = st$raw)
+}
+
+#' Hands the next `cut` bytes to the piece reader's function.
+#' @param st The reader's state.
+#' @param cut The bytes of whole records at the start of the buffer.
+#' @param fun As for .bl_csv_each().
+#' @return FALSE once `fun` asks to stop or the file is done.
+#' @noRd
+.bl_csv_give <- function(st, cut, fun) {
+  txt <- .bl_csv_split(st, st$buf[seq_len(cut)])
+  st$buf <- st$buf[-seq_len(cut)]
+  st$given <- st$given + 1L
+  go <- fun(txt, st$rows)
+  st$rows <- st$rows + length(txt[[1L]])
+  !isFALSE(go) && !(st$eof && !length(st$buf))
+}
+
+#' Takes the header off the front of the piece reader's buffer, once it is
+#' there whole with the start of the first record after it (a byte-order mark
+#' there is dropped, as a whole read drops it).
+#' @param st The reader's state.
+#' @return TRUE when the header was taken.
+#' @noRd
+.bl_csv_take_head <- function(st) {
+  b <- st$buf
+  nl <- as.raw(c(10L, 13L))
+  even <- cumsum(b == as.raw(34L)) %% 2L == 0L
+  first <- match(TRUE, !b %in% nl)
+  ends <- which(b %in% nl & even)
+  e <- if (is.na(first)) NA else ends[ends > first][1L]
+  body <- if (is.na(e)) integer() else seq_len(length(b) - e) + e
+  more <- match(TRUE, !b[body] %in% nl)
+  if (!st$eof && (is.na(e) || is.na(more) || length(body) < more + 4L)) {
+    .bl_csv_probe(st)
+    return(FALSE)
+  }
+  if (is.na(e)) {
+    e <- length(b)
+  }
+  st$hdr <- c(b[seq_len(e)], as.raw(10L))
+  st$buf <- .bl_csv_body_bom(b[-seq_len(e)])
+  h <- .bl_csv_call(st$hdr, 0)
+  st$raw <- h$names
+  st$nm <- make.names(h$names, unique = TRUE)
+  st$fake <- charToRaw(
+    paste0(paste(rep("x", length(st$nm)), collapse = ","), "\n")
+  )
+  TRUE
+}
+
+#' Where the piece reader's buffer ends in whole records: after its last line
+#' end outside quotes (an even count of quote marks before it, as quotes
+#' inside a quoted field are doubled).
+#' @param b The buffer.
+#' @return A byte count, 0 when the buffer holds no whole record.
+#' @noRd
+.bl_csv_cut <- function(b) {
+  even <- cumsum(b == as.raw(34L)) %% 2L == 0L
+  e <- which((b == as.raw(10L) | b == as.raw(13L)) & even)
+  if (length(e)) e[length(e)] else 0L
+}
+
+#' Reads what the piece reader holds when it finds no line end to cut at, each
+#' time the buffer doubles, so a malformed record (a stray quote makes every
+#' line end look quoted) is refused when it is met instead of after the rest
+#' of the file has been read into memory. A quoted field still open is not an
+#' error yet.
+#' @param st The reader's state.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_csv_probe <- function(st) {
+  if (length(st$buf) < st$probe) {
+    return(invisible(NULL))
+  }
+  st$probe <- 2 * st$probe
+  # up to the last line end, quoted or not: a record cut short could have too
+  # many fields already, and be refused with a count it does not have
+  nl <- which(st$buf == as.raw(10L) | st$buf == as.raw(13L))
+  if (!length(nl)) {
+    return(invisible(NULL))
+  }
+  b <- st$buf[seq_len(nl[length(nl)])]
+  if (!is.null(st$hdr)) {
+    b <- c(st$hdr, st$fake, b)
+  }
+  tryCatch(.bl_csv_call(b, st$rows), error = function(e) {
+    if (!grepl("never closes", conditionMessage(e), fixed = TRUE)) {
+      stop(e)
+    }
+  })
+  invisible(NULL)
+}
+
+#' Splits one piece into its columns, as text.
+#' @param st The reader's state.
+#' @param body The piece's records.
+#' @return A named list of character vectors, attribute `raw`.
+#' @noRd
+.bl_csv_split <- function(st, body) {
+  p <- .bl_csv_call(c(st$hdr, st$fake, body), st$rows)
+  cols <- lapply(p$columns, `[`, -1L)
+  names(cols) <- st$nm
+  attr(cols, "raw") <- st$raw
+  cols
+}
+
+#' The compiled splitter on a piece, a record named in its refusal counted
+#' from the start of the file (the piece's own count starts at its header, and
+#' the row of "x" is one more).
+#' @param bytes The header, the row of "x" and the records.
+#' @param rows The rows before the piece.
+#' @return As C_rmbl_csv_split.
+#' @noRd
+.bl_csv_call <- function(bytes, rows) {
+  tryCatch(.Call(C_rmbl_csv_split, bytes, TRUE), error = function(e) {
+    msg <- conditionMessage(e)
+    m <- regexpr("record [0-9]+", msg)
+    if (m < 0L) {
+      stop(e)
+    }
+    r <- as.numeric(substr(msg, m + 7L, m + attr(m, "match.length") - 1L))
+    regmatches(msg, m) <- sprintf("record %.0f", r + rows - 1)
+    stop(msg, call. = FALSE)
+  })
+}
+
+#' Drops a byte-order mark at the start of the first record, after any blank
+#' lines and inside an opening quote too, as the compiled splitter drops it
+#' after the header of a whole table.
+#' @param b The bytes after the header.
+#' @return The bytes.
+#' @noRd
+.bl_csv_body_bom <- function(b) {
+  q <- match(TRUE, !b %in% as.raw(c(10L, 13L)))
+  if (is.na(q)) {
+    return(b)
+  }
+  bom <- as.raw(c(0xef, 0xbb, 0xbf))
+  for (k in c(0L, 2L, 1L)) {
+    at <- q + k + 0:2
+    if (
+      max(at) <= length(b) &&
+        all(b[q + seq_len(k) - 1L] == as.raw(34L)) &&
+        identical(b[at], bom)
+    ) {
+      return(b[-at])
+    }
+  }
+  b
+}
+
+#' Reads a gzip-compressed CSV as read.csv() reads it, faster.
+#'
+#' A gzip-compressed CSV as utils::read.csv(gzfile(f), stringsAsFactors = FALSE,
+#' skipNul = TRUE) reads it (the same columns, types, names and row names), in a
+#' fraction of the time: the file is decompressed by the checked reader, split
+#' into columns in C (rmbl_csv.c) and typed by type.convert(), which is what
+#' read.csv() does after scan(). read.csv() took 20 to 28 s on a 75 MB table
+#' (review of 29a55d8 and after, CSV speed). The fast way holds the whole
+#' decompressed table in memory, so it is taken up to `in_memory` bytes (the
+#' gzip reader measures the output before it allocates any of it). Past that the
+#' table is read as read.csv(gzfile()) reads it, a piece at a time: a 2.6 MB
+#' file that inflated to 2.5 GiB of blank lines got the process killed for
+#' memory (network stress test of 5e1dce5). A file that is not gzip data at all,
+#' though its name ends in .gz, is read as the plain CSV it is, as gzfile() did.
+#' Either way the table may decompress to at most the option
+#' rmoriebricklayer.maxcsvbytes (1 GiB by default), as the pollution readers'
+#' tables may: it was not applied here, and a 612 KB gzip asked for 2 GB (CRAN
+#' stress test of b617a3f, #6).
+#' @param path The CSV file, gzipped or plain, to read.
+#' @param in_memory The most decompressed bytes read the fast way.
+#' @param lim The most bytes the table may decompress to; `Inf` for a file
+#'   verified against the manifest.
+#' @return A data frame.
+#' @noRd
 .bl_read_csv_gz <- function(
   path,
   in_memory = 512 * 2^20,

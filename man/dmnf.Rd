@@ -33,7 +33,9 @@ sent. Kept so that calls written for earlier versions still run.}
 
 \item{cols}{Character vector, default \code{NULL} (every column): the
 columns to read, by the names in the manifest or as \code{dload()}
-returns them. The others are skipped as the file is read.}
+returns them. The others are skipped as the file is read. The columns
+come back in the order of the file, whatever the order of \code{cols},
+and a column named twice comes back once.}
 
 \item{n}{A whole number, default \code{Inf}: at most this many rows are
 kept, and reading stops there.}
@@ -47,7 +49,8 @@ year) without ever being held whole. It sees every column, whatever
 
 \item{file}{Logical scalar, default \code{FALSE}. \code{TRUE} downloads
 and verifies the table and returns the path of its gzip-compressed CSV
-without reading it, for tools that query a file in place.}
+without reading it, for tools that query a file in place; it cannot be
+combined with \code{cols}, \code{n} or \code{keep}.}
 }
 \value{
 \code{dmnf()}: the manifest as a list (element
@@ -119,6 +122,15 @@ table the manifest marks restricted, with \code{access} other than
 one line), and \code{dload()} refuses them before any request, saying
 where to get them. Downloads draw a progress bar when
 \code{options(morie.progress)} allows it.
+
+With \code{cols}, \code{n} or \code{keep} the table is read a piece of
+about 8 MB of text at a time, twice: the first pass checks every record as
+a whole read checks it and settles each column's type over the whole
+table, the second reads the pieces in those types. The names, types and
+refusals are those of \code{dload(key)}, and \code{keep} sees the values
+it holds: \code{dload(key, keep = f)} gives the rows of \code{dload(key)}
+that \code{f} keeps, numbered from 1. Even \code{n = 1} reads the file
+once whole, for the types.
 
 Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; the service
 unavailable; a \code{key} that is not of the form \code{db/table}, not

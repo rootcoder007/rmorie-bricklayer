@@ -463,7 +463,7 @@ format.bricklayer_certpath_check <- function(x, ...) {
   invisible(NULL)
 }
 
-#' The optional [0] version: v1, v2 or v3.
+#' The optional `[0]` version: v1, v2 or v3.
 #' @param k The tbsCertificate's children.
 #' @param bad The function that refuses.
 #' @return The serialNumber's position: 2 after a version, else 1.
@@ -513,8 +513,8 @@ format.bricklayer_certpath_check <- function(x, ...) {
   .rmbl_x509_alg_shape(k[[1L]], "key algorithm", bad)
 }
 
-#' The optional fields after a certificate's key: [1] and [2] unique
-#' identifiers, [3] extensions, in that order, once each. (A certificate
+#' The optional fields after a certificate's key: `[1]` and `[2]` unique
+#' identifiers, `[3]` extensions, in that order, once each. (A certificate
 #' without the version field that still carries extensions is read: the
 #' version sits inside the signed bytes.)
 #' @param rest The nodes after subjectPublicKeyInfo.
@@ -539,8 +539,8 @@ format.bricklayer_certpath_check <- function(x, ...) {
   invisible(NULL)
 }
 
-#' The [3] extensions field: one SEQUENCE of extensions.
-#' @param nd The [3] node.
+#' The `[3]` extensions field: one SEQUENCE of extensions.
+#' @param nd The `[3]` node.
 #' @param bad The function that refuses.
 #' @return NULL, invisibly.
 #' @noRd
