@@ -97,19 +97,7 @@ jsgzenc <- function(x, raw = FALSE, ...) {
   raw <- .rmbl_flag1(raw, "raw")
   txt <- tojs(x, ...)
   json <- charToRaw(as.character(txt))
-  # what jsgzdec() will read back: it inflates at most 64 MiB
-  if (length(json) > 64 * 1024^2) {
-    stop(
-      sprintf(
-        paste0(
-          "jsgzenc: the JSON is %.0f bytes, and jsgzdec() reads at ",
-          "most 64 MiB (67108864 bytes)"
-        ),
-        length(json)
-      ),
-      call. = FALSE
-    )
-  }
+  .rmbl_gz_json_cap(length(json))
   bytes <- .rmbl_gzip_member(json)
   if (isTRUE(raw)) {
     return(bytes)
@@ -254,6 +242,27 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
           "refusing to inflate more than 64 MiB"
         ),
         isize
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' Refuses JSON longer than jsgzdec() inflates (64 MiB), before it is
+#' compressed: jsgzenc() wrote what jsgzdec() then refused.
+#' @param n The JSON's length in bytes.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_gz_json_cap <- function(n) {
+  if (n > 64 * 1024^2) {
+    stop(
+      sprintf(
+        paste0(
+          "jsgzenc: the JSON is %.0f bytes, and jsgzdec() reads at ",
+          "most 64 MiB (67108864 bytes)"
+        ),
+        n
       ),
       call. = FALSE
     )

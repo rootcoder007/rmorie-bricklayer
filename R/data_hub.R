@@ -341,7 +341,7 @@ dload <- function(
       )
     }
   )
-  if (!isTRUE(file.rename(tmp, p))) {
+  if (!isTRUE(suppressWarnings(file.rename(tmp, p)))) {
     .bl_data_wfail(p, "could not store the manifest")
   }
   m
@@ -1245,7 +1245,8 @@ dload <- function(
       call. = FALSE
     )
   }
-  if (!file.rename(tmp, dest)) {
+  # refused in words below, so base R's warning is not printed beside it
+  if (!isTRUE(suppressWarnings(file.rename(tmp, dest)))) {
     .bl_data_wfail(dest, "the download could not be moved into place")
   }
   invisible(dest)
@@ -1452,7 +1453,9 @@ dload <- function(
 #' @noRd
 .bl_data_join <- function(pfile, dest, part) {
   j <- file.path(dirname(pfile[[1L]]), "joined")
-  if (!file.exists(j) && !file.rename(pfile[[1L]], j)) {
+  moved <- file.exists(j) ||
+    isTRUE(suppressWarnings(file.rename(pfile[[1L]], j)))
+  if (!moved) {
     .bl_data_missing(dest, pfile[[1L]])
   }
   done <- min(length(pfile), floor(file.size(j) / part))
@@ -1480,7 +1483,7 @@ dload <- function(
     full()
   }
   unlink(dest)
-  if (!file.rename(j, dest)) {
+  if (!isTRUE(suppressWarnings(file.rename(j, dest)))) {
     full()
   }
   invisible(dest)

@@ -309,8 +309,8 @@ test_that("N5: a download that cannot be written says so, with the option", {
 
 test_that("N6: a key that is not valid text, or too long, is refused once", {
   ns <- asNamespace("rmoriebricklayer")
-  said <- character()
-  out <- function(x) said <<- c(said, x)
+  got <- new.env()
+  out <- function(x) got$said <- c(got$said, x)
   flag <- function(x) NULL
   keys <- list(strrep("a", 5000), file.path(strrep("a", 300), "t"))
   if (isTRUE(l10n_info()[["UTF-8"]])) {
@@ -320,14 +320,14 @@ test_that("N6: a key that is not valid text, or too long, is refused once", {
     if (!identical(k, "a/b/c")) {
       expect_no_warning(expect_error(dload(k), "^key must be db/table"))
     }
-    said <- character()
+    got$said <- character()
     expect_no_warning(st <- ns$.bl_cli_data_pull(c("pull", k), flag, out))
     expect_identical(st, 2L)
-    expect_length(said, 1L)
-    expect_match(said, "is not a table key")
-    expect_lt(nchar(said, type = "bytes"), 200)
+    expect_length(got$said, 1L)
+    expect_match(got$said, "is not a table key")
+    expect_lt(nchar(got$said, type = "bytes"), 200)
     flag2 <- function(x) if (identical(x, "--out")) "x.csv" else NULL
-    said <- character()
+    got$said <- character()
     expect_no_warning(st <- ns$.bl_cli_data_pull(c("pull", k), flag2, out))
     expect_identical(st, 2L)
   }

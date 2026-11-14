@@ -185,13 +185,12 @@
 #' @noRd
 .bl_pd_is_scope <- function(pd, id) {
   k <- .bl_pd_kids(pd, id)
-  if (!length(k)) {
-    return(FALSE)
-  }
   if (any(pd$token[k] %in% c("FUNCTION", "'\\\\'"))) {
     return(TRUE)
   }
-  pd$token[k[1L]] == "expr" &&
+  # every node asked about is a parent, so it has a first child
+  length(k) > 0L &&
+    pd$token[k[1L]] == "expr" &&
     any(
       pd$parent == pd$id[k[1L]] &
         pd$token == "SYMBOL_FUNCTION_CALL" &
