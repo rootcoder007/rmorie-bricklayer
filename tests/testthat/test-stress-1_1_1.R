@@ -325,6 +325,18 @@ test_that("dload reads part of a table: columns, a row cap, a filter", {
   expect_error(suppressWarnings(.bl_data_join(missing, dest)))
   expect_false(file.exists(dest))
   expect_false(file.exists(paste0(dest, ".join")))
+  # the parts are freed as they are joined
+  expect_false(any(file.exists(p)))
+  # a write that fails (a full disk: writeBin() only warns) is an error in
+  # words, and leaves no file
+  writeBin(as.raw(1:3), p[1L])
+  local_mocked_bindings(
+    .bl_write_raw = function(buf, out) warning("problem writing to connection")
+  )
+  expect_error(.bl_data_join(p[1L], dest), "is full or cannot be written")
+  expect_error(.bl_data_join(p[1L], dest), "rmoriebricklayer.dcache")
+  expect_false(file.exists(dest))
+  expect_false(file.exists(paste0(dest, ".join")))
   expect_false(.bl_csv_part_args(NULL, Inf, NULL))
   expect_true(.bl_csv_part_args("a", Inf, NULL))
   expect_true(.bl_csv_part_args(NULL, 3, NULL))

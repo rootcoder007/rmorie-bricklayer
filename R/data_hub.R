@@ -943,33 +943,90 @@ dload <- function(
   # killed session) left a file that looked finished until its digest was
   # checked
   tmp <- paste0(dest, ".join")
+  total <- sum(file.size(pfile))
+  full <- function() {
+    stop(
+      sprintf(
+        paste0(
+          "cannot join the parts of %s: the folder %s is full or cannot be ",
+          "written (the file needs %.0f MB). Name a folder with room in ",
+          "options(rmoriebricklayer.dcache = ) and run again."
+        ),
+        basename(dest),
+        dirname(dest),
+        total / 2^20
+      ),
+      call. = FALSE
+    )
+  }
   out <- file(tmp, "wb")
-  done <- FALSE
+  open <- TRUE
   on.exit(
     {
-      close(out)
-      if (done) {
-        unlink(dest)
-        file.rename(tmp, dest)
-      } else {
-        unlink(tmp)
+      if (open) {
+        close(out)
       }
+      unlink(tmp)
     },
     add = TRUE
   )
   for (p in pfile) {
-    con <- file(p, "rb")
-    repeat {
-      buf <- readBin(con, "raw", 2^24)
-      if (!length(buf)) {
-        break
-      }
-      writeBin(buf, out)
+    if (!.bl_data_append(p, out)) {
+      full()
     }
-    close(con)
+    # a part is freed once it is in the joined file: the two together took
+    # twice the table's size on disk
+    unlink(p)
   }
-  done <- TRUE
+  close(out)
+  open <- FALSE
+  # a write that failed only when the file was closed shows in its size
+  if (!identical(as.numeric(file.size(tmp)), as.numeric(total))) {
+    full()
+  }
+  unlink(dest)
+  if (!file.rename(tmp, dest)) {
+    full()
+  }
   invisible(dest)
+}
+
+#' Appends one part file to an open connection.
+#' @param p The part file.
+#' @param out The connection written to.
+#' @return TRUE, or FALSE when a write failed (writeBin() only warns when the
+#'   disk is full).
+#' @noRd
+.bl_data_append <- function(p, out) {
+  con <- file(p, "rb")
+  on.exit(close(con), add = TRUE)
+  repeat {
+    buf <- readBin(con, "raw", 2^24)
+    if (!length(buf)) {
+      return(TRUE)
+    }
+    ok <- tryCatch(
+      {
+        .bl_write_raw(buf, out)
+        TRUE
+      },
+      warning = function(w) FALSE,
+      error = function(e) FALSE
+    )
+    if (!ok) {
+      return(FALSE)
+    }
+  }
+}
+
+#' writeBin(), under a name the tests can replace.
+#' @param buf The bytes.
+#' @param out The connection.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_write_raw <- function(buf, out) {
+  writeBin(buf, out)
+  invisible(NULL)
 }
 
 #' A fetched manifest, checked before it replaces the cached one: a JSON
