@@ -181,7 +181,7 @@ for an uncompressed form that keeps types and attributes.</p></div>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># text that is not a gzip member is refused</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">jsgzdec</span><span class="op">(</span><span class="fu"><a href="b64.html">jsb64enc</a></span><span class="op">(</span><span class="st">"not gzip"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `txt` does not hold a gzip member: expected at least 18 bytes starting 1f 8b, got 8 byte(s).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : jsgzdec: `txt` does not hold a gzip member: expected at least 18 bytes starting 1f 8b, got 8 byte(s).</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

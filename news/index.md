@@ -2,7 +2,24 @@
 
 ## rmoriebricklayer 1.1.1
 
-- `rmbl data` with no subcommand prints its usage line instead of
+- A table downloaded in parts no longer comes out damaged when the disk
+  fills up while the parts are joined: the failed write is an error that
+  names the folder and the option for choosing one with room
+  (`options(rmoriebricklayer.dcache = )`), where it was a silent short
+  file that then failed its checksum as “tampered with in transit”. Each
+  part is deleted once it is in the joined file, so the download needs
+  the table’s size plus one part on disk, not twice the table’s size.
+- [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  can read part of a table, for the curated tables too large to hold in
+  memory (the largest has 93 million rows): `cols` reads only the named
+  columns, `n` at most that many rows, and `keep` is a function called
+  on each piece of the file as it is read, so only the rows it accepts
+  are kept. `file = TRUE` returns the path of the downloaded, verified
+  file without reading it. Before reading a table of more than about 2
+  GB whole,
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  says how large it is and names these arguments.
+- `rmbl data` with nothing after it prints its usage line instead of
   downloading the table list, and `rmbl data pull` refuses a key that is
   not `db/table` (`../../etc/passwd`) before any download.
   [`blfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blfetch.md)
@@ -26,28 +43,46 @@
   [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md)
   no longer warns once per string function on a page with bytes that are
   not UTF-8.
-- A Ctrl-C in the first tenth of a second of `rmbl`, while R is still
-  starting, exits 130 where `/bin/sh` is bash (Fedora, macOS) too; it
-  exited 1 there. The launchers
+- The launchers
   [`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
-  writes do the same.
+  writes report a Ctrl-C that lands while R is still starting as status
+  130, as the package’s own launcher does; they ran R with `exec`, so no
+  shell was left to say so and the status was 1. A failure that is not
+  an interrupt keeps its status.
 - [`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
   inflates with the package’s bounded reader: a damaged gzip member of
   under 2 KB made base R’s
   [`memDecompress()`](https://rdrr.io/r/base/memCompress.html) take more
   than 12 GB, and is now refused at once.
 - [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md)
-  no longer waits past `tmout` between attempts: with `tmout = 30`, a
-  server answering 503 with a long `Retry-After` held the call for three
-  minutes.
+  keeps the whole download inside `tmout`: it no longer waits past it
+  between attempts (with `tmout = 30`, a server answering 503 with a
+  long `Retry-After` held the call for three minutes), and each further
+  attempt gets only the time that is left.
 - `rmbl migrate` leaves a call of a function the script defines itself
-  alone (`rate <- function(x) x; rate(2)` became `rtcalc(2)`); a call
-  written `rmoriebricklayer::rate()` is still rewritten.
+  alone (`rate <- function(x) x; rate(2)` became `rtcalc(2)`), where
+  that definition is in reach: one made inside a function or
+  [`local()`](https://rdrr.io/r/base/eval.html) does not hide the
+  package’s function at the top level. Definitions through
+  [`assign()`](https://rdrr.io/r/base/assign.html), `setGeneric()` and a
+  backquoted name count. A call written `rmoriebricklayer::rate()` is
+  still rewritten.
 - [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
   on a JSON object that
   [`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
-  did not write (`{"a":1}`) says so, instead of “missing value where
-  TRUE/FALSE needed”.
+  did not write (`{"a":1}`, an unknown type, a value R cannot make into
+  its type) says so, instead of “missing value where TRUE/FALSE needed”
+  and other base R messages.
+  [`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  refuses a list nested deeper than
+  [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  reads, and
+  [`jsgzenc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
+  JSON longer than the 64 MiB
+  [`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
+  inflates;
+  [`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
+  calls a truncated gzip member damaged, not too large.
 - [`svydes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svydes.md)
   no longer copies into a zero-length vector when a replicate column has
   no positive entry (undefined behaviour, reported by the clang

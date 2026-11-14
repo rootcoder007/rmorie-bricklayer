@@ -22,7 +22,15 @@ dmnf(refresh = FALSE)
 
 dtabs(refresh = FALSE)
 
-dload(key, refresh = FALSE, token = NULL)
+dload(
+  key,
+  refresh = FALSE,
+  token = NULL,
+  cols = NULL,
+  n = Inf,
+  keep = NULL,
+  file = FALSE
+)
 ```
 
 ## Arguments
@@ -41,6 +49,31 @@ dload(key, refresh = FALSE, token = NULL)
 
   Ignored, with a warning: the tables need no key, and none is sent.
   Kept so that calls written for earlier versions still run.
+
+- cols:
+
+  Character vector, default `NULL` (every column): the columns to read,
+  by the names in the manifest or as `dload()` returns them. The others
+  are skipped as the file is read.
+
+- n:
+
+  A whole number, default `Inf`: at most this many rows are kept, and
+  reading stops there.
+
+- keep:
+
+  `NULL`, or a function of one data frame that returns `TRUE` for the
+  rows to keep. The table is read a piece at a time and `keep` is called
+  on each piece, so a table too large for memory can be reduced to the
+  part that is wanted (one province, one year) without ever being held
+  whole. It sees every column, whatever `cols` says is returned.
+
+- file:
+
+  Logical scalar, default `FALSE`. `TRUE` downloads and verifies the
+  table and returns the path of its gzip-compressed CSV without reading
+  it, for tools that query a file in place.
 
 ## Value
 

@@ -250,13 +250,13 @@ number; <code>path</code> not a card file.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   orcid        0000-0002-1825-0097                                          │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   web          https://example.org/ada                                      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   key          ML-DSA-44                                                    │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   fingerprint  ED6A 5EC9 E0CF 06DD B648 5C40 97A5 8427 D26F DEE7 C0E6 DFDF  │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                C4B7 3933 CB13 196D                                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   issued       2026-11-13T23:12:05Z                                         │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   expires      2028-11-12T23:12:05Z                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   fingerprint  76CA 86EE 9FCB 6803 C006 FE0E 317D 71C0 CE88 4D0B 8E3D C82B  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                2647 08D7 26DF BD9C                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   issued       2026-11-14T03:56:01Z                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   expires      2028-11-13T03:56:01Z                                         │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="va">card</span><span class="op">$</span><span class="va">fingerprint</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "ED6A 5EC9 E0CF 06DD B648 5C40 97A5 8427 D26F DEE7 C0E6 DFDF C4B7 3933 CB13 196D"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "76CA 86EE 9FCB 6803 C006 FE0E 317D 71C0 CE88 4D0B 8E3D C82B 2647 08D7 26DF BD9C"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># anyone, later: is this the card I was told about, and did it sign this?</span></span></span>
 <span class="r-in"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu"><a href="mkmnf.html">mkmnf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>project <span class="op">=</span> <span class="st">"demo"</span><span class="op">)</span>, env <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
@@ -277,7 +277,7 @@ number; <code>path</code> not a card file.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1                                                                                    </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2                                 an rmbl identity card, signed under its own context</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3                               made by the holder of the card's key; unchanged since</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 valid 2026-11-13T23:12:05Z to 2028-11-12T23:12:05Z; checked at 2026-11-13T23:12:05Z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 valid 2026-11-14T03:56:01Z to 2028-11-13T03:56:01Z; checked at 2026-11-14T03:56:01Z</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5                                                                 0000-0002-1825-0097</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6                                            the card's key is the one you were given</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 7                                              the attestation carries the card's key</span>

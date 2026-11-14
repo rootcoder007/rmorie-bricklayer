@@ -123,5 +123,5 @@ jsgzdec(jsgzenc(list(a = 1, b = "x"), auto_unbox = TRUE),
 
 # text that is not a gzip member is refused
 try(jsgzdec(jsb64enc("not gzip")))
-#> Error : `txt` does not hold a gzip member: expected at least 18 bytes starting 1f 8b, got 8 byte(s).
+#> Error : jsgzdec: `txt` does not hold a gzip member: expected at least 18 bytes starting 1f 8b, got 8 byte(s).
 ```

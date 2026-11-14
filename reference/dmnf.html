@@ -100,7 +100,15 @@ From the shell: <code>rmoriebricklayer data list</code> and
 <span></span>
 <span><span class="fu">dtabs</span><span class="op">(</span>refresh <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">dload</span><span class="op">(</span><span class="va">key</span>, refresh <span class="op">=</span> <span class="cn">FALSE</span>, token <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">dload</span><span class="op">(</span></span>
+<span>  <span class="va">key</span>,</span>
+<span>  refresh <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  token <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cols <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n <span class="op">=</span> <span class="cn">Inf</span>,</span>
+<span>  keep <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  file <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -121,6 +129,32 @@ table) is cached.</p></dd>
 <dt id="arg-token">token<a class="anchor" aria-label="anchor" href="#arg-token"></a></dt>
 <dd><p>Ignored, with a warning: the tables need no key, and none is
 sent. Kept so that calls written for earlier versions still run.</p></dd>
+
+
+<dt id="arg-cols">cols<a class="anchor" aria-label="anchor" href="#arg-cols"></a></dt>
+<dd><p>Character vector, default <code>NULL</code> (every column): the
+columns to read, by the names in the manifest or as <code>dload()</code>
+returns them. The others are skipped as the file is read.</p></dd>
+
+
+<dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
+<dd><p>A whole number, default <code>Inf</code>: at most this many rows are
+kept, and reading stops there.</p></dd>
+
+
+<dt id="arg-keep">keep<a class="anchor" aria-label="anchor" href="#arg-keep"></a></dt>
+<dd><p><code>NULL</code>, or a function of one data frame that returns
+<code>TRUE</code> for the rows to keep. The table is read a piece at a time
+and <code>keep</code> is called on each piece, so a table too large for
+memory can be reduced to the part that is wanted (one province, one
+year) without ever being held whole. It sees every column, whatever
+<code>cols</code> says is returned.</p></dd>
+
+
+<dt id="arg-file">file<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>
+<dd><p>Logical scalar, default <code>FALSE</code>. <code>TRUE</code> downloads
+and verifies the table and returns the path of its gzip-compressed CSV
+without reading it, for tools that query a file in place.</p></dd>
 
 </dl></div>
     <div class="section level2">
