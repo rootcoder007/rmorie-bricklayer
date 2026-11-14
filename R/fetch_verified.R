@@ -66,7 +66,14 @@ fetchvrf <- function(
   url <- .rmbl_string1(url, "url")
   dest <- .rmbl_out_file(dest, "dest", connection = FALSE)
   sha256 <- .fv_check(sha256, mirrors, arcs)
-  tmp <- paste0(dest, ".part")
+  # a name of this process's own beside `dest`: one shared `<dest>.part` let
+  # two processes fetching one file write into and delete each other's (the
+  # sibling of audit of 716154bd, N4)
+  tmp <- tempfile(
+    pattern = paste0(basename(dest), "-"),
+    tmpdir = dirname(dest),
+    fileext = ".part"
+  )
   on.exit(unlink(tmp), add = TRUE)
   acc <- new.env(parent = emptyenv())
   acc$tried <- data.frame(

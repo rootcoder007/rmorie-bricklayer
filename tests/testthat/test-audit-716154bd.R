@@ -210,6 +210,103 @@ test_that("N3: a header with blanks around a name is named as a whole read", {
   }
 })
 
+test_that("N4: parallel downloads of one table take turns and share it", {
+  skip_on_os("windows")
+  skip_on_cran()
+  d <- withr::local_tempdir()
+  set.seed(4)
+  bytes <- as.raw(sample(0:255, 3 * 2^20 + 7, replace = TRUE))
+  src <- file.path(d, "src")
+  writeBin(bytes, src)
+  log <- file.path(d, "log")
+  dir.create(log)
+  dir.create(file.path(d, "c"))
+  dest <- file.path(d, "c", "db__t.csv.gz")
+  withr::local_options(rmoriebricklayer.dpart = 2^20)
+  local_mocked_bindings(
+    .bl_data_url = function() "https://data.example.org",
+    .bl_data_label = function(path) list(label = "db/t", size = length(bytes)),
+    bldl = function(url, dest, headers = NULL, ...) {
+      rng <- sub("^bytes=", "", headers[["Range"]])
+      r <- as.numeric(strsplit(rng, "-", fixed = TRUE)[[1]])
+      file.create(file.path(log, paste0(Sys.getpid(), "-", r[1L])))
+      Sys.sleep(0.2)
+      writeBin(bytes[(r[1L] + 1):(r[2L] + 1)], dest)
+      invisible(dest)
+    }
+  )
+  get <- function(i) {
+    tryCatch(
+      {
+        suppressMessages(.bl_data_get("/db/t.csv.gz", dest))
+        "ok"
+      },
+      error = conditionMessage
+    )
+  }
+  skip_if_lowmem()
+  res <- parallel::mclapply(1:2, get, mc.cores = 2L)
+  expect_identical(unique(unlist(res)), "ok")
+  expect_identical(readBin(dest, "raw", length(bytes) + 1), bytes)
+  expect_setequal(
+    list.files(dirname(dest), all.files = TRUE, no.. = TRUE),
+    c("db__t.csv.gz", "db__t.csv.gz.lock")
+  )
+  # each part was fetched once: the process that waited kept the other's file
+  expect_length(list.files(log), 4L)
+})
+
+test_that("N5: a download that cannot be written says so, with the option", {
+  ns <- asNamespace("rmoriebricklayer")
+  # the transport's own check of `dest` runs, and nothing is sent
+  local_mocked_bindings(
+    .bl_data_url = function() "https://data.example.org",
+    .bl_data_label = function(path) list(label = "db/t", size = NULL),
+    bldl = function(url, dest, ...) {
+      .rmbl_out_file(dest, "dest", connection = FALSE)
+      stop("bldl: no network in this test", call. = FALSE)
+    }
+  )
+  reg <- withr::local_tempfile()
+  writeLines("x", reg)
+  for (dc in c(file.path(reg, "sub"), "/proc/rmbl-none/cache")) {
+    withr::local_options(rmoriebricklayer.dcache = dc)
+    for (expr in list(
+      quote(dmnf(refresh = TRUE)),
+      quote(ns$.bl_data_get("/db/t.csv.gz", file.path(dc, "db__t.csv.gz")))
+    )) {
+      e <- tryCatch(eval(expr), error = conditionMessage)
+      expect_match(e, "cannot write .* on this computer", info = dc)
+      expect_match(e, "options(rmoriebricklayer.dcache = )", fixed = TRUE)
+      expect_false(grepl("^data.rmorie.com", e), info = dc)
+    }
+  }
+  # a full disk, as the transport reports it
+  d <- withr::local_tempdir()
+  local_mocked_bindings(
+    bldl = function(...) {
+      stop(
+        "bldl: https://data.example.org/db/t.csv.gz: Failure writing output ",
+        "to destination, passed 8192 returned 320",
+        call. = FALSE
+      )
+    }
+  )
+  expect_error(
+    ns$.bl_data_get("/db/t.csv.gz", file.path(d, "t.csv.gz")),
+    "on this computer \\(https://.*Failure writing output.*dcache = \\)"
+  )
+  # a failure of the service still says so
+  local_mocked_bindings(
+    bldl = function(...) stop("bldl: answered HTTP 503", call. = FALSE)
+  )
+  expect_error(
+    ns$.bl_data_get("/db/t.csv.gz", file.path(d, "t.csv.gz")),
+    "^data.rmorie.com: bldl: answered HTTP 503$"
+  )
+  expect_length(list.files(d, pattern = "[.]dl$"), 0L)
+})
+
 test_that("N8: file = TRUE with cols, n or keep is refused, not ignored", {
   aud_cache(charToRaw("a,b\n1,2\n"))
   for (a in list(
@@ -227,6 +324,65 @@ test_that("N8: file = TRUE with cols, n or keep is refused, not ignored", {
   expect_named(dload("db/t", cols = c("b", "a", "b")), c("a", "b"))
 })
 
+test_that("N9: a join cut short keeps what it joined, and the rerun goes on", {
+  st <- new.env()
+  set.seed(9)
+  bytes <- as.raw(sample(0:255, 5000, replace = TRUE))
+  st$seen <- character()
+  st$writes <- 0
+  st$fail <- 2
+  local_mocked_bindings(
+    .bl_data_url = function() "https://data.example.org",
+    bldl = function(url, dest, headers = NULL, ...) {
+      rng <- sub("^bytes=", "", headers[["Range"]])
+      r <- as.numeric(strsplit(rng, "-", fixed = TRUE)[[1]])
+      st$seen <- c(st$seen, headers[["Range"]])
+      writeBin(bytes[(r[1L] + 1):(r[2L] + 1)], dest)
+      invisible(dest)
+    },
+    .bl_write_raw = function(buf, out) {
+      st$writes <- st$writes + 1
+      if (st$writes == st$fail) {
+        warning("problem writing to connection")
+      }
+      writeBin(buf, out)
+    }
+  )
+  dest <- file.path(withr::local_tempdir(), "t.csv.gz")
+  ns <- asNamespace("rmoriebricklayer")
+  get <- function() {
+    ns$.bl_data_get_parts(
+      "/db/t.csv.gz", dest, character(), "db/t", 5000, 1024, 60
+    )
+  }
+  expect_error(get(), "is full or cannot be written")
+  expect_false(file.exists(dest))
+  pd <- paste0(dest, ".parts")
+  expect_identical(file.size(file.path(pd, "joined")), 2048)
+  expect_setequal(list.files(pd), c("joined", "00003", "00004", "00005"))
+  # the rerun downloads nothing again
+  st$seen <- character()
+  st$fail <- 0
+  get()
+  expect_identical(st$seen, character())
+  expect_identical(readBin(dest, "raw", 6000), bytes)
+  expect_false(dir.exists(pd))
+  # a joined file holding half a part is written over from that part
+  unlink(dest)
+  dir.create(pd)
+  writeBin(c(bytes[1:1500], as.raw(rep(0, 100))), file.path(pd, "joined"))
+  for (i in 2:5) {
+    a <- (i - 1) * 1024
+    writeBin(
+      bytes[(a + 1):min(a + 1024, 5000)],
+      file.path(pd, sprintf("%05d", i))
+    )
+  }
+  get()
+  expect_identical(st$seen, character())
+  expect_identical(readBin(dest, "raw", 6000), bytes)
+})
+
 test_that("N10: no two roxygen blocks run together in the sources", {
   r <- testthat::test_path("..", "..", "R")
   skip_if_not(dir.exists(r), "the package sources are not here")
@@ -242,4 +398,42 @@ test_that("N10: no two roxygen blocks run together in the sources", {
       )
     }
   }
+})
+
+test_that("N12: a damaged cached manifest is fetched again, once", {
+  good <- charToRaw("a,b\n1,2\n")
+  d <- aud_cache(good)
+  p <- file.path(d, "manifest.json")
+  txt <- readLines(p)
+  writeLines(substr(txt, 1L, nchar(txt) - 5L), p)
+  st <- new.env()
+  st$n <- 0
+  local_mocked_bindings(.bl_data_get = function(path, dest, ...) {
+    st$n <- st$n + 1
+    writeLines(txt, dest)
+    invisible(dest)
+  })
+  expect_identical(dmnf()$datasets[[1L]]$key, "db/t")
+  expect_identical(st$n, 1)
+  expect_identical(readLines(p), txt)
+  # a fresh download is kept when the manifest has to be fetched again
+  writeLines("{\"datasets\": [", p)
+  tab <- file.path(d, "db__t.csv.gz")
+  gz <- readBin(tab, "raw", file.size(tab))
+  unlink(tab)
+  local_mocked_bindings(.bl_data_get = function(path, dest, ...) {
+    if (grepl("manifest", path, fixed = TRUE)) {
+      writeLines(txt, dest)
+    } else {
+      writeBin(gz, dest)
+    }
+    invisible(dest)
+  })
+  expect_identical(dload("db/t"), data.frame(a = 1L, b = 2L))
+  # offline, the damage is named
+  writeLines("{\"datasets\": [", p)
+  local_mocked_bindings(.bl_data_get = function(...) {
+    stop("data.rmorie.com: offline", call. = FALSE)
+  })
+  expect_error(dmnf(), "the cached manifest .* is damaged, and a fresh one")
 })

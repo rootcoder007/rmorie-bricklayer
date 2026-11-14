@@ -258,6 +258,11 @@ dload <- function(
 
 #' The manifest as the service sends it, the tables that are not served
 #' included (dmnf() leaves them out).
+#'
+#' A cached copy that cannot be read as a manifest (cut short or damaged on
+#' disk) is fetched again at once, as a stale one is: it stopped dmnf() with
+#' the parser's message, and dload() then threw away the table it had just
+#' downloaded for want of a digest (audit of 716154bd, N12).
 #' @param refresh Whether to fetch it again.
 #' @return The manifest, a list.
 #' @noRd
@@ -269,35 +274,76 @@ dload <- function(
   } else {
     Inf
   }
-  fresh <- age < 86400
-  if (refresh || !fresh) {
-    # fetched beside the cached copy and moved over it only once it is a
-    # manifest: a refresh that fails leaves the last good one in place, and the
-    # digest check falls back on it. The temporary name is this process's own:
-    # one shared `manifest.json.part` let parallel refreshes delete each other's
-    # file (11 of 12 workers failed; review of 02a38be, C8).
-    dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
-    tmp <- tempfile(
-      pattern = "manifest-",
-      tmpdir = dirname(p),
-      fileext = ".part"
-    )
-    on.exit(unlink(tmp), add = TRUE)
-    # the manifest is a list of tables (well under 1 MiB): 32 MiB is far past
-    # any real one, and a 300 MiB reply (a gzip bomb) was read whole, then
-    # failed to allocate (CRAN stress test of 0.5.14)
-    .bl_data_get("/manifest.json", tmp, timeout = 60, max_bytes = 32 * 2^20)
-    m <- .rmbl_json_text(
-      .bl_read_text_capped(tmp, 32 * 2^20),
-      simplifyVector = FALSE
-    )
-    .bl_manifest_check(m, p)
-    if (!isTRUE(file.rename(tmp, p))) {
-      stop(sprintf("could not store the manifest in %s", p), call. = FALSE)
+  if (!refresh && age < 86400) {
+    m <- .bl_manifest_read(p)
+    if (!is.null(m)) {
+      return(m)
     }
-    return(m)
+    return(.bl_dmnf_fetch(p, damaged = TRUE))
   }
-  .rmbl_json_text(.bl_read_text_capped(p, 32 * 2^20), simplifyVector = FALSE)
+  .bl_dmnf_fetch(p)
+}
+
+#' The cached manifest, or NULL when it cannot be read as one.
+#' @param p Its path.
+#' @return The manifest, or NULL.
+#' @noRd
+.bl_manifest_read <- function(p) {
+  m <- tryCatch(
+    .rmbl_json_text(.bl_read_text_capped(p, 32 * 2^20), simplifyVector = FALSE),
+    error = function(e) .bl_unless_interrupted(e)
+  )
+  ok <- !is.null(m) &&
+    is.null(tryCatch(.bl_manifest_check(m, p), error = function(e) e))
+  if (ok) m else NULL
+}
+
+#' Fetches the manifest and stores it in place of the cached copy.
+#' @param p The cached copy's path.
+#' @param damaged Whether the cached copy could not be read.
+#' @return The manifest, a list.
+#' @noRd
+.bl_dmnf_fetch <- function(p, damaged = FALSE) {
+  # fetched beside the cached copy and moved over it only once it is a
+  # manifest: a refresh that fails leaves the last good one in place, and the
+  # digest check falls back on it. The temporary name is this process's own:
+  # one shared `manifest.json.part` let parallel refreshes delete each other's
+  # file (11 of 12 workers failed; review of 02a38be, C8).
+  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
+  tmp <- tempfile(pattern = "manifest-", tmpdir = dirname(p), fileext = ".part")
+  on.exit(unlink(tmp), add = TRUE)
+  m <- tryCatch(
+    {
+      # the manifest is a list of tables (well under 1 MiB): 32 MiB is far
+      # past any real one, and a 300 MiB reply (a gzip bomb) was read whole,
+      # then failed to allocate (CRAN stress test of 0.5.14)
+      .bl_data_get("/manifest.json", tmp, timeout = 60, max_bytes = 32 * 2^20)
+      m <- .rmbl_json_text(
+        .bl_read_text_capped(tmp, 32 * 2^20),
+        simplifyVector = FALSE
+      )
+      .bl_manifest_check(m, p)
+      m
+    },
+    error = function(e) {
+      if (!damaged) stop(e)
+      stop(
+        sprintf(
+          paste(
+            "the cached manifest %s is damaged, and a fresh one could not",
+            "be had: %s"
+          ),
+          p,
+          conditionMessage(e)
+        ),
+        call. = FALSE
+      )
+    }
+  )
+  if (!isTRUE(file.rename(tmp, p))) {
+    .bl_data_wfail(p, "could not store the manifest")
+  }
+  m
 }
 
 #' Checks dload()'s `cols`, `n` and `keep`, and says whether any asks for
@@ -1118,6 +1164,14 @@ dload <- function(
 }
 
 #' Downloads a path from the curated-data service (no key: none is needed).
+#'
+#' A table is downloaded under a lock on `<dest>.lock`, held by this process
+#' alone: R processes downloading one table into one cache folder take turns,
+#' and one that waited finds the file the first finished and keeps it. They
+#' shared the parts folder and the joined file's name, deleted each other's
+#' parts and were told the disk was full (11 of 12 workers failed; audit of
+#' 716154bd, N4). The file is written under a name of this process's own and
+#' moved into place whole.
 #' @param path The path on the service.
 #' @param dest The local file the downloaded table is written to.
 #' @param timeout Seconds before the download gives up.
@@ -1129,19 +1183,42 @@ dload <- function(
   on.exit(options(old), add = TRUE)
   hdr <- c("User-Agent" = "rmoriebricklayer/1 (+https://www.rmorie.com)")
   lb <- .bl_data_label(path)
-  label <- lb$label
-  size <- lb$size
-  part <- .bl_data_part_bytes()
-  if (!is.null(size) && is.finite(size) && size > 2 * part) {
-    return(.bl_data_get_parts(path, dest, hdr, label, size, part, timeout))
+  if (!grepl("\\.csv\\.gz$", path)) {
+    return(.bl_data_get_one(path, dest, hdr, lb, timeout, max_bytes))
   }
+  .bl_data_locked(dest, function() {
+    part <- .bl_data_part_bytes()
+    size <- lb$size
+    if (!is.null(size) && is.finite(size) && size > 2 * part) {
+      .bl_data_get_parts(path, dest, hdr, lb$label, size, part, timeout)
+    } else {
+      .bl_data_get_one(path, dest, hdr, lb, timeout, max_bytes)
+    }
+  })
+  invisible(dest)
+}
+
+#' Downloads one file whole, under a name of its own beside `dest`, moved
+#' into place once complete.
+#' @param path,dest,timeout,max_bytes As for .bl_data_get().
+#' @param hdr The request headers.
+#' @param lb The label and size, from .bl_data_label().
+#' @return `dest`, invisibly.
+#' @noRd
+.bl_data_get_one <- function(path, dest, hdr, lb, timeout, max_bytes) {
+  tmp <- tempfile(
+    pattern = paste0(basename(dest), "-"),
+    tmpdir = dirname(dest),
+    fileext = ".dl"
+  )
+  on.exit(unlink(tmp), add = TRUE)
   rc <- tryCatch(
     bldl(
       paste0(.bl_data_url(), path),
-      dest,
+      tmp,
       headers = hdr,
-      label = label,
-      size = size,
+      label = lb$label,
+      size = lb$size,
       tmout = timeout,
       maxbytes = max_bytes
     ),
@@ -1149,9 +1226,107 @@ dload <- function(
     warning = function(w) w
   )
   if (inherits(rc, "condition")) {
-    .bl_data_get_failed(rc, label)
+    .bl_data_get_failed(rc, lb$label, dest)
+  }
+  .bl_data_move(tmp, dest)
+  invisible(dest)
+}
+
+#' Moves a finished download into place.
+#' @param tmp The download.
+#' @param dest Its name.
+#' @return `dest`, invisibly.
+#' @noRd
+.bl_data_move <- function(tmp, dest) {
+  if (!file.exists(tmp)) {
+    stop(
+      sprintf("data.rmorie.com: the download of %s wrote no file", dest),
+      call. = FALSE
+    )
+  }
+  if (!file.rename(tmp, dest)) {
+    .bl_data_wfail(dest, "the download could not be moved into place")
   }
   invisible(dest)
+}
+
+#' Runs a table's download under an operating-system lock on `<dest>.lock`
+#' (rmbl_flock.c, released by the kernel when the process ends), waiting while
+#' another process holds it. A file that appeared or changed under `dest`
+#' while this one waited is the other's finished download, and is kept.
+#' @param dest The table's file.
+#' @param f The download, a function of no arguments.
+#' @return `dest`, invisibly.
+#' @noRd
+.bl_data_locked <- function(dest, f) {
+  m0 <- file.mtime(dest)
+  busy <- new.env(parent = emptyenv())
+  run <- function() {
+    arrived <- file.exists(dest) && (is.na(m0) || file.mtime(dest) > m0)
+    if (!arrived) f()
+    invisible(dest)
+  }
+  said <- FALSE
+  repeat {
+    r <- tryCatch(
+      .Call(C_rmbl_flock_with, paste0(dest, ".lock"), run, busy),
+      error = function(e) {
+        m <- conditionMessage(e)
+        if (!grepl("lock file", m, fixed = TRUE)) stop(e)
+        .bl_data_wfail(dest, m)
+      }
+    )
+    if (!identical(r, busy)) {
+      return(invisible(dest))
+    }
+    if (!said) {
+      message(basename(dest), ": another R process is downloading it; waiting")
+      said <- TRUE
+    }
+    Sys.sleep(0.2)
+  }
+}
+
+#' Stops with the error for a download that could not be written on this
+#' computer (a folder that is missing, read-only or full), which names the
+#' option for another folder: it said "data.rmorie.com:" as if the service
+#' had failed (audit of 716154bd, N5).
+#' @param dest The file being written.
+#' @param why What went wrong on this computer, for the message.
+#' @return Does not return.
+#' @noRd
+.bl_data_wfail <- function(dest, why) {
+  stop(
+    sprintf(
+      paste0(
+        "cannot write %s on this computer (%s). Name a folder that can be ",
+        "written and has room in options(rmoriebricklayer.dcache = ) and run ",
+        "again."
+      ),
+      dest,
+      why
+    ),
+    call. = FALSE
+  )
+}
+
+#' Says whether a failed download failed on this computer: the transport says
+#' it could not write, or the folder takes no file.
+#' @param msg The transport's error message.
+#' @param dest The file being written.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_data_local_fail <- function(msg, dest) {
+  re <- paste0(
+    "Failure writing|Failed writing|folder for `dest`|No space left|",
+    "Permission denied|Read-only file system|cannot open (the )?(file|conn)"
+  )
+  if (grepl(re, msg)) {
+    return(TRUE)
+  }
+  probe <- tempfile(tmpdir = dirname(dest))
+  on.exit(unlink(probe), add = TRUE)
+  !isTRUE(suppressWarnings(file.create(probe)))
 }
 
 #' The size of one part of a large download (option
@@ -1170,9 +1345,11 @@ dload <- function(
 #' Downloads a large table in parts, each a byte range of the file.
 #'
 #' A slow or broken connection loses at most one part: each part is retried by
-#' the transport, kept on disk once whole, and a later run starts from the
-#' first part still missing. The parts are joined into `dest`, whose SHA-256
-#' the caller checks against the manifest.
+#' the transport, kept on disk once whole (written under a name of its own and
+#' moved into place), and a later run starts from the first part still
+#' missing. The parts are then joined in place (.bl_data_join()), which a later
+#' run resumes too. The caller checks the SHA-256 of `dest` against the
+#' manifest. The caller holds the table's lock (.bl_data_locked()).
 #' @param path,dest,timeout As for .bl_data_get().
 #' @param hdr The request headers.
 #' @param label The table's key.
@@ -1186,91 +1363,142 @@ dload <- function(
   pdir <- paste0(dest, ".parts")
   dir.create(pdir, recursive = TRUE, showWarnings = FALSE)
   pfile <- file.path(pdir, sprintf("%05d", seq_len(n)))
-  for (i in seq_len(n)) {
+  # the parts already in the joined file of an earlier run are not fetched
+  j <- file.path(pdir, "joined")
+  done <- if (file.exists(j)) min(n, floor(file.size(j) / part)) else 0
+  for (i in seq_len(n)[seq_len(n) > done]) {
     a <- starts[i]
     want <- min(a + part, size) - a
-    if (file.exists(pfile[i]) && identical(file.size(pfile[i]), want)) {
-      next
-    }
-    unlink(pfile[i])
-    rc <- tryCatch(
-      bldl(
-        paste0(.bl_data_url(), path),
-        pfile[i],
-        headers = c(hdr, Range = sprintf("bytes=%.0f-%.0f", a, a + want - 1)),
-        label = sprintf("%s (part %d of %d)", label, i, n),
-        size = want,
-        tmout = timeout,
-        maxbytes = want
-      ),
-      error = function(e) .bl_unless_interrupted(e, e),
-      warning = function(w) w
-    )
-    if (inherits(rc, "condition")) {
-      .bl_data_get_failed(rc, label)
-    }
     if (!identical(file.size(pfile[i]), want)) {
-      got <- file.size(pfile[i])
-      unlink(pfile[i])
-      stop(
-        sprintf(
-          paste(
-            "data.rmorie.com: part %d of %s came back with %.0f bytes, not",
-            "%.0f; run again to resume from that part"
-          ),
-          i, label, got, want
-        ),
-        call. = FALSE
+      .bl_data_get_part(
+        path, pfile[i], hdr, sprintf("%s (part %d of %d)", label, i, n),
+        c(a, want), timeout
       )
     }
   }
-  .bl_data_join(pfile, dest)
+  .bl_data_join(pfile, dest, part)
   unlink(pdir, recursive = TRUE)
   invisible(dest)
 }
 
-#' Joins the parts of a download into one file.
+#' Downloads one part of a large table.
+#' @param path,timeout As for .bl_data_get().
+#' @param pf The part's file.
+#' @param hdr The request headers.
+#' @param label The part's label.
+#' @param rng Its first byte and length.
+#' @return `pf`, invisibly.
+#' @noRd
+.bl_data_get_part <- function(path, pf, hdr, label, rng, timeout) {
+  tmp <- tempfile(
+    pattern = paste0(basename(pf), "-"),
+    tmpdir = dirname(pf),
+    fileext = ".dl"
+  )
+  on.exit(unlink(tmp), add = TRUE)
+  want <- rng[[2L]]
+  rc <- tryCatch(
+    bldl(
+      paste0(.bl_data_url(), path),
+      tmp,
+      headers = c(
+        hdr,
+        Range = sprintf("bytes=%.0f-%.0f", rng[[1L]], rng[[1L]] + want - 1)
+      ),
+      label = label,
+      size = want,
+      tmout = timeout,
+      maxbytes = want
+    ),
+    error = function(e) .bl_unless_interrupted(e, e),
+    warning = function(w) w
+  )
+  if (inherits(rc, "condition")) {
+    .bl_data_get_failed(rc, sub(" \\(part .*", "", label), pf)
+  }
+  if (!identical(file.size(tmp), want)) {
+    stop(
+      sprintf(
+        paste(
+          "data.rmorie.com: %s came back with %.0f bytes, not",
+          "%.0f; run again to resume from that part"
+        ),
+        sub("^(.*) \\(part ([0-9]+) of [0-9]+\\)$", "part \\2 of \\1", label),
+        file.size(tmp),
+        want
+      ),
+      call. = FALSE
+    )
+  }
+  .bl_data_move(tmp, pf)
+}
+
+#' Joins the parts of a download into one file, in place.
+#'
+#' The first part becomes the joined file (`joined`, beside the parts) and the
+#' others are appended to it in order, each deleted once it is in it and
+#' flushed: the parts and the joined file together never hold much more than
+#' the table's size, and a join cut short (a full disk, a killed session)
+#' leaves the joined file holding the start of the table, so the next run goes
+#' on from the first part not yet in it (seeking there, over any part written
+#' halfway) instead of downloading the deleted parts again (audit of
+#' 716154bd, N9). The file is moved to `dest` once whole.
 #' @param pfile The part files, in order.
 #' @param dest The file written.
+#' @param part The size of each part but the last (the joined file's size
+#'   says how many parts it holds).
 #' @return `dest`, invisibly.
 #' @noRd
-.bl_data_join <- function(pfile, dest) {
-  # written beside `dest` and renamed when whole: a join cut short (a
-  # killed session) left a file that looked finished until its digest was
-  # checked
-  tmp <- paste0(dest, ".join")
-  total <- sum(file.size(pfile))
+.bl_data_join <- function(pfile, dest, part) {
+  j <- file.path(dirname(pfile[[1L]]), "joined")
+  if (!file.exists(j) && !file.rename(pfile[[1L]], j)) {
+    .bl_data_missing(dest, pfile[[1L]])
+  }
+  done <- min(length(pfile), floor(file.size(j) / part))
+  rest <- pfile[seq_along(pfile) > done]
+  total <- done * part + sum(file.size(rest))
+  if (is.na(total)) {
+    .bl_data_missing(dest, rest[is.na(file.size(rest))][[1L]])
+  }
   full <- function() .bl_data_full(dest, total)
-  out <- file(tmp, "wb")
+  out <- file(j, "r+b")
   open <- TRUE
-  on.exit(
-    {
-      if (open) {
-        close(out)
-      }
-      unlink(tmp)
-    },
-    add = TRUE
-  )
-  for (p in pfile) {
+  on.exit(if (open) close(out), add = TRUE)
+  seek(out, done * part, rw = "write")
+  for (p in rest) {
     if (!.bl_data_append(p, out)) {
       full()
     }
-    # a part is freed once it is in the joined file: the two together took
-    # twice the table's size on disk
+    flush(out)
     unlink(p)
   }
   close(out)
   open <- FALSE
   # a write that failed only when the file was closed shows in its size
-  if (!identical(as.numeric(file.size(tmp)), as.numeric(total))) {
+  if (!identical(as.numeric(file.size(j)), as.numeric(total))) {
     full()
   }
   unlink(dest)
-  if (!file.rename(tmp, dest)) {
+  if (!file.rename(j, dest)) {
     full()
   }
   invisible(dest)
+}
+
+#' Stops because a part to be joined is missing.
+#' @param dest The file being joined.
+#' @param p The missing part.
+#' @return Does not return.
+#' @noRd
+.bl_data_missing <- function(dest, p) {
+  stop(
+    sprintf(
+      "cannot join the parts of %s: part %s is missing; run again to get it",
+      basename(dest),
+      basename(p)
+    ),
+    call. = FALSE
+  )
 }
 
 #' Stops with the full-disk message of a join.
@@ -1896,8 +2124,9 @@ dload <- function(
 #' Says why a download from the curated-data service failed.
 #' @param rc The error or warning the download raised.
 #' @param label The download's label.
+#' @param dest The file the download was writing.
 #' @noRd
-.bl_data_get_failed <- function(rc, label) {
+.bl_data_get_failed <- function(rc, label, dest) {
   msg <- conditionMessage(rc)
   if (grepl("\\b410\\b|Gone", msg)) {
     stop(
@@ -1918,6 +2147,9 @@ dload <- function(
       ),
       call. = FALSE
     )
+  }
+  if (.bl_data_local_fail(msg, dest)) {
+    .bl_data_wfail(dest, sub("^bldl: ", "", msg))
   }
   stop("data.rmorie.com: ", msg, call. = FALSE)
 }

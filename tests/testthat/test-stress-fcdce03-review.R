@@ -113,6 +113,9 @@ test_that(
       ...
     ) {
       got$seen <- headers
+      # the download is written under a name of its own and moved into place,
+      # so the transport writes a file, as the real one does
+      writeLines("x", dest)
       invisible(dest)
     })
     .bl_data_get("/x.csv.gz", tempfile())
