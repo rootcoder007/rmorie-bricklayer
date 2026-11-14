@@ -99,7 +99,7 @@ fdl(url, path)             # plain-language failure diagnosis
                                          # + automatic Wayback fallback
 ```
 
-This vignette stays offline, so we go straight to the fallback path.
+This vignette stays offline, so it goes straight to the fallback path.
 
 ## 3. Synthetic fallback: the pipeline always runs
 
