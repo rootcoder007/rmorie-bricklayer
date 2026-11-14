@@ -7,6 +7,21 @@
 skip_on_cran()
 
 ns <- asNamespace("rmoriebricklayer")
+
+# A long analysis runs in a fork of the session (.bl_bg() calls
+# parallel::mcparallel()). Under covr each fork of this file's session grew to
+# the session's own size, about 800 MB, beside it, which stopped the coverage
+# run of a 2 GB checking machine. There the background run is done in this
+# process instead: the promise, its polling and the refusal are the same, only
+# the second process is left out. The fork itself is tested (by "long
+# analyses run as an ExtendedTask ...") where there is room for it.
+if (mem_cap() < 3 * 1024^3) {
+  local_mocked_bindings(
+    mcparallel = function(expr, ...) list(value = try(expr, silent = TRUE)),
+    mccollect = function(jobs, ...) list(jobs$value),
+    .package = "parallel"
+  )
+}
 specs <- function() ns$.bl_app_specs()
 spec <- function(id) Filter(function(s) s$id == id, specs())[[1L]]
 setting <- function() shiny::reactive(list(digits = 4L, seed = 1L))
