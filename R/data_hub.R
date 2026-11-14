@@ -944,21 +944,7 @@ dload <- function(
   # checked
   tmp <- paste0(dest, ".join")
   total <- sum(file.size(pfile))
-  full <- function() {
-    stop(
-      sprintf(
-        paste0(
-          "cannot join the parts of %s: the folder %s is full or cannot be ",
-          "written (the file needs %.0f MB). Name a folder with room in ",
-          "options(rmoriebricklayer.dcache = ) and run again."
-        ),
-        basename(dest),
-        dirname(dest),
-        total / 2^20
-      ),
-      call. = FALSE
-    )
-  }
+  full <- function() .bl_data_full(dest, total)
   out <- file(tmp, "wb")
   open <- TRUE
   on.exit(
@@ -989,6 +975,27 @@ dload <- function(
     full()
   }
   invisible(dest)
+}
+
+#' Stops with the full-disk message of a join.
+#' @param dest The file being written.
+#' @param total Its size in bytes.
+#' @return Does not return.
+#' @noRd
+.bl_data_full <- function(dest, total) {
+  stop(
+    sprintf(
+      paste0(
+        "cannot join the parts of %s: the folder %s is full or cannot be ",
+        "written (the file needs %.0f MB). Name a folder with room in ",
+        "options(rmoriebricklayer.dcache = ) and run again."
+      ),
+      basename(dest),
+      dirname(dest),
+      total / 2^20
+    ),
+    call. = FALSE
+  )
 }
 
 #' Appends one part file to an open connection.
