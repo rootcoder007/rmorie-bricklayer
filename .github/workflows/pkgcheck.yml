@@ -24,11 +24,10 @@ jobs:
     timeout-minutes: 330
     # the bot's server sets no container limit, so its memory is the size of
     # its machine, which is not published. The suite is required to pass in
-    # 2 GB. The two smaller sizes are reported, not required: pkgcheck's own R
-    # process holds about 800 MB for this package once coverage is in, so at
-    # 1.5 GB it is stopped in goodpractice's R CMD check step, and at 1 GB a
-    # test process is stopped during coverage, whatever the tests themselves
-    # need. They stay in the matrix so a change in either direction is seen.
+    # 2 GB. One smaller size is reported, not required. pkgcheck's own R
+    # process holds about 800 MB for this package once coverage is in, so a
+    # 1.5 GB container is always stopped in goodpractice's R CMD check step,
+    # whatever the tests need: that size told nothing and is not run.
     continue-on-error: ${{ matrix.required == false }}
     strategy:
       fail-fast: false
@@ -41,10 +40,6 @@ jobs:
           - label: 1 GB + 1 GB swap
             mem: 1g
             swap: 2g
-            required: false
-          - label: 1.5 GB
-            mem: 1536m
-            swap: 1536m
             required: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
