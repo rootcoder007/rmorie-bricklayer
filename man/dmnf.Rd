@@ -17,7 +17,8 @@ dload(
   cols = NULL,
   n = Inf,
   keep = NULL,
-  file = FALSE
+  file = FALSE,
+  names = c("R", "asis")
 )
 }
 \arguments{

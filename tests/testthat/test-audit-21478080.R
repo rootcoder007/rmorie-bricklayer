@@ -72,7 +72,7 @@ test_that("P3: text that is not valid UTF-8 is refused once, in words", {
     function() co2int(b),
     function() capenv(b),
     function() ruledstn(b),
-    function() instcli(dir = file.path(tempdir(), b))
+    function() instcli(dir = b)
   )
   for (i in seq_along(calls)) {
     acc <- new.env()
@@ -85,8 +85,15 @@ test_that("P3: text that is not valid UTF-8 is refused once, in words", {
       error = conditionMessage
     )
     expect_length(acc$w, 0L)
-    expect_match(e, "not valid UTF-8|outside the base64 alphabet", info = i)
-    expect_false(grepl("input string", e, fixed = TRUE), info = i)
+    expect_type(e, "character")
+    expect_match(
+      e, "not valid UTF-8|outside the base64 alphabet",
+      info = paste("call", i)
+    )
+    expect_false(
+      grepl("input string", e, fixed = TRUE),
+      info = paste("call", i)
+    )
   }
   acc <- new.env()
   acc$got <- character()
