@@ -329,7 +329,7 @@ blcli("help")
 #> 
 #> Data and functions
 #>   data list                                 curated tables at data.rmorie.com
-#>   data pull db/table [--out FILE.csv]       download one of them (no sign-in)
+#>   data pull db/table [--out FILE.csv]       download one of them (no sign-in; --names asis keeps the table's column names)
 #>   app [PATH] [--port N] [--no-browser]      the analysis dashboard on this machine (needs shiny)
 #>   wayback FILE [--out F.jsonl] [--jobs N]   archive every URL in FILE (archive.org keys)
 #>   wayback --retry F.jsonl                   retry the failed URLs of an earlier wayback run
@@ -361,7 +361,7 @@ blcli("help")
 
 # one verb's usage
 blcli(c("help", "data"))
-#> usage: rmoriebricklayer data list | data pull db/table [--out FILE.csv]   curated tables at data.rmorie.com (no sign-in)
+#> usage: rmoriebricklayer data list | data pull db/table [--out FILE.csv] [--names R|asis]   curated tables at data.rmorie.com (no sign-in)
 
 # capture the output instead of printing it
 con <- textConnection("lines", "w")
@@ -384,33 +384,33 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.1.1](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpIG47D8/capsule-1e6645cd8273`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpZ7ZQxf/capsule-1e7820d459bc`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpIG47D8/capsule-1e6645cd8273` | /tmp/RtmpIG47D8/temp_libpath1e66155a44c0/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpZ7ZQxf/capsule-1e7820d459bc` | /tmp/RtmpZ7ZQxf/temp_libpath1e7847757414/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpIG47D8/capsule-1e6645cd8273</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpZ7ZQxf/capsule-1e7820d459bc</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpIG47D8/temp_libpath1e66155a44c0/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpZ7ZQxf/temp_libpath1e7847757414/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpIG47D8/capsule-1e6645cd8273/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpIG47D8/capsule-1e6645cd8273/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpZ7ZQxf/capsule-1e7820d459bc/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpZ7ZQxf/capsule-1e7820d459bc/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpIG47D8/capsule-1e6645cd8273/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpZ7ZQxf/capsule-1e7820d459bc/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000282 Wh, 0.000129 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000214 Wh, 9.82e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
 #> 
 #> ---
 #> 

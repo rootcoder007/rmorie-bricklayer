@@ -13,7 +13,7 @@ same as a data frame; `dload("db/table")` one table as a data frame,
 cached under [`tempdir()`](https://rdrr.io/r/base/tempfile.html) (or the
 directory in `options(rmoriebricklayer.dcache = )`) so later calls are
 local. From the shell: `rmoriebricklayer data list` and
-`rmoriebricklayer data pull db/table [--out FILE.csv]`.
+`rmoriebricklayer data pull db/table [--out FILE.csv] [--names R|asis]`.
 
 ## Usage
 
@@ -29,7 +29,8 @@ dload(
   cols = NULL,
   n = Inf,
   keep = NULL,
-  file = FALSE
+  file = FALSE,
+  names = c("R", "asis")
 )
 ```
 
@@ -78,6 +79,15 @@ dload(
   it, for tools that query a file in place; it cannot be combined with
   `cols`, `n` or `keep`.
 
+- names:
+
+  `"R"` (the default) for the column names
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) gives
+  (syntactic, from
+  [`make.names()`](https://rdrr.io/r/base/make.names.html)), `"asis"`
+  for the names as the table's header writes them (see Details). `cols`
+  takes either form, and `keep` sees the names the call returns.
+
 ## Value
 
 `dmnf()`: the manifest as a list (element `datasets`, one list per table
@@ -104,19 +114,52 @@ refused (after one refresh of the manifest, since a table rebuilt
 upstream has a new digest). When the manifest cannot be fetched, the
 last copy on disk, however old, supplies the digest; with none, a fresh
 download is not kept and a cached file is kept but not used. The CSV is
-read in compiled code with the same result as
-`read.csv(gzfile(f), stringsAsFactors = FALSE)`, two malformed shapes
-apart, which are refused with the record they are in where
-[`read.csv()`](https://rdrr.io/r/utils/read.table.html) changes the data
-without a word: a record with more fields than the header
+read in compiled code. Its records are read as
+`read.csv(gzfile(f), stringsAsFactors = FALSE)` reads them, two
+malformed shapes apart, which are refused with the record they are in
+where [`read.csv()`](https://rdrr.io/r/utils/read.table.html) changes
+the data without a word: a record with more fields than the header
 ([`read.csv()`](https://rdrr.io/r/utils/read.table.html) turns the first
 column into row names) and a quote mark inside an unquoted field
 ([`read.csv()`](https://rdrr.io/r/utils/read.table.html) takes the rest
 of the file as one quoted run). Tables that inflate past 512 MiB are
-read by [`read.csv()`](https://rdrr.io/r/utils/read.table.html) itself,
-a piece at a time. A table whose SHA-256 matches the manifest is the
-file the service holds, so it is read whatever its size; one the
-manifest lists without a digest may decompress to at most the option
+read by [`read.csv()`](https://rdrr.io/r/utils/read.table.html) as text,
+a piece at a time, and typed the same way.
+
+The values are not always those
+[`read.csv()`](https://rdrr.io/r/utils/read.table.html) gives. A column
+is a number only when every value in it is a number R gives back as it
+is written: a plain integer or decimal (an exponent allowed, as in
+`1e5`; trailing zeros after the point, as in `6.0`, too) with no leading
+zero other than `0` itself or `0.` before the decimals, no leading `+`
+and at most 17 significant digits; or `Inf`, `-Inf` or `NaN`. A column
+holding a value such as `046`, `+1`, `0x1A`, `1+2i` or a number of 20
+digits is text, every value as written:
+[`read.csv()`](https://rdrr.io/r/utils/read.table.html) made the codes
+`046` and `007` the numbers 46 and 7. Blanks around a number do not stop
+it being one. `TRUE`, `FALSE`, `T` and `F` make a logical column. A text
+column keeps every value as written: the text `NA` there is the text
+`"NA"` ([`read.csv()`](https://rdrr.io/r/utils/read.table.html) made it
+missing) and an empty field is `""`. In a number or logical column an
+empty field and `NA` are both missing, as before. A column with no value
+at all is logical `NA`; one whose only values are the text `NA` is text.
+Numbers are read correctly rounded, the same double on every machine:
+R's own reading of decimal text can differ in the last bit between
+processors (`1.239042694` did between x86-64 and ARM64).
+
+The column names are by default those
+[`read.csv()`](https://rdrr.io/r/utils/read.table.html) gives:
+`make.names(unique = TRUE)` of the header, each name trimmed of the
+blanks around it unless it is quoted, so `Offence Description` becomes
+`Offence.Description`, `% share` `X..share` and a second `x` `x.1`.
+`names = "asis"` returns the names as the header writes them (the same
+trimming, a byte-order mark dropped, duplicates and empty names kept),
+which are the names of the published table and its manifest. The default
+may change in a later major version.
+
+A table whose SHA-256 matches the manifest is the file the service
+holds, so it is read whatever its size; one the manifest lists without a
+digest may decompress to at most the option
 `rmoriebricklayer.maxcsvbytes` (1 GiB by default). A large table needs
 memory for all of it: a 1 GB decompressed CSV takes a few GB of RAM as a
 data frame.

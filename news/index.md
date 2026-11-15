@@ -11,10 +11,37 @@
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   and the help already said.
 - [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
-  with `cols`, `n` or `keep` gives NaN in a complex column as NaN, as
+  changes the values it returns for some columns, so that they are the
+  values the file holds. A column is a number only when every value in
+  it is a number R gives back as written (no leading zero but `0`
+  itself, no leading `+`, at most 17 significant digits; `Inf`, `-Inf`
+  and `NaN` count); a column holding codes such as `046` or `007`, or
+  `+1`, a hex number or a complex number, is text with every value as
+  written, where `046` became the number 46. Census FIPS, ZIP, county
+  and site codes in the curated tables are now text, as are coordinates
+  written with a leading `+` or zero (`+40.7002150`, `-073.9938089`).
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
-  of the whole table does; it gave NA.
-  [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  with `cols`, `n` or `keep`, the tables over 512 MiB and
+  `rmbl data pull` follow the same rule.
+- In a text column the text `NA` is the text `"NA"` (a committee called
+  NA, a code), where
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  made it missing; an empty field there is `""`, as before. In a number
+  or logical column an empty field and `NA` are both missing, as before.
+- Numbers in the curated tables are read correctly rounded, so
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  gives the same doubles on every machine: R’s own reading of decimal
+  text put `1.239042694` and `-8833541.51630376` one bit apart on x86-64
+  and ARM64.
+- `dload(names = "asis")` and `rmbl data pull --names asis` return the
+  column names as the published table and its manifest write them
+  (`Offence Description`, `% share`), where by default
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  gives the names
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) makes
+  (`Offence.Description`, `X..share`). The default stays as it is in
+  this release and may change in a later major version.
+- [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
   reads back a complex NaN as
   [`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
   writes it (`"NaN+0i"`), which it refused, and `rmbl data pull` writes

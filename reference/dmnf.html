@@ -14,7 +14,8 @@ under tempdir() (or the directory in
 options(rmoriebricklayer.dcache = )) so later calls are
 local.
 From the shell: rmoriebricklayer data list and
-rmoriebricklayer data pull db/table [--out FILE.csv]."><meta property="og:description" content="The MORIE project keeps databases materialised from Google BigQuery
+rmoriebricklayer data pull db/table [--out FILE.csv]
+[--names R|asis]."><meta property="og:description" content="The MORIE project keeps databases materialised from Google BigQuery
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge. They need no sign-in and no key, and there are no
@@ -29,7 +30,8 @@ under tempdir() (or the directory in
 options(rmoriebricklayer.dcache = )) so later calls are
 local.
 From the shell: rmoriebricklayer data list and
-rmoriebricklayer data pull db/table [--out FILE.csv]."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+rmoriebricklayer data pull db/table [--out FILE.csv]
+[--names R|asis]."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -94,7 +96,8 @@ under <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link"
 <code>options(rmoriebricklayer.dcache = )</code>) so later calls are
 local.
 From the shell: <code>rmoriebricklayer data list</code> and
-<code>rmoriebricklayer data pull db/table [--out FILE.csv]</code>.</p>
+<code>rmoriebricklayer data pull db/table [--out FILE.csv]
+[--names R|asis]</code>.</p>
     </div>
 
     <div class="section level2">
@@ -110,7 +113,8 @@ From the shell: <code>rmoriebricklayer data list</code> and
 <span>  cols <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  keep <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  file <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  file <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"R"</span>, <span class="st">"asis"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -162,6 +166,14 @@ and verifies the table and returns the path of its gzip-compressed CSV
 without reading it, for tools that query a file in place; it cannot be
 combined with <code>cols</code>, <code>n</code> or <code>keep</code>.</p></dd>
 
+
+<dt id="arg-names">names<a class="anchor" aria-label="anchor" href="#arg-names"></a></dt>
+<dd><p><code>"R"</code> (the default) for the column names
+<code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> gives (syntactic, from <code><a href="https://rdrr.io/r/base/make.names.html" class="external-link">make.names()</a></code>),
+<code>"asis"</code> for the names as the table's header writes them (see
+Details). <code>cols</code> takes either form, and <code>keep</code> sees the
+names the call returns.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -191,15 +203,43 @@ deleted and refused (after one refresh of the manifest, since a table
 rebuilt upstream has a new digest). When the manifest cannot be fetched,
 the last copy on disk, however old, supplies the digest; with none, a fresh
 download is not kept and a cached file is kept but not used. The CSV is
-read in compiled code with the same result as
-<code>read.csv(gzfile(f), stringsAsFactors = FALSE)</code>, two malformed shapes
-apart, which are refused with the record they are in where <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code>
-changes the data without a word: a record with more fields than the header
-(<code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> turns the first column into row names) and a quote mark
-inside an unquoted field (<code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> takes the rest of the file as one
-quoted run). Tables that inflate
-past 512 MiB are read by <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> itself, a piece at a time. A
-table whose SHA-256 matches the manifest is the file the service holds, so
+read in compiled code. Its records are read as
+<code>read.csv(gzfile(f), stringsAsFactors = FALSE)</code> reads them, two
+malformed shapes apart, which are refused with the record they are in
+where <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> changes the data without a word: a record with
+more fields than the header (<code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> turns the first column into
+row names) and a quote mark inside an unquoted field (<code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code>
+takes the rest of the file as one quoted run). Tables that inflate past
+512 MiB are read by <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> as text, a piece at a time, and
+typed the same way.</p>
+<p>The values are not always those <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> gives. A column is a
+number only when every value in it is a number R gives back as it is
+written: a plain integer or decimal (an exponent allowed, as in
+<code>1e5</code>; trailing zeros after the point, as in <code>6.0</code>, too) with
+no leading zero other than <code>0</code> itself or <code>0.</code> before the
+decimals, no leading <code>+</code> and at most 17 significant digits; or
+<code>Inf</code>, <code>-Inf</code> or <code>NaN</code>. A column holding a value such as
+<code>046</code>, <code>+1</code>, <code>0x1A</code>, <code>1+2i</code> or a number of 20
+digits is text, every value as written: <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> made the codes
+<code>046</code> and <code>007</code> the numbers 46 and 7. Blanks around a number do
+not stop it being one. <code>TRUE</code>, <code>FALSE</code>, <code>T</code> and <code>F</code>
+make a logical column. A text column keeps every value as written: the
+text <code>NA</code> there is the text <code>"NA"</code> (<code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> made it
+missing) and an empty field is <code>""</code>. In a number or logical column
+an empty field and <code>NA</code> are both missing, as before. A column with no
+value at all is logical <code>NA</code>; one whose only values are the text
+<code>NA</code> is text. Numbers are read correctly rounded, the same double on
+every machine: R's own reading of decimal text can differ in the last bit
+between processors (<code>1.239042694</code> did between x86-64 and ARM64).</p>
+<p>The column names are by default those <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> gives:
+<code>make.names(unique = TRUE)</code> of the header, each name trimmed of the
+blanks around it unless it is quoted, so <code>Offence Description</code>
+becomes <code>Offence.Description</code>, <code>% share</code> <code>X..share</code> and
+a second <code>x</code> <code>x.1</code>. <code>names = "asis"</code> returns the names as
+the header writes them (the same trimming, a byte-order mark dropped,
+duplicates and empty names kept), which are the names of the published
+table and its manifest. The default may change in a later major version.</p>
+<p>A table whose SHA-256 matches the manifest is the file the service holds, so
 it is read whatever its size; one the manifest lists without a digest may
 decompress to at most the option <code>rmoriebricklayer.maxcsvbytes</code>
 (1 GiB by default). A large table needs memory for all of it: a 1 GB
