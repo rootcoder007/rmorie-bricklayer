@@ -176,32 +176,6 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
   })
 }
 
-#' Runs a decoder under the name of the function the user called.
-#'
-#' A refusal raised by a step (jsb64dec() inside jsgzdec(), the JSON parser
-#' inside jsunser()) is said as the called function's, its argument named as
-#' the caller names it.
-#' @param fn The function the user called.
-#' @param expr Its work.
-#' @param arg What the step's `input` is called in `fn`, or NULL.
-#' @return The value of `expr`.
-#' @noRd
-.rmbl_js_as <- function(fn, expr, arg = NULL) {
-  tryCatch(expr, error = function(e) {
-    m <- conditionMessage(e)
-    # R's own time limits pass as they are (.rmbl_or() tests their start), and
-    # so does a refusal that already names the function
-    if (startsWith(m, paste0(fn, "()")) || grepl("time limit", m)) {
-      stop(e)
-    }
-    m <- sub("^(fromjs|tojs|js[a-z0-9]+): ", "", m)
-    if (!is.null(arg)) {
-      m <- gsub("`input`", arg, m, fixed = TRUE)
-    }
-    stop(fn, ": ", m, call. = FALSE)
-  })
-}
-
 #' Wrap a deflate stream in a real gzip member (RFC 1952).
 #'
 #' memCompress(type = \code{"gzip"}) does NOT produce gzip: it produces a zlib
