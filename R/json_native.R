@@ -182,26 +182,7 @@ jsb64dec <- function(input) {
   if (!length(ch)) {
     return(raw(0))
   }
-  v <- match(ch, .RMBL_JSON_B64) - 1L
-  nfull <- length(v) %/% 4L
-  rem <- length(v) %% 4L
-  out <- integer(0)
-  if (nfull) {
-    m <- matrix(v[seq_len(nfull * 4L)], nrow = 4L)
-    w <- m[1L, ] * 262144L + m[2L, ] * 4096L + m[3L, ] * 64L + m[4L, ]
-    out <- as.vector(rbind(w %/% 65536L, w %/% 256L %% 256L, w %% 256L))
-  }
-  if (rem == 2L) {
-    w <- v[nfull * 4L + 1L] * 262144L + v[nfull * 4L + 2L] * 4096L
-    out <- c(out, w %/% 65536L)
-  } else if (rem == 3L) {
-    w <- v[nfull * 4L + 1L] *
-      262144L +
-      v[nfull * 4L + 2L] * 4096L +
-      v[nfull * 4L + 3L] * 64L
-    out <- c(out, w %/% 65536L, w %/% 256L %% 256L)
-  }
-  as.raw(out)
+  .rmbl_b64_bytes(ch)
 }
 
 #' @rdname b64
@@ -214,29 +195,6 @@ jsb64uenc <- function(input) {
 #' @export
 jsb64udec <- function(input) {
   .rmbl_js_as("jsb64udec", .rmbl_b64udec(input))
-}
-
-#' The work of jsb64udec(), whose refusals it names.
-#' @param input As for jsb64udec().
-#' @return The bytes.
-#' @noRd
-.rmbl_b64udec <- function(input) {
-  input <- .rmbl_text_input(input, "input", allow_raw = FALSE)
-  if (!is.character(input) || anyNA(input)) {
-    stop("`input` must be base64url text", call. = FALSE)
-  }
-  if (any(grepl("[^A-Za-z0-9_=-]", gsub("[\r\n]", "", input)))) {
-    stop("`input` is not base64url text", call. = FALSE)
-  }
-  if (!length(input)) {
-    return(jsb64dec(input))
-  }
-  text <- paste(gsub("[\r\n]", "", chartr("-_", "+/", input)), collapse = "")
-  mod <- nchar(text) %% 4L
-  if (mod > 0L) {
-    text <- paste0(text, strrep("=", 4L - mod))
-  }
-  jsb64dec(text)
 }
 
 #' Encode an R object as JSON (jsonlite's toJSON, natively)
@@ -617,6 +575,57 @@ jsunser <- function(txt, trusted = FALSE) {
   # every refusal names jsunser, also those of the steps it calls (audit of
   # 21478080, P8)
   .rmbl_js_as("jsunser", .rmbl_jsunser(txt, trusted), "`txt`")
+}
+
+#' The bytes that base64 characters stand for.
+#' @param ch The characters of the base64 alphabet, one a piece, with no
+#'   padding.
+#' @return A raw vector.
+#' @noRd
+.rmbl_b64_bytes <- function(ch) {
+  v <- match(ch, .RMBL_JSON_B64) - 1L
+  nfull <- length(v) %/% 4L
+  rem <- length(v) %% 4L
+  out <- integer(0)
+  if (nfull) {
+    m <- matrix(v[seq_len(nfull * 4L)], nrow = 4L)
+    w <- m[1L, ] * 262144L + m[2L, ] * 4096L + m[3L, ] * 64L + m[4L, ]
+    out <- as.vector(rbind(w %/% 65536L, w %/% 256L %% 256L, w %% 256L))
+  }
+  if (rem == 2L) {
+    w <- v[nfull * 4L + 1L] * 262144L + v[nfull * 4L + 2L] * 4096L
+    out <- c(out, w %/% 65536L)
+  } else if (rem == 3L) {
+    w <- v[nfull * 4L + 1L] *
+      262144L +
+      v[nfull * 4L + 2L] * 4096L +
+      v[nfull * 4L + 3L] * 64L
+    out <- c(out, w %/% 65536L, w %/% 256L %% 256L)
+  }
+  as.raw(out)
+}
+
+#' The work of jsb64udec(), whose refusals it names.
+#' @param input As for jsb64udec().
+#' @return The bytes.
+#' @noRd
+.rmbl_b64udec <- function(input) {
+  input <- .rmbl_text_input(input, "input", allow_raw = FALSE)
+  if (!is.character(input) || anyNA(input)) {
+    stop("`input` must be base64url text", call. = FALSE)
+  }
+  if (any(grepl("[^A-Za-z0-9_=-]", gsub("[\r\n]", "", input)))) {
+    stop("`input` is not base64url text", call. = FALSE)
+  }
+  if (!length(input)) {
+    return(jsb64dec(input))
+  }
+  text <- paste(gsub("[\r\n]", "", chartr("-_", "+/", input)), collapse = "")
+  mod <- nchar(text) %% 4L
+  if (mod > 0L) {
+    text <- paste0(text, strrep("=", 4L - mod))
+  }
+  jsb64dec(text)
 }
 
 #' The work of jsunser(), whose refusals it names.

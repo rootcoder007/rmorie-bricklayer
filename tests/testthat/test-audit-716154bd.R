@@ -144,7 +144,7 @@ test_that("N2: keep sees the whole table's types, whatever the piece", {
     vapply(whole, typeof, ""),
     c(
       id = "integer", code = "character", v = "double", w = "character",
-      e = "integer", l = "character", t = "character", z = "complex"
+      e = "integer", l = "character", t = "character", z = "character"
     )
   )
   preds <- list(
@@ -154,7 +154,7 @@ test_that("N2: keep sees the whole table's types, whatever the piece", {
     function(d) is.na(d$e),
     function(d) d$l == "TRUE",
     function(d) d$t == "T",
-    function(d) Re(d$z) == 1
+    function(d) d$z == "1"
   )
   for (i in seq_along(preds)) {
     ref <- whole[which(preds[[i]](whole)), , drop = FALSE]

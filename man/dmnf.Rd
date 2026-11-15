@@ -125,9 +125,9 @@ decimals, no leading \code{+} and at most 17 significant digits; or
 digits is text, every value as written: \code{read.csv()} made the codes
 \code{046} and \code{007} the numbers 46 and 7. Blanks around a number do
 not stop it being one. \code{TRUE}, \code{FALSE}, \code{T} and \code{F}
-make a logical column. Only an empty field is missing in a text column:
-the text \code{NA} there is the text \code{"NA"} (\code{read.csv()} made
-it missing, and an empty field \code{""}). In a number or logical column
+make a logical column. A text column keeps every value as written: the
+text \code{NA} there is the text \code{"NA"} (\code{read.csv()} made it
+missing) and an empty field is \code{""}. In a number or logical column
 an empty field and \code{NA} are both missing, as before. A column with no
 value at all is logical \code{NA}; one whose only values are the text
 \code{NA} is text. Numbers are read correctly rounded, the same double on

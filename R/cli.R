@@ -240,23 +240,10 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
       call. = FALSE
     )
   }
-  args <- as.character(args)
   prog <- .bl_prog()
-  # a word that is not valid text failed in gsub() with base R's traceback and
-  # "Execution halted" (audit of 21478080, P3): one line, a usage error
-  bad <- which(!validEnc(args))
-  if (length(bad)) {
-    out(sprintf(
-      "%s: argument %d is not valid text in this locale\n",
-      prog,
-      bad[[1L]]
-    ))
-    return(invisible(2L))
-  }
-  a <- .bl_cli_words(args)
-  st <- .bl_cli_precheck(a$verb, a$rest, prog, out)
-  if (!is.null(st)) {
-    return(invisible(st))
+  a <- .bl_cli_parse(as.character(args), prog, out)
+  if (!is.null(a$st)) {
+    return(invisible(a$st))
   }
   invisible(.bl_cli_dispatch(a$verb, a$rest, a$tail_args, out, prog))
 }
@@ -347,6 +334,32 @@ instcli <- function(
     if (on_path) "" else sprintf("; add %s to your PATH", dir)
   ))
   invisible(targets[[1L]]) # the primary launcher's path; rmbl sits beside it
+}
+
+#' The command line's words, or the status that ends the call.
+#'
+#' A word that is not valid text failed in gsub() with base R's traceback and
+#' "Execution halted" (audit of 21478080, P3): it is one line and a usage
+#' error. Otherwise the words are split and checked as before.
+#' @param args The words, as text.
+#' @param prog The program's name.
+#' @param out The function that writes text.
+#' @return The list of .bl_cli_words(), with `st` set when the call ends
+#'   here.
+#' @noRd
+.bl_cli_parse <- function(args, prog, out) {
+  bad <- which(!validEnc(args))
+  if (length(bad)) {
+    out(sprintf(
+      "%s: argument %d is not valid text in this locale\n",
+      prog,
+      bad[[1L]]
+    ))
+    return(list(st = 2L))
+  }
+  a <- .bl_cli_words(args)
+  a$st <- .bl_cli_precheck(a$verb, a$rest, prog, out)
+  a
 }
 
 #' Signals an interrupt condition and stops.
@@ -2086,7 +2099,7 @@ instcli <- function(
 #' with NA in its place (audit of 21478080, P1). A column holding NaN is
 #' written as write.csv() writes it, with each NaN put back; the other columns
 #' and the quoting are as write.csv() gives them.
-#' @param df The table.
+#' @param df The table to write.
 #' @param dest The CSV file.
 #' @return NULL, invisibly.
 #' @noRd

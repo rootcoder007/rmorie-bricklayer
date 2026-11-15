@@ -285,6 +285,7 @@ deux
 devtools
 df
 DGUID
+difftime
 diffusivities
 DigestInfo
 Dijk
@@ -373,6 +374,7 @@ fnigc
 FO
 FORS
 FP
+fromjs
 fromJSON
 FTCS
 Fujisaki
@@ -1068,6 +1070,7 @@ Townsley
 TP
 TPS
 tps
+traceback
 Transcultural
 trc
 Tremblay

@@ -1,5 +1,5 @@
 # The values dload() gives for a CSV column (P9): numbers only when R gives
-# them back as written, empty fields missing, numbers correctly rounded, and
+# them back as written, the text NA kept, numbers correctly rounded, and
 # the names as the header writes them on request.
 
 csv_gz <- function(txt) {
@@ -27,9 +27,9 @@ test_that("a code with a leading zero stays text, as written", {
   expect_identical(w$hex, c("0x1A", "5"))
   expect_identical(w$big, c("12345678901234567890", "1"))
   expect_identical(w$mix, c(6, 7))
-  # only an empty field is missing in a text column
+  # a text column is as written: the text NA stays, an empty field is ""
   expect_identical(w$na, c("NA", "x"))
-  expect_identical(w$emp, c(NA, "y"))
+  expect_identical(w$emp, c("", "y"))
   expect_identical(w$onlyna, c("NA", "NA"))
   # the part reader and the large-table path give the same frame
   for (p in c(3L, 7L, 64L)) {
@@ -82,7 +82,7 @@ test_that("numbers are read correctly rounded", {
   expect_identical(g$x, c(2.5, Inf, -Inf, NaN, NA))
   # the readers: a column of the texts of 17 significant digits or fewer
   short <- names(ref)[nchar(gsub("[^0-9]", "", names(ref))) <= 17L |
-                        grepl("e", names(ref))]
+                        grepl("e", names(ref), fixed = TRUE)]
   short <- short[!grepl("^1\\.0000000000000001110|^3\\.14159", short)]
   f <- csv_gz(paste0("x\n", paste(short, collapse = "\n"), "\n"))
   w <- .bl_read_csv_gz(f)
@@ -94,24 +94,23 @@ test_that("numbers are read correctly rounded", {
 test_that("names = \"asis\" keeps the header's own names", {
   f <- csv_gz(" Offence Description ,code,% share,x,x\nTheft,046,1.5,1,2\n")
   w <- .bl_read_csv_gz(f)
-  expect_identical(names(w), c("Offence.Description", "code", "X..share",
-                               "x", "x.1"))
+  expect_named(w, c("Offence.Description", "code", "X..share", "x", "x.1"))
   a <- .bl_read_csv_gz(f, names = "asis")
   raw <- c("Offence Description", "code", "% share", "x", "x")
-  expect_identical(names(a), raw)
+  expect_named(a, raw)
   expect_identical(unname(as.list(a)), unname(as.list(w)))
   p <- .bl_csv_part(f, "% share", Inf, NULL, names = "asis")
-  expect_identical(names(p), "% share")
-  seen <- NULL
+  expect_named(p, "% share")
+  acc <- new.env()
   .bl_csv_part(f, NULL, Inf, function(d) {
-    seen <<- names(d)
+    acc$seen <- names(d)
     rep(TRUE, nrow(d))
   }, names = "asis")
-  expect_identical(seen, raw)
+  expect_identical(acc$seen, raw)
   expect_error(dload("a/b", names = "plain"), "names")
-  got <- character()
+  acc$got <- character()
   st <- blcli(c("data", "pull", "a/b", "--names", "plain"),
-              out = function(...) got <<- c(got, paste0(...)))
+              out = function(...) acc$got <- c(acc$got, paste0(...)))
   expect_identical(st, 2L)
-  expect_match(got, "`--names` must be R or asis")
+  expect_match(acc$got, "`--names` must be R or asis", fixed = TRUE)
 })

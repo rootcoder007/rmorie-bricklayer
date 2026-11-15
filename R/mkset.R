@@ -68,9 +68,7 @@ mkset <- function(..., title = "Analysis results", file = NULL,
   ) {
     items <- items[[1L]]
   }
-  for (it in items) {
-    .rmbl_valid_text(it, "...")
-  }
+  invisible(lapply(items, .rmbl_valid_text, "..."))
   if (!length(items)) {
     stop("mkset: give at least one result", call. = FALSE)
   }

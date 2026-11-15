@@ -58,9 +58,9 @@
 #' digits is text, every value as written: \code{read.csv()} made the codes
 #' \code{046} and \code{007} the numbers 46 and 7. Blanks around a number do
 #' not stop it being one. \code{TRUE}, \code{FALSE}, \code{T} and \code{F}
-#' make a logical column. Only an empty field is missing in a text column:
-#' the text \code{NA} there is the text \code{"NA"} (\code{read.csv()} made
-#' it missing, and an empty field \code{""}). In a number or logical column
+#' make a logical column. A text column keeps every value as written: the
+#' text \code{NA} there is the text \code{"NA"} (\code{read.csv()} made it
+#' missing) and an empty field is \code{""}. In a number or logical column
 #' an empty field and \code{NA} are both missing, as before. A column with no
 #' value at all is logical \code{NA}; one whose only values are the text
 #' \code{NA} is text. Numbers are read correctly rounded, the same double on
@@ -488,6 +488,7 @@ dload <- function(
 #' @param path The CSV file, gzipped or plain.
 #' @param cols,n,keep As for dload().
 #' @param piece Decompressed bytes read at a time.
+#' @param names "R" or "asis", as for dload().
 #' @return A data frame.
 #' @noRd
 .bl_csv_part <- function(
@@ -665,7 +666,7 @@ dload <- function(
 
 #' Says which text values are numbers R gives back as written (see
 #' .bl_csv_kinds()).
-#' @param v A character vector.
+#' @param v The fields of one column, as text.
 #' @return A logical vector.
 #' @noRd
 .bl_csv_plain_num <- function(v) {
@@ -706,9 +707,11 @@ dload <- function(
 #' @noRd
 .bl_csv_as <- function(v, type = .bl_csv_kind_type(.bl_csv_kinds(v))) {
   if (type == "character") {
+    # a text column is as written: an empty field is "", never missing
+    v[is.na(v)] <- ""
     return(v)
   }
-  v[v %in% "NA"] <- NA
+  v[!is.na(v) & v == "NA"] <- NA
   v <- trimws(v)
   if (type == "logical") {
     return(v %in% c("TRUE", "T") | ifelse(v %in% c("FALSE", "F"), FALSE, NA))
@@ -728,7 +731,7 @@ dload <- function(
 #' @return A data frame.
 #' @noRd
 .bl_csv_frame <- function(cols, types) {
-  for (j in which(types != "character")) {
+  for (j in seq_along(cols)) {
     cols[[j]] <- .bl_csv_as(cols[[j]], types[[j]])
   }
   structure(
@@ -1031,7 +1034,7 @@ dload <- function(
 #' The large-table path: read.csv() itself, on a gzfile() connection (it reads
 #' plain files too).
 #' @param path The gzipped CSV file, read in chunks.
-#' @param names "R" for syntactic names, "asis" for the header's own.
+#' @inheritParams .bl_csv_from_bytes
 #' @return A data frame.
 #' @noRd
 .bl_read_csv_streamed <- function(path, names = "R") {
@@ -1066,7 +1069,7 @@ dload <- function(
   con <- gzfile(path, "rt")
   on.exit(close(con), add = TRUE)
   # read as text and typed as the in-memory path types (.bl_csv_kinds()):
-  # read.csv() made "046" the number 46 and an empty text field ""
+  # read.csv() made "046" the number 46 and the text NA missing
   d <- utils::read.csv(
     con,
     colClasses = "character",

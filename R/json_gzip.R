@@ -138,11 +138,33 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
     }
     jsb64dec(as.character(txt))
   }
+  json <- .rmbl_jsgz_inflate(bytes)
+  # two gzip members joined (two results of jsgzenc() pasted together) inflate
+  # to two JSON documents in a row
+  tryCatch(fromjs(json, ...), error = function(e) {
+    m <- conditionMessage(e)
+    if (!grepl("trailing content at character", m, fixed = TRUE)) {
+      stop(e)
+    }
+    stop(
+      "`txt` holds more than one JSON value (",
+      sub("^.*(trailing content at character [0-9]+).*$", "\\1", m),
+      "): decode each result of jsgzenc() on its own",
+      call. = FALSE
+    )
+  })
+}
+
+#' Inflate the gzip member of jsgzdec() to its JSON text.
+#' @param bytes The gzip member.
+#' @return The text.
+#' @noRd
+.rmbl_jsgz_inflate <- function(bytes) {
   # the package's bounded inflater: base memDecompress() kept doubling its
   # buffer on a damaged stream until the machine ran out of memory. It says
   # what is wrong with the member; the trailer's declared length alone
   # called a truncated member an oversized one.
-  json <- tryCatch(
+  tryCatch(
     {
       .rmbl_gzip_check(bytes, isize = FALSE)
       rawToChar(.Call(C_rmbl_gunzip_checked, bytes, 64 * 1024^2))
@@ -160,20 +182,6 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
       stop("jsgzdec: ", m, call. = FALSE)
     }
   )
-  # two gzip members joined (two results of jsgzenc() pasted together) inflate
-  # to two JSON documents in a row
-  tryCatch(fromjs(json, ...), error = function(e) {
-    m <- conditionMessage(e)
-    if (!grepl("trailing content at character", m, fixed = TRUE)) {
-      stop(e)
-    }
-    stop(
-      "`txt` holds more than one JSON value (",
-      sub("^.*(trailing content at character [0-9]+).*$", "\\1", m),
-      "): decode each result of jsgzenc() on its own",
-      call. = FALSE
-    )
-  })
 }
 
 #' Wrap a deflate stream in a real gzip member (RFC 1952).

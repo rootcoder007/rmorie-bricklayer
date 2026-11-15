@@ -7,7 +7,8 @@ test_that("P1: NaN stays NaN, read whole or in parts", {
   close(con)
   w <- .bl_read_csv_gz(f)
   expect_true(is.nan(w$z[2L]))
-  expect_true(is.na(w$z[3L]) && !is.nan(w$z[3L]))
+  expect_true(is.na(w$z[3L]))
+  expect_false(is.nan(w$z[3L]))
   expect_identical(.bl_csv_part(f, NULL, Inf, NULL, piece = 3L), w)
   expect_identical(.bl_csv_part(f, "z", Inf, NULL)$z, w$z)
   # jsser() writes a complex NaN as "NaN+0i"; jsunser() refused it
@@ -23,7 +24,8 @@ test_that("P1: NaN stays NaN, read whole or in parts", {
   .bl_write_pull(d, out)
   back <- utils::read.csv(out)
   expect_true(is.nan(back$x[2L]))
-  expect_true(is.na(back$x[3L]) && !is.nan(back$x[3L]))
+  expect_true(is.na(back$x[3L]))
+  expect_false(is.nan(back$x[3L]))
   expect_true(is.nan(back$z[1L]))
   expect_identical(back$s, d$s)
   plain <- tempfile(fileext = ".csv")
@@ -73,43 +75,46 @@ test_that("P3: text that is not valid UTF-8 is refused once, in words", {
     function() instcli(dir = file.path(tempdir(), b))
   )
   for (i in seq_along(calls)) {
-    w <- character()
+    acc <- new.env()
+    acc$w <- character()
     e <- tryCatch(
       withCallingHandlers(calls[[i]](), warning = function(x) {
-        w <<- c(w, conditionMessage(x))
+        acc$w <- c(acc$w, conditionMessage(x))
         invokeRestart("muffleWarning")
       }),
       error = conditionMessage
     )
-    expect_length(w, 0L)
+    expect_length(acc$w, 0L)
     expect_match(e, "not valid UTF-8|outside the base64 alphabet", info = i)
-    expect_false(grepl("input string", e), info = i)
+    expect_false(grepl("input string", e, fixed = TRUE), info = i)
   }
-  got <- character()
-  st <- blcli(b, out = function(...) got <<- c(got, paste0(...)))
+  acc <- new.env()
+  acc$got <- character()
+  st <- blcli(b, out = function(...) acc$got <- c(acc$got, paste0(...)))
   expect_identical(st, 2L)
-  expect_length(got, 1L)
-  expect_match(got, "argument 1 is not valid text")
+  expect_length(acc$got, 1L)
+  expect_match(acc$got, "argument 1 is not valid text")
 })
 
 test_that("P4: migrate on a folder or an unreadable file: one line", {
-  got <- character()
-  out <- function(...) got <<- c(got, paste0(...))
+  acc <- new.env()
+  acc$got <- character()
+  out <- function(...) acc$got <- c(acc$got, paste0(...))
   d <- withr::local_tempdir()
   expect_no_warning(st <- blcli(c("migrate", d), out = out))
   expect_identical(st, 1L)
-  expect_length(got, 1L)
-  expect_match(got, "a folder, not an R file")
+  expect_length(acc$got, 1L)
+  expect_match(acc$got, "a folder, not an R file")
   f <- file.path(d, "a.R")
   writeLines("yoy(1)", f)
   Sys.chmod(f, "000")
   on.exit(Sys.chmod(f, "644"), add = TRUE)
   skip_if(file.access(f, 4L) == 0L, "this user reads any file")
-  got <- character()
+  acc$got <- character()
   expect_no_warning(st <- blcli(c("migrate", f), out = out))
   expect_identical(st, 1L)
-  expect_length(got, 1L)
-  expect_match(got, "cannot be read")
+  expect_length(acc$got, 1L)
+  expect_match(acc$got, "cannot be read")
 })
 
 test_that("P6: a cached manifest that lists no tables is fetched again", {
@@ -117,14 +122,15 @@ test_that("P6: a cached manifest that lists no tables is fetched again", {
   withr::local_options(rmoriebricklayer.dcache = d)
   p <- file.path(d, "manifest.json")
   writeLines('{"datasets":[]}', p)
-  fetched <- 0L
+  acc <- new.env()
+  acc$n <- 0L
   local_mocked_bindings(.bl_data_get = function(path, dest, ...) {
-    fetched <<- fetched + 1L
+    acc$n <- acc$n + 1L
     writeLines('{"datasets":[{"key":"db/t"}]}', dest)
     invisible(dest)
   })
   m <- .bl_dmnf_raw()
-  expect_identical(fetched, 1L)
+  expect_identical(acc$n, 1L)
   expect_length(m$datasets, 1L)
   writeLines('{"datasets":[]}', p)
   local_mocked_bindings(.bl_data_get = function(...) stop("no connection"))
