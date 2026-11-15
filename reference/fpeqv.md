@@ -69,7 +69,7 @@ fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON",
                         cpupwrw = 45, memgb = 8)
 unlist(fpeqv(fp$co2eg)[c("carkm", "treemon")])
 #>        carkm      treemon 
-#> 5.303695e-09 1.012156e-09 
+#> 5.733998e-09 1.094274e-09 
 
 # a vector is refused: convert one total at a time
 try(fpeqv(c(10, 20)))
