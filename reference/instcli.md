@@ -38,8 +38,9 @@ invisibly; the others are written beside it.
 On Unix-alikes each launcher is a `/bin/sh` script (mode 0755) that sets
 `RMBL_PROG` to its own name and runs
 `Rscript -e "rmoriebricklayer::blcli()"` with the shell's arguments,
-exiting with the function's status (130 on Ctrl-C). The library this
-copy of the package is installed in is pinned inside R with
+exiting with the function's status (130 on Ctrl-C, also one that lands
+while R is still starting or as it quits). The library this copy of the
+package is installed in is pinned inside R with
 [`.libPaths()`](https://rdrr.io/r/base/libPaths.html), so an `R_LIBS`
 set in the shell or in `~/.Renviron` cannot make the command run another
 copy. An existing file or link of the same name in `dir` is replaced. On
@@ -64,18 +65,18 @@ for the verbs.
 # into a scratch folder, so nothing on your PATH changes
 d <- file.path(tempdir(), "bin")
 p <- instcli(dir = d)
-#> Installed /tmp/Rtmp0i3FAN/bin/rmoriebricklayer and /tmp/Rtmp0i3FAN/bin/rmbl; add /tmp/Rtmp0i3FAN/bin to your PATH
+#> Installed /tmp/RtmpIG47D8/bin/rmoriebricklayer and /tmp/RtmpIG47D8/bin/rmbl; add /tmp/RtmpIG47D8/bin to your PATH
 list.files(d)
 #> [1] "rmbl"             "rmoriebricklayer"
 readLines(p)[1:4]
 #> [1] "#!/bin/sh"                                                                                        
 #> [2] "# rmoriebricklayer: the rmoriebricklayer command line (written by rmoriebricklayer::instcli())"   
-#> [3] "# runs the package in /tmp/Rtmp0i3FAN/temp_libpath1e78691130e7 (pinned with .libPaths() inside R)"
+#> [3] "# runs the package in /tmp/RtmpIG47D8/temp_libpath1e66155a44c0 (pinned with .libPaths() inside R)"
 #> [4] "export RMBL_PROG=rmoriebricklayer"                                                                
 
 # one name only
 instcli(dir = d, name = "rmbl")
-#> Installed /tmp/Rtmp0i3FAN/bin/rmbl; add /tmp/Rtmp0i3FAN/bin to your PATH
+#> Installed /tmp/RtmpIG47D8/bin/rmbl; add /tmp/RtmpIG47D8/bin to your PATH
 if (FALSE) { # interactive()
 instcli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
 }

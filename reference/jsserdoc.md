@@ -36,7 +36,11 @@ jsunser(txt, trusted = FALSE)
 
 - txt:
 
-  Character scalar: JSON produced by `jsser()`.
+  Character scalar: JSON produced by `jsser()`. JSON that `jsser()`
+  would not write is refused, with an error that starts `jsunser:`: a
+  value not of the type it names, or a class or attribute that does not
+  fit the data (the class `Date` on text, a factor whose levels repeat,
+  more or fewer names than values, a time zone that does not exist).
 
 - trusted:
 

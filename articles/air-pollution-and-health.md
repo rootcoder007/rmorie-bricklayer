@@ -418,7 +418,7 @@ rbind(prolin = c(usage = a$usage, cpukwh = a$enekwh$cpu),
       maccod = c(usage = b$usage, cpukwh = b$enekwh$cpu))
 #>            usage       cpukwh
 #> prolin 0.2500000 9.375000e-09
-#> maccod 0.2222222 2.884259e-08
+#> maccod 0.2222222 3.021605e-08
 b$usagemode
 #> [1] "machine"
 ```

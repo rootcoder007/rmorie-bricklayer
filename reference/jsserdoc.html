@@ -95,7 +95,11 @@ does in jsonlite.</p></dd>
 
 <dt id="arg-txt">txt<a class="anchor" aria-label="anchor" href="#arg-txt"></a></dt>
 <dd><p>Character scalar: JSON produced by
-<code>jsser()</code>.</p></dd>
+<code>jsser()</code>. JSON that <code>jsser()</code> would not write is refused, with an error
+that starts <code>jsunser:</code>: a value not of the type it names, or a class or
+attribute that does not fit the data (the class <code>Date</code> on text, a factor
+whose levels repeat, more or fewer names than values, a time zone that
+does not exist).</p></dd>
 
 
 <dt id="arg-trusted">trusted<a class="anchor" aria-label="anchor" href="#arg-trusted"></a></dt>

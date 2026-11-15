@@ -107,7 +107,7 @@ s$data[c("mode", "base_url")]
 #> [1] "https://data.rmorie.com"
 #> 
 s$issued
-#> [1] "2026-10-14T00:46:57Z"
+#> [1] "2026-11-15T00:55:07Z"
 
 # arguments are checked
 try(svcs(maxage = -1))

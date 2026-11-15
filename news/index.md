@@ -2,6 +2,79 @@
 
 ## rmoriebricklayer 1.1.1
 
+- The services document shipped with the package (and published, signed,
+  at `rmorie.com/.well-known/`) no longer says the curated tables need a
+  personal key or a sign-in, and no longer points at pages that were
+  removed:
+  [`svcs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svcs.md)
+  now shows the notice that the tables need no sign-in, as
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  and the help already said.
+- [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  with `cols`, `n` or `keep` gives NaN in a complex column as NaN, as
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  of the whole table does; it gave NA.
+  [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  reads back a complex NaN as
+  [`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  writes it (`"NaN+0i"`), which it refused, and `rmbl data pull` writes
+  NaN to the CSV file as NaN, not NA.
+- `rmbl migrate` takes [`assign()`](https://rdrr.io/r/base/assign.html)
+  with its arguments named in any order (`assign(value = f, x = "yoy")`)
+  for a definition, rewrites a call written in backquotes
+  (`` `yoy`(1) ``) as it rewrites `yoy(1)`, and no longer takes a loop
+  variable or a constant (`for (yoy in 1:3)`, `yoy <- 3`) for a
+  definition of a function: R still calls the package’s function for
+  `yoy(1)`, so the call is rewritten.
+- Text that is not valid in the session’s encoding (bytes such as
+  `"a\xffb"` in a UTF-8 session) is refused once, in the package’s
+  words, by
+  [`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md),
+  [`jsb64dec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md),
+  [`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md),
+  [`blcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blcli.md),
+  [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md),
+  [`blfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blfetch.md),
+  [`sctidy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sctidy.md),
+  [`clncolnms()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clncolnms.md)
+  and every function whose text or number arguments go through the
+  package’s checks, instead of base R’s “input string 1 is invalid”
+  after warnings that the text could not be translated. On the command
+  line such a word is a usage error (one line, status 2); as the first
+  word it stopped R with a traceback and “Execution halted”.
+- `rmbl migrate` given a folder, or a file it cannot read, says so in
+  one line with status 1, instead of “cannot open the connection” and
+  base R’s warnings.
+- A cached manifest that lists no tables is fetched again at once, as a
+  damaged one is, instead of being kept for a day while every table was
+  “not at data.rmorie.com”; with no connection, the error says the
+  cached copy lists no tables.
+- [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  also refuses an object whose class or attributes do not fit its data:
+  the class `Date`, `POSIXct` or `difftime` on text, a class naming a
+  type the data are not (`"environment"` on an integer), a factor whose
+  levels repeat, more or fewer names than values, a time in a time zone
+  that does not exist and a difftime in no known unit. R accepted each
+  without a word.
+- The refusals of
+  [`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md),
+  [`jsb64dec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md),
+  [`jsb64udec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md)
+  and
+  [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  start with the name of the function called, also those raised by the
+  base64 and JSON steps inside them
+  ([`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
+  said “fromjs: trailing content” and, for a character outside the
+  alphabet, named no function). Two results of
+  [`jsgzenc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
+  joined into one string are said to hold more than one JSON value.
+- The launchers (the package’s own and those
+  [`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
+  writes) exit 130 on every Ctrl-C, also one that lands as R finishes,
+  where the status was 0. A Ctrl-C in the first few tenths of a second,
+  while R itself is still starting, can still make R print “Execution
+  halted” before it ends; the status is 130.
 - Several R processes calling
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   for the same table with one cache folder take turns: each download
