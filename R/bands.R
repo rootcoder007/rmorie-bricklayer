@@ -531,6 +531,7 @@ expbands <- function(bands, cnts, ..., drpunp = FALSE) {
 #' @return `x`.
 #' @noRd
 .bands_labels <- function(x, what) {
+  .rmbl_valid_text(x, what)
   if (!is.null(x) && !is.character(x) && !is.factor(x)) {
     stop(
       .rmbl_fn(),

@@ -164,12 +164,21 @@ jsb64dec <- function(input) {
   }
   s <- rawToChar(input)
   # whitespace and padding may be dropped; anything else is not base64, and
-  # deleting it would decode a corrupt body into a shorter valid-looking one
-  if (grepl("[^A-Za-z0-9+/=[:space:]]", s)) {
-    stop("base64 input contains characters outside the alphabet", call. = FALSE)
+  # deleting it would decode a corrupt body into a shorter valid-looking one.
+  # Base64 is ASCII, so the bytes are matched as bytes: a byte that is not
+  # text failed in grepl() with base R's warnings (audit of 21478080, P3)
+  if (grepl("[^A-Za-z0-9+/=[:space:]]", s, useBytes = TRUE)) {
+    stop(
+      "jsb64dec: `input` holds characters outside the base64 alphabet",
+      call. = FALSE
+    )
   }
   .rmbl_b64_padding(s)
-  ch <- strsplit(gsub("[^A-Za-z0-9+/]", "", s), "", fixed = TRUE)[[1]]
+  ch <- strsplit(
+    gsub("[^A-Za-z0-9+/]", "", s, useBytes = TRUE),
+    "",
+    fixed = TRUE
+  )[[1]]
   if (!length(ch)) {
     return(raw(0))
   }
@@ -204,6 +213,14 @@ jsb64uenc <- function(input) {
 #' @rdname b64
 #' @export
 jsb64udec <- function(input) {
+  .rmbl_js_as("jsb64udec", .rmbl_b64udec(input))
+}
+
+#' The work of jsb64udec(), whose refusals it names.
+#' @param input As for jsb64udec().
+#' @return The bytes.
+#' @noRd
+.rmbl_b64udec <- function(input) {
   input <- .rmbl_text_input(input, "input", allow_raw = FALSE)
   if (!is.character(input) || anyNA(input)) {
     stop("`input` must be base64url text", call. = FALSE)
@@ -527,7 +544,11 @@ fromjs <- function(
 #' does in jsonlite.
 #' @param pretty Logical scalar, default \code{FALSE}: indent the output.
 #' @param txt Character scalar: JSON produced by
-#' `jsser()`.
+#' `jsser()`. JSON that `jsser()` would not write is refused, with an error
+#' that starts `jsunser:`: a value not of the type it names, or a class or
+#' attribute that does not fit the data (the class `Date` on text, a factor
+#' whose levels repeat, more or fewer names than values, a time zone that
+#' does not exist).
 #' @param trusted `FALSE` (default) rebuilds data types only (vectors,
 #' lists, factors, matrices, data frames, environments, symbols) and
 #' refuses functions, calls, expressions, namespaces and S4 objects:
@@ -586,12 +607,23 @@ jsser <- function(x, digits = 8, pretty = FALSE) {
   if (.rmbl_json_depth(packed) > 99L) {
     stop(deep, call. = FALSE)
   }
-  tojs(packed, digits = digits, pretty = pretty)
+  # a refusal of the writer names jsser, not tojs (audit of 21478080, P3)
+  .rmbl_js_as("jsser", tojs(packed, digits = digits, pretty = pretty))
 }
 
 #' @rdname jsserdoc
 #' @export
 jsunser <- function(txt, trusted = FALSE) {
+  # every refusal names jsunser, also those of the steps it calls (audit of
+  # 21478080, P8)
+  .rmbl_js_as("jsunser", .rmbl_jsunser(txt, trusted), "`txt`")
+}
+
+#' The work of jsunser(), whose refusals it names.
+#' @param txt,trusted As for jsunser().
+#' @return As for jsunser().
+#' @noRd
+.rmbl_jsunser <- function(txt, trusted) {
   if (!is.character(txt) || length(txt) != 1L || is.na(txt)) {
     stop("`txt` must be one string of JSON from jsser()", call. = FALSE)
   }
@@ -733,7 +765,10 @@ jsunser <- function(txt, trusted = FALSE) {
   if (!length(x)) {
     return(logical())
   }
-  !is.na(suppressWarnings(as.complex(x)))
+  # NaN in a part is a number: is.na() is TRUE for it too, and NaN+0i,
+  # which jsser() writes, was refused (audit of 21478080, P1)
+  y <- suppressWarnings(as.complex(x))
+  !is.na(y) | is.nan(y)
 }
 
 #' Format doubles and integers the way jsonlite's num_to_char() does
@@ -971,7 +1006,7 @@ jsunser <- function(txt, trusted = FALSE) {
   if (!length(x)) {
     return(character(0))
   }
-  x <- .rmbl_as_utf8(x)
+  x <- .rmbl_as_utf8(.rmbl_valid_text(x, "x"))
   x <- gsub("\\", "\\\\", x, fixed = TRUE)
   x <- gsub("\"", "\\\"", x, fixed = TRUE)
   x <- gsub("\n", "\\n", x, fixed = TRUE)
@@ -3726,6 +3761,18 @@ bricklayer_json_validate <- function(txt) {
     return(substitute())
   }
   attrs <- lapply(obj$attributes, .rmbl_json_unpack, trusted = trusted)
+  # structure() pads names that are too few with NA (audit of 21478080, P7)
+  nm <- attrs[["names"]]
+  if (!is.null(nm) && length(nm) != length(newdata[[1L]])) {
+    stop(
+      sprintf(
+        "`txt` is not JSON written by jsser() (%d names for %d values)",
+        length(nm),
+        length(newdata[[1L]])
+      ),
+      call. = FALSE
+    )
+  }
   output <- do.call("structure", c(newdata, attrs), quote = TRUE)
   .rmbl_json_shape(output, mode)
   if (mode == "closure") {
@@ -3762,15 +3809,82 @@ bricklayer_json_validate <- function(txt) {
     ok <- mode == "integer" && (is.null(lv) || is.character(lv)) &&
       all(v >= 1L & v <= length(lv))
   }
-  if (!ok) {
-    stop(
-      "`txt` is not JSON written by jsser() (a ",
-      class(x)[[1L]],
-      " whose data do not have its shape)",
-      call. = FALSE
-    )
+  why <- if (ok) {
+    .rmbl_json_class_fit(x)
+  } else {
+    paste0("a ", class(x)[[1L]], " whose data do not have its shape")
+  }
+  if (!is.null(why)) {
+    stop("`txt` is not JSON written by jsser() (", why, ")", call. = FALSE)
   }
   invisible(NULL)
+}
+
+#' Says why a class does not fit the data it is given, or NULL when it does.
+#'
+#' jsser() never writes a class on data that cannot hold it, and R takes such
+#' an object without a word: the class Date on text (NA dates and a warning
+#' when printed), "environment" on an integer, a factor whose levels repeat,
+#' a time in a time zone that does not exist, a difftime in no unit (audit of
+#' 21478080, P7).
+#' @param x The object rebuilt.
+#' @return A reason, or NULL.
+#' @noRd
+.rmbl_json_class_fit <- function(x) {
+  cl <- oldClass(x)
+  is_type <- list(
+    environment = is.environment,
+    `function` = is.function,
+    list = is.list,
+    character = is.character,
+    numeric = is.numeric,
+    integer = is.integer,
+    double = is.double,
+    logical = is.logical,
+    complex = is.complex,
+    raw = is.raw
+  )
+  for (b in intersect(cl, names(is_type))) {
+    if (!is_type[[b]](x)) {
+      return(sprintf("the class %s on data of type %s", b, typeof(x)))
+    }
+  }
+  num <- intersect(cl, c("Date", "POSIXct", "difftime"))
+  if (length(num) && !is.double(x) && !is.integer(x)) {
+    return(sprintf("the class %s on data of type %s", num[[1L]], typeof(x)))
+  }
+  if (inherits(x, "factor") && anyDuplicated(attr(x, "levels"))) {
+    return("a factor whose levels repeat")
+  }
+  if (inherits(x, "POSIXct") && !.rmbl_json_tz_ok(attr(x, "tzone"))) {
+    return("a time in a time zone that does not exist")
+  }
+  u <- attr(x, "units")
+  units <- c("secs", "mins", "hours", "days", "weeks")
+  if (inherits(x, "difftime") && !(is.character(u) && length(u) == 1L &&
+                                     u %in% units)) {
+    return("a difftime whose units are not secs, mins, hours, days or weeks")
+  }
+  NULL
+}
+
+#' Says whether a POSIXct's time zone exists: none, one the time-zone database
+#' names, or a POSIX TZ rule such as EST5EDT; any zone where the database is
+#' not found.
+#' @param tz The `tzone` attribute.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_json_tz_ok <- function(tz) {
+  if (is.null(tz)) {
+    return(TRUE)
+  }
+  if (!is.character(tz) || !length(tz) || is.na(tz[[1L]])) {
+    return(FALSE)
+  }
+  z <- tz[[1L]]
+  known <- OlsonNames()
+  !nzchar(z) || !length(known) || z %in% known ||
+    (!grepl("/", z, fixed = TRUE) && grepl("[0-9]", z))
 }
 
 #' Refuses the code-bearing types of the list `jsser()` wrote unless the JSON
@@ -3900,7 +4014,7 @@ bricklayer_json_validate <- function(txt) {
 #' @return NULL, invisibly.
 #' @noRd
 .rmbl_b64_padding <- function(s) {
-  s <- gsub("[[:space:]]", "", s)
+  s <- gsub("[[:space:]]", "", s, useBytes = TRUE)
   if (grepl("=[^=]", s) || grepl("===", s, fixed = TRUE)) {
     stop(
       "jsb64dec: `input` has `=` padding before its end; decode each ",

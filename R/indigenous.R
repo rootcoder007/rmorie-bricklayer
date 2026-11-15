@@ -62,6 +62,7 @@
 #' t924 <- sctidy("13100924")
 #' @export
 sctidy <- function(x) {
+  .rmbl_valid_text(x, "x")
   if (is.character(x) && length(x) == 1L && !is.na(x)) {
     key <- if (grepl("^[0-9]{8}$", x)) {
       paste0("statcan_indigenous/tbl_", x)
@@ -1237,6 +1238,7 @@ format.rmbl_trc_progress <- function(x, ...) {
 #' @return NULL, invisibly.
 #' @noRd
 .qr_check_x <- function(x) {
+  .rmbl_valid_text(x, "x")
   if (!.rmbl_is_atomic(x)) {
     stop(.rmbl_fn(), "`x` must be a vector of flags", call. = FALSE)
   }

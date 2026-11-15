@@ -71,6 +71,7 @@
 #' try(co2int("Atlantis"))
 #' @export
 co2int <- function(loc = "WORLD") {
+  .rmbl_valid_text(loc, "loc")
   if (is.numeric(loc)) {
     return(.rmbl_cls(.rmbl_ci_user(loc), "rmbl_co2int"))
   }
@@ -1342,6 +1343,7 @@ format.rmbl_co2eqv <- function(x, digits = 4L, ...) {
     if (!is.null(v) && !(is.character(v) && length(v) <= 1L)) {
       stop(sprintf("`%s` must be one string (or NULL)", nm), call. = FALSE)
     }
+    .rmbl_valid_text(v, nm)
   }
   invisible(NULL)
 }

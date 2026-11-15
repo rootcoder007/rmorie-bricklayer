@@ -167,6 +167,12 @@ explerr <- function(msg = geterrmessage(), pkgs = NULL, n = 3L) {
     return(.bl_explain_rows(msg, pkgs))
   }
   msg <- .bl_ee_msg_text(msg)
+  # an error message may hold bytes that are not text (a path in another
+  # encoding): they are shown as <xx> rather than refused, so the error can
+  # still be explained (audit of 21478080, P3)
+  if (is.character(msg) && !all(validEnc(msg))) {
+    msg <- iconv(msg, "UTF-8", "UTF-8", sub = "byte")
+  }
   n <- .bl_ee_n(n)
   pk <- .bl_ee_packages(pkgs)
   .msg <- .bl_ee_clean(msg)

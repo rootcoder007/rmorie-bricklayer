@@ -24,7 +24,11 @@ does in jsonlite.}
 \item{pretty}{Logical scalar, default \code{FALSE}: indent the output.}
 
 \item{txt}{Character scalar: JSON produced by
-\code{jsser()}.}
+\code{jsser()}. JSON that \code{jsser()} would not write is refused, with an error
+that starts \verb{jsunser:}: a value not of the type it names, or a class or
+attribute that does not fit the data (the class \code{Date} on text, a factor
+whose levels repeat, more or fewer names than values, a time zone that
+does not exist).}
 
 \item{trusted}{\code{FALSE} (default) rebuilds data types only (vectors,
 lists, factors, matrices, data frames, environments, symbols) and

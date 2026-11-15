@@ -206,6 +206,8 @@ wbsnpnat <- function(url, tmout = 30L) {
   ) {
     stop("`dest` must be one non-empty file path", call. = FALSE)
   }
+  .rmbl_valid_text(url, "url")
+  .rmbl_valid_text(dest, "dest")
   .bl_fetch_check_url(url)
   .bl_fetch_check_dest(dest)
   tmout <- suppressWarnings(as.integer(tmout))

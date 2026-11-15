@@ -6,10 +6,11 @@ export RMBL_PROG=rmoriebricklayer
 # did not see) exits 130 like every other interrupt, not 1 with "Execution halted" (C10 on the
 # release legs of 84840ac).
 # A Ctrl-C while R is still starting (before that handler exists) ends R with "Execution halted"
-# and status 1: the shell notes the interrupt and reports 130 for it (final audit of 1.0.0, #11).
+# and status 1: the shell notes the interrupt and reports 130 for it (final audit of 1.0.0, #11),
+# also when R ended 0 (a Ctrl-C as R quit; audit of 21478080, L7).
 rc=
 trap 'rc=130' INT
 Rscript --no-save --no-restore -e 'suppressPackageStartupMessages({ q <- tryCatch(rmoriebricklayer::blcli(), interrupt = function(e) 130L); quit(status = as.integer(q)) })' "$@"
 st=$?
-[ -n "$rc" ] && [ "$st" -ne 130 ] && [ "$st" -ne 0 ] && st=$rc
+[ -n "$rc" ] && st=130
 exit $st

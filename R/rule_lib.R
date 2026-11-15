@@ -405,6 +405,7 @@ rulecmpl <- function(sev = c("warning", "fatal")) {
 ruledstn <- function(cols = NULL, sev = c("warning", "fatal")) {
   sev <- .rmbl_arg(sev)
   .rmbl_no_fn(cols = cols)
+  .rmbl_valid_text(cols, "cols")
   # NA, 1 or list() built a rule that passed every data frame
   ok <- is.null(cols) ||
     (is.character(cols) && length(cols) && !anyNA(cols) && all(nzchar(cols)))

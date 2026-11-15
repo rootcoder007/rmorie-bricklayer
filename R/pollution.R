@@ -1124,7 +1124,7 @@ vrfpol <- function(
   rare = FALSE,
   hirate = FALSE
 ) {
-  poll <- .pollution_poll_key(poll)
+  poll <- .pollution_poll_key(.rmbl_valid_text(poll, "poll"))
   # the input contract is part of the report: an argument the pipeline cannot
   # use is an "error" report with exit status 2, never a raw stop() or a
   # silently truncated vector

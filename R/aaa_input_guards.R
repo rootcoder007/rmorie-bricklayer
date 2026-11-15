@@ -209,6 +209,32 @@
       call. = FALSE
     )
   }
+  .rmbl_valid_text(x, what)
+}
+
+#' Refuses text that is not valid in its encoding.
+#'
+#' Bytes that are not text (`"a\xffb"` where the session is UTF-8) reached
+#' gsub(), grepl() or trimws() and failed there in base R's words, "input
+#' string 1 is invalid", after warnings "unable to translate ... to a wide
+#' string" (audit of 21478080, P3). Each text guard of the package refuses
+#' them here, once, before anything reads them as text.
+#' @param x The argument's value; anything but character passes.
+#' @param what The argument's name, quoted in the refusal.
+#' @return `x`.
+#' @noRd
+.rmbl_valid_text <- function(x, what) {
+  if (is.character(x) && !all(validEnc(x))) {
+    stop(
+      .rmbl_fn(),
+      sprintf(
+        "`%s` holds text that is not valid %s",
+        what,
+        if (isTRUE(l10n_info()[["UTF-8"]])) "UTF-8" else "in this locale"
+      ),
+      call. = FALSE
+    )
+  }
   x
 }
 
@@ -272,6 +298,7 @@
 #' @return `x`, through `.rmbl_utf8()`.
 #' @noRd
 .rmbl_string1 <- function(x, what) {
+  .rmbl_valid_text(x, what)
   if (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(trimws(x))) {
     stop(
       .rmbl_fn(),
@@ -531,6 +558,7 @@
 .rmbl_num <- function(x, what, integer = FALSE) {
   .rmbl_num_kind(x, what, integer)
   if (is.character(x)) {
+    .rmbl_valid_text(x, what)
     v <- suppressWarnings(as.numeric(x))
     bad <- !is.na(x) & is.na(v) & nzchar(trimws(x)) & x != "NA"
     if (any(bad)) {
@@ -651,7 +679,7 @@
       call. = FALSE
     )
   }
-  x
+  .rmbl_valid_text(x, what)
 }
 
 #' Checks a scalar numeric argument against a range.

@@ -85,6 +85,7 @@ pubbnd <- function(
   supmar = c("x", "X", "s", "..", "F", "suppressed", "n/a")
 ) {
   rndkind <- .rmbl_arg(rndkind)
+  .rmbl_valid_text(x, "x")
   ck <- .pb_check_args(rnd, suplim, supmar)
   rnd <- ck$rnd
   suplim <- ck$suplim

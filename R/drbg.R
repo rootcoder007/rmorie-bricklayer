@@ -300,6 +300,7 @@ format.bricklayer_drbg <- function(x, ...) {
 #' @return A raw vector.
 #' @noRd
 .rmbl_drbg_input <- function(x, what, max, exact = FALSE) {
+  .rmbl_valid_text(x, what)
   if (is.null(x)) {
     return(raw(0))
   }

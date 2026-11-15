@@ -697,7 +697,7 @@ rgnmappts <- function(x, y, unit, bounds, fields, crs = 4326) {
 #' @return The trimmed character vector.
 #' @noRd
 .rmbl_rm_chr <- function(x, arg) {
-  x <- trimws(as.character(x))
+  x <- trimws(.rmbl_valid_text(as.character(x), arg))
   if (!length(x)) {
     stop(.rmbl_fn(), sprintf("`%s` must not be empty", arg), call. = FALSE)
   }

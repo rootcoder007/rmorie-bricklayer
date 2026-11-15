@@ -568,6 +568,7 @@ clncolnms <- function(
   quiet <- .rmbl_flag1(quiet, "quiet")
   .cln_data(data)
   nms <- if (is.data.frame(data)) names(data) else as.character(data)
+  .rmbl_valid_text(nms, "data")
   if (length(nms) == 0L) {
     if (is.data.frame(data)) {
       return(data)
@@ -660,7 +661,7 @@ clncolnms <- function(
 #' @noRd
 .rmbl_freq_values <- function(data, col) {
   if (!is.data.frame(data)) {
-    return(data)
+    return(.rmbl_valid_text(data, "data"))
   }
   if (is.null(col)) {
     stop("`col` is required when `data` is a data frame", call. = FALSE)

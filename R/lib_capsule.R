@@ -224,7 +224,7 @@ capenv <- function(pkgs = loadedNamespaces()) {
   if (!is.character(pkgs) || anyNA(pkgs)) {
     stop("`pkgs` must be package names", call. = FALSE)
   }
-  pkgs <- sort(unique(pkgs))
+  pkgs <- sort(unique(.rmbl_valid_text(pkgs, "pkgs")))
   out <- list(
     r_version = as.character(getRversion()),
     platform = R.version$platform,

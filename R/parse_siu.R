@@ -182,6 +182,8 @@ siuprs <- function(html) {
   if (any(bad)) {
     html[bad] <- iconv(html[bad], "UTF-8", "UTF-8", sub = "byte")
   }
+  # what is left is a path or a URL, which must be text
+  .rmbl_valid_text(html, "html")
   if (length(html) > 1L) {
     # several reports: one row each
     return(.bl_siu_rows(html))

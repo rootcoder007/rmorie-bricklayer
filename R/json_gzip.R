@@ -95,7 +95,7 @@
 #' @export
 jsgzenc <- function(x, raw = FALSE, ...) {
   raw <- .rmbl_flag1(raw, "raw")
-  txt <- tojs(x, ...)
+  txt <- .rmbl_js_as("jsgzenc", tojs(x, ...))
   json <- charToRaw(as.character(txt))
   .rmbl_gz_json_cap(length(json))
   bytes <- .rmbl_gzip_member(json)
@@ -108,6 +108,17 @@ jsgzenc <- function(x, raw = FALSE, ...) {
 #' @rdname jsgz
 #' @export
 jsgzdec <- function(txt, raw = FALSE, ...) {
+  # every refusal names jsgzdec, also those of the base64 and JSON steps
+  # ("fromjs: trailing content", "base64 input contains characters outside
+  # the alphabet"; audit of 21478080, P8)
+  .rmbl_js_as("jsgzdec", .rmbl_jsgzdec(txt, raw, ...), "`txt`")
+}
+
+#' The work of jsgzdec(), whose refusals it names.
+#' @param txt,raw,... As for jsgzdec().
+#' @return As for jsgzdec().
+#' @noRd
+.rmbl_jsgzdec <- function(txt, raw, ...) {
   .rmbl_no_fn(txt = txt)
   raw <- .rmbl_flag1(raw, "raw")
   # The input's own type settles how to read it: raw is already the gzip
@@ -149,7 +160,46 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
       stop("jsgzdec: ", m, call. = FALSE)
     }
   )
-  fromjs(json, ...)
+  # two gzip members joined (two results of jsgzenc() pasted together) inflate
+  # to two JSON documents in a row
+  tryCatch(fromjs(json, ...), error = function(e) {
+    m <- conditionMessage(e)
+    if (!grepl("trailing content at character", m, fixed = TRUE)) {
+      stop(e)
+    }
+    stop(
+      "`txt` holds more than one JSON value (",
+      sub("^.*(trailing content at character [0-9]+).*$", "\\1", m),
+      "): decode each result of jsgzenc() on its own",
+      call. = FALSE
+    )
+  })
+}
+
+#' Runs a decoder under the name of the function the user called.
+#'
+#' A refusal raised by a step (jsb64dec() inside jsgzdec(), the JSON parser
+#' inside jsunser()) is said as the called function's, its argument named as
+#' the caller names it.
+#' @param fn The function the user called.
+#' @param expr Its work.
+#' @param arg What the step's `input` is called in `fn`, or NULL.
+#' @return The value of `expr`.
+#' @noRd
+.rmbl_js_as <- function(fn, expr, arg = NULL) {
+  tryCatch(expr, error = function(e) {
+    m <- conditionMessage(e)
+    # R's own time limits pass as they are (.rmbl_or() tests their start), and
+    # so does a refusal that already names the function
+    if (startsWith(m, paste0(fn, "()")) || grepl("time limit", m)) {
+      stop(e)
+    }
+    m <- sub("^(fromjs|tojs|js[a-z0-9]+): ", "", m)
+    if (!is.null(arg)) {
+      m <- gsub("`input`", arg, m, fixed = TRUE)
+    }
+    stop(fn, ": ", m, call. = FALSE)
+  })
 }
 
 #' Wrap a deflate stream in a real gzip member (RFC 1952).

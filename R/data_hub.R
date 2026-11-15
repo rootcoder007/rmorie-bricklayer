@@ -263,7 +263,9 @@ dload <- function(
 #' A cached copy that cannot be read as a manifest (cut short or damaged on
 #' disk) is fetched again at once, as a stale one is: it stopped dmnf() with
 #' the parser's message, and dload() then threw away the table it had just
-#' downloaded for want of a digest (audit of 716154bd, N12).
+#' downloaded for want of a digest (audit of 716154bd, N12). A cached copy
+#' that lists no tables is damaged too: it was kept for a day, and every table
+#' was "not at data.rmorie.com" (audit of 21478080, P6).
 #' @param refresh Whether to fetch it again.
 #' @return The manifest, a list.
 #' @noRd
@@ -277,10 +279,13 @@ dload <- function(
   }
   if (!refresh && age < 86400) {
     m <- .bl_manifest_read(p)
-    if (!is.null(m)) {
+    if (!is.null(m) && length(m$datasets)) {
       return(m)
     }
-    return(.bl_dmnf_fetch(p, damaged = TRUE))
+    return(.bl_dmnf_fetch(
+      p,
+      damaged = if (is.null(m)) "is damaged" else "lists no tables"
+    ))
   }
   .bl_dmnf_fetch(p)
 }
@@ -301,7 +306,8 @@ dload <- function(
 
 #' Fetches the manifest and stores it in place of the cached copy.
 #' @param p The cached copy's path.
-#' @param damaged Whether the cached copy could not be read.
+#' @param damaged FALSE, or what is wrong with the cached copy ("is
+#'   damaged", "lists no tables"), said when no fresh one could be had.
 #' @return The manifest, a list.
 #' @noRd
 .bl_dmnf_fetch <- function(p, damaged = FALSE) {
@@ -327,14 +333,15 @@ dload <- function(
       m
     },
     error = function(e) {
-      if (!damaged) stop(e)
+      if (isFALSE(damaged)) stop(e)
       stop(
         sprintf(
           paste(
-            "the cached manifest %s is damaged, and a fresh one could not",
+            "the cached manifest %s %s, and a fresh one could not",
             "be had: %s"
           ),
           p,
+          damaged,
           conditionMessage(e)
         ),
         call. = FALSE
@@ -610,8 +617,9 @@ dload <- function(
       types[[j]]
     )
     # a missing value made complex from another type keeps a zero imaginary
-    # part; a whole read gives NA_complex_
-    if (is.complex(v)) v[is.na(v)] <- NA_complex_
+    # part; a whole read gives NA_complex_. NaN is not missing there: is.na()
+    # is TRUE for it too, and NaN came back as NA (audit of 21478080, P1)
+    if (is.complex(v)) v[is.na(v) & !is.nan(v)] <- NA_complex_
     cols[[j]] <- v
   }
   structure(

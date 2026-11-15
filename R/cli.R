@@ -240,8 +240,20 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
       call. = FALSE
     )
   }
-  a <- .bl_cli_words(as.character(args))
+  args <- as.character(args)
   prog <- .bl_prog()
+  # a word that is not valid text failed in gsub() with base R's traceback and
+  # "Execution halted" (audit of 21478080, P3): one line, a usage error
+  bad <- which(!validEnc(args))
+  if (length(bad)) {
+    out(sprintf(
+      "%s: argument %d is not valid text in this locale\n",
+      prog,
+      bad[[1L]]
+    ))
+    return(invisible(2L))
+  }
+  a <- .bl_cli_words(args)
   st <- .bl_cli_precheck(a$verb, a$rest, prog, out)
   if (!is.null(st)) {
     return(invisible(st))
@@ -261,7 +273,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
 #' On Unix-alikes each launcher is a \code{/bin/sh} script (mode 0755) that
 #' sets \code{RMBL_PROG} to its own name and runs
 #' \code{Rscript -e "rmoriebricklayer::blcli()"} with the shell's
-#' arguments, exiting with the function's status (130 on Ctrl-C). The library
+#' arguments, exiting with the function's status (130 on Ctrl-C, also one
+#' that lands while R is still starting or as it quits). The library
 #' this copy of the package is installed in is pinned inside R with
 #' \code{.libPaths()}, so an \code{R_LIBS} set in the shell or in
 #' \code{~/.Renviron} cannot make the command run another copy. An existing
@@ -2065,6 +2078,40 @@ instcli <- function(
   if (tab[["failed"]] > 0L || ns > 0L) 1L else 0L
 }
 
+#' Writes a pulled table as CSV, NaN as NaN.
+#'
+#' write.csv() writes NaN as NA: a table holding NaN came back from its CSV
+#' with NA in its place (audit of 21478080, P1). A column holding NaN is
+#' written as write.csv() writes it, with each NaN put back; the other columns
+#' and the quoting are as write.csv() gives them.
+#' @param df The table.
+#' @param dest The CSV file.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_write_pull <- function(df, dest) {
+  nan <- vapply(df, function(v) is.numeric(v) || is.complex(v), NA)
+  nan[nan] <- vapply(df[nan], function(v) any(is.nan(v)), NA)
+  if (!any(nan)) {
+    utils::write.csv(df, dest, row.names = FALSE)
+    return(invisible(NULL))
+  }
+  q <- which(vapply(df, function(v) is.character(v) || is.factor(v), NA))
+  for (j in which(nan)) {
+    v <- df[[j]]
+    s <- utils::capture.output(utils::write.table(
+      data.frame(v),
+      sep = ",",
+      row.names = FALSE,
+      col.names = FALSE,
+      quote = FALSE
+    ))
+    s[is.nan(v)] <- as.character(v[is.nan(v)])
+    df[[j]] <- s
+  }
+  utils::write.csv(df, dest, row.names = FALSE, quote = q)
+  invisible(NULL)
+}
+
 #' `data pull TABLE`: one table, written to a CSV file.
 #' @param rest,flag,out As for .bl_cli_data().
 #' @return The exit status.
@@ -2087,7 +2134,7 @@ instcli <- function(
   df <- dload(rest[[2L]])
   ok <- tryCatch(
     {
-      suppressWarnings(utils::write.csv(df, dest, row.names = FALSE))
+      suppressWarnings(.bl_write_pull(df, dest))
       TRUE
     },
     error = function(e) FALSE
@@ -2701,15 +2748,13 @@ instcli <- function(
       sprintf("export RMBL_PROG=%s", nm),
       # as inst/bin/rmbl: the shell stays (no exec) and notes a Ctrl-C, so
       # one that ends R while it is still starting ("Execution halted",
-      # status 1) is reported as 130; any other failure keeps its status
+      # status 1), or as R quits (status 0), is reported as 130; any other
+      # failure keeps its status (audit of 21478080, L7)
       "rc=",
       "trap 'rc=130' INT",
       sprintf("Rscript --no-save --no-restore -e '%s' \"$@\"", body),
       "st=$?",
-      paste0(
-        "[ -n \"$rc\" ] && [ \"$st\" -ne 130 ] && [ \"$st\" -ne 0 ] ",
-        "&& st=$rc"
-      ),
+      "[ -n \"$rc\" ] && st=130",
       "exit $st"
     ),
     target

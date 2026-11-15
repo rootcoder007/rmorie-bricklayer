@@ -128,13 +128,21 @@
     parse(text = lines, keep.source = TRUE),
     includeText = TRUE
   )
+  # a name in backquotes is the name: `yoy`(1) calls yoy (audit of 21478080,
+  # P2); an edit replaces the token by its place, quotes included
+  sym <- pd$token %in%
+    c("SYMBOL_FUNCTION_CALL", "SYMBOL", "SYMBOL_SUB", "SYMBOL_FORMALS")
+  pd$text[sym] <- gsub("^`|`$", "", pd$text[sym])
   m <- .bl_old_map()
   edits <- list()
   hits <- which(pd$token == "SYMBOL_FUNCTION_CALL" & pd$text %in% m$old)
   def <- .bl_migrate_defined(pd)
+  # a call looks for a function: a loop variable or a constant of the same
+  # name is passed over, as R passes over it
+  fdef <- def[def$fun, , drop = FALSE]
   for (h in hits) {
     qual <- any(pd$token[pd$parent == pd$parent[h]] == "SYMBOL_PACKAGE")
-    own <- !qual && .bl_migrate_own(pd, h, pd$text[h], def)
+    own <- !qual && .bl_migrate_own(pd, h, pd$text[h], fdef)
     if (!.bl_migrate_ours(pd, h) || own) {
       next
     }
@@ -224,9 +232,12 @@
 #' assign(), delayedAssign(), makeActiveBinding(), setGeneric() or
 #' setMethod(). A name is the script's own only where its definition is in
 #' reach: `rate <- function(x) x` inside one function says nothing about a
-#' call of rate() at the top level.
+#' call of rate() at the top level. `fun` is FALSE for a name that cannot hold
+#' a function: a loop variable, or one assigned a constant. A call of the name
+#' still finds the function (`for (yoy in 1:3)` then `yoy(1)`; audit of
+#' 21478080, P2).
 #' @param pd The parse data.
-#' @return A data frame: name, scope (a parse id, 0 for the top level).
+#' @return A data frame: name, scope (a parse id, 0 for the top level), fun.
 #' @noRd
 .bl_migrate_defined <- function(pd) {
   bare <- function(x) gsub("^`|`$", "", x)
@@ -234,67 +245,116 @@
   f <- which(pd$token == "SYMBOL_FORMALS")
   name <- bare(pd$text[f])
   scope <- pd$parent[f]
+  fun <- rep(TRUE, length(f))
   as <- which(pd$token %in% c("LEFT_ASSIGN", "EQ_ASSIGN", "RIGHT_ASSIGN"))
   for (a in as) {
     k <- .bl_pd_kids(pd, pd$parent[a])
-    tgt <- if (pd$token[a] == "RIGHT_ASSIGN") k[length(k)] else k[1L]
+    right <- pd$token[a] == "RIGHT_ASSIGN"
+    tgt <- if (right) k[length(k)] else k[1L]
+    val <- if (right) k[1L] else k[length(k)]
     nm <- bare(pd$text[pd$parent == pd$id[tgt] & pd$token == "SYMBOL"])
     top <- pd$text[a] %in% c("<<-", "->>")
     name <- c(name, nm)
     scope <- c(scope, rep(if (top) 0L else here(a), length(nm)))
+    fun <- c(fun, rep(!.bl_pd_is_const(pd, val), length(nm)))
   }
   fc <- which(pd$token == "forcond")
   for (r in fc) {
     nm <- bare(pd$text[pd$parent == pd$id[r] & pd$token == "SYMBOL"])
     name <- c(name, nm)
     scope <- c(scope, rep(here(r), length(nm)))
+    fun <- c(fun, rep(FALSE, length(nm)))
   }
-  by_string <- c(
+  s <- .bl_migrate_by_string(pd, here)
+  data.frame(
+    name = c(name, s$name),
+    scope = c(scope, s$scope),
+    fun = c(fun, rep(TRUE, length(s$name))),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' Says whether a parse node is a constant alone: a number, a string, TRUE,
+#' NULL.
+#' @param pd The parse data.
+#' @param row The node's row in `pd`.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_pd_is_const <- function(pd, row) {
+  k <- which(pd$parent == pd$id[row])
+  length(k) == 1L &&
+    pd$token[k] %in% c("NUM_CONST", "STR_CONST", "NULL_CONST")
+}
+
+#' The names given as a string to assign(), delayedAssign(),
+#' makeActiveBinding(), setGeneric() or setMethod(), each with its scope.
+#' @param pd The parse data.
+#' @param here A function of a row: the scope it is in.
+#' @return list(name, scope).
+#' @noRd
+.bl_migrate_by_string <- function(pd, here) {
+  fns <- c(
     "assign", "delayedAssign", "makeActiveBinding", "setGeneric", "setMethod"
   )
-  for (r in which(
-    pd$token == "SYMBOL_FUNCTION_CALL" & pd$text %in% by_string
-  )) {
-    k <- .bl_pd_kids(pd, pd$parent[pd$parent[r] == pd$id][1L])
-    arg <- k[pd$token[k] == "expr"][-1L]
-    if (!length(arg)) {
-      next
-    }
-    str <- pd$text[pd$parent == pd$id[arg[1L]] & pd$token == "STR_CONST"]
-    if (length(str) == 1L) {
-      name <- c(name, substr(str, 2L, nchar(str) - 1L))
+  name <- character()
+  scope <- integer()
+  for (r in which(pd$token == "SYMBOL_FUNCTION_CALL" & pd$text %in% fns)) {
+    a <- .bl_migrate_by_string1(pd, r)
+    if (!is.null(a)) {
+      name <- c(name, a$name)
       # an environment named in the call (assign(envir = globalenv()) in a
       # function) may be any scope, so the name counts everywhere: it was
       # taken as the function's own (audit of 716154bd, N11)
-      gen <- pd$text[r] %in% c("setGeneric", "setMethod")
-      env <- !gen && .bl_migrate_env_arg(pd, k, pd$text[r])
-      scope <- c(scope, if (gen || env) 0L else here(r))
+      scope <- c(scope, if (a$any) 0L else here(r))
     }
   }
-  data.frame(name = name, scope = scope, stringsAsFactors = FALSE)
+  list(name = name, scope = scope)
 }
 
-#' Says whether a call of assign(), delayedAssign() or makeActiveBinding()
-#' names the environment it defines in, other than the one it runs in.
+#' The name one call of assign() and the like defines, read from the call as
+#' R matches its arguments: by name in any order, or by position
+#' (`assign(value = f, x = "yoy")` defines yoy; audit of 21478080, P2).
 #' @param pd The parse data.
-#' @param k The rows of the call's children, in order.
-#' @param fn Which of the three is called.
-#' @return TRUE or FALSE.
+#' @param r The row of the function's name in `pd`.
+#' @return NULL when the name is not a string; else list(name, any), `any`
+#'   TRUE when the call names an environment other than its own.
 #' @noRd
-.bl_migrate_env_arg <- function(pd, k, fn) {
-  at <- c(assign = 3L, delayedAssign = 4L, makeActiveBinding = 3L)[[fn]]
-  sub <- pd$token[k] == "SYMBOL_SUB"
-  named <- which(sub & pd$text[k] %in% c("envir", "pos", "assign.env", "env"))
-  val <- if (length(named)) {
-    k[named[[1L]] + 2L]
-  } else {
-    # the positional arguments: the expressions not after `name =`
-    e <- which(pd$token[k] == "expr")[-1L]
-    e <- e[pd$token[k[e - 1L]] != "EQ_SUB"]
-    if (length(e) >= at) k[e[[at]]] else NA
+.bl_migrate_by_string1 <- function(pd, r) {
+  fn <- pd$text[r]
+  call_id <- pd$parent[match(pd$parent[r], pd$id)]
+  cl <- tryCatch(
+    str2lang(pd$text[match(call_id, pd$id)]),
+    error = function(e) NULL
+  )
+  def <- switch(
+    fn,
+    assign = base::assign,
+    delayedAssign = base::delayedAssign,
+    makeActiveBinding = base::makeActiveBinding,
+    setGeneric = function(name, def, ...) NULL,
+    function(f, signature, definition, ...) NULL
+  )
+  m <- if (is.call(cl)) {
+    tryCatch(as.list(match.call(def, cl)), error = function(e) NULL)
   }
-  txt <- gsub("[[:space:]]", "", pd$text[val])
-  !is.na(val) && !identical(txt, "environment()")
+  arg <- c(
+    assign = "x", delayedAssign = "x", makeActiveBinding = "sym",
+    setGeneric = "name", setMethod = "f"
+  )[[fn]]
+  nm <- m[[arg]]
+  if (!is.character(nm) || length(nm) != 1L || is.na(nm)) {
+    return(NULL)
+  }
+  envs <- switch(
+    fn,
+    assign = c("pos", "envir"),
+    delayedAssign = "assign.env",
+    makeActiveBinding = "env",
+    character()
+  )
+  own <- vapply(m[intersect(envs, names(m))], identical, NA,
+                quote(environment()))
+  list(name = nm, any = !length(envs) || !all(own))
 }
 
 #' Says whether a name used at a parse row is one the script defines in a
@@ -318,6 +378,7 @@
 .bl_migrate_refs <- function(pd, m) {
   old <- m$old
   def <- .bl_migrate_defined(pd)
+  fdef <- def[def$fun, , drop = FALSE]
   edits <- list()
   for (s in which(pd$token == "SYMBOL" & pd$text %in% old)) {
     if (
@@ -334,12 +395,14 @@
   for (s in which(pd$token == "STR_CONST")) {
     q <- substr(pd$text[s], 1L, 1L)
     val <- substr(pd$text[s], 2L, nchar(pd$text[s]) - 1L)
-    if (
-      q %in% c("'", "\"") &&
-        val %in% old &&
-        .bl_migrate_fn_str(pd, s) &&
-        !.bl_migrate_own(pd, s, val, def)
-    ) {
+    fs <- if (q %in% c("'", "\"") && val %in% old) {
+      .bl_migrate_fn_str(pd, s)
+    } else {
+      ""
+    }
+    # do.call() and match.fun() look for a function, as a call does
+    seen <- if (fs %in% c("do.call", "match.fun")) fdef else def
+    if (nzchar(fs) && !.bl_migrate_own(pd, s, val, seen)) {
       new <- paste0(q, .bl_old_row(val)$new, q)
       edits <- c(edits, list(.bl_migrate_edit(pd, s, new)))
     }
@@ -365,12 +428,12 @@
 #' get(), get0() or exists(): their first argument, or `what`, `FUN` or `x`.
 #' @param pd The parse data.
 #' @param s The string's row in `pd`.
-#' @return TRUE or FALSE.
+#' @return The name of the function the string is passed to, or "".
 #' @noRd
 .bl_migrate_fn_str <- function(pd, s) {
   e <- pd$parent[s]
   if (!.bl_migrate_is_arg(pd, e)) {
-    return(FALSE)
+    return("")
   }
   k <- .bl_pd_kids(pd, pd$parent[match(e, pd$id)])
   fn <- pd$text[
@@ -378,11 +441,11 @@
   ]
   ok <- c("do.call", "match.fun", "get", "get0", "exists")
   if (length(fn) != 1L || !fn %in% ok) {
-    return(FALSE)
+    return("")
   }
   i <- match(e, pd$id[k])
   if (pd$token[k[i - 1L]] == "EQ_SUB") {
-    return(pd$text[k[i - 2L]] %in% c("what", "FUN", "x"))
+    return(if (pd$text[k[i - 2L]] %in% c("what", "FUN", "x")) fn else "")
   }
   # the first unnamed argument
   args <- k[-(1:2)]
@@ -392,7 +455,33 @@
     function(a) pd$token[k[match(a, k) - 1L]] == "EQ_SUB",
     NA
   )
-  identical(args[!named][1L], k[i])
+  if (identical(args[!named][1L], k[i])) fn else ""
+}
+
+#' Reads one file for the migrate verb.
+#'
+#' A folder, a missing file or one that cannot be read is said in one line: a
+#' folder reached readLines() and failed as "cannot open the connection", with
+#' base R's warnings (audit of 21478080, P4).
+#' @param f The file named on the command line.
+#' @return list(lines, why): `why` NULL when the file was read.
+#' @noRd
+.bl_migrate_read <- function(f) {
+  why <- if (!file.exists(f)) {
+    "no such file"
+  } else if (dir.exists(f)) {
+    "a folder, not an R file"
+  }
+  lines <- if (is.null(why)) {
+    tryCatch(
+      suppressWarnings(readLines(f, warn = FALSE, encoding = "UTF-8")),
+      error = function(e) NULL
+    )
+  }
+  if (is.null(why) && is.null(lines)) {
+    why <- "cannot be read (no permission, or not a file)"
+  }
+  list(lines = lines, why = why)
 }
 
 #' The migrate verb: rewrites 0.5.x scripts to the 1.0.0 names.
@@ -404,12 +493,13 @@
   }
   status <- 0L
   for (f in files) {
-    if (!file.exists(f)) {
-      out(sprintf("%s: no such file\n", f))
+    old <- .bl_migrate_read(f)
+    if (!is.null(old$why)) {
+      out(sprintf("%s: %s\n", f, old$why))
       status <- 1L
       next
     }
-    old <- readLines(f, warn = FALSE, encoding = "UTF-8")
+    old <- old$lines
     res <- tryCatch(.bl_migrate_text(old), error = function(e) e)
     if (inherits(res, "error")) {
       out(sprintf(

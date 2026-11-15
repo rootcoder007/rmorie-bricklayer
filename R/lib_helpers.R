@@ -788,7 +788,7 @@ wrtxtfb <- function(text, path) {
   resolve = FALSE,
   allow_loopback = FALSE
 ) {
-  url <- as.character(unlist(url))[1L]
+  url <- .rmbl_valid_text(as.character(unlist(url))[1L], what)
   if (is.na(url) || !nzchar(url)) {
     stop(sprintf("%s is empty", what), call. = FALSE)
   }
