@@ -588,16 +588,28 @@ test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
     # not after a fixed sleep: on a loaded runner R was still starting at 5 s,
     # and an interrupt during startup exits 1 (C-locale leg, 01200ae and
     # 2c1f5c1: the transcript was empty)
+    # ^C goes in as soon as the prompt is there, with no sleep after it, and
+    # the input stays open until the command has answered: closed at once,
+    # script sent the end of input a moment after the ^C, and on a loaded
+    # machine the read could end on it first (exit 2; audit of 21478080)
     wait <- sprintf(
       paste(
         "i=0; while [ $i -lt 240 ] && ! grep -q 'key: ' %s 2>/dev/null;",
-        "do sleep 0.5; i=$((i+1)); done; sleep 1"
+        "do sleep 0.5; i=$((i+1)); done"
+      ),
+      shQuote(ty)
+    )
+    done <- sprintf(
+      paste(
+        "i=0; while [ $i -lt 240 ] && ! grep -qE 'interrupted|usage' %s",
+        "2>/dev/null; do sleep 0.5; i=$((i+1)); done"
       ),
       shQuote(ty)
     )
     cmd <- sprintf(
-      "(%s; printf '\\003') | script -qfec %s %s > /dev/null 2>&1",
+      "(%s; printf '\\003'; %s) | script -qfec %s %s > /dev/null 2>&1",
       wait,
+      done,
       shQuote(paste("sh", shQuote(launcher), args)),
       shQuote(ty)
     )

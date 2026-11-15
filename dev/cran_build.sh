@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Build the CRAN submission tarball of this package: a copy of the tree in which the package
 # pages point at CRAN rather than r-universe, and (rmoriebricklayer) the large test-vector
-# files are left out so the tarball stays under CRAN's 5 MB; the tests that read them skip.
+# files are left out to keep the tarball small; the tests that read them skip. The script
+# enforces no size limit: R CMD check --as-cran notes a tarball over 1e7 bytes
+# (_R_CHECK_CRAN_INCOMING_TARBALL_THRESHOLD_), and the size is printed at the end.
 #   dev/cran_build.sh [output directory, default /tmp/cran]
 set -eu
 src=$(cd "$(dirname "$0")/.." && pwd)

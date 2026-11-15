@@ -23,26 +23,33 @@ skip_if_sigint_ignored <- function() {
 }
 
 # Run `expr_text` in a fresh R child whose SIGINT disposition is reset to the
-# default (bash by a python3 launcher), with a helper that sends it SIGINT after
-# `after` seconds. Returns "interrupt", "returned", or "inconclusive" (the
-# helper could not run in time). Works where this process inherited SIGINT as
-# ignored, which skip_if_sigint_ignored() would otherwise skip over.
+# default (bash by a python3 launcher), with a helper that sends it SIGINT
+# `after` seconds once the expression has started (the child marks the start;
+# a fixed sleep from the child's start let the signal land before the
+# expression on a loaded machine). Returns "interrupt", "returned", or
+# "inconclusive" (the helper could not run in time). Works where this process
+# inherited SIGINT as ignored, which skip_if_sigint_ignored() would otherwise
+# skip over.
 interrupt_probe <- function(expr_text, after = 1, timeout = 120) {
   skip_if_lowmem()
   marker <- tempfile("probe-")
+  ready <- tempfile("ready-")
   code <- sprintf(
     paste(
       "suppressMessages(library(rmoriebricklayer));",
-      "system2('bash', c('-c', shQuote(sprintf('sleep %s; kill -INT %%d",
-      "&& touch %s', Sys.getpid()))), wait = FALSE);",
-      "got <- tryCatch({ %s; 'returned' }, interrupt = function(e)",
-      "'interrupt');",
+      "system2('bash', c('-c', shQuote(sprintf('i=0; while [ ! -e %s ] &&",
+      "[ $i -lt 1200 ]; do sleep 0.05; i=$((i+1)); done; sleep %s;",
+      "kill -INT %%d && touch %s', Sys.getpid()))), wait = FALSE);",
+      "got <- tryCatch({ file.create('%s'); %s; 'returned' },",
+      "interrupt = function(e) 'interrupt');",
       "for (i in 1:20) if (file.exists('%s')) break else Sys.sleep(0.1);",
       "cat(if (!file.exists('%s') && got == 'returned') 'inconclusive'",
       "else got, '\\n')"
     ),
+    ready,
     after,
     marker,
+    ready,
     expr_text,
     marker,
     marker

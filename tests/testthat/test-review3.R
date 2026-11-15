@@ -569,12 +569,19 @@ test_that(
     # same as a kernel that swallowed the interrupt
     skip_if_sigint_ignored()
     signal_sent <- tempfile("sigint-")
+    # the helper waits for the kernel's start (a file made just before it),
+    # not a fixed second from now, then gives it a moment to be in its loop
+    ready <- tempfile("ready-")
     system2(
       "bash",
       c(
         "-c",
         shQuote(sprintf(
-          "sleep 1; kill -INT %d && touch %s",
+          paste(
+            "i=0; while [ ! -e %s ] && [ $i -lt 1200 ]; do sleep 0.05;",
+            "i=$((i+1)); done; sleep 0.5; kill -INT %d && touch %s"
+          ),
+          ready,
           Sys.getpid(),
           signal_sent
         ))
@@ -583,6 +590,7 @@ test_that(
     )
     got <- tryCatch(
       {
+        file.create(ready)
         .Call(
           C("C_rmbl_pbkdf2"),
           charToRaw("pw"),
