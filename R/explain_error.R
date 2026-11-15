@@ -170,8 +170,13 @@ explerr <- function(msg = geterrmessage(), pkgs = NULL, n = 3L) {
   # an error message may hold bytes that are not text (a path in another
   # encoding): they are shown as <xx> rather than refused, so the error can
   # still be explained (audit of 21478080, P3)
-  if (is.character(msg) && !all(validEnc(msg))) {
-    msg <- iconv(msg, "UTF-8", "UTF-8", sub = "byte")
+  # validUTF8(), not validEnc(): in the C locale every byte is valid text to
+  # validEnc(), and the pattern matching below then stops on the bytes
+  if (is.character(msg)) {
+    msg <- enc2utf8(msg)
+    if (!all(validUTF8(msg))) {
+      msg <- iconv(msg, "UTF-8", "UTF-8", sub = "byte")
+    }
   }
   n <- .bl_ee_n(n)
   pk <- .bl_ee_packages(pkgs)

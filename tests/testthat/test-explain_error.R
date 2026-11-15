@@ -143,7 +143,7 @@ test_that("a message holding bytes that are not text is still explained", {
   # a path in another encoding inside an error message: the bytes are shown
   # as <xx>, the call does not stop
   bad <- "caf\xe9: object 'zz' not found"
-  expect_false(validEnc(bad))
+  expect_false(validUTF8(bad))
   e <- explerr(bad)
   expect_s3_class(e, "data.frame")
   expect_named(
