@@ -325,7 +325,11 @@ test_that("#10 and the CSV parity items: the reader matches read.csv()", {
   # a line of NULs
   same(c(charToRaw("a,b\n1,2\n"), as.raw(c(0, 0)), charToRaw("\n3,4\n")))
   same(c(charToRaw("a,b\n1,2\n"), as.raw(c(0, 0, 0)))) # NULs at the end
-  same(charToRaw("a\n00000000000012\n7\n")) # leading zeros: integer
+  # leading zeros are part of a code: the column is text, as written
+  expect_identical(
+    ns(".bl_csv_from_bytes")(charToRaw("a\n00000000000012\n7\n"))$a,
+    c("00000000000012", "7")
+  )
   same(charToRaw("\"\"\n1\n2\n")) # a header of "" alone
   same(charToRaw(" \"a\" ,b\n1,2\n")) # blanks outside header quotes
   same(charToRaw("a\n\"x\"y\"z\"\n")) # quotes after a closing one

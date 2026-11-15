@@ -188,7 +188,7 @@ test_that(
     local_mocked_bindings(.bl_launcher = function() "")
     expect_error(instcli(tempfile("bin")), "launcher is missing")
     # the destination directory is fine but the table cannot be written as CSV
-    local_mocked_bindings(dload = function(key) {
+    local_mocked_bindings(dload = function(key, ...) {
       df <- data.frame(a = 1:2)
       df$e <- list(new.env(), new.env())
       df
@@ -196,7 +196,8 @@ test_that(
     got <- new.env()
     got$out <- character(0)
     dest <- tempfile(fileext = ".csv")
-    rc <- .bl_cli_data(c("pull", "db/tbl"), function(f) dest, function(s) {
+    flag <- function(f) if (f == "--out") dest
+    rc <- .bl_cli_data(c("pull", "db/tbl"), flag, function(s) {
       got$out <- c(got$out, s)
     })
     expect_identical(rc, 1L)

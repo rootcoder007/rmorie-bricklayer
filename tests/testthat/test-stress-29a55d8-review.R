@@ -809,23 +809,43 @@ test_that("the CSV reader gives read.csv's table, byte for byte of meaning", {
   same("a,b\n1,NA\n\"NA\",2\nNA,\n")
   same("a b,c-d,1x\n1,2,3\n")
   same("a,a,b\n1,2,3\n")
-  same("id,text\n07035394,\"0001\"\n2,x\n")
   same("a,b\n1.5,1e3\n2,1e400\n")
   same("a,b\n1,2\n3\n")
   same("a,b\n")
   same("x\n1\n2")
   same("a,b\n\"\",\"\"\n")
   same("a,b,c\nTRUE,1,T\n1,TRUE,F\n")
-  same("a,b,c,d\n2147483647,2147483648,-2147483648,+5\n1,2,3,05\n")
-  same("a,b,c\n1e3,0x10,Inf\n2.,.5,-inf\n")
-  same("a,b\n 1,1 \n2,2\n")
   same("a,b\n,\n,\n")
   same("a,b\n1,\n2,\n")
   same("a\n1d5\n2\n")
   same("a,b\n1,2\n3,4.5\n")
-  same("a\n12345678901234567890\n1\n")
   same("a,b\nT,F\ntrue,False\n")
   same("a,b\n1,2\nNA,NA\n")
+  # where the table differs from that of read.csv(): a value is a number only
+  # when R gives it back as written, so a code keeps its zeros, "+5" its sign,
+  # a hex or a 20-digit number every character, and the column is text
+  rd <- function(txt) ns(".bl_csv_from_bytes")(charToRaw(txt))
+  expect_identical(
+    rd("id,text\n07035394,\"0001\"\n2,x\n"),
+    data.frame(id = c("07035394", "2"), text = c("0001", "x"))
+  )
+  expect_identical(
+    rd("a,b,c,d\n2147483647,2147483648,-2147483648,+5\n1,2,3,05\n"),
+    data.frame(
+      a = c(2147483647L, 1L), b = c(2147483648, 2),
+      c = c(-2147483648, 3), d = c("+5", "05")
+    )
+  )
+  expect_identical(
+    rd("a,b,c\n1e3,0x10,Inf\n2.,.5,-inf\n"),
+    data.frame(a = c(1000, 2), b = c("0x10", ".5"), c = c("Inf", "-inf"))
+  )
+  # blanks around a number are not part of it
+  expect_identical(rd("a,b\n 1,1 \n2,2\n"), data.frame(a = 1:2, b = 1:2))
+  expect_identical(
+    rd("a\n12345678901234567890\n1\n"),
+    data.frame(a = c("12345678901234567890", "1"))
+  )
   # a NUL byte is dropped, as skipNul = TRUE drops it; a byte-order mark is not
   # part of a name
   expect_identical(
@@ -858,8 +878,11 @@ test_that("the CSV reader gives read.csv's table, byte for byte of meaning", {
   con <- gzfile(f, "w")
   writeLines(c("k,v,flag", "1,alpha,TRUE", "2,\"b,eta\",FALSE", "3,NA,NA"), con)
   close(con)
+  # the text NA is the text in a text column and missing in a logical one
   expect_identical(
     ns(".bl_read_csv_gz")(f),
-    utils::read.csv(gzfile(f), stringsAsFactors = FALSE, skipNul = TRUE)
+    data.frame(
+      k = 1:3, v = c("alpha", "b,eta", "NA"), flag = c(TRUE, FALSE, NA)
+    )
   )
 })

@@ -79,7 +79,7 @@ test_that("a WARC that cannot be read is noted as failed, not thrown", {
 
 test_that("sctidy() loads a key that is not a table number as given", {
   got <- new.env()
-  local_mocked_bindings(dload = function(key) {
+  local_mocked_bindings(dload = function(key, ...) {
     got$key <- key
     data.frame()
   })

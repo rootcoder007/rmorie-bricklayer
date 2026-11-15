@@ -1078,7 +1078,7 @@ test_that(
     # N6), and the destination is what this asks about
     rc <- .bl_cli_data(
       c("pull", "db/tbl"),
-      function(f) "/nonexistent-dir-zz/out.csv",
+      function(f) if (f == "--out") "/nonexistent-dir-zz/out.csv",
       function(s) got$out <- c(got$out, s)
     )
     expect_identical(rc, 1L)

@@ -387,7 +387,7 @@ test_that(
   ),
   {
     skip_if_cannot_mock()
-    testthat::local_mocked_bindings(dload = function(key) {
+    testthat::local_mocked_bindings(dload = function(key, ...) {
       stop("the table was downloaded")
     })
     r <- .cap8("data", "pull", "hib/x", "--out", "/nonexistent-dir-r8/x.csv")

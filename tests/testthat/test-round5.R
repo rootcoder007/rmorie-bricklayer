@@ -154,7 +154,7 @@ test_that("blfetch names the cause before downloading anything", {
 })
 
 test_that("data pull to an unwritable path says so, without an R warning", {
-  local_mocked_bindings(dload = function(key) data.frame(a = 1))
+  local_mocked_bindings(dload = function(key, ...) data.frame(a = 1))
   expect_silent(
     {
       r <- .cap("data", "pull", "hib/x", "--out", "/nonexistent-dir-r5/x.csv")
