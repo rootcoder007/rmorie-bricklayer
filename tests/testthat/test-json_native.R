@@ -132,3 +132,19 @@ test_that("jsb64dec refuses NA and padding inside the text", {
   long <- jsb64enc(strrep("x", 200))
   expect_identical(rawToChar(jsb64dec(long)), strrep("x", 200))
 })
+
+test_that("jsunser() rebuilds a time with no zone, refuses a missing one", {
+  # no tzone attribute: the session's zone, as R itself reads it
+  x <- .POSIXct(0)
+  expect_null(attr(x, "tzone"))
+  y <- jsunser(jsser(x))
+  expect_s3_class(y, "POSIXct")
+  expect_identical(unclass(y), unclass(x))
+  # a tzone that is a missing string is not a zone
+  s <- sub("\"UTC\"", "null", jsser(.POSIXct(0, tz = "UTC")), fixed = TRUE)
+  expect_error(
+    jsunser(s),
+    "a time in a time zone that does not exist",
+    fixed = TRUE
+  )
+})

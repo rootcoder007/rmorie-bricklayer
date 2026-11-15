@@ -138,3 +138,16 @@ test_that("explain-error from the shell", {
   expect_identical(as.integer(r$status), 2L)
   expect_match(r$text, "usage:")
 })
+
+test_that("a message holding bytes that are not text is still explained", {
+  # a path in another encoding inside an error message: the bytes are shown
+  # as <xx>, the call does not stop
+  bad <- "caf\xe9: object 'zz' not found"
+  expect_false(validEnc(bad))
+  e <- explerr(bad)
+  expect_s3_class(e, "data.frame")
+  expect_named(
+    e,
+    c("package", "raised_by", "exported", "kind", "message", "match")
+  )
+})

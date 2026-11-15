@@ -63,3 +63,24 @@ test_that("jsgzenc and jsgzdec check raw and take one string", {
   expect_error(jsgzdec(c(g, g)), "jsgzdec: `txt` must be a single string")
   expect_identical(jsgzdec(g), list(a = 1L))
 })
+
+test_that("jsgzdec() gives the JSON reader's own refusal for damaged JSON", {
+  # one gzip member whose content is not JSON: the refusal is the reader's,
+  # under jsgzdec's name, not the one for two members joined
+  f <- tempfile()
+  on.exit(unlink(f), add = TRUE)
+  z <- gzfile(f, "wb")
+  writeBin(charToRaw("{bad"), z)
+  close(z)
+  b <- readBin(f, "raw", file.size(f))
+  expect_error(
+    jsgzdec(b, raw = TRUE),
+    "jsgzdec: expected a string key at character 2",
+    fixed = TRUE
+  )
+  expect_error(
+    jsgzdec(jsb64enc(b)),
+    "jsgzdec: expected a string key at character 2",
+    fixed = TRUE
+  )
+})

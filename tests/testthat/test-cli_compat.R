@@ -123,3 +123,18 @@ test_that("migrate skips $ and @ members, rewrites references (BL-M1)", {
   # a function body or an if is not an argument
   expect_identical(mig("g <- function() yoy", "if (TRUE) share")$n, 0L)
 })
+
+test_that("migrate renames a string only where it names the function", {
+  ns <- function(x) get(x, envir = asNamespace("rmoriebricklayer"))
+  mig <- ns(".bl_migrate_text")
+  # the first unnamed argument of do.call() is the function: renamed
+  expect_identical(
+    mig("z <- do.call(\"admissions\", list(d))")$lines,
+    "z <- do.call(\"admits\", list(d))"
+  )
+  # the same string as the second unnamed argument is data: left alone
+  expect_identical(
+    mig("z <- do.call(f, \"admissions\")")$lines,
+    "z <- do.call(f, \"admissions\")"
+  )
+})
