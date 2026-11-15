@@ -41,6 +41,10 @@
   [`read.csv()`](https://rdrr.io/r/utils/read.table.html) makes
   (`Offence.Description`, `X..share`). The default stays as it is in
   this release and may change in a later major version.
+- [`explerr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/explerr.md)
+  explains a message that holds bytes which are not UTF-8 (a path in
+  another encoding) in every locale; in the C locale it stopped with
+  “input string 1 is invalid”.
 - [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
   reads back a complex NaN as
   [`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
