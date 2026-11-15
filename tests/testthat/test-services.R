@@ -111,7 +111,11 @@ test_that(
     expect_identical(s$data$base_url, "https://data.rmorie.com")
     expect_identical(s$data$auth_url, "https://data.rmorie.com/auth")
     expect_match(s$notice, "Language models are not hosted")
-    expect_match(s$llm$request_access, "^https://rmorie.com/")
+    # the tables need no sign-in: the notice says so and no address points
+    # at a page for asking for access
+    expect_match(s$notice, "need no sign-in")
+    expect_identical(s$llm$request_access, "https://data.rmorie.com/")
+    expect_identical(s$data$request_access, "https://data.rmorie.com/")
     # the bundled signature is over exactly these bytes: one changed byte fails
     p <- system.file(
       "services",

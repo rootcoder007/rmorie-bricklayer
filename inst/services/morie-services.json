@@ -1,21 +1,21 @@
 {
   "version": 1,
-  "issued": "2026-10-14T00:46:57Z",
-  "notice": "Language models are not hosted: bring your own key, or run a model locally. The curated tables at https://data.rmorie.com open with a personal key: sign in with GitHub or an emailed code, or ask at https://rmorie.com/access.",
+  "issued": "2026-11-15T00:55:07Z",
+  "notice": "Language models are not hosted: bring your own key, or run a model locally. The curated tables at https://data.rmorie.com need no sign-in and no key: the packages download them directly.",
   "llm": {
     "mode": "off",
     "base_url": "",
     "auth_url": "https://data.rmorie.com/auth",
     "default_model": "",
     "models": [],
-    "request_access": "https://rmorie.com/access"
+    "request_access": "https://data.rmorie.com/"
   },
   "data": {
     "mode": "key",
     "base_url": "https://data.rmorie.com",
     "auth_url": "https://data.rmorie.com/auth",
-    "license": "https://rmorie.com/data-license",
-    "request_access": "https://rmorie.com/access",
-    "terms": "https://data.rmorie.com/terms"
+    "license": "https://data.rmorie.com/",
+    "request_access": "https://data.rmorie.com/",
+    "terms": "https://data.rmorie.com/"
   }
 }
