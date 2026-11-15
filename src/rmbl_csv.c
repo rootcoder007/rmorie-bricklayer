@@ -13,7 +13,9 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <string.h>
-#include <R_ext/Utils.h>   /* R_strtod */
+
+/* decimal text to the nearest double, exactly (rmbl_strtod.cpp) */
+extern double rmbl_strtod_bytes(const char *s, size_t len, int *ok);
 
 int rmbl_interrupt_pending(void);   /* rmbl_barrier.cpp: a Ctrl-C is pending */
 void rmbl_interrupt_raise_unbarriered(void);   /* rmbl_barrier.cpp: raise R's interrupt condition */
@@ -170,16 +172,15 @@ static int rmbl_csv_lgl(const char *b, size_t len, int *val) {
     return 0;
 }
 
-/* [+-]?digits, within int: the shape type.convert() reads as an integer (a longer run of digits is
- * a double there, so it is not taken here) */
+/* -?digits with no leading zero (but 0 itself), within int: an integer R gives back as written.
+ * "046" read as 46 and "+1" as 1 changed what the file holds (they are codes, often): those are
+ * text, as R's side of the reader decides (.bl_csv_kinds(); audit of the sibling package, P9) */
 static int rmbl_csv_int(const char *b, size_t len, int *val) {
     size_t i = 0;
     int neg = 0;
-    if (len && (b[0] == '+' || b[0] == '-')) { neg = b[0] == '-'; i = 1; }
+    if (len && b[0] == '-') { neg = 1; i = 1; }
     if (i >= len) return 0;
-    /* leading zeros do not count against the ten digits: type.convert() reads 00000000000012 as the
-     * integer 12 (it was a double here; CRAN stress test of b617a3f) */
-    while (i + 1 < len && b[i] == '0') i++;
+    if (b[i] == '0' && len - i > 1) return 0;
     if (len - i > 10) return 0;
     long long v = 0;
     for (; i < len; i++) {
@@ -192,10 +193,13 @@ static int rmbl_csv_int(const char *b, size_t len, int *val) {
     return 1;
 }
 
-/* [+-]?(digits[.digits] | .digits)([eE][+-]?digits)?: read with R_strtod, as type.convert() does */
-static int rmbl_csv_num(const char *b, size_t len, double *val) {
+/* A decimal number's text as the double nearest to it: -?(digits[.digits] | .digits)
+ * ([eE][+-]?digits)?, checked here, then the package's exact converter (rmbl_strtod.cpp), which
+ * asks neither the C library nor the locale. R_strtod() is not correctly rounded: "1.239042694"
+ * read one bit apart on x86-64 and ARM64 (P9). Returns 0 for text that is not such a number. */
+static int rmbl_csv_dbl(const char *b, size_t len, double *val) {
     size_t i = 0, nd = 0;
-    if (len && (b[0] == '+' || b[0] == '-')) i = 1;
+    if (len && b[0] == '-') i = 1;
     while (i < len && b[i] >= '0' && b[i] <= '9') { i++; nd++; }
     if (i < len && b[i] == '.') { i++; while (i < len && b[i] >= '0' && b[i] <= '9') { i++; nd++; } }
     if (nd == 0) return 0;
@@ -207,13 +211,34 @@ static int rmbl_csv_num(const char *b, size_t len, double *val) {
         if (ne == 0) return 0;
     }
     if (i != len) return 0;
-    char tmp[64];
-    if (len >= sizeof tmp) return 0;
-    memcpy(tmp, b, len);
-    tmp[len] = '\0';
-    char *end = NULL;
-    *val = R_strtod(tmp, &end);
-    return end == tmp + len;
+    int ok = 0;
+    *val = rmbl_strtod_bytes(b, len, &ok);
+    return ok;
+}
+
+/* -?(digits[.digits] | .digits)([eE][+-]?digits)?, the integer part with no leading zero (but 0
+ * itself) and at most 17 significant digits: a number R gives back as written; read by rmbl_csv_dbl(),
+ * as R reads it (.bl_csv_kinds()) */
+static int rmbl_csv_num(const char *b, size_t len, double *val) {
+    size_t i = 0, nd = 0, first = 0, last = 0, k = 0;
+    if (len && b[0] == '-') i = 1;
+    if (i + 1 < len && b[i] == '0' && b[i + 1] >= '0' && b[i + 1] <= '9') return 0;
+    for (; i < len && ((b[i] >= '0' && b[i] <= '9') || (b[i] == '.' && !k)); i++) {
+        if (b[i] == '.') { k = 1; continue; }
+        nd++;
+        if (b[i] != '0') { if (!first) first = nd; last = nd; }
+    }
+    if (nd == 0) return 0;
+    if (first && last - first + 1 > 17) return 0;
+    if (i < len && (b[i] == 'e' || b[i] == 'E')) {
+        i++;
+        if (i < len && (b[i] == '+' || b[i] == '-')) i++;
+        size_t ne = 0;
+        while (i < len && b[i] >= '0' && b[i] <= '9') { i++; ne++; }
+        if (ne == 0) return 0;
+    }
+    if (i != len) return 0;
+    return rmbl_csv_dbl(b, len, val);
 }
 
 /* list(names = <character>, columns = <list>): the header's fields and the records below it, as
@@ -341,7 +366,8 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     /* first pass: the rows are counted and each column's type decided, with no allocation */
     int *type = (int *) R_alloc(ncol, sizeof(int));
     int *word = (int *) R_alloc(ncol, sizeof(int));   /* a logical word was seen: a number after it is text */
-    for (size_t j = 0; j < ncol; j++) { type[j] = RMBL_T_LGL; word[j] = 0; }
+    int *natext = (int *) R_alloc(ncol, sizeof(int)); /* the text NA was seen */
+    for (size_t j = 0; j < ncol; j++) { type[j] = RMBL_T_LGL; word[j] = 0; natext[j] = 0; }
     char *buf = NULL;
     size_t bufcap = 0;
     size_t nrow = 0, work = 0;
@@ -360,7 +386,7 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
             if (type[j] == RMBL_T_STR) continue;
             if (fl + 1 > bufcap) { bufcap = fl * 2 + 16; buf = (char *) R_alloc(bufcap, 1); }
             size_t len = rmbl_csv_field(s, &spans[j], buf);
-            if (rmbl_csv_is_na(buf, len)) continue;
+            if (rmbl_csv_is_na(buf, len)) { if (len) natext[j] = 1; continue; }
             int iv; double dv;
             int blank = 0;
             for (size_t q = 0; q < len; q++) if (buf[q] == ' ' || buf[q] == '\t') { blank = 1; break; }
@@ -382,8 +408,9 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
               "records: not a table this reader takes", (unsigned long) nrow, (unsigned long) ncol,
               (double) nrow * (double) ncol, (unsigned long) n);
     }
-    /* a logical column that mixed TRUE with 1 is text for type.convert(); a column with no value at
-     * all is logical NA, as type.convert() makes it */
+    /* a logical column that mixed TRUE with 1 is text; a column with no value at all is logical NA,
+     * and one whose only values are the text NA is that text (P9) */
+    for (size_t j = 0; j < ncol; j++) if (type[j] == RMBL_T_LGL && !word[j] && natext[j]) type[j] = RMBL_T_STR;
     buf = (char *) R_alloc(maxlen + 1, 1);
     SEXP names = PROTECT(allocVector(STRSXP, (R_xlen_t) ncol));
     pos = start;
@@ -429,7 +456,9 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
             case RMBL_T_NUM: { double v = NA_REAL; if (!na) rmbl_csv_num(buf, len, &v); REAL(col)[i] = v; break; }
             case RMBL_T_LGL: { int v = NA_LOGICAL; if (!na) rmbl_csv_lgl(buf, len, &v); LOGICAL(col)[i] = v; break; }
             default:
-                if (len == 2 && buf[0] == 'N' && buf[1] == 'A') SET_STRING_ELT(col, (R_xlen_t) i, NA_STRING);
+                /* only an empty field is missing in a text column: the text NA is the text "NA" (it was
+                 * missing, and the empty field ""; P9) */
+                if (len == 0) SET_STRING_ELT(col, (R_xlen_t) i, NA_STRING);
                 else SET_STRING_ELT(col, (R_xlen_t) i, mkCharLenCE(buf, (int) len, CE_NATIVE));
             }
         }
@@ -440,3 +469,4 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     UNPROTECT(4);
     return out;
 }
+

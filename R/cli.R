@@ -743,7 +743,7 @@ instcli <- function(
   list(
     ask = c("--model", "--route", "--fresh"),
     models = "--route",
-    data = "--out",
+    data = c("--out", "--names"),
     app = c("--port", "--no-browser"),
     wayback = c(
       "--out",
@@ -803,6 +803,7 @@ instcli <- function(
       "--model",
       "--route",
       "--out",
+      "--names",
       "--jobs",
       "--within",
       "--reason",
@@ -1648,7 +1649,8 @@ instcli <- function(
       "to 1.0.0 (shows the changes)"
     ),
     data = paste0(
-      "data list | data pull db/table [--out FILE.csv]   curated tables ",
+      "data list | data pull db/table [--out FILE.csv] [--names R|asis]   ",
+      "curated tables ",
       "at data.rmorie.com (no sign-in)"
     ),
     app = paste0(
@@ -2121,6 +2123,12 @@ instcli <- function(
   if (.bl_cli_key_refused(key, out)) {
     return(2L)
   }
+  # the column names as R makes them (the default), or as the table has them
+  nms <- flag("--names") %||% "R"
+  if (!nms %in% c("R", "asis")) {
+    out(sprintf("`--names` must be R or asis, not %s\n", .rmbl_printable(nms)))
+    return(2L)
+  }
   dest <- flag("--out") %||% paste0(gsub("/", "_", key, fixed = TRUE), ".csv")
   # refuse an unwritable destination before downloading the table, not after
   dir <- dirname(dest)
@@ -2131,7 +2139,7 @@ instcli <- function(
     ))
     return(1L)
   }
-  df <- dload(rest[[2L]])
+  df <- dload(rest[[2L]], names = nms)
   ok <- tryCatch(
     {
       suppressWarnings(.bl_write_pull(df, dest))
@@ -2194,9 +2202,11 @@ instcli <- function(
   # the positional words, without --out and its value: an extra word was
   # silently ignored
   pos <- rest
-  i <- match("--out", pos)
-  if (!is.na(i)) {
-    pos <- pos[-c(i, i + 1L)]
+  for (f in c("--out", "--names")) {
+    i <- match(f, pos)
+    if (!is.na(i)) {
+      pos <- pos[-c(i, i + 1L)]
+    }
   }
   if (
     (identical(sub, "list") && length(pos) > 1L) ||
@@ -2204,8 +2214,8 @@ instcli <- function(
   ) {
     out(sprintf(
       paste0(
-        "usage: %s data list | data pull db/table [--out FILE.csv]  (one ",
-        "table per pull)\n"
+        "usage: %s data list | data pull db/table [--out FILE.csv] ",
+        "[--names R|asis]  (one table per pull)\n"
       ),
       .bl_prog()
     ))
@@ -2224,7 +2234,7 @@ instcli <- function(
   } else {
     out(paste0(
       sprintf("usage: %s data list | ", .bl_prog()),
-      "data pull db/table [--out FILE.csv]\n"
+      "data pull db/table [--out FILE.csv] [--names R|asis]\n"
     ))
     # asking for help is not a mistake: --help exits 0 like every other verb's
     # help
@@ -2312,7 +2322,7 @@ instcli <- function(
     "  data list                                 curated tables at ",
     "data.rmorie.com\n",
     "  data pull db/table [--out FILE.csv]       download one of them ",
-    "(no sign-in)\n",
+    "(no sign-in; --names asis keeps the table's column names)\n",
     "  app [PATH] [--port N] [--no-browser]      the analysis dashboard ",
     "on this machine (needs shiny)\n",
     "  wayback FILE [--out F.jsonl] [--jobs N]   archive every URL in ",

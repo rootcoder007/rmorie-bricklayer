@@ -51,6 +51,12 @@ year) without ever being held whole. It sees every column, whatever
 and verifies the table and returns the path of its gzip-compressed CSV
 without reading it, for tools that query a file in place; it cannot be
 combined with \code{cols}, \code{n} or \code{keep}.}
+
+\item{names}{\code{"R"} (the default) for the column names
+\code{read.csv()} gives (syntactic, from \code{make.names()}),
+\code{"asis"} for the names as the table's header writes them (see
+Details). \code{cols} takes either form, and \code{keep} sees the
+names the call returns.}
 }
 \value{
 \code{dmnf()}: the manifest as a list (element
@@ -81,7 +87,8 @@ under \code{tempdir()} (or the directory in
 \code{options(rmoriebricklayer.dcache = )}) so later calls are
 local.
 From the shell: \code{rmoriebricklayer data list} and
-\code{rmoriebricklayer data pull db/table [--out FILE.csv]}.
+\code{rmoriebricklayer data pull db/table [--out FILE.csv]
+[--names R|asis]}.
 }
 \details{
 The manifest is cached as \code{manifest.json} in the cache folder and
@@ -97,15 +104,46 @@ deleted and refused (after one refresh of the manifest, since a table
 rebuilt upstream has a new digest). When the manifest cannot be fetched,
 the last copy on disk, however old, supplies the digest; with none, a fresh
 download is not kept and a cached file is kept but not used. The CSV is
-read in compiled code with the same result as
-\code{read.csv(gzfile(f), stringsAsFactors = FALSE)}, two malformed shapes
-apart, which are refused with the record they are in where \code{read.csv()}
-changes the data without a word: a record with more fields than the header
-(\code{read.csv()} turns the first column into row names) and a quote mark
-inside an unquoted field (\code{read.csv()} takes the rest of the file as one
-quoted run). Tables that inflate
-past 512 MiB are read by \code{read.csv()} itself, a piece at a time. A
-table whose SHA-256 matches the manifest is the file the service holds, so
+read in compiled code. Its records are read as
+\code{read.csv(gzfile(f), stringsAsFactors = FALSE)} reads them, two
+malformed shapes apart, which are refused with the record they are in
+where \code{read.csv()} changes the data without a word: a record with
+more fields than the header (\code{read.csv()} turns the first column into
+row names) and a quote mark inside an unquoted field (\code{read.csv()}
+takes the rest of the file as one quoted run). Tables that inflate past
+512 MiB are read by \code{read.csv()} as text, a piece at a time, and
+typed the same way.
+
+The values are not always those \code{read.csv()} gives. A column is a
+number only when every value in it is a number R gives back as it is
+written: a plain integer or decimal (an exponent allowed, as in
+\code{1e5}; trailing zeros after the point, as in \code{6.0}, too) with
+no leading zero other than \code{0} itself or \code{0.} before the
+decimals, no leading \code{+} and at most 17 significant digits; or
+\code{Inf}, \code{-Inf} or \code{NaN}. A column holding a value such as
+\code{046}, \code{+1}, \code{0x1A}, \code{1+2i} or a number of 20
+digits is text, every value as written: \code{read.csv()} made the codes
+\code{046} and \code{007} the numbers 46 and 7. Blanks around a number do
+not stop it being one. \code{TRUE}, \code{FALSE}, \code{T} and \code{F}
+make a logical column. Only an empty field is missing in a text column:
+the text \code{NA} there is the text \code{"NA"} (\code{read.csv()} made
+it missing, and an empty field \code{""}). In a number or logical column
+an empty field and \code{NA} are both missing, as before. A column with no
+value at all is logical \code{NA}; one whose only values are the text
+\code{NA} is text. Numbers are read correctly rounded, the same double on
+every machine: R's own reading of decimal text can differ in the last bit
+between processors (\code{1.239042694} did between x86-64 and ARM64).
+
+The column names are by default those \code{read.csv()} gives:
+\code{make.names(unique = TRUE)} of the header, each name trimmed of the
+blanks around it unless it is quoted, so \code{Offence Description}
+becomes \code{Offence.Description}, \code{\% share} \code{X..share} and
+a second \code{x} \code{x.1}. \code{names = "asis"} returns the names as
+the header writes them (the same trimming, a byte-order mark dropped,
+duplicates and empty names kept), which are the names of the published
+table and its manifest. The default may change in a later major version.
+
+A table whose SHA-256 matches the manifest is the file the service holds, so
 it is read whatever its size; one the manifest lists without a digest may
 decompress to at most the option \code{rmoriebricklayer.maxcsvbytes}
 (1 GiB by default). A large table needs memory for all of it: a 1 GB

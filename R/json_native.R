@@ -3853,6 +3853,14 @@ bricklayer_json_validate <- function(txt) {
   if (length(num) && !is.double(x) && !is.integer(x)) {
     return(sprintf("the class %s on data of type %s", num[[1L]], typeof(x)))
   }
+  .rmbl_json_attr_fit(x)
+}
+
+#' The attribute checks of .rmbl_json_class_fit(): levels, time zone, units.
+#' @param x The object rebuilt.
+#' @return A reason, or NULL.
+#' @noRd
+.rmbl_json_attr_fit <- function(x) {
   if (inherits(x, "factor") && anyDuplicated(attr(x, "levels"))) {
     return("a factor whose levels repeat")
   }

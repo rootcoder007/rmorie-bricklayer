@@ -20,7 +20,8 @@
 #' \code{options(rmoriebricklayer.dcache = )}) so later calls are
 #' local.
 #' From the shell: \code{rmoriebricklayer data list} and
-#' \code{rmoriebricklayer data pull db/table [--out FILE.csv]}.
+#' \code{rmoriebricklayer data pull db/table [--out FILE.csv]
+#' [--names R|asis]}.
 #'
 #' @details
 #' The manifest is cached as \code{manifest.json} in the cache folder and
@@ -36,15 +37,46 @@
 #' rebuilt upstream has a new digest). When the manifest cannot be fetched,
 #' the last copy on disk, however old, supplies the digest; with none, a fresh
 #' download is not kept and a cached file is kept but not used. The CSV is
-#' read in compiled code with the same result as
-#' \code{read.csv(gzfile(f), stringsAsFactors = FALSE)}, two malformed shapes
-#' apart, which are refused with the record they are in where \code{read.csv()}
-#' changes the data without a word: a record with more fields than the header
-#' (\code{read.csv()} turns the first column into row names) and a quote mark
-#' inside an unquoted field (\code{read.csv()} takes the rest of the file as one
-#' quoted run). Tables that inflate
-#' past 512 MiB are read by \code{read.csv()} itself, a piece at a time. A
-#' table whose SHA-256 matches the manifest is the file the service holds, so
+#' read in compiled code. Its records are read as
+#' \code{read.csv(gzfile(f), stringsAsFactors = FALSE)} reads them, two
+#' malformed shapes apart, which are refused with the record they are in
+#' where \code{read.csv()} changes the data without a word: a record with
+#' more fields than the header (\code{read.csv()} turns the first column into
+#' row names) and a quote mark inside an unquoted field (\code{read.csv()}
+#' takes the rest of the file as one quoted run). Tables that inflate past
+#' 512 MiB are read by \code{read.csv()} as text, a piece at a time, and
+#' typed the same way.
+#'
+#' The values are not always those \code{read.csv()} gives. A column is a
+#' number only when every value in it is a number R gives back as it is
+#' written: a plain integer or decimal (an exponent allowed, as in
+#' \code{1e5}; trailing zeros after the point, as in \code{6.0}, too) with
+#' no leading zero other than \code{0} itself or \code{0.} before the
+#' decimals, no leading \code{+} and at most 17 significant digits; or
+#' \code{Inf}, \code{-Inf} or \code{NaN}. A column holding a value such as
+#' \code{046}, \code{+1}, \code{0x1A}, \code{1+2i} or a number of 20
+#' digits is text, every value as written: \code{read.csv()} made the codes
+#' \code{046} and \code{007} the numbers 46 and 7. Blanks around a number do
+#' not stop it being one. \code{TRUE}, \code{FALSE}, \code{T} and \code{F}
+#' make a logical column. Only an empty field is missing in a text column:
+#' the text \code{NA} there is the text \code{"NA"} (\code{read.csv()} made
+#' it missing, and an empty field \code{""}). In a number or logical column
+#' an empty field and \code{NA} are both missing, as before. A column with no
+#' value at all is logical \code{NA}; one whose only values are the text
+#' \code{NA} is text. Numbers are read correctly rounded, the same double on
+#' every machine: R's own reading of decimal text can differ in the last bit
+#' between processors (\code{1.239042694} did between x86-64 and ARM64).
+#'
+#' The column names are by default those \code{read.csv()} gives:
+#' \code{make.names(unique = TRUE)} of the header, each name trimmed of the
+#' blanks around it unless it is quoted, so \code{Offence Description}
+#' becomes \code{Offence.Description}, \code{\% share} \code{X..share} and
+#' a second \code{x} \code{x.1}. \code{names = "asis"} returns the names as
+#' the header writes them (the same trimming, a byte-order mark dropped,
+#' duplicates and empty names kept), which are the names of the published
+#' table and its manifest. The default may change in a later major version.
+#'
+#' A table whose SHA-256 matches the manifest is the file the service holds, so
 #' it is read whatever its size; one the manifest lists without a digest may
 #' decompress to at most the option \code{rmoriebricklayer.maxcsvbytes}
 #' (1 GiB by default). A large table needs memory for all of it: a 1 GB
@@ -98,6 +130,11 @@
 #'   and verifies the table and returns the path of its gzip-compressed CSV
 #'   without reading it, for tools that query a file in place; it cannot be
 #'   combined with \code{cols}, \code{n} or \code{keep}.
+#' @param names \code{"R"} (the default) for the column names
+#'   \code{read.csv()} gives (syntactic, from \code{make.names()}),
+#'   \code{"asis"} for the names as the table's header writes them (see
+#'   Details). \code{cols} takes either form, and \code{keep} sees the
+#'   names the call returns.
 #' @param token Ignored, with a warning: the tables need no key, and none is
 #'   sent. Kept so that calls written for earlier versions still run.
 #' @return \code{dmnf()}: the manifest as a list (element
@@ -211,11 +248,13 @@ dload <- function(
   cols = NULL,
   n = Inf,
   keep = NULL,
-  file = FALSE
+  file = FALSE,
+  names = c("R", "asis")
 ) {
   .bl_data_check_keyarg(key)
   .bl_check_flag(refresh, "refresh")
   .bl_check_flag(file, "file")
+  names <- .rmbl_arg(names)
   part <- .bl_csv_part_args(cols, n, keep, file)
   # a table that is not served is refused before any request
   if (.bl_data_restricted(key)) {
@@ -241,7 +280,7 @@ dload <- function(
     return(dest)
   }
   if (part) {
-    return(.bl_csv_part(dest, cols, n, keep))
+    return(.bl_csv_part(dest, cols, n, keep, names = names))
   }
   .bl_data_big_note(key)
   # a file whose digest matches the manifest is the service's own, not a
@@ -253,7 +292,8 @@ dload <- function(
       Inf
     } else {
       .rmbl_max_csv_bytes()
-    }
+    },
+    names = names
   )
 }
 
@@ -450,18 +490,30 @@ dload <- function(
 #' @param piece Decompressed bytes read at a time.
 #' @return A data frame.
 #' @noRd
-.bl_csv_part <- function(path, cols, n, keep, piece = .bl_csv_piece_bytes()) {
+.bl_csv_part <- function(
+  path,
+  cols,
+  n,
+  keep,
+  piece = .bl_csv_piece_bytes(),
+  names = "R"
+) {
   path <- .rmbl_file1(path, "path")
   ty <- .bl_csv_types(path, piece, cols, keep)
   if (is.null(ty)) {
     # a header of no columns: such a table holds nothing but a row count
     return(.bl_csv_part_small(.bl_read_csv_gz(path), cols, n, keep))
   }
+  if (identical(names, "asis")) {
+    ty$nm <- ty$raw
+  }
   use <- if (is.null(keep)) ty$want else rep(TRUE, length(ty$want))
   acc <- new.env(parent = emptyenv())
   acc$kept <- list()
   acc$have <- 0
   .bl_csv_each(path, piece, function(cols, rows) {
+    # keep sees the names the call returns
+    names(cols) <- ty$nm
     df <- .bl_csv_frame(cols[use], ty$types[use])
     idx <- seq_len(nrow(df))
     if (!is.null(keep)) {
@@ -560,49 +612,114 @@ dload <- function(
 #' The first pass of the part reader: every record checked, and the type of
 #' each column needed settled over the whole table.
 #'
-#' A piece's text gives the type a whole read would give it; the table's type
-#' is the one type.convert() gives text of all the pieces' types together, so
-#' each piece adds one word of its type ("TRUE", "1", "1.5", "1i", "x") and a
-#' piece with no value adds none. A logical piece beside an integer one makes
-#' text, as type.convert(c("TRUE", "1")) does.
+#' Each piece adds what its values are (.bl_csv_kinds()) to what the pieces
+#' before it held, and the type is decided from all of it as a whole read
+#' decides it (.bl_csv_kind_type()).
 #' @param path,piece As for .bl_csv_part().
 #' @param cols,keep As for dload().
 #' @return NULL for a header of no columns, else list(nm, want, types).
 #' @noRd
 .bl_csv_types <- function(path, piece, cols, keep) {
-  word <- c(
-    logical = "TRUE",
-    integer = "1",
-    double = "1.5",
-    complex = "1i",
-    character = "x"
-  )
   acc <- new.env(parent = emptyenv())
   h <- .bl_csv_each(path, piece, function(txt, rows) {
     if (is.null(acc$seen)) {
-      acc$seen <- rep(list(character()), length(txt))
+      acc$seen <- rep(list(logical(5L)), length(txt))
       acc$want <- .bl_csv_want(names(txt), attr(txt, "raw"), cols)
     }
     need <- which(acc$want | !is.null(keep))
-    for (j in need[!vapply(acc$seen[need], `%in%`, NA, x = "x")]) {
-      v <- utils::type.convert(txt[[j]], as.is = TRUE, na.strings = character())
-      if (!is.logical(v) || !all(is.na(v))) {
-        acc$seen[[j]] <- union(acc$seen[[j]], word[[typeof(v)]])
-      }
+    for (j in need[!vapply(acc$seen[need], `[[`, NA, 4L)]) {
+      acc$seen[[j]] <- acc$seen[[j]] | .bl_csv_kinds(txt[[j]])
     }
     TRUE
   })
   if (is.null(h)) {
     return(NULL)
   }
-  seen <- acc$seen
-  want <- acc$want
-  types <- vapply(
-    seen,
-    function(w) typeof(utils::type.convert(w, as.is = TRUE)),
-    ""
+  types <- vapply(acc$seen, .bl_csv_kind_type, "")
+  list(nm = h$nm, raw = h$raw, want = acc$want, types = types)
+}
+
+#' What the values of a column of CSV text are.
+#'
+#' A value is a number only when R gives it back as it is written: a plain
+#' integer or decimal, with no leading zero (but "0" and "0.5"), no "+" and at
+#' most 17 significant digits; or Inf, -Inf or NaN. "046" read as 46 and
+#' "+1" as 1 changed what the file holds, so such a value is text, and with it
+#' its column (audit of the sibling package, P9). A value with blanks around
+#' it is judged without them. TRUE, FALSE, T and F are logical. An empty field
+#' (NA here) is missing; the text NA is missing in a number or logical column
+#' and is the text "NA" in a text column.
+#' @param v A character vector, NA for an empty field.
+#' @return Five flags: logical, integer, double, text, the text NA seen.
+#' @noRd
+.bl_csv_kinds <- function(v) {
+  v <- v[!is.na(v)]
+  na <- v == "NA"
+  v <- trimws(v[!na])
+  lgl <- v %in% c("TRUE", "FALSE", "T", "F")
+  int <- grepl("^-?(0|[1-9][0-9]*)$", v)
+  int[int] <- abs(as.numeric(v[int])) <= 2147483647
+  num <- !lgl & !int & .bl_csv_plain_num(v)
+  c(any(lgl), any(int), any(num), any(!lgl & !int & !num), any(na))
+}
+
+#' Says which text values are numbers R gives back as written (see
+#' .bl_csv_kinds()).
+#' @param v A character vector.
+#' @return A logical vector.
+#' @noRd
+.bl_csv_plain_num <- function(v) {
+  ok <- grepl(
+    "^-?(0|[1-9][0-9]*)?([.][0-9]*)?([eE][+-]?[0-9]+)?$",
+    v
   )
-  list(nm = h$nm, want = want, types = types)
+  mant <- sub("[eE].*$", "", v[ok])
+  dig <- gsub("^0+|0+$", "", gsub("[^0-9]", "", mant))
+  ok[ok] <- grepl("[0-9]", mant) & nchar(dig) <= 17L
+  ok | v %in% c("Inf", "-Inf", "NaN")
+}
+
+#' A column's type from the flags of .bl_csv_kinds(): text when any value is
+#' text or logical words mix with numbers; else double, integer or logical;
+#' a column holding only the text NA is text, and one with no value at all is
+#' logical NA.
+#' @param k The five flags.
+#' @return The type's name.
+#' @noRd
+.bl_csv_kind_type <- function(k) {
+  if (k[[4L]] || (k[[1L]] && (k[[2L]] || k[[3L]]))) {
+    return("character")
+  }
+  if (k[[3L]]) {
+    return("double")
+  }
+  if (k[[2L]]) {
+    return("integer")
+  }
+  if (k[[1L]] || !k[[5L]]) "logical" else "character"
+}
+
+#' A column of CSV text in a type (.bl_csv_kind_type()).
+#' @param v A character vector, NA for an empty field.
+#' @param type The type, by default the column's own.
+#' @return The typed vector.
+#' @noRd
+.bl_csv_as <- function(v, type = .bl_csv_kind_type(.bl_csv_kinds(v))) {
+  if (type == "character") {
+    return(v)
+  }
+  v[v %in% "NA"] <- NA
+  v <- trimws(v)
+  if (type == "logical") {
+    return(v %in% c("TRUE", "T") | ifelse(v %in% c("FALSE", "F"), FALSE, NA))
+  }
+  if (type == "integer") {
+    return(as.integer(v))
+  }
+  # correctly rounded by the package's exact converter, as the compiled
+  # splitter reads its numbers: as.numeric() (R_strtod) put "1.239042694" one
+  # bit apart on x86-64 and ARM64 (P9)
+  .rmbl_strtod(v)
 }
 
 #' One piece in the table's types, as a data frame.
@@ -612,15 +729,7 @@ dload <- function(
 #' @noRd
 .bl_csv_frame <- function(cols, types) {
   for (j in which(types != "character")) {
-    v <- as.vector(
-      utils::type.convert(cols[[j]], as.is = TRUE, na.strings = character()),
-      types[[j]]
-    )
-    # a missing value made complex from another type keeps a zero imaginary
-    # part; a whole read gives NA_complex_. NaN is not missing there: is.na()
-    # is TRUE for it too, and NaN came back as NA (audit of 21478080, P1)
-    if (is.complex(v)) v[is.na(v) & !is.nan(v)] <- NA_complex_
-    cols[[j]] <- v
+    cols[[j]] <- .bl_csv_as(cols[[j]], types[[j]])
   }
   structure(
     cols,
@@ -852,7 +961,8 @@ dload <- function(
 .bl_read_csv_gz <- function(
   path,
   in_memory = 512 * 2^20,
-  lim = .rmbl_max_csv_bytes()
+  lim = .rmbl_max_csv_bytes(),
+  names = "R"
 ) {
   # a directory is refused by name: gzfile() on one hung (1.0.3)
   path <- .rmbl_file1(path, "path")
@@ -870,15 +980,18 @@ dload <- function(
       .bl_csv_too_big(path, lim)
     }
     if (file.size(path) > in_memory) {
-      return(.bl_read_csv_streamed(path))
+      return(.bl_read_csv_streamed(path, names))
     }
-    return(.bl_csv_from_bytes(readBin(path, "raw", file.size(path))))
+    return(.bl_csv_from_bytes(
+      readBin(path, "raw", file.size(path)),
+      names = names
+    ))
   }
   # the checked reader takes at most 2 GB of gzip (which inflates past in_memory
   # anyway); a larger file goes the piece-at-a-time way
   bytes <- .bl_gunzip_held(path, in_memory)
   if (!is.null(bytes)) {
-    return(.bl_csv_from_bytes(bytes))
+    return(.bl_csv_from_bytes(bytes, names = names))
   }
   if (in_memory >= lim) {
     .bl_csv_too_big(path, lim)
@@ -886,7 +999,7 @@ dload <- function(
   # past what is held in memory: the stream is checked whole (trailers, CRC,
   # size) before read.csv() reads it, which takes a truncated one as short
   .bl_gz_verify(path, lim)
-  .bl_read_csv_streamed(path)
+  .bl_read_csv_streamed(path, names)
 }
 
 #' Checks a gzip file whole before the piece-at-a-time read: refuses a
@@ -918,9 +1031,10 @@ dload <- function(
 #' The large-table path: read.csv() itself, on a gzfile() connection (it reads
 #' plain files too).
 #' @param path The gzipped CSV file, read in chunks.
+#' @param names "R" for syntactic names, "asis" for the header's own.
 #' @return A data frame.
 #' @noRd
-.bl_read_csv_streamed <- function(path) {
+.bl_read_csv_streamed <- function(path, names = "R") {
   # a directory is refused by name: gzfile() on one hung (1.0.3)
   path <- .rmbl_file1(path, "path")
   # the field count of every record first: read.csv() reads a table whose header
@@ -951,12 +1065,18 @@ dload <- function(
   .bl_csv_same_fields(nf[!is.na(nf)])
   con <- gzfile(path, "rt")
   on.exit(close(con), add = TRUE)
-  utils::read.csv(
+  # read as text and typed as the in-memory path types (.bl_csv_kinds()):
+  # read.csv() made "046" the number 46 and an empty text field ""
+  d <- utils::read.csv(
     con,
-    stringsAsFactors = FALSE,
+    colClasses = "character",
+    na.strings = character(),
     skipNul = TRUE,
-    row.names = NULL
+    row.names = NULL,
+    check.names = identical(names, "R")
   )
+  d[] <- lapply(d, function(v) .bl_csv_as(replace(v, !nzchar(v), NA)))
+  d
 }
 
 #' Refuses a table whose records do not all have the header's field count.
@@ -985,9 +1105,11 @@ dload <- function(
 #' Reads a CSV held in memory as read.csv() reads it.
 #' @param bytes The CSV as a raw vector.
 #' @param skip_nul Whether nul bytes are skipped.
+#' @param names "R" for syntactic names (make.names(unique = TRUE)), "asis"
+#'   for the header's own.
 #' @return A data frame.
 #' @noRd
-.bl_csv_from_bytes <- function(bytes, skip_nul = TRUE) {
+.bl_csv_from_bytes <- function(bytes, skip_nul = TRUE, names = "R") {
   parts <- .Call(C_rmbl_csv_split, bytes, skip_nul)
   # a header of no columns ("", blanks, a byte-order mark alone): read.csv()
   # takes each row's one field as its row name, and refuses more; a table of no
@@ -997,17 +1119,17 @@ dload <- function(
     return(.bl_csv_no_columns(bytes, skip_nul))
   }
   # the bytes decided the plain integer, decimal and logical columns; the rest
-  # is text for R to judge
+  # is text for R to judge, by the same rule (.bl_csv_kinds())
   cols <- lapply(parts$columns, function(v) {
-    if (is.character(v)) {
-      utils::type.convert(v, as.is = TRUE, na.strings = character())
-    } else {
-      v
-    }
+    if (is.character(v)) .bl_csv_as(v) else v
   })
   # the splitter gives one column per name, so there is at least one here (a
   # header of no columns returned above)
-  names(cols) <- make.names(parts$names, unique = TRUE)
+  names(cols) <- if (identical(names, "asis")) {
+    parts$names
+  } else {
+    make.names(parts$names, unique = TRUE)
+  }
   structure(
     cols,
     class = "data.frame",

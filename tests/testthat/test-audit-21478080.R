@@ -1,12 +1,13 @@
 # The LOW findings of the audit of 21478080 (P1 to P8, L7).
 
-test_that("P1: NaN in a complex column stays NaN, read in parts too", {
+test_that("P1: NaN stays NaN, read whole or in parts", {
   f <- tempfile(fileext = ".csv.gz")
   con <- gzfile(f, "wb")
-  writeBin(charToRaw("z,y\n1+2i,a\nNaN,b\nNA,c\n3,d\n"), con)
+  writeBin(charToRaw("z,y\n1.5,a\nNaN,b\nNA,c\n3,d\n"), con)
   close(con)
   w <- .bl_read_csv_gz(f)
   expect_true(is.nan(w$z[2L]))
+  expect_true(is.na(w$z[3L]) && !is.nan(w$z[3L]))
   expect_identical(.bl_csv_part(f, NULL, Inf, NULL, piece = 3L), w)
   expect_identical(.bl_csv_part(f, "z", Inf, NULL)$z, w$z)
   # jsser() writes a complex NaN as "NaN+0i"; jsunser() refused it
