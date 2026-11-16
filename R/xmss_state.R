@@ -649,7 +649,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 #' @return A data frame (key, index, sig, where), or NULL.
 #' @noRd
 .rmbl_xmss_seen_read <- function(f) {
-  if (dir.exists(f)) {
+  if (.rmbl_isdir(f)) {
     stop(
       .rmbl_fn(),
       "the XMSS seen-log ",

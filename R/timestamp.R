@@ -415,7 +415,7 @@ format.bricklayer_timestamp <- function(x, ...) {
   if (is.raw(x)) {
     return(x)
   }
-  if (is.character(x) && length(x) == 1L && dir.exists(x)) {
+  if (is.character(x) && length(x) == 1L && !is.na(x) && .rmbl_isdir(x)) {
     stop(
       sprintf("`%s` is a directory, not a token file: %s", what, x),
       call. = FALSE

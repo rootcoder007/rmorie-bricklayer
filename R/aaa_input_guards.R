@@ -800,6 +800,16 @@
   }
 }
 
+#' Whether a path is a folder, by stat(): base R's dir.exists() says TRUE
+#' for a Unix socket too (its mode shares the directory bit), and readers
+#' called a socket a folder.
+#' @param path The path to look at.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_isdir <- function(path) {
+  identical(.rmbl_path_kind(path.expand(path)), "directory")
+}
+
 #' A file the function reads: one path that exists, is a regular file (not
 #' a directory, a device, a pipe or a socket), can be read, and is no
 #' larger than `max` bytes.
@@ -1297,7 +1307,7 @@ if (!exists("%||%", envir = baseenv(), inherits = FALSE)) {
 #' @noRd
 .rmbl_notdir <- function(path, arg, fn = "") {
   if (is.character(path) && length(path) == 1L && !is.na(path) &&
-        dir.exists(path)) {
+        .rmbl_isdir(path)) {
     stop(sprintf("%s`%s` is a folder (%s), not a file",
                  if (nzchar(fn)) paste0(fn, ": ") else "", arg, path),
          call. = FALSE)

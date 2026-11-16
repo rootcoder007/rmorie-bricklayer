@@ -173,3 +173,21 @@ test_that("a provenance record past 60 fields says how many are left out", {
   expect_match(box_text(p),
     "... and 10 more fields: unclass(x) has them all.", fixed = TRUE)
 })
+
+test_that("loadprov() refuses a socket as no regular file, not a folder", {
+  # base R's dir.exists() is TRUE for a Unix socket (its mode shares the
+  # directory bit); stat() says it is neither a file nor a folder. A folder
+  # stands in for the socket, stat() made to say "other" as it does for one.
+  d <- withr::local_tempdir()
+  local_mocked_bindings(
+    .rmbl_path_kind = function(path) "other",
+    .package = "rmoriebricklayer"
+  )
+  e <- tryCatch(loadprov(d), error = conditionMessage)
+  expect_match(
+    e,
+    "`path` is not a regular file (a device, a pipe or a socket)",
+    fixed = TRUE
+  )
+  expect_false(grepl("folder|directory", e))
+})

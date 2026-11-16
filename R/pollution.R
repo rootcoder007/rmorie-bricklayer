@@ -2068,7 +2068,7 @@ format.rmbl_plr_boot <- function(x, ...) {
   if (!file.exists(expcsv)) {
     return(sprintf("exposure CSV not found: %s", expcsv))
   }
-  if (dir.exists(expcsv)) {
+  if (.rmbl_isdir(expcsv)) {
     return(sprintf("exposure CSV is a directory, not a file: %s", expcsv))
   }
   empty <- sprintf(

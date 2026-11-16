@@ -74,13 +74,14 @@ loadprov <- function(path) {
   if (!file.exists(path)) {
     return(NULL)
   }
-  if (dir.exists(path)) {
+  if (.rmbl_isdir(path)) {
     stop(
       sprintf("`path` is a directory, not a provenance file: %s", path),
       call. = FALSE
     )
   }
-  p <- .rmbl_read_json(path, simplify = FALSE)
+  # a device, a pipe or a socket is refused in the shared file check's words
+  p <- .rmbl_read_json(.rmbl_file1(path, "path"), simplify = FALSE)
   if (is.list(p) && !is.data.frame(p) && !is.object(p)) {
     p <- .rmbl_cls(.rmbl_prov_shape(p), "rmbl_provenance")
   }
