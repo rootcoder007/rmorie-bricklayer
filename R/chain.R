@@ -48,6 +48,16 @@
 #' accept them under those rules, with a warning that they were sealed with the
 #' weaker scheme. Appending to such a chain adds scheme-2 entries.
 #'
+#' The label is digested as UTF-8, the same bytes in every locale: text
+#' that is valid UTF-8 is read as UTF-8, other text is converted from its
+#' encoding mark or the session's encoding, and \code{chnapp()} refuses a
+#' label that is neither. Up to 1.1.0 an unmarked label that is not ASCII
+#' was digested as the session's encoding read it, so a chain made in the C
+#' locale with such a label verified only in the C locale; it no longer
+#' verifies in any locale (its stored digests cover other bytes), and it is
+#' rebuilt by appending its entries again. Chains made in a UTF-8 locale, and
+#' chains whose labels are ASCII or missing, verify as before.
+#'
 #' \code{chnvrf()} walks the chain from the start: an entry fails when
 #' its \code{prev} is not the previous link, its \code{scheme} is neither 2
 #' nor absent, or its \code{digest} does not recompute (compared in constant
@@ -76,8 +86,9 @@
 #' signature an attacker who rewrites the whole chain leaves it internally
 #' consistent, because recomputing every link is cheap.
 #'
-#' Error: a \code{chain} that does not come from \code{chnnew()} (for
-#' \code{chnapp()}, \code{chnhead()} and \code{chnvrf()}).
+#' Errors: a \code{chain} that does not come from \code{chnnew()} (for
+#' \code{chnapp()}, \code{chnhead()} and \code{chnvrf()}); a \code{label}
+#' that is not text (\code{chnapp()}).
 #'
 #' @param chain A chain from \code{chnnew()} or \code{chnapp()}.
 #' @param entry Any object to record. It is digested through
@@ -165,6 +176,16 @@ chnapp <- function(chain, entry, label = NA_character_) {
   prev <- chnhead(chain)
   payload <- .rmbl_entry_digest(entry)
   label <- as.character(label)[1L]
+  if (!is.na(label)) {
+    label <- .rmbl_utf8_text(label)
+    if (is.na(label)) {
+      stop(
+        "chnapp: `label` holds text that is neither valid UTF-8 nor text ",
+        "of this locale",
+        call. = FALSE
+      )
+    }
+  }
   rec <- list(
     label = label,
     payload = payload,
@@ -402,12 +423,39 @@ format.bricklayer_chain_check <- function(x, ...) {
   if (scheme == 1L) {
     return(csha256(paste0(prev, ":", payload)))
   }
-  lab <- if (length(label) != 1L || is.na(label)) {
-    "0"
+  if (length(label) != 1L || is.na(label)) {
+    lab <- "0"
   } else {
-    paste0("1", enc2utf8(as.character(label)))
+    lab <- .rmbl_utf8_text(label)
+    # a label that is no text has no digest, so the link cannot verify
+    if (is.na(lab)) {
+      return("")
+    }
+    lab <- paste0("1", lab)
   }
   csha256(paste0("v2|", prev, "|", payload, "|", lab))
+}
+
+#' Text as UTF-8 bytes that do not depend on the session's locale.
+#'
+#' enc2utf8() reads unmarked text as the locale's encoding: in a C locale the
+#' UTF-8 bytes of a label such as "caf\u00e9" came out as other bytes, so its
+#' link digested differently there and a chain made in one locale failed in
+#' the other. Unmarked text that is valid UTF-8 is taken as UTF-8, other
+#' unmarked text is converted from the locale's encoding, and marked text
+#' from its mark.
+#' @param x One string.
+#' @return `x` in UTF-8, or NA when it is neither valid UTF-8 nor text of
+#'   the locale.
+#' @noRd
+.rmbl_utf8_text <- function(x) {
+  x <- as.character(x)
+  y <- if (Encoding(x) == "unknown" && !validUTF8(x)) {
+    iconv(x, "", "UTF-8")
+  } else {
+    enc2utf8(.rmbl_utf8(x))
+  }
+  if (is.na(y) || !validUTF8(y)) NA_character_ else y
 }
 
 #' Computes a deterministic SHA-256 digest of an R object.

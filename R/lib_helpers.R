@@ -1121,7 +1121,9 @@ wrtxtfb <- function(text, path) {
 #' @return One string.
 #' @noRd
 .rmbl_fields <- function(x) {
-  x <- enc2utf8(as.character(x))
+  # UTF-8 bytes whatever the locale (enc2utf8() alone rewrote unmarked
+  # UTF-8 text in a C locale)
+  x <- .rmbl_as_utf8(as.character(x))
   paste(ifelse(is.na(x), "~", paste0(nchar(x, type = "bytes"), ":", x)),
         collapse = "")
 }

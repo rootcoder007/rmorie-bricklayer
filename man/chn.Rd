@@ -83,6 +83,16 @@ include the writer's R version). \code{chnvrf()} and \code{chnseal()} still
 accept them under those rules, with a warning that they were sealed with the
 weaker scheme. Appending to such a chain adds scheme-2 entries.
 
+The label is digested as UTF-8, the same bytes in every locale: text
+that is valid UTF-8 is read as UTF-8, other text is converted from its
+encoding mark or the session's encoding, and \code{chnapp()} refuses a
+label that is neither. Up to 1.1.0 an unmarked label that is not ASCII
+was digested as the session's encoding read it, so a chain made in the C
+locale with such a label verified only in the C locale; it no longer
+verifies in any locale (its stored digests cover other bytes), and it is
+rebuilt by appending its entries again. Chains made in a UTF-8 locale, and
+chains whose labels are ASCII or missing, verify as before.
+
 \code{chnvrf()} walks the chain from the start: an entry fails when
 its \code{prev} is not the previous link, its \code{scheme} is neither 2
 nor absent, or its \code{digest} does not recompute (compared in constant
@@ -110,8 +120,9 @@ Signing is what turns tamper-EVIDENT into tamper-PROOF: without a
 signature an attacker who rewrites the whole chain leaves it internally
 consistent, because recomputing every link is cheap.
 
-Error: a \code{chain} that does not come from \code{chnnew()} (for
-\code{chnapp()}, \code{chnhead()} and \code{chnvrf()}).
+Errors: a \code{chain} that does not come from \code{chnnew()} (for
+\code{chnapp()}, \code{chnhead()} and \code{chnvrf()}); a \code{label}
+that is not text (\code{chnapp()}).
 }
 }
 \examples{

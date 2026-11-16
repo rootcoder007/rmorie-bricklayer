@@ -85,3 +85,45 @@ test_that("chains and their checks print as boxes", {
   e <- chnnew()
   o1_expect_box(o1_box(e), e, "Manifest chain", "(empty)")
 })
+
+test_that("a label digests to the same bytes in every locale", {
+  lab <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xc3, 0xa9)))
+  here <- chnapp(chnnew(), "x", label = lab)$entries[[1L]]$digest
+  # the digest rmoriebricklayer 1.1.0 gives in a UTF-8 locale
+  expect_true(startsWith(here, "2bee4f27559cddda"))
+  skip_if_lowmem()
+  f <- withr::local_tempfile(fileext = ".rds")
+  code <- paste0(
+    "ch <- rmoriebricklayer::chnapp(rmoriebricklayer::chnnew(), 'x', ",
+    "label = rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xc3, 0xa9)))); ",
+    "saveRDS(ch, ", deparse(f), "); ",
+    "cat(ch$entries[[1]]$digest, rmoriebricklayer::chnvrf(ch)$valid)"
+  )
+  out <- withr::with_envvar(
+    c(
+      LC_ALL = "C",
+      LANG = "C",
+      R_TESTS = NA,
+      R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep)
+    ),
+    system2(
+      file.path(R.home("bin"), "Rscript"),
+      c("--vanilla", "-e", shQuote(code)),
+      stdout = TRUE,
+      stderr = FALSE
+    )
+  )
+  expect_identical(utils::tail(out, 1L), paste(here, "TRUE"))
+  expect_true(chnvrf(readRDS(f))$valid)
+})
+
+test_that("a label that is no text is refused, and never verifies", {
+  skip_if(isTRUE(l10n_info()[["Latin-1"]]))
+  expect_error(
+    chnapp(chnnew(), "x", label = "caf\xe9"),
+    "chnapp: `label` holds text that is neither valid UTF-8 nor text"
+  )
+  ch <- chnapp(chnnew(), "x", label = "cafe")
+  ch$entries[[1L]]$label <- "caf\xe9"
+  expect_false(chnvrf(ch)$valid)
+})
