@@ -607,7 +607,9 @@ wrtxtfb <- function(text, path) {
     .rmbl_fetch_url(x, dest)
     x <- dest
   }
-  txt <- if (length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x)) {
+  isf <- length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x)
+  # text that is also a device's name (nul, con on Windows) stays text
+  txt <- if (isf && .rmbl_isreg(x)) {
     x <- .rmbl_file1(x, "path")
     paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
   } else {

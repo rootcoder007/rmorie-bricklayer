@@ -2271,7 +2271,13 @@ dload <- function(
 #' @noRd
 .bl_data_get_failed <- function(rc, label, dest) {
   msg <- conditionMessage(rc)
-  if (grepl("\\b410\\b|Gone", msg)) {
+  # the status is looked for outside the destination's own name: a
+  # temporary file's name is random hex and now and then holds "403"
+  st <- msg
+  for (pth in unique(c(dest, dirname(dest)))) {
+    if (nzchar(pth)) st <- gsub(pth, "", st, fixed = TRUE)
+  }
+  if (grepl("\\b410\\b|Gone", st)) {
     stop(
       label,
       " is not served by data.rmorie.com: ICPSR's terms do not allow ",
@@ -2279,7 +2285,7 @@ dload <- function(
       call. = FALSE
     )
   }
-  if (grepl("401|403|Unauthorized|Forbidden", msg)) {
+  if (grepl("\\b(401|403)\\b|Unauthorized|Forbidden", st)) {
     stop(
       sprintf(
         paste(

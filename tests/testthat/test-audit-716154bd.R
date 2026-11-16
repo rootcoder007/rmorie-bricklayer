@@ -571,3 +571,15 @@ test_that("N12: a damaged cached manifest is fetched again, once", {
   })
   expect_error(dmnf(), "the cached manifest .* is damaged, and a fresh one")
 })
+
+test_that("a destination whose name holds 403 is not a refusal by the site", {
+  ns <- asNamespace("rmoriebricklayer")
+  d <- file.path(tempdir(), "file39372a58a403", "sub", "t.csv.gz")
+  rc <- simpleError(paste0("cannot open file '", d, "': No such file"))
+  e <- tryCatch(ns$.bl_data_get_failed(rc, "db/t", d), error = conditionMessage)
+  expect_false(grepl("asked for a key", e, fixed = TRUE))
+  rc <- simpleError(paste0("HTTP 403 for ", d))
+  e <- tryCatch(ns$.bl_data_get_failed(rc, "db/t", d), error = conditionMessage)
+  expect_match(e, "asked for a key", fixed = TRUE)
+})
+

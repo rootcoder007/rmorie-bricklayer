@@ -421,7 +421,9 @@ format.bricklayer_timestamp <- function(x, ...) {
       call. = FALSE
     )
   }
-  if (is.character(x) && length(x) == 1L && file.exists(x)) {
+  # a token given as text that is also a device's name (nul, con on
+  # Windows) is text, not a file
+  if (is.character(x) && length(x) == 1L && file.exists(x) && .rmbl_isreg(x)) {
     x <- .rmbl_file1(x, what)
     b <- readBin(x, "raw", file.size(x))
     # a PEM file is base64 between markers; DER is what everything here

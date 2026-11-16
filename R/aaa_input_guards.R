@@ -813,6 +813,10 @@
 #' @param max The largest size read, in bytes.
 #' @return The path.
 #' @noRd
+.rmbl_isreg <- function(path) {
+  identical(.rmbl_path_kind(path.expand(path)), "regular")
+}
+
 .rmbl_file1 <- function(path, what = "path", max = Inf) {
   path <- .rmbl_string1(path, what)
   kind <- .rmbl_path_kind(path.expand(path))
