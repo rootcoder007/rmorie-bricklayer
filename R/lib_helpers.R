@@ -448,13 +448,14 @@ wrtxtfb <- function(text, path) {
 #' @return NULL, invisibly.
 #' @noRd
 .rmbl_sha256_path <- function(path) {
-  if (
-    !is.character(path) ||
-      length(path) != 1L ||
-      is.na(path) ||
-      !file.exists(path) ||
-      dir.exists(path)
-  ) {
+  # a name the system cannot convert (bytes that are not text, on Windows)
+  # stops file.exists() itself: such a path is no file either
+  ok <- is.character(path) && length(path) == 1L && !is.na(path) &&
+    isTRUE(tryCatch(
+      file.exists(path) && !dir.exists(path),
+      error = function(e) FALSE
+    ))
+  if (!ok) {
     stop(
       sprintf(
         "sha256file: %s is not a file",
