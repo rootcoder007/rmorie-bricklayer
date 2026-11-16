@@ -11,7 +11,7 @@
   the text after the byte on its line was dropped unread, so a bundle
   file could carry bytes that were never checked.
   [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
-  refuses an empty hmac secret and
+  refuses an empty HMAC secret and
   [`cpsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.md)
   verifies nothing under one, as
   [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
@@ -22,7 +22,7 @@
 - [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
   and `rmbl verify` fail when no capsule is found under the path: a
   folder with nothing to check (empty, or whose capsule was deleted or
-  moved into a `.git` or `.rmbl-cache` folder, which stay unsearched)
+  moved into a `.git` or `.rmbl-cache` folder, which stay not searched)
   passed as `ok`, also with `pubkey` (`--public-key`) given, and
   `rmbl verify` exited 0. The result now has one failed `no_capsule` row
   and the status `error`, the report says that no capsule was found and
