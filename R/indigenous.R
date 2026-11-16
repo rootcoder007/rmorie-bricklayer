@@ -1544,7 +1544,7 @@ format.rmbl_trc_progress <- function(x, ...) {
 .rmbl_dsr_check <- function(events, pop, std) {
   if (!length(std) || !all(is.finite(std)) || any(std < 0) || sum(std) <= 0) {
     stop(
-      "agestd: `std` must be non-negative finite counts, one per age group, ",
+      "agestd: `std` must be non-negative counts, one per age group, ",
       "not all zero",
       call. = FALSE
     )

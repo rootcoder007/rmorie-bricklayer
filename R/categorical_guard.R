@@ -1306,27 +1306,7 @@ rlblfrns <- function(vlabs, obs, cnts = NULL) {
   if (!is.null(cnts)) {
     cnts <- stats::setNames(.rmbl_num(cnts, "cnts"), names(cnts))
   } # read by label
-  # vectors: a data frame (a list) has names and failed in `[` in base R's
-  # words
-  if (
-    !.rmbl_is_atomic(vlabs) || !.rmbl_is_atomic(obs) ||
-      is.null(names(vlabs)) || is.null(names(obs))
-  ) {
-    stop(
-      "rlblfrns: `vlabs` (code = label) and `obs` ",
-      "(true = seen) ",
-      "must both be named vectors",
-      call. = FALSE
-    )
-  }
-  labs <- unname(vlabs)
-  if (!setequal(names(obs), labs) || !setequal(unname(obs), labs)) {
-    stop(
-      "rlblfrns: `obs` must be a permutation of the labels ",
-      "in `vlabs`",
-      call. = FALSE
-    )
-  }
+  labs <- .rlbl_check(vlabs, obs)
   .obs <- unname(obs[labs])
   mech <- .rlbl_mechanisms(vlabs, labs, cnts)
   rows <- lapply(names(mech), function(nm) {
@@ -2262,4 +2242,33 @@ format.rmbl_transfer_check <- function(x, ...) {
     ))
   }
   NULL
+}
+
+#' rlblfrns()'s `vlabs` and `obs`, checked: named vectors (a data frame, a
+#' list, has names and failed in `[` in base R's words), `obs` a
+#' permutation of the labels.
+#' @param vlabs,obs As for rlblfrns().
+#' @return The labels, unnamed.
+#' @noRd
+.rlbl_check <- function(vlabs, obs) {
+  if (
+    !.rmbl_is_atomic(vlabs) || !.rmbl_is_atomic(obs) ||
+      is.null(names(vlabs)) || is.null(names(obs))
+  ) {
+    stop(
+      "rlblfrns: `vlabs` (code = label) and `obs` ",
+      "(true = seen) ",
+      "must both be named vectors",
+      call. = FALSE
+    )
+  }
+  labs <- unname(vlabs)
+  if (!setequal(names(obs), labs) || !setequal(unname(obs), labs)) {
+    stop(
+      "rlblfrns: `obs` must be a permutation of the labels ",
+      "in `vlabs`",
+      call. = FALSE
+    )
+  }
+  labs
 }

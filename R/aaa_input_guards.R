@@ -784,7 +784,7 @@
 #' a pipe, a socket), from stat() in rmbl_flock.c. Sourced into a bundle,
 #' where there is no compiled code, base R tells only a folder from a file,
 #' and every existing path that is not a folder counts as regular.
-#' @param path One path, expanded.
+#' @param path The path to look at, expanded.
 #' @return One string.
 #' @noRd
 .rmbl_path_kind <- function(path) {

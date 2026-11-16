@@ -552,12 +552,9 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20, offline = FALSE) {
       call. = FALSE
     )
   }
-  if (
-    !is.numeric(tmout) || length(tmout) != 1L || !is.finite(tmout) ||
-      tmout < 1 || tmout > .Machine$integer.max
-  ) {
-    # bounded as bldl() bounds it: 1e15 became NA in as.integer() with a
-    # warning
+  # bounded as bldl() bounds it: 1e15 became NA in as.integer() with a
+  # warning
+  if (!.rmbl_is_num1(tmout, 1) || tmout > .Machine$integer.max) {
     stop(
       "`tmout` must be a single number of seconds, from 1 to 2147483647",
       call. = FALSE

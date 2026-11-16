@@ -1337,6 +1337,9 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     usage_error(sub("\n$", "", .bl_verb_usage(verb, .bl_prog())))
   }
   root <- pos[[1L]]
+  if (!dir.exists(root)) {
+    usage_error(sprintf("%s is not a directory", .rmbl_printable(root)))
+  }
   # an option given an empty value is a mistake, not the option left out:
   # `--public-key ""` (an unset CI variable) verified a self-signed bundle as if
   # no key were pinned (audit of 30bed8e, #10)
@@ -1349,14 +1352,6 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   if (!is.null(pk) && !grepl("^[0-9a-fA-F]{16,}$", pk)) {
     usage_error(paste0("--public-key must be the public key or key id in ",
                        "hexadecimal (16 digits at least)"))
-  }
-  # a missing input is a failed verb (status 1), as for pack and wayback;
-  # checked after the options, so a usage error is still status 2
-  if (!dir.exists(root)) {
-    stop(
-      sprintf("%s is not a directory", .rmbl_printable(root)),
-      call. = FALSE
-    )
   }
   root
 }
@@ -1403,8 +1398,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   key <- Sys.getenv("RMBL_KEY")
   .Call(C_rmbl_env_wipe, "RMBL_KEY")
   Sys.unsetenv("RMBL_KEY")
-  o <- .bl_capsule_output(rest, flag, usage_error)
   root <- .bl_capsule_root(verb, rest, flag, usage_error)
+  o <- .bl_capsule_output(rest, flag, usage_error)
   fail_on <- o$fail_on
   fmt <- o$fmt
   if (verb == "refresh") {
@@ -1527,15 +1522,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   out,
   usage_error
 ) {
-  scheme <- flag("--scheme") %||% "hmac"
-  # the options are checked before the key is asked for: a bad scheme was
-  # reported as a missing key
-  if (!scheme %in% c("hmac", pqcbknd())) {
-    usage_error(sprintf(
-      "--scheme takes hmac or a scheme pqcbknd() lists, not '%s'",
-      .rmbl_printable(scheme)
-    ))
-  }
+  scheme <- .bl_cli_sign_scheme(flag, usage_error)
   kf <- flag("--key-file")
   key <- .bl_cli_sign_key(key, kf, usage_error)
   glob <- flag("--manifests") %||% ""
@@ -1579,6 +1566,23 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     .bl_cli_xmss_report(xs, root, flag("--seen-log"), out)
   }
   .bl_cli_sign_check(root, scheme, key, pub, glob, flag, fmt, fail_on, out)
+}
+
+#' rmbl sign's --scheme, checked before the key is asked for: a bad scheme
+#' was reported as a missing key.
+#' @param flag The function that reads one of sign's options.
+#' @param usage_error The function that stops sign with status 2.
+#' @return The scheme, "hmac" when none is given.
+#' @noRd
+.bl_cli_sign_scheme <- function(flag, usage_error) {
+  scheme <- flag("--scheme") %||% "hmac"
+  if (!scheme %in% c("hmac", pqcbknd())) {
+    usage_error(sprintf(
+      "--scheme takes hmac or a scheme pqcbknd() lists, not '%s'",
+      .rmbl_printable(scheme)
+    ))
+  }
+  scheme
 }
 
 #' rmbl sign's key: from the environment, or from --key-file.
@@ -2092,6 +2096,15 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       "the data are marked synthetic: a ",
       "capsule holds the real data"
     ),
+    .bl_check_meanings_bundle()
+  )
+}
+
+#' The meanings of the failed checks of what a capsule's bundle covers.
+#' @return A named character vector: check name to meaning.
+#' @noRd
+.bl_check_meanings_bundle <- function() {
+  c(
     no_unlisted_files = paste0(
       "the capsule holds files the bundle does not cover: remove them or ",
       "sign again (cpsbndl())"

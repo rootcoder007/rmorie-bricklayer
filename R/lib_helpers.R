@@ -1204,13 +1204,54 @@ wrtxtfb <- function(text, path) {
   # /dev/null (NUL on Windows) is where output is sent to be discarded: it
   # is written to as it is, with no temporary beside it
   if (.rmbl_discard(path)) {
-    if (is.function(x)) {
-      con <- file(path, "wb")
-      on.exit(close(con), add = TRUE)
-      x(con)
-    }
-    return(invisible(path))
+    return(.rmbl_wdiscard(path, x))
   }
+  old <- .rmbl_wtarget(path)
+  tmp <- tempfile(".rmbl-", tmpdir = dirname(path), fileext = ".tmp")
+  on.exit(unlink(tmp), add = TRUE)
+  if (!is.function(x) && !is.raw(x)) {
+    x <- .rmbl_eol(
+      charToRaw(paste0(enc2utf8(as.character(x)), sep, collapse = ""))
+    )
+  }
+  why <- .rmbl_wput(tmp, path, x, size, private, binary)
+  if (!is.null(why)) {
+    stop(
+      .rmbl_fn(),
+      sprintf(
+        "could not write %s (%s); %s",
+        path,
+        why,
+        if (is.na(old)) "nothing was left there" else "the file is unchanged"
+      ),
+      call. = FALSE
+    )
+  }
+  if (!private) {
+    Sys.chmod(path, if (is.na(old)) "666" else old, use_umask = is.na(old))
+  }
+  invisible(path)
+}
+
+#' Sends output to /dev/null or NUL, where it is discarded.
+#' @param path The discarding target.
+#' @param x As for .rmbl_wfile(): a function is run on a connection to it.
+#' @return `path`, invisibly.
+#' @noRd
+.rmbl_wdiscard <- function(path, x) {
+  if (is.function(x)) {
+    con <- file(path, "wb")
+    on.exit(close(con), add = TRUE)
+    x(con)
+  }
+  invisible(path)
+}
+
+#' Refuses a target .rmbl_wfile() cannot write, in words.
+#' @param path The file to be written, expanded.
+#' @return Its mode when it is a file there now, else NA.
+#' @noRd
+.rmbl_wtarget <- function(path) {
   kind <- .rmbl_path_kind(path)
   if (kind == "other" && !file.exists(path)) {
     kind <- "missing"
@@ -1230,49 +1271,35 @@ wrtxtfb <- function(text, path) {
   if (!is.null(bad)) {
     stop(.rmbl_fn(), sprintf("cannot write %s: %s", path, bad), call. = FALSE)
   }
-  old <- if (kind == "regular") file.info(path)$mode else NA
-  tmp <- tempfile(".rmbl-", tmpdir = dirname(path), fileext = ".tmp")
-  on.exit(unlink(tmp), add = TRUE)
-  if (!is.function(x) && !is.raw(x)) {
-    x <- .rmbl_eol(
-      charToRaw(paste0(enc2utf8(as.character(x)), sep, collapse = ""))
-    )
+  if (kind == "regular") file.info(path)$mode else NA
+}
+
+#' Writes the content to the temporary and moves it over the target.
+#' @param tmp The temporary beside the target.
+#' @param path The target.
+#' @param x Bytes, or a function of a connection.
+#' @param size,private,binary As for .rmbl_wfile().
+#' @return NULL, or what went wrong.
+#' @noRd
+.rmbl_wput <- function(tmp, path, x, size, private, binary) {
+  if (is.function(x)) {
+    return(.rmbl_wconn(tmp, path, x, size, private, binary))
   }
-  why <- if (is.function(x)) {
-    .rmbl_wconn(tmp, path, x, size, private, binary)
-  } else if (exists("C_rmbl_write_file_checked")) {
-    .Call(C_rmbl_write_file_checked, tmp, path, x)
-  } else {
-    # sourced into a bundle: no compiled code, the connection writer
-    bytes <- x
-    .rmbl_wconn(
-      tmp,
-      path,
-      function(con) writeBin(bytes, con),
-      length(bytes),
-      private
-    )
+  if (exists("C_rmbl_write_file_checked")) {
+    return(.Call(C_rmbl_write_file_checked, tmp, path, x))
   }
-  if (!is.null(why)) {
-    stop(
-      .rmbl_fn(),
-      sprintf(
-        "could not write %s (%s); %s",
-        path,
-        why,
-        if (is.na(old)) "nothing was left there" else "the file is unchanged"
-      ),
-      call. = FALSE
-    )
-  }
-  if (!private) {
-    Sys.chmod(path, if (is.na(old)) "666" else old, use_umask = is.na(old))
-  }
-  invisible(path)
+  # sourced into a bundle: no compiled code, the connection writer
+  .rmbl_wconn(
+    tmp,
+    path,
+    function(con) writeBin(x, con),
+    length(x),
+    private
+  )
 }
 
 #' Writes a temporary file through a connection and renames it into place.
-#' @param tmp The temporary file.
+#' @param tmp The temporary file, written first.
 #' @param path The file it becomes.
 #' @param fill A function of the open binary connection that writes it.
 #' @param size The number of bytes `fill` must write, or NULL.
@@ -1283,53 +1310,68 @@ wrtxtfb <- function(text, path) {
 #' @noRd
 .rmbl_wconn <- function(tmp, path, fill, size, private = FALSE,
                         binary = TRUE) {
-  why <- character()
+  # what went wrong, kept in an environment the handlers add to
+  st <- new.env(parent = emptyenv())
+  st$why <- character()
   keep <- function(w) {
-    why <<- c(why, conditionMessage(w))
+    st$why <- c(st$why, conditionMessage(w))
     invokeRestart("muffleWarning")
   }
-  con <- NULL
-  own <- NULL
-  tryCatch(
+  own <- .rmbl_wconn_fill(tmp, fill, private, binary, st, keep)
+  if (!is.null(own)) {
+    stop(own)
+  }
+  if (!length(st$why) && !is.null(size) &&
+        !identical(file.size(tmp), as.numeric(size))) {
+    st$why <- sprintf("%.0f of %.0f bytes were written", file.size(tmp), size)
+  }
+  if (!length(st$why) &&
+        !withCallingHandlers(file.rename(tmp, path), warning = keep)) {
+    st$why <- c(st$why, "the finished file could not be moved into place")
+  }
+  if (length(st$why)) st$why[[1L]] else NULL
+}
+
+#' Opens the temporary, runs the writer and closes it, every warning and
+#' error kept in `st$why`.
+#' @param tmp The temporary to open.
+#' @param fill,private,binary As for .rmbl_wconn().
+#' @param st The environment whose `why` collects what went wrong.
+#' @param keep The warning handler that adds to `st$why`.
+#' @return The package's own refusal raised by `fill` (an error with no
+#'   call, as the byte cap of an inflated file is), to be raised again as it
+#'   is; else NULL.
+#' @noRd
+.rmbl_wconn_fill <- function(tmp, fill, private, binary, st, keep) {
+  st$con <- NULL
+  own <- tryCatch(
     withCallingHandlers(
       {
         if (private) {
           file.create(tmp)
           Sys.chmod(tmp, "0600")
         }
-        con <- file(tmp, if (binary) "wb" else "w")
-        fill(con)
-        done <- con
-        con <- NULL
+        st$con <- file(tmp, if (binary) "wb" else "w")
+        fill(st$con)
+        done <- st$con
+        st$con <- NULL
         close(done)
+        NULL
       },
       warning = keep
     ),
     error = function(e) {
-      # the package's own refusal (raised with call. = FALSE, as the byte
-      # cap of an inflated file is) is passed on as it is
-      if (is.null(conditionCall(e))) own <<- e
-      why <<- c(why, conditionMessage(e))
+      st$why <- c(st$why, conditionMessage(e))
+      if (is.null(conditionCall(e))) e
     }
   )
-  if (!is.null(con)) {
+  if (!is.null(st$con)) {
     tryCatch(
-      withCallingHandlers(close(con), warning = keep),
+      withCallingHandlers(close(st$con), warning = keep),
       error = function(e) NULL
     )
   }
-  if (!is.null(own)) {
-    stop(own)
-  }
-  if (!length(why) && !is.null(size) &&
-        !identical(file.size(tmp), as.numeric(size))) {
-    why <- sprintf("%.0f of %.0f bytes were written", file.size(tmp), size)
-  }
-  if (!length(why) &&
-        !withCallingHandlers(file.rename(tmp, path), warning = keep)) {
-    why <- c(why, "the finished file could not be moved into place")
-  }
-  if (length(why)) why[[1L]] else NULL
+  own
 }
 
 #' Adds text to the end of a file, whole or not at all.
@@ -1338,7 +1380,7 @@ wrtxtfb <- function(text, path) {
 #' .rmbl_wfile(), so a failed write leaves the file as it was: cat(append =
 #' TRUE) on a full disk left half a line and only warned. Each call rewrites
 #' the file, which suits the logs it serves (a line per URL or signature).
-#' @param path The file.
+#' @param path The log to add to.
 #' @param text The text added, written as it is (no line end is added).
 #' @return `path`, invisibly.
 #' @noRd
@@ -1406,7 +1448,7 @@ wrtxtfb <- function(text, path) {
 
 #' Whether a path is where output is discarded: /dev/null, or NUL on
 #' Windows.
-#' @param path One path, expanded.
+#' @param path The output path, expanded.
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_discard <- function(path) {

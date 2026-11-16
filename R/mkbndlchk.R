@@ -488,8 +488,9 @@ format.rmbl_bundle_audit <- function(x, ...) {
   on.exit(unlink(home, recursive = TRUE, force = TRUE), add = TRUE)
   # a check run inside R CMD check would hand the child its test startup
   .rmbl_local_env(c(R_TESTS = NA))
-  wd <- setwd(root)
-  on.exit(setwd(wd), add = TRUE)
+  # the run starts in the bundle's folder; this session's working folder
+  # is not changed for it
+  root <- normalizePath(root, winslash = "/")
   exe <- if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript"
   rscript <- file.path(R.home("bin"), exe)
   tmout <- .bndlchk_tmout()
@@ -498,9 +499,9 @@ format.rmbl_bundle_audit <- function(x, ...) {
     .bndlchk_ctr(rt, root, args, data, !synthetic && is.null(data), tmout,
                  log, out %||% file.path(home, "out"))
   } else if (isTRUE(win)) {
-    .bndlchk_win(rscript, args, home, tmout, log)
+    .bndlchk_win(rscript, args, home, tmout, log, root)
   } else {
-    .bndlchk_posix(rscript, args, home, tmout, log)
+    .bndlchk_posix(rscript, args, home, tmout, log, root)
   }
   if (identical(as.integer(r$status), 124L)) {
     cat(sprintf("\nstopped: the run took longer than %d seconds\n", tmout),
@@ -537,25 +538,25 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' @param home The run's HOME.
 #' @param tmout Seconds before the run is stopped.
 #' @param log The file the output goes to.
+#' @param wd The folder the run starts in (this session's stays as it is).
 #' @return A list: the exit status (124 when the run was stopped) and the
 #'   isolation used.
 #' @noRd
-.bndlchk_posix <- function(rscript, args, home, tmout, log) {
-  # job control (set -m) gives the run its own group; bash keeps it without
-  # a terminal, where dash turns it off
-  sh <- Sys.which("bash")
-  if (!nzchar(sh)) sh <- "/bin/sh"
-  envp <- Sys.which("env")
-  if (!nzchar(envp)) envp <- "/usr/bin/env"
+.bndlchk_posix <- function(rscript, args, home, tmout, log, wd = getwd()) {
+  pr <- .bndlchk_progs()
+  sh <- pr$sh
+  envp <- pr$env
   wrap <- file.path(home, "run.sh")
   .rmbl_wlines(.bndlchk_wrap(), wrap)
   # the run's mark: what still carries it afterwards outlived the run
   tag <- basename(tempfile("rmblchk"))
   env <- c(.rmbl_envmin(home), RMBL_CHKRUN = tag)
   pidns <- .bndlchk_unshare()
+  # started in `wd` by a shell that then becomes the run's own (exec)
   cmd <- c(
-    "-i", paste0(names(env), "=", env), pidns, sh, wrap, tmout,
-    file.path(home, "timed_out"), rscript, args
+    "-i", paste0(names(env), "=", env), pidns,
+    "/bin/sh", "-c", "cd \"$1\" && shift && exec \"$@\"", "sh", wd,
+    sh, wrap, tmout, file.path(home, "timed_out"), rscript, args
   )
   # this session the run's subreaper: what leaves the run stays below it
   reap <- .bndlchk_reaper(TRUE)
@@ -589,6 +590,19 @@ format.rmbl_bundle_audit <- function(x, ...) {
     units = units,
     blind = !reap && !length(pidns)
   )
+}
+
+#' The shell and env programs a POSIX run uses: bash, whose job control
+#' (set -m) gives the run its own group without a terminal, where dash
+#' turns it off; else /bin/sh, and /usr/bin/env when env is not found.
+#' @return A list: sh and env.
+#' @noRd
+.bndlchk_progs <- function() {
+  sh <- Sys.which("bash")
+  if (!nzchar(sh)) sh <- "/bin/sh"
+  envp <- Sys.which("env")
+  if (!nzchar(envp)) envp <- "/usr/bin/env"
+  list(sh = sh, env = envp)
 }
 
 #' Makes this R session the child subreaper of what it starts, or stops it
@@ -782,11 +796,11 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' credentials removed and HOME a temporary folder, for the run only, and
 #' the run started inside a job object that kills every process in it when
 #' the run ends or times out.
-#' @param rscript,args,home,tmout,log As for .bndlchk_posix().
+#' @param rscript,args,home,tmout,log,wd As for .bndlchk_posix().
 #' @return A list: the exit status (124 when the run was stopped) and the
 #'   isolation used.
 #' @noRd
-.bndlchk_win <- function(rscript, args, home, tmout, log) {
+.bndlchk_win <- function(rscript, args, home, tmout, log, wd = getwd()) {
   e <- unclass(Sys.getenv())
   drop <- .rmbl_envdrop(names(e), unname(e))
   tmp <- file.path(home, "tmp")
@@ -795,18 +809,19 @@ format.rmbl_bundle_audit <- function(x, ...) {
     HOME = home, R_USER = home, TMPDIR = tmp, TMP = tmp, TEMP = tmp
   ))
   cmd <- paste(shQuote(c(rscript, args), type = "cmd"), collapse = " ")
-  list(status = .rmbl_wjob(cmd, log, tmout), mode = "job object")
+  list(status = .rmbl_wjob(cmd, log, tmout, wd), mode = "job object")
 }
 
 #' Runs a command line inside a Windows job object (rmbl_winjob.c).
 #' @param cmd The command line.
 #' @param log The file its output goes to.
 #' @param tmout Seconds before the job is killed.
+#' @param wd The folder the job starts in.
 #' @return The exit status, 124 when the job was killed at the limit.
 #' @noRd
-.rmbl_wjob <- function(cmd, log, tmout) {
+.rmbl_wjob <- function(cmd, log, tmout, wd = getwd()) {
   .Call(C_rmbl_winjob, cmd, normalizePath(log, mustWork = FALSE),
-        as.numeric(tmout))
+        as.numeric(tmout), normalizePath(wd, mustWork = FALSE))
 }
 
 #' The container runtime a check asked for.
@@ -1277,7 +1292,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' mkbndlchk() called it unconditionally ("there is no package called
 #' 'withr'"). NA unsets a variable; each is put back as it was, or unset
 #' again, when the caller returns.
-#' @param vals A named character vector.
+#' @param vals The variables to set, NA to unset, by name.
 #' @param frame The caller's frame.
 #' @return The old values, invisibly.
 #' @noRd
@@ -1293,7 +1308,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
 }
 
 #' Sets environment variables, unsetting those given as NA.
-#' @param vals A named character vector.
+#' @param vals Names and values; NA unsets.
 #' @return NULL, invisibly.
 #' @noRd
 .rmbl_put_env <- function(vals) {
@@ -1301,7 +1316,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
   if (any(na)) {
     Sys.unsetenv(names(vals)[na])
   }
-  if (any(!na)) {
+  if (!all(na)) {
     do.call(Sys.setenv, as.list(vals[!na]))
   }
   invisible(NULL)

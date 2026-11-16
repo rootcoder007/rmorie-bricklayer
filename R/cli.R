@@ -115,13 +115,17 @@
 #'
 #' Errors are not raised: every error is written to \code{out} as
 #' \code{"PROG: message"} and turned into the exit status. The status is 0
-#' on success, 1 when the verb failed (an error, nothing found, no route, an
-#' input file or folder that does not exist, or output that could not be
-#' written to standard output, which is said on standard error), 2 for a
-#' usage error (an unknown verb or option, a missing value, a value an
-#' option does not take; options are checked before any key or input is
-#' read) and 130 when interrupted (Ctrl-C). The command name in messages is
-#' the environment variable \code{RMBL_PROG}, else
+#' on success, 1 when the verb failed (an error, nothing found, no route, or
+#' output that could not be written to standard output, which is said on
+#' standard error), 2 for a usage error (an unknown verb or option, a
+#' missing value, a value an option does not take) and 130 when interrupted
+#' (Ctrl-C). An input that does not exist gives, verb by verb: 2 for the
+#' folder of \code{verify}, \code{drift}, \code{report}, \code{refresh}
+#' and \code{sign} (a usage error, checked with the arguments), and 1 for
+#' the project of \code{pack} and the results file of \code{wayback} (a
+#' failed verb). The options of \code{pack} and \code{sign} are checked
+#' before anything is read or a key is asked for. The command name in
+#' messages is the environment variable \code{RMBL_PROG}, else
 #' \code{rmoriebricklayer}.
 #'
 #' Side effects: during the call \code{options(morie.progress = TRUE)} is set,
@@ -250,33 +254,6 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   invisible(.bl_cli_wrote(st, out, prog))
 }
 
-#' The exit status once the output is out: on the command line (the
-#' launcher sets RMBL_PROG) a verb whose text could not be written to
-#' standard output (a full disk, a closed descriptor) failed, status 1, said
-#' on standard error. `rmbl version > /dev/full` exited 0 with its output
-#' lost.
-#' @param st The verb's status.
-#' @param out The output function; only cat() writes to standard output.
-#' @param prog The command's name.
-#' @return The status.
-#' @noRd
-.bl_cli_wrote <- function(st, out, prog) {
-  if (!identical(out, cat) || !nzchar(Sys.getenv("RMBL_PROG")) ||
-        .bl_stdout_ok()) {
-    return(st)
-  }
-  cat(
-    sprintf("%s: the output could not be written to standard output\n", prog),
-    file = stderr()
-  )
-  if (identical(as.integer(st), 0L)) 1L else st
-}
-
-#' Whether standard output took everything written to it (rmbl_flock.c).
-#' @return TRUE or FALSE.
-#' @noRd
-.bl_stdout_ok <- function() .Call(C_rmbl_stdout_ok)
-
 #' Install the rmoriebricklayer command-line launcher
 #'
 #' Writes small launcher scripts into a directory on your PATH so that
@@ -364,6 +341,33 @@ instcli <- function(
   ))
   invisible(targets[[1L]]) # the primary launcher's path; rmbl sits beside it
 }
+
+#' The exit status once the output is out: on the command line (the
+#' launcher sets RMBL_PROG) a verb whose text could not be written to
+#' standard output (a full disk, a closed descriptor) failed, status 1, said
+#' on standard error. `rmbl version > /dev/full` exited 0 with its output
+#' lost.
+#' @param st The verb's status.
+#' @param out The output function; only cat() writes to standard output.
+#' @param prog The command's name.
+#' @return The status.
+#' @noRd
+.bl_cli_wrote <- function(st, out, prog) {
+  if (!identical(out, cat) || !nzchar(Sys.getenv("RMBL_PROG")) ||
+        .bl_stdout_ok()) {
+    return(st)
+  }
+  cat(
+    sprintf("%s: the output could not be written to standard output\n", prog),
+    file = stderr()
+  )
+  if (identical(as.integer(st), 0L)) 1L else st
+}
+
+#' Whether standard output took everything written to it (rmbl_flock.c).
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_stdout_ok <- function() .Call(C_rmbl_stdout_ok)
 
 #' The command line's words, or the status that ends the call.
 #'
@@ -2802,12 +2806,7 @@ instcli <- function(
         lib
       ),
       sprintf("export RMBL_PROG=%s", nm),
-      # standard output closed: R would write its output into a file of its
-      # own on descriptor 1 (as inst/bin/rmbl)
-      "if ! (exec 3>&1) 2>/dev/null; then",
-      "  echo \"$RMBL_PROG: standard output is closed\" >&2",
-      "  exit 1",
-      "fi",
+      .bl_launcher_sh_stdout(),
       # as inst/bin/rmbl: the shell stays (no exec) and notes a Ctrl-C, so
       # one that ends R while it is still starting ("Execution halted",
       # status 1), or as R quits (status 0), is reported as 130; any other
@@ -2823,6 +2822,20 @@ instcli <- function(
   )
   Sys.chmod(target, "0755")
   target
+}
+
+#' The lines of a /bin/sh launcher that stop it, status 1, when its
+#' standard output is closed: R would take descriptor 1 for a file of its
+#' own and write its output there (as inst/bin/rmbl).
+#' @return Character.
+#' @noRd
+.bl_launcher_sh_stdout <- function() {
+  c(
+    "if ! (exec 3>&1) 2>/dev/null; then",
+    "  echo \"$RMBL_PROG: standard output is closed\" >&2",
+    "  exit 1",
+    "fi"
+  )
 }
 
 #' Stops unless instcli()'s `name` is one or more command names.

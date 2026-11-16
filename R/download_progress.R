@@ -355,7 +355,8 @@ bldl <- function(
 .bl_dl_file <- function(url, dest, size, draw) {
   con <- file(sub("^file://", "", url, ignore.case = TRUE), open = "rb")
   on.exit(close(con), add = TRUE)
-  got <- 0
+  n <- new.env(parent = emptyenv())
+  n$got <- 0
   .rmbl_wfile(dest, function(out) {
     repeat {
       chunk <- readBin(con, what = "raw", n = 1048576L)
@@ -363,11 +364,11 @@ bldl <- function(
         break
       }
       writeBin(chunk, out)
-      got <<- got + length(chunk)
-      draw(got, if (is.na(size)) 0 else size)
+      n$got <- n$got + length(chunk)
+      draw(n$got, if (is.na(size)) 0 else size)
     }
   })
-  got
+  n$got
 }
 
 #' A download through the package's transport.

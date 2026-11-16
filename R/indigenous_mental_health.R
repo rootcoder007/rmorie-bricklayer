@@ -2281,7 +2281,7 @@ indiex <- function(
 .sp_check_std <- function(std) {
   if (!length(std) || !all(is.finite(std)) || any(std < 0) || sum(std) <= 0) {
     stop(
-      "stdprev: `std` must be non-negative finite counts, one per age group, ",
+      "stdprev: `std` must be non-negative counts, one per age group, ",
       "not all zero",
       call. = FALSE
     )

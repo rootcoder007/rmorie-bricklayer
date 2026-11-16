@@ -439,8 +439,9 @@ test_that("the run's environment keeps only what R needs", {
 
 test_that("the default time limit is 30 minutes", {
   got <- new.env()
-  stub <- function(rscript, args, home, tmout, log) {
+  stub <- function(rscript, args, home, tmout, log, wd) {
     got$tmout <- tmout
+    got$wd <- wd
     got$home <- home
     list(status = 0L, mode = "process group")
   }
@@ -449,6 +450,7 @@ test_that("the default time limit is 30 minutes", {
   withr::local_options(rmbl.bundle.timeout = NULL)
   expect_identical(.bndlchk_run(root, NULL, FALSE)$status, 0L)
   expect_identical(got$tmout, 1800L)
+  expect_identical(got$wd, normalizePath(root, winslash = "/"))
   expect_false(dir.exists(got$home))
   withr::local_options(rmbl.bundle.timeout = 60)
   .bndlchk_run(root, NULL, FALSE)
@@ -533,8 +535,9 @@ test_that("the Windows way, and no bash or env on the PATH", {
              file.path(root, "setup_and_run.R"))
   withr::local_envvar(RMBL_KEY = "fake", GITHUB_TOKEN = "fake")
   got <- new.env()
-  local_mocked_bindings(.rmbl_wjob = function(cmd, log, tmout) {
+  local_mocked_bindings(.rmbl_wjob = function(cmd, log, tmout, wd) {
     got$cmd <- cmd
+    got$wd <- wd
     got$env <- names(Sys.getenv())
     got$home <- Sys.getenv("HOME")
     got$tmout <- tmout
@@ -547,6 +550,8 @@ test_that("the Windows way, and no bash or env on the PATH", {
   expect_false(any(c("RMBL_KEY", "GITHUB_TOKEN") %in% got$env))
   expect_false(got$home == Sys.getenv("HOME"))
   expect_identical(got$tmout, 1800L)
+  # the run starts in the bundle's folder; this session's stays where it was
+  expect_identical(got$wd, normalizePath(root, winslash = "/"))
   expect_identical(Sys.getenv("RMBL_KEY"), "fake")
 
   local_mocked_bindings(Sys.which = function(names) "", .package = "base")

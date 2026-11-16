@@ -265,7 +265,7 @@ extern int rmbl_progress_bar(double, double, int, int, int, int, int, int, int, 
 extern const char *rmbl_progress_spinner(double, int);
 
 /* a bundle check's run inside a Windows job object (rmbl_winjob.c) */
-extern SEXP C_rmbl_winjob(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_winjob(SEXP, SEXP, SEXP, SEXP);
 /* a bundle check's survivors found and reaped on Linux (rmbl_reap.c) */
 extern SEXP C_rmbl_subreap(SEXP);
 extern SEXP C_rmbl_reap(SEXP);
@@ -415,7 +415,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_blake2b",           (DL_FUNC) &C_rmbl_blake2b,           3},
     {"C_rmbl_pbkdf2",            (DL_FUNC) &C_rmbl_pbkdf2,            4},
     {"C_rmbl_os_random",         (DL_FUNC) &C_rmbl_os_random,         1},
-    {"C_rmbl_winjob",            (DL_FUNC) &C_rmbl_winjob,            3},
+    {"C_rmbl_winjob",            (DL_FUNC) &C_rmbl_winjob,            4},
     {"C_rmbl_subreap",           (DL_FUNC) &C_rmbl_subreap,           1},
     {"C_rmbl_reap",              (DL_FUNC) &C_rmbl_reap,              1},
     {NULL, NULL, 0}

@@ -1011,9 +1011,10 @@ test_that("verify refuses a local source that refresh and drift refuse", {
 
 test_that("rmbl exit statuses follow the page", {
   no_stdin()
-  # a missing input is a failed verb, as for pack and wayback
+  # a missing folder for verify is a usage error (2), as 1.1.0 gives it;
+  # pack and wayback call a missing input a failed verb (1)
   r <- run_cli(c("verify", file.path(tempdir(), "no-such-capsule")))
-  expect_identical(r$status, 1L)
+  expect_identical(r$status, 2L)
   expect_match(r$out, "is not a directory", fixed = TRUE)
   # an option without its value is a usage error before anything runs
   r <- run_cli(c("pack", ".", "--dest"))

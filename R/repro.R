@@ -365,17 +365,18 @@ capdeps <- function(pkgs = loadedNamespaces()) {
 .mnf_row <- function(nm, rec, f, data, tol) {
   # a statistic's warnings belong to its row, not to the caller (mean() of
   # data = NULL leaked "argument is not numeric or logical")
-  warned <- character()
+  w <- new.env(parent = emptyenv())
+  w$msg <- character()
   got <- tryCatch(
-    withCallingHandlers(f(data), warning = function(w) {
-      warned <<- c(warned, conditionMessage(w))
+    withCallingHandlers(f(data), warning = function(x) {
+      w$msg <- c(w$msg, conditionMessage(x))
       invokeRestart("muffleWarning")
     }),
     error = function(e) e
   )
   row <- .mnf_row_of(nm, rec, got, tol)
-  if (length(warned)) {
-    row$detail <- paste0(row$detail, "; it warned: ", toString(unique(warned)))
+  if (length(w$msg)) {
+    row$detail <- paste0(row$detail, "; it warned: ", toString(unique(w$msg)))
   }
   row
 }

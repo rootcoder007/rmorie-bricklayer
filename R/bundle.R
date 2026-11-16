@@ -598,8 +598,8 @@ format.bricklayer_bundle_check <- function(x, ...) {
 #' A failed row for fields of a bundle or its file records that cpsbndl()
 #' never writes, which the signature does not cover; nothing when there are
 #' none.
-#' @param bundle The bundle.
-#' @param note_row The function that records the check.
+#' @param bundle The bundle whose fields are checked.
+#' @param note_row Records the fields check as a row.
 #' @return NULL, invisibly.
 #' @noRd
 .bl_bnd_fields_row <- function(bundle, note_row) {

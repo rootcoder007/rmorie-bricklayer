@@ -35,8 +35,11 @@ test_that("#7: the reservoir loop answers an interrupt", {
   skip_on_cran()
   skip_on_os("windows")
   skip_if(!nzchar(Sys.which("python3")), "python3 runs the probe")
-  # 3e9 items took 37.9 s through a Ctrl-C; the loop now takes it
-  r <- interrupt_probe("rsvidx(3e9, 1)", after = 1)
+  # 3e9 items took 37.9 s through a Ctrl-C; the loop now takes it. Since
+  # 1.0.3 `n` is at most 2147483647, and 3e9 was refused before the loop
+  # ran (the test skipped as inconclusive): the largest accepted size still
+  # runs for many seconds
+  r <- interrupt_probe("rsvidx(2147483647, 1)", after = 1)
   skip_if(startsWith(r, "inconclusive"), r)
   expect_identical(r, "interrupt")
 })

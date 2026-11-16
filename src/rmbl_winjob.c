@@ -67,14 +67,17 @@ static int rmbl_wjob_wait(HANDLE proc, double limit_ms) {
     }
 }
 
-SEXP C_rmbl_winjob(SEXP cmd, SEXP log, SEXP tmout) {
+/* `dir` is the folder the run starts in: the caller's own working folder is not
+ * changed for it */
+SEXP C_rmbl_winjob(SEXP cmd, SEXP log, SEXP tmout, SEXP dir) {
     if (!isString(cmd) || LENGTH(cmd) != 1 || !isString(log) ||
-        LENGTH(log) != 1)
-        error("the command line and the log must be single strings");
+        LENGTH(log) != 1 || !isString(dir) || LENGTH(dir) != 1)
+        error("the command line, the log and the folder must be single strings");
     double limit = asReal(tmout);
     if (ISNAN(limit) || limit <= 0) error("the time limit must be positive");
     wchar_t *wcmd = rmbl_wjob_wide(cmd, "command line");
     wchar_t *wlog = rmbl_wjob_wide(log, "log file name");
+    wchar_t *wdir = rmbl_wjob_wide(dir, "folder");
 
     SECURITY_ATTRIBUTES sa;
     memset(&sa, 0, sizeof sa);
@@ -108,7 +111,7 @@ SEXP C_rmbl_winjob(SEXP cmd, SEXP log, SEXP tmout) {
     memset(&pi, 0, sizeof pi);
     /* started suspended, so it is in the job before it can start anything */
     BOOL ok = CreateProcessW(NULL, wcmd, NULL, NULL, TRUE,
-                             CREATE_SUSPENDED | CREATE_NO_WINDOW, NULL, NULL,
+                             CREATE_SUSPENDED | CREATE_NO_WINDOW, NULL, wdir,
                              &si, &pi);
     DWORD e = ok ? 0 : GetLastError();
     CloseHandle(in);
@@ -144,10 +147,11 @@ SEXP C_rmbl_winjob(SEXP cmd, SEXP log, SEXP tmout) {
 
 #else
 
-SEXP C_rmbl_winjob(SEXP cmd, SEXP log, SEXP tmout) {
+SEXP C_rmbl_winjob(SEXP cmd, SEXP log, SEXP tmout, SEXP dir) {
     (void) cmd;
     (void) log;
     (void) tmout;
+    (void) dir;
     error("the job-object runner is for Windows only");
     return R_NilValue; /* not reached */
 }

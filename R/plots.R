@@ -123,15 +123,7 @@ blpal <- function(
   if (is.null(n)) {
     return(base)
   }
-  n <- .rmbl_num(n, "n", integer = TRUE)
-  # bounded: .Machine$integer.max colours asked for 16 GB
-  if (length(n) != 1L || is.na(n) || n < 1L || n > 1e5) {
-    stop(
-      "`n` must be a single positive whole number, at most 100,000",
-      call. = FALSE
-    )
-  }
-  n <- as.integer(n)[1L]
+  n <- .bl_pal_n(n)
   if (name %in% c("okabe", "grey")) {
     return(rep_len(base, n))
   }
@@ -5607,14 +5599,7 @@ plotbump <- function(
 #' @noRd
 .bl_cal_days <- function(x, y) {
   dt <- tryCatch(as.Date(x), error = function(e) NULL)
-  if (
-    is.null(dt) ||
-      anyNA(dt[!is.na(x)]) ||
-      # an infinite date has no year (as.integer() warned, then NA)
-      any(is.infinite(unclass(dt))) ||
-      length(dt) != length(y) ||
-      !is.numeric(y)
-  ) {
+  if (!.bl_cal_ok(dt, x, y)) {
     stop(
       "plotcal: `x` must be dates, one per value of the numeric `y`",
       call. = FALSE
@@ -5912,7 +5897,7 @@ plotbump <- function(
 .bl_check_bw <- function(bw) {
   rules <- c("nrd0", "nrd", "ucv", "bcv", "sj", "sj-ste", "sj-dpi")
   ok <- if (is.character(bw)) {
-    length(bw) == 1L && !is.na(bw) && validEnc(bw) && tolower(bw) %in% rules
+    .bl_bw_rule(bw, rules)
   } else {
     is.numeric(bw) && length(bw) == 1L && is.finite(bw) && bw > 0 &&
       bw < 1e15
@@ -5928,4 +5913,41 @@ plotbump <- function(
     )
   }
   invisible(bw)
+}
+
+#' blpal()'s `n`, checked: a whole number from 1 to 100,000 (a plot needs a
+#' few dozen; .Machine$integer.max colours asked for 16 GB).
+#' @param n The number of colours asked for.
+#' @return `n` as an integer.
+#' @noRd
+.bl_pal_n <- function(n) {
+  n <- .rmbl_num(n, "n", integer = TRUE)
+  if (length(n) != 1L || is.na(n) || n < 1L || n > 1e5) {
+    stop(
+      "`n` must be a single positive whole number, at most 100,000",
+      call. = FALSE
+    )
+  }
+  as.integer(n)[1L]
+}
+
+#' Whether plotcal()'s `x` reads as dates, one per numeric `y`: not an
+#' infinite date (it has no year; as.integer() warned, then NA).
+#' @param dt `x` as dates, or NULL when as.Date() refused it.
+#' @param x,y As for plotcal().
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_cal_ok <- function(dt, x, y) {
+  !is.null(dt) && !anyNA(dt[!is.na(x)]) && !any(is.infinite(unclass(dt))) &&
+    length(dt) == length(y) && is.numeric(y)
+}
+
+#' Whether a bandwidth given as text is one rule density() knows, said by
+#' one string that is valid text (bytes that are not failed in tolower()).
+#' @param bw The bandwidth given.
+#' @param rules The rule names.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_bw_rule <- function(bw, rules) {
+  length(bw) == 1L && !is.na(bw) && validEnc(bw) && tolower(bw) %in% rules
 }

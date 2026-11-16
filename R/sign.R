@@ -1206,9 +1206,12 @@ xmssadv <- function(key, sig, msg = NULL) {
 #' the signer's private key.
 #'
 #' The encoding is strict: the signature's hex must be lower case, as
-#' [cpssign()] writes it; a field [cpssign()] does not write for the scheme
-#' is not accepted; and the context and pre-hash name a standardised
-#' signature records must be the ones it is verified under. Each of these
+#' [cpssign()]
+#' writes it; a field
+#' [cpssign()]
+#' does not write for the scheme is not accepted; and the context and
+#' pre-hash name a standardised signature records must be the ones it is
+#' verified under. Each of these
 #' returns `FALSE`: such an object is not the one that was made, although
 #' the bytes verified are the same.
 #'
@@ -1958,7 +1961,7 @@ xmssfgt <- function(keytofgt = NULL) {
 #' scheme (and `key_state`, which XMSS objects of 0.5.9 to 0.5.12 carry and
 #' which is warned about). A field no writer makes is covered by no
 #' signature, so an object carrying one is not the one that was made.
-#' @param sig The signature.
+#' @param sig The signature whose fields are checked.
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_vrf_known_fields <- function(sig) {
@@ -1968,7 +1971,8 @@ xmssfgt <- function(keytofgt = NULL) {
   } else if (identical(sc, "xmss-sha256")) {
     c("auth", "index", "root", "height", "randomizer", "wire", "key_state")
   } else {
-    c("context", "prehash")
+    # a FIPS module key (fipsmkg()) records the module that signed
+    c("context", "prehash", "module")
   }
   all(names(sig) %in% c("scheme", "signature", more))
 }
@@ -1981,7 +1985,7 @@ xmssfgt <- function(keytofgt = NULL) {
 #' fields), so a recorded value that differs was edited and the object is
 #' refused. An absent field is accepted. A context is raw bytes in R and
 #' their base64 text in JSON (\code{""} for none).
-#' @param sig The signature.
+#' @param sig The signature whose context and pre-hash are checked.
 #' @param ctx The context bytes used.
 #' @param ph The pre-hash name used.
 #' @return TRUE or FALSE.
@@ -2045,9 +2049,11 @@ xmssfgt <- function(keytofgt = NULL) {
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_vrf_xmss_shape <- function(sig) {
-  .rmbl_vrf_lowhex(sig$signature) && nzchar(sig$signature) &&
-    .rmbl_vrf_lowhex(sig$auth) && nzchar(sig$auth) &&
-    .rmbl_vrf_lowhex(sig[["randomizer"]]) && nzchar(sig[["randomizer"]]) &&
+  all(vapply(
+    list(sig$signature, sig$auth, sig[["randomizer"]]),
+    function(x) .rmbl_vrf_lowhex(x) && nzchar(x),
+    NA
+  )) &&
     .rmbl_vrf_whole(sig$index) &&
     .rmbl_vrf_whole(sig$height) &&
     .rmbl_vrf_one_string(sig$root) &&

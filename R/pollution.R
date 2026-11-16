@@ -428,9 +428,7 @@ polbrdn <- function(
   rare = FALSE,
   hirate = FALSE
 ) {
-  .rmbl_no_fn(poll = poll)
-  # bytes that are not text: refused, not printed in the message below
-  .rmbl_valid_text(poll, "poll")
+  .pollution_poll_arg(poll)
   pol <- .pollution_pollutant(poll)
   if (is.na(pol)) {
     stop(
@@ -1527,10 +1525,7 @@ format.rmbl_plr_boot <- function(x, ...) {
 #' @return \code{"PM2.5"}, \code{"NO2"} or NA.
 #' @noRd
 .pollution_pollutant <- function(pollutant) {
-  if (
-    !is.character(pollutant) || length(pollutant) != 1L || is.na(pollutant) ||
-      !validEnc(pollutant)
-  ) {
+  if (!.rmbl_is_str1(pollutant) || !validEnc(pollutant)) {
     return(NA_character_)
   }
   key <- gsub("[^a-z0-9]", "", tolower(pollutant))
@@ -3600,4 +3595,16 @@ format.rmbl_plr_boot <- function(x, ...) {
       sprintf("Concentration index of exposure: %.4f", p$equity$concidx)
     }
   )
+}
+
+#' polbrdn()'s `poll` before it is looked up: not a function, and text,
+#' since bytes that are not text were printed in the refusal of an unknown
+#' pollutant (base R's "input string 1 is invalid").
+#' @param poll The pollutant name given.
+#' @return `poll`, invisibly.
+#' @noRd
+.pollution_poll_arg <- function(poll) {
+  .rmbl_no_fn(poll = poll)
+  .rmbl_valid_text(poll, "poll")
+  invisible(poll)
 }
