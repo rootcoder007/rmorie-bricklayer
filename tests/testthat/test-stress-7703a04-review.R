@@ -358,7 +358,17 @@ test_that(
       assign("out", c(out, s), envir = parent.env(environment()))
     })
     expect_false(any(grepl("--token KEY|--token \\[KEY\\]", out)))
-    for (lc in c("C", "en_US.UTF-8")) {
+    # a locale that is not installed is not an error of Sys.setlocale() but
+    # a warning, after which the block would run in the old locale: the
+    # UTF-8 leg takes the first UTF-8 locale this machine has
+    has <- function(lc) {
+      old <- Sys.getlocale("LC_CTYPE")
+      on.exit(Sys.setlocale("LC_CTYPE", old), add = TRUE)
+      nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", lc)))
+    }
+    u8 <- Filter(has, c("en_US.UTF-8", "C.UTF-8", "en_US.utf8"))
+    if (!length(u8)) skip("no UTF-8 locale is installed here")
+    for (lc in c("C", u8[1L])) {
       r <- try(
         withr::with_locale(c(LC_CTYPE = lc), {
           nm <- paste0(
