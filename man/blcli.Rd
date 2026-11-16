@@ -127,10 +127,14 @@ asked as \code{ask} would ask it.
 
 Errors are not raised: every error is written to \code{out} as
 \code{"PROG: message"} and turned into the exit status. The status is 0
-on success, 1 when the verb failed (an error, nothing found, no route), 2
-for a usage error (an unknown verb or option, a missing value) and 130 when
-interrupted (Ctrl-C). The command name in messages is the environment
-variable \code{RMBL_PROG}, else \code{rmoriebricklayer}.
+on success, 1 when the verb failed (an error, nothing found, no route, an
+input file or folder that does not exist, or output that could not be
+written to standard output, which is said on standard error), 2 for a
+usage error (an unknown verb or option, a missing value, a value an
+option does not take; options are checked before any key or input is
+read) and 130 when interrupted (Ctrl-C). The command name in messages is
+the environment variable \code{RMBL_PROG}, else
+\code{rmoriebricklayer}.
 
 Side effects: during the call \code{options(morie.progress = TRUE)} is set,
 so downloads draw a progress bar; when \code{RMBL_PROG} is set (the

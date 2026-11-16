@@ -8,6 +8,12 @@ export RMBL_PROG=rmoriebricklayer
 # A Ctrl-C while R is still starting (before that handler exists) ends R with "Execution halted"
 # and status 1: the shell notes the interrupt and reports 130 for it (final audit of 1.0.0, #11),
 # also when R ended 0 (a Ctrl-C as R quit; audit of 21478080, L7).
+# Standard output closed (rmbl >&-): R would take descriptor 1 for a file of
+# its own and the output would go there; the command fails, status 1.
+if ! (exec 3>&1) 2>/dev/null; then
+  echo "$RMBL_PROG: standard output is closed" >&2
+  exit 1
+fi
 rc=
 trap 'rc=130' INT
 Rscript --no-save --no-restore -e 'suppressPackageStartupMessages({ q <- tryCatch(rmoriebricklayer::blcli(), interrupt = function(e) 130L); quit(status = as.integer(q)) })' "$@"

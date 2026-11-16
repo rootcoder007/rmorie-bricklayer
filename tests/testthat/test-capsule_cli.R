@@ -1008,3 +1008,89 @@ test_that("verify refuses a local source that refresh and drift refuse", {
   x <- cpschk(cp$dir, "verify", fp = FALSE)
   expect_false("source: local path" %in% x$rows$check)
 })
+
+test_that("rmbl exit statuses follow the page", {
+  no_stdin()
+  # a missing input is a failed verb, as for pack and wayback
+  r <- run_cli(c("verify", file.path(tempdir(), "no-such-capsule")))
+  expect_identical(r$status, 1L)
+  expect_match(r$out, "is not a directory", fixed = TRUE)
+  # an option without its value is a usage error before anything runs
+  r <- run_cli(c("pack", ".", "--dest"))
+  expect_identical(r$status, 2L)
+  expect_match(r$out, "--dest needs a value", fixed = TRUE)
+  # the scheme is checked before the key is asked for
+  root <- withr::local_tempdir()
+  withr::local_envvar(RMBL_KEY = NA)
+  r <- run_cli(c("sign", root, "--scheme", "bogus"))
+  expect_identical(r$status, 2L)
+  expect_match(
+    r$out,
+    "--scheme takes hmac or a scheme pqcbknd() lists, not 'bogus'",
+    fixed = TRUE
+  )
+})
+
+test_that("output lost on the command line is a failed verb", {
+  withr::local_envvar(RMBL_PROG = "rmbl")
+  testthat::local_mocked_bindings(.bl_stdout_ok = function() FALSE)
+  err <- utils::capture.output(
+    st <- .bl_cli_wrote(0L, cat, "rmbl"),
+    type = "message"
+  )
+  expect_identical(st, 1L)
+  expect_identical(
+    err,
+    "rmbl: the output could not be written to standard output"
+  )
+  utils::capture.output(st <- .bl_cli_wrote(2L, cat, "rmbl"), type = "message")
+  expect_identical(st, 2L)
+  # another output function, or blcli() called from R: as it was
+  expect_identical(.bl_cli_wrote(0L, function(s) NULL, "rmbl"), 0L)
+  withr::local_envvar(RMBL_PROG = NA)
+  expect_identical(.bl_cli_wrote(0L, cat, "rmbl"), 0L)
+  expect_true(.bl_stdout_ok() %in% c(TRUE, FALSE))
+})
+
+test_that("rmbl version to a full disk exits 1", {
+  skip_on_os("windows")
+  skip_if_not(file.exists("/dev/full"))
+  skip_if_lowmem()
+  err <- withr::local_tempfile()
+  st <- withr::with_envvar(
+    c(
+      RMBL_PROG = "rmbl",
+      R_TESTS = NA,
+      R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep)
+    ),
+    system2(
+      file.path(R.home("bin"), "Rscript"),
+      c("--vanilla", "-e",
+        shQuote("quit(status = rmoriebricklayer::blcli('version'))")),
+      stdout = "/dev/full",
+      stderr = err
+    )
+  )
+  expect_identical(as.integer(st), 1L)
+  expect_match(
+    paste(readLines(err), collapse = "\n"),
+    "the output could not be written to standard output",
+    fixed = TRUE
+  )
+})
+
+test_that("a launcher with standard output closed exits 1", {
+  skip_on_os("windows")
+  l <- system.file("bin", "rmbl", package = "rmoriebricklayer")
+  skip_if_not(nzchar(l))
+  err <- withr::local_tempfile()
+  st <- system2("sh", c("-c", shQuote(paste(shQuote(l), "version >&-"))),
+                stdout = FALSE, stderr = err)
+  expect_identical(as.integer(st), 1L)
+  expect_identical(readLines(err), "rmbl: standard output is closed")
+  d <- withr::local_tempdir()
+  p <- instcli(dir = d, name = "rmbl")
+  st <- system2("sh", c("-c", shQuote(paste(shQuote(p), "version >&-"))),
+                stdout = FALSE, stderr = err)
+  expect_identical(as.integer(st), 1L)
+})

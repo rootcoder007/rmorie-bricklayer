@@ -115,10 +115,14 @@
 #'
 #' Errors are not raised: every error is written to \code{out} as
 #' \code{"PROG: message"} and turned into the exit status. The status is 0
-#' on success, 1 when the verb failed (an error, nothing found, no route), 2
-#' for a usage error (an unknown verb or option, a missing value) and 130 when
-#' interrupted (Ctrl-C). The command name in messages is the environment
-#' variable \code{RMBL_PROG}, else \code{rmoriebricklayer}.
+#' on success, 1 when the verb failed (an error, nothing found, no route, an
+#' input file or folder that does not exist, or output that could not be
+#' written to standard output, which is said on standard error), 2 for a
+#' usage error (an unknown verb or option, a missing value, a value an
+#' option does not take; options are checked before any key or input is
+#' read) and 130 when interrupted (Ctrl-C). The command name in messages is
+#' the environment variable \code{RMBL_PROG}, else
+#' \code{rmoriebricklayer}.
 #'
 #' Side effects: during the call \code{options(morie.progress = TRUE)} is set,
 #' so downloads draw a progress bar; when \code{RMBL_PROG} is set (the
@@ -242,11 +246,36 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   }
   prog <- .bl_prog()
   a <- .bl_cli_parse(as.character(args), prog, out)
-  if (!is.null(a$st)) {
-    return(invisible(a$st))
-  }
-  invisible(.bl_cli_dispatch(a$verb, a$rest, a$tail_args, out, prog))
+  st <- a$st %||% .bl_cli_dispatch(a$verb, a$rest, a$tail_args, out, prog)
+  invisible(.bl_cli_wrote(st, out, prog))
 }
+
+#' The exit status once the output is out: on the command line (the
+#' launcher sets RMBL_PROG) a verb whose text could not be written to
+#' standard output (a full disk, a closed descriptor) failed, status 1, said
+#' on standard error. `rmbl version > /dev/full` exited 0 with its output
+#' lost.
+#' @param st The verb's status.
+#' @param out The output function; only cat() writes to standard output.
+#' @param prog The command's name.
+#' @return The status.
+#' @noRd
+.bl_cli_wrote <- function(st, out, prog) {
+  if (!identical(out, cat) || !nzchar(Sys.getenv("RMBL_PROG")) ||
+        .bl_stdout_ok()) {
+    return(st)
+  }
+  cat(
+    sprintf("%s: the output could not be written to standard output\n", prog),
+    file = stderr()
+  )
+  if (identical(as.integer(st), 0L)) 1L else st
+}
+
+#' Whether standard output took everything written to it (rmbl_flock.c).
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_stdout_ok <- function() .Call(C_rmbl_stdout_ok)
 
 #' Install the rmoriebricklayer command-line launcher
 #'
@@ -2773,6 +2802,12 @@ instcli <- function(
         lib
       ),
       sprintf("export RMBL_PROG=%s", nm),
+      # standard output closed: R would write its output into a file of its
+      # own on descriptor 1 (as inst/bin/rmbl)
+      "if ! (exec 3>&1) 2>/dev/null; then",
+      "  echo \"$RMBL_PROG: standard output is closed\" >&2",
+      "  exit 1",
+      "fi",
       # as inst/bin/rmbl: the shell stays (no exec) and notes a Ctrl-C, so
       # one that ends R while it is still starting ("Execution halted",
       # status 1), or as R quits (status 0), is reported as 130; any other
@@ -2876,6 +2911,9 @@ instcli <- function(
 #' @noRd
 .bl_cli_pack <- function(rest, flag, out) {
   pos <- .bl_cli_packpos(rest)
+  # an option without its value is a usage error before anything runs:
+  # `pack . --dest` reported the folder as having no config.json (status 1)
+  for (f in .bl_pack_valued) flag(f)
   ow <- "--overwrite" %in% rest
   show <- function(x) {
     out(paste0(paste(utils::capture.output(print(x)), collapse = "\n"), "\n"))
