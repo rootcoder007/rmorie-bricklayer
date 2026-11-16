@@ -1,5 +1,7 @@
 # rmoriebricklayer 1.1.1
 
+* `drvkey()` with a password longer than 64 bytes takes as long as with a short one: PBKDF2 hashed such a password again on every iteration (64,000 bytes at 10,000 iterations took 6 s, a megabyte at the default 100,000 about ten minutes). The keys derived are unchanged. `ralloc()` and `rallocvrf()` derive a seed word's bytes with the compiled SHA-256 (a 1 MB word took 211 s), with the same result.
+
 * The pre-built vignettes no longer print folders of the machine that built them: the starter project, the bundle, the sample ledger and the stale XMSS key are shown by name.
 
 * The help of `kemdecap()` names the element of `kemencap()`'s result to pass, `ciphertext` (it said `ct`).

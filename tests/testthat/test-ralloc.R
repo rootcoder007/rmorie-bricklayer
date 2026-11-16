@@ -258,3 +258,13 @@ test_that("arm and stratum names blank but for Unicode spaces are refused", {
   }
   expect_s3_class(ralloc(4, arms = c("A", "Bé")), "rmbl_alloc")
 })
+
+test_that("ralloc() derives a seed word's bytes as before", {
+  # the compiled SHA-256 in place of the pure-R port: the same bytes
+  s <- strrep("seed word ", 30)
+  want <- c(
+    .rmbl_sha256_raw(charToRaw(paste0("ralloc seed 1:", s))),
+    .rmbl_sha256_raw(charToRaw(paste0("ralloc seed 2:", s)))
+  )[1:48]
+  expect_identical(.ralloc_seed(s)$raw, want)
+})

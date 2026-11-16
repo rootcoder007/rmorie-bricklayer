@@ -478,10 +478,10 @@ plot.rmbl_alloc <- function(x, ...) {
     }
   } else {
     s <- .rmbl_string1(as.character(seed), "seed")
-    seed <- c(
-      .rmbl_sha256_raw(charToRaw(paste0("ralloc seed 1:", s))),
-      .rmbl_sha256_raw(charToRaw(paste0("ralloc seed 2:", s)))
-    )[1:48]
+    # the compiled SHA-256: the pure-R one (kept for standalone bundles) took
+    # 0.15 ms a character, 211 s for a seed word of 1 MB
+    h <- function(i) .bl_hex_raw(csha256(charToRaw(paste0(i, s))))
+    seed <- c(h("ralloc seed 1:"), h("ralloc seed 2:"))[1:48]
   }
   list(raw = seed, hex = paste(format(as.hexmode(as.integer(seed)),
                                       width = 2L), collapse = ""))

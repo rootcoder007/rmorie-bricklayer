@@ -233,6 +233,17 @@ static int pbkdf2_inner(const unsigned char *pass, size_t passlen,
         block.assign(salt, salt + saltlen);
     }
     block.resize(saltlen + 4, 0);
+    /* a password longer than the 64-byte SHA-256 block is hashed once here: HMAC hashes such a
+     * key first (RFC 2104), so the MAC under H(pass) is the MAC under pass, and every
+     * iteration no longer hashes the whole password again (64,000 bytes at 10,000 iterations
+     * took 6 s against 0.02 s) */
+    unsigned char hk[32];
+    rmbl_ct::Guard ghk(hk, sizeof hk);
+    if (passlen > 64) {
+        rmbl_sha256_raw(pass, passlen, hk);
+        pass = hk;
+        passlen = 32;
+    }
     /* the raw MAC, never its hex form: decoding hex branches on the
      * characters, and every character here derives from the password */
     auto hmac_raw = [&](const unsigned char *m, size_t mlen,

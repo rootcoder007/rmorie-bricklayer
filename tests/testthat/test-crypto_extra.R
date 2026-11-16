@@ -186,3 +186,19 @@ test_that("cblake2b keeps a missing input missing", {
   expect_identical(cblake2b(c("abc", NA)), c(cblake2b("abc"), NA_character_))
   expect_identical(cblake2b(NA_character_), NA_character_)
 })
+
+test_that("drvkey() of a password longer than a block is unchanged", {
+  # PBKDF2 hashes a password longer than the 64-byte block once now; the
+  # output must be the one HMAC gives with the long password itself (RFC
+  # 2104 hashes such a key per MAC), built here from chmac() the slow way
+  xr <- function(a, b) as.raw(bitwXor(as.integer(a), as.integer(b)))
+  for (n in c(64L, 65L, 200L)) {
+    p <- strrep("p", n)
+    u1 <- .bl_hex_raw(chmac(p, c(charToRaw("salt"), as.raw(c(0, 0, 0, 1)))))
+    u2 <- .bl_hex_raw(chmac(p, u1))
+    u3 <- .bl_hex_raw(chmac(p, u2))
+    want <- paste(format(as.hexmode(as.integer(xr(xr(u1, u2), u3))),
+                         width = 2L), collapse = "")
+    expect_identical(drvkey(p, "salt", iter = 3L), want, info = n)
+  }
+})
