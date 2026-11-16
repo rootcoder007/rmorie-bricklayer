@@ -813,8 +813,13 @@
 #' @param max The largest size read, in bytes.
 #' @return The path.
 #' @noRd
+# Whether a text-or-file argument that exists on disk is taken as a file: a
+# regular file is, and so is anything written as a path (it has a
+# separator), which .rmbl_file1() then refuses when it is a device. A bare
+# word that is also a device's name (nul, con on Windows) stays text.
 .rmbl_isreg <- function(path) {
-  identical(.rmbl_path_kind(path.expand(path)), "regular")
+  identical(.rmbl_path_kind(path.expand(path)), "regular") ||
+    grepl("[/\\\\]", path)
 }
 
 .rmbl_file1 <- function(path, what = "path", max = Inf) {

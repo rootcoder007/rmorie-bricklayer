@@ -3525,8 +3525,8 @@ bricklayer_json_unbox <- function(x) {
     }
     if (file.exists(txt)) {
       .rmbl_notdir(txt, "txt", "fromjs")
-      # only a regular file is read as one: a short text that is also the
-      # name of a device (nul or con on Windows) is JSON text for the parser
+      # a bare word that is also the name of a device (nul or con on
+      # Windows) is JSON text for the parser; a path to a device is refused
       if (.rmbl_isreg(txt)) {
         txt <- file(.rmbl_file1(txt, "txt"))
       }
