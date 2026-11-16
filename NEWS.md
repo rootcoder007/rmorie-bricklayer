@@ -1,5 +1,7 @@
 # rmoriebricklayer 1.1.1
 
+* The help of `kemdecap()` names the element of `kemencap()`'s result to pass, `ciphertext` (it said `ct`).
+
 * `cwtd()` gives the same mean and variance whatever the scale of the weights: equal weights of any size give `var(x)` (`rep(1e-160, 3)` gave 0.99999443, `rep(1e-165, 3)` and `rep(1e154, 3)` gave `NaN`), and one weight much larger than the rest no longer gives `NaN` (`c(1, 1e200, 1)` gives 0.5). The weights are scaled by a power of two, which is exact, and the denominator is summed without cancelling. `sprd()` with reliability weights does the same. The help of `cwtd()` said all-zero weights give `NaN`; they are refused, and the help now says so.
 
 * A hash-chain label is digested as UTF-8, the same bytes in every locale: a label that is not ASCII digested differently in the C locale, so a chain made there failed `chnvrf()` in a UTF-8 locale (a false alarm of tampering). `chnapp()` refuses a label that is neither valid UTF-8 nor text of the session's encoding. Chains made in a UTF-8 locale, or whose labels are ASCII, verify as before; a chain made in the C locale by an earlier version with a label that is not ASCII no longer verifies anywhere and is rebuilt by appending its entries again.

@@ -10,7 +10,7 @@ kemdecap(key, ct, masked = getOption("rmoriebricklayer.masked", TRUE))
 \item{key}{A key from
 \code{\link[=kemkg]{kemkg()}}, with its secret half.}
 
-\item{ct}{The \code{ct} element from
+\item{ct}{The \code{ciphertext} element from
 \code{\link[=kemencap]{kemencap()}},
 as a hex string or a raw vector, of the length for the key's level.}
 

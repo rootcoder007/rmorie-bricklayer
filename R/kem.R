@@ -312,7 +312,7 @@ kemencap <- function(key, m = NULL) {
 #'
 #' @param key A key from
 #' [kemkg()], with its secret half.
-#' @param ct The \code{ct} element from
+#' @param ct The \code{ciphertext} element from
 #'   [kemencap()],
 #'   as a hex string or a raw vector, of the length for the key's level.
 #' @param masked Logical, \code{TRUE} or \code{FALSE}.
