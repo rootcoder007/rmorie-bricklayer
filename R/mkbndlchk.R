@@ -487,8 +487,9 @@ format.rmbl_bundle_audit <- function(x, ...) {
   dir.create(file.path(home, "tmp"), recursive = TRUE)
   on.exit(unlink(home, recursive = TRUE, force = TRUE), add = TRUE)
   # a check run inside R CMD check would hand the child its test startup
-  withr::local_envvar(R_TESTS = NA)
-  withr::local_dir(root)
+  .rmbl_local_env(c(R_TESTS = NA))
+  wd <- setwd(root)
+  on.exit(setwd(wd), add = TRUE)
   exe <- if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript"
   rscript <- file.path(R.home("bin"), exe)
   tmout <- .bndlchk_tmout()
@@ -789,7 +790,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
   e <- unclass(Sys.getenv())
   drop <- .rmbl_envdrop(names(e), unname(e))
   tmp <- file.path(home, "tmp")
-  withr::local_envvar(c(
+  .rmbl_local_env(c(
     stats::setNames(rep(NA_character_, length(drop)), drop),
     HOME = home, R_USER = home, TMPDIR = tmp, TMP = tmp, TEMP = tmp
   ))
@@ -1268,4 +1269,40 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' @noRd
 .bndlchk_u32 <- function(b, i) {
   .bndlchk_u16(b, i) + 65536 * .bndlchk_u16(b, i + 2L)
+}
+
+#' Sets environment variables until the calling function returns.
+#'
+#' What withr::local_envvar() does, in base R: withr is only suggested, and
+#' mkbndlchk() called it unconditionally ("there is no package called
+#' 'withr'"). NA unsets a variable; each is put back as it was, or unset
+#' again, when the caller returns.
+#' @param vals A named character vector.
+#' @param frame The caller's frame.
+#' @return The old values, invisibly.
+#' @noRd
+.rmbl_local_env <- function(vals, frame = parent.frame()) {
+  old <- Sys.getenv(names(vals), unset = NA, names = TRUE)
+  .rmbl_put_env(vals)
+  do.call(
+    on.exit,
+    list(bquote(.rmbl_put_env(.(old))), add = TRUE),
+    envir = frame
+  )
+  invisible(old)
+}
+
+#' Sets environment variables, unsetting those given as NA.
+#' @param vals A named character vector.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_put_env <- function(vals) {
+  na <- is.na(vals)
+  if (any(na)) {
+    Sys.unsetenv(names(vals)[na])
+  }
+  if (any(!na)) {
+    do.call(Sys.setenv, as.list(vals[!na]))
+  }
+  invisible(NULL)
 }

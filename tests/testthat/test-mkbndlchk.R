@@ -881,3 +881,22 @@ test_that("user services a run starts are found, stopped and fail the check", {
   expect_identical(.bndlchk_units(sc), character())
   expect_identical(.bndlchk_units(""), character())
 })
+
+test_that("mkbndlchk() needs no suggested package to set its environment", {
+  # withr is only suggested: three unconditional withr:: calls stopped every
+  # run without it ("there is no package called 'withr'")
+  withr::local_envvar(RMBL_T1 = "old", RMBL_T2 = NA)
+  f <- function() {
+    .rmbl_local_env(c(RMBL_T1 = NA, RMBL_T2 = "new"))
+    c(Sys.getenv("RMBL_T1", NA), Sys.getenv("RMBL_T2", NA))
+  }
+  expect_identical(f(), c(NA_character_, "new"))
+  expect_identical(Sys.getenv("RMBL_T1", NA), "old")
+  expect_identical(Sys.getenv("RMBL_T2", NA), NA_character_)
+  ns <- asNamespace("rmoriebricklayer")
+  uses <- Filter(function(n) {
+    g <- get(n, envir = ns)
+    is.function(g) && any(grepl("withr::", deparse(g), fixed = TRUE))
+  }, ls(ns, all.names = TRUE))
+  expect_identical(uses, character())
+})
