@@ -379,4 +379,3 @@ test_that("text that is also the name of a device is parsed, not opened", {
     )
   }
 })
-

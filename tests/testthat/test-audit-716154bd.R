@@ -582,4 +582,3 @@ test_that("a destination whose name holds 403 is not a refusal by the site", {
   e <- tryCatch(ns$.bl_data_get_failed(rc, "db/t", d), error = conditionMessage)
   expect_match(e, "asked for a key", fixed = TRUE)
 })
-
