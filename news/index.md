@@ -2,6 +2,23 @@
 
 ## rmoriebricklayer 1.1.1
 
+- A JSON file holding a NUL byte is refused by
+  [`fromjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fromjs.md),
+  [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md),
+  [`cpsbndlrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  and
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md):
+  the text after the byte on its line was dropped unread, so a bundle
+  file could carry bytes that were never checked.
+  [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+  refuses an empty hmac secret and
+  [`cpsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.md)
+  verifies nothing under one, as
+  [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
+  and
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  already did.
+
 - Output sent to `/dev/null` (or `NUL` on Windows) to be discarded is
   written there as before. Text, CSV and credential files written on
   Windows keep the line ends 1.1.0 gave them (a carriage return before

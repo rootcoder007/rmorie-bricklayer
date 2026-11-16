@@ -35,7 +35,7 @@ other name.
 
 ``` r
 schemapath("capsule")
-#> [1] "/tmp/RtmpoKYvqd/temp_libpath1e702f83871a/rmoriebricklayer/schemas/capsule.schema.json"
+#> [1] "/tmp/RtmpAcPUAE/temp_libpath1e6e4c4a2ff3/rmoriebricklayer/schemas/capsule.schema.json"
 s <- fromjs(paste(readLines(schemapath("bundle")), collapse = "\n"))
 s$required
 #> [1] "files"           "manifest_digest" "bundled_utc"     "attestation"    
