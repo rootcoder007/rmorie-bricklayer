@@ -3559,7 +3559,31 @@ bricklayer_json_unbox <- function(x) {
     open(con, "rb")
     on.exit(close(con), add = TRUE)
   }
-  readLines(con, warn = FALSE, encoding = "UTF-8")
+  if (!identical(summary(con)$text, "binary")) {
+    return(readLines(con, warn = FALSE, encoding = "UTF-8"))
+  }
+  # read as bytes: readLines() drops what follows a NUL byte on its line, so
+  # a file could hold text that was never parsed
+  b <- list()
+  repeat {
+    r <- readBin(con, "raw", 65536L)
+    if (!length(r)) {
+      break
+    }
+    b[[length(b) + 1L]] <- r
+  }
+  b <- unlist(b)
+  if (is.null(b)) {
+    return(character())
+  }
+  if (any(b == as.raw(0L))) {
+    stop("the JSON text holds a NUL byte, which JSON does not allow",
+      call. = FALSE
+    )
+  }
+  x <- strsplit(rawToChar(b), "\r\n|\n|\r", useBytes = TRUE)[[1L]]
+  Encoding(x) <- "UTF-8"
+  x
 }
 
 #' Downloads a JSON document through the package's checked transport.

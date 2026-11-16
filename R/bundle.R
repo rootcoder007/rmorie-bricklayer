@@ -218,7 +218,7 @@ cpsbndl <- function(
 cpsbndlrd <- function(path) {
   path <- .rmbl_file1(path, "path")
   b <- .rmbl_json_text(
-    paste(readLines(path, warn = FALSE), collapse = "\n"),
+    paste(.rmbl_json_read_con(file(path)), collapse = "\n"),
     simplifyVector = FALSE
   )
   if (

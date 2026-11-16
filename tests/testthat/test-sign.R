@@ -230,3 +230,29 @@ test_that("cpsvrf() takes one spelling of a signature only", {
   expect_false(cpsvrf("m", h, "a secret"))
   expect_true(.rmbl_vrf_fips_bound(list(), raw(0), "none"))
 })
+
+test_that("an empty hmac secret signs and verifies nothing", {
+  for (k in list("", raw(0), NA_character_, c("a", "b"))) {
+    expect_error(cpssign("m", k, scheme = "hmac"), "`key` is empty")
+  }
+  s <- cpssign("m", "a secret", scheme = "hmac")
+  for (k in list("", raw(0), NA_character_)) {
+    expect_false(cpsvrf("m", s, k))
+  }
+  s$signature <- chmac("", "m")
+  expect_false(cpsvrf("m", s, ""))
+  k <- as.raw(1:4)
+  expect_true(cpsvrf("m", cpssign("m", k, scheme = "hmac"), k))
+})
+
+test_that("a JSON file with a NUL byte is refused, not read in part", {
+  f <- withr::local_tempfile(fileext = ".json")
+  writeBin(c(charToRaw('{"a": 1,'), as.raw(0), charToRaw(' "b": 2\n}\n')), f)
+  expect_error(fromjs(f), "NUL byte")
+  expect_error(loadprov(f))
+  expect_error(cpsbndlrd(f), "NUL byte")
+  writeBin(charToRaw('{"a": 1,\r\n "b": [2, 3]}'), f)
+  expect_identical(fromjs(f)$b, c(2L, 3L))
+  writeBin(raw(0), f)
+  expect_error(fromjs(f))
+})

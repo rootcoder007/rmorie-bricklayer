@@ -1037,6 +1037,13 @@ cpssign <- function(
         call. = FALSE
       )
     }
+    if (!.rmbl_hmac_secret(key)) {
+      stop(
+        "`key` is empty: an hmac signature needs a shared secret (one ",
+        "non-empty string or a raw vector)",
+        call. = FALSE
+      )
+    }
     tag <- chmac(key, msg)
     out <- list(scheme = "hmac", signature = tag)
     class(out) <- c("bricklayer_signature", "list")
@@ -3123,5 +3130,18 @@ xmssfgt <- function(keytofgt = NULL) {
   ) {
     return(FALSE)
   }
+  # the empty secret is everyone's: nothing verifies under it
+  if (!.rmbl_hmac_secret(key)) {
+    return(FALSE)
+  }
   tryCatch(cdgsteq(chmac(key, msg), sg), error = function(e) FALSE)
+}
+
+#' Whether a shared secret for hmac holds anything.
+#' @param key The secret.
+#' @return TRUE for a raw vector of one byte or more, or one non-empty string.
+#' @noRd
+.rmbl_hmac_secret <- function(key) {
+  (is.raw(key) && length(key) > 0L) ||
+    (is.character(key) && length(key) == 1L && !is.na(key) && nzchar(key))
 }

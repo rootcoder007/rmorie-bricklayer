@@ -1,5 +1,7 @@
 # rmoriebricklayer 1.1.1
 
+* A JSON file holding a NUL byte is refused by `fromjs()`, `loadprov()`, `cpsbndlrd()` and `cpsbndlvrf()`: the text after the byte on its line was dropped unread, so a bundle file could carry bytes that were never checked. `cpssign()` refuses an empty hmac secret and `cpsvrf()` verifies nothing under one, as `cpsatst()` and `cpsbndl()` already did.
+
 * Output sent to `/dev/null` (or `NUL` on Windows) to be discarded is written there as before. Text, CSV and credential files written on Windows keep the line ends 1.1.0 gave them (a carriage return before each line feed), so the bytes of manifests, bundles and other files whose digests a capsule may hold are unchanged. A temporary left beside a file by a write that was cut short (`.rmbl-<hex>.tmp`) is never bundled by `cpsbndl()` or packed by `mkbndl()`, and `cpsbndlvrf()` names it as a leftover of an interrupted write, not part of the capsule.
 
 * Signatures and bundles have one accepted spelling: a signature whose hex is not lower case (as `cpssign()` writes it) does not verify, nor does one whose recorded context or pre-hash differs from the one it is verified under, or one carrying a field its scheme does not have; `cpsbndlvrf()` fails a bundle or attestation holding fields no signature covers, with a `no_unsigned_fields` row naming them. Bundles and signatures written by released versions keep verifying: they are written in lower case with only these fields (an XMSS object of 0.5.9 to 0.5.12 with `key_state` still verifies, with its warning).
