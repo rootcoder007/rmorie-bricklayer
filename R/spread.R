@@ -82,13 +82,18 @@ sprd <- function(
   xw <- .rmbl_spread_clean(x, .w, narm)
   x <- xw$x
   .w <- xw$w
+  freq <- is.null(w) || wtype == "frequency"
+  if (!freq) {
+    # reliability weights count only by their ratios: scaled by a power of
+    # two (exactly), so their sums neither over- nor underflow, as in cwtd()
+    .w <- .w / 2^floor(log2(max(.w)))
+  }
   n <- length(x)
   .N <- if (is.null(N)) NA_real_ else .rmbl_scalar(N, "N", 1)
   des <- .rmbl_spread_design(des, n, .N)
   sw <- sum(.w)
   m <- sum(.w * x) / sw
   ss <- sum(.w * (x - m)^2)
-  freq <- is.null(w) || wtype == "frequency"
   dn <- .rmbl_spread_den(des, freq, is.null(w), .w)
   v <- if (dn$den > 0) ss / dn$den else NA_real_
   se <- switch(
@@ -200,7 +205,11 @@ format.rmbl_spread <- function(x, digits = 6L, ...) {
     den <- sw - 1
     dtxt <- if (noweights) "n - 1 (Bessel)" else "sum of weights - 1"
   } else {
-    den <- sw - sum(.w^2) / sw
+    # sum_{i != j} w_i w_j / sum w: sum w - sum w^2 / sum w cancelled to
+    # nothing when one weight dwarfs the rest (as in cwtd())
+    top <- which.max(.w)
+    o <- .w[-top]
+    den <- (.w[top] * sum(o) + sum(o * (sw - o))) / sw
     dtxt <- "sum w - sum w^2 / sum w (reliability weights)"
   }
   list(den = den, dtxt = dtxt)

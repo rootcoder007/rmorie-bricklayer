@@ -450,14 +450,17 @@ cwinsmean <- function(x, trim = 0.1) {
 #'
 #' Refusals: `x` and `w` of different lengths
 #' (`"must have the same length"`), any negative weight
-#' (`"must be non-negative"`), and a character, factor or list argument
-#' (`"must be numeric"`). All-zero weights, or an `NA` in either vector,
-#' give `NaN` for both entries.
+#' (`"must be non-negative"`), an infinite weight or all-zero weights
+#' (`"must be non-negative and finite, not all zero"`), and a character,
+#' factor or list argument (`"must be numeric"`). An `NA` in either
+#' vector gives `NaN` for both entries, and so does a variance with a
+#' single positive weight. The result does not depend on the scale of the
+#' weights: equal weights of any size give [stats::var()].
 #'
 #' @param x Numeric vector of observations.
 #' @param w Numeric vector of non-negative weights, the same length as
-#'   `x`. Only their relative sizes matter for the mean; the variance's
-#'   correction uses them as given.
+#'   `x`. Only their relative sizes matter, for the mean and for the
+#'   variance.
 #' @return A named length-2 numeric vector: `mean` (units of `x`) and
 #'   `variance` (squared units of `x`).
 #' @seealso [cmom()] for the unweighted moments,

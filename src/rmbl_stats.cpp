@@ -236,34 +236,69 @@ double rmbl_winsorized_mean(const double *a, R_xlen_t n, double trim) {
     });
 }
 
+/* The power of two (as its exponent, in *shift) that brings the largest |weight| into [1, 2);
+ * false when there is no finite positive scale (every weight 0, or one infinite). A power of
+ * two scales exactly, so weights whose sums neither over- nor underflow give the same sums as
+ * before. An exponent, not a factor: 2^1074, for weights near the smallest double, is no
+ * double. */
+static bool rmbl_wtd_scale(const double *w, R_xlen_t n, int *shift) {
+    double c = 0.0;
+    for (R_xlen_t i = 0; i < n; ++i) c = std::fmax(c, std::fabs(w[i]));
+    if (!(c > 0.0) || !std::isfinite(c)) return false;
+    int e = 0;
+    std::frexp(c, &e);
+    *shift = 1 - e;
+    return true;
+}
+
 double rmbl_weighted_mean(const double *a, const double *w, R_xlen_t n) {
     if (n < 1 || has_nan(a, n) || has_nan(w, n)) return std::nan("");
+    int k = 0;
+    if (!rmbl_wtd_scale(w, n, &k)) return std::nan("");
     double sw = 0.0, s = 0.0;
     for (R_xlen_t i = 0; i < n; ++i) {
-        sw += w[i];
-        s += w[i] * a[i];
+        const double v = std::ldexp(w[i], k);
+        sw += v;
+        s += v * a[i];
     }
     if (sw == 0.0) return std::nan("");
     return s / sw;
 }
 
-/* Reliability weights: the unbiased estimator with the sum-of-weights
- * denominator corrected by the sum of squared weights. */
+/* Reliability weights: sum w (x - m)^2 / (sum w - sum w^2 / sum w), the same for every scale
+ * of the weights. They are scaled first (rmbl_wtd_scale), so no sum over- or underflows:
+ * rep(1e-165, 3) and rep(1e154, 3) gave NaN, rep(1e-160, 3) 0.99999443 for var(1:3) = 1. The
+ * denominator is sum_{i != j} w_i w_j / sum w, with the other weights added directly for the
+ * largest one: sum w - sum w^2 / sum w cancelled to nothing when one weight dwarfs the rest
+ * (c(1, 1e200, 1) gave NaN). Every other weight is at most half the sum, so sum w - w_i
+ * loses nothing. */
 double rmbl_weighted_var(const double *a, const double *w, R_xlen_t n) {
     if (n < 2 || has_nan(a, n) || has_nan(w, n)) return std::nan("");
-    double sw = 0.0, sw2 = 0.0;
+    int k = 0;
+    if (!rmbl_wtd_scale(w, n, &k)) return std::nan("");
+    double sw = 0.0;
+    R_xlen_t top = 0;
     for (R_xlen_t i = 0; i < n; ++i) {
-        sw += w[i];
-        sw2 += w[i] * w[i];
+        sw += std::ldexp(w[i], k);
+        if (std::fabs(w[i]) > std::fabs(w[top])) top = i;
     }
-    if (sw <= 0.0 || sw * sw == sw2) return std::nan("");
+    if (sw <= 0.0) return std::nan("");
+    double rest = 0.0, pairs = 0.0;
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (i == top) continue;
+        const double v = std::ldexp(w[i], k);
+        rest += v;
+        pairs += v * (sw - v);
+    }
+    pairs += std::ldexp(w[top], k) * rest;
+    if (pairs == 0.0) return std::nan("");
     const double m = rmbl_weighted_mean(a, w, n);
     double s = 0.0;
     for (R_xlen_t i = 0; i < n; ++i) {
         const double d = a[i] - m;
-        s += w[i] * d * d;
+        s += std::ldexp(w[i], k) * d * d;
     }
-    return s / (sw - sw2 / sw);
+    return s / (pairs / sw);
 }
 
 /* Spearman's rho: Pearson correlation of the midranks, so ties are

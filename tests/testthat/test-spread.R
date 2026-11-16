@@ -86,3 +86,19 @@ test_that("sprd() prints as a box with its rule", {
   .o2_check(sprd(c(1, 2, 3, 10)), "Mean and spread",
     c("Standard error of the mean", "Rule:", "16.6667"))
 })
+
+test_that("reliability-weighted sprd() does not depend on the scale", {
+  for (s in c(1e-165, 1e-300, 1e154, 1e300)) {
+    expect_equal(
+      sprd(c(1, 2, 3), w = rep(s, 3), wtype = "reliability")$variance,
+      1,
+      tolerance = 1e-15,
+      info = format(s)
+    )
+  }
+  expect_equal(
+    sprd(c(1, 2, 3), w = c(1, 1e200, 1), wtype = "reliability")$variance,
+    0.5,
+    tolerance = 1e-15
+  )
+})

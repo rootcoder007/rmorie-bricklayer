@@ -10,8 +10,8 @@ cwtd(x, w)
 \item{x}{Numeric vector of observations.}
 
 \item{w}{Numeric vector of non-negative weights, the same length as
-\code{x}. Only their relative sizes matter for the mean; the variance's
-correction uses them as given.}
+\code{x}. Only their relative sizes matter, for the mean and for the
+variance.}
 }
 \value{
 A named length-2 numeric vector: \code{mean} (units of \code{x}) and
@@ -39,9 +39,12 @@ design-based variance, so do not use this variance for those.
 
 Refusals: \code{x} and \code{w} of different lengths
 (\code{"must have the same length"}), any negative weight
-(\code{"must be non-negative"}), and a character, factor or list argument
-(\code{"must be numeric"}). All-zero weights, or an \code{NA} in either vector,
-give \code{NaN} for both entries.
+(\code{"must be non-negative"}), an infinite weight or all-zero weights
+(\code{"must be non-negative and finite, not all zero"}), and a character,
+factor or list argument (\code{"must be numeric"}). An \code{NA} in either
+vector gives \code{NaN} for both entries, and so does a variance with a
+single positive weight. The result does not depend on the scale of the
+weights: equal weights of any size give \code{\link[stats:var]{stats::var()}}.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

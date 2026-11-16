@@ -567,3 +567,41 @@ test_that("the Hawkes likelihood matches an independent recomputation", {
   )
   expect_error(chwknll(times, horizon, "cauchy", c(1, 2, 3)))
 })
+
+test_that("cwtd() does not depend on the scale of the weights", {
+  x <- c(1, 2, 3)
+  # equal weights of any size are var(x) = 1, within 4 ulps (1e-160 gave
+  # 0.99999443, the others NaN); a power of two scales exactly, so equal
+  # weights that are one give exactly 1
+  expect_identical(cwtd(x, rep(1, 3))[["variance"]], 1)
+  for (s in c(1e-160, 1e-165, 1e-300, 2^-1064, 1e154, 1e300)) {
+    expect_equal(
+      cwtd(x, rep(s, 3))[["variance"]],
+      1,
+      tolerance = 4 * .Machine$double.eps,
+      info = format(s)
+    )
+    expect_identical(cwtd(x, rep(s, 3))[["mean"]], 2, info = format(s))
+  }
+  # one weight dwarfs the rest: 2e (1 + 2e) / (4e + 2e^2) with e = 1e-200,
+  # 0.5 to within 1e-200
+  expect_equal(cwtd(x, c(1, 1e200, 1))[["variance"]], 0.5, tolerance = 1e-15)
+  # exact rational reference: mean 250/8, variance 887.5 / 5.25 = 3550/21,
+  # within 4 ulps
+  r <- cwtd(c(10, 20, 30, 40), c(1, 1, 2, 4))
+  expect_identical(r[["mean"]], 31.25)
+  expect_equal(r[["variance"]], 3550 / 21, tolerance = 4 * .Machine$double.eps)
+  # ordinary weights agree with the textbook formula to 1e-12
+  set.seed(2)
+  for (i in 1:30) {
+    xx <- stats::rnorm(25)
+    w <- stats::runif(25, 0.1, 10)
+    m <- sum(w * xx) / sum(w)
+    v <- sum(w * (xx - m)^2) / (sum(w) - sum(w^2) / sum(w))
+    expect_equal(cwtd(xx, w)[["mean"]], m, tolerance = 1e-14)
+    expect_equal(cwtd(xx, w)[["variance"]], v, tolerance = 1e-12)
+  }
+  # a single positive weight has no variance; all-zero weights are refused
+  expect_true(is.nan(cwtd(x, c(0, 0, 5))[["variance"]]))
+  expect_error(cwtd(x, c(0, 0, 0)), "not all zero")
+})
