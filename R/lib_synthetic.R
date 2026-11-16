@@ -297,7 +297,7 @@ mksyncsv <- function(schema, outpath, nrows = NULL, seed = NULL) {
   out_df <- .syn_draw(schema, nrows, pg)
   .rmbl_wfile(outpath, function(con) {
     utils::write.csv(out_df, con, row.names = FALSE)
-  })
+  }, binary = FALSE)
   # The CSV stays a plain CSV so every reader opens it; the sidecar beside
   # it is what says the rows were generated (seed, recipe digest), and
   # vrfcps() refuses a capsule whose data file has one. Read back

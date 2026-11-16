@@ -673,3 +673,10 @@ test_that("mkbndl() copies a regular data file only", {
   )
   expect_length(list.files(dest), 0L)
 })
+
+test_that("mkbndl() does not pack the temporary of a cut-short write", {
+  p <- bndl_proj()
+  writeLines("half", file.path(p$dir, ".rmbl-1a2b3c.tmp"))
+  b <- mkbndl(p$dir, withr::local_tempdir())
+  expect_false(any(grepl("rmbl-1a2b3c", b$files, fixed = TRUE)))
+})

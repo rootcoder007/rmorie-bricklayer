@@ -1194,10 +1194,23 @@ wrtxtfb <- function(text, path) {
 #' @param sep The line end, for text.
 #' @param size For a function, the number of bytes it must write, or NULL.
 #' @param private Whether the file is kept owner-only (0600).
+#' @param binary For a function, whether its connection is binary; text
+#'   (FALSE) ends lines as the platform does, as write.csv() to a path did.
 #' @return `path`, invisibly.
 #' @noRd
-.rmbl_wfile <- function(path, x, sep = "\n", size = NULL, private = FALSE) {
+.rmbl_wfile <- function(path, x, sep = "\n", size = NULL, private = FALSE,
+                        binary = TRUE) {
   path <- path.expand(path)
+  # /dev/null (NUL on Windows) is where output is sent to be discarded: it
+  # is written to as it is, with no temporary beside it
+  if (.rmbl_discard(path)) {
+    if (is.function(x)) {
+      con <- file(path, "wb")
+      on.exit(close(con), add = TRUE)
+      x(con)
+    }
+    return(invisible(path))
+  }
   kind <- .rmbl_path_kind(path)
   if (kind == "other" && !file.exists(path)) {
     kind <- "missing"
@@ -1221,10 +1234,12 @@ wrtxtfb <- function(text, path) {
   tmp <- tempfile(".rmbl-", tmpdir = dirname(path), fileext = ".tmp")
   on.exit(unlink(tmp), add = TRUE)
   if (!is.function(x) && !is.raw(x)) {
-    x <- charToRaw(paste0(enc2utf8(as.character(x)), sep, collapse = ""))
+    x <- .rmbl_eol(
+      charToRaw(paste0(enc2utf8(as.character(x)), sep, collapse = ""))
+    )
   }
   why <- if (is.function(x)) {
-    .rmbl_wconn(tmp, path, x, size, private)
+    .rmbl_wconn(tmp, path, x, size, private, binary)
   } else if (exists("C_rmbl_write_file_checked")) {
     .Call(C_rmbl_write_file_checked, tmp, path, x)
   } else {
@@ -1262,10 +1277,12 @@ wrtxtfb <- function(text, path) {
 #' @param fill A function of the open binary connection that writes it.
 #' @param size The number of bytes `fill` must write, or NULL.
 #' @param private Whether the file is made owner-only before it is written.
+#' @param binary Whether the connection is opened binary ("wb") or as text.
 #' @return NULL, or what went wrong: a write, close or rename that failed
 #'   (each a warning or an error of base R), or a short copy.
 #' @noRd
-.rmbl_wconn <- function(tmp, path, fill, size, private = FALSE) {
+.rmbl_wconn <- function(tmp, path, fill, size, private = FALSE,
+                        binary = TRUE) {
   why <- character()
   keep <- function(w) {
     why <<- c(why, conditionMessage(w))
@@ -1280,7 +1297,7 @@ wrtxtfb <- function(text, path) {
           file.create(tmp)
           Sys.chmod(tmp, "0600")
         }
-        con <- file(tmp, "wb")
+        con <- file(tmp, if (binary) "wb" else "w")
         fill(con)
         done <- con
         con <- NULL
@@ -1330,7 +1347,8 @@ wrtxtfb <- function(text, path) {
     path <- .rmbl_file1(path, "path")
     readBin(path, "raw", file.size(path))
   }
-  new <- charToRaw(paste(enc2utf8(as.character(text)), collapse = ""))
+  new <- .rmbl_eol(charToRaw(paste(enc2utf8(as.character(text)),
+                                   collapse = "")))
   .rmbl_wfile(path, c(old, new))
 }
 
@@ -1364,4 +1382,48 @@ wrtxtfb <- function(text, path) {
     Sys.setFileTime(to, file.mtime(from))
   }
   invisible(to)
+}
+
+#' Line ends as a text connection writes them on this platform.
+#'
+#' writeLines() to a path wrote text through a text connection, which on
+#' Windows ends every line in CR LF. Text goes to the checked writer as
+#' bytes, so the same translation is made here: a file written on Windows
+#' has the bytes 1.1.0 wrote, whose digests old capsules may hold.
+#' @param b The bytes, lines ended in LF.
+#' @param win Whether lines end in CR LF (Windows).
+#' @return The bytes.
+#' @noRd
+.rmbl_eol <- function(b, win = .Platform$OS.type == "windows") {
+  i <- b == as.raw(10L)
+  if (!win || !any(i)) {
+    return(b)
+  }
+  r <- b[rep(seq_along(b), 1L + i)]
+  r[which(i) + seq_len(sum(i)) - 1L] <- as.raw(13L)
+  r
+}
+
+#' Whether a path is where output is discarded: /dev/null, or NUL on
+#' Windows.
+#' @param path One path, expanded.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_discard <- function(path) {
+  identical(path, "/dev/null") ||
+    (.Platform$OS.type == "windows" &&
+      toupper(basename(path)) %in% c("NUL", "NUL:"))
+}
+
+#' Whether a file is the temporary of a write that was cut short.
+#'
+#' .rmbl_wfile() writes to ".rmbl-<hex>.tmp" beside its target and removes
+#' it; a session killed in between leaves it. Such a file is no content of
+#' a capsule or project: it is not bundled or packed, and a check that
+#' finds it says what it is.
+#' @param f File paths or names.
+#' @return A logical vector.
+#' @noRd
+.rmbl_leftover <- function(f) {
+  grepl("(^|[/\\\\])[.]rmbl-[0-9a-f]+[.]tmp$", f)
 }

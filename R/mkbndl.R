@@ -606,7 +606,9 @@ format.rmbl_bundle_project <- function(x, ...) {
   .bndl_toomany(.bndl_count(pdir))
   w <- .bndl_walk(pdir)
   f <- w$files
-  keep <- !grepl("(^|/)results_[^/]*(/|$)", f) & !grepl("[.]zip$", f)
+  # not packed: results, zips and the temporary of a write cut short
+  keep <- !grepl("(^|/)results_[^/]*(/|$)", f) & !grepl("[.]zip$", f) &
+    !.rmbl_leftover(f)
   f <- f[keep]
   if (length(w$links)) {
     warning(

@@ -692,8 +692,8 @@ llmstat <- function() {
   # (review of 46de6a9)
   .bl_private_dir(dirname(p))
   .rmbl_wfile(p, function(con) {
-    writeBin(charToRaw(paste(txt, collapse = "")), con)
-  }, private = TRUE)
+    writeLines(txt, con, sep = "", useBytes = TRUE)
+  }, private = TRUE, binary = FALSE)
   invisible(p)
 }
 

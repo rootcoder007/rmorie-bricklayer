@@ -1158,7 +1158,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   } else if (.bl_dl_table(x, TRUE)) {
     .rmbl_wfile(file, function(con) {
       utils::write.csv(.bl_dl_table(x), con, row.names = FALSE)
-    })
+    }, binary = FALSE)
   } else {
     .rmbl_wlines(utils::capture.output(print(x)), file)
   }
@@ -1513,7 +1513,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
     function(file) {
       .rmbl_wfile(file, function(con) {
         utils::write.csv(.bl_main_table(res()$value), con, row.names = FALSE)
-      })
+      }, binary = FALSE)
     }
   )
   invisible(NULL)

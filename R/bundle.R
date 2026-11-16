@@ -370,6 +370,8 @@ format.bricklayer_bundle_check <- function(x, ...) {
       full.names = FALSE,
       no.. = TRUE
     )
+    # the temporary of a write cut short is no content of the capsule
+    all_files <- all_files[!.rmbl_leftover(all_files)]
     keep <- vapply(
       all_files,
       function(f) {
@@ -544,17 +546,25 @@ format.bricklayer_bundle_check <- function(x, ...) {
     "capsule_bundle.json"
   }
   extra <- setdiff(on_disk, c(named, own_rel))
+  # a temporary left by a write that was cut short is said to be one: it
+  # is not part of the capsule either, and is removed rather than signed
+  left <- extra[.rmbl_leftover(extra)]
+  extra <- setdiff(extra, left)
   note_row(
     "no_unlisted_files",
-    length(extra) == 0L,
-    if (length(extra)) {
-      paste(
-        "not covered by the bundle:",
-        toString(utils::head(extra, 5L))
-      )
-    } else {
-      ""
-    }
+    !length(extra) && !length(left),
+    paste(c(
+      if (length(extra)) {
+        paste("not covered by the bundle:", toString(utils::head(extra, 5L)))
+      },
+      if (length(left)) {
+        paste(
+          "left over from an interrupted write, not part of the capsule",
+          "(remove it):",
+          toString(utils::head(left, 5L))
+        )
+      }
+    ), collapse = "; ")
   )
   invisible(NULL)
 }

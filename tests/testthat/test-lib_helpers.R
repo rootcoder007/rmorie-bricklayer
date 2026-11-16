@@ -136,8 +136,8 @@ test_that(".rmbl_wfile() writes a file whole or not at all", {
     .rmbl_wfile(file.path(d, "no", "a.txt"), "x"),
     "its folder does not exist"
   )
-  if (file.exists("/dev/null")) {
-    expect_error(.rmbl_wfile("/dev/null", "x"), "not a regular file")
+  if (file.exists("/dev/zero")) {
+    expect_error(.rmbl_wfile("/dev/zero", "x"), "not a regular file")
   }
   # a connection still gets the text, as before
   expect_identical(
@@ -231,7 +231,8 @@ test_that(".rmbl_wappend() and .rmbl_fcopy() write whole files", {
 test_that("the writer works where there is no compiled code (a bundle)", {
   # a bundle sources lib_helpers.R and aaa_input_guards.R into plain R
   e <- new.env(parent = baseenv())
-  for (f in c(".rmbl_path_kind", ".rmbl_wfile", ".rmbl_wconn", ".rmbl_fn")) {
+  for (f in c(".rmbl_path_kind", ".rmbl_wfile", ".rmbl_wconn", ".rmbl_fn",
+              ".rmbl_discard", ".rmbl_eol")) {
     g <- get(f)
     environment(g) <- e
     assign(f, g, envir = e)
@@ -243,4 +244,66 @@ test_that("the writer works where there is no compiled code (a bundle)", {
   e$.rmbl_wfile(p, c("x", "y"))
   expect_identical(readLines(p), c("x", "y"))
   expect_identical(e$.rmbl_path_kind(p), "regular")
+})
+
+test_that("output can be discarded, and text ends lines as before", {
+  # /dev/null (NUL on Windows) is a target, not a device to refuse
+  null <- if (.Platform$OS.type == "windows") "NUL" else "/dev/null"
+  expect_identical(.rmbl_wfile(null, "x"), null)
+  expect_identical(.rmbl_wfile(null, function(con) writeBin(raw(3), con)), null)
+  expect_true(.rmbl_discard("/dev/null"))
+  expect_false(.rmbl_discard(file.path(tempdir(), "null")))
+  m <- mkmnf(list(x = 1), env = FALSE)
+  if (!identical(null, "NUL")) {
+    expect_identical(wrmnfjs(m, null), null)
+  }
+  # what a text connection writes on Windows, so files keep their bytes
+  b <- charToRaw("a\nb\n\nc")
+  expect_identical(.rmbl_eol(b, win = FALSE), b)
+  expect_identical(
+    .rmbl_eol(b, win = TRUE),
+    charToRaw("a\r\nb\r\n\r\nc")
+  )
+  expect_identical(.rmbl_eol(charToRaw("abc"), win = TRUE), charToRaw("abc"))
+  expect_identical(.rmbl_eol(raw(0), win = TRUE), raw(0))
+  # a CSV through a text connection ends lines as write.csv() to a path did
+  d <- withr::local_tempdir()
+  a <- file.path(d, "a.csv")
+  b2 <- file.path(d, "b.csv")
+  df <- data.frame(x = 1:2, y = c("p", "q"))
+  utils::write.csv(df, a, row.names = FALSE)
+  .rmbl_wfile(b2, function(con) {
+    utils::write.csv(df, con, row.names = FALSE)
+  }, binary = FALSE)
+  expect_identical(readBin(b2, "raw", 100L), readBin(a, "raw", 100L))
+})
+
+test_that("the temporary of a cut-short write is no content", {
+  expect_true(.rmbl_leftover(".rmbl-1a2b3c.tmp"))
+  expect_true(.rmbl_leftover("sub/.rmbl-ff.tmp"))
+  expect_false(.rmbl_leftover("rmbl-1a.tmp"))
+  expect_false(.rmbl_leftover(".rmbl-1a.tmp.csv"))
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "a.csv"))
+  left <- file.path(dir, ".rmbl-1a2b3c.tmp")
+  writeLines("half a bundle", left)
+  m <- mkmnf(list(x = 1), env = FALSE)
+  bp <- file.path(withr::local_tempdir(), "b.json")
+  b <- cpsbndl(dir, m, "a secret", path = bp)
+  expect_identical(
+    vapply(b$files, function(e) e$path, ""),
+    "a.csv"
+  )
+  r <- cpsbndlvrf(bp, dir, man = m, key = "a secret")
+  expect_false(r$ok)
+  expect_match(
+    r$checks$detail[r$checks$check == "no_unlisted_files"],
+    paste0(
+      "left over from an interrupted write, not part of the capsule ",
+      "(remove it): .rmbl-1a2b3c.tmp"
+    ),
+    fixed = TRUE
+  )
+  unlink(left)
+  expect_true(cpsbndlvrf(bp, dir, man = m, key = "a secret")$ok)
 })

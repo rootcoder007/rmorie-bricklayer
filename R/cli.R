@@ -2138,7 +2138,7 @@ instcli <- function(
   if (!any(nan)) {
     .rmbl_wfile(dest, function(con) {
       utils::write.csv(df, con, row.names = FALSE)
-    })
+    }, binary = FALSE)
     return(invisible(NULL))
   }
   q <- which(vapply(df, function(v) is.character(v) || is.factor(v), NA))
@@ -2156,7 +2156,7 @@ instcli <- function(
   }
   .rmbl_wfile(dest, function(con) {
     utils::write.csv(df, con, row.names = FALSE, quote = q)
-  })
+  }, binary = FALSE)
   invisible(NULL)
 }
 
