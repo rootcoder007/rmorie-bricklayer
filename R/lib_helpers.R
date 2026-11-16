@@ -608,6 +608,7 @@ wrtxtfb <- function(text, path) {
     x <- dest
   }
   txt <- if (length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x)) {
+    x <- .rmbl_file1(x, "path")
     paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
   } else {
     x

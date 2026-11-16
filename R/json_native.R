@@ -3523,7 +3523,7 @@ bricklayer_json_unbox <- function(x) {
     }
     if (file.exists(txt)) {
       .rmbl_notdir(txt, "txt", "fromjs")
-      txt <- file(txt)
+      txt <- file(.rmbl_file1(txt, "txt"))
     }
   }
   if (inherits(txt, "connection")) {

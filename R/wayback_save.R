@@ -822,6 +822,7 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
   if (is.null(output) || !file.exists(output)) {
     return(rows)
   }
+  .rmbl_file1(output, "output")
   for (l in readLines(output, warn = FALSE)) {
     r <- tryCatch(.rmbl_json_parse(l), error = function(e) NULL)
     u <- .bl_wb_str(if (is.list(r)) r$url)

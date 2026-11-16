@@ -438,6 +438,8 @@ siuso <- function(text) {
       file.exists(html)
   ) {
     .rmbl_notdir(html, "html", "siuprs")
+    # a regular file within the 2 MiB a report page is held to
+    .rmbl_file1(html, "html", max = 2^21)
     html <- paste(
       readLines(html, warn = FALSE, encoding = "UTF-8"),
       collapse = "\n"

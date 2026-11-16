@@ -1,5 +1,7 @@
 # rmoriebricklayer 1.1.1
 
+* Every function that reads a file the user names checks it first, in its own words: a path that is missing, a folder, a device, a pipe or a socket, or a file that cannot be read is refused, where about forty readers failed with base R's "cannot open the connection" and a warning, more than fifteen read `/dev/zero` until memory ran out, and `sha256file()`, `vrfsha256()` and the other hashing functions never returned. `siuprs()` refuses a page file over its 2 MiB cap before reading it.
+
 * `rmbl` exit statuses follow its page: output that cannot be written to standard output (`rmbl version > /dev/full`, standard output closed) is a failed verb, status 1, said on standard error, where it was 0; an option given without its value (`rmbl pack . --dest`) is a usage error, status 2, checked before anything runs; an input folder that does not exist is a failed verb, status 1, for `verify`, `drift`, `report`, `refresh` and `sign` as for `pack` and `wayback` (it was 2); and `rmbl sign --scheme` with a scheme it does not know is a usage error about the scheme, checked before the key is asked for.
 
 * `drvkey()` with a password longer than 64 bytes takes as long as with a short one: PBKDF2 hashed such a password again on every iteration (64,000 bytes at 10,000 iterations took 6 s, a megabyte at the default 100,000 about ten minutes). The keys derived are unchanged. `ralloc()` and `rallocvrf()` derive a seed word's bytes with the compiled SHA-256 (a 1 MB word took 211 s), with the same result.

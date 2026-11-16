@@ -422,6 +422,7 @@ format.bricklayer_timestamp <- function(x, ...) {
     )
   }
   if (is.character(x) && length(x) == 1L && file.exists(x)) {
+    x <- .rmbl_file1(x, what)
     b <- readBin(x, "raw", file.size(x))
     # a PEM file is base64 between markers; DER is what everything here
     # expects

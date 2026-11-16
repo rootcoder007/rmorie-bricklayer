@@ -661,6 +661,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
   if (!file.exists(f)) {
     return(NULL)
   }
+  .rmbl_file1(f, "seenlog")
   l <- readLines(f, warn = FALSE)
   l <- l[nzchar(l) & !startsWith(l, "#")]
   p <- strsplit(l, "\t", fixed = TRUE)
@@ -751,6 +752,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 #' @return A one-row data frame, or NULL when it holds no XMSS signature.
 #' @noRd
 .rmbl_xmss_bundle_row <- function(f) {
+  f <- .rmbl_file1(f, "path")
   b <- tryCatch(
     .rmbl_json_text(readLines(f, warn = FALSE), simplifyVector = FALSE),
     error = function(e) NULL

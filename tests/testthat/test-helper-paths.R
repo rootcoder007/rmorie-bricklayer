@@ -165,3 +165,38 @@ test_that("the run summary includes the package versions when recorded", {
     fixed = TRUE
   ))
 })
+
+test_that("readers refuse what is not a readable regular file", {
+  f <- withr::local_tempfile(fileext = ".json")
+  writeLines("{}", f)
+  expect_error(.rmbl_file1(f, "path", max = 1), "`path` is larger than the 1")
+  readers <- list(
+    function(p) cpsbndlrd(p),
+    function(p) fromjs(p),
+    function(p) idcrdrd(p),
+    function(p) loadprov(p),
+    function(p) sha256file(p),
+    function(p) crc32file(p),
+    function(p) ldgrread(p),
+    function(p) certprs(p),
+    function(p) mnfdiff(p, p),
+    function(p) xmssidxseen(p)
+  )
+  # a device has no end: readLines() grew until memory ran out, and a hash
+  # never returned
+  if (file.exists("/dev/zero")) {
+    for (i in seq_along(readers)) {
+      expect_error(readers[[i]]("/dev/zero"), "is not a regular file",
+                   info = i)
+    }
+  }
+  skip_on_os("windows")
+  Sys.chmod(f, "000", use_umask = FALSE)
+  on.exit(Sys.chmod(f, "644", use_umask = FALSE), add = TRUE)
+  skip_if(file.access(f, 4L) == 0L) # run as root
+  # an unreadable file was base R's "cannot open the connection" and warning
+  for (i in seq_along(readers)) {
+    expect_error(readers[[i]](f), "cannot be read [(]permission denied[)]",
+                 info = i)
+  }
+})
