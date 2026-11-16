@@ -280,27 +280,20 @@ asciifb <- function(x, force = FALSE) {
 wrtxtfb <- function(text, path) {
   .rmbl_no_fn(text = text)
   path <- .rmbl_out_file(path, "path", connection = FALSE)
-  ok <- tryCatch(
-    {
-      # the UTF-8 bytes go to a binary connection: a text connection with
-      # encoding = "UTF-8" re-encodes from the native locale, and in a C
-      # locale that is a warning per accented string
-      con <- file(path, open = "wb")
-      on.exit(close(con), add = TRUE)
-      writeBin(
-        charToRaw(paste0(
-          paste(enc2utf8(as.character(text)), collapse = "\n"),
-          "\n"
-        )),
-        con
-      )
-      TRUE
-    },
-    error = function(e) FALSE
+  # the UTF-8 bytes are written as they are: a text connection with
+  # encoding = "UTF-8" re-encodes from the native locale, and in a C locale
+  # that is a warning per accented string
+  bytes <- tryCatch(
+    charToRaw(paste0(
+      paste(enc2utf8(as.character(text)), collapse = "\n"),
+      "\n"
+    )),
+    error = function(e) NULL
   )
-  if (!ok) {
-    .rmbl_wlines(toascii(text), path)
+  if (is.null(bytes)) {
+    bytes <- toascii(text)
   } # nocov -- encoding-error retry
+  .rmbl_wfile(path, bytes)
   invisible(path)
 }
 
@@ -1173,5 +1166,199 @@ wrtxtfb <- function(text, path) {
 #' @return NULL, invisibly.
 #' @noRd
 .rmbl_wlines <- function(text, con = stdout(), sep = "\n", useBytes = TRUE) {
+  if (is.character(con)) {
+    .rmbl_wfile(con, text, sep = sep)
+    return(invisible(NULL))
+  }
   writeLines(enc2utf8(as.character(text)), con, sep = sep, useBytes = TRUE)
+}
+
+#' Writes a file whole or not at all.
+#'
+#' Every file the package writes goes through here. The content goes to a
+#' new temporary file beside `path`; every write and the close are checked
+#' and the temporary is renamed over `path` only when it is complete. On a
+#' failure (a full disk, a file-size limit, a folder that cannot be
+#' written) the temporary is removed, a file already at `path` is left as
+#' it was, and the call stops in the package's words. writeLines() straight
+#' to `path` left a cut-short file under the final name, and a failure at
+#' close was only a warning. Bytes and text are written by the checked
+#' writer of rmbl_flock.c (written, size-checked, flushed to the disk,
+#' renamed); a function writes through a connection checked here.
+#' @param path The file to write.
+#' @param x The content: a raw vector, text (written as UTF-8 lines), or a
+#'   function of one binary connection that writes it.
+#' @param sep The line end, for text.
+#' @param size For a function, the number of bytes it must write, or NULL.
+#' @param private Whether the file is kept owner-only (0600).
+#' @return `path`, invisibly.
+#' @noRd
+.rmbl_wfile <- function(path, x, sep = "\n", size = NULL, private = FALSE) {
+  path <- path.expand(path)
+  kind <- .rmbl_path_kind(path)
+  if (kind == "other" && !file.exists(path)) {
+    kind <- "missing"
+  }
+  dir <- dirname(path)
+  bad <- if (kind == "directory") {
+    "it is a folder"
+  } else if (kind == "other") {
+    "it is not a regular file (a device, a pipe or a socket)"
+  } else if (kind == "regular" && file.access(path, 2L) != 0L) {
+    "it cannot be written to"
+  } else if (!dir.exists(dir)) {
+    "its folder does not exist"
+  } else if (file.access(dir, 2L) != 0L) {
+    "its folder cannot be written to"
+  }
+  if (!is.null(bad)) {
+    stop(.rmbl_fn(), sprintf("cannot write %s: %s", path, bad), call. = FALSE)
+  }
+  old <- if (kind == "regular") file.info(path)$mode else NA
+  tmp <- tempfile(".rmbl-", tmpdir = dirname(path), fileext = ".tmp")
+  on.exit(unlink(tmp), add = TRUE)
+  if (!is.function(x) && !is.raw(x)) {
+    x <- charToRaw(paste0(enc2utf8(as.character(x)), sep, collapse = ""))
+  }
+  why <- if (is.function(x)) {
+    .rmbl_wconn(tmp, path, x, size, private)
+  } else if (exists("C_rmbl_write_file_checked")) {
+    .Call(C_rmbl_write_file_checked, tmp, path, x)
+  } else {
+    # sourced into a bundle: no compiled code, the connection writer
+    bytes <- x
+    .rmbl_wconn(
+      tmp,
+      path,
+      function(con) writeBin(bytes, con),
+      length(bytes),
+      private
+    )
+  }
+  if (!is.null(why)) {
+    stop(
+      .rmbl_fn(),
+      sprintf(
+        "could not write %s (%s); %s",
+        path,
+        why,
+        if (is.na(old)) "nothing was left there" else "the file is unchanged"
+      ),
+      call. = FALSE
+    )
+  }
+  if (!private) {
+    Sys.chmod(path, if (is.na(old)) "666" else old, use_umask = is.na(old))
+  }
+  invisible(path)
+}
+
+#' Writes a temporary file through a connection and renames it into place.
+#' @param tmp The temporary file.
+#' @param path The file it becomes.
+#' @param fill A function of the open binary connection that writes it.
+#' @param size The number of bytes `fill` must write, or NULL.
+#' @param private Whether the file is made owner-only before it is written.
+#' @return NULL, or what went wrong: a write, close or rename that failed
+#'   (each a warning or an error of base R), or a short copy.
+#' @noRd
+.rmbl_wconn <- function(tmp, path, fill, size, private = FALSE) {
+  why <- character()
+  keep <- function(w) {
+    why <<- c(why, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  }
+  con <- NULL
+  own <- NULL
+  tryCatch(
+    withCallingHandlers(
+      {
+        if (private) {
+          file.create(tmp)
+          Sys.chmod(tmp, "0600")
+        }
+        con <- file(tmp, "wb")
+        fill(con)
+        done <- con
+        con <- NULL
+        close(done)
+      },
+      warning = keep
+    ),
+    error = function(e) {
+      # the package's own refusal (raised with call. = FALSE, as the byte
+      # cap of an inflated file is) is passed on as it is
+      if (is.null(conditionCall(e))) own <<- e
+      why <<- c(why, conditionMessage(e))
+    }
+  )
+  if (!is.null(con)) {
+    tryCatch(
+      withCallingHandlers(close(con), warning = keep),
+      error = function(e) NULL
+    )
+  }
+  if (!is.null(own)) {
+    stop(own)
+  }
+  if (!length(why) && !is.null(size) &&
+        !identical(file.size(tmp), as.numeric(size))) {
+    why <- sprintf("%.0f of %.0f bytes were written", file.size(tmp), size)
+  }
+  if (!length(why) &&
+        !withCallingHandlers(file.rename(tmp, path), warning = keep)) {
+    why <- c(why, "the finished file could not be moved into place")
+  }
+  if (length(why)) why[[1L]] else NULL
+}
+
+#' Adds text to the end of a file, whole or not at all.
+#'
+#' The old bytes and the new are written as one new file through
+#' .rmbl_wfile(), so a failed write leaves the file as it was: cat(append =
+#' TRUE) on a full disk left half a line and only warned. Each call rewrites
+#' the file, which suits the logs it serves (a line per URL or signature).
+#' @param path The file.
+#' @param text The text added, written as it is (no line end is added).
+#' @return `path`, invisibly.
+#' @noRd
+.rmbl_wappend <- function(path, text) {
+  old <- if (file.exists(path)) {
+    path <- .rmbl_file1(path, "path")
+    readBin(path, "raw", file.size(path))
+  }
+  new <- charToRaw(paste(enc2utf8(as.character(text)), collapse = ""))
+  .rmbl_wfile(path, c(old, new))
+}
+
+#' Copies a file the user gave, whole or not at all.
+#'
+#' Only a regular file is copied: a device such as /dev/zero has no end,
+#' and file.copy() or file.append() from one filled the disk (17 GB in five
+#' minutes) and only warned when a write failed. The copy is checked
+#' against the source's size.
+#' @param from The file to copy.
+#' @param to The copy.
+#' @param what The argument that named `from`, for the message.
+#' @param date Whether the copy keeps the source's modification time.
+#' @return `to`, invisibly.
+#' @noRd
+.rmbl_fcopy <- function(from, to, what = "data", date = FALSE) {
+  from <- .rmbl_file1(from, what)
+  n <- file.size(from)
+  .rmbl_wfile(to, function(con) {
+    inp <- file(from, "rb")
+    on.exit(close(inp), add = TRUE)
+    repeat {
+      b <- readBin(inp, "raw", 2^23)
+      if (!length(b)) {
+        break
+      }
+      writeBin(b, con)
+    }
+  }, size = n)
+  if (date) {
+    Sys.setFileTime(to, file.mtime(from))
+  }
+  invisible(to)
 }

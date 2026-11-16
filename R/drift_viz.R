@@ -125,7 +125,7 @@ drfthtml <- function(
   title <- .rmbl_text1(title, "title")
   .rmbl_flag1(open, "open")
   p <- .bl_drift_payload(x, warn, fail, title)
-  writeLines(.bl_drift_page(p, title), file, useBytes = TRUE)
+  .rmbl_wlines(.bl_drift_page(p, title), file)
   if (open) {
     .bl_open_file(file)
   }

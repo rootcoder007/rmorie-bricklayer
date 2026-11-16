@@ -355,18 +355,18 @@ bldl <- function(
 .bl_dl_file <- function(url, dest, size, draw) {
   con <- file(sub("^file://", "", url, ignore.case = TRUE), open = "rb")
   on.exit(close(con), add = TRUE)
-  out <- file(dest, open = "wb")
-  on.exit(close(out), add = TRUE)
   got <- 0
-  repeat {
-    chunk <- readBin(con, what = "raw", n = 1048576L)
-    if (!length(chunk)) {
-      break
+  .rmbl_wfile(dest, function(out) {
+    repeat {
+      chunk <- readBin(con, what = "raw", n = 1048576L)
+      if (!length(chunk)) {
+        break
+      }
+      writeBin(chunk, out)
+      got <<- got + length(chunk)
+      draw(got, if (is.na(size)) 0 else size)
     }
-    writeBin(chunk, out)
-    got <- got + length(chunk)
-    draw(got, if (is.na(size)) 0 else size)
-  }
+  })
   got
 }
 

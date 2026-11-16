@@ -189,9 +189,7 @@ format.rmbl_fetch <- function(x, ...) {
   # system); the copy below is the answer to that, so the warning is not
   # passed on
   if (!suppressWarnings(.rmbl_rename(tmp, dest))) {
-    if (!file.copy(tmp, dest, overwrite = TRUE)) {
-      stop(sprintf("cannot write %s", dest), call. = FALSE)
-    }
+    .rmbl_fcopy(tmp, dest, "dest")
   }
   note(u, "kept")
   src <- if (i > 1L) "mirror" else as.character(got)
@@ -249,5 +247,11 @@ format.rmbl_fetch <- function(x, ...) {
 #' @noRd
 .bl_move <- function(from, to) {
   suppressWarnings(file.rename(from, to)) ||
-    isTRUE(file.copy(from, to, overwrite = TRUE))
+    isTRUE(tryCatch(
+      {
+        .rmbl_fcopy(from, to, "dest")
+        TRUE
+      },
+      error = function(e) FALSE
+    ))
 }

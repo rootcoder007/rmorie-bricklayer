@@ -79,7 +79,7 @@ tsstmp <- function(data, tsa = "https://freetsa.org/tsr", file = NULL,
   }
   token <- res$body
   if (!is.null(a$file)) {
-    writeBin(token, a$file)
+    .rmbl_wfile(a$file, token)
   }
   out <- tsvrf(token, bytes, trust = trust, nonce = nonce)
   out$token <- token

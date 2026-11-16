@@ -407,7 +407,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     digits = NA
   )
   if (!identical(.rmbl_realpath(f$path), .rmbl_realpath(dest))) {
-    file.copy(f$path, dest, overwrite = TRUE)
+    .rmbl_fcopy(f$path, dest, "new")
   }
   .rmbl_wlines(js, pf)
   invisible(dest)
@@ -447,7 +447,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     )
   }
   if (isTRUE(ok) && !is.null(keep)) {
-    file.copy(got, keep, overwrite = TRUE)
+    .rmbl_fcopy(got, keep, "source")
   }
   if (!isTRUE(ok)) {
     unlink(got)
@@ -769,9 +769,9 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   # a directory is refused by name: gzfile() on one hung (1.0.3)
   p <- .rmbl_file1(p, "path")
   inp <- gzfile(p, "rb")
-  dst <- file(out, "wb")
+  on.exit(close(inp), add = TRUE)
   total <- 0
-  tryCatch(
+  .rmbl_wfile(out, function(dst) {
     repeat {
       b <- readBin(inp, "raw", 4194304L)
       if (!length(b)) {
@@ -782,12 +782,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
         .bl_gunzip_over(p, lim)
       }
       writeBin(b, dst)
-    },
-    finally = {
-      close(inp)
-      close(dst)
     }
-  )
+  })
   invisible(NULL)
 }
 

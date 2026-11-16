@@ -550,7 +550,7 @@ format.rmbl_archive_capture <- function(x, ...) {
     # an error page) or another request's token is never saved or sent
     ts <- tsvrf(res$body, mpath, nonce = nonce)
     if (.bl_ts_core(ts)) {
-      writeBin(res$body, file.path(dir, "manifest.tsr"))
+      .rmbl_wfile(file.path(dir, "manifest.tsr"), res$body)
       return(ts)
     }
     warning(

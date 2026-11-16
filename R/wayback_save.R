@@ -509,13 +509,7 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
       message = paste("found on retry;", failed$message[i]),
       at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
     )
-    cat(
-      tojs(rec, auto_unbox = TRUE),
-      "\n",
-      sep = "",
-      file = output,
-      append = TRUE
-    )
+    .rmbl_wappend(output, c(tojs(rec, auto_unbox = TRUE), "\n"))
     found <- found + 1L
     failed$status[i] <- "existing"
   }
@@ -1247,13 +1241,7 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
   w$results[[u]] <- rec
   w$counts[[status]] <- w$counts[[status]] + 1L
   if (!is.null(w$output)) {
-    cat(
-      tojs(rec, auto_unbox = TRUE),
-      "\n",
-      sep = "",
-      file = w$output,
-      append = TRUE
-    )
+    .rmbl_wappend(w$output, c(tojs(rec, auto_unbox = TRUE), "\n"))
   }
 }
 

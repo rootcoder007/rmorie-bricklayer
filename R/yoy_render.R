@@ -147,7 +147,7 @@ yoyhtml <- function(
     m,
     c(.yoy_first_note(d, m), notes)
   )
-  writeLines(html, file, useBytes = TRUE)
+  .rmbl_wlines(html, file)
   invisible(file)
 }
 

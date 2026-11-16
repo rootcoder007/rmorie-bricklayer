@@ -2307,7 +2307,7 @@ format.rmbl_plr_boot <- function(x, ...) {
     # goes through a text connection, several times slower on a large file
     src <- tempfile(fileext = ".csv")
     on.exit(unlink(src), add = TRUE)
-    writeLines(txt, src, useBytes = TRUE)
+    .rmbl_wlines(txt, src)
   }
   rm(txt)
   .pollution_csv_shape(src)

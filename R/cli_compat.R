@@ -519,7 +519,7 @@
       out(sprintf("%s:%d\n- %s\n+ %s\n", f, i, old[i], res$lines[i]))
     }
     if (has("--write")) {
-      writeLines(res$lines, f, useBytes = TRUE)
+      .rmbl_wlines(res$lines, f)
       out(sprintf("%s: %d changes written\n", f, res$n))
     } else {
       out(sprintf("%s: %d changes (--write writes them)\n", f, res$n))

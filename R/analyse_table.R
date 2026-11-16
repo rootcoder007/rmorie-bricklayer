@@ -285,7 +285,7 @@ rptanl <- function(
     text <- .md_to_html(text, title)
   }
   if (!is.null(path)) {
-    writeLines(enc2utf8(text), path, useBytes = TRUE)
+    .rmbl_wlines(text, path)
   }
   invisible(text)
 }

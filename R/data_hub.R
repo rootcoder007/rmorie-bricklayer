@@ -2227,7 +2227,7 @@ dload <- function(
   if (n && !bytes[[n]] %in% as.raw(c(10, 13))) {
     bytes <- c(bytes, as.raw(10))
   }
-  writeBin(bytes, f)
+  .rmbl_wfile(f, bytes)
   # what read.csv() refuses (a header of "" and nothing under it: "first five
   # rows are empty") is refused in words, as the reader refuses
   tryCatch(

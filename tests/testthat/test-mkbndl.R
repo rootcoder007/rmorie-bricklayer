@@ -660,3 +660,16 @@ test_that("66,000 files are counted and refused in seconds", {
   )[["elapsed"]]
   expect_lt(t, 5)
 })
+
+test_that("mkbndl() copies a regular data file only", {
+  skip_if_not(file.exists("/dev/zero"))
+  p <- bndl_proj()
+  dest <- withr::local_tempdir()
+  # /dev/zero was copied without bound (17 GB in five minutes), and under a
+  # file-size limit a truncated copy was zipped as the data
+  expect_error(
+    mkbndl(p$dir, dest, data = "/dev/zero"),
+    "`data` is not a regular file"
+  )
+  expect_length(list.files(dest), 0L)
+})

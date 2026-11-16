@@ -334,7 +334,7 @@ wrmnfjs <- function(man, path, canon = FALSE) {
     man$meta$synthetic <- TRUE
   }
   if (isTRUE(canon)) {
-    writeLines(mnfcanon(man), path, useBytes = TRUE)
+    .rmbl_wlines(mnfcanon(man), path)
     return(invisible(path))
   }
   .rmbl_wlines(

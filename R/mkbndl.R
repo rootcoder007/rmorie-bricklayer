@@ -580,11 +580,13 @@ format.rmbl_bundle_project <- function(x, ...) {
   # counted before anything is copied (at least these many entries: the
   # folder, the runner's files, the project's files and their folders)
   .bndl_toomany(1L + length(parts) + length(proj) + length(.bndl_dirs(proj)))
-  file.copy(parts, stage, copy.date = TRUE)
+  for (p in parts) {
+    .rmbl_fcopy(p, file.path(stage, basename(p)), "project", date = TRUE)
+  }
   for (f in proj) {
     to <- file.path(stage, f)
     dir.create(dirname(to), recursive = TRUE, showWarnings = FALSE)
-    file.copy(file.path(pdir, f), to, copy.date = TRUE)
+    .rmbl_fcopy(file.path(pdir, f), to, "project", date = TRUE)
   }
   invisible(NULL)
 }
@@ -873,7 +875,7 @@ format.rmbl_bundle_project <- function(x, ...) {
   }
   if (!is.null(data)) {
     fn <- basename(.bndl_get(prov, c("resource", "filename"), basename(data)))
-    file.copy(data, file.path(stage, fn), copy.date = TRUE)
+    .rmbl_fcopy(data, file.path(stage, fn), date = TRUE)
   }
   invisible(NULL)
 }
@@ -892,9 +894,7 @@ format.rmbl_bundle_project <- function(x, ...) {
 #' @return Nothing useful.
 #' @noRd
 .bndl_write_text <- function(txt, path) {
-  con <- file(path, open = "wb")
-  on.exit(close(con), add = TRUE)
-  writeBin(charToRaw(enc2utf8(paste0(txt, "\n"))), con)
+  .rmbl_wfile(path, charToRaw(enc2utf8(paste0(txt, "\n"))))
   invisible(NULL)
 }
 
@@ -1054,26 +1054,26 @@ format.rmbl_bundle_project <- function(x, ...) {
 .bndl_zip <- function(base, top, zip, limit = 4294967295, nmax = 65535L) {
   ents <- .bndl_ents(base, top, nmax)
   stamp <- .bndl_dos_time(Sys.time())
-  con <- file(zip, open = "wb")
-  on.exit(close(con), add = TRUE)
-  cdir <- list()
-  off <- 0
-  for (p in ents) {
-    e <- .bndl_zip_entry(file.path(base, p), p, stamp)
-    if (off + length(e$local) + length(e$data) >= limit) {
-      stop(
-        "the bundle is larger than 4 GB, more than a plain zip holds",
-        call. = FALSE
-      )
+  .rmbl_wfile(zip, function(con) {
+    cdir <- list()
+    off <- 0
+    for (p in ents) {
+      e <- .bndl_zip_entry(file.path(base, p), p, stamp)
+      if (off + length(e$local) + length(e$data) >= limit) {
+        stop(
+          "the bundle is larger than 4 GB, more than a plain zip holds",
+          call. = FALSE
+        )
+      }
+      writeBin(e$local, con)
+      writeBin(e$data, con)
+      cdir[[length(cdir) + 1L]] <- c(e$central, .bndl_u32(off), e$name)
+      off <- off + length(e$local) + length(e$data)
     }
-    writeBin(e$local, con)
-    writeBin(e$data, con)
-    cdir[[length(cdir) + 1L]] <- c(e$central, .bndl_u32(off), e$name)
-    off <- off + length(e$local) + length(e$data)
-  }
-  cd <- unlist(cdir, use.names = FALSE)
-  writeBin(cd, con)
-  writeBin(.bndl_eocd(length(ents), length(cd), off), con)
+    cd <- unlist(cdir, use.names = FALSE)
+    writeBin(cd, con)
+    writeBin(.bndl_eocd(length(ents), length(cd), off), con)
+  })
   ifelse(dir.exists(file.path(base, ents)), paste0(ents, "/"), ents)
 }
 

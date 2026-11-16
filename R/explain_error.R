@@ -726,8 +726,7 @@ explerr <- function(msg = geterrmessage(), pkgs = NULL, n = 3L) {
         f
       )
       unlink(old) # one table kept: the versions installed now
-      saveRDS(tab, f)
-      Sys.chmod(f, "0600")
+      .rmbl_wfile(f, serialize(tab, NULL), private = TRUE)
     },
     error = function(e) NULL,
     warning = function(w) NULL

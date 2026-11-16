@@ -704,16 +704,14 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 #' @return `f`, invisibly.
 #' @noRd
 .rmbl_xmss_seen_append <- function(f, df) {
-  if (!file.exists(f)) {
-    cat(
-      paste0(
-        "# rmoriebricklayer xmss seen-log 1: key fingerprint, index, ",
-        "signature digest, where\n"
-      ),
-      file = f
+  head <- if (!file.exists(f)) {
+    paste0(
+      "# rmoriebricklayer xmss seen-log 1: key fingerprint, index, ",
+      "signature digest, where\n"
     )
   }
-  cat(
+  .rmbl_wappend(f, c(
+    head,
     paste0(
       df$key,
       "\t",
@@ -724,10 +722,8 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
       gsub("[\t\r\n]", " ", df$where),
       "\n",
       collapse = ""
-    ),
-    file = f,
-    append = TRUE
-  )
+    )
+  ))
   invisible(f)
 }
 

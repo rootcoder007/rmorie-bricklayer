@@ -1236,8 +1236,9 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
     long code = -1;
     curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     curl_easy_cleanup(h);
-    const bool lost_stream = fs.fp == nullptr;
-    if (fs.fp) std::fclose(fs.fp);
+    /* a full disk can show only when the buffered tail is flushed at close: that is a write
+     * that failed, not a finished file to move into place */
+    const bool lost_stream = fs.fp == nullptr || std::fclose(fs.fp) != 0;
     if (written) *written = fs.written;
     if (interrupted) *interrupted = prog.interrupted;
     /* a completed transfer with a 4xx/5xx status is the server's answer: report the status,
@@ -1248,7 +1249,7 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
         if (err) *err = "HTTP " + std::to_string(code);
         return code;
     }
-    if (rc != CURLE_OK && lost_stream) {
+    if (lost_stream) {
         std::remove(part.c_str());
         if (err) *err = "cannot write " + part;
         if (local_fail) *local_fail = true;

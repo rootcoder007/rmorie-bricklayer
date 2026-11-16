@@ -1156,7 +1156,9 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   if (inherits(x, "rmbl_yoy")) {
     yoyhtml(x, file)
   } else if (.bl_dl_table(x, TRUE)) {
-    utils::write.csv(.bl_dl_table(x), file, row.names = FALSE)
+    .rmbl_wfile(file, function(con) {
+      utils::write.csv(.bl_dl_table(x), con, row.names = FALSE)
+    })
   } else {
     .rmbl_wlines(utils::capture.output(print(x)), file)
   }
@@ -1509,7 +1511,9 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   output$csv <- shiny::downloadHandler(
     paste0("rmbl-", id, ".csv"),
     function(file) {
-      utils::write.csv(.bl_main_table(res()$value), file, row.names = FALSE)
+      .rmbl_wfile(file, function(con) {
+        utils::write.csv(.bl_main_table(res()$value), con, row.names = FALSE)
+      })
     }
   )
   invisible(NULL)

@@ -691,14 +691,9 @@ llmstat <- function() {
   # the directory as private as its files: under umask 000 it came out 0777
   # (review of 46de6a9)
   .bl_private_dir(dirname(p))
-  tmp <- tempfile(pattern = ".cred-", tmpdir = dirname(p), fileext = ".tmp")
-  file.create(tmp)
-  Sys.chmod(tmp, mode = "0600")
-  writeLines(txt, tmp, useBytes = TRUE, sep = "")
-  if (!isTRUE(file.rename(tmp, p))) {
-    unlink(tmp)
-    stop(sprintf("could not write %s", p), call. = FALSE)
-  }
+  .rmbl_wfile(p, function(con) {
+    writeBin(charToRaw(paste(txt, collapse = "")), con)
+  }, private = TRUE)
   invisible(p)
 }
 

@@ -780,27 +780,68 @@
   invisible(TRUE)
 }
 
-#' A file the function reads: one path that exists and is a file (not a
-#' directory)
-#' @param path The path passed by the user.
-#' @param what The argument's name (`path`), quoted if the file is missing.
-#' @return The path.
+#' What a path is: "missing", "regular", "directory" or "other" (a device,
+#' a pipe, a socket), from stat() in rmbl_flock.c. Sourced into a bundle,
+#' where there is no compiled code, base R tells only a folder from a file,
+#' and every existing path that is not a folder counts as regular.
+#' @param path One path, expanded.
+#' @return One string.
 #' @noRd
-.rmbl_file1 <- function(path, what = "path") {
-  path <- .rmbl_string1(path, what)
-  if (!file.exists(path)) {
-    stop(
-      .rmbl_fn(),
-      sprintf("`%s`: no such file: %s", what, path),
-      call. = FALSE
-    )
+.rmbl_path_kind <- function(path) {
+  if (exists("C_rmbl_path_kind")) {
+    return(.Call(C_rmbl_path_kind, path))
   }
   if (dir.exists(path)) {
-    stop(
-      .rmbl_fn(),
-      sprintf("`%s` is a directory, not a file: %s", what, path),
-      call. = FALSE
-    )
+    "directory"
+  } else if (file.exists(path)) {
+    "regular"
+  } else {
+    "missing"
+  }
+}
+
+#' A file the function reads: one path that exists, is a regular file (not
+#' a directory, a device, a pipe or a socket), can be read, and is no
+#' larger than `max` bytes.
+#'
+#' Every reader checks its file here. A file that could not be read
+#' reached file() and failed as "cannot open the connection" with base R's
+#' warning; a device such as /dev/zero has no end, and readLines() grew
+#' until memory ran out, or a hash never returned.
+#' @param path The path passed by the user.
+#' @param what The argument's name (`path`), quoted if the file is missing.
+#' @param max The largest size read, in bytes.
+#' @return The path.
+#' @noRd
+.rmbl_file1 <- function(path, what = "path", max = Inf) {
+  path <- .rmbl_string1(path, what)
+  kind <- .rmbl_path_kind(path.expand(path))
+  # stat() failed for another reason than a missing file: a folder on the
+  # way that cannot be searched, a loop of links
+  if (kind == "other" && !file.exists(path)) {
+    kind <- "missing"
+  }
+  why <- switch(kind,
+    missing = sprintf("`%s`: no such file: %s", what, path),
+    directory = sprintf("`%s` is a directory, not a file: %s", what, path),
+    other = sprintf(
+      "`%s` is not a regular file (a device, a pipe or a socket): %s",
+      what,
+      path
+    ),
+    if (file.access(path, 4L) != 0L) {
+      sprintf("`%s` cannot be read (permission denied): %s", what, path)
+    } else if (file.size(path) > max) {
+      sprintf(
+        "`%s` is larger than the %s bytes read: %s",
+        what,
+        format(max, big.mark = ",", scientific = FALSE),
+        path
+      )
+    }
+  )
+  if (!is.null(why)) {
+    stop(.rmbl_fn(), why, call. = FALSE)
   }
   path
 }

@@ -2107,7 +2107,9 @@ instcli <- function(
   nan <- vapply(df, function(v) is.numeric(v) || is.complex(v), NA)
   nan[nan] <- vapply(df[nan], function(v) any(is.nan(v)), NA)
   if (!any(nan)) {
-    utils::write.csv(df, dest, row.names = FALSE)
+    .rmbl_wfile(dest, function(con) {
+      utils::write.csv(df, con, row.names = FALSE)
+    })
     return(invisible(NULL))
   }
   q <- which(vapply(df, function(v) is.character(v) || is.factor(v), NA))
@@ -2123,7 +2125,9 @@ instcli <- function(
     s[is.nan(v)] <- as.character(v[is.nan(v)])
     df[[j]] <- s
   }
-  utils::write.csv(df, dest, row.names = FALSE, quote = q)
+  .rmbl_wfile(dest, function(con) {
+    utils::write.csv(df, con, row.names = FALSE, quote = q)
+  })
   invisible(NULL)
 }
 

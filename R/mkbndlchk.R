@@ -864,7 +864,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
     dd <- tempfile("bndldata")
     dir.create(dd)
     on.exit(unlink(dd, recursive = TRUE, force = TRUE), add = TRUE)
-    file.copy(data, file.path(dd, basename(data)))
+    .rmbl_fcopy(data, file.path(dd, basename(data)))
     args[args == data] <- file.path("/data", basename(data))
   }
   name <- paste0("rmblchk-", sub("^file", "", basename(tempfile())))

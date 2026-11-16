@@ -1083,9 +1083,10 @@ rslvarc <- function(prov) {
   } else if (grepl("^file://", url, ignore.case = TRUE)) {
     # allowed only when asked for (offline tests): a local copy
     src <- sub("^file://", "", url, ignore.case = TRUE)
-    if (!file.exists(src) || !file.copy(src, dest, overwrite = TRUE)) {
+    if (!file.exists(src)) {
       stop(sprintf("cannot open the file %s", src), call. = FALSE)
     }
+    .rmbl_fcopy(src, dest, "url")
     invisible(dest)
   } else {
     .rmbl_bfetch(url, dest)

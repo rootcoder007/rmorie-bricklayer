@@ -577,7 +577,7 @@ format.rmbl_fipsmod <- function(x, ...) {
   on.exit(unlink(d, recursive = TRUE), add = TRUE)
   f <- file.path(d, c("key.pem", "msg", "sig"))
   .rmbl_wlines(key$pem, f[1L])
-  writeBin(.rmbl_sign_message(msg), f[2L])
+  .rmbl_wfile(f[2L], .rmbl_sign_message(msg))
   cx <- .rmbl_fips_context(ctx)
   args <- c("pkeyutl", "-sign", "-rawin", "-inkey", .rmbl_fipsmod_q(f[1L]),
             "-in", .rmbl_fipsmod_q(f[2L]), "-out", .rmbl_fipsmod_q(f[3L]))

@@ -152,9 +152,9 @@ format.rmbl_xvrf <- function(x, ...) {
   dir.create(d)
   on.exit(unlink(d, recursive = TRUE), add = TRUE)
   f <- file.path(d, c("pub.der", "msg", "sig"))
-  writeBin(.rmbl_xvrf_spki(oid, pk), f[1L])
-  writeBin(.rmbl_sign_message(msg), f[2L])
-  writeBin(sg, f[3L])
+  .rmbl_wfile(f[1L], .rmbl_xvrf_spki(oid, pk))
+  .rmbl_wfile(f[2L], .rmbl_sign_message(msg))
+  .rmbl_wfile(f[3L], sg)
   args <- .rmbl_xvrf_args(f, ctx)
   res <- suppressWarnings(
     system2(openssl, args, stdout = TRUE, stderr = TRUE,

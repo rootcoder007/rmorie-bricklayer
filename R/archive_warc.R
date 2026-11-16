@@ -173,9 +173,7 @@
     http
   )
   metadata <- .bl_warc_meta(url, resp_id, wdate, capture_id, sha_hex, meta)
-  con <- file(warc, "wb")
-  on.exit(close(con), add = TRUE)
-  writeBin(c(warcinfo, response, metadata), con)
+  .rmbl_wfile(warc, c(warcinfo, response, metadata))
   rec <- list(
     url = url,
     mime = mime,
@@ -304,7 +302,7 @@
   old <- if (file.exists(index)) readLines(index, warn = FALSE) else character()
   all <- unique(c(old, lines))
   keys <- sub("^(\\S+ \\S+) .*$", "\\1", all)
-  writeLines(all[order(keys, method = "radix")], index, useBytes = TRUE)
+  .rmbl_wlines(all[order(keys, method = "radix")], index)
   invisible(index)
 }
 
@@ -373,7 +371,7 @@
   a <- .bl_crlf2(rec, 1L)
   b <- .bl_crlf2(rec, a + 4L)
   body <- rec[(b + 4L):(length(rec) - 4L)]
-  writeBin(body, dest)
+  .rmbl_wfile(dest, body)
   if (!identical(sha256file(dest), r$sha256)) {
     stop(
       sprintf("the WARC copy in %s does not match its index", dir),

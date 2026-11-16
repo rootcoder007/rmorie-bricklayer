@@ -256,7 +256,7 @@ yoyjs <- function(x, file, digits = NULL, pretty = TRUE, ...) {
   if (is.null(file)) {
     return(txt)
   }
-  writeLines(txt, file, useBytes = TRUE)
+  .rmbl_wlines(txt, file)
   invisible(file)
 }
 
@@ -279,7 +279,7 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   if (is.null(file)) {
     return(txt)
   }
-  writeLines(txt, file, useBytes = TRUE)
+  .rmbl_wlines(txt, file)
   invisible(file)
 }
 
@@ -336,7 +336,7 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   if (is.null(file)) {
     return(txt)
   }
-  writeLines(txt, file, sep = "", useBytes = TRUE)
+  .rmbl_wlines(txt, file, sep = "")
   invisible(file)
 }
 
