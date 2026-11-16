@@ -4,10 +4,11 @@
 
 - Output sent to `/dev/null` (or `NUL` on Windows) to be discarded is
   written there as before. Text, CSV and credential files written on
-  Windows keep the line ends 1.1.0 gave them (CR LF), so the bytes of
-  manifests, bundles and other files whose digests a capsule may hold
-  are unchanged. A temporary left beside a file by a write that was cut
-  short (`.rmbl-<hex>.tmp`) is never bundled by
+  Windows keep the line ends 1.1.0 gave them (a carriage return before
+  each line feed), so the bytes of manifests, bundles and other files
+  whose digests a capsule may hold are unchanged. A temporary left
+  beside a file by a write that was cut short (`.rmbl-<hex>.tmp`) is
+  never bundled by
   [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
   or packed by
   [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md),
@@ -47,7 +48,7 @@
   [`rlblfrns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rlblfrns.md)
   with data frames;
   [`jsb64dec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md)
-  with a nul byte; `blpal(n = )` above its new maximum of 100,000
+  with a zero byte; `blpal(n = )` above its new maximum of 100,000
   colours; a glob over 4,096 bytes or one that cannot be compiled in
   [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
   and
@@ -94,11 +95,12 @@
   standard output (`rmbl version > /dev/full`, standard output closed)
   is a failed verb, status 1, said on standard error, where it was 0; an
   option given without its value (`rmbl pack . --dest`) is a usage
-  error, status 2, checked before anything runs; an input folder that
-  does not exist is a failed verb, status 1, for `verify`, `drift`,
-  `report`, `refresh` and `sign` as for `pack` and `wayback` (it was 2);
-  and `rmbl sign --scheme` with a scheme it does not know is a usage
-  error about the scheme, checked before the key is asked for.
+  error, status 2, checked before anything runs; the help says which
+  status a missing input gives, verb by verb (2 for the folder of
+  `verify`, `drift`, `report`, `refresh` and `sign`, 1 for `pack` and
+  `wayback`, as before); and `rmbl sign --scheme` with a scheme it does
+  not know is a usage error about the scheme, checked before the key is
+  asked for.
 
 - [`drvkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drvkey.md)
   with a password longer than 64 bytes takes as long as with a short
@@ -127,7 +129,8 @@
   0.99999443, `rep(1e-165, 3)` and `rep(1e154, 3)` gave `NaN`), and one
   weight much larger than the rest no longer gives `NaN`
   (`c(1, 1e200, 1)` gives 0.5). The weights are scaled by a power of
-  two, which is exact, and the denominator is summed without cancelling.
+  two, which is exact, and the denominator is summed so that it keeps
+  its precision.
   [`sprd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sprd.md)
   with reliability weights does the same. The help of
   [`cwtd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cwtd.md)

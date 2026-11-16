@@ -132,9 +132,12 @@ vector. A key or signature whose class, scheme or fields were edited returns
 carries a <code>key_state</code> field) still verifies, with a warning that it exposed
 the signer's private key.</p>
 <p>The encoding is strict: the signature's hex must be lower case, as
-<code><a href="cpssign.html">cpssign()</a></code> writes it; a field <code><a href="cpssign.html">cpssign()</a></code> does not write for the scheme
-is not accepted; and the context and pre-hash name a standardised
-signature records must be the ones it is verified under. Each of these
+<code><a href="cpssign.html">cpssign()</a></code>
+writes it; a field
+<code><a href="cpssign.html">cpssign()</a></code>
+does not write for the scheme is not accepted; and the context and
+pre-hash name a standardised signature records must be the ones it is
+verified under. Each of these
 returns <code>FALSE</code>: such an object is not the one that was made, although
 the bytes verified are the same.</p>
     </div>

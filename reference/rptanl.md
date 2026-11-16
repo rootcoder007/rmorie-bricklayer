@@ -82,7 +82,7 @@ md <- rptanl(a)
 cat(substr(md, 1, 400))
 #> # Analysis of a published table
 #> 
-#> `individuals` by `year`, grouped by `table` and `group`; 15 rows; 3 period(s) from 2023 to 2025; generated 2026-11-16 02:54.
+#> `individuals` by `year`, grouped by `table` and `group`; 15 rows; 3 period(s) from 2023 to 2025; generated 2026-11-16 04:57.
 #> 
 #> ## Change between periods
 #> 
