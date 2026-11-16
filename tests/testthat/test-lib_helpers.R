@@ -192,8 +192,12 @@ test_that("a write cut short by a file-size limit leaves the old file", {
     shQuote(file.path(R.home("bin"), "Rscript")),
     " --vanilla -e ", shQuote(code)
   )
+  # under covr the child saves its trace as it exits, under the same limit:
+  # cut at 4096 bytes in the run's folder, it stopped the merge of every
+  # trace ("error reading from connection"); it goes to a folder of its own
   out <- withr::with_envvar(
-    c(R_TESTS = NA, R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep)),
+    c(R_TESTS = NA, R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep),
+      COVERAGE_DIR = withr::local_tempdir()),
     system2("sh", c("-c", shQuote(sh)), stdout = TRUE, stderr = FALSE)
   )
   expect_match(paste(out, collapse = "\n"), "the file is unchanged")
