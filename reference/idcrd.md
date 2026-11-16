@@ -136,7 +136,7 @@ or
 `name` not one non-empty string; an optional field that is not one
 string, an ORCID iD with a wrong check digit, an e-mail address or a web
 page of the wrong shape; `days` not a positive whole number; `path` not
-a card file.
+a card file, or over 32 MiB.
 
 ## See also
 
@@ -166,13 +166,13 @@ card
 #> │   orcid        0000-0002-1825-0097                                          │
 #> │   web          https://example.org/ada                                      │
 #> │   key          ML-DSA-44                                                    │
-#> │   fingerprint  9396 2806 C17E 56A4 7E2F DB1D C88C 7914 82F2 C715 D328 F72C  │
-#> │                D1B1 9F76 242E 8798                                          │
-#> │   issued       2026-11-16T21:46:26Z                                         │
-#> │   expires      2028-11-15T21:46:26Z                                         │
+#> │   fingerprint  7D80 1746 D77F 38F7 56BB 39BC 497D 4ADB 1312 DA02 C2A0 6588  │
+#> │                EE76 F40C D27C D076                                          │
+#> │   issued       2026-11-16T22:27:17Z                                         │
+#> │   expires      2028-11-15T22:27:17Z                                         │
 #> ╰─────────────────────────────────────────────────────────────────────────────╯
 card$fingerprint
-#> [1] "9396 2806 C17E 56A4 7E2F DB1D C88C 7914 82F2 C715 D328 F72C D1B1 9F76 242E 8798"
+#> [1] "7D80 1746 D77F 38F7 56BB 39BC 497D 4ADB 1312 DA02 C2A0 6588 EE76 F40C D27C D076"
 
 # anyone, later: is this the card I was told about, and did it sign this?
 man <- mkmnf(list(project = "demo"), env = FALSE)
@@ -193,7 +193,7 @@ res$checks
 #> 1                                                                                    
 #> 2                                 an rmbl identity card, signed under its own context
 #> 3                               made by the holder of the card's key; unchanged since
-#> 4 valid 2026-11-16T21:46:26Z to 2028-11-15T21:46:26Z; checked at 2026-11-16T21:46:26Z
+#> 4 valid 2026-11-16T22:27:17Z to 2028-11-15T22:27:17Z; checked at 2026-11-16T22:27:17Z
 #> 5                                                                 0000-0002-1825-0097
 #> 6                                            the card's key is the one you were given
 #> 7                                              the attestation carries the card's key

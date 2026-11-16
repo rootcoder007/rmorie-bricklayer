@@ -19,6 +19,67 @@
   [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
   already did.
 
+- [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  and `rmbl verify` fail when no capsule is found under the path: a
+  folder with nothing to check (empty, or whose capsule was deleted or
+  moved into a `.git` or `.rmbl-cache` folder, which stay unsearched)
+  passed as `ok`, also with `pubkey` (`--public-key`) given, and
+  `rmbl verify` exited 0. The result now has one failed `no_capsule` row
+  and the status `error`, the report says that no capsule was found and
+  nothing was checked, and `rmbl verify` and `rmbl drift` exit 1, as for
+  any failed verification (`rmbl report` still exits 0).
+
+- [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  (and `rmbl verify`) reports an empty folder inside a bundled capsule
+  as content the bundle does not list, in its `no_unlisted_files` row,
+  named with a trailing `/`, as it reports an unlisted file; a bundle
+  lists only files, so an empty folder added after signing went
+  unreported.
+
+- [`fromjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fromjs.md),
+  [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md),
+  [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md)
+  and
+  [`wbrtry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbrtry.md)
+  no longer call a Unix socket a folder or a directory: base R’s
+  [`dir.exists()`](https://rdrr.io/r/base/files2.html) says TRUE for a
+  socket, and these readers refused it in those words. They refuse it as
+  every reader refuses what is not a regular file (“is not a regular
+  file (a device, a pipe or a socket)”);
+  [`xmssidxseen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md),
+  the token files of the timestamp functions and `vrfpol(expcsv = )`
+  tell a folder from a socket the same way.
+
+- Bytes that are not text in a date given to
+  [`perdays()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/perdays.md),
+  a setting name given to
+  [`llmcfg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmcfg.md)
+  or a path given to
+  [`sha256file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256file.md)
+  are shown as `<ff>` in the error, as the NEWS of this release says
+  such bytes are shown: they were pasted as they were, so the message
+  itself was not valid UTF-8.
+
+- [`cpsbndlrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
+  [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md)
+  and
+  [`idcrdrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
+  refuse a file over 32 MiB in the package’s words (“is larger than the
+  33,554,432 bytes read”), as the reader of the data manifest does,
+  where base R’s [`readLines()`](https://rdrr.io/r/base/readLines.html)
+  failed with “cannot allocate buffer” on a very large one; so do
+  [`ldgrread()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md),
+  [`vrfrcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrrcdmnf.md),
+  [`mnfdiff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md)
+  and `rmbl verify` for the JSON documents they read.
+
+- [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  exempts a capsule’s `capsule_bundle.json` from the unlisted-files
+  check only when it is the bundle being checked: with a bundle checked
+  from a file outside the capsule, a `capsule_bundle.json` planted
+  inside passed whatever it held, and is now reported in the
+  `no_unlisted_files` row like any other file the bundle does not list.
+
 - Output sent to `/dev/null` (or `NUL` on Windows) to be discarded is
   written there as before. Text, CSV and credential files written on
   Windows keep the line ends 1.1.0 gave them (a carriage return before
@@ -34,18 +95,23 @@
   names it as a leftover of an interrupted write, not part of the
   capsule.
 
-- Signatures and bundles have one accepted spelling: a signature whose
-  hex is not lower case (as
+- The values a signature records have one accepted spelling: a signature
+  whose hex is not lower case (as
   [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
   writes it) does not verify, nor does one whose recorded context or
   pre-hash differs from the one it is verified under, or one carrying a
   field its scheme does not have;
   [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
   fails a bundle or attestation holding fields no signature covers, with
-  a `no_unsigned_fields` row naming them. Bundles and signatures written
-  by released versions keep verifying: they are written in lower case
-  with only these fields (an XMSS object of 0.5.9 to 0.5.12 with
-  `key_state` still verifies, with its warning).
+  a `no_unsigned_fields` row naming them. The JSON text of a bundle is
+  not checked, only the values it holds: a bundle rewritten with the
+  same values (a `\u` escape, `6.0` for `6`, Windows line ends) still
+  verifies, as the signature covers the values, not the bytes of the
+  file; one that starts with a byte-order mark is refused as not JSON,
+  as before. Bundles and signatures written by released versions keep
+  verifying: they are written in lower case with only these fields (an
+  XMSS object of 0.5.9 to 0.5.12 with `key_state` still verifies, with
+  its warning).
 
 - Arguments that reached base R and failed in its words are refused in
   the package’s:

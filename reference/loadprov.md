@@ -51,7 +51,8 @@ without a provenance record and every resolver treats `NULL` as “nothing
 pinned”.
 
 Errors: `path` that is not a single non-empty string; `path` that is a
-directory; a file that is not valid JSON.
+directory, or not a regular file, or over 32 MiB; a file that is not
+valid JSON.
 
 ## Examples
 
@@ -74,5 +75,5 @@ length(valsch(data.frame(id = 1, year = 2020), p))
 
 # a directory is not a provenance file
 try(loadprov(tempdir()))
-#> Error : `path` is a directory, not a provenance file: /tmp/RtmpAcPUAE
+#> Error : `path` is a directory, not a provenance file: /tmp/RtmpQg7XL1
 ```

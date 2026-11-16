@@ -137,8 +137,10 @@ shown when `options(morie.progress)` allows it.
 
 How it is checked. `cpsbndlvrf()` re-hashes every listed file (a path
 that is absolute or climbs out of `dir` fails its row), reports every
-file on disk the bundle does not list (the bundle's own file excepted),
-checks the attestation with
+file on disk the bundle does not list (the bundle's own file excepted,
+when it is the file checked: a `capsule_bundle.json` in `dir` is
+unlisted when another bundle file is checked) and every empty folder
+(named with a trailing `/`), checks the attestation with
 [`cpschkatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
 (signature, digest, and `keyexp` when given; an `"hmac"` signature needs
 the shared secret as `key`), and, when `man` is given, compares its
@@ -148,9 +150,10 @@ digest with the bundled one. Every check is a row of `checks`; `ok` is
 Errors: `dir` missing or not a directory; no files to bundle, or a named
 file not in `dir`; a key
 [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
-cannot sign with; `cpsbndlrd()` given a file that is not a bundle;
-`cpsbndlvrf()` given something other than a bundle or a path. Reading a
-bundle whose signature records a stateful key's state warns (see
+cannot sign with; `cpsbndlrd()` given a file that is not a bundle, or
+one over 32 MiB; `cpsbndlvrf()` given something other than a bundle or a
+path. Reading a bundle whose signature records a stateful key's state
+warns (see
 [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)).
 
 ## See also
@@ -192,10 +195,10 @@ b2
 #> │   Files            1                                                        │
 #> │   Manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e416796 │
 #> │                    0781a579                                                 │
-#> │   Bundled          2026-11-16T21:46:01Z                                     │
+#> │   Bundled          2026-11-16T22:26:46Z                                     │
 #> │   Scheme           ML-DSA-44                                                │
 #> │   Note             as published                                             │
-#> │   Path             /tmp/RtmpAcPUAE/file1e6e13697ba7/capsule_bundle.json     │
+#> │   Path             /tmp/RtmpQg7XL1/file1f41202c2645/capsule_bundle.json     │
 #> │                                                                             │
 #> │   A signed list of the capsule's files and their digests; check the files   │
 #> │   against it with cpsbndlvrf().                                             │
@@ -230,6 +233,6 @@ unlink(dir2, recursive = TRUE)
 
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/RtmpAcPUAE/no-such-capsule
+#> Error : `dir` does not exist: /tmp/RtmpQg7XL1/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

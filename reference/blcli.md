@@ -106,11 +106,12 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   The secret of an HMAC bundle is read from `RMBL_KEY`, which is then
   removed from the environment. Prints the Markdown report, or JSON with
   `--json`; exits 1 when a failed row is at or above `--fail-on`
-  (`error`, the default, `drift` or `warn`). `--base MANIFEST|DIR`
-  compares each manifest with its base copy, `--manifests GLOB` checks
-  only the capsule files matching GLOB, `--snapshot` looks up each
-  source's latest Wayback snapshot and `--no-footprint` leaves the
-  footprint
+  (`error`, the default, `drift` or `warn`), and when no capsule is
+  found under PATH (an error row: nothing was checked).
+  `--base MANIFEST|DIR` compares each manifest with its base copy,
+  `--manifests GLOB` checks only the capsule files matching GLOB,
+  `--snapshot` looks up each source's latest Wayback snapshot and
+  `--no-footprint` leaves the footprint
   ([`co2fp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md))
   out of the report. `--seen-log FILE` adds the signatures an XMSS
   seen-log lists to those under PATH: an XMSS index one key signed twice
@@ -390,33 +391,33 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.1.1](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpAcPUAE/capsule-1e6e6087fd96`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpQg7XL1/capsule-1f416f6e28dd`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpAcPUAE/capsule-1e6e6087fd96` | /tmp/RtmpAcPUAE/temp_libpath1e6e4c4a2ff3/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpQg7XL1/capsule-1f416f6e28dd` | /tmp/RtmpQg7XL1/temp_libpath1f413662c485/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpAcPUAE/capsule-1e6e6087fd96</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpQg7XL1/capsule-1f416f6e28dd</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpAcPUAE/temp_libpath1e6e4c4a2ff3/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpQg7XL1/temp_libpath1f413662c485/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpAcPUAE/capsule-1e6e6087fd96/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpAcPUAE/capsule-1e6e6087fd96/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpQg7XL1/capsule-1f416f6e28dd/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpQg7XL1/capsule-1f416f6e28dd/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpAcPUAE/capsule-1e6e6087fd96/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpQg7XL1/capsule-1f416f6e28dd/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000121 Wh, 5.54e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000148 Wh, 6.77e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
 #> 
 #> ---
 #> 

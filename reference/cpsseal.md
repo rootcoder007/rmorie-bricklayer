@@ -88,7 +88,7 @@ writeLines('{"resource": {"filename": "data.csv"}}',
 s <- cpsseal(root, "a shared secret")
 s
 #>                                     capsule pinned files
-#> 1 /tmp/RtmpAcPUAE/capsules-1e6e18b88245/one   TRUE     2
+#> 1 /tmp/RtmpQg7XL1/capsules-1f414bb3d544/one   TRUE     2
 #>                                                             public
 #> 1 2b23046c08926e30017362694e61c9f76f64815699749bede71734e74c84f65e
 cpschk(root, key = "a shared secret", fp = FALSE)$status
@@ -96,7 +96,7 @@ cpschk(root, key = "a shared secret", fp = FALSE)$status
 
 # a second run needs overwrite, and a post-quantum key signs too
 try(cpsseal(root, "a shared secret"))
-#> Error : cpsseal: capsule_bundle.json already exists in /tmp/RtmpAcPUAE/capsules-1e6e18b88245/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again
+#> Error : cpsseal: capsule_bundle.json already exists in /tmp/RtmpQg7XL1/capsules-1f414bb3d544/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again
 cpsseal(root, fipskg("ML-DSA-44"), overwrite = TRUE)$pinned
 #> [1] FALSE
 ```
