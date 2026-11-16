@@ -483,7 +483,7 @@ is written.
 proj <- file.path(tempdir(), "my-study")
 p <- mkbndlproj(proj, title = "My study", author = "A. Researcher",
                 contact = "a.researcher@example.org", overwrite = TRUE)
-p
+list.files(proj)
 ```
 
 `config.json` says who and what (and `r_packages`, the packages your
@@ -516,7 +516,8 @@ stop on the reviewer's machine with "could not find function".
 
 ```{r}
 b <- mkbndl(proj, dest = tempdir(), data = csv, overwrite = TRUE)
-b
+basename(b$path)
+b$sha256
 ```
 
 Send `b$sha256` separately from the zip: the reviewer checks it before

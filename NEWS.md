@@ -1,5 +1,7 @@
 # rmoriebricklayer 1.1.1
 
+* The pre-built vignettes no longer print folders of the machine that built them: the starter project, the bundle, the sample ledger and the stale XMSS key are shown by name.
+
 * The help of `kemdecap()` names the element of `kemencap()`'s result to pass, `ciphertext` (it said `ct`).
 
 * `cwtd()` gives the same mean and variance whatever the scale of the weights: equal weights of any size give `var(x)` (`rep(1e-160, 3)` gave 0.99999443, `rep(1e-165, 3)` and `rep(1e154, 3)` gave `NaN`), and one weight much larger than the rest no longer gives `NaN` (`c(1, 1e200, 1)` gives 0.5). The weights are scaled by a power of two, which is exact, and the denominator is summed without cancelling. `sprd()` with reliability weights does the same. The help of `cwtd()` said all-zero weights give `NaN`; they are refused, and the help now says so.

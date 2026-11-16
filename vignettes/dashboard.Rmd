@@ -159,7 +159,11 @@ led <- ldgrread(system.file(
   "ledger_sample.json",
   package = "rmoriebricklayer"
 ))
-led
+# the box names the file it read: shown by its name, not the folder of
+# this installation
+shown <- led
+attr(shown, "path") <- basename(attr(led, "path"))
+shown
 ldgrchk(led)[, c("check", "ok", "severity")]
 ```
 
