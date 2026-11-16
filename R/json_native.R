@@ -162,12 +162,14 @@ jsb64dec <- function(input) {
   if (!is.raw(input)) {
     stop("jsb64dec: `input` must be a raw vector or text", call. = FALSE)
   }
-  s <- rawToChar(input)
   # whitespace and padding may be dropped; anything else is not base64, and
   # deleting it would decode a corrupt body into a shorter valid-looking one.
   # Base64 is ASCII, so the bytes are matched as bytes: a byte that is not
-  # text failed in grepl() with base R's warnings (audit of 21478080, P3)
-  if (grepl("[^A-Za-z0-9+/=[:space:]]", s, useBytes = TRUE)) {
+  # text failed in grepl() with base R's warnings (audit of 21478080, P3),
+  # and a nul byte in rawToChar() ("embedded nul in string")
+  nul <- any(input == as.raw(0L))
+  s <- if (nul) "" else rawToChar(input)
+  if (nul || grepl("[^A-Za-z0-9+/=[:space:]]", s, useBytes = TRUE)) {
     stop(
       "jsb64dec: `input` holds characters outside the base64 alphabet",
       call. = FALSE

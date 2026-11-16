@@ -595,3 +595,8 @@ test_that(
     }
   }
 )
+
+test_that("a model name that is no text is refused in words", {
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  expect_error(.bl_model_name("\xff\xfe"), "`model` holds text that is not")
+})

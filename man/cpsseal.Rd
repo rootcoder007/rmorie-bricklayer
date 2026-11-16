@@ -18,7 +18,8 @@ consecutive indices (each reserved as \code{\link{cpssign}} reserves it).}
 \item{overwrite}{Logical: sign a capsule that already has a bundle again.}
 
 \item{glob}{Character scalar: only the provenance files whose path
-matches this glob (\code{*} also matches \code{/}), or \code{""}.}
+matches this glob (\code{*} also matches \code{/}), or \code{""}; at
+most 4,096 bytes.}
 }
 \value{
 A data frame, one row per capsule: \code{capsule},

@@ -543,6 +543,7 @@ yoypdf <- function(
       call. = FALSE
     )
   }
+  .rmbl_valid_text(notes, "notes")
   invisible(NULL)
 }
 

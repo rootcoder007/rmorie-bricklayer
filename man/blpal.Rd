@@ -15,7 +15,8 @@ one of \code{"diverging"}, \code{"sequential"} and \code{"grey"}.}
 
 \item{n}{Integer scalar or \code{NULL} (the default: the palette's own
 colours). The number of colours wanted; \code{"okabe"} and \code{"grey"}
-recycle, \code{"sequential"} and \code{"diverging"} interpolate.}
+recycle, \code{"sequential"} and \code{"diverging"} interpolate. At
+most 100,000 (a plot needs a few dozen).}
 
 \item{...}{For \code{plotopt()}, named options to set:
 \code{palette} (a palette name), \code{grid} (logical, draw grid
@@ -65,9 +66,9 @@ size, so that they stay readable; for larger text set, for example,
 \code{plotopt(cex = 1.2)}, and for a table with many rows use a taller
 device.
 
-Errors: an unknown palette \code{name}; \code{n} not a positive whole
-number; an option name other than the six above, or an unnamed value; an
-unknown \code{palette} option.
+Errors: an unknown palette \code{name}; \code{n} not a whole number from
+1 to 100,000; an option name other than the six above, or an unnamed
+value; an unknown \code{palette} option.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

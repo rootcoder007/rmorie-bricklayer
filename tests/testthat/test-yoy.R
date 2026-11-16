@@ -1112,3 +1112,17 @@ test_that("the first period is said once, not once per group or on the plot", {
     1L
   )
 })
+
+test_that("yoywr() and yoyhtml() refuse bytes that are not text", {
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  y <- yoychg(data.frame(year = 2019:2021, n = c(5, 7, 9)), "n", "year")
+  f <- withr::local_tempfile(fileext = ".html")
+  expect_error(
+    yoywr(y, f, format = "\xff\xfe"),
+    "`format` holds text that is not"
+  )
+  expect_error(
+    yoyhtml(y, f, notes = "\xff\xfe"),
+    "`notes` holds text that is not"
+  )
+})

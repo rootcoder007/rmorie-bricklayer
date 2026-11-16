@@ -54,7 +54,7 @@
 #'
 #' Errors: \code{refresh} or \code{offline} not \code{TRUE} or \code{FALSE};
 #' \code{maxage} not a single non-negative number; \code{tmout} not a
-#' single finite number of at least 1.
+#' single number from 1 to 2147483647.
 #'
 #' @param refresh Logical scalar, default \code{FALSE}: \code{TRUE} fetches
 #'   the live document even when the cached copy is fresh.
@@ -553,10 +553,13 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20, offline = FALSE) {
     )
   }
   if (
-    !is.numeric(tmout) || length(tmout) != 1L || !is.finite(tmout) || tmout < 1
+    !is.numeric(tmout) || length(tmout) != 1L || !is.finite(tmout) ||
+      tmout < 1 || tmout > .Machine$integer.max
   ) {
+    # bounded as bldl() bounds it: 1e15 became NA in as.integer() with a
+    # warning
     stop(
-      "`tmout` must be a single number of seconds, at least one",
+      "`tmout` must be a single number of seconds, from 1 to 2147483647",
       call. = FALSE
     )
   }

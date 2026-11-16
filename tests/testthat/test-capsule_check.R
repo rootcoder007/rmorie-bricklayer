@@ -1125,3 +1125,31 @@ test_that("cpschk(archive = TRUE) is ignored with a warning", {
     "`archive` is ignored"
   )
 })
+
+test_that("cpschk() and cpsseal() bound the glob in their own words", {
+  d <- withr::local_tempdir()
+  expect_error(
+    cpschk(d, glob = strrep("A", 5000)),
+    "cpschk: `glob` is longer than the 4,096 bytes"
+  )
+  expect_error(
+    cpsseal(d, "a secret", glob = strrep("A", 5000)),
+    "cpsseal: `glob` is longer than the 4,096 bytes"
+  )
+  expect_identical(.bl_glob_rx("*.json"), utils::glob2rx("*.json"))
+  testthat::local_mocked_bindings(
+    glob2rx = function(...) "(",
+    .package = "utils"
+  )
+  expect_error(.bl_glob_rx("x"), "`glob` is not a pattern that can be matched")
+})
+
+test_that("ghcmt() and cpschk() take bytes that are no text as such", {
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  expect_error(
+    cpschk(withr::local_tempdir(), pubkey = "\xff\xfe"),
+    "`pubkey` must be the expected public key"
+  )
+  x <- cpschk(withr::local_tempdir())
+  expect_error(ghcmt(x, failon = "\xff\xfe"), "`failon` holds text that is not")
+})

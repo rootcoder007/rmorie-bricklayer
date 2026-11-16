@@ -553,3 +553,18 @@ test_that("an indigenous-health table without its columns prints plainly", {
     expect_plain_df(cls)
   }
 })
+
+test_that("agestd() and limfrom() refuse in their own words", {
+  expect_error(
+    agestd(Inf, Inf, Inf),
+    "agestd: `std` must be non-negative finite"
+  )
+  expect_error(agestd(Inf, 1, 1), "agestd: `events` must be non-negative whole")
+  expect_error(agestd(1, Inf, 1), "agestd: `pop` must be positive and finite")
+  # a cv of the wrong length was recycled with only R's warning
+  expect_error(
+    limfrom(est = c(1, 2, 3), cv = c(8, 12)),
+    "limfrom: `cv` must be one per estimate, or one for all"
+  )
+  expect_identical(nrow(limfrom(est = c(1, 2, 3), cv = 8)), 3L)
+})

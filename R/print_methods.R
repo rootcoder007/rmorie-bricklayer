@@ -889,6 +889,12 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   # as .rmbl_printable() does, it is matched and folded, not warned about
   # (recheck of a8cdaf9: yoychg() labels in a C locale)
   s <- .rmbl_mark8(s)
+  # bytes that are not text are shown as <ff>: grepl() warned "input string
+  # 1 is invalid" on them (a download or progress label, a plot title)
+  bad <- !is.na(s) & !validEnc(s)
+  if (any(bad)) {
+    s[bad] <- iconv(s[bad], "", "UTF-8", sub = "byte")
+  }
   # the class is built from the characters themselves: a pattern marked
   # UTF-8 matches the bidi controls whatever the session's locale
   u <- function(k) intToUtf8(k)

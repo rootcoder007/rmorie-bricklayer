@@ -194,20 +194,21 @@ limfrom <- function(
   }
   conflvl <- .rmbl_conf_level(conflvl)
   moelev <- .rmbl_conf_level(moelev, "moelev")
-  s <- if (given[1L]) {
-    .rmbl_num(se, "se")
-  } else if (given[2L]) {
-    est * .rmbl_num(cv, "cv") / 100
-  } else {
-    .rmbl_num(moe, "moe") / stats::qnorm(1 - (1 - moelev) / 2)
-  }
-  if (length(s) != length(est) && length(s) != 1L) {
+  nm <- c("se", "cv", "moe")[given]
+  v <- .rmbl_num(list(se, cv, moe)[[which(given)]], nm)
+  # checked before `est * cv` recycled a shorter `cv` with only R's warning
+  if (length(v) != length(est) && length(v) != 1L) {
     stop(
       .rmbl_fn(),
-      "the standard errors must be one per estimate",
+      sprintf("`%s` must be one per estimate, or one for all", nm),
       call. = FALSE
     )
   }
+  s <- switch(nm,
+    se = v,
+    cv = est * v / 100,
+    moe = v / stats::qnorm(1 - (1 - moelev) / 2)
+  )
   if (any(s < 0, na.rm = TRUE)) {
     stop(
       .rmbl_fn(),
@@ -1541,9 +1542,9 @@ format.rmbl_trc_progress <- function(x, ...) {
 #' @return NULL, invisibly.
 #' @noRd
 .rmbl_dsr_check <- function(events, pop, std) {
-  if (!length(std) || anyNA(std) || any(std < 0) || sum(std) <= 0) {
+  if (!length(std) || !all(is.finite(std)) || any(std < 0) || sum(std) <= 0) {
     stop(
-      "agestd: `std` must be non-negative counts, one per age group, ",
+      "agestd: `std` must be non-negative finite counts, one per age group, ",
       "not all zero",
       call. = FALSE
     )
@@ -1556,7 +1557,8 @@ format.rmbl_trc_progress <- function(x, ...) {
     )
   }
   if (
-    anyNA(events) || any(events < 0) || any(abs(events - round(events)) > 1e-8)
+    !all(is.finite(events)) || any(events < 0) ||
+      any(abs(events - round(events)) > 1e-8)
   ) {
     stop(
       .rmbl_fn(),
@@ -1564,8 +1566,8 @@ format.rmbl_trc_progress <- function(x, ...) {
       call. = FALSE
     )
   }
-  if (anyNA(pop) || any(pop <= 0)) {
-    stop("agestd: `pop` must be positive", call. = FALSE)
+  if (!all(is.finite(pop)) || any(pop <= 0)) {
+    stop("agestd: `pop` must be positive and finite", call. = FALSE)
   }
   invisible(NULL)
 }

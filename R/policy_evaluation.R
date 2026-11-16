@@ -1634,6 +1634,10 @@ piperate <- function(num, den, win = 12L, lag = 0L, grp = NULL) {
   if (length(num) != length(den)) {
     stop(.rmbl_fn(), "`num` and `den` must be the same length", call. = FALSE)
   }
+  # no counts gave no rows, and the class could not be set on NULL
+  if (!length(num)) {
+    stop(.rmbl_fn(), "`num` and `den` hold no counts", call. = FALSE)
+  }
   if (any(c(num, den) < 0, na.rm = TRUE)) {
     stop(.rmbl_fn(), "counts must not be negative", call. = FALSE)
   }
@@ -3767,10 +3771,11 @@ polex <- function(seed = 20240101) {
   if (length(e) != n || length(.pop) != n) {
     stop(.rmbl_fn(), "`age`, `fireve` and `pop` must match", call. = FALSE)
   }
-  if (anyNA(c(age, e, .pop)) || any(e < 0) || any(.pop <= 0)) {
+  if (!all(is.finite(c(age, e, .pop))) || any(e < 0) || any(.pop <= 0)) {
     stop(
       .rmbl_fn(),
-      "counts must be 0 or more and populations above 0, with no NA",
+      "counts must be 0 or more and populations above 0, all finite, with ",
+      "no NA",
       call. = FALSE
     )
   }
@@ -3788,8 +3793,12 @@ polex <- function(seed = 20240101) {
 #' @noRd
 .rmbl_cr_opt <- function(x, nm, n) {
   x <- .rmbl_num(x, nm)
-  if (nm == "atrisk" && (length(x) != n || any(x <= 0))) {
-    stop(.rmbl_fn(), "`atrisk` must be one per age, above 0", call. = FALSE)
+  if (nm == "atrisk" && (length(x) != n || !all(is.finite(x)) || any(x <= 0))) {
+    stop(
+      .rmbl_fn(),
+      "`atrisk` must be one per age, above 0 and finite",
+      call. = FALSE
+    )
   }
   if (nm == "dthrate" && (length(x) != n || any(x < 0 | x >= 1))) {
     stop(

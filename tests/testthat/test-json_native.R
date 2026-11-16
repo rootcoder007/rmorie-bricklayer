@@ -148,3 +148,10 @@ test_that("jsunser() rebuilds a time with no zone, refuses a missing one", {
     fixed = TRUE
   )
 })
+
+test_that("jsb64dec() refuses a nul byte as outside the alphabet", {
+  expect_error(
+    jsb64dec(as.raw(c(0x61, 0, 0x62))),
+    "jsb64dec: `input` holds characters outside the base64 alphabet"
+  )
+})

@@ -720,6 +720,15 @@ rgnmappts <- function(x, y, unit, bounds, fields, crs = 4326) {
   if (!is.data.frame(d)) {
     stop(sprintf("`%s` must be a data frame", arg), call. = FALSE)
   }
+  # a column named by no string (a data frame, NULL) gave an error with an
+  # empty message: sprintf() of a zero-length name is no text
+  if (!is.character(nm) || length(nm) != 1L || is.na(nm)) {
+    stop(
+      .rmbl_fn(),
+      sprintf("the columns of `%s` must be named by single strings", arg),
+      call. = FALSE
+    )
+  }
   if (length(nm) != 1L || !nm %in% names(d)) {
     stop(sprintf("`%s` has no column `%s`", arg, nm), call. = FALSE)
   }

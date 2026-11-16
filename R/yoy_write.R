@@ -72,6 +72,7 @@ yoywr <- function(x, file, format = "auto", ...) {
     stop("yoywr: `x` must be an rmbl_yoy object from yoychg()", call. = FALSE)
   }
   file <- as.character(file)[1L]
+  .rmbl_valid_text(format, "format")
   format <- tolower(as.character(format)[1L])
   format <- .rmbl_yoy_format(file, format)
   if (!format %in% c("html", "pdf", "csv", "tsv", "json", "markdown")) {

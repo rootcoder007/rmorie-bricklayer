@@ -369,3 +369,10 @@ test_that("svcs() argument checks", {
   expect_error(svcs(refresh = NA), "`refresh` must be TRUE or FALSE")
   expect_error(svcs(offline = "yes"), "`offline` must be TRUE or FALSE")
 })
+
+test_that("svcs() bounds its timeout as bldl() does", {
+  expect_error(
+    svcs(refresh = TRUE, tmout = 1e15),
+    "`tmout` must be a single number of seconds, from 1 to 2147483647"
+  )
+})

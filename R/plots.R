@@ -41,15 +41,16 @@
 #' \code{plotopt(cex = 1.2)}, and for a table with many rows use a taller
 #' device.
 #'
-#' Errors: an unknown palette \code{name}; \code{n} not a positive whole
-#' number; an option name other than the six above, or an unnamed value; an
-#' unknown \code{palette} option.
+#' Errors: an unknown palette \code{name}; \code{n} not a whole number from
+#' 1 to 100,000; an option name other than the six above, or an unnamed
+#' value; an unknown \code{palette} option.
 #'
 #' @param name Character scalar, the palette: \code{"okabe"} (the default), or
 #'   one of \code{"diverging"}, \code{"sequential"} and \code{"grey"}.
 #' @param n Integer scalar or \code{NULL} (the default: the palette's own
 #'   colours). The number of colours wanted; \code{"okabe"} and \code{"grey"}
-#'   recycle, \code{"sequential"} and \code{"diverging"} interpolate.
+#'   recycle, \code{"sequential"} and \code{"diverging"} interpolate. At
+#'   most 100,000 (a plot needs a few dozen).
 #' @param ... For \code{plotopt()}, named options to set:
 #'   \code{palette} (a palette name), \code{grid} (logical, draw grid
 #'   lines), \code{cex} (numeric text and symbol size), \code{las} (axis label
@@ -123,8 +124,12 @@ blpal <- function(
     return(base)
   }
   n <- .rmbl_num(n, "n", integer = TRUE)
-  if (length(n) != 1L || is.na(n) || n < 1L) {
-    stop("`n` must be a single positive whole number", call. = FALSE)
+  # bounded: .Machine$integer.max colours asked for 16 GB
+  if (length(n) != 1L || is.na(n) || n < 1L || n > 1e5) {
+    stop(
+      "`n` must be a single positive whole number, at most 100,000",
+      call. = FALSE
+    )
   }
   n <- as.integer(n)[1L]
   if (name %in% c("okabe", "grey")) {
@@ -2508,6 +2513,10 @@ plotmult <- function(
   pal = NULL
 ) {
   d <- .bl_series(y, prd, grp)
+  # range() of no finite value warned and gave c(Inf, -Inf)
+  if (!any(is.finite(d$y))) {
+    stop(.rmbl_fn(), "`y` has no finite value to draw", call. = FALSE)
+  }
   lv <- levels(d$grp)
   cols <- .bl_cols(length(lv), col, pal)
   op <- .bl_panels_begin(length(lv))
@@ -3052,6 +3061,8 @@ plotbump <- function(
       call. = FALSE
     )
   }
+  # bytes that are not text failed in nchar() in base R's words
+  .rmbl_valid_text(main, "main")
   if (is.character(main)) .rmbl_ctl_escape(main) else main
 }
 
@@ -5576,6 +5587,15 @@ plotbump <- function(
   } else {
     match(d$prd, unique(d$prd))
   }
+  # an infinite period has no place on the axis: plot.window() stopped with
+  # "need finite 'xlim' values" after min() and max() warned
+  if (!all(is.finite(d$pos))) {
+    stop(
+      .rmbl_fn(),
+      "`prd` must be finite periods",
+      call. = FALSE
+    )
+  }
   d[order(d$grp, d$pos), , drop = FALSE]
 }
 
@@ -5590,6 +5610,8 @@ plotbump <- function(
   if (
     is.null(dt) ||
       anyNA(dt[!is.na(x)]) ||
+      # an infinite date has no year (as.integer() warned, then NA)
+      any(is.infinite(unclass(dt))) ||
       length(dt) != length(y) ||
       !is.numeric(y)
   ) {
@@ -5890,7 +5912,7 @@ plotbump <- function(
 .bl_check_bw <- function(bw) {
   rules <- c("nrd0", "nrd", "ucv", "bcv", "sj", "sj-ste", "sj-dpi")
   ok <- if (is.character(bw)) {
-    length(bw) == 1L && !is.na(bw) && tolower(bw) %in% rules
+    length(bw) == 1L && !is.na(bw) && validEnc(bw) && tolower(bw) %in% rules
   } else {
     is.numeric(bw) && length(bw) == 1L && is.finite(bw) && bw > 0 &&
       bw < 1e15

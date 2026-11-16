@@ -101,7 +101,8 @@
 #'   earlier versions (the rmbl GitHub Action passes it) still run; use
 #'   \code{cache} for a copy kept by an earlier run.
 #' @param glob Character scalar: check only the capsule files whose path
-#'   matches this glob (\code{*} also matches \code{/}), or \code{""}.
+#'   matches this glob (\code{*} also matches \code{/}), or \code{""}; at
+#'   most 4,096 bytes.
 #' @param fp Logical: measure the footprint of the checks
 #'   (\code{\link{co2fp}}) for the last lines of the report.
 #' @param seenlog Character scalar: an XMSS seen-log (\code{\link{xmssidxseen}};
@@ -373,6 +374,7 @@ ghcmt <- function(
     stop("ghcmt: `failon` must be NULL or check names (text)",
          call. = FALSE)
   }
+  .rmbl_valid_text(failon, "failon")
   marker <- .rmbl_string1(marker, "marker")
   limit <- .rmbl_scalar(limit, "limit", 100, integer = TRUE)
   if (!is.null(runurl)) {
@@ -469,7 +471,8 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #'   consecutive indices (each reserved as \code{\link{cpssign}} reserves it).
 #' @param overwrite Logical: sign a capsule that already has a bundle again.
 #' @param glob Character scalar: only the provenance files whose path
-#'   matches this glob (\code{*} also matches \code{/}), or \code{""}.
+#'   matches this glob (\code{*} also matches \code{/}), or \code{""}; at
+#'   most 4,096 bytes.
 #' @return A data frame, one row per capsule: \code{capsule},
 #'   \code{pinned} (whether the provenance was pinned now), \code{files}
 #'   (the number signed) and \code{public} (the HMAC key id or the public
@@ -691,7 +694,8 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 .bl_pubkey_arg <- function(x) {
   # " " or "x" pinned nothing and the capsule passed as if a key had been
   # checked (network review of 1.0.3)
-  if (nzchar(x) && !grepl("^[0-9a-fA-F]{16,}$", x)) {
+  # matched as bytes: text that is not valid warned in grepl()
+  if (nzchar(x) && !grepl("^[0-9a-fA-F]{16,}$", x, useBytes = TRUE)) {
     stop(
       .rmbl_fn(),
       "`pubkey` must be the expected public key or key id in hexadecimal ",

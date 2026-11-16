@@ -612,3 +612,10 @@ test_that(
     expect_false(ns$.bl_busy("quiet", ns$.bl_progress_state$busy))
   }
 )
+
+test_that("a label that is no text is drawn as escapes, without a warning", {
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  expect_no_warning(pg <- blprog("caf\xff", 2, quiet = TRUE))
+  pg$done()
+  expect_identical(.rmbl_ctl_escape("a\xffb"), "a<ff>b")
+})

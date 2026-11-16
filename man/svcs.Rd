@@ -73,7 +73,7 @@ rest of the package makes) return it without checking the signature again.
 
 Errors: \code{refresh} or \code{offline} not \code{TRUE} or \code{FALSE};
 \code{maxage} not a single non-negative number; \code{tmout} not a
-single finite number of at least 1.
+single number from 1 to 2147483647.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

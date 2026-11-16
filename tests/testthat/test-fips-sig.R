@@ -341,3 +341,14 @@ test_that("the print methods say which scheme and withhold the secret", {
     fixed = TRUE
   )))
 })
+
+test_that("hex that is no text is no key, said in words", {
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  k <- fipskg("ML-DSA-44", seed = as.raw(1:32))
+  expect_error(
+    fipskey("ML-DSA-44", "\xff\xfe", k$secret),
+    "must be .* bytes of key material for ML-DSA-44"
+  )
+  expect_null(.rmbl_hex_or_null("\xff\xfe"))
+  expect_error(.rmbl_check_seed("\xff\xfe", "seed"), "`seed` must be 64 hex")
+})

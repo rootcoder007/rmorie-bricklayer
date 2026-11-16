@@ -429,6 +429,8 @@ polbrdn <- function(
   hirate = FALSE
 ) {
   .rmbl_no_fn(poll = poll)
+  # bytes that are not text: refused, not printed in the message below
+  .rmbl_valid_text(poll, "poll")
   pol <- .pollution_pollutant(poll)
   if (is.na(pol)) {
     stop(
@@ -1525,7 +1527,10 @@ format.rmbl_plr_boot <- function(x, ...) {
 #' @return \code{"PM2.5"}, \code{"NO2"} or NA.
 #' @noRd
 .pollution_pollutant <- function(pollutant) {
-  if (!is.character(pollutant) || length(pollutant) != 1L || is.na(pollutant)) {
+  if (
+    !is.character(pollutant) || length(pollutant) != 1L || is.na(pollutant) ||
+      !validEnc(pollutant)
+  ) {
     return(NA_character_)
   }
   key <- gsub("[^a-z0-9]", "", tolower(pollutant))
@@ -3096,6 +3101,7 @@ format.rmbl_plr_boot <- function(x, ...) {
       call. = FALSE
     )
   }
+  .rmbl_valid_text(poll, "poll")
   pol <- .pollution_pollutant(poll)
   if (is.na(pol)) {
     tolower(as.character(poll))

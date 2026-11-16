@@ -630,7 +630,7 @@ crc32file <- function(path, blkbytes = 1048576L) {
 #' @noRd
 .rmbl_hex_to_raw <- function(hex) {
   hex <- as.character(hex)[1L]
-  n <- nchar(hex)
+  n <- nchar(hex, type = "bytes")
   if (n %% 2L != 0L) {
     stop("hex string has odd length", call. = FALSE)
   }

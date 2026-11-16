@@ -653,3 +653,11 @@ test_that("a log RR without its interval; an unknown check reads n/a", {
   ))
   expect_identical(a, c("PASS x -- fine", "n/a  y -- not run"))
 })
+
+test_that("polbrdn() names a pollutant that is no text as unknown", {
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  expect_error(
+    polbrdn(25, 1, 0.008, 1e6, poll = "\xff\xfe"),
+    "polbrdn: `poll` holds text that is not valid"
+  )
+})

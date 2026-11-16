@@ -1399,13 +1399,16 @@ xmssfgt <- function(keytofgt = NULL) {
     h <- if (length(x) == 1L) as.character(x) else NA_character_
     # not .rmbl_hex_or_null(): that decodes to bytes, and what is wanted
     # here is the validated STRING, since a key is carried as hex
-    if (is.na(h) || nchar(h) %% 2L != 0L || !grepl("^[0-9a-fA-F]*$", h)) {
+    if (
+      is.na(h) || nchar(h, type = "bytes") %% 2L != 0L ||
+        !grepl("^[0-9a-fA-F]*$", h, useBytes = TRUE)
+    ) {
       NULL
     } else {
       tolower(h)
     }
   }
-  if (is.null(hex) || nchar(hex) %/% 2L != n) {
+  if (is.null(hex) || nchar(hex, type = "bytes") %/% 2L != n) {
     stop(
       sprintf("`%s` must be %d bytes of key material for %s", what, n, scheme),
       call. = FALSE
@@ -2036,10 +2039,12 @@ xmssfgt <- function(keytofgt = NULL) {
     return(NULL)
   }
   hex <- as.character(hex)
-  if (is.na(hex) || nchar(hex) %% 2L != 0L) {
+  # counted and matched as bytes: text that is not valid (bytes such as
+  # "\\xff") failed in nchar() in base R's words, and is no hex
+  if (is.na(hex) || nchar(hex, type = "bytes") %% 2L != 0L) {
     return(NULL)
   }
-  if (!grepl("^[0-9a-fA-F]*$", hex)) {
+  if (!grepl("^[0-9a-fA-F]*$", hex, useBytes = TRUE)) {
     return(NULL)
   }
   .rmbl_hex_to_raw(hex)
@@ -2107,8 +2112,8 @@ xmssfgt <- function(keytofgt = NULL) {
   if (
     length(seed) != 1L ||
       is.na(seed) ||
-      nchar(seed) != 64L ||
-      !grepl("^[0-9a-fA-F]{64}$", seed)
+      nchar(seed, type = "bytes") != 64L ||
+      !grepl("^[0-9a-fA-F]{64}$", seed, useBytes = TRUE)
   ) {
     stop(
       sprintf("`%s` must be 64 hex characters (32 bytes)", what),

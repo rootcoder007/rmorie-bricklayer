@@ -321,3 +321,10 @@ test_that("rgnmapintg() and rgnmapcmp() results print as boxes", {
 test_that("a region coverage without its record prints plainly", {
   expect_plain_df("rmbl_region_coverage")
 })
+
+test_that("rgnmapalt() names a column given by no string", {
+  expect_error(
+    rgnmapalt(data.frame(), data.frame(), data.frame(), data.frame()),
+    "the columns of `map` must be named by single strings"
+  )
+})

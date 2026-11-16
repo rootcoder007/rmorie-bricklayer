@@ -1079,6 +1079,40 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   )
 }
 
+#' A glob as a regular expression, refused in words when it is longer than
+#' a path pattern needs (4,096 bytes) or does not compile: a 1 MB glob
+#' stopped cpschk() and cpsseal() with "invalid regular expression" after
+#' the regex engine ran out of memory.
+#' @param glob One string.
+#' @return The regular expression.
+#' @noRd
+.bl_glob_rx <- function(glob) {
+  if (nchar(glob, type = "bytes") > 4096L) {
+    stop(
+      .rmbl_fn(),
+      "`glob` is longer than the 4,096 bytes a path pattern may have",
+      call. = FALSE
+    )
+  }
+  rx <- utils::glob2rx(glob)
+  ok <- tryCatch(
+    {
+      grepl(rx, "")
+      TRUE
+    },
+    error = function(e) FALSE,
+    warning = function(w) FALSE
+  )
+  if (!ok) {
+    stop(
+      .rmbl_fn(),
+      "`glob` is not a pattern that can be matched",
+      call. = FALSE
+    )
+  }
+  rx
+}
+
 #' The directories under a path that hold a capsule (a provenance or a bundle).
 #' @param root The directory searched.
 #' @param glob Only capsule files whose path matches this glob (its `*` also
@@ -1095,7 +1129,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   f <- sub("^\\./", "", f)
   f <- f[!grepl("(^|/)(\\.git|\\.rmbl-cache)/", f)]
   if (nzchar(glob)) {
-    f <- f[grepl(utils::glob2rx(glob), f)]
+    f <- f[grepl(.bl_glob_rx(glob), f)]
   }
   d <- sort(unique(dirname(f)))
   # one capsule once: list.files() follows a link back up the tree, and a loop

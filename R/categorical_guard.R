@@ -776,6 +776,8 @@ format.rmbl_or_check <- function(x, ...) {
 #' try(grdbin(c(0, 1, 2), "treated"))
 #' @export
 grdbin <- function(x, col) {
+  # the name is quoted in every refusal: a function there failed in paste()
+  col <- .rmbl_text1(col, "col")
   if (is.null(x) || !.rmbl_is_atomic(x)) {
     stop("Column `", col, "` must be an atomic vector", call. = FALSE)
   }
@@ -1304,11 +1306,16 @@ rlblfrns <- function(vlabs, obs, cnts = NULL) {
   if (!is.null(cnts)) {
     cnts <- stats::setNames(.rmbl_num(cnts, "cnts"), names(cnts))
   } # read by label
-  if (is.null(names(vlabs)) || is.null(names(obs))) {
+  # vectors: a data frame (a list) has names and failed in `[` in base R's
+  # words
+  if (
+    !.rmbl_is_atomic(vlabs) || !.rmbl_is_atomic(obs) ||
+      is.null(names(vlabs)) || is.null(names(obs))
+  ) {
     stop(
       "rlblfrns: `vlabs` (code = label) and `obs` ",
       "(true = seen) ",
-      "must both be named",
+      "must both be named vectors",
       call. = FALSE
     )
   }
@@ -1718,8 +1725,10 @@ format.rmbl_transfer_check <- function(x, ...) {
 #' @return list(orig, recd).
 #' @noRd
 .vrf_inputs <- function(orig, recd) {
-  if (!.rmbl_is_atomic(orig) || !.rmbl_is_atomic(recd)) {
-    stop("`orig` and `recd` must be atomic vectors", call. = FALSE)
+  # raw bytes are no labels: order() refused them in base R's words
+  if (!.rmbl_is_atomic(orig) || !.rmbl_is_atomic(recd) || is.raw(orig) ||
+        is.raw(recd)) {
+    stop("`orig` and `recd` must be atomic vectors of labels", call. = FALSE)
   }
   if (is.factor(orig)) {
     orig <- as.character(orig)
@@ -1753,15 +1762,20 @@ format.rmbl_transfer_check <- function(x, ...) {
 #' @return NULL, invisibly.
 #' @noRd
 .vrf_mapping <- function(tab, decl) {
-  realized <- apply(tab, 1L, function(r) colnames(tab)[which(r > 0)])
-  for (old in names(realized)) {
-    expected <- if (old %in% names(decl)) unname(decl[old]) else old
-    if (!identical(realized[[old]], expected)) {
+  # by position: apply() simplified to a vector, and a category named ""
+  # (an empty label) could not be looked up by name ("subscript out of
+  # bounds")
+  for (i in seq_len(nrow(tab))) {
+    old <- rownames(tab)[i]
+    got <- colnames(tab)[tab[i, ] > 0]
+    k <- match(old, names(decl))
+    expected <- if (is.na(k)) old else unname(decl[k])
+    if (!identical(got, expected)) {
       stop(
         "vrfrcd: ",
         .rmbl_squote(old),
         " was mapped to ",
-        .rmbl_squote(realized[[old]]),
+        .rmbl_squote(got),
         " but the declared mapping says ",
         .rmbl_squote(expected),
         ". THIS is how groups get swapped; fix the ",

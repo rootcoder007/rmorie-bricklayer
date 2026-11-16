@@ -344,3 +344,19 @@ test_that("a dispersion field and particles print as boxes", {
   txt <- expect_box(q, "Lagrangian particles", "x = 1.5, y = 3.5")
   expect_false(any(grepl("Grid", txt, fixed = TRUE)))
 })
+
+test_that("receptors given as text are refused without a coercion warning", {
+  expect_error(
+    gplume(q = 100, u = 4, h = 78.9, rcpt = c("a", "b", "c")),
+    "gplume: `rcpt` must give x, y, z for at least one receptor"
+  )
+  expect_error(
+    gspuff(mass = 1000, u = 3, h = 10, rcpt = c("a", "b", "c"), t = 600),
+    "gspuff: `rcpt` must give x, y, z for at least one receptor"
+  )
+})
+
+test_that("a stability class that is no text is refused in words", {
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  expect_error(.ad_class("\xff\xfe"), "`stab` must be one of the Pasquill")
+})

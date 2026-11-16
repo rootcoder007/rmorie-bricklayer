@@ -1788,6 +1788,8 @@ llmstat <- function() {
   if (!is.character(model) || length(model) != 1L || is.na(model)) {
     stop("`model` must be one model name", call. = FALSE)
   }
+  # bytes that are not text failed in nchar() and grepl() in base R's words
+  .rmbl_valid_text(model, "model")
   # a model is a name (gpt-4o-mini, claude-sonnet-4-5, llama3.1:8b,
   # mistral-large-latest): words and version numbers joined by - . : /. A UUID,
   # groups of mixed-case letters and digits joined by dashes

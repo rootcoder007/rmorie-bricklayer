@@ -1178,3 +1178,15 @@ test_that("weights too large to square give the estimate of weights 1", {
   expect_true(all(s >= .Machine$double.xmin))
   expect_identical(s[2L] / s[1L], big[2L] / big[1L])
 })
+
+test_that("cmlrisk() and piperate() refuse in their own words", {
+  expect_error(
+    cmlrisk(Inf, Inf, Inf),
+    "counts must be 0 or more and populations"
+  )
+  expect_error(
+    cmlrisk(1:2, c(1, 1), c(10, 10), atrisk = c(Inf, 5)),
+    "`atrisk` must be one per age, above 0 and finite"
+  )
+  expect_error(piperate(NULL, NULL), "piperate: `num` and `den` hold no counts")
+})

@@ -222,3 +222,8 @@ test_that("mkbndlchk() refuses a zip that unpacks past the size cap", {
   withr::local_options(rmbl.bundle.maxsize = 1000)
   expect_error(.bndlchk_unzip(z, file.path(d, "x")), "more than the")
 })
+
+test_that("a seed that is no text is refused without warnings", {
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  expect_error(ralloc(10, seed = "\xff\xfe"), "`seed` holds text that is not")
+})

@@ -64,7 +64,8 @@ is changed.
 
 Errors: \code{man} not a list with \code{results}; \code{stats}
 not a non-empty fully named list, or with an element that is not a
-function.
+function. A statistic that warns while it is recomputed does not warn
+the caller: its warnings are added to its row's \code{detail}.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

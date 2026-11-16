@@ -865,7 +865,12 @@ format.rmbl_particles <- function(x, ...) {
 #' @return The class in upper case.
 #' @noRd
 .ad_class <- function(stability) {
-  cls <- toupper(as.character(stability))
+  # bytes that are not text failed in toupper() in base R's words
+  cls <- if (is.character(stability) && !all(validEnc(stability))) {
+    NA_character_
+  } else {
+    toupper(as.character(stability))
+  }
   if (
     length(cls) != 1L || is.na(cls) || !cls %in% c("A", "B", "C", "D", "E", "F")
   ) {
@@ -929,21 +934,24 @@ format.rmbl_particles <- function(x, ...) {
       call. = FALSE
     )
   }
+  # coordinates are numbers: text that is none went through as.numeric()
+  # with its coercion warning before the NA it made was refused
+  num <- function(v) tryCatch(as.numeric(v), warning = function(w) bad())
   m <- if (is.list(r) && !is.data.frame(r)) {
     if (!length(r) || any(lengths(r) != 3L)) {
       bad()
     }
-    do.call(rbind, lapply(r, as.numeric))
+    do.call(rbind, lapply(r, num))
   } else if (is.matrix(r) || is.data.frame(r)) {
     if (ncol(r) != 3L) {
       bad()
     }
-    matrix(as.numeric(as.matrix(r)), ncol = 3)
+    matrix(num(as.matrix(r)), ncol = 3)
   } else {
     if (!length(r) || length(r) %% 3L != 0L) {
       bad()
     }
-    matrix(as.numeric(r), ncol = 3, byrow = TRUE)
+    matrix(num(r), ncol = 3, byrow = TRUE)
   }
   if (!nrow(m) || anyNA(m)) {
     bad()

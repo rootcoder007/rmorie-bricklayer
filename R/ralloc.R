@@ -468,6 +468,8 @@ plot.rmbl_alloc <- function(x, ...) {
       call. = FALSE
     )
   }
+  # bytes that are not text warned in grepl() before they were refused
+  .rmbl_valid_text(seed, "seed")
   if (is.character(seed) && length(seed) == 1L &&
         grepl("^[0-9a-fA-F]{96}$", seed)) {
     seed <- as.raw(strtoi(substring(seed, seq(1, 95, 2), seq(2, 96, 2)), 16L))

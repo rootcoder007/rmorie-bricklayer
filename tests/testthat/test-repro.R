@@ -449,3 +449,16 @@ test_that("a recomputation that differs names each row that did not match", {
   expect_false(r$ok)
   expect_match(box_text(r), "mean_x: ", fixed = TRUE)
 })
+
+test_that("a statistic's warning goes into its row, not to the caller", {
+  m <- recrd(mkmnf(list(dataset = "d"), env = FALSE), "n", obs = 1, expd = 1)
+  expect_no_warning(
+    r <- mnfrcmp(m, NULL, list(n = function(z) mean(z$x)))
+  )
+  expect_identical(r$results$status, "DIFFER")
+  expect_match(
+    r$results$detail,
+    "; it warned: argument is not numeric or logical: returning NA",
+    fixed = TRUE
+  )
+})

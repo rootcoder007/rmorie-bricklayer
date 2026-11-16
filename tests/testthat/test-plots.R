@@ -880,3 +880,22 @@ test_that(".bl_par_set() returns one parameter as a named list", {
   graphics::par(op)
   expect_identical(graphics::par("lty"), old)
 })
+
+test_that("plots refuse what they cannot draw in their own words", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  expect_error(
+    blpal(n = .Machine$integer.max),
+    "`n` must be a single positive whole number, at most 100,000"
+  )
+  expect_length(blpal("sequential", 1e5), 1e5)
+  for (f in list(plotbump, plothrz, plotmult)) {
+    expect_error(f(Inf, Inf, Inf), "`prd` must be finite periods")
+  }
+  expect_error(plotmult(c(Inf, NA), 1:2), "`y` has no finite value to draw")
+  expect_error(plotcal(Inf, 1), "plotcal: `x` must be dates")
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  bad <- "\xff\xfe"
+  expect_error(plotmult(1:3, 1:3, main = bad), "`main` holds text that is not")
+  expect_error(plotrdg(c(1, 2, 3, 4), bw = bad), "plotrdg")
+})

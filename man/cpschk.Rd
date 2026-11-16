@@ -72,7 +72,8 @@ http(s) source in the Wayback Machine first (archive.org keys, as
 \code{wbsave()} reads them).}
 
 \item{glob}{Character scalar: check only the capsule files whose path
-matches this glob (\code{*} also matches \code{/}), or \code{""}.}
+matches this glob (\code{*} also matches \code{/}), or \code{""}; at
+most 4,096 bytes.}
 
 \item{fp}{Logical: measure the footprint of the checks
 (\code{\link{co2fp}}) for the last lines of the report.}
