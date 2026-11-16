@@ -20,6 +20,11 @@ test_that("sha256file() hashes a file and refuses what is not one", {
   expect_error(sha256file(c("a", "b")), "sha256file: `path` is not a file")
   expect_error(sha256file(NA_character_), "is not a file")
   expect_error(sha256file(1), "sha256file: `path` is not a file")
+  # a path holding a byte that is not text is named with it shown as <ff>
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  e <- tryCatch(sha256file("no-such-\xff"), error = conditionMessage)
+  expect_true(validUTF8(e))
+  expect_match(e, "no-such-<ff> is not a file", fixed = TRUE)
 })
 
 test_that("toascii() folds accents and drops what has no ASCII form", {

@@ -458,7 +458,11 @@ wrtxtfb <- function(text, path) {
     stop(
       sprintf(
         "sha256file: %s is not a file",
-        if (is.character(path) && length(path) == 1L) path else "`path`"
+        if (is.character(path) && length(path) == 1L) {
+          .rmbl_ctl_escape(path)
+        } else {
+          "`path`"
+        }
       ),
       call. = FALSE
     )

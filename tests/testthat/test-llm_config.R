@@ -429,3 +429,14 @@ test_that("doctor says why ask would fail when a saved address is unusable", {
   )
   expect_match(cf_out("doctor")$text, "ask would fail: bad address")
 })
+
+test_that("an unknown setting holding a byte that is not text is shown", {
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  cf_env()
+  e <- tryCatch(
+    do.call(llmcfg, stats::setNames(list("x"), "a\xffb")),
+    error = conditionMessage
+  )
+  expect_true(validUTF8(e))
+  expect_match(e, "unknown setting 'a<ff>b'", fixed = TRUE)
+})

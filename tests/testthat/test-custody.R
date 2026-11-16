@@ -167,6 +167,14 @@ test_that("perdays counts both ends, and leap years look after themselves", {
     perdays(c("2024-01-01", "2024-01-02"), "2024-12-31"),
     "a single date"
   )
+  # a byte that is not text (in a UTF-8 session) is shown as <ff>, so the
+  # message is valid UTF-8
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]))
+  for (bad in list(c("a\xffb", "2024-01-01"), c("2024-01-01", "a\xffb"))) {
+    e <- tryCatch(perdays(bad[1L], bad[2L]), error = conditionMessage)
+    expect_true(validUTF8(e))
+    expect_match(e, "is not a date: a<ff>b", fixed = TRUE)
+  }
 })
 
 test_that("staysmry describes the distribution, not just its mean", {

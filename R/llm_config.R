@@ -638,7 +638,7 @@ llmcfg <- function(...) {
     stop(
       sprintf(
         "unknown setting '%s' (one of: %s)",
-        bad[[1L]],
+        .rmbl_ctl_escape(bad[[1L]]),
         toString(spec$key)
       ),
       call. = FALSE

@@ -1009,7 +1009,12 @@ all.equal.rmbl_measure <- function(target, current, ...) {
   } # refused by perdays(), as a missing date
   d <- tryCatch(as.Date(v), error = function(e) as.Date(NA))
   if (is.na(d)) {
-    stop(sprintf("`%s` is not a date: %s", what, format(v)), call. = FALSE)
+    # bytes that are not text are shown as <ff>: pasted as they were, they
+    # made the message itself invalid UTF-8
+    stop(
+      sprintf("`%s` is not a date: %s", what, .rmbl_ctl_escape(format(v))),
+      call. = FALSE
+    )
   }
   d
 }
