@@ -44,7 +44,8 @@
 #' \dQuote{nothing pinned}.
 #'
 #' Errors: \code{path} that is not a single non-empty string; \code{path}
-#' that is a directory; a file that is not valid JSON.
+#' that is a directory, or not a regular file, or over 32 MiB; a file that
+#' is not valid JSON.
 #'
 #' @param path Path to the provenance JSON file, a single string.
 #' @return The parsed provenance as a nested named list (JSON objects become
@@ -81,7 +82,10 @@ loadprov <- function(path) {
     )
   }
   # a device, a pipe or a socket is refused in the shared file check's words
-  p <- .rmbl_read_json(.rmbl_file1(path, "path"), simplify = FALSE)
+  p <- .rmbl_read_json(
+    .rmbl_file1(path, "path", max = 32 * 2^20),
+    simplify = FALSE
+  )
   if (is.list(p) && !is.data.frame(p) && !is.object(p)) {
     p <- .rmbl_cls(.rmbl_prov_shape(p), "rmbl_provenance")
   }

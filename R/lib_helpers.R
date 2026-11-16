@@ -614,7 +614,9 @@ wrtxtfb <- function(text, path) {
   isf <- length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x)
   # text that is also a device's name (nul, con on Windows) stays text
   txt <- if (isf && .rmbl_isreg(x)) {
-    x <- .rmbl_file1(x, "path")
+    # the package's JSON documents are held to the 32 MiB its manifest reader
+    # takes: readLines() of a larger one failed as "cannot allocate buffer"
+    x <- .rmbl_file1(x, "path", max = 32 * 2^20)
     paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
   } else {
     x

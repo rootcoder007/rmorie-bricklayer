@@ -54,7 +54,7 @@
 #' Errors: `dir` missing or not a directory; no files to bundle, or a named
 #' file not in `dir`; a key [cpsatst()] cannot
 #' sign with;
-#' `cpsbndlrd()` given a file that is not a bundle;
+#' `cpsbndlrd()` given a file that is not a bundle, or one over 32 MiB;
 #' `cpsbndlvrf()` given something other than a bundle or a path.
 #' Reading a bundle whose signature records a stateful key's state warns (see
 #' [cpsatst()]).
@@ -217,7 +217,8 @@ cpsbndl <- function(
 #' @rdname cpsbndl
 #' @export
 cpsbndlrd <- function(path) {
-  path <- .rmbl_file1(path, "path")
+  # within the 32 MiB the package's JSON documents are held to
+  path <- .rmbl_file1(path, "path", max = 32 * 2^20)
   b <- .rmbl_json_text(
     paste(.rmbl_json_read_con(file(path)), collapse = "\n"),
     simplifyVector = FALSE

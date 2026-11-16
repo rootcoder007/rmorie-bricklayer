@@ -132,7 +132,7 @@ an error.
 Errors: \code{dir} missing or not a directory; no files to bundle, or a named
 file not in \code{dir}; a key \code{\link[=cpsatst]{cpsatst()}} cannot
 sign with;
-\code{cpsbndlrd()} given a file that is not a bundle;
+\code{cpsbndlrd()} given a file that is not a bundle, or one over 32 MiB;
 \code{cpsbndlvrf()} given something other than a bundle or a path.
 Reading a bundle whose signature records a stateful key's state warns (see
 \code{\link[=cpsatst]{cpsatst()}}).

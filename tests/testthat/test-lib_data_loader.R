@@ -191,3 +191,15 @@ test_that("loadprov() refuses a socket as no regular file, not a folder", {
   )
   expect_false(grepl("folder|directory", e))
 })
+
+test_that("loadprov() refuses a file over 32 MiB, the cap of JSON documents", {
+  # read whole, a very large file failed in readLines() as "cannot allocate
+  # buffer"; the file check refuses it first, in the package's words
+  f <- withr::local_tempfile(fileext = ".json")
+  writeBin(raw(32 * 2^20 + 1), f)
+  expect_error(
+    loadprov(f),
+    "`path` is larger than the 33,554,432 bytes read",
+    fixed = TRUE
+  )
+})

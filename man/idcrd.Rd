@@ -123,7 +123,7 @@ Errors: \code{key} not a private key of \code{\link[=fipskg]{fipskg()}} or
 optional field that is not one string, an ORCID iD
 with a wrong check digit, an e-mail address or a web
 page of the wrong shape; \code{days} not a positive whole
-number; \code{path} not a card file.
+number; \code{path} not a card file, or over 32 MiB.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

@@ -44,7 +44,8 @@ run without a provenance record and every resolver treats \code{NULL} as
 \dQuote{nothing pinned}.
 
 Errors: \code{path} that is not a single non-empty string; \code{path}
-that is a directory; a file that is not valid JSON.
+that is a directory, or not a regular file, or over 32 MiB; a file that
+is not valid JSON.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

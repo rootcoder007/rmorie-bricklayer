@@ -58,7 +58,7 @@
 #' optional field that is not one string, an ORCID iD
 #' with a wrong check digit, an e-mail address or a web
 #' page of the wrong shape; `days` not a positive whole
-#' number; `path` not a card file.
+#' number; `path` not a card file, or over 32 MiB.
 #'
 #' @param key Your private signing key, from [fipskg()]
 #'   or [pqckg()].
@@ -179,7 +179,8 @@ idcrd <- function(
 #' @rdname idcrd
 #' @export
 idcrdrd <- function(path) {
-  path <- .rmbl_file1(path, "path")
+  # within the 32 MiB the package's JSON documents are held to
+  path <- .rmbl_file1(path, "path", max = 32 * 2^20)
   x <- .rmbl_json_text(
     paste(readLines(path, warn = FALSE), collapse = "\n"),
     simplifyVector = FALSE
