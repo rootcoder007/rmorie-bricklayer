@@ -2001,7 +2001,7 @@ CRAN release: 2026-10-21
 - Spelling: US spelling throughout (“optimized”, “renormalized”,
   “victimized”), code names in code font, and the technical terms in
   `inst/WORDLIST`;
-  [`spelling::spell_check_package()`](https://docs.ropensci.org/spelling//reference/spell_check_package.html)
+  [`spelling::spell_check_package()`](https://docs.ropensci.org/spelling/reference/spell_check_package.html)
   finds nothing.
 - R CMD check no longer reruns the vignettes’ analyses: when it
   re-builds a vignette, only the setup chunk runs. R CMD build,
@@ -7981,11 +7981,11 @@ now does itself, which had been true before 0.3.8 moved both to Suggests
 behind a native JSON codec and a compiled SHA-256 core:
 
 - `load_provenance()` said it parsed via
-  [`jsonlite::fromJSON()`](https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html),
+  [`jsonlite::fromJSON()`](https://rdrr.io/pkg/jsonlite/man/fromJSON.html),
   and linked to it; it reads with
   [`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md).
 - `verify_capsule()`’s example called
-  [`jsonlite::write_json()`](https://jeroen.r-universe.dev/jsonlite/reference/read_json.html)
+  [`jsonlite::write_json()`](https://rdrr.io/pkg/jsonlite/man/read_json.html)
   – a Suggests package used unconditionally in an example. It now writes
   with
   [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md).
