@@ -2,6 +2,119 @@
 
 ## rmoriebricklayer 1.1.1
 
+- Output sent to `/dev/null` (or `NUL` on Windows) to be discarded is
+  written there as before. Text, CSV and credential files written on
+  Windows keep the line ends 1.1.0 gave them (CR LF), so the bytes of
+  manifests, bundles and other files whose digests a capsule may hold
+  are unchanged. A temporary left beside a file by a write that was cut
+  short (`.rmbl-<hex>.tmp`) is never bundled by
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  or packed by
+  [`mkbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndl.md),
+  and
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  names it as a leftover of an interrupted write, not part of the
+  capsule.
+
+- Signatures and bundles have one accepted spelling: a signature whose
+  hex is not lower case (as
+  [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+  writes it) does not verify, nor does one whose recorded context or
+  pre-hash differs from the one it is verified under, or one carrying a
+  field its scheme does not have;
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  fails a bundle or attestation holding fields no signature covers, with
+  a `no_unsigned_fields` row naming them. Bundles and signatures written
+  by released versions keep verifying: they are written in lower case
+  with only these fields (an XMSS object of 0.5.9 to 0.5.12 with
+  `key_state` still verifies, with its warning).
+
+- Arguments that reached base R and failed in its words are refused in
+  the package’s:
+  [`agestd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agestd.md),
+  [`stdprev()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdprev.md)
+  and
+  [`cmlrisk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cmlrisk.md)
+  with an infinite value;
+  [`piperate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/piperate.md)
+  with no counts;
+  [`vrfrcd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfrcd.md)
+  and
+  [`rcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rcdmnf.md)
+  with an empty label (or raw vectors),
+  [`grdbin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdbin.md)
+  with a column name that is not a string and
+  [`rlblfrns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rlblfrns.md)
+  with data frames;
+  [`jsb64dec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md)
+  with a nul byte; `blpal(n = )` above its new maximum of 100,000
+  colours; a glob over 4,096 bytes or one that cannot be compiled in
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  and
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md);
+  [`plotbump()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md),
+  [`plothrz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  and
+  [`plotmult()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  with an infinite period and
+  [`plotmult()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  with no finite value;
+  [`plotcal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  with an infinite date;
+  [`rgnmapalt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmapalt.md)
+  with columns named by no string (the error had no message);
+  [`limfrom()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/limfrom.md)
+  with a `se`, `cv` or `moe` of another length than `est` and not one
+  (it was recycled); receptors given as text that is no number in
+  [`gplume()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md)
+  and
+  [`gspuff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md);
+  `svcs(tmout = )` above 2147483647 seconds, as
+  [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md);
+  and text that is not valid in the session’s encoding as a plot title,
+  a bandwidth, a stability class, a pollutant, a key, a seed, a model
+  name, notes, a format or `failon`. None of these warns any longer, and
+  a statistic that warns while
+  [`mnfrcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfrcmp.md)
+  recomputes it has its warning in its row’s detail; progress and
+  download labels show such bytes as `<ff>`.
+
+- Every function that reads a file the user names checks it first, in
+  its own words: a path that is missing, a folder, a device, a pipe or a
+  socket, or a file that cannot be read is refused, where about forty
+  readers failed with base R’s “cannot open the connection” and a
+  warning, more than fifteen read `/dev/zero` until memory ran out, and
+  [`sha256file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256file.md),
+  [`vrfsha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfsha256.md)
+  and the other hashing functions never returned.
+  [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md)
+  refuses a page file over its 2 MiB cap before reading it.
+
+- `rmbl` exit statuses follow its page: output that cannot be written to
+  standard output (`rmbl version > /dev/full`, standard output closed)
+  is a failed verb, status 1, said on standard error, where it was 0; an
+  option given without its value (`rmbl pack . --dest`) is a usage
+  error, status 2, checked before anything runs; an input folder that
+  does not exist is a failed verb, status 1, for `verify`, `drift`,
+  `report`, `refresh` and `sign` as for `pack` and `wayback` (it was 2);
+  and `rmbl sign --scheme` with a scheme it does not know is a usage
+  error about the scheme, checked before the key is asked for.
+
+- [`drvkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drvkey.md)
+  with a password longer than 64 bytes takes as long as with a short
+  one: PBKDF2 hashed such a password again on every iteration (64,000
+  bytes at 10,000 iterations took 6 s, a megabyte at the default 100,000
+  about ten minutes). The keys derived are unchanged.
+  [`ralloc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ralloc.md)
+  and
+  [`rallocvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rallocvrf.md)
+  derive a seed word’s bytes with the compiled SHA-256 (a 1 MB word took
+  211 s), with the same result.
+
+- The pre-built vignettes no longer print folders of the machine that
+  built them: the starter project, the bundle, the sample ledger and the
+  stale XMSS key are shown by name.
+
 - The help of
   [`kemdecap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemdecap.md)
   names the element of

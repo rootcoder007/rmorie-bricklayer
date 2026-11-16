@@ -90,8 +90,8 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ╭── Signing key (post-quantum) ───────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
-#> │   root       8a46c6353cf82a6903ad709653d5fb5a45103d82ab89aa01598c012147fce8 │
-#> │              5b                                                             │
+#> │   root       da9f154a2a9958fe034b2481e220af687e7142ef6fd6152b47346ec5ea37b7 │
+#> │              2d                                                             │
 #> │   height     3                                                              │
 #> │   used       0 of 8 signatures                                              │
 #> │   remaining  8                                                              │
@@ -108,7 +108,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ╭── Public verification key ─────────────────────────────────────────────────╮
 #> │   scheme  xmss-sha256                                                      │
-#> │   root    8a46c6353cf82a6903ad709653d5fb5a45103d82ab89aa01598c012147fce85b │
+#> │   root    da9f154a2a9958fe034b2481e220af687e7142ef6fd6152b47346ec5ea37b72d │
 #> │   height  3                                                                │
 #> ╰────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -451,7 +451,7 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ╭── Against the declaration of 2026-11-16T02:36:43Z: departures below ──╮
+#> ╭── Against the declaration of 2026-11-16T02:56:21Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -469,7 +469,7 @@ prrgchk(plan, "n_rows")
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ╭── Against the declaration of 2026-11-16T02:36:43Z: departures below ──╮
+#> ╭── Against the declaration of 2026-11-16T02:56:21Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -687,7 +687,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #> │   ✔    no_unlisted_files                                                    │
 #> │   ✔    attestation:attestation_complete                                     │
 #> │   ✔    attestation:manifest_digest                                          │
-#> │        f874ad0fba27396756513f09d105965baa73226b30783e8cc703cf5e387e2a26     │
+#> │        1ec9b546ccfea8f3bbb06b069219e8e00ca4ca0ca504c7b29855b5c0d7b7e5c9     │
 #> │   ✔    attestation:signature                                                │
 #> │   ✔    manifest_digest                                                      │
 #> │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │
@@ -722,17 +722,8 @@ tried before the analysis is written.
 proj <- file.path(tempdir(), "my-study")
 p <- mkbndlproj(proj, title = "My study", author = "A. Researcher",
                 contact = "a.researcher@example.org", overwrite = TRUE)
-p
-#> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpYiNCRA/my-study                                          │
-#> │   Files   config.json, data_provenance.json, analysis.R                     │
-#> │                                                                             │
-#> │   Edit config.json (who and what), data_provenance.json (the data file,     │
-#> │   its URL and SHA-256) and analysis.R (the checks), then build the zip      │
-#> │   with mkbndl().                                                            │
-#> │   It runs as it is on synthetic data, so the bundle can be tried before     │
-#> │   the analysis is written.                                                  │
-#> ╰─────────────────────────────────────────────────────────────────────────────╯
+list.files(proj)
+#> [1] "analysis.R"           "config.json"          "data_provenance.json"
 ```
 
 `config.json` says who and what (and `r_packages`, the packages your
@@ -769,23 +760,10 @@ it cannot stop on the reviewer’s machine with “could not find function”.
 ``` r
 
 b <- mkbndl(proj, dest = tempdir(), data = csv, overwrite = TRUE)
-b
-#> ╭── Reproducibility bundle ───────────────────────────────────────────────────╮
-#> │   Project    my-study                                                       │
-#> │   Zip        my-study_v1_with_data.zip                                      │
-#> │   Folder     /tmp/RtmpYiNCRA                                                │
-#> │   Size       213.7 KB                                                       │
-#> │   Files      28                                                             │
-#> │   Data file  inside                                                         │
-#> │   SHA-256    d775e50891d53993c1f4bb9a1ceb3fd8f09ffb30105b09ea38a950c17ec4af │
-#> │              60                                                             │
-#> │                                                                             │
-#> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │
-#> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │
-#> │                                                                             │
-#> │   Send the SHA-256 separately from the zip, so recipients can check the     │
-#> │   copy they received was not altered.                                       │
-#> ╰─────────────────────────────────────────────────────────────────────────────╯
+basename(b$path)
+#> [1] "my-study_v1_with_data.zip"
+b$sha256
+#> [1] "191c8fade842219d799c2cda8b8bbde2b8f36d9b0617a17bebe0d8338a6bacbe"
 ```
 
 Send `b$sha256` separately from the zip: the reviewer checks it before

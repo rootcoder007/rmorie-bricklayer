@@ -31,7 +31,8 @@ plotopt(...)
 
   Integer scalar or `NULL` (the default: the palette's own colours). The
   number of colours wanted; `"okabe"` and `"grey"` recycle,
-  `"sequential"` and `"diverging"` interpolate.
+  `"sequential"` and `"diverging"` interpolate. At most 100,000 (a plot
+  needs a few dozen).
 
 - ...:
 
@@ -72,9 +73,9 @@ size, so that they stay readable; for larger text set, for example,
 `plotopt(cex = 1.2)`, and for a table with many rows use a taller
 device.
 
-Errors: an unknown palette `name`; `n` not a positive whole number; an
-option name other than the six above, or an unnamed value; an unknown
-`palette` option.
+Errors: an unknown palette `name`; `n` not a whole number from 1 to
+100,000; an option name other than the six above, or an unnamed value;
+an unknown `palette` option.
 
 ## References
 

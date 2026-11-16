@@ -319,13 +319,16 @@ is set), printed digits, and the seed the seeded analyses use.</li>
 <span>  <span class="st">"ledger_sample.json"</span>,</span>
 <span>  package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">led</span></span>
+<span><span class="co"># the box names the file it read: shown by its name, not the folder of</span></span>
+<span><span class="co"># this installation</span></span>
+<span><span class="va">shown</span> <span class="op">&lt;-</span> <span class="va">led</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">shown</span>, <span class="st">"path"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">led</span>, <span class="st">"path"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">shown</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Proof ledger rmoriebricklayer sample ledger</span> ──────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   Theorems  3 theorems (1 proved, 1 sorry, 1 axiom)                         │</span></span>
 <span><span class="co">#&gt; │   Source    https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab    │</span></span>
 <span><span class="co">#&gt; │   Lean      v4.12.0                                                         │</span></span>
-<span><span class="co">#&gt; │   File      /tmp/RtmpfajJcf/temp_libpath1e912f0c7a54/rmoriebricklayer/extda │</span></span>
-<span><span class="co">#&gt; │             ta/ledger_sample.json                                           │</span></span>
+<span><span class="co">#&gt; │   File      ledger_sample.json                                              │</span></span>
 <span><span class="co">#&gt; │                                                                             │</span></span>
 <span><span class="co">#&gt; │   id               theorem                         status  sorry            │</span></span>
 <span><span class="co">#&gt; │   ---------------  ------------------------------  ------  -----            │</span></span>

@@ -117,7 +117,7 @@ print(x, ...)
 - glob:
 
   Character scalar: check only the capsule files whose path matches this
-  glob (`*` also matches `/`), or `""`.
+  glob (`*` also matches `/`), or `""`; at most 4,096 bytes.
 
 - fp:
 
@@ -264,14 +264,14 @@ x
 #> │ ✔ VERIFIED  · 7 of 7 checks passed                                          │
 #> │                                                                             │
 #> │   Status    ok                                                              │
-#> │   Path      /tmp/RtmpfajJcf/capsules-1e9144dca673                           │
+#> │   Path      /tmp/RtmpLTIEku/capsules-1ea19d3a9e4                            │
 #> │   Capsules  1                                                               │
 #> │   Checks    7 of 7 passed                                                   │
 #> │   Checked   rmoriebricklayer 1.1.1, R version 4.6.2 (2026-10-29)            │
 #> │                                                                             │
 #> │   capsule  result  passed  checks  source                                   │
 #> │   -------  ------  ------  ------  ---------------------------------------- │
-#> │   one      ok           7       7  /tmp/RtmpfajJcf/temp_libpath1e912f0c7... │
+#> │   one      ok           7       7  /tmp/RtmpLTIEku/temp_libpath1ea15dcd8... │
 #> │                                                                             │
 #> │   capsule  sha256        size    rows  bounds                               │
 #> │   -------  ------------  ------  ----  ------                               │
@@ -279,22 +279,22 @@ x
 #> │                                                                             │
 #> │   Every capsule is still the one its analysis was run on.                   │
 #> │                                                                             │
-#> │   /tmp/RtmpfajJcf/capsules-1e9144dca673/one: ok                             │
+#> │   /tmp/RtmpLTIEku/capsules-1ea19d3a9e4/one: ok                              │
 #> │     source:                                                                 │
-#> │     /tmp/RtmpfajJcf/temp_libpath1e912f0c7a54/rmoriebricklayer/extdata/otis_ │
+#> │     /tmp/RtmpLTIEku/temp_libpath1ea15dcd88d7/rmoriebricklayer/extdata/otis_ │
 #> │     a01_individuals.csv                                                     │
 #> │     pinned SHA-256:                                                         │
 #> │     6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248        │
 #> │   ✔    schema: data_provenance.json  valid against capsule.schema.json      │
 #> │   ✔    provenance_readable                                                  │
-#> │        /tmp/RtmpfajJcf/capsules-1e9144dca673/one/data_provenance.json       │
+#> │        /tmp/RtmpLTIEku/capsules-1ea19d3a9e4/one/data_provenance.json        │
 #> │   ✔    data_present                                                         │
-#> │        /tmp/RtmpfajJcf/capsules-1e9144dca673/one/otis_a01_individuals.csv   │
+#> │        /tmp/RtmpLTIEku/capsules-1ea19d3a9e4/one/otis_a01_individuals.csv    │
 #> │   ✔    data_sha256                                                          │
 #> │        6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248     │
 #> │   ✔    data_size_bytes               462 bytes on disk                      │
 #> │   ✔    data_readable                                                        │
-#> │        /tmp/RtmpfajJcf/capsules-1e9144dca673/one/otis_a01_individuals.csv   │
+#> │        /tmp/RtmpLTIEku/capsules-1ea19d3a9e4/one/otis_a01_individuals.csv    │
 #> │   ✔    data_not_synthetic no synthetic marker: sidecar, manifest and        │
 #> │        provenance all say real data                                         │
 #> │   format(x) gives the full Markdown report.                                 │
@@ -320,14 +320,14 @@ x$capsules[[1]]$notes
 #> [1] "explained: the data file's size differs from resource$size_bytes: its bytes changed"
 #> 
 substr(format(x, fmt = "json"), 1, 120)
-#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmpfajJcf/capsules-1e9144dca673\",\n  \"capsules\": [\n    {\n    "
+#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmpLTIEku/capsules-1ea19d3a9e4\",\n  \"capsules\": [\n    {\n     "
 
 # drift: fetch the source again (here a local file) and compare
 cpschk(root, "drift", psiwarn = 0.05, fp = FALSE)$status
 #> [1] "error"
 
 try(cpschk(tempfile()))
-#> Error : cpschk: `path` is not an existing directory: /tmp/RtmpfajJcf/file1e9158a02aba
+#> Error : cpschk: `path` is not an existing directory: /tmp/RtmpLTIEku/file1ea175566c65
 try(cpschk(root, psiwarn = 1))
 #> Error : cpschk: `psiwarn` (1) must not exceed `psifail` (0.25)
 ```

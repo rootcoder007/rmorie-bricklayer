@@ -220,10 +220,13 @@ break or key-shaped word) and no verb is asked as `ask` would ask it.
 
 Errors are not raised: every error is written to `out` as
 `"PROG: message"` and turned into the exit status. The status is 0 on
-success, 1 when the verb failed (an error, nothing found, no route), 2
-for a usage error (an unknown verb or option, a missing value) and 130
-when interrupted (Ctrl-C). The command name in messages is the
-environment variable `RMBL_PROG`, else `rmoriebricklayer`.
+success, 1 when the verb failed (an error, nothing found, no route, an
+input file or folder that does not exist, or output that could not be
+written to standard output, which is said on standard error), 2 for a
+usage error (an unknown verb or option, a missing value, a value an
+option does not take; options are checked before any key or input is
+read) and 130 when interrupted (Ctrl-C). The command name in messages is
+the environment variable `RMBL_PROG`, else `rmoriebricklayer`.
 
 Side effects: during the call `options(morie.progress = TRUE)` is set,
 so downloads draw a progress bar; when `RMBL_PROG` is set (the launcher
@@ -384,26 +387,26 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.1.1](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpfajJcf/capsule-1e9135ef4725`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpLTIEku/capsule-1ea1682aa0ff`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpfajJcf/capsule-1e9135ef4725` | /tmp/RtmpfajJcf/temp_libpath1e912f0c7a54/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpLTIEku/capsule-1ea1682aa0ff` | /tmp/RtmpLTIEku/temp_libpath1ea15dcd88d7/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpfajJcf/capsule-1e9135ef4725</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpLTIEku/capsule-1ea1682aa0ff</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpfajJcf/temp_libpath1e912f0c7a54/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpLTIEku/temp_libpath1ea15dcd88d7/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpfajJcf/capsule-1e9135ef4725/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpfajJcf/capsule-1e9135ef4725/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpLTIEku/capsule-1ea1682aa0ff/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpLTIEku/capsule-1ea1682aa0ff/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpfajJcf/capsule-1e9135ef4725/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpLTIEku/capsule-1ea1682aa0ff/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>

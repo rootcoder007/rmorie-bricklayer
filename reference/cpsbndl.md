@@ -101,7 +101,9 @@ and the path it was written to as attribute `"path"`.
 
 `cpsbndlvrf()`: a list of class `bricklayer_bundle_check` with `ok`
 (logical) and `checks` (a data frame of `check`, logical `ok` and
-`detail`: one `file:PATH` row per listed file, `no_unlisted_files`, the
+`detail`: one `file:PATH` row per listed file, `no_unlisted_files`, a
+failed `no_unsigned_fields` row when the bundle or its attestation holds
+fields `cpsbndl()` does not write (no signature covers them), the
 `attestation:` rows, with a manifest `manifest_digest`, and with `seen`
 `xmss_index`). For an XMSS bundle the `attestation:signature` row's
 detail names the signature's index and the key fingerprint.
@@ -190,10 +192,10 @@ b2
 #> │   Files            1                                                        │
 #> │   Manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e416796 │
 #> │                    0781a579                                                 │
-#> │   Bundled          2026-11-16T02:34:11Z                                     │
+#> │   Bundled          2026-11-16T02:53:55Z                                     │
 #> │   Scheme           ML-DSA-44                                                │
 #> │   Note             as published                                             │
-#> │   Path             /tmp/RtmpfajJcf/file1e912621c9b6/capsule_bundle.json     │
+#> │   Path             /tmp/RtmpLTIEku/file1ea16a5f70f8/capsule_bundle.json     │
 #> │                                                                             │
 #> │   A signed list of the capsule's files and their digests; check the files   │
 #> │   against it with cpsbndlvrf().                                             │
@@ -228,6 +230,6 @@ unlink(dir2, recursive = TRUE)
 
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/RtmpfajJcf/no-such-capsule
+#> Error : `dir` does not exist: /tmp/RtmpLTIEku/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

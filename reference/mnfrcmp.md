@@ -80,7 +80,9 @@ nothing recorded was left unchecked. The functions are run as given, so
 they can read files or draw random numbers; nothing else is changed.
 
 Errors: `man` not a list with `results`; `stats` not a non-empty fully
-named list, or with an element that is not a function.
+named list, or with an element that is not a function. A statistic that
+warns while it is recomputed does not warn the caller: its warnings are
+added to its row's `detail`.
 
 ## See also
 

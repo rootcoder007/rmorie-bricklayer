@@ -249,9 +249,17 @@ state$used$generation
 # the old copy is refused: the bundles show indices it does not know are used
 blcli(
   c("sign", root, "--scheme", "xmss-sha256", "--key-file", copy, "--overwrite"),
-  out = function(s) cat(grep("stale", s, fixed = TRUE, value = TRUE))
+  # the bundle named by its capsule, not by the temporary folder
+  out = function(s) {
+    cat(sub(
+      "seen in \\S*/([^/]+/capsule_bundle[.]json)",
+      "seen in \\1",
+      grep("stale", s, fixed = TRUE, value = TRUE),
+      perl = TRUE
+    ))
+  }
 )
-#> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/RtmpU913m7/capsules-3a0e638f14d1/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
+#> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
 xmssidxseen(root)[, c("index", "reused")]
 #>   index reused
 #> 1     0  FALSE

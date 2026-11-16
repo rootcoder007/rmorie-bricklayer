@@ -80,8 +80,8 @@ kept for the session, so later `offline = TRUE` calls (which the rest of
 the package makes) return it without checking the signature again.
 
 Errors: `refresh` or `offline` not `TRUE` or `FALSE`; `maxage` not a
-single non-negative number; `tmout` not a single finite number of at
-least 1.
+single non-negative number; `tmout` not a single number from 1 to
+2147483647.
 
 ## See also
 

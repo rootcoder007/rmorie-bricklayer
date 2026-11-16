@@ -280,13 +280,16 @@ led <- ldgrread(system.file(
   "ledger_sample.json",
   package = "rmoriebricklayer"
 ))
-led
+# the box names the file it read: shown by its name, not the folder of
+# this installation
+shown <- led
+attr(shown, "path") <- basename(attr(led, "path"))
+shown
 #> ╭── Proof ledger rmoriebricklayer sample ledger ──────────────────────────────╮
 #> │   Theorems  3 theorems (1 proved, 1 sorry, 1 axiom)                         │
 #> │   Source    https://github.com/rootcoder007/rmorie-proofs @ 0123456789ab    │
 #> │   Lean      v4.12.0                                                         │
-#> │   File      /tmp/RtmpfajJcf/temp_libpath1e912f0c7a54/rmoriebricklayer/extda │
-#> │             ta/ledger_sample.json                                           │
+#> │   File      ledger_sample.json                                              │
 #> │                                                                             │
 #> │   id               theorem                         status  sorry            │
 #> │   ---------------  ------------------------------  ------  -----            │

@@ -140,7 +140,8 @@ run as given, so they can read files or draw random numbers; nothing else
 is changed.</p>
 <p>Errors: <code>man</code> not a list with <code>results</code>; <code>stats</code>
 not a non-empty fully named list, or with an element that is not a
-function.</p>
+function. A statistic that warns while it is recomputed does not warn
+the caller: its warnings are added to its row's <code>detail</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

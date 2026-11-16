@@ -72,6 +72,15 @@ returns `FALSE`. An XMSS signature object written by 0.5.9 to 0.5.12
 (one that carries a `key_state` field) still verifies, with a warning
 that it exposed the signer's private key.
 
+The encoding is strict: the signature's hex must be lower case, as
+[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+writes it; a field
+[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+does not write for the scheme is not accepted; and the context and
+pre-hash name a standardised signature records must be the ones it is
+verified under. Each of these returns `FALSE`: such an object is not the
+one that was made, although the bytes verified are the same.
+
 ## See also
 
 [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md),
