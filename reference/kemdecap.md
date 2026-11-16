@@ -22,7 +22,7 @@ kemdecap(key, ct, masked = getOption("rmoriebricklayer.masked", TRUE))
 
 - ct:
 
-  The `ct` element from
+  The `ciphertext` element from
   [`kemencap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemencap.md),
   as a hex string or a raw vector, of the length for the key's level.
 

@@ -76,8 +76,8 @@ each one is. Both come from the compiled core in one pass.</p>
 
 <dt id="arg-w">w<a class="anchor" aria-label="anchor" href="#arg-w"></a></dt>
 <dd><p>Numeric vector of non-negative weights, the same length as
-<code>x</code>. Only their relative sizes matter for the mean; the variance's
-correction uses them as given.</p></dd>
+<code>x</code>. Only their relative sizes matter, for the mean and for the
+variance.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -101,9 +101,12 @@ meaning three identical rows) call for the denominator
 design-based variance, so do not use this variance for those.</p>
 <p>Refusals: <code>x</code> and <code>w</code> of different lengths
 (<code>"must have the same length"</code>), any negative weight
-(<code>"must be non-negative"</code>), and a character, factor or list argument
-(<code>"must be numeric"</code>). All-zero weights, or an <code>NA</code> in either vector,
-give <code>NaN</code> for both entries.</p>
+(<code>"must be non-negative"</code>), an infinite weight or all-zero weights
+(<code>"must be non-negative and finite, not all zero"</code>), and a character,
+factor or list argument (<code>"must be numeric"</code>). An <code>NA</code> in either
+vector gives <code>NaN</code> for both entries, and so does a variance with a
+single positive weight. The result does not depend on the scale of the
+weights: equal weights of any size give <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">stats::var()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -2,6 +2,66 @@
 
 ## rmoriebricklayer 1.1.1
 
+- The help of
+  [`kemdecap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemdecap.md)
+  names the element of
+  [`kemencap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemencap.md)’s
+  result to pass, `ciphertext` (it said `ct`).
+
+- [`cwtd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cwtd.md)
+  gives the same mean and variance whatever the scale of the weights:
+  equal weights of any size give `var(x)` (`rep(1e-160, 3)` gave
+  0.99999443, `rep(1e-165, 3)` and `rep(1e154, 3)` gave `NaN`), and one
+  weight much larger than the rest no longer gives `NaN`
+  (`c(1, 1e200, 1)` gives 0.5). The weights are scaled by a power of
+  two, which is exact, and the denominator is summed without cancelling.
+  [`sprd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sprd.md)
+  with reliability weights does the same. The help of
+  [`cwtd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cwtd.md)
+  said all-zero weights give `NaN`; they are refused, and the help now
+  says so.
+
+- A hash-chain label is digested as UTF-8, the same bytes in every
+  locale: a label that is not ASCII digested differently in the C
+  locale, so a chain made there failed
+  [`chnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
+  in a UTF-8 locale (a false alarm of tampering).
+  [`chnapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
+  refuses a label that is neither valid UTF-8 nor text of the session’s
+  encoding. Chains made in a UTF-8 locale, or whose labels are ASCII,
+  verify as before; a chain made in the C locale by an earlier version
+  with a label that is not ASCII no longer verifies anywhere and is
+  rebuilt by appending its entries again.
+
+- Every file the package writes is written whole or not at all: the
+  content goes to a temporary file beside the target, every write and
+  the close are checked, and the file is moved into place only when it
+  is complete. A write that fails (a full disk, a file-size limit, a
+  folder that cannot be written) is an error that names the file and
+  says that the file already there is unchanged;
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
+  [`wrmnfjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrmnfjs.md),
+  `cpsseal(overwrite = TRUE)` and `rmbl sign --overwrite` left a
+  cut-short file under the final name (the capsule’s previous bundle
+  among them), and a failure that showed only when the file was closed
+  (`path = "/dev/full"`) returned normally with base R’s warnings. A
+  target that is a folder, a device, a pipe or a file that cannot be
+  written, or in a folder that does not exist or cannot be written, is
+  refused in words. Files written on Windows now end their lines with a
+  line feed alone.
+
+- `mkbndl(data = )` and the other functions that copy a file the user
+  gives refuse a device, pipe or socket (`/dev/zero` was copied without
+  bound and filled 17 GB) and check that the copy has the size of the
+  original; a downloaded body whose last write failed when the file was
+  closed is an error, not a file.
+
+- [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
+  (and `rmbl pack --check`) runs without withr, which is only suggested:
+  it set its environment variables and working folder through withr, and
+  without it every run stopped with “there is no package called
+  ‘withr’”. It now uses base R and puts both back as they were.
+
 - The services document shipped with the package (and published, signed,
   at `rmorie.com/.well-known/`) no longer says the curated tables need a
   personal key or a sign-in, and no longer points at pages that were
@@ -10,6 +70,7 @@
   now shows the notice that the tables need no sign-in, as
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   and the help already said.
+
 - [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   changes the values it returns for some columns, so that they are the
   values the file holds. A column is a number only when every value in
@@ -23,16 +84,19 @@
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   with `cols`, `n` or `keep`, the tables over 512 MiB and
   `rmbl data pull` follow the same rule.
+
 - In a text column the text `NA` is the text `"NA"` (a committee called
   NA, a code), where
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   made it missing; an empty field there is `""`, as before. In a number
   or logical column an empty field and `NA` are both missing, as before.
+
 - Numbers in the curated tables are read correctly rounded, so
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   gives the same doubles on every machine: R’s own reading of decimal
   text put `1.239042694` and `-8833541.51630376` one bit apart on x86-64
   and ARM64.
+
 - `dload(names = "asis")` and `rmbl data pull --names asis` return the
   column names as the published table and its manifest write them
   (`Offence Description`, `% share`), where by default
@@ -41,15 +105,18 @@
   [`read.csv()`](https://rdrr.io/r/utils/read.table.html) makes
   (`Offence.Description`, `X..share`). The default stays as it is in
   this release and may change in a later major version.
+
 - [`explerr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/explerr.md)
   explains a message that holds bytes which are not UTF-8 (a path in
   another encoding) in every locale; in the C locale it stopped with
   “input string 1 is invalid”.
+
 - [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
   reads back a complex NaN as
   [`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
   writes it (`"NaN+0i"`), which it refused, and `rmbl data pull` writes
   NaN to the CSV file as NaN, not NA.
+
 - `rmbl migrate` takes [`assign()`](https://rdrr.io/r/base/assign.html)
   with its arguments named in any order (`assign(value = f, x = "yoy")`)
   for a definition, rewrites a call written in backquotes
@@ -57,6 +124,7 @@
   variable or a constant (`for (yoy in 1:3)`, `yoy <- 3`) for a
   definition of a function: R still calls the package’s function for
   `yoy(1)`, so the call is rewritten.
+
 - Text that is not valid in the session’s encoding (bytes such as
   `"a\xffb"` in a UTF-8 session) is refused once, in the package’s
   words, by
@@ -73,13 +141,16 @@
   after warnings that the text could not be translated. On the command
   line such a word is a usage error (one line, status 2); as the first
   word it stopped R with a traceback and “Execution halted”.
+
 - `rmbl migrate` given a folder, or a file it cannot read, says so in
   one line with status 1, instead of “cannot open the connection” and
   base R’s warnings.
+
 - A cached manifest that lists no tables is fetched again at once, as a
   damaged one is, instead of being kept for a day while every table was
   “not at data.rmorie.com”; with no connection, the error says the
   cached copy lists no tables.
+
 - [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
   also refuses an object whose class or attributes do not fit its data:
   the class `Date`, `POSIXct` or `difftime` on text, a class naming a
@@ -87,6 +158,7 @@
   levels repeat, more or fewer names than values, a time in a time zone
   that does not exist and a difftime in no known unit. R accepted each
   without a word.
+
 - The refusals of
   [`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md),
   [`jsb64dec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md),
@@ -100,12 +172,14 @@
   alphabet, named no function). Two results of
   [`jsgzenc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
   joined into one string are said to hold more than one JSON value.
+
 - The launchers (the package’s own and those
   [`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
   writes) exit 130 on every Ctrl-C, also one that lands as R finishes,
   where the status was 0. A Ctrl-C in the first few tenths of a second,
   while R itself is still starting, can still make R print “Execution
   halted” before it ends; the status is 130.
+
 - Several R processes calling
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   for the same table with one cache folder take turns: each download
@@ -116,10 +190,12 @@
   the folder was full.
   [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
   writes its download under a name of its own too.
+
 - A download that cannot be written on this computer (a cache folder
   that does not exist, is read-only or is full) says so, with the path
   and `options(rmoriebricklayer.dcache = )`, instead of being reported
   as an error of data.rmorie.com.
+
 - A cached manifest that cannot be read (cut short or damaged on disk)
   is fetched again, instead of stopping
   [`dmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
@@ -127,27 +203,32 @@
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   throw away the table it had just downloaded; when no fresh one can be
   had, the error says the cached copy is damaged.
+
 - [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   and `rmbl data pull` refuse a key that is not valid text in the
   session’s encoding, or is longer than 200 bytes, in one line (status 2
   on the command line), without the warnings base R gave about the text.
+
 - [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
   refuses a value that is not of the type the JSON names (`"x"` or `1`
   as a logical, `3.7` or `"7"` as an integer, a number as text or as a
   complex number), where it converted it, and an object whose class does
   not fit its data (an integer vector with class `data.frame`, a factor
   code past its levels).
+
 - `rmbl migrate` treats a function defined by
   [`assign()`](https://rdrr.io/r/base/assign.html) with `envir =` (or
   `pos =`) as defined wherever the script calls it, and a name defined
   inside [`with()`](https://rdrr.io/r/base/with.html) or
   [`within()`](https://rdrr.io/r/base/with.html) as defined only there.
+
 - The help of
   [`dmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   and the services fallback no longer name pages at www.rmorie.com that
   do not exist: the tables need no sign-in and have no terms of the
   service’s own, each keeping its source’s licence, which the manifest
   names; the fallback points at <https://data.rmorie.com/>.
+
 - A table downloaded in parts no longer comes out damaged when the disk
   fills up while the parts are joined: the failed write is an error that
   names the folder and the option for choosing one with room
@@ -160,6 +241,7 @@
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   from the first part not yet joined, without downloading the joined
   parts again.
+
 - [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   can read part of a table, for the curated tables too large to hold in
   memory (the largest has 93 million rows): `cols` reads only the named
@@ -175,6 +257,7 @@
   than about 2 GB whole,
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   says how large it is and names these arguments.
+
 - `rmbl data` with nothing after it prints its usage line instead of
   downloading the table list, and `rmbl data pull` refuses a key that is
   not `db/table` (`../../etc/passwd`) before any download.
@@ -183,12 +266,14 @@
   error), as
   [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md)
   does.
+
 - `rmbl login`, `rmbl logout`, `rmbl archive find` (and `get`, `mine`,
   `private`, `public`, `withdraw`), `rmbl help login` and
   `rmbl describe dlogin` (or `dlogout`, `arcfind`, `arcget`) say that
   the command or function was removed in 1.1.1 and why, instead of
   “unknown verb” or “no help page”. `rmbl describe yoy` (and `anltab`,
   `plotecdf`, `plotsm`) says the name was renamed in 1.1.1, not 1.0.0.
+
 - Smaller refusals in words: `rmbl functions` with a pattern that is not
   a regular expression;
   [`mkbndlproj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlproj.md)
@@ -199,22 +284,26 @@
   [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md)
   no longer warns once per string function on a page with bytes that are
   not UTF-8.
+
 - The launchers
   [`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
   writes report a Ctrl-C that lands while R is still starting as status
   130, as the package’s own launcher does; they ran R with `exec`, so no
   shell was left to say so and the status was 1. A failure that is not
   an interrupt keeps its status.
+
 - [`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
   inflates with the package’s bounded reader: a damaged gzip member of
   under 2 KB made base R’s
   [`memDecompress()`](https://rdrr.io/r/base/memCompress.html) take more
   than 12 GB, and is now refused at once.
+
 - [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md)
   keeps the whole download inside `tmout`: it no longer waits past it
   between attempts (with `tmout = 30`, a server answering 503 with a
   long `Retry-After` held the call for three minutes), and each further
   attempt gets only the time that is left.
+
 - `rmbl migrate` leaves a call of a function the script defines itself
   alone (`rate <- function(x) x; rate(2)` became `rtcalc(2)`), where
   that definition is in reach: one made inside a function or
@@ -223,6 +312,7 @@
   [`assign()`](https://rdrr.io/r/base/assign.html), `setGeneric()` and a
   backquoted name count. A call written `rmoriebricklayer::rate()` is
   still rewritten.
+
 - [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
   on a JSON object that
   [`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
@@ -239,10 +329,12 @@
   inflates;
   [`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
   calls a truncated gzip member damaged, not too large.
+
 - [`svydes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svydes.md)
   no longer copies into a zero-length vector when a replicate column has
   no positive entry (undefined behaviour, reported by the clang
   sanitizer).
+
 - The functions for archive.rmorie.com are gone: `arcfind()` and
   `arcget()` (both in 1.1.0), and `arcmine()`, `arcvis()` and `arcwd()`
   (never released), with the `rmbl archive find`, `get`, `mine`,
@@ -277,6 +369,7 @@
   keep running. `rmbl archive save` no longer needs `--reason` or takes
   `--private`, and `rmbl archive push DIR --also wayback` asks the
   Wayback Machine for a kept capture.
+
 - `dlogin()`, `dlogout()` and the `rmbl login` and `rmbl logout`
   commands are gone, with the GitHub and emailed-code sign-in behind
   them: the curated tables at data.rmorie.com need no sign-in. A key
@@ -284,6 +377,7 @@
   as it is on disk), `dload(token = )` is ignored with a warning, and
   `rmbl doctor` says “data key: none (the curated tables need none)”.
   Language-model provider keys are unchanged.
+
 - Four functions have new names, so that no exported name is also a
   function in another CRAN package: `plotecdf()` is
   [`plotcdfs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
@@ -299,6 +393,7 @@
   [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md),
   and `rmbl migrate` rewrites calls of the old names in a script to the
   new ones (`rmbl describe anltab` says what it became).
+
 - The 0.5.13 S3 generics `rate()`, `rate_change()` and `share()` are
   gone, for the same reason;
   [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md),
@@ -311,12 +406,14 @@
   `rmbl describe rate` says what it became, and `rmbl migrate` rewrites
   a script’s `rate()`, `rate_change()` and `share()` calls to the new
   functions and argument names.
+
 - The curated tables at data.rmorie.com need no sign-in:
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
   [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   and `rmbl data pull` work without a key. ICPSR studies are no longer
   served there (ICPSR’s terms do not allow redistribution); asking for
   one says where to get it.
+
 - A curated table larger than twice the part size (option
   `rmoriebricklayer.dpart`, 90 MB by default) is downloaded in parts,
   each a byte range of the file: a slow or broken connection costs at
@@ -324,30 +421,36 @@
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   again resumes from the first part still missing. The joined file is
   checked against the manifest SHA-256 as before.
+
 - A test that refreshes the data manifest from several processes at once
   forks two at a time instead of twelve: under coverage each fork copied
   an 850 MB test session, and twelve ran a 2 GB check machine out of
   memory.
+
 - On a machine or container with less than 3 GB (rOpenSci’s pkgcheck
   runs in 2 GB), the tests that fork or start a second R process skip:
   that process takes 500 to 800 MB beside the test session and the
   checker’s own session, and the three overran 2 GB, in the coverage
   step and again in R CMD check. CI and the coverage job, on larger
   machines, still run them.
+
 - The full test suite runs in batches of 8 files, each in a fresh R
   process, so no process grows past about 1 GB; in batches of 25, R CMD
   check on a 2 GB machine was stopped for lack of memory.
+
 - On a machine or container with less than 3 GB the batches are 3 files
   (under coverage a batch of 8 reached 1.1 GB), and the C++ sources
   compile as three units, so no compiler process needs more than about
   460 MB (one unit needed over 700 MB). The Windows check time is
   unchanged.
+
 - [`co2fp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md)
   and
   [`raplok()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/raplok.md)
   skip a RAPL power domain whose `name` file cannot be read (as inside a
   container) without a warning; each such domain used to print “cannot
   open file”.
+
 - On Windows, the internal check that a socket to a private or loopback
   address is refused answered “refused” for every address, public ones
   too, when it ran in an R process that had made no transfer yet: the
@@ -355,9 +458,11 @@
   it itself. Downloads were not affected (they always make a handle
   first); the package’s own test of the policy failed on Windows once
   the tests ran in fresh processes.
+
 - A new hex logo (`man/figures/logo.png`, source
   `data-raw/hex_logo.svg`): contour lines of a density in the shape of a
   fingerprint, with the package name on the lower edge.
+
 - [`cqnt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md),
   [`cmed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md),
   [`ciqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
@@ -366,15 +471,18 @@
   handle an infinite value as
   [`stats::quantile()`](https://rdrr.io/r/stats/quantile.html) does
   (`cmed(c(-Inf, 1))` is `-Inf`); they returned `NaN`.
+
 - [`cgamcdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cgamcdf.md)
   agrees with [`pgamma()`](https://rdrr.io/r/stats/GammaDist.html) to
   rounding far below the shape too: `cgamcdf(30, 1e-8)` was off in the
   sixth digit.
+
 - [`cpsbndlrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
   and
   [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
   say that a file whose attestation has no signature is not a capsule
   bundle; they stopped with an internal error.
+
 - [`yoymd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md)
   and the Markdown of
   [`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
@@ -384,29 +492,35 @@
   and
   [`yoytsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md)
   stays one line when a column name holds a line break.
+
 - [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
   given something that is no key names the keys it takes.
+
 - The help of
   [`benfordtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benfordtst.md)
   says which digit a value within rounding of a power of ten counts
   under: the one R prints.
+
 - Under coverage the test runner adds each batch’s counts into one trace
   file as the suite goes. covr reads the trace file of every R process
   before adding them up, and the 52 files of a full run took 2.06 GB,
   which stopped rOpenSci’s pkgcheck (“Package coverage failed”) on a 2
   GB machine after every test had passed. The coverage figures are
   unchanged.
+
 - [`cpsbndlrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
   and
   [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
   also refuse a bundle whose file list holds something other than
   records with a path and a digest.
+
 - [`llmchat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmchat.md)
   and
   [`llmask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.md)
   say that the model’s server did not answer in the provider’s format
   when a member of its reply has the wrong type; they stopped with an
   internal error.
+
 - A provenance file whose `dataset`, `resource`, `source`, `script` or
   `schema` is not an object no longer stops
   [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
@@ -418,20 +532,26 @@
   [`rslvarc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rslvarc.md)
   with an internal error, and neither does a portal reply of the wrong
   shape: the check fails as a row and the resolver returns `NULL`.
+
 - A provenance text member that is not one string (a number, a list) is
   dropped the same way, a count written as text gives no coercion
   warning, and the summary table of `rmbl verify` shows a folder name
   such as `R&D survey` as written.
+
 - [`idcrdvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
   reports a card whose issue or expiry date is not one string as a
   failed row; it stopped with an internal error.
+
 - The Markdown of `rmbl verify`, `rmbl report` and the drift report
   escapes HTML in a table cell.
+
 - The `@srrstatsNA` entry for standard G2.14c (imputation) starts its
   own line again, so ‘srr’ reads it.
+
 - Code blocks in vignettes that are not R (shell, YAML, R shown but not
   run) are fenced with `~~~`, which ‘goodpractice’ does not take for the
   end of an R chunk.
+
 - The package description and the README now name the policy-evaluation
   functions
   ([`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md),
@@ -442,6 +562,7 @@
   straight after
   [`anytab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anytab.md);
   nothing in the code changes.
+
 - Tables whose source terms do not allow redistribution (the ICPSR
   studies, the NCVS 38604 extract among them, and any table the manifest
   marks restricted) are left out of
@@ -452,10 +573,12 @@
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   and `rmbl data pull` refuse them before any request is sent, saying
   where to get them. The A2AJ case law is an ordinary open table.
+
 - The Schedule B prompt for the restricted tables and the `--restricted`
   and `--supervisor-*` options are gone with the sign-in itself (see the
   first two items). A refusal with HTTP 403 no longer points to a terms
   page.
+
 - The help of
   [`dmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
   [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
@@ -463,8 +586,10 @@
   [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
   the command-line help, `rmbl doctor`, the dashboard and the vignettes
   no longer say that the curated tables need a key or a sign-in.
+
 - A curated table the manifest lists without any SHA-256 is still
   loaded, now with a warning (once per session and table).
+
 - `rmbl migrate` no longer rewrites a list element or method named like
   a removed function (`obj$rate(1)` became `obj$rtcalc(1)`), and now
   also rewrites a renamed function passed by name (`lapply(x, yoy)`) or
@@ -475,30 +600,37 @@
   [`get0()`](https://rdrr.io/r/base/exists.html) or
   [`exists()`](https://rdrr.io/r/base/exists.html), unless the script
   defines that name itself.
+
 - A language-model provider’s error text, and an archive.org Save Page
   Now message, are withheld when they repeat the key sent (the
   provider’s key, or the S3 keys), whether as sent, in base64 at any of
   its three alignments, in URL-safe base64, in hex or broken up by
   separators.
+
 - A dropped connection during a download or upload is reported as the
   send or receive error libcurl gives: every transfer ignores SIGPIPE
   while it runs (and restores the previous handler after), where a write
   to a TLS connection the peer had closed stopped R with “ignoring
   SIGPIPE signal”.
+
 - [`cqnt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
   names its quantiles exactly as
   [`quantile()`](https://rdrr.io/r/stats/quantile.html) does (`"50%"`,
   not `"50.0%"`).
+
 - `cgamcdf(Inf, x)` gives the limit, 0 for a finite `x` and 1 for `Inf`,
   as [`pgamma()`](https://rdrr.io/r/stats/GammaDist.html), instead of
   NaN.
+
 - [`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
   writes a column name with a line break on one line, and shows
   backticks and asterisks in a group label as written instead of as code
   or bold, in Markdown and in HTML.
+
 - [`shrs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md)
   gives a lower bound of exactly 0 for a zero count and an upper bound
   of exactly 100 for the whole total, as `prop.test(correct = FALSE)`.
+
 - [`plotrdg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
   and
   [`plotvln()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
@@ -507,6 +639,7 @@
   [`hurwzeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwzeta.md)
   no longer warns “probable complete loss of accuracy in modulus” at
   orders past 2^53.
+
 - The help of
   [`yoychg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoychg.md)
   and its writers names the argument `dir` (not the 0.5.x name
@@ -514,6 +647,7 @@
   [`mkbndlchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkbndlchk.md)
   box labels the bundle run’s own results “Results in the run”, apart
   from the audit’s checks.
+
 - The tests leave nothing in the home folder: the dashboard tests turn
   off the sass cache (`~/.cache/R/sass`), and the podman test does not
   create storage for podman where there is none.
