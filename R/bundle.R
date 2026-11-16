@@ -41,7 +41,8 @@
 #' How it is checked. `cpsbndlvrf()` re-hashes every listed file
 #' (a path that is absolute or climbs out of `dir` fails its row), reports
 #' every file on disk the bundle does not list (the bundle's own file
-#' excepted), checks the attestation with
+#' excepted) and every empty folder (named with a trailing \code{/}),
+#' checks the attestation with
 #' [cpschkatst()]
 #' (signature, digest, and `keyexp` when given; an `"hmac"`
 #' signature needs the shared secret as `key`), and, when `man`
@@ -533,9 +534,21 @@ format.bricklayer_bundle_check <- function(x, ...) {
     recursive = TRUE,
     full.names = FALSE,
     all.files = TRUE,
+    include.dirs = TRUE,
     no.. = TRUE
   )
-  on_disk <- on_disk[!dir.exists(file.path(dir, on_disk))]
+  # a folder is content when it is empty (a bundle lists only files, so an
+  # empty folder added to a capsule went unreported); it is named with a
+  # trailing slash
+  isdir <- dir.exists(file.path(dir, on_disk))
+  empty <- vapply(
+    on_disk[isdir],
+    function(f) {
+      !length(list.files(file.path(dir, f), all.files = TRUE, no.. = TRUE))
+    },
+    NA
+  )
+  on_disk <- c(on_disk[!isdir], sprintf("%s/", on_disk[isdir][empty]))
   # only the bundle's OWN file is exempt from the listing, not every file
   # whose name ends in bundle.json
   own <- attr(bundle, "path")
