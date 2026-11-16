@@ -535,8 +535,8 @@ sd <- syndid(
 sd
 #> ╭── Synthetic difference in differences ─────────────────────────────────╮
 #> │   Estimate              -2.886                                         │
-#> │   Standard error        0.5931 (placebo)                               │
-#> │   Interval              [-4.048, -1.723]                               │
+#> │   Standard error        0.5927 (placebo)                               │
+#> │   Interval              [-4.047, -1.724]                               │
 #> │   Adoption              13                                             │
 #> │   Comparison units      5                                              │
 #> │   With weight           5                                              │
@@ -552,7 +552,7 @@ sd
 #> │   D08   0.1945                                                         │
 #> │                                                                        │
 #> │   Weighting the comparison units and the pre-periods to match the      │
-#> │   treated units, the effect is -2.886 (its interval [-4.048, -1.723]): │
+#> │   treated units, the effect is -2.886 (its interval [-4.047, -1.724]): │
 #> │   the interval excludes 0, so the data distinguish it from no effect.  │
 #> ╰────────────────────────────────────────────────────────────────────────╯
 plot(sd)
