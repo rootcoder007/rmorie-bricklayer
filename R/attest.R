@@ -247,6 +247,17 @@ cpschkatst <- function(attest, man, keyexp = NULL, key = NULL) {
   }
   sig <- .rmbl_attest_sig_check(attest, key, length(missing) == 0L)
   rows <- c(rows, list(.rmbl_attest_row("signature", sig$ok, sig$detail)))
+  # a field no writer makes is covered by no signature (an "unsigned_claim"
+  # beside the signed ones was accepted without a word): reported, as a
+  # bundle reports files it does not list
+  extra <- setdiff(names(attest), needed)
+  if (length(extra)) {
+    rows <- c(rows, list(.rmbl_attest_row(
+      "no_unsigned_fields",
+      FALSE,
+      paste("not covered by the signature:", toString(extra))
+    )))
+  }
 
   df <- do.call(rbind, rows)
   rownames(df) <- NULL

@@ -199,3 +199,34 @@ test_that("standardised keys print as boxes with their fingerprint", {
   class(oldp) <- c("bricklayer_oqs_public_key", "list")
   o1_expect_box(o1_box(oldp), oldp, "Public verification key", "ML-DSA-44")
 })
+
+test_that("cpsvrf() takes one spelling of a signature only", {
+  k <- fipskg("ML-DSA-44", seed = as.raw(1:32))
+  g <- cpssign("m", k, ctx = "abc")
+  expect_true(cpsvrf("m", g, fipspubkey(k), ctx = "abc"))
+  up <- g
+  up$signature <- toupper(g$signature)
+  expect_false(cpsvrf("m", up, fipspubkey(k), ctx = "abc"))
+  # the recorded context and pre-hash must be the ones verified under
+  other <- g
+  other$context <- charToRaw("xyz")
+  expect_false(cpsvrf("m", other, fipspubkey(k), ctx = "abc"))
+  other <- g
+  other$prehash <- "sha256"
+  expect_false(cpsvrf("m", other, fipspubkey(k), ctx = "abc"))
+  # as JSON carries it: the context's base64 text
+  js <- g
+  js$context <- jsb64enc(charToRaw("abc"))
+  expect_true(cpsvrf("m", js, fipspubkey(k), ctx = "abc"))
+  js$context <- "eHl6"
+  expect_false(cpsvrf("m", js, fipspubkey(k), ctx = "abc"))
+  # a field no writer makes
+  more <- g
+  more$reviewed <- "yes"
+  expect_false(cpsvrf("m", more, fipspubkey(k), ctx = "abc"))
+  h <- cpssign("m", "a secret", scheme = "hmac")
+  expect_true(cpsvrf("m", h, "a secret"))
+  h$signature <- toupper(h$signature)
+  expect_false(cpsvrf("m", h, "a secret"))
+  expect_true(.rmbl_vrf_fips_bound(list(), raw(0), "none"))
+})

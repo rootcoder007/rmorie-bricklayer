@@ -79,7 +79,9 @@ attribute
 \code{cpsbndlvrf()}: a list of class \code{bricklayer_bundle_check} with
 \code{ok} (logical) and \code{checks} (a data frame of \code{check}, logical \code{ok}
 and
-\code{detail}: one \code{file:PATH} row per listed file, \code{no_unlisted_files}, the
+\code{detail}: one \code{file:PATH} row per listed file, \code{no_unlisted_files}, a
+failed \code{no_unsigned_fields} row when the bundle or its attestation holds
+fields \code{cpsbndl()} does not write (no signature covers them), the
 \verb{attestation:} rows, with a manifest \code{manifest_digest}, and with \code{seen}
 \code{xmss_index}). For an XMSS bundle the \code{attestation:signature} row's
 detail names the signature's index and the key fingerprint.

@@ -1205,6 +1205,13 @@ xmssadv <- function(key, sig, msg = NULL) {
 #' carries a `key_state` field) still verifies, with a warning that it exposed
 #' the signer's private key.
 #'
+#' The encoding is strict: the signature's hex must be lower case, as
+#' [cpssign()] writes it; a field [cpssign()] does not write for the scheme
+#' is not accepted; and the context and pre-hash name a standardised
+#' signature records must be the ones it is verified under. Each of these
+#' returns `FALSE`: such an object is not the one that was made, although
+#' the bytes verified are the same.
+#'
 #' @param msg The message the signature is claimed to
 #' cover.
 #' @param sig A `bricklayer_signature` from
@@ -1260,6 +1267,11 @@ cpsvrf <- function(msg, sig, key, ctx = NULL, prehash = NULL) {
   .rmbl_no_fn(msg = msg)
   if (!inherits(sig, "bricklayer_signature")) {
     stop("`sig` must come from cpssign()", call. = FALSE)
+  }
+  # a field cpssign() never writes is covered by no signature: an object
+  # carrying one is not the signature that was made
+  if (!.rmbl_vrf_known_fields(sig)) {
+    return(FALSE)
   }
   # a key object whose class or scheme was edited is "not verified", like an
   # edited signature; a value that is not a key object at all (a number, a
@@ -1901,7 +1913,7 @@ xmssfgt <- function(keytofgt = NULL) {
   # an unknown pre-hash name in the signature (or asked for) is "not
   # verified", not an error
   ph <- tryCatch(.rmbl_fips_prehash(ph), error = function(e) NULL)
-  if (is.null(ph)) {
+  if (is.null(ph) || !.rmbl_vrf_fips_bound(sig, .ctx, ph)) {
     return(FALSE)
   }
   .rmbl_fips_verify(key$scheme, pk, .msg, .ctx, sg, ph)
@@ -1913,7 +1925,7 @@ xmssfgt <- function(keytofgt = NULL) {
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_vrf_fips_fields <- function(sig) {
-  if (!is.character(sig$signature) || length(sig$signature) != 1L) {
+  if (!.rmbl_vrf_lowhex(sig$signature)) {
     return(FALSE)
   }
   rec <- sig[["context"]]
@@ -1926,6 +1938,66 @@ xmssfgt <- function(keytofgt = NULL) {
   }
   recp <- sig[["prehash"]]
   is.null(recp) || (is.character(recp) && length(recp) == 1L && !is.na(recp))
+}
+
+#' One string of lower-case hex digits, as every writer of the package
+#' spells them.
+#'
+#' A re-cased signature decodes to the same bytes, so it verified: one
+#' signature then had many accepted spellings, where every other hex field is
+#' compared exactly.
+#' @param x A signature field.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_vrf_lowhex <- function(x) {
+  is.character(x) && length(x) == 1L && !is.na(x) &&
+    grepl("^[0-9a-f]*$", x, useBytes = TRUE)
+}
+
+#' Whether a signature object holds only the fields cpssign() writes for its
+#' scheme (and `key_state`, which XMSS objects of 0.5.9 to 0.5.12 carry and
+#' which is warned about). A field no writer makes is covered by no
+#' signature, so an object carrying one is not the one that was made.
+#' @param sig The signature.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_vrf_known_fields <- function(sig) {
+  sc <- sig[["scheme"]]
+  more <- if (identical(sc, "hmac")) {
+    character()
+  } else if (identical(sc, "xmss-sha256")) {
+    c("auth", "index", "root", "height", "randomizer", "wire", "key_state")
+  } else {
+    c("context", "prehash")
+  }
+  all(names(sig) %in% c("scheme", "signature", more))
+}
+
+#' Whether a FIPS signature's own context and pre-hash name are the ones it
+#' is verified under.
+#'
+#' The writer records them in the signature; they are not covered by it, and
+#' the verifier uses its own (the arguments, or the attestation's signed
+#' fields), so a recorded value that differs was edited and the object is
+#' refused. An absent field is accepted. A context is raw bytes in R and
+#' their base64 text in JSON (\code{""} for none).
+#' @param sig The signature.
+#' @param ctx The context bytes used.
+#' @param ph The pre-hash name used.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_vrf_fips_bound <- function(sig, ctx, ph) {
+  rec <- sig[["context"]]
+  ctx_ok <- is.null(rec) ||
+    (is.raw(rec) && identical(rec, ctx)) ||
+    (is.character(rec) &&
+      identical(rec, if (length(ctx)) jsb64enc(ctx) else ""))
+  rp <- sig[["prehash"]]
+  ph_ok <- is.null(rp) || identical(
+    tryCatch(.rmbl_fips_prehash(rp), error = function(e) NULL),
+    ph
+  )
+  ctx_ok && ph_ok
 }
 
 #' One non-empty string.
@@ -1973,9 +2045,9 @@ xmssfgt <- function(keytofgt = NULL) {
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_vrf_xmss_shape <- function(sig) {
-  .rmbl_vrf_one_string(sig$signature) &&
-    .rmbl_vrf_one_string(sig$auth) &&
-    .rmbl_vrf_one_string(sig[["randomizer"]]) &&
+  .rmbl_vrf_lowhex(sig$signature) && nzchar(sig$signature) &&
+    .rmbl_vrf_lowhex(sig$auth) && nzchar(sig$auth) &&
+    .rmbl_vrf_lowhex(sig[["randomizer"]]) && nzchar(sig[["randomizer"]]) &&
     .rmbl_vrf_whole(sig$index) &&
     .rmbl_vrf_whole(sig$height) &&
     .rmbl_vrf_one_string(sig$root) &&
@@ -3041,7 +3113,7 @@ xmssfgt <- function(keytofgt = NULL) {
     !is.character(sg) ||
       length(sg) != 1L ||
       is.na(sg) ||
-      !grepl("^[0-9a-fA-F]{64}$", sg)
+      !grepl("^[0-9a-f]{64}$", sg)
   ) {
     return(FALSE)
   }

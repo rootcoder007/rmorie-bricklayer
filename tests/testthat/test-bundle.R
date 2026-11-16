@@ -167,3 +167,45 @@ test_that(
     expect_identical(utils::tail(out, 1L), "FALSE TRUE")
   }
 )
+
+test_that("a bundle with fields no signature covers fails", {
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "a.csv"))
+  m <- mkmnf(list(x = 1), env = FALSE)
+  k <- fipskg("ML-DSA-44", seed = as.raw(1:32))
+  bp <- file.path(withr::local_tempdir(), "b.json")
+  cpsbndl(dir, m, k, path = bp)
+  expect_true(cpsbndlvrf(bp, dir, man = m, keyexp = k$public)$ok)
+  edit <- function(f) {
+    b <- fromjs(bp, simplifyVector = FALSE)
+    p <- tempfile(fileext = ".json")
+    writeLines(tojs(f(b), auto_unbox = TRUE, pretty = TRUE, na = "null",
+                    null = "null", digits = I(17)), p)
+    cpsbndlvrf(p, dir, man = m, keyexp = k$public)
+  }
+  expect_true(edit(identity)$ok)
+  r <- edit(function(b) c(b, list(unsigned_claim = "reviewed")))
+  expect_false(r$ok)
+  expect_match(
+    r$checks$detail[r$checks$check == "no_unsigned_fields"],
+    "not covered by the signature: unsigned_claim"
+  )
+  r <- edit(function(b) {
+    b$attestation$reviewer <- "x"
+    b
+  })
+  expect_false(r$ok)
+  expect_true("attestation:no_unsigned_fields" %in% r$checks$check)
+  r <- edit(function(b) {
+    b$attestation$signature$signature <- toupper(
+      b$attestation$signature$signature
+    )
+    b
+  })
+  expect_false(r$ok)
+  r <- edit(function(b) {
+    b$attestation$signature$prehash <- "sha512"
+    b
+  })
+  expect_false(r$ok)
+})

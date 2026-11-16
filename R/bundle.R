@@ -105,7 +105,9 @@
 #' `cpsbndlvrf()`: a list of class `bricklayer_bundle_check` with
 #' `ok` (logical) and `checks` (a data frame of `check`, logical `ok`
 #' and
-#' `detail`: one `file:PATH` row per listed file, `no_unlisted_files`, the
+#' `detail`: one `file:PATH` row per listed file, `no_unlisted_files`, a
+#' failed `no_unsigned_fields` row when the bundle or its attestation holds
+#' fields \code{cpsbndl()} does not write (no signature covers them), the
 #' `attestation:` rows, with a manifest `manifest_digest`, and with `seen`
 #' `xmss_index`). For an XMSS bundle the `attestation:signature` row's
 #' detail names the signature's index and the key fingerprint.
@@ -272,6 +274,7 @@ cpsbndlvrf <- function(
     .bl_bnd_file_row(e, dir, note_row)
   }
   .bl_bnd_extra_row(bundle, dir, note_row)
+  .bl_bnd_fields_row(bundle, note_row)
   .bl_bnd_att_rows(bundle, keyexp, key, note_row)
   if (!is.null(seen)) {
     .bl_bnd_xmss_row(bundle, seen, note_row)
@@ -577,6 +580,32 @@ format.bricklayer_bundle_check <- function(x, ...) {
       paste0("attestation:", res$checks$check[i]),
       res$checks$ok[i],
       res$checks$detail[i]
+    )
+  }
+  invisible(NULL)
+}
+
+#' A failed row for fields of a bundle or its file records that cpsbndl()
+#' never writes, which the signature does not cover; nothing when there are
+#' none.
+#' @param bundle The bundle.
+#' @param note_row The function that records the check.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_bnd_fields_row <- function(bundle, note_row) {
+  top <- setdiff(
+    names(bundle),
+    c("files", "manifest_digest", "bundled_utc", "attestation")
+  )
+  rec <- unlist(lapply(bundle$files, function(e) {
+    setdiff(names(e), c("path", "sha256", "size_bytes"))
+  }))
+  extra <- c(top, if (length(rec)) paste0("files: ", unique(rec)))
+  if (length(extra)) {
+    note_row(
+      "no_unsigned_fields",
+      FALSE,
+      paste("not covered by the signature:", toString(extra))
     )
   }
   invisible(NULL)

@@ -2095,6 +2095,10 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     no_unlisted_files = paste0(
       "the capsule holds files the bundle does not cover: remove them or ",
       "sign again (cpsbndl())"
+    ),
+    no_unsigned_fields = paste0(
+      "the bundle holds fields no signature covers: remove them or sign ",
+      "again (cpsbndl())"
     )
   )
 }

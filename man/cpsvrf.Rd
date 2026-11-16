@@ -58,6 +58,13 @@ vector. A key or signature whose class, scheme or fields were edited returns
 \code{FALSE}. An XMSS signature object written by 0.5.9 to 0.5.12 (one that
 carries a \code{key_state} field) still verifies, with a warning that it exposed
 the signer's private key.
+
+The encoding is strict: the signature's hex must be lower case, as
+\code{\link[=cpssign]{cpssign()}} writes it; a field \code{\link[=cpssign]{cpssign()}} does not write for the scheme
+is not accepted; and the context and pre-hash name a standardised
+signature records must be the ones it is verified under. Each of these
+returns \code{FALSE}: such an object is not the one that was made, although
+the bytes verified are the same.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
