@@ -1,8 +1,8 @@
 # rmoriebricklayer 1.1.1
 
-* A JSON file holding a NUL byte is refused by `fromjs()`, `loadprov()`, `cpsbndlrd()` and `cpsbndlvrf()`: the text after the byte on its line was dropped unread, so a bundle file could carry bytes that were never checked. `cpssign()` refuses an empty hmac secret and `cpsvrf()` verifies nothing under one, as `cpsatst()` and `cpsbndl()` already did.
+* A JSON file holding a NUL byte is refused by `fromjs()`, `loadprov()`, `cpsbndlrd()` and `cpsbndlvrf()`: the text after the byte on its line was dropped unread, so a bundle file could carry bytes that were never checked. `cpssign()` refuses an empty HMAC secret and `cpsvrf()` verifies nothing under one, as `cpsatst()` and `cpsbndl()` already did.
 
-* `cpschk()` and `rmbl verify` fail when no capsule is found under the path: a folder with nothing to check (empty, or whose capsule was deleted or moved into a `.git` or `.rmbl-cache` folder, which stay unsearched) passed as `ok`, also with `pubkey` (`--public-key`) given, and `rmbl verify` exited 0. The result now has one failed `no_capsule` row and the status `error`, the report says that no capsule was found and nothing was checked, and `rmbl verify` and `rmbl drift` exit 1, as for any failed verification (`rmbl report` still exits 0).
+* `cpschk()` and `rmbl verify` fail when no capsule is found under the path: a folder with nothing to check (empty, or whose capsule was deleted or moved into a `.git` or `.rmbl-cache` folder, which stay not searched) passed as `ok`, also with `pubkey` (`--public-key`) given, and `rmbl verify` exited 0. The result now has one failed `no_capsule` row and the status `error`, the report says that no capsule was found and nothing was checked, and `rmbl verify` and `rmbl drift` exit 1, as for any failed verification (`rmbl report` still exits 0).
 
 * `cpsbndlvrf()` (and `rmbl verify`) reports an empty folder inside a bundled capsule as content the bundle does not list, in its `no_unlisted_files` row, named with a trailing `/`, as it reports an unlisted file; a bundle lists only files, so an empty folder added after signing went unreported.
 

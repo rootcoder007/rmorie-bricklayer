@@ -517,21 +517,11 @@ format.bricklayer_bundle_check <- function(x, ...) {
   invisible(NULL)
 }
 
-#' The row for files on disk that a bundle does not list.
-#' @param bundle The bundle.
-#' @param dir The bundled directory searched for files the bundle omits.
-#' @param note_row The function that records the extra-files check.
-#' @return NULL, invisibly.
+#' What a bundled directory holds: its files, and its empty folders.
+#' @param dir The bundled directory.
+#' @return Paths relative to `dir`; an empty folder ends in a slash.
 #' @noRd
-.bl_bnd_extra_row <- function(bundle, dir, note_row) {
-  # Files present on disk that the bundle does not mention are reported:
-  # a signed list of what SHOULD be there says nothing about what else
-  # has been added beside it.
-  named <- vapply(
-    bundle$files,
-    function(e) as.character(e$path)[1L],
-    character(1)
-  )
+.bl_bnd_ondisk <- function(dir) {
   on_disk <- list.files(
     dir,
     recursive = TRUE,
@@ -551,19 +541,43 @@ format.bricklayer_bundle_check <- function(x, ...) {
     },
     NA
   )
-  on_disk <- c(on_disk[!isdir], sprintf("%s/", on_disk[isdir][empty]))
+  c(on_disk[!isdir], sprintf("%s/", on_disk[isdir][empty]))
+}
+
+#' The bundle's own file, relative to the directory, when it lies inside.
+#' @param bundle The bundle; its `path` attribute is the file checked.
+#' @param dir The bundled directory.
+#' @return A relative path, or NULL.
+#' @noRd
+.bl_bnd_ownrel <- function(bundle, dir) {
   # only the bundle's OWN file is exempt from the listing, when it is the
   # file checked: a bundle checked from outside the capsule exempts nothing,
   # where a capsule_bundle.json planted inside passed whatever it held
   own <- attr(bundle, "path")
-  own <- if (!is.null(own)) {
-    normalizePath(own, winslash = "/", mustWork = FALSE)
+  if (is.null(own)) {
+    return(NULL)
   }
+  own <- normalizePath(own, winslash = "/", mustWork = FALSE)
   d <- sub("/+$", "", normalizePath(dir, winslash = "/", mustWork = FALSE))
-  own_rel <- if (!is.null(own) && startsWith(own, paste0(d, "/"))) {
-    substring(own, nchar(d) + 2L)
-  }
-  extra <- setdiff(on_disk, c(named, own_rel))
+  if (startsWith(own, paste0(d, "/"))) substring(own, nchar(d) + 2L)
+}
+
+#' The row for files on disk that a bundle does not list.
+#' @param bundle The bundle.
+#' @param dir The bundled directory searched for files the bundle omits.
+#' @param note_row The function that records the extra-files check.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_bnd_extra_row <- function(bundle, dir, note_row) {
+  # Files present on disk that the bundle does not mention are reported:
+  # a signed list of what SHOULD be there says nothing about what else
+  # has been added beside it.
+  named <- vapply(
+    bundle$files,
+    function(e) as.character(e$path)[1L],
+    character(1)
+  )
+  extra <- setdiff(.bl_bnd_ondisk(dir), c(named, .bl_bnd_ownrel(bundle, dir)))
   # a temporary left by a write that was cut short is said to be one: it
   # is not part of the capsule either, and is removed rather than signed
   left <- extra[.rmbl_leftover(extra)]
