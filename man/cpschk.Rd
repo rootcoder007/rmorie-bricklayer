@@ -40,7 +40,8 @@ cpschk(
 
 \item{pubkey}{Character scalar: the public key (hex) every bundle must be
 signed with (for an HMAC bundle, its key id), or \code{""}. Given, a
-capsule with no signed bundle fails: there is nothing the key checks.}
+capsule with no signed bundle fails: there is nothing the key checks,
+as a path holding no capsule fails.}
 
 \item{psiwarn, psifail}{Non-negative numbers, \code{psiwarn} at most
 \code{psifail}: the PSI bands, by default 0.1 and 0.25, the bands
@@ -140,7 +141,10 @@ result is the worst severity among its failed rows, and \code{status} the
 worst over all capsules: \code{ok}, \code{warn}, \code{drift} or
 \code{error}. Each failed row adds a note, and one more from
 \code{\link{explerr}} where it finds what the row means or where its
-message is raised.
+message is raised. When no capsule is found under \code{path} (outside
+the skipped folders, and matching \code{glob}), nothing was checked: the
+result is one failed \code{no_capsule} row, no capsules and the status
+\code{error}, also with \code{pubkey} given.
 
 Drift: when the fetched source's SHA-256 differs from the pin and the
 pinned data file is a CSV, \code{cpsdrft()} runs with

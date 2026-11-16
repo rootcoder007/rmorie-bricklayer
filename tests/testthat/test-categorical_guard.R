@@ -656,7 +656,7 @@ test_that("reports and messages stay readable where Unicode is not shown", {
   d <- withr::local_tempdir()
   md <- format(cpschk(d, "drift", fp = FALSE), fmt = "md")
   expect_true(all(charToRaw(md) < as.raw(128)))
-  expect_match(md, "OK No manifests found", fixed = TRUE)
+  expect_match(md, "X No capsule found", fixed = TRUE)
   expect_true(endsWith(md, "\n"))
   e <- tryCatch(grdrcd(c("W", "X"), c(W = "White")), error = conditionMessage)
   expect_false(grepl("‘|<U\\+", e))

@@ -439,10 +439,12 @@ test_that("the capsule verbs refuse a usage error with exit status 2", {
     "Capsules (the checks of the rmbl GitHub Action)",
     fixed = TRUE
   )
-  # nothing under the path: ok, and nothing to refresh
+  # nothing under the path: nothing was checked, which fails verify (status
+  # 1, as a failed row); nothing to refresh
   r <- run_cli(c("verify", root))
-  expect_identical(r$status, 0L)
-  expect_match(r$out, "No manifests found under", fixed = TRUE)
+  expect_identical(r$status, 1L)
+  expect_match(r$out, "No capsule found under", fixed = TRUE)
+  expect_identical(run_cli(c("report", root))$status, 0L)
   r <- run_cli(c("refresh", root))
   expect_identical(r$status, 0L)
   expect_match(r$out, "nothing to refresh", fixed = TRUE)
@@ -745,7 +747,8 @@ test_that("the capsule verbs take the options of the rmbl action", {
       unlist(j$capsules$notes)
   )
   r <- run_cli(c("verify", dirname(cp$dir), "--manifests", "nothing/*"))
-  expect_match(r$out, "No manifests found under", fixed = TRUE)
+  expect_match(r$out, "No capsule found under", fixed = TRUE)
+  expect_identical(r$status, 1L)
   m <- withr::local_tempfile(fileext = ".json")
   writeLines('{"resource": {"filename": "data.csv", "sha256": "01"}}', m)
   writeLines(

@@ -29,7 +29,10 @@
 #' worst over all capsules: \code{ok}, \code{warn}, \code{drift} or
 #' \code{error}. Each failed row adds a note, and one more from
 #' \code{\link{explerr}} where it finds what the row means or where its
-#' message is raised.
+#' message is raised. When no capsule is found under \code{path} (outside
+#' the skipped folders, and matching \code{glob}), nothing was checked: the
+#' result is one failed \code{no_capsule} row, no capsules and the status
+#' \code{error}, also with \code{pubkey} given.
 #'
 #' Drift: when the fetched source's SHA-256 differs from the pin and the
 #' pinned data file is a CSV, \code{cpsdrft()} runs with
@@ -72,7 +75,8 @@
 #'   \code{""}.
 #' @param pubkey Character scalar: the public key (hex) every bundle must be
 #'   signed with (for an HMAC bundle, its key id), or \code{""}. Given, a
-#'   capsule with no signed bundle fails: there is nothing the key checks.
+#'   capsule with no signed bundle fails: there is nothing the key checks,
+#'   as a path holding no capsule fails.
 #' @param psiwarn,psifail Non-negative numbers, \code{psiwarn} at most
 #'   \code{psifail}: the PSI bands, by default 0.1 and 0.25, the bands
 #'   \code{\link{drftpsi}} documents.
@@ -272,7 +276,7 @@ format.rmbl_cpschk <- function(
 #' @export
 print.rmbl_cpschk <- function(x, ...) {
   rows <- x$rows
-  verdict <- if (length(x$capsules)) {
+  verdict <- if (NROW(rows)) {
     list(
       ok = identical(x$status, "ok"),
       checks = data.frame(ok = rows$ok | rows$severity == "note")
@@ -676,7 +680,10 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' @noRd
 .bl_cpschk_reading <- function(x, caps) {
   if (!length(caps)) {
-    return(sprintf("No manifests were found under %s.", x$path))
+    return(sprintf(
+      "No capsule was found under %s: nothing was checked, which fails.",
+      x$path
+    ))
   }
   switch(
     x$status,
@@ -1218,8 +1225,8 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     md <- c(
       md,
       sprintf(
-        "%s No manifests found under `%s`%s.",
-        mark[["ok"]],
+        "%s No capsule found under `%s`%s: nothing was checked.",
+        mark[["error"]],
         x$path,
         if (nzchar(x$glob)) sprintf(" matching `%s`", x$glob) else ""
       )
@@ -2027,9 +2034,18 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   rows <- .bl_cpschk_rows(caps)
   dc <- .bl_cpschk_drifts(caps, rows)
   caps <- dc$caps
+  # nothing found is nothing checked, not a pass: a capsule renamed into a
+  # skipped folder (.git, .rmbl-cache) or deleted passed as "ok"
+  if (!length(caps)) {
+    rows <- .bl_no_capsule_row(o$path, glob)
+  }
   structure(
     list(
-      status = .bl_worst(vapply(caps, `[[`, "", "result")),
+      status = if (length(caps)) {
+        .bl_worst(vapply(caps, `[[`, "", "result"))
+      } else {
+        "error"
+      },
       mode = o$mode,
       path = o$path,
       glob = glob,
@@ -2046,6 +2062,29 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     ),
     class = "rmbl_cpschk",
     drifts = dc$drifts
+  )
+}
+
+#' cpschk()'s one row when no capsule is found under the path: a failure.
+#' @param path The folder searched.
+#' @param glob The checked glob, or "".
+#' @return One failed check row.
+#' @noRd
+.bl_no_capsule_row <- function(path, glob) {
+  .bl_check_row(
+    path,
+    "capsule",
+    path,
+    "no_capsule",
+    FALSE,
+    sprintf(
+      paste0(
+        "no capsule (data_provenance.json or capsule_bundle.json) under ",
+        "%s%s, outside folders named .git and .rmbl-cache: nothing was checked"
+      ),
+      .rmbl_printable(path),
+      if (nzchar(glob)) sprintf(" matching %s", .rmbl_printable(glob)) else ""
+    )
   )
 }
 

@@ -78,8 +78,10 @@ does (\code{\link{cpschk}}): each file against its JSON Schema
 \code{RMBL_KEY}, which is then removed from the environment. Prints the
 Markdown report, or JSON with \code{--json}; exits 1 when a failed row is at
 or above \code{--fail-on} (\code{error}, the default, \code{drift} or
-\code{warn}). \code{--base MANIFEST|DIR} compares each manifest with its base
-copy, \code{--manifests GLOB} checks only the capsule files matching GLOB,
+\code{warn}), and when no capsule is found under PATH (an error row:
+nothing was checked). \code{--base MANIFEST|DIR} compares each
+manifest with its base copy, \code{--manifests GLOB} checks only the
+capsule files matching GLOB,
 \code{--snapshot} looks up each source's latest Wayback snapshot and
 \code{--no-footprint} leaves the footprint (\code{\link{co2fp}}) out of the
 report. \code{--seen-log FILE} adds the signatures an XMSS seen-log lists to
