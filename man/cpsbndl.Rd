@@ -119,7 +119,9 @@ itself. A progress bar is shown when \code{options(morie.progress)} allows it.
 How it is checked. \code{cpsbndlvrf()} re-hashes every listed file
 (a path that is absolute or climbs out of \code{dir} fails its row), reports
 every file on disk the bundle does not list (the bundle's own file
-excepted) and every empty folder (named with a trailing \code{/}),
+excepted, when it is the file checked: a \code{capsule_bundle.json}
+in \code{dir} is unlisted when another bundle file is checked) and every
+empty folder (named with a trailing \code{/}),
 checks the attestation with
 \code{\link[=cpschkatst]{cpschkatst()}}
 (signature, digest, and \code{keyexp} when given; an \code{"hmac"}

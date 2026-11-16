@@ -271,3 +271,26 @@ test_that("a bundle respelt with the same values still verifies", {
   writeBin(c(as.raw(c(0xef, 0xbb, 0xbf)), orig), p)
   expect_error(cpsbndlvrf(p, dir, man = m, key = "a secret"), "not JSON")
 })
+
+test_that("capsule_bundle.json is exempt only when it is the bundle checked", {
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "a.csv"))
+  m <- mkmnf(list(x = 1), env = FALSE)
+  bp <- file.path(withr::local_tempdir(), "b.json")
+  cpsbndl(dir, m, "a secret", path = bp)
+  expect_true(cpsbndlvrf(bp, dir, man = m, key = "a secret")$ok)
+  # checked from outside, a file planted under the bundle's usual name is
+  # content the bundle does not list, whatever it holds
+  writeLines("anything", file.path(dir, "capsule_bundle.json"))
+  r <- cpsbndlvrf(bp, dir, man = m, key = "a secret")
+  expect_false(r$ok)
+  expect_identical(
+    r$checks$detail[r$checks$check == "no_unlisted_files"],
+    "not covered by the bundle: capsule_bundle.json"
+  )
+  # the bundle in its usual place is its own file: exempt when it is checked
+  unlink(file.path(dir, "capsule_bundle.json"))
+  ip <- attr(cpsbndl(dir, m, "a secret"), "path")
+  expect_true(cpsbndlvrf(ip, dir, man = m, key = "a secret")$ok)
+  expect_true(cpsbndlvrf(cpsbndlrd(ip), dir, man = m, key = "a secret")$ok)
+})

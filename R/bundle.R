@@ -41,7 +41,9 @@
 #' How it is checked. `cpsbndlvrf()` re-hashes every listed file
 #' (a path that is absolute or climbs out of `dir` fails its row), reports
 #' every file on disk the bundle does not list (the bundle's own file
-#' excepted) and every empty folder (named with a trailing \code{/}),
+#' excepted, when it is the file checked: a \code{capsule_bundle.json}
+#' in `dir` is unlisted when another bundle file is checked) and every
+#' empty folder (named with a trailing \code{/}),
 #' checks the attestation with
 #' [cpschkatst()]
 #' (signature, digest, and `keyexp` when given; an `"hmac"`
@@ -550,14 +552,16 @@ format.bricklayer_bundle_check <- function(x, ...) {
     NA
   )
   on_disk <- c(on_disk[!isdir], sprintf("%s/", on_disk[isdir][empty]))
-  # only the bundle's OWN file is exempt from the listing, not every file
-  # whose name ends in bundle.json
+  # only the bundle's OWN file is exempt from the listing, when it is the
+  # file checked: a bundle checked from outside the capsule exempts nothing,
+  # where a capsule_bundle.json planted inside passed whatever it held
   own <- attr(bundle, "path")
+  own <- if (!is.null(own)) {
+    normalizePath(own, winslash = "/", mustWork = FALSE)
+  }
   d <- sub("/+$", "", normalizePath(dir, winslash = "/", mustWork = FALSE))
   own_rel <- if (!is.null(own) && startsWith(own, paste0(d, "/"))) {
     substring(own, nchar(d) + 2L)
-  } else {
-    "capsule_bundle.json"
   }
   extra <- setdiff(on_disk, c(named, own_rel))
   # a temporary left by a write that was cut short is said to be one: it
