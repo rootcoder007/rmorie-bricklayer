@@ -220,16 +220,15 @@ break or key-shaped word) and no verb is asked as `ask` would ask it.
 
 Errors are not raised: every error is written to `out` as
 `"PROG: message"` and turned into the exit status. The status is 0 on
-success, 1 when the verb failed (an error, nothing found, no route, or
-output that could not be written to standard output, which is said on
-standard error), 2 for a usage error (an unknown verb or option, a
-missing value, a value an option does not take) and 130 when interrupted
-(Ctrl-C). An input that does not exist gives, verb by verb: 2 for the
-folder of `verify`, `drift`, `report`, `refresh` and `sign` (a usage
-error, checked with the arguments), and 1 for the project of `pack` and
-the results file of `wayback` (a failed verb). The options of `pack` and
-`sign` are checked before anything is read or a key is asked for. The
-command name in messages is the environment variable `RMBL_PROG`, else
+success, 1 when the verb failed (an error, nothing found or no route), 2
+for a usage error (an unknown verb or option, a missing value, a value
+an option does not take) and 130 when interrupted (Ctrl-C). An input
+that does not exist gives, verb by verb: 2 for the folder of `verify`,
+`drift`, `report`, `refresh` and `sign` (a usage error, checked with the
+arguments), and 1 for the project of `pack` and the results file of
+`wayback` (a failed verb). The options of `pack` and `sign` are checked
+before anything is read or a key is asked for. The command name in
+messages is the environment variable `RMBL_PROG`, else
 `rmoriebricklayer`.
 
 Side effects: during the call `options(morie.progress = TRUE)` is set,
@@ -391,33 +390,33 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.1.1](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmphtQtDc/capsule-1ea34f127fa2`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpoKYvqd/capsule-1e707dce19c`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmphtQtDc/capsule-1ea34f127fa2` | /tmp/RtmphtQtDc/temp_libpath1ea3115446f4/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpoKYvqd/capsule-1e707dce19c` | /tmp/RtmpoKYvqd/temp_libpath1e702f83871a/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmphtQtDc/capsule-1ea34f127fa2</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpoKYvqd/capsule-1e707dce19c</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmphtQtDc/temp_libpath1ea3115446f4/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpoKYvqd/temp_libpath1e702f83871a/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmphtQtDc/capsule-1ea34f127fa2/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmphtQtDc/capsule-1ea34f127fa2/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpoKYvqd/capsule-1e707dce19c/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpoKYvqd/capsule-1e707dce19c/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmphtQtDc/capsule-1ea34f127fa2/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpoKYvqd/capsule-1e707dce19c/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000121 Wh, 5.54e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000107 Wh, 4.91e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
 #> 
 #> ---
 #> 

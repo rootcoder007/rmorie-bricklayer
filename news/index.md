@@ -91,16 +91,15 @@
   [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md)
   refuses a page file over its 2 MiB cap before reading it.
 
-- `rmbl` exit statuses follow its page: output that cannot be written to
-  standard output (`rmbl version > /dev/full`, standard output closed)
-  is a failed verb, status 1, said on standard error, where it was 0; an
-  option given without its value (`rmbl pack . --dest`) is a usage
-  error, status 2, checked before anything runs; the help says which
-  status a missing input gives, verb by verb (2 for the folder of
-  `verify`, `drift`, `report`, `refresh` and `sign`, 1 for `pack` and
-  `wayback`, as before); and `rmbl sign --scheme` with a scheme it does
-  not know is a usage error about the scheme, checked before the key is
-  asked for.
+- `rmbl` exit statuses follow its page: `rmbl` run with standard output
+  closed (`rmbl version >&-`) fails with status 1 and says so on
+  standard error, where it was 0; an option given without its value
+  (`rmbl pack . --dest`) is a usage error, status 2, checked before
+  anything runs; the help says which status a missing input gives, verb
+  by verb (2 for the folder of `verify`, `drift`, `report`, `refresh`
+  and `sign`, 1 for `pack` and `wayback`, as before); and
+  `rmbl sign --scheme` with a scheme it does not know is a usage error
+  about the scheme, checked before the key is asked for.
 
 - [`drvkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drvkey.md)
   with a password longer than 64 bytes takes as long as with a short
