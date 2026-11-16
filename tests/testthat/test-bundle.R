@@ -241,3 +241,33 @@ test_that("cpsbndlrd() refuses a file over 32 MiB, the cap of JSON documents", {
     fixed = TRUE
   )
 })
+
+test_that("a bundle respelt with the same values still verifies", {
+  # the signature covers the values a bundle records, not the bytes of its
+  # JSON: rewritten without changing a value, a bundle keeps verifying (the
+  # hex, context, pre-hash and fields are what have one accepted spelling);
+  # a byte-order mark is no JSON the package's documents start with, and the
+  # bundle is refused before anything is checked
+  dir <- withr::local_tempdir()
+  writeBin(charToRaw("hello\n"), file.path(dir, "a.csv"))
+  m <- mkmnf(list(x = 1), env = FALSE)
+  p <- attr(cpsbndl(dir, m, "a secret"), "path")
+  orig <- readBin(p, "raw", file.size(p))
+  txt <- rawToChar(orig)
+  expect_match(txt, "\"a.csv\"", fixed = TRUE)
+  expect_match(txt, "\"size_bytes\": 6\\b")
+  respelt <- list(
+    escape = charToRaw(sub("\"a.csv\"", "\"\\u0061.csv\"", txt,
+                           fixed = TRUE)),
+    decimal = charToRaw(sub("(\"size_bytes\": 6)\\b", "\\1.0", txt)),
+    crlf = charToRaw(gsub("\n", "\r\n", txt, fixed = TRUE))
+  )
+  for (k in names(respelt)) {
+    expect_false(identical(respelt[[k]], orig), info = k)
+    writeBin(respelt[[k]], p)
+    r <- cpsbndlvrf(p, dir, man = m, key = "a secret")
+    expect_true(r$ok, info = k)
+  }
+  writeBin(c(as.raw(c(0xef, 0xbb, 0xbf)), orig), p)
+  expect_error(cpsbndlvrf(p, dir, man = m, key = "a secret"), "not JSON")
+})
