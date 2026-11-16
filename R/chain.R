@@ -444,7 +444,7 @@ format.bricklayer_chain_check <- function(x, ...) {
 #' the other. Unmarked text that is valid UTF-8 is taken as UTF-8, other
 #' unmarked text is converted from the locale's encoding, and marked text
 #' from its mark.
-#' @param x One string.
+#' @param x The label text.
 #' @return `x` in UTF-8, or NA when it is neither valid UTF-8 nor text of
 #'   the locale.
 #' @noRd

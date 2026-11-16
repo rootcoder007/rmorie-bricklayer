@@ -931,7 +931,7 @@ format.rmbl_bundle_project <- function(x, ...) {
 }
 
 #' A string as the inside of a JSON string literal.
-#' @param x One string.
+#' @param x The text to escape.
 #' @return One string.
 #' @noRd
 .bndl_json_str <- function(x) {
@@ -942,7 +942,7 @@ format.rmbl_bundle_project <- function(x, ...) {
 }
 
 #' A string as an R string literal, quotes included.
-#' @param x One string.
+#' @param x The text to quote.
 #' @return One string.
 #' @noRd
 .bndl_r_str <- function(x) {
