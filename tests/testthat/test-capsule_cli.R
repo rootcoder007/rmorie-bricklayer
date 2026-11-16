@@ -1032,54 +1032,6 @@ test_that("rmbl exit statuses follow the page", {
   )
 })
 
-test_that("output lost on the command line is a failed verb", {
-  withr::local_envvar(RMBL_PROG = "rmbl")
-  testthat::local_mocked_bindings(.bl_stdout_ok = function() FALSE)
-  err <- utils::capture.output(
-    st <- .bl_cli_wrote(0L, cat, "rmbl"),
-    type = "message"
-  )
-  expect_identical(st, 1L)
-  expect_identical(
-    err,
-    "rmbl: the output could not be written to standard output"
-  )
-  utils::capture.output(st <- .bl_cli_wrote(2L, cat, "rmbl"), type = "message")
-  expect_identical(st, 2L)
-  # another output function, or blcli() called from R: as it was
-  expect_identical(.bl_cli_wrote(0L, function(s) NULL, "rmbl"), 0L)
-  withr::local_envvar(RMBL_PROG = NA)
-  expect_identical(.bl_cli_wrote(0L, cat, "rmbl"), 0L)
-  expect_true(.bl_stdout_ok() %in% c(TRUE, FALSE))
-})
-
-test_that("rmbl version to a full disk exits 1", {
-  skip_on_os("windows")
-  skip_if_not(file.exists("/dev/full"))
-  skip_if_lowmem()
-  err <- withr::local_tempfile()
-  st <- withr::with_envvar(
-    c(
-      RMBL_PROG = "rmbl",
-      R_TESTS = NA,
-      R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep)
-    ),
-    system2(
-      file.path(R.home("bin"), "Rscript"),
-      c("--vanilla", "-e",
-        shQuote("quit(status = rmoriebricklayer::blcli('version'))")),
-      stdout = "/dev/full",
-      stderr = err
-    )
-  )
-  expect_identical(as.integer(st), 1L)
-  expect_match(
-    paste(readLines(err), collapse = "\n"),
-    "the output could not be written to standard output",
-    fixed = TRUE
-  )
-})
-
 test_that("a launcher with standard output closed exits 1", {
   skip_on_os("windows")
   l <- system.file("bin", "rmbl", package = "rmoriebricklayer")

@@ -127,9 +127,8 @@ asked as \code{ask} would ask it.
 
 Errors are not raised: every error is written to \code{out} as
 \code{"PROG: message"} and turned into the exit status. The status is 0
-on success, 1 when the verb failed (an error, nothing found, no route, or
-output that could not be written to standard output, which is said on
-standard error), 2 for a usage error (an unknown verb or option, a
+on success, 1 when the verb failed (an error, nothing found or no route), 2
+for a usage error (an unknown verb or option, a
 missing value, a value an option does not take) and 130 when interrupted
 (Ctrl-C). An input that does not exist gives, verb by verb: 2 for the
 folder of \code{verify}, \code{drift}, \code{report}, \code{refresh}

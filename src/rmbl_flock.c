@@ -287,13 +287,3 @@ SEXP C_rmbl_env_wipe(SEXP name) {
     return ScalarLogical(getenv(CHAR(STRING_ELT(name, 0))) != NULL);
 #endif
 }
-
-/*
- * Whether everything written to standard output so far reached it: the buffered tail is
- * flushed here, and a write that failed (a full disk, a closed descriptor) leaves the stream's
- * error flag set. `rmbl version > /dev/full` exited 0 with its output lost.
- */
-SEXP C_rmbl_stdout_ok(void) {
-    int bad = fflush(stdout) != 0 || ferror(stdout);
-    return ScalarLogical(!bad);
-}

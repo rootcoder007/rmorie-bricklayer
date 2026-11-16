@@ -247,7 +247,6 @@ extern SEXP C_rmbl_flock_acquire(SEXP, SEXP);
 extern SEXP C_rmbl_flock_release(SEXP);
 extern SEXP C_rmbl_flock_with(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_env_wipe(SEXP);
-extern SEXP C_rmbl_stdout_ok(void);
 extern SEXP C_rmbl_path_kind(SEXP);
 extern SEXP C_rmbl_write_file_checked(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_gunzip_checked(SEXP, SEXP);   /* rmbl_gunzip.c */
@@ -275,7 +274,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_flock_release",  (DL_FUNC) &C_rmbl_flock_release,  1},
     {"C_rmbl_flock_with",     (DL_FUNC) &C_rmbl_flock_with,     3},
     {"C_rmbl_env_wipe",       (DL_FUNC) &C_rmbl_env_wipe,       1},
-    {"C_rmbl_stdout_ok",      (DL_FUNC) &C_rmbl_stdout_ok,      0},
     {"C_rmbl_path_kind",      (DL_FUNC) &C_rmbl_path_kind,      1},
     {"C_rmbl_write_file_checked", (DL_FUNC) &C_rmbl_write_file_checked, 3},
     {"C_rmbl_gunzip_checked",     (DL_FUNC) &C_rmbl_gunzip_checked,     2},

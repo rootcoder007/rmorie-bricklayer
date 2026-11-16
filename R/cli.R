@@ -115,9 +115,8 @@
 #'
 #' Errors are not raised: every error is written to \code{out} as
 #' \code{"PROG: message"} and turned into the exit status. The status is 0
-#' on success, 1 when the verb failed (an error, nothing found, no route, or
-#' output that could not be written to standard output, which is said on
-#' standard error), 2 for a usage error (an unknown verb or option, a
+#' on success, 1 when the verb failed (an error, nothing found or no route), 2
+#' for a usage error (an unknown verb or option, a
 #' missing value, a value an option does not take) and 130 when interrupted
 #' (Ctrl-C). An input that does not exist gives, verb by verb: 2 for the
 #' folder of \code{verify}, \code{drift}, \code{report}, \code{refresh}
@@ -251,7 +250,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
   prog <- .bl_prog()
   a <- .bl_cli_parse(as.character(args), prog, out)
   st <- a$st %||% .bl_cli_dispatch(a$verb, a$rest, a$tail_args, out, prog)
-  invisible(.bl_cli_wrote(st, out, prog))
+  invisible(st)
 }
 
 #' Install the rmoriebricklayer command-line launcher
@@ -341,33 +340,6 @@ instcli <- function(
   ))
   invisible(targets[[1L]]) # the primary launcher's path; rmbl sits beside it
 }
-
-#' The exit status once the output is out: on the command line (the
-#' launcher sets RMBL_PROG) a verb whose text could not be written to
-#' standard output (a full disk, a closed descriptor) failed, status 1, said
-#' on standard error. `rmbl version > /dev/full` exited 0 with its output
-#' lost.
-#' @param st The verb's status.
-#' @param out The output function; only cat() writes to standard output.
-#' @param prog The command's name.
-#' @return The status.
-#' @noRd
-.bl_cli_wrote <- function(st, out, prog) {
-  if (!identical(out, cat) || !nzchar(Sys.getenv("RMBL_PROG")) ||
-        .bl_stdout_ok()) {
-    return(st)
-  }
-  cat(
-    sprintf("%s: the output could not be written to standard output\n", prog),
-    file = stderr()
-  )
-  if (identical(as.integer(st), 0L)) 1L else st
-}
-
-#' Whether standard output took everything written to it (rmbl_flock.c).
-#' @return TRUE or FALSE.
-#' @noRd
-.bl_stdout_ok <- function() .Call(C_rmbl_stdout_ok)
 
 #' The command line's words, or the status that ends the call.
 #'
