@@ -155,8 +155,8 @@ system dependency.</p>
 <span><span class="va">signingkey</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Signing key (post-quantum)</span> ───────────────────────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   scheme     xmss-sha256                                                    │</span></span>
-<span><span class="co">#&gt; │   root       af170a29c808e21f7f8573c27c799f2ebfca9c375dc92c4ca2f637708c05b6 │</span></span>
-<span><span class="co">#&gt; │              82                                                             │</span></span>
+<span><span class="co">#&gt; │   root       246c16866504d96c465091c3a40951138bba7f18237383aadd667165c110bb │</span></span>
+<span><span class="co">#&gt; │              3c                                                             │</span></span>
 <span><span class="co">#&gt; │   height     3                                                              │</span></span>
 <span><span class="co">#&gt; │   used       0 of 8 signatures                                              │</span></span>
 <span><span class="co">#&gt; │   remaining  8                                                              │</span></span>
@@ -169,7 +169,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Public verification key</span> ─────────────────────────────────────────────────╮</span></span>
 <span><span class="co">#&gt; │   scheme  xmss-sha256                                                      │</span></span>
-<span><span class="co">#&gt; │   root    af170a29c808e21f7f8573c27c799f2ebfca9c375dc92c4ca2f637708c05b682 │</span></span>
+<span><span class="co">#&gt; │   root    246c16866504d96c465091c3a40951138bba7f18237383aadd667165c110bb3c │</span></span>
 <span><span class="co">#&gt; │   height  3                                                                │</span></span>
 <span><span class="co">#&gt; ╰────────────────────────────────────────────────────────────────────────────╯</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -453,7 +453,7 @@ failures:</p>
 <span></span>
 <span><span class="co"># a declared outcome that was not reported</span></span>
 <span><span class="fu"><a href="../reference/prrgdecl.html">prrgchk</a></span><span class="op">(</span><span class="va">plan</span>, <span class="st">"n_rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-11-17T01:31:18Z: departures below</span> ──╮</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-11-17T02:42:56Z: departures below</span> ──╮</span></span>
 <span><span class="co">#&gt; │ <span style="color: #BB0000;">✖ NOT VERIFIED</span>                                                        │</span></span>
 <span><span class="co">#&gt; │                                                                       │</span></span>
 <span><span class="co">#&gt; │   Declared  2                                                         │</span></span>
@@ -471,7 +471,7 @@ failures:</p>
 <span></span>
 <span><span class="co"># statistics reported that were never declared</span></span>
 <span><span class="fu"><a href="../reference/prrgdecl.html">prrgchk</a></span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"n_rows"</span>, <span class="st">"byyear"</span>, <span class="st">"byprecinct"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-11-17T01:31:18Z: departures below</span> ──╮</span></span>
+<span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Against the declaration of 2026-11-17T02:42:56Z: departures below</span> ──╮</span></span>
 <span><span class="co">#&gt; │ <span style="color: #BB0000;">✖ NOT VERIFIED</span>                                                        │</span></span>
 <span><span class="co">#&gt; │                                                                       │</span></span>
 <span><span class="co">#&gt; │   Declared  2                                                         │</span></span>
@@ -657,7 +657,7 @@ rewritten to match whatever the files now say.</p>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    no_unlisted_files                                                    │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    attestation:attestation_complete                                     │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    attestation:manifest_digest                                          │</span></span>
-<span><span class="co">#&gt; │        16d4a7cf02b00dcd220b231905819327ed33427e12f73e7409e40f38d0887daf     │</span></span>
+<span><span class="co">#&gt; │        1fca537d81b6a46ea40cadd355d9c2952190f2f031b75638c91c652dfedef592     │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    attestation:signature                                                │</span></span>
 <span><span class="co">#&gt; │   <span style="color: #00BB00;">✔</span>    manifest_digest                                                      │</span></span>
 <span><span class="co">#&gt; │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │</span></span>
@@ -716,7 +716,7 @@ is in the bundle, so it cannot stop on the reviewer’s machine with
 <span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">path</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "my-study_v1_with_data.zip"</span></span>
 <span><span class="va">b</span><span class="op">$</span><span class="va">sha256</span></span>
-<span><span class="co">#&gt; [1] "e45056480f8c2be6b724fbea665682c23e760b5596efec0e0cf4707aaa460f25"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "67536340adf6064e0396f34cba442ce9fc4215526911231283aa018301e4265c"</span></span></code></pre></div>
 <p>Send <code>b$sha256</code> separately from the zip: the reviewer
 checks it before opening anything.</p>
 <p><strong>Step 4: what the reviewer sees.</strong> Unzipped and started

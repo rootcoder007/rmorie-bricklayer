@@ -37,6 +37,21 @@
   [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md)
   reads its page the same way.
 
+- The other readers of a file the user names read its bytes on disk too:
+  `rmbl wayback`, `rmbl migrate`, `rmbl sign --key-file`,
+  [`xmssidxseen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md)
+  (its bundles, held to 32 MiB, and its seen-log), the XMSS key and
+  state files and the history files of
+  [`drfthtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthtml.md)
+  inflated a compressed file as they read it, so a 203 KB file cost
+  `rmbl migrate` 8 GB of memory.
+
+- [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
+  and `rmbl sign` seal a capsule that lies inside another before the
+  outer one. Sealed after it, the inner capsule changed files the outer
+  bundle already covered, and the tree failed the check `rmbl sign` runs
+  next.
+
 - A pipe or a device where a file is expected no longer makes a check
   wait for ever.
   [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md),
