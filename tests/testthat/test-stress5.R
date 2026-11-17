@@ -582,7 +582,10 @@ s10_tree <- function(root, good, bad, dirs, mode) {
       dir.create(sub, recursive = TRUE, showWarnings = FALSE)
       if (stats::runif(1L) < 0.8) {
         nm <- sample(if (stats::runif(1L) < 0.85) good else bad, 1L)
-        try(writeLines("v", .rmbl_jpath(sub, nm)), silent = TRUE)
+        # a file system that refuses the name (macOS, for bytes that are
+        # not UTF-8) warns as well as failing: the name is then left out
+        try(suppressWarnings(writeLines("v", .rmbl_jpath(sub, nm))),
+            silent = TRUE)
       }
     }
     if (stats::runif(1L) < 0.3) {
@@ -605,15 +608,16 @@ s10_writable <- function(root) {
                        full.names = TRUE), "644")
 }
 s10_warns <- function(expr) {
-  w <- character()
+  seen <- new.env()
+  seen$w <- character()
   r <- withCallingHandlers(
     tryCatch(expr, error = function(e) e),
     warning = function(x) {
-      w <<- c(w, conditionMessage(x))
+      seen$w <- c(seen$w, conditionMessage(x))
       invokeRestart("muffleWarning")
     }
   )
-  list(value = r, warnings = w)
+  list(value = r, warnings = seen$w)
 }
 
 test_that("names that are not ASCII anywhere on a path go through it all", {
