@@ -150,11 +150,13 @@ result is one failed \code{no_capsule} row, no capsules and the status
 Links: a link to a folder inside \code{path} is followed, each real
 folder checked once; a link to a folder on the way down or above it (a
 loop) is not followed. A link to any other folder outside \code{path} is
-not followed, and is not passed over in silence: one failed
-\code{links_not_followed} row, of severity \code{error}, names every such
-link, so the status is \code{error} (\code{rmbl verify} exits 1). A
-capsule behind one is not checked, so the tree cannot be called sound;
-check that folder where it lies, or copy it in. A folder under
+not followed, and is not passed over in silence: one
+\code{links_not_followed} row, of severity \code{warn}, names every such
+link (\code{rmbl verify --fail-on warn} exits 1 on it). A capsule
+behind one is not checked here: check that folder where it lies. It is a
+warning, not an error, because ordinary project trees hold such links
+(a project library that links each package to a cache, a shared data
+folder) beside capsules that are sound. A folder under
 \code{path} that cannot be read stops the check, named.
 
 A data file is found to read as a table, and its rows counted, as

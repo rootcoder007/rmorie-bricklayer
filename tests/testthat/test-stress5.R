@@ -780,13 +780,18 @@ test_that("a search reports a link out of the folder searched", {
   withr::defer(Sys.chmod(file.path(far, "private"), "755"))
   # not followed (the unreadable folder behind it fails nothing), and named
   x <- cpschk(root, key = "k", fp = FALSE)
-  expect_identical(x$status, "error")
   row <- x$rows[x$rows$check == "links_not_followed", ]
   expect_false(row$ok)
+  expect_identical(row$severity, "warn")
   expect_match(row$detail, "was not followed.*: [^ ]*shared$")
-  expect_match(s5_msg(xmssidxseen(root)), "^xmssidxseen: .*: [^ ]*shared$")
-  expect_match(s5_msg(cpsseal(root, "k", overwrite = TRUE)),
-               "^cpsseal: .*was not followed")
+  # told, not refused: the capsules of the tree are sound, and a project
+  # library or a shared data folder is such a link
+  expect_false(identical(x$status, "error"))
+  expect_true(all(x$rows$ok[x$rows$check != "links_not_followed"]))
+  expect_warning(xmssidxseen(root), "^xmssidxseen: .*: [^ ]*shared$")
+  expect_warning(cpsseal(root, "k", overwrite = TRUE),
+                 "^cpsseal: .*was not followed")
+  expect_false(identical(cpschk(root, key = "k", fp = FALSE)$status, "error"))
   unlink(file.path(root, "shared"))
   # a folder under the path that cannot be read is refused in the words of
   # the function called
@@ -1022,14 +1027,15 @@ test_that("a capsule behind a link out of the tree is reported", {
   cpsseal(root, "k")
   skip_if_not(file.symlink(file.path(ext, "c01"), file.path(root, "big")))
   x <- cpschk(root, key = "k", fp = FALSE)
-  expect_identical(x$status, "error")
+  expect_false(identical(x$status, "error"))
   expect_true(any(x$rows$check == "links_not_followed" & !x$rows$ok))
-  expect_identical(s10_cli(c("verify", root))$status, 1L)
+  # a warning: the default verify passes, and --fail-on warn does not
+  expect_identical(s10_cli(c("verify", root))$status, 0L)
+  expect_identical(s10_cli(c("verify", root, "--fail-on", "warn"))$status, 1L)
   expect_identical(s10_cli(c("report", root))$status, 0L)
-  b0 <- s10_state(root)
-  expect_match(s5_msg(cpsseal(root, "k", overwrite = TRUE)),
-               "^cpsseal: .*not followed.*: [^ ]*big$")
-  expect_identical(s10_state(root), b0)
+  expect_warning(cpsseal(root, "k", overwrite = TRUE),
+                 "^cpsseal: .*not followed.*: [^ ]*big$")
+  expect_false(identical(cpschk(root, key = "k", fp = FALSE)$status, "error"))
 })
 
 test_that("link refusals in a tree of capsules are headed and placed", {
@@ -1425,4 +1431,23 @@ test_that("a count in a dashboard box and a title given to a fit plot", {
   none <- .bl_vbox_ui(list(est = 1))
   expect_match(paste(as.character(none), collapse = ""), "Not reported",
                fixed = TRUE)
+})
+
+test_that("what the review of round 11 found is as it was before it", {
+  # a quote left open at the end of a table is read.csv()'s to warn of
+  expect_identical(.vc_quiet(function() {
+    warning("EOF within quoted string")
+    2L
+  }), 2L)
+  # the user's own pattern: accented letters in either case, and the
+  # constructs of a regular expression
+  n <- nrow(indtabs("M\u00e9tis"))
+  expect_gt(n, 0L)
+  expect_identical(nrow(indtabs("M\u00c9TIS")), n)
+  expect_silent(indtabs("M\u00e9tis"))
+  expect_identical(s10_cli(c("functions", "(?i)capsule"))$status, 0L)
+  # two spellings of one label that differ by an accented capital
+  h <- audcats(data.frame(g = c("M\u00e9tis", "M\u00c9TIS", "Inuit"),
+                          stringsAsFactors = FALSE))$hazards
+  expect_match(paste(h, collapse = " "), "M\u00c9TIS", fixed = TRUE)
 })

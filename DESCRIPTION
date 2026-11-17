@@ -39,7 +39,8 @@ Description: For any data an analysis depends on (tables, spreadsheets,
     others (2018) <doi:10.1111/ectj.12097>).
 License: AGPL-3
 Copyright: The bundled excerpts of published statistics in inst/extdata belong
-    to their publishers; see inst/COPYRIGHTS.
+    to their publishers, and the Unicode Character Database tables in
+    inst/unicode to Unicode, Inc.; see inst/COPYRIGHTS.
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE, roclets = c("namespace", "rd", "srr::srr_stats_roclet"))

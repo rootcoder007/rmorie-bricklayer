@@ -37,11 +37,13 @@
 #' Links: a link to a folder inside \code{path} is followed, each real
 #' folder checked once; a link to a folder on the way down or above it (a
 #' loop) is not followed. A link to any other folder outside \code{path} is
-#' not followed, and is not passed over in silence: one failed
-#' \code{links_not_followed} row, of severity \code{error}, names every such
-#' link, so the status is \code{error} (\code{rmbl verify} exits 1). A
-#' capsule behind one is not checked, so the tree cannot be called sound;
-#' check that folder where it lies, or copy it in. A folder under
+#' not followed, and is not passed over in silence: one
+#' \code{links_not_followed} row, of severity \code{warn}, names every such
+#' link (\code{rmbl verify --fail-on warn} exits 1 on it). A capsule
+#' behind one is not checked here: check that folder where it lies. It is a
+#' warning, not an error, because ordinary project trees hold such links
+#' (a project library that links each package to a cache, a shared data
+#' folder) beside capsules that are sound. A folder under
 #' \code{path} that cannot be read stops the check, named.
 #'
 #' A data file is found to read as a table, and its rows counted, as
@@ -443,12 +445,12 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' Capsules are searched for as \code{cpschk()} searches: a link to a
 #' folder inside \code{path} is followed, each real folder once; a link to
 #' a folder on the way down or above it (a loop) is not followed; a link to
-#' any other folder outside \code{path} is not followed and refuses the
-#' seal, named, since a capsule behind it would be neither sealed nor
-#' checked: seal that folder where it is, and copy it in or remove the link.
+#' any other folder outside \code{path} is not followed and is warned of,
+#' named, since a capsule behind it is neither sealed nor checked: seal
+#' that folder where it is.
 #'
 #' Errors, before anything is written: no provenance under \code{path}, a
-#' folder under it that cannot be read, or a link out of it as above; a
+#' folder under it that cannot be read; a
 #' capsule that already has a
 #' bundle, unless \code{overwrite}; a key that cannot sign (a public key,
 #' or anything \code{\link{cpsatst}} refuses: a key other than an XMSS key
@@ -717,7 +719,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     fetched_sha256 = "",
     changed = FALSE,
     rows = .bl_check_row(path, "capsule", path, "links_not_followed", FALSE,
-                         .bl_link_out(path, out))
+                         .bl_link_out(path, out), severity = "warn")
   ))
 }
 

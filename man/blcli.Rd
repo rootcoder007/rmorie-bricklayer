@@ -144,7 +144,7 @@ verb by verb: 2 for the folder of \code{verify}, \code{drift},
 \code{pack} and the results file of \code{wayback} (a failed verb). The
 capsule verbs search PATH as \code{\link{cpschk}} does: a link to a
 folder inside it is followed, a loop is not, and a link to any other
-folder outside it is not followed and fails the verb, named. The options of
+folder outside it is not followed and is warned of, named. The options of
 \code{pack} and \code{sign} are checked
 before anything is read or a key is asked for. The command name in
 messages is the environment variable \code{RMBL_PROG}, else

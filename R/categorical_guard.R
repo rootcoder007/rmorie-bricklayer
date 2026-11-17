@@ -1926,7 +1926,7 @@ format.rmbl_transfer_check <- function(x, ...) {
       method = "radix"
     ),
     "labels sorted case-insensitively, assigned by code position" = labs[order(
-      .rmbl_lower(labs),
+      tolower(labs),
       method = "radix"
     )],
     "labels sorted in reverse, assigned by code position" = rev(sort(
@@ -2183,7 +2183,8 @@ format.rmbl_transfer_check <- function(x, ...) {
       )
     )
   }
-  lc <- .rmbl_lower(core)
+  # the user's labels, not file names: accented capitals fold too
+  lc <- tolower(core)
   # a case-variant pair is two DIFFERENT trimmed labels that agree once
   # lower-cased; a pair that differs only by whitespace was reported above
   case_groups <- split(core, lc)

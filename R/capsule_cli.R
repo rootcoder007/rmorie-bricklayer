@@ -1125,7 +1125,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @param root The directory searched.
 #' @param glob Only capsule files whose path matches this glob (its `*` also
 #' matches \code{"/"}), or \code{""}.
-#' @param strict TRUE to refuse a link out of `root` (.bl_find()).
+#' @param strict TRUE to warn of a link out of `root` (.bl_find()).
 #' @return Sorted directory paths; attribute "outside" as .bl_find() gives
 #'   it.
 #' @noRd
@@ -1151,14 +1151,17 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' searched once; a link to a folder outside it is not followed.
 #'
 #' A folder that cannot be read is refused: a capsule in it was left
-#' unsealed and unchecked without a word. A link not followed is refused
-#' too (`strict`), or returned for the caller to report: skipped without a
+#' unsealed and unchecked without a word. A link not followed is warned of
+#' (`strict`), or returned for the caller to report: skipped without a
 #' word, a capsule linked in from another disk went unchecked and the check
-#' said "ok". The refusals are headed by the function the user called
+#' said "ok". It is not refused: a project library (renv links each
+#' package to its cache), node_modules or a shared data folder are links
+#' out of a tree that holds sound capsules. Messages are headed by the
+#' function the user called
 #' (.rmbl_fn()): no exported function lies between it and this one.
 #' @param root The folder searched for files named `names`.
 #' @param names The file names looked for.
-#' @param strict TRUE to refuse a link that leaves `root`.
+#' @param strict TRUE to warn of a link that leaves `root`.
 #' @return Their paths, under `root` (relative when `root` is "."), with
 #'   attribute "outside": the links not followed, named the same way.
 #' @noRd
@@ -1180,7 +1183,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   under <- function(x) if (nzchar(top) && length(x)) .rmbl_jpath(top, x) else x
   out <- under(w$outside)
   if (strict && length(out)) {
-    stop(.rmbl_fn(), .bl_link_out(root, out), call. = FALSE)
+    warning(.rmbl_fn(), .bl_link_out(root, out), call. = FALSE)
   }
   b <- sub("^.*/", "", w$files, useBytes = TRUE)
   structure(under(w$files[.rmbl_bytes(b) %in% names]), outside = out)
@@ -1194,9 +1197,9 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 .bl_link_out <- function(root, out) {
   paste0(
     "a link under ", .bl_names(root), " leads to a folder outside it and ",
-    "was not followed, so a capsule behind it would be neither sealed nor ",
-    "checked; seal and check that folder where it is, and copy it in or ",
-    "remove the link: ", .bl_names(out, Inf)
+    "was not followed, so a capsule behind it is neither sealed nor ",
+    "checked here; seal and check that folder where it is: ",
+    .bl_names(out, Inf)
   )
 }
 

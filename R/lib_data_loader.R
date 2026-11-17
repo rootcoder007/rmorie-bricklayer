@@ -1056,7 +1056,7 @@ rslvarc <- function(prov) {
       name <- if (is.null(r$name)) "" else r$name
       fmt <- .rmbl_upper(r$format %||% "")
       if (
-        grepl(.rmbl_ci(pat), name, perl = TRUE) &&
+        grepl(pat, name, ignore.case = TRUE) &&
           (fmt == "CSV" || is.null(res$format) ||
              .rmbl_upper(res$format) == fmt)
       ) {
@@ -1621,7 +1621,7 @@ rslvarc <- function(prov) {
 .rmbl_ckan_pick <- function(resources, pat) {
   for (r in .rmbl_recs(resources)) {
     name <- if (is.null(r$name)) "" else r$name
-    if (grepl(.rmbl_ci(pat), name, perl = TRUE)) {
+    if (grepl(pat, name, ignore.case = TRUE)) {
       # a hostile record is an error in words, not "source unreachable"
       return(.rmbl_check_public_url(r$url, "the CKAN resource URL"))
     }

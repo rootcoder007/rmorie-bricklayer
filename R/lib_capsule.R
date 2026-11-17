@@ -689,7 +689,11 @@ format.rmbl_citation <- function(x, ...) {
 #' @noRd
 .vc_quiet <- function(f) {
   withCallingHandlers(f(), warning = function(w) {
-    if (grepl("incomplete final line", conditionMessage(w), fixed = TRUE)) {
+    # how the file ends is not its readability: a last line without a
+    # newline, or a quote left open (capsules sealed with one passed)
+    m <- conditionMessage(w)
+    if (grepl("incomplete final line", m, fixed = TRUE) ||
+          grepl("EOF within quoted string", m, fixed = TRUE)) {
       invokeRestart("muffleWarning")
     }
     stop(conditionMessage(w), call. = FALSE)

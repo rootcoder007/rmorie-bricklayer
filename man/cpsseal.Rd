@@ -47,12 +47,12 @@ it is. Side effects: writes \code{data_provenance.json} (first run) and
 Capsules are searched for as \code{cpschk()} searches: a link to a
 folder inside \code{path} is followed, each real folder once; a link to
 a folder on the way down or above it (a loop) is not followed; a link to
-any other folder outside \code{path} is not followed and refuses the
-seal, named, since a capsule behind it would be neither sealed nor
-checked: seal that folder where it is, and copy it in or remove the link.
+any other folder outside \code{path} is not followed and is warned of,
+named, since a capsule behind it is neither sealed nor checked: seal
+that folder where it is.
 
 Errors, before anything is written: no provenance under \code{path}, a
-folder under it that cannot be read, or a link out of it as above; a
+folder under it that cannot be read; a
 capsule that already has a
 bundle, unless \code{overwrite}; a key that cannot sign (a public key,
 or anything \code{\link{cpsatst}} refuses: a key other than an XMSS key

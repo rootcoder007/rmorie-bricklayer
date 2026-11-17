@@ -747,7 +747,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 
 #' The capsule bundles under a path: the path itself when it is a file.
 #' @param path A directory or a bundle file.
-#' @param strict TRUE to refuse a link out of the folder, as .bl_find()
+#' @param strict TRUE to warn of a link out of the folder, as .bl_find()
 #'   does.
 #' @return The bundle files' paths.
 #' @noRd

@@ -951,10 +951,10 @@ wrtxtfb <- function(text, path) {
   both <- function(x) paste0(.rmbl_lower(x), .rmbl_upper(x))
   c1 <- ch[[i]]
   r3 <- paste(ch[i:min(i + 2L, length(ch))], collapse = "")
-  if (cls && grepl("^[A-Za-z]-[A-Za-z]$", r3, perl = TRUE)) {
+  if (cls && grepl("^[A-Za-z]-[A-Za-z]$", r3, perl = TRUE, useBytes = TRUE)) {
     return(list(s = both(r3), i = i + 3L, cls = TRUE))
   }
-  if (!grepl("^[A-Za-z]$", c1, perl = TRUE)) {
+  if (!grepl("^[A-Za-z]$", c1, perl = TRUE, useBytes = TRUE)) {
     return(list(s = c1, i = i + 1L, cls = cls))
   }
   list(s = if (cls) both(c1) else paste0("[", both(c1), "]"), i = i + 1L,
