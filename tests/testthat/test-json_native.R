@@ -171,5 +171,6 @@ test_that("fromjs() refuses a socket as no regular file, not a folder", {
     "`txt` is not a regular file (a device, a pipe or a socket)",
     fixed = TRUE
   )
-  expect_false(grepl("folder|directory", e))
+  # the path is left out: a macOS temporary folder is under /var/folders
+  expect_false(grepl("folder|directory", gsub("[/\\\\][^ ]*", "", e)))
 })

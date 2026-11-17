@@ -189,7 +189,8 @@ test_that("loadprov() refuses a socket as no regular file, not a folder", {
     "`path` is not a regular file (a device, a pipe or a socket)",
     fixed = TRUE
   )
-  expect_false(grepl("folder|directory", e))
+  # the path is left out: a macOS temporary folder is under /var/folders
+  expect_false(grepl("folder|directory", gsub("[/\\\\][^ ]*", "", e)))
 })
 
 test_that("loadprov() refuses a file over 32 MiB, the cap of JSON documents", {
