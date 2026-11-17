@@ -356,7 +356,7 @@ print.rmbl_id_check <- function(x, ...) {
   if (!nzchar(id)) {
     return("")
   }
-  id <- toupper(sub("^https?://(www\\.)?orcid\\.org/", "", id))
+  id <- .rmbl_upper(sub("^https?://(www\\.)?orcid\\.org/", "", id))
   if (!grepl("^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$", id)) {
     stop(
       "idcrd: `orcid` must look like 0000-0002-1825-0097",
@@ -442,10 +442,10 @@ print.rmbl_id_check <- function(x, ...) {
   if (!is.character(card$public) || !is.character(card$scheme)) {
     return("")
   }
-  h <- toupper(csha256(charToRaw(paste0(
+  h <- .rmbl_upper(csha256(charToRaw(paste0(
     card$scheme,
     ":",
-    tolower(card$public)
+    .rmbl_lower(card$public)
   ))))
   paste(substring(h, seq(1L, 61L, 4L), seq(4L, 64L, 4L)), collapse = " ")
 }
@@ -550,7 +550,7 @@ print.rmbl_id_check <- function(x, ...) {
   if (!is.character(fpr) || length(fpr) != 1L || is.na(fpr)) {
     stop("idcrdvrf: `fpr` must be one string", call. = FALSE)
   }
-  squash <- function(s) toupper(gsub("[^0-9A-Fa-f]", "", s))
+  squash <- function(s) .rmbl_upper(gsub("[^0-9A-Fa-f]", "", s))
   ok <- nzchar(squash(fpr)) && identical(squash(fpr), squash(.bl_id_fpr(card)))
   .rmbl_attest_row(
     "fingerprint",
@@ -581,7 +581,7 @@ print.rmbl_id_check <- function(x, ...) {
     )
   }
   ok <- identical(atst$scheme, card$scheme) &&
-    identical(tolower(atst$public), tolower(card$public))
+    identical(.rmbl_lower(atst$public), .rmbl_lower(card$public))
   .rmbl_attest_row(
     "signed_by_card",
     ok,

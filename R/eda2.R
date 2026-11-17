@@ -130,7 +130,7 @@ mahaoutl <- function(data, alpha = 0.001, robust = TRUE) {
   pg <- blprog("Mahalanobis distances", 0)
   on.exit(pg$done(), add = TRUE)
   pg$update(
-    info = sprintf("centring %s rows", format(nrow(Xc), big.mark = ","))
+    info = sprintf("centring %s rows", .rmbl_ntxt(nrow(Xc)))
   )
 
   zs <- .rmbl_maha_std(Xc, robust)

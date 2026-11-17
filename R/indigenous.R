@@ -130,10 +130,10 @@ qltyrcd <- function(x, suppr = c("F", "x", "..", "..."), caution = "E") {
   .qr_check_x(x)
   for (nm in c("suppr", "caution")) {
     v <- get(nm)
-    if (!is.character(v) || anyNA(v)) {
+    if (!is.character(v) || anyNA(v) || any(.rmbl_nontext(v))) {
       stop(
         .rmbl_fn(),
-        sprintf("`%s` must be flags (character)", nm),
+        sprintf("`%s` must be flags (character, valid text)", nm),
         call. = FALSE
       )
     }
@@ -928,7 +928,8 @@ indtabs <- function(pat = NULL, refresh = FALSE) {
     stringsAsFactors = FALSE
   )
   if (!is.null(pat)) {
-    out <- out[grepl(pat, out$description, ignore.case = TRUE), , drop = FALSE]
+    out <- out[grepl(.rmbl_ci(pat), out$description, perl = TRUE), ,
+        drop = FALSE]
   }
   rownames(out) <- NULL
   out
@@ -1230,7 +1231,7 @@ format.rmbl_trc_progress <- function(x, ...) {
       "^total|^indigenous identity|^aboriginal identity|^total ",
       "indigenous|^indigenous population"
     ),
-    trimws(tolower(g))
+    trimws(.rmbl_lower(g))
   )
 }
 
@@ -1411,7 +1412,7 @@ format.rmbl_trc_progress <- function(x, ...) {
 #' @noRd
 .rmbl_gap_ref_warn <- function(ref, pooled) {
   if (
-    grepl("^total", trimws(ref), ignore.case = TRUE) ||
+    grepl(.rmbl_ci("^total"), trimws(ref), perl = TRUE, useBytes = TRUE) ||
       .rmbl_pan_indigenous(ref, pooled)
   ) {
     warning(

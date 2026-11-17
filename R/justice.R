@@ -608,8 +608,8 @@ format.rmbl_disposition_mix <- function(x, ...) {
   tabs <- list(`Share of each period's cases` = wide)
   if (!is.null(x$trend)) {
     tr <- x$trend
-    st <- formatC(tr$statistic, format = "f", digits = 2L, big.mark = ",")
-    tr$statistic <- formatC(st, width = max(nchar(st)))
+    st <- .rmbl_fc(tr$statistic, format = "f", digits = 2L, big.mark = ",")
+    tr$statistic <- .rmbl_fc(st, width = max(nchar(st)))
     tabs[["Cochran-Armitage trend in each share (Holm-adjusted)"]] <- tr
   }
   h <- x$homogeneity
@@ -926,7 +926,7 @@ plot.rmbl_density <- function(
   .bl_ylab(if (ll) "Latitude" else "y (km)")
   .bl_title(.bl_main(
     main,
-    sprintf("Incident density, %s incidents", format(x$n, big.mark = ","))
+    sprintf("Incident density, %s incidents", .rmbl_ntxt(x$n))
   ))
   .cd_overlay(x, xs, ys, ll, points)
   invisible(data.frame(
@@ -2569,8 +2569,8 @@ NULL
       "(%.3f to %.3f)"
     ),
     nrow(x),
-    format(m$totalrec, big.mark = ","),
-    format(m$totaldis, big.mark = ","),
+    .rmbl_ntxt(m$totalrec),
+    .rmbl_ntxt(m$totaldis),
     overall,
     ci$lower,
     ci$upper
@@ -2583,7 +2583,7 @@ NULL
           "Pending at the end: %s, about %.1f periods of disposition at ",
           "the last %d-period pace"
         ),
-        format(utils::tail(x$pending, 1L), big.mark = ","),
+        .rmbl_ntxt(utils::tail(x$pending, 1L)),
         utils::tail(x$pertoclear, 1L),
         m$window
       )
@@ -3628,7 +3628,7 @@ NULL
           "band, rescale, or raise `maxprs`"
         ),
         length(fi),
-        format(max_pairs, big.mark = ",")
+        .rmbl_ntxt(max_pairs)
       ),
       call. = FALSE
     )
@@ -3655,7 +3655,7 @@ NULL
         "band: use a smaller",
         "largest band, fewer incidents, or raise `maxprs`"
       ),
-      format(max_pairs, big.mark = ",")
+      .rmbl_ntxt(max_pairs)
     ),
     call. = FALSE
   )
@@ -3935,7 +3935,7 @@ NULL
   c(
     sprintf(
       "%s incidents%s; bandwidth %.3g km east-west, %.3g km north-south",
-      format(x$n, big.mark = ","),
+      .rmbl_ntxt(x$n),
       if (x$dropped) {
         sprintf(" (%d without a location dropped)", x$dropped)
       } else {

@@ -642,7 +642,7 @@
 #' @return `path`, invisibly.
 #' @noRd
 .rmbl_name_ok <- function(path, what) {
-  parts <- strsplit(path, "[/\\\\]")[[1L]]
+  parts <- strsplit(path, "[/\\\\]", useBytes = TRUE)[[1L]]
   if (any(nchar(parts, type = "bytes") > 255L)) {
     stop(.rmbl_fn(),
          sprintf(paste0("`%s` has a name longer than the 255 bytes a file ",
@@ -829,7 +829,7 @@
 # word that is also a device's name (nul, con on Windows) stays text.
 .rmbl_isreg <- function(path) {
   identical(.rmbl_path_kind(path.expand(path)), "regular") ||
-    grepl("[/\\\\]", path)
+    grepl("[/\\\\]", path, useBytes = TRUE)
 }
 
 #' A path as a message shows it: with control and non-text bytes escaped
@@ -914,6 +914,14 @@
   Encoding(x) <- "bytes"
   x
 }
+
+#' Strings sorted by their bytes, the same in every locale: sort() follows
+#' the locale's collation, and its radix method refuses text that is not
+#' UTF-8 or Latin-1 unless it is marked as bytes.
+#' @param x Strings to sort.
+#' @return `x`, sorted.
+#' @noRd
+.rmbl_bsort <- function(x) x[order(.rmbl_bytes(x), method = "radix")]
 
 #' Whether strings start with a prefix, by their bytes.
 #'
@@ -1040,7 +1048,7 @@
       sprintf(
         "`%s` is larger than the %s bytes read: %s",
         what,
-        format(max, big.mark = ",", scientific = FALSE),
+        .rmbl_ntxt(max),
         shown
       )
     }
@@ -1499,4 +1507,36 @@ if (!exists("%||%", envir = baseenv(), inherits = FALSE)) {
          call. = FALSE)
   }
   invisible(path)
+}
+
+#' formatC() with "." as its decimal mark: by default it takes
+#' options(OutDec), so a report read "5,5" in one session and "5.5" in
+#' another, and with a thousands mark of "," it warned once per number.
+#' @param x Numbers, as formatC() takes them.
+#' @param ... formatC()'s other arguments.
+#' @return Strings.
+#' @noRd
+.rmbl_fc <- function(x, ...) formatC(x, ..., decimal.mark = ".")
+
+#' Numbers as text, the same whatever the session's options and locale.
+#'
+#' format() takes its decimal mark from options(OutDec) (with
+#' big.mark = "," and OutDec = "," it warned once per number, an error
+#' under warn = 2), its notation from scipen and its digits from digits;
+#' formatC() takes OutDec as its decimal mark. Every number the package
+#' writes as text with a thousands mark goes through here: whole numbers in
+#' full (1,234,567, never 1.234567e+06), others with 7 significant digits,
+#' as format() gives them by default, the decimal mark always ".".
+#' @param x Numbers to write as text.
+#' @param big The thousands mark ("" for none).
+#' @return Strings, one per number; NA as "NA".
+#' @noRd
+.rmbl_ntxt <- function(x, big = ",") {
+  x <- as.numeric(x)
+  whole <- is.finite(x) & x == round(x) & abs(x) < 1e15
+  out <- .rmbl_fc(x, format = "fg", digits = 7L, big.mark = big)
+  # "f" with no decimals: "d" makes a whole number an integer first, and
+  # one past 2^31 became NA
+  out[whole] <- .rmbl_fc(x[whole], format = "f", digits = 0L, big.mark = big)
+  trimws(out)
 }

@@ -766,7 +766,7 @@ test_that("an empty folder is no content: a capsule with one checks", {
   expect_identical(s10_state(root), b0)
 })
 
-test_that("a search does not follow a link out of the folder searched", {
+test_that("a search reports a link out of the folder searched", {
   skip_on_os("windows")
   withr::local_options(morie.progress = FALSE)
   root <- withr::local_tempdir()
@@ -778,10 +778,16 @@ test_that("a search does not follow a link out of the folder searched", {
   skip_if_not(file.symlink(far, file.path(root, "shared")))
   Sys.chmod(file.path(far, "private"), "000")
   withr::defer(Sys.chmod(file.path(far, "private"), "755"))
+  # not followed (the unreadable folder behind it fails nothing), and named
   x <- cpschk(root, key = "k", fp = FALSE)
-  expect_identical(x$status, "ok")
-  expect_length(x$capsules, 1L)
-  expect_identical(nrow(xmssidxseen(root)), 0L)
+  expect_identical(x$status, "error")
+  row <- x$rows[x$rows$check == "links_not_followed", ]
+  expect_false(row$ok)
+  expect_match(row$detail, "was not followed.*: [^ ]*shared$")
+  expect_match(s5_msg(xmssidxseen(root)), "^xmssidxseen: .*: [^ ]*shared$")
+  expect_match(s5_msg(cpsseal(root, "k", overwrite = TRUE)),
+               "^cpsseal: .*was not followed")
+  unlink(file.path(root, "shared"))
   # a folder under the path that cannot be read is refused in the words of
   # the function called
   skip_if(file.access(file.path(far, "private"), 4L) == 0L)
@@ -951,4 +957,413 @@ test_that("a bundle made before the stricter names still verifies", {
   v <- cpsbndlvrf(path, d, man = m, key = "k")
   expect_true(v$ok)
   expect_true(all(paste0("file:", nm) %in% v$checks$check))
+})
+
+# ---- round 11 ----
+
+s11_tree <- function(n = 1L) {
+  root <- withr::local_tempdir(.local_envir = parent.frame())
+  for (i in seq_len(n)) s5_capsule(root, sprintf("c%02d", i))
+  root
+}
+
+test_that("a relative path under a folder that is not UTF-8 seals", {
+  skip_on_os("windows")
+  withr::local_options(morie.progress = FALSE)
+  base <- withr::local_tempdir()
+  lat <- tryCatch(
+    suppressWarnings(.rmbl_jpath(base, rawToChar(as.raw(c(0x6c, 0xe9))))),
+    error = function(e) NULL
+  )
+  skip_if(is.null(lat) || !isTRUE(suppressWarnings(dir.create(lat))))
+  s5_capsule(.rmbl_jpath(lat, "tree"), "c1")
+  withr::local_dir(.rmbl_jpath(lat, "tree"))
+  r <- s10_warns(cpsseal(".", "k"))
+  expect_length(r$warnings, 0L)
+  expect_s3_class(r$value, "data.frame")
+  x <- cpschk(".", key = "k", fp = FALSE)
+  expect_identical(x$status, "ok")
+})
+
+test_that("every leftover temporary is named, however many", {
+  withr::local_options(morie.progress = FALSE)
+  root <- s11_tree(25L)
+  left <- sprintf("c%02d/.rmbl-%04x.tmp", 1:25, 1:25)
+  for (f in left) writeLines("x", file.path(root, f))
+  e <- s5_msg(cpsseal(root, "k"))
+  for (f in left) expect_true(grepl(f, e, fixed = TRUE))
+  expect_false(grepl("more", e, fixed = TRUE))
+})
+
+test_that("a capsule linked in from inside the tree is checked", {
+  skip_on_os("windows")
+  withr::local_options(morie.progress = FALSE)
+  root <- s11_tree(1L)
+  big <- s5_capsule(file.path(root, "store"), "big")
+  cpsseal(root, "k")
+  skip_if_not(file.symlink(big, file.path(root, "linked")))
+  x <- cpschk(root, key = "k", fp = FALSE)
+  expect_identical(x$status, "ok")
+  # each real folder once: the linked capsule is not checked twice
+  expect_length(x$capsules, 2L)
+  utils::write.csv(data.frame(x = 7:9), file.path(big, "data.csv"),
+                   row.names = FALSE)
+  expect_identical(cpschk(root, key = "k", fp = FALSE)$status, "error")
+})
+
+test_that("a capsule behind a link out of the tree is reported", {
+  skip_on_os("windows")
+  withr::local_options(morie.progress = FALSE)
+  ext <- s11_tree(1L)
+  cpsseal(ext, "k")
+  root <- s11_tree(1L)
+  cpsseal(root, "k")
+  skip_if_not(file.symlink(file.path(ext, "c01"), file.path(root, "big")))
+  x <- cpschk(root, key = "k", fp = FALSE)
+  expect_identical(x$status, "error")
+  expect_true(any(x$rows$check == "links_not_followed" & !x$rows$ok))
+  expect_identical(s10_cli(c("verify", root))$status, 1L)
+  expect_identical(s10_cli(c("report", root))$status, 0L)
+  b0 <- s10_state(root)
+  expect_match(s5_msg(cpsseal(root, "k", overwrite = TRUE)),
+               "^cpsseal: .*not followed.*: [^ ]*big$")
+  expect_identical(s10_state(root), b0)
+})
+
+test_that("link refusals in a tree of capsules are headed and placed", {
+  skip_on_os("windows")
+  withr::local_options(morie.progress = FALSE)
+  for (k in list(c("..", "up"), c("nowhere", "dangling"))) {
+    root <- s11_tree(3L)
+    skip_if_not(file.symlink(k[[1L]], file.path(root, "c02", k[[2L]])))
+    b0 <- s10_state(root)
+    e <- s5_msg(cpsseal(root, "k"))
+    expect_match(e, "^cpsseal: .*c02: ")
+    expect_identical(s10_state(root), b0)
+  }
+  expect_match(e, "lead nowhere")
+})
+
+test_that("a byte-order mark is dropped the same way in every locale", {
+  d <- withr::local_tempdir()
+  w <- function(nm, b) {
+    f <- file.path(d, nm)
+    writeBin(as.raw(b), f)
+    f
+  }
+  bom <- c(0xef, 0xbb, 0xbf)
+  f1 <- w("a.csv", c(bom, 0x0a))
+  f2 <- w("b.csv", c(bom, 0x20, 0x20, 0x0a, 0x20, 0x0a))
+  f3 <- w("c.csv", c(bom, bom, charToRaw("a,b\nx,1\n")))
+  one <- function() {
+    list(s5_msg(.bl_run_value(f1)), s5_msg(.bl_run_value(f2)),
+         .bl_run_value(f3))
+  }
+  old <- Sys.getlocale("LC_CTYPE")
+  withr::defer(Sys.setlocale("LC_CTYPE", old))
+  got <- lapply(c("C", "C.UTF-8"), function(l) {
+    if (!nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", l)))) {
+      return(NULL)
+    }
+    r <- one()
+    r[1:2] <- lapply(r[1:2], function(x) sub(": [^:]*$", "", x))
+    r
+  })
+  got <- Filter(Negate(is.null), got)
+  expect_match(got[[1L]][[1L]], "only blank lines|is empty")
+  expect_match(got[[1L]][[2L]], "only blank lines")
+  expect_named(got[[1L]][[3L]], c("a", "b"))
+  if (length(got) == 2L) {
+    expect_identical(got[[1L]], got[[2L]])
+  }
+})
+
+test_that("names one system takes for one are refused when bundling", {
+  withr::local_options(morie.progress = FALSE)
+  u <- function(...) intToUtf8(c(...))
+  sets <- list(c("A.txt", "a.txt"), c("sub/x", "SUB/x"),
+               c(u(0xe9), u(0x65, 0x301)), u(0x43, 0x4f, 0x4d, 0xb9),
+               c(u(0x4c, 0x50, 0x54, 0xb3, 0x2e, 0x74)))
+  m <- mkmnf(list(), env = FALSE)
+  for (s in sets) {
+    d <- withr::local_tempdir()
+    for (f in s) {
+      # by its bytes: a name marked UTF-8 is translated in a C locale
+      p <- .rmbl_jpath(d, rawToChar(charToRaw(f)))
+      suppressWarnings(dir.create(dirname(p), showWarnings = FALSE))
+      suppressWarnings(file.create(p))
+    }
+    n <- length(list.files(d, recursive = TRUE, all.files = TRUE))
+    skip_if(n < length(s), "the file system holds only one of the names")
+    expect_match(s5_msg(cpsbndl(d, m, "k")), "^cpsbndl: .*(one name|reserves)")
+  }
+  # distinct names stay distinct
+  d <- withr::local_tempdir()
+  for (f in c("a.txt", "b.txt", "resume.txt")) writeLines(f, file.path(d, f))
+  expect_s3_class(cpsbndl(d, m, "k"), "bricklayer_bundle")
+})
+
+test_that("the caseless match is Unicode's, whatever the locale", {
+  u <- function(...) intToUtf8(c(...))
+  k <- .rmbl_caseless(c("A.TXT", "a.txt", u(0xc9), u(0x65, 0x301),
+                        u(0x212b), u(0xe5), u(0x1d6), u(0x75, 0x308, 0x304),
+                        u(0xac00), u(0x1100, 0x1161), u(0x3a3), u(0x3c2)))
+  expect_identical(k[[1L]], k[[2L]])
+  expect_identical(k[[3L]], k[[4L]])
+  expect_identical(k[[5L]], k[[6L]])
+  expect_identical(k[[7L]], k[[8L]])
+  expect_identical(k[[9L]], k[[10L]])
+  expect_identical(k[[11L]], k[[12L]])
+  expect_false(identical(.rmbl_caseless("e"), .rmbl_caseless(u(0xe9))))
+  expect_length(.rmbl_clash(c("a/b", "a/c", "A")), 1L)
+  expect_length(.rmbl_clash(c("a/b", "a/c")), 0L)
+})
+
+test_that("a bundle made before the clash rule still verifies", {
+  skip_on_os(c("windows", "mac"))
+  withr::local_options(morie.progress = FALSE)
+  d <- withr::local_tempdir()
+  nm <- c("A.txt", "a.txt")
+  for (n in nm) writeLines(n, file.path(d, n))
+  m <- mkmnf(list(), env = FALSE)
+  files <- lapply(nm, function(n) {
+    p <- file.path(d, n)
+    list(path = n, sha256 = sha256file(p), size_bytes = file.size(p))
+  })
+  payload <- list(files = files, manifest_digest = mnfdgst(m),
+                  bundled_utc = "2026-10-01T00:00:00Z")
+  att <- cpsatst(list(meta = payload, results = list()), "k")
+  b <- structure(c(payload, list(attestation = att)),
+                 class = c("bricklayer_bundle", "list"))
+  path <- file.path(d, "capsule_bundle.json")
+  .bl_bnd_write(b, path)
+  expect_true(cpsbndlvrf(path, d, man = m, key = "k")$ok)
+})
+
+test_that("ASCII case is folded by bytes, whatever the locale", {
+  u <- function(...) intToUtf8(c(...))
+  expect_identical(.rmbl_lower(c("I", "i", u(0x130), u(0x131), NA)),
+                   c("i", "i", u(0x130), u(0x131), NA))
+  expect_identical(.rmbl_upper(c("I", "i", u(0x130), u(0x131))),
+                   c("I", "I", u(0x130), u(0x131)))
+  bad <- rawToChar(as.raw(c(0x41, 0xff)))
+  expect_identical(charToRaw(.rmbl_lower(bad)), as.raw(c(0x61, 0xff)))
+  expect_identical(.rmbl_ci("^file://[a-z]\\.x$"),
+                   "^[fF][iI][lL][eE]://[a-zA-Z]\\.[xX]$")
+  expect_identical(.rmbl_ci("\\p{L}[[:alpha:]]"), "\\p{L}[[:alpha:]]")
+  expect_identical(.rmbl_relwhy("I:data.csv"), "it starts with a drive letter")
+  old <- Sys.getlocale("LC_CTYPE")
+  withr::defer(Sys.setlocale("LC_CTYPE", old))
+  skip_if(!nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", "tr_TR.UTF-8"))),
+          "no Turkish locale")
+  expect_identical(.rmbl_relwhy("I:data.csv"), "it starts with a drive letter")
+  expect_identical(.rmbl_lower("I"), "i")
+  expect_true(grepl(.rmbl_ci("^file://"), "FILE://x", perl = TRUE))
+})
+
+test_that("a CSV with no final newline seals and checks under warn = 2", {
+  withr::local_options(morie.progress = FALSE)
+  root <- s11_tree(1L)
+  writeBin(charToRaw("a,b\n1,2"), file.path(root, "c01", "data.csv"))
+  r <- s10_warns(cpsseal(root, "k"))
+  expect_length(r$warnings, 0L)
+  expect_s3_class(r$value, "data.frame")
+  withr::local_options(warn = 2)
+  expect_identical(cpschk(root, key = "k", fp = FALSE)$status, "ok")
+})
+
+test_that("a CSV is read a block of rows at a time, as read.csv() counts", {
+  d <- withr::local_tempdir()
+  shapes <- c("a,b\n1,2\n3,4\n", "a,b\n1,2\n3\n", "a,b\n1,2\n3,4,5\n",
+              "a,b\n1,2\n1,2\n1,2\n1,2\n1,2\n1,2\n3,4,5\n1,2\n",
+              "a,b\n1,2,3\n4,5,6\n", "a,b\n\"x\ny\",2\n3,4\n",
+              "a,b\n\n\n1,2\n", "a,b\n", "a;b\n1;2\n", "a,b\n1,2",
+              "\n\na,b\n1,2\n3,4\n5,6\n7,8\n9,0\n1,1\n2,2\n")
+  for (i in seq_along(shapes)) {
+    f <- file.path(d, sprintf("s%02d.csv", i))
+    writeBin(charToRaw(shapes[[i]]), f)
+    want <- nrow(suppressWarnings(utils::read.csv(f, row.names = NULL)))
+    for (b in c(1L, 2L, 3L, 65536L)) {
+      expect_identical(.vc_csv_scan(f, b), list(n = want, why = NULL))
+    }
+  }
+  writeBin(charToRaw("a\n1,2,3\n"), f)
+  expect_match(.vc_csv_scan(f)$why, "more columns than column names")
+  file.create(f)
+  expect_match(.vc_csv_scan(f)$why, "no lines available")
+})
+
+test_that("a CSV that does not read says why, in the seal and the check", {
+  withr::local_options(morie.progress = FALSE)
+  root <- s11_tree(1L)
+  writeBin(charToRaw("a\n1,2,3\n"), file.path(root, "c01", "data.csv"))
+  expect_match(s5_msg(cpsseal(root, "k")),
+               "data_readable: .*does not read as a CSV: more columns")
+})
+
+test_that("a file or link changed while it is hashed stops the seal", {
+  skip_on_os("windows")
+  withr::local_options(morie.progress = FALSE)
+  root <- s11_tree(1L)
+  d <- file.path(root, "c01")
+  ln <- file.path(d, "ln")
+  skip_if_not(file.symlink("data.csv", ln))
+  out <- withr::local_tempfile()
+  writeLines("outside", out)
+  orig <- sha256file
+  st <- new.env()
+  st$n <- 0L
+  bundling <- function() {
+    any(vapply(sys.calls(), function(x) identical(x[[1L]], quote(cpsbndl)),
+               NA))
+  }
+  local_mocked_bindings(sha256file = function(path) {
+    if (bundling() && st$n == 0L) {
+      st$n <- 1L
+      unlink(ln)
+      file.symlink(out, ln)
+    }
+    orig(path)
+  })
+  b0 <- s10_state(root)
+  e <- s5_msg(cpsseal(root, "k"))
+  expect_match(e, "^cpsbndl: .*changed.*: ln;")
+  # all put back; the link is as the other process left it
+  keep <- function(x) x[!startsWith(x, "c01/ln|")]
+  expect_identical(keep(s10_state(root)), keep(b0))
+  expect_false(file.exists(file.path(d, "capsule_bundle.json")))
+})
+
+test_that("a file rewritten after it was hashed stops the seal", {
+  withr::local_options(morie.progress = FALSE)
+  root <- s11_tree(1L)
+  d <- file.path(root, "c01")
+  writeLines("v1", file.path(d, "notes.txt"))
+  orig <- sha256file
+  st <- new.env()
+  st$n <- 0L
+  local_mocked_bindings(sha256file = function(path) {
+    r <- orig(path)
+    if (grepl("notes[.]txt$", path, useBytes = TRUE) && st$n == 0L) {
+      st$n <- 1L
+      writeLines("v2 changed", file.path(d, "notes.txt"))
+    }
+    r
+  })
+  # read once: expect_match() evaluates its object twice
+  e <- s5_msg(cpsseal(root, "k"))
+  expect_match(e, "changed while.*notes.txt")
+  expect_false(file.exists(file.path(d, "capsule_bundle.json")))
+})
+
+test_that("a refusal or a failed check exits 1, a usage error 2", {
+  skip_on_os("windows")
+  withr::local_options(morie.progress = FALSE)
+  root <- s11_tree(1L)
+  cpsseal(root, "k")
+  lk <- file.path(root, "locked")
+  dir.create(lk)
+  Sys.chmod(lk, "000")
+  withr::defer(Sys.chmod(lk, "755"))
+  skip_if(file.access(lk, 4L) == 0L)
+  for (v in c("verify", "report", "drift")) {
+    expect_identical(s10_cli(c(v, root))$status, 1L)
+  }
+  expect_identical(s10_cli(c("sign", root, "--overwrite"))$status, 1L)
+  expect_identical(s10_cli(c("verify", file.path(root, "nope")))$status, 2L)
+  expect_identical(s10_cli(c("verify", root, "--psi-warn", "x"))$status, 2L)
+})
+
+test_that("a bad second argument is refused in the package's words", {
+  expect_match(s5_msg(blfetch("https://example.invalid/x", tempfile(),
+                              tmout = sum)), "`tmout` must be")
+  expect_match(s5_msg(qltyrcd(c("1", "F"), suppr = rawToChar(as.raw(
+    c(0x61, 0xff)
+  )))), "^qltyrcd: `suppr` must be")
+  expect_match(s5_msg(rcdmnf("x", "x", map = -Inf)), "^rcdmnf: `map` must")
+})
+
+# the settings a session may carry; none may change what the package does
+s11_settings <- list(
+  scipen_neg = list(opt = list(scipen = -100)),
+  scipen_pos = list(opt = list(scipen = 100)),
+  outdec = list(opt = list(OutDec = ",")),
+  warn2 = list(opt = list(warn = 2, warnPartialMatchArgs = TRUE,
+                          warnPartialMatchAttr = TRUE,
+                          warnPartialMatchDollar = TRUE)),
+  saf = list(opt = list(stringsAsFactors = TRUE)),
+  tz = list(tz = "Pacific/Kiritimati")
+)
+
+# runs `f` under one setting (R takes a scipen of -100 as -9, and says so;
+# stringsAsFactors = TRUE is deprecated, and says so)
+s11_under <- function(s, f) {
+  if (!is.null(s$tz)) {
+    withr::local_timezone(s$tz)
+  }
+  old <- suppressWarnings(options(s$opt))
+  withr::defer(options(old))
+  f()
+}
+
+# a capsule whose files are written byte for byte; `pin` pins its
+# provenance by hand, at a fixed time, so a seal changes no byte of it
+s11_fixed <- function(root, pin) {
+  unlink(root, recursive = TRUE)
+  d <- file.path(root, "c1")
+  dir.create(d, recursive = TRUE)
+  f <- file.path(d, "data.csv")
+  writeLines(c("x,y", "1.5,1", "5.5,2", "12345.25,3"), f)
+  writeLines(paste0(
+    '{"resource": {"filename": "data.csv", "row_count_data_rows": 3',
+    if (pin) {
+      sprintf(paste0(', "sha256": "%s", "size_bytes": %d, ',
+                     '"retrieved_utc": "2026-11-01T00:00:00Z"'),
+              sha256file(f), file.size(f))
+    },
+    "}}"
+  ), file.path(d, "data_provenance.json"))
+  d
+}
+
+# one pass of the capsule verbs, the root and the times of signing taken out
+s11_pass <- function(root) {
+  d <- s11_fixed(root, FALSE)
+  m <- mkmnf(list(n = 12345.5, p = 1e-7), env = FALSE)
+  b <- cpsbndl(d, m, "k", path = file.path(root, "b.json"))
+  v <- cpsbndlvrf(attr(b, "path"), d, man = m, key = "k")
+  unlink(attr(b, "path"))
+  s <- cpsseal(root, "k")
+  pinned <- readLines(file.path(d, "data_provenance.json"))
+  d <- s11_fixed(root, TRUE)
+  cpsseal(root, "k")
+  x <- cpschk(root, key = "k", fp = FALSE)
+  # the signature and the manifest the seal makes record the time
+  sig <- x$rows$detail[x$rows$check %in% c("attestation:signature",
+                                           "attestation:manifest_digest")]
+  sig <- sig[nzchar(sig)]
+  out <- list(b$files, b$manifest_digest, v$ok, v$checks$check, s, pinned,
+              x$rows, format(x), format(x, fmt = "json"),
+              format(x, fmt = "text"),
+              s10_cli(c("verify", root, "--no-footprint")),
+              s10_cli(c("verify", root, "--json", "--no-footprint")),
+              .bl_run_value(file.path(d, "data.csv")))
+  rapply(out, function(t) {
+    for (g in sig) {
+      t <- gsub(g, "<sig>", t, fixed = TRUE)
+    }
+    gsub("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z", "<utc>",
+         gsub(root, "<root>", t, fixed = TRUE))
+  }, classes = "character", how = "replace")
+}
+
+test_that("no session setting changes what the capsule verbs do", {
+  skip_on_cran()
+  withr::local_options(morie.progress = FALSE)
+  root <- file.path(withr::local_tempdir(), "t")
+  want <- s11_pass(root)
+  for (nm in names(s11_settings)) {
+    got <- s11_under(s11_settings[[nm]], function() s11_pass(root))
+    expect_identical(got, want, label = nm)
+  }
 })

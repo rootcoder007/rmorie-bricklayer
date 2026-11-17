@@ -70,7 +70,7 @@
 #' @return A character vector of terms.
 #' @noRd
 .bl_kn_tokens <- function(x) {
-  w <- strsplit(tolower(x), "[^a-z0-9_]+")[[1L]]
+  w <- strsplit(.rmbl_lower(x), "[^a-z0-9_]+")[[1L]]
   w <- w[nchar(w) >= 2L]
   w <- w[!w %in% .bl_kn_stop_words()]
   # a light stem, so "emissions" finds "emission" and "testing" finds "test":
@@ -205,7 +205,8 @@
     0
   )
   # a page named in the query comes first
-  named <- vapply(pages, function(p) any(tolower(p$aliases) %in% q), logical(1))
+  named <- vapply(pages, function(p) any(.rmbl_lower(p$aliases) %in% q),
+      logical(1))
   score <- score + ifelse(named, 100, 0)
   o <- order(-score)
   o <- o[score[o] > 0]
@@ -272,7 +273,7 @@
   # plain text, not a pattern: a model's "([" is not an error (review of
   # 29a55d8, L2)
   if (nzchar(filter %||% "")) {
-    out <- out[grepl(tolower(filter), tolower(out), fixed = TRUE)]
+    out <- out[grepl(.rmbl_lower(filter), .rmbl_lower(out), fixed = TRUE)]
   }
   if (!length(out)) {
     return(

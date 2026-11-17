@@ -684,13 +684,13 @@ format.rmbl_co2eqv <- function(x, digits = 4L, ...) {
 #' @return The row index, or NA.
 #' @noRd
 .rmbl_ci_match <- function(key, tab) {
-  key <- toupper(trimws(key))
+  key <- .rmbl_upper(trimws(key))
   i <- match(key, tab$location)
   if (is.na(i)) {
     i <- match(key, tab$iso3)
   }
   if (is.na(i)) {
-    i <- match(key, toupper(tab$name))
+    i <- match(key, .rmbl_upper(tab$name))
   }
   i
 }
@@ -1326,7 +1326,7 @@ format.rmbl_co2eqv <- function(x, digits = 4L, ...) {
   if (!is.na(i)) {
     note <- sprintf(
       "no row for zone %s; its country %s used",
-      toupper(loc),
+      .rmbl_upper(loc),
       tab$location[i]
     )
   }

@@ -533,21 +533,33 @@
 
 #' The lines of a .csv named to run, from its bytes on disk.
 #'
-#' A compressed file is said to be one (gzip, xz, zstd and lz4 by their
+#' Every UTF-8 byte-order mark at its start is dropped first, by its bytes,
+#' before anything else looks at the file: a UTF-8 locale's readLines()
+#' drops one mark itself and the C locale none, so a mark then blank lines
+#' was refused in one and read as a table in the other, and two marks named
+#' the first column "a" in one and "X.U.FEFF.a" in the other. Then a
+#' compressed file is said to be one (gzip, xz, zstd and lz4 by their
 #' magic, bzip2 by its header and block mark: "BZh" alone is how a text
 #' file may begin); an empty file, one of blank lines only, a NUL byte, a
 #' UTF-16 or UTF-32 byte-order mark and bytes that are not text in this
 #' session are refused in the command's own words, where read.csv() failed
-#' in base R's. Valid UTF-8 is read as UTF-8 in every locale, a leading
-#' UTF-8 byte-order mark dropped: in the C locale "caf\u00e9" came out as
-#' "caf<c3><a9>" and the mark went into the first column's name.
+#' in base R's. Valid UTF-8 is read as UTF-8 in every locale: in the C
+#' locale "caf\u00e9" came out as "caf<c3><a9>".
 #' @param path The .csv file, already found to be a regular file.
 #' @return Its lines, one element each, those that are UTF-8 marked so.
 #' @noRd
 .bl_run_csv <- function(path) {
   shown <- .rmbl_shown(path)
   no <- function(...) stop("run: the .csv ", ..., ": ", shown, call. = FALSE)
-  h <- readBin(path, "raw", 10L)
+  con <- file(path, "rb")
+  on.exit(close(con), add = TRUE)
+  bom <- as.raw(c(0xef, 0xbb, 0xbf))
+  skip <- 0L
+  while (identical(readBin(con, "raw", 3L), bom)) {
+    skip <- skip + 3L
+  }
+  h <- readBin(path, "raw", skip + 10L)
+  h <- h[seq_along(h) > skip]
   kind <- .bl_run_packed(h)
   if (!is.null(kind)) {
     no("is compressed (", kind, ") and is read as it is on disk; ",
@@ -566,7 +578,11 @@
   if (.bl_run_nul(path)) {
     no("holds a NUL byte, so it is no table of text")
   }
-  lines <- .rmbl_rlines(path)
+  # read past the marks: nothing is left for readLines() to drop
+  close(con)
+  con <- file(path, "rb")
+  readBin(con, "raw", skip)
+  lines <- readLines(con, warn = FALSE)
   if (any(.rmbl_nontext(lines))) {
     no("holds bytes that are not text in this session (",
        if (isTRUE(l10n_info()[["UTF-8"]])) "UTF-8" else "its encoding",
@@ -574,11 +590,6 @@
   }
   if (!any(nzchar(trimws(lines)))) {
     no("holds only blank lines, so it is no table")
-  }
-  # a UTF-8 locale drops the mark as it reads; the C locale keeps it
-  r1 <- charToRaw(lines[1L])
-  if (identical(r1[1:3], as.raw(c(0xef, 0xbb, 0xbf)))) {
-    lines[1L] <- rawToChar(r1[-1:-3])
   }
   .rmbl_utf8(lines)
 }
@@ -693,10 +704,12 @@
   }
   # a file the user names: a pipe or a device is refused, and a .csv is
   # read from its bytes on disk (read.csv() of a path inflates gzip)
-  if (file.exists(s) && grepl("\\.csv$", s, ignore.case = TRUE)) {
+  if (file.exists(s) && grepl(.rmbl_ci("\\.csv$"), s, perl = TRUE,
+      useBytes = TRUE)) {
     return(.bl_run_table(.rmbl_file1(s, "VALUE")))
   }
-  if (file.exists(s) && grepl("\\.rds$", s, ignore.case = TRUE)) {
+  if (file.exists(s) && grepl(.rmbl_ci("\\.rds$"), s, perl = TRUE,
+      useBytes = TRUE)) {
     return(.bl_run_rds(.rmbl_file1(s, "VALUE")))
   }
   utils::type.convert(strsplit(s, ",", fixed = TRUE)[[1L]], as.is = TRUE)

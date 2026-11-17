@@ -202,7 +202,7 @@ format.bricklayer_schema <- function(x, ...) {
       ranges[[nm]] <- .infsch_range(v, slack)
     } else if (is.factor(v) || is.character(v) || is.logical(v)) {
       lv <- unique(as.character(v[!is.na(v)]))
-      if (length(lv) <= maxlvl) value_sets[[nm]] <- sort(lv)
+      if (length(lv) <= maxlvl) value_sets[[nm]] <- .rmbl_bsort(lv)
     }
   }
   list(value_sets = value_sets, ranges = ranges, miss = miss)
@@ -218,8 +218,8 @@ format.bricklayer_schema <- function(x, ...) {
   if (!is.null(x$numeric_ranges[[nm]])) {
     sprintf(
       "[%s, %s]",
-      formatC(x$numeric_ranges[[nm]][["min"]], format = "g", digits = 4),
-      formatC(x$numeric_ranges[[nm]][["max"]], format = "g", digits = 4)
+      .rmbl_fc(x$numeric_ranges[[nm]][["min"]], format = "g", digits = 4),
+      .rmbl_fc(x$numeric_ranges[[nm]][["max"]], format = "g", digits = 4)
     )
   } else if (!is.null(x$expected_value_sets[[nm]])) {
     lv <- x$expected_value_sets[[nm]]

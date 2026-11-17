@@ -876,6 +876,7 @@ grdbin <- function(x, col) {
 #' @export
 rcdmnf <- function(orig, recd, map, pub = NULL, key = NULL, ctx = NULL) {
   .rmbl_no_fn(ctx = ctx)
+  .rcd_map_named(map)
   vrfrcd(orig, recd, map)
   marg <- if (!is.null(pub)) {
     vrfmrg(recd, pub)
@@ -1925,7 +1926,7 @@ format.rmbl_transfer_check <- function(x, ...) {
       method = "radix"
     ),
     "labels sorted case-insensitively, assigned by code position" = labs[order(
-      tolower(labs),
+      .rmbl_lower(labs),
       method = "radix"
     )],
     "labels sorted in reverse, assigned by code position" = rev(sort(
@@ -2158,7 +2159,7 @@ format.rmbl_transfer_check <- function(x, ...) {
 .ac_label_hazards <- function(lv, core) {
   hazards <- character(0)
   sentinels <- c("NA", "N/A", "NAN", "NULL", "NONE", ".", "-", "?")
-  sentinel <- lv[toupper(core) %in% sentinels]
+  sentinel <- lv[.rmbl_upper(core) %in% sentinels]
   if (length(sentinel)) {
     hazards <- c(
       hazards,
@@ -2182,7 +2183,7 @@ format.rmbl_transfer_check <- function(x, ...) {
       )
     )
   }
-  lc <- tolower(core)
+  lc <- .rmbl_lower(core)
   # a case-variant pair is two DIFFERENT trimmed labels that agree once
   # lower-cased; a pair that differs only by whitespace was reported above
   case_groups <- split(core, lc)
@@ -2272,4 +2273,21 @@ format.rmbl_transfer_check <- function(x, ...) {
     )
   }
   labs
+}
+
+#' Stops unless a recode map names every code it maps: a map with no names
+#' was taken by rcdmnf(), and printing the manifest then failed in
+#' data.frame()'s words.
+#' @param map The map, old = new.
+#' @return NULL, invisibly.
+#' @noRd
+.rcd_map_named <- function(map) {
+  nm <- names(map)
+  fine <- c(is.atomic(map) | is.list(map), length(map) > 0L,
+            length(nm) == length(map), !anyNA(nm), all(nzchar(nm)))
+  if (!all(fine)) {
+    stop(.rmbl_fn(), "`map` must be a named vector, old = new, with a name ",
+         "for every code", call. = FALSE)
+  }
+  invisible(NULL)
 }

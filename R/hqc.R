@@ -605,7 +605,8 @@ format.bricklayer_hqc_capsule <- function(x, ...) {
 .rmbl_hqc_expand <- function(key, seed, level, version) {
   full <- hqckg(level, seed = seed, ver = version)
   if (
-    !is.null(key[["public"]]) && !identical(tolower(key$public), full$public)
+    !is.null(key[["public"]]) && !identical(.rmbl_lower(key$public),
+        full$public)
   ) {
     stop(
       "the compressed secret key does not derive this key's public key",

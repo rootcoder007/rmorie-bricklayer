@@ -170,12 +170,12 @@ format.bricklayer_online <- function(x, ...) {
   .rmbl_stat_block(
     "Accumulated summary",
     facts = list(
-      n = format(s[["n"]], big.mark = ","),
-      Mean = formatC(s[["mean"]], format = "g", digits = 6),
-      `Standard deviation` = formatC(s[["sd"]], format = "g", digits = 6),
-      Variance = formatC(s[["variance"]], format = "g", digits = 6),
-      Skewness = formatC(s[["skewness"]], format = "g", digits = 4),
-      `Excess kurtosis` = formatC(s[["kurtosis"]], format = "g", digits = 4)
+      n = .rmbl_ntxt(s[["n"]]),
+      Mean = .rmbl_fc(s[["mean"]], format = "g", digits = 6),
+      `Standard deviation` = .rmbl_fc(s[["sd"]], format = "g", digits = 6),
+      Variance = .rmbl_fc(s[["variance"]], format = "g", digits = 6),
+      Skewness = .rmbl_fc(s[["skewness"]], format = "g", digits = 4),
+      `Excess kurtosis` = .rmbl_fc(s[["kurtosis"]], format = "g", digits = 4)
     ),
     reading = paste(
       "Moments of every value seen so far, kept in one pass; smryupd() adds",

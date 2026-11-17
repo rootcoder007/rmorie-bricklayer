@@ -115,8 +115,8 @@ format.bricklayer_benford <- function(x, ...) {
     paste0("  ", verdict),
     "",
     .rmbl_kv(list(
-      "values used" = format(x$n, big.mark = ","),
-      "chi-square" = formatC(x$statistic, format = "f", digits = 3),
+      "values used" = .rmbl_ntxt(x$n),
+      "chi-square" = .rmbl_fc(x$statistic, format = "f", digits = 3),
       "df" = x$df,
       "p-value" = .rmbl_fmt_p(x$p_value)
     )),
@@ -125,8 +125,8 @@ format.bricklayer_benford <- function(x, ...) {
     sprintf(
       "  %5s  %8s  %8s  %s",
       names(prop),
-      formatC(prop, format = "f", digits = 3),
-      formatC(expected, format = "f", digits = 3),
+      .rmbl_fc(prop, format = "f", digits = 3),
+      .rmbl_fc(expected, format = "f", digits = 3),
       bar
     ),
     .rmbl_benford_reading(x, prop, expected),
@@ -290,7 +290,7 @@ summary.bricklayer_benford <- function(object, ...) {
 #' try(profcols(df[, 0]))
 #' @export
 #' @srrstats {EA5.2} print.bricklayer_profile formats numbers with
-#'   formatC(digits = 4); other print methods use formatC or sprintf too;
+#'   .rmbl_fc(digits = 4); other print methods use formatC or sprintf too;
 #'   test-print_methods.R.
 #' @srrstats {EA5.3} The column profile has a `type` column (the first class of
 #'   each column); test-print_methods.R:137.
@@ -512,7 +512,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   w <- if (length(keys)) max(nchar(keys)) else 0L
   paste0(
     strrep(" ", indent),
-    formatC(keys, width = w, flag = "-"),
+    .rmbl_fc(keys, width = w, flag = "-"),
     "  ",
     vapply(pairs, function(v) toString(format(.rmbl_txt(v))), character(1))
   )
@@ -1365,7 +1365,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
     if (r > 1L) out <- c(out, "")
     out <- c(out, vapply(seq_along(cols), function(i) {
       v <- cols[[i]][r]
-      paste0(formatC(hdr[i], width = w, flag = "-"), "  ",
+      paste0(.rmbl_fc(hdr[i], width = w, flag = "-"), "  ",
              if (is.na(v)) "NA" else v)
     }, ""))
   }
@@ -1427,7 +1427,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
     )
   )
   cell <- function(s, i) {
-    formatC(s, width = w[[i]], flag = if (num[[i]]) " " else "-")
+    .rmbl_fc(s, width = w[[i]], flag = if (num[[i]]) " " else "-")
   }
   head <- paste(
     vapply(seq_along(cols), function(i) cell(names(cols)[i], i), ""),
@@ -1458,7 +1458,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   # p, p_value, p.value, pholm, padj, p_adj, pbh, pfdr, q, qvalue, adj_p, ...
   grepl(
     "^(p|q)([._]?(value|holm|adj|bh|by|bonf|fdr|perm|exact))?$|_p$",
-    tolower(nm)
+    .rmbl_lower(nm)
   )
 }
 
@@ -1470,7 +1470,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
 .rmbl_is_period_col <- function(nm) {
   grepl(
     "(^|_)(year|yr|fy|period|prd|month|quarter|wave|cycle|edition)(s)?($|_)",
-    tolower(nm)
+    .rmbl_lower(nm)
   )
 }
 
@@ -1482,7 +1482,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   out <- ifelse(
     p < 0.001,
     "< 0.001",
-    formatC(p, format = "f", digits = 3L)
+    .rmbl_fc(p, format = "f", digits = 3L)
   )
   out[is.na(p)] <- ""
   out
@@ -1506,12 +1506,12 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
         return(if (v > 0) "Inf" else "-Inf")
       }
       if (v != 0 && (abs(v) >= 1e7 || abs(v) < 1e-4)) {
-        return(formatC(v, format = "e", digits = digits - 1L))
+        return(.rmbl_fc(v, format = "e", digits = digits - 1L))
       }
       if (v == round(v)) {
-        return(formatC(v, format = "d", big.mark = ","))
+        return(.rmbl_fc(v, format = "d", big.mark = ","))
       }
-      formatC(signif(v, digits), format = "fg", digits = digits)
+      .rmbl_fc(signif(v, digits), format = "fg", digits = digits)
     },
     ""
   )
@@ -1536,7 +1536,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   }
   typ <- stats::median(a[a > 0])
   dp <- as.integer(min(6, max(0, digits - 1 - floor(log10(typ)))))
-  out <- formatC(v, format = "f", digits = dp, big.mark = ",")
+  out <- .rmbl_fc(v, format = "f", digits = dp, big.mark = ",")
   out[is.na(v)] <- ""
   out[is.infinite(v)] <- ifelse(v[is.infinite(v)] > 0, "Inf", "-Inf")
   out
@@ -1655,7 +1655,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   c(
     out,
     body,
-    if (more > 0L) sprintf("  ... %s more rows", format(more, big.mark = ","))
+    if (more > 0L) sprintf("  ... %s more rows", .rmbl_ntxt(more))
   )
 }
 

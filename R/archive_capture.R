@@ -869,7 +869,7 @@ format.rmbl_archive_capture <- function(x, ...) {
 #' @return One media type.
 #' @noRd
 .bl_mime <- function(f) {
-  ext <- tolower(sub("^.*\\.", "", basename(f)))
+  ext <- .rmbl_lower(sub("^.*\\.", "", basename(f)))
   m <- c(
     csv = "text/csv",
     tsv = "text/tab-separated-values",

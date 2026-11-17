@@ -151,8 +151,8 @@
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_nc_match_dns <- function(name, base) {
-  name <- tolower(name)
-  base <- tolower(base)
+  name <- .rmbl_lower(name)
+  base <- .rmbl_lower(base)
   if (!nzchar(base)) {
     return(TRUE)
   }
@@ -173,8 +173,8 @@
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_nc_match_email <- function(name, base) {
-  name <- tolower(name)
-  base <- tolower(base)
+  name <- .rmbl_lower(name)
+  base <- .rmbl_lower(base)
   if (grepl("@", base, fixed = TRUE)) {
     return(identical(name, base))
   }
@@ -237,7 +237,7 @@
     v <- vapply(
       Filter(Negate(is.null), atvs),
       function(a) {
-        paste0(a$oid, "=", tolower(trimws(a$value)))
+        paste0(a$oid, "=", .rmbl_lower(trimws(a$value)))
       },
       character(1)
     )

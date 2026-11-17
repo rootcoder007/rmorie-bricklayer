@@ -61,8 +61,8 @@
 #' unlink(f)
 #' try(yoywr(y, file.path(tempdir(), "change.xlsx")))
 #' @export
-#' @srrstats {G2.3b} format is lower-cased with tolower() before dispatch, and
-#'   so is the file extension when format = "auto".
+#' @srrstats {G2.3b} format is lower-cased by its ASCII bytes before
+#'   dispatch, and so is the file extension when format = "auto".
 #' @srrstats {G4.0} Output format is parsed from the file suffix
 #'   (csv/tsv/json/md/html/pdf); a path with no known suffix is refused unless
 #'   format is given.
@@ -73,7 +73,7 @@ yoywr <- function(x, file, format = "auto", ...) {
   }
   file <- as.character(file)[1L]
   .rmbl_valid_text(format, "format")
-  format <- tolower(as.character(format)[1L])
+  format <- .rmbl_lower(as.character(format)[1L])
   format <- .rmbl_yoy_format(file, format)
   if (!format %in% c("html", "pdf", "csv", "tsv", "json", "markdown")) {
     stop(sprintf("unknown format: %s", format), call. = FALSE)
@@ -563,7 +563,7 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   if (!identical(format, "auto")) {
     return(format)
   }
-  ext <- tolower(sub(".*\\.", "", basename(file)))
+  ext <- .rmbl_lower(sub(".*\\.", "", basename(file)))
   map <- c(
     html = "html",
     htm = "html",

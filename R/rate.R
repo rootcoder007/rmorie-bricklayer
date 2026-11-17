@@ -667,7 +667,7 @@ format.rmbl_share <- function(x, digits = 4L, ...) {
     )
   }
   if (is.character(per)) {
-    key <- tolower(gsub("[ ,_]", "", per[1L]))
+    key <- .rmbl_lower(gsub("[ ,_]", "", per[1L]))
     key <- sub("^per", "", key)
     if (!key %in% names(.rate_per_names)) {
       stop(
@@ -696,7 +696,7 @@ format.rmbl_share <- function(x, digits = 4L, ...) {
 #' @return One string such as `"per 100,000"`.
 #' @noRd
 .rate_per_label <- function(per) {
-  paste0("per ", formatC(per, format = "d", big.mark = ","))
+  paste0("per ", .rmbl_fc(per, format = "d", big.mark = ","))
 }
 
 #' Computes rates per `per` with exact Poisson intervals from aggregated counts

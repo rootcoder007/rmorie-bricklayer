@@ -538,7 +538,7 @@ explerr <- function(msg = geterrmessage(), pkgs = NULL, n = 3L) {
 #'   numbers left out.
 #' @noRd
 .bl_ee_words <- function(x) {
-  w <- tolower(unlist(strsplit(x, "[^[:alnum:]_]+")))
+  w <- .rmbl_lower(unlist(strsplit(x, "[^[:alnum:]_]+")))
   unique(w[nchar(w) >= 3L & !w %in% .bl_ee_stop & !grepl("^[0-9]+$", w)])
 }
 

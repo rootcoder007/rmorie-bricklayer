@@ -555,7 +555,8 @@ plot.rmbl_dstfit <- function(
     .bl_xlab(if (which == "qq") "Fitted quantile" else "Plotting position")
     .bl_ylab(if (which == "qq") "Observed value" else "Fitted probability")
     .bl_title(
-      if (is.null(main)) sprintf("%s: %s", toupper(which), fams[i]) else main
+      if (is.null(main)) sprintf("%s: %s", .rmbl_upper(which),
+          fams[i]) else main
     )
     out <- rbind(
       out,

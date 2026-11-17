@@ -181,7 +181,8 @@ rallocvrf <- function(x, digest = NULL, seed = NULL) {
   same <- identical(as_chr(again), as_chr(x)) &&
     identical(nrow(again), nrow(x))
   ids <- !anyDuplicated(x$id) && identical(nrow(x), as.integer(set$n))
-  checks <- .ralloc_checks(identical(got, tolower(want)), same, ids, nrow(x))
+  checks <- .ralloc_checks(identical(got, .rmbl_lower(want)), same, ids,
+      nrow(x))
   .rmbl_cls(
     list(ok = all(checks$ok), checks = checks, digest = got),
     "rmbl_alloc_check"

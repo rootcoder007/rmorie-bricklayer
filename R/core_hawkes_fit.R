@@ -751,7 +751,7 @@ chwkjit <- function(times, res = 1, seed = 42, hor = Inf) {
   n <- length(times)
   pg <- blprog(sprintf("Hawkes fit (%s)", kernel), 0)
   on.exit(pg$done(), add = TRUE)
-  pg$update(info = sprintf("fitting %s events", format(n, big.mark = ",")))
+  pg$update(info = sprintf("fitting %s events", .rmbl_ntxt(n)))
   em <- .rmbl_hk_em(times, hor, kernel, base, x0, b, pg = pg)
   # EM converges linearly: its steps shrink long before it reaches the
   # maximum, so a small step is not a stop (it ended 1.4e-5 short on macOS
@@ -827,7 +827,7 @@ chwkjit <- function(times, res = 1, seed = 42, hor = Inf) {
     sprintf(
       "Hawkes fit (%s, %s events): %s",
       kernel,
-      format(n, big.mark = ","),
+      .rmbl_ntxt(n),
       what
     ),
     expr

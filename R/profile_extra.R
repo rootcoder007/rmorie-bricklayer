@@ -124,7 +124,7 @@ format.bricklayer_missingness <- function(x, ...) {
   if (!all(c("pattern", "n_rows", "pctrows") %in% names(df))) {
     return(utils::capture.output(print(df)))
   }
-  df$pctrows <- formatC(df$pctrows, format = "f", digits = 1)
+  df$pctrows <- .rmbl_fc(df$pctrows, format = "f", digits = 1)
   .rmbl_stat_block(
     "Missingness patterns",
     facts = list(
@@ -273,7 +273,7 @@ format.bricklayer_correlations <- function(x, ...) {
   attr(df, "method") <- NULL
   # a signed bar makes the direction and strength readable at a glance
   df$plot <- vapply(x$correlation, .bl_cor_bar, character(1))
-  df$correlation <- formatC(df$correlation, format = "f", digits = 3)
+  df$correlation <- .rmbl_fc(df$correlation, format = "f", digits = 3)
   df$abscor <- NULL
   .rmbl_stat_block(
     title,
@@ -516,9 +516,9 @@ format.bricklayer_env_diff <- function(x, ...) {
   k <- as.integer(round(abs(r) * 10))
   bar <- strrep("#", k)
   if (r < 0) {
-    paste0(formatC(bar, width = 10), "|", strrep(" ", 10))
+    paste0(.rmbl_fc(bar, width = 10), "|", strrep(" ", 10))
   } else {
-    paste0(strrep(" ", 10), "|", formatC(bar, width = -10))
+    paste0(strrep(" ", 10), "|", .rmbl_fc(bar, width = -10))
   }
 }
 

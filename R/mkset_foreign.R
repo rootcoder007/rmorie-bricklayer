@@ -119,10 +119,10 @@
   # a robust (sandwich) SE, when the model has one, is the one its z and p
   # use: coxph(... + cluster(id)) lists se(coef) first, then robust se
   se <- c(
-    grep("robust", cn, ignore.case = TRUE),
-    grep("^se|std", cn, ignore.case = TRUE)
+    grep(.rmbl_ci("robust"), cn, perl = TRUE, useBytes = TRUE),
+    grep(.rmbl_ci("^se|std"), cn, perl = TRUE, useBytes = TRUE)
   )[1L]
-  pc <- grep("^pr|^p$|p-value", cn, ignore.case = TRUE)[1L]
+  pc <- grep(.rmbl_ci("^pr|^p$|p-value"), cn, perl = TRUE, useBytes = TRUE)[1L]
   out <- data.frame(
     term = rownames(m),
     est = unname(m[, 1L]),

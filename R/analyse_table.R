@@ -260,7 +260,8 @@ rptanl <- function(
   }
   if (!is.null(path) && is.null(format)) {
     format <- if (
-      is.character(path) && grepl("\\.html?$", path, ignore.case = TRUE)
+      is.character(path) && grepl(.rmbl_ci("\\.html?$"), path, perl = TRUE,
+          useBytes = TRUE)
     ) {
       "html"
     } else {
@@ -440,7 +441,7 @@ rptanl <- function(
       return("")
     }
     format(z, big.mark = if (big && abs(z) >= 1e4) "," else "",
-           trim = TRUE, scientific = FALSE, digits = 15L)
+           trim = TRUE, scientific = FALSE, digits = 15L, decimal.mark = ".")
   }, character(1L))
 }
 
@@ -480,7 +481,7 @@ rptanl <- function(
       # a separator from 10,000 up only: a four-digit whole number (a year in
       # the profile's min / max) read as "2,023"
       num <- ifelse(whole, .md_num1(v, big = TRUE),
-                    formatC(v, digits = digits, format = "f"))
+                    .rmbl_fc(v, digits = digits, format = "f"))
       ifelse(is.na(v), "", num)
     } else {
       ifelse(is.na(v), "", .md_cell(v))

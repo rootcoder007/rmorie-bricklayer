@@ -41,7 +41,7 @@
 #' @return One string.
 #' @noRd
 .bl_surt <- function(url) {
-  u <- sub("#.*$", "", tolower(url))
+  u <- sub("#.*$", "", .rmbl_lower(url))
   m <- regmatches(
     u,
     regexec("^([a-z][a-z0-9+.-]*)://([^/?]*)([^?]*)(\\?(.*))?$", u)
@@ -64,7 +64,7 @@
   if (nzchar(q)) {
     q <- paste0(
       "?",
-      paste(sort(strsplit(q, "&", fixed = TRUE)[[1L]]), collapse = "&")
+      paste(.rmbl_bsort(strsplit(q, "&", fixed = TRUE)[[1L]]), collapse = "&")
     )
   }
   paste0(
@@ -205,9 +205,9 @@
 #' @noRd
 .bl_warc_http <- function(headers, mime, status, body) {
   headers <- headers[
-    !tolower(names(headers)) %in% c("transfer-encoding", "content-length")
+    !.rmbl_lower(names(headers)) %in% c("transfer-encoding", "content-length")
   ]
-  if (!any(tolower(names(headers)) == "content-type")) {
+  if (!any(.rmbl_lower(names(headers)) == "content-type")) {
     headers <- c(headers, "Content-Type" = mime)
   }
   headers <- c(headers, "Content-Length" = as.character(length(body)))

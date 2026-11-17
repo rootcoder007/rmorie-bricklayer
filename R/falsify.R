@@ -165,7 +165,7 @@ format.bricklayer_falsification <- function(x, ...) {
   ct <- x$controls
   mark <- c("FAIL", "ok  ")[ct$passed + 1L]
   mark[is.na(ct$passed)] <- "--  "
-  nm <- formatC(ct$control, width = max(nchar(ct$control)), flag = "-")
+  nm <- .rmbl_fc(ct$control, width = max(nchar(ct$control)), flag = "-")
   .rmbl_stat_block(
     "Falsification controls",
     facts = list(

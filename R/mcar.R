@@ -198,7 +198,7 @@ format.bricklayer_mcar <- function(x, ...) {
     "Little's MCAR test",
     facts = list(
       Verdict = verdict,
-      Statistic = formatC(x$statistic, format = "f", digits = 3),
+      Statistic = .rmbl_fc(x$statistic, format = "f", digits = 3),
       df = x$df,
       `p-value` = .rmbl_fmt_p(x$p_value),
       Patterns = x$npat,

@@ -1344,7 +1344,7 @@ cpsdrft <- function(
       as.POSIXct(v, origin = "1970-01-01", tz = "UTC"),
       "%Y-%m-%dT%H:%M:%SZ"
     ),
-    trimws(formatC(v, digits = 3, format = "g"))
+    trimws(.rmbl_fc(v, digits = 3, format = "g"))
   )
 }
 

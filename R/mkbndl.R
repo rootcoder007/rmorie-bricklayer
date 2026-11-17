@@ -655,7 +655,7 @@ format.rmbl_bundle_project <- function(x, ...) {
       if (k == "dir") todo <- c(todo, r)
     }
   }
-  list(files = sort(got$file), links = sort(got$link))
+  list(files = .rmbl_bsort(got$file), links = .rmbl_bsort(got$link))
 }
 
 #' What one entry under a project is for .bndl_walk(): a file to pack, a
@@ -684,7 +684,7 @@ format.rmbl_bundle_project <- function(x, ...) {
 #' @return TRUE or FALSE.
 #' @noRd
 .bndl_secret <- function(path) {
-  b <- tolower(basename(path))
+  b <- .rmbl_lower(basename(path))
   if (endsWith(b, ".pub")) {
     return(FALSE)
   }
@@ -1086,7 +1086,7 @@ format.rmbl_bundle_project <- function(x, ...) {
 #' @return The paths, `top` first.
 #' @noRd
 .bndl_ents <- function(base, top, nmax) {
-  rel <- sort(list.files(
+  rel <- .rmbl_bsort(list.files(
     file.path(base, top),
     recursive = TRUE,
     all.files = TRUE,
@@ -1153,7 +1153,7 @@ format.rmbl_bundle_project <- function(x, ...) {
   }
   real <- normalizePath(p, winslash = "/", mustWork = FALSE)
   par <- normalizePath(dirname(p), winslash = "/", mustWork = FALSE)
-  tolower(real) != tolower(file.path(par, basename(p)))
+  .rmbl_lower(real) != .rmbl_lower(file.path(par, basename(p)))
 }
 
 #' How many files and folders a bundle of a project holds at least: every

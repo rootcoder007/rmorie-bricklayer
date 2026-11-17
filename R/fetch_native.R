@@ -162,7 +162,7 @@ wbsnpnat <- function(url, tmout = 30L) {
 #' @noRd
 .bl_fetch_check_url <- function(url) {
   # what can be told before any download: the URL, the destination, the timeout
-  if (!grepl("^https?://", url, ignore.case = TRUE)) {
+  if (!grepl(.rmbl_ci("^https?://"), url, perl = TRUE, useBytes = TRUE)) {
     stop(sprintf("blfetch: '%s' is not an http(s) URL", url), call. = FALSE)
   }
   # the same gate every other entry point has (the compiled layer checks
@@ -210,7 +210,18 @@ wbsnpnat <- function(url, tmout = 30L) {
   .rmbl_valid_text(dest, "dest")
   .bl_fetch_check_url(url)
   .bl_fetch_check_dest(dest)
-  tmout <- suppressWarnings(as.integer(tmout))
+  .bl_fetch_tmout(tmout)
+}
+
+#' blfetch()'s timeout, checked: a function or a list stopped as.integer()
+#' in base R's words.
+#' @param tmout The timeout given, in seconds.
+#' @return It as an integer.
+#' @noRd
+.bl_fetch_tmout <- function(tmout) {
+  tmout <- if (is.numeric(tmout) || is.logical(tmout)) {
+    suppressWarnings(as.integer(tmout))
+  }
   if (length(tmout) != 1L || is.na(tmout) || tmout < 1L) {
     stop("`tmout` must be a positive number of seconds", call. = FALSE)
   }

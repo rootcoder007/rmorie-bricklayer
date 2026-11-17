@@ -240,7 +240,7 @@
 #' @param id The provider id.
 #' @return The variable name.
 #' @noRd
-.bl_preset_model_env <- function(id) paste0("MORIE_", toupper(id), "_MODEL")
+.bl_preset_model_env <- function(id) paste0("MORIE_", .rmbl_upper(id), "_MODEL")
 
 #' Finds a provider's key.
 #'
@@ -574,7 +574,7 @@
     return(s)
   }
   if (is.character(s$type)) {
-    s$type <- toupper(s$type)
+    s$type <- .rmbl_upper(s$type)
   }
   if (is.list(s$properties)) {
     s$properties <- lapply(s$properties, .bl_gemini_schema)

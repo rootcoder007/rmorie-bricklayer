@@ -128,7 +128,7 @@ bldl <- function(
   # The transport calls this about ten times a second with the bytes so far
   # and the total the server announced (0 when it did not).
   draw <- function(got, total) .bl_dl_draw(st, got, total)
-  got <- if (grepl("^file://", url, ignore.case = TRUE)) {
+  got <- if (grepl(.rmbl_ci("^file://"), url, perl = TRUE, useBytes = TRUE)) {
     .bl_dl_file(url, dest, size, draw)
   } else {
     .bl_dl_net(url, dest, a, draw, quiet, label)
@@ -222,7 +222,7 @@ bldl <- function(
   fmt <- .bl_fmt_bytes
   if (!identical(unit, "B")) {
     fmt <- function(n) {
-      paste(format(round(n), big.mark = ",", scientific = FALSE), unit)
+      paste(.rmbl_ntxt(round(n)), unit)
     }
   }
   rate <- sprintf("%s/s", fmt(got / elapsed))
@@ -353,7 +353,8 @@ bldl <- function(
 #' @return The bytes copied.
 #' @noRd
 .bl_dl_file <- function(url, dest, size, draw) {
-  con <- file(sub("^file://", "", url, ignore.case = TRUE), open = "rb")
+  con <- file(sub(.rmbl_ci("^file://"), "", url, perl = TRUE, useBytes = TRUE),
+              open = "rb")
   on.exit(close(con), add = TRUE)
   n <- new.env(parent = emptyenv())
   n$got <- 0

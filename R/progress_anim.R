@@ -1139,7 +1139,7 @@ print.rmbl_progress <- function(x, ...) {
 #' @param x A count to format with thousands separators.
 #' @return One string.
 #' @noRd
-.bl_n <- function(x) format(x, big.mark = ",", scientific = FALSE, trim = TRUE)
+.bl_n <- function(x) .rmbl_ntxt(x)
 
 #' The frame of a bar with no count: the spinner, the label, the time so far
 #' and the stage.

@@ -51,8 +51,34 @@
 #' a backslash, a double quote, one of \code{< > : | ? *} or a control
 #' character, or has
 #' a part that ends in a dot or a space or that Windows reserves (CON, PRN,
-#' AUX, NUL, COM1 to COM9, LPT1 to LPT9, with any extension). A progress bar
-#' is shown when `options(morie.progress)` allows it.
+#' AUX, NUL, COM1 to COM9, LPT1 to LPT9, and COM and LPT followed by a
+#' superscript 1, 2 or 3, with any extension), letters compared by their
+#' ASCII bytes in every locale. Names that differ only by letter case or by
+#' Unicode normalisation (\code{A.txt} and \code{a.txt}, \code{sub/x} and
+#' \code{SUB/x}, an accented letter written as one character and as a letter
+#' with a combining accent) are one name on Windows and macOS, so they are
+#' refused together, each set named: every name and every folder above one
+#' is compared by Unicode's canonical caseless match (the canonical
+#' decomposition of the simple case folding of the canonical decomposition,
+#' Unicode 15.1, section 3.13), from the Unicode Character Database's tables
+#' and never the locale's. Simple folding maps one character to one, so
+#' \code{ss} and a sharp s are two names (as Windows takes them); the Turkish
+#' dotted capital I folds to an i with a dot above, not to a plain i. The
+#' check of a bundle does not apply these rules, so a bundle made before them
+#' still verifies. A progress bar is shown when `options(morie.progress)`
+#' allows it.
+#'
+#' Each file is read through the real path it had when it was checked,
+#' below `dir`, so a link changed while the bundle is made is not followed
+#' out of the folder. Before anything is signed every file is looked at
+#' again: its real path, a link's target, its size and its modification and
+#' status-change times must be those it had before it was read, and a file
+#' of at most 1 MiB is read a second time and must give the same digest;
+#' anything else stops `cpsbndl()` with the files named and nothing signed.
+#' What remains unseen is a change to a file over 1 MiB that keeps its size
+#' and both times: the system sets the status-change time on every write
+#' and no program can set it back, so only a file system that records
+#' whole seconds, written twice within one, can hide such a change.
 #'
 #' How it is checked. `cpsbndlvrf()` re-hashes every listed file
 #' (a path that is absolute or climbs out of `dir` fails its row), reports
@@ -71,7 +97,8 @@
 #' an error.
 #'
 #' Errors: `dir` missing or not a directory; no files to bundle, or a named
-#' file not in `dir`; the links, folders and names above; a file that cannot
+#' file not in `dir`, or a link whose target does not exist; the links,
+#' folders and names above; a file changed while it was read; a file that cannot
 #' be read, or a bundle file or its folder that cannot be written to (all
 #' before any file is hashed); a key [cpsatst()] cannot
 #' sign with;
@@ -212,13 +239,7 @@ cpsbndl <- function(
   files <- prep$files
   pg <- blprog("bundling", length(files))
   on.exit(pg$done(), add = TRUE)
-  entries <- lapply(seq_along(files), function(i) {
-    f <- files[[i]]
-    pg$update(i - 1L, sprintf("hashing %s", .bl_names(basename(f))))
-    p <- file.path(dir, f)
-    list(path = f, sha256 = sha256file(p), size_bytes = file.size(p))
-  })
-  pg$update(length(files), "signing")
+  entries <- .bl_bnd_hash(dir, files, pg)
   payload <- list(
     files = entries,
     manifest_digest = prep$digest,
@@ -296,7 +317,7 @@ cpsbndlvrf <- function(
   for (e in bundle$files) {
     # sub(), not basename(): basename() translates a name marked UTF-8 to
     # the session encoding, and stopped on an accented name in a C locale
-    nm <- sub("^.*/", "", as.character(e$path)[1L])
+    nm <- sub("^.*/", "", as.character(e$path)[1L], useBytes = TRUE)
     pg$tick(1, sprintf("hashing %s", .bl_names(nm)))
     .bl_bnd_file_row(e, dir, note_row)
   }
@@ -393,11 +414,14 @@ format.bricklayer_bundle_check <- function(x, ...) {
 #' neither bundled nor reported.
 #' @param dir The folder, as .rmbl_fspath() gives it.
 #' @param search TRUE to look for capsules under `dir` instead of listing
-#'   one: no link to a folder is followed (one that stays inside is walked
-#'   by its own path; one that leaves `dir` walked all of /usr for a link
-#'   to it, and a folder there that could not be read failed the search),
-#'   each real folder is listed once, and .git and .rmbl-cache are not
-#'   entered.
+#'   one: a link to a folder inside `dir` is followed, each real folder
+#'   listed once (a capsule linked in from elsewhere in the tree is found);
+#'   a link to a folder on the path walked or above it (a loop) is not
+#'   followed; a link to any other folder outside `dir` is not followed but
+#' named in `outside` (a link to /usr walked all of it, and a folder there that
+#'   could not be read failed the search; skipped without a word, a linked
+#'   capsule went unchecked and the check said "ok"); .git and .rmbl-cache
+#'   are not entered.
 #' @return A list of paths relative to `dir`: `files` (every entry that is
 #'   not a folder), `loops`, `outside` (links that leave `dir`), `unread`
 #'   (folders that cannot be read; "." for `dir` itself) and `many` (folders
@@ -474,7 +498,8 @@ format.bricklayer_bundle_check <- function(x, ...) {
   loop <- link & .bl_up(real, it$chain)
   out <- link & !loop & !.bl_under(real, w[[1L]])
   if (w[[2L]]) {
-    go <- !link
+    .bl_walk_put(st, outside = rel[out])
+    go <- !out & !loop
     go[go] <- .bl_walk_once(st, real[go])
   } else {
     many <- !loop & !out
@@ -627,7 +652,8 @@ format.bricklayer_bundle_check <- function(x, ...) {
   w <- .bl_walk(dir)
   why <- .bl_walk_why(w)
   if (length(why)) {
-    stop(paste(why, collapse = "; "), call. = FALSE)
+    stop(.rmbl_fn(), .bl_names(dir), ": ", paste(why, collapse = "; "),
+         call. = FALSE)
   }
   # the temporary of a write cut short is no content of the capsule, and
   # the check reports it: bundled without it, the capsule failed its check
@@ -636,15 +662,17 @@ format.bricklayer_bundle_check <- function(x, ...) {
   own <- normalizePath(.rmbl_fspath(path), winslash = "/", mustWork = FALSE)
   real <- normalizePath(.rmbl_jpath(dir, f), winslash = "/",
                         mustWork = FALSE)
-  sort(f[.rmbl_bytes(real) != .rmbl_bytes(own)])
+  .rmbl_bsort(f[.rmbl_bytes(real) != .rmbl_bytes(own)])
 }
 
 #' Stops when temporaries of the package's writes are left in a capsule.
 #'
 #' A write or a seal that was stopped or killed leaves them (a seal keeps a
 #' copy of each file it replaces, and puts it back when it fails); they are
-#' no content, the check reports them, and nothing needs them. Each is
-#' named, so a seal can be run again once they are deleted.
+#' no content, the check reports them, and nothing needs them. Every one
+#' is named, however many (a seal killed late leaves two for each capsule
+#' it had sealed, and naming 20 of them left the rest unnamed), so a seal
+#' can be run again once exactly those are deleted.
 #' @param left Their paths.
 #' @return NULL, invisibly.
 #' @noRd
@@ -654,7 +682,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
       .rmbl_fn(), "a temporary left by a write or a seal of this package ",
       "that was cut short (stopped or killed) is not part of the capsule ",
       "and is safe to delete; delete it and run again: ",
-      .bl_names(left, 20L),
+      .bl_names(left, Inf),
       call. = FALSE
     )
   }
@@ -673,26 +701,141 @@ format.bricklayer_bundle_check <- function(x, ...) {
   files <- if (is.null(files)) {
     .bl_bnd_every(dir, path)
   } else {
-    sort(.rmbl_fspath(as.character(files)))
+    .rmbl_bsort(.rmbl_fspath(as.character(files)))
+  }
+  no <- function(...) {
+    stop(.rmbl_fn(), .bl_names(dir), ": ", ..., call. = FALSE)
   }
   if (!length(files)) {
-    stop("no files to bundle", call. = FALSE)
+    no("no files to bundle")
   }
-  .bl_bnd_names(files)
-  missing <- files[!file.exists(file.path(dir, files))]
-  if (length(missing)) {
-    stop("these files are not in `dir`: ", .bl_names(missing, 5L),
-         call. = FALSE)
+  .bl_bnd_names(files, .bl_bnd_selfname(dir, path))
+  p <- .rmbl_jpath(dir, files)
+  gone <- !file.exists(p)
+  # a link whose target is missing is in the folder: it is no missing file
+  lk <- Sys.readlink(p)
+  dang <- gone & !is.na(lk) & nzchar(lk)
+  if (any(dang)) {
+    no("these links lead nowhere (their target does not exist); remove ",
+       "them or restore what they point to: ", .bl_names(files[dang], Inf))
+  }
+  if (any(gone)) {
+    no("these files are not in `dir`: ", .bl_names(files[gone], 5L))
   }
   out <- .bl_bnd_outside(dir, files)
   if (length(out)) {
-    stop(
-      "these entries are reached through a link that leaves the capsule ",
-      "folder; copy them in or remove the link: ", .bl_names(out, 5L),
-      call. = FALSE
-    )
+    no("these entries are reached through a link that leaves the capsule ",
+       "folder; copy them in or remove the link: ", .bl_names(out, 5L))
   }
   files
+}
+
+#' The bundle file's own name when it is written inside the capsule folder,
+#' for the clash of names: a capsule holding CAPSULE_BUNDLE.JSON has its
+#' bundle written over it where case is ignored.
+#' @param dir The capsule folder.
+#' @param path Where the bundle is written.
+#' @return Its name relative to `dir`, or none.
+#' @noRd
+.bl_bnd_selfname <- function(dir, path) {
+  real <- function(x) normalizePath(x, winslash = "/", mustWork = FALSE)
+  pd <- real(dirname(.rmbl_fspath(path)))
+  if (.rmbl_bytes(pd) == .rmbl_bytes(real(dir))) basename(path)
+}
+
+#' Hashes the files of a bundle, each read by the real path it had when it
+#' was checked, so a link swapped meanwhile is not followed out of the
+#' capsule, and stops when one changed before anything is signed
+#' (.bl_bnd_unmoved()).
+#' @param dir The capsule folder.
+#' @param files The files, relative to `dir`.
+#' @param pg The progress bar.
+#' @return The bundle's entries: `path`, `sha256`, `size_bytes`.
+#' @noRd
+.bl_bnd_hash <- function(dir, files, pg) {
+  st <- .bl_bnd_stat(dir, files)
+  entries <- lapply(seq_along(files), function(i) {
+    pg$update(i - 1L, sprintf("hashing %s", .bl_names(basename(files[[i]]))))
+    list(path = files[[i]], sha256 = sha256file(st$real[[i]]),
+         size_bytes = st$size[[i]])
+  })
+  .bl_bnd_unmoved(dir, files, st, entries)
+  pg$update(length(files), "signing")
+  entries
+}
+
+#' What cpsbndl() records of each file before it reads it: its real path
+#' (which must lie inside the folder), the target of a link, its size and
+#' its modification and status-change times.
+#'
+#' Base R reads no inode number; the status-change time (ctime) stands in
+#' for it: the system sets it whenever a file is written, renamed onto or
+#' has its mode changed, and no program can set it back.
+#' @param dir The capsule folder.
+#' @param files The files, relative to `dir`.
+#' @return A list of vectors: `real`, `link`, `size`, `mtime`, `ctime`.
+#' @noRd
+.bl_bnd_stat <- function(dir, files) {
+  p <- .rmbl_jpath(dir, files)
+  real <- normalizePath(p, winslash = "/", mustWork = FALSE)
+  root <- normalizePath(dir, winslash = "/", mustWork = FALSE)
+  out <- !.bl_under(real, root)
+  if (any(out)) {
+    stop(.rmbl_fn(), .bl_names(dir), ": these entries were changed during ",
+         "the seal to lead outside the capsule folder, and were not read: ",
+         .bl_names(files[out], Inf), call. = FALSE)
+  }
+  # read as `dir` plus the real path below it: no link below `dir` is
+  # followed, and a folder above it whose name is not UTF-8 is not spelled
+  # out (sha256file() refuses such a path in a UTF-8 locale)
+  n <- length(charToRaw(sub("/*$", "/", root, useBytes = TRUE)))
+  below <- vapply(real, function(r) rawToChar(charToRaw(r)[-seq_len(n)]), "",
+                  USE.NAMES = FALSE)
+  fi <- file.info(real, extra_cols = FALSE)
+  lk <- Sys.readlink(p)
+  lk[is.na(lk)] <- ""
+  list(real = .rmbl_jpath(dir, below), link = lk,
+       size = fi$size, mtime = as.numeric(fi$mtime),
+       ctime = as.numeric(fi$ctime))
+}
+
+#' Stops when a file changed while cpsbndl() read it, before anything is
+#' signed.
+#'
+#' Every file is looked at again: its real path, link target, size and
+#' times must be those recorded before it was read (.bl_bnd_stat()), and a
+#' file of at most 1 MiB is read a second time and must give the same
+#' digest. A change that keeps the size and both times of a larger file is
+#' not seen; the system changes the status-change time on every write.
+#' @param dir The capsule folder.
+#' @param files The files, relative to `dir`.
+#' @param st What .bl_bnd_stat() recorded before they were read.
+#' @param entries The bundle's entries: each file's `sha256`.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_bnd_unmoved <- function(dir, files, st, entries) {
+  now <- .bl_bnd_stat(dir, files)
+  same <- function(k) {
+    a <- st[[k]]
+    b <- now[[k]]
+    if (is.character(a)) {
+      return(.rmbl_bytes(a) == .rmbl_bytes(b))
+    }
+    !is.na(a) & !is.na(b) & a == b
+  }
+  ok <- same("real") & same("link") & same("size") & same("mtime") &
+    same("ctime")
+  small <- which(ok & st$size <= 1048576)
+  ok[small] <- vapply(small, function(i) {
+    identical(sha256file(st$real[[i]]), entries[[i]]$sha256)
+  }, NA)
+  if (!all(ok)) {
+    stop(.rmbl_fn(), .bl_names(dir), ": these files changed while the ",
+         "capsule was being bundled, so nothing was signed; run it again ",
+         "once nothing writes to them: ", .bl_names(files[!ok], Inf),
+         call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 #' What cpsbndl() checks before it reads a byte or signs.
@@ -837,9 +980,10 @@ format.bricklayer_bundle_check <- function(x, ...) {
 #' cannot be listed in JSON by its bytes; and a name Windows cannot hold
 #' would not verify there.
 #' @param files The files to bundle, relative to the directory.
+#' @param own The bundle file's own name in the directory, or NULL.
 #' @return NULL, invisibly.
 #' @noRd
-.bl_bnd_names <- function(files) {
+.bl_bnd_names <- function(files, own = NULL) {
   why <- .rmbl_relwhy(files, strict = TRUE)
   bad <- which(nzchar(why))
   if (length(bad)) {
@@ -851,6 +995,16 @@ format.bricklayer_bundle_check <- function(x, ...) {
       "not verify on every system, cannot be listed in a bundle; rename ",
       "it: ", toString(utils::head(each, 5L)),
       if (length(bad) > 5L) sprintf(" and %d more", length(bad) - 5L),
+      call. = FALSE
+    )
+  }
+  clash <- .rmbl_clash(c(files, own))
+  if (length(clash)) {
+    stop(
+      .rmbl_fn(), "names that differ only by case or by Unicode ",
+      "normalisation are one name on Windows and macOS, where only one of ",
+      "each set can be, so the capsule would not verify there; rename all ",
+      "but one of each: ", paste(clash, collapse = "; "),
       call. = FALSE
     )
   }

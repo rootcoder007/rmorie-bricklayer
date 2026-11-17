@@ -1411,8 +1411,8 @@ all.equal.rmbl_measure <- function(target, current, ...) {
 .an_count <- function(v) {
   whole <- !is.na(v) & v == round(v) & abs(v) < 1e15
   out <- .rmbl_fmt_num(v)
-  out[whole] <- formatC(v[whole], format = "f", digits = 0L, big.mark = ",")
-  formatC(out, width = max(c(0L, nchar(out))))
+  out[whole] <- .rmbl_fc(v[whole], format = "f", digits = 0L, big.mark = ",")
+  .rmbl_fc(out, width = max(c(0L, nchar(out))))
 }
 
 #' Text columns cut so that the first column and any other one fit side by

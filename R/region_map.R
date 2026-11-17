@@ -151,7 +151,7 @@ print.rmbl_region_coverage <- function(x, n = 10L, ...) {
 #' @export
 format.rmbl_region_coverage <- function(x, n = 10L, ...) {
   a <- attr(x, "coverage")
-  fm <- function(v) format(round(v), big.mark = ",", trim = TRUE)
+  fm <- function(v) .rmbl_ntxt(round(v))
   n <- min(as.integer(n)[1L], nrow(x))
   d <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(d, "coverage") <- NULL

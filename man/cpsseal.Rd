@@ -44,8 +44,16 @@ A provenance already pinned (one with \code{resource$sha256}) is left as
 it is. Side effects: writes \code{data_provenance.json} (first run) and
 \code{capsule_bundle.json} in each capsule.
 
-Errors, before anything is written: no provenance under \code{path}, or
-a folder under it that cannot be read; a capsule that already has a
+Capsules are searched for as \code{cpschk()} searches: a link to a
+folder inside \code{path} is followed, each real folder once; a link to
+a folder on the way down or above it (a loop) is not followed; a link to
+any other folder outside \code{path} is not followed and refuses the
+seal, named, since a capsule behind it would be neither sealed nor
+checked: seal that folder where it is, and copy it in or remove the link.
+
+Errors, before anything is written: no provenance under \code{path}, a
+folder under it that cannot be read, or a link out of it as above; a
+capsule that already has a
 bundle, unless \code{overwrite}; a key that cannot sign (a public key,
 or anything \code{\link{cpsatst}} refuses: a key other than an XMSS key
 signs a throwaway manifest first, which changes nothing), or an XMSS key
@@ -56,8 +64,11 @@ a file in the capsule, a provenance that cannot be pinned or that is no
 JSON (the file named), a \code{manifest.json} that does not hold a JSON
 object, a provenance or bundle file that cannot be written to, every
 refusal of \code{cpsbndl()} short of the signature (links, names, files
-that cannot be read, a folder that cannot be written to, a temporary left
-by a write that was cut short), and anything \code{cpschk()} would report
+that cannot be read, a folder that cannot be written to, a link whose
+target does not exist, a temporary left by a write that was cut short:
+every such \code{.rmbl-*.tmp} file in the tree is named, however many),
+each headed by the capsule's folder, and anything \code{cpschk()} would
+report
 as an error once the capsule is sealed (a \code{manifest.json} that fails
 its schema, a data file that does not read as a table, the checks of
 \code{\link{vrfcps}}), found by the check's own code. Each pinned
@@ -65,13 +76,26 @@ provenance is worked out in memory first. So a tree \code{cpsseal()}
 has sealed passes \code{cpschk()}, but for what depends on the check's
 options (\code{allowfile}, a source that has drifted).
 
-What cannot be known before writing (the disk filling up, a file that
-changes or stops being readable during the seal, a signature that fails)
-stops the seal: every file it had written is then put back as it was
-(each is copied aside before it is replaced and renamed back, which
-needs no room on the disk), and the error says which files, if any,
-could not be. XMSS indices a failed seal signed with stay used, as they
-must.
+The data file is found to read as a table as \code{cpschk()} reads it:
+its header and first rows by \code{read.csv()}, the rest a block of
+65,536 rows at a time, so memory stays at about that many fields and the
+longest line whatever the file's size, and a refusal gives
+\code{read.csv()}'s reason. Only a provenance that pins a schema has the
+table read whole, for the schema's checks.
+
+What cannot be known before writing (the disk filling up, a file or a
+link that changes or stops being readable during the seal, as
+\code{cpsbndl()} finds it, a signature that fails) stops the seal, as an
+error or Ctrl-C (an interrupt) does: every file it had written is then
+put back as it was (each is copied aside before it is replaced and
+renamed back, which needs no room on the disk), and the error says which
+files, if any, could not be. A seal killed by a signal R cannot catch
+(SIGKILL, SIGTERM, a lost machine) puts nothing back: some capsules may
+be sealed and others not, and each capsule it had sealed keeps its copies
+as \code{.rmbl-*.tmp} files. The next seal refuses the tree and names
+every one of them; delete exactly those and seal again with
+\code{overwrite = TRUE} (\code{rmbl sign --overwrite}). XMSS indices a
+failed seal signed with stay used, as they must.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

@@ -326,7 +326,7 @@ capdeps <- function(pkgs = loadedNamespaces()) {
     stop("`pkgs` must be a character vector of package names", call. = FALSE)
   }
   .rmbl_valid_text(pkgs, "pkgs")
-  pkgs <- sort(unique(as.character(pkgs)))
+  pkgs <- .rmbl_bsort(unique(as.character(pkgs)))
   pg <- blprog("reading package descriptions", length(pkgs))
   on.exit(pg$done(), add = TRUE)
   rows <- lapply(pkgs, function(p) {

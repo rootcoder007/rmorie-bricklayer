@@ -629,14 +629,14 @@ vrfsha256 <- function(path, expsha) {
   # provenance JSON hands the pinned digest over as a length-1 list;
   # identical() on list-vs-character never matched, so every intact
   # capsule reported a mismatch between two identical strings.
-  expected <- tolower(trimws(as.character(unlist(expsha))))
+  expected <- .rmbl_lower(trimws(as.character(unlist(expsha))))
   if (length(expected) != 1L || is.na(expected)) {
     stop("`expsha` must be a single SHA-256 hex string", call. = FALSE)
   }
   list(
     actual = actual,
     expected = expected,
-    match = identical(tolower(actual), expected)
+    match = identical(.rmbl_lower(actual), expected)
   )
 }
 
@@ -1054,10 +1054,11 @@ rslvarc <- function(prov) {
   for (pkg in .rmbl_recs(resp$result$results)) {
     for (r in .rmbl_recs(pkg$resources)) {
       name <- if (is.null(r$name)) "" else r$name
-      fmt <- toupper(r$format %||% "")
+      fmt <- .rmbl_upper(r$format %||% "")
       if (
-        grepl(pat, name, ignore.case = TRUE) &&
-          (fmt == "CSV" || is.null(res$format) || toupper(res$format) == fmt)
+        grepl(.rmbl_ci(pat), name, perl = TRUE) &&
+          (fmt == "CSV" || is.null(res$format) ||
+             .rmbl_upper(res$format) == fmt)
       ) {
         return(.rmbl_check_public_url(r$url, "the CKAN resource URL"))
       }
@@ -1081,9 +1082,9 @@ rslvarc <- function(prov) {
   url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
   if (exists("bldl", mode = "function")) {
     bldl(url, dest, quiet = FALSE, allowfile = allow_file)
-  } else if (grepl("^file://", url, ignore.case = TRUE)) {
+  } else if (grepl(.rmbl_ci("^file://"), url, perl = TRUE, useBytes = TRUE)) {
     # allowed only when asked for (offline tests): a local copy
-    src <- sub("^file://", "", url, ignore.case = TRUE)
+    src <- sub(.rmbl_ci("^file://"), "", url, perl = TRUE)
     if (!file.exists(src)) {
       stop(sprintf("cannot open the file %s", src), call. = FALSE)
     }
@@ -1145,7 +1146,7 @@ rslvarc <- function(prov) {
 #' @param msg The failed download's error message, matched for known causes.
 #' @noRd
 .fdl_causes <- function(msg) {
-  has <- function(p) grepl(p, msg, ignore.case = TRUE)
+  has <- function(p) grepl(.rmbl_ci(p), msg, perl = TRUE, useBytes = TRUE)
   known <- has(paste0(
     "429|too ",
     "many|rate|SSL|TLS|certificate|handshake|UNEXPECTED_EOF|could ",
@@ -1620,7 +1621,7 @@ rslvarc <- function(prov) {
 .rmbl_ckan_pick <- function(resources, pat) {
   for (r in .rmbl_recs(resources)) {
     name <- if (is.null(r$name)) "" else r$name
-    if (grepl(pat, name, ignore.case = TRUE)) {
+    if (grepl(.rmbl_ci(pat), name, perl = TRUE)) {
       # a hostile record is an error in words, not "source unreachable"
       return(.rmbl_check_public_url(r$url, "the CKAN resource URL"))
     }

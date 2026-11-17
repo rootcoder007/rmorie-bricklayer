@@ -78,9 +78,9 @@
   }
   x <- as.numeric(x[[1L]])
   if (is.finite(x) && x != 0 && abs(x) < 1e-4) {
-    return(formatC(x, digits = 2L, format = "e"))
+    return(.rmbl_fc(x, digits = 2L, format = "e"))
   }
-  trimws(formatC(
+  trimws(.rmbl_fc(
     signif(x, digits),
     digits = digits,
     format = "fg",
@@ -302,7 +302,7 @@
     ),
     vb(
       "n",
-      if (!is.null(h$n)) format(h$n, big.mark = ",") else "Not reported",
+      if (!is.null(h$n)) .rmbl_ntxt(h$n) else "Not reported",
       if (!is.null(h$p)) sprintf("p = %s", .bl_num(h$p, 3L))
     ),
     vb(
@@ -352,7 +352,7 @@
 .bl_vbox_value <- function(h) {
   .bl_num(h$est) %||%
     if (!is.null(h$rows)) {
-      sprintf("%s rows", format(h$rows, big.mark = ","))
+      sprintf("%s rows", .rmbl_ntxt(h$rows))
     } else {
       "See the table"
     }
@@ -802,7 +802,7 @@
         class = "bl-about",
         sprintf(
           "The first 200 of %s rows; the CSV has them all.",
-          format(nrow(t), big.mark = ",")
+          .rmbl_ntxt(nrow(t))
         )
       )
     }

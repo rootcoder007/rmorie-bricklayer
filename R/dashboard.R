@@ -1860,7 +1860,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
     shiny::tags$strong(d$label),
     sprintf(
       ": %s rows, %d columns",
-      format(nrow(d$data), big.mark = ","),
+      .rmbl_ntxt(nrow(d$data)),
       ncol(d$data)
     )
   )

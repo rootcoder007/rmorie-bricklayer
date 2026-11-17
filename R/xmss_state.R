@@ -20,7 +20,10 @@
 #' places, or a bundle and its log line) is not a reuse.
 #'
 #' @param path A directory (every `capsule_bundle.json` under it) or one bundle
-#'   file.
+#'   file. A directory is searched as [cpschk()] searches it: a link to a
+#'   folder inside it is followed, each real folder once, and a loop is not;
+#'   a folder that cannot be read, or a link to any other folder outside
+#'   it, is refused, named, since a signature behind it would not be seen.
 #' @param seenlog Seen-log files to read as well, or NULL. A file that does not
 #'   exist yet is an empty log; a directory, or a log with a malformed line, is
 #'   refused.
@@ -78,10 +81,12 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 #' "xmssidxseen: ...", a function the user had not called.
 #' @param path A directory or a bundle file, checked.
 #' @param seenlog Seen logs, or NULL.
+#' @param strict As for .bl_find(): cpschk() reports a link it did not
+#'   follow as a row of its own.
 #' @return The data frame.
 #' @noRd
-.rmbl_xmss_seen <- function(path, seenlog = NULL) {
-  rows <- lapply(.rmbl_xmss_bundle_files(path), .rmbl_xmss_bundle_row)
+.rmbl_xmss_seen <- function(path, seenlog = NULL, strict = TRUE) {
+  rows <- lapply(.rmbl_xmss_bundle_files(path, strict), .rmbl_xmss_bundle_row)
   rows <- c(rows, lapply(seenlog, .rmbl_xmss_seen_read))
   .rmbl_xmss_seen_df(rows)
 }
@@ -96,7 +101,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 #' @return 16 hex characters.
 #' @noRd
 .rmbl_xmss_fpr <- function(public) {
-  substr(tolower(csha256(charToRaw(tolower(public)))), 1L, 16L)
+  substr(.rmbl_lower(csha256(charToRaw(.rmbl_lower(public)))), 1L, 16L)
 }
 
 #' A digest of one XMSS signature (its wire form), to tell two signatures at one
@@ -105,7 +110,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 #' @return 16 hex characters.
 #' @noRd
 .rmbl_xmss_sigd <- function(wire) {
-  substr(tolower(csha256(charToRaw(tolower(wire)))), 1L, 16L)
+  substr(.rmbl_lower(csha256(charToRaw(.rmbl_lower(wire)))), 1L, 16L)
 }
 
 #' The host fingerprint of a state's writer: SHA-256 of the host name and the
@@ -123,7 +128,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
     error = function(e) ""
   )
   substr(
-    tolower(csha256(charToRaw(paste0(
+    .rmbl_lower(csha256(charToRaw(paste0(
       "rmoriebricklayer xmss writer\n",
       Sys.info()[["nodename"]],
       "\n",
@@ -534,7 +539,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
   }
   i <- sec$index %||%
     (strtoi(
-      substr(tolower(csha256(charToRaw(paste0(sec$name, fpr)))), 1L, 7L),
+      substr(.rmbl_lower(csha256(charToRaw(paste0(sec$name, fpr)))), 1L, 7L),
       16L
     ) %%
       kk)
@@ -732,7 +737,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
       "\t",
       df$sig,
       "\t",
-      gsub("[\t\r\n]", " ", df$where),
+      gsub("[\t\r\n]", " ", df$where, useBytes = TRUE),
       "\n",
       collapse = ""
     )
@@ -742,12 +747,14 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 
 #' The capsule bundles under a path: the path itself when it is a file.
 #' @param path A directory or a bundle file.
+#' @param strict TRUE to refuse a link out of the folder, as .bl_find()
+#'   does.
 #' @return The bundle files' paths.
 #' @noRd
-.rmbl_xmss_bundle_files <- function(path) {
+.rmbl_xmss_bundle_files <- function(path, strict = TRUE) {
   if (dir.exists(path)) {
     # walked as cpschk() walks it: a link loop is not followed (.bl_find())
-    .bl_find(path, "capsule_bundle.json")
+    .bl_find(path, "capsule_bundle.json", strict)
   } else {
     path
   }

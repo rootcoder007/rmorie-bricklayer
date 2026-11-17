@@ -1494,7 +1494,7 @@ plot.rmbl_pollution_report <- function(
     if (is.null(main)) {
       sprintf(
         "%s, %s",
-        toupper(x$pollutant),
+        .rmbl_upper(x$pollutant),
         gsub("_", " ", x$outcome, fixed = TRUE)
       )
     } else {
@@ -2434,8 +2434,8 @@ plotcal <- function(x, y, ..., main = NULL, col = NULL, pal = NULL) {
     main,
     sprintf(
       "Daily values, %s to %s",
-      format(r[1L], big.mark = ","),
-      format(r[2L], big.mark = ",")
+      .rmbl_ntxt(r[1L]),
+      .rmbl_ntxt(r[2L])
     )
   ))
   invisible(d[, c("date", "year", "week", "wday", "y")])
@@ -2807,7 +2807,7 @@ plotbump <- function(
 #' @noRd
 .bl_bar_labels <- function(mids, h, horiz) {
   say <- is.finite(h)
-  txt <- trimws(formatC(h[say], digits = 3, format = "fg", big.mark = ","))
+  txt <- trimws(.rmbl_fc(h[say], digits = 3, format = "fg", big.mark = ","))
   if (horiz) {
     graphics::text(
       h[say],
@@ -2944,7 +2944,7 @@ plotbump <- function(
     graphics::text(
       x[n],
       y[n],
-      trimws(formatC(y[n], digits = 3, format = "fg", big.mark = ",")),
+      trimws(.rmbl_fc(y[n], digits = 3, format = "fg", big.mark = ",")),
       pos = 3,
       offset = 0.7,
       cex = 0.8,
@@ -3031,7 +3031,9 @@ plotbump <- function(
 #' @param digits The number of significant digits.
 #' @return A character vector.
 #' @noRd
-.bl_label <- function(x, digits = 3) format(x, digits = digits, big.mark = ",")
+.bl_label <- function(x, digits = 3) {
+  format(x, digits = digits, big.mark = ",", decimal.mark = ".")
+}
 
 #' The title: the caller's, or the method's default
 #' @param main The caller's title, or NULL.
@@ -4568,7 +4570,7 @@ plotbump <- function(
       "%s: %s, PSI %s",
       cl,
       v,
-      formatC(sum(b$contrib), digits = 3, format = "g")
+      .rmbl_fc(sum(b$contrib), digits = 3, format = "g")
     )
   )
   if (!is.null(s$hist)) {
@@ -4617,7 +4619,7 @@ plotbump <- function(
     sprintf(
       "%s: largest gap %s",
       cl,
-      trimws(formatC(max(abs(e$ref - e$cur)), digits = 3, format = "g"))
+      trimws(.rmbl_fc(max(abs(e$ref - e$cur)), digits = 3, format = "g"))
     )
   ))
   .bl_ylab("Share at or below")
@@ -5762,7 +5764,7 @@ plotbump <- function(
   top <- utils::head(order(-b$contrib), 3L)
   cap <- paste0(
     "largest PSI terms: ",
-    toString(trimws(formatC(b$contrib[top], digits = 2, format = "g"))),
+    toString(trimws(.rmbl_fc(b$contrib[top], digits = 2, format = "g"))),
     if (nrow(b) > 3L) " ..." else ""
   )
   cx <- min(
@@ -5806,7 +5808,7 @@ plotbump <- function(
   graphics::text(
     colMeans(mids),
     apply(m, 2L, max),
-    formatC(bb$contrib, digits = 2, format = "g"),
+    .rmbl_fc(bb$contrib, digits = 2, format = "g"),
     pos = 3,
     cex = 0.6,
     col = "#3D4350",
@@ -5949,5 +5951,5 @@ plotbump <- function(
 #' @return TRUE or FALSE.
 #' @noRd
 .bl_bw_rule <- function(bw, rules) {
-  length(bw) == 1L && !is.na(bw) && validEnc(bw) && tolower(bw) %in% rules
+  length(bw) == 1L && !is.na(bw) && validEnc(bw) && .rmbl_lower(bw) %in% rules
 }

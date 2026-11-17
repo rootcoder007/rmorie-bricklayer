@@ -159,7 +159,7 @@ drvkey <- function(pass, salt, iter = 100000L, length = 32L) {
   .bl_busy(
     sprintf(
       "deriving a key (%s PBKDF2 iterations)",
-      format(iter, big.mark = ",")
+      .rmbl_ntxt(iter)
     ),
     .Call(C_rmbl_pbkdf2, pass, salt, iter, length)
   )

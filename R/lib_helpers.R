@@ -331,7 +331,7 @@ wrtxtfb <- function(text, path) {
   }
   if (isTRUE(base)) {
     f <- get("sha256sum", envir = asNamespace("tools"))
-    return(unname(tolower(f(path))))
+    return(unname(.rmbl_lower(f(path))))
   }
   h <- if (is.function(os)) os(path)
   if (!is.null(h)) {
@@ -438,7 +438,7 @@ wrtxtfb <- function(text, path) {
     # line with a backslash
     h <- sub("^\\\\", "", sub("[ \t].*$", "", out))
   }
-  h <- tolower(grep("^[0-9A-Fa-f]{64}$", h, value = TRUE))
+  h <- .rmbl_lower(grep("^[0-9A-Fa-f]{64}$", h, value = TRUE))
   if (length(h)) h[[1L]] else NULL
 }
 
@@ -611,7 +611,8 @@ wrtxtfb <- function(text, path) {
     .rmbl_fetch_url(x, dest)
     x <- dest
   }
-  isf <- length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x)
+  isf <- length(x) == 1L && !grepl("^\\s*[\\[{\"]", x, useBytes = TRUE) &&
+    file.exists(x)
   # text that is also a device's name (nul, con on Windows) stays text
   txt <- if (isf && .rmbl_isreg(x)) {
     # the package's JSON documents are held to the 32 MiB its manifest reader
@@ -755,14 +756,18 @@ wrtxtfb <- function(text, path) {
 #' on every system (`strict`): those, and a name that is not UTF-8, holds a
 #' backslash, one of \code{< > : " | ? *} or a control character, or has a
 #' part that ends in a dot or a space or that Windows reserves (CON, PRN,
-#' AUX, NUL, COM1 to COM9, LPT1 to LPT9, with any extension). So what is
-#' bundled verifies, and what the check refuses is never signed.
+#' AUX, NUL, COM1 to COM9, LPT1 to LPT9, COM and LPT with a superscript
+#' 1, 2 or 3, with any extension). So what is bundled verifies, and what
+#' the check refuses is never signed. Letters are compared by their ASCII
+#' bytes (.rmbl_lower()): with ignore.case, a Turkish locale did not take
+#' "I:" for a drive letter.
 #' @param rel Relative paths, their parts parted by "/".
 #' @param strict TRUE when a bundle is made.
 #' @return For each, the reason it is refused, or "".
 #' @noRd
 .rmbl_relwhy <- function(rel, strict = FALSE) {
-  g <- function(re) grepl(re, rel, ignore.case = TRUE, useBytes = TRUE)
+  low <- .rmbl_lower(rel)
+  g <- function(re) grepl(re, low, perl = TRUE, useBytes = TRUE)
   why <- list(
     "it is empty" = !nzchar(rel),
     "it is an absolute path" = g("^[/\\\\]"),
@@ -771,17 +776,20 @@ wrtxtfb <- function(text, path) {
     "it has an empty, . or .. part" = g("(^|[/\\\\])[.]{0,2}([/\\\\]|$)")
   )
   if (strict) {
+    # superscript one, two and three in UTF-8
+    sup <- "\\xc2\\xb9|\\xc2\\xb2|\\xc2\\xb3"
     win <- stats::setNames(list(
       g("[\\\\]"),
       g("[<>:\"|?*\001-\037]"),
       g("[. ](/|$)"),
-      g("(^|/)(con|prn|aux|nul|com[1-9]|lpt[1-9])([.][^/]*)?(/|$)")
+      g(paste0("(^|/)(con|prn|aux|nul|(com|lpt)([1-9]|", sup,
+               "))([.][^/]*)?(/|$)"))
     ), c(
       "it holds a backslash, which parts folders on Windows",
       "it holds < > : \" | ? * or a control character, which Windows refuses",
       "a part of it ends in a dot or a space, which Windows drops",
       paste("a part of it is a name Windows reserves (CON, PRN, AUX, NUL,",
-            "COM1-9, LPT1-9)")
+            "COM1-9, LPT1-9, COM or LPT with a superscript 1, 2 or 3)")
     ))
     why <- c(list("it is not valid text (UTF-8)" = !validUTF8(rel)), why, win)
   }
@@ -806,8 +814,250 @@ wrtxtfb <- function(text, path) {
     tail <- c(basename(p), tail)
     p <- dirname(p)
   }
-  p <- sub("/+$", "", normalizePath(p, winslash = "/", mustWork = FALSE))
+  # by its bytes: a folder name that is not UTF-8 stopped sub() in a UTF-8
+  # locale ("input string 1 is invalid")
+  p <- sub("/+$", "", normalizePath(p, winslash = "/", mustWork = FALSE),
+           useBytes = TRUE)
   if (length(tail)) paste(c(p, tail), collapse = "/") else p
+}
+
+#' Letters A to Z made lower case by their bytes, whatever the locale.
+#'
+#' tolower() and ignore.case follow the locale: in a Turkish one "I" is not
+#' the capital of "i". Every byte outside A to Z is kept, so text that is
+#' not UTF-8 is never refused and other letters are left as they are.
+#' @param x Text whose capitals are made small.
+#' @return `x` with A to Z made a to z, its encoding marks and names kept.
+#' @noRd
+.rmbl_lower <- function(x) {
+  x <- as.character(x)
+  up <- !is.na(x) & grepl("[A-Z]", x, perl = TRUE, useBytes = TRUE)
+  x[up] <- vapply(x[up], function(s) {
+    b <- charToRaw(s)
+    u <- b >= as.raw(0x41) & b <= as.raw(0x5a)
+    b[u] <- as.raw(as.integer(b[u]) + 32L)
+    r <- rawToChar(b)
+    Encoding(r) <- Encoding(s)
+    r
+  }, "", USE.NAMES = FALSE)
+  x
+}
+
+#' Letters a to z made upper case by their bytes, whatever the locale (in a
+#' Turkish one toupper("i") is a dotted capital I).
+#' @param x Text whose small letters are made capitals.
+#' @return `x` with a to z made A to Z, its encoding marks and names kept.
+#' @noRd
+.rmbl_upper <- function(x) {
+  x <- as.character(x)
+  lo <- !is.na(x) & grepl("[a-z]", x, perl = TRUE, useBytes = TRUE)
+  x[lo] <- vapply(x[lo], function(s) {
+    b <- charToRaw(s)
+    u <- b >= as.raw(0x61) & b <= as.raw(0x7a)
+    b[u] <- as.raw(as.integer(b[u]) - 32L)
+    r <- rawToChar(b)
+    Encoding(r) <- Encoding(s)
+    r
+  }, "", USE.NAMES = FALSE)
+  x
+}
+
+#' A regular expression made to match ASCII letters of either case by
+#' itself, for perl = TRUE: ignore.case follows the locale, and in a
+#' Turkish one "I" does not match "i".
+#'
+#' Each letter outside a class becomes a class of both cases; a letter or a
+#' range of letters inside one gains the other case. What follows a
+#' backslash is kept as it is, with its braces (\\p{L}, \\x{e9}), as are
+#' POSIX classes ([:alpha:]).
+#' @param re One regular expression.
+#' @return The expression.
+#' @noRd
+.rmbl_ci <- function(re) {
+  ch <- strsplit(re, "", useBytes = TRUE)[[1L]]
+  out <- character()
+  i <- 1L
+  cls <- FALSE
+  while (i <= length(ch)) {
+    r <- .rmbl_ci1(ch, i, cls)
+    out <- c(out, r$s)
+    cls <- r$cls
+    i <- r$i
+  }
+  paste(out, collapse = "")
+}
+
+#' One step of .rmbl_ci(): the text for the characters at `i`.
+#' @param ch The expression's characters.
+#' @param i Where the step starts.
+#' @param cls Whether `i` is inside a bracketed class.
+#' @return A list: `s` (the text), `i` (where the next step starts) and
+#'   `cls`.
+#' @noRd
+.rmbl_ci1 <- function(ch, i, cls) {
+  c1 <- ch[[i]]
+  if (c1 == "\\") {
+    return(.rmbl_ci_esc(ch, i, cls))
+  }
+  if (c1 == "[" || (cls && c1 == "]")) {
+    return(.rmbl_ci_br(ch, i, cls))
+  }
+  .rmbl_ci_let(ch, i, cls)
+}
+
+#' A backslash and what it escapes, with the braces that follow (\\p{L}),
+#' kept as they are.
+#' @inheritParams .rmbl_ci1
+#' @return As for .rmbl_ci1().
+#' @noRd
+.rmbl_ci_esc <- function(ch, i, cls) {
+  j <- i + 1L
+  if (j + 1L <= length(ch) && ch[[j + 1L]] == "{") {
+    j <- match("}", ch[-seq_len(j)], length(ch) - j) + j
+  }
+  list(s = paste(ch[i:min(j, length(ch))], collapse = ""), i = j + 1L,
+       cls = cls)
+}
+
+#' A bracket: the start of a class (with a leading ^ and ]), its end, a
+#' POSIX class inside one ([:alpha:]), or a literal bracket inside one.
+#' @inheritParams .rmbl_ci1
+#' @return As for .rmbl_ci1().
+#' @noRd
+.rmbl_ci_br <- function(ch, i, cls) {
+  at <- function(k) if (k <= length(ch)) ch[[k]] else ""
+  if (!cls) {
+    j <- i + 1L
+    j <- j + (at(j) == "^")
+    j <- j + (at(j) == "]")
+    return(list(s = paste(ch[i:(j - 1L)], collapse = ""), i = j, cls = TRUE))
+  }
+  if (ch[[i]] == "]") {
+    return(list(s = "]", i = i + 1L, cls = FALSE))
+  }
+  if (at(i + 1L) != ":") {
+    return(list(s = "[", i = i + 1L, cls = TRUE))
+  }
+  j <- match("]", ch[-seq_len(i)], length(ch) - i) + i
+  list(s = paste(ch[i:j], collapse = ""), i = j + 1L, cls = TRUE)
+}
+
+#' A character outside a backslash and brackets: an ASCII letter (or a
+#' range of them in a class) gains its other case.
+#' @inheritParams .rmbl_ci1
+#' @return As for .rmbl_ci1().
+#' @noRd
+.rmbl_ci_let <- function(ch, i, cls) {
+  both <- function(x) paste0(.rmbl_lower(x), .rmbl_upper(x))
+  c1 <- ch[[i]]
+  r3 <- paste(ch[i:min(i + 2L, length(ch))], collapse = "")
+  if (cls && grepl("^[A-Za-z]-[A-Za-z]$", r3, perl = TRUE)) {
+    return(list(s = both(r3), i = i + 3L, cls = TRUE))
+  }
+  if (!grepl("^[A-Za-z]$", c1, perl = TRUE)) {
+    return(list(s = c1, i = i + 1L, cls = cls))
+  }
+  list(s = if (cls) both(c1) else paste0("[", both(c1), "]"), i = i + 1L,
+       cls = cls)
+}
+
+#' The tables of .rmbl_caseless(), read once from inst/unicode.
+#' @return An environment: `dk`, `dv` (canonical decompositions), `fk`,
+#'   `fv` (simple case folding) and `ck`, `cv` (combining classes).
+#' @noRd
+.rmbl_uc_tab <- function() {
+  t <- .rmbl_uc
+  if (is.null(t$dk)) {
+    f <- system.file("unicode", "caseless.txt", package = "rmoriebricklayer")
+    p <- strsplit(readLines(f), " ", fixed = TRUE)
+    k <- vapply(p, `[[`, "", 1L)
+    h <- function(kind, i) {
+      strtoi(vapply(p[k == kind], `[[`, "", i), 16L)
+    }
+    t$dv <- lapply(p[k == "D"], function(x) strtoi(x[-1:-2], 16L))
+    t$dk <- h("D", 2L)
+    t$fk <- h("F", 2L)
+    t$fv <- h("F", 3L)
+    t$ck <- h("C", 2L)
+    t$cv <- as.integer(vapply(p[k == "C"], `[[`, "", 3L))
+  }
+  t
+}
+
+.rmbl_uc <- new.env(parent = emptyenv())
+
+#' Code points in Unicode's canonical decomposition (NFD): each decomposed
+#' fully (by the table, a Hangul syllable by its arithmetic) and each run of
+#' combining marks put in the order of their classes.
+#' @param u Code points.
+#' @param t The tables (.rmbl_uc_tab()).
+#' @return Code points.
+#' @noRd
+.rmbl_nfd <- function(u, t) {
+  parts <- as.list(u)
+  i <- match(u, t$dk)
+  parts[!is.na(i)] <- t$dv[i[!is.na(i)]]
+  hg <- which(u >= 0xAC00 & u <= 0xD7A3)
+  parts[hg] <- lapply(u[hg] - 0xAC00, function(s) {
+    c(0x1100 + s %/% 588, 0x1161 + (s %% 588) %/% 28,
+      if (s %% 28) 0x11A7 + s %% 28)
+  })
+  u <- as.integer(unlist(parts, use.names = FALSE))
+  cc <- t$cv[match(u, t$ck)]
+  cc[is.na(cc)] <- 0L
+  u[order(cumsum(cc == 0L), cc, seq_along(u))]
+}
+
+#' Names as one system compares them when it ignores case and Unicode
+#' normalisation: Unicode's canonical caseless match (NFD of the simple case
+#' folding of the NFD; Unicode 15.1, section 3.13, D145).
+#'
+#' The tables come from the Unicode Character Database
+#' (data-raw/unicode_caseless.R). Simple folding maps one character to
+#' one: a sharp s is not "ss" (Windows does not take them for one name
+#' either), and the Turkish dotted capital I folds to "i" with a dot above.
+#' Locale plays no part.
+#' @param x Valid UTF-8 names.
+#' @return The keys: two names clash when their keys are equal.
+#' @noRd
+.rmbl_caseless <- function(x) {
+  out <- .rmbl_lower(x)
+  wide <- which(grepl("[^\\x00-\\x7f]", x, perl = TRUE, useBytes = TRUE))
+  if (length(wide)) {
+    t <- .rmbl_uc_tab()
+    out[wide] <- vapply(x[wide], function(s) {
+      # by its bytes: utf8ToInt() refuses a string marked "bytes"
+      u <- .rmbl_nfd(utf8ToInt(rawToChar(charToRaw(s))), t)
+      f <- match(u, t$fk)
+      u[!is.na(f)] <- t$fv[f[!is.na(f)]]
+      intToUtf8(.rmbl_nfd(u, t))
+    }, "", USE.NAMES = FALSE)
+  }
+  out
+}
+
+#' The names of a bundle that one system would take for one name.
+#'
+#' Windows and macOS compare names without regard to case, and macOS
+#' without regard to Unicode normalisation: of "A.txt" and "a.txt", of
+#' "sub/x" and "SUB/x", or of e acute written as one character and as e
+#' with a combining accent, only one can be there, and a copy of the capsule
+#' fails its check. Every name and every folder above one is compared by
+#' .rmbl_caseless().
+#' @param files Valid UTF-8 paths, relative, parted by "/".
+#' @return The sets that clash, one string each ("A.txt, a.txt"); none
+#'   when there is no clash.
+#' @noRd
+.rmbl_clash <- function(files) {
+  parts <- strsplit(files, "/", fixed = TRUE, useBytes = TRUE)
+  all <- unique(unlist(lapply(parts, function(p) {
+    vapply(seq_along(p), function(i) paste(p[seq_len(i)], collapse = "/"), "")
+  }), use.names = FALSE))
+  key <- .rmbl_caseless(all)
+  hit <- key %in% key[duplicated(key)]
+  # in the order of the names, whatever the locale's collation
+  by <- factor(key[hit], levels = unique(key[hit]))
+  vapply(split(all[hit], by), .bl_names, "", USE.NAMES = FALSE)
 }
 
 #' Checks that a URL is one the package may fetch.
@@ -838,10 +1088,12 @@ wrtxtfb <- function(text, path) {
   if (is.na(url) || !nzchar(url)) {
     stop(sprintf("%s is empty", what), call. = FALSE)
   }
-  if (isTRUE(allow_file) && grepl("^file://", url, ignore.case = TRUE)) {
+  if (isTRUE(allow_file) && grepl(.rmbl_ci("^file://"), url, perl = TRUE,
+      useBytes = TRUE)) {
     return(url)
   }
-  if (!grepl("^[a-z][a-z0-9+.-]*://", url, ignore.case = TRUE)) {
+  if (!grepl(.rmbl_ci("^[a-z][a-z0-9+.-]*://"), url, perl = TRUE,
+      useBytes = TRUE)) {
     stop(sprintf("%s has no URL scheme: '%s'", what, url), call. = FALSE)
   }
   # One implementation, in C, shared with the transport itself: the authority is
@@ -866,12 +1118,10 @@ wrtxtfb <- function(text, path) {
 #' @return Does not return.
 #' @noRd
 .rmbl_url_refuse <- function(url, what, why) {
-  scheme <- tolower(sub(
-    "^([a-z][a-z0-9+.-]*)://.*$",
+  scheme <- .rmbl_lower(sub(
+    .rmbl_ci("^([a-z][a-z0-9+.-]*)://.*$"),
     "\\1",
-    url,
-    ignore.case = TRUE
-  ))
+    url, perl = TRUE))
   if (startsWith(why, "plain http") || startsWith(why, "scheme ")) {
     stop(
       sprintf(
@@ -943,21 +1193,19 @@ wrtxtfb <- function(text, path) {
 #' @noRd
 .rmbl_url_why_base <- function(url, allow_http, allow_loopback) {
   # self-contained: a staged bundle runs this without the rest of the package
-  scheme <- tolower(sub(
-    "^([a-z][a-z0-9+.-]*)://.*$",
+  scheme <- .rmbl_lower(sub(
+    .rmbl_ci("^([a-z][a-z0-9+.-]*)://.*$"),
     "\\1",
-    url,
-    ignore.case = TRUE
-  ))
+    url, perl = TRUE))
   if (!scheme %in% c("https", "http")) {
     return(sprintf("scheme %s is not allowed", scheme))
   }
   auth <- sub(
     "[/?#].*$",
     "",
-    sub("^[a-z][a-z0-9+.-]*://", "", url, ignore.case = TRUE)
+    sub(.rmbl_ci("^[a-z][a-z0-9+.-]*://"), "", url, perl = TRUE)
   )
-  host <- tolower(sub(":[0-9]*$", "", sub("^.*@", "", auth)))
+  host <- .rmbl_lower(sub(":[0-9]*$", "", sub("^.*@", "", auth)))
   loop <- host %in%
     c("localhost", "127.0.0.1", "[::1]") ||
     startsWith(host, "127.")
@@ -1058,7 +1306,7 @@ wrtxtfb <- function(text, path) {
 #' @noRd
 .rmbl_synthetic_env <- function() {
   v <- trimws(Sys.getenv("BRICKLAYER_SYNTHETIC", unset = ""))
-  nzchar(v) && !tolower(v) %in% c("0", "false", "no", "off")
+  nzchar(v) && !.rmbl_lower(v) %in% c("0", "false", "no", "off")
 }
 
 #' Parses JSON text and nothing else.
@@ -1506,7 +1754,7 @@ wrtxtfb <- function(text, path) {
 .rmbl_discard <- function(path) {
   identical(path, "/dev/null") ||
     (.Platform$OS.type == "windows" &&
-      toupper(basename(path)) %in% c("NUL", "NUL:"))
+      .rmbl_upper(basename(path)) %in% c("NUL", "NUL:"))
 }
 
 #' Whether a file is the temporary of a write that was cut short.

@@ -109,7 +109,7 @@ scests <- function(x) {
   }
   sc <- cols[is_stat]
   lab <- gsub("\\s+", " ", .rmbl_utf8(trimws(as.character(x[[sc]]))))
-  low <- tolower(lab)
+  low <- .rmbl_lower(lab)
   rt <- .sce_roles(low)
   conf <- .sce_conf(low)
   dims <- setdiff(cols, sc)
@@ -490,7 +490,7 @@ plot.rmbl_dsr <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
     .bl_main(main, "Age-standardised rates"),
     sprintf(
       "Rate per %s, with its gamma interval",
-      format(attr(x, "per"), big.mark = ",", scientific = FALSE)
+      .rmbl_ntxt(attr(x, "per"))
     ),
     .bl_cols(nrow(d), col, palette),
     ...
@@ -1893,10 +1893,9 @@ indiex <- function(
       (grepl("^(Statistics|Characteristics)\\b", n) && text) ||
         (text &&
           any(grepl(
-            "confidence interval|coefficient of variation|standard error",
-            v,
-            ignore.case = TRUE
-          )))
+            .rmbl_ci(paste0("confidence interval|coefficient of variation|",
+                            "standard error")),
+            v, perl = TRUE, useBytes = TRUE)))
     },
     NA
   )
@@ -1974,11 +1973,11 @@ indiex <- function(
   t <- m$target[i[1L]]
   cand <- m$ests
   if (nzchar(t)) {
-    exact <- m$ests[tolower(m$ests) == t]
+    exact <- m$ests[.rmbl_lower(m$ests) == t]
     cand <- if (length(exact)) {
       exact
     } else {
-      m$ests[grepl(t, tolower(m$ests), fixed = TRUE)]
+      m$ests[grepl(t, .rmbl_lower(m$ests), fixed = TRUE)]
     }
   }
   if (length(cand) > 1L && any(nzchar(m$uom))) {

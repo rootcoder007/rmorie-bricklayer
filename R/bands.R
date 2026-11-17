@@ -99,7 +99,7 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
   .rmbl_flag1(clsup, "clsup")
   .rmbl_flag1(intsca, "intsca")
   lab <- as.character(x)
-  s <- tolower(trimws(lab))
+  s <- .rmbl_lower(trimws(lab))
   # normalise the dash family, which publishers mix freely. Byte-wise, so
   # the en dash -- the commonest published separator -- parses in a C
   # locale too, where a UTF-8 pattern aborted the call.

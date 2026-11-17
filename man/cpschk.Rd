@@ -30,7 +30,8 @@ cpschk(
 }
 \arguments{
 \item{path}{Character scalar, the folder searched recursively
-(\code{.git} and \code{.rmbl-cache} folders skipped).}
+(\code{.git} and \code{.rmbl-cache} folders skipped; links as the
+details say).}
 
 \item{mode}{\code{"verify"} (the default), \code{"drift"},
 \code{"refresh"} or \code{"report"} (the verify checks).}
@@ -146,6 +147,19 @@ the skipped folders, and matching \code{glob}), nothing was checked: the
 result is one failed \code{no_capsule} row, no capsules and the status
 \code{error}, also with \code{pubkey} given.
 
+Links: a link to a folder inside \code{path} is followed, each real
+folder checked once; a link to a folder on the way down or above it (a
+loop) is not followed. A link to any other folder outside \code{path} is
+not followed, and is not passed over in silence: one failed
+\code{links_not_followed} row, of severity \code{error}, names every such
+link, so the status is \code{error} (\code{rmbl verify} exits 1). A
+capsule behind one is not checked, so the tree cannot be called sound;
+check that folder where it lies, or copy it in. A folder under
+\code{path} that cannot be read stops the check, named.
+
+A data file is found to read as a table, and its rows counted, as
+\code{\link{vrfcps}} does: a block of rows at a time, in bounded memory.
+
 Drift: when the fetched source's SHA-256 differs from the pin and the
 pinned data file is a CSV, \code{cpsdrft()} runs with
 \code{psithr = psifail}. A column is \code{drift} when \code{cpsdrft()}
@@ -176,8 +190,9 @@ Side effects: \code{"drift"} and \code{"refresh"} fetch each source
 (the network for http(s) ones), as \code{snapshot = TRUE} asks the
 Wayback Machine once per capsule (\code{\link{wbsnpurl}});
 \code{"refresh"} writes the capsules; a cache folder is written to.
-Errors: \code{path} is not a directory; a bad argument. A capsule whose
-checks stop is one failed row, not an error.
+Errors: \code{path} is not a directory; a bad argument; a folder under
+\code{path} that cannot be read. A capsule whose checks stop is one
+failed row, not an error.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

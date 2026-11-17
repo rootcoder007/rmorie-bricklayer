@@ -634,7 +634,7 @@ print.bricklayer_synthetic <- function(x, ...) {
   ## Generate columns in declaration order; later columns can see ctx
   out <- .syn_columns(schema, nrows, n_total, expand, base_p, pg)
   if (!is.null(pg)) {
-    pg$tick(0, sprintf("writing %s rows", format(n_total, big.mark = ",")))
+    pg$tick(0, sprintf("writing %s rows", .rmbl_ntxt(n_total)))
   }
   out_df <- as.data.frame(out, stringsAsFactors = FALSE)
   out_df

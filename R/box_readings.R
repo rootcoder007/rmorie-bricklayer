@@ -51,7 +51,7 @@
 #' @noRd
 .rd_num <- function(v) {
   if (is.finite(v) && abs(v) >= 1000 && abs(v) < 1e15) {
-    return(formatC(round(v), format = "f", digits = 0, big.mark = ","))
+    return(.rmbl_fc(round(v), format = "f", digits = 0, big.mark = ","))
   }
   .rmbl_fmt_num(v)
 }
@@ -380,7 +380,7 @@
   bad <- !is.na(q) & q != "ok"
   s1 <- sprintf(
     "%s values of %d characteristics in %d geographies.",
-    format(nrow(d), big.mark = ","),
+    .rmbl_ntxt(nrow(d)),
     length(unique(d$chaid)),
     length(unique(d$geo))
   )
@@ -461,7 +461,7 @@
         "Clearance is below 1 over the whole run (interval below 1): %s ",
         "more cases came in than were disposed, so the caseload grew."
       ),
-      format(net, big.mark = ",")
+      .rmbl_ntxt(net)
     )
   } else if (isTRUE(ci$lower > 1)) {
     sprintf(
@@ -469,7 +469,7 @@
         "Clearance is above 1 over the whole run (interval above 1): %s ",
         "more cases were disposed than came in, so the caseload shrank."
       ),
-      format(-net, big.mark = ",")
+      .rmbl_ntxt(-net)
     )
   } else {
     paste0(
@@ -569,12 +569,12 @@
     sprintf(
       "Expired on %s, %s days ago.",
       day(x$not_after),
-      format(floor(-left), big.mark = ",")
+      .rmbl_ntxt(floor(-left))
     )
   } else {
     sprintf(
       "In force now, for %s more days (until %s).",
-      format(floor(left), big.mark = ","),
+      .rmbl_ntxt(floor(left)),
       day(x$not_after)
     )
   }
@@ -1223,9 +1223,9 @@
   }
   sprintf(
     "%s row%s, %s column%s",
-    format(d[1L], big.mark = ","),
+    .rmbl_ntxt(d[1L]),
     if (d[1L] == 1L) "" else "s",
-    format(d[2L], big.mark = ","),
+    .rmbl_ntxt(d[2L]),
     if (d[2L] == 1L) "" else "s"
   )
 }
@@ -1248,7 +1248,7 @@
         list(if (length(cols)) toString(cols) else "none"),
         names(dropped)[1L]
       ),
-      list(`Rows dropped` = if (rows > 0L) format(rows, big.mark = ","))
+      list(`Rows dropped` = if (rows > 0L) .rmbl_ntxt(rows))
     ),
     reading = if (!length(cols) && rows == 0L) {
       "Nothing to drop: the table came back as it was."
@@ -1257,7 +1257,7 @@
         "%d column%s and %s row%s dropped.",
         length(cols),
         if (length(cols) == 1L) "" else "s",
-        format(rows, big.mark = ","),
+        .rmbl_ntxt(rows),
         if (rows == 1L) "" else "s"
       )
     },
@@ -1324,9 +1324,9 @@
     facts = list(
       Table = .rmbl_dim_txt(dim(data)),
       `Compared on` = if (length(cols)) toString(cols) else "every column",
-      `Duplicate rows` = format(nrow(out), big.mark = ","),
-      Groups = format(round(groups), big.mark = ","),
-      `Extra copies` = format(nrow(out) - round(groups), big.mark = ",")
+      `Duplicate rows` = .rmbl_ntxt(nrow(out)),
+      Groups = .rmbl_ntxt(round(groups)),
+      `Extra copies` = .rmbl_ntxt(nrow(out) - round(groups))
     ),
     reading = if (nrow(out)) {
       sprintf(
@@ -1334,9 +1334,9 @@
           "%s rows fall in %s groups of identical rows: dropping the ",
           "repeats would remove %s."
         ),
-        format(nrow(out), big.mark = ","),
-        format(round(groups), big.mark = ","),
-        format(nrow(out) - round(groups), big.mark = ",")
+        .rmbl_ntxt(nrow(out)),
+        .rmbl_ntxt(round(groups)),
+        .rmbl_ntxt(nrow(out) - round(groups))
       )
     } else {
       "No two rows are the same on these columns."

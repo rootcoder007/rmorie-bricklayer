@@ -448,7 +448,7 @@ siuso <- function(text) {
     )
   } else if (
     !grepl("[<\n]", html) &&
-      grepl("\\.html?$|[/\\\\]", html, ignore.case = TRUE)
+      grepl(.rmbl_ci("\\.html?$|[/\\\\]"), html, perl = TRUE, useBytes = TRUE)
   ) {
     # a mistyped path is not an empty report
     stop("`html`: no such file: ", html, call. = FALSE)

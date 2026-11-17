@@ -398,7 +398,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
 .bndlchk_args <- function(bundle, data, synthetic, dir, keep) {
   bundle <- .rmbl_string1(bundle, "bundle")
   if (!file.exists(bundle) || dir.exists(bundle) ||
-        !grepl("[.]zip$", bundle, ignore.case = TRUE)) {
+        !grepl(.rmbl_ci("[.]zip$"), bundle, perl = TRUE, useBytes = TRUE)) {
     stop(sprintf("`bundle` is not an existing .zip file: %s", bundle),
          call. = FALSE)
   }
@@ -959,7 +959,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
     "DYLD_FALLBACK_LIBRARY_PATH", "SSL_CERT_FILE", "SSL_CERT_DIR",
     "CURL_CA_BUNDLE", .rmbl_lcvars()
   ) |
-    (tolower(n) %in% c("http_proxy", "https_proxy", "no_proxy") &
+    (.rmbl_lower(n) %in% c("http_proxy", "https_proxy", "no_proxy") &
        !grepl("@", e, fixed = TRUE))
   keep <- keep & !grepl("[^A-Za-z0-9_]", n)
   c(
@@ -1000,12 +1000,12 @@ format.rmbl_bundle_audit <- function(x, ...) {
     "GCP|GEMINI|MISTRAL|COHERE|GROQ|HF|HUGGINGFACE|CODECOV|CLOUDFLARE|CF|",
     "R2|OLLAMA)_"
   )
-  bad <- grepl(pre, n, ignore.case = TRUE) |
-    grepl("KEY|TOKEN|SECRET|PASS|CREDENTIAL|AUTH|COOKIE|SESSION", n,
-          ignore.case = TRUE) |
-    grepl("(^|_)(DATABASE_URL|WEBHOOK_URL|DSN|SK)$|_PWD$", n,
-          ignore.case = TRUE) |
-    (startsWith(toupper(n), "LC_") & !toupper(n) %in% .rmbl_lcvars())
+  bad <- grepl(.rmbl_ci(pre), n, perl = TRUE, useBytes = TRUE) |
+    grepl(.rmbl_ci("KEY|TOKEN|SECRET|PASS|CREDENTIAL|AUTH|COOKIE|SESSION"), n,
+        perl = TRUE, useBytes = TRUE) |
+    grepl(.rmbl_ci("(^|_)(DATABASE_URL|WEBHOOK_URL|DSN|SK)$|_PWD$"), n,
+        perl = TRUE, useBytes = TRUE) |
+    (startsWith(.rmbl_upper(n), "LC_") & !.rmbl_upper(n) %in% .rmbl_lcvars())
   if (!is.null(v)) {
     # a password with or without a user name: redis://:pw@host
     bad <- bad | grepl("://[^/@[:space:]]*:[^/@[:space:]]*@", v)
@@ -1258,7 +1258,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
     bad(sprintf("has entries that leave its folder: %s", shown(nm[out])))
   }
   # empty and "." parts name the same file: a//b and a/./b are a/b
-  key <- tolower(vapply(parts, function(p) {
+  key <- .rmbl_lower(vapply(parts, function(p) {
     paste(p[!p %in% c("", ".")], collapse = "/")
   }, ""))
   dup <- duplicated(key)

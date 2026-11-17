@@ -108,8 +108,8 @@ mnfdiff <- function(old, new) {
   keys <- union(a$resource, b$resource)
   ia <- match(keys, a$resource)
   ib <- match(keys, b$resource)
-  sa <- tolower(a$sha256[ia])
-  sb <- tolower(b$sha256[ib])
+  sa <- .rmbl_lower(a$sha256[ia])
+  sb <- .rmbl_lower(b$sha256[ib])
   za <- a$size_bytes[ia]
   zb <- b$size_bytes[ib]
   eq <- sa == sb
@@ -242,7 +242,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     ifelse(
       is.na(z),
       "-",
-      format(z, big.mark = ",", scientific = FALSE, trim = TRUE)
+      .rmbl_ntxt(z)
     )
   }
   c(
@@ -385,7 +385,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       call. = FALSE
     )
   }
-  cur <- if (grepl("\\.csv$", dest, ignore.case = TRUE)) {
+  cur <- if (grepl(.rmbl_ci("\\.csv$"), dest, perl = TRUE, useBytes = TRUE)) {
     .bl_read_csv_capped(f$path)
   }
   issues <- if (is.data.frame(cur)) valsch(cur, f$old)
@@ -424,7 +424,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   s1 <- .bl_s1
   # a source in a capsule (a pull request's, in the action) is fetched over
   # https only (audit of 30bed8e, #6)
-  if (!grepl("^https://", src, ignore.case = TRUE)) {
+  if (!grepl(.rmbl_ci("^https://"), src, perl = TRUE, useBytes = TRUE)) {
     stop(
       .rmbl_fn(),
       "a source to fetch must be an https:// URL: ",
@@ -520,7 +520,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   cached <- FALSE
   tmp <- FALSE
   if (
-    grepl("^file://", src, ignore.case = TRUE) ||
+    grepl(.rmbl_ci("^file://"), src, perl = TRUE, useBytes = TRUE) ||
       !grepl("^[A-Za-z][A-Za-z0-9+.-]*://", src)
   ) {
     got <- .bl_local_source(src, dir, allowfile, root)
@@ -579,7 +579,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     )
   }
   real <- normalizePath(allowfile, winslash = "/", mustWork = TRUE)
-  if (grepl("^([A-Za-z]:)?/*$", real)) {
+  if (grepl("^([A-Za-z]:)?/*$", real, useBytes = TRUE)) {
     stop(
       .rmbl_fn(),
       "`allowfile` must not be the root of the file system",
@@ -606,7 +606,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @return The file's real path.
 #' @noRd
 .bl_local_source <- function(src, dir, allowfile, root) {
-  is_file <- grepl("^file://", src, ignore.case = TRUE)
+  is_file <- grepl(.rmbl_ci("^file://"), src, perl = TRUE, useBytes = TRUE)
   if (is_file && isFALSE(allowfile)) {
     stop(
       .rmbl_fn(),
@@ -626,7 +626,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   if (
     is.null(real) ||
       !any(startsWith(real, paste0(roots, "/"))) ||
-      grepl("^/(proc|sys|dev)(/|$)", real)
+      grepl("^/(proc|sys|dev)(/|$)", real, useBytes = TRUE)
   ) {
     stop(
       .rmbl_fn(),
@@ -650,14 +650,15 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   p <- src
   if (is_file) {
     p <- utils::URLdecode(sub(
-      "^file://(localhost)?",
+      .rmbl_ci("^file://(localhost)?"),
       "",
       src,
-      ignore.case = TRUE
+      perl = TRUE
     ))
-    p <- sub("^/([A-Za-z]:)", "\\1", p)
+    # by their bytes: a %-escape can decode to bytes that are not UTF-8
+    p <- sub("^/([A-Za-z]:)", "\\1", p, useBytes = TRUE)
   }
-  if (!grepl("^([/\\\\]|~|[A-Za-z]:)", p)) {
+  if (!grepl("^([/\\\\]|~|[A-Za-z]:)", p, useBytes = TRUE)) {
     p <- file.path(dir, p)
   }
   path.expand(p)
@@ -681,7 +682,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   sub(
     "/+$",
     "",
-    normalizePath(roots[nzchar(roots)], winslash = "/", mustWork = FALSE)
+    normalizePath(roots[nzchar(roots)], winslash = "/", mustWork = FALSE),
+    useBytes = TRUE
   )
 }
 
@@ -753,7 +755,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
         "rmoriebricklayer.maxcsvbytes and rmoriebricklayer.maxgzratio)"
       ),
       basename(p),
-      format(lim, big.mark = ",", scientific = FALSE)
+      .rmbl_ntxt(lim)
     ),
     call. = FALSE
   )
@@ -812,15 +814,17 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     tz = "UTC"
   )
   if (had_rows) {
-    d <- .bl_read_csv_capped(got)
-    if (is.null(d)) {
+    # counted as the check counts them (.vc_csv_scan()), a block at a time
+    d <- .vc_csv_scan(got)
+    if (!is.null(d$why)) {
       stop(
         .rmbl_fn(),
-        "the source does not read as a CSV, so its rows cannot be counted",
+        "the source does not read as a CSV, so its rows cannot be counted: ",
+        d$why,
         call. = FALSE
       )
     }
-    prov$resource$row_count_data_rows <- nrow(d)
+    prov$resource$row_count_data_rows <- d$n
   }
   prov
 }
@@ -1121,36 +1125,44 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @param root The directory searched.
 #' @param glob Only capsule files whose path matches this glob (its `*` also
 #' matches \code{"/"}), or \code{""}.
-#' @return Sorted directory paths.
+#' @param strict TRUE to refuse a link out of `root` (.bl_find()).
+#' @return Sorted directory paths; attribute "outside" as .bl_find() gives
+#'   it.
 #' @noRd
-.bl_capsule_dirs <- function(root, glob = "") {
+.bl_capsule_dirs <- function(root, glob = "", strict = TRUE) {
   # a folder whose name starts with a dot is searched too: a capsule
   # renamed to .two was neither sealed nor checked, and the result was ok
-  f <- .bl_find(root, c("data_provenance.json", "capsule_bundle.json"))
+  f <- .bl_find(root, c("data_provenance.json", "capsule_bundle.json"),
+                strict)
   if (nzchar(glob)) {
     f <- f[grepl(.bl_glob_rx(glob), f, useBytes = TRUE)]
   }
-  d <- sort(unique(dirname(f)))
+  # sorted by their bytes, the same in every locale
+  d <- .rmbl_bsort(unique(dirname(f)))
   # one capsule once: list.files() followed a link back up the tree, and a
   # loop listed the same capsule under every depth the system allowed, a
   # 209 KB report (audit of 30bed8e, #17)
-  d[!duplicated(normalizePath(d, winslash = "/", mustWork = FALSE))]
+  d <- d[!duplicated(normalizePath(d, winslash = "/", mustWork = FALSE))]
+  structure(d, outside = attr(f, "outside"))
 }
 
 #' The files of given names under a folder, found by .bl_walk()'s search:
-#' no link to a folder is followed (one inside is found by its own path,
-#' one that leaves the folder is not searched), and each real folder is
-#' searched once.
+#' a link to a folder inside the folder is followed, each real folder
+#' searched once; a link to a folder outside it is not followed.
 #'
 #' A folder that cannot be read is refused: a capsule in it was left
-#' unsealed and unchecked without a word. The refusal is headed by the
-#' function the user called (.rmbl_fn()): no exported function lies between
-#' it and this one.
+#' unsealed and unchecked without a word. A link not followed is refused
+#' too (`strict`), or returned for the caller to report: skipped without a
+#' word, a capsule linked in from another disk went unchecked and the check
+#' said "ok". The refusals are headed by the function the user called
+#' (.rmbl_fn()): no exported function lies between it and this one.
 #' @param root The folder searched for files named `names`.
 #' @param names The file names looked for.
-#' @return Their paths, under `root` (relative when `root` is ".").
+#' @param strict TRUE to refuse a link that leaves `root`.
+#' @return Their paths, under `root` (relative when `root` is "."), with
+#'   attribute "outside": the links not followed, named the same way.
 #' @noRd
-.bl_find <- function(root, names) {
+.bl_find <- function(root, names, strict = TRUE) {
   root <- .rmbl_fspath(root)
   w <- .bl_walk(root, search = TRUE)
   if (length(w$unread)) {
@@ -1158,15 +1170,34 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       .rmbl_fn(),
       "a folder under ", .bl_names(root), " cannot be read (permission ",
       "denied), so a capsule in it would be missed; make it readable or ",
-      "move it: ", .bl_names(w$unread),
+      "move it: ", .bl_names(w$unread, Inf),
       call. = FALSE
     )
   }
-  b <- sub("^.*/", "", w$files, useBytes = TRUE)
-  f <- w$files[.rmbl_bytes(b) %in% names]
   # named as list.files(full.names = TRUE) named them, less a leading "./"
-  top <- if (identical(root, ".")) "" else sub("^[.]/", "", root)
-  if (nzchar(top)) .rmbl_jpath(top, f) else f
+  top <- if (identical(root, ".")) "" else sub("^[.]/", "", root,
+                                                  useBytes = TRUE)
+  under <- function(x) if (nzchar(top) && length(x)) .rmbl_jpath(top, x) else x
+  out <- under(w$outside)
+  if (strict && length(out)) {
+    stop(.rmbl_fn(), .bl_link_out(root, out), call. = FALSE)
+  }
+  b <- sub("^.*/", "", w$files, useBytes = TRUE)
+  structure(under(w$files[.rmbl_bytes(b) %in% names]), outside = out)
+}
+
+#' What a search says of the links it did not follow.
+#' @param root The folder the search was made in.
+#' @param out The links, as .bl_find() names them.
+#' @return One sentence.
+#' @noRd
+.bl_link_out <- function(root, out) {
+  paste0(
+    "a link under ", .bl_names(root), " leads to a folder outside it and ",
+    "was not followed, so a capsule behind it would be neither sealed nor ",
+    "checked; seal and check that folder where it is, and copy it in or ",
+    "remove the link: ", .bl_names(out, Inf)
+  )
 }
 
 #' The verify rows of one capsule: every file against its schema, vrfcps(),
@@ -1314,7 +1345,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       substr(s1(res[["sha256"]]), 1L, 12L)
     },
     size = .bl_capsule_size(b),
-    rows = if (is.na(n)) "-" else format(n, big.mark = ","),
+    rows = if (is.na(n)) "-" else .rmbl_ntxt(n),
     bounds = .bl_capsule_bounds(rnd, sup)
   )
 }
@@ -1490,11 +1521,12 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     if (is.null(v)) default else suppressWarnings(as.numeric(v))
   }
   # a refused argument (a PSI band that is not a number, a --base that does not
-  # exist) is a usage error
-  tryCatch(
-    cpschk(
-      root,
-      verb,
+  # exist) is a usage error; what stops once they are checked (a folder under
+  # PATH that cannot be read) fails the verb, exit status 1, as sign does
+  a <- tryCatch(
+    .bl_cpschk_args(list(
+      path = root,
+      mode = verb,
       key = key,
       pubkey = flag("--public-key") %||% "",
       psiwarn = num("--psi-warn", 0.1),
@@ -1503,11 +1535,22 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       cache = flag("--cache") %||% FALSE,
       allowfile = "--allow-file" %in% rest,
       snapshot = "--snapshot" %in% rest,
+      wayback = FALSE,
       glob = flag("--manifests") %||% "",
       fp = !"--no-footprint" %in% rest,
       seenlog = flag("--seen-log") %||% ""
-    ),
-    error = function(e) usage_error(sub("^cpschk: ", "", conditionMessage(e)))
+    )),
+    error = function(e) {
+      usage_error(sub("^[a-z]+: ", "", conditionMessage(e), useBytes = TRUE))
+    }
+  )
+  # the verb's own refusal, without the name of the function under it
+  tryCatch(
+    .bl_cpschk_do(a$o, a$glob, a$fp, a$seenlog, flag("--base")),
+    error = function(e) {
+      stop(sub("^[a-z]+: ", "", conditionMessage(e), useBytes = TRUE),
+           call. = FALSE)
+    }
   )
 }
 
@@ -1680,7 +1723,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   out(sprintf(
     "%s: %s\n",
     .bl_prog(),
-    sub("^(blcli|xmssidxseen): ", "", conditionMessage(e))
+    sub("^(blcli|xmssidxseen): ", "", conditionMessage(e), useBytes = TRUE)
   ))
   1L
 }
@@ -1771,7 +1814,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   }
   if (!is.null(sf)) {
     kind <- .Call(C_rmbl_path_kind, sf)
-    why <- if (!grepl("^(/|[A-Za-z]:[/\\\\])", sf)) {
+    why <- if (!grepl("^(/|[A-Za-z]:[/\\\\])", sf, useBytes = TRUE)) {
       "a relative path"
     } else if (kind == "directory") {
       "a directory"
@@ -2008,7 +2051,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     file
   } else {
     paste0(
-      sub("\\.html?$", "", file, ignore.case = TRUE),
+      sub(.rmbl_ci("\\.html?$"), "", file, perl = TRUE, useBytes = TRUE),
       "-",
       basename(names(drifts)),
       ".html"

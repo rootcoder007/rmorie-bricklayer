@@ -1309,9 +1309,9 @@ yoychg.ts <- function(x, lag = NULL, ...) {
   b <- .yoy_rx(s, "^([A-Za-z]+) ([0-9]{4})$", 2L)
   d <- .yoy_rx(s, "^([0-9]{4}) ([A-Za-z]+)$", 2L)
   nm <- ifelse(is.na(b[, 1L]), d[, 2L], b[, 1L])
-  l <- tolower(nm)
-  mn <- match(l, tolower(month.abb))
-  mn <- ifelse(is.na(mn), match(l, tolower(month.name)), mn)
+  l <- .rmbl_lower(nm)
+  mn <- match(l, .rmbl_lower(month.abb))
+  mn <- ifelse(is.na(mn), match(l, .rmbl_lower(month.name)), mn)
   yn <- ifelse(is.na(b[, 2L]), d[, 1L], b[, 2L])
   y <- as.numeric(ifelse(is.na(a[, 1L]), yn, a[, 1L]))
   m <- ifelse(is.na(a[, 2L]), mn, as.numeric(a[, 2L]))
@@ -1433,8 +1433,8 @@ yoychg.ts <- function(x, lag = NULL, ...) {
   }
   nm <- regmatches(tpl, regexpr("[A-Za-z]+", tpl))
   mon <- if (nchar(nm) > 3L) month.name[m] else month.abb[m]
-  if (identical(nm, toupper(nm))) {
-    mon <- toupper(mon)
+  if (identical(nm, .rmbl_upper(nm))) {
+    mon <- .rmbl_upper(mon)
   }
   if (grepl("^[0-9]", tpl)) paste(y, mon) else paste(mon, y)
 }

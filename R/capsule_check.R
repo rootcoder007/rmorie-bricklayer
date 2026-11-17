@@ -34,6 +34,19 @@
 #' result is one failed \code{no_capsule} row, no capsules and the status
 #' \code{error}, also with \code{pubkey} given.
 #'
+#' Links: a link to a folder inside \code{path} is followed, each real
+#' folder checked once; a link to a folder on the way down or above it (a
+#' loop) is not followed. A link to any other folder outside \code{path} is
+#' not followed, and is not passed over in silence: one failed
+#' \code{links_not_followed} row, of severity \code{error}, names every such
+#' link, so the status is \code{error} (\code{rmbl verify} exits 1). A
+#' capsule behind one is not checked, so the tree cannot be called sound;
+#' check that folder where it lies, or copy it in. A folder under
+#' \code{path} that cannot be read stops the check, named.
+#'
+#' A data file is found to read as a table, and its rows counted, as
+#' \code{\link{vrfcps}} does: a block of rows at a time, in bounded memory.
+#'
 #' Drift: when the fetched source's SHA-256 differs from the pin and the
 #' pinned data file is a CSV, \code{cpsdrft()} runs with
 #' \code{psithr = psifail}. A column is \code{drift} when \code{cpsdrft()}
@@ -64,11 +77,13 @@
 #' (the network for http(s) ones), as \code{snapshot = TRUE} asks the
 #' Wayback Machine once per capsule (\code{\link{wbsnpurl}});
 #' \code{"refresh"} writes the capsules; a cache folder is written to.
-#' Errors: \code{path} is not a directory; a bad argument. A capsule whose
-#' checks stop is one failed row, not an error.
+#' Errors: \code{path} is not a directory; a bad argument; a folder under
+#' \code{path} that cannot be read. A capsule whose checks stop is one
+#' failed row, not an error.
 #'
 #' @param path Character scalar, the folder searched recursively
-#'   (\code{.git} and \code{.rmbl-cache} folders skipped).
+#'   (\code{.git} and \code{.rmbl-cache} folders skipped; links as the
+#'   details say).
 #' @param mode \code{"verify"} (the default), \code{"drift"},
 #'   \code{"refresh"} or \code{"report"} (the verify checks).
 #' @param key Character scalar: the shared secret of HMAC bundles, or
@@ -186,45 +201,8 @@ cpschk <- function(
   seenlog = "",
   archive = FALSE
 ) {
-  if (isTRUE(archive)) {
-    warning(
-      "cpschk(): `archive` is ignored: there is no hosted copy to fall back ",
-      "to; `cache` keeps a copy from an earlier run",
-      call. = FALSE
-    )
-  }
-  path <- .rmbl_fspath(.rmbl_string1(path, "path"))
-  if (!dir.exists(path)) {
-    stop(
-      .rmbl_fn(),
-      "`path` is not an existing directory: ",
-      .rmbl_printable(path),
-      call. = FALSE
-    )
-  }
-  o <- .bl_cpschk_opts(
-    list(path = path, mode = .rmbl_arg(mode)),
-    key,
-    pubkey,
-    psiwarn,
-    psifail,
-    base,
-    list(allowfile = allowfile, snapshot = snapshot, wayback = wayback)
-  )
-  glob <- .bl_str0(glob, "glob")
-  fp <- .rmbl_flag1(fp, "fp")
-  o$cache <- .bl_cache_arg(cache)
-  seenlog <- .bl_str0(seenlog, "seenlog")
-  # every XMSS signature under the path and in the log, for the index-reuse row
-  # of each bundle
-  o$seen <- .rmbl_xmss_seen(path, if (nzchar(seenlog)) seenlog)
-  dirs <- .bl_capsule_dirs(path, glob)
-  foot <- if (fp) co2fp(.bl_cpschk_run(dirs, o))
-  caps <- lapply(
-    if (fp) foot$value else .bl_cpschk_run(dirs, o),
-    .bl_cps_finish
-  )
-  .bl_cpschk_result(o, glob, caps, base, foot[names(foot) != "value"])
+  a <- .bl_cpschk_args(as.list(environment()))
+  .bl_cpschk_do(a$o, a$glob, a$fp, a$seenlog, base)
 }
 
 #' @rdname cpschk
@@ -434,7 +412,7 @@ ghout <- function(x, report = "", json = "", comment = "off") {
     changed = paste(changed, collapse = ","),
     verified = sum(st != "error"),
     failed = sum(st == "error"),
-    `manifest-changed` = tolower(any(vapply(
+    `manifest-changed` = .rmbl_lower(any(vapply(
       ms,
       function(m) isTRUE(m$changed),
       NA
@@ -462,8 +440,16 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' it is. Side effects: writes \code{data_provenance.json} (first run) and
 #' \code{capsule_bundle.json} in each capsule.
 #'
-#' Errors, before anything is written: no provenance under \code{path}, or
-#' a folder under it that cannot be read; a capsule that already has a
+#' Capsules are searched for as \code{cpschk()} searches: a link to a
+#' folder inside \code{path} is followed, each real folder once; a link to
+#' a folder on the way down or above it (a loop) is not followed; a link to
+#' any other folder outside \code{path} is not followed and refuses the
+#' seal, named, since a capsule behind it would be neither sealed nor
+#' checked: seal that folder where it is, and copy it in or remove the link.
+#'
+#' Errors, before anything is written: no provenance under \code{path}, a
+#' folder under it that cannot be read, or a link out of it as above; a
+#' capsule that already has a
 #' bundle, unless \code{overwrite}; a key that cannot sign (a public key,
 #' or anything \code{\link{cpsatst}} refuses: a key other than an XMSS key
 #' signs a throwaway manifest first, which changes nothing), or an XMSS key
@@ -474,8 +460,11 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' JSON (the file named), a \code{manifest.json} that does not hold a JSON
 #' object, a provenance or bundle file that cannot be written to, every
 #' refusal of \code{cpsbndl()} short of the signature (links, names, files
-#' that cannot be read, a folder that cannot be written to, a temporary left
-#' by a write that was cut short), and anything \code{cpschk()} would report
+#' that cannot be read, a folder that cannot be written to, a link whose
+#' target does not exist, a temporary left by a write that was cut short:
+#' every such \code{.rmbl-*.tmp} file in the tree is named, however many),
+#' each headed by the capsule's folder, and anything \code{cpschk()} would
+#' report
 #' as an error once the capsule is sealed (a \code{manifest.json} that fails
 #' its schema, a data file that does not read as a table, the checks of
 #' \code{\link{vrfcps}}), found by the check's own code. Each pinned
@@ -483,13 +472,26 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' has sealed passes \code{cpschk()}, but for what depends on the check's
 #' options (\code{allowfile}, a source that has drifted).
 #'
-#' What cannot be known before writing (the disk filling up, a file that
-#' changes or stops being readable during the seal, a signature that fails)
-#' stops the seal: every file it had written is then put back as it was
-#' (each is copied aside before it is replaced and renamed back, which
-#' needs no room on the disk), and the error says which files, if any,
-#' could not be. XMSS indices a failed seal signed with stay used, as they
-#' must.
+#' The data file is found to read as a table as \code{cpschk()} reads it:
+#' its header and first rows by \code{read.csv()}, the rest a block of
+#' 65,536 rows at a time, so memory stays at about that many fields and the
+#' longest line whatever the file's size, and a refusal gives
+#' \code{read.csv()}'s reason. Only a provenance that pins a schema has the
+#' table read whole, for the schema's checks.
+#'
+#' What cannot be known before writing (the disk filling up, a file or a
+#' link that changes or stops being readable during the seal, as
+#' \code{cpsbndl()} finds it, a signature that fails) stops the seal, as an
+#' error or Ctrl-C (an interrupt) does: every file it had written is then
+#' put back as it was (each is copied aside before it is replaced and
+#' renamed back, which needs no room on the disk), and the error says which
+#' files, if any, could not be. A seal killed by a signal R cannot catch
+#' (SIGKILL, SIGTERM, a lost machine) puts nothing back: some capsules may
+#' be sealed and others not, and each capsule it had sealed keeps its copies
+#' as \code{.rmbl-*.tmp} files. The next seal refuses the tree and names
+#' every one of them; delete exactly those and seal again with
+#' \code{overwrite = TRUE} (\code{rmbl sign --overwrite}). XMSS indices a
+#' failed seal signed with stay used, as they must.
 #'
 #' @param path Character scalar, the folder searched recursively.
 #' @param key The signing key, as \code{cpsbndl()} takes it: a shared
@@ -632,6 +634,91 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     },
     call. = FALSE
   )
+}
+
+#' cpschk()'s arguments, checked: what `rmbl verify` calls a usage error
+#' (exit status 2) stops here, and nothing else does.
+#' @param a cpschk()'s arguments as a list.
+#' @return A list: the options `o`, `glob`, `fp` and `seenlog`.
+#' @noRd
+.bl_cpschk_args <- function(a) {
+  if (isTRUE(a$archive)) {
+    warning(
+      "cpschk(): `archive` is ignored: there is no hosted copy to fall back ",
+      "to; `cache` keeps a copy from an earlier run",
+      call. = FALSE
+    )
+  }
+  path <- .rmbl_fspath(.rmbl_string1(a$path, "path"))
+  if (!dir.exists(path)) {
+    stop(
+      .rmbl_fn(),
+      "`path` is not an existing directory: ",
+      .rmbl_printable(path),
+      call. = FALSE
+    )
+  }
+  mode <- a$mode
+  mode <- .rmbl_arg(mode, c("verify", "drift", "refresh", "report"))
+  o <- .bl_cpschk_opts(
+    list(path = path, mode = mode),
+    a$key,
+    a$pubkey,
+    a$psiwarn,
+    a$psifail,
+    a$base,
+    list(allowfile = a$allowfile, snapshot = a$snapshot, wayback = a$wayback)
+  )
+  o$cache <- .bl_cache_arg(a$cache)
+  seenlog <- .bl_str0(a$seenlog, "seenlog")
+  # a seen-log that cannot be read is a bad value of the option
+  if (nzchar(seenlog)) {
+    .rmbl_xmss_seen_read(seenlog)
+  }
+  list(o = o, glob = .bl_str0(a$glob, "glob"), fp = .rmbl_flag1(a$fp, "fp"),
+       seenlog = seenlog)
+}
+
+#' cpschk() on checked arguments: what stops here is a failed check (exit
+#' status 1 for `rmbl verify`), not a usage error.
+#' @param o,glob,fp,seenlog As .bl_cpschk_args() gives them.
+#' @param base As for cpschk().
+#' @return The cpschk() result.
+#' @noRd
+.bl_cpschk_do <- function(o, glob, fp, seenlog, base) {
+  # every XMSS signature under the path and in the log, for the index-reuse row
+  # of each bundle
+  o$seen <- .rmbl_xmss_seen(o$path, if (nzchar(seenlog)) seenlog,
+                            strict = FALSE)
+  dirs <- .bl_capsule_dirs(o$path, glob, strict = FALSE)
+  foot <- if (fp) co2fp(.bl_cpschk_run(dirs, o))
+  caps <- lapply(
+    c(if (fp) foot$value else .bl_cpschk_run(dirs, o),
+      .bl_link_cap(o$path, attr(dirs, "outside"))),
+    .bl_cps_finish
+  )
+  .bl_cpschk_result(o, glob, caps, base, foot[names(foot) != "value"])
+}
+
+#' The links a check's search did not follow, as one failed entry: a
+#' capsule behind one is not checked, so the result cannot be "ok".
+#' @param path The folder searched.
+#' @param out The links not followed.
+#' @return A list of one capsule entry, or an empty list.
+#' @noRd
+.bl_link_cap <- function(path, out) {
+  if (!length(out)) {
+    return(list())
+  }
+  list(list(
+    capsule = path,
+    source = "",
+    pinned_sha256 = "",
+    fetched_sha256 = "",
+    changed = FALSE,
+    rows = .bl_check_row(path, "capsule", path, "links_not_followed", FALSE,
+                         .bl_link_out(path, out))
+  ))
 }
 
 #' The console summary of a capsule check: one titled block.
@@ -879,10 +966,10 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 .bl_source_row <- function(d, src, o) {
   # drift and refresh refuse it themselves, as they fetch
   if (!o$mode %in% c("verify", "report") || !nzchar(src) ||
-        grepl("^https?://", src, ignore.case = TRUE)) {
+        grepl(.rmbl_ci("^https?://"), src, perl = TRUE, useBytes = TRUE)) {
     return(NULL)
   }
-  is_file <- grepl("^file://", src, ignore.case = TRUE)
+  is_file <- grepl(.rmbl_ci("^file://"), src, perl = TRUE, useBytes = TRUE)
   # the folder resolved, which exists, so a ../ is taken out even when the
   # file is not there
   raw <- .bl_local_path(src, is_file, d)
@@ -1148,7 +1235,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' @noRd
 .bl_rel_dir <- function(d, root) {
   a <- normalizePath(d, winslash = "/")
-  r <- sub("/+$", "", normalizePath(root, winslash = "/"))
+  r <- sub("/+$", "", normalizePath(root, winslash = "/"), useBytes = TRUE)
   if (a == r) "." else substring(a, nchar(r) + 2L)
 }
 
@@ -1346,8 +1433,8 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' @return The span, backticks included.
 #' @noRd
 .bl_md_code <- function(x) {
-  x <- .rmbl_ctl_escape(gsub("[\r\n]+", " ", x))
-  x <- gsub("|", "\\|", x, fixed = TRUE)
+  x <- .rmbl_ctl_escape(gsub("[\r\n]+", " ", x, useBytes = TRUE))
+  x <- gsub("|", "\\|", x, fixed = TRUE, useBytes = TRUE)
   ifelse(
     grepl("`", x, fixed = TRUE),
     paste0("`` ", x, " ``"),
@@ -1361,7 +1448,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' @return Text.
 #' @noRd
 .bl_md_num <- function(x, digits = 3) {
-  ifelse(is.na(x), "-", trimws(formatC(x, digits = digits, format = "g")))
+  ifelse(is.na(x), "-", trimws(.rmbl_fc(x, digits = digits, format = "g")))
 }
 
 #' A list of names after a lead, or \code{""} when there are none.
@@ -1483,7 +1570,8 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   # a capsule inside another is sealed first: sealing it pins its
   # provenance and writes its bundle, which the outer bundle must cover
   # (sealed after the outer one, it left a tree that failed its own check)
-  dirs[order(-lengths(strsplit(dirs, "/", fixed = TRUE)), dirs)]
+  depth <- lengths(strsplit(dirs, "/", fixed = TRUE, useBytes = TRUE))
+  dirs[order(-depth, .rmbl_bytes(dirs), method = "radix")]
 }
 
 #' cpschk()'s options, checked.
@@ -1636,7 +1724,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   local <- .rmbl_safe_rel(.bl_s1(f$old[["resource"]][["filename"]]), d) %||% ""
   if (
     nrow(ch) &&
-      grepl("\\.csv$", local, ignore.case = TRUE) &&
+      grepl(.rmbl_ci("\\.csv$"), local, perl = TRUE, useBytes = TRUE) &&
       file.exists(local)
   ) {
     tryCatch(.bl_column_drift(local, f$path, o), error = function(e) e)
@@ -1750,7 +1838,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' @noRd
 .bl_drift_summary <- function(cols, dr) {
   hit <- cols[cols$verdict != "ok", , drop = FALSE]
-  g <- function(v) formatC(v, digits = 3, format = "g")
+  g <- function(v) .rmbl_fc(v, digits = 3, format = "g")
   paste0(
     sprintf("%d of %d columns past a band", nrow(hit), nrow(cols)),
     if (nrow(hit)) {
@@ -2062,8 +2150,8 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
       .bl_md_list("; removed ", dr$removed),
       dr$psiwarn,
       dr$psifail,
-      format(dr$nref, big.mark = ","),
-      format(dr$ncur, big.mark = ","),
+      .rmbl_ntxt(dr$nref),
+      .rmbl_ntxt(dr$ncur),
       dr$alpha
     )
   )
@@ -2251,7 +2339,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     # bundled as walked here, with the bundles of the capsules inside it,
     # which the seal writes first: the folder then holds the copies the seal
     # keeps of what it replaces, which are no content
-    plan$files <- sort(unique(c(prep$files, .bl_seal_inner(d, dirs))))
+    plan$files <- .rmbl_bsort(unique(c(prep$files, .bl_seal_inner(d, dirs))))
     plan
   })
 }
@@ -2335,7 +2423,8 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 .bl_seal_read <- function(f) {
   tryCatch(loadprov(f), error = function(e) {
     stop(.rmbl_fn(), .bl_names(f), ": ",
-         sub("^loadprov: ", "", conditionMessage(e)), call. = FALSE)
+         sub("^loadprov: ", "", conditionMessage(e), useBytes = TRUE),
+         call. = FALSE)
   })
 }
 

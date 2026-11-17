@@ -129,8 +129,34 @@ refused, with its reason, when it is not UTF-8 (its bytes shown as
 a backslash, a double quote, one of \code{< > : | ? *} or a control
 character, or has
 a part that ends in a dot or a space or that Windows reserves (CON, PRN,
-AUX, NUL, COM1 to COM9, LPT1 to LPT9, with any extension). A progress bar
-is shown when \code{options(morie.progress)} allows it.
+AUX, NUL, COM1 to COM9, LPT1 to LPT9, and COM and LPT followed by a
+superscript 1, 2 or 3, with any extension), letters compared by their
+ASCII bytes in every locale. Names that differ only by letter case or by
+Unicode normalisation (\code{A.txt} and \code{a.txt}, \code{sub/x} and
+\code{SUB/x}, an accented letter written as one character and as a letter
+with a combining accent) are one name on Windows and macOS, so they are
+refused together, each set named: every name and every folder above one
+is compared by Unicode's canonical caseless match (the canonical
+decomposition of the simple case folding of the canonical decomposition,
+Unicode 15.1, section 3.13), from the Unicode Character Database's tables
+and never the locale's. Simple folding maps one character to one, so
+\code{ss} and a sharp s are two names (as Windows takes them); the Turkish
+dotted capital I folds to an i with a dot above, not to a plain i. The
+check of a bundle does not apply these rules, so a bundle made before them
+still verifies. A progress bar is shown when \code{options(morie.progress)}
+allows it.
+
+Each file is read through the real path it had when it was checked,
+below \code{dir}, so a link changed while the bundle is made is not followed
+out of the folder. Before anything is signed every file is looked at
+again: its real path, a link's target, its size and its modification and
+status-change times must be those it had before it was read, and a file
+of at most 1 MiB is read a second time and must give the same digest;
+anything else stops \code{cpsbndl()} with the files named and nothing signed.
+What remains unseen is a change to a file over 1 MiB that keeps its size
+and both times: the system sets the status-change time on every write
+and no program can set it back, so only a file system that records
+whole seconds, written twice within one, can hide such a change.
 
 How it is checked. \code{cpsbndlvrf()} re-hashes every listed file
 (a path that is absolute or climbs out of \code{dir} fails its row), reports
@@ -149,7 +175,8 @@ not
 an error.
 
 Errors: \code{dir} missing or not a directory; no files to bundle, or a named
-file not in \code{dir}; the links, folders and names above; a file that cannot
+file not in \code{dir}, or a link whose target does not exist; the links,
+folders and names above; a file changed while it was read; a file that cannot
 be read, or a bundle file or its folder that cannot be written to (all
 before any file is hashed); a key \code{\link[=cpsatst]{cpsatst()}} cannot
 sign with;

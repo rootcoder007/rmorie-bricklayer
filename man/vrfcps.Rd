@@ -60,13 +60,23 @@ the provenance's \code{resource$filename}) is inside the capsule and is a
 file.} \item{\code{data_sha256}}{\code{\link[=vrfsha256]{vrfsha256()}} finds that its
 SHA-256 equals \code{resource$sha256} (64 hex characters).}
 \item{\code{data_size_bytes}}{when \code{resource$size_bytes} is recorded:
-the size on disk matches.} \item{\code{data_readable}}{a \code{.csv} file is
-read with \code{utils::read.csv()}; a non-CSV file fails this row when a row
-count or schema is recorded (they cannot be checked).}
+the size on disk matches.} \item{\code{data_readable}}{a \code{.csv} file
+(gzip-compressed or plain, its name's case aside) reads as a table:
+\code{utils::read.csv()} reads its header and first five rows, so the
+columns are found as it finds them, and \code{scan()} the rest a block of
+65,536 rows at a time, keeping one field of each, so memory stays at
+about that many fields plus the longest line whatever the file's size;
+\code{read.csv()}'s "incomplete final line" warning is no fault, any
+other error or warning fails the row with its words in \code{detail}. A
+row name used twice, which \code{read.csv()} refuses, is not looked at.
+A non-CSV file fails this row when a row count or schema is recorded
+(they cannot be checked).}
 \item{\code{data_row_count}}{when \code{resource$row_count_data_rows} is
-recorded: the CSV has that many rows.} \item{\code{schema_valid}}{when a
+recorded: the CSV has that many rows, counted as \code{read.csv()} counts
+them, in the same pass.} \item{\code{schema_valid}}{when a
 \code{schema} is recorded: \code{\link[=valsch]{valsch()}} finds no fatal issue
-(warnings are listed in \code{detail} but pass).}
+(warnings are listed in \code{detail} but pass); the table is read whole
+for it, and when it cannot be the row fails with the reason.}
 \item{\code{manifest_consistent}}{when \code{mnffile} is given, or the
 capsule holds \code{manifest.json}: every result with numeric \code{observed}
 and \code{expected}, a \code{tol} and a status of \code{PASS} or

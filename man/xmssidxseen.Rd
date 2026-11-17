@@ -8,7 +8,10 @@ xmssidxseen(path = ".", seenlog = NULL)
 }
 \arguments{
 \item{path}{A directory (every \code{capsule_bundle.json} under it) or one bundle
-file.}
+file. A directory is searched as \code{\link[=cpschk]{cpschk()}} searches it: a link to a
+folder inside it is followed, each real folder once, and a loop is not;
+a folder that cannot be read, or a link to any other folder outside
+it, is refused, named, since a signature behind it would not be seen.}
 
 \item{seenlog}{Seen-log files to read as well, or NULL. A file that does not
 exist yet is an empty log; a directory, or a log with a malformed line, is

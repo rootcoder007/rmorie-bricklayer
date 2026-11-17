@@ -29,9 +29,9 @@
   }
   off <- c("off", "0", "false", "no", "none", "disabled")
   opt <- .rmbl_getopt("llmcache")
-  !tolower(trimws(Sys.getenv("MORIE_LLM_CACHE", ""))) %in% off &&
+  !.rmbl_lower(trimws(Sys.getenv("MORIE_LLM_CACHE", ""))) %in% off &&
     !isFALSE(opt) &&
-    !(is.character(opt) && tolower(trimws(opt[[1L]])) %in% off) &&
+    !(is.character(opt) && .rmbl_lower(trimws(opt[[1L]])) %in% off) &&
     !isTRUE(getOption("morie.quiet")) &&
     .bl_person_watching()
 }

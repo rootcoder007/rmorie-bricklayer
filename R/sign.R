@@ -780,7 +780,7 @@ pqckg <- function(height = 10L, skseed = NULL, pubseed = NULL, skprf = NULL) {
   root <- .bl_busy(
     sprintf(
       "XMSS key: building the tree of %s one-time keys",
-      format(2^height, big.mark = ",")
+      .rmbl_ntxt(2^height)
     ),
     .Call(C_rmbl_xmss_keygen, skseed, pubseed, height)
   )
@@ -1427,7 +1427,7 @@ xmssfgt <- function(keytofgt = NULL) {
     ) {
       NULL
     } else {
-      tolower(h)
+      .rmbl_lower(h)
     }
   }
   if (is.null(hex) || nchar(hex, type = "bytes") %/% 2L != n) {
@@ -1759,7 +1759,7 @@ xmssfgt <- function(keytofgt = NULL) {
       msg
     )
   )
-  if (!identical(tolower(as.character(res$root)), ids$root)) {
+  if (!identical(.rmbl_lower(as.character(res$root)), ids$root)) {
     stop(
       sprintf(
         paste(
@@ -1836,7 +1836,8 @@ xmssfgt <- function(keytofgt = NULL) {
 #' @noRd
 .rmbl_xa_index <- function(sig, key) {
   if (
-    !identical(tolower(as.character(sig$root)), tolower(as.character(key$root)))
+    !identical(.rmbl_lower(as.character(sig$root)),
+        .rmbl_lower(as.character(key$root)))
   ) {
     stop(
       "this signature was not made by this key (the roots differ)",
@@ -2037,7 +2038,7 @@ xmssfgt <- function(keytofgt = NULL) {
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_vrf_same <- function(a, b) {
-  identical(tolower(as.character(a)), tolower(as.character(b)))
+  identical(.rmbl_lower(as.character(a)), .rmbl_lower(as.character(b)))
 }
 
 #' Whether an XMSS signature has the shape this package writes.
@@ -2205,7 +2206,7 @@ xmssfgt <- function(keytofgt = NULL) {
       call. = FALSE
     )
   }
-  tolower(seed)
+  .rmbl_lower(seed)
 }
 
 #' The one sentence every path that meets an old XMSS object with `key_state`
@@ -2252,7 +2253,7 @@ xmssfgt <- function(keytofgt = NULL) {
   sk <- .rmbl_check_seed(.rmbl_xkey(key, "skseed"), "skseed")
   ps <- .rmbl_check_seed(.rmbl_xkey(key, "pubseed"), "pubseed")
   root <- if (is.character(key$root) && length(key$root) == 1L) {
-    tolower(key$root)
+    .rmbl_lower(key$root)
   } else {
     NA_character_
   }
@@ -2266,7 +2267,8 @@ xmssfgt <- function(keytofgt = NULL) {
   list(
     id = paste0(
       "k:",
-      tolower(csha256(charToRaw(paste0("rmoriebricklayer xmss record\n", sk))))
+      .rmbl_lower(csha256(charToRaw(paste0("rmoriebricklayer xmss record\n",
+          sk))))
     ),
     legacy = paste0(root, ":", ps),
     root = root
@@ -2382,7 +2384,7 @@ xmssfgt <- function(keytofgt = NULL) {
   out <- integer()
   for (k in names(rec)) {
     v <- rec[[k]]
-    kk <- tolower(k)
+    kk <- .rmbl_lower(k)
     if (!.rmbl_xmss_legacy_entry_ok(kk, v)) {
       .rmbl_xmss_legacy_bad(j)
     }
@@ -2844,7 +2846,7 @@ xmssfgt <- function(keytofgt = NULL) {
     return(NULL)
   }
   if (
-    toupper(p) %in%
+    .rmbl_upper(p) %in%
       strsplit("TRUE FALSE T F 0 1 NULL NA YES NO ON OFF", " ", fixed = TRUE)[[
         1L
       ]]

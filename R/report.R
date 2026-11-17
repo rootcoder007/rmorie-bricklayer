@@ -223,7 +223,7 @@ format.bricklayer_report <- function(x, ...) {
   )
   facts <- list(
     Verdict = head_line,
-    Rows = format(x$n_rows, big.mark = ","),
+    Rows = .rmbl_ntxt(x$n_rows),
     Columns = x$n_cols,
     `Missing cells` = sprintf("%.1f%%", x$missingness[["pct_missing"]]),
     `Complete rows` = sprintf("%.1f%%", x$missingness[["pct_complete_rows"]]),
@@ -776,7 +776,7 @@ rptmd <- function(report, path = NULL, title = "Capsule report") {
     "",
     "| | |",
     "|---|---|",
-    sprintf("| rows | %s |", format(report$n_rows, big.mark = ",")),
+    sprintf("| rows | %s |", .rmbl_ntxt(report$n_rows)),
     sprintf("| columns | %d |", report$n_cols),
     sprintf("| missing cells | %.1f%% |", report$missingness[["pct_missing"]]),
     sprintf(

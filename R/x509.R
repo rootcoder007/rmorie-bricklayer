@@ -1573,7 +1573,7 @@ tbs_alg_oid <- function(alg) {
       next
     }
     cert <- path[[i]]
-    hit <- tolower(cert$serial) %in% tolower(covered[[i]])
+    hit <- .rmbl_lower(cert$serial) %in% .rmbl_lower(covered[[i]])
     add(
       sprintf("revocation [%d]", i),
       !hit,

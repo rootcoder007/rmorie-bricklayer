@@ -659,7 +659,7 @@ llmstat <- function() {
       sprintf(
         "%s is %s bytes: too large to be a credentials file",
         p,
-        format(n, big.mark = ",")
+        .rmbl_ntxt(n)
       ),
       call. = FALSE
     )
@@ -951,7 +951,8 @@ llmstat <- function() {
     ".]+\\]|",
     "\\[f[cd][0-9a-f]{2}:[0-9a-f:.]*\\])"
   )
-  grepl(paste0("^https?://", host, "(:[0-9]+)?(/|$)"), url, ignore.case = TRUE)
+  grepl(.rmbl_ci(paste0("^https?://", host, "(:[0-9]+)?(/|$)")), url,
+      perl = TRUE)
 }
 
 #' Returns the base address of your own OpenAI-compatible endpoint, if set.
@@ -959,7 +960,7 @@ llmstat <- function() {
 #' @noRd
 .bl_own_base <- function() {
   v <- sub("/+$", "", .bl_env1("MORIE_LLM_BASE_URL") %||% "")
-  if (!nzchar(v) || tolower(v) %in% c("off", "none", "disabled")) {
+  if (!nzchar(v) || .rmbl_lower(v) %in% c("off", "none", "disabled")) {
     return(NULL)
   }
   if (!grepl("^https?://[^/[:space:]]+", v)) {
@@ -1004,7 +1005,7 @@ llmstat <- function() {
     .bl_config_value("OLLAMA_HOST") %||%
     .bl_config_value("OLLAMA_BASE_URL") %||%
     "http://localhost:11434"
-  if (tolower(v) %in% c("off", "none", "disabled")) {
+  if (.rmbl_lower(v) %in% c("off", "none", "disabled")) {
     return(NULL)
   }
   if (!grepl("^https?://", v)) {
@@ -1231,7 +1232,7 @@ llmstat <- function() {
 #' @return The route, or NULL for the automatic order.
 #' @noRd
 .bl_llm_saved_route <- function() {
-  saved <- tolower(.bl_env1("MORIE_LLM_ROUTE") %||% "auto")
+  saved <- .rmbl_lower(.bl_env1("MORIE_LLM_ROUTE") %||% "auto")
   if (identical(saved, "hosted")) {
     # a route saved before the hosted tier was retired: said once, then the
     # automatic order
@@ -1712,7 +1713,7 @@ llmstat <- function() {
 #' @return TRUE or FALSE.
 #' @noRd
 .bl_key_echoed <- function(text, keys) {
-  flat <- function(x) tolower(gsub("[^[:alnum:]]+", "", x))
+  flat <- function(x) .rmbl_lower(gsub("[^[:alnum:]]+", "", x))
   if (!is.character(text) || length(text) != 1L || is.na(text)) {
     return(FALSE)
   }

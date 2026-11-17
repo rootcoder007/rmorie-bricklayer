@@ -145,7 +145,7 @@ format.rmbl_fetch <- function(x, ...) {
 #' @noRd
 .fv_check <- function(sha256, mirrors, arcs) {
   if (!is.null(sha256)) {
-    sha256 <- tolower(.rmbl_string1(sha256, "sha256"))
+    sha256 <- .rmbl_lower(.rmbl_string1(sha256, "sha256"))
     if (!grepl("^[0-9a-f]{64}$", sha256)) {
       stop("`sha256` must be 64 hexadecimal characters", call. = FALSE)
     }

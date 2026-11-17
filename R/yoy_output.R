@@ -389,7 +389,7 @@ format.rmbl_yoy_summary <- function(x, digits = 4L, ...) {
 .yoy_fmt_num <- function(v, digits = 0L) {
   out <- rep(.yg("\u2014"), length(v))
   ok <- !is.na(v)
-  out[ok] <- formatC(v[ok], format = "f", digits = digits, big.mark = ",")
+  out[ok] <- .rmbl_fc(v[ok], format = "f", digits = digits, big.mark = ",")
   out
 }
 

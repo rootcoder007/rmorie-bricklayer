@@ -1958,7 +1958,7 @@ plot.rmbl_svy_compare <- function(
       "a %s replicate is"
     ),
     nm,
-    toupper(type)
+    .rmbl_upper(type)
   )
 }
 
@@ -3029,7 +3029,7 @@ plot.rmbl_svy_compare <- function(
         "as a %s replicate is"
       ),
       nm,
-      toupper(type)
+      .rmbl_upper(type)
     ))
   }
   character()

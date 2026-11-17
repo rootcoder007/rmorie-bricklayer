@@ -452,7 +452,7 @@ dload <- function(
         "file's path."
       ),
       key,
-      format(rows, big.mark = ",", scientific = FALSE),
+      .rmbl_ntxt(rows),
       nc,
       gb
     ))
@@ -1209,7 +1209,7 @@ dload <- function(
   for (x in list(d, d[["meta"]])) {
     a <- if (is.list(x)) x[["access"]]
     open <- !is.character(a) || length(a) != 1L ||
-      tolower(a) %in% c("open", "public")
+      .rmbl_lower(a) %in% c("open", "public")
     if (!open || (is.list(x) && isTRUE(x[["restricted"]]))) {
       return(TRUE)
     }
@@ -1836,7 +1836,7 @@ dload <- function(
         one <- length(v) == 1L && (is.character(v) || is.na(v))
         v <- if (one) sub("^sha256:", "", as.character(v)) else NA_character_
         if (length(v) == 1L && !is.na(v) && grepl("^[0-9a-fA-F]{64}$", v)) {
-          return(tolower(v))
+          return(.rmbl_lower(v))
         }
         # a digest field that is not a digest is not "no digest": the file
         # cannot be trusted
@@ -2008,7 +2008,7 @@ dload <- function(
   rows <- ifelse(
     is.na(tables$rows),
     "-",
-    formatC(tables$rows, format = "d", big.mark = ",")
+    .rmbl_fc(tables$rows, format = "d", big.mark = ",")
   )
   # the manifest is fetched text: what would not print as itself is removed
   # (.rmbl_printable)
@@ -2022,7 +2022,8 @@ dload <- function(
   cut <- nchar(name) > room
   name[cut] <- paste0(trimws(substr(name[cut], 1L, room - 3L)), "...")
   line <- function(k, r, n) {
-    sprintf("%s  %s  %s", formatC(k, width = -kw), formatC(r, width = rw), n)
+    sprintf("%s  %s  %s", .rmbl_fc(k, width = -kw),
+        .rmbl_fc(r, width = rw), n)
   }
   paste0(
     line("key", "rows", "name"),
@@ -2154,7 +2155,7 @@ dload <- function(
         "raise them to read it"
       ),
       basename(path),
-      format(lim, big.mark = ",", scientific = FALSE)
+      .rmbl_ntxt(lim)
     ),
     call. = FALSE
   )
@@ -2396,7 +2397,7 @@ dload <- function(
 #' @return NULL, invisibly.
 #' @noRd
 .bl_data_digest_match <- function(key, dest, want) {
-  have <- tolower(csha256(readBin(dest, "raw", file.size(dest))))
+  have <- .rmbl_lower(csha256(readBin(dest, "raw", file.size(dest))))
   if (!identical(have, want)) {
     # a table rebuilt upstream has a new digest in a new manifest: fetch the
     # manifest again before calling the file bad, so a stale cached manifest

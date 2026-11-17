@@ -655,7 +655,7 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
   if (
     !is.na(x) &&
       grepl("^[A-Za-z0-9._:-]{1,200}$", x) &&
-      !grepl("^error", x, ignore.case = TRUE)
+      !grepl(.rmbl_ci("^error"), x, perl = TRUE, useBytes = TRUE)
   ) {
     x
   } else {
@@ -771,13 +771,11 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
 .bl_wb_throttled <- function(j) {
   isTRUE(.bl_wb_str(j$status_ext) %in% .bl_wb_throttle_codes) ||
     grepl(
-      paste0(
+      .rmbl_ci(paste0(
         "already reached the limit of active sessions|cannot start ",
         "capture|too many requests|try again later"
-      ),
-      .bl_wb_str(j$message) %|NA|% "",
-      ignore.case = TRUE
-    )
+      )),
+      .bl_wb_str(j$message) %|NA|% "", perl = TRUE, useBytes = TRUE)
 }
 
 #' The account's own daily cap: nothing more can be captured today, so the run
@@ -791,13 +789,11 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
       c("error:max-daily-bandwidth", "error:max-daily-bandwidth-from-ip")
   ) ||
     grepl(
-      paste0(
+      .rmbl_ci(paste0(
         "cannot make more than [0-9,]+ captures per day|daily ",
         "(not-logged-in )?captures limit"
-      ),
-      .bl_wb_str(j$message) %|NA|% "",
-      ignore.case = TRUE
-    )
+      )),
+      .bl_wb_str(j$message) %|NA|% "", perl = TRUE)
 }
 
 #' Returns `b` when `a` is NA, else `a`.
@@ -989,7 +985,8 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
       )
     }
   }
-  bad <- urls[!grepl("^https?://[^[:space:]]+$", urls, ignore.case = TRUE)]
+  bad <- urls[!grepl(.rmbl_ci("^https?://[^[:space:]]+$"), urls, perl = TRUE,
+      useBytes = TRUE)]
   if (length(bad)) {
     stop(
       sprintf("not an http(s) URL: %s", .rmbl_printable(bad[[1L]])),
@@ -1562,7 +1559,8 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
   orig <- .bl_wb_str(j$original_url)
   if (
     is.na(orig) ||
-      !grepl("^https?://[^[:space:]]+$", orig, ignore.case = TRUE)
+      !grepl(.rmbl_ci("^https?://[^[:space:]]+$"), orig, perl = TRUE,
+          useBytes = TRUE)
   ) {
     orig <- u
   }
@@ -1675,13 +1673,11 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
   # status of archive.org's own API (a capture refused or a job lost), and those
   # pages are live
   grepl(
-    paste0(
+    .rmbl_ci(paste0(
       "target server cannot find|returned 404|returned ",
       "410|error:not-found|error:gone"
-    ),
-    msg,
-    ignore.case = TRUE
-  )
+    )),
+    msg, perl = TRUE, useBytes = TRUE)
 }
 
 #' A failure that a capture today cannot fix: the URL's or the account's daily
@@ -1691,12 +1687,10 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
 #' @noRd
 .bl_wb_daily_failure <- function(msg) {
   grepl(
-    paste0(
+    .rmbl_ci(paste0(
       "already captured|captured already today|captured [0-9]+ times ",
       "today|too-many-daily-captures|",
       "daily capture limit|captures per day"
-    ),
-    msg,
-    ignore.case = TRUE
-  )
+    )),
+    msg, perl = TRUE, useBytes = TRUE)
 }

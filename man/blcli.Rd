@@ -128,15 +128,24 @@ argument that is plainly a question (two or more words, or ending in
 asked as \code{ask} would ask it.
 
 Errors are not raised: every error is written to \code{out} as
-\code{"PROG: message"} and turned into the exit status. The status is 0
-on success, 1 when the verb failed (an error, nothing found or no route), 2
-for a usage error (an unknown verb or option, a
-missing value, a value an option does not take) and 130 when interrupted
-(Ctrl-C). An input that does not exist gives, verb by verb: 2 for the
-folder of \code{verify}, \code{drift}, \code{report}, \code{refresh}
-and \code{sign} (a usage error, checked with the arguments), and 1 for
-the project of \code{pack} and the results file of \code{wayback} (a
-failed verb). The options of \code{pack} and \code{sign} are checked
+\code{"PROG: message"} and turned into the exit status, one table for
+every verb: 0 on success; 1 when the verb failed or refused (an error,
+nothing found, no route, a check that failed at or above
+\code{--fail-on}, a folder under PATH that cannot be read, a link out of
+PATH that the capsule verbs do not follow); 2 for a usage error, found
+while the arguments are checked and before anything is read (an unknown
+verb or option, a missing value, a value an option does not take, such
+as a PSI band that is no number, a \code{--base} or a folder PATH that
+does not exist, a \code{--seen-log} that cannot be read); and 130 when
+interrupted (Ctrl-C). \code{report} prints the report and exits 0 once
+it is made, whatever its rows say. An input that does not exist gives,
+verb by verb: 2 for the folder of \code{verify}, \code{drift},
+\code{report}, \code{refresh} and \code{sign}, and 1 for the project of
+\code{pack} and the results file of \code{wayback} (a failed verb). The
+capsule verbs search PATH as \code{\link{cpschk}} does: a link to a
+folder inside it is followed, a loop is not, and a link to any other
+folder outside it is not followed and fails the verb, named. The options of
+\code{pack} and \code{sign} are checked
 before anything is read or a key is asked for. The command name in
 messages is the environment variable \code{RMBL_PROG}, else
 \code{rmoriebricklayer}.

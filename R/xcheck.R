@@ -175,8 +175,8 @@ format.rmbl_xvrf <- function(x, ...) {
   # 3.5); 3.5 adds "provider signature failure" on stderr. Matched without
   # regard to case: a case-sensitive match read OpenSSL 3.0's rejection as
   # no verdict at all
-  if (grepl("signature verification failure|signature failure", txt,
-            ignore.case = TRUE)) {
+  if (grepl(.rmbl_ci("signature verification failure|signature failure"), txt,
+      perl = TRUE, useBytes = TRUE)) {
     return(list(ok = FALSE, version = ver$label, reason = NA_character_))
   }
   .rmbl_xvrf_none(paste0(ver$label, " could not check it: ",

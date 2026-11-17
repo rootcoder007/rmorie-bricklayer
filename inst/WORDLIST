@@ -1253,3 +1253,6 @@ FFFF
 LPT
 PRN
 xmssidxseen
+caseless
+SIGKILL
+SIGTERM

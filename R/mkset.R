@@ -251,7 +251,7 @@ print.rmbl_set <- function(x, ...) {
 #' @noRd
 .mkset_write <- function(out, file, plots) {
   file <- .rmbl_out_file(file, "file", connection = FALSE)
-  ext <- tolower(tools::file_ext(file))
+  ext <- .rmbl_lower(tools::file_ext(file))
   if (!ext %in% c("html", "htm", "md", "txt")) {
     stop(
       sprintf(

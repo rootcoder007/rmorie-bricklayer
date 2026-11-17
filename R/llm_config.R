@@ -447,7 +447,7 @@ llmcfg <- function(...) {
     key,
     route = {
       r <- .bl_env1("MORIE_LLM_ROUTE") %||% "auto"
-      if (identical(tolower(r), "hosted")) {
+      if (identical(.rmbl_lower(r), "hosted")) {
         "auto (the saved route `hosted` is retired and ignored)"
       } else {
         r
@@ -526,7 +526,7 @@ llmcfg <- function(...) {
   if (
     key %in%
       c("own.url", "ollama.url") &&
-      !tolower(value) %in% c("off", "none", "disabled")
+      !.rmbl_lower(value) %in% c("off", "none", "disabled")
   ) {
     .bl_url_sane(value, key)
   }
@@ -574,7 +574,7 @@ llmcfg <- function(...) {
 #' @return NULL, invisibly.
 #' @noRd
 .bl_cfg_chk_own <- function(value) {
-  if (!tolower(value) %in% c("off", "none", "disabled")) {
+  if (!.rmbl_lower(value) %in% c("off", "none", "disabled")) {
     if (!grepl("^https?://[^/[:space:]]+", value)) {
       stop(
         "own.url must be an http(s):// address, e.g. ",
@@ -595,11 +595,13 @@ llmcfg <- function(...) {
 #' @return NULL, invisibly.
 #' @noRd
 .bl_cfg_chk_ollama <- function(value) {
-  if (!tolower(value) %in% c("off", "none", "disabled")) {
-    has_scheme <- grepl("^[a-z][a-z0-9+.-]*://", value, ignore.case = TRUE)
+  if (!.rmbl_lower(value) %in% c("off", "none", "disabled")) {
+    has_scheme <- grepl(.rmbl_ci("^[a-z][a-z0-9+.-]*://"), value, perl = TRUE,
+        useBytes = TRUE)
     if (
       grepl("[[:space:]]", value) ||
-        (has_scheme && !grepl("^https?://", value, ignore.case = TRUE))
+        (has_scheme && !grepl(.rmbl_ci("^https?://"), value, perl = TRUE,
+            useBytes = TRUE))
     ) {
       stop(
         "ollama.url must be an http(s):// address such as ",
@@ -693,7 +695,7 @@ llmcfg <- function(...) {
     return(data)
   }
   if (identical(k, "route")) {
-    v <- tolower(v)
+    v <- .rmbl_lower(v)
   }
   .bl_config_check(k, v)
   # a key belongs to the server it was saved for: a new address drops the
@@ -1028,7 +1030,8 @@ llmcfg <- function(...) {
       "OpenAI-compatible server), auto.\n"
     )
   )
-  route <- tolower(ask("Which should `ask` use", .bl_config_effective("route")))
+  route <- .rmbl_lower(ask("Which should `ask` use",
+      .bl_config_effective("route")))
   if (!route %in% c("auto", .bl_llm_route_names())) {
     out(sprintf("'%s' is not one of them; keeping auto\n", route))
     route <- "auto"
