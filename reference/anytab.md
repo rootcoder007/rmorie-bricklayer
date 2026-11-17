@@ -241,7 +241,7 @@ a
 #> │   adjusted for the number of comparisons; rptanl() writes the full      │
 #> │   tables as a report, and x$change, x$rates and x$trend hold them.      │
 #> │                                                                         │
-#> │   Run 2026-11-17 02:39                                                  │
+#> │   Run 2026-11-17 03:15                                                  │
 #> ╰─────────────────────────────────────────────────────────────────────────╯
 a$change[, c("table", "group", "year", "pctchg", "padj")]
 #>           table    group year     pctchg          padj

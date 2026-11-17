@@ -391,33 +391,33 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.1.1](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpKP4D7z/capsule-1f40523a5c47`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpOVrvut/capsule-1e76442d65e`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpKP4D7z/capsule-1f40523a5c47` | /tmp/RtmpKP4D7z/temp_libpath1f4071ec2c11/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpOVrvut/capsule-1e76442d65e` | /tmp/RtmpOVrvut/temp_libpath1e761dc2078f/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpKP4D7z/capsule-1f40523a5c47</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpOVrvut/capsule-1e76442d65e</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpKP4D7z/temp_libpath1f4071ec2c11/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpOVrvut/temp_libpath1e761dc2078f/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpKP4D7z/capsule-1f40523a5c47/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpKP4D7z/capsule-1f40523a5c47/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpOVrvut/capsule-1e76442d65e/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpOVrvut/capsule-1e76442d65e/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpKP4D7z/capsule-1f40523a5c47/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpOVrvut/capsule-1e76442d65e/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000174 Wh, 8e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000121 Wh, 5.52e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
 #> 
 #> ---
 #> 
