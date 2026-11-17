@@ -57,7 +57,7 @@
 #' options(op)
 #' @export
 xmssidxseen <- function(path = ".", seenlog = NULL) {
-  path <- .rmbl_string1(path, "path")
+  path <- .rmbl_fspath(.rmbl_string1(path, "path"))
   if (!file.exists(path)) {
     stop(
       .rmbl_fn(),
@@ -734,14 +734,8 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 #' @noRd
 .rmbl_xmss_bundle_files <- function(path) {
   if (dir.exists(path)) {
-    f <- list.files(
-      path,
-      pattern = "^capsule_bundle[.]json$",
-      recursive = TRUE,
-      full.names = TRUE,
-      all.files = TRUE
-    )
-    f[!grepl("(^|/)([.]git|[.]rmbl-cache)/", f)]
+    # walked as cpschk() walks it: a link loop is not followed (.bl_find())
+    .bl_find(path, "capsule_bundle.json")
   } else {
     path
   }

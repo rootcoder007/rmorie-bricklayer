@@ -58,7 +58,7 @@
 #' try(usecpstmpl(d))
 #' @export
 usecpstmpl <- function(path, name = basename(path), ex = FALSE) {
-  path <- .rmbl_string1(path, "path")
+  path <- .rmbl_fspath(.rmbl_string1(path, "path"))
   .rmbl_name_ok(path, "path")
   ex <- .rmbl_flag1(ex, "ex")
   if (file.exists(path) && !dir.exists(path)) {

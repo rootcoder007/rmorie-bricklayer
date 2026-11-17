@@ -565,7 +565,9 @@ test_that("report writers write no control byte from a label", {
         }
       }
     )
-    txt <- paste(readLines(f, warn = FALSE), collapse = "\n")
+    # the report is UTF-8: read as such, it is matched in any locale
+    txt <- paste(readLines(f, warn = FALSE, encoding = "UTF-8"),
+                 collapse = "\n")
     expect_false(bad(txt), info = ext)
     expect_match(txt, "\\033", fixed = TRUE, info = ext)
   }

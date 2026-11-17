@@ -123,7 +123,8 @@ test_that("a file name that is not text is reported, not an error", {
 })
 
 test_that("refusals show control and non-text bytes escaped", {
-  for (f in list(fipskg, fipssz)) {
+  # in a Latin-1 session the byte ff is text (y with diaeresis)
+  for (f in if (!isTRUE(l10n_info()[["Latin-1"]])) list(fipskg, fipssz)) {
     e <- s5_msg(f("a\xffb"))
     expect_true(validUTF8(e))
     expect_match(e, "unknown scheme 'a<ff>b'", fixed = TRUE)
@@ -283,4 +284,255 @@ test_that("the run verb reads a .csv as a table of text", {
   expect_match(s5_msg(.bl_run_value(f)), "the .csv is empty")
   writeBin(c(charToRaw("a,b\n1,"), as.raw(0L), charToRaw("\n")), f)
   expect_match(s5_msg(.bl_run_value(f)), "NUL byte")
+})
+
+s5_snap <- function(root) {
+  f <- list.files(root, recursive = TRUE, all.files = TRUE)
+  stats::setNames(tools::md5sum(file.path(root, f)), f)
+}
+
+test_that("links back to the capsule or above it are refused at once", {
+  skip_on_os("windows")
+  withr::local_options(morie.progress = FALSE)
+  root <- withr::local_tempdir()
+  a <- s5_capsule(root, "a")
+  skip_if_not(file.symlink(".", file.path(a, "l1")))
+  file.symlink(".", file.path(a, "l2"))
+  file.symlink("/", file.path(a, "top"))
+  file.symlink("../..", file.path(a, "up"))
+  t <- system.time(e <- s5_msg(cpsbndl(a, mkmnf(list(), env = FALSE), "k")))
+  expect_lt(t[["elapsed"]], 10)
+  expect_match(e, "points back into the capsule folder")
+  for (n in c("l1", "l2", "top", "up")) {
+    expect_match(e, n, fixed = TRUE)
+  }
+  expect_match(s5_msg(cpsseal(root, "k")), "points back")
+  expect_false(file.exists(file.path(a, "capsule_bundle.json")))
+  # a loop to a folder that holds no file of its own
+  b <- s5_capsule(root, "b")
+  dir.create(file.path(b, "x", "y"), recursive = TRUE)
+  writeLines("g", file.path(b, "x", "y", "g.txt"))
+  file.symlink("..", file.path(b, "x", "y", "z"))
+  e <- s5_msg(cpsbndl(b, mkmnf(list(), env = FALSE), "k"))
+  expect_match(e, "points back into the capsule folder.*x/y/z$")
+  # the check of a bundle walks the folder the same way, and reports it
+  unlink(file.path(b, "x", "y", "z"))
+  bn <- cpsbndl(b, mkmnf(list(), env = FALSE), "k")
+  file.symlink(".", file.path(b, "x", "lp"))
+  v <- cpsbndlvrf(attr(bn, "path"), b, key = "k")
+  row <- v$checks[v$checks$check == "no_unlisted_files", ]
+  expect_false(row$ok)
+  expect_match(row$detail, "points back.*x/lp")
+})
+
+test_that("links that stay inside are content, and a deep tree is walked", {
+  skip_on_os("windows")
+  withr::local_options(morie.progress = FALSE)
+  root <- withr::local_tempdir()
+  a <- s5_capsule(root, "a")
+  dir.create(file.path(a, "sub"))
+  writeLines("s", file.path(a, "sub", "s.txt"))
+  skip_if_not(file.symlink("sub", file.path(a, "alias")))
+  deep <- do.call(file.path, as.list(c(a, sprintf("l%02d", 1:30))))
+  dir.create(deep, recursive = TRUE)
+  writeLines("d", file.path(deep, "deep.txt"))
+  dir.create(file.path(a, ".hid"))
+  writeLines("h", file.path(a, ".hid", ".x"))
+  writeLines("t", file.path(a, ".rmbl-0a1b.tmp"))
+  b <- cpsbndl(a, mkmnf(list(), env = FALSE), "k")
+  p <- vapply(b$files, `[[`, "", "path")
+  expect_true(all(c("alias/s.txt", "sub/s.txt", ".hid/.x") %in% p))
+  expect_true(any(endsWith(p, "l30/deep.txt")))
+  expect_false(any(grepl("rmbl-", p, fixed = TRUE)))
+  unlink(file.path(a, ".rmbl-0a1b.tmp"))
+  expect_true(cpsbndlvrf(attr(b, "path"), a, key = "k")$ok)
+  # through a link to the capsule itself
+  ln <- file.path(root, "ln")
+  file.symlink(a, ln)
+  expect_true(cpsbndlvrf(file.path(ln, "capsule_bundle.json"), ln,
+                         key = "k")$ok)
+  # pairs of links that list the folders below 2^n times stop at 64
+  p <- file.path(a, "g")
+  dir.create(p)
+  for (i in 1:8) {
+    file.symlink("d", file.path(p, "l1"))
+    file.symlink("d", file.path(p, "l2"))
+    p <- file.path(p, "d")
+    dir.create(p)
+  }
+  t <- system.time(e <- s5_msg(cpsbndl(a, mkmnf(list(), env = FALSE), "k")))
+  expect_lt(t[["elapsed"]], 20)
+  expect_match(e, "more than 64 times")
+})
+
+test_that("a folder that cannot be read is refused, not skipped", {
+  skip_on_os("windows")
+  withr::local_options(morie.progress = FALSE)
+  root <- withr::local_tempdir()
+  a <- s5_capsule(root, "a")
+  sd <- file.path(a, "sd")
+  dir.create(sd)
+  writeLines("z", file.path(sd, "z.txt"))
+  Sys.chmod(sd, "000")
+  on.exit(Sys.chmod(sd, "755"), add = TRUE)
+  skip_if(file.access(sd, 4L) == 0L) # run as root
+  expect_match(s5_msg(cpsbndl(a, mkmnf(list(), env = FALSE), "k")),
+               "cannot be read \\(permission denied\\).*: sd$")
+  expect_match(s5_msg(cpsseal(root, "k")), "cannot be read")
+  expect_false(file.exists(file.path(a, "capsule_bundle.json")))
+  # a folder under the searched path, outside any capsule
+  Sys.chmod(sd, "755")
+  hid <- file.path(root, "hid")
+  dir.create(hid)
+  Sys.chmod(hid, "000")
+  on.exit(Sys.chmod(hid, "755"), add = TRUE)
+  expect_match(s5_msg(cpsseal(root, "k")), "capsule in it would be missed")
+})
+
+test_that("a name that is UTF-8 is bundled by its bytes", {
+  skip_on_os("windows")
+  withr::local_options(morie.progress = FALSE)
+  root <- withr::local_tempdir()
+  a <- s5_capsule(root, "a")
+  nm <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xc3, 0xa9)))
+  f <- tryCatch(file.path(a, nm), error = function(e) NULL)
+  skip_if(is.null(f))
+  skip_if_not(isTRUE(tryCatch(file.create(f), warning = function(w) FALSE)))
+  # a path marked UTF-8 keeps its bytes for the file system
+  u <- nm
+  Encoding(u) <- "UTF-8"
+  expect_identical(charToRaw(.rmbl_fspath(u)), charToRaw(nm))
+  expect_no_warning(s <- cpsseal(root, "k"))
+  j <- readBin(file.path(a, "capsule_bundle.json"), "raw", 1e6)
+  expect_true(grepl(nm, rawToChar(j), fixed = TRUE, useBytes = TRUE))
+  expect_no_warning(x <- cpschk(root, key = "k", fp = FALSE))
+  expect_identical(x$status, "ok")
+})
+
+test_that("bytes Latin-1 cannot convert are not text", {
+  for (b in c(0x81, 0x8d, 0x8f, 0x90, 0x9d)) {
+    s <- rawToChar(as.raw(c(0x61, b, 0x62)))
+    Encoding(s) <- "latin1"
+    expect_true(.rmbl_nontext(s))
+    expect_no_warning(e <- .rmbl_ctl_escape(s))
+    expect_true(validUTF8(e))
+  }
+  s <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xe9)))
+  Encoding(s) <- "latin1"
+  expect_false(.rmbl_nontext(s))
+  expect_match(.bl_names(rawToChar(as.raw(c(0x61, 0xe9)))), "a<e9>",
+               fixed = TRUE)
+})
+
+test_that("cpsseal() writes nothing when the key cannot sign them all", {
+  withr::local_options(
+    morie.progress = FALSE,
+    rmoriebricklayer.xmssidxfile = withr::local_tempfile()
+  )
+  root <- withr::local_tempdir()
+  s5_capsule(root, "a")
+  s5_capsule(root, "b")
+  b0 <- s5_snap(root)
+  k <- fipskg("ML-DSA-44")
+  expect_match(s5_msg(cpsseal(root, fipspubkey(k))), "public key")
+  spent <- pqckg(2)
+  invisible(cpsatst(mkmnf(list(), env = FALSE), spent))
+  expect_match(s5_msg(cpsseal(root, spent)), "index 0 of this key")
+  one <- pqckg(1)
+  s <- cpsatst(mkmnf(list(), env = FALSE), one)
+  one <- xmssadv(one, s$signature)
+  expect_match(s5_msg(cpsseal(root, one)), "1 signatures left and 2")
+  expect_identical(s5_snap(root), b0)
+  # the index was not spent: the key still seals one capsule
+  unlink(file.path(root, "b"), recursive = TRUE)
+  expect_identical(nrow(cpsseal(root, one)), 1L)
+})
+
+test_that("cpsseal() checks every manifest and file before it writes", {
+  withr::local_options(morie.progress = FALSE)
+  root <- withr::local_tempdir()
+  s5_capsule(root, "a")
+  b <- s5_capsule(root, "b")
+  b0 <- s5_snap(root)
+  for (t in c("1", "[]", "[1, 2]", "\"x\"")) {
+    writeLines(t, file.path(b, "manifest.json"))
+    expect_match(s5_msg(cpsseal(root, "k")), "must hold a JSON object")
+  }
+  writeLines("{}", file.path(b, "manifest.json"))
+  b0 <- s5_snap(root)
+  skip_on_os("windows")
+  z <- file.path(b, "z.txt")
+  writeLines("z", z)
+  Sys.chmod(z, "000")
+  on.exit(Sys.chmod(z, "644"), add = TRUE)
+  skip_if(file.access(z, 4L) == 0L)
+  expect_match(s5_msg(cpsseal(root, "k")), "cannot be read")
+  Sys.chmod(z, "644")
+  expect_identical(s5_snap(root)[names(b0)], b0)
+  expect_false(file.exists(file.path(root, "a", "capsule_bundle.json")))
+})
+
+test_that("a seal that fails while writing puts every file back", {
+  withr::local_options(morie.progress = FALSE)
+  root <- withr::local_tempdir()
+  s5_capsule(root, "a")
+  s5_capsule(root, file.path("a", "in"))
+  s5_capsule(root, "b")
+  cpsseal(root, "k")
+  b0 <- s5_snap(root)
+  # the second bundle written fails, as on a full disk
+  cnt <- new.env()
+  cnt$n <- 0L
+  local_mocked_bindings(.bl_bnd_write = function(bundle, path) {
+    cnt$n <- cnt$n + 1L
+    if (cnt$n == 2L) stop("the disk is full", call. = FALSE)
+    .rmbl_wlines("{}", path)
+  })
+  e <- s5_msg(cpsseal(root, "k", overwrite = TRUE))
+  expect_match(e, "the disk is full; every file the seal had written")
+  expect_identical(s5_snap(root), b0)
+  # a provenance pinned before the failed write is put back too
+  r <- withr::local_tempdir()
+  s5_capsule(r, "a")
+  r0 <- s5_snap(r)
+  cnt$n <- 1L
+  # evaluated once: expect_match() evaluates its argument twice
+  e <- s5_msg(cpsseal(r, "k"))
+  expect_match(e, "put back")
+  expect_identical(s5_snap(r), r0)
+})
+
+test_that("the run verb refuses what is no table in its own words", {
+  d <- withr::local_tempdir()
+  w <- function(n, b) {
+    p <- file.path(d, n)
+    writeBin(b, p)
+    p
+  }
+  m <- function(p) s5_msg(.bl_run_value(p))
+  expect_match(m(w("nl.csv", charToRaw("\n \n"))), "only blank lines")
+  zst <- as.raw(c(0x28, 0xb5, 0x2f, 0xfd, 1, 2, 3, 4, 0xc3, 0x28))
+  expect_match(m(w("z.csv", zst)), "compressed \\(zstd\\)")
+  lz4 <- as.raw(c(0x04, 0x22, 0x4d, 0x18, 1, 2))
+  expect_match(m(w("l.csv", lz4)), "compressed \\(lz4\\)")
+  # bytes that are not UTF-8 are text only in a Latin-1 session
+  b <- w("b.csv", as.raw(c(0x61, 0x2c, 0xff, 0xfe, 0x0a)))
+  if (isTRUE(l10n_info()[["Latin-1"]])) {
+    expect_s3_class(.bl_run_value(b), "data.frame")
+  } else {
+    expect_match(m(b), "holds bytes that are not text")
+  }
+  expect_match(m(w("q.csv", charToRaw("a,b\n\"1,2\n"))),
+               "run: the .csv cannot be read as a table \\(")
+  # a NUL past the first block is found
+  big <- c(rep(charToRaw("a,b\n"), 300000L), as.raw(0L))
+  expect_match(m(w("n.csv", big)), "NUL byte")
+  expect_match(m(w("e.rds", raw(0))), "the .rds is empty")
+  expect_match(m(w("j.rds", charToRaw("not rds"))), "is not an RDS file")
+  r <- file.path(d, "t.rds")
+  saveRDS(data.frame(x = 1:1000), r)
+  b <- readBin(r, "raw", file.size(r))
+  expect_match(m(w("c.rds", b[seq_len(length(b) %/% 2L)])),
+               "truncated or damaged")
+  expect_identical(nrow(.bl_run_value(r)), 1000L)
 })

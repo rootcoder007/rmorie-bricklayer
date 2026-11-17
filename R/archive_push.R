@@ -63,7 +63,7 @@ arcpush <- function(
   tmout = 600L
 ) {
   upload <- .bl_cap_upload_arg(upload)
-  dir <- .rmbl_string1(dir, "dir")
+  dir <- .rmbl_fspath(.rmbl_string1(dir, "dir"))
   .bl_cap_item_meta(item, meta)
   if (is.null(item) && is.null(upload)) {
     stop("give `item`, `upload` or both: where the capture goes",

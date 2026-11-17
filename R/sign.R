@@ -1033,7 +1033,7 @@ cpssign <- function(
     if (!is.character(key) && !is.raw(key)) {
       stop(
         "`key` must come from fipskg() or pqckg(), or be a shared secret (a ",
-        "string or raw vector) for hmac",
+        "string or raw vector) for hmac; a public key cannot sign",
         call. = FALSE
       )
     }
@@ -3016,6 +3016,17 @@ xmssfgt <- function(keytofgt = NULL) {
 #' @return NULL, invisibly; an error for an index outside the block.
 #' @noRd
 .rmbl_xmss_take_block <- function(ids, idx, blk) {
+  .rmbl_xmss_take_check(idx, blk)
+  assign(ids$id, c(idx + 1L, blk[[2L]]), envir = .rmbl_xmss_block)
+  invisible(NULL)
+}
+
+#' Refuses an index outside the block rmbl sign reserved.
+#' @param idx The index.
+#' @param blk The block, first and last index.
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_xmss_take_check <- function(idx, blk) {
   if (idx < blk[[1L]] || idx > blk[[2L]]) {
     stop(
       sprintf(
@@ -3030,7 +3041,6 @@ xmssfgt <- function(keytofgt = NULL) {
       call. = FALSE
     )
   }
-  assign(ids$id, c(idx + 1L, blk[[2L]]), envir = .rmbl_xmss_block)
   invisible(NULL)
 }
 
@@ -3040,10 +3050,7 @@ xmssfgt <- function(keytofgt = NULL) {
 #' @return NULL, invisibly, after the warning.
 #' @noRd
 .rmbl_xmss_reserve_off <- function(ids, idx) {
-  hi <- .rmbl_xmss_highest(ids, integer(0))
-  if (idx <= hi) {
-    .rmbl_xmss_refuse(idx, hi)
-  }
+  .rmbl_xmss_check_idx(ids, idx, integer(0), record = FALSE)
   assign(ids$id, idx, envir = .rmbl_xmss_used)
   warning(
     "the XMSS used-index record is off ",
@@ -3066,11 +3073,27 @@ xmssfgt <- function(keytofgt = NULL) {
 #' @noRd
 .rmbl_xmss_reserve_locked <- function(p, ids, idx) {
   rec <- .rmbl_xmss_record_read(p)
+  .rmbl_xmss_check_idx(ids, idx, rec)
+  rec[ids$id] <- idx
+  .rmbl_xmss_record_write(p, rec)
+  assign(ids$id, idx, envir = .rmbl_xmss_used)
+}
+
+#' Refuses an index the record or this session has seen used, and index 0
+#' of a key the record does not know: what a reservation refuses, before it
+#' writes anything (the reservation and cpsseal()'s look-ahead share it).
+#' @param ids The key's record ids.
+#' @param idx The index.
+#' @param rec The record, as read.
+#' @param record Whether the record is on (off, only this session knows).
+#' @return NULL, invisibly.
+#' @noRd
+.rmbl_xmss_check_idx <- function(ids, idx, rec, record = TRUE) {
   hi <- .rmbl_xmss_highest(ids, rec)
   if (idx <= hi) {
     .rmbl_xmss_refuse(idx, hi)
   }
-  if (!.rmbl_xmss_known(ids, rec) && idx == 0L) {
+  if (record && !.rmbl_xmss_known(ids, rec) && idx == 0L) {
     stop(
       "this XMSS key is not in the used-index record on this ",
       "machine, and it claims never to have ",
@@ -3084,9 +3107,44 @@ xmssfgt <- function(keytofgt = NULL) {
       call. = FALSE
     )
   }
-  rec[ids$id] <- idx
-  .rmbl_xmss_record_write(p, rec)
-  assign(ids$id, idx, envir = .rmbl_xmss_used)
+  invisible(NULL)
+}
+
+#' Whether an XMSS key can make `n` signatures in a row, found without
+#' making one or reserving an index.
+#'
+#' cpsseal() signs one capsule after another: a key with one index left for
+#' two capsules signed the first, spent its last index and then stopped, and
+#' a key whose next index was already used was refused only after the first
+#' capsule had been pinned. The checks are those the signer makes
+#' (.rmbl_sign_index(), the block of rmbl sign, .rmbl_xmss_check_idx()),
+#' applied to the first index and to the capacity the run needs.
+#' @param key An XMSS signing key.
+#' @param n The number of signatures.
+#' @return NULL, invisibly; stops in the signer's words.
+#' @noRd
+.rmbl_xmss_ready <- function(key, n) {
+  idx <- .rmbl_sign_index(key)
+  if (idx + n > key$capacity) {
+    stop(sprintf(paste0(
+      "this key has %d signatures left and %d are needed: generate a new ",
+      "key, or sign fewer capsules at a time; nothing was signed"
+    ), key$capacity - idx, n), call. = FALSE)
+  }
+  ids <- .rmbl_xmss_ids(key)
+  blk <- .rmbl_xmss_block[[ids$id]]
+  if (!is.null(blk)) {
+    .rmbl_xmss_take_check(idx, blk)
+    .rmbl_xmss_take_check(idx + n - 1L, blk)
+    return(invisible(NULL))
+  }
+  p <- .rmbl_xmss_index_file()
+  rec <- if (is.null(p)) {
+    integer(0)
+  } else {
+    .rmbl_xmss_with_lock(p, function() .rmbl_xmss_record_read(p))
+  }
+  .rmbl_xmss_check_idx(ids, idx, rec, record = !is.null(p))
 }
 
 #' The ML-DSA mode of a fipsvrfmu() verification, when the key, signature

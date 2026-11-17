@@ -193,7 +193,7 @@ cpschk <- function(
       call. = FALSE
     )
   }
-  path <- .rmbl_string1(path, "path")
+  path <- .rmbl_fspath(.rmbl_string1(path, "path"))
   if (!dir.exists(path)) {
     stop(
       .rmbl_fn(),
@@ -460,12 +460,29 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' @details
 #' A provenance already pinned (one with \code{resource$sha256}) is left as
 #' it is. Side effects: writes \code{data_provenance.json} (first run) and
-#' \code{capsule_bundle.json} in each capsule. Errors, before anything is
-#' written: no provenance under \code{path}; a capsule that already has a
-#' bundle, unless \code{overwrite}; then, per capsule, a
-#' \code{resource$filename} that is not a plain relative path to a file in
-#' the capsule, and the refusals of \code{cpsbndl()} (a key it cannot sign
-#' with).
+#' \code{capsule_bundle.json} in each capsule.
+#'
+#' Errors, before anything is written: no provenance under \code{path}, or
+#' a folder under it that cannot be read; a capsule that already has a
+#' bundle, unless \code{overwrite}; a key that cannot sign (a public key,
+#' or anything \code{\link{cpsatst}} refuses: a key other than an XMSS key
+#' signs a throwaway manifest first, which changes nothing), or an XMSS key
+#' whose next index was already used or that has fewer unused indices than
+#' there are capsules (checked without spending one); then, for every
+#' capsule, a \code{resource$filename} that is not a plain relative path to
+#' a file in the capsule, a provenance that cannot be pinned, a
+#' \code{manifest.json} that does not hold a JSON object, and every refusal
+#' of \code{cpsbndl()} short of the signature (links, names, files that
+#' cannot be read, a folder that cannot be written to). Each pinned
+#' provenance is worked out in memory first.
+#'
+#' What cannot be known before writing (the disk filling up, a file that
+#' changes or stops being readable during the seal, a signature that fails)
+#' stops the seal: every file it had written is then put back as it was
+#' (each is copied aside before it is replaced and renamed back, which
+#' needs no room on the disk), and the error says which files, if any,
+#' could not be. XMSS indices a failed seal signed with stay used, as they
+#' must.
 #'
 #' @param path Character scalar, the folder searched recursively.
 #' @param key The signing key, as \code{cpsbndl()} takes it: a shared
@@ -504,49 +521,110 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' @export
 cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   dirs <- .bl_seal_dirs(path, overwrite, glob)
-  bad <- .bl_seal_ahead(dirs, key)
-  if (!is.null(bad)) {
-    stop(.rmbl_fn(), bad, call. = FALSE)
-  }
+  plans <- .bl_seal_ahead(dirs, key)
+  undo <- new.env(parent = emptyenv())
+  undo$old <- list()
   rows <- list()
-  for (d in dirs) {
-    pf <- file.path(d, "data_provenance.json")
-    prov <- loadprov(pf)
-    pinned <- is.null(prov[["resource"]][["sha256"]])
-    if (pinned) {
-      fn <- .bl_s1(prov[["resource"]][["filename"]])
-      # .bl_seal_ahead() has found the file this names
-      df <- .rmbl_safe_rel(fn, d)
-      .rmbl_wlines(
-        tojs(
-          .bl_pin(prov, df, fn),
-          auto_unbox = TRUE,
-          pretty = TRUE,
-          null = "null",
-          digits = NA
-        ),
-        pf
-      )
-    }
-    mf <- file.path(d, "manifest.json")
-    b <- cpsbndl(
-      d,
-      if (file.exists(mf)) loadprov(mf) else mkmnf(list(), env = FALSE),
-      key
-    )
-    # an XMSS key moves past the index it just signed with, for the next capsule
-    if (inherits(key, "bricklayer_signing_key")) {
-      key$next_index <- b$attestation$signature$index + 1L
-    }
-    rows[[length(rows) + 1L]] <- data.frame(
-      capsule = d,
-      pinned = pinned,
-      files = length(b$files),
-      public = b$attestation$public,
-      stringsAsFactors = FALSE
-    )
-  }
+  # what fails during the writes (a full disk, a file changed meanwhile) puts
+  # every file this call wrote back as it was
+  tryCatch(
+    for (i in seq_along(dirs)) {
+      r <- .bl_seal_one(dirs[[i]], plans[[i]], key, undo)
+      key <- r$key
+      rows[[i]] <- r$row
+    },
+    error = function(e) .bl_seal_undo(undo, conditionMessage(e), key),
+    interrupt = function(e) .bl_seal_undo(undo, "cpsseal: interrupted", key)
+  )
+  bak <- vapply(undo$old, `[[`, "", 2L)
+  unlink(bak[!is.na(bak)])
   do.call(rbind, rows)
+}
+
+#' Seals one capsule as planned: pins its provenance, then bundles it,
+#' keeping a copy of each file before it is replaced.
+#' @param d The capsule folder.
+#' @param plan Its plan, from .bl_seal_plan().
+#' @param key The signing key, moved past each XMSS index it signs with.
+#' @param undo Where the copies are kept (.bl_seal_keep()).
+#' @return A list: the `key` (an XMSS key moved past the index it signed
+#'   with, for the next capsule) and the capsule's `row`.
+#' @noRd
+.bl_seal_one <- function(d, plan, key, undo) {
+  if (!is.null(plan$pin)) {
+    .bl_seal_keep(undo, plan$pf)
+    .rmbl_wlines(plan$pin, plan$pf)
+  }
+  .bl_seal_keep(undo, file.path(d, "capsule_bundle.json"))
+  b <- cpsbndl(d, plan$man, key)
+  if (inherits(key, "bricklayer_signing_key")) {
+    key$next_index <- b$attestation$signature$index + 1L
+  }
+  row <- data.frame(
+    capsule = d,
+    pinned = !is.null(plan$pin),
+    files = length(b$files),
+    public = b$attestation$public,
+    stringsAsFactors = FALSE
+  )
+  list(key = key, row = row)
+}
+
+#' Keeps a copy of a file cpsseal() is about to replace, beside it, to be
+#' renamed back if the seal fails: a rename needs no room on the disk, so a
+#' full disk cannot stop it.
+#' @param undo The seal's record of files written.
+#' @param f The file.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_seal_keep <- function(undo, f) {
+  bak <- NA_character_
+  if (file.exists(f)) {
+    # named as a temporary of the package's writes, so no bundle lists it
+    bak <- tempfile(".rmbl-", tmpdir = dirname(f), fileext = ".tmp")
+    if (!isTRUE(file.copy(f, bak))) {
+      unlink(bak)
+      stop(.rmbl_fn(), "could not keep a copy of ", .bl_names(f),
+           " to put back if the seal fails", call. = FALSE)
+    }
+  }
+  undo$old[[length(undo$old) + 1L]] <- c(f, bak)
+  invisible(NULL)
+}
+
+#' Puts back every file a failed seal wrote, then stops with its reason.
+#' @param undo The seal's record of files written (.bl_seal_keep()).
+#' @param why The reason the seal failed.
+#' @param key The key as far as the seal had moved it.
+#' @return Does not return.
+#' @noRd
+.bl_seal_undo <- function(undo, why, key) {
+  left <- character()
+  for (o in rev(undo$old)) {
+    back <- if (is.na(o[[2L]])) {
+      !file.exists(o[[1L]]) || unlink(o[[1L]]) == 0L
+    } else {
+      file.rename(o[[2L]], o[[1L]])
+    }
+    if (!isTRUE(back)) {
+      left <- c(left, o[[1L]])
+    }
+  }
+  stop(
+    why,
+    if (length(left)) {
+      paste0("; these could not be put back as they were: ", .bl_names(left))
+    } else if (length(undo$old)) {
+      "; every file the seal had written was put back as it was"
+    },
+    if (inherits(key, "bricklayer_signing_key") && length(undo$old)) {
+      sprintf(paste0(
+        "; the XMSS indices the seal used stay used (the key's next ",
+        "index is now at least %d)"
+      ), key$next_index)
+    },
+    call. = FALSE
+  )
 }
 
 #' The console summary of a capsule check: one titled block.
@@ -1365,7 +1443,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' @return The capsule directories.
 #' @noRd
 .bl_seal_dirs <- function(path, overwrite, glob) {
-  path <- .rmbl_string1(path, "path")
+  path <- .rmbl_fspath(.rmbl_string1(path, "path"))
   if (!dir.exists(path)) {
     stop(
       .rmbl_fn(),
@@ -2130,37 +2208,85 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   }
 }
 
-#' Looks at every capsule before cpsseal() writes the first.
+#' Works out every capsule's seal before cpsseal() writes the first.
 #'
-#' A refusal at the third capsule left the first two pinned and bundled.
-#' The key is looked at too; no signature is made, since a stateful key
-#' would spend an index. The file names, the links and each manifest.json
-#' stop with their own words.
+#' A refusal at the third capsule left the first two pinned and bundled,
+#' and a look-ahead that listed refusals one at a time missed some (a
+#' public key, a spent or exhausted XMSS key, a manifest that is no object,
+#' a file that cannot be read). So the look-ahead is the seal's own code
+#' with nothing written: each provenance is pinned in memory
+#' (.bl_seal_plan()), each capsule goes through cpsbndl()'s own checks
+#' (.bl_bnd_prep()), and the key signs a throwaway manifest by cpsbndl()'s
+#' own signer, or, for a stateful XMSS key, which a signature would spend,
+#' is checked for as many unused indices as there are capsules.
 #' @param dirs The capsule folders about to be sealed.
 #' @param key The signing key cpsseal() was given.
-#' @return NULL, or the words of the refusal of a data file's name.
+#' @return The plans, one per capsule.
 #' @noRd
 .bl_seal_ahead <- function(dirs, key) {
-  .rmbl_attest_scheme(key)
-  .rmbl_attest_public(key)
-  for (d in dirs) {
-    pf <- file.path(d, "data_provenance.json")
-    prov <- loadprov(pf)
-    df <- .rmbl_safe_rel(.bl_s1(prov[["resource"]][["filename"]]), d)
-    unpinned <- is.null(prov[["resource"]][["sha256"]])
-    if (unpinned && (is.null(df) || !file.exists(df) || dir.exists(df))) {
-      return(paste0(
-        pf, ": resource$filename must name the data file, relative to ",
-        "the capsule"
-      ))
-    }
-    .bl_bnd_textnames(
-      .bl_bnd_select(d, NULL, file.path(d, "capsule_bundle.json"))
-    )
-    mf <- file.path(d, "manifest.json")
-    if (file.exists(mf)) {
-      loadprov(mf)
-    }
+  if (inherits(key, "bricklayer_signing_key")) {
+    .rmbl_xmss_ready(key, length(dirs))
+  } else {
+    cpsatst(mkmnf(list(), env = FALSE), key)
   }
-  NULL
+  lapply(dirs, function(d) {
+    plan <- .bl_seal_plan(d)
+    .bl_bnd_prep(d, NULL, file.path(d, "capsule_bundle.json"), plan$man)
+    plan
+  })
+}
+
+#' What sealing one capsule writes, worked out without writing it: the
+#' pinned provenance's JSON (NULL when it is pinned already) and the
+#' manifest the bundle is signed over.
+#' @param d The capsule folder.
+#' @return A list: `pf` (the provenance file), `pin` and `man`.
+#' @noRd
+.bl_seal_plan <- function(d) {
+  pf <- file.path(d, "data_provenance.json")
+  prov <- loadprov(pf)
+  pin <- NULL
+  if (is.null(prov[["resource"]][["sha256"]])) {
+    fn <- .bl_s1(prov[["resource"]][["filename"]])
+    df <- .rmbl_safe_rel(fn, d)
+    if (is.null(df) || !file.exists(df) || dir.exists(df)) {
+      stop(
+        .rmbl_fn(), .bl_names(pf), ": resource$filename must name the ",
+        "data file, relative to the capsule",
+        call. = FALSE
+      )
+    }
+    pin <- tojs(
+      .bl_pin(prov, df, fn),
+      auto_unbox = TRUE,
+      pretty = TRUE,
+      null = "null",
+      digits = NA
+    )
+  }
+  list(pf = pf, pin = pin, man = .bl_seal_man(d))
+}
+
+#' The manifest a capsule's bundle is signed over: its manifest.json, which
+#' must hold a JSON object, or an empty manifest.
+#' @param d The capsule folder.
+#' @return The manifest.
+#' @noRd
+.bl_seal_man <- function(d) {
+  mf <- file.path(d, "manifest.json")
+  if (!file.exists(mf)) {
+    return(mkmnf(list(), env = FALSE))
+  }
+  man <- loadprov(mf)
+  # 1, "x" or [1, 2] parse, and were refused only after the capsules before
+  # it had been sealed; [] parses as {} does, so the text is looked at
+  h <- readBin(mf, "raw", 4096L)
+  h <- h[!h %in% as.raw(c(0x20, 0x09, 0x0a, 0x0d, 0xef, 0xbb, 0xbf))]
+  if (!is.list(man) || !length(h) || h[[1L]] != charToRaw("{")) {
+    stop(
+      .rmbl_fn(), .bl_names(mf), ": manifest.json must hold a JSON object",
+      call. = FALSE
+    )
+  }
+  man
 }

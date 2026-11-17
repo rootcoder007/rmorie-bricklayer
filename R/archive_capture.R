@@ -748,7 +748,7 @@ format.rmbl_archive_capture <- function(x, ...) {
     stop("`warc` must be TRUE or FALSE", call. = FALSE)
   }
   urls <- .bl_cap_urls(urls)
-  dir <- .rmbl_string1(dir, "dir")
+  dir <- .rmbl_fspath(.rmbl_string1(dir, "dir"))
   .bl_cap_item_meta(item, meta)
   if (!is.null(tsa)) {
     tsa <- .rmbl_string1(tsa, "tsa")

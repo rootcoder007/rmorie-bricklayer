@@ -223,7 +223,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 #' @return A list: data, code, label, capsule.
 #' @noRd
 .bl_app_capsule <- function(dir) {
-  dir <- .rmbl_string1(dir, "capsule")
+  dir <- .rmbl_fspath(.rmbl_string1(dir, "capsule"))
   if (!dir.exists(dir)) {
     stop(
       "rmblapp: `capsule` is not an existing directory: ",

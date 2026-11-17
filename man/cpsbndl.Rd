@@ -114,14 +114,24 @@ whose \code{meta} is that payload, and the bundle (payload plus attestation) is
 written as pretty JSON with doubles at 17 digits. With \code{files = NULL} every
 regular file under \code{dir} is hashed, recursively and including dot-files
 (a \code{.Rprofile} dropped into a capsule runs code), except the bundle file
-itself. A progress bar is shown when \code{options(morie.progress)} allows it.
+itself and the temporary of a write that was cut short. The folder is
+walked one level at a time: a link that stays inside is content like any
+other file or folder, but a link to the capsule folder or a folder above
+it, a link that leaves the folder, a folder that cannot be read and
+links that would list one folder more than 64 times are refused, all of
+them named at once. File names are kept by their bytes: a name that is
+UTF-8 is bundled in every locale (C and Latin-1 too), and one that is
+not UTF-8 is refused with its bytes shown as \code{<e9>}. A progress bar
+is shown when \code{options(morie.progress)} allows it.
 
 How it is checked. \code{cpsbndlvrf()} re-hashes every listed file
 (a path that is absolute or climbs out of \code{dir} fails its row), reports
 every file on disk the bundle does not list (the bundle's own file
 excepted, when it is the file checked: a \code{capsule_bundle.json}
-in \code{dir} is unlisted when another bundle file is checked) and every
-empty folder (named with a trailing \code{/}),
+in \code{dir} is unlisted when another bundle file is checked), every
+empty folder (named with a trailing \code{/}) and what the walk of
+\code{dir} cannot cover (the links and folders \code{cpsbndl()} refuses), in the
+\code{no_unlisted_files} row,
 checks the attestation with
 \code{\link[=cpschkatst]{cpschkatst()}}
 (signature, digest, and \code{keyexp} when given; an \code{"hmac"}
@@ -132,7 +142,9 @@ not
 an error.
 
 Errors: \code{dir} missing or not a directory; no files to bundle, or a named
-file not in \code{dir}; a key \code{\link[=cpsatst]{cpsatst()}} cannot
+file not in \code{dir}; the links, folders and names above; a file that cannot
+be read, or a folder for the bundle that cannot be written to (both
+before any file is hashed); a key \code{\link[=cpsatst]{cpsatst()}} cannot
 sign with;
 \code{cpsbndlrd()} given a file that is not a bundle, or one over 32 MiB;
 \code{cpsbndlvrf()} given something other than a bundle or a path.

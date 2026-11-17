@@ -381,7 +381,7 @@
 #'   the code.
 #' @noRd
 .bl_cps_view <- function(dir) {
-  dir <- .rmbl_string1(dir, "dir")
+  dir <- .rmbl_fspath(.rmbl_string1(dir, "dir"))
   if (!dir.exists(dir)) {
     stop(
       "rmblapp: the capsule is not an existing directory: ",

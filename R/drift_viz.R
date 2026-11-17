@@ -599,7 +599,7 @@ drftapp <- function(
 #' @return A data frame: run, file, column, psi and p_value.
 #' @noRd
 .bl_drift_history <- function(dir) {
-  dir <- .rmbl_string1(dir, "hist")
+  dir <- .rmbl_fspath(.rmbl_string1(dir, "hist"))
   if (!dir.exists(dir)) {
     stop(
       .rmbl_fn(),

@@ -610,7 +610,7 @@
   if (connection && (is.null(file) || inherits(file, "connection"))) {
     return(file)
   }
-  file <- .rmbl_string1(file, what)
+  file <- .rmbl_fspath(.rmbl_string1(file, what))
   # a folder, or a file in a folder that is not there, reached file() and
   # failed as "cannot open the connection"
   if (dir.exists(file)) {
@@ -850,7 +850,10 @@
 #' argument with a stray byte was shown raw and bundled there: a string is
 #' not text when it is no valid UTF-8 and the session's locale cannot vouch
 #' for it (it is neither marked Latin-1 nor valid in a locale that has
-#' characters beyond ASCII).
+#' characters beyond ASCII). Latin-1 text is converted by R as Windows-1252,
+#' which has no character for the bytes 0x81, 0x8d, 0x8f, 0x90 and 0x9d: a
+#' name holding one was valid Latin-1, and grepl() then warned "input string
+#' 1 is invalid UTF-8"; such a string is not text either.
 #' @param s The character vector whose elements are judged.
 #' @return A logical vector, FALSE for NA.
 #' @noRd
@@ -858,8 +861,54 @@
   li <- l10n_info()
   ascii <- !isTRUE(li[["UTF-8"]]) && !isTRUE(li[["Latin-1"]]) &&
     !isTRUE(li[["MBCS"]])
-  !is.na(s) & !validUTF8(s) & Encoding(s) != "latin1" &
-    (ascii | !validEnc(s))
+  enc <- Encoding(s)
+  lat <- enc == "latin1" |
+    (enc == "unknown" & isTRUE(li[["Latin-1"]]) & !validUTF8(s))
+  hole <- lat
+  hole[lat] <- vapply(s[lat], function(x) {
+    any(charToRaw(x) %in% as.raw(c(0x81, 0x8d, 0x8f, 0x90, 0x9d)))
+  }, NA, USE.NAMES = FALSE)
+  bad <- !validUTF8(s) & enc != "latin1" & (ascii | !validEnc(s))
+  !is.na(s) & (hole | bad)
+}
+
+#' A path as the file system names it: by its bytes.
+#'
+#' .rmbl_string1() marks a valid UTF-8 path as UTF-8, and R translates a
+#' marked path to the session's encoding before it opens the file: in a C
+#' locale the name "caf\\u00e9" became "caf<U+00E9>" (with a warning), in a
+#' Latin-1 locale the byte e9, and neither named the file. A path marked
+#' UTF-8 is handed to the system as its bytes, which is how the system
+#' itself stores the name. Windows takes a marked path as wide characters,
+#' which is right there, so it is left as it is.
+#' @param p A character vector of paths.
+#' @return `p`, its UTF-8 marks dropped (the bytes unchanged).
+#' @noRd
+.rmbl_fspath <- function(p) {
+  if (!is.character(p) || .Platform$OS.type == "windows") {
+    return(p)
+  }
+  u <- !is.na(p) & Encoding(p) == "UTF-8"
+  if (any(u)) {
+    v <- p[u]
+    Encoding(v) <- "unknown"
+    p[u] <- v
+  }
+  p
+}
+
+#' Strings compared by their bytes.
+#'
+#' match() and == compare a name read from a folder (no mark) and the same
+#' name read from JSON (marked UTF-8) after translating one of them, which in
+#' a C or Latin-1 locale changed it or failed with a warning.
+#' @param x The strings to compare.
+#' @return `x` with every non-ASCII element marked "bytes", for comparing.
+#' @noRd
+.rmbl_bytes <- function(x) {
+  x <- as.character(x)
+  Encoding(x) <- "bytes"
+  x
 }
 
 #' The lines of a file from its bytes as they are on disk.
@@ -878,7 +927,7 @@
 }
 
 .rmbl_file1 <- function(path, what = "path", max = Inf) {
-  path <- .rmbl_string1(path, what)
+  path <- .rmbl_fspath(.rmbl_string1(path, what))
   kind <- .rmbl_path_kind(path.expand(path))
   # stat() failed for another reason than a missing file: a folder on the
   # way that cannot be searched, a loop of links

@@ -533,44 +533,127 @@
 
 #' The lines of a .csv named to run, from its bytes on disk.
 #'
-#' A compressed file is said to be one (gzip and xz by their magic, bzip2
-#' by its header and block mark: "BZh" alone is how a text file may begin),
-#' and a NUL byte or an empty file is refused in the table's own words.
+#' A compressed file is said to be one (gzip, xz, zstd and lz4 by their
+#' magic, bzip2 by its header and block mark: "BZh" alone is how a text
+#' file may begin); an empty file, one of blank lines only, a NUL byte and
+#' bytes that are not text in this session are refused in the command's
+#' own words, where read.csv() failed in base R's.
 #' @param path The .csv file, already found to be a regular file.
 #' @return Its lines, one element each.
 #' @noRd
 .bl_run_csv <- function(path) {
+  shown <- .rmbl_shown(path)
+  no <- function(...) stop("run: the .csv ", ..., ": ", shown, call. = FALSE)
   h <- readBin(path, "raw", 10L)
+  kind <- .bl_run_packed(h)
+  if (!is.null(kind)) {
+    no("is compressed (", kind, ") and is read as it is on disk; ",
+       "decompress it first")
+  }
+  if (!length(h)) {
+    no("is empty")
+  }
+  # readLines() cuts a line at a NUL without a word; scanned a block at a
+  # time, where the whole file was read with a logical vector 4 times its
+  # size beside it
+  if (.bl_run_nul(path)) {
+    no("holds a NUL byte, so it is no table of text")
+  }
+  lines <- .rmbl_rlines(path)
+  if (any(.rmbl_nontext(lines))) {
+    no("holds bytes that are not text in this session (",
+       if (isTRUE(l10n_info()[["UTF-8"]])) "UTF-8" else "its encoding",
+       "), so it is no table of text")
+  }
+  if (!any(nzchar(trimws(lines)))) {
+    no("holds only blank lines, so it is no table")
+  }
+  lines
+}
+
+#' The compression a file's first bytes show, or NULL.
+#' @param h The first 10 bytes.
+#' @return "gzip", "xz", "zstd", "lz4", "bzip2" or NULL.
+#' @noRd
+.bl_run_packed <- function(h) {
   is <- function(m, at = 1L) {
     length(h) >= at + length(m) - 1L &&
       identical(h[at + seq_along(m) - 1L], m)
   }
-  kind <- if (is(as.raw(c(0x1f, 0x8b)))) {
-    "gzip"
-  } else if (is(as.raw(c(0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00)))) {
-    "xz"
-  } else if (is(charToRaw("BZh")) && is(charToRaw("1AY&SY"), 5L)) {
-    "bzip2"
+  magic <- list(
+    gzip = c(0x1f, 0x8b),
+    xz = c(0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00),
+    zstd = c(0x28, 0xb5, 0x2f, 0xfd),
+    lz4 = c(0x04, 0x22, 0x4d, 0x18),
+    lz4 = c(0x02, 0x21, 0x4c, 0x18)
+  )
+  for (k in seq_along(magic)) {
+    if (is(as.raw(magic[[k]]))) {
+      return(names(magic)[[k]])
+    }
   }
+  if (is(charToRaw("BZh")) && is(charToRaw("1AY&SY"), 5L)) "bzip2"
+}
+
+#' Whether a file holds a NUL byte, read a block at a time.
+#' @param path The file scanned for a NUL byte.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_run_nul <- function(path) {
+  con <- file(path, "rb")
+  on.exit(close(con), add = TRUE)
+  repeat {
+    b <- readBin(con, "raw", 1048576L)
+    if (!length(b)) {
+      return(FALSE)
+    }
+    if (match(as.raw(0L), b, 0L) > 0L) {
+      return(TRUE)
+    }
+  }
+}
+
+#' A named .rds file read for run, refused in the command's words.
+#' @param path The .rds file, already found to be a regular file.
+#' @return The object it holds.
+#' @noRd
+.bl_run_rds <- function(path) {
   shown <- .rmbl_shown(path)
-  if (!is.null(kind)) {
-    stop(
-      "run: the .csv is compressed (", kind, ") and is read as it is on ",
-      "disk; decompress it first: ", shown,
-      call. = FALSE
-    )
-  }
+  no <- function(...) stop("run: the .rds ", ..., ": ", shown, call. = FALSE)
+  h <- readBin(path, "raw", 10L)
   if (!length(h)) {
-    stop("run: the .csv is empty: ", shown, call. = FALSE)
+    no("is empty")
   }
-  # readLines() cuts a line at a NUL without a word
-  if (any(readBin(path, "raw", file.size(path)) == as.raw(0L))) {
-    stop(
-      "run: the .csv holds a NUL byte, so it is no table of text: ", shown,
-      call. = FALSE
-    )
+  # serialize() writes "X\n", "A\n" or "B\n"; saveRDS() compresses that
+  # with gzip, bzip2, xz or zstd
+  kind <- .bl_run_packed(h)
+  plain <- length(h) >= 2L && h[[2L]] == as.raw(0x0a) &&
+    h[[1L]] %in% charToRaw("XAB")
+  if (is.null(kind) && !plain) {
+    no("is not an RDS file (it does not begin as saveRDS() writes one)")
   }
-  .rmbl_rlines(path)
+  bad <- function(e) {
+    no("cannot be read: it is truncated or damaged, or not an RDS file")
+  }
+  withCallingHandlers(tryCatch(readRDS(path), error = bad), warning = bad)
+}
+
+#' A named .csv read as a table for run: what read.csv() cannot make a table
+#' of (a quote left open, more fields than names) is refused in the
+#' command's words, base R's reason given after them.
+#' @param path The .csv file, already found to be a regular file.
+#' @return A data frame.
+#' @noRd
+.bl_run_table <- function(path) {
+  lines <- .bl_run_csv(path)
+  no <- function(e) {
+    stop("run: the .csv cannot be read as a table (",
+         conditionMessage(e), "): ", .rmbl_shown(path), call. = FALSE)
+  }
+  withCallingHandlers(
+    tryCatch(utils::read.csv(text = lines), error = no),
+    warning = no
+  )
 }
 
 #' Reads one command-line value for run.
@@ -586,10 +669,10 @@
   # a file the user names: a pipe or a device is refused, and a .csv is
   # read from its bytes on disk (read.csv() of a path inflates gzip)
   if (file.exists(s) && grepl("\\.csv$", s, ignore.case = TRUE)) {
-    return(utils::read.csv(text = .bl_run_csv(.rmbl_file1(s, "VALUE"))))
+    return(.bl_run_table(.rmbl_file1(s, "VALUE")))
   }
   if (file.exists(s) && grepl("\\.rds$", s, ignore.case = TRUE)) {
-    return(readRDS(.rmbl_file1(s, "VALUE")))
+    return(.bl_run_rds(.rmbl_file1(s, "VALUE")))
   }
   utils::type.convert(strsplit(s, ",", fixed = TRUE)[[1L]], as.is = TRUE)
 }

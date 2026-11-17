@@ -310,7 +310,7 @@ instcli <- function(
   name = c("rmoriebricklayer", "rmbl")
 ) {
   .bl_cli_names_check(name)
-  dir <- .rmbl_string1(dir, "dir")
+  dir <- .rmbl_fspath(.rmbl_string1(dir, "dir"))
   src <- .bl_launcher()
   if (!nzchar(src)) {
     stop("the launcher is missing from this installation", call. = FALSE)

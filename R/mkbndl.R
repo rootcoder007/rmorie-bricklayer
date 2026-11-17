@@ -224,7 +224,7 @@ mkbndlproj <- function(
   contact = "",
   overwrite = FALSE
 ) {
-  dir <- .rmbl_string1(dir, "dir")
+  dir <- .rmbl_fspath(.rmbl_string1(dir, "dir"))
   name <- .bndl_name(.rmbl_string1(name, "name"), "`name`")
   title <- .rmbl_string1(title, "title")
   author <- .bndl_text(author, "author")

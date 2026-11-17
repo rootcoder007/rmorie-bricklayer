@@ -215,7 +215,7 @@ format.rmbl_mnfdiff <- function(x, ...) {
 #'   filename one plain relative path inside it (test-capsule_cli.R).
 #' @export
 cpsrfrsh <- function(dir, allowfile = FALSE) {
-  dir <- .rmbl_string1(dir, "dir")
+  dir <- .rmbl_fspath(.rmbl_string1(dir, "dir"))
   allowfile <- .bl_allowfile_arg(allowfile)
   if (!dir.exists(dir)) {
     stop(.rmbl_fn(), "`dir` is not an existing directory: ", dir, call. = FALSE)
@@ -1120,25 +1120,46 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @return Sorted directory paths.
 #' @noRd
 .bl_capsule_dirs <- function(root, glob = "") {
-  f <- list.files(
-    root,
-    pattern = "^(data_provenance|capsule_bundle)\\.json$",
-    recursive = TRUE,
-    full.names = TRUE,
-    # a folder whose name starts with a dot is searched too: a capsule
-    # renamed to .two was neither sealed nor checked, and the result was ok
-    all.files = TRUE
-  )
-  f <- sub("^\\./", "", f)
-  f <- f[!grepl("(^|/)(\\.git|\\.rmbl-cache)/", f)]
+  # a folder whose name starts with a dot is searched too: a capsule
+  # renamed to .two was neither sealed nor checked, and the result was ok
+  f <- .bl_find(root, c("data_provenance.json", "capsule_bundle.json"))
   if (nzchar(glob)) {
-    f <- f[grepl(.bl_glob_rx(glob), f)]
+    f <- f[grepl(.bl_glob_rx(glob), f, useBytes = TRUE)]
   }
   d <- sort(unique(dirname(f)))
-  # one capsule once: list.files() follows a link back up the tree, and a loop
-  # listed the same capsule under every depth the system allowed, a 209 KB
-  # report (audit of 30bed8e, #17)
+  # one capsule once: list.files() followed a link back up the tree, and a
+  # loop listed the same capsule under every depth the system allowed, a
+  # 209 KB report (audit of 30bed8e, #17)
   d[!duplicated(normalizePath(d, winslash = "/", mustWork = FALSE))]
+}
+
+#' The files of given names under a folder, found by .bl_walk()'s search:
+#' a link loop is not followed, nor a link to a folder found by its own
+#' path, and each real folder is searched once.
+#'
+#' A folder that cannot be read is refused: a capsule in it was left
+#' unsealed and unchecked without a word.
+#' @param root The folder searched for files named `names`.
+#' @param names The file names looked for.
+#' @return Their paths, under `root` (relative when `root` is ".").
+#' @noRd
+.bl_find <- function(root, names) {
+  root <- .rmbl_fspath(root)
+  w <- .bl_walk(root, search = TRUE)
+  if (length(w$unread)) {
+    stop(
+      .rmbl_fn(),
+      "a folder under ", .bl_names(root), " cannot be read (permission ",
+      "denied), so a capsule in it would be missed; make it readable or ",
+      "move it: ", .bl_names(w$unread),
+      call. = FALSE
+    )
+  }
+  b <- sub("^.*/", "", w$files, useBytes = TRUE)
+  f <- w$files[.rmbl_bytes(b) %in% names]
+  # named as list.files(full.names = TRUE) named them, less a leading "./"
+  top <- if (identical(root, ".")) "" else sub("^[.]/", "", root)
+  if (nzchar(top)) file.path(top, f) else f
 }
 
 #' The verify rows of one capsule: every file against its schema, vrfcps(),

@@ -729,7 +729,10 @@ wrtxtfb <- function(text, path) {
 #' @return The joined path, or NULL.
 #' @noRd
 .rmbl_safe_rel <- function(rel, dir) {
-  rel <- as.character(unlist(rel))[1L]
+  # by its bytes: a name read from JSON is marked UTF-8, and R translated it
+  # to the session's encoding before looking for it (.rmbl_fspath())
+  rel <- .rmbl_fspath(as.character(unlist(rel))[1L])
+  dir <- .rmbl_fspath(dir)
   if (is.na(rel) || !nzchar(rel)) {
     return(NULL)
   }
@@ -743,7 +746,7 @@ wrtxtfb <- function(text, path) {
   full <- file.path(dir, rel)
   d <- .rmbl_realpath(dir)
   f <- .rmbl_realpath(full)
-  if (!startsWith(f, paste0(d, "/"))) {
+  if (!startsWith(.rmbl_bytes(f), .rmbl_bytes(paste0(d, "/")))) {
     return(NULL)
   }
   full

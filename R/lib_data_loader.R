@@ -71,7 +71,7 @@
 #' try(loadprov(tempdir()))
 #' @export
 loadprov <- function(path) {
-  path <- .rmbl_string1(path, "path")
+  path <- .rmbl_fspath(.rmbl_string1(path, "path"))
   if (!file.exists(path)) {
     return(NULL)
   }
