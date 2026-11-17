@@ -1277,9 +1277,13 @@ test_that("a refusal or a failed check exits 1, a usage error 2", {
 test_that("a bad second argument is refused in the package's words", {
   expect_match(s5_msg(blfetch("https://example.invalid/x", tempfile(),
                               tmout = sum)), "`tmout` must be")
-  expect_match(s5_msg(qltyrcd(c("1", "F"), suppr = rawToChar(as.raw(
-    c(0x61, 0xff)
-  )))), "^qltyrcd: `suppr` must be")
+  r <- s5_msg(qltyrcd("E", suppr = rawToChar(as.raw(c(0x61, 0xff)))))
+  # the byte ff is a letter in a Latin-1 locale, and the flag is text there
+  if (isTRUE(l10n_info()[["Latin-1"]])) {
+    expect_identical(r, "E")
+  } else {
+    expect_match(r, "^qltyrcd: `suppr` must be")
+  }
   expect_match(s5_msg(rcdmnf("x", "x", map = -Inf)), "^rcdmnf: `map` must")
 })
 

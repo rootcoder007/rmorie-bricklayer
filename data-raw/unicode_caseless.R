@@ -12,6 +12,7 @@
 #   D <cp> <cp> ...  the full canonical decomposition of a code point
 #   F <cp> <cp>      its simple case folding
 #   C <cp> <n>       its canonical combining class, when not 0
+# Lines starting with # are the notice the Unicode License asks for.
 # Hangul syllables are not listed: their decomposition is arithmetic.
 a <- commandArgs(TRUE)
 ud <- utils::read.table(a[1], sep = ";", quote = "", colClasses = "character",
@@ -34,6 +35,10 @@ cf <- utils::read.table(a[2], sep = ";", quote = "", comment.char = "#",
 cf <- cf[cf$V2 %in% c("C", "S"), ]
 ccc <- ud$V4 != "0"
 out <- c(
+  "# Derived from the Unicode Character Database 15.1.0 (UnicodeData.txt,",
+  "# CaseFolding.txt) by data-raw/unicode_caseless.R.",
+  "# Copyright (c) 1991-2023 Unicode, Inc. Distributed under the Unicode",
+  "# License v3 (https://www.unicode.org/license.txt); see inst/COPYRIGHTS.",
   paste("D", names(dl), dl),
   paste("F", cf$V1, cf$V3),
   paste("C", ud$V1[ccc], ud$V4[ccc])
