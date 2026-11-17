@@ -477,7 +477,7 @@
   }
   lines <- if (is.null(why)) {
     tryCatch(
-      suppressWarnings(readLines(f, warn = FALSE, encoding = "UTF-8")),
+      suppressWarnings(.rmbl_rlines(f, encoding = "UTF-8")),
       error = function(e) NULL
     )
   }

@@ -2092,7 +2092,7 @@ instcli <- function(
   if (!.bl_cli_listfile(pos[[1L]], out)) {
     return(1L)
   }
-  urls <- trimws(readLines(pos[[1L]], warn = FALSE))
+  urls <- trimws(.rmbl_rlines(pos[[1L]]))
   urls <- urls[nzchar(urls) & !startsWith(urls, "#")]
   jobs <- flag("--jobs") %||% "4"
   res <- wbsave(

@@ -1053,7 +1053,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   key <- sub("^.*\\.", "", at)
   hit <- grep(
     paste0("\"", key, "\"[[:space:]]*:"),
-    readLines(path, warn = FALSE)
+    .rmbl_rlines(path)
   )
   if (length(hit)) hit[[1L]] else NA_integer_
 }
@@ -1610,7 +1610,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     key <- sub(
       "[\r\n]+$",
       "",
-      paste(readLines(kf, warn = FALSE), collapse = "\n")
+      paste(.rmbl_rlines(kf), collapse = "\n")
     )
   }
   if (!nzchar(key)) {

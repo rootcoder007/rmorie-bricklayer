@@ -612,7 +612,7 @@ drftapp <- function(
   rows <- lapply(seq_along(files), function(i) {
     j <- tryCatch(
       .rmbl_json_text(
-        readLines(files[i], warn = FALSE),
+        .rmbl_rlines(files[i]),
         simplifyVector = FALSE
       ),
       error = function(e) NULL

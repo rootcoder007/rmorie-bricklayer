@@ -4,6 +4,10 @@
 
 * The 32 MiB a reader holds its JSON file to is the size of what is read. `cpsbndlrd()`, `cpsbndlvrf()`, `loadprov()`, `mnfdiff()`, `idcrdrd()` and `vrfrcdmnf()` read their file through `readLines()`, which inflates a gzip, bzip2 or xz file as it reads: a 66 KB file was read as 64 MiB and a 209 KB one took 1.2 GB of memory. They read the bytes on disk, say that a compressed file is one, and `loadprov()`, `mnfdiff()`, `idcrdrd()` and `vrfrcdmnf()` now refuse a NUL byte as `fromjs()` does (text after it was dropped unread). `siuprs()` reads its page the same way.
 
+* The other readers of a file the user names read its bytes on disk too: `rmbl wayback`, `rmbl migrate`, `rmbl sign --key-file`, `xmssidxseen()` (its bundles, held to 32 MiB, and its seen-log), the XMSS key and state files and the history files of `drfthtml()` inflated a compressed file as they read it, so a 203 KB file cost `rmbl migrate` 8 GB of memory.
+
+* `cpsseal()` and `rmbl sign` seal a capsule that lies inside another before the outer one. Sealed after it, the inner capsule changed files the outer bundle already covered, and the tree failed the check `rmbl sign` runs next.
+
 * A pipe or a device where a file is expected no longer makes a check wait for ever. `vrfcps()`, `cpschk()` and `rmbl verify` read a capsule's CSV data file as a table only when it is a regular file (a named pipe put in its place hung them after the hash had already failed), and `rmbl sign --key-file`, `rmbl wayback` and `rmbl migrate` refuse a device, a pipe or a socket in words.
 
 * A file name that is not valid text no longer stops a check with base R's "input string 1 is invalid UTF-8". `cpschk()` and `cpsbndlvrf()` report it as a file the bundle does not cover, shown as `caf<e9>.txt`, and `rmbl verify` exits 1, not 2; `cpsbndl()` and `cpsseal()` say that such a name cannot be listed in a bundle.

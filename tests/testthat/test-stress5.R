@@ -145,3 +145,33 @@ test_that("explerr() is quiet on a very long message", {
   expect_no_warning(x <- explerr(strrep("a", 5000L)))
   expect_no_error(x)
 })
+
+test_that("line readers of a named file do not inflate a compressed one", {
+  f <- withr::local_tempfile(fileext = ".txt")
+  con <- gzfile(f, "wb")
+  writeLines(strrep("a", 5000L), con)
+  close(con)
+  expect_lt(sum(nchar(.rmbl_rlines(f), "bytes")), 200)
+  writeLines(c("one", "two"), f)
+  expect_identical(.rmbl_rlines(f), c("one", "two"))
+  expect_identical(.rmbl_rlines(f, n = 1L), "one")
+  # a gzip file given as a list of URLs, a script or a key is not its text
+  con <- gzfile(f, "wb")
+  writeLines("https://example.org/", con)
+  close(con)
+  got <- .bl_migrate_read(f)$lines
+  expect_false(any(grepl("example.org", got, useBytes = TRUE)))
+  expect_null(.rmbl_xmss_bundle_row(f))
+})
+
+test_that("a capsule inside another is sealed first, and the tree checks", {
+  root <- withr::local_tempdir()
+  s5_capsule(root)
+  s5_capsule(root, file.path("one", ".sub"))
+  s5_capsule(root, file.path("one", "in"))
+  withr::local_options(morie.progress = FALSE)
+  d <- .bl_seal_dirs(root, FALSE, "")
+  expect_identical(basename(d), c(".sub", "in", "one"))
+  cpsseal(root, fipskg("ML-DSA-44"))
+  expect_identical(cpschk(root, fp = FALSE)$status, "ok")
+})

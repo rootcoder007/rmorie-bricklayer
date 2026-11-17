@@ -832,6 +832,21 @@
     grepl("[/\\\\]", path)
 }
 
+#' The lines of a file from its bytes as they are on disk.
+#'
+#' readLines() of a path inflates a gzip, bzip2 or xz file as it reads, so
+#' a 41 KB file was read as 40 MiB and cost a gigabyte: every reader of a
+#' file the user names reads through this.
+#' @param path A regular file.
+#' @param ... Passed to readLines() (`encoding`, `n`).
+#' @return A character vector, one element per line.
+#' @noRd
+.rmbl_rlines <- function(path, ...) {
+  con <- file(path, "rb")
+  on.exit(close(con), add = TRUE)
+  readLines(con, warn = FALSE, ...)
+}
+
 .rmbl_file1 <- function(path, what = "path", max = Inf) {
   path <- .rmbl_string1(path, what)
   kind <- .rmbl_path_kind(path.expand(path))

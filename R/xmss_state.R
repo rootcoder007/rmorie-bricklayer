@@ -373,7 +373,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
   txt <- if (is.null(kf)) {
     keytxt
   } else {
-    paste(readLines(kf, warn = FALSE), collapse = "\n")
+    paste(.rmbl_rlines(kf), collapse = "\n")
   }
   kj <- .rmbl_xmss_key_json(txt, "the key")
   key <- kj$key
@@ -386,7 +386,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
   )
   st <- if (!is.null(sf) && file.exists(sf) && file.size(sf) > 0) {
     tryCatch(
-      .rmbl_json_text(readLines(sf, warn = FALSE), simplifyVector = FALSE),
+      .rmbl_json_text(.rmbl_rlines(sf), simplifyVector = FALSE),
       error = function(e) NULL
     )
   } else {
@@ -662,7 +662,7 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
     return(NULL)
   }
   .rmbl_file1(f, "seenlog")
-  l <- readLines(f, warn = FALSE)
+  l <- .rmbl_rlines(f)
   l <- l[nzchar(l) & !startsWith(l, "#")]
   p <- strsplit(l, "\t", fixed = TRUE)
   ok <- vapply(
@@ -752,9 +752,10 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
 #' @return A one-row data frame, or NULL when it holds no XMSS signature.
 #' @noRd
 .rmbl_xmss_bundle_row <- function(f) {
-  f <- .rmbl_file1(f, "path")
+  # a bundle is held to the 32 MiB cpsbndlrd() reads, by its bytes on disk
+  f <- .rmbl_file1(f, "path", max = 32 * 2^20)
   b <- tryCatch(
-    .rmbl_json_text(readLines(f, warn = FALSE), simplifyVector = FALSE),
+    .rmbl_json_text(.rmbl_rlines(f), simplifyVector = FALSE),
     error = function(e) NULL
   )
   a <- if (is.list(b) && is.list(b$attestation)) b$attestation

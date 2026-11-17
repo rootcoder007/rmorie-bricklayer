@@ -2921,7 +2921,7 @@ xmssfgt <- function(keytofgt = NULL) {
   if (!file.exists(p)) {
     return(list(ids = character(), idx = integer()))
   }
-  lines <- readLines(p, warn = FALSE, encoding = "UTF-8")
+  lines <- .rmbl_rlines(p, encoding = "UTF-8")
   lines <- lines[grepl("[^[:space:]]", lines, perl = TRUE)]
   ok <- grepl(
     "^(k:[0-9a-f]{64}|[0-9a-f]{64}:[0-9a-f]{64})\t(-1|[0-9]{1,9})$",

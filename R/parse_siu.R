@@ -443,11 +443,7 @@ siuso <- function(text) {
     # the bytes on disk: readLines() of a path inflates a compressed file past
     # the cap
     html <- paste(
-      local({
-        con <- file(html, "rb")
-        on.exit(close(con), add = TRUE)
-        readLines(con, warn = FALSE, encoding = "UTF-8")
-      }),
+      .rmbl_rlines(html, encoding = "UTF-8"),
       collapse = "\n"
     )
   } else if (

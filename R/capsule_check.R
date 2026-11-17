@@ -1399,7 +1399,10 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
       call. = FALSE
     )
   }
-  dirs
+  # a capsule inside another is sealed first: sealing it pins its
+  # provenance and writes its bundle, which the outer bundle must cover
+  # (sealed after the outer one, it left a tree that failed its own check)
+  dirs[order(-lengths(strsplit(dirs, "/", fixed = TRUE)), dirs)]
 }
 
 #' cpschk()'s options, checked.
