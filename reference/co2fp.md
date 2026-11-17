@@ -194,7 +194,7 @@ Quantifying the carbon emissions of machine learning. arXiv:1910.09700.
 ``` r
 fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 fp$enekwh$total
-#> [1] 1.339216e-08
+#> [1] 1.339215e-08
 fp$co2eg
 #> [1] 1.218284e-06
 fp$co2int$year
@@ -204,8 +204,8 @@ fp$assumptions
 #> [2] "memory charged: the machine's total 15.3 GB"        
 print(fp)
 #> ╭── Computation footprint (modelled) ─────────────────────────────────────────╮
-#> │   Time         0.001 s wall, 0.002 s CPU                                    │
-#> │   Utilisation  utilisation 0.50 (process) on 4 cores                        │
+#> │   Time         0.001 s wall, 0.001 s CPU                                    │
+#> │   Utilisation  utilisation 0.25 (process) on 4 cores                        │
 #> │   Memory       15.3 GB                                                      │
 #> │   Energy       1.34e-08 kWh (cpu 1.18e-08, memory 1.59e-09)                 │
 #> │   CO2e         1.22e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)        │
