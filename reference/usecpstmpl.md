@@ -91,9 +91,9 @@ list.files(d)
 # the provenance file to fill in
 cat(readLines(file.path(d, "data_provenance.json")), sep = "\n")
 #> {
-#>   "name": "capsule-1ebb1ff32724",
+#>   "name": "capsule-1ecc3d98f7df",
 #>   "source": {
-#>     "url": "/tmp/RtmpDTDn19/temp_libpath1ebb7895de8f/rmoriebricklayer/extdata/otis_a01_individuals.csv",
+#>     "url": "/tmp/RtmpU0nQdy/temp_libpath1ecc3f8913f5/rmoriebricklayer/extdata/otis_a01_individuals.csv",
 #>     "publisher": "TODO: who publishes the table",
 #>     "licence": "TODO: e.g. Open Government Licence - Ontario",
 #>     "retrieved": "TODO: YYYY-MM-DD",

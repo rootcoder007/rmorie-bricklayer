@@ -204,8 +204,8 @@ fp$assumptions
 #> [2] "memory charged: the machine's total 15.3 GB"        
 print(fp)
 #> ╭── Computation footprint (modelled) ─────────────────────────────────────────╮
-#> │   Time         0.002 s wall, 0.002 s CPU                                    │
-#> │   Utilisation  utilisation 0.25 (process) on 4 cores                        │
+#> │   Time         0.002 s wall, 0.001 s CPU                                    │
+#> │   Utilisation  utilisation 0.12 (process) on 4 cores                        │
 #> │   Memory       15.3 GB                                                      │
 #> │   Energy       2.68e-08 kWh (cpu 2.36e-08, memory 3.17e-09)                 │
 #> │   CO2e         2.44e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)        │
