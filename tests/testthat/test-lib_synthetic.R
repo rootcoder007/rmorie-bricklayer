@@ -157,7 +157,9 @@ test_that("a synthetic record sourced on its own prints without the box", {
   alone <- function(f) {
     keep <- c(
       "{", "(", "<-", "if", "!", "exists", "return", "c", "sprintf", "$",
-      "format", "format.default", "substr", "cat", "invisible", "::", ":::"
+      "format", "format.default", "substr", "cat", "invisible", "::", ":::",
+      # a coverage run counts lines through .Call()
+      ".Call"
     )
     environment(f) <- list2env(
       mget(keep, envir = baseenv()),

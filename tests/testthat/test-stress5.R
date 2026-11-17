@@ -102,7 +102,9 @@ test_that("a file name that is not text is reported, not an error", {
   root <- withr::local_tempdir()
   d <- s5_capsule(root)
   withr::local_options(morie.progress = FALSE)
-  bad <- file.path(d, "caf\xe9.txt")
+  # file.path() itself refuses such a name before R 4.2
+  bad <- tryCatch(file.path(d, "caf\xe9.txt"), error = function(e) NULL)
+  skip_if(is.null(bad))
   skip_if_not(isTRUE(tryCatch({
     writeLines("e", bad)
     TRUE
