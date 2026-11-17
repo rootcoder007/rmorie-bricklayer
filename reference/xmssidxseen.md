@@ -64,9 +64,9 @@ key <- pqckg(height = 2)
 b <- cpsbndl(d, mkmnf(list(), env = FALSE), key)
 xmssidxseen(root)
 #>                key index              sig
-#> 1 7b1dfb148f3b80fa     0 2320430a83668127
+#> 1 3a7e9f88891ce540     0 d8974ad903150190
 #>                                                           where reused
-#> 1 /tmp/Rtmpr6Kjwy/capsules-1e73578b4112/one/capsule_bundle.json  FALSE
+#> 1 /tmp/RtmptHgREp/capsules-1e8c2f976eba/one/capsule_bundle.json  FALSE
 
 # the same index signed again from a stale copy of the key: reused
 e <- file.path(root, "two")
@@ -81,6 +81,6 @@ xmssidxseen(root)[, c("index", "reused")]
 #> 2     0   TRUE
 
 try(xmssidxseen(tempfile()))
-#> Error : xmssidxseen: `path` is not an existing directory or bundle file: /tmp/Rtmpr6Kjwy/file1e736a7396b4
+#> Error : xmssidxseen: `path` is not an existing directory or bundle file: /tmp/RtmptHgREp/file1e8c1bc9e118
 options(op)
 ```
