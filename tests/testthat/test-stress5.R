@@ -74,7 +74,8 @@ test_that("a data file that is no regular file is not read as a table", {
   x <- vrfcps(d)
   row <- x$checks[x$checks$check == "data_readable", , drop = FALSE]
   expect_identical(nrow(row), 1L)
-  expect_false(isTRUE(row$ok) || isTRUE(row$pass))
+  expect_false(isTRUE(row$ok))
+  expect_false(isTRUE(row$pass))
 })
 
 test_that("the command line refuses a device where it reads a file", {
@@ -275,7 +276,7 @@ test_that("the run verb reads a .csv as a table of text", {
   d <- withr::local_tempdir()
   f <- file.path(d, "t.csv")
   writeLines(c("BZh_code,n", "a,1"), f)
-  expect_identical(names(.bl_run_value(f)), c("BZh_code", "n"))
+  expect_named(.bl_run_value(f), c("BZh_code", "n"))
   file.create(f)
   expect_match(s5_msg(.bl_run_value(f)), "the .csv is empty")
   writeBin(c(charToRaw("a,b\n1,"), as.raw(0L), charToRaw("\n")), f)

@@ -401,6 +401,42 @@ format.bricklayer_bundle_check <- function(x, ...) {
   files[out]
 }
 
+#' Refuses the links a bundle cannot cover.
+#'
+#' A bundle covers files inside its folder: one reached through a link that
+#' leaves it was bundled and then refused by the check of that bundle, and
+#' a link back to a folder above it made list.files() invent paths.
+#' @param dir The folder being bundled.
+#' @param files Its entries, relative to it.
+#' @param loops TRUE to look for links back into the folder, FALSE for
+#'   links that leave it.
+#' @return NULL, invisibly; stops on a link.
+#' @noRd
+.bl_bnd_links <- function(dir, files, loops) {
+  if (loops) {
+    loop <- .bl_bnd_loops(dir, files)
+    if (length(loop)) {
+      stop(
+        "a link that points back into the capsule folder cannot be ",
+        "bundled; remove it: ",
+        .rmbl_printable(loop),
+        call. = FALSE
+      )
+    }
+    return(invisible(NULL))
+  }
+  out <- .bl_bnd_outside(dir, files)
+  if (length(out)) {
+    stop(
+      "these entries are reached through a link that leaves the capsule ",
+      "folder; copy them in or remove the link: ",
+      toString(.rmbl_printable(utils::head(out, 5L))),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
 #' The files a bundle covers: those named, or every regular file in `dir`
 #' but the bundle itself; each must exist and lie inside `dir`.
 #' @param dir The directory whose regular files, dotfiles too, are bundled.
@@ -422,15 +458,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
     )
     # the temporary of a write cut short is no content of the capsule
     all_files <- all_files[!.rmbl_leftover(all_files)]
-    loop <- .bl_bnd_loops(dir, all_files)
-    if (length(loop)) {
-      stop(
-        "a link that points back into the capsule folder cannot be ",
-        "bundled; remove it: ",
-        .rmbl_printable(loop),
-        call. = FALSE
-      )
-    }
+    .bl_bnd_links(dir, all_files, loops = TRUE)
     keep <- vapply(
       all_files,
       function(f) {
@@ -458,17 +486,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
       call. = FALSE
     )
   }
-  # a bundle covers files inside its folder: one reached through a link
-  # that leaves it was bundled and then refused by the check of that bundle
-  out <- .bl_bnd_outside(dir, files)
-  if (length(out)) {
-    stop(
-      "these entries are reached through a link that leaves the capsule ",
-      "folder; copy them in or remove the link: ",
-      toString(.rmbl_printable(utils::head(out, 5L))),
-      call. = FALSE
-    )
-  }
+  .bl_bnd_links(dir, files, loops = FALSE)
   files
 }
 

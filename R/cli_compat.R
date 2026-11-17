@@ -536,8 +536,8 @@
 #' A compressed file is said to be one (gzip and xz by their magic, bzip2
 #' by its header and block mark: "BZh" alone is how a text file may begin),
 #' and a NUL byte or an empty file is refused in the table's own words.
-#' @param path A regular file.
-#' @return A character vector, one element per line.
+#' @param path The .csv file, already found to be a regular file.
+#' @return Its lines, one element each.
 #' @noRd
 .bl_run_csv <- function(path) {
   h <- readBin(path, "raw", 10L)

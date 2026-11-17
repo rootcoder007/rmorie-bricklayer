@@ -851,7 +851,7 @@
 #' not text when it is no valid UTF-8 and the session's locale cannot vouch
 #' for it (it is neither marked Latin-1 nor valid in a locale that has
 #' characters beyond ASCII).
-#' @param s Strings.
+#' @param s The character vector whose elements are judged.
 #' @return A logical vector, FALSE for NA.
 #' @noRd
 .rmbl_nontext <- function(s) {

@@ -443,6 +443,41 @@ ghout <- function(x, report = "", json = "", comment = "off") {
   )
 }
 
+#' Looks at every capsule before cpsseal() writes the first.
+#'
+#' A refusal at the third capsule left the first two pinned and bundled.
+#' The key is looked at too; no signature is made, since a stateful key
+#' would spend an index. The file names, the links and each manifest.json
+#' stop with their own words.
+#' @param dirs The capsule folders about to be sealed.
+#' @param key The signing key cpsseal() was given.
+#' @return NULL, or the words of the refusal of a data file's name.
+#' @noRd
+.bl_seal_ahead <- function(dirs, key) {
+  .rmbl_attest_scheme(key)
+  .rmbl_attest_public(key)
+  for (d in dirs) {
+    pf <- file.path(d, "data_provenance.json")
+    prov <- loadprov(pf)
+    df <- .rmbl_safe_rel(.bl_s1(prov[["resource"]][["filename"]]), d)
+    unpinned <- is.null(prov[["resource"]][["sha256"]])
+    if (unpinned && (is.null(df) || !file.exists(df) || dir.exists(df))) {
+      return(paste0(
+        pf, ": resource$filename must name the data file, relative to ",
+        "the capsule"
+      ))
+    }
+    .bl_bnd_textnames(
+      .bl_bnd_select(d, NULL, file.path(d, "capsule_bundle.json"))
+    )
+    mf <- file.path(d, "manifest.json")
+    if (file.exists(mf)) {
+      loadprov(mf)
+    }
+  }
+  NULL
+}
+
 #' Pin and sign every capsule under a folder
 #'
 #' @description
@@ -504,35 +539,9 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' @export
 cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   dirs <- .bl_seal_dirs(path, overwrite, glob)
-  # every capsule is looked at before the first is written: a refusal at
-  # the third left the first two pinned and bundled. The key is looked at
-  # too (no signature is made: a stateful key would spend an index)
-  .rmbl_attest_scheme(key)
-  .rmbl_attest_public(key)
-  for (d in dirs) {
-    pf <- file.path(d, "data_provenance.json")
-    prov <- loadprov(pf)
-    fn <- .bl_s1(prov[["resource"]][["filename"]])
-    df <- .rmbl_safe_rel(fn, d)
-    if (
-      is.null(prov[["resource"]][["sha256"]]) &&
-        (is.null(df) || !file.exists(df) || dir.exists(df))
-    ) {
-      stop(
-        .rmbl_fn(),
-        pf,
-        ": resource$filename must name the data file, relative to the ",
-        "capsule",
-        call. = FALSE
-      )
-    }
-    .bl_bnd_textnames(
-      .bl_bnd_select(d, NULL, file.path(d, "capsule_bundle.json"))
-    )
-    mf <- file.path(d, "manifest.json")
-    if (file.exists(mf)) {
-      loadprov(mf)
-    }
+  bad <- .bl_seal_ahead(dirs, key)
+  if (!is.null(bad)) {
+    stop(.rmbl_fn(), bad, call. = FALSE)
   }
   rows <- list()
   for (d in dirs) {
