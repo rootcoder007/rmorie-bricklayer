@@ -378,7 +378,7 @@ print(fp)
 #> │   Time         0.003 s wall, 0.003 s CPU                                    │
 #> │   Utilisation  utilisation 0.25 (process) on 4 cores                        │
 #> │   Memory       16 GB                                                        │
-#> │   Energy       1.43e-08 kWh (cpu 9.38e-09, memory 4.97e-09)                 │
+#> │   Energy       1.43e-08 kWh (cpu 9.37e-09, memory 4.97e-09)                 │
 #> │   CO2e         1.3e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)         │
 #> │   Source       Electricity Maps (2025). Canada 2024 Yearly Carbon           │
 #> │                Intensity Data (Version January 27, 2025). Electricity Maps  │

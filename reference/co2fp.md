@@ -245,18 +245,18 @@ fp2 <- co2fp(
 )
 fp2$enekwh
 #> $cpu
-#> [1] 3.015278e-08
+#> [1] 1.507639e-08
 #> 
 #> $memory
-#> [1] 5.529556e-09
+#> [1] 2.764778e-09
 #> 
 #> $total
-#> [1] 3.568233e-08
+#> [1] 1.784117e-08
 #> 
 fpeqv(fp2$co2eg)
 #> ╭── Footprint in everyday terms ────────────────────────────────────────╮
-#> │   Car travel   6.117e-09 km                                           │
-#> │   Tree uptake  1.167e-09 tree-months                                  │
+#> │   Car travel   3.058e-09 km                                           │
+#> │   Tree uptake  5.837e-10 tree-months                                  │
 #> │                                                                       │
 #> │   The same emissions as driving a European passenger car this far, or │
 #> │   what this many trees take up in a month.                            │
