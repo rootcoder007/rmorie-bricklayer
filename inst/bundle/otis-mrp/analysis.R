@@ -274,6 +274,17 @@ if (INPUT_MODE == "rdata") {
   ## years are unchanged. Columns are therefore matched to the recorded
   ## names without regard to case or underscores, so both spellings read.
   .nk <- function(x) gsub("[^a-z0-9]", "", tolower(x))
+  ## two columns that read as one recorded name: the first would be taken
+  ## without a word, so the file is refused and both are named
+  .twice <- unique(.nk(colnames(df_raw))[duplicated(.nk(colnames(df_raw)))])
+  .twice <- intersect(.twice, .nk(expected_cols))
+  if (length(.twice)) {
+    stop("CSV has more than one column for: ",
+         paste(vapply(.twice, function(k) paste(
+           colnames(df_raw)[.nk(colnames(df_raw)) == k], collapse = " and "),
+           ""), collapse = "; "),
+         ". Remove or rename the extra column.", call. = FALSE)
+  }
   .hit <- match(.nk(expected_cols), .nk(colnames(df_raw)))
   .ren <- !is.na(.hit) & !(expected_cols %in% colnames(df_raw))
   if (any(.ren)) {
@@ -298,7 +309,19 @@ if (INPUT_MODE == "rdata") {
   ## --- A later release of the file holds years the paper did not use.
   ## They are left out, so the published values are reproduced from either
   ## release; RMBL_ALL_YEARS (setup_and_run.R --all-years) analyses them too.
+  .yraw <- as.character(df_raw[["EndFiscalYear"]])
+  .ybad <- unique(.yraw[is.na(.yraw) | !grepl("^[0-9]{4}$", trimws(.yraw))])
+  if (length(.ybad)) {
+    stop("EndFiscalYear holds values that are not a four-digit year: ",
+         paste(utils::head(.ybad, 5L), collapse = ", "), call. = FALSE)
+  }
   .yrs <- sort(unique(as.integer(df_raw[["EndFiscalYear"]])))
+  if (!any(.yrs %in% paper_years) && !nzchar(Sys.getenv("RMBL_ALL_YEARS"))) {
+    stop("The file has no rows of the paper's fiscal years (",
+         paste(range(paper_years), collapse = "-"), "); it holds ",
+         paste(.yrs, collapse = ", "), ". --all-years analyses those.",
+         call. = FALSE)
+  }
   .more <- setdiff(.yrs, paper_years)
   if (length(.more) && !nzchar(Sys.getenv("RMBL_ALL_YEARS"))) {
     cat("      Fiscal years in the file beyond the paper's (",

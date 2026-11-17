@@ -531,6 +531,48 @@
   status
 }
 
+#' The lines of a .csv named to run, from its bytes on disk.
+#'
+#' A compressed file is said to be one (gzip and xz by their magic, bzip2
+#' by its header and block mark: "BZh" alone is how a text file may begin),
+#' and a NUL byte or an empty file is refused in the table's own words.
+#' @param path A regular file.
+#' @return A character vector, one element per line.
+#' @noRd
+.bl_run_csv <- function(path) {
+  h <- readBin(path, "raw", 10L)
+  is <- function(m, at = 1L) {
+    length(h) >= at + length(m) - 1L &&
+      identical(h[at + seq_along(m) - 1L], m)
+  }
+  kind <- if (is(as.raw(c(0x1f, 0x8b)))) {
+    "gzip"
+  } else if (is(as.raw(c(0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00)))) {
+    "xz"
+  } else if (is(charToRaw("BZh")) && is(charToRaw("1AY&SY"), 5L)) {
+    "bzip2"
+  }
+  shown <- .rmbl_shown(path)
+  if (!is.null(kind)) {
+    stop(
+      "run: the .csv is compressed (", kind, ") and is read as it is on ",
+      "disk; decompress it first: ", shown,
+      call. = FALSE
+    )
+  }
+  if (!length(h)) {
+    stop("run: the .csv is empty: ", shown, call. = FALSE)
+  }
+  # readLines() cuts a line at a NUL without a word
+  if (any(readBin(path, "raw", file.size(path)) == as.raw(0L))) {
+    stop(
+      "run: the .csv holds a NUL byte, so it is no table of text: ", shown,
+      call. = FALSE
+    )
+  }
+  .rmbl_rlines(path)
+}
+
 #' Reads one command-line value for run.
 #'
 #' A .csv or .rds file that exists is read; otherwise a comma-separated list
@@ -544,8 +586,7 @@
   # a file the user names: a pipe or a device is refused, and a .csv is
   # read from its bytes on disk (read.csv() of a path inflates gzip)
   if (file.exists(s) && grepl("\\.csv$", s, ignore.case = TRUE)) {
-    s <- .rmbl_file1(s, "VALUE")
-    return(utils::read.csv(text = .rmbl_json_file_lines(s)))
+    return(utils::read.csv(text = .bl_run_csv(.rmbl_file1(s, "VALUE"))))
   }
   if (file.exists(s) && grepl("\\.rds$", s, ignore.case = TRUE)) {
     return(readRDS(.rmbl_file1(s, "VALUE")))

@@ -119,7 +119,7 @@ blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
   label <- as.character(label)
   # bytes that are not text are shown as <ff>: drawing them warned "input
   # string 1 is invalid" in base R's words
-  bad <- !is.na(label) & !validEnc(label)
+  bad <- .rmbl_nontext(label)
   if (any(bad)) {
     label[bad] <- iconv(label[bad], "", "UTF-8", sub = "byte")
   }

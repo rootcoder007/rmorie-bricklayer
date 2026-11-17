@@ -356,6 +356,30 @@ format.bricklayer_bundle_check <- function(x, ...) {
     ))
 }
 
+#' The folders of a capsule that are links back to a folder above them.
+#'
+#' list.files() walks through such a link again and again (loop/loop/...),
+#' and the names it makes up were then reported as missing files.
+#' @param dir The capsule folder.
+#' @param files Paths relative to `dir`.
+#' @return The shortest such link, or character(0).
+#' @noRd
+.bl_bnd_loops <- function(dir, files) {
+  d <- setdiff(unique(dirname(files)), ".")
+  for (p in d[order(nchar(d))]) {
+    full <- file.path(dir, p)
+    back <- tryCatch(suppressWarnings({
+      up <- paste0(.rmbl_realpath(dirname(full)), "/")
+      nzchar(Sys.readlink(full)) &&
+        startsWith(up, paste0(.rmbl_realpath(full), "/"))
+    }), error = function(e) FALSE)
+    if (isTRUE(back)) {
+      return(p)
+    }
+  }
+  character(0)
+}
+
 #' The entries of a capsule folder reached through a link that leaves it.
 #' @param dir The capsule folder.
 #' @param files Paths relative to `dir`.
@@ -368,7 +392,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
     # a name that is not valid text is reported by the check of the names
     function(f) {
       tryCatch(
-        !startsWith(.rmbl_realpath(file.path(dir, f)), d),
+        suppressWarnings(!startsWith(.rmbl_realpath(file.path(dir, f)), d)),
         error = function(e) FALSE
       )
     },
@@ -398,6 +422,15 @@ format.bricklayer_bundle_check <- function(x, ...) {
     )
     # the temporary of a write cut short is no content of the capsule
     all_files <- all_files[!.rmbl_leftover(all_files)]
+    loop <- .bl_bnd_loops(dir, all_files)
+    if (length(loop)) {
+      stop(
+        "a link that points back into the capsule folder cannot be ",
+        "bundled; remove it: ",
+        .rmbl_printable(loop),
+        call. = FALSE
+      )
+    }
     keep <- vapply(
       all_files,
       function(f) {
@@ -557,7 +590,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
 #' @return NULL, invisibly.
 #' @noRd
 .bl_bnd_textnames <- function(files) {
-  bad <- files[!validEnc(files)]
+  bad <- files[.rmbl_nontext(files)]
   if (length(bad)) {
     stop(
       "cpsbndl: a file whose name is not valid text cannot be listed in a ",

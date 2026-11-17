@@ -891,7 +891,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   s <- .rmbl_mark8(s)
   # bytes that are not text are shown as <ff>: grepl() warned "input string
   # 1 is invalid" on them (a download or progress label, a plot title)
-  bad <- !is.na(s) & !validEnc(s)
+  bad <- .rmbl_nontext(s)
   if (any(bad)) {
     s[bad] <- iconv(s[bad], "", "UTF-8", sub = "byte")
   }

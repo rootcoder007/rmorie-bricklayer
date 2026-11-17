@@ -242,3 +242,42 @@ test_that("a capsule that cannot be sealed stops the seal before the first", {
   expect_false(file.exists(file.path(root, "b", "deep", "capsule_bundle.json")))
   expect_null(loadprov(file.path(a, "data_provenance.json"))$resource$sha256)
 })
+
+test_that("cpsseal() checks key, manifest and names before it writes", {
+  root <- withr::local_tempdir()
+  a <- s5_capsule(root, "a")
+  b <- s5_capsule(root, "b")
+  withr::local_options(morie.progress = FALSE)
+  pinned <- function() {
+    !is.null(loadprov(file.path(a, "data_provenance.json"))$resource$sha256)
+  }
+  expect_error(cpsseal(root, NULL))
+  expect_false(pinned())
+  writeLines("not json", file.path(b, "manifest.json"))
+  expect_error(cpsseal(root, fipskg("ML-DSA-44")))
+  expect_false(pinned())
+  expect_false(file.exists(file.path(a, "capsule_bundle.json")))
+})
+
+test_that("a link back into the capsule is refused by its name", {
+  skip_on_os("windows")
+  root <- withr::local_tempdir()
+  a <- s5_capsule(root, "a")
+  skip_if_not(file.symlink(".", file.path(a, "loop")))
+  withr::local_options(morie.progress = FALSE)
+  e <- s5_msg(cpsseal(root, fipskg("ML-DSA-44")))
+  expect_match(e, "points back into the capsule folder")
+  expect_match(e, "loop$")
+  expect_false(grepl("loop/loop", e, fixed = TRUE))
+})
+
+test_that("the run verb reads a .csv as a table of text", {
+  d <- withr::local_tempdir()
+  f <- file.path(d, "t.csv")
+  writeLines(c("BZh_code,n", "a,1"), f)
+  expect_identical(names(.bl_run_value(f)), c("BZh_code", "n"))
+  file.create(f)
+  expect_match(s5_msg(.bl_run_value(f)), "the .csv is empty")
+  writeBin(c(charToRaw("a,b\n1,"), as.raw(0L), charToRaw("\n")), f)
+  expect_match(s5_msg(.bl_run_value(f)), "NUL byte")
+})

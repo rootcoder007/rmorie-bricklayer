@@ -224,7 +224,7 @@
 #' @return `x`.
 #' @noRd
 .rmbl_valid_text <- function(x, what) {
-  if (is.character(x) && !all(validEnc(x))) {
+  if (is.character(x) && any(.rmbl_nontext(x))) {
     stop(
       .rmbl_fn(),
       sprintf(
@@ -842,6 +842,24 @@
 #' @noRd
 .rmbl_shown <- function(x) {
   if (exists(".rmbl_ctl_escape", mode = "function")) .rmbl_ctl_escape(x) else x
+}
+
+#' Which strings are not text.
+#'
+#' validEnc() calls every byte valid in the C locale, so a file name or an
+#' argument with a stray byte was shown raw and bundled there: a string is
+#' not text when it is no valid UTF-8 and the session's locale cannot vouch
+#' for it (it is neither marked Latin-1 nor valid in a locale that has
+#' characters beyond ASCII).
+#' @param s Strings.
+#' @return A logical vector, FALSE for NA.
+#' @noRd
+.rmbl_nontext <- function(s) {
+  li <- l10n_info()
+  ascii <- !isTRUE(li[["UTF-8"]]) && !isTRUE(li[["Latin-1"]]) &&
+    !isTRUE(li[["MBCS"]])
+  !is.na(s) & !validUTF8(s) & Encoding(s) != "latin1" &
+    (ascii | !validEnc(s))
 }
 
 #' The lines of a file from its bytes as they are on disk.

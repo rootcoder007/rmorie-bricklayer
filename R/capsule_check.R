@@ -505,7 +505,10 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   dirs <- .bl_seal_dirs(path, overwrite, glob)
   # every capsule is looked at before the first is written: a refusal at
-  # the third left the first two pinned and bundled
+  # the third left the first two pinned and bundled. The key is looked at
+  # too (no signature is made: a stateful key would spend an index)
+  .rmbl_attest_scheme(key)
+  .rmbl_attest_public(key)
   for (d in dirs) {
     pf <- file.path(d, "data_provenance.json")
     prov <- loadprov(pf)
@@ -523,7 +526,13 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
         call. = FALSE
       )
     }
-    .bl_bnd_select(d, NULL, file.path(d, "capsule_bundle.json"))
+    .bl_bnd_textnames(
+      .bl_bnd_select(d, NULL, file.path(d, "capsule_bundle.json"))
+    )
+    mf <- file.path(d, "manifest.json")
+    if (file.exists(mf)) {
+      loadprov(mf)
+    }
   }
   rows <- list()
   for (d in dirs) {

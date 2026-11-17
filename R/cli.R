@@ -355,7 +355,7 @@ instcli <- function(
 #'   here.
 #' @noRd
 .bl_cli_parse <- function(args, prog, out) {
-  bad <- which(!validEnc(args))
+  bad <- which(.rmbl_nontext(args))
   if (length(bad)) {
     out(sprintf(
       "%s: argument %d is not valid text in this locale\n",
