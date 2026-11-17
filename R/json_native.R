@@ -3574,7 +3574,7 @@ bricklayer_json_unbox <- function(x) {
   if (!is.null(kind)) {
     stop(
       .rmbl_fn(), "the file is compressed (", kind, ") and is read as it is ",
-      "on disk; decompress it first: ", .rmbl_ctl_escape(path),
+      "on disk; decompress it first: ", .rmbl_shown(path),
       call. = FALSE
     )
   }

@@ -832,6 +832,18 @@
     grepl("[/\\\\]", path)
 }
 
+#' A path as a message shows it: with control and non-text bytes escaped
+#' where the package's printing code is loaded. A capsule bundle sources
+#' this file before that code (and need not source it at all), so there the
+#' path is shown as it is rather than the reader stopping for want of a
+#' function.
+#' @param x A path.
+#' @return One string.
+#' @noRd
+.rmbl_shown <- function(x) {
+  if (exists(".rmbl_ctl_escape", mode = "function")) .rmbl_ctl_escape(x) else x
+}
+
 #' The lines of a file from its bytes as they are on disk.
 #'
 #' readLines() of a path inflates a gzip, bzip2 or xz file as it reads, so
@@ -856,7 +868,7 @@
     kind <- "missing"
   }
   # shown with control and non-text bytes escaped, as sha256file() shows it
-  shown <- .rmbl_ctl_escape(path)
+  shown <- .rmbl_shown(path)
   why <- switch(kind,
     missing = sprintf("`%s`: no such file: %s", what, shown),
     directory = sprintf("`%s` is a directory, not a file: %s", what, shown),

@@ -175,3 +175,13 @@ test_that("a capsule inside another is sealed first, and the tree checks", {
   cpsseal(root, fipskg("ML-DSA-44"))
   expect_identical(cpschk(root, fp = FALSE)$status, "ok")
 })
+
+test_that("a file check shows the path as it is without the escaper", {
+  # a capsule bundle sources the guards before the printing code
+  e <- new.env()
+  sys.source(test_path("..", "..", "R", "aaa_input_guards.R"), envir = e)
+  skip_if_not(exists(".rmbl_shown", envir = e, inherits = FALSE))
+  environment(e$.rmbl_shown) <- baseenv()
+  expect_identical(e$.rmbl_shown("a b"), "a b")
+  expect_identical(.rmbl_shown("a\033b"), .rmbl_ctl_escape("a\033b"))
+})
