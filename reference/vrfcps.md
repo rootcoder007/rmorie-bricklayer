@@ -108,11 +108,17 @@ The checks, in the order they appear in `checks`:
   block of 65,536 rows at a time, keeping one field of each, so memory
   stays at about that many fields plus the longest line whatever the
   file's size; [`read.csv()`](https://rdrr.io/r/utils/read.table.html)'s
-  "incomplete final line" warning is no fault, any other error or
-  warning fails the row with its words in `detail`. A row name used
-  twice, which [`read.csv()`](https://rdrr.io/r/utils/read.table.html)
-  refuses, is not looked at. A non-CSV file fails this row when a row
-  count or schema is recorded (they cannot be checked).
+  "incomplete final line" and "EOF within quoted string" warnings are no
+  fault, any other error or warning fails the row with its words in
+  `detail`. A row name used twice, which
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) refuses, is
+  not looked at. A gzip file is inflated under the caps every reader of
+  the package has: at most the option `rmoriebricklayer.maxcsvbytes` (1
+  GiB), and past 64 MiB at most `rmoriebricklayer.maxgzratio` (200)
+  times its compressed size. A table of very repetitive rows can pass
+  those: raise the options for the check, as `detail` then says. A
+  non-CSV file fails this row when a row count or schema is recorded
+  (they cannot be checked).
 
 - `data_row_count`:
 
@@ -185,12 +191,12 @@ vrfcps(dir)
 #> │                                                                             │
 #> │   Every check passed: the capsule is still the one the analysis was run on. │
 #> │                                                                             │
-#> │   ✔    provenance_readable  /tmp/Rtmp44V4G0/capsule-example/data_provenance │
+#> │   ✔    provenance_readable  /tmp/RtmpSf2BPU/capsule-example/data_provenance │
 #> │                             .json                                           │
-#> │   ✔    data_present         /tmp/Rtmp44V4G0/capsule-example/d.csv           │
+#> │   ✔    data_present         /tmp/RtmpSf2BPU/capsule-example/d.csv           │
 #> │   ✔    data_sha256          da4aaa3a009d063f36d0515f2b50a11bcc578264aa7c455 │
 #> │                             04b46fedbbae4f8f7                               │
-#> │   ✔    data_readable        /tmp/Rtmp44V4G0/capsule-example/d.csv           │
+#> │   ✔    data_readable        /tmp/RtmpSf2BPU/capsule-example/d.csv           │
 #> │   ✔    data_row_count       3 rows on disk                                  │
 #> │   ✔    schema_valid                                                         │
 #> │   ✔    data_not_synthetic   no synthetic marker: sidecar, manifest and      │
@@ -216,6 +222,6 @@ vrfcps(dir, provfile = "../elsewhere.json")$ok
 
 # a missing directory is an error
 try(vrfcps(file.path(tempdir(), "no-such-capsule")))
-#> Error : `cpsdir` is not an existing directory: /tmp/Rtmp44V4G0/no-such-capsule
+#> Error : `cpsdir` is not an existing directory: /tmp/RtmpSf2BPU/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

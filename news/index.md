@@ -2,6 +2,17 @@
 
 ## rmoriebricklayer 1.1.1
 
+- The check of a capsule’s gzip table is under the caps of every reader
+  in the package (options `rmoriebricklayer.maxcsvbytes` and
+  `rmoriebricklayer.maxgzratio`): a table that inflates more than 200
+  times its size, past 64 MiB, fails `data_readable` with the options
+  named. The help of
+  [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
+  says so now. The refusal of names that one system takes for one name
+  is headed by the capsule’s folder, as the other refusals of a seal
+  are, and is worked out for all names at once: 100,000 names with
+  accents took 80 seconds and take 2.
+
 - A link that leads out of the folder searched for capsules is told, not
   refused.
   [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
