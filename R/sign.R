@@ -1480,7 +1480,7 @@ xmssfgt <- function(keytofgt = NULL) {
           "are: %s. For the stateful hash-based scheme ",
           "use pqckg()."
         ),
-        scheme,
+        .rmbl_ctl_escape(scheme),
         toString(known)
       ),
       call. = FALSE

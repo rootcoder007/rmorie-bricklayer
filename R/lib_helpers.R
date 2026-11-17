@@ -618,7 +618,7 @@ wrtxtfb <- function(text, path) {
     # the package's JSON documents are held to the 32 MiB its manifest reader
     # takes: readLines() of a larger one failed as "cannot allocate buffer"
     x <- .rmbl_file1(x, "path", max = 32 * 2^20)
-    paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+    paste(.rmbl_json_file_lines(x), collapse = "\n")
   } else {
     x
   }
@@ -1476,5 +1476,6 @@ wrtxtfb <- function(text, path) {
 #' @return A logical vector.
 #' @noRd
 .rmbl_leftover <- function(f) {
-  grepl("(^|[/\\\\])[.]rmbl-[0-9a-f]+[.]tmp$", f)
+  # by bytes: a name that is not valid text made grepl() warn
+  grepl("(^|[/\\\\])[.]rmbl-[0-9a-f]+[.]tmp$", f, useBytes = TRUE)
 }

@@ -255,7 +255,12 @@ explerr <- function(msg = geterrmessage(), pkgs = NULL, n = 3L) {
   vapply(
     rx,
     function(r) {
-      isTRUE(tryCatch(grepl(r, .msg, perl = TRUE), error = function(e) FALSE))
+      # a pattern that meets PCRE's match limit on a long message does not
+      # match, and says nothing
+      isTRUE(tryCatch(
+        suppressWarnings(grepl(r, .msg, perl = TRUE)),
+        error = function(e) FALSE
+      ))
     },
     NA
   )

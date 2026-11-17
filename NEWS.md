@@ -1,5 +1,17 @@
 # rmoriebricklayer 1.1.1
 
+* Verification no longer passes over a capsule in a folder whose name starts with a dot. `cpschk()`, `cpsseal()` and `rmbl verify` searched only folders listed without their hidden entries, so a signed capsule that had been changed and renamed from `two` to `.two` was neither checked nor reported, and the result was "ok" with exit status 0. Every folder is searched except `.git` and `.rmbl-cache`, as the help says.
+
+* The 32 MiB a reader holds its JSON file to is the size of what is read. `cpsbndlrd()`, `cpsbndlvrf()`, `loadprov()`, `mnfdiff()`, `idcrdrd()` and `vrfrcdmnf()` read their file through `readLines()`, which inflates a gzip, bzip2 or xz file as it reads: a 66 KB file was read as 64 MiB and a 209 KB one took 1.2 GB of memory. They read the bytes on disk, say that a compressed file is one, and `loadprov()`, `mnfdiff()`, `idcrdrd()` and `vrfrcdmnf()` now refuse a NUL byte as `fromjs()` does (text after it was dropped unread). `siuprs()` reads its page the same way.
+
+* A pipe or a device where a file is expected no longer makes a check wait for ever. `vrfcps()`, `cpschk()` and `rmbl verify` read a capsule's CSV data file as a table only when it is a regular file (a named pipe put in its place hung them after the hash had already failed), and `rmbl sign --key-file`, `rmbl wayback` and `rmbl migrate` refuse a device, a pipe or a socket in words.
+
+* A file name that is not valid text no longer stops a check with base R's "input string 1 is invalid UTF-8". `cpschk()` and `cpsbndlvrf()` report it as a file the bundle does not cover, shown as `caf<e9>.txt`, and `rmbl verify` exits 1, not 2; `cpsbndl()` and `cpsseal()` say that such a name cannot be listed in a bundle.
+
+* Refusals show control and non-text bytes escaped in two more places: the "no such file" and sibling messages of every reader that checks its file (`sha512file()`, `crc32file()`, `cpsbndlrd()`, `idcrdrd()`, `ldgrread()` among them), and the unknown-scheme message of `fipskg()` and `fipssz()`.
+
+* `cblake2b()` refuses a key that is not one string or a raw vector, as its help says: a number was used as its text, so `key = Inf` gave the MAC of `key = "Inf"`. `explerr()` no longer raises base R's "PCRE error 'match limit exceeded'" on a message of thousands of characters.
+
 * A JSON file holding a NUL byte is refused by `fromjs()`, `loadprov()`, `cpsbndlrd()` and `cpsbndlvrf()`: the text after the byte on its line was dropped unread, so a bundle file could carry bytes that were never checked. `cpssign()` refuses an empty HMAC secret and `cpsvrf()` verifies nothing under one, as `cpsatst()` and `cpsbndl()` already did.
 
 * `cpschk()` and `rmbl verify` fail when no capsule is found under the path: a folder with nothing to check (empty, or whose capsule was deleted or moved into a `.git` or `.rmbl-cache` folder, which stay not searched) passed as `ok`, also with `pubkey` (`--public-key`) given, and `rmbl verify` exited 0. The result now has one failed `no_capsule` row and the status `error`, the report says that no capsule was found and nothing was checked, and `rmbl verify` and `rmbl drift` exit 1, as for any failed verification (`rmbl report` still exits 0).

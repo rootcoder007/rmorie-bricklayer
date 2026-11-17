@@ -471,6 +471,9 @@
     "no such file"
   } else if (dir.exists(f)) {
     "a folder, not an R file"
+  } else if (!identical(.rmbl_path_kind(path.expand(f)), "regular")) {
+    # a pipe or a device has no end to read to
+    "not a regular file (a device, a pipe or a socket)"
   }
   lines <- if (is.null(why)) {
     tryCatch(

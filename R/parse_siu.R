@@ -440,8 +440,14 @@ siuso <- function(text) {
     .rmbl_notdir(html, "html", "siuprs")
     # a regular file within the 2 MiB a report page is held to
     .rmbl_file1(html, "html", max = 2^21)
+    # the bytes on disk: readLines() of a path inflates a compressed file past
+    # the cap
     html <- paste(
-      readLines(html, warn = FALSE, encoding = "UTF-8"),
+      local({
+        con <- file(html, "rb")
+        on.exit(close(con), add = TRUE)
+        readLines(con, warn = FALSE, encoding = "UTF-8")
+      }),
       collapse = "\n"
     )
   } else if (

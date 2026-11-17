@@ -565,10 +565,15 @@ format.rmbl_citation <- function(x, ...) {
     )
   }
   if (grepl("\\.csv$", dpath, ignore.case = TRUE)) {
-    df <- tryCatch(
-      utils::read.csv(dpath, check.names = FALSE, stringsAsFactors = FALSE),
-      error = function(e) NULL
-    )
+    # a pipe put in the data file's place has no end: read.csv() waited on it
+    # for ever, after the hash row had already failed
+    reg <- identical(.rmbl_path_kind(path.expand(dpath)), "regular")
+    df <- if (reg) {
+      tryCatch(
+        utils::read.csv(dpath, check.names = FALSE, stringsAsFactors = FALSE),
+        error = function(e) NULL
+      )
+    }
     .vc_note(acc, "data_readable", !is.null(df), dpath)
     return(df)
   }

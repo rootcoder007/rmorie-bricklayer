@@ -3549,6 +3549,39 @@ bricklayer_json_unbox <- function(x) {
     !bricklayer_json_validate(txt)
 }
 
+#' The lines of a file, from its bytes as they are on disk.
+#'
+#' readLines() of a path, and a connection opened after it was made, inflate
+#' a gzip, bzip2 or xz file as they read: the 32 MiB a reader holds its file
+#' to bounded the size on disk, and a 66 KB file was read as 64 MiB. A NUL
+#' byte is refused, as .rmbl_json_read_con() refuses it.
+#' @param path A regular file, already checked by .rmbl_file1().
+#' @return A character vector, one element per line.
+#' @noRd
+.rmbl_json_file_lines <- function(path) {
+  con <- file(path, "rb")
+  on.exit(close(con), add = TRUE)
+  # a compressed file is said to be one, not refused for the NUL bytes its
+  # compressed form holds
+  h <- readBin(con, "raw", 6L)
+  kind <- if (length(h) >= 2L && identical(h[1:2], as.raw(c(0x1f, 0x8b)))) {
+    "gzip"
+  } else if (length(h) >= 3L && identical(h[1:3], charToRaw("BZh"))) {
+    "bzip2"
+  } else if (identical(h, as.raw(c(0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00)))) {
+    "xz"
+  }
+  if (!is.null(kind)) {
+    stop(
+      .rmbl_fn(), "the file is compressed (", kind, ") and is read as it is ",
+      "on disk; decompress it first: ", .rmbl_ctl_escape(path),
+      call. = FALSE
+    )
+  }
+  seek(con, 0L)
+  .rmbl_json_read_con(con)
+}
+
 #' Reads every line of a connection, opening (and then closing) it when it
 #' is not open.
 #' @param con The connection to read the JSON text from.

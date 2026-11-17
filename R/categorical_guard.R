@@ -1038,7 +1038,7 @@ vrfrcdmnf <- function(path, orig, recd) {
   # within the 32 MiB the package's JSON documents are held to
   path <- .rmbl_file1(path, "path", max = 32 * 2^20)
   m <- .rmbl_json_text(paste(
-    readLines(path, warn = FALSE, encoding = "UTF-8"),
+    .rmbl_json_file_lines(path),
     collapse = "\n"
   ))
   mapping <- unlist(m$mapping)

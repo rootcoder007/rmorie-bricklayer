@@ -182,7 +182,7 @@ idcrdrd <- function(path) {
   # within the 32 MiB the package's JSON documents are held to
   path <- .rmbl_file1(path, "path", max = 32 * 2^20)
   x <- .rmbl_json_text(
-    paste(readLines(path, warn = FALSE), collapse = "\n"),
+    paste(.rmbl_json_file_lines(path), collapse = "\n"),
     simplifyVector = FALSE
   )
   if (!is.list(x) || !identical(x$type, .bl_id_type)) {

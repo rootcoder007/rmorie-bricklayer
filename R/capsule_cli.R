@@ -1124,7 +1124,10 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     root,
     pattern = "^(data_provenance|capsule_bundle)\\.json$",
     recursive = TRUE,
-    full.names = TRUE
+    full.names = TRUE,
+    # a folder whose name starts with a dot is searched too: a capsule
+    # renamed to .two was neither sealed nor checked, and the result was ok
+    all.files = TRUE
   )
   f <- sub("^\\./", "", f)
   f <- f[!grepl("(^|/)(\\.git|\\.rmbl-cache)/", f)]
@@ -1595,6 +1598,14 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   if (!is.null(kf)) {
     if (!file.exists(kf) || dir.exists(kf)) {
       usage_error(sprintf("--key-file: no such file: %s", .rmbl_printable(kf)))
+    }
+    # a pipe or a device has no end: readLines() waited, or read until
+    # memory ran out
+    if (!identical(.rmbl_path_kind(path.expand(kf)), "regular")) {
+      usage_error(sprintf(
+        "--key-file: not a regular file (a device, a pipe or a socket): %s",
+        .rmbl_printable(kf)
+      ))
     }
     key <- sub(
       "[\r\n]+$",

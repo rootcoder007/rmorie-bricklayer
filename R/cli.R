@@ -2041,6 +2041,25 @@ instcli <- function(
   if (tab[["failed"]] > 0L || tab[["submitted"]] > 0L) 1L else 0L
 }
 
+#' Whether the file of URLs named on the command line can be read: a file
+#' that is missing is said to be, and so is a folder, a device, a pipe or a
+#' socket (a pipe has no end: readLines() waited on it for ever).
+#' @param p The path given.
+#' @param out The function that prints.
+#' @return TRUE when `p` is a regular file.
+#' @noRd
+.bl_cli_listfile <- function(p, out) {
+  why <- if (!file.exists(p)) {
+    "no such file"
+  } else if (!identical(.rmbl_path_kind(path.expand(p)), "regular")) {
+    "not a regular file (a folder, a device, a pipe or a socket)"
+  }
+  if (!is.null(why)) {
+    out(sprintf("%s: %s\n", why, .rmbl_printable(p)))
+  }
+  is.null(why)
+}
+
 #' Runs the wayback verb.
 #'
 #' The wayback verb: every URL in a file (one per line; blank lines and #
@@ -2070,8 +2089,7 @@ instcli <- function(
     out(.bl_verb_usage("wayback", .bl_prog()))
     return(if (length(pos) == 1L) 0L else 2L)
   }
-  if (!file.exists(pos[[1L]])) {
-    out(sprintf("no such file: %s\n", pos[[1L]]))
+  if (!.bl_cli_listfile(pos[[1L]], out)) {
     return(1L)
   }
   urls <- trimws(readLines(pos[[1L]], warn = FALSE))

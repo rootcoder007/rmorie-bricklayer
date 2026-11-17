@@ -840,22 +840,24 @@
   if (kind == "other" && !file.exists(path)) {
     kind <- "missing"
   }
+  # shown with control and non-text bytes escaped, as sha256file() shows it
+  shown <- .rmbl_ctl_escape(path)
   why <- switch(kind,
-    missing = sprintf("`%s`: no such file: %s", what, path),
-    directory = sprintf("`%s` is a directory, not a file: %s", what, path),
+    missing = sprintf("`%s`: no such file: %s", what, shown),
+    directory = sprintf("`%s` is a directory, not a file: %s", what, shown),
     other = sprintf(
       "`%s` is not a regular file (a device, a pipe or a socket): %s",
       what,
-      path
+      shown
     ),
     if (file.access(path, 4L) != 0L) {
-      sprintf("`%s` cannot be read (permission denied): %s", what, path)
+      sprintf("`%s` cannot be read (permission denied): %s", what, shown)
     } else if (file.size(path) > max) {
       sprintf(
         "`%s` is larger than the %s bytes read: %s",
         what,
         format(max, big.mark = ",", scientific = FALSE),
-        path
+        shown
       )
     }
   )

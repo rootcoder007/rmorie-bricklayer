@@ -190,6 +190,7 @@ cpsbndl <- function(
   }
   path <- path %||% file.path(dir, "capsule_bundle.json")
   files <- .bl_bnd_select(dir, files, path)
+  .bl_bnd_textnames(files)
   pg <- blprog("bundling", length(files))
   on.exit(pg$done(), add = TRUE)
   entries <- lapply(seq_along(files), function(i) {
@@ -222,7 +223,7 @@ cpsbndlrd <- function(path) {
   # within the 32 MiB the package's JSON documents are held to
   path <- .rmbl_file1(path, "path", max = 32 * 2^20)
   b <- .rmbl_json_text(
-    paste(.rmbl_json_read_con(file(path)), collapse = "\n"),
+    paste(.rmbl_json_file_lines(path), collapse = "\n"),
     simplifyVector = FALSE
   )
   if (
@@ -517,6 +518,25 @@ format.bricklayer_bundle_check <- function(x, ...) {
   invisible(NULL)
 }
 
+#' Stops when a file to bundle has a name that is not valid text: a bundle
+#' is JSON, which is UTF-8, so the name cannot be listed in one (it failed
+#' later as a refusal of sha256file()).
+#' @param files The files to bundle, relative to the directory.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_bnd_textnames <- function(files) {
+  bad <- files[!validEnc(files)]
+  if (length(bad)) {
+    stop(
+      "cpsbndl: a file whose name is not valid text cannot be listed in a ",
+      "bundle; rename it: ",
+      toString(.rmbl_ctl_escape(utils::head(bad, 5L))),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
 #' What a bundled directory holds: its files, and its empty folders.
 #' @param dir The bundled directory.
 #' @return Paths relative to `dir`; an empty folder ends in a slash.
@@ -587,13 +607,16 @@ format.bricklayer_bundle_check <- function(x, ...) {
     !length(extra) && !length(left),
     paste(c(
       if (length(extra)) {
-        paste("not covered by the bundle:", toString(utils::head(extra, 5L)))
+        paste(
+          "not covered by the bundle:",
+          toString(.rmbl_ctl_escape(utils::head(extra, 5L)))
+        )
       },
       if (length(left)) {
         paste(
           "left over from an interrupted write, not part of the capsule",
           "(remove it):",
-          toString(utils::head(left, 5L))
+          toString(.rmbl_ctl_escape(utils::head(left, 5L)))
         )
       }
     ), collapse = "; ")
