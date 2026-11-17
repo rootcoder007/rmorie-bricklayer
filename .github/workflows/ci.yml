@@ -93,7 +93,8 @@ jobs:
           f=.otis-input/a01_restrictive_confinement_detailed_dataset.csv
           p=inst/bundle/otis-mrp/data_provenance.json
           want="$(jq -r '.resource.sha256' "$p")"
-          ok() { [ -s "$f" ] && echo "$want  $f" | sha256sum -c - >/dev/null 2>&1; }
+          sum() { (sha256sum "$1" 2>/dev/null || shasum -a 256 "$1") | cut -d' ' -f1; }
+          ok() { [ -s "$f" ] && [ "$(sum "$f")" = "$want" ]; }
           # the publisher replaces this file in place: the recorded one is
           # taken from its archived copy, the live address only if that is it
           for url in "$(jq -r '.wayback.csv_snapshot' "$p")" \
@@ -153,10 +154,18 @@ jobs:
         run: |
           mkdir -p .otis-input
           f=.otis-input/a01_restrictive_confinement_detailed_dataset.csv
-          if [ ! -s "$f" ]; then
-            url="$(jq -r '.resource.direct_url' inst/bundle/otis-mrp/data_provenance.json)"
-            curl -sSfL --retry 3 --retry-delay 5 -o "$f" "$url"
-          fi
+          p=inst/bundle/otis-mrp/data_provenance.json
+          want="$(jq -r '.resource.sha256' "$p")"
+          sum() { (sha256sum "$1" 2>/dev/null || shasum -a 256 "$1") | cut -d' ' -f1; }
+          ok() { [ -s "$f" ] && [ "$(sum "$f")" = "$want" ]; }
+          # the publisher replaces this file in place: the recorded one is
+          # taken from its archived copy, the live address only if that is it
+          for url in "$(jq -r '.wayback.csv_snapshot' "$p")" \
+                     "$(jq -r '.resource.direct_url' "$p")"; do
+            ok && break
+            curl -sSfL --retry 5 --retry-delay 15 -o "$f" "$url" || true
+          done
+          ok || { echo "the recorded OTIS file could not be fetched"; exit 1; }
 
       - name: Install the package
         run: R CMD INSTALL --no-test-load .
