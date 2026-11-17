@@ -57,7 +57,7 @@
 
   "network": {
     "endpoints": [
-      "https://data.ontario.ca/api/3/action/package_show?id=data-on-inmates-in-ontario",
+      "https://data.ontario.ca/api/3/action/package_show?id=09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36",
       "https://data.ontario.ca/dataset/.../*.csv"
     ],
     "_comment": "Listed in the WHERE EVERYTHING WILL GO panel for transparency."

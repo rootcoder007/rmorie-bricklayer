@@ -541,11 +541,14 @@
   if (identical(s, "NULL")) {
     return(NULL)
   }
+  # a file the user names: a pipe or a device is refused, and a .csv is
+  # read from its bytes on disk (read.csv() of a path inflates gzip)
   if (file.exists(s) && grepl("\\.csv$", s, ignore.case = TRUE)) {
-    return(utils::read.csv(s))
+    s <- .rmbl_file1(s, "VALUE")
+    return(utils::read.csv(text = .rmbl_json_file_lines(s)))
   }
   if (file.exists(s) && grepl("\\.rds$", s, ignore.case = TRUE)) {
-    return(readRDS(s))
+    return(readRDS(.rmbl_file1(s, "VALUE")))
   }
   utils::type.convert(strsplit(s, ",", fixed = TRUE)[[1L]], as.is = TRUE)
 }

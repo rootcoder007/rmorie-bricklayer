@@ -178,10 +178,67 @@ test_that("a capsule inside another is sealed first, and the tree checks", {
 
 test_that("a file check shows the path as it is without the escaper", {
   # a capsule bundle sources the guards before the printing code
+  # the source file is there in a source tree, not under R CMD check
+  src <- test_path("..", "..", "R", "aaa_input_guards.R")
+  skip_if_not(file.exists(src))
   e <- new.env()
-  sys.source(test_path("..", "..", "R", "aaa_input_guards.R"), envir = e)
+  sys.source(src, envir = e)
   skip_if_not(exists(".rmbl_shown", envir = e, inherits = FALSE))
   environment(e$.rmbl_shown) <- baseenv()
   expect_identical(e$.rmbl_shown("a b"), "a b")
   expect_identical(.rmbl_shown("a\033b"), .rmbl_ctl_escape("a\033b"))
+})
+
+test_that("the run verb reads a named file from its bytes, a regular one", {
+  d <- withr::local_tempdir()
+  g <- file.path(d, "w.csv")
+  writeLines(c("a,b", "1,2"), g)
+  expect_identical(.bl_run_value(g), data.frame(a = 1L, b = 2L))
+  f <- file.path(d, "v.csv")
+  con <- gzfile(f, "wb")
+  writeLines(c("a", "1"), con)
+  close(con)
+  expect_match(s5_msg(.bl_run_value(f)), "compressed")
+  skip_on_os("windows")
+  for (p in file.path(d, c("p.csv", "p.rds"))) {
+    skip_if_not(system2("mkfifo", shQuote(p)) == 0L)
+    expect_match(s5_msg(.bl_run_value(p)), "not a regular file")
+  }
+})
+
+test_that("a link that leaves a capsule is refused before any seal", {
+  skip_on_os("windows")
+  root <- withr::local_tempdir()
+  a <- s5_capsule(root, "a")
+  dir.create(file.path(root, "shared"))
+  writeLines("n", file.path(root, "shared", "notes.txt"))
+  skip_if_not(file.symlink(file.path(root, "shared"), file.path(a, "ln")))
+  withr::local_options(morie.progress = FALSE)
+  k <- fipskg("ML-DSA-44")
+  expect_match(s5_msg(cpsseal(root, k)), "link that leaves the capsule")
+  expect_false(file.exists(file.path(a, "capsule_bundle.json")))
+  expect_match(
+    s5_msg(cpsbndl(a, mkmnf(list(), env = FALSE), k)),
+    "link that leaves the capsule"
+  )
+  # a link that stays inside is content like any other
+  unlink(file.path(a, "ln"))
+  file.symlink(file.path(a, "data.csv"), file.path(a, "same.csv"))
+  cpsseal(root, k)
+  expect_identical(cpschk(root, fp = FALSE)$status, "ok")
+})
+
+test_that("a capsule that cannot be sealed stops the seal before the first", {
+  root <- withr::local_tempdir()
+  a <- s5_capsule(root, "a")
+  s5_capsule(root, file.path("b", "deep"))
+  cc <- s5_capsule(root, "c")
+  writeLines('{"resource": {"filename": "../x.csv"}}',
+             file.path(cc, "data_provenance.json"))
+  withr::local_options(morie.progress = FALSE)
+  expect_match(s5_msg(cpsseal(root, fipskg("ML-DSA-44"))),
+               "must name the data file")
+  expect_false(file.exists(file.path(a, "capsule_bundle.json")))
+  expect_false(file.exists(file.path(root, "b", "deep", "capsule_bundle.json")))
+  expect_null(loadprov(file.path(a, "data_provenance.json"))$resource$sha256)
 })

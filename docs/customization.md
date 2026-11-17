@@ -60,8 +60,8 @@ Every configurable point in `rmorie-bricklayer`, organized by which file control
 
 ```json
 "dataset": {
-  "package_slug":        "data-on-inmates-in-ontario",
-  "ckan_api_endpoint":   "https://data.ontario.ca/api/3/action/package_show?id=data-on-inmates-in-ontario",
+  "package_slug":        "jahn-settlement-data-inmates-ontario",
+  "ckan_api_endpoint":   "https://data.ontario.ca/api/3/action/package_show?id=09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36",
   "catalogue_page":      "https://...",
   "publisher":           "Ontario Ministry of the Solicitor General",
   "licence_name":        "Open Government Licence – Ontario",

@@ -4,10 +4,10 @@
   "captured_at_utc": "2026-06-23T04:41:40Z",
   "captured_by": "vsruhela@proton.me (rootcoder-reproducibility/1.0)",
   "dataset": {
-    "package_slug": "data-on-inmates-in-ontario",
+    "package_slug": "jahn-settlement-data-inmates-ontario",
     "package_uuid": "09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36",
-    "catalogue_page": "https://data.ontario.ca/dataset/data-on-inmates-in-ontario",
-    "ckan_api_endpoint": "https://data.ontario.ca/api/3/action/package_show?id=data-on-inmates-in-ontario",
+    "catalogue_page": "https://data.ontario.ca/dataset/jahn-settlement-data-inmates-ontario",
+    "ckan_api_endpoint": "https://data.ontario.ca/api/3/action/package_show?id=09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36",
     "publisher": "Ontario Ministry of the Solicitor General",
     "source_system": "OTIS (Offender Tracking Information System)",
     "licence_name": "Open Government Licence – Ontario",
@@ -38,7 +38,18 @@
     "data_dictionary_snapshot": "https://web.archive.org/web/20260623063713/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/d83fe893-9634-4794-a0c1-c17bf619a95a/download/od-restrictiveconfinement-segregation-deaths-dd20251103.xlsx",
     "data_update_note_snapshot": "https://web.archive.org/web/20260623063720/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/2c4d1156-3424-4dab-bf01-6c2b982f51d5/download/dataupdatenote.docx"
   },
+  "publisher_changes": {
+    "_comment": "A record of what the publisher did after this capsule was captured. Nothing here is checked: resource.sha256 above stays the file the paper analysed, which setup_and_run.R fetches from wayback.csv_snapshot when the publisher's current file differs.",
+    "2026-10-30": {
+      "what": "The file was replaced in place at the same address: fiscal year 2026 added (34,267 rows; 111,201 in all), every column renamed to lower_snake_case, the dataset renamed 'Jahn Settlement: Data on Inmates in Ontario' (the earlier catalogue address no longer answers; the package and resource identifiers are unchanged). The rows of fiscal years 2023 to 2025 are identical to the recorded file.",
+      "size_bytes": 6888296,
+      "sha256": "fde2bc6b3f71e945b1ffa8ffccbc8f3c97a53c5010d8ed4939e70550848c312b",
+      "row_count_data_rows": 111201,
+      "csv_snapshot": "https://web.archive.org/web/20261117025615/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/5a0c5804-a055-4031-9743-73f556e43bb4/download/a01_restrictive_confinement_detailed_dataset.csv"
+    }
+  },
   "schema": {
+    "paper_fiscal_years": [2023, 2024, 2025],
     "expected_columns": [
       "EndFiscalYear",
       "UniqueIndividual_ID",

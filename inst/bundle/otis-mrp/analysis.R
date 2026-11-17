@@ -24,7 +24,7 @@
 ##    .RData  — author-prepared workspace with df + res_pool + res_by_year
 ##              Reproduces all 36 cross-checks.
 ##    .csv    — raw public OTIS A01RCDD dataset from
-##              https://data.ontario.ca/dataset/data-on-inmates-in-ontario
+##              https://data.ontario.ca/dataset/jahn-settlement-data-inmates-ontario
 ##              (file: "Restrictive Confinement – Detailed Dataset English")
 ##              Reproduces 28 cross-checks; DML estimates record as INFO
 ##              because they're pre-computed in the .RData (see paper §5).
@@ -240,6 +240,8 @@ if (INPUT_MODE == "rdata") {
     SuicideWatch_Alert         = c("Yes","No")
   )
   min_rows <- 70000L; max_rows <- 90000L
+  ## the fiscal years the paper analysed
+  paper_years <- 2023:2025
 
   if (file.exists(provenance_path)) {
     cat("      Using schema from: ", provenance_path, "\n")
@@ -260,8 +262,24 @@ if (INPUT_MODE == "rdata") {
       min_rows <- prov$schema$structural_invariants$min_data_rows
     if (!is.null(prov$schema$structural_invariants$max_data_rows))
       max_rows <- prov$schema$structural_invariants$max_data_rows
+    if (!is.null(prov$schema$paper_fiscal_years))
+      paper_years <- as.integer(unlist(prov$schema$paper_fiscal_years))
   } else {
     cat("      (data_provenance.json not found; using built-in schema)\n")
+  }
+
+  ## --- The publisher changed this file on 2026-10-30: every column was
+  ## renamed to lower_snake_case (EndFiscalYear became end_fiscal_year) and
+  ## fiscal year 2026 was added to the same file; the rows of the earlier
+  ## years are unchanged. Columns are therefore matched to the recorded
+  ## names without regard to case or underscores, so both spellings read.
+  .nk <- function(x) gsub("[^a-z0-9]", "", tolower(x))
+  .hit <- match(.nk(expected_cols), .nk(colnames(df_raw)))
+  .ren <- !is.na(.hit) & !(expected_cols %in% colnames(df_raw))
+  if (any(.ren)) {
+    setnames(df_raw, colnames(df_raw)[.hit[.ren]], expected_cols[.ren])
+    cat("      Column names are the publisher's later spelling; read as the",
+        "recorded ones.\n")
   }
 
   ## --- Schema validation: hard fail on missing required cols ---
@@ -270,10 +288,27 @@ if (INPUT_MODE == "rdata") {
     stop("CSV missing expected columns: ",
          paste(missing_cols, collapse = ", "),
          "\nThis script expects the OTIS A01RCDD CSV from ",
-         "https://data.ontario.ca/dataset/data-on-inmates-in-ontario ",
+         "https://data.ontario.ca/dataset/",
+         "jahn-settlement-data-inmates-ontario ",
          "with the schema documented in data_provenance.json. ",
          "If Ontario has changed the column names, update ",
          "data_provenance.json's expected_columns to match.")
+  }
+
+  ## --- A later release of the file holds years the paper did not use.
+  ## They are left out, so the published values are reproduced from either
+  ## release; RMBL_ALL_YEARS (setup_and_run.R --all-years) analyses them too.
+  .yrs <- sort(unique(as.integer(df_raw[["EndFiscalYear"]])))
+  .more <- setdiff(.yrs, paper_years)
+  if (length(.more) && !nzchar(Sys.getenv("RMBL_ALL_YEARS"))) {
+    cat("      Fiscal years in the file beyond the paper's (",
+        paste(.more, collapse = ", "), ") are left out; --all-years keeps",
+        " them.\n", sep = "")
+    df_raw <- df_raw[as.integer(df_raw[["EndFiscalYear"]]) %in% paper_years, ]
+  } else if (length(.more)) {
+    cat("      All fiscal years analysed (", paste(.yrs, collapse = ", "),
+        "): the paper's values are for ", paste(range(paper_years),
+        collapse = "-"), " and will differ.\n", sep = "")
   }
 
   ## --- Schema validation: warn on row count out of expected range ---
@@ -1648,7 +1683,7 @@ if (SYNTHETIC_MODE) {
     "machine. To actually reproduce the paper, please obtain",
     "the real public CSV from:",
     "",
-    "  https://data.ontario.ca/dataset/data-on-inmates-in-ontario",
+    "  https://data.ontario.ca/dataset/jahn-settlement-data-inmates-ontario",
     "",
     "Run time:    ", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
     "Synthetic CSV: ", INPUT_PATH,

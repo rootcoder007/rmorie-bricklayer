@@ -356,8 +356,29 @@ format.bricklayer_bundle_check <- function(x, ...) {
     ))
 }
 
+#' The entries of a capsule folder reached through a link that leaves it.
+#' @param dir The capsule folder.
+#' @param files Paths relative to `dir`.
+#' @return Those of `files` whose real path is not inside `dir`.
+#' @noRd
+.bl_bnd_outside <- function(dir, files) {
+  d <- paste0(.rmbl_realpath(dir), "/")
+  out <- vapply(
+    files,
+    # a name that is not valid text is reported by the check of the names
+    function(f) {
+      tryCatch(
+        !startsWith(.rmbl_realpath(file.path(dir, f)), d),
+        error = function(e) FALSE
+      )
+    },
+    logical(1)
+  )
+  files[out]
+}
+
 #' The files a bundle covers: those named, or every regular file in `dir`
-#' but the bundle itself; each must exist.
+#' but the bundle itself; each must exist and lie inside `dir`.
 #' @param dir The directory whose regular files, dotfiles too, are bundled.
 #' @param files The file names given, or NULL.
 #' @param path Where the bundle is written.
@@ -401,6 +422,17 @@ format.bricklayer_bundle_check <- function(x, ...) {
     stop(
       "these files are not in `dir`: ",
       toString(utils::head(missing, 5L)),
+      call. = FALSE
+    )
+  }
+  # a bundle covers files inside its folder: one reached through a link
+  # that leaves it was bundled and then refused by the check of that bundle
+  out <- .bl_bnd_outside(dir, files)
+  if (length(out)) {
+    stop(
+      "these entries are reached through a link that leaves the capsule ",
+      "folder; copy them in or remove the link: ",
+      toString(.rmbl_printable(utils::head(out, 5L))),
       call. = FALSE
     )
   }

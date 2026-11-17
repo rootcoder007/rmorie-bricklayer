@@ -51,7 +51,7 @@ Fill in your metadata:
 
 This is the source-of-truth for your dataset. Fill in:
 
-- `dataset.package_slug` — the CKAN slug for your dataset (e.g. `data-on-inmates-in-ontario`)
+- `dataset.package_slug` — the CKAN slug for your dataset (e.g. `jahn-settlement-data-inmates-ontario`)
 - `dataset.ckan_api_endpoint` — usually `https://{portal}/api/3/action/package_show?id={slug}`
 - `dataset.catalogue_page` — the human-facing page URL
 - `dataset.licence_name` / `licence_url` — e.g. `Open Government Licence – Ontario`

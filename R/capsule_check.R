@@ -504,6 +504,27 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' @export
 cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   dirs <- .bl_seal_dirs(path, overwrite, glob)
+  # every capsule is looked at before the first is written: a refusal at
+  # the third left the first two pinned and bundled
+  for (d in dirs) {
+    pf <- file.path(d, "data_provenance.json")
+    prov <- loadprov(pf)
+    fn <- .bl_s1(prov[["resource"]][["filename"]])
+    df <- .rmbl_safe_rel(fn, d)
+    if (
+      is.null(prov[["resource"]][["sha256"]]) &&
+        (is.null(df) || !file.exists(df) || dir.exists(df))
+    ) {
+      stop(
+        .rmbl_fn(),
+        pf,
+        ": resource$filename must name the data file, relative to the ",
+        "capsule",
+        call. = FALSE
+      )
+    }
+    .bl_bnd_select(d, NULL, file.path(d, "capsule_bundle.json"))
+  }
   rows <- list()
   for (d in dirs) {
     pf <- file.path(d, "data_provenance.json")

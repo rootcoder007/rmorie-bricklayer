@@ -25,6 +25,8 @@
 ##   Rscript setup_and_run.R --allow-digest-drift  # analyse bytes whose
 ##                                        # SHA-256 differs from the pinned
 ##                                        # provenance (recorded in manifest)
+##   Rscript setup_and_run.R --all-years  # keep fiscal years beyond the
+##                                        # paper's, when the file has them
 ##   Rscript setup_and_run.R --help
 ##
 ## Licence: AGPL-3.0-or-later
@@ -53,6 +55,8 @@ SYNTH_ARG  <- any(args %in% "--synthetic")
 ## (exit 7) unless this flag is given, and then the override is recorded
 ## in the manifest rather than printed once and forgotten.
 ALLOW_DRIFT <- any(args %in% "--allow-digest-drift")
+## analysis.R (a child process) reads this from the environment
+if (any(args %in% "--all-years")) Sys.setenv(RMBL_ALL_YEARS = "1")
 DIGEST_OVERRIDE <- FALSE
 digest_mismatch <- function(v) {
   say("  ! SHA256 differs from the pinned provenance:")
@@ -78,7 +82,8 @@ DATA_ARG   <- NULL
 usage_stop <- function(...) {
   cat("ERROR: ", ..., "\n", sep = "")
   cat("Usage: Rscript setup_and_run.R [--quick] [--synthetic] ",
-      "[--data PATH] [--allow-digest-drift] [--help]\n", sep = "")
+      "[--data PATH] [--allow-digest-drift] [--all-years] [--help]\n",
+      sep = "")
   quit(status = 2)
 }
 if (any(args == "--data")) {
@@ -89,7 +94,7 @@ if (any(args == "--data")) {
   DATA_ARG <- args[i + 1]
 }
 known <- c("-q", "--quick", "-h", "--help", "--synthetic",
-           "--allow-digest-drift", "--data")
+           "--allow-digest-drift", "--all-years", "--data")
 rest <- args
 if (!is.null(DATA_ARG)) rest <- rest[-(which(args == "--data")[1] + 0:1)]
 odd <- rest[!rest %in% known]
@@ -453,6 +458,27 @@ if (!is.null(DATA_ARG)) {
       input_path <- target
       if (nzchar(prov$resource$sha256 %||% "")) {
         v <- vrfsha256(target, prov$resource$sha256)
+        ## a publisher replaces a file in place (a new year, renamed
+        ## columns): the recorded file is then fetched from its archived
+        ## copy, so the capsule keeps running on the bytes it records
+        if (!v$match && !ALLOW_DRIFT && nzchar(wb_url)) {
+          say("  The publisher's file is no longer the one this capsule")
+          say("  records (it has been replaced by a later release).")
+          say("  Fetching the archived copy of the recorded file:")
+          say("    ", wb_url)
+          old <- paste0(target, ".recorded")
+          if (isTRUE(tryCatch(fdl(wb_url, old, attwb = FALSE),
+                              error = function(e) FALSE))) {
+            w <- vrfsha256(old, prov$resource$sha256)
+            if (w$match && file.rename(old, target)) v <- w
+          }
+          unlink(old)
+          if (!v$match) {
+            say("  The archived copy could not be fetched or did not match.")
+            say("  --allow-digest-drift analyses the publisher's current")
+            say("  file instead (the paper's fiscal years of it).")
+          }
+        }
         if (v$match) say("  ✓ SHA256 byte-for-byte match.")
         else digest_mismatch(v)
       }

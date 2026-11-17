@@ -49,7 +49,7 @@ prov <- list(
   captured_at_utc = "2026-06-23T04:41:40Z",
   dataset = list(publisher = "Ontario Ministry of the Solicitor General",
                  licence_short = "OGL-Ontario",
-                 package_slug = "data-on-inmates-in-ontario"),
+                 package_slug = "jahn-settlement-data-inmates-ontario"),
   resource = list(name = "Restrictive Confinement - Detailed Dataset",
                   direct_url = "https://data.ontario.ca/example.csv")
 )
@@ -69,6 +69,6 @@ cat(citecps(prov)$text)
 citecps(NULL)
 
 # anything else that is not a list is an error
-try(citecps("data-on-inmates-in-ontario"))
+try(citecps("jahn-settlement-data-inmates-ontario"))
 \dontshow{\}) # examplesIf}
 }
