@@ -2,6 +2,84 @@
 
 ## rmoriebricklayer 1.1.1
 
+- Verification no longer passes over a capsule in a folder whose name
+  starts with a dot.
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
+  and `rmbl verify` searched only folders listed without their hidden
+  entries, so a signed capsule that had been changed and renamed from
+  `two` to `.two` was neither checked nor reported, and the result was
+  “ok” with exit status 0. Every folder is searched except `.git` and
+  `.rmbl-cache`, as the help says.
+
+- The 32 MiB a reader holds its JSON file to is the size of what is
+  read.
+  [`cpsbndlrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
+  [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md),
+  [`mnfdiff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md),
+  [`idcrdrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
+  and
+  [`vrfrcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrrcdmnf.md)
+  read their file through
+  [`readLines()`](https://rdrr.io/r/base/readLines.html), which inflates
+  a gzip, bzip2 or xz file as it reads: a 66 KB file was read as 64 MiB
+  and a 209 KB one took 1.2 GB of memory. They read the bytes on disk,
+  say that a compressed file is one, and
+  [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md),
+  [`mnfdiff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md),
+  [`idcrdrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md)
+  and
+  [`vrfrcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrrcdmnf.md)
+  now refuse a NUL byte as
+  [`fromjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fromjs.md)
+  does (text after it was dropped unread).
+  [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md)
+  reads its page the same way.
+
+- A pipe or a device where a file is expected no longer makes a check
+  wait for ever.
+  [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md),
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  and `rmbl verify` read a capsule’s CSV data file as a table only when
+  it is a regular file (a named pipe put in its place hung them after
+  the hash had already failed), and `rmbl sign --key-file`,
+  `rmbl wayback` and `rmbl migrate` refuse a device, a pipe or a socket
+  in words.
+
+- A file name that is not valid text no longer stops a check with base
+  R’s “input string 1 is invalid UTF-8”.
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  and
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  report it as a file the bundle does not cover, shown as `caf<e9>.txt`,
+  and `rmbl verify` exits 1, not 2;
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  and
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
+  say that such a name cannot be listed in a bundle.
+
+- Refusals show control and non-text bytes escaped in two more places:
+  the “no such file” and sibling messages of every reader that checks
+  its file
+  ([`sha512file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/filedgst.md),
+  [`crc32file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/filedgst.md),
+  [`cpsbndlrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
+  [`idcrdrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/idcrd.md),
+  [`ldgrread()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  among them), and the unknown-scheme message of
+  [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
+  and
+  [`fipssz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipssz.md).
+
+- [`cblake2b()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cblake2b.md)
+  refuses a key that is not one string or a raw vector, as its help
+  says: a number was used as its text, so `key = Inf` gave the MAC of
+  `key = "Inf"`.
+  [`explerr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/explerr.md)
+  no longer raises base R’s “PCRE error ‘match limit exceeded’” on a
+  message of thousands of characters.
+
 - A JSON file holding a NUL byte is refused by
   [`fromjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fromjs.md),
   [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md),

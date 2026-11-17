@@ -159,7 +159,7 @@ starts a project.
 proj <- file.path(tempdir(), "audit-demo")
 mkbndlproj(proj, title = "Demo analysis")
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpdhRp9x/audit-demo                                        │
+#> │   Folder  /tmp/Rtmp1e6MZN/audit-demo                                        │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -184,8 +184,8 @@ a
 #> │                                                                             │
 #> │   ✔    run finished                  exit status 0                          │
 #> │   ✔    manifest written                                                     │
-#> │        /tmp/RtmpdhRp9x/bndlchk1e802f5ac80d/audit-demo_v1/results_20261116-2 │
-#> │        33532/manifest.json                                                  │
+#> │        /tmp/Rtmp1e6MZN/bndlchk1fd46d67acc2/audit-demo_v1/results_20261117-0 │
+#> │        12843/manifest.json                                                  │
 #> │   ✔    no cross-check differs        0 DIFFER                               │
 #> │   ✔    counts match config.json      not compared: a synthetic run          │
 #> │   ✔    launchers executable          2 launcher(s)                          │
