@@ -438,7 +438,9 @@ format.bricklayer_bundle_check <- function(x, ...) {
   real <- normalizePath(p, winslash = "/", mustWork = FALSE)
   # a link, of either kind (a Windows junction too), by its real path: a
   # link that does not resolve is a file that is not there
-  want <- paste0(if (identical(it$real, "/")) "" else it$real, "/", e)
+  # joined by hand: file.path() refuses a name that is not text before R 4.2
+  sl <- "/"
+  want <- paste0(if (identical(it$real, sl)) "" else it$real, sl, e)
   link <- file.exists(p) & .rmbl_bytes(real) != .rmbl_bytes(want)
   out <- !search & !isd & link & !.bl_under(real, root)
   .bl_walk_put(
