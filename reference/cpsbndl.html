@@ -184,13 +184,23 @@ whose <code>meta</code> is that payload, and the bundle (payload plus attestatio
 written as pretty JSON with doubles at 17 digits. With <code>files = NULL</code> every
 regular file under <code>dir</code> is hashed, recursively and including dot-files
 (a <code>.Rprofile</code> dropped into a capsule runs code), except the bundle file
-itself. A progress bar is shown when <code>options(morie.progress)</code> allows it.</p>
+itself and the temporary of a write that was cut short. The folder is
+walked one level at a time: a link that stays inside is content like any
+other file or folder, but a link to the capsule folder or a folder above
+it, a link that leaves the folder, a folder that cannot be read and
+links that would list one folder more than 64 times are refused, all of
+them named at once. File names are kept by their bytes: a name that is
+UTF-8 is bundled in every locale (C and Latin-1 too), and one that is
+not UTF-8 is refused with its bytes shown as <code>&lt;e9&gt;</code>. A progress bar
+is shown when <code>options(morie.progress)</code> allows it.</p>
 <p>How it is checked. <code>cpsbndlvrf()</code> re-hashes every listed file
 (a path that is absolute or climbs out of <code>dir</code> fails its row), reports
 every file on disk the bundle does not list (the bundle's own file
 excepted, when it is the file checked: a <code>capsule_bundle.json</code>
-in <code>dir</code> is unlisted when another bundle file is checked) and every
-empty folder (named with a trailing <code>/</code>),
+in <code>dir</code> is unlisted when another bundle file is checked), every
+empty folder (named with a trailing <code>/</code>) and what the walk of
+<code>dir</code> cannot cover (the links and folders <code>cpsbndl()</code> refuses), in the
+<code>no_unlisted_files</code> row,
 checks the attestation with
 <code><a href="cpsatst.html">cpschkatst()</a></code>
 (signature, digest, and <code>keyexp</code> when given; an <code>"hmac"</code>
@@ -200,7 +210,9 @@ is given, compares its digest with the bundled one. Every check is a row of
 not
 an error.</p>
 <p>Errors: <code>dir</code> missing or not a directory; no files to bundle, or a named
-file not in <code>dir</code>; a key <code><a href="cpsatst.html">cpsatst()</a></code> cannot
+file not in <code>dir</code>; the links, folders and names above; a file that cannot
+be read, or a folder for the bundle that cannot be written to (both
+before any file is hashed); a key <code><a href="cpsatst.html">cpsatst()</a></code> cannot
 sign with;
 <code>cpsbndlrd()</code> given a file that is not a bundle, or one over 32 MiB;
 <code>cpsbndlvrf()</code> given something other than a bundle or a path.
@@ -246,10 +258,10 @@ Reading a bundle whose signature records a stateful key's state warns (see
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Files            1                                                        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e416796 │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                    0781a579                                                 │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Bundled          2026-11-17T07:41:12Z                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Bundled          2026-11-17T09:03:56Z                                     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Scheme           ML-DSA-44                                                │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Note             as published                                             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Path             /tmp/RtmpU0nQdy/file1ecc4ebee293/capsule_bundle.json     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Path             /tmp/Rtmpw7QSGk/file1e8a55dda959/capsule_bundle.json     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   A signed list of the capsule's files and their digests; check the files   │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   against it with cpsbndlvrf().                                             │</span>
@@ -284,7 +296,7 @@ Reading a bundle whose signature records a stateful key's state warns (see
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a directory that does not exist</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsbndl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"no-such-capsule"</span><span class="op">)</span>, <span class="va">m</span>, <span class="va">key</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `dir` does not exist: /tmp/RtmpU0nQdy/no-such-capsule</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `dir` does not exist: /tmp/Rtmpw7QSGk/no-such-capsule</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

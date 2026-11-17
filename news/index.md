@@ -34,7 +34,17 @@
   wait for ever), and a `.csv` is read from its bytes on disk: a 78 KB
   gzip file named `.csv` was inflated to about 1 GB before it was
   refused. A compressed, empty or NUL-holding `.csv` is refused in words
-  about the table.
+  about the table. So are a `.csv` of blank lines only, one compressed
+  with zstd or lz4, one holding bytes that are not text in the session,
+  and one [`read.csv()`](https://rdrr.io/r/utils/read.table.html) cannot
+  make a table of (base R’s reason follows the command’s words); the NUL
+  byte is looked for a megabyte at a time, where the whole file was held
+  with a logical vector four times its size. An empty `.rds`, a file
+  named `.rds` that does not begin as
+  [`saveRDS()`](https://rdrr.io/r/base/readRDS.html) writes one, and a
+  truncated or damaged one are refused in the command’s words, where
+  [`readRDS()`](https://rdrr.io/r/base/readRDS.html) said “error reading
+  from connection” or “unknown input format”.
 
 - [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
   [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
@@ -45,14 +55,51 @@
   right after it was sealed. A link that stays inside the capsule is
   bundled as before. A link that points back to a folder above it
   (`loop -> .`) is refused by name; its made-up paths (`loop/loop/...`)
-  were reported as missing files.
+  were reported as missing files. The capsule folder is walked one level
+  at a time, each link resolved before it is followed: two links back to
+  the capsule (`a -> .`, `b -> .`) made
+  [`list.files()`](https://rdrr.io/r/base/list.files.html) walk some
+  2^40 paths, so
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  and
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
+  hung, and a link to `/` or to a folder far above walked the whole file
+  system and ran out of memory, before the link could be refused. Every
+  link to the capsule folder or a folder above it is now refused at
+  once, all of them named, also when that folder holds no file of its
+  own (`x/y/z -> ..`); links that would list one folder more than 64
+  times are refused too, so the walk is bounded by the real entries. A
+  folder that cannot be read is refused in words, where its files were
+  left out of the bundle without a word.
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md),
+  [`xmssidxseen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md)
+  and `rmbl sign`, `verify` and `refresh` list a capsule and search for
+  capsules the same way, so the listing that is checked is the listing
+  that was signed; a folder under the searched path that cannot be read
+  is refused, and a link to a folder that is reached by its own path is
+  not followed again.
 
 - [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
   looks at every capsule before it writes the first. A
   `resource$filename` it refuses in one capsule left the capsules before
   it pinned and bundled, although the help lists that refusal among
   those made before anything is written. The key, each capsule’s
-  `manifest.json` and its file names are looked at then as well.
+  `manifest.json` and its file names are looked at then as well. The
+  look-ahead is the seal’s own code with nothing written: each
+  provenance is pinned in memory, each capsule goes through every check
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  makes before it hashes (links, names, files that cannot be read, a
+  folder that cannot be written to), a `manifest.json` must hold a JSON
+  object, and a key other than an XMSS key signs a throwaway manifest
+  first. A public key, an XMSS key whose next index was already used,
+  and an XMSS key with fewer unused indices than capsules were refused
+  only after the first capsule had been pinned or bundled; the last
+  spent its final index on a seal that failed. An XMSS key is checked
+  without spending an index. What fails while the seal writes (a full
+  disk, a file that changes meanwhile) puts every file the seal had
+  written back as it was.
 
 - Verification no longer passes over a capsule in a folder whose name
   starts with a dot.
@@ -124,7 +171,18 @@
   [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
   and
   [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
-  say that such a name cannot be listed in a bundle.
+  say that such a name cannot be listed in a bundle. A file name that is
+  valid UTF-8 is bundled and checked by its bytes in every locale: in
+  the C locale
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  refused “café” as “no such file” after base R’s “unable to translate”
+  warning, and in a Latin-1 locale it looked for another file. A name
+  that is not UTF-8 is refused in every locale, also in a Latin-1 one
+  where it was bundled and its listing then named no file in any other
+  locale. Every path a function of the package is given is opened by its
+  bytes in the C and Latin-1 locales. A string holding a byte Latin-1
+  cannot convert (0x81, 0x8d, 0x8f, 0x90, 0x9d) is not text, so it
+  raises no base R warning.
 
 - Refusals show control and non-text bytes escaped in two more places:
   the “no such file” and sibling messages of every reader that checks

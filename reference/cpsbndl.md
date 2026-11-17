@@ -132,15 +132,25 @@ signs a manifest whose `meta` is that payload, and the bundle (payload
 plus attestation) is written as pretty JSON with doubles at 17 digits.
 With `files = NULL` every regular file under `dir` is hashed,
 recursively and including dot-files (a `.Rprofile` dropped into a
-capsule runs code), except the bundle file itself. A progress bar is
-shown when `options(morie.progress)` allows it.
+capsule runs code), except the bundle file itself and the temporary of a
+write that was cut short. The folder is walked one level at a time: a
+link that stays inside is content like any other file or folder, but a
+link to the capsule folder or a folder above it, a link that leaves the
+folder, a folder that cannot be read and links that would list one
+folder more than 64 times are refused, all of them named at once. File
+names are kept by their bytes: a name that is UTF-8 is bundled in every
+locale (C and Latin-1 too), and one that is not UTF-8 is refused with
+its bytes shown as `<e9>`. A progress bar is shown when
+`options(morie.progress)` allows it.
 
 How it is checked. `cpsbndlvrf()` re-hashes every listed file (a path
 that is absolute or climbs out of `dir` fails its row), reports every
 file on disk the bundle does not list (the bundle's own file excepted,
 when it is the file checked: a `capsule_bundle.json` in `dir` is
-unlisted when another bundle file is checked) and every empty folder
-(named with a trailing `/`), checks the attestation with
+unlisted when another bundle file is checked), every empty folder (named
+with a trailing `/`) and what the walk of `dir` cannot cover (the links
+and folders `cpsbndl()` refuses), in the `no_unlisted_files` row, checks
+the attestation with
 [`cpschkatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
 (signature, digest, and `keyexp` when given; an `"hmac"` signature needs
 the shared secret as `key`), and, when `man` is given, compares its
@@ -148,7 +158,9 @@ digest with the bundled one. Every check is a row of `checks`; `ok` is
 `TRUE` only when all pass. A failed check is a row, not an error.
 
 Errors: `dir` missing or not a directory; no files to bundle, or a named
-file not in `dir`; a key
+file not in `dir`; the links, folders and names above; a file that
+cannot be read, or a folder for the bundle that cannot be written to
+(both before any file is hashed); a key
 [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
 cannot sign with; `cpsbndlrd()` given a file that is not a bundle, or
 one over 32 MiB; `cpsbndlvrf()` given something other than a bundle or a
@@ -195,10 +207,10 @@ b2
 #> │   Files            1                                                        │
 #> │   Manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e416796 │
 #> │                    0781a579                                                 │
-#> │   Bundled          2026-11-17T07:41:12Z                                     │
+#> │   Bundled          2026-11-17T09:03:56Z                                     │
 #> │   Scheme           ML-DSA-44                                                │
 #> │   Note             as published                                             │
-#> │   Path             /tmp/RtmpU0nQdy/file1ecc4ebee293/capsule_bundle.json     │
+#> │   Path             /tmp/Rtmpw7QSGk/file1e8a55dda959/capsule_bundle.json     │
 #> │                                                                             │
 #> │   A signed list of the capsule's files and their digests; check the files   │
 #> │   against it with cpsbndlvrf().                                             │
@@ -233,6 +245,6 @@ unlink(dir2, recursive = TRUE)
 
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/RtmpU0nQdy/no-such-capsule
+#> Error : `dir` does not exist: /tmp/Rtmpw7QSGk/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

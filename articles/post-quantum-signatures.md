@@ -262,8 +262,8 @@ blcli(
 #> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
 xmssidxseen(root)[, c("index", "reused")]
 #>   index reused
-#> 1     0  FALSE
-#> 2     1  FALSE
+#> 1     1  FALSE
+#> 2     0  FALSE
 ```
 
 `--state-file` keeps the state in a file of its own.
