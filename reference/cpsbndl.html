@@ -199,8 +199,33 @@ refused, with its reason, when it is not UTF-8 (its bytes shown as
 a backslash, a double quote, one of <code>&lt; &gt; : | ? *</code> or a control
 character, or has
 a part that ends in a dot or a space or that Windows reserves (CON, PRN,
-AUX, NUL, COM1 to COM9, LPT1 to LPT9, with any extension). A progress bar
-is shown when <code>options(morie.progress)</code> allows it.</p>
+AUX, NUL, COM1 to COM9, LPT1 to LPT9, and COM and LPT followed by a
+superscript 1, 2 or 3, with any extension), letters compared by their
+ASCII bytes in every locale. Names that differ only by letter case or by
+Unicode normalisation (<code>A.txt</code> and <code>a.txt</code>, <code>sub/x</code> and
+<code>SUB/x</code>, an accented letter written as one character and as a letter
+with a combining accent) are one name on Windows and macOS, so they are
+refused together, each set named: every name and every folder above one
+is compared by Unicode's canonical caseless match (the canonical
+decomposition of the simple case folding of the canonical decomposition,
+Unicode 15.1, section 3.13), from the Unicode Character Database's tables
+and never the locale's. Simple folding maps one character to one, so
+<code>ss</code> and a sharp s are two names (as Windows takes them); the Turkish
+dotted capital I folds to an i with a dot above, not to a plain i. The
+check of a bundle does not apply these rules, so a bundle made before them
+still verifies. A progress bar is shown when <code>options(morie.progress)</code>
+allows it.</p>
+<p>Each file is read through the real path it had when it was checked,
+below <code>dir</code>, so a link changed while the bundle is made is not followed
+out of the folder. Before anything is signed every file is looked at
+again: its real path, a link's target, its size and its modification and
+status-change times must be those it had before it was read, and a file
+of at most 1 MiB is read a second time and must give the same digest;
+anything else stops <code>cpsbndl()</code> with the files named and nothing signed.
+What remains unseen is a change to a file over 1 MiB that keeps its size
+and both times: the system sets the status-change time on every write
+and no program can set it back, so only a file system that records
+whole seconds, written twice within one, can hide such a change.</p>
 <p>How it is checked. <code>cpsbndlvrf()</code> re-hashes every listed file
 (a path that is absolute or climbs out of <code>dir</code> fails its row), reports
 every file on disk the bundle does not list (the bundle's own file
@@ -217,7 +242,8 @@ is given, compares its digest with the bundled one. Every check is a row of
 not
 an error.</p>
 <p>Errors: <code>dir</code> missing or not a directory; no files to bundle, or a named
-file not in <code>dir</code>; the links, folders and names above; a file that cannot
+file not in <code>dir</code>, or a link whose target does not exist; the links,
+folders and names above; a file changed while it was read; a file that cannot
 be read, or a bundle file or its folder that cannot be written to (all
 before any file is hashed); a key <code><a href="cpsatst.html">cpsatst()</a></code> cannot
 sign with;
@@ -265,10 +291,10 @@ Reading a bundle whose signature records a stateful key's state warns (see
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Files            1                                                        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e416796 │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                    0781a579                                                 │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Bundled          2026-11-17T15:02:44Z                                     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Bundled          2026-11-17T20:50:49Z                                     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Scheme           ML-DSA-44                                                │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Note             as published                                             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Path             /tmp/RtmptHgREp/file1e8c58d1a1ca/capsule_bundle.json     │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Path             /tmp/RtmpmcrieF/file1e797ef92db1/capsule_bundle.json     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   A signed list of the capsule's files and their digests; check the files   │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   against it with cpsbndlvrf().                                             │</span>
@@ -303,7 +329,7 @@ Reading a bundle whose signature records a stateful key's state warns (see
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a directory that does not exist</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsbndl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"no-such-capsule"</span><span class="op">)</span>, <span class="va">m</span>, <span class="va">key</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `dir` does not exist: /tmp/RtmptHgREp/no-such-capsule</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `dir` does not exist: /tmp/RtmpmcrieF/no-such-capsule</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

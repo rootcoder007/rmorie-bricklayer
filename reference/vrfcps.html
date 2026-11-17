@@ -153,17 +153,27 @@ SHA-256 equals <code>resource$sha256</code> (64 hex characters).</p></dd>
 <dd><p>when <code>resource$size_bytes</code> is recorded:
 the size on disk matches.</p></dd>
  <dt><code>data_readable</code></dt>
-<dd><p>a <code>.csv</code> file is
-read with <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">utils::read.csv()</a></code>; a non-CSV file fails this row when a row
-count or schema is recorded (they cannot be checked).</p></dd>
+<dd><p>a <code>.csv</code> file
+(gzip-compressed or plain, its name's case aside) reads as a table:
+<code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">utils::read.csv()</a></code> reads its header and first five rows, so the
+columns are found as it finds them, and <code><a href="https://rdrr.io/r/base/scan.html" class="external-link">scan()</a></code> the rest a block of
+65,536 rows at a time, keeping one field of each, so memory stays at
+about that many fields plus the longest line whatever the file's size;
+<code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code>'s "incomplete final line" warning is no fault, any
+other error or warning fails the row with its words in <code>detail</code>. A
+row name used twice, which <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> refuses, is not looked at.
+A non-CSV file fails this row when a row count or schema is recorded
+(they cannot be checked).</p></dd>
 
 <dt><code>data_row_count</code></dt>
 <dd><p>when <code>resource$row_count_data_rows</code> is
-recorded: the CSV has that many rows.</p></dd>
+recorded: the CSV has that many rows, counted as <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> counts
+them, in the same pass.</p></dd>
  <dt><code>schema_valid</code></dt>
 <dd><p>when a
 <code>schema</code> is recorded: <code><a href="valsch.html">valsch()</a></code> finds no fatal issue
-(warnings are listed in <code>detail</code> but pass).</p></dd>
+(warnings are listed in <code>detail</code> but pass); the table is read whole
+for it, and when it cannot be the row fails with the reason.</p></dd>
 
 <dt><code>manifest_consistent</code></dt>
 <dd><p>when <code>mnffile</code> is given, or the
@@ -216,12 +226,12 @@ is a failed row, not an error.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Every check passed: the capsule is still the one the analysis was run on. │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    provenance_readable  /tmp/RtmptHgREp/capsule-example/data_provenance │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    provenance_readable  /tmp/RtmpmcrieF/capsule-example/data_provenance │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                             .json                                           │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_present         /tmp/RtmptHgREp/capsule-example/d.csv           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_present         /tmp/RtmpmcrieF/capsule-example/d.csv           │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_sha256          da4aaa3a009d063f36d0515f2b50a11bcc578264aa7c455 │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                             04b46fedbbae4f8f7                               │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_readable        /tmp/RtmptHgREp/capsule-example/d.csv           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_readable        /tmp/RtmpmcrieF/capsule-example/d.csv           │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_row_count       3 rows on disk                                  │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    schema_valid                                                         │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_not_synthetic   no synthetic marker: sidecar, manifest and      │</span>
@@ -247,7 +257,7 @@ is a failed row, not an error.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a missing directory is an error</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">vrfcps</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"no-such-capsule"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `cpsdir` is not an existing directory: /tmp/RtmptHgREp/no-such-capsule</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `cpsdir` is not an existing directory: /tmp/RtmpmcrieF/no-such-capsule</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

@@ -146,9 +146,34 @@ on every system, so a name is refused, with its reason, when it is not
 UTF-8 (its bytes shown as `<e9>`), starts with `~` or a drive letter
 (`c:`), holds a backslash, a double quote, one of `< > : | ? *` or a
 control character, or has a part that ends in a dot or a space or that
-Windows reserves (CON, PRN, AUX, NUL, COM1 to COM9, LPT1 to LPT9, with
-any extension). A progress bar is shown when `options(morie.progress)`
-allows it.
+Windows reserves (CON, PRN, AUX, NUL, COM1 to COM9, LPT1 to LPT9, and
+COM and LPT followed by a superscript 1, 2 or 3, with any extension),
+letters compared by their ASCII bytes in every locale. Names that differ
+only by letter case or by Unicode normalisation (`A.txt` and `a.txt`,
+`sub/x` and `SUB/x`, an accented letter written as one character and as
+a letter with a combining accent) are one name on Windows and macOS, so
+they are refused together, each set named: every name and every folder
+above one is compared by Unicode's canonical caseless match (the
+canonical decomposition of the simple case folding of the canonical
+decomposition, Unicode 15.1, section 3.13), from the Unicode Character
+Database's tables and never the locale's. Simple folding maps one
+character to one, so `ss` and a sharp s are two names (as Windows takes
+them); the Turkish dotted capital I folds to an i with a dot above, not
+to a plain i. The check of a bundle does not apply these rules, so a
+bundle made before them still verifies. A progress bar is shown when
+`options(morie.progress)` allows it.
+
+Each file is read through the real path it had when it was checked,
+below `dir`, so a link changed while the bundle is made is not followed
+out of the folder. Before anything is signed every file is looked at
+again: its real path, a link's target, its size and its modification and
+status-change times must be those it had before it was read, and a file
+of at most 1 MiB is read a second time and must give the same digest;
+anything else stops `cpsbndl()` with the files named and nothing signed.
+What remains unseen is a change to a file over 1 MiB that keeps its size
+and both times: the system sets the status-change time on every write
+and no program can set it back, so only a file system that records whole
+seconds, written twice within one, can hide such a change.
 
 How it is checked. `cpsbndlvrf()` re-hashes every listed file (a path
 that is absolute or climbs out of `dir` fails its row), reports every
@@ -164,7 +189,8 @@ digest with the bundled one. Every check is a row of `checks`; `ok` is
 `TRUE` only when all pass. A failed check is a row, not an error.
 
 Errors: `dir` missing or not a directory; no files to bundle, or a named
-file not in `dir`; the links, folders and names above; a file that
+file not in `dir`, or a link whose target does not exist; the links,
+folders and names above; a file changed while it was read; a file that
 cannot be read, or a bundle file or its folder that cannot be written to
 (all before any file is hashed); a key
 [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
@@ -213,10 +239,10 @@ b2
 #> │   Files            1                                                        │
 #> │   Manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e416796 │
 #> │                    0781a579                                                 │
-#> │   Bundled          2026-11-17T15:02:44Z                                     │
+#> │   Bundled          2026-11-17T20:50:49Z                                     │
 #> │   Scheme           ML-DSA-44                                                │
 #> │   Note             as published                                             │
-#> │   Path             /tmp/RtmptHgREp/file1e8c58d1a1ca/capsule_bundle.json     │
+#> │   Path             /tmp/RtmpmcrieF/file1e797ef92db1/capsule_bundle.json     │
 #> │                                                                             │
 #> │   A signed list of the capsule's files and their digests; check the files   │
 #> │   against it with cpsbndlvrf().                                             │
@@ -251,6 +277,6 @@ unlink(dir2, recursive = TRUE)
 
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/RtmptHgREp/no-such-capsule
+#> Error : `dir` does not exist: /tmp/RtmpmcrieF/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

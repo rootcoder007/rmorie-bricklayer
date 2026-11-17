@@ -115,7 +115,8 @@ Markdown report or the JSON, and <code><a href="ghann.html">ghann</a></code>,
 
 <dl><dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
 <dd><p>Character scalar, the folder searched recursively
-(<code>.git</code> and <code>.rmbl-cache</code> folders skipped).</p></dd>
+(<code>.git</code> and <code>.rmbl-cache</code> folders skipped; links as the
+details say).</p></dd>
 
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
@@ -254,6 +255,17 @@ message is raised. When no capsule is found under <code>path</code> (outside
 the skipped folders, and matching <code>glob</code>), nothing was checked: the
 result is one failed <code>no_capsule</code> row, no capsules and the status
 <code>error</code>, also with <code>pubkey</code> given.</p>
+<p>Links: a link to a folder inside <code>path</code> is followed, each real
+folder checked once; a link to a folder on the way down or above it (a
+loop) is not followed. A link to any other folder outside <code>path</code> is
+not followed, and is not passed over in silence: one failed
+<code>links_not_followed</code> row, of severity <code>error</code>, names every such
+link, so the status is <code>error</code> (<code>rmbl verify</code> exits 1). A
+capsule behind one is not checked, so the tree cannot be called sound;
+check that folder where it lies, or copy it in. A folder under
+<code>path</code> that cannot be read stops the check, named.</p>
+<p>A data file is found to read as a table, and its rows counted, as
+<code><a href="vrfcps.html">vrfcps</a></code> does: a block of rows at a time, in bounded memory.</p>
 <p>Drift: when the fetched source's SHA-256 differs from the pin and the
 pinned data file is a CSV, <code><a href="cpsdrft.html">cpsdrft()</a></code> runs with
 <code>psithr = psifail</code>. A column is <code>drift</code> when <code><a href="cpsdrft.html">cpsdrft()</a></code>
@@ -280,8 +292,9 @@ fetch fails.</p>
 (the network for http(s) ones), as <code>snapshot = TRUE</code> asks the
 Wayback Machine once per capsule (<code><a href="wbsnpurl.html">wbsnpurl</a></code>);
 <code>"refresh"</code> writes the capsules; a cache folder is written to.
-Errors: <code>path</code> is not a directory; a bad argument. A capsule whose
-checks stop is one failed row, not an error.</p>
+Errors: <code>path</code> is not a directory; a bad argument; a folder under
+<code>path</code> that cannot be read. A capsule whose checks stop is one
+failed row, not an error.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -311,14 +324,14 @@ checks stop is one failed row, not an error.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │ <span style="color: #00BB00;">✔ VERIFIED</span>  <span style="font-weight: 100;">· 7 of 7 checks passed</span>                                          │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Status    ok                                                              │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   Path      /tmp/RtmptHgREp/capsules-1e8c2cc83443                           │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   Path      /tmp/RtmpmcrieF/capsules-1e7959c0f0b5                           │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Capsules  1                                                               │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Checks    7 of 7 passed                                                   │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Checked   rmoriebricklayer 1.1.1, R version 4.6.2 (2026-10-29)            │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   capsule  result  passed  checks  source                                   │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   -------  ------  ------  ------  ---------------------------------------- │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   one      ok           7       7  /tmp/RtmptHgREp/temp_libpath1e8c308fc... │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   one      ok           7       7  /tmp/RtmpmcrieF/temp_libpath1e794bfbc... │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   capsule  sha256        size    rows  bounds                               │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   -------  ------------  ------  ----  ------                               │</span>
@@ -326,22 +339,22 @@ checks stop is one failed row, not an error.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   Every capsule is still the one its analysis was run on.                   │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │                                                                             │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   /tmp/RtmptHgREp/capsules-1e8c2cc83443/one: ok                             │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   /tmp/RtmpmcrieF/capsules-1e7959c0f0b5/one: ok                             │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │     source:                                                                 │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │     /tmp/RtmptHgREp/temp_libpath1e8c308fc543/rmoriebricklayer/extdata/otis_ │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │     /tmp/RtmpmcrieF/temp_libpath1e794bfbcd4d/rmoriebricklayer/extdata/otis_ │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │     a01_individuals.csv                                                     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │     pinned SHA-256:                                                         │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │     6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    schema: data_provenance.json  valid against capsule.schema.json      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    provenance_readable                                                  │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │        /tmp/RtmptHgREp/capsules-1e8c2cc83443/one/data_provenance.json       │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        /tmp/RtmpmcrieF/capsules-1e7959c0f0b5/one/data_provenance.json       │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_present                                                         │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │        /tmp/RtmptHgREp/capsules-1e8c2cc83443/one/otis_a01_individuals.csv   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        /tmp/RtmpmcrieF/capsules-1e7959c0f0b5/one/otis_a01_individuals.csv   │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_sha256                                                          │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │        6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248     │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_size_bytes               462 bytes on disk                      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_readable                                                        │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │        /tmp/RtmptHgREp/capsules-1e8c2cc83443/one/otis_a01_individuals.csv   │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │        /tmp/RtmpmcrieF/capsules-1e7959c0f0b5/one/otis_a01_individuals.csv   │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   <span style="color: #00BB00;">✔</span>    data_not_synthetic no synthetic marker: sidecar, manifest and        │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │        provenance all say real data                                         │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   format(x) gives the full Markdown report.                                 │</span>
@@ -367,14 +380,14 @@ checks stop is one failed row, not an error.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "explained: the data file's size differs from resource$size_bytes: its bytes changed"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">x</span>, fmt <span class="op">=</span> <span class="st">"json"</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">120</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmptHgREp/capsules-1e8c2cc83443\",\n  \"capsules\": [\n    {\n    "</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmpmcrieF/capsules-1e7959c0f0b5\",\n  \"capsules\": [\n    {\n    "</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># drift: fetch the source again (here a local file) and compare</span></span></span>
 <span class="r-in"><span><span class="fu">cpschk</span><span class="op">(</span><span class="va">root</span>, <span class="st">"drift"</span>, psiwarn <span class="op">=</span> <span class="fl">0.05</span>, fp <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">status</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "error"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpschk</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpschk: `path` is not an existing directory: /tmp/RtmptHgREp/file1e8c3e91036a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpschk: `path` is not an existing directory: /tmp/RtmpmcrieF/file1e7943651432</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpschk</span><span class="op">(</span><span class="va">root</span>, psiwarn <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpschk: `psiwarn` (1) must not exceed `psifail` (0.25)</span>
 </code></pre></div>

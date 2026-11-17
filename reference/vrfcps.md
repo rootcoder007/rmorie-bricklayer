@@ -100,21 +100,34 @@ The checks, in the order they appear in `checks`:
 
 - `data_readable`:
 
-  a `.csv` file is read with
-  [`utils::read.csv()`](https://rdrr.io/r/utils/read.table.html); a
-  non-CSV file fails this row when a row count or schema is recorded
-  (they cannot be checked).
+  a `.csv` file (gzip-compressed or plain, its name's case aside) reads
+  as a table:
+  [`utils::read.csv()`](https://rdrr.io/r/utils/read.table.html) reads
+  its header and first five rows, so the columns are found as it finds
+  them, and [`scan()`](https://rdrr.io/r/base/scan.html) the rest a
+  block of 65,536 rows at a time, keeping one field of each, so memory
+  stays at about that many fields plus the longest line whatever the
+  file's size; [`read.csv()`](https://rdrr.io/r/utils/read.table.html)'s
+  "incomplete final line" warning is no fault, any other error or
+  warning fails the row with its words in `detail`. A row name used
+  twice, which [`read.csv()`](https://rdrr.io/r/utils/read.table.html)
+  refuses, is not looked at. A non-CSV file fails this row when a row
+  count or schema is recorded (they cannot be checked).
 
 - `data_row_count`:
 
   when `resource$row_count_data_rows` is recorded: the CSV has that many
-  rows.
+  rows, counted as
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) counts them,
+  in the same pass.
 
 - `schema_valid`:
 
   when a `schema` is recorded:
   [`valsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valsch.md)
-  finds no fatal issue (warnings are listed in `detail` but pass).
+  finds no fatal issue (warnings are listed in `detail` but pass); the
+  table is read whole for it, and when it cannot be the row fails with
+  the reason.
 
 - `manifest_consistent`:
 
@@ -172,12 +185,12 @@ vrfcps(dir)
 #> │                                                                             │
 #> │   Every check passed: the capsule is still the one the analysis was run on. │
 #> │                                                                             │
-#> │   ✔    provenance_readable  /tmp/RtmptHgREp/capsule-example/data_provenance │
+#> │   ✔    provenance_readable  /tmp/RtmpmcrieF/capsule-example/data_provenance │
 #> │                             .json                                           │
-#> │   ✔    data_present         /tmp/RtmptHgREp/capsule-example/d.csv           │
+#> │   ✔    data_present         /tmp/RtmpmcrieF/capsule-example/d.csv           │
 #> │   ✔    data_sha256          da4aaa3a009d063f36d0515f2b50a11bcc578264aa7c455 │
 #> │                             04b46fedbbae4f8f7                               │
-#> │   ✔    data_readable        /tmp/RtmptHgREp/capsule-example/d.csv           │
+#> │   ✔    data_readable        /tmp/RtmpmcrieF/capsule-example/d.csv           │
 #> │   ✔    data_row_count       3 rows on disk                                  │
 #> │   ✔    schema_valid                                                         │
 #> │   ✔    data_not_synthetic   no synthetic marker: sidecar, manifest and      │
@@ -203,6 +216,6 @@ vrfcps(dir, provfile = "../elsewhere.json")$ok
 
 # a missing directory is an error
 try(vrfcps(file.path(tempdir(), "no-such-capsule")))
-#> Error : `cpsdir` is not an existing directory: /tmp/RtmptHgREp/no-such-capsule
+#> Error : `cpsdir` is not an existing directory: /tmp/RtmpmcrieF/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

@@ -220,17 +220,26 @@ a question (two or more words, or ending in `?`, with no path, line
 break or key-shaped word) and no verb is asked as `ask` would ask it.
 
 Errors are not raised: every error is written to `out` as
-`"PROG: message"` and turned into the exit status. The status is 0 on
-success, 1 when the verb failed (an error, nothing found or no route), 2
-for a usage error (an unknown verb or option, a missing value, a value
-an option does not take) and 130 when interrupted (Ctrl-C). An input
-that does not exist gives, verb by verb: 2 for the folder of `verify`,
-`drift`, `report`, `refresh` and `sign` (a usage error, checked with the
-arguments), and 1 for the project of `pack` and the results file of
-`wayback` (a failed verb). The options of `pack` and `sign` are checked
-before anything is read or a key is asked for. The command name in
-messages is the environment variable `RMBL_PROG`, else
-`rmoriebricklayer`.
+`"PROG: message"` and turned into the exit status, one table for every
+verb: 0 on success; 1 when the verb failed or refused (an error, nothing
+found, no route, a check that failed at or above `--fail-on`, a folder
+under PATH that cannot be read, a link out of PATH that the capsule
+verbs do not follow); 2 for a usage error, found while the arguments are
+checked and before anything is read (an unknown verb or option, a
+missing value, a value an option does not take, such as a PSI band that
+is no number, a `--base` or a folder PATH that does not exist, a
+`--seen-log` that cannot be read); and 130 when interrupted (Ctrl-C).
+`report` prints the report and exits 0 once it is made, whatever its
+rows say. An input that does not exist gives, verb by verb: 2 for the
+folder of `verify`, `drift`, `report`, `refresh` and `sign`, and 1 for
+the project of `pack` and the results file of `wayback` (a failed verb).
+The capsule verbs search PATH as
+[`cpschk`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+does: a link to a folder inside it is followed, a loop is not, and a
+link to any other folder outside it is not followed and fails the verb,
+named. The options of `pack` and `sign` are checked before anything is
+read or a key is asked for. The command name in messages is the
+environment variable `RMBL_PROG`, else `rmoriebricklayer`.
 
 Side effects: during the call `options(morie.progress = TRUE)` is set,
 so downloads draw a progress bar; when `RMBL_PROG` is set (the launcher
@@ -391,33 +400,33 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.1.1](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmptHgREp/capsule-1e8c208c7b51`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpmcrieF/capsule-1e796f32eff9`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmptHgREp/capsule-1e8c208c7b51` | /tmp/RtmptHgREp/temp_libpath1e8c308fc543/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpmcrieF/capsule-1e796f32eff9` | /tmp/RtmpmcrieF/temp_libpath1e794bfbcd4d/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmptHgREp/capsule-1e8c208c7b51</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpmcrieF/capsule-1e796f32eff9</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmptHgREp/temp_libpath1e8c308fc543/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpmcrieF/temp_libpath1e794bfbcd4d/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmptHgREp/capsule-1e8c208c7b51/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmptHgREp/capsule-1e8c208c7b51/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpmcrieF/capsule-1e796f32eff9/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpmcrieF/capsule-1e796f32eff9/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmptHgREp/capsule-1e8c208c7b51/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpmcrieF/capsule-1e796f32eff9/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000121 Wh, 5.52e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000134 Wh, 6.14e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
 #> 
 #> ---
 #> 

@@ -46,8 +46,13 @@
   [`readRDS()`](https://rdrr.io/r/base/readRDS.html) said “error reading
   from connection” or “unknown input format”. In the C locale a UTF-8
   `.csv` is read as UTF-8, where its text came out as `caf<c3><a9>`, and
-  a leading byte-order mark is dropped, where it went into the first
-  column’s name; a UTF-16 or UTF-32 file is refused in words.
+  every byte-order mark at the start of the file is dropped by its bytes
+  before anything else looks at it, so a `.csv` gives the same table or
+  the same refusal in every locale: a mark followed by blank lines was
+  refused as blank in a UTF-8 locale and read as a table, or refused in
+  base R’s words, in the C locale, and two marks named the first column
+  `a` in one and `X.U.FEFF.a` in the other; a UTF-16 or UTF-32 file is
+  refused in words.
 
 - [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
   [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
@@ -92,10 +97,22 @@
   [`xmssidxseen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md)
   with base R’s “translating strings with”bytes” encoding is not
   allowed”: paths are compared by their bytes in every locale. A search
-  for capsules no longer follows a link that leaves the folder searched:
-  a link to `/usr` was walked for 106 s, and a folder that could not be
-  read behind such a link made a sound tree fail. A refusal of the
-  search is headed by the function called, where
+  for capsules follows a link to a folder inside the folder searched,
+  each real folder once, and does not follow a loop. It does not follow
+  a link to any other folder outside it (a link to `/usr` was walked for
+  106 s, and a folder that could not be read behind such a link made a
+  sound tree fail), and it says so:
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  gives a failed `links_not_followed` row of severity error naming every
+  such link, so its status is error and `rmbl verify` exits 1, and
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md),
+  [`xmssidxseen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md)
+  and `rmbl sign` and `refresh` refuse, naming them. An earlier build of
+  this version skipped every link to a folder without a word, so a
+  capsule linked in from another disk and changed after it was signed
+  was neither checked nor reported, and the check said “ok”. The help
+  pages of these functions say which links are followed. A refusal of
+  the search is headed by the function called, where
   [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
   said “xmssidxseen:”. A temporary left by a write that was cut short
   (`.rmbl-*.tmp`) is refused by
@@ -104,9 +121,21 @@
   [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md),
   as the check reports it; it was left out of the bundle, and the
   capsule failed its check right after. The refusal names every such
-  file in the tree and says it is safe to delete, so a seal that was
-  killed can be run again once they are gone; a seal that fails or is
-  interrupted puts its files back and leaves none.
+  file in the tree, however many (it named 20 and counted the rest), and
+  says it is safe to delete, so a seal that was killed can be run again
+  once exactly those are gone. A seal that fails, or is interrupted with
+  Ctrl-C, puts its files back and leaves none. A seal killed by a signal
+  R cannot catch (SIGKILL or SIGTERM) puts nothing back: some capsules
+  may be sealed and others not, and each capsule it sealed keeps a
+  `.rmbl-*.tmp` copy. Delete the files the next seal names and seal
+  again with `overwrite = TRUE` (`rmbl sign --overwrite`). A link up, a
+  link out or a link whose target does not exist in one capsule of a
+  tree is refused in words headed by the function called and naming the
+  capsule’s folder, and a link whose target is missing is called one,
+  where it was called a file “not in `dir`”. A relative path under a
+  folder whose name is not UTF-8 is sealed and checked in a UTF-8
+  locale, where R 4.6 stopped with “input string 1 is invalid”; every
+  pattern the package matches against a path is matched by its bytes.
 
 - [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
   looks at every capsule before it writes the first. A
@@ -126,15 +155,40 @@
   spent its final index on a seal that failed. An XMSS key is checked
   without spending an index. What fails while the seal writes (a full
   disk, a file that changes meanwhile) puts every file the seal had
-  written back as it was. The look-ahead also refuses a provenance or
-  bundle file that cannot be written to, where the capsules before it
-  were written and put back and an XMSS key had spent their indices, and
-  a provenance or `manifest.json` that is no JSON, naming the file,
-  where it said only “not JSON”. It refuses whatever
+  written back as it was.
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  reads each file through the real path it had when it was checked, so a
+  link swapped to point outside while the capsule is hashed is not
+  followed, and before it signs it looks at every file again (its real
+  path, a link’s target, its size and its modification and status-change
+  times, and the digest of a file of at most 1 MiB): a change stops it,
+  the files named, where a link swapped mid-seal put an outside file’s
+  digest into the signed bundle and a file rewritten after it was hashed
+  was sealed, and both then failed the check. The look-ahead also
+  refuses a provenance or bundle file that cannot be written to, where
+  the capsules before it were written and put back and an XMSS key had
+  spent their indices, and a provenance or `manifest.json` that is no
+  JSON, naming the file, where it said only “not JSON”. It refuses
+  whatever
   [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
   would report as an error once the capsule is sealed, by the check’s
   own code: a `manifest.json` that fails its schema and an empty data
-  file were sealed, and `rmbl sign` then failed. So a tree
+  file were sealed, and `rmbl sign` then failed. The data file is read
+  as the check reads it, and the check now reads it a block of 65,536
+  rows at a time after
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) has read its
+  header and first rows, so memory stays bounded whatever the file’s
+  size: an earlier build of this version read a 127 MB CSV whole in the
+  seal, 1.4 s and 138 MB peak becoming 33.6 s and 1 GB, and refused a
+  1.39 GB CSV after 237 s at 5.66 GB with only “data_readable: ”. A
+  `data_readable` row that fails gives
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html)’s reason. The
+  row count recorded when a provenance is pinned is counted the same
+  way. A CSV with no final newline raises no warning in the seal or the
+  check, where [`read.csv()`](https://rdrr.io/r/utils/read.table.html)’s
+  “incomplete final line” warning refused the seal and failed the check
+  under `options(warn = 2)`. Only a provenance that pins a schema has
+  the table read whole. So a tree
   [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
   has sealed passes
   [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
@@ -202,6 +256,31 @@
   `rmbl wayback` and `rmbl migrate` refuse a device, a pipe or a socket
   in words.
 
+- Numbers are written as text the same way under every session option:
+  with `options(OutDec = ",")` the capsule report warned “‘big.mark’ and
+  ‘decimal.mark’ are both ‘,’” once per row, and `rmbl verify` exited 1
+  for a valid capsule under `options(warn = 2)`. Every thousands mark
+  the package writes comes from one helper with the decimal mark “.”,
+  whole numbers in full; the bundle, the seal, the check, its report and
+  JSON, `rmbl verify` and `rmbl run` give the same results under
+  `scipen`, `OutDec`, `warn = 2` with the partial-matching warnings,
+  `stringsAsFactors` and `TZ`.
+
+- `rmbl verify`, `report` and `drift` exit 1 when a folder under PATH
+  cannot be read, as `rmbl sign` does, where they exited 2, the status
+  of a usage error. A usage error is now only what is found while the
+  arguments are checked;
+  [`blcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blcli.md)’s
+  help gives one table of exit statuses for every verb.
+
+- [`blfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blfetch.md)
+  refuses a `tmout` that is a function or a list in its own words,
+  [`qltyrcd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/qltyrcd.md)
+  a `suppr` or `caution` that is not valid text, and
+  [`rcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rcdmnf.md)
+  a `map` without a name for every code, where each stopped in base R’s
+  words (the last only when its result was printed).
+
 - A file name that is not valid text no longer stops a check with base
   R’s “input string 1 is invalid UTF-8”.
   [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
@@ -237,7 +316,20 @@
   `< > : " | ? *` or a control character, or has a part that ends in a
   dot or a space or that Windows reserves (`CON`, `NUL`, `COM1` and the
   like). Such a name was bundled and signed, and the check then refused
-  it as “not a plain relative path”.
+  it as “not a plain relative path”. So are `COM` and `LPT` followed by
+  a superscript 1, 2 or 3, which Windows reserves too, and names that
+  one system takes for one name: names that differ only by letter case
+  (`A.txt` and `a.txt`, `sub/x` and `SUB/x`) or by Unicode normalisation
+  (an accented letter written as one character and as a letter and a
+  combining accent), compared by Unicode’s canonical caseless match with
+  the Unicode Character Database’s tables, never the locale’s. The check
+  does not apply these rules, so bundles made by 1.1.0 still verify.
+  Letters in the name rules are compared by their ASCII bytes: in a
+  Turkish locale `I:data.csv` was not taken for a drive letter. Every
+  comparison of letters the package makes without regard to case (file
+  extensions, URL schemes, keywords, hex digits, column names) is made
+  by ASCII bytes in every locale, and file names are sorted by their
+  bytes.
 
 - Refusals show control and non-text bytes escaped in two more places:
   the “no such file” and sibling messages of every reader that checks

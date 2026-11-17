@@ -90,8 +90,8 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ╭── Signing key (post-quantum) ───────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
-#> │   root       ed9c60a7b28143d3fb0ab33e32305e0302c9ffd795b6100e06247fa380b304 │
-#> │              ad                                                             │
+#> │   root       61f7c4a6f9f81b1f9eadc9b4d382f16ba5c4f9968e204af14b014672728cd7 │
+#> │              04                                                             │
 #> │   height     3                                                              │
 #> │   used       0 of 8 signatures                                              │
 #> │   remaining  8                                                              │
@@ -108,7 +108,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ╭── Public verification key ─────────────────────────────────────────────────╮
 #> │   scheme  xmss-sha256                                                      │
-#> │   root    ed9c60a7b28143d3fb0ab33e32305e0302c9ffd795b6100e06247fa380b304ad │
+#> │   root    61f7c4a6f9f81b1f9eadc9b4d382f16ba5c4f9968e204af14b014672728cd704 │
 #> │   height  3                                                                │
 #> ╰────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -451,7 +451,7 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ╭── Against the declaration of 2026-11-17T15:05:11Z: departures below ──╮
+#> ╭── Against the declaration of 2026-11-17T20:53:21Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -469,7 +469,7 @@ prrgchk(plan, "n_rows")
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ╭── Against the declaration of 2026-11-17T15:05:11Z: departures below ──╮
+#> ╭── Against the declaration of 2026-11-17T20:53:21Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -687,7 +687,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #> │   ✔    no_unlisted_files                                                    │
 #> │   ✔    attestation:attestation_complete                                     │
 #> │   ✔    attestation:manifest_digest                                          │
-#> │        836e00f3f30665b4b6b53267b0ae46e263510a275591efe6ff6977d94acf1aff     │
+#> │        c96afbc9ce085c9d8880e2d8d4d2bcef774b1fb73702bbb9a2b69ed74f6634f6     │
 #> │   ✔    attestation:signature                                                │
 #> │   ✔    manifest_digest                                                      │
 #> │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │
@@ -763,7 +763,7 @@ b <- mkbndl(proj, dest = tempdir(), data = csv, overwrite = TRUE)
 basename(b$path)
 #> [1] "my-study_v1_with_data.zip"
 b$sha256
-#> [1] "2230677dcad209f009f440fe7ae6b8c0b06471af7faef63f0a78ae82e337f4fe"
+#> [1] "87fdcdc47598c6b515d0d4f46d3e3af5dd799175c546e32875b0016af78aa94c"
 ```
 
 Send `b$sha256` separately from the zip: the reviewer checks it before

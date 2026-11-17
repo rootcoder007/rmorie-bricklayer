@@ -122,8 +122,15 @@ key; never the secret).</p>
     <p>A provenance already pinned (one with <code>resource$sha256</code>) is left as
 it is. Side effects: writes <code>data_provenance.json</code> (first run) and
 <code>capsule_bundle.json</code> in each capsule.</p>
-<p>Errors, before anything is written: no provenance under <code>path</code>, or
-a folder under it that cannot be read; a capsule that already has a
+<p>Capsules are searched for as <code><a href="cpschk.html">cpschk()</a></code> searches: a link to a
+folder inside <code>path</code> is followed, each real folder once; a link to
+a folder on the way down or above it (a loop) is not followed; a link to
+any other folder outside <code>path</code> is not followed and refuses the
+seal, named, since a capsule behind it would be neither sealed nor
+checked: seal that folder where it is, and copy it in or remove the link.</p>
+<p>Errors, before anything is written: no provenance under <code>path</code>, a
+folder under it that cannot be read, or a link out of it as above; a
+capsule that already has a
 bundle, unless <code>overwrite</code>; a key that cannot sign (a public key,
 or anything <code><a href="cpsatst.html">cpsatst</a></code> refuses: a key other than an XMSS key
 signs a throwaway manifest first, which changes nothing), or an XMSS key
@@ -134,21 +141,36 @@ a file in the capsule, a provenance that cannot be pinned or that is no
 JSON (the file named), a <code>manifest.json</code> that does not hold a JSON
 object, a provenance or bundle file that cannot be written to, every
 refusal of <code><a href="cpsbndl.html">cpsbndl()</a></code> short of the signature (links, names, files
-that cannot be read, a folder that cannot be written to, a temporary left
-by a write that was cut short), and anything <code><a href="cpschk.html">cpschk()</a></code> would report
+that cannot be read, a folder that cannot be written to, a link whose
+target does not exist, a temporary left by a write that was cut short:
+every such <code>.rmbl-*.tmp</code> file in the tree is named, however many),
+each headed by the capsule's folder, and anything <code><a href="cpschk.html">cpschk()</a></code> would
+report
 as an error once the capsule is sealed (a <code>manifest.json</code> that fails
 its schema, a data file that does not read as a table, the checks of
 <code><a href="vrfcps.html">vrfcps</a></code>), found by the check's own code. Each pinned
 provenance is worked out in memory first. So a tree <code>cpsseal()</code>
 has sealed passes <code><a href="cpschk.html">cpschk()</a></code>, but for what depends on the check's
 options (<code>allowfile</code>, a source that has drifted).</p>
-<p>What cannot be known before writing (the disk filling up, a file that
-changes or stops being readable during the seal, a signature that fails)
-stops the seal: every file it had written is then put back as it was
-(each is copied aside before it is replaced and renamed back, which
-needs no room on the disk), and the error says which files, if any,
-could not be. XMSS indices a failed seal signed with stay used, as they
-must.</p>
+<p>The data file is found to read as a table as <code><a href="cpschk.html">cpschk()</a></code> reads it:
+its header and first rows by <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code>, the rest a block of
+65,536 rows at a time, so memory stays at about that many fields and the
+longest line whatever the file's size, and a refusal gives
+<code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code>'s reason. Only a provenance that pins a schema has the
+table read whole, for the schema's checks.</p>
+<p>What cannot be known before writing (the disk filling up, a file or a
+link that changes or stops being readable during the seal, as
+<code><a href="cpsbndl.html">cpsbndl()</a></code> finds it, a signature that fails) stops the seal, as an
+error or Ctrl-C (an interrupt) does: every file it had written is then
+put back as it was (each is copied aside before it is replaced and
+renamed back, which needs no room on the disk), and the error says which
+files, if any, could not be. A seal killed by a signal R cannot catch
+(SIGKILL, SIGTERM, a lost machine) puts nothing back: some capsules may
+be sealed and others not, and each capsule it had sealed keeps its copies
+as <code>.rmbl-*.tmp</code> files. The next seal refuses the tree and names
+every one of them; delete exactly those and seal again with
+<code>overwrite = TRUE</code> (<code>rmbl sign --overwrite</code>). XMSS indices a
+failed seal signed with stay used, as they must.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -168,7 +190,7 @@ must.</p>
 <span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="st">"a shared secret"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">s</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                     capsule pinned files</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/RtmptHgREp/capsules-1e8c661834b8/one   TRUE     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/RtmpmcrieF/capsules-1e792ba7ea12/one   TRUE     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                             public</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 2b23046c08926e30017362694e61c9f76f64815699749bede71734e74c84f65e</span>
 <span class="r-in"><span><span class="fu"><a href="cpschk.html">cpschk</a></span><span class="op">(</span><span class="va">root</span>, key <span class="op">=</span> <span class="st">"a shared secret"</span>, fp <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">status</span></span></span>
@@ -176,7 +198,7 @@ must.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a second run needs overwrite, and a post-quantum key signs too</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="st">"a shared secret"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpsseal: capsule_bundle.json already exists in /tmp/RtmptHgREp/capsules-1e8c661834b8/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpsseal: capsule_bundle.json already exists in /tmp/RtmpmcrieF/capsules-1e792ba7ea12/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again</span>
 <span class="r-in"><span><span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="fu"><a href="fipskg.html">fipskg</a></span><span class="op">(</span><span class="st">"ML-DSA-44"</span><span class="op">)</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">pinned</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 </code></pre></div>

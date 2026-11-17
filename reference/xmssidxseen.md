@@ -19,6 +19,12 @@ xmssidxseen(path = ".", seenlog = NULL)
 - path:
 
   A directory (every `capsule_bundle.json` under it) or one bundle file.
+  A directory is searched as
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  searches it: a link to a folder inside it is followed, each real
+  folder once, and a loop is not; a folder that cannot be read, or a
+  link to any other folder outside it, is refused, named, since a
+  signature behind it would not be seen.
 
 - seenlog:
 
@@ -64,9 +70,9 @@ key <- pqckg(height = 2)
 b <- cpsbndl(d, mkmnf(list(), env = FALSE), key)
 xmssidxseen(root)
 #>                key index              sig
-#> 1 3a7e9f88891ce540     0 d8974ad903150190
+#> 1 978c4d3be786d46e     0 872e62d98620efe5
 #>                                                           where reused
-#> 1 /tmp/RtmptHgREp/capsules-1e8c2f976eba/one/capsule_bundle.json  FALSE
+#> 1 /tmp/RtmpmcrieF/capsules-1e796bd6201a/one/capsule_bundle.json  FALSE
 
 # the same index signed again from a stale copy of the key: reused
 e <- file.path(root, "two")
@@ -81,6 +87,6 @@ xmssidxseen(root)[, c("index", "reused")]
 #> 2     0   TRUE
 
 try(xmssidxseen(tempfile()))
-#> Error : xmssidxseen: `path` is not an existing directory or bundle file: /tmp/RtmptHgREp/file1e8c1bc9e118
+#> Error : xmssidxseen: `path` is not an existing directory or bundle file: /tmp/RtmpmcrieF/file1e793d288eeb
 options(op)
 ```
