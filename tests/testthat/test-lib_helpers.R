@@ -241,6 +241,7 @@ test_that("the writer works where there is no compiled code (a bundle)", {
   # a bundle sources lib_helpers.R and aaa_input_guards.R into plain R
   e <- new.env(parent = baseenv())
   for (f in c(".rmbl_path_kind", ".rmbl_wfile", ".rmbl_wconn", ".rmbl_fn",
+              ".rmbl_upper", ".rmbl_lower",
               ".rmbl_discard", ".rmbl_eol", ".rmbl_wtarget", ".rmbl_wput",
               ".rmbl_wdiscard", ".rmbl_wconn_fill")) {
     g <- get(f)

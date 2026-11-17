@@ -159,6 +159,8 @@ test_that("print and the four plots draw and return what they drew", {
     unique(plot(f, which = "qq", fams = "lognormal")$family),
     "lognormal"
   )
+  expect_s3_class(plot(f, which = "qq", main = "A title"), "data.frame")
+  expect_s3_class(plot(f, which = "pp", main = "A title"), "data.frame")
   expect_error(
     plot(dstfit(c(-3, -2, -1, 0, 1), nboot = 0), which = "tail"),
     "two values above 0"

@@ -969,6 +969,8 @@ s11_tree <- function(n = 1L) {
 
 test_that("a relative path under a folder that is not UTF-8 seals", {
   skip_on_os("windows")
+  # R before 4.2 stops in file.path() on a name it cannot translate
+  skip_if(getRversion() < "4.2.0")
   withr::local_options(morie.progress = FALSE)
   base <- withr::local_tempdir()
   lat <- tryCatch(
@@ -1370,4 +1372,57 @@ test_that("no session setting changes what the capsule verbs do", {
     got <- s11_under(s11_settings[[nm]], function() s11_pass(root))
     expect_identical(got, want, label = nm)
   }
+})
+
+test_that("the arms of round 11 that no other test takes", {
+  # a bracket that ends the pattern, and one that is a letter of its class
+  expect_identical(.rmbl_ci("a["), "[aA][")
+  expect_identical(.rmbl_ci("[a[b]"), "[aA[bB]")
+  expect_true(grepl(.rmbl_ci("[a[b]"), "B", perl = TRUE))
+  # a Hangul syllable with a final consonant, and one without
+  k <- .rmbl_caseless(c("\uac01", "\uac00"))
+  expect_identical(nchar(k, "chars"), c(3L, 2L))
+  # a warning other than the missing final newline is a reason, not noise
+  expect_error(.vc_quiet(function() warning("boom")), "boom")
+  expect_identical(.vc_quiet(function() {
+    warning("incomplete final line found")
+    1L
+  }), 1L)
+  # a gzip CSV is read whole through its inflated copy, which is removed
+  d <- withr::local_tempdir()
+  gz <- file.path(d, "b.csv.gz")
+  con <- gzfile(gz, "w")
+  writeLines(c("x", "1", "2"), con)
+  close(con)
+  before <- list.files(tempdir())
+  expect_identical(.vc_csv_whole(gz)$x, 1:2)
+  expect_identical(list.files(tempdir()), before)
+  # a table that could not be read whole fails the schema check, with the reason
+  acc <- new.env()
+  .vc_frame_checks(acc, list(n = 3L, df = "no memory"),
+                   list(schema = list(a = 1)))
+  got <- do.call(rbind, acc$checks)
+  expect_identical(got$check, "schema_valid")
+  expect_false(got$ok)
+  expect_match(got$detail,
+               "could not be read whole for the schema check: no memory")
+})
+
+test_that("a file named through a link that leaves the folder is refused", {
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  out <- withr::local_tempdir()
+  writeLines("x", file.path(out, "f.txt"))
+  skip_if_not(file.symlink(out, file.path(d, "lk")))
+  expect_error(.bl_bnd_select(d, "lk/f.txt", file.path(d, "bundle.json")),
+               "through a link that leaves the capsule folder.*lk/f.txt")
+})
+
+test_that("a count in a dashboard box and a title given to a fit plot", {
+  skip_if_not_installed("bslib")
+  ui <- .bl_vbox_ui(list(n = 12345, est = 1, lo = 0, up = 2, conf = 0.95))
+  expect_match(paste(as.character(ui), collapse = ""), "12,345", fixed = TRUE)
+  none <- .bl_vbox_ui(list(est = 1))
+  expect_match(paste(as.character(none), collapse = ""), "Not reported",
+               fixed = TRUE)
 })

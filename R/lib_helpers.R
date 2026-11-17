@@ -874,7 +874,7 @@ wrtxtfb <- function(text, path) {
 #' @return The expression.
 #' @noRd
 .rmbl_ci <- function(re) {
-  ch <- strsplit(re, "", useBytes = TRUE)[[1L]]
+  ch <- strsplit(re, "", fixed = TRUE, useBytes = TRUE)[[1L]]
   out <- character()
   i <- 1L
   cls <- FALSE
@@ -1022,7 +1022,7 @@ wrtxtfb <- function(text, path) {
 #' @noRd
 .rmbl_caseless <- function(x) {
   out <- .rmbl_lower(x)
-  wide <- which(grepl("[^\\x00-\\x7f]", x, perl = TRUE, useBytes = TRUE))
+  wide <- grep("[^\\x00-\\x7f]", x, perl = TRUE, useBytes = TRUE)
   if (length(wide)) {
     t <- .rmbl_uc_tab()
     out[wide] <- vapply(x[wide], function(s) {
