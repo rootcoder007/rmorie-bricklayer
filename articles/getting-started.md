@@ -60,7 +60,7 @@ a
 #> │   adjusted for the number of comparisons; rptanl() writes the full      │
 #> │   tables as a report, and x$change, x$rates and x$trend hold them.      │
 #> │                                                                         │
-#> │   Run 2026-11-17 10:02                                                  │
+#> │   Run 2026-11-17 13:09                                                  │
 #> ╰─────────────────────────────────────────────────────────────────────────╯
 ```
 

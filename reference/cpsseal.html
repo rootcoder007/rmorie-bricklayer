@@ -130,11 +130,18 @@ signs a throwaway manifest first, which changes nothing), or an XMSS key
 whose next index was already used or that has fewer unused indices than
 there are capsules (checked without spending one); then, for every
 capsule, a <code>resource$filename</code> that is not a plain relative path to
-a file in the capsule, a provenance that cannot be pinned, a
-<code>manifest.json</code> that does not hold a JSON object, and every refusal
-of <code><a href="cpsbndl.html">cpsbndl()</a></code> short of the signature (links, names, files that
-cannot be read, a folder that cannot be written to). Each pinned
-provenance is worked out in memory first.</p>
+a file in the capsule, a provenance that cannot be pinned or that is no
+JSON (the file named), a <code>manifest.json</code> that does not hold a JSON
+object, a provenance or bundle file that cannot be written to, every
+refusal of <code><a href="cpsbndl.html">cpsbndl()</a></code> short of the signature (links, names, files
+that cannot be read, a folder that cannot be written to, a temporary left
+by a write that was cut short), and anything <code><a href="cpschk.html">cpschk()</a></code> would report
+as an error once the capsule is sealed (a <code>manifest.json</code> that fails
+its schema, a data file that does not read as a table, the checks of
+<code><a href="vrfcps.html">vrfcps</a></code>), found by the check's own code. Each pinned
+provenance is worked out in memory first. So a tree <code>cpsseal()</code>
+has sealed passes <code><a href="cpschk.html">cpschk()</a></code>, but for what depends on the check's
+options (<code>allowfile</code>, a source that has drifted).</p>
 <p>What cannot be known before writing (the disk filling up, a file that
 changes or stops being readable during the seal, a signature that fails)
 stops the seal: every file it had written is then put back as it was
@@ -161,7 +168,7 @@ must.</p>
 <span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="st">"a shared secret"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">s</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                     capsule pinned files</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/Rtmp69XbPV/capsules-1eb122fe3763/one   TRUE     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/Rtmpr6Kjwy/capsules-1e73181531a0/one   TRUE     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                             public</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 2b23046c08926e30017362694e61c9f76f64815699749bede71734e74c84f65e</span>
 <span class="r-in"><span><span class="fu"><a href="cpschk.html">cpschk</a></span><span class="op">(</span><span class="va">root</span>, key <span class="op">=</span> <span class="st">"a shared secret"</span>, fp <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">status</span></span></span>
@@ -169,7 +176,7 @@ must.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a second run needs overwrite, and a post-quantum key signs too</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="st">"a shared secret"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpsseal: capsule_bundle.json already exists in /tmp/Rtmp69XbPV/capsules-1eb122fe3763/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpsseal: capsule_bundle.json already exists in /tmp/Rtmpr6Kjwy/capsules-1e73181531a0/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again</span>
 <span class="r-in"><span><span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="fu"><a href="fipskg.html">fipskg</a></span><span class="op">(</span><span class="st">"ML-DSA-44"</span><span class="op">)</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">pinned</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 </code></pre></div>

@@ -72,12 +72,23 @@ which changes nothing), or an XMSS key whose next index was already used
 or that has fewer unused indices than there are capsules (checked
 without spending one); then, for every capsule, a `resource$filename`
 that is not a plain relative path to a file in the capsule, a provenance
-that cannot be pinned, a `manifest.json` that does not hold a JSON
-object, and every refusal of
+that cannot be pinned or that is no JSON (the file named), a
+`manifest.json` that does not hold a JSON object, a provenance or bundle
+file that cannot be written to, every refusal of
 [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
 short of the signature (links, names, files that cannot be read, a
-folder that cannot be written to). Each pinned provenance is worked out
-in memory first.
+folder that cannot be written to, a temporary left by a write that was
+cut short), and anything
+[`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+would report as an error once the capsule is sealed (a `manifest.json`
+that fails its schema, a data file that does not read as a table, the
+checks of
+[`vrfcps`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)),
+found by the check's own code. Each pinned provenance is worked out in
+memory first. So a tree `cpsseal()` has sealed passes
+[`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
+but for what depends on the check's options (`allowfile`, a source that
+has drifted).
 
 What cannot be known before writing (the disk filling up, a file that
 changes or stops being readable during the seal, a signature that fails)
@@ -107,7 +118,7 @@ writeLines('{"resource": {"filename": "data.csv"}}',
 s <- cpsseal(root, "a shared secret")
 s
 #>                                     capsule pinned files
-#> 1 /tmp/Rtmp69XbPV/capsules-1eb122fe3763/one   TRUE     2
+#> 1 /tmp/Rtmpr6Kjwy/capsules-1e73181531a0/one   TRUE     2
 #>                                                             public
 #> 1 2b23046c08926e30017362694e61c9f76f64815699749bede71734e74c84f65e
 cpschk(root, key = "a shared secret", fp = FALSE)$status
@@ -115,7 +126,7 @@ cpschk(root, key = "a shared secret", fp = FALSE)$status
 
 # a second run needs overwrite, and a post-quantum key signs too
 try(cpsseal(root, "a shared secret"))
-#> Error : cpsseal: capsule_bundle.json already exists in /tmp/Rtmp69XbPV/capsules-1eb122fe3763/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again
+#> Error : cpsseal: capsule_bundle.json already exists in /tmp/Rtmpr6Kjwy/capsules-1e73181531a0/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again
 cpsseal(root, fipskg("ML-DSA-44"), overwrite = TRUE)$pinned
 #> [1] FALSE
 ```

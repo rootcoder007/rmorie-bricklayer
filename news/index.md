@@ -44,7 +44,10 @@
   [`saveRDS()`](https://rdrr.io/r/base/readRDS.html) writes one, and a
   truncated or damaged one are refused in the command’s words, where
   [`readRDS()`](https://rdrr.io/r/base/readRDS.html) said “error reading
-  from connection” or “unknown input format”.
+  from connection” or “unknown input format”. In the C locale a UTF-8
+  `.csv` is read as UTF-8, where its text came out as `caf<c3><a9>`, and
+  a leading byte-order mark is dropped, where it went into the first
+  column’s name; a UTF-16 or UTF-32 file is refused in words.
 
 - [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
   [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
@@ -79,7 +82,31 @@
   capsules the same way, so the listing that is checked is the listing
   that was signed; a folder under the searched path that cannot be read
   is refused, and a link to a folder that is reached by its own path is
-  not followed again.
+  not followed again. A folder whose name is not ASCII (`données/`),
+  above the capsule or inside it, no longer stops
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md),
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  and
+  [`xmssidxseen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md)
+  with base R’s “translating strings with”bytes” encoding is not
+  allowed”: paths are compared by their bytes in every locale. A search
+  for capsules no longer follows a link that leaves the folder searched:
+  a link to `/usr` was walked for 106 s, and a folder that could not be
+  read behind such a link made a sound tree fail. A refusal of the
+  search is headed by the function called, where
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  said “xmssidxseen:”. A temporary left by a write that was cut short
+  (`.rmbl-*.tmp`) is refused by
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  and
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md),
+  as the check reports it; it was left out of the bundle, and the
+  capsule failed its check right after. The refusal names every such
+  file in the tree and says it is safe to delete, so a seal that was
+  killed can be run again once they are gone; a seal that fails or is
+  interrupted puts its files back and leaves none.
 
 - [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
   looks at every capsule before it writes the first. A
@@ -99,7 +126,21 @@
   spent its final index on a seal that failed. An XMSS key is checked
   without spending an index. What fails while the seal writes (a full
   disk, a file that changes meanwhile) puts every file the seal had
-  written back as it was.
+  written back as it was. The look-ahead also refuses a provenance or
+  bundle file that cannot be written to, where the capsules before it
+  were written and put back and an XMSS key had spent their indices, and
+  a provenance or `manifest.json` that is no JSON, naming the file,
+  where it said only “not JSON”. It refuses whatever
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  would report as an error once the capsule is sealed, by the check’s
+  own code: a `manifest.json` that fails its schema and an empty data
+  file were sealed, and `rmbl sign` then failed. So a tree
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
+  has sealed passes
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  and `rmbl verify` in every locale, but for what depends on the check’s
+  options.
 
 - Verification no longer passes over a capsule in a folder whose name
   starts with a dot.
@@ -182,7 +223,21 @@
   locale. Every path a function of the package is given is opened by its
   bytes in the C and Latin-1 locales. A string holding a byte Latin-1
   cannot convert (0x81, 0x8d, 0x8f, 0x90, 0x9d) is not text, so it
-  raises no base R warning.
+  raises no base R warning. A name holding a 5- or 6-byte form or a code
+  point above U+10FFFF is shown escaped too (`a<f8><88><80><80><80>`),
+  where base R warned and
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  stopped: every byte that is not part of valid UTF-8, as
+  [`validUTF8()`](https://rdrr.io/r/base/validUTF8.html) judges it, is
+  shown so. A bundle lists only names that verify on every system:
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
+  and `rmbl sign` refuse, with the reason, a name that starts with `~`
+  or a drive letter (`c:raw.csv`), holds a backslash, one of
+  `< > : " | ? *` or a control character, or has a part that ends in a
+  dot or a space or that Windows reserves (`CON`, `NUL`, `COM1` and the
+  like). Such a name was bundled and signed, and the check then refused
+  it as “not a plain relative path”.
 
 - Refusals show control and non-text bytes escaped in two more places:
   the “no such file” and sibling messages of every reader that checks
@@ -232,12 +287,13 @@
   nothing was checked, and `rmbl verify` and `rmbl drift` exit 1, as for
   any failed verification (`rmbl report` still exits 0).
 
-- [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
-  (and `rmbl verify`) reports an empty folder inside a bundled capsule
-  as content the bundle does not list, in its `no_unlisted_files` row,
-  named with a trailing `/`, as it reports an unlisted file; a bundle
-  lists only files, so an empty folder added after signing went
-  unreported.
+- An empty folder in a capsule is no content:
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  does not list it, and
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  and `rmbl verify` do not report it. Reported, it made a capsule sealed
+  with an empty `output/` folder fail its check for ever.
 
 - [`fromjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fromjs.md),
   [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md),
