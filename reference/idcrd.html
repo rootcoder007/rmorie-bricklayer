@@ -250,13 +250,13 @@ number; <code>path</code> not a card file, or over 32 MiB.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   orcid        0000-0002-1825-0097                                          │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   web          https://example.org/ada                                      │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> │   key          ML-DSA-44                                                    │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   fingerprint  7DCD 55EF 26C2 6016 AAAE F58A B545 801E 23FC F561 6F76 8E72  │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │                EBD0 CFBC C8A0 5BBD                                          │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   issued       2026-11-17T09:04:20Z                                         │</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> │   expires      2028-11-16T09:04:20Z                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   fingerprint  D0D5 9CB1 E776 28D8 9F4A 07E4 F500 994E 94BA F37A 8E48 75DE  │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │                4F02 833C 2E08 D25C                                          │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   issued       2026-11-17T10:01:00Z                                         │</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> │   expires      2028-11-16T10:01:00Z                                         │</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ╰─────────────────────────────────────────────────────────────────────────────╯</span>
 <span class="r-in"><span><span class="va">card</span><span class="op">$</span><span class="va">fingerprint</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "7DCD 55EF 26C2 6016 AAAE F58A B545 801E 23FC F561 6F76 8E72 EBD0 CFBC C8A0 5BBD"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "D0D5 9CB1 E776 28D8 9F4A 07E4 F500 994E 94BA F37A 8E48 75DE 4F02 833C 2E08 D25C"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># anyone, later: is this the card I was told about, and did it sign this?</span></span></span>
 <span class="r-in"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu"><a href="mkmnf.html">mkmnf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>project <span class="op">=</span> <span class="st">"demo"</span><span class="op">)</span>, env <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
@@ -277,7 +277,7 @@ number; <code>path</code> not a card file, or over 32 MiB.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1                                                                                    </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2                                 an rmbl identity card, signed under its own context</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3                               made by the holder of the card's key; unchanged since</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 valid 2026-11-17T09:04:20Z to 2028-11-16T09:04:20Z; checked at 2026-11-17T09:04:20Z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 valid 2026-11-17T10:01:00Z to 2028-11-16T10:01:00Z; checked at 2026-11-17T10:01:00Z</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5                                                                 0000-0002-1825-0097</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6                                            the card's key is the one you were given</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 7                                              the attestation carries the card's key</span>
