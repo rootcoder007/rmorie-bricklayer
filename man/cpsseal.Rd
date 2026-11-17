@@ -52,11 +52,18 @@ signs a throwaway manifest first, which changes nothing), or an XMSS key
 whose next index was already used or that has fewer unused indices than
 there are capsules (checked without spending one); then, for every
 capsule, a \code{resource$filename} that is not a plain relative path to
-a file in the capsule, a provenance that cannot be pinned, a
-\code{manifest.json} that does not hold a JSON object, and every refusal
-of \code{cpsbndl()} short of the signature (links, names, files that
-cannot be read, a folder that cannot be written to). Each pinned
-provenance is worked out in memory first.
+a file in the capsule, a provenance that cannot be pinned or that is no
+JSON (the file named), a \code{manifest.json} that does not hold a JSON
+object, a provenance or bundle file that cannot be written to, every
+refusal of \code{cpsbndl()} short of the signature (links, names, files
+that cannot be read, a folder that cannot be written to, a temporary left
+by a write that was cut short), and anything \code{cpschk()} would report
+as an error once the capsule is sealed (a \code{manifest.json} that fails
+its schema, a data file that does not read as a table, the checks of
+\code{\link{vrfcps}}), found by the check's own code. Each pinned
+provenance is worked out in memory first. So a tree \code{cpsseal()}
+has sealed passes \code{cpschk()}, but for what depends on the check's
+options (\code{allowfile}, a source that has drifted).
 
 What cannot be known before writing (the disk filling up, a file that
 changes or stops being readable during the seal, a signature that fails)

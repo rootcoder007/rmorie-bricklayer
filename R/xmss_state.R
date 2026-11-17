@@ -69,6 +69,18 @@ xmssidxseen <- function(path = ".", seenlog = NULL) {
   if (!is.null(seenlog) && (!is.character(seenlog) || anyNA(seenlog))) {
     stop(.rmbl_fn(), "`seenlog` must be file paths, or NULL", call. = FALSE)
   }
+  .rmbl_xmss_seen(path, seenlog)
+}
+
+#' The XMSS signatures under a path and in seen logs, as xmssidxseen()
+#' returns them, for the package's own callers: called through
+#' xmssidxseen(), a folder cpschk() could not search was refused as
+#' "xmssidxseen: ...", a function the user had not called.
+#' @param path A directory or a bundle file, checked.
+#' @param seenlog Seen logs, or NULL.
+#' @return The data frame.
+#' @noRd
+.rmbl_xmss_seen <- function(path, seenlog = NULL) {
   rows <- lapply(.rmbl_xmss_bundle_files(path), .rmbl_xmss_bundle_row)
   rows <- c(rows, lapply(seenlog, .rmbl_xmss_seen_read))
   .rmbl_xmss_seen_df(rows)

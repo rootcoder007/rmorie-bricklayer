@@ -210,21 +210,25 @@ test_that("a bundle with fields no signature covers fails", {
   expect_false(r$ok)
 })
 
-test_that("an empty folder added to a bundled capsule is unlisted content", {
+test_that("an empty folder is no content of a bundled capsule", {
   dir <- withr::local_tempdir()
   writeLines("x", file.path(dir, "a.csv"))
   m <- mkmnf(list(x = 1), env = FALSE)
   b <- cpsbndl(dir, m, "a secret")
   expect_true(cpsbndlvrf(b, dir, man = m, key = "a secret")$ok)
+  # a bundle lists files only: reported, an empty folder failed every
+  # capsule sealed with one, for ever
   dir.create(file.path(dir, "added", "deeper"), recursive = TRUE)
+  expect_true(cpsbndlvrf(b, dir, man = m, key = "a secret")$ok)
+  # a file put in it is reported
+  writeLines("y", file.path(dir, "added", "deeper", "f.txt"))
   r <- cpsbndlvrf(b, dir, man = m, key = "a secret")
   expect_false(r$ok)
   row <- r$checks[r$checks$check == "no_unlisted_files", ]
   expect_false(row$ok)
-  # the empty folder is named; the folder holding it is not empty
   expect_identical(
     row$detail,
-    "not covered by the bundle: added/deeper/"
+    "not covered by the bundle: added/deeper/f.txt"
   )
   unlink(file.path(dir, "added"), recursive = TRUE)
   expect_true(cpsbndlvrf(b, dir, man = m, key = "a secret")$ok)

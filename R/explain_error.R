@@ -175,7 +175,7 @@ explerr <- function(msg = geterrmessage(), pkgs = NULL, n = 3L) {
   if (is.character(msg)) {
     msg <- enc2utf8(msg)
     if (!all(validUTF8(msg))) {
-      msg <- iconv(msg, "UTF-8", "UTF-8", sub = "byte")
+      msg <- .rmbl_esc8(msg)
     }
   }
   n <- .bl_ee_n(n)

@@ -80,7 +80,7 @@
     return("")
   }
   s <- tryCatch(rawToChar(v), error = function(e) "")
-  if (validUTF8(s)) s else iconv(s, "UTF-8", "UTF-8", sub = "byte")
+  .rmbl_esc8(s)
 }
 
 #' Reads a distinguished name as a list of RDNs.

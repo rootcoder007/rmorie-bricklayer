@@ -82,14 +82,10 @@ loadprov <- function(path) {
     )
   }
   # a device, a pipe or a socket is refused in the shared file check's words
-  p <- .rmbl_read_json(
+  .rmbl_prov_obj(.rmbl_read_json(
     .rmbl_file1(path, "path", max = 32 * 2^20),
     simplify = FALSE
-  )
-  if (is.list(p) && !is.data.frame(p) && !is.object(p)) {
-    p <- .rmbl_cls(.rmbl_prov_shape(p), "rmbl_provenance")
-  }
-  p
+  ))
 }
 #' @export
 format.rmbl_provenance <- function(x, ...) {
@@ -1792,3 +1788,15 @@ rslvarc <- function(prov) {
 #' @return A list of lists, possibly empty.
 #' @noRd
 .rmbl_recs <- function(x) if (is.list(x)) Filter(is.list, x) else list()
+
+#' A provenance as loadprov() returns it, from its parsed JSON: cpsseal()'s
+#' look-ahead reads the provenance it is about to write so.
+#' @param p The JSON, parsed with simplify = FALSE.
+#' @return The provenance.
+#' @noRd
+.rmbl_prov_obj <- function(p) {
+  if (is.list(p) && !is.data.frame(p) && !is.object(p)) {
+    p <- .rmbl_cls(.rmbl_prov_shape(p), "rmbl_provenance")
+  }
+  p
+}

@@ -217,7 +217,7 @@ cpschk <- function(
   seenlog <- .bl_str0(seenlog, "seenlog")
   # every XMSS signature under the path and in the log, for the index-reuse row
   # of each bundle
-  o$seen <- xmssidxseen(path, if (nzchar(seenlog)) seenlog)
+  o$seen <- .rmbl_xmss_seen(path, if (nzchar(seenlog)) seenlog)
   dirs <- .bl_capsule_dirs(path, glob)
   foot <- if (fp) co2fp(.bl_cpschk_run(dirs, o))
   caps <- lapply(
@@ -470,11 +470,18 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' whose next index was already used or that has fewer unused indices than
 #' there are capsules (checked without spending one); then, for every
 #' capsule, a \code{resource$filename} that is not a plain relative path to
-#' a file in the capsule, a provenance that cannot be pinned, a
-#' \code{manifest.json} that does not hold a JSON object, and every refusal
-#' of \code{cpsbndl()} short of the signature (links, names, files that
-#' cannot be read, a folder that cannot be written to). Each pinned
-#' provenance is worked out in memory first.
+#' a file in the capsule, a provenance that cannot be pinned or that is no
+#' JSON (the file named), a \code{manifest.json} that does not hold a JSON
+#' object, a provenance or bundle file that cannot be written to, every
+#' refusal of \code{cpsbndl()} short of the signature (links, names, files
+#' that cannot be read, a folder that cannot be written to, a temporary left
+#' by a write that was cut short), and anything \code{cpschk()} would report
+#' as an error once the capsule is sealed (a \code{manifest.json} that fails
+#' its schema, a data file that does not read as a table, the checks of
+#' \code{\link{vrfcps}}), found by the check's own code. Each pinned
+#' provenance is worked out in memory first. So a tree \code{cpsseal()}
+#' has sealed passes \code{cpschk()}, but for what depends on the check's
+#' options (\code{allowfile}, a source that has drifted).
 #'
 #' What cannot be known before writing (the disk filling up, a file that
 #' changes or stops being readable during the seal, a signature that fails)
@@ -556,7 +563,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     .rmbl_wlines(plan$pin, plan$pf)
   }
   .bl_seal_keep(undo, file.path(d, "capsule_bundle.json"))
-  b <- cpsbndl(d, plan$man, key)
+  b <- cpsbndl(d, plan$man, key, files = plan$files)
   if (inherits(key, "bricklayer_signing_key")) {
     key$next_index <- b$attestation$signature$index + 1L
   }
@@ -821,7 +828,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   if (is.null(base) || is.function(base)) {
     return(base)
   }
-  base <- .rmbl_string1(base, "base")
+  base <- .rmbl_fspath(.rmbl_string1(base, "base"))
   if (!file.exists(base)) {
     stop(
       .rmbl_fn(),
@@ -856,7 +863,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   if (isFALSE(cache)) {
     return(NULL)
   }
-  cache <- .rmbl_string1(cache, "cache")
+  cache <- .rmbl_fspath(.rmbl_string1(cache, "cache"))
   dir.create(cache, showWarnings = FALSE, recursive = TRUE)
   cache
 }
@@ -2229,11 +2236,61 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   } else {
     cpsatst(mkmnf(list(), env = FALSE), key)
   }
+  # every capsule's temporaries named at once, so one deletion lets the
+  # seal run again
+  .bl_left_stop(unique(unlist(lapply(dirs, function(d) {
+    f <- .bl_walk(d)$files
+    normalizePath(.rmbl_jpath(d, f[.rmbl_leftover(f)]), winslash = "/",
+                  mustWork = FALSE)
+  }))))
   lapply(dirs, function(d) {
     plan <- .bl_seal_plan(d)
-    .bl_bnd_prep(d, NULL, file.path(d, "capsule_bundle.json"), plan$man)
+    prep <- .bl_bnd_prep(d, NULL, file.path(d, "capsule_bundle.json"),
+                         plan$man)
+    .bl_seal_verify(d, plan)
+    # bundled as walked here, with the bundles of the capsules inside it,
+    # which the seal writes first: the folder then holds the copies the seal
+    # keeps of what it replaces, which are no content
+    plan$files <- sort(unique(c(prep$files, .bl_seal_inner(d, dirs))))
     plan
   })
+}
+
+#' The bundles cpsseal() writes in the capsules inside a capsule.
+#' @param d The capsule folder.
+#' @param dirs Every capsule folder sealed.
+#' @return Their paths, relative to `d`.
+#' @noRd
+.bl_seal_inner <- function(d, dirs) {
+  pre <- sub("/*$", "/", d, useBytes = TRUE)
+  inner <- dirs[.rmbl_bstarts(dirs, pre)]
+  n <- seq_along(charToRaw(pre))
+  .rmbl_jpath(vapply(inner, function(x) rawToChar(charToRaw(x)[-n]), "",
+                     USE.NAMES = FALSE), "capsule_bundle.json")
+}
+
+#' Stops when the check would fail a capsule right after it is sealed.
+#'
+#' The check's own rows (.bl_verify_files()) on the capsule as the seal
+#' leaves it, its provenance as the seal will write it; the bundle, which
+#' the seal writes, aside. A row the check counts as an error refuses the
+#' seal, so whatever cpsseal() seals passes cpschk().
+#' @param d The capsule folder.
+#' @param plan Its plan, from .bl_seal_plan().
+#' @return NULL, invisibly.
+#' @noRd
+.bl_seal_verify <- function(d, plan) {
+  r <- .bl_verify_files(d, ahead = TRUE, pin = plan$pin)
+  bad <- r[!r$ok & r$severity == "error", , drop = FALSE]
+  if (nrow(bad)) {
+    stop(
+      .rmbl_fn(), .bl_names(d), ": the check would fail this capsule once ",
+      "it is sealed, so nothing was sealed: ",
+      paste0(bad$check, ": ", bad$detail, collapse = "; "),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }
 
 #' What sealing one capsule writes, worked out without writing it: the
@@ -2244,7 +2301,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' @noRd
 .bl_seal_plan <- function(d) {
   pf <- file.path(d, "data_provenance.json")
-  prov <- loadprov(pf)
+  prov <- .bl_seal_read(pf)
   pin <- NULL
   if (is.null(prov[["resource"]][["sha256"]])) {
     fn <- .bl_s1(prov[["resource"]][["filename"]])
@@ -2263,8 +2320,23 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
       null = "null",
       digits = NA
     )
+    # the writer's own check: a provenance that cannot be written to was
+    # found only after the capsules before it were signed
+    .rmbl_wtarget(path.expand(pf))
   }
   list(pf = pf, pin = pin, man = .bl_seal_man(d))
+}
+
+#' A capsule's JSON file read for the seal, its path named when it is no
+#' JSON: in a tree of many capsules "not JSON" said not which.
+#' @param f The file.
+#' @return As loadprov().
+#' @noRd
+.bl_seal_read <- function(f) {
+  tryCatch(loadprov(f), error = function(e) {
+    stop(.rmbl_fn(), .bl_names(f), ": ",
+         sub("^loadprov: ", "", conditionMessage(e)), call. = FALSE)
+  })
 }
 
 #' The manifest a capsule's bundle is signed over: its manifest.json, which
@@ -2277,7 +2349,7 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   if (!file.exists(mf)) {
     return(mkmnf(list(), env = FALSE))
   }
-  man <- loadprov(mf)
+  man <- .bl_seal_read(mf)
   # 1, "x" or [1, 2] parse, and were refused only after the capsules before
   # it had been sealed; [] parses as {} does, so the text is looked at
   h <- readBin(mf, "raw", 4096L)

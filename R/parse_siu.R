@@ -180,7 +180,7 @@ siuprs <- function(html) {
   # <xx>: R's string functions warned on each, in base R's words
   bad <- !validUTF8(html) & grepl("<", html, fixed = TRUE, useBytes = TRUE)
   if (any(bad)) {
-    html[bad] <- iconv(html[bad], "UTF-8", "UTF-8", sub = "byte")
+    html[bad] <- .rmbl_esc8(html[bad])
   }
   # what is left is a path or a URL, which must be text
   .rmbl_valid_text(html, "html")

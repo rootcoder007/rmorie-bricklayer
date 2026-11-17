@@ -147,13 +147,12 @@ toascii <- function(x) {
   .rmbl_no_fn(x = x)
   x <- as.character(x)
   # Bytes that are not valid UTF-8 at all (a mislabelled file) are dropped
-  # first. validUTF8() and an explicit UTF-8 -> UTF-8 iconv() both work on
-  # the bytes, so this does not depend on the session locale; enc2utf8()
-  # does, and under a C locale it re-encodes the bytes as Latin-1 instead
-  # of flagging them.
+  # first, from the bytes, so this does not depend on the session locale;
+  # enc2utf8() does, and under a C locale it re-encodes the bytes as Latin-1
+  # instead of flagging them. iconv(sub = "") kept a 5-byte form.
   inv <- !is.na(x) & !validUTF8(x)
   if (any(inv)) {
-    x[inv] <- iconv(x[inv], "UTF-8", "UTF-8", sub = "")
+    x[inv] <- .rmbl_esc8(x[inv], drop = TRUE)
   }
   if (.rmbl_has_stringi()) {
     # Best + platform-independent: romanize any script to Latin, then fold
@@ -733,23 +732,64 @@ wrtxtfb <- function(text, path) {
   # to the session's encoding before looking for it (.rmbl_fspath())
   rel <- .rmbl_fspath(as.character(unlist(rel))[1L])
   dir <- .rmbl_fspath(dir)
-  if (is.na(rel) || !nzchar(rel)) {
-    return(NULL)
-  }
-  if (grepl("^([/\\\\]|~|[A-Za-z]:)", rel)) {
-    return(NULL)
-  }
-  parts <- strsplit(gsub("\\", "/", rel, fixed = TRUE), "/", fixed = TRUE)[[1L]]
-  if (any(parts %in% c("", ".", ".."))) {
+  if (is.na(rel) || nzchar(.rmbl_relwhy(rel))) {
     return(NULL)
   }
   full <- file.path(dir, rel)
   d <- .rmbl_realpath(dir)
   f <- .rmbl_realpath(full)
-  if (!startsWith(.rmbl_bytes(f), .rmbl_bytes(paste0(d, "/")))) {
+  sl <- "/"
+  if (!.rmbl_bstarts(f, paste0(d, sl))) {
     return(NULL)
   }
   full
+}
+
+#' Why a relative path may not be listed in a bundle, or "".
+#'
+#' One rule for a bundle's names, used when the bundle is made and when it
+#' is checked. The check refuses a name that could reach outside the
+#' folder: an empty name, an absolute path, a home (\code{~}) or drive
+#' (\code{c:}) prefix, an empty, \code{.} or \code{..} part, a backslash
+#' parting them as on Windows. A bundle is made only of names that verify
+#' on every system (`strict`): those, and a name that is not UTF-8, holds a
+#' backslash, one of \code{< > : " | ? *} or a control character, or has a
+#' part that ends in a dot or a space or that Windows reserves (CON, PRN,
+#' AUX, NUL, COM1 to COM9, LPT1 to LPT9, with any extension). So what is
+#' bundled verifies, and what the check refuses is never signed.
+#' @param rel Relative paths, their parts parted by "/".
+#' @param strict TRUE when a bundle is made.
+#' @return For each, the reason it is refused, or "".
+#' @noRd
+.rmbl_relwhy <- function(rel, strict = FALSE) {
+  g <- function(re) grepl(re, rel, ignore.case = TRUE, useBytes = TRUE)
+  why <- list(
+    "it is empty" = !nzchar(rel),
+    "it is an absolute path" = g("^[/\\\\]"),
+    "it starts with ~, a home folder" = g("^~"),
+    "it starts with a drive letter" = g("^[a-z]:"),
+    "it has an empty, . or .. part" = g("(^|[/\\\\])[.]{0,2}([/\\\\]|$)")
+  )
+  if (strict) {
+    win <- stats::setNames(list(
+      g("[\\\\]"),
+      g("[<>:\"|?*\001-\037]"),
+      g("[. ](/|$)"),
+      g("(^|/)(con|prn|aux|nul|com[1-9]|lpt[1-9])([.][^/]*)?(/|$)")
+    ), c(
+      "it holds a backslash, which parts folders on Windows",
+      "it holds < > : \" | ? * or a control character, which Windows refuses",
+      "a part of it ends in a dot or a space, which Windows drops",
+      paste("a part of it is a name Windows reserves (CON, PRN, AUX, NUL,",
+            "COM1-9, LPT1-9)")
+    ))
+    why <- c(list("it is not valid text (UTF-8)" = !validUTF8(rel)), why, win)
+  }
+  out <- character(length(rel))
+  for (j in rev(seq_along(why))) {
+    out[why[[j]]] <- names(why)[[j]]
+  }
+  out
 }
 
 #' Resolves a path that may not exist yet through its deepest existing ancestor.

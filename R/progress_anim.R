@@ -121,7 +121,7 @@ blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
   # string 1 is invalid" in base R's words
   bad <- .rmbl_nontext(label)
   if (any(bad)) {
-    label[bad] <- iconv(label[bad], "", "UTF-8", sub = "byte")
+    label[bad] <- .rmbl_esc8(label[bad])
   }
   delay <- .bl_prog_args(label, total, quiet, color, delay)
   creator <- parent.frame()

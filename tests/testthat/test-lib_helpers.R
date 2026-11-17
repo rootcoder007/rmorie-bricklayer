@@ -299,11 +299,17 @@ test_that("the temporary of a cut-short write is no content", {
   writeLines("half a bundle", left)
   m <- mkmnf(list(x = 1), env = FALSE)
   bp <- file.path(withr::local_tempdir(), "b.json")
+  # refused when bundling, as the check reports it, and named
+  expect_error(cpsbndl(dir, m, "a secret", path = bp),
+               "safe to delete; delete it and run again: .rmbl-1a2b3c.tmp",
+               fixed = TRUE)
+  unlink(left)
   b <- cpsbndl(dir, m, "a secret", path = bp)
   expect_identical(
     vapply(b$files, function(e) e$path, ""),
     "a.csv"
   )
+  writeLines("half a bundle", left)
   r <- cpsbndlvrf(bp, dir, man = m, key = "a secret")
   expect_false(r$ok)
   expect_match(

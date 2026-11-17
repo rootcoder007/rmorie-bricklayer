@@ -462,7 +462,11 @@ test_that(
     local_mocked_bindings(.bl_data_get = function(...) {
       stop("could not resolve host")
     })
-    expect_identical(nrow(dload("db/t")), 1L)
+    # the warning is given once a session: cleared, so it comes whatever
+    # file ran before
+    suppressWarnings(rm(list = "db/t", envir = .bl_data_nodigest))
+    expect_warning(n <- nrow(dload("db/t")), "without a SHA-256")
+    expect_identical(n, 1L)
     # no manifest anywhere: refused, and the cached table is kept for the next
     # run
     unlink(file.path(d, "manifest.json"))

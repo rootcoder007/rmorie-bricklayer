@@ -1011,10 +1011,14 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @param capsule The capsule directory.
 #' @param path The capsule JSON file checked against `schema`.
 #' @param schema The schema's name, for schemapath().
+#' @param x The file's JSON, parsed, or NULL to read `path` (cpsseal()'s
+#'   look-ahead gives the provenance it is about to write).
 #' @return One check row.
 #' @noRd
-.bl_schema_row <- function(capsule, path, schema) {
-  x <- tryCatch(.bl_read_json_list(path), error = function(e) e)
+.bl_schema_row <- function(capsule, path, schema, x = NULL) {
+  if (is.null(x)) {
+    x <- tryCatch(.bl_read_json_list(path), error = function(e) e)
+  }
   err <- if (inherits(x, "error")) {
     paste("not valid JSON:", conditionMessage(x))
   } else {
@@ -1134,11 +1138,14 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 }
 
 #' The files of given names under a folder, found by .bl_walk()'s search:
-#' a link loop is not followed, nor a link to a folder found by its own
-#' path, and each real folder is searched once.
+#' no link to a folder is followed (one inside is found by its own path,
+#' one that leaves the folder is not searched), and each real folder is
+#' searched once.
 #'
 #' A folder that cannot be read is refused: a capsule in it was left
-#' unsealed and unchecked without a word.
+#' unsealed and unchecked without a word. The refusal is headed by the
+#' function the user called (.rmbl_fn()): no exported function lies between
+#' it and this one.
 #' @param root The folder searched for files named `names`.
 #' @param names The file names looked for.
 #' @return Their paths, under `root` (relative when `root` is ".").
@@ -1159,7 +1166,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   f <- w$files[.rmbl_bytes(b) %in% names]
   # named as list.files(full.names = TRUE) named them, less a leading "./"
   top <- if (identical(root, ".")) "" else sub("^[.]/", "", root)
-  if (nzchar(top)) file.path(top, f) else f
+  if (nzchar(top)) .rmbl_jpath(top, f) else f
 }
 
 #' The verify rows of one capsule: every file against its schema, vrfcps(),
@@ -1180,35 +1187,57 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   pkgs = NULL,
   seen = NULL
 ) {
-  prov_file <- file.path(d, "data_provenance.json")
-  bundle_file <- file.path(d, "capsule_bundle.json")
-  rows <- list()
-  for (sp in list(
-    c(prov_file, "capsule"),
-    c(bundle_file, "bundle"),
+  rbind(
+    .bl_verify_files(d, pkgs),
+    .bl_bundle_rows(d, file.path(d, "capsule_bundle.json"), key, pubkey,
+                    seen)
+  )
+}
+
+#' The verify rows of one capsule short of its bundle's signature: each file
+#' against its schema, vrfcps(), a pinned proof ledger.
+#'
+#' cpsseal() runs them before it writes (`ahead`), so a capsule the check
+#' would fail right after the seal is refused instead: a manifest.json that
+#' fails its schema and a data file that does not read were sealed, and
+#' `rmbl sign` then failed.
+#' @param d The capsule directory whose files are checked.
+#' @param pkgs As for .bl_verify_capsule().
+#' @param ahead TRUE for cpsseal()'s look-ahead: the bundle, which the seal
+#'   writes, is not looked at.
+#' @param pin With `ahead`, the provenance's JSON as the seal will write it,
+#'   or NULL when it is pinned already.
+#' @return Check rows.
+#' @noRd
+.bl_verify_files <- function(d, pkgs = NULL, ahead = FALSE, pin = NULL) {
+  pf <- file.path(d, "data_provenance.json")
+  x <- if (!is.null(pin)) {
+    .rmbl_read_json(paste(pin, collapse = "\n"), simplify = FALSE)
+  }
+  sp <- list(
+    c(pf, "capsule"),
+    if (!ahead) c(file.path(d, "capsule_bundle.json"), "bundle"),
     c(file.path(d, "manifest.json"), "manifest"),
     c(file.path(d, "results", "manifest.json"), "manifest")
-  )) {
-    if (file.exists(sp[[1L]])) {
-      rows[[length(rows) + 1L]] <- .bl_schema_row(d, sp[[1L]], sp[[2L]])
+  )
+  rows <- lapply(sp, function(s) {
+    if (!is.null(x) && identical(s[[1L]], pf)) {
+      .bl_schema_row(d, pf, "capsule", x)
+    } else if (length(s) && file.exists(s[[1L]])) {
+      .bl_schema_row(d, s[[1L]], s[[2L]])
+    }
+  })
+  if (!is.null(x) || file.exists(pf)) {
+    prov <- if (!is.null(x)) .rmbl_prov_obj(x)
+    rows <- c(rows, list(.bl_result_rows(.vc_run(d, prov = prov), d,
+                                         "provenance", pf)))
+    # a proof ledger pinned in a capsule: its theorem rows and the pins of
+    # its commit and build
+    led <- x %||% tryCatch(.bl_read_json_list(pf), error = function(e) NULL)
+    if (identical(led$kind, "ledger")) {
+      rows <- c(rows, list(.bl_ldgr_capsule_rows(d, led, pkgs)))
     }
   }
-  if (file.exists(prov_file)) {
-    rows[[length(rows) + 1L]] <- .bl_result_rows(
-      vrfcps(d),
-      d,
-      "provenance",
-      prov_file
-    )
-    # a proof ledger pinned in a capsule: its theorem rows and the pins of its
-    # commit and build
-    prov <- tryCatch(.bl_read_json_list(prov_file), error = function(e) NULL)
-    if (identical(prov$kind, "ledger")) {
-      rows[[length(rows) + 1L]] <- .bl_ldgr_capsule_rows(d, prov, pkgs)
-    }
-  }
-  rows[[length(rows) + 1L]] <- .bl_bundle_rows(d, bundle_file, key, pubkey,
-                                                seen)
   do.call(rbind, rows)
 }
 
@@ -1865,7 +1894,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       dirs <- .bl_seal_dirs(root, overwrite, glob)
       # every signature of this key seen under the path and in the log: a state
       # below them is a stale copy
-      seen <- xmssidxseen(root, seenlog)
+      seen <- .rmbl_xmss_seen(root, seenlog)
       ids <- .rmbl_xmss_ids(.rmbl_xmss_key_json(key, "the key")$key)
       p <- .rmbl_xmss_index_file(cli = TRUE)
       rec_hi <- if (is.null(p)) {
@@ -1945,7 +1974,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     message(sub("\n$", "", m))
   }
   if (!is.null(seenlog)) {
-    s <- xmssidxseen(root)
+    s <- .rmbl_xmss_seen(root)
     .rmbl_xmss_seen_append(
       seenlog,
       s[s$key == xs$fpr & s$index >= xs$from & s$index <= xs$to, , drop = FALSE]

@@ -106,40 +106,24 @@ vrfcps <- function(
   mnffile = NULL,
   scrfile = NULL
 ) {
-  cpsdir <- .rmbl_string1(cpsdir, "cpsdir")
+  # by their bytes, as the file system names them (.rmbl_fspath()): marked
+  # UTF-8, a capsule under "donn\u00e9es/" was "not an existing directory"
+  # in a C locale
+  cpsdir <- .rmbl_fspath(.rmbl_string1(cpsdir, "cpsdir"))
   if (!dir.exists(cpsdir)) {
     stop("`cpsdir` is not an existing directory: ", cpsdir, call. = FALSE)
   }
-  provfile <- .rmbl_string1(provfile, "provfile")
+  provfile <- .rmbl_fspath(.rmbl_string1(provfile, "provfile"))
   if (!is.null(dfile)) {
-    dfile <- .rmbl_string1(dfile, "dfile")
+    dfile <- .rmbl_fspath(.rmbl_string1(dfile, "dfile"))
   }
   if (!is.null(mnffile)) {
-    mnffile <- .rmbl_string1(mnffile, "mnffile")
+    mnffile <- .rmbl_fspath(.rmbl_string1(mnffile, "mnffile"))
   }
   if (!is.null(scrfile)) {
-    scrfile <- .rmbl_string1(scrfile, "scrfile")
+    scrfile <- .rmbl_fspath(.rmbl_string1(scrfile, "scrfile"))
   }
-  acc <- .vc_acc()
-  prov <- .vc_provenance(acc, provfile, cpsdir)
-  dpath <- .vc_data_file(acc, dfile, prov, cpsdir)
-  synth_sidecar <- !is.null(dpath) && file.exists(paste0(dpath, ".synthetic"))
-  df <- if (!is.null(dpath)) .vc_data_checks(acc, dpath, prov)
-  if (!is.null(df)) {
-    .vc_frame_checks(acc, df, prov)
-  }
-  # a capsule that carries manifest.json is checked against it by default:
-  # vrfcps(dir) used to open the data and never the manifest
-  if (
-    is.null(mnffile) &&
-      file.exists(file.path(cpsdir, "manifest.json"))
-  ) {
-    mnffile <- "manifest.json"
-  }
-  manifest <- if (!is.null(mnffile)) .vc_manifest(acc, mnffile, cpsdir)
-  .vc_script(acc, scrfile, prov, manifest, cpsdir)
-  .vc_synthetic(acc, dpath, synth_sidecar, manifest, prov)
-  .vc_result(acc)
+  .vc_run(cpsdir, provfile, dfile, mnffile, scrfile)
 }
 
 #' @export
@@ -375,6 +359,44 @@ format.rmbl_citation <- function(x, ...) {
       "cat(x$text) or cat(x$bibtex) gives either as it is, to paste."
     )
   )
+}
+
+#' vrfcps() on checked arguments.
+#'
+#' cpsseal()'s look-ahead runs it on the provenance as the seal will write
+#' it (`prov`), so what the check would call an error is refused before
+#' anything is written, by the check's own code.
+#' @param cpsdir,provfile,dfile,mnffile,scrfile As for vrfcps(), checked.
+#' @param prov The provenance, as loadprov() reads it, or NULL to read
+#'   `provfile`.
+#' @return The vrfcps() result.
+#' @noRd
+.vc_run <- function(cpsdir, provfile = "data_provenance.json", dfile = NULL,
+                    mnffile = NULL, scrfile = NULL, prov = NULL) {
+  acc <- .vc_acc()
+  if (is.null(prov)) {
+    prov <- .vc_provenance(acc, provfile, cpsdir)
+  } else {
+    .vc_note(acc, "provenance_readable", TRUE, file.path(cpsdir, provfile))
+  }
+  dpath <- .vc_data_file(acc, dfile, prov, cpsdir)
+  synth_sidecar <- !is.null(dpath) && file.exists(paste0(dpath, ".synthetic"))
+  df <- if (!is.null(dpath)) .vc_data_checks(acc, dpath, prov)
+  if (!is.null(df)) {
+    .vc_frame_checks(acc, df, prov)
+  }
+  # a capsule that carries manifest.json is checked against it by default:
+  # vrfcps(dir) used to open the data and never the manifest
+  if (
+    is.null(mnffile) &&
+      file.exists(file.path(cpsdir, "manifest.json"))
+  ) {
+    mnffile <- "manifest.json"
+  }
+  manifest <- if (!is.null(mnffile)) .vc_manifest(acc, mnffile, cpsdir)
+  .vc_script(acc, scrfile, prov, manifest, cpsdir)
+  .vc_synthetic(acc, dpath, synth_sidecar, manifest, prov)
+  .vc_result(acc)
 }
 
 #' A fresh record of vrfcps()'s checks, with the rows it requires.

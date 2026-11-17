@@ -535,11 +535,14 @@
 #'
 #' A compressed file is said to be one (gzip, xz, zstd and lz4 by their
 #' magic, bzip2 by its header and block mark: "BZh" alone is how a text
-#' file may begin); an empty file, one of blank lines only, a NUL byte and
-#' bytes that are not text in this session are refused in the command's
-#' own words, where read.csv() failed in base R's.
+#' file may begin); an empty file, one of blank lines only, a NUL byte, a
+#' UTF-16 or UTF-32 byte-order mark and bytes that are not text in this
+#' session are refused in the command's own words, where read.csv() failed
+#' in base R's. Valid UTF-8 is read as UTF-8 in every locale, a leading
+#' UTF-8 byte-order mark dropped: in the C locale "caf\u00e9" came out as
+#' "caf<c3><a9>" and the mark went into the first column's name.
 #' @param path The .csv file, already found to be a regular file.
-#' @return Its lines, one element each.
+#' @return Its lines, one element each, those that are UTF-8 marked so.
 #' @noRd
 .bl_run_csv <- function(path) {
   shown <- .rmbl_shown(path)
@@ -552,6 +555,10 @@
   }
   if (!length(h)) {
     no("is empty")
+  }
+  if (.bl_run_wide(h)) {
+    no("is UTF-16 or UTF-32 text (it begins with that byte-order mark); ",
+       "save it as UTF-8")
   }
   # readLines() cuts a line at a NUL without a word; scanned a block at a
   # time, where the whole file was read with a logical vector 4 times its
@@ -568,7 +575,23 @@
   if (!any(nzchar(trimws(lines)))) {
     no("holds only blank lines, so it is no table")
   }
-  lines
+  # a UTF-8 locale drops the mark as it reads; the C locale keeps it
+  r1 <- charToRaw(lines[1L])
+  if (identical(r1[1:3], as.raw(c(0xef, 0xbb, 0xbf)))) {
+    lines[1L] <- rawToChar(r1[-1:-3])
+  }
+  .rmbl_utf8(lines)
+}
+
+#' Whether a file's first bytes are a UTF-16 or UTF-32 byte-order mark.
+#' @param h The first bytes.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_run_wide <- function(h) {
+  boms <- list(c(0xff, 0xfe), c(0xfe, 0xff), c(0, 0, 0xfe, 0xff))
+  any(vapply(boms, function(m) {
+    length(h) >= length(m) && identical(h[seq_along(m)], as.raw(m))
+  }, NA))
 }
 
 #' The compression a file's first bytes show, or NULL.

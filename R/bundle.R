@@ -36,24 +36,31 @@
 #' written as pretty JSON with doubles at 17 digits. With `files = NULL` every
 #' regular file under `dir` is hashed, recursively and including dot-files
 #' (a `.Rprofile` dropped into a capsule runs code), except the bundle file
-#' itself and the temporary of a write that was cut short. The folder is
+#' itself; a temporary left by a write that was cut short
+#' (\code{.rmbl-*.tmp}) is refused, as the check reports it. The folder is
 #' walked one level at a time: a link that stays inside is content like any
 #' other file or folder, but a link to the capsule folder or a folder above
 #' it, a link that leaves the folder, a folder that cannot be read and
 #' links that would list one folder more than 64 times are refused, all of
-#' them named at once. File names are kept by their bytes: a name that is
-#' UTF-8 is bundled in every locale (C and Latin-1 too), and one that is
-#' not UTF-8 is refused with its bytes shown as \code{<e9>}. A progress bar
+#' them named at once. An empty folder holds no content: it is not bundled
+#' and the check does not report it. File names are kept by their bytes: a
+#' name that is UTF-8 is bundled in every locale (C and Latin-1 too). A
+#' bundle lists only names that verify on every system, so a name is
+#' refused, with its reason, when it is not UTF-8 (its bytes shown as
+#' \code{<e9>}), starts with \code{~} or a drive letter (\code{c:}), holds
+#' a backslash, a double quote, one of \code{< > : | ? *} or a control
+#' character, or has
+#' a part that ends in a dot or a space or that Windows reserves (CON, PRN,
+#' AUX, NUL, COM1 to COM9, LPT1 to LPT9, with any extension). A progress bar
 #' is shown when `options(morie.progress)` allows it.
 #'
 #' How it is checked. `cpsbndlvrf()` re-hashes every listed file
 #' (a path that is absolute or climbs out of `dir` fails its row), reports
 #' every file on disk the bundle does not list (the bundle's own file
 #' excepted, when it is the file checked: a \code{capsule_bundle.json}
-#' in `dir` is unlisted when another bundle file is checked), every
-#' empty folder (named with a trailing \code{/}) and what the walk of
-#' `dir` cannot cover (the links and folders `cpsbndl()` refuses), in the
-#' `no_unlisted_files` row,
+#' in `dir` is unlisted when another bundle file is checked) and what the
+#' walk of `dir` cannot cover (the links and folders `cpsbndl()` refuses),
+#' in the `no_unlisted_files` row,
 #' checks the attestation with
 #' [cpschkatst()]
 #' (signature, digest, and `keyexp` when given; an `"hmac"`
@@ -65,7 +72,7 @@
 #'
 #' Errors: `dir` missing or not a directory; no files to bundle, or a named
 #' file not in `dir`; the links, folders and names above; a file that cannot
-#' be read, or a folder for the bundle that cannot be written to (both
+#' be read, or a bundle file or its folder that cannot be written to (all
 #' before any file is hashed); a key [cpsatst()] cannot
 #' sign with;
 #' `cpsbndlrd()` given a file that is not a bundle, or one over 32 MiB;
@@ -382,17 +389,19 @@ format.bricklayer_bundle_check <- function(x, ...) {
 #' followed; a link that leaves `dir` is not followed; a folder that cannot
 #' be read is named. A link that stays inside is content, as before, but no
 #' real folder is listed more than 64 times, so the work is bounded by the
-#' real entries whatever the links.
+#' real entries whatever the links. An empty folder is no content: it is
+#' neither bundled nor reported.
 #' @param dir The folder, as .rmbl_fspath() gives it.
 #' @param search TRUE to look for capsules under `dir` instead of listing
-#'   one: a link that leaves `dir` is followed, one that stays inside is not
-#'   (its target is walked by its own path), each real folder is listed once,
-#'   and .git and .rmbl-cache are not entered.
+#'   one: no link to a folder is followed (one that stays inside is walked
+#'   by its own path; one that leaves `dir` walked all of /usr for a link
+#'   to it, and a folder there that could not be read failed the search),
+#'   each real folder is listed once, and .git and .rmbl-cache are not
+#'   entered.
 #' @return A list of paths relative to `dir`: `files` (every entry that is
-#'   not a folder), `empty` (folders with no entry), `loops`, `outside`
-#'   (links that leave `dir`), `unread` (folders that cannot be read; "."
-#'   for `dir` itself) and `many` (folders that links would list a 65th
-#'   time).
+#'   not a folder), `loops`, `outside` (links that leave `dir`), `unread`
+#'   (folders that cannot be read; "." for `dir` itself) and `many` (folders
+#'   that links would list a 65th time).
 #' @noRd
 .bl_walk <- function(dir, search = FALSE) {
   root <- normalizePath(dir, winslash = "/", mustWork = FALSE)
@@ -406,7 +415,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
     todo[[length(todo)]] <- NULL
     todo <- c(todo, .bl_walk1(dir, it, root, search, st))
   }
-  keys <- c("files", "empty", "loops", "outside", "unread", "many")
+  keys <- c("files", "loops", "outside", "unread", "many")
   lapply(stats::setNames(keys, keys), function(k) {
     as.character(unlist(lapply(st$out, `[[`, k), use.names = FALSE))
   })
@@ -422,7 +431,9 @@ format.bricklayer_bundle_check <- function(x, ...) {
 #' @return The folders to walk next, as `it` is.
 #' @noRd
 .bl_walk1 <- function(dir, it, root, search, st) {
-  full <- if (nzchar(it$rel)) file.path(dir, it$rel) else dir
+  # joined by .rmbl_jpath(): file.path() refuses a name that is not text
+  # before R 4.2
+  full <- if (nzchar(it$rel)) .rmbl_jpath(dir, it$rel) else dir
   # a folder that cannot be listed or searched hides its files (Windows
   # tests no search permission)
   mode <- if (.Platform$OS.type == "windows") 4L else 5L
@@ -430,25 +441,18 @@ format.bricklayer_bundle_check <- function(x, ...) {
     return(.bl_walk_put(st, unread = if (nzchar(it$rel)) it$rel else "."))
   }
   e <- list.files(full, all.files = TRUE, no.. = TRUE)
-  rel <- if (nzchar(it$rel)) file.path(it$rel, e) else e
-  p <- file.path(full, e)
+  rel <- if (nzchar(it$rel)) .rmbl_jpath(it$rel, e) else e
+  p <- .rmbl_jpath(full, e)
   isd <- dir.exists(p)
   # dir.exists() says TRUE for a socket too
   isd[isd] <- vapply(p[isd], .rmbl_isdir, NA, USE.NAMES = FALSE)
   real <- normalizePath(p, winslash = "/", mustWork = FALSE)
   # a link, of either kind (a Windows junction too), by its real path: a
   # link that does not resolve is a file that is not there
-  # joined by hand: file.path() refuses a name that is not text before R 4.2
-  sl <- "/"
-  want <- paste0(if (identical(it$real, sl)) "" else it$real, sl, e)
+  want <- .rmbl_jpath(if (identical(it$real, "/")) "" else it$real, e)
   link <- file.exists(p) & .rmbl_bytes(real) != .rmbl_bytes(want)
   out <- !search & !isd & link & !.bl_under(real, root)
-  .bl_walk_put(
-    st,
-    files = rel[!isd & !out],
-    outside = rel[out],
-    empty = if (!length(e) && nzchar(it$rel)) it$rel
-  )
+  .bl_walk_put(st, files = rel[!isd & !out], outside = rel[out])
   .bl_walk_dirs(it, rel[isd], real[isd], link[isd], list(root, search, st))
 }
 
@@ -470,7 +474,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
   loop <- link & .bl_up(real, it$chain)
   out <- link & !loop & !.bl_under(real, w[[1L]])
   if (w[[2L]]) {
-    go <- !loop & (!link | out)
+    go <- !link
     go[go] <- .bl_walk_once(st, real[go])
   } else {
     many <- !loop & !out
@@ -535,9 +539,8 @@ format.bricklayer_bundle_check <- function(x, ...) {
 #' @return A logical vector.
 #' @noRd
 .bl_under <- function(x, root) {
-  pre <- if (endsWith(root, "/")) root else paste0(root, "/")
-  .rmbl_bytes(x) == .rmbl_bytes(root) | startsWith(.rmbl_bytes(x),
-                                                   .rmbl_bytes(pre))
+  pre <- sub("/*$", "/", root, useBytes = TRUE)
+  .rmbl_bytes(x) == .rmbl_bytes(root) | .rmbl_bstarts(x, pre)
 }
 
 #' Whether real paths are a folder on a walked path or above one of them: a
@@ -592,7 +595,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
 .bl_names <- function(x, n = 20L) {
   s <- utils::head(x, n)
   bad <- !validUTF8(s)
-  s[bad] <- iconv(s[bad], "UTF-8", "UTF-8", sub = "byte")
+  s[bad] <- .rmbl_esc8(s[bad])
   paste0(
     toString(.rmbl_ctl_escape(s)),
     if (length(x) > n) sprintf(" and %d more", length(x) - n)
@@ -626,15 +629,41 @@ format.bricklayer_bundle_check <- function(x, ...) {
   if (length(why)) {
     stop(paste(why, collapse = "; "), call. = FALSE)
   }
-  # the temporary of a write cut short is no content of the capsule
-  f <- w$files[!.rmbl_leftover(w$files)]
+  # the temporary of a write cut short is no content of the capsule, and
+  # the check reports it: bundled without it, the capsule failed its check
+  .bl_left_stop(w$files[.rmbl_leftover(w$files)])
+  f <- w$files
   own <- normalizePath(.rmbl_fspath(path), winslash = "/", mustWork = FALSE)
-  real <- normalizePath(file.path(dir, f), winslash = "/", mustWork = FALSE)
+  real <- normalizePath(.rmbl_jpath(dir, f), winslash = "/",
+                        mustWork = FALSE)
   sort(f[.rmbl_bytes(real) != .rmbl_bytes(own)])
 }
 
+#' Stops when temporaries of the package's writes are left in a capsule.
+#'
+#' A write or a seal that was stopped or killed leaves them (a seal keeps a
+#' copy of each file it replaces, and puts it back when it fails); they are
+#' no content, the check reports them, and nothing needs them. Each is
+#' named, so a seal can be run again once they are deleted.
+#' @param left Their paths.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_left_stop <- function(left) {
+  if (length(left)) {
+    stop(
+      .rmbl_fn(), "a temporary left by a write or a seal of this package ",
+      "that was cut short (stopped or killed) is not part of the capsule ",
+      "and is safe to delete; delete it and run again: ",
+      .bl_names(left, 20L),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
 #' The files a bundle covers: those named, or every regular file in `dir`
-#' but the bundle itself; each must exist and lie inside `dir`.
+#' but the bundle itself; each must have a name a bundle may list, exist
+#' and lie inside `dir`.
 #' @param dir The directory whose regular files, dotfiles too, are bundled.
 #' @param files The file names given, or NULL.
 #' @param path Where the bundle is written.
@@ -649,6 +678,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
   if (!length(files)) {
     stop("no files to bundle", call. = FALSE)
   }
+  .bl_bnd_names(files)
   missing <- files[!file.exists(file.path(dir, files))]
   if (length(missing)) {
     stop("these files are not in `dir`: ", .bl_names(missing, 5L),
@@ -667,9 +697,10 @@ format.bricklayer_bundle_check <- function(x, ...) {
 
 #' What cpsbndl() checks before it reads a byte or signs.
 #'
-#' The files to bundle (walked, their names UTF-8, each inside `dir`),
-#' each one checked as sha256file() checks it before reading it, the
-#' folder the bundle is written to, and the manifest's digest. cpsseal()
+#' The files to bundle (walked, their names ones a bundle may list, each
+#' inside `dir`), each one checked as sha256file() checks it before reading
+#' it, the bundle file as the writer checks it, and the manifest's digest.
+#' cpsseal()
 #' runs it over every capsule before it writes the first, so its look-ahead
 #' is this code and cannot miss a refusal of it.
 #' @param dir,files,path,man As for cpsbndl(); `path` is set.
@@ -677,18 +708,13 @@ format.bricklayer_bundle_check <- function(x, ...) {
 #' @noRd
 .bl_bnd_prep <- function(dir, files, path, man) {
   files <- .bl_bnd_select(dir, files, path)
-  .bl_bnd_textnames(files)
   for (p in file.path(dir, files)) {
     .rmbl_sha256_path(p)
     .rmbl_file1(p, "path")
   }
-  if (file.access(dirname(.rmbl_fspath(path)), 2L) != 0L) {
-    stop(
-      "the folder the bundle is written to cannot be written to: ",
-      .bl_names(dirname(path)),
-      call. = FALSE
-    )
-  }
+  # the writer's own check: a bundle that cannot be written to was found
+  # only after the capsules before it were signed
+  .rmbl_wtarget(path.expand(.rmbl_fspath(path)))
   list(files = files, digest = mnfdgst(man))
 }
 
@@ -803,40 +829,46 @@ format.bricklayer_bundle_check <- function(x, ...) {
   invisible(NULL)
 }
 
-#' Stops when a file to bundle has a name that is not UTF-8.
+#' Stops when a file to bundle has a name a bundle may not list.
 #'
-#' A bundle is JSON, which is UTF-8, and a name is listed by its bytes so
-#' that the check finds the same file in any locale. A name that is not
-#' UTF-8 (Latin-1 bytes, say) cannot be listed so; it is refused in every
-#' locale, where it was bundled in a Latin-1 one and its listing then named
-#' no file in any other.
+#' The rule is the check's (.rmbl_relwhy()), made strict: a name the check
+#' refuses ("~notes.txt", "c:raw.csv", "a\\\\b") was bundled and signed, and
+#' the capsule failed its check right after; a name that is not UTF-8
+#' cannot be listed in JSON by its bytes; and a name Windows cannot hold
+#' would not verify there.
 #' @param files The files to bundle, relative to the directory.
 #' @return NULL, invisibly.
 #' @noRd
-.bl_bnd_textnames <- function(files) {
-  bad <- files[!validUTF8(files)]
+.bl_bnd_names <- function(files) {
+  why <- .rmbl_relwhy(files, strict = TRUE)
+  bad <- which(nzchar(why))
   if (length(bad)) {
+    each <- vapply(bad, function(i) {
+      paste0(.bl_names(files[[i]]), " (", why[[i]], ")")
+    }, "")
     stop(
-      "cpsbndl: a file whose name is not valid text (UTF-8) cannot be ",
-      "listed in a bundle; rename it: ", .bl_names(bad, 5L),
+      .rmbl_fn(), "a file whose name is not valid text (UTF-8), or would ",
+      "not verify on every system, cannot be listed in a bundle; rename ",
+      "it: ", toString(utils::head(each, 5L)),
+      if (length(bad) > 5L) sprintf(" and %d more", length(bad) - 5L),
       call. = FALSE
     )
   }
   invisible(NULL)
 }
 
-#' What a bundled directory holds: its files, and its empty folders.
+#' What a bundled directory holds: its files.
 #'
 #' Walked as cpsbndl() walks it (.bl_walk()), so the listing that is checked
-#' is the listing that was signed.
+#' is the listing that was signed. An empty folder is no content, as it is
+#' none of a bundle: reported, it failed every capsule sealed with one.
 #' @param dir The bundled directory.
-#' @return Paths relative to `dir`; an empty folder ends in a slash (a bundle
-#'   lists only files, so an empty folder added to a capsule went
-#'   unreported). Attribute "why": what the walk could not cover.
+#' @return Paths relative to `dir`. Attribute "why": what the walk could not
+#'   cover.
 #' @noRd
 .bl_bnd_ondisk <- function(dir) {
   w <- .bl_walk(dir)
-  out <- c(w$files, paste0(w$empty, rep_len("/", length(w$empty))))
+  out <- w$files
   attr(out, "why") <- .bl_walk_why(w)
   out
 }
@@ -855,8 +887,12 @@ format.bricklayer_bundle_check <- function(x, ...) {
     return(NULL)
   }
   own <- normalizePath(own, winslash = "/", mustWork = FALSE)
-  d <- sub("/+$", "", normalizePath(dir, winslash = "/", mustWork = FALSE))
-  if (startsWith(own, paste0(d, "/"))) substring(own, nchar(d) + 2L)
+  d <- sub("/*$", "/", normalizePath(dir, winslash = "/", mustWork = FALSE),
+           useBytes = TRUE)
+  # by its bytes, as the walk compares
+  if (.rmbl_bstarts(own, d)) {
+    rawToChar(charToRaw(own)[-seq_along(charToRaw(d))])
+  }
 }
 
 #' The row for files on disk that a bundle does not list.

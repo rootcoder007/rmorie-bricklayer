@@ -893,7 +893,7 @@ format.bricklayer_profile <- function(x, digits = 4L, ...) {
   # 1 is invalid" on them (a download or progress label, a plot title)
   bad <- .rmbl_nontext(s)
   if (any(bad)) {
-    s[bad] <- iconv(s[bad], "", "UTF-8", sub = "byte")
+    s[bad] <- .rmbl_esc8(s[bad])
   }
   # the class is built from the characters themselves: a pattern marked
   # UTF-8 matches the bidi controls whatever the session's locale

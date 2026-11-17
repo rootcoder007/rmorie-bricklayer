@@ -901,7 +901,11 @@
 #'
 #' match() and == compare a name read from a folder (no mark) and the same
 #' name read from JSON (marked UTF-8) after translating one of them, which in
-#' a C or Latin-1 locale changed it or failed with a warning.
+#' a C or Latin-1 locale changed it or failed with a warning. A string
+#' marked "bytes" is for == and %in% only: startsWith(), sprintf(),
+#' basename(), file.path(), sort() and most other functions refuse one that
+#' is not ASCII ("translating strings with "bytes" encoding is not
+#' allowed"); a prefix is compared with .rmbl_bstarts().
 #' @param x The strings to compare.
 #' @return `x` with every non-ASCII element marked "bytes", for comparing.
 #' @noRd
@@ -909,6 +913,92 @@
   x <- as.character(x)
   Encoding(x) <- "bytes"
   x
+}
+
+#' Whether strings start with a prefix, by their bytes.
+#'
+#' startsWith() of strings marked "bytes" stopped every walk under a folder
+#' with a name that is not ASCII ("donn\\u00e9es"); the raw bytes are
+#' compared instead, in any locale and whatever the strings' marks.
+#' @param x Strings whose start is tested.
+#' @param pre One prefix.
+#' @return A logical vector.
+#' @noRd
+.rmbl_bstarts <- function(x, pre) {
+  p <- charToRaw(pre)
+  vapply(as.character(x), function(s) {
+    r <- charToRaw(s)
+    length(r) >= length(p) && identical(r[seq_along(p)], p)
+  }, NA, USE.NAMES = FALSE)
+}
+
+#' Paths joined by a slash, whatever their bytes.
+#'
+#' file.path() refuses a name that is not text before R 4.2, so a folder
+#' holding such a file stopped a walk in base R's words.
+#' @param a A folder, or folders.
+#' @param b Names in it.
+#' @return The joined paths; none when `a` or `b` is empty.
+#' @noRd
+.rmbl_jpath <- function(a, b) {
+  if (!length(a) || !length(b)) {
+    return(character())
+  }
+  sl <- "/"
+  paste0(a, sl, b)
+}
+
+#' Strings with each byte that is not part of valid UTF-8 shown as <xx>.
+#'
+#' iconv(sub = "byte") left a 5- or 6-byte form and a code point above
+#' U+10FFFF as they were (the system's decoder takes them), and base R then
+#' warned "input string 1 is invalid UTF-8". Each sequence is cut from the
+#' bytes by the length its first byte gives and kept only when validUTF8()
+#' calls it valid: one rule for what is text.
+#' @param x Strings to escape.
+#' @param drop TRUE to leave such bytes out instead.
+#' @return `x`; each element changed is valid UTF-8, marked so.
+#' @noRd
+.rmbl_esc8 <- function(x, drop = FALSE) {
+  bad <- !is.na(x) & !validUTF8(x)
+  x[bad] <- vapply(x[bad], .rmbl_esc8one, "", drop = drop,
+                   USE.NAMES = FALSE)
+  x
+}
+
+#' One string escaped as .rmbl_esc8() escapes it.
+#' @param s The string.
+#' @param drop As for .rmbl_esc8().
+#' @return The string, marked UTF-8.
+#' @noRd
+.rmbl_esc8one <- function(s, drop) {
+  r <- charToRaw(s)
+  b <- as.integer(r)
+  n <- length(r)
+  # the length a first byte gives (0: a byte that starts nothing)
+  k <- c(1L, 0L, 2L, 3L, 4L, 0L)[
+    findInterval(b, c(0, 128, 194, 224, 240, 245))
+  ]
+  keep <- k == 1L
+  at <- which(k > 1L & seq_len(n) + k - 1L <= n)
+  seqs <- lapply(at, function(i) i + seq_len(k[i]) - 1L)
+  ok <- validUTF8(vapply(seqs, function(j) rawToChar(r[j]), ""))
+  keep[unlist(seqs[ok])] <- TRUE
+  run <- rle(keep)
+  end <- cumsum(run$lengths)
+  out <- vapply(seq_along(end), function(i) {
+    j <- (end[i] - run$lengths[i] + 1L):end[i]
+    if (run$values[i]) {
+      rawToChar(r[j])
+    } else if (drop) {
+      ""
+    } else {
+      paste(sprintf("<%02x>", b[j]), collapse = "")
+    }
+  }, "")
+  y <- paste(out, collapse = "")
+  Encoding(y) <- "UTF-8"
+  y
 }
 
 #' The lines of a file from its bytes as they are on disk.

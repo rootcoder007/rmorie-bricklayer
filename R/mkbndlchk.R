@@ -1241,7 +1241,7 @@ format.rmbl_bundle_audit <- function(x, ...) {
 #' @noRd
 .bndlchk_names <- function(nm, bad) {
   # names are bytes: invalid UTF-8 is shown as <xx>, never an error
-  nm <- iconv(nm, "UTF-8", "UTF-8", sub = "byte")
+  nm <- .rmbl_esc8(nm)
   shown <- function(x) toString(.rmbl_printable(utils::head(x, 3L)))
   parts <- strsplit(nm, "[/\\\\]")
   long <- nchar(nm, type = "bytes") > 1024L |
