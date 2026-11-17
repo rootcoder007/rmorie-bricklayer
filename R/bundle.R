@@ -709,7 +709,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
   if (!length(files)) {
     no("no files to bundle")
   }
-  .bl_bnd_names(files, .bl_bnd_selfname(dir, path))
+  .bl_bnd_names(files, .bl_bnd_selfname(dir, path), dir)
   p <- .rmbl_jpath(dir, files)
   gone <- !file.exists(p)
   # a link whose target is missing is in the folder: it is no missing file
@@ -983,7 +983,8 @@ format.bricklayer_bundle_check <- function(x, ...) {
 #' @param own The bundle file's own name in the directory, or NULL.
 #' @return NULL, invisibly.
 #' @noRd
-.bl_bnd_names <- function(files, own = NULL) {
+.bl_bnd_names <- function(files, own = NULL, dir = NULL) {
+  at <- if (is.null(dir)) "" else paste0(.bl_names(dir), ": ")
   why <- .rmbl_relwhy(files, strict = TRUE)
   bad <- which(nzchar(why))
   if (length(bad)) {
@@ -991,7 +992,8 @@ format.bricklayer_bundle_check <- function(x, ...) {
       paste0(.bl_names(files[[i]]), " (", why[[i]], ")")
     }, "")
     stop(
-      .rmbl_fn(), "a file whose name is not valid text (UTF-8), or would ",
+      .rmbl_fn(), at,
+      "a file whose name is not valid text (UTF-8), or would ",
       "not verify on every system, cannot be listed in a bundle; rename ",
       "it: ", toString(utils::head(each, 5L)),
       if (length(bad) > 5L) sprintf(" and %d more", length(bad) - 5L),
@@ -1001,7 +1003,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
   clash <- .rmbl_clash(c(files, own))
   if (length(clash)) {
     stop(
-      .rmbl_fn(), "names that differ only by case or by Unicode ",
+      .rmbl_fn(), at, "names that differ only by case or by Unicode ",
       "normalisation are one name on Windows and macOS, where only one of ",
       "each set can be, so the capsule would not verify there; rename all ",
       "but one of each: ", paste(clash, collapse = "; "),

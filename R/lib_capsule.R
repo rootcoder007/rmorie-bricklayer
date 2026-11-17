@@ -29,9 +29,15 @@
 #' columns are found as it finds them, and \code{scan()} the rest a block of
 #' 65,536 rows at a time, keeping one field of each, so memory stays at
 #' about that many fields plus the longest line whatever the file's size;
-#' \code{read.csv()}'s "incomplete final line" warning is no fault, any
-#' other error or warning fails the row with its words in \code{detail}. A
-#' row name used twice, which \code{read.csv()} refuses, is not looked at.
+#' \code{read.csv()}'s "incomplete final line" and "EOF within quoted
+#' string" warnings are no fault, any other error or warning fails the
+#' row with its words in \code{detail}. A row name used twice, which
+#' \code{read.csv()} refuses, is not looked at. A gzip file is inflated
+#' under the caps every reader of the package has: at most the option
+#' \code{rmoriebricklayer.maxcsvbytes} (1 GiB), and past 64 MiB at most
+#' \code{rmoriebricklayer.maxgzratio} (200) times its compressed size. A
+#' table of very repetitive rows can pass those: raise the options for
+#' the check, as \code{detail} then says.
 #' A non-CSV file fails this row when a row count or schema is recorded
 #' (they cannot be checked).}
 #' \item{\code{data_row_count}}{when \code{resource$row_count_data_rows} is

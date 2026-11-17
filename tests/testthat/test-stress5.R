@@ -1451,3 +1451,22 @@ test_that("what the review of round 11 found is as it was before it", {
                           stringsAsFactors = FALSE))$hazards
   expect_match(paste(h, collapse = " "), "M\u00c9TIS", fixed = TRUE)
 })
+
+test_that("a clash of names is told with its capsule, and found in one pass", {
+  d <- withr::local_tempdir()
+  expect_error(.bl_bnd_names(c("A.txt", "a.txt"), dir = d),
+               paste0(basename(d), ": names that differ only by case"))
+  expect_error(.bl_bnd_names(c("A.txt", "a.txt")),
+               "names that differ only by case")
+  # many names at once give what one name at a time gives, marks that open
+  # or close a name included
+  u <- function(...) intToUtf8(c(...))
+  x <- c(u(0x301, 0x41), u(0x41, 0x327, 0x301), u(0xc9), u(0x65, 0x301),
+         u(0xac01), u(0x130), "plain.TXT", u(0x327, 0x301))
+  one <- vapply(x, .rmbl_caseless, "", USE.NAMES = FALSE)
+  expect_identical(.rmbl_caseless(x), one)
+  expect_identical(.rmbl_caseless(rev(x)), rev(one))
+  expect_identical(one[[3L]], one[[4L]])
+  expect_identical(.rmbl_nfd(c(0x41L, 0x327L, 0x301L), .rmbl_uc_tab()),
+                   .rmbl_nfd(c(0x41L, 0x301L, 0x327L), .rmbl_uc_tab()))
+})

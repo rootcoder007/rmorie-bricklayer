@@ -988,25 +988,45 @@ wrtxtfb <- function(text, path) {
 
 #' Code points in Unicode's canonical decomposition (NFD): each decomposed
 #' fully (by the table, a Hangul syllable by its arithmetic) and each run of
-#' combining marks put in the order of their classes.
+#' combining marks put in the order of their classes. Many strings are
+#' taken at once: `id` says which string each code point belongs to, and a
+#' run of marks never crosses from one string into the next.
+#' @param u Code points.
+#' @param t The tables (.rmbl_uc_tab()).
+#' @param id The string of each code point, in rising order; one string by
+#'   default.
+#' @return A list: the code points `u` and their strings `id`.
+#' @noRd
+.rmbl_nfdv <- function(u, t, id = rep(1L, length(u))) {
+  i <- match(u, t$dk)
+  dec <- which(!is.na(i))
+  hg <- which(u >= 0xAC00 & u <= 0xD7A3)
+  s <- u[hg] - 0xAC00
+  len <- rep(1L, length(u))
+  len[dec] <- lengths(t$dv[i[dec]])
+  len[hg] <- 2L + (s %% 28 != 0)
+  at <- cumsum(len) - len + 1L
+  out <- integer(sum(len))
+  out[at] <- u
+  out[rep(at[dec], len[dec]) + sequence(len[dec]) - 1L] <-
+    as.integer(unlist(t$dv[i[dec]], use.names = FALSE))
+  out[at[hg]] <- as.integer(0x1100 + s %/% 588)
+  out[at[hg] + 1L] <- as.integer(0x1161 + (s %% 588) %/% 28)
+  tail <- s %% 28 != 0
+  out[at[hg][tail] + 2L] <- as.integer(0x11A7 + s[tail] %% 28)
+  id <- rep(id, len)
+  cc <- t$cv[match(out, t$ck)]
+  cc[is.na(cc)] <- 0L
+  o <- order(id, cumsum(cc == 0L), cc, seq_along(out))
+  list(u = out[o], id = id)
+}
+
+#' One string's code points in NFD (.rmbl_nfdv()).
 #' @param u Code points.
 #' @param t The tables (.rmbl_uc_tab()).
 #' @return Code points.
 #' @noRd
-.rmbl_nfd <- function(u, t) {
-  parts <- as.list(u)
-  i <- match(u, t$dk)
-  parts[!is.na(i)] <- t$dv[i[!is.na(i)]]
-  hg <- which(u >= 0xAC00 & u <= 0xD7A3)
-  parts[hg] <- lapply(u[hg] - 0xAC00, function(s) {
-    c(0x1100 + s %/% 588, 0x1161 + (s %% 588) %/% 28,
-      if (s %% 28) 0x11A7 + s %% 28)
-  })
-  u <- as.integer(unlist(parts, use.names = FALSE))
-  cc <- t$cv[match(u, t$ck)]
-  cc[is.na(cc)] <- 0L
-  u[order(cumsum(cc == 0L), cc, seq_along(u))]
-}
+.rmbl_nfd <- function(u, t) .rmbl_nfdv(u, t)$u
 
 #' Names as one system compares them when it ignores case and Unicode
 #' normalisation: Unicode's canonical caseless match (NFD of the simple case
@@ -1025,13 +1045,19 @@ wrtxtfb <- function(text, path) {
   wide <- grep("[^\\x00-\\x7f]", x, perl = TRUE, useBytes = TRUE)
   if (length(wide)) {
     t <- .rmbl_uc_tab()
-    out[wide] <- vapply(x[wide], function(s) {
-      # by its bytes: utf8ToInt() refuses a string marked "bytes"
-      u <- .rmbl_nfd(utf8ToInt(rawToChar(charToRaw(s))), t)
-      f <- match(u, t$fk)
-      u[!is.na(f)] <- t$fv[f[!is.na(f)]]
-      intToUtf8(.rmbl_nfd(u, t))
-    }, "", USE.NAMES = FALSE)
+    # by their bytes: utf8ToInt() refuses a string marked "bytes". All the
+    # names are folded in one pass: a name at a time, 100,000 names with
+    # accents took 80 seconds
+    cp <- lapply(x[wide], function(s) utf8ToInt(rawToChar(charToRaw(s))))
+    n <- lengths(cp)
+    d <- .rmbl_nfdv(as.integer(unlist(cp, use.names = FALSE)), t,
+                    rep(seq_along(cp), n))
+    f <- match(d$u, t$fk)
+    d$u[!is.na(f)] <- t$fv[f[!is.na(f)]]
+    d <- .rmbl_nfdv(d$u, t, d$id)
+    key <- vapply(split(d$u, factor(d$id, levels = seq_along(cp))),
+                  intToUtf8, "", USE.NAMES = FALSE)
+    out[wide] <- key
   }
   out
 }
