@@ -2,6 +2,34 @@
 
 ## rmoriebricklayer 1.1.1
 
+- A link that leads out of the folder searched for capsules is told, not
+  refused.
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  gives it a `links_not_followed` row of severity `warn`
+  (`rmbl verify --fail-on warn` exits 1 on it), and
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md),
+  `rmbl sign`, `rmbl refresh` and
+  [`xmssidxseen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md)
+  warn and go on: a capsule behind such a link is still neither sealed
+  nor checked from there, and the message says to seal and check that
+  folder where it is. Trees with a project library that links each
+  package to a cache, a `node_modules` folder or a linked shared data
+  folder seal and check as they did in 1.1.0.
+
+- A table whose last quoted field is never closed passes
+  `data_readable`, as it did:
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) reads it with
+  a warning, and capsules sealed with such a table exist. Other warnings
+  of the reader still fail the row.
+
+- Patterns and labels the user gives match letters outside ASCII in
+  either case again: `indtabs("MÉTIS")` finds what `indtabs("Métis")`
+  finds, `rmbl functions` and the CKAN resource patterns take any
+  regular expression R takes (`(?i)`, named groups, `\\x` escapes), and
+  [`audcats()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audcats.md)
+  lists `MÉTIS` as a case variant of `Métis`. The package’s own matching
+  of extensions, schemes and digests stays the same in every locale.
+
 - Bytes that are not text are recognised in the C locale too. There
   every byte counts as valid text to R, so a file whose name holds a
   stray byte was bundled by

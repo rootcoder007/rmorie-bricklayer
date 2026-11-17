@@ -67,14 +67,12 @@ Capsules are searched for as
 searches: a link to a folder inside `path` is followed, each real folder
 once; a link to a folder on the way down or above it (a loop) is not
 followed; a link to any other folder outside `path` is not followed and
-refuses the seal, named, since a capsule behind it would be neither
-sealed nor checked: seal that folder where it is, and copy it in or
-remove the link.
+is warned of, named, since a capsule behind it is neither sealed nor
+checked: seal that folder where it is.
 
 Errors, before anything is written: no provenance under `path`, a folder
-under it that cannot be read, or a link out of it as above; a capsule
-that already has a bundle, unless `overwrite`; a key that cannot sign (a
-public key, or anything
+under it that cannot be read; a capsule that already has a bundle,
+unless `overwrite`; a key that cannot sign (a public key, or anything
 [`cpsatst`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
 refuses: a key other than an XMSS key signs a throwaway manifest first,
 which changes nothing), or an XMSS key whose next index was already used
@@ -146,7 +144,7 @@ writeLines('{"resource": {"filename": "data.csv"}}',
 s <- cpsseal(root, "a shared secret")
 s
 #>                                     capsule pinned files
-#> 1 /tmp/RtmpTBSTfp/capsules-1e981af8fb9e/one   TRUE     2
+#> 1 /tmp/Rtmp44V4G0/capsules-1f996609ce9c/one   TRUE     2
 #>                                                             public
 #> 1 2b23046c08926e30017362694e61c9f76f64815699749bede71734e74c84f65e
 cpschk(root, key = "a shared secret", fp = FALSE)$status
@@ -154,7 +152,7 @@ cpschk(root, key = "a shared secret", fp = FALSE)$status
 
 # a second run needs overwrite, and a post-quantum key signs too
 try(cpsseal(root, "a shared secret"))
-#> Error : cpsseal: capsule_bundle.json already exists in /tmp/RtmpTBSTfp/capsules-1e981af8fb9e/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again
+#> Error : cpsseal: capsule_bundle.json already exists in /tmp/Rtmp44V4G0/capsules-1f996609ce9c/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again
 cpsseal(root, fipskg("ML-DSA-44"), overwrite = TRUE)$pinned
 #> [1] FALSE
 ```

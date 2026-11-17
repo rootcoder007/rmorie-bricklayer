@@ -201,11 +201,13 @@ given.
 Links: a link to a folder inside `path` is followed, each real folder
 checked once; a link to a folder on the way down or above it (a loop) is
 not followed. A link to any other folder outside `path` is not followed,
-and is not passed over in silence: one failed `links_not_followed` row,
-of severity `error`, names every such link, so the status is `error`
-(`rmbl verify` exits 1). A capsule behind one is not checked, so the
-tree cannot be called sound; check that folder where it lies, or copy it
-in. A folder under `path` that cannot be read stops the check, named.
+and is not passed over in silence: one `links_not_followed` row, of
+severity `warn`, names every such link (`rmbl verify --fail-on warn`
+exits 1 on it). A capsule behind one is not checked here: check that
+folder where it lies. It is a warning, not an error, because ordinary
+project trees hold such links (a project library that links each package
+to a cache, a shared data folder) beside capsules that are sound. A
+folder under `path` that cannot be read stops the check, named.
 
 A data file is found to read as a table, and its rows counted, as
 [`vrfcps`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
@@ -283,14 +285,14 @@ x
 #> │ ✔ VERIFIED  · 7 of 7 checks passed                                          │
 #> │                                                                             │
 #> │   Status    ok                                                              │
-#> │   Path      /tmp/RtmpTBSTfp/capsules-1e9870b69c1e                           │
+#> │   Path      /tmp/Rtmp44V4G0/capsules-1f99368dfad5                           │
 #> │   Capsules  1                                                               │
 #> │   Checks    7 of 7 passed                                                   │
 #> │   Checked   rmoriebricklayer 1.1.1, R version 4.6.2 (2026-10-29)            │
 #> │                                                                             │
 #> │   capsule  result  passed  checks  source                                   │
 #> │   -------  ------  ------  ------  ---------------------------------------- │
-#> │   one      ok           7       7  /tmp/RtmpTBSTfp/temp_libpath1e98a615d... │
+#> │   one      ok           7       7  /tmp/Rtmp44V4G0/temp_libpath1f99132fd... │
 #> │                                                                             │
 #> │   capsule  sha256        size    rows  bounds                               │
 #> │   -------  ------------  ------  ----  ------                               │
@@ -298,22 +300,22 @@ x
 #> │                                                                             │
 #> │   Every capsule is still the one its analysis was run on.                   │
 #> │                                                                             │
-#> │   /tmp/RtmpTBSTfp/capsules-1e9870b69c1e/one: ok                             │
+#> │   /tmp/Rtmp44V4G0/capsules-1f99368dfad5/one: ok                             │
 #> │     source:                                                                 │
-#> │     /tmp/RtmpTBSTfp/temp_libpath1e98a615d46/rmoriebricklayer/extdata/otis_a │
+#> │     /tmp/Rtmp44V4G0/temp_libpath1f99132fd50/rmoriebricklayer/extdata/otis_a │
 #> │     01_individuals.csv                                                      │
 #> │     pinned SHA-256:                                                         │
 #> │     6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248        │
 #> │   ✔    schema: data_provenance.json  valid against capsule.schema.json      │
 #> │   ✔    provenance_readable                                                  │
-#> │        /tmp/RtmpTBSTfp/capsules-1e9870b69c1e/one/data_provenance.json       │
+#> │        /tmp/Rtmp44V4G0/capsules-1f99368dfad5/one/data_provenance.json       │
 #> │   ✔    data_present                                                         │
-#> │        /tmp/RtmpTBSTfp/capsules-1e9870b69c1e/one/otis_a01_individuals.csv   │
+#> │        /tmp/Rtmp44V4G0/capsules-1f99368dfad5/one/otis_a01_individuals.csv   │
 #> │   ✔    data_sha256                                                          │
 #> │        6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248     │
 #> │   ✔    data_size_bytes               462 bytes on disk                      │
 #> │   ✔    data_readable                                                        │
-#> │        /tmp/RtmpTBSTfp/capsules-1e9870b69c1e/one/otis_a01_individuals.csv   │
+#> │        /tmp/Rtmp44V4G0/capsules-1f99368dfad5/one/otis_a01_individuals.csv   │
 #> │   ✔    data_not_synthetic no synthetic marker: sidecar, manifest and        │
 #> │        provenance all say real data                                         │
 #> │   format(x) gives the full Markdown report.                                 │
@@ -339,14 +341,14 @@ x$capsules[[1]]$notes
 #> [1] "explained: the data file's size differs from resource$size_bytes: its bytes changed"
 #> 
 substr(format(x, fmt = "json"), 1, 120)
-#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmpTBSTfp/capsules-1e9870b69c1e\",\n  \"capsules\": [\n    {\n    "
+#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/Rtmp44V4G0/capsules-1f99368dfad5\",\n  \"capsules\": [\n    {\n    "
 
 # drift: fetch the source again (here a local file) and compare
 cpschk(root, "drift", psiwarn = 0.05, fp = FALSE)$status
 #> [1] "error"
 
 try(cpschk(tempfile()))
-#> Error : cpschk: `path` is not an existing directory: /tmp/RtmpTBSTfp/file1e981a8e3722
+#> Error : cpschk: `path` is not an existing directory: /tmp/Rtmp44V4G0/file1f994d633c68
 try(cpschk(root, psiwarn = 1))
 #> Error : cpschk: `psiwarn` (1) must not exceed `psifail` (0.25)
 ```
