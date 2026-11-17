@@ -2,6 +2,42 @@
 
 ## rmoriebricklayer 1.1.1
 
+- The otis-mrp bundle keeps running after the publisher replaces its
+  data file. On 2026-10-30 Ontario replaced the file at the same
+  address: fiscal year 2026 was added, every column was renamed to
+  lower_snake_case and the dataset was renamed. A run that downloaded
+  the file then stopped, because its SHA-256 was no longer the recorded
+  one. `setup_and_run.R` now fetches the archived copy of the recorded
+  file when the publisher’s current file differs, and so analyses the
+  bytes the capsule records. `analysis.R` matches columns without regard
+  to case or underscores, so both spellings are read, and leaves out
+  fiscal years the paper did not use unless `--all-years` is given; with
+  `--allow-digest-drift` the publisher’s current file therefore
+  reproduces the published values too. The provenance record names the
+  catalogue by its identifier, which the renaming did not change, and
+  records the later release.
+
+- `rmbl run NAME FILE.csv` and `FILE.rds` check the file they are given.
+  A pipe or a device is refused at once (a named pipe made the command
+  wait for ever), and a `.csv` is read from its bytes on disk: a 78 KB
+  gzip file named `.csv` was inflated to about 1 GB before it was
+  refused.
+
+- [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md),
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
+  and `rmbl sign` refuse an entry reached through a link that leaves the
+  capsule folder. Such an entry was bundled, and the check of that
+  bundle then refused it, so a tree failed
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  right after it was sealed. A link that stays inside the capsule is
+  bundled as before.
+
+- [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
+  looks at every capsule before it writes the first. A
+  `resource$filename` it refuses in one capsule left the capsules before
+  it pinned and bundled, although the help lists that refusal among
+  those made before anything is written.
+
 - Verification no longer passes over a capsule in a folder whose name
   starts with a dot.
   [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
