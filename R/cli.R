@@ -2044,7 +2044,7 @@ instcli <- function(
 #' Whether the file of URLs named on the command line can be read: a file
 #' that is missing is said to be, and so is a folder, a device, a pipe or a
 #' socket (a pipe has no end: readLines() waited on it for ever).
-#' @param p The path given.
+#' @param p The file named on the command line.
 #' @param out The function that prints.
 #' @return TRUE when `p` is a regular file.
 #' @noRd
