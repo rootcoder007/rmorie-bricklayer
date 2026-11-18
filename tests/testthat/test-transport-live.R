@@ -6,7 +6,7 @@
 
 C <- function(nm) get(nm, envir = asNamespace("rmoriebricklayer"))
 
-online <- function() {
+online <- function(url = "https://cloud.r-project.org/") {
   # live traffic only when asked for (review of 46de6a9, H8)
   if (!identical(Sys.getenv("RMBL_LIVE_TESTS"), "1")) {
     return(FALSE)
@@ -14,7 +14,7 @@ online <- function() {
   r <- tryCatch(
     .Call(
       C("C_rmbl_http_download"),
-      "https://cloud.r-project.org/",
+      url,
       tempfile(),
       20L,
       NULL,
@@ -35,6 +35,10 @@ test_that(
   {
     skip_on_cran()
     skip_if_not(online(), "no network")
+    # the host the redirect ends at is another one than the probe's: when it
+    # does not answer by itself, the redirect cannot be followed either
+    skip_if_not(online("https://www.r-project.org/"),
+                "www.r-project.org does not answer from here")
     dest <- tempfile(fileext = ".html")
     seen <- numeric(0)
     # r-project.org answers 301 to www.r-project.org: a different host, so the
