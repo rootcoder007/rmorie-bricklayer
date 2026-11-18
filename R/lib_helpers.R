@@ -1021,12 +1021,48 @@ wrtxtfb <- function(text, path) {
   list(u = out[o], id = id)
 }
 
-#' One string's code points in NFD (.rmbl_nfdv()).
-#' @param u Code points.
-#' @param t The tables (.rmbl_uc_tab()).
-#' @return Code points.
+#' A user's pattern matched whatever the case of its letters, accented ones
+#' included, in any locale.
+#'
+#' In a UTF-8 session this is grepl(ignore.case = TRUE) as it always was.
+#' Elsewhere (the C locale of a container) that engine folds the letters
+#' a to z only, so text past ASCII is matched by the Perl-compatible one,
+#' which folds by Unicode; text typed there arrives unmarked, and is taken
+#' for UTF-8 when its bytes are valid UTF-8.
+#' @param pat A regular expression.
+#' @param x Character vector.
+#' @param utf8 Whether the session is a UTF-8 one.
+#' @return Logical vector, as grepl().
 #' @noRd
-.rmbl_nfd <- function(u, t) .rmbl_nfdv(u, t)$u
+.rmbl_grepl_ci <- function(pat, x, utf8 = isTRUE(l10n_info()[["UTF-8"]])) {
+  if (utf8) {
+    return(grepl(pat, x, ignore.case = TRUE))
+  }
+  mark <- function(s) {
+    u <- !is.na(s) & Encoding(s) == "unknown" & validUTF8(s)
+    Encoding(s[u]) <- "UTF-8"
+    s
+  }
+  pat <- mark(pat)
+  x <- mark(as.character(x))
+  wide <- any(grepl("[^\\x01-\\x7f]", c(pat, x), perl = TRUE,
+                    useBytes = TRUE))
+  grepl(pat, x, ignore.case = TRUE, perl = wide)
+}
+
+#' Labels as they compare when case is ignored, accented capitals too, in
+#' any locale: .rmbl_caseless() for valid UTF-8; in bytes that are not, the
+#' letters A to Z only (tolower() stops at such a string).
+#' @param x Character vector.
+#' @return The keys.
+#' @noRd
+.rmbl_fold <- function(x) {
+  x <- as.character(x)
+  ok <- !is.na(x) & validUTF8(x)
+  x[ok] <- .rmbl_caseless(x[ok])
+  x[!ok] <- .rmbl_lower(x[!ok])
+  x
+}
 
 #' Names as one system compares them when it ignores case and Unicode
 #' normalisation: Unicode's canonical caseless match (NFD of the simple case

@@ -2184,7 +2184,7 @@ format.rmbl_transfer_check <- function(x, ...) {
     )
   }
   # the user's labels, not file names: accented capitals fold too
-  lc <- tolower(core)
+  lc <- .rmbl_fold(core)
   # a case-variant pair is two DIFFERENT trimmed labels that agree once
   # lower-cased; a pair that differs only by whitespace was reported above
   case_groups <- split(core, lc)

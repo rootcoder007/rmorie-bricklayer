@@ -1,5 +1,7 @@
 # rmoriebricklayer 1.1.1
 
+* A search pattern (`indtabs()`, `rmbl functions`, the CKAN resource patterns) and the labels `audcats()` compares fold accented letters in either case in every locale: in the C locale of a container, an accented capital did not match its small letter, because the default engine folds only a to z there. In a UTF-8 session nothing changes.
+
 * The check of a capsule's gzip table is under the caps of every reader in the package (options `rmoriebricklayer.maxcsvbytes` and `rmoriebricklayer.maxgzratio`): a table that inflates more than 200 times its size, past 64 MiB, fails `data_readable` with the options named. The help of `vrfcps()` says so now. The refusal of names that one system takes for one name is headed by the capsule's folder, as the other refusals of a seal are, and is worked out for all names at once: 100,000 names with accents took 80 seconds and take 2.
 
 * A link that leads out of the folder searched for capsules is told, not refused. `cpschk()` gives it a `links_not_followed` row of severity `warn` (`rmbl verify --fail-on warn` exits 1 on it), and `cpsseal()`, `rmbl sign`, `rmbl refresh` and `xmssidxseen()` warn and go on: a capsule behind such a link is still neither sealed nor checked from there, and the message says to seal and check that folder where it is. Trees with a project library that links each package to a cache, a `node_modules` folder or a linked shared data folder seal and check as they did in 1.1.0.

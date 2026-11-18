@@ -1893,7 +1893,7 @@ instcli <- function(
   } else {
     tryCatch(
       suppressWarnings(
-        grepl(pattern, ns) | grepl(pattern, titles, ignore.case = TRUE)
+        grepl(pattern, ns) | .rmbl_grepl_ci(pattern, titles)
       ),
       error = function(e) {
         stop(

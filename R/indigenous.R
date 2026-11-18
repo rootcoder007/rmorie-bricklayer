@@ -929,8 +929,7 @@ indtabs <- function(pat = NULL, refresh = FALSE) {
   )
   if (!is.null(pat)) {
     # the user's own pattern: every letter, accented ones too, in either case
-    out <- out[grepl(pat, out$description, ignore.case = TRUE), ,
-        drop = FALSE]
+    out <- out[.rmbl_grepl_ci(pat, out$description), , drop = FALSE]
   }
   rownames(out) <- NULL
   out

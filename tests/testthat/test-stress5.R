@@ -1426,6 +1426,7 @@ test_that("a file named through a link that leaves the folder is refused", {
 
 test_that("a count in a dashboard box and a title given to a fit plot", {
   skip_if_not_installed("bslib")
+  skip_if_not_installed("shiny")
   ui <- .bl_vbox_ui(list(n = 12345, est = 1, lo = 0, up = 2, conf = 0.95))
   expect_match(paste(as.character(ui), collapse = ""), "12,345", fixed = TRUE)
   none <- .bl_vbox_ui(list(est = 1))
@@ -1467,6 +1468,36 @@ test_that("a clash of names is told with its capsule, and found in one pass", {
   expect_identical(.rmbl_caseless(x), one)
   expect_identical(.rmbl_caseless(rev(x)), rev(one))
   expect_identical(one[[3L]], one[[4L]])
-  expect_identical(.rmbl_nfd(c(0x41L, 0x327L, 0x301L), .rmbl_uc_tab()),
-                   .rmbl_nfd(c(0x41L, 0x301L, 0x327L), .rmbl_uc_tab()))
+  nfd <- function(u) .rmbl_nfdv(u, .rmbl_uc_tab())$u
+  expect_identical(nfd(c(0x41L, 0x327L, 0x301L)),
+                   nfd(c(0x41L, 0x301L, 0x327L)))
+})
+
+test_that("a pattern and a label fold accented letters outside UTF-8 too", {
+  u <- function(...) intToUtf8(c(...))
+  lo <- paste0("M", u(0xe9), "tis")
+  up <- paste0("M", u(0xc9), "TIS")
+  x <- c(paste(up, "people"), lo, "metis", NA)
+  want <- c(TRUE, TRUE, FALSE, FALSE)
+  expect_identical(.rmbl_grepl_ci(lo, x, utf8 = FALSE), want)
+  # text typed where the session is not UTF-8 carries no mark
+  raw <- lo
+  Encoding(raw) <- "unknown"
+  expect_identical(.rmbl_grepl_ci(raw, x, utf8 = FALSE), want)
+  # the constructs of a regular expression still work, and plain ASCII
+  # goes the way it always went
+  expect_identical(.rmbl_grepl_ci(paste0("^m", u(0xc9), "t(is|ex)$"), x,
+                                  utf8 = FALSE),
+                   c(FALSE, TRUE, FALSE, FALSE))
+  expect_identical(.rmbl_grepl_ci("^META", c("metadata", "x"), utf8 = FALSE),
+                   c(TRUE, FALSE))
+  expect_identical(.rmbl_grepl_ci("^META", c("metadata", "x"), utf8 = TRUE),
+                   c(TRUE, FALSE))
+  # labels: valid UTF-8 by Unicode, anything else by its letters A to Z
+  bad <- rawToChar(as.raw(c(0x41, 0xff)))
+  f <- .rmbl_fold(c(lo, up, NA, "ABC", bad))
+  expect_identical(f[[1L]], f[[2L]])
+  expect_identical(f[[3L]], NA_character_)
+  expect_identical(f[[4L]], "abc")
+  expect_identical(f[[5L]], rawToChar(as.raw(c(0x61, 0xff))))
 })
