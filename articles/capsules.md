@@ -171,7 +171,7 @@ summarypath <- wrsmrytxt(
 cat(readLines(summarypath)[7:12], sep = "\n")
 #> Project:   demo-study
 #> Author:    A. Author
-#> When:      2026-11-17 23:42:35 UTC
+#> When:      2026-11-18 01:01:44 UTC
 #> OS:        Linux
 #> R:         R version 4.6.2 (2026-10-29)
 #> Mode:      SYNTHETIC (not real data -- pipeline check only)

@@ -2,6 +2,15 @@
 
 ## rmoriebricklayer 1.1.1
 
+- A search pattern
+  ([`indtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indtabs.md),
+  `rmbl functions`, the CKAN resource patterns) and the labels
+  [`audcats()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audcats.md)
+  compares fold accented letters in either case in every locale: in the
+  C locale of a container, an accented capital did not match its small
+  letter, because the default engine folds only a to z there. In a UTF-8
+  session nothing changes.
+
 - The check of a capsule’s gzip table is under the caps of every reader
   in the package (options `rmoriebricklayer.maxcsvbytes` and
   `rmoriebricklayer.maxgzratio`): a table that inflates more than 200
