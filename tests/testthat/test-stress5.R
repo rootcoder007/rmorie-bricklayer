@@ -1442,8 +1442,16 @@ test_that("what the review of round 11 found is as it was before it", {
   }), 2L)
   # the user's own pattern: accented letters in either case, and the
   # constructs of a regular expression
+  # a manifest of its own: the test asks no network for one
+  man <- list(datasets = list(
+    list(key = "statcan_indigenous/a", rows = 1,
+         meta = list(description = "First Nations, M\u00e9tis and Inuit")),
+    list(key = "census2021_ipp/b", rows = 1,
+         meta = list(description = "Population profile"))
+  ))
+  local_mocked_bindings(dmnf = function(refresh = FALSE) man)
   n <- nrow(indtabs("M\u00e9tis"))
-  expect_gt(n, 0L)
+  expect_identical(n, 1L)
   expect_identical(nrow(indtabs("M\u00c9TIS")), n)
   expect_silent(indtabs("M\u00e9tis"))
   expect_identical(s10_cli(c("functions", "(?i)capsule"))$status, 0L)
