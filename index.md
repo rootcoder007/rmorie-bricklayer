@@ -1501,7 +1501,7 @@ not theirs.
 If you use rmoriebricklayer in your research, please cite the software:
 
 > Ruhela, V. S. (2026). *rmoriebricklayer: Reproducible Data Capsules
-> with Provenance and Fallback.* R package version 1.1.1.
+> with Provenance.* R package version 1.1.1.
 > <doi:10.32614/CRAN.package.rmoriebricklayer>.
 > <https://github.com/rootcoder007/rmorie-bricklayer>
 
@@ -1511,7 +1511,7 @@ entry stamped with the exact installed version, sourced from
 
 ``` bibtex
 @Manual{ruhela_rmoriebricklayer_2026,
-  title  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},
+  title  = {rmoriebricklayer: Reproducible Data Capsules with Provenance},
   author = {Ruhela, Vansh Singh},
   year   = {2026},
   doi    = {10.32614/CRAN.package.rmoriebricklayer},
