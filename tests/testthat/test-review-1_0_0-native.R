@@ -199,6 +199,13 @@ test_that("H2: a trailing-dot host is fetched through the pin (live)", {
     identical(Sys.getenv("RMBL_LIVE_TESTS"), "1"),
     "live: RMBL_LIVE_TESTS=1"
   )
+  # the same host without the dot is the control: when it does not answer
+  # either, the network of this machine is down, which is not what is
+  # tested here
+  plain <- .Call(C_rmbl_http_get, "https://cloud.r-project.org/", 30L, NULL,
+                 FALSE)
+  skip_if(!identical(plain$status, 200L),
+          "cloud.r-project.org does not answer from here")
   r <- .Call(C_rmbl_http_get, "https://cloud.r-project.org./", 30L, NULL, FALSE)
   expect_identical(r$status, 200L)
 })
