@@ -1053,10 +1053,10 @@ estimators. Any error in that translation is the package's, not theirs.
 The policy-evaluation functions and their plots follow the designs of
 Professor Ángela Zorro Medina's studies of criminal procedure reform (Zorro
 Medina 2020; Acosta, Mejia and Zorro Medina 2023), and the test of spatial
-dependence in areal residuals the use Professor Laniyonu (2017) made of
-Moran's I. The check of a table's labelling against a reported contrast
-takes its case from the correction the Ontario Human Rights Commission
-published on 26 January 2023.
+dependence in areal residuals the use Professor Ayobami Laniyonu (2017)
+made of Moran's I. The check of a table's labelling against a reported
+contrast takes its case from the correction the Ontario Human Rights
+Commission published on 26 January 2023.
 
 The examples and the bundled excerpts are tables that public bodies
 publish: Ontario's Ministry of the Solicitor General (the Offender
