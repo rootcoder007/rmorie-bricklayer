@@ -191,12 +191,12 @@ vrfcps(dir)
 #> │                                                                             │
 #> │   Every check passed: the capsule is still the one the analysis was run on. │
 #> │                                                                             │
-#> │   ✔    provenance_readable  /tmp/RtmpUKWo2b/capsule-example/data_provenance │
+#> │   ✔    provenance_readable  /tmp/Rtmpe7t8tp/capsule-example/data_provenance │
 #> │                             .json                                           │
-#> │   ✔    data_present         /tmp/RtmpUKWo2b/capsule-example/d.csv           │
+#> │   ✔    data_present         /tmp/Rtmpe7t8tp/capsule-example/d.csv           │
 #> │   ✔    data_sha256          da4aaa3a009d063f36d0515f2b50a11bcc578264aa7c455 │
 #> │                             04b46fedbbae4f8f7                               │
-#> │   ✔    data_readable        /tmp/RtmpUKWo2b/capsule-example/d.csv           │
+#> │   ✔    data_readable        /tmp/Rtmpe7t8tp/capsule-example/d.csv           │
 #> │   ✔    data_row_count       3 rows on disk                                  │
 #> │   ✔    schema_valid                                                         │
 #> │   ✔    data_not_synthetic   no synthetic marker: sidecar, manifest and      │
@@ -222,6 +222,6 @@ vrfcps(dir, provfile = "../elsewhere.json")$ok
 
 # a missing directory is an error
 try(vrfcps(file.path(tempdir(), "no-such-capsule")))
-#> Error : `cpsdir` is not an existing directory: /tmp/RtmpUKWo2b/no-such-capsule
+#> Error : `cpsdir` is not an existing directory: /tmp/Rtmpe7t8tp/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```
