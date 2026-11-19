@@ -2,6 +2,8 @@
 
 ## rmoriebricklayer 1.1.1
 
+CRAN release: 2026-11-18
+
 - A search pattern
   ([`indtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indtabs.md),
   `rmbl functions`, the CKAN resource patterns) and the labels
