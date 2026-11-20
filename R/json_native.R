@@ -3845,6 +3845,7 @@ bricklayer_json_validate <- function(txt) {
       call. = FALSE
     )
   }
+  .rmbl_json_factor_type(attrs, mode)
   output <- do.call("structure", c(newdata, attrs), quote = TRUE)
   .rmbl_json_shape(output, mode)
   if (mode == "closure") {
@@ -3856,6 +3857,27 @@ bricklayer_json_validate <- function(txt) {
     return(as.pairlist(output))
   }
   output
+}
+
+#' Refuses the class factor on data that are not integers, before the object
+#' is made.
+#'
+#' In the words of `.rmbl_json_shape()`: `structure()` turned such data into
+#' integers up to R 4.6, and stops with a message of its own in R-devel
+#' (r90935), before that check is reached.
+#' @param attrs The attributes read, a named list.
+#' @param mode The type the JSON names.
+#' @return `NULL`, invisibly.
+#' @noRd
+.rmbl_json_factor_type <- function(attrs, mode) {
+  if ("factor" %in% attrs[["class"]] && !identical(mode, "integer")) {
+    stop(
+      "`txt` is not JSON written by jsser() (a factor whose data do not ",
+      "have its shape)",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }
 
 #' Refuses an object whose class says one shape and whose data another: a
