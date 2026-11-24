@@ -16,7 +16,7 @@
 #   apk add build-base gfortran R-dev
 # Pinned by digest; Dependabot moves the pin weekly, and apk upgrade below
 # takes the newest packages on every build.
-FROM cgr.dev/chainguard/wolfi-base@sha256:e9b8c3739e5fb5fc778843a2ce74f8620588c9ddc9c44918cead527abcb0b628
+FROM cgr.dev/chainguard/wolfi-base@sha256:7974283557d272e72834dfae1a9a5b98b6bdfc90ecf88b352cf2778f15c5481d
 
 # Wolfi sets no locale, so R would run in C; C.UTF-8 is built into glibc
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
